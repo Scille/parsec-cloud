@@ -407,10 +407,9 @@ Format of the client → server `auth` event:
 
 *Editics protocol changes*:
 
-- Rename to `request_auth`
 - Remove `jwtOpen`/`jwtSession`/`token`/`user` fields: Parsec has its own authentication
   (the SSE endpoint is already authenticated), so OnlyOffice JWTs are not needed.
-- Keep `user.indexUser` as `index_user`
+- Keep `user.indexUser` as `indexUser`
 - Remove `documentFormatSave`/`headingsColor`/`lang`: All related to document content, so handled client-side.
 - Remove `openCmd`: Parsec handles document opening fully on client-side.
 - Remove `encrypted`: Parsec don't use OnlyOffice's encryption system.
@@ -442,8 +441,7 @@ Format:
 
 *Editics protocol changes*:
 
-- Rename to `wait_auth`
-- Remove `lockDocument` and replace it by a `auth_locked_by` field containing the
+- Remove `lockDocument` and replace it by a `authLockedBy` field containing the
   ID of the connection currently holding the auth lock.
 
 Once the session is in co-editing mode, the server sends its `auth` event.
@@ -477,7 +475,6 @@ Format of the client → server `auth` event:
 *Editics protocol changes*:
 TODO
 
-- Rename to `editics_auth`.
 - Remove `jwtOpen` / `jwtSession` / `jwt`: Parsec has its own authentication
   (the SSE endpoint is already authenticated), so OnlyOffice JWTs are not needed.
 - Remove `documentCallbackUrl`, `documentFormatSave`, `headingsColor`,
@@ -550,7 +547,7 @@ Format:
 TODO
 
 - Folded into the `bootstrap` SSE event (§3.1): the change backlog is delivered
-  as `encrypted_changes: List<(Index, Bytes)>` in the same message that
+  as `encryptedChanges: List<(Index, Bytes)>` in the same message that
   acknowledges the join. No separate chunking / ack flow is needed since SSE
   is one-directional and the server controls the send rate (and the changes are
   end-to-end encrypted, so the server can't size-optimize them by inspecting
@@ -596,17 +593,11 @@ Format:
 ```
 
 *Editics protocol changes*:
-TODO
 
-- Rename to `participants` (this is exactly the `participants` SSE event in
-  §3.1).
-- Replace `participantsTimestamp` with a `DateTime timestamp` (same monotonic
-  role).
-- Replace the `participants` array with a `Dictionary<Integer, DeviceID>`
-  (participant index → device id), since the client already knows the rest.
-- Replace the `waitAuth` boolean with `co_editing_ready: Boolean` (inverted
-  meaning: `true` once the established editor has released the auth lock and
-  co-editing is fully on; corresponds to `waitAuth: false`).
+- In `participants`:
+  - Remove `encrypted` (we never rely on OnlyOffice encryption system)
+  - Replace fields `id`/`idOriginal`/`username`  by `device_id` (the client
+    has already a single source of truth on those info).
 
 #### `message` (client → server) & `message` (server → client)
 
@@ -626,8 +617,7 @@ Format:
 
 *Editics protocol changes*:
 
-- Rename to `send_message`.
-- Encrypt `message` field.
+- Encrypt `message` field (hence rename the field to `encryptedMessage`).
 
 This leads to the server to send its own `message` event to inform other users.
 
@@ -661,7 +651,7 @@ Format:
 - Remove field `docid` (as the session is only related to a single document).
 - Replace fields `user`/`useridoriginal`/`username` by `device_id` (the client
   has already a single source of truth on those info).
-- Encrypt `message` field.
+- Encrypt `message` field (hence rename the field to `encryptedMessage`).
 
 #### `getMessages` (client → server)
 
@@ -705,8 +695,7 @@ Format:
 
 *Editics protocol changes*:
 
-- Rename to `move_cursor`.
-- Encrypt `cursor` field.
+- Encrypt `cursor` field (hence rename the field to `encryptedCursor`)
 
 This leads to the server to send its own `message` event to inform other users.
 
@@ -731,8 +720,7 @@ Format:
 
 *Editics protocol changes*:
 
-- Rename to `cursor_moved`.
-- Encrypt `cursor` field.
+- Encrypt `cursor` field (hence rename the field to `encryptedCursor`)
 - Replace fields `user`/`useridoriginal` by `device_id` (the client has already a
   single source of truth on those info).
 
@@ -763,9 +751,7 @@ Client format:
 }
 ```
 
-*Editics protocol changes*:
-
-- Rename to `acquire_region_lock`
+*Editics protocol changes*: Keep as-is.
 
 Then the server *to every clients* (including the one that send the `getLock` event) a `getLock` event.
 
@@ -800,9 +786,7 @@ Server format:
 }
 ```
 
-*Editics protocol changes*:
-
-- Rename to `region_lock_acquired`
+*Editics protocol changes*: Keep as-is.
 
 #### `releaseLock` (server → client)
 
@@ -841,7 +825,7 @@ Format:
 ```
 
 *Editics protocol changes*:
-TODO
+TODO: what is the `user` field correspond to ? should be replace this by something else ?
 
 #### `saveChanges` (client → server) & `saveChanges`/`savePartChanges` (server → client)
 
@@ -943,12 +927,9 @@ Quick reference, who sends what during a save:
 >   A typical example of `changes` field in default format:
 >   `"[\"64;AgAAADEA//8BACxLuimoIAIApwAAAAEAAAAAAAAAAAAAAAAAAAAAAAAA9v///w4AAAAwAC4AMAAuADAALgAwAA==\",\"37;> CAAAADAAXwAyADQAAQAcAAEAAAAFAAAAAQAAAGkAAAAAAwAAAA==\"]"`
 >
->   Default format is wasteful however so we want to use instead the binary format
->   (since the actual communication with the Parsec server is going to be done in
->   msgpack that supports binary data).
->
->   Switching to binary format can be done by setting `editorConfig.settings.binaryChanges`
->   to `true` > in `window.DocsAPI.DocEditor`'s config parameter.
+>   A binary format is also possible (by `editorConfig.settings.binaryChanges`
+>   to `true` > in `window.DocsAPI.DocEditor`'s config parameter), however it
+>   is not useful as long as JSON is used to encode the event.
 >
 > - *Spreadsheet Editor lock calculation*: `excelAdditionalInfo` field contains
 >   aditional info that are used by the server to compute locks on cells.
@@ -1011,10 +992,8 @@ Format:
 
 *Editics protocol changes*:
 
-- Rename to `save_changes`.
-- Encrypt `changes` fields.
+- Encrypt `changes` fields (hence rename it to `encryptedChanges`).
 - Split `excelAdditionalInfo` into `cursor` (encrypted field) and `excel_info` (containing `index_cells` and `index_rows`)
-- Switch to binary format for `changes` field.
 - Remove `unlock` field: we rely on the fact `unLockDocument` is always send after and contains this field.
 - Remove `reSave`
 - Remove `isExcel`: instead set `excel_info` to null if not excel.
@@ -1171,9 +1150,7 @@ sends a `saveChanges` (see `releaseLocks` field).
 }
 ```
 
-*Editics protocol changes*:
-
-- Rename to `un_save_lock`
+*Editics protocol changes*: Keep as-is.
 
 This leads to the server to send its own event to the client:
 
@@ -1276,9 +1253,7 @@ TODO
    }
  ```
 
-*Editics protocol changes*:
-
-- Rename to `un_lock_document`
+*Editics protocol changes*: Keep as-is.
 
 #### `close` (client → server)
 
@@ -1335,9 +1310,7 @@ Format:
 }
 ```
 
-*Editics protocol changes*:
-
-- Rename to `warning_received`
+*Editics protocol changes*: Keep as-is.
 
 #### `license` (server → client)
 
@@ -1784,7 +1757,9 @@ between the Parsec client and server that replaces the OnlyOffice protocol.
 
 It main charateristics:
 
-- Largerly based on the OnlyOffice protocol for its client and server events
+- Largerly based on the OnlyOffice protocol for its client and server events.
+  Basically for each event we keep the content of the `payload` field, remove the
+  uneeded fields (e.g. `username`), encrypt the sensitive fields.
 - JSON-based: unlike other Parsec communication protocol (e.g. authenticated API) normally rely on msgpack,
   however
 - Unlike OnlyOffice that uses websocket, its transport is achieved with two types of connections:
