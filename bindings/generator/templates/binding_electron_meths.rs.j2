@@ -298,7 +298,7 @@ Box::new({{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }})
     {%- endif %}
     {
         Ok(val) => val,
-        // err can't infer type in some case, because of the previous `try_into`
+        // err can't infer type in some cases, because of the previous `try_into`
         #[allow(clippy::useless_format)]
         Err(err) => return cx.throw_type_error(format!("{}", err)),
     }
@@ -313,13 +313,13 @@ Box::new({{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }})
 {%- elif type.kind == "variant" -%}
 {{ variant_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
 {%- elif type.kind == "OnClientEventCallback" -%}
-// The Javascript function object is going to be shared between the closure
+// The JavaScript function object is going to be shared between the closure
 // called by rust (that can be called multiple times) and the single-use
 // closure sent to the js runtime.
 // So we must use an Arc to ensure the resource is shared correctly, but
 // that's not all of it !
-// When the resource is no longer use, we must consume the reference we
-// had on the javascript function in a neon context so that it can itself
+// When the resource is no longer used, we must consume the reference we
+// had on the JavaScript function in a neon context so that it can itself
 // notify the js runtime's garbage collector.
 struct Callback {
     js_fn: Option<neon::handle::Root<JsFunction>>,
@@ -376,7 +376,7 @@ std::sync::Arc::new(
 {{ render_rs_to_js("*" + rs_value, type.elem, mut_cx_ref) }}
 {%- elif type.kind == "dict" -%}
 {
-    {# TODO: neon bindings doesn't expose Map, so we need to rely on eval here ! #}
+    {# TODO: neon bindings don't expose Map, so we need to rely on eval here ! #}
     let new_map_code = ({{ mut_cx_ref }}).string("new Map()");
     let js_map = neon::reflect::eval({{ mut_cx_ref }}, new_map_code)?.downcast_or_throw::<JsObject, _>({{ mut_cx_ref }})?;
     for (key, value) in {{ rs_value }}.into_iter() {
@@ -828,7 +828,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
 {% if meth.return_type is none %}
