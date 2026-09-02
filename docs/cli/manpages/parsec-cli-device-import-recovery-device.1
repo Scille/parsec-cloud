@@ -4,10 +4,23 @@
 .SH NAME
 parsec\-cli\-device\-import\-recovery\-device \- Import recovery device
 .SH SYNOPSIS
-\fBparsec\-cli device import\-recovery\-device\fR [\fB\-\-password\-stdin\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] <\fB\-i\fR|\fB\-\-input\fR> <\fB\-l\fR|\fB\-\-label\fR> [\fB\-h\fR|\fB\-\-help\fR] 
+\fBparsec\-cli device import\-recovery\-device\fR [\fB\-\-auth\fR] [\fB\-\-password\-stdin\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fB\-i\fR|\fB\-\-input\fR> <\fB\-l\fR|\fB\-\-label\fR> 
 .SH DESCRIPTION
 Import recovery device
 .SH OPTIONS
+.TP
+\fB\-\-auth\fR \fI<AUTH>\fR [default: password]
+New authentication method for the new device
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+keyring
+.IP \(bu 2
+password
+.RE
 .TP
 \fB\-\-password\-stdin\fR
 Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
@@ -22,7 +35,7 @@ May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable.
 Path where encrypted recovery device data is
 .TP
 \fB\-l\fR, \fB\-\-label\fR \fI<LABEL>\fR
-new device label
+New device label
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print help

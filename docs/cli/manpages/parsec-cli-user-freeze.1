@@ -1,12 +1,12 @@
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH parsec-cli-user-totp-reset 1  "totp-reset " 
+.TH parsec-cli-user-freeze 1  "freeze " 
 .SH NAME
-parsec\-cli\-user\-totp\-reset \- Reset TOTP (aka MFA, Multi\-Factor Authentication) for a user (administration command)
+parsec\-cli\-user\-freeze \- Freeze a user (temporary access restriction) (administration command)
 .SH SYNOPSIS
-\fBparsec\-cli user totp\-reset\fR [\fB\-\-send\-email\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fB\-o\fR|\fB\-\-organization\fR> <\fB\-t\fR|\fB\-\-token\fR> <\fB\-a\fR|\fB\-\-addr\fR> <\fB\-\-user\-id\fR|\fB\-\-user\-email\fR> 
+\fBparsec\-cli user freeze\fR [\fB\-\-unfreeze\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fB\-o\fR|\fB\-\-organization\fR> <\fB\-t\fR|\fB\-\-token\fR> <\fB\-a\fR|\fB\-\-addr\fR> <\fB\-\-user\-id\fR|\fB\-\-user\-email\fR> 
 .SH DESCRIPTION
-Reset TOTP (aka MFA, Multi\-Factor Authentication) for a user (administration command)
+Freeze a user (temporary access restriction) (administration command)
 .SH OPTIONS
 .TP
 \fB\-o\fR, \fB\-\-organization\fR \fI<ORGANIZATION>\fR
@@ -33,8 +33,8 @@ User ID (hex) of the user to reset TOTP for (mutually exclusive with \-\-user\-e
 \fB\-\-user\-email\fR \fI<USER_EMAIL>\fR
 Email of the user to reset TOTP for (mutually exclusive with \-\-user\-id)
 .TP
-\fB\-\-send\-email\fR
-Request the server to send the an email informing the user of the reset
+\fB\-\-unfreeze\fR
+Unfreeze the user
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print help
