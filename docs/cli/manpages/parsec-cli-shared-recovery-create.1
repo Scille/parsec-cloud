@@ -4,10 +4,13 @@
 .SH NAME
 parsec\-cli\-shared\-recovery\-create \- create shared recovery
 .SH SYNOPSIS
-\fBparsec\-cli shared\-recovery create\fR [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-\-recipients\fR] [\fB\-t\fR|\fB\-\-threshold\fR] [\fB\-\-no\-confirmation\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+\fBparsec\-cli shared\-recovery create\fR [\fB\-\-force\fR] [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-\-recipients\fR] [\fB\-t\fR|\fB\-\-threshold\fR] [\fB\-h\fR|\fB\-\-help\fR] 
 .SH DESCRIPTION
 create shared recovery
 .SH OPTIONS
+.TP
+\fB\-\-force\fR
+force default option to bypass interaction
 .TP
 \fB\-\-password\-stdin\fR
 Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
@@ -29,9 +32,6 @@ Share recipients, with their weight. If missing organization\*(Aqs admins will b
 .TP
 \fB\-t\fR, \fB\-\-threshold\fR \fI<THRESHOLD>\fR
 Threshold number of shares required to proceed with recovery
-.TP
-\fB\-\-no\-confirmation\fR
-Whether to ask for confirmation or not
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print help

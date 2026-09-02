@@ -64,7 +64,7 @@ async fn create_shared_recovery_ok(tmp_path: TmpPath, test_ui: &Ui) {
         &toto.human_handle.email().to_string(),
         "--threshold",
         "1",
-        "--no-confirmation"
+        "--force"
     )
     .stderr(predicates::str::contains(
         "Shared recovery setup has been created",
@@ -93,7 +93,7 @@ async fn create_shared_recovery_with_weights(tmp_path: TmpPath, test_ui: &Ui) {
         &format!("{}:{}", &toto.human_handle.email(), "3"),
         "--threshold",
         "2",
-        "--no-confirmation"
+        "--force"
     )
     .stderr(
         predicates::str::contains("Shared recovery setup has been created")
@@ -125,7 +125,7 @@ async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath, test_ui: &Ui
         "not-here@example.com",
         "--threshold",
         "1",
-        "--no-confirmation"
+        "--force"
     )
     .stderr(predicates::str::contains(
         "A user with email not-here@example.com not found",

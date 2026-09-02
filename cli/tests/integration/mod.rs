@@ -194,7 +194,7 @@ fn shared_recovery_create(
             &toto.human_handle.email().to_string(),
             "--threshold",
             "1",
-            "--no-confirmation"
+            "--force"
         )
         .stderr(predicates::str::contains(
             "Shared recovery setup has been created",
@@ -210,7 +210,7 @@ fn shared_recovery_create(
             &bob.human_handle.email().to_string(),
             "--threshold",
             "1",
-            "--no-confirmation"
+            "--force"
         )
         .stderr(predicates::str::contains(
             "Shared recovery setup has been created",
