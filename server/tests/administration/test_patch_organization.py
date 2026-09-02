@@ -126,7 +126,7 @@ async def test_ok(
     assert response.status_code == 200, response.content
     assert response.json() == {}
 
-    dump = await backend.organization.test_dump_organizations()
+    dump = await backend.organization.list_organizations()
     assert dump[coolorg.organization_id] == OrganizationDump(
         organization_id=coolorg.organization_id,
         bootstrap_token=ANY,
@@ -164,7 +164,7 @@ async def test_expire_and_cancel_expire(
             EventOrganizationExpired(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is True
 
         # Re-expire, should be a no-op
@@ -182,7 +182,7 @@ async def test_expire_and_cancel_expire(
             EventOrganizationExpired(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is True
 
         # Cancel expiration
@@ -196,7 +196,7 @@ async def test_expire_and_cancel_expire(
 
         # Cancelling the expiration doesn't trigger any event
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is False
 
         # Re-cancel expiration, should be a no-op
@@ -210,7 +210,7 @@ async def test_expire_and_cancel_expire(
 
         # Cancelling the expiration doesn't trigger any event
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is False
 
 
@@ -235,7 +235,7 @@ async def test_set_unset_tos(
             EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].tos == TermsOfService(
             updated_on=ANY, per_locale_urls={"fr_CA": "https://parsec.invalid/tos_fr1"}
         )
@@ -258,7 +258,7 @@ async def test_set_unset_tos(
             EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].tos == TermsOfService(
             updated_on=ANY,
             per_locale_urls={
@@ -280,7 +280,7 @@ async def test_set_unset_tos(
             EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].tos is None
 
 

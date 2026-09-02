@@ -321,7 +321,7 @@ class BaseOrganizationComponent:
     ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
         raise NotImplementedError
 
-    async def test_dump_organizations(
+    async def list_organizations(
         self, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
         raise NotImplementedError

@@ -198,7 +198,7 @@ async def test_ok(
         case tos:
             expected_tos = TermsOfService(updated_on=ANY, per_locale_urls=tos)
 
-    dump = await backend.organization.test_dump_organizations()
+    dump = await backend.organization.list_organizations()
     assert dump[org_id] == OrganizationDump(
         organization_id=org_id,
         bootstrap_token=bootstrap_token,
@@ -231,7 +231,7 @@ async def test_overwrite_existing(
     assert isinstance(outcome, AccessToken)
 
     # Sanity check
-    dump = await backend.organization.test_dump_organizations()
+    dump = await backend.organization.list_organizations()
     assert dump[org_id] == OrganizationDump(
         organization_id=org_id,
         bootstrap_token=bootstrap_token,
@@ -262,7 +262,7 @@ async def test_overwrite_existing(
     new_bootstrap_token = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"]).token
     assert new_bootstrap_token != bootstrap_token.hex
 
-    dump = await backend.organization.test_dump_organizations()
+    dump = await backend.organization.list_organizations()
     assert dump[org_id] == OrganizationDump(
         organization_id=org_id,
         bootstrap_token=new_bootstrap_token,

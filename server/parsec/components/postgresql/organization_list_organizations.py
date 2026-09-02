@@ -32,7 +32,7 @@ ORDER BY organization_id
 """)
 
 
-async def organization_test_dump_organizations(
+async def organization_list_organizations(
     conn: AsyncpgConnection, skip_templates: bool = True
 ) -> dict[OrganizationID, OrganizationDump]:
     items = {}

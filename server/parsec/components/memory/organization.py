@@ -402,7 +402,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         return org.tos
 
     @override
-    async def test_dump_organizations(
+    async def list_organizations(
         self, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
         items = {}

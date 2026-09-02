@@ -133,7 +133,7 @@ async def test_anonymous_organization_bootstrap_ok(
     # Ensure the default config has been used to configure the organization
     # when spontaneously created.
     if config.spontaneous:
-        orgs = await backend.organization.test_dump_organizations()
+        orgs = await backend.organization.list_organizations()
         org = orgs[organization_id]
         assert org.active_users_limit == backend.config.organization_initial_active_users_limit
         assert (
