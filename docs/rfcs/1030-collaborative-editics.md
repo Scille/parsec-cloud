@@ -100,6 +100,7 @@ then wait for a user with write access to join and do the save for them...).
 
 Each OnlyOffice session is identified by an ID that is used by the clients to join the session.
 We use the couple (workspace ID + document vlob ID) as the session ID.
+
 This means:
 
 - A document cannot change its vlob ID (i.e. the document is saved by creating new versions of this vlob)
@@ -110,8 +111,7 @@ This means:
 - A document can only have at most one session at a given time. This is important
   as it prevent most concurrency modifications.
 - Concurrency modifications are still possible if the document is directly modified
-  in the workspace (e.g. document modified
-  from the workspace mountpoint).
+  in the workspace (e.g. document modified from the workspace mountpoint).
 - Since the editics session is considered the main way of editing a document and
   doesn't cause save conflicts by itself (i.e. the session act as a single source of truth),
   it is allowed to save to the workspace by just uploading a new vlob version without
@@ -148,6 +148,7 @@ However hosting each instance on a single server instance brings significant ben
 - Better performances since the event can be processed and broadcasted without going
   trough the PostgreSQL server.
 - Simple code since most of the state is stored in memory.
+- Single server handling the session means trivial ordering of events and monotonic timestamps.
 
 So to keep those advantages while staying in a Twelve-Factor App philosophy we:
 
@@ -161,7 +162,7 @@ So to keep those advantages while staying in a Twelve-Factor App philosophy we:
     `1.editics.parsec.cloud`), and the main server runs a sharding algorithm to
     dispatch the edition session according to the document ID.
 
-### 1.5 - End-to-end encryption
+### 1.6 - End-to-end encryption
 
 Not all event sent to the server has to be end-to-end encrypted. As a matter,
 all events should have their name in clear text (so that the server can do access
@@ -181,8 +182,9 @@ Regarding how encryption is actually handled, the workspace encryption system wi
 
 ## 2 - The OnlyOffice communication protocol
 
-The OnlyOffice protocol used between client and server is not clearly defined
-(no spec, no schemas), it is instead implemented the yolo way directly in the code :/
+The OnlyOffice commanication protocol (aka "OnlyOffice protocol") used between
+client and server is not clearly defined (no spec, no schemas), it is instead
+implemented the yolo way directly in the code :/
 
 The list of events used in the protocol can be obtained from the code:
 
@@ -1775,403 +1777,49 @@ Format:
 
 *Editics protocol changes*: Ignore this event since the server is not able to save on its side.
 
-## 3 - Protocol changes
+## 3 - The Parsec editics communication protocol
+
+The Parsec editics communication protocol (aka "editics protocol") is the protocol used
+between the Parsec client and server that replaces the OnlyOffice protocol.
+
+It main charateristics:
+
+- Largerly based on the OnlyOffice protocol for its client and server events
+- JSON-based: unlike other Parsec communication protocol (e.g. authenticated API) normally rely on msgpack,
+  however
+- Unlike OnlyOffice that uses websocket, its transport is achieved with two types of connections:
+  SSE for server to client events and a dedicated RPC for client to server event (RPC response can
+  also contain a single server event).
+- Authentication is similar to the Parsec protocol (i.e. using the Parsec authentication
+  `PARSEC-SIGN-ED25519.<device_id_hex>.<timestamp>.<b64_signature>`).
+
+### 3.1 - Client events
+
+TODO: define a schema (using FastAPI's Pydantic format since it's what is going to be used when implementing the server). The schema should be an union of all the client events.
+
+### 3.2 - Server events
+
+TODO: define a schema (using FastAPI's Pydantic format since it's what is going to be used when implementing the server). The schema should be an union of all the server events.
+
+## 4 - Parsec editics architecture
 
 Basically stack works as follow:
 
-- Iframe dedicated to OnlyOffice that communicates with the main GUI
-- main GUI uses libparsec to communicate with the server
-- libparsec handles encryption/decryption (e.g. cursor, changes) and uses RCP & SSE with the server
+- The document is edited in the OnlyOffice client running in an IFrame
+- The OnlyOffice client itself runs in another Iframe (see `client/public/onlyoffice-host.html`)
+  and communicates using the OnlyOffice protocol with the `MockServer` (see `client/public/onlyoffice-mock-server.js`)
+- The `MockServer` itself runs the SSE and RPC connections to the actual server and translate the
+  OnlyOffice protocol into Editics protocol. To do that it also relies on libparsec to obtain the
+  authentication token, handle the encryption/decryption, handle the saving of the document in the
+  workspace.
 
-### 3.1 - Join session SSE endpoint
-
-On the server, the editics session needs to both keep track of the connected clients and push them messages (i.e. cursor move, document modification etc.).
-
-For this we introduce a new authenticated SSE endpoint dedicated to joining a session.
-
-Since the server has to keep track of who is connected to an editics session, we
-
-> [NOTE]
->
-> - This endpoint is similar to the already existing `GET /authenticated/{raw_organization_id}/events`.
-> - We choose to introduce a new SSE endpoint instead of modifying `/authenticated/{raw_organization_id}/events`.
->   This is to simplify tracking who is connected to the session (and establishing a dedicated SSE connection for
->   each session maps this very well).
-
-`GET /authenticated/{organization_id}/editics/{workspace_id}/{document_id}/{version}`
-
-```json5
-[
-    {
-        "major_versions": [
-            5
-        ],
-        "cmd": "editics_join_session",
-        // Request is never used as this API is only meant to be used from SSE
-        "req": {
-            "fields": []
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "unit": "EditicsEvent"
-            },
-            {
-                // Returned if:
-                // - The server has disabled editics support
-                // - The command is used through the regular rpc route instead of the SSE one
-                "status": "not_available"
-            },
-            {
-                // To reconstruct a document we need two things:
-                // - The document as stored in the workspace (so the content of a vlob at given version)
-                // - Additional changes that have been done to the document in the edition session
-                //
-                // So obviously both has to match otherwise we would apply changes to an unrelated document.
-                // For this reason only the initial vlob version and the versions that have been created by
-                // saving this session are allowed to be used as starting document.
-                "status": "cannot_bootstrap_from_version",
-                "fields": [
-                    {
-                        // Note this version is not necessary *the* latest (i.e. a newer version might exist
-                        // that results from some modification done outside of the edition session).
-                        "name": "latest_allowed_version",
-                        "type": "Version"
-                    }
-                ]
-            },
-            {
-                "status": "author_not_allowed"
-            },
-            {
-                "status": "realm_not_found"
-            },
-            {
-                "status": "realm_archived"
-            },
-            {
-                "status": "realm_deleted"
-            }
-        ],
-        "nested_types": [
-            {
-                "name": "EditicsEvent",
-                "discriminant_field": "event",
-                "variants": [
-                    {
-                        // First event sent automatically by the server when the connection starts
-                        "name": "bootstrap",
-                        "discriminant_value": "BOOTSTRAP",
-                        "fields": [
-                            {
-                                "name": "timestamp",
-                                "type": "DateTime"
-                            },
-                            {
-                                "name": "participants",
-                                "type": "Dictionary<UUID, DeviceID>"
-                            },
-                            {
-                                // TODO: what if there is *a lot* of changes ? should we stream them across multiple events ?
-                                // TODO: provide also the change index, however we need to patch Cryptpad's OnlyOffice (see `onlyoffice-editor/src/index.ts:147`) to handle it
-                                "name": "encrypted_changes",
-                                // List of (key_index, encrypted_change)
-                                "type": "List<(Index, Bytes)>"
-                            }
-                        ]
-
-                    },
-                    {
-                        "name": "participants",
-                        "discriminant_value": "PARTICIPANTS",
-                        "fields": [
-                            {
-                                "name": "timestamp",
-                                "type": "DateTime"
-                            },
-                            {
-                                "name": "participants",
-                                // Each member of the session is identified by an index corresponding to the order they
-                                // have joined the session (this a strong requirement from the OnlyOffice client code that
-                                // does arithmetic with this index so we cannot just use an UUID here).
-                                // see: https://github.com/cryptpad/onlyoffice-editor/blob/c1be39bb0042d82c0f52d420e2d668f866458611/sdkjs/common/docscoapi.js#L1553
-                                "type": "Dictionary<Integer, DeviceID>"
-                            },
-                            {
-                                // There is two mode for document edition:
-                                // - Exclusive: Used when there is a single client connected to the session
-                                //   (hence no need for broadcasting every change).
-                                // - Co-editing: Used when multiple clients are connected to the session.
-                                //
-                                // The tricky part is when a new client joins a session in exclusive mode: the initial
-                                // client must switch the session to co-editing mode (this is done by sending an `unLockDocument`)
-                                // and the new client must wait in the meantime.
-                                // Hence this boolean field that indicates when this operation is done.
-                                "name": "co_editing_ready",
-                                "type": "Boolean"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "cursor",
-                        "discriminant_value": "CURSOR",
-                        "fields": [
-                            {
-                                // Key index identifies which key in the realm's keys bundle has
-                                // been used to encrypt the cursor data.
-                                "name": "key_index",
-                                "type": "Index"
-                            },
-                            {
-                                "name": "encrypted_cursor",
-                                "type": "Bytes"
-                            },
-                            {
-                                "name": "timestamp",
-                                "type": "DateTime"
-                            },
-                            {
-                                "name": "participant",
-                                "type": "Integer"
-                            }
-                        ]
-                    },
-                    {
-                        "name": "change",
-                        "discriminant_value": "CHANGE",
-                        "fields": [
-                            {
-                                // Key index identifies which key in the realm's keys bundle has
-                                // been used to encrypt the changes.
-                                "name": "key_index",
-                                "type": "Index"
-                            },
-                            {
-                                "name": "encrypted_changes",
-                                "type": "List<(Index, Bytes)>"
-                            },
-                            {
-                                "name": "timestamp",
-                                "type": "DateTime"
-                            },
-                            {
-                                "name": "participant",
-                                "type": "Integer"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
-]
-```
-
-### 3.2 - Move cursor
-
-authenticated API:
-
-```json5
-[
-    {
-        "major_versions": [
-            5
-        ],
-        "cmd": "editics_move_cursor",
-        "req": {
-            "fields": [
-                {
-                    "name": "realm_id",
-                    "type": "VlobID"
-                },
-                {
-                    "name": "document_id",
-                    "type": "VlobID"
-                },
-                {
-                    // Key index identifies which key in the realm's keys bundle has
-                    // been used to encrypt the cursor data.
-                    "name": "key_index",
-                    "type": "Index"
-                },
-                {
-                    // OnlyOffice opaque cursor data encrypted with the realm's latest key
-                    "name": "encrypted_cursor",
-                    "type": "Bytes"
-                }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "fields": [
-                    {
-                        "name": "timestamp",
-                        "type": "DateTime"
-                    }
-                ]
-            },
-            {
-                "status": "author_not_allowed"
-            },
-            {
-                // If the `key_index` in the certificate is not currently the realm's last
-                "status": "bad_key_index",
-                "fields": [
-                    {
-                        "name": "last_realm_certificate_timestamp",
-                        "type": "DateTime"
-                    }
-                ]
-            },
-            {
-                "status": "realm_not_found"
-            },
-            {
-                "status": "realm_archived"
-            },
-            {
-                "status": "realm_deleted"
-            }
-        ]
-    }
-]
-```
-
-### 3.3 - Edit document
-
-authenticated API:
-
-```json5
-[
-    {
-        "major_versions": [
-            5
-        ],
-        "cmd": "editics_change_lock",
-        "req": {
-            "fields": [
-                {
-                    "name": "realm_id",
-                    "type": "VlobID"
-                },
-                {
-                    "name": "document_id",
-                    "type": "VlobID"
-                },
-                {
-                    "name": "encrypted_cursor",
-                    "type": "Bytes"
-                }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "fields": [
-                    {
-                        "name": "timestamp",
-                        "type": "DateTime"
-                    }
-                ]
-            },
-            {
-                "status": "author_not_allowed"
-            },
-            {
-                // If the `key_index` in the certificate is not currently the realm's last
-                "status": "bad_key_index",
-                "fields": [
-                    {
-                        "name": "last_realm_certificate_timestamp",
-                        "type": "DateTime"
-                    }
-                ]
-            },
-            {
-                "status": "realm_not_found"
-            },
-            {
-                "status": "realm_archived"
-            },
-            {
-                "status": "realm_deleted"
-            }
-        ]
-    }
-]
-```
-
-### 3.5 - Save document
-
-authenticated API:
-
-### 4 - Server-side implementation of session members tracking
-
-Since multiple instance of the server can be running, the tracking of the clients connected to a session cannot be done purely in the server memory.
-
-Instead the server relies on the PostgreSQL database to periodically store the list of its connections
-
- ```sql
- -- Session information are only kept for the duration of the session.
-CREATE TABLE editics_session (
-    _id SERIAL PRIMARY KEY,
-    -- An editics session is always related to a given vlob
-    vlob_id UUID NOT NULL,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
-    created_on TIMESTAMPTZ NOT NULL,
-    -- TODO: save lock logic should go here
-);
-
--- Modifications on the document has to be kept for the duration of
--- the session so that other clients can join the session.
-CREATE TABLE editics_session_patch (
-    _id SERIAL PRIMARY KEY,
-    -- An editics session is always related to a given vlob
-    vlob_id UUID NOT NULL,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
-    blob BYTEA NOT NULL,
-    -- Strictly growing
-    index INTEGER NOT NULL,
-
-    UNIQUE (realm, vlob_id, index)
-);
-
--- Since the session only stores patches, the client has to obtain by
--- itself the initial document on which to apply those patches.
--- Hence those join points that are all the allowed version of the vlobs:
--- - The initial version that has been used when the session has been created.
--- - All the versions that have been created when the document has been saved
---   during this session edit.
-CREATE TABLE editics_session_join_point (
-    _id SERIAL PRIMARY KEY,
-    editics_session INTEGER REFERENCES editics_session (_id) NOT NULL,
-    vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
-    -- All patches with index lower than this one should be ignored for this join point
-    -- (i.e. those older patches are supposed to be already contained in the vlob atom to use)
-    first_patch_index INTEGER NOT NULL,
-):
-
-CREATE TABLE editics_session_presence (
-    _id SERIAL PRIMARY KEY,
-    editics_session INTEGER REFERENCES editics_session (_id) NOT NULL,
-    device INTEGER REFERENCES device (_id) NOT NULL,
-    -- Periodically updated by the server owning the SSE connection that
-    -- represent this presence
-    last_seen   TIMESTAMPTZ NOT NULL,
-    PRIMARY KEY (editics_session_id, user_id)
-);
- ```
-
-### 5 - Per server session handling
+## 5 - Per server session handling
 
 TODO: document that an edition session only lives in a single server instance,
       which means a client has to be able to connect to a specific server instance
       to join a session.
 
-- Single server handling the session means trivial ordering of events and monotonic timestamps
 - return the list of editics servers with `server_config` command ?
 - provide a dedicate `editics_join_session` command that return the URL of the editics server to join ?
 - What sharding algorith to use ?
 - use the hash of the configuration (e.g. URLs of each available editics server) to detect that the configuration hasn't changed ? (in which case the sharding algorithm could - instruct to use the wrong editics server)
-- Use a background job on the server to save to PostgreSQL the non-euphemeral events ? (faster communication with the clients)
