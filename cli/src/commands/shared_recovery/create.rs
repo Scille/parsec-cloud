@@ -49,7 +49,7 @@ impl std::str::FromStr for WeightedEmail {
 }
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, password_stdin, force]
     pub struct Args {
         /// Share recipients, with their weight.
         /// If missing organization's admins will be used instead.
@@ -60,9 +60,6 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Threshold number of shares required to proceed with recovery.
         #[arg(short, long, requires = "recipients")]
         threshold: Option<NonZeroU8>,
-        /// Whether to ask for confirmation or not
-        #[arg(long, default_value_t)]
-        no_confirmation: bool,
     }
 );
 
@@ -76,7 +73,7 @@ pub async fn create_shared_recovery(
     let Args {
         recipients,
         threshold,
-        no_confirmation,
+        force,
         ..
     } = args;
 
@@ -144,7 +141,7 @@ pub async fn create_shared_recovery(
             })
     })?;
 
-    if !no_confirmation
+    if !force
         && !Confirm::new()
             .with_prompt("Do you want to proceed?")
             .interact()?

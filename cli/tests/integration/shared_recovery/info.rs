@@ -37,7 +37,7 @@ async fn info_shared_recovery_ok(tmp_path: TmpPath, test_ui: &Ui) {
         &toto.human_handle.email().to_string(),
         "--threshold",
         "1",
-        "--no-confirmation"
+        "--force"
     )
     .stderr(predicates::str::contains(
         "Shared recovery setup has been created",
