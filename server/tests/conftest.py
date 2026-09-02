@@ -280,6 +280,18 @@ async def db_config(request: pytest.FixtureRequest) -> BaseDatabaseConfig:
 
 
 @pytest.fixture
+async def db_args(db_config: BaseDatabaseConfig) -> list[str]:
+    if isinstance(db_config, PostgreSQLDatabaseConfig):
+        return [
+            f"--db={db_config.url}",
+            f"--db-min-connections={db_config.min_connections}",
+            f"--db-max-connections={db_config.max_connections}",
+        ]
+    else:
+        return ["--db=MOCKED"]
+
+
+@pytest.fixture
 def blockstore_config(db_config: BaseDatabaseConfig) -> BaseBlockStoreConfig:
     # TODO: allow to test against swift ?
     if db_config.is_mocked():
