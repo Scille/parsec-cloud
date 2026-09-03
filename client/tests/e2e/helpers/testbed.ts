@@ -3,7 +3,7 @@
 import { Page } from '@playwright/test';
 import { MsPage } from '@tests/e2e/helpers/types';
 
-type TestbedTemplate = 'coolorg' | 'empty';
+export type TestbedTemplate = 'coolorg' | 'empty' | 'shamir';
 
 declare global {
   interface Window {
