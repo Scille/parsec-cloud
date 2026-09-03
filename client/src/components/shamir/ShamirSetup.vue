@@ -210,7 +210,7 @@
 <script setup lang="ts">
 import ShamirIconCircleDark from '@/assets/images/shamir-icon-circle-dark.svg?raw';
 import ShamirIconCircleLight from '@/assets/images/shamir-icon-circle-light.svg?raw';
-import ShamirSetupSearchDropdown from '@/components/profile/ShamirSetupSearchDropdown.vue';
+import ShamirSetupSearchDropdown from '@/components/shamir/ShamirSetupSearchDropdown.vue';
 import { getClientInfo, listUsers, UserInfo, UserProfile } from '@/parsec';
 import { getRequiredShamirThreshold, setupShamirRecovery } from '@/parsec/shamir';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -485,7 +485,7 @@ async function startSetup(): Promise<void> {
     display: flex;
     flex-direction: column;
     gap: ms.spacing('gap-lg');
-    background: ms.color('surface-base-default');
+    background: ms.color('surface-base-page');
     padding: ms.spacing('padding-3xl');
     border-radius: ms.radius('2xl');
     box-shadow: ms.shadow('elevation-sm');

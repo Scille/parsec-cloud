@@ -60,7 +60,6 @@
         </ion-radio>
 
         <ion-radio
-          v-if="false"
           :value="RecoveryMethod.Shamir"
           class="recovery-method-item"
           :class="{ 'recovery-method-item--selected': selectedMethod === RecoveryMethod.Shamir }"
@@ -74,7 +73,7 @@
               {{ $msTranslate('ImportRecoveryDevicePage.modal.options.shamir.title') }}
             </ion-text>
             <ion-text class="recovery-method-item__subtitle">
-              {{ $msTranslate('ImportRecoveryDevicePage.modal.options.shamir.subtitle') }}
+              {{ $msTranslate({ key: 'ImportRecoveryDevicePage.modal.options.shamir.subtitle', data: { threshold: shamirThreshold } }) }}
             </ion-text>
           </div>
         </ion-radio>
@@ -136,11 +135,12 @@ import RecoveryFileIconDark from '@/assets/images/recovery-file-icon-dark.svg?ra
 import RecoveryFileIcon from '@/assets/images/recovery-file-icon.svg?raw';
 import RecoveryTrustIconDark from '@/assets/images/recovery-trusted-user-icon-dark.svg?raw';
 import RecoveryTrustIcon from '@/assets/images/recovery-trusted-user-icon.svg?raw';
+import { getRequiredShamirThreshold } from '@/parsec/shamir';
 import { RecoveryMethod } from '@/views/devices/types';
 import { IonIcon, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
 import { add, link, logIn, phonePortraitOutline } from 'ionicons/icons';
 import { MsImage, MsModal, MsModalResult, Theme, useTheme } from 'megashark-lib';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 enum RecoveryMethodStep {
   MethodChoice = 'method-choice',
@@ -150,6 +150,11 @@ enum RecoveryMethodStep {
 const { theme } = useTheme();
 const currentStep = ref<RecoveryMethodStep>(RecoveryMethodStep.MethodChoice);
 const selectedMethod = ref<RecoveryMethod | undefined>(undefined);
+const shamirThreshold = ref<number>(0);
+
+onMounted(async () => {
+  shamirThreshold.value = await getRequiredShamirThreshold();
+});
 
 const stepConfig = computed(() => {
   if (currentStep.value === RecoveryMethodStep.MethodChoice) {

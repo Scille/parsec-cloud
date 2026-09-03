@@ -473,7 +473,9 @@ async function setupApp(): Promise<void> {
     window.nativeAPI.log('debug', msg);
 
     // Dev mode, provide a default testbed
-    const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.PARSEC_APP_TESTBED_SERVER);
+    const template = (window as any).PARSEC_APP_DEV_TESTBED_TEMPLATE ?? 'coolorg';
+    const configResult = await libparsec.testNewTestbed(template, import.meta.env.PARSEC_APP_TESTBED_SERVER);
+    (window as any).TESTBED_TEMPLATE = template;
     if (configResult.ok) {
       nextStage(configResult.value); // Fire-and-forget call
     } else {

@@ -213,8 +213,9 @@ export const claimAndBootstrapLinkValidator: IValidator = async function (value:
       result.value.tag === ParsedParsecAddrTag.InvitationUser ||
       result.value.tag === ParsedParsecAddrTag.InvitationDevice ||
       result.value.tag === ParsedParsecAddrTag.AsyncEnrollment ||
-      // Not a join link but it we can use it as a backup
-      result.value.tag === ParsedParsecAddrTag.TOTPReset)
+      // Not join links but we can use this as a backup
+      result.value.tag === ParsedParsecAddrTag.TOTPReset ||
+      result.value.tag === ParsedParsecAddrTag.InvitationShamirRecovery)
   ) {
     return { validity: Validity.Valid };
   }
@@ -335,4 +336,18 @@ export const totpResetLinkValidator: IValidator = async function (value: string)
     return result.value.tag === ParsedParsecAddrTag.TOTPReset ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   return { validity: Validity.Invalid, reason: 'HomePage.organizationRequest.totp.invalidLink' };
+};
+
+export const shamirRecoveryLinkValidator: IValidator = async function (value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return { validity: Validity.Intermediate };
+  }
+  const result = await parseParsecAddr(value);
+  if (result.ok) {
+    return result.value.tag === ParsedParsecAddrTag.InvitationShamirRecovery
+      ? { validity: Validity.Valid }
+      : { validity: Validity.Invalid };
+  }
+  return { validity: Validity.Invalid, reason: 'HomePage.shamir.invalidLink' };
 };

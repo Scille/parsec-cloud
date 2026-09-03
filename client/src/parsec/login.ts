@@ -137,8 +137,14 @@ export async function listAvailableDevicesWithError(filter = true): Promise<Resu
   if (!filter) {
     return { ok: true, value: availableDevices };
   }
+  const sortedDevices: AvailableDevice[] = [];
   // Sort them by creation date
-  const sortedDevices = availableDevices.sort((d1, d2) => d2.createdOn.toMillis() - d1.createdOn.toMillis());
+  if (window.usesTestbed() && (window as any).TESTBED_TEMPLATE === 'shamir') {
+    // On testbed with shamir, second device is missing some info, it's better to use the first one.
+    sortedDevices.push(...availableDevices.sort((d1, d2) => d1.createdOn.toMillis() - d2.createdOn.toMillis()));
+  } else {
+    sortedDevices.push(...availableDevices.sort((d1, d2) => d2.createdOn.toMillis() - d1.createdOn.toMillis()));
+  }
   const devices: Array<AvailableDevice> = [];
 
   for (const ad of sortedDevices) {

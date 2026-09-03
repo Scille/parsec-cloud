@@ -308,6 +308,17 @@
         },
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session",
+        "shamir": {
+            "invalidLink": "Not a valid recovery link.",
+            "noAuthentication": "The recovery was stopped because no authentication method was chosen.",
+            "recoverDeviceFailed": "An error occurred while recovering your access.",
+            "offlineTitle": "Server unreachable",
+            "offlineMessage": "Unable to reach the server. Check your internet connection and try again.",
+            "retry": "Retry",
+            "giveUp": "Give up",
+            "saveDeviceFailed": "An error occurred while saving your device.",
+            "recovered": "Your access has been recovered!"
+        },
         "organizationRequest": {
             "title": "Pending requests",
             "status": {
@@ -1399,6 +1410,17 @@
             "subtitle": "The current authentication method is not allowed by the organization. Please choose a different method.",
             "yesText": "Change authentication method",
             "noText": "Log out"
+        },
+        "chooseModal": {
+            "title": "Choose an authentication method",
+            "subtitle": "Choose the method to log in to your organization.",
+            "continue": "Continue",
+            "interrupt": {
+                "title": "Interrupt the recovery",
+                "message": "If you close this window, your account recovery will be interrupted and you will have to start it again. Are you sure?",
+                "yes": "Interrupt",
+                "no": "Keep going"
+            }
         }
     },
     "ImportRecoveryDevicePage": {
@@ -1427,7 +1449,7 @@
                 },
                 "shamir": {
                     "title": "Trusted users",
-                    "subtitle": "You must have created a circle of trust with at least three people."
+                    "subtitle": "You must have created a circle of trust with at least {threshold} people."
                 }
             },
             "connectedDevice": {
@@ -1451,6 +1473,80 @@
                 "actions": {
                     "addRecoveryFile": "Add recovery file (.psrk)",
                     "updateRecoveryFile": "Update"
+                }
+            },
+            "shamir": {
+                "instructions": {
+                    "title": "How does the circle of trust work",
+                    "previous": "Previous",
+                    "next": "Next",
+                    "understood": "Got it",
+                    "steps": {
+                        "getLinks": {
+                            "title": "Get recovery links",
+                            "description": "Contact a trusted person (by email, by phone or in person) to get your recovery link (accessible from their profile)."
+                        },
+                        "exchangeCodes": {
+                            "title": "Exchange codes",
+                            "description": "Choose your trusted people, and exchange codes with them to validate your recovery."
+                        },
+                        "recoverAccount": {
+                            "title": "Recover your account",
+                            "description": "Once you have the required number of approvals, you can recover your account and choose how you want to authenticate."
+                        }
+                    }
+                },
+                "link": {
+                    "title": "Start your account recovery",
+                    "subtitle": "Enter a recovery link, then exchange codes with your trusted people.",
+                    "inputLabel": "Recovery link",
+                    "start": "Start recovery",
+                    "reminderTitle": "Where can I find this link?",
+                    "reminderDescription": "Your trusted contacts have this link. They can find it in their <b>profile</b>, via the <b>Access recovery</b> tab, by clicking <b>Help recover an access</b>, then <b>Copy link</b>."
+                },
+                "claim": {
+                    "progressLabel": "Required approvals",
+                    "progressCount": "{current} of {total}",
+                    "searchPlaceholder": "Search trusted people by name or email",
+                    "noMatch": "No trusted person matches your search.",
+                    "choose": "Choose",
+                    "waiting": "Waiting...",
+                    "cancel": "Cancel",
+                    "done": {
+                        "title": "Validation complete",
+                        "subtitle": "Your trusted people have approved your recovery. You can now set a new authentication method to access your account.",
+                        "continue": "Set my authentication method"
+                    },
+                    "interrupt": {
+                        "title": "Interrupt the recovery",
+                        "message": "Are you sure you want to interrupt your account recovery?",
+                        "yes": "Interrupt",
+                        "no": "Keep going"
+                    },
+                    "errors": {
+                        "pickRecipientFailed": "Unable to reach this trusted person.",
+                        "waitFailed": "An error occurred while waiting for the trusted person.",
+                        "greeterCancelled": "The trusted person cancelled the code exchange.",
+                        "noCodeSelected": "No code was selected, the code exchange has been cancelled.",
+                        "wrongCodeSelected": "The selected code is incorrect, the code exchange has been cancelled.",
+                        "exchangeFailed": "The code exchange failed.",
+                        "claimFailed": "Unable to retrieve this trusted person's approval.",
+                        "addShareFailed": "Unable to add this trusted person's approval."
+                    },
+                    "exchange": {
+                        "chooseCode": {
+                            "title": "Trusted person's code",
+                            "description": "Select the code {name} gave you."
+                        },
+                        "provideCode": {
+                            "title": "Code to share",
+                            "description": "Please share this code with {name} to start the process."
+                        },
+                        "waiting": "Waiting for the trusted person"
+                    },
+                    "reminderTitle": "How do I exchange codes with a person?",
+                    "reminderDescription": "Choose a person who has access to Parsec and ask them to start the recovery via the <b>Access recovery</b> tab, by clicking <b>Help recover an access</b>, then <b>Start</b>.",
+                    "progressDone": "Recovery complete"
                 }
             },
             "authentication": {
@@ -2106,21 +2202,53 @@
             "modalOthers": {
                 "title": "Help recover access",
                 "subtitle": "Help someone recover their access by being part of their circle of trust.",
-                "info": "If one of them contacts you, copy their link and send it to them — they can then initiate the code exchange.",
+                "info": "If one of them contacts you, copy their link and send it to them, they can then initiate the code exchange.",
                 "noPeopleTitle": "You are not part of any circle of trust",
                 "noPeopleSubtitle": "People who have added you to their circle of trust will appear here. You can then help them recover their access in case of loss.",
                 "copyLink": "Copy link",
-                "startRecovery": "Start recovery",
                 "toasts": {
                     "linkCopied": "Recovery link copied to clipboard.",
                     "linkNotCopied": "Failed to copy recovery link to clipboard."
-                }
+                },
+                "recover": "Recover",
+                "start": "Start"
             },
             "errors": {
                 "generic": "An error occurred. Please try again later.",
                 "failedToGetLink": "Failed to get the recovery link.",
                 "notEnoughPeople": "Not enough people in your organization. At least {needed} people with a profile different than External are required.",
                 "notEnoughAdmins": "Not enough administrators in your organization. At least {needed} administrators are required."
+            },
+            "greet": {
+                "waitClaimer": {
+                    "title": "Waiting for {name}",
+                    "description": "Ask {name} to choose you in their list to start the code exchange."
+                },
+                "provideCode": {
+                    "title": "Code to share",
+                    "description": "Share this code with {name} to validate their recovery."
+                },
+                "chooseCode": {
+                    "title": "Select the received code",
+                    "description": "Please select the verification code shared by {name}."
+                },
+                "waiting": "(Waiting for {name})",
+                "success": "You helped {name} recover their access.",
+                "interrupt": {
+                    "title": "Interrupt the recovery",
+                    "message": "Are you sure you want to interrupt the recovery of {name}?",
+                    "yes": "Interrupt",
+                    "no": "Keep going"
+                },
+                "errors": {
+                    "startFailed": "Failed to start the recovery.",
+                    "waitFailed": "Could not reach {name}. Please try again.",
+                    "claimerCancelled": "{name} cancelled the recovery.",
+                    "noCodeSelected": "No code was selected, the recovery has been cancelled.",
+                    "wrongCodeSelected": "The selected code is incorrect, the recovery has been cancelled.",
+                    "signifyTrustFailed": "Failed to validate the code. Please try again.",
+                    "finalizeFailed": "Failed to finalize the recovery. Please try again."
+                }
             }
         },
         "state": {

@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import ShamirSelfDisplay from '@/components/profile/ShamirSelfDisplay.vue';
-import ShamirSetup from '@/components/profile/ShamirSetup.vue';
+import ShamirSelfDisplay from '@/components/shamir/ShamirSelfDisplay.vue';
+import ShamirSetup from '@/components/shamir/ShamirSetup.vue';
 import { getSelfShamirRecovery, SelfShamirRecoveryInfo, SelfShamirRecoveryInfoTag } from '@/parsec';
 import { InformationManager } from '@/services/informationManager';
 import { MsReportText, MsReportTheme } from 'megashark-lib';

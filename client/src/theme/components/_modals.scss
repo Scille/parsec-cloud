@@ -674,6 +674,38 @@ ion-modal {
   }
 }
 
+.choose-authentication-modal {
+  --width: 43.5rem;
+}
+
+.shamir-instructions-modal::part(content),
+.shamir-link-modal::part(content),
+.claim-shamir-recovery-modal::part(content),
+.greet-shamir-recovery-modal::part(content) {
+  width: 35rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    width: 100%;
+  }
+}
+
+.shamir-link-modal .ms-modal,
+.claim-shamir-recovery-modal .ms-modal,
+.greet-shamir-recovery-modal .ms-modal {
+  padding: ms.spacing('padding-none');
+
+  .ms-modal-content {
+    padding: ms.spacing('padding-none');
+  }
+}
+
+.shamir-link-modal .ms-modal,
+.claim-shamir-recovery-modal .ms-modal {
+  .ms-modal-content {
+    margin: 0;
+  }
+}
+
 .import-recovery-device-modal,
 .choose-recovery-device-modal,
 .device-join-organization-modal,
