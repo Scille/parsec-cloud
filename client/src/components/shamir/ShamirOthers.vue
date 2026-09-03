@@ -26,36 +26,54 @@
         {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.info') }}
       </ms-report-text>
       <div class="shamir-others-list">
-        <ion-item
+        <div
           v-for="info in shamirInfo"
           :key="info.userId"
           class="shamir-others-list-item"
+          :class="{ 'shamir-others-list-item--expanded': expandedUserId === info.userId }"
         >
-          <ion-text class="shamir-others-list-item__text">
-            <span class="shamir-others-list-item__text-label">
-              {{ info.owner.humanHandle.label }}
-            </span>
-            <span class="shamir-others-list-item__text-description">
-              {{ info.owner.humanHandle.email }}
-            </span>
-          </ion-text>
-          <div class="shamir-others-list-item-buttons">
+          <div class="shamir-others-list-item-content">
+            <ion-text class="shamir-others-list-item__text">
+              <span class="shamir-others-list-item__text-label">
+                {{ info.owner.humanHandle.label }}
+              </span>
+              <span class="shamir-others-list-item__text-description">
+                {{ info.owner.humanHandle.email }}
+              </span>
+            </ion-text>
             <ion-button
+              v-if="expandedUserId !== info.userId"
               fill="clear"
               size="small"
-              class="shamir-others-list-item-buttons__button"
+              class="shamir-others-list-item__recover"
+              @click="expandedUserId = info.userId"
+            >
+              {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.recover') }}
+            </ion-button>
+          </div>
+          <div
+            v-if="expandedUserId === info.userId"
+            class="shamir-others-list-item-buttons"
+          >
+            <ion-button
+              fill="outline"
+              class="shamir-others-list-item-buttons__copy"
               @click="$emit('copyLink', info)"
             >
+              <ion-icon
+                class="button-icon-left"
+                :icon="link"
+              />
               {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.copyLink') }}
             </ion-button>
             <ion-button
-              class="shamir-others-list-item-buttons__button"
+              class="shamir-others-list-item-buttons__start"
               @click="$emit('startRecovery', info)"
             >
-              {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.startRecovery') }}
+              {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.start') }}
             </ion-button>
           </div>
-        </ion-item>
+        </div>
       </div>
     </div>
 
@@ -69,13 +87,14 @@
 
 <script setup lang="ts">
 import { OtherShamirRecoveryInfo, getOthersShamirRecovery } from '@/parsec';
-import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
-import { people } from 'ionicons/icons';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { link, people } from 'ionicons/icons';
 import { MsReportText, MsReportTheme } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
 const shamirInfo = ref<Array<OtherShamirRecoveryInfo>>([]);
 const error = ref('');
+const expandedUserId = ref<string | undefined>(undefined);
 
 defineEmits<{
   (e: 'copyLink', info: OtherShamirRecoveryInfo): void;
@@ -157,28 +176,19 @@ async function refreshShamirStatus(): Promise<void> {
 }
 
 .shamir-others-list-item {
-  --background: #{ms.color('surface-base-default')};
-
-  &::part(native) {
-    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
-  }
-
-  &::part(container) {
-    display: flex;
-    align-items: center;
-    gap: ms.spacing('gap-lg');
-    overflow: hidden;
-    justify-content: space-between;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-lg');
+  padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+  background: ms.color('surface-base-default');
+  border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
 
   &__text {
-    @include ms.font('body-md-medium');
-    margin: 0;
     display: flex;
     align-items: center;
     gap: ms.spacing('gap-md');
-    width: 100%;
-    overflow: hidden;
+    flex: 1;
+    min-width: 0;
 
     &-label {
       @include ms.font('body-md-medium');
@@ -195,14 +205,29 @@ async function refreshShamirStatus(): Promise<void> {
     }
   }
 
-  &:hover {
-    background: ms.color('surface-base-default');
+  &__recover {
+    @include ms.font('label-md-medium');
+    flex-shrink: 0;
+    margin: 0;
+    min-height: 2rem;
+    --color: #{ms.color('text-brand-default')};
   }
+}
+
+.shamir-others-list-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ms.spacing('gap-lg');
+  min-height: 2rem;
 }
 
 .shamir-others-list-item-buttons {
   display: flex;
   gap: ms.spacing('gap-lg');
-  flex-shrink: 0;
+
+  ion-button {
+    flex: 1;
+  }
 }
 </style>

@@ -52,10 +52,11 @@ for (const authMode of ['password', 'sso']) {
     await expect(chooseRecoveryModal).toBeVisible();
     await expect(recoveryFilesContent).toBeHidden();
 
-    await expect(recoveryMethodChoices).toHaveCount(2);
+    await expect(recoveryMethodChoices).toHaveCount(3);
     await expect(recoveryMethodChoices.locator('.recovery-method-item__title')).toHaveText([
       'Another connected device/browser',
       'Recovery file',
+      'Trusted users',
     ]);
 
     await recoveryMethodChoices.nth(1).click();
@@ -194,10 +195,11 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(chooseRecoveryModal).toBeVisible();
     await expect(recoveryFilesContent).toBeHidden();
 
-    await expect(recoveryMethodChoices).toHaveCount(2);
+    await expect(recoveryMethodChoices).toHaveCount(3);
     await expect(recoveryMethodChoices.locator('.recovery-method-item__title')).toHaveText([
       'Another connected device/browser',
       'Recovery file',
+      'Trusted users',
     ]);
 
     await recoveryMethodChoices.nth(1).click();

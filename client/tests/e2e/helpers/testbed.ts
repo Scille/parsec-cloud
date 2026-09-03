@@ -3,12 +3,13 @@
 import { Page } from '@playwright/test';
 import { MsPage } from '@tests/e2e/helpers/types';
 
-type TestbedTemplate = 'coolorg' | 'empty';
+export type TestbedTemplate = 'coolorg' | 'empty' | 'shamir';
 
 declare global {
   interface Window {
     TESTING_CONFIG_PATH: string;
     TESTBED_SERVER_URL: string;
+    TESTBED_TEMPLATE: string;
   }
 }
 
@@ -33,6 +34,7 @@ export async function initTestBed(page: Page, reuseConfigPath?: string, template
       }
       window.TESTING_CONFIG_PATH = configPath as string;
       window.TESTBED_SERVER_URL = testbedServerUrl as string;
+      window.TESTBED_TEMPLATE = template as string;
 
       await nextStage(configPath as string, 'en-US');
       return configPath as string;
