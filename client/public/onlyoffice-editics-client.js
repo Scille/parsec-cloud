@@ -770,17 +770,44 @@
             this._sendToClient(ooMsg);
           }
           break;
-        case 'getLock':
+        case 'getLock': {
           // The full lock table after the server attempted to acquire the
-          // requested blocks for the requester. Forward as-is.
-          Panel.log({ type: 'getLock', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: event } });
-          this._sendToClient(event);
+          // requested blocks for the requester. Translate the `user` field
+          // (server indexUser, an int) to OnlyOffice's composite
+          // `<userId><indexUser>` id so the editor matches it against its
+          // `_userId` (self = state 2 acquired, other = state 3).
+          const ooLocks = {};
+          for (const key in (event.locks || {})) {
+            const lock = event.locks[key];
+            const userId = this._userId(lock.user);
+            ooLocks[key] = {
+              time: lock.time,
+              user: userId + String(lock.user),
+              block: lock.block,
+            };
+          }
+          const ooMsg = { type: 'getLock', locks: ooLocks };
+          Panel.log({ type: 'getLock', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });
+          this._sendToClient(ooMsg);
           break;
-        case 'releaseLock':
-          // OnlyOffice expects `locks` records with the original block shape.
-          Panel.log({ type: 'releaseLock', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: event } });
-          this._sendToClient(event);
+        }
+        case 'releaseLock': {
+          // Translate the `user` field (server indexUser) to OnlyOffice's
+          // composite id in each released-lock record.
+          const rlRecords = (event.locks || []).map((lock) => {
+            const userId = this._userId(lock.user);
+            return {
+              block: lock.block,
+              user: userId + String(lock.user),
+              time: lock.time,
+              changes: null,
+            };
+          });
+          const rlMsg = { type: 'releaseLock', locks: rlRecords };
+          Panel.log({ type: 'releaseLock', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: rlMsg } });
+          this._sendToClient(rlMsg);
           break;
+        }
         case 'saveChanges':
           {
             // Broadcast to other participants: map the editics records back to
@@ -806,7 +833,15 @@
               syncChangesIndex: event.syncChangesIndex,
               endSaveChanges: !!event.endSaveChanges,
               startSaveChanges: true,
-              locks: event.locks || [],
+              locks: (event.locks || []).map((lock) => {
+                const userId = this._userId(lock.user);
+                return {
+                  block: lock.block,
+                  user: userId + String(lock.user),
+                  time: lock.time,
+                  changes: lock.changes,
+                };
+              }),
               excelAdditionalInfo: event.encryptedCursor != null ? this._fromB64(event.encryptedCursor) : undefined,
             };
             Panel.log({ type: 'saveChanges', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });

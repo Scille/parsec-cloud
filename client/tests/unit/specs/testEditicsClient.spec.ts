@@ -149,6 +149,43 @@ describe('editics client translation', () => {
     expect(sentToOO[0]).toEqual({ type: 'saveLock', saveLock: true });
   });
 
+  it('translates a getLock reply: key by plain block id, user = userId+index', async () => {
+    const { client, sentToOO } = makeClient();
+    await (client as any)._mergeParticipants([
+      { indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+    ]);
+    const serverEvent = {
+      type: 'getLock',
+      // The server keys word blocks by the plain string and uses int indexUser.
+      locks: { K: { time: 1, user: 1, block: 'K' } },
+    };
+    await (client as any)._onSseData(JSON.stringify(serverEvent));
+    expect(sentToOO.length).toBe(1);
+    const msg = sentToOO[0];
+    expect(msg.type).toBe('getLock');
+    // Key preserved (plain string "K").
+    expect(Object.keys(msg.locks)).toEqual(['K']);
+    // `user` translated to `<userId><indexUser>`.
+    expect(msg.locks.K.user).toBe('F89d8069ba2b1');
+    expect(msg.locks.K.block).toBe('K');
+  });
+
+  it('translates a releaseLock: user = userId+index', async () => {
+    const { client, sentToOO } = makeClient();
+    await (client as any)._mergeParticipants([
+      { indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+    ]);
+    const serverEvent = {
+      type: 'releaseLock',
+      locks: [{ block: 'K', user: 1, time: 1, changes: null }],
+    };
+    await (client as any)._onSseData(JSON.stringify(serverEvent));
+    expect(sentToOO.length).toBe(1);
+    expect(sentToOO[0].type).toBe('releaseLock');
+    expect(sentToOO[0].locks[0].user).toBe('F89d8069ba2b1');
+    expect(sentToOO[0].locks[0].block).toBe('K');
+  });
+
   it('maps unSaveLock reply to the editor', async () => {
     const { client, sentToOO } = makeClient();
     (client as any)._applyReply('saveChanges', {
