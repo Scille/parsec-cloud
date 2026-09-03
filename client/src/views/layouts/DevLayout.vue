@@ -89,7 +89,13 @@ as the default handle when not connecting properly`,
     devices = listResult.value;
   }
 
-  let device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace' && d.deviceLabel.includes('dev1'));
+  let device: parsec.AvailableDevice | undefined;
+
+  if ((window as any).DEV_TESTBED_TEMPLATE === 'shamir') {
+    device = devices.find((d) => d.humanHandle.label === 'Boby McBobFace' && d.deviceLabel.includes('dev1'));
+  } else {
+    device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace' && d.deviceLabel.includes('dev1'));
+  }
 
   if (!device) {
     device = devices[0];

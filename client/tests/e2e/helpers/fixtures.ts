@@ -173,7 +173,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
 
   let testbed: string | undefined;
   if (!opts.skipTestbed) {
-    testbed = await initTestBed(page, opts.testbedPath);
+    testbed = await initTestBed(page, opts.testbedPath, opts.tesbedTemplate);
   } else if (!opts.customNextStage) {
     await page.evaluate(async () => {
       const [, nextStage] = window.nextStageHook();

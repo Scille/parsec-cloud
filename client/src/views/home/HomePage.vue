@@ -26,6 +26,7 @@
               :show-secondary-menu="state !== HomePageState.AccountSettings"
               :show-back-button="showBackButton"
             />
+            <button @click="wrapHandleShamirRecovery()">PENIS</button>
             <slide-horizontal
               :appear-from="slidePositions.appearFrom"
               :disappear-to="slidePositions.disappearTo"
@@ -83,6 +84,7 @@ import {
   claimAndBootstrapLinkValidator,
   claimDeviceLinkValidator,
   claimUserLinkValidator,
+  shamirRecoveryLinkValidator,
   totpResetLinkValidator,
 } from '@/common/validators';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
@@ -101,7 +103,6 @@ import {
   DevicePrimaryProtectionStrategyTag,
   ListAvailableDeviceErrorTag,
   ParsecAccount,
-  ParsedParsecAddrTag,
   PendingAsyncEnrollmentInfoTag,
   PrimaryProtectionStrategy,
   archiveDevice,
@@ -149,9 +150,9 @@ import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
+import { handleAsyncEnrollment, handleTotpReset } from '@/views/home/utils';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
-import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
-import AsyncEnrollmentModal from '@/views/users/AsyncEnrollmentModal.vue';
+import { handleShamirRecovery } from '@/views/shamir/utils';
 import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBaoAuthModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
@@ -382,20 +383,25 @@ async function handleQuery(): Promise<void> {
   const query = getCurrentRouteQuery();
   if (query.claimLink) {
     const link = query.claimLink;
-    await navigateTo(Routes.Home, { skipHandle: true });
+    await navigateTo(Routes.Home, { skipHandle: true, replace: true });
     openJoinByLinkModal(link);
   } else if (query.bootstrapLink) {
     const link = query.bootstrapLink;
-    await navigateTo(Routes.Home, { skipHandle: true });
+    await navigateTo(Routes.Home, { skipHandle: true, replace: true });
     openCreateOrganizationModal(link);
   } else if (query.asyncEnrollmentLink) {
     const link = query.asyncEnrollmentLink;
-    await navigateTo(Routes.Home, { skipHandle: true });
-    handleAsyncEnrollment(link);
+    await navigateTo(Routes.Home, { skipHandle: true, replace: true });
+    handleAsyncEnrollment(link, informationManager);
+    await refreshJoinRequestsList();
   } else if (query.totpResetLink) {
     const link = query.totpResetLink;
-    await navigateTo(Routes.Home, { skipHandle: true });
-    handleTotpReset(link);
+    await navigateTo(Routes.Home, { skipHandle: true, replace: true });
+    handleTotpReset(link, informationManager);
+  } else if (query.shamirRecoveryLink) {
+    const link = query.shamirRecoveryLink;
+    await navigateTo(Routes.Home, { skipHandle: true, replace: true });
+    await wrapHandleShamirRecovery(link);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
@@ -468,123 +474,21 @@ async function onJoinOrganizationClicked(showRecoveryText?: boolean): Promise<vo
     const result = await parseParsecAddr(link);
 
     if (!result.ok) {
+      return;
     }
     if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
       await openCreateOrganizationModal(link);
     } else if ((await asyncEnrollmentLinkValidator(link)).validity === Validity.Valid) {
-      await handleAsyncEnrollment(link);
+      await handleAsyncEnrollment(link, informationManager);
+      await refreshJoinRequestsList();
     } else if ((await totpResetLinkValidator(link)).validity === Validity.Valid) {
-      await handleTotpReset(link);
+      await handleTotpReset(link, informationManager);
+    } else if ((await shamirRecoveryLinkValidator(link)).validity === Validity.Valid) {
+      await wrapHandleShamirRecovery(link);
     } else {
       await openJoinByLinkModal(link);
     }
   }
-}
-
-async function handleTotpReset(link: string): Promise<void> {
-  const addrResult = await parseParsecAddr(link);
-
-  if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.TOTPReset) {
-    informationManager.present(
-      new Information({
-        message: 'HomePage.organizationRequest.totp.invalidLink',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-  const modal = await modalController.create({
-    component: ActivateTotpModal,
-    cssClass: 'activate-totp-modal',
-    componentProps: {
-      params: {
-        mode: 'reset',
-        link: link,
-      },
-    },
-    canDismiss: true,
-    backdropDismiss: true,
-    showBackdrop: true,
-  });
-  await modal.present();
-  const { role } = await modal.onDidDismiss();
-  await modal.dismiss();
-
-  if (role !== MsModalResult.Confirm) {
-    return;
-  }
-  informationManager.present(
-    new Information({
-      message: 'Authentication.mfa.mfaSuccess.description',
-      level: InformationLevel.Success,
-    }),
-    PresentationMode.Toast,
-  );
-}
-
-async function handleAsyncEnrollment(link: string): Promise<void> {
-  const addrResult = await parseParsecAddr(link);
-
-  if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.AsyncEnrollment) {
-    informationManager.present(
-      new Information({
-        message: 'HomePage.organizationRequest.asyncEnrollmentModal.errors.invalidLink',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-
-  const addr = await buildParsecAddr(addrResult.value);
-  const pkiAvailable = await isSmartcardAvailable();
-  const serverConfigResult = await getServerConfig(addr);
-
-  // We don't have PKI and openbao is not configured on the server, can't do anything
-  if (
-    !pkiAvailable &&
-    (!serverConfigResult.ok || !serverConfigResult.value.openbao || serverConfigResult.value.openbao.auths.length === 0)
-  ) {
-    informationManager.present(
-      new Information({
-        message: 'HomePage.organizationRequest.asyncEnrollmentModal.errors.pkiSsoNotAvailable',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-
-  const modal = await modalController.create({
-    component: AsyncEnrollmentModal,
-    showBackdrop: true,
-    backdropDismiss: false,
-    componentProps: {
-      link: link,
-      addr: addrResult.value,
-      serverConfig: serverConfigResult.ok ? serverConfigResult.value : undefined,
-      pkiAvailable: pkiAvailable,
-    },
-    cssClass: 'async-enrollment-modal',
-  });
-  await modal.present();
-  const { role } = await modal.onDidDismiss();
-  await modal.dismiss();
-
-  if (role !== MsModalResult.Confirm) {
-    return;
-  }
-
-  informationManager.present(
-    new Information({
-      message: 'HomePage.organizationRequest.requestSent.success',
-      level: InformationLevel.Success,
-    }),
-    PresentationMode.Toast,
-  );
-
-  await refreshJoinRequestsList();
 }
 
 async function onJoinRequestClicked(request: AsyncEnrollmentRequest): Promise<void> {
@@ -774,6 +678,14 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
       await ParsecAccount.createRegistrationDevice(data.access);
     }
     await login(creationData.device, creationData.access);
+  }
+}
+
+async function wrapHandleShamirRecovery(link?: string): Promise<void> {
+  const result = await handleShamirRecovery(informationManager, link);
+
+  if (result) {
+    await login(result.device, result.access);
   }
 }
 
