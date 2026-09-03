@@ -32,6 +32,7 @@ from parsec.components.auth import BaseAuthComponent
 from parsec.components.block import BaseBlockComponent
 from parsec.components.blockstore import BaseBlockStoreComponent
 from parsec.components.cryptpad import BaseCryptpadComponent
+from parsec.components.editics import BaseEditicsComponent
 from parsec.components.events import BaseEventsComponent, EventBus
 from parsec.components.invite import BaseInviteComponent
 from parsec.components.memory import components_factory as mocked_components_factory
@@ -82,6 +83,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             block=components["block"],
             blockstore=components["blockstore"],
             cryptpad=components["cryptpad"],
+            editics=components["editics"],
             event_bus=components["event_bus"],
             events=components["events"],
             invite=components["invite"],
@@ -112,6 +114,7 @@ class Backend:
     block: BaseBlockComponent
     blockstore: BaseBlockStoreComponent
     cryptpad: BaseCryptpadComponent
+    editics: BaseEditicsComponent
     events: BaseEventsComponent
     invite: BaseInviteComponent
     organization: BaseOrganizationComponent

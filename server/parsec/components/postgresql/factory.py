@@ -15,6 +15,7 @@ from parsec.components.postgresql.async_enrollment import PGAsyncEnrollmentCompo
 from parsec.components.postgresql.auth import PGAuthComponent
 from parsec.components.postgresql.block import PGBlockComponent
 from parsec.components.postgresql.cryptpad import PGCryptpadComponent
+from parsec.components.postgresql.editics import MemoryEditicsComponent
 from parsec.components.postgresql.events import PGEventsComponent, event_bus_factory
 from parsec.components.postgresql.handler import asyncpg_pool_factory
 from parsec.components.postgresql.invite import PGInviteComponent
@@ -57,6 +58,7 @@ async def components_factory(
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 block = PGBlockComponent(pool=pool, blockstore=blockstore)
                 cryptpad = PGCryptpadComponent(pool=pool, config=config)
+                editics = MemoryEditicsComponent(config=config)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 invite = PGInviteComponent(pool=pool, config=config)
                 organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
@@ -76,6 +78,7 @@ async def components_factory(
                     "block": block,
                     "blockstore": blockstore,
                     "cryptpad": cryptpad,
+                    "editics": editics,
                     "event_bus": event_bus,
                     "events": events,
                     "invite": invite,
