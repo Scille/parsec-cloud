@@ -66,7 +66,17 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, getWorkspaceInfo, getCurrentServerAddr, getUserInfoFromDeviceID, entryStat, WorkspaceHandle, EntryStatTag, parseParsecAddr } from '@/parsec';
+import {
+  ClientInfo,
+  entryStat,
+  EntryStatTag,
+  FsPath,
+  getCurrentServerAddr,
+  getUserInfoFromDeviceID,
+  getWorkspaceInfo,
+  parseParsecAddr,
+  WorkspaceHandle,
+} from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   getOnlyOfficeDocumentType,
@@ -140,6 +150,41 @@ onUnmounted(() => {
   }
 });
 
+// Resolve the document's vlob version for the editics session (RFC 1030 §1.2).
+//
+// A freshly-created file has `baseVersion: 0` and `needSync: true` until the
+// workspace has manifested it as a new vlob on the server (version 1). If two
+// tabs open the same document around that moment, the first can capture
+// `baseVersion: 0` (local-only) while the second reads `baseVersion: 1`
+// (synced) -- the editics server would then reject the second as
+// "modified outside the session" since its version is ahead of the session's
+// `initial_version`.
+//
+// To make the collaborative join robust, wait until the file is synced
+// (`needSync === false`) before reading `baseVersion`, polling for a bounded
+// time. If it never syncs within the deadline, fall back to the last seen
+// `baseVersion` (the session may still be created; the join-retry path handles
+// the rest). This keeps both tabs on the same committed vlob version.
+const VLOB_VERSION_SYNC_TIMEOUT_MS = 5000;
+const VLOB_VERSION_SYNC_POLL_MS = 100;
+
+async function resolveVlobVersion(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  initialStat: Awaited<ReturnType<typeof entryStat>>,
+): Promise<number> {
+  let stat = initialStat;
+  const deadline = Date.now() + VLOB_VERSION_SYNC_TIMEOUT_MS;
+  while (stat.ok && stat.value.tag === EntryStatTag.File && stat.value.needSync) {
+    if (Date.now() >= deadline) {
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, VLOB_VERSION_SYNC_POLL_MS));
+    stat = await entryStat(workspaceHandle, path);
+  }
+  return stat.ok && stat.value.tag === EntryStatTag.File ? stat.value.baseVersion : 1;
+}
+
 async function buildEditicsConfig(workspaceHandle: WorkspaceHandle): Promise<OpenDocumentOptions['editics'] | undefined> {
   // Build the editics collaborative session config (RFC 1030, step 0) so the
   // host page connects to the Parsec server's SSE + RPC routes instead of the
@@ -172,24 +217,21 @@ async function buildEditicsConfig(workspaceHandle: WorkspaceHandle): Promise<Ope
     }
     const parsed = parsedAddrResult.value;
     const scheme = parsed.useSsl ? 'https' : 'http';
-    const baseUrl = parsed.isDefaultPort
-      ? `${scheme}://${parsed.hostname}`
-      : `${scheme}://${parsed.hostname}:${parsed.port}`;
+    const baseUrl = parsed.isDefaultPort ? `${scheme}://${parsed.hostname}` : `${scheme}://${parsed.hostname}:${parsed.port}`;
     const wsInfoResult = await getWorkspaceInfo(workspaceHandle);
     if (!wsInfoResult.ok) {
       return undefined;
     }
     const statResult = await entryStat(workspaceHandle, contentInfo.path);
-    const vlobVersion = statResult.ok && statResult.value.tag === EntryStatTag.File
-      ? statResult.value.baseVersion
-      : 1;
-    const editorType = documentType.value === OnlyOfficeDocumentType.Word
-      ? 0
-      : documentType.value === OnlyOfficeDocumentType.Cell
-        ? 1
-        : documentType.value === OnlyOfficeDocumentType.Slide
-          ? 2
-          : 3;
+    const vlobVersion = await resolveVlobVersion(workspaceHandle, contentInfo.path, statResult);
+    const editorType =
+      documentType.value === OnlyOfficeDocumentType.Word
+        ? 0
+        : documentType.value === OnlyOfficeDocumentType.Cell
+          ? 1
+          : documentType.value === OnlyOfficeDocumentType.Slide
+            ? 2
+            : 3;
     return {
       baseUrl,
       organizationId: info.organizationId,
