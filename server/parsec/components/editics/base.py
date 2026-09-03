@@ -20,9 +20,11 @@ client-side translation layer thin, see RFC §2).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
+import anyio
+from anyio.streams.memory import MemoryObjectReceiveStream
 from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer
 
 from parsec._parsec import DeviceID, VlobID
@@ -185,6 +187,79 @@ ServerEvent = Annotated[
 ]
 
 
+# --- SSE channel (component-layer handle) ---------------------------------
+
+# Buffer size for the per-connection SSE event queue. Step 0 produces very few
+# events (a single `connectState` on join), so a small buffer is plenty.
+SSE_CHANNEL_BUFFER = 16
+
+
+class EditicsSseChannel:
+    """One participant's SSE connection (component-layer handle).
+
+    The channel is created when the client opens the `GET .../join` SSE stream
+    but is *pending* until the matching `auth` RPC arrives: until then it is
+    not a participant of the session and does not receive `connectState`
+    broadcasts (todo step_0 §6).
+
+    The server pushes server events by calling `send_nowait` (or `send`); the
+    ASGI route's `EditicsStreamingResponse` (in `parsec/asgi/editics.py`)
+    consumes them from the receive stream and frames them as SSE `data:` lines.
+
+    This class lives in the components layer (and not next to the SSE framing
+    in `parsec/asgi/editics.py`) because it is the handle passed between the
+    editics component and the ASGI route — mirroring how
+    `ClientBroadcastableEventStream` for the events SSE route is a components
+    type consumed by `StreamingResponseMiddleware` in `parsec/asgi/rpc.py`.
+    It only depends on `anyio`, so there is no import cycle.
+    """
+
+    def __init__(self, participant_uuid: UUID, keepalive: float) -> None:
+        self.participant_uuid = participant_uuid
+        self.keepalive = keepalive
+        self._send, self._recv = anyio.create_memory_object_stream[dict[str, Any]](
+            max_buffer_size=SSE_CHANNEL_BUFFER
+        )
+        # `pending` is True from creation until the matching `auth` RPC promotes
+        # the channel to a full participant. While pending, the channel is
+        # registered in `Session.pending` (not `Session.connections`).
+        self.pending: bool = True
+        self.closed: bool = False
+        # Filled in when the channel is promoted to a full participant by the
+        # `auth` RPC (used to build the `ServerEventAuth.sessionTimeConnect` field
+        # and to find the participant on leave). They are not part of the SSE
+        # protocol itself.
+        self.index_user: int | None = None
+        self.connect_time_ms: int | None = None
+
+    @property
+    def receive(self) -> MemoryObjectReceiveStream[dict[str, Any]]:
+        return self._recv
+
+    def send_nowait(self, event: dict[str, Any]) -> None:
+        """Enqueue a server event to be delivered over this SSE stream.
+
+        Raises `anyio.WouldBlock` if the buffer is full (backpressure); the
+        component closes the channel in that case (mirrors the events SSE
+        backpressure handling in `parsec/asgi/rpc.py`).
+        """
+        if self.closed:
+            return
+        self._send.send_nowait(event)
+
+    async def send(self, event: dict[str, Any]) -> None:
+        if self.closed:
+            return
+        await self._send.send(event)
+
+    def close(self) -> None:
+        if self.closed:
+            return
+        self.closed = True
+        self._send.close()
+        self._recv.close()
+
+
 # --- In-memory session state (step 0) ---------------------------------------
 
 
@@ -209,8 +284,6 @@ class EditicsSession:
     # participant_uuid -> pending SSE connection (opened, auth not yet received)
     pending: dict[UUID, EditicsSseChannel] = field(default_factory=dict)
 
-
-from parsec.components.editics.transport import EditicsSseChannel
 
 
 @dataclass

@@ -23,7 +23,7 @@ from parsec.config import BackendConfig
 from parsec.logging import get_logger
 
 if TYPE_CHECKING:
-    from parsec.components.editics.transport import EditicsSseChannel
+    from parsec.components.editics.base import EditicsSseChannel
 
 logger = get_logger()
 
