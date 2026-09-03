@@ -1,0 +1,1 @@
+Fixed a bug where the trial organization icons would not be visible in small display
