@@ -247,6 +247,13 @@ async function buildEditicsConfig(workspaceHandle: WorkspaceHandle): Promise<Ope
         }
         return undefined;
       },
+      resolveUserId: async (deviceId: string): Promise<string | undefined> => {
+        const result = await getUserInfoFromDeviceID(deviceId);
+        if (result.ok) {
+          return result.value.id;
+        }
+        return undefined;
+      },
     };
   } catch (e) {
     window.nativeAPI.log('warn', `Failed to build editics config: ${String(e)}`);
