@@ -106,7 +106,14 @@
         }
 
         function openDocument(options) {
-          Promise.all([loadScript('/onlyoffice/web-apps/apps/api/documents/api.js'), loadScript('/onlyoffice-mock-server.js')])
+          var scripts = ['/onlyoffice/web-apps/apps/api/documents/api.js'];
+          // Always load the local mock server (used as a fallback if the
+          // editics transport can't be set up, so the editor still opens).
+          scripts.push('/onlyoffice-mock-server.js');
+          if (options.editics) {
+            scripts.push('/onlyoffice-editics-client.js');
+          }
+          Promise.all(scripts.map(loadScript))
             .then(function () {
               if (!window.DocsAPI || !window.DocsAPI.DocEditor) {
                 postToParent('oo-error', { details: 'DocsAPI is not available' });
@@ -118,18 +125,81 @@
               window.APP = window.APP || {};
               var config = buildConfig(options);
               var docEditor = new window.DocsAPI.DocEditor('placeholder', config);
-              var mockServer = window.OnlyOfficeMockServer.create({
-                documentId: options.documentId,
-                userId: options.userId,
-                userName: options.userName,
-                mode: options.mode,
-              });
+              var mockServer;
+              if (options.editics) {
+                // Real collaborative transport: connect to the Parsec server's
+                // editics SSE + RPC routes (RFC 1030, step 0). The
+                // participant-name resolver is bridged to the parent window
+                // (libparsec lives there, not in this iframe).
+                //
+                // If the editics client module isn't available or fails to
+                // initialize, fall back to the local mock server so the editor
+                // still opens (the collaborative transport must never block
+                // document editing).
+                try {
+                  if (!window.OnlyOfficeEditicsClient) {
+                    throw new Error('onlyoffice-editics-client.js failed to load');
+                  }
+                  mockServer = window.OnlyOfficeEditicsClient.create({
+                    baseUrl: options.editics.baseUrl,
+                    organizationId: options.editics.organizationId,
+                    workspaceId: options.editics.workspaceId,
+                    vlobId: options.editics.vlobId,
+                    deviceIdHex: options.editics.deviceId,
+                    vlobVersion: options.editics.vlobVersion,
+                    editorType: options.editics.editorType,
+                    // Local user identity, used to seed the participant list
+                    // before the server-assigned `indexUser` arrives (the
+                    // editor calls `getParticipants` during init).
+                    userId: options.userId,
+                    userName: options.userName,
+                    mode: options.mode,
+                    resolveUserName: function (deviceIdHex) {
+                      return new Promise(function (resolve) {
+                        var channel = new MessageChannel();
+                        var timeout = setTimeout(function () { resolve(undefined); }, 2000);
+                        channel.port1.onmessage = function (ev) {
+                          clearTimeout(timeout);
+                          resolve(ev.data && ev.data.userName);
+                        };
+                        parentWindow.postMessage({ command: 'oo-resolve-user-name', deviceId: deviceIdHex }, '*', [channel.port2]);
+                      });
+                    },
+                  });
+                } catch (editicsErr) {
+                  console.warn('[editics] disabled, falling back to mock server:', editicsErr);
+                  mockServer = null;
+                }
+                if (!mockServer) {
+                  // Fall back to the local mock server.
+                  mockServer = window.OnlyOfficeMockServer.create({
+                    documentId: options.documentId,
+                    userId: options.userId,
+                    userName: options.userName,
+                    mode: options.mode,
+                  });
+                }
+              } else {
+                mockServer = window.OnlyOfficeMockServer.create({
+                  documentId: options.documentId,
+                  userId: options.userId,
+                  userName: options.userName,
+                  mode: options.mode,
+                });
+              }
               mockServer.setEditor(docEditor);
               window.__ooMockServer = mockServer; // debugging hook, see notes/communication_protocol.md
               window.addEventListener('pagehide', function () {
                 mockServer.destroy();
               });
-              docEditor.connectMockServer(mockServer);
+              try {
+                docEditor.connectMockServer(mockServer);
+              } catch (connectErr) {
+                // `connectMockServer` throwing must not fail the whole open: the
+                // editor instance is already created and can still render the
+                // document; just log so the user isn't blocked.
+                console.error('[editics] connectMockServer failed:', connectErr);
+              }
             })
             .catch(function (err) {
               postToParent('oo-error', { details: err.message });
@@ -141,10 +211,16 @@
             return;
           }
           var data = event.data;
-          if (!data || data.command !== 'oo-open') {
+          if (!data) {
             return;
           }
-          openDocument(data.options);
+          switch (data.command) {
+            case 'oo-open':
+              openDocument(data.options);
+              break;
+            // `oo-resolve-user-name` is sent *by* this iframe to the parent (see
+            // OnlyOfficeEditicsClient's resolveUserName), not received here.
+          }
         });
 
         postToParent('oo-host-ready');

@@ -56,6 +56,29 @@ namespace OnlyOfficeCommAPI {
     mode: OnlyOfficeCommAPI.OpenModes;
     locale: string;
     theme?: 'light' | 'dark';
+    // Editics collaborative session config (RFC 1030, step 0). When present, the
+    // host page connects to the Parsec server's SSE + RPC editics routes
+    // (see client/public/onlyoffice-editics-client.js) instead of the
+    // localStorage/BroadcastChannel-only mock server. `deviceId` is the
+    // hyphenated UUID form of the client's DeviceID (matches the server's
+    // `DeviceID.from_hex`); `workspaceId`/`vlobId` are the VlobID UUID strings.
+    editics?: {
+      // Origin + path prefix up to (but not including) the organization id,
+      // e.g. `http://parsec.invalid`.
+      baseUrl: string;
+      organizationId: string;
+      workspaceId: string;
+      vlobId: string;
+      // DeviceID hyphenated UUID string.
+      deviceId: string;
+      // The vlob version the client has loaded locally (RFC §1.2).
+      vlobVersion: number;
+      // 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
+      editorType: number;
+      // Resolve a DeviceID hex to a display name (libparsec lookup). The server
+      // is not trusted for names; the client keeps its own table.
+      resolveUserName: (deviceId: string) => Promise<string | undefined>;
+    };
   }
 }
 
@@ -206,6 +229,20 @@ export async function openDocument(
               handlers.onError(new OnlyOfficeError(OnlyOfficeErrorCodes.EventError, event.data.details));
               break;
             }
+            case 'oo-resolve-user-name': {
+              // The editics client in the host iframe asks for a user name given
+              // a DeviceID hex (the server is not trusted for names, RFC §3.3).
+              // Reply on the MessagePort it provided, if any.
+              const port = (event as MessageEvent).ports[0];
+              if (port && options.editics?.resolveUserName) {
+                options.editics.resolveUserName(event.data.deviceId).then((userName) => {
+                  port.postMessage({ userName });
+                });
+              } else if (port) {
+                port.postMessage({ userName: undefined });
+              }
+              break;
+            }
           }
         },
         { signal: controller.signal },
@@ -235,10 +272,21 @@ export async function openDocument(
     return undefined;
   }
 
+  // `resolveUserName` is a function and cannot survive structured-clone across
+  // the iframe boundary; the host page bridges it back to us via the
+  // `oo-resolve-user-name` message above. Strip it before posting.
+  let postOptions: OpenDocumentOptions = options;
+  if (options.editics) {
+    // `resolveUserName` is a function and cannot survive structured-clone
+    // across the iframe boundary; the host page bridges it back to us via the
+    // `oo-resolve-user-name` message above. Strip it before posting.
+    const { resolveUserName: _omitted, ...editicsSerializable } = options.editics;
+    postOptions = { ...options, editics: editicsSerializable } as OpenDocumentOptions;
+  }
   frame.contentWindow.postMessage(
     {
       command: OnlyOfficeCommAPI.Commands.Open,
-      options: { ...options, documentContent },
+      options: { ...postOptions, documentContent },
     },
     '*',
   );
