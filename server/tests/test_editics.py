@@ -23,7 +23,7 @@ from tests.common import MinimalorgRpcClients
 SERVER_DOMAIN = "parsec.invalid"
 
 
-def AuthClientJSON(*, indexUser: int, editorType: int, vlobVersion: int) -> bytes:
+def ClientEventAuthJSON(*, indexUser: int, editorType: int, vlobVersion: int) -> bytes:
     return json.dumps(
         {
             "type": "auth",
@@ -99,7 +99,7 @@ async def test_join_fresh_session(minimalorg: MinimalorgRpcClients) -> None:
 
     async with open_editics_sse(minimalorg.raw_client, join_url, auth) as sse:
         # Send the auth RPC.
-        auth_body = AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=10)
+        auth_body = ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=10)
         rep = await minimalorg.raw_client.post(
             send_url,
             headers={"Authorization": auth, "Content-Type": "application/json"},
@@ -177,7 +177,7 @@ async def test_leave_removes_participant_and_broadcasts(
         rep = await minimalorg.raw_client.post(
             send_url,
             headers={"Authorization": alice_auth, "Content-Type": "application/json"},
-            content=AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=10),
+            content=ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=10),
         )
         assert rep.status_code == 200
         await _next_data_event(alice_sse)  # alice's connectState
@@ -185,7 +185,7 @@ async def test_leave_removes_participant_and_broadcasts(
         rep = await minimalorg.raw_client.post(
             send_url,
             headers={"Authorization": bob_auth, "Content-Type": "application/json"},
-            content=AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=10),
+            content=ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=10),
         )
         assert rep.status_code == 200
         await _next_data_event(alice_sse)  # alice sees bob join
@@ -238,7 +238,7 @@ async def test_reject_wrong_vlob_version(minimalorg: MinimalorgRpcClients) -> No
         rep = await minimalorg.raw_client.post(
             send_url,
             headers={"Authorization": auth, "Content-Type": "application/json"},
-            content=AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=10),
+            content=ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=10),
         )
         assert rep.status_code == 200
         await _next_data_event(sse)
@@ -255,7 +255,7 @@ async def test_reject_wrong_vlob_version(minimalorg: MinimalorgRpcClients) -> No
             rep = await minimalorg.raw_client.post(
                 bob_send_url,
                 headers={"Authorization": bob_auth, "Content-Type": "application/json"},
-                content=AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=11),
+                content=ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=11),
             )
             assert rep.status_code == 200, rep.content
             rejected = rep.json()
@@ -294,7 +294,7 @@ async def test_join_via_authorization_query_param(minimalorg: MinimalorgRpcClien
         rep = await minimalorg.raw_client.post(
             send_url,
             headers={"Authorization": auth, "Content-Type": "application/json"},
-            content=AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=10),
+            content=ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=10),
         )
         assert rep.status_code == 200, rep.content
         connect_state = await _next_data_event(events)
@@ -312,7 +312,7 @@ async def test_missing_auth_header(minimalorg: MinimalorgRpcClients) -> None:
     rep = await minimalorg.raw_client.post(
         send_url,
         headers={"Content-Type": "application/json"},
-        content=AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=10),
+        content=ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=10),
     )
     assert rep.status_code == 401
 
@@ -322,6 +322,6 @@ async def test_missing_auth_header(minimalorg: MinimalorgRpcClients) -> None:
             "Authorization": "Bearer not-editics",
             "Content-Type": "application/json",
         },
-        content=AuthClientJSON(indexUser=-1, editorType=0, vlobVersion=10),
+        content=ClientEventAuthJSON(indexUser=-1, editorType=0, vlobVersion=10),
     )
     assert rep.status_code == 401

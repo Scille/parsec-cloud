@@ -76,7 +76,7 @@ class ParticipantEntry(BaseModel):
 # --- Client -> server events -------------------------------------------------
 
 
-class AuthClient(BaseModel):
+class ClientEventAuth(BaseModel):
     """OnlyOffice client `auth` event, trimmed.
 
     See RFC §2.2 / todo step_0 §4 for the fields dropped from the OnlyOffice
@@ -100,13 +100,16 @@ class AuthClient(BaseModel):
     vlobVersion: int
 
 
-ClientEvent = AuthClient
+ClientEvent = Annotated[
+    ClientEventAuth,
+    Field(discriminator="type"),
+]
 
 
 # --- Server -> client events -------------------------------------------------
 
 
-class AuthServer(BaseModel):
+class ServerEventAuth(BaseModel):
     """OnlyOffice server `auth` reply, trimmed. Name kept.
 
     See RFC §2.2 / todo step_0 §4.4 for the fields dropped from the OnlyOffice
@@ -129,7 +132,22 @@ class AuthServer(BaseModel):
     # For a fresh session the backlog is empty -> no `authChanges` is sent.
 
 
-class ConnectState(BaseModel):
+class ServerEventAuthRejected(BaseModel):
+    """`auth` reply shape reused for rejection (RFC §1.2).
+
+    On rejection the RPC returns this instead of `ServerEventAuth`, with a
+    non-success `result` and the allowed version. OnlyOffice uses `result`
+    codes; we reuse the field (bad name documented at the definition site).
+    """
+
+    # OnlyOffice `auth` reply shape, reused for rejection. Name `result` kept.
+    type: Literal["auth"] = "auth"
+    result: int = 0  # 0 = rejected (OnlyOffice: non-1 = failure)
+    # RFC §1.2: the version the client should reload to before retrying.
+    latestAllowedVersion: int
+
+
+class ServerEventConnectState(BaseModel):
     """OnlyOffice `connectState`, trimmed. Name kept.
 
     See RFC §2.2 / todo step_0 §4.5 for the fields dropped from the OnlyOffice
@@ -146,7 +164,7 @@ class ConnectState(BaseModel):
     waitAuth: bool = False  # always false in step 0 (no auth lock)
 
 
-class AuthChanges(BaseModel):
+class ServerEventAuthChanges(BaseModel):
     """OnlyOffice `authChanges`. Name kept.
 
     Defined for completeness; NOT sent in step 0 (fresh session -> empty
@@ -161,25 +179,10 @@ class AuthChanges(BaseModel):
     changes: list[tuple[int, bytes]] = Field(default_factory=list)
 
 
-ServerEvent = AuthServer | ConnectState | AuthChanges
-
-
-# --- Rejection response (RPC reply) -----------------------------------------
-
-
-class AuthRejected(BaseModel):
-    """`auth` reply shape reused for rejection (RFC §1.2).
-
-    On rejection the RPC returns this instead of `AuthServer`, with a
-    non-success `result` and the allowed version. OnlyOffice uses `result`
-    codes; we reuse the field (bad name documented at the definition site).
-    """
-
-    # OnlyOffice `auth` reply shape, reused for rejection. Name `result` kept.
-    type: Literal["auth"] = "auth"
-    result: int = 0  # 0 = rejected (OnlyOffice: non-1 = failure)
-    # RFC §1.2: the version the client should reload to before retrying.
-    latestAllowedVersion: int
+ServerEvent = Annotated[
+    ServerEventAuth | ServerEventAuthRejected | ServerEventConnectState | ServerEventAuthChanges,
+    Field(discriminator="type"),
+]
 
 
 # --- In-memory session state (step 0) ---------------------------------------
@@ -252,7 +255,7 @@ class BaseEditicsComponent:
         vlob_id: VlobID,
         client_ctx: EditicsClientContext,
         event: ClientEvent,
-    ) -> AuthServer | AuthRejected | None:
+    ) -> ServerEvent | None:
         raise NotImplementedError
 
     async def leave(
