@@ -388,16 +388,161 @@
     }
 
     onMessage(msg) {
-      // Step 0 has no document-modification client events. Only `auth` is
-      // defined, and it is handled by `_sendAuth` (not delivered through
-      // `onMessage`). Forwarding of future event types (saveChanges, cursor,
-      // …) is deferred to later steps.
-      // The OnlyOffice editor sent a message to its "server" (us). In step 0
-      // most of these have no Editics/network counterpart yet; log the OO side.
-      Panel.log({
-        type: (msg && msg.type) || 'onMessage',
-        oo: { dir: 'in', payload: msg },
-      });
+      // The OnlyOffice editor sent a message to its "server" (us). Forward the
+      // step-1 client events to the Parsec server over the RPC, mapping fields
+      // per the editics protocol (RFC §2.2). Encrypted-shaped fields are passed
+      // through as opaque base64 for now (§2.4: real encryption is deferred).
+      const type = msg && msg.type;
+      Panel.log({ type: type || 'onMessage', oo: { dir: 'in', payload: msg } });
+      switch (type) {
+        case 'message':
+          this._post({ type: 'message', encryptedMessage: this._toB64(msg.message) });
+          break;
+        case 'cursor':
+          this._post({ type: 'cursor', encryptedCursor: this._toB64(msg.cursor) });
+          break;
+        case 'getLock':
+          this._post({ type: 'getLock', block: msg.block });
+          break;
+        case 'isSaveLock':
+          this._post({ type: 'isSaveLock', syncChangesIndex: msg.syncChangesIndex });
+          break;
+        case 'saveChanges':
+          this._post({
+            type: 'saveChanges',
+            // Binary changes mode: `changes` is a real JSON array (one entry per
+            // fragment); base64-encode each fragment independently (§2.2).
+            encryptedChanges: (msg.changes || []).map((c) => this._toB64(c)),
+            startSaveChanges: !!msg.startSaveChanges,
+            endSaveChanges: !!msg.endSaveChanges,
+            deleteIndex: msg.deleteIndex,
+            excel_info: msg.excel_info,
+            encryptedCursor: msg.encryptedCursor != null ? this._toB64(msg.encryptedCursor) : null,
+            releaseLocks: !!msg.releaseLocks,
+          });
+          break;
+        case 'unSaveLock':
+          this._post({ type: 'unSaveLock' });
+          break;
+        case 'unLockDocument':
+          this._post({
+            type: 'unLockDocument',
+            isSave: !!msg.isSave,
+            unlock: !!msg.unlock,
+            deleteIndex: msg.deleteIndex,
+            releaseLocks: !!msg.releaseLocks,
+          });
+          break;
+        case 'close':
+          this._post({ type: 'close' });
+          break;
+        case 'authChangesAck':
+          this._post({ type: 'authChangesAck' });
+          break;
+        case 'saveDone':
+          // Editics addition (no OO equivalent); the host page posts it after a
+          // vlob upload. Forward as-is.
+          this._post({ type: 'saveDone', savedUpToIndex: msg.savedUpToIndex, newVersion: msg.newVersion });
+          break;
+        default:
+          // Unknown OO event: no editics counterpart (logged on the OO side
+          // above). Do not forward.
+          break;
+      }
+    }
+
+    _toB64(value) {
+      // Pass opaque content through as base64. OnlyOffice cursor/change
+      // fragments may already be strings (JSON-encoded); treat strings as
+      // UTF-8 bytes. Real encryption is layered in a later step (§2.4).
+      if (value == null) return '';
+      if (typeof value === 'string') {
+        // encodeURIComponent+unescape handles UTF-8; btoa then base64-encodes.
+        try {
+          return btoa(unescape(encodeURIComponent(value)));
+        } catch (_e) {
+          return btoa(String(value));
+        }
+      }
+      if (value instanceof Uint8Array) {
+        let s = '';
+        for (let i = 0; i < value.length; i++) s += String.fromCharCode(value[i]);
+        return btoa(s);
+      }
+      return btoa(String(value));
+    }
+
+    _fromB64(b64) {
+      // Decode a base64 string back to a UTF-8 string (for opaque pass-through
+      // to OnlyOffice). Real decryption is deferred (§2.4).
+      try {
+        return decodeURIComponent(escape(atob(b64)));
+      } catch (_e) {
+        return atob(b64);
+      }
+    }
+
+    async _post(body) {
+      // Fire-and-forget RPC: the reply (a server event to the sender, or 204)
+      // is logged but most flows get their sender-visible result over SSE.
+      try {
+        const rep = await fetch(this.sendUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: this.authHeader },
+          body: JSON.stringify(body),
+        });
+        if (!rep.ok) {
+          Panel.log({ type: body.type, note: 'RPC ' + rep.status, net: { dir: 'in', payload: { status: rep.status } } });
+          return;
+        }
+        if (rep.status === 204) return;
+        const data = await rep.json();
+        Panel.log({ type: body.type + ' reply', net: { dir: 'in', payload: data } });
+        this._applyReply(body.type, data);
+      } catch (err) {
+        Panel.log({
+          type: body.type,
+          note: 'RPC error: ' + ((err && err.message) || err),
+          net: { dir: 'in', payload: { error: String(err) } },
+        });
+      }
+    }
+
+    _applyReply(requestType, data) {
+      // Map the RPC reply (a server event addressed to the sender) back to the
+      // OnlyOffice shape the editor expects, and push it via sendMessageToOO.
+      if (!data || !data.type) return;
+      switch (data.type) {
+        case 'saveLock':
+          this._sendToClient({ type: 'saveLock', saveLock: !!data.saveLock });
+          break;
+        case 'savePartChanges':
+          this._sendToClient({
+            type: 'savePartChanges',
+            changesIndex: data.changesIndex,
+            syncChangesIndex: data.syncChangesIndex,
+          });
+          break;
+        case 'unSaveLock':
+          this._sendToClient({
+            type: 'unSaveLock',
+            index: data.index,
+            time: data.time,
+            syncChangesIndex: data.syncChangesIndex,
+          });
+          break;
+        case 'getLock':
+          // `getLock` reply == the broadcast (§6.6); the SSE broadcast also
+          // delivers it to others. The sender's view is identical, so push it
+          // once here (the SSE broadcast to self is also delivered, but the
+          // server excludes the sender from broadcasts — see §6.6 — so we
+          // push the sender's view here).
+          this._sendToClient({ type: 'getLock', locks: data.locks });
+          break;
+        default:
+          // Other replies (e.g. `auth`, `waitAuth`) are handled in `_sendAuth`.
+          break;
+      }
     }
 
     destroy() {
@@ -476,6 +621,14 @@
         return;
       }
       const data = await rep.json();
+      if (data.type === 'waitAuth') {
+        // Auth lock held by another participant (todo step_1 §6.2): we are
+        // parked. The completion (authChanges + connectState{waitAuth:false})
+        // arrives over SSE once the holder releases the lock.
+        Panel.log({ type: 'auth', note: 'parked (waitAuth)', net: { dir: 'in', payload: data } });
+        Panel.setStatus(this._statusText('parked (waitAuth)'));
+        return;
+      }
       if (data.type !== 'auth') {
         console.error('[editics] unexpected auth reply', data);
         Panel.log({ type: 'auth', note: 'unexpected reply', net: { dir: 'in', payload: data } });
@@ -543,7 +696,8 @@
           }
           break;
         case 'authChanges':
-          // Defined for completeness; empty in step 0. Forward as-is.
+          // Backlog of changes since the session was created (§6.3). Forward
+          // as-is; the host layer base64-decodes each blob when applying.
           {
             const ooMsg = { type: 'authChanges', changes: event.changes || [] };
             Panel.log({
@@ -553,6 +707,86 @@
             });
             this._sendToClient(ooMsg);
           }
+          break;
+        case 'message':
+          {
+            const recs = (event.messages || []).map((m) => ({
+              message: this._fromB64(m.encryptedMessage),
+              time: m.time,
+              user: String(m.authorIndexUser),
+              useridoriginal: String(m.authorIndexUser),
+              username: this._userName(m.authorIndexUser),
+            }));
+            const ooMsg = { type: 'message', messages: recs };
+            Panel.log({ type: 'message', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });
+            this._sendToClient(ooMsg);
+          }
+          break;
+        case 'cursor':
+          {
+            const recs = (event.messages || []).map((m) => ({
+              cursor: this._fromB64(m.encryptedCursor),
+              time: m.time,
+              user: String(m.authorIndexUser),
+              useridoriginal: String(m.authorIndexUser),
+            }));
+            const ooMsg = { type: 'cursor', messages: recs };
+            Panel.log({ type: 'cursor', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });
+            this._sendToClient(ooMsg);
+          }
+          break;
+        case 'getLock':
+          // The full lock table after the server attempted to acquire the
+          // requested blocks for the requester. Forward as-is.
+          Panel.log({ type: 'getLock', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: event } });
+          this._sendToClient(event);
+          break;
+        case 'releaseLock':
+          // OnlyOffice expects `locks` records with the original block shape.
+          Panel.log({ type: 'releaseLock', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: event } });
+          this._sendToClient(event);
+          break;
+        case 'saveChanges':
+          {
+            // Broadcast to other participants: map the editics records back to
+            // OnlyOffice's { docid, change, time, user, useridoriginal } shape.
+            const docid = this.config.workspaceId + '/' + this.config.vlobId;
+            const changes = (event.changes || []).map((c) => ({
+              docid,
+              change: this._fromB64(c.change),
+              time: c.time,
+              user: String(c.authorIndexUser),
+              useridoriginal: String(c.authorIndexUser),
+            }));
+            const ooMsg = {
+              type: 'saveChanges',
+              changes,
+              changesIndex: event.changesIndex,
+              syncChangesIndex: event.syncChangesIndex,
+              endSaveChanges: !!event.endSaveChanges,
+              locks: event.locks || [],
+              excelAdditionalInfo: event.encryptedCursor != null ? event.encryptedCursor : undefined,
+            };
+            Panel.log({ type: 'saveChanges', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });
+            this._sendToClient(ooMsg);
+          }
+          break;
+        case 'savePartChanges':
+        case 'unSaveLock':
+          // Replies to the saver are delivered via the RPC reply path
+          // (`_applyReply`), not over SSE. Ignore the SSE copy (the server only
+          // sends these to the saver over RPC, so this is just defensive).
+          Panel.log({ type: event.type, net: { dir: 'in', payload: event } });
+          break;
+        case 'drop':
+          Panel.log({ type: 'drop', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: event } });
+          this._sendToClient(event);
+          // We have been force-removed: stop the SSE stream.
+          if (this._sse) this._sse.close();
+          break;
+        case 'warning':
+          Panel.log({ type: 'warning', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: event } });
+          this._sendToClient(event);
           break;
         default:
           // Unknown server event: pass through (the client does not strictly
@@ -596,6 +830,11 @@
         });
       });
       return list;
+    }
+
+    _userName(indexUser) {
+      const p = this._participants.get(indexUser);
+      return p ? p.userName : String(indexUser);
     }
 
     _sendToClient(msg) {
