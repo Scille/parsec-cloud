@@ -1,0 +1,201 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+"""Editics ASGI routes (step 0: auth subset).
+
+Two routes per session, both under the existing authenticated ASGI app
+(`server/parsec/asgi/`). They reuse the existing organization-id-in-path pattern
+but **not** the existing Parsec `PARSEC-SIGN-ED25519` handshake (see todo
+step_0 §3.3):
+
+    GET  /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{vlob_id}/join
+    POST /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{vlob_id}/send
+
+- `GET .../join` opens the SSE stream (server→client).
+- `POST .../send` carries one client event (client→server).
+
+Identity is the lightweight `Authorization: Editics <device_id_hex>.<participant_uuid_hex>`
+header (todo step_0 §3.3). It is **not** a secure authorization system.
+"""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import Response
+from starlette.requests import ClientDisconnect
+
+from parsec._parsec import DeviceID, OrganizationID, VlobID
+from parsec.backend import Backend
+from parsec.components.editics import (
+    AuthClient,
+    AuthRejected,
+    AuthServer,
+    EditicsClientContext,
+    EditicsSseChannel,
+    iter_editics_sse_events,
+)
+from parsec.components.editics.transport import EditicsStreamingResponse
+
+editics_router = APIRouter(include_in_schema=False)
+
+# Max size for the RPC body. The only client event in step 0 is `auth`, which is
+# tiny, but keep a reasonable ceiling consistent with the rest of the API.
+MAX_CONTENT_LENGTH = 1 * 1024 * 1024
+
+ACCEPT_TYPE_SSE = "text/event-stream"
+
+
+def _parse_editics_auth_header(headers, request: Request) -> EditicsClientContext:
+    """Parse the `Authorization: Editics <device_id_hex>.<participant_uuid_hex>` header.
+
+    Returns 401 on missing/malformed header. No real auth check in step 0
+    (todo step_0 §3.3, §9.1.5).
+
+    The SSE route also accepts the identity as an `authorization` query parameter,
+    because the browser's `EventSource` API cannot set custom request headers
+    (todo step_0 §9.2). The RPC route always uses the real header.
+    """
+    raw = headers.get("Authorization")
+    if not raw:
+        raw = request.query_params.get("authorization")
+    if not raw:
+        raise HTTPException(status_code=401, detail="Missing Editics authorization")
+    expected_scheme, _, rest = raw.partition(" ")
+    if expected_scheme != "Editics" or not rest:
+        raise HTTPException(status_code=401, detail="Missing Editics authorization")
+    device_hex, sep, participant_hex = rest.partition(".")
+    if not sep:
+        raise HTTPException(status_code=401, detail="Missing Editics authorization")
+    try:
+        device_id = DeviceID.from_hex(device_hex)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Bad Editics authorization")
+    try:
+        participant_uuid = UUID(hex=participant_hex)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Bad Editics authorization")
+    return EditicsClientContext(device_id=device_id, participant_uuid=participant_uuid)
+
+
+def _parse_organization_id(raw_organization_id: str) -> OrganizationID:
+    try:
+        return OrganizationID(raw_organization_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+
+def _parse_vlob_id(raw: str) -> VlobID:
+    try:
+        return VlobID.from_hex(raw)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Bad vlob id")
+
+
+async def _read_body(request: Request) -> bytes:
+    try:
+        content_length = int(request.headers["Content-Length"])
+    except (ValueError, KeyError):
+        content_length = MAX_CONTENT_LENGTH
+    else:
+        if content_length > MAX_CONTENT_LENGTH:
+            raise HTTPException(status_code=413)
+
+    chunks: list[bytes] = []
+    try:
+        async for chunk in request.stream():
+            chunks.append(chunk)
+            if sum(len(c) for c in chunks) > content_length:
+                raise HTTPException(status_code=413)
+    except ClientDisconnect:
+        raise HTTPException(status_code=413)
+    return b"".join(chunks)
+
+
+@editics_router.get(
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/join"
+)
+async def editics_join(
+    raw_organization_id: str, raw_realm_id: str, raw_document_id: str, request: Request
+):
+    """Open the editics SSE stream for a session (todo step_0 §3.1, §6).
+
+    Registers a *pending* SSE connection for `(session, participant_uuid)`. The
+    connection stays pending (and receives nothing but keepalives) until the
+    matching `auth` RPC promotes it to a full participant over `POST .../send`.
+    """
+    backend: Backend = request.app.state.backend
+
+    if request.headers.get("Accept") != ACCEPT_TYPE_SSE:
+        raise HTTPException(status_code=406, detail="Expected text/event-stream")
+
+    org_id = _parse_organization_id(raw_organization_id)
+    realm_id = _parse_vlob_id(raw_realm_id)
+    document_id = _parse_vlob_id(raw_document_id)
+    client_ctx = _parse_editics_auth_header(request.headers, request)
+
+    channel = EditicsSseChannel(
+        participant_uuid=client_ctx.participant_uuid,
+        keepalive=backend.config.sse_keepalive,
+    )
+    await backend.editics.join_sse(org_id, realm_id, document_id, client_ctx, channel)
+
+    async def stream():
+        try:
+            async for chunk in iter_editics_sse_events(channel):
+                yield chunk
+        finally:
+            # SSE disconnect (todo step_0 §8): remove the participant and
+            # broadcast the updated participant set to the remaining ones.
+            await backend.editics.leave(realm_id, document_id, client_ctx)
+
+    return EditicsStreamingResponse(
+        channel=channel,
+        status_code=200,
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+        media_type=ACCEPT_TYPE_SSE,
+    )
+
+
+@editics_router.post(
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/send"
+)
+async def editics_send(
+    raw_organization_id: str, raw_realm_id: str, raw_document_id: str, request: Request
+):
+    """Carry one client→server event (todo step_0 §3.1, §3.4, §6).
+
+    Step 0 only implements `auth`. The RPC returns the `auth` server event as
+    JSON (200) on success, or an `AuthRejected`-shaped reply on rejection. When
+    the client event triggers no reply to the sender, returns 204 No Content
+    (not used in step 0 but defined per §3.4).
+    """
+    backend: Backend = request.app.state.backend
+
+    org_id = _parse_organization_id(raw_organization_id)
+    realm_id = _parse_vlob_id(raw_realm_id)
+    document_id = _parse_vlob_id(raw_document_id)
+    client_ctx = _parse_editics_auth_header(request.headers, request)
+
+    body = await _read_body(request)
+
+    # Strict server-side validation of the client event (Pydantic). The server
+    # IS strictly validated on what it accepts from clients (todo step_0 §2).
+    try:
+        event = AuthClient.model_validate_json(body)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid client event")
+
+    reply = await backend.editics.handle_client_event(
+        org_id, realm_id, document_id, client_ctx, event
+    )
+
+    match reply:
+        case AuthServer() | AuthRejected():
+            return Response(content=reply.model_dump_json(), media_type="application/json")
+        case None:
+            return Response(status_code=204)
+        case _:  # pragma: no cover
+            raise HTTPException(status_code=500, detail="Unexpected editics reply")
