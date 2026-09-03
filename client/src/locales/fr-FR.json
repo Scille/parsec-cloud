@@ -350,6 +350,9 @@
         },
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session",
+        "shamir": {
+            "invalidLink": "Pas un lien de récupération valide."
+        },
         "organizationRequest": {
             "notAvailable": "Les requêtes pour rejoindre une organisation en utilisant un certificat ne sont pas encore disponibles sur votre système.",
             "title": "Demandes en attente",

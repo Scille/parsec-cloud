@@ -160,7 +160,7 @@ import {
   verifyTotpSetup,
 } from '@/parsec';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
-import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
+import PromptCurrentAuthentication from '@/views/authentication/PromptCurrentAuthentication.vue';
 import { IonButton, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle, copy } from 'ionicons/icons';
 import { Clipboard, MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';

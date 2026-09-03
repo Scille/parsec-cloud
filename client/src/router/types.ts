@@ -316,6 +316,7 @@ export interface Query {
   asyncEnrollmentLink?: string;
   bootstrapLink?: string;
   totpResetLink?: string;
+  shamirRecoveryLink?: string;
   fileLink?: ParsecWorkspacePathAddr;
   openInvite?: true;
   workspaceName?: WorkspaceName;
