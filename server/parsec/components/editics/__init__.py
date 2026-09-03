@@ -9,6 +9,7 @@ from parsec.components.editics.base import (
     ClientEventAuth,
     EditicsClientContext,
     EditicsSession,
+    EditicsSseChannel,
     IndexUser,
     ParticipantEntry,
     ServerEvent,
@@ -18,10 +19,6 @@ from parsec.components.editics.base import (
     ServerEventConnectState,
 )
 from parsec.components.editics.memory import MemoryEditicsComponent
-from parsec.components.editics.transport import (
-    EditicsSseChannel,
-    iter_editics_sse_events,
-)
 
 __all__ = [
     "BaseEditicsComponent",
@@ -38,5 +35,4 @@ __all__ = [
     "ServerEventAuthChanges",
     "ServerEventAuthRejected",
     "ServerEventConnectState",
-    "iter_editics_sse_events",
 ]
