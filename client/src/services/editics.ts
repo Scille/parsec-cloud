@@ -59,16 +59,145 @@ export interface ConnectState {
 }
 
 export interface AuthChanges {
-  // OnlyOffice `authChanges`. Name kept. Defined for completeness; NOT sent
-  // in step 0 (fresh session -> empty backlog).
+  // OnlyOffice `authChanges`. Name kept. Delivered to a joining client as
+  // the backlog of changes since the session was created (RFC §1.2 step 3.4).
   type: 'authChanges';
   // Each entry: (change index, base64 change blob). JSON cannot carry raw
-  // bytes, so the server serializes `bytes` as base64 when it eventually sends
-  // `authChanges`. Placeholder to be revisited when the backlog is implemented.
+  // bytes, so the server serializes `bytes` as base64.
   changes: Array<[number, string /* base64 bytes */]>;
 }
 
-export type ServerEvent = AuthServer | ConnectState | AuthChanges;
+// OnlyOffice `waitAuth` (s->c). Name kept. Per RFC §2.2 editics changes,
+// `lockDocument` is replaced by `authLockedBy`. Sent to a joining non-view
+// participant when the auth lock is held (todo step_1 §6.2), as the RPC reply.
+export interface WaitAuth {
+  type: 'waitAuth';
+  authLockedBy: IndexUser;
+}
+
+// --- Server -> client events: chat / cursor / locks / save ----------------
+
+// One record in a `message` event's `messages` array.
+export interface MessageRecord {
+  time: number; // server timestamp (ms)
+  authorIndexUser: IndexUser;
+  encryptedMessage: string; // base64 (§2.4); opaque to the server.
+}
+
+// OnlyOffice `message` (s->c). Name kept. Broadcast to all participants
+// (including the sender, §6.4).
+export interface MessageServer {
+  type: 'message';
+  // OnlyOffice wraps the payload in `messages: [...]`; we keep the array shape
+  // (bad name documented) for translation-layer symmetry.
+  messages: MessageRecord[];
+}
+
+// One record in a `cursor` event's `messages` array.
+export interface CursorRecord {
+  time: number;
+  authorIndexUser: IndexUser;
+  encryptedCursor: string; // base64 (§2.4); opaque to the server.
+}
+
+// OnlyOffice `cursor` (s->c). Name kept. Broadcast to other participants.
+export interface CursorServer {
+  type: 'cursor';
+  messages: CursorRecord[];
+}
+
+// OnlyOffice `getLock` (s->c). Name kept. Broadcast to all participants.
+// `locks` is keyed by the block key; each record is { time, user, block }.
+export interface GetLockServer {
+  type: 'getLock';
+  locks: Record<string, { time: number; user: IndexUser; block: unknown }>;
+}
+
+// One record in a `releaseLock` event / a `saveChanges` `locks` field.
+export interface ReleaseLockRecord {
+  block: unknown; // opaque block descriptor (re-broadcast as-is)
+  user: IndexUser; // holder who released (OnlyOffice bad name kept)
+  time: number;
+  changes: null; // always null here (OnlyOffice shape)
+}
+
+// OnlyOffice `releaseLock` (s->c). Name kept. Broadcast to others.
+export interface ReleaseLockServer {
+  type: 'releaseLock';
+  locks: ReleaseLockRecord[];
+}
+
+// OnlyOffice `saveLock` (s->c). Name kept. Reply to `isSaveLock` (c->s).
+export interface SaveLockServer {
+  type: 'saveLock';
+  saveLock: boolean; // true = denied, false = granted
+}
+
+// One record in a `saveChanges` broadcast's `changes` array.
+export interface SaveChangeRecord {
+  time: number;
+  authorIndexUser: IndexUser;
+  change: string; // base64 (§2.4); opaque to the server.
+}
+
+// OnlyOffice `saveChanges` (s->c, broadcast to *other* participants). Name kept.
+export interface SaveChangesServer {
+  type: 'saveChanges';
+  changes: SaveChangeRecord[];
+  changesIndex: number; // new save point after this save (§2.2)
+  syncChangesIndex: number; // always-advancing total (§2.2)
+  endSaveChanges: boolean; // mirrors the originator's flag
+  locks: ReleaseLockRecord[]; // locks released by the originator
+  excel_info: Record<string, unknown> | null;
+  encryptedCursor: string | null; // base64 (§2.4)
+}
+
+// OnlyOffice `savePartChanges` (s->c, reply to the saver for intermediate
+// chunks). Name kept.
+export interface SavePartChangesServer {
+  type: 'savePartChanges';
+  changesIndex: number; // -1 except first non-truncating chunk
+  syncChangesIndex: number; // always-advancing total
+}
+
+// OnlyOffice `unSaveLock` (s->c). Name kept. Reply to `unSaveLock` (c->s,
+// cancellation) or a final `saveChanges` chunk (success).
+export interface UnSaveLockServer {
+  type: 'unSaveLock';
+  index: number; // save point, or -1 on cancel
+  time: number; // last change time, or -1 on cancel
+  syncChangesIndex: number; // new total, or -1 on cancel
+}
+
+// OnlyOffice `drop` (s->c). Name kept. Force-remove a participant.
+export interface DropServer {
+  type: 'drop';
+  code: number; // OnlyOffice DROP_CODE constant (4007)
+  description: string;
+}
+
+// OnlyOffice `warning` (s->c). Name kept. Shape only in step 1.
+export interface WarningServer {
+  type: 'warning';
+  code: number;
+  message: string;
+}
+
+export type ServerEvent =
+  | AuthServer
+  | ConnectState
+  | AuthChanges
+  | WaitAuth
+  | MessageServer
+  | CursorServer
+  | GetLockServer
+  | ReleaseLockServer
+  | SaveLockServer
+  | SaveChangesServer
+  | SavePartChangesServer
+  | UnSaveLockServer
+  | DropServer
+  | WarningServer;
 
 // --- Client -> server events ------------------------------------------------
 
@@ -80,7 +209,86 @@ export interface AuthClient {
   vlobVersion: number; // the vlob version the client has loaded locally
 }
 
-export type ClientEvent = AuthClient;
+// OnlyOffice `authChangesAck` (c->s). Name kept.
+export interface AuthChangesAckClient {
+  type: 'authChangesAck';
+}
+
+// OnlyOffice `message` (c->s). Name kept. `encryptedMessage` is base64.
+export interface MessageClient {
+  type: 'message';
+  encryptedMessage: string; // base64 (§2.4)
+}
+
+// OnlyOffice `cursor` (c->s). Name kept. `encryptedCursor` is base64.
+export interface CursorClient {
+  type: 'cursor';
+  encryptedCursor: string; // base64 (§2.4)
+}
+
+// OnlyOffice `getLock` (c->s). Name kept.
+export interface GetLockClient {
+  type: 'getLock';
+  block: unknown[]; // opaque block descriptors
+}
+
+// OnlyOffice `isSaveLock` (c->s). Name kept.
+export interface IsSaveLockClient {
+  type: 'isSaveLock';
+  syncChangesIndex: number;
+}
+
+// OnlyOffice `saveChanges` (c->s). Name kept. See RFC §2.2 editics changes.
+export interface SaveChangesClient {
+  type: 'saveChanges';
+  encryptedChanges: string[]; // each: base64 (§2.4); one per fragment
+  startSaveChanges: boolean;
+  endSaveChanges: boolean;
+  deleteIndex: number | null;
+  excel_info: Record<string, unknown> | null;
+  encryptedCursor: string | null; // base64 (§2.4)
+  releaseLocks: boolean;
+}
+
+// OnlyOffice `unSaveLock` (c->s). Name kept.
+export interface UnSaveLockClient {
+  type: 'unSaveLock';
+}
+
+// OnlyOffice `unLockDocument` (c->s). Name kept.
+export interface UnLockDocumentClient {
+  type: 'unLockDocument';
+  isSave: boolean;
+  unlock: boolean;
+  deleteIndex: number | null;
+  releaseLocks: boolean;
+}
+
+// OnlyOffice `close` (c->s). Name kept.
+export interface CloseClient {
+  type: 'close';
+}
+
+// Editics addition (no OnlyOffice equivalent). Bumps the session's
+// `latest_allowed_version` after a vlob upload (RFC §1.2 step 4.3).
+export interface SaveDoneClient {
+  type: 'saveDone';
+  savedUpToIndex: number;
+  newVersion: number;
+}
+
+export type ClientEvent =
+  | AuthClient
+  | AuthChangesAckClient
+  | MessageClient
+  | CursorClient
+  | GetLockClient
+  | IsSaveLockClient
+  | SaveChangesClient
+  | UnSaveLockClient
+  | UnLockDocumentClient
+  | CloseClient
+  | SaveDoneClient;
 
 // --- Rejection response (RPC reply) -----------------------------------------
 

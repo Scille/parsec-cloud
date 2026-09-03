@@ -39,12 +39,11 @@ from starlette.types import Receive
 
 from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.backend import Backend
+from parsec.components.editics import ClientEvent as EditicsClientEvent
 from parsec.components.editics import (
-    ClientEventAuth,
     EditicsClientContext,
     EditicsSseChannel,
-    ServerEventAuth,
-    ServerEventAuthRejected,
+    _SaveChangesRejected,
 )
 
 editics_router = APIRouter(include_in_schema=False)
@@ -52,6 +51,13 @@ editics_router = APIRouter(include_in_schema=False)
 # Max size for the RPC body. The only client event in step 0 is `auth`, which is
 # tiny, but keep a reasonable ceiling consistent with the rest of the API.
 MAX_CONTENT_LENGTH = 1 * 1024 * 1024
+
+# `ClientEvent` is a Pydantic discriminated union (Annotated[..., Field(discriminator)]),
+# which has no `model_validate_json` on the union itself. A `TypeAdapter` is the
+# supported way to validate/serialize a discriminated union (todo step_1 §3).
+from pydantic import TypeAdapter
+
+_CLIENT_EVENT_ADAPTER = TypeAdapter(EditicsClientEvent)
 
 ACCEPT_TYPE_SSE = "text/event-stream"
 
@@ -295,18 +301,19 @@ async def editics_send(
     # Strict server-side validation of the client event (Pydantic). The server
     # IS strictly validated on what it accepts from clients (todo step_0 §2).
     try:
-        event = ClientEventAuth.model_validate_json(body)
+        event = _CLIENT_EVENT_ADAPTER.validate_json(body)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid client event")
 
-    reply = await backend.editics.handle_client_event(
-        org_id, realm_id, document_id, client_ctx, event
-    )
+    try:
+        reply = await backend.editics.handle_client_event(
+            org_id, realm_id, document_id, client_ctx, event
+        )
+    except _SaveChangesRejected:
+        # `saveChanges` without the save lock held: protocol violation (todo
+        # step_1 §6.5.2). The client must re-take the lock.
+        raise HTTPException(status_code=400, detail="saveChanges without save lock")
 
-    match reply:
-        case ServerEventAuth() | ServerEventAuthRejected():
-            return Response(content=reply.model_dump_json(), media_type="application/json")
-        case None:
-            return Response(status_code=204)
-        case _:  # pragma: no cover
-            raise HTTPException(status_code=500, detail="Unexpected editics reply")
+    if reply is None:
+        return Response(status_code=204)
+    return Response(content=reply.model_dump_json(), media_type="application/json")
