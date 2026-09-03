@@ -88,6 +88,13 @@ class ParticipantEntry(BaseModel):
     # Editics addition (replaces OnlyOffice's idOriginal/username/etc.).
     # Serialized as its hex form; parsed from a `DeviceID` or a hex string.
     deviceId: DeviceIDField
+    # OnlyOffice name `view` kept. Step 1 addition (forward-compat, todo
+    # step_1 §4.1 / §2.5): whether the participant is a viewer (read-only).
+    # Always False in step 1 (all participants are treated as editors; real
+    # realm-role-based access control is deferred). The field is present in
+    # the schema so the client translation layer can be written against the
+    # final shape.
+    view: bool = False
 
 
 # --- Client -> server events -------------------------------------------------
@@ -293,6 +300,12 @@ class EditicsSession:
     initial_version: int
     latest_allowed_version: int
     next_index: int = 1  # monotonic, starts at 1
+    # Monotonic non-decreasing timestamp (ms) of the last `connectState`
+    # broadcast (todo step_1 §6.1 V-A3). Bumped on every participant-set change
+    # so clients can ignore outdated messages. Stored on the session (rather
+    # than read from the wall clock per broadcast) so it is strictly
+    # non-decreasing even across rapid back-to-back broadcasts.
+    participants_timestamp: int = 0
     # indexUser -> deviceId
     participants: dict[IndexUser, DeviceID] = field(default_factory=dict)
     # participant_uuid (client-generated) -> SSE channel
@@ -385,6 +398,20 @@ class BaseEditicsComponent:
             # here and recreated on the `auth` RPC. This is fine for step 0.
             del self._sessions[key]
 
+    def _drop_session(self, workspace_id: VlobID, vlob_id: VlobID) -> None:
+        # Unconditionally remove the session (and close any live participant
+        # channels). Used to self-heal malformed sessions (e.g. an
+        # `initial_version < 1` session left by a buggy client) so the next
+        # valid join recreates a proper session.
+        key = (workspace_id, vlob_id)
+        session = self._sessions.pop(key, None)
+        if session is None:
+            return
+        for channel in session.connections.values():
+            channel.close()
+        session.connections.clear()
+        session.participants.clear()
+
     @staticmethod
     def _participants_list(session: EditicsSession) -> list[ParticipantEntry]:
         return [
@@ -438,7 +465,27 @@ class BaseEditicsComponent:
         """
         session = self._get_session(workspace_id, vlob_id)
 
-        # --- Vlob-version validation (RFC §1.2) -----------------------------
+        # --- Vlob-version validation (RFC §1.2, §1.3) --------------------------
+        # A Parsec vlob version is always >= 1; `base_version: 0` is a purely
+        # local-manifest concept (placeholder for a not-yet-synced file) and is
+        # *never* a valid server vlob version. RFC §1.3 requires a document to
+        # exist as a vlob before it can be edited in a session, so reject
+        # `vlobVersion < 1` outright: the client must wait for the file to be
+        # synced (its `needSync` flag to flip false) before joining.
+        if event.vlobVersion < 1:
+            return ServerEventAuthRejected(latestAllowedVersion=0)
+
+        # A session whose `initial_version` is < 1 is malformed (it could only
+        # have been created by a buggy client that joined a not-yet-synced file).
+        # Such a session cannot be a valid collaboration target (no vlob ever
+        # exists at version 0), so drop it and let the current join recreate a
+        # proper session at the joiner's valid version. This self-heals stale
+        # in-memory sessions left over from before this guard existed, without
+        # requiring a server restart.
+        if session is not None and session.initial_version < 1:
+            self._drop_session(workspace_id, vlob_id)
+            session = None
+
         if session is None:
             # Session absent -> create it.
             session = self._get_or_create_session(
@@ -488,9 +535,15 @@ class BaseEditicsComponent:
         return auth_reply
 
     def _broadcast_connect_state(self, session: EditicsSession) -> None:
+        # Bump the session's monotonic participant-set timestamp. Use the wall
+        # clock but never let it go backwards (todo step_1 §6.1 V-A3).
+        now_ms = int(time.time() * 1000)
+        if now_ms <= session.participants_timestamp:
+            now_ms = session.participants_timestamp + 1
+        session.participants_timestamp = now_ms
         participants = self._participants_list(session)
         event = ServerEventConnectState(
-            participantsTimestamp=int(time.time() * 1000),
+            participantsTimestamp=session.participants_timestamp,
             participants=participants,
             waitAuth=False,
         )
