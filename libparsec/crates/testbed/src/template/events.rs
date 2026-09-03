@@ -2168,11 +2168,23 @@ impl TestbedEventNewShamirRecovery {
             NonZeroU8::try_from(total_share_count).expect("Share must be > 0")
         };
 
+        // The shares must be generated deterministically: the testbed materializes
+        // this shamir recovery setup independently on the client and on the server,
+        // and recovering the secret only works if every party's share belongs to
+        // the same secret sharing polynomial. Seeding the RNG from `data_key` (which
+        // is itself deterministically derived from the template builder counters)
+        // guarantees byte-identical share certificates across processes.
+        let mut rng = {
+            let mut seed = <rand::rngs::StdRng as rand::SeedableRng>::Seed::default();
+            seed.copy_from_slice(self.data_key.as_ref());
+            <rand::rngs::StdRng as rand::SeedableRng>::from_seed(seed)
+        };
+
         let mut shark_shares = ShamirRecoverySecret {
             data_key: self.data_key.clone(),
             reveal_token: self.reveal_token,
         }
-        .dump_and_encrypt_into_shares(self.threshold, total_share_count)
+        .dump_and_encrypt_into_shares_with_rng(self.threshold, total_share_count, &mut rng)
         .into_iter();
 
         for (recipient, shares_count) in &self.per_recipient_shares {
