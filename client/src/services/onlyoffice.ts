@@ -78,6 +78,9 @@ namespace OnlyOfficeCommAPI {
       // Resolve a DeviceID hex to a display name (libparsec lookup). The server
       // is not trusted for names; the client keeps its own table.
       resolveUserName: (deviceId: string) => Promise<string | undefined>;
+      // Resolve a DeviceID hex to the user's `userId` (person id), to build
+      // OnlyOffice's composite `<userId><indexUser>` participant id.
+      resolveUserId: (deviceId: string) => Promise<string | undefined>;
     };
   }
 }
@@ -243,6 +246,20 @@ export async function openDocument(
               }
               break;
             }
+            case 'oo-resolve-user-id': {
+              // The editics client asks for the user's `userId` (person id) given
+              // a DeviceID hex, to build OnlyOffice's composite participant id
+              // (see onlyoffice-host.html's resolveUserId).
+              const port = (event as MessageEvent).ports[0];
+              if (port && options.editics?.resolveUserId) {
+                options.editics.resolveUserId(event.data.deviceId).then((userId) => {
+                  port.postMessage({ userId });
+                });
+              } else if (port) {
+                port.postMessage({ userId: undefined });
+              }
+              break;
+            }
           }
         },
         { signal: controller.signal },
@@ -277,10 +294,12 @@ export async function openDocument(
   // `oo-resolve-user-name` message above. Strip it before posting.
   let postOptions: OpenDocumentOptions = options;
   if (options.editics) {
-    // `resolveUserName` is a function and cannot survive structured-clone
-    // across the iframe boundary; the host page bridges it back to us via the
-    // `oo-resolve-user-name` message above. Strip it before posting.
-    const { resolveUserName: _omitted, ...editicsSerializable } = options.editics;
+    // `resolveUserName` and `resolveUserId` are functions and cannot survive
+    // structured-clone across the iframe boundary; the host page bridges them
+    // back to us via the `oo-resolve-user-name` / `oo-resolve-user-id` messages
+    // above. Strip them before posting.
+    const { resolveUserName: _omitted, resolveUserId: _omitted2, ...editicsSerializable } =
+      options.editics;
     postOptions = { ...options, editics: editicsSerializable } as OpenDocumentOptions;
   }
   frame.contentWindow.postMessage(

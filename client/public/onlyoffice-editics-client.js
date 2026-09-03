@@ -284,7 +284,7 @@
       // initial `getParticipants()` call during `connectMockServer` has someone
       // to show before the server-assigned `indexUser` arrives over the auth
       // RPC. Mirrors the local mock server, which seeds presence on `onAuth`.
-      this._participants.set(0, { deviceId: config.deviceIdHex, userName: config.userName || config.userId || config.deviceIdHex });
+      this._participants.set(0, { deviceId: config.deviceIdHex, userName: config.userName || config.userId || config.deviceIdHex, userId: config.userId || config.deviceIdHex });
       this._abort = null;
       this._closed = false;
       Panel.setStatus(this._statusText('constructed (no session yet)'));
@@ -407,20 +407,35 @@
         case 'isSaveLock':
           this._post({ type: 'isSaveLock', syncChangesIndex: msg.syncChangesIndex });
           break;
-        case 'saveChanges':
+        case 'saveChanges': {
+          // OnlyOffice sends `changes` as a JSON-encoded *string* in default
+          // (JSON) mode, e.g. '["66;...","127;..."]' (an array of opaque op
+          // fragments). Parse it into an array of fragment strings, then
+          // base64-encode each fragment independently as `encryptedChanges`
+          // (one entry per fragment, §2.2). The server counts fragments by
+          // `len(encryptedChanges)` and never inspects the content.
+          let fragments = [];
+          if (msg.changes != null) {
+            try {
+              const parsed = typeof msg.changes === 'string' ? JSON.parse(msg.changes) : msg.changes;
+              if (Array.isArray(parsed)) fragments = parsed;
+            } catch (_e) {
+              // Fall back to treating the whole thing as one fragment.
+              fragments = [msg.changes];
+            }
+          }
           this._post({
             type: 'saveChanges',
-            // Binary changes mode: `changes` is a real JSON array (one entry per
-            // fragment); base64-encode each fragment independently (§2.2).
-            encryptedChanges: (msg.changes || []).map((c) => this._toB64(c)),
+            encryptedChanges: fragments.map((f) => this._toB64(String(f))),
             startSaveChanges: !!msg.startSaveChanges,
             endSaveChanges: !!msg.endSaveChanges,
             deleteIndex: msg.deleteIndex,
             excel_info: msg.excel_info,
-            encryptedCursor: msg.encryptedCursor != null ? this._toB64(msg.encryptedCursor) : null,
+            encryptedCursor: msg.excelAdditionalInfo != null ? this._toB64(msg.excelAdditionalInfo) : null,
             releaseLocks: !!msg.releaseLocks,
           });
           break;
+        }
         case 'unSaveLock':
           this._post({ type: 'unSaveLock' });
           break;
@@ -696,10 +711,24 @@
           }
           break;
         case 'authChanges':
-          // Backlog of changes since the session was created (§6.3). Forward
-          // as-is; the host layer base64-decodes each blob when applying.
+          // Backlog of changes since the session was created (§6.3). Map the
+          // editics (index, blob) tuples to OnlyOffice's
+          // { docid, change, time, user, useridoriginal } records.
           {
-            const ooMsg = { type: 'authChanges', changes: event.changes || [] };
+            const docid = this.config.workspaceId + '/' + this.config.vlobId;
+            const changes = (event.changes || []).map((entry) => {
+              const idx = entry[0];
+              const blob = entry[1];
+              const userId = this._userId(idx);
+              return {
+                docid,
+                change: JSON.stringify(this._fromB64(blob)),
+                time: 0,
+                user: userId + String(idx),
+                useridoriginal: userId,
+              };
+            });
+            const ooMsg = { type: 'authChanges', changes };
             Panel.log({
               type: 'authChanges',
               net: { dir: 'in', payload: event },
@@ -710,13 +739,16 @@
           break;
         case 'message':
           {
-            const recs = (event.messages || []).map((m) => ({
-              message: this._fromB64(m.encryptedMessage),
-              time: m.time,
-              user: String(m.authorIndexUser),
-              useridoriginal: String(m.authorIndexUser),
-              username: this._userName(m.authorIndexUser),
-            }));
+            const recs = (event.messages || []).map((m) => {
+              const userId = this._userId(m.authorIndexUser);
+              return {
+                message: this._fromB64(m.encryptedMessage),
+                time: m.time,
+                user: userId + String(m.authorIndexUser),
+                useridoriginal: userId,
+                username: this._userName(m.authorIndexUser),
+              };
+            });
             const ooMsg = { type: 'message', messages: recs };
             Panel.log({ type: 'message', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });
             this._sendToClient(ooMsg);
@@ -724,12 +756,15 @@
           break;
         case 'cursor':
           {
-            const recs = (event.messages || []).map((m) => ({
-              cursor: this._fromB64(m.encryptedCursor),
-              time: m.time,
-              user: String(m.authorIndexUser),
-              useridoriginal: String(m.authorIndexUser),
-            }));
+            const recs = (event.messages || []).map((m) => {
+              const userId = this._userId(m.authorIndexUser);
+              return {
+                cursor: this._fromB64(m.encryptedCursor),
+                time: m.time,
+                user: userId + String(m.authorIndexUser),
+                useridoriginal: userId,
+              };
+            });
             const ooMsg = { type: 'cursor', messages: recs };
             Panel.log({ type: 'cursor', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });
             this._sendToClient(ooMsg);
@@ -750,22 +785,29 @@
           {
             // Broadcast to other participants: map the editics records back to
             // OnlyOffice's { docid, change, time, user, useridoriginal } shape.
+            // `change` must be a JSON string of the opaque fragment (the editor
+            // does `JSON.parse(change["change"])`), `user` = `<deviceId><indexUser>`
+            // and `useridoriginal` = `deviceId` (matching connectState).
             const docid = this.config.workspaceId + '/' + this.config.vlobId;
-            const changes = (event.changes || []).map((c) => ({
-              docid,
-              change: this._fromB64(c.change),
-              time: c.time,
-              user: String(c.authorIndexUser),
-              useridoriginal: String(c.authorIndexUser),
-            }));
+            const changes = (event.changes || []).map((c) => {
+              const userId = this._userId(c.authorIndexUser);
+              return {
+                docid,
+                change: JSON.stringify(this._fromB64(c.change)),
+                time: c.time,
+                user: userId + String(c.authorIndexUser),
+                useridoriginal: userId,
+              };
+            });
             const ooMsg = {
               type: 'saveChanges',
               changes,
               changesIndex: event.changesIndex,
               syncChangesIndex: event.syncChangesIndex,
               endSaveChanges: !!event.endSaveChanges,
+              startSaveChanges: true,
               locks: event.locks || [],
-              excelAdditionalInfo: event.encryptedCursor != null ? event.encryptedCursor : undefined,
+              excelAdditionalInfo: event.encryptedCursor != null ? this._fromB64(event.encryptedCursor) : undefined,
             };
             Panel.log({ type: 'saveChanges', net: { dir: 'in', payload: event }, oo: { dir: 'out', payload: ooMsg } });
             this._sendToClient(ooMsg);
@@ -805,6 +847,7 @@
       for (const p of participants) {
         if (!this._participants.has(p.indexUser)) {
           let userName = p.deviceId;
+          let userId = p.deviceId;
           try {
             if (this.config.resolveUserName) {
               const resolved = await this.config.resolveUserName(p.deviceId);
@@ -813,7 +856,25 @@
           } catch (_e) {
             // Fall back to the device id (the server is not trusted for names).
           }
-          this._participants.set(p.indexUser, { deviceId: p.deviceId, userName });
+          try {
+            if (this.config.resolveUserId) {
+              const resolved = await this.config.resolveUserId(p.deviceId);
+              if (resolved) userId = resolved;
+            }
+          } catch (_e) {
+            // Fall back to the device id.
+          }
+          this._participants.set(p.indexUser, { deviceId: p.deviceId, userName, userId });
+        } else {
+          // Ensure the userId is backfilled if it wasn't resolved the first time
+          // (e.g. the resolver wasn't ready) but is now.
+          const existing = this._participants.get(p.indexUser);
+          if (existing && (!existing.userId || existing.userId === existing.deviceId) && this.config.resolveUserId) {
+            try {
+              const resolved = await this.config.resolveUserId(p.deviceId);
+              if (resolved) existing.userId = resolved;
+            } catch (_e) { /* ignore */ }
+          }
         }
       }
     }
@@ -821,9 +882,12 @@
     _onlyofficeParticipants() {
       const list = [];
       this._participants.forEach((p, indexUser) => {
+        // OnlyOffice's `_userId = editorConfig.user.id + indexUser`; the
+        // `id` field must match that composite so the editor recognizes self in
+        // the participant map. `idOriginal` is the per-person id (userId).
         list.push({
-          id: String(indexUser),
-          idOriginal: p.deviceId,
+          id: p.userId + String(indexUser),
+          idOriginal: p.userId,
           username: p.userName,
           indexUser: indexUser,
           view: false,
@@ -835,6 +899,18 @@
     _userName(indexUser) {
       const p = this._participants.get(indexUser);
       return p ? p.userName : String(indexUser);
+    }
+
+    _userId(indexUser) {
+      // The per-person userId for `user`/`useridoriginal` fields (matches the
+      // editor's `_userId = userId + indexUser`).
+      const p = this._participants.get(indexUser);
+      return p ? (p.userId || p.deviceId) : String(indexUser);
+    }
+
+    _deviceId(indexUser) {
+      const p = this._participants.get(indexUser);
+      return p ? p.deviceId : String(indexUser);
     }
 
     _sendToClient(msg) {
