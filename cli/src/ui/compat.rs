@@ -18,7 +18,7 @@ const USER_ID_FIELD: &str = "user_id";
 const USER_PROFILE_FIELD: &str = "user_profile";
 const USER_ROLE_FIELD: &str = "user_role";
 
-pub struct AvailableDeviceDisplay(pub libparsec::AvailableDevice);
+struct AvailableDeviceDisplay(pub libparsec::AvailableDevice);
 
 impl Deref for AvailableDeviceDisplay {
     type Target = libparsec::AvailableDevice;
@@ -44,7 +44,71 @@ impl Serialize for AvailableDeviceDisplay {
     }
 }
 
-impl CLIDisplay for AvailableDeviceDisplay {
+pub struct LongAvailableDeviceDisplay(AvailableDeviceDisplay);
+
+impl From<libparsec::AvailableDevice> for LongAvailableDeviceDisplay {
+    fn from(value: libparsec::AvailableDevice) -> Self {
+        LongAvailableDeviceDisplay(AvailableDeviceDisplay(value))
+    }
+}
+
+impl Deref for LongAvailableDeviceDisplay {
+    type Target = libparsec::AvailableDevice;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Serialize for LongAvailableDeviceDisplay {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.0.serialize(serializer)
+    }
+}
+
+impl CLIDisplay for LongAvailableDeviceDisplay {
+    fn plain_write<W: Write>(&self, fmt: &ColorFormatter, mut w: W) -> std::io::Result<()> {
+        write!(
+            w,
+            "{dev_id} - {org_id}: {handle} @ {label} ({ty})",
+            dev_id = fmt.wrap_in_color(Color::Yellow, self.device_id.hex()),
+            org_id = self.organization_id,
+            handle = self.human_handle,
+            label = self.device_label,
+            ty = self.ty,
+        )
+    }
+}
+
+pub struct ShortAvailableDeviceDisplay(AvailableDeviceDisplay);
+
+impl From<libparsec::AvailableDevice> for ShortAvailableDeviceDisplay {
+    fn from(value: libparsec::AvailableDevice) -> Self {
+        ShortAvailableDeviceDisplay(AvailableDeviceDisplay(value))
+    }
+}
+
+impl Deref for ShortAvailableDeviceDisplay {
+    type Target = libparsec::AvailableDevice;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Serialize for ShortAvailableDeviceDisplay {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.0.serialize(serializer)
+    }
+}
+
+impl CLIDisplay for ShortAvailableDeviceDisplay {
     fn plain_write<W: Write>(&self, fmt: &ColorFormatter, mut w: W) -> std::io::Result<()> {
         write!(
             w,

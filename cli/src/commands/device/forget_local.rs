@@ -6,7 +6,7 @@ use dialoguer::Confirm;
 use libparsec_client::remove_device;
 
 use crate::{
-    ui::{compat::AvailableDeviceDisplay, CLIDisplay},
+    ui::{compat::LongAvailableDeviceDisplay, CLIDisplay},
     utils::*,
 };
 
@@ -42,7 +42,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
 
     let device = load_device_file(&config.config_dir, device)
         .await
-        .map(AvailableDeviceDisplay)?;
+        .map(LongAvailableDeviceDisplay::from)?;
 
     ui.with_message(|fmt, out| {
         writeln!(out, "You are about to forget the following local device:")?;

@@ -6,7 +6,7 @@ use libparsec::{
     ParsecOrganizationBootstrapAddr, Url,
 };
 
-use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
+use crate::{ui::compat::ShortAvailableDeviceDisplay, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = password_stdin, auth]
@@ -97,7 +97,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         sequester_authority_verify_key_pem.as_deref(),
     )
     .await
-    .map(AvailableDeviceDisplay)?;
+    .map(ShortAvailableDeviceDisplay::from)?;
 
     handle.stop_with(|_, out| write!(out, "Organization bootstrapped"))?;
 
