@@ -122,6 +122,7 @@ fetchrow
 fetchval
 filechooser
 fileprovider
+fileviewer
 firacode
 fixedfooter
 fncychap
@@ -405,6 +406,7 @@ sshfs
 stripecdn
 structlogs
 styl
+subtle
 swiftclient
 syft
 SYMED

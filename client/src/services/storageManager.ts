@@ -65,8 +65,7 @@ export class StorageManager {
   static get DEFAULT_CONFIG(): Config {
     return {
       locale: I18n.getPreferredLocale(),
-      theme: Theme.Light,
-      // theme: Theme.System, Remove previous line and uncomment this when dark theme will be implemented
+      theme: Theme.System,
       enableTelemetry: true,
       minimizeToTray: true,
       confirmBeforeQuit: true,
