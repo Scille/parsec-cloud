@@ -1076,9 +1076,23 @@ class BaseEditicsComponent:
 
     @staticmethod
     def _block_key(block: Any) -> str:
-        # The server uses a stable string key derived from the JSON-serialized
-        # block descriptor (RFC §2.2). OnlyOffice guarantees the `block` shape
-        # is stable per editor type.
+        # OnlyOffice keys its internal lock table (`_locks`/`_lockCallbacks`) by:
+        #  - the plain block id string for the Document editor (Word);
+        #  - `block["guid"]` for the Spreadsheet / Presentation / PDF editors.
+        # The `getLock` reply's `locks` dict MUST use the same key, otherwise the
+        # editor's pending-lock callback (registered under that key) never fires
+        # and the lock is stuck (RFC §6.6: "keyed by their JSON key -- matching
+        # OnlyOffice's per-editor re-keying"). The `block` descriptor is opaque
+        # to the server, but its *type* is stable per editor type, so this rule
+        # is derivable without inspecting content.
+        if isinstance(block, str):
+            return block
+        if isinstance(block, dict):
+            guid = block.get("guid")
+            if isinstance(guid, str):
+                return guid
+        # Fallback: a stable JSON key (should not happen for the supported
+        # editor types, but keeps the table consistent).
         return __import__("json").dumps(block, sort_keys=True, separators=(",", ":"))
 
     def _handle_get_lock(

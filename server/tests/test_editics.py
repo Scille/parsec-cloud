@@ -9,6 +9,7 @@ exercised too.
 
 from __future__ import annotations
 
+import base64
 import json
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -698,15 +699,11 @@ async def test_self_heal_stale_version_zero_session(
 # Helpers for the step-1 substep tests (B..I).
 # ---------------------------------------------------------------------------
 
-import base64
 
-
-def _key(block) -> str:
-    """The JSON-serialized block key the server uses for the region lock table."""
-    return json.dumps(block, sort_keys=True, separators=(",", ":"))
-
-
-K = _key("K")  # the region-lock table key for block "K"
+# The region-lock table key for block "K". The server keys word (string)
+# blocks by the plain string (OnlyOffice's per-editor re-keying, §6.6), so the
+# key is "K" itself (not its JSON serialization).
+K = "K"
 
 
 def _b64(b: bytes) -> str:
@@ -2010,3 +2007,58 @@ async def test_save_done_ignored_from_non_holder(minimalorg, backend) -> None:
         )
         assert rep.status_code == 204
         assert backend.editics._sessions[(workspace_id, vlob_id)].latest_allowed_version == 10
+
+
+# ---------------------------------------------------------------------------
+# Step 1, substep F — Region lock keying (OnlyOffice per-editor re-keying).
+# The `getLock` reply's `locks` dict MUST be keyed by the plain block id for
+# the Document editor (Word) and by `block.guid` for Spreadsheet/Presentation,
+# matching the editor's internal `_locks`/`_lockCallbacks` keys; otherwise the
+# editor's pending-lock callback never fires and the lock is stuck.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.timeout(10)
+async def test_get_lock_keying_word_and_excel(minimalorg, backend) -> None:
+    """The lock-table key is the plain block string for Word and `block.guid`
+    for Spreadsheet/Presentation (OnlyOffice per-editor re-keying, §6.6)."""
+    device_id = minimalorg.alice.device_id
+    workspace_id = VlobID.new()
+    vlob_id = VlobID.new()
+    alice_auth = _auth_header(device_id, uuid4())
+    bob_auth = _auth_header(device_id, uuid4())
+    join_url = _join_url(minimalorg.organization_id, workspace_id, vlob_id)
+    send_url = _send_url(minimalorg.organization_id, workspace_id, vlob_id)
+
+    async with (
+        open_editics_sse(minimalorg.raw_client, join_url, alice_auth) as alice_sse,
+        open_editics_sse(minimalorg.raw_client, join_url, bob_auth) as bob_sse,
+    ):
+        await _send_event(minimalorg.raw_client, send_url, alice_auth, {"type": "auth", "indexUser": -1, "editorType": 0, "vlobVersion": 10})
+        await _next_data_event(alice_sse)
+        await _send_event(minimalorg.raw_client, send_url, bob_auth, {"type": "auth", "indexUser": -1, "editorType": 0, "vlobVersion": 10})
+        await _next_data_event(alice_sse)
+        await _next_data_event(bob_sse)
+        await _send_event(minimalorg.raw_client, send_url, alice_auth, _unlock_document_body(unlock=True))
+        await _next_data_event(alice_sse)
+        await _next_data_event(bob_sse)
+        await _next_data_event(bob_sse)
+
+        # Word-style: plain string block "K" -> key "K" (not '"K"').
+        rep = await _send_event(minimalorg.raw_client, send_url, alice_auth, _get_lock_body(["K"]))
+        gl = rep.json()
+        assert "K" in gl["locks"]
+        assert '"K"' not in gl["locks"]
+        assert gl["locks"]["K"]["user"] == 1
+        await _next_data_event(bob_sse)
+        # The internal table is keyed by "K".
+        assert "K" in backend.editics._sessions[(workspace_id, vlob_id)].region_locks
+
+        # Excel/Presentation-style: object block with a `guid` -> key = guid.
+        guid = "abc-123"
+        rep = await _send_event(minimalorg.raw_client, send_url, alice_auth, _get_lock_body([{"guid": guid, "range": "A1:B2"}]))
+        gl2 = rep.json()
+        assert guid in gl2["locks"]
+        assert gl2["locks"][guid]["block"] == {"guid": guid, "range": "A1:B2"}
+        await _next_data_event(bob_sse)
+        assert guid in backend.editics._sessions[(workspace_id, vlob_id)].region_locks
