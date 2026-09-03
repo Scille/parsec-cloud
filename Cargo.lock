@@ -2793,6 +2793,7 @@ dependencies = [
  "libparsec_types",
  "log",
  "paste",
+ "rand 0.8.7",
  "regex",
  "reqwest",
  "rmp-serde",

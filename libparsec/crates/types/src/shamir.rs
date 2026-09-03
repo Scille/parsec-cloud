@@ -46,11 +46,29 @@ impl ShamirRecoverySecret {
         threshold: NonZeroU8,
         shares: NonZeroU8,
     ) -> Vec<ShamirShare> {
+        self.dump_and_encrypt_into_shares_with_rng(threshold, shares, &mut rand::thread_rng())
+    }
+
+    /// Same as [`Self::dump_and_encrypt_into_shares`], but the share generation is
+    /// driven by the provided RNG.
+    ///
+    /// This is only useful for testing purpose: passing a seeded RNG makes the
+    /// output deterministic, so that a given shamir recovery setup yields
+    /// byte-identical share certificates across processes (e.g. the testbed
+    /// generates the certificates independently on the client and on the server,
+    /// and combining shares obtained from different parties only works if both
+    /// sides used the same secret sharing polynomial).
+    pub fn dump_and_encrypt_into_shares_with_rng(
+        &self,
+        threshold: NonZeroU8,
+        shares: NonZeroU8,
+        rng: &mut impl rand::Rng,
+    ) -> Vec<ShamirShare> {
         let secret = self.dump();
 
         let blahaj = blahaj::Sharks(threshold.get());
         blahaj
-            .dealer(&secret)
+            .dealer_rng(&secret, rng)
             .map(ShamirShare)
             // Note, unlike what Sharks's documentation claims, at most
             // 255 shares can be generated !

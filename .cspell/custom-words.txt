@@ -367,6 +367,7 @@ secretkeybytes
 secretservice
 sectionauthor
 seealso
+seedable
 seedbytes
 Sellsy
 SEPA
