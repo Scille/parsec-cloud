@@ -9,14 +9,15 @@ from uuid import UUID, uuid4
 
 from parsec._parsec import OrganizationID, VlobID
 from parsec.components.editics.base import (
-    AuthClient,
-    AuthRejected,
-    AuthServer,
     BaseEditicsComponent,
-    ConnectState,
+    ClientEventAuth,
     EditicsClientContext,
     EditicsSession,
     ParticipantEntry,
+    ServerEvent,
+    ServerEventAuth,
+    ServerEventAuthRejected,
+    ServerEventConnectState,
 )
 from parsec.config import BackendConfig
 from parsec.logging import get_logger
@@ -119,8 +120,8 @@ class MemoryEditicsComponent(BaseEditicsComponent):
         workspace_id: VlobID,
         vlob_id: VlobID,
         client_ctx: EditicsClientContext,
-        event: AuthClient,
-    ) -> AuthServer | AuthRejected:
+        event: ClientEventAuth,
+    ) -> ServerEvent:
         """Handle a client→server event.
 
         Step 0 only implements `auth` (the sole `ClientEvent`). The flow is
@@ -131,7 +132,7 @@ class MemoryEditicsComponent(BaseEditicsComponent):
           or validate `auth.vlobVersion` against the existing session's
           `[initial_version, latest_allowed_version]` range (RFC §1.2).
         - Assign the participant a fresh `indexUser`, promote the pending SSE
-          channel, build the `AuthServer` reply and enqueue a `connectState`
+          channel, build the `ServerEventAuth` reply and enqueue a `connectState`
           broadcast to all participants (the newcomer included).
         """
         session = self._get_session(workspace_id, vlob_id)
@@ -145,9 +146,9 @@ class MemoryEditicsComponent(BaseEditicsComponent):
             session.latest_allowed_version = session.initial_version
         else:
             if event.vlobVersion < session.initial_version:
-                return AuthRejected(latestAllowedVersion=session.initial_version)
+                return ServerEventAuthRejected(latestAllowedVersion=session.initial_version)
             if event.vlobVersion > session.latest_allowed_version:
-                return AuthRejected(latestAllowedVersion=session.latest_allowed_version)
+                return ServerEventAuthRejected(latestAllowedVersion=session.latest_allowed_version)
             # else: accepted (in range)
 
         # --- Promote the pending SSE connection -----------------------------
@@ -156,7 +157,7 @@ class MemoryEditicsComponent(BaseEditicsComponent):
         if channel is None:
             # The `auth` RPC arrived without a matching pending SSE connection.
             # In step 0 this is a protocol violation; reject as a failed auth.
-            return AuthRejected(latestAllowedVersion=session.latest_allowed_version)
+            return ServerEventAuthRejected(latestAllowedVersion=session.latest_allowed_version)
         channel.pending = False
         channel.connect_time_ms = int(time.time() * 1000)
         session.connections[client_ctx.participant_uuid] = channel
@@ -170,9 +171,9 @@ class MemoryEditicsComponent(BaseEditicsComponent):
         # leave (the SSE disconnect only knows `participant_uuid`).
         channel.index_user = index_user
 
-        # --- Build the AuthServer reply (returned as the RPC reply) ---------
+        # --- Build the ServerEventAuth reply (returned as the RPC reply) ------
         participants = self._participants_list(session)
-        auth_reply = AuthServer(
+        auth_reply = ServerEventAuth(
             result=1,
             participants=participants,
             indexUser=index_user,
@@ -187,7 +188,7 @@ class MemoryEditicsComponent(BaseEditicsComponent):
 
     def _broadcast_connect_state(self, session: EditicsSession) -> None:
         participants = self._participants_list(session)
-        event = ConnectState(
+        event = ServerEventConnectState(
             participantsTimestamp=int(time.time() * 1000),
             participants=participants,
             waitAuth=False,

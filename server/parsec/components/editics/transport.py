@@ -60,7 +60,7 @@ class EditicsSseChannel:
         self.pending: bool = True
         self.closed: bool = False
         # Filled in when the channel is promoted to a full participant by the
-        # `auth` RPC (used to build the `AuthServer.sessionTimeConnect` field and
+        # `auth` RPC (used to build the `ServerEventAuth.sessionTimeConnect` field and
         # to find the participant on leave). They are not part of the SSE
         # protocol itself.
         self.index_user: int | None = None

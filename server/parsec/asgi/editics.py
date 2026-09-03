@@ -27,11 +27,11 @@ from starlette.requests import ClientDisconnect
 from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.backend import Backend
 from parsec.components.editics import (
-    AuthClient,
-    AuthRejected,
-    AuthServer,
+    ClientEventAuth,
     EditicsClientContext,
     EditicsSseChannel,
+    ServerEventAuth,
+    ServerEventAuthRejected,
     iter_editics_sse_events,
 )
 from parsec.components.editics.transport import EditicsStreamingResponse
@@ -184,7 +184,7 @@ async def editics_send(
     # Strict server-side validation of the client event (Pydantic). The server
     # IS strictly validated on what it accepts from clients (todo step_0 §2).
     try:
-        event = AuthClient.model_validate_json(body)
+        event = ClientEventAuth.model_validate_json(body)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid client event")
 
@@ -193,7 +193,7 @@ async def editics_send(
     )
 
     match reply:
-        case AuthServer() | AuthRejected():
+        case ServerEventAuth() | ServerEventAuthRejected():
             return Response(content=reply.model_dump_json(), media_type="application/json")
         case None:
             return Response(status_code=204)

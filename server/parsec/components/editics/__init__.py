@@ -4,18 +4,18 @@
 from __future__ import annotations
 
 from parsec.components.editics.base import (
-    AuthChanges,
-    AuthClient,
-    AuthRejected,
-    AuthServer,
     BaseEditicsComponent,
     ClientEvent,
-    ConnectState,
+    ClientEventAuth,
     EditicsClientContext,
     EditicsSession,
     IndexUser,
     ParticipantEntry,
     ServerEvent,
+    ServerEventAuth,
+    ServerEventAuthChanges,
+    ServerEventAuthRejected,
+    ServerEventConnectState,
 )
 from parsec.components.editics.memory import MemoryEditicsComponent
 from parsec.components.editics.transport import (
@@ -24,13 +24,9 @@ from parsec.components.editics.transport import (
 )
 
 __all__ = [
-    "AuthChanges",
-    "AuthClient",
-    "AuthRejected",
-    "AuthServer",
     "BaseEditicsComponent",
     "ClientEvent",
-    "ConnectState",
+    "ClientEventAuth",
     "EditicsClientContext",
     "EditicsSession",
     "EditicsSseChannel",
@@ -38,5 +34,9 @@ __all__ = [
     "MemoryEditicsComponent",
     "ParticipantEntry",
     "ServerEvent",
+    "ServerEventAuth",
+    "ServerEventAuthChanges",
+    "ServerEventAuthRejected",
+    "ServerEventConnectState",
     "iter_editics_sse_events",
 ]
