@@ -20,7 +20,7 @@ subclass and the `iter_editics_sse_events` framing generator), mirroring the
 existing `StreamingResponseMiddleware` in `parsec/asgi/rpc.py`: the ASGI route
 is the only consumer of the SSE framing, so it is defined next to it. The
 component-layer channel handle (`EditicsSseChannel`) stays in
-`parsec/components/editics/base.py` (it is passed between the component and
+`parsec/components/editics.py` (it is passed between the component and
 this route, like `ClientBroadcastableEventStream` for the events SSE route).
 """
 
