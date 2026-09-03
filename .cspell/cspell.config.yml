@@ -18,6 +18,7 @@ dictionaryDefinitions:
 # Dictionaries to always be used
 dictionaries:
   # custom dictionaries
+  - subtle
   - custom-words
   - custom-ext
   - names
