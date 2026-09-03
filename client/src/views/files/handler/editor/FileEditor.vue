@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo } from '@/parsec';
+import { ClientInfo, getWorkspaceInfo, getCurrentServerAddr, getUserInfoFromDeviceID, entryStat, WorkspaceHandle, EntryStatTag, parseParsecAddr } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   getOnlyOfficeDocumentType,
@@ -76,6 +76,7 @@ import {
   OnlyOfficeOpenModes,
   OnlyOfficeSession,
   openDocument,
+  OpenDocumentOptions,
 } from '@/services/onlyoffice';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
@@ -139,6 +140,78 @@ onUnmounted(() => {
   }
 });
 
+async function buildEditicsConfig(workspaceHandle: WorkspaceHandle): Promise<OpenDocumentOptions['editics'] | undefined> {
+  // Build the editics collaborative session config (RFC 1030, step 0) so the
+  // host page connects to the Parsec server's SSE + RPC routes instead of the
+  // localStorage/BroadcastChannel-only mock server. We resolve:
+  //   - baseUrl:        the server's HTTP origin (from the device's server addr).
+  //   - organizationId: from the client info.
+  //   - workspaceId:    the workspace (realm) VlobID.
+  //   - vlobId:         the document's VlobID (contentInfo.fileId).
+  //   - deviceId:       the client's DeviceID (hyphenated UUID string).
+  //   - vlobVersion:    the file's current vlob version (baseVersion from stat).
+  //   - editorType:     0=Word,1=Spreadsheet,2=Presentation,3=Visio.
+  // The server is not trusted for user names: `resolveUserName` resolves a
+  // DeviceID hex to a display name through libparsec (RFC §3.3 / todo §2).
+  try {
+    const info = userInfo;
+    if (!info) {
+      return undefined;
+    }
+    const serverResult = await getCurrentServerAddr();
+    if (!serverResult.ok) {
+      return undefined;
+    }
+    // The parsec server addr uses the `parsec3://` scheme (with a `no_ssl=true`
+    // query when the server runs plain HTTP); the editics HTTP routes live at
+    // the same host. Parse it properly to get the hostname/port/ssl flags
+    // instead of string-mangling the scheme (which breaks on `?no_ssl=true`).
+    const parsedAddrResult = await parseParsecAddr(serverResult.value);
+    if (!parsedAddrResult.ok) {
+      return undefined;
+    }
+    const parsed = parsedAddrResult.value;
+    const scheme = parsed.useSsl ? 'https' : 'http';
+    const baseUrl = parsed.isDefaultPort
+      ? `${scheme}://${parsed.hostname}`
+      : `${scheme}://${parsed.hostname}:${parsed.port}`;
+    const wsInfoResult = await getWorkspaceInfo(workspaceHandle);
+    if (!wsInfoResult.ok) {
+      return undefined;
+    }
+    const statResult = await entryStat(workspaceHandle, contentInfo.path);
+    const vlobVersion = statResult.ok && statResult.value.tag === EntryStatTag.File
+      ? statResult.value.baseVersion
+      : 1;
+    const editorType = documentType.value === OnlyOfficeDocumentType.Word
+      ? 0
+      : documentType.value === OnlyOfficeDocumentType.Cell
+        ? 1
+        : documentType.value === OnlyOfficeDocumentType.Slide
+          ? 2
+          : 3;
+    return {
+      baseUrl,
+      organizationId: info.organizationId,
+      workspaceId: wsInfoResult.value.id,
+      vlobId: contentInfo.fileId,
+      deviceId: info.deviceId,
+      vlobVersion,
+      editorType,
+      resolveUserName: async (deviceId: string): Promise<string | undefined> => {
+        const result = await getUserInfoFromDeviceID(deviceId);
+        if (result.ok) {
+          return result.value.humanHandle.label;
+        }
+        return undefined;
+      },
+    };
+  } catch (e) {
+    window.nativeAPI.log('warn', `Failed to build editics config: ${String(e)}`);
+    return undefined;
+  }
+}
+
 async function loadEditor(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
 
@@ -173,6 +246,7 @@ async function loadEditor(): Promise<void> {
   // silently resume a stale collaboration session (locks, accumulated changes) from a past, unrelated
   // file that happened to share the same name.
   const documentId = contentInfo.fileId;
+  const editics = await buildEditicsConfig(workspaceHandle);
   session = await openDocument(
     {
       documentContent: content,
@@ -185,6 +259,7 @@ async function loadEditor(): Promise<void> {
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
       mode: readOnly || contentInfo.timestamp ? OnlyOfficeOpenModes.View : OnlyOfficeOpenModes.Edit,
       locale: longLocaleCodeToShort(I18n.getLocale()),
+      editics,
     },
     {
       onReady: (): void => {
