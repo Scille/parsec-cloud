@@ -7,7 +7,7 @@ import { expect, importDefaultFiles, ImportDocuments, msTest } from '@tests/e2e/
 // `todo/step_0.md` §9.3). It opens a document in edit mode and asserts the
 // OnlyOffice editor host frame is mounted, which validates that the editics
 // config building (server addr, workspace id, vlob id/version, device id) and
-// the `editics` option plumbing through `onlyoffice.ts` / `onlyoffice-host.html`
+// the `editics` option plumbing through `onlyoffice.ts` / `editics/index.html`
 // do not break the open flow. The vendored OnlyOffice editor itself is not
 // required for this test; the server-side transport (SSE + RPC, `auth` and
 // `connectState`) is covered by `server/tests/test_editics.py`.

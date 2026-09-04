@@ -115,6 +115,13 @@ plugins.push(
         dest: 'onlyoffice-x2t',
         rename: { stripBase: 3 },
       },
+      // POC: editics client module (todo step_2 §3.1). Copied to `dist/editics`
+      // so the `/editics/index.html` host-page URL (served in dev by the
+      // `serve-editics` middleware above) resolves in release builds too.
+      {
+        src: 'editics/**/*',
+        dest: 'editics',
+      },
     ],
   }),
 );
@@ -247,6 +254,36 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
         serveVendorDir('/onlyoffice-x2t', 'vendors/onlyoffice/x2t');
       },
     },
+    {
+      // Serve the editics client module (todo step_2 §3.1 / §9.2) at
+      // `/editics/*` in dev mode. `client/editics/index.html` is the OnlyOffice
+      // host page loaded in an iframe by `src/services/onlyoffice.ts`; it loads
+      // `main.js` (which imports the pure `protocol.js` translator) as ESM.
+      // In release, `viteStaticCopy` (see below) copies the folder into
+      // `dist/editics` so the same `/editics/index.html` URL resolves.
+      name: 'serve-editics',
+      configureServer(server) {
+        const MIME: Record<string, string> = {
+          '.html': 'text/html',
+          '.js': 'text/javascript',
+          '.mjs': 'text/javascript',
+        };
+        server.middlewares.use('/editics', async (req, res, _next) => {
+          const filePath = path.join(import.meta.dirname, 'editics', (req.url ?? '/').split('?')[0]);
+          try {
+            const content = await fs.promises.readFile(filePath);
+            const mimeType = MIME[path.extname(filePath)];
+            if (mimeType) {
+              res.setHeader('Content-Type', mimeType);
+            }
+            res.end(content);
+          } catch {
+            res.statusCode = 404;
+            res.end();
+          }
+        });
+      },
+    },
   ],
   build: {
     sourcemap: true,
@@ -274,6 +311,15 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
   envPrefix: 'PARSEC_APP_',
+  optimizeDeps: {
+    // Only scan the app entry. By default Vite crawls every `*.html` under the
+    // project root, which includes the vendored OnlyOffice editor HTML and the
+    // editics host page (`client/editics/index.html`, loaded in an iframe at
+    // runtime, not part of the app's import graph). Those vendored HTML files
+    // pull in files the bundler can't resolve, so restrict the scan to the
+    // single root entry.
+    entries: ['index.html'],
+  },
   server: {
     port: 8080,
     hmr: true,

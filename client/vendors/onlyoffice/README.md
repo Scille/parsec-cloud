@@ -29,7 +29,7 @@ Building either repo from source requires Docker and is a pain — use a release
 - `vite.config.ts` serves `editor/*` at `/onlyoffice/*` and `x2t/*` at `/onlyoffice-x2t/*` in dev
   mode (`serve-onlyoffice-vendor` plugin), and copies both to `dist/onlyoffice/*` /
   `dist/onlyoffice-x2t/*` on build (`viteStaticCopy` targets).
-- `client/public/onlyoffice-host.html` is a plain (non-Vue) page loaded in an iframe by
+- `client/editics/index.html` is a plain (non-Vue) page loaded in an iframe by
   `src/services/onlyoffice.ts` / `FileEditor.vue`. It loads `/onlyoffice/web-apps/apps/api/documents/api.js`
   and wires it to the parent window with postMessage.
 - There's no collaborative server yet (see the root `CLAUDE.md`, steps 3 and 4): the host page uses
