@@ -200,18 +200,6 @@ impl DateTime {
 
         Ok(union_validator)
     }
-
-    #[classmethod]
-    #[pyo3(name = "__get_pydantic_json_schema__")]
-    fn get_pydantic_json_schema<'py>(
-        _cls: &Bound<'_, PyType>,
-        _schema: &Bound<'_, PyAny>,
-        _handler: &Bound<'_, PyAny>,
-        py: Python<'py>,
-    ) -> PyResult<Bound<'py, PyDict>> {
-        let dict = PyDict::new(py);
-        dict.set_item("type", "string")?;
-        dict.set_item("format", "date-time")?;
-        Ok(dict)
-    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(DateTime, type="string", format="date-time");
