@@ -7,17 +7,17 @@
 /* ------- Global list header ------- */
 
 .list-header {
-  color: var(--parsec-color-light-secondary-grey);
-  padding-inline-start: 0;
+  color: ms.color('text-base-description');
+  padding-inline-start: ms.spacing('padding-none');
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--parsec-color-light-secondary-opacity30);
+  background: ms.color('surface-base-default');
   backdrop-filter: blur(10px);
 
   &::part(inner) {
-    border: none;
-    padding: 0 1rem 0 0;
+    border: ms.border('none');
+    padding: 0 ms.spacing('padding-3xl') 0 0;
     width: 100%;
   }
 }
@@ -25,15 +25,15 @@
 .list-header-label {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: ms.spacing('gap-md');
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  padding: 0.5rem 1rem;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
   cursor: pointer;
 
   &:hover {
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-neutral-default');
 
     .sort-icon {
       display: block;
@@ -53,7 +53,7 @@
   }
 
   &--sorted {
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-neutral-default');
 
     .sort-icon {
       display: block;
@@ -64,18 +64,18 @@
 /* ------- Global list items ------- */
 
 .list-item {
-  border-radius: var(--parsec-radius-4);
+  border-radius: ms.radius('sm');
   --show-full-highlight: 0;
   --padding-start: 0px;
-  --inner-padding-end: 0px;
-  --background-hover: var(--parsec-color-light-primary-30);
+  --inner-padding-end: #{ms.spacing('padding-none')};
+  --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
   --background-hover-opacity: 1;
 
   &::part(native) {
-    border: none;
+    border: ms.border('none');
     width: 100%;
     cursor: default;
-    padding: 0 1rem 0 0;
+    padding: 0 ms.spacing('padding-3xl') 0 0;
   }
 
   // border between items
@@ -87,21 +87,21 @@
     left: 0;
     width: 100%;
     height: 1px;
-    background: var(--parsec-color-light-secondary-medium);
+    background: ms.color('border-base-default');
     z-index: 1;
     cursor: default;
   }
 
   &.selected {
-    --background: var(--parsec-color-light-primary-100);
-    --background-hover: var(--parsec-color-light-primary-100);
+    --background: #{ms.color('surface-brand-default-subtle-pressed')};
+    --background-hover: #{ms.color('surface-brand-default-subtle-pressed')};
     --border-width: 0;
 
     &:hover {
       .cell,
       .options-button__icon,
       .person-name {
-        color: var(--parsec-color-light-secondary-text) !important;
+        color: ms.color('text-base-body') !important;
       }
       &::part(native) {
         --padding-start: 0px;
@@ -110,18 +110,18 @@
   }
 
   &.item-checkbox-checked {
-    --background: var(--parsec-color-light-primary-100);
+    --background: #{ms.color('surface-brand-default-subtle-pressed')};
     --background-checked-opacity: 1;
 
     .cell,
     .options-button__icon,
     .person-name {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
     }
   }
 
   &-sorted {
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-neutral-default');
 
     .sort-icon {
       display: block;
@@ -132,7 +132,7 @@
 .list-item-container {
   display: flex;
   width: 100%;
-  padding: 0;
+  padding: ms.spacing('padding-none');
 }
 
 .list-item-label {
@@ -143,15 +143,15 @@
 }
 
 .list-item-column {
-  padding: 0.5rem 1rem;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
   display: flex;
   align-items: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('text-base-description');
   --background-hover-opacity: 1;
-  --background-hover: var(--parsec-color-light-primary-30);
+  --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
   cursor: default !important;
 
   .checkbox {
@@ -169,17 +169,17 @@
     --background-hover: none;
 
     &::part(native) {
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
 
     &__icon {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
       font-size: 1.25rem;
     }
 
     &:hover {
       .options-button__icon {
-        color: var(--parsec-color-light-primary-500);
+        color: ms.color('icon-brand-default');
       }
     }
   }
@@ -200,7 +200,7 @@
       justify-content: end;
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 0;
+        padding: ms.spacing('padding-none');
         flex-basis: 2.5rem;
         max-width: 2.5rem;
       }
@@ -224,7 +224,7 @@
 
       @include ms.responsive-breakpoint('sm') {
         flex-basis: calc(100% - 4rem);
-        padding: 0.75rem 1rem;
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       }
     }
 
@@ -233,7 +233,7 @@
       flex-basis: 40rem;
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 0.75rem 1rem;
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       }
     }
 
@@ -305,7 +305,7 @@
     .label-size:is(.cell),
     .label-creation-date:is(.cell),
     .label-last-update:is(.cell) {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
     }
 
     .header-label-space,
@@ -327,7 +327,7 @@
       justify-content: center;
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 1rem;
+        padding: ms.spacing('padding-3xl');
         position: absolute;
       }
     }
@@ -388,7 +388,7 @@
     .user-options {
       min-width: 4rem;
       flex: 1 0 4rem;
-      padding: 0.75rem;
+      padding: ms.spacing('padding-2xl');
     }
   }
 
@@ -492,7 +492,7 @@
       width: 100%;
       height: 100%;
       opacity: 0.4;
-      background: var(--parsec-color-light-secondary-disabled);
+      background: ms.color('surface-disabled-default');
       z-index: 1;
     }
   }
@@ -504,17 +504,17 @@
 
 // User items - Allow to keep hover when context menu is open
 .user-list-item--hovered {
-  --background: var(--parsec-color-light-primary-30) !important;
-  background-color: var(--parsec-color-light-primary-30) !important;
+  --background: #{ms.color('surface-neutral-default-subtle-hover')} !important;
+  background-color: ms.color('surface-neutral-default-subtle-hover') !important;
 
   .ms-checkbox {
-    outline: 1px solid var(--parsec-color-light-primary-300);
+    outline: 1px solid ms.color('border-brand-default');
     outline-offset: 2px;
   }
 }
 
 .revoked {
-  --background: var(--parsec-color-light-secondary-premiere) !important;
+  --background: #{ms.color('surface-disabled-default')} !important;
   --background-hover: none;
 
   .user-name,
@@ -523,13 +523,13 @@
 
     .person-name,
     .user-card-info__name {
-      color: var(--parsec-color-light-secondary-grey) !important;
+      color: ms.color('text-disabled-default') !important;
     }
   }
 
   .tag {
-    background: var(--parsec-color-light-secondary-disabled) !important;
-    color: var(--parsec-color-light-secondary-grey) !important;
+    background: ms.color('surface-disabled-default') !important;
+    color: ms.color('text-disabled-default') !important;
   }
 }
 
@@ -537,11 +537,11 @@
 
 // File items - Allow to keep hover when context menu is open
 .file-list-item--hovered {
-  --background: var(--parsec-color-light-primary-30) !important;
-  background-color: var(--parsec-color-light-primary-30) !important;
+  --background: #{ms.color('surface-neutral-default-subtle-hover')} !important;
+  background-color: ms.color('surface-neutral-default-subtle-hover') !important;
 
   .ms-checkbox {
-    outline: 1px solid var(--parsec-color-light-primary-300);
+    outline: 1px solid ms.color('border-brand-default');
     outline-offset: 2px;
   }
 }
@@ -549,7 +549,7 @@
 .file-name {
   position: relative;
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   .file-icon {
     width: 2rem;
@@ -558,7 +558,7 @@
   }
 
   .label-name {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
 
     &:not(.selection):hover {
       text-decoration: underline;
@@ -574,11 +574,11 @@
     right: 0;
 
     &-ok {
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('icon-brand-default');
     }
 
     &-ko {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
     }
 
     @include ms.responsive-breakpoint('sm') {
@@ -586,9 +586,9 @@
       top: 50%;
       transform: translateY(16%);
       right: auto;
-      background: var(--parsec-color-light-secondary-white);
+      background: ms.color('surface-base-default');
       border-radius: var(--parsec-radius-circle);
-      padding: 0.125rem;
+      padding: ms.spacing('padding-xs');
     }
   }
 }
@@ -598,10 +598,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   margin: 0 0.5rem;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
 
   .file-mobile-content {
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     width: 100%;
   }
 
@@ -613,14 +613,14 @@
   .file-mobile-text {
     flex-grow: 1;
     overflow: hidden;
-    color: var(--parsec-color-light-secondary-grey);
+    color: ms.color('text-base-description');
     display: flex;
-    gap: 0.125rem;
+    gap: ms.spacing('gap-xs');
     flex-direction: column;
 
     &__data {
       display: flex;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -643,7 +643,7 @@
 }
 
 .upload-progress {
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-description');
   visibility: hidden;
   flex-shrink: 0;
 
@@ -662,7 +662,7 @@
     bottom: -8px;
     width: 1.75rem;
     height: 1.75rem;
-    background: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-base-default');
     text-wrap: nowrap;
   }
 
@@ -682,13 +682,13 @@
 
 // Set special style when search results are displayed
 .main-container:has(.file-search-results) {
-  background: var(--parsec-color-light-secondary-background);
-  padding: 1.5rem;
+  background: ms.color('surface-base-default-secondary');
+  padding: ms.spacing('padding-4xl');
   margin: 1rem 0 0;
   overflow: hidden;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0;
+    padding: ms.spacing('padding-none');
   }
 }
 
@@ -697,17 +697,17 @@
 // Workspace items - Manage hover state when context menu is open
 .workspace-card-item--hovered,
 .workspace-list-item--hovered {
-  background: var(--parsec-color-light-secondary-white);
+  background: ms.color('surface-base-default');
 }
 
 /* ------- Specific Invitations ------- */
 
 // Invitation emails + PKI
 .list-container:has(.invitation-list-item, .request-list-item) {
-  padding: 0 !important;
+  padding: ms.spacing('padding-none') !important;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem !important;
+    padding: ms.spacing('padding-3xl') !important;
   }
 
   .invitation-actions,
@@ -723,27 +723,27 @@
     }
 
     .primary-button {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
-      color: var(--parsec-color-light-secondary-white);
+      --background: #{ms.color('surface-neutral-default')};
+      --background-hover: #{ms.color('surface-neutral-default-hover')};
+      color: ms.color('text-on-color-label');
 
       &::part(native) {
-        padding: 0.7rem 1rem;
+        padding: 0.7rem ms.spacing('padding-3xl');
       }
     }
 
     &-secondary {
       display: flex;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
 
       &__button {
         --background: transparent;
-        color: var(--parsec-color-light-secondary-soft-text);
+        color: ms.color('text-neutral-default');
 
         &::part(native) {
-          border: 1px solid var(--parsec-color-light-secondary-medium);
-          box-shadow: var(--parsec-shadow-input);
-          padding: 0.5rem;
+          border: ms.border('thin') solid ms.color('border-base-default');
+          box-shadow: ms.shadow('input');
+          padding: ms.spacing('padding-lg');
         }
 
         .button-icon {
@@ -752,8 +752,8 @@
         }
 
         &:hover {
-          color: var(--parsec-color-light-secondary-text);
-          --background-hover: var(--parsec-color-light-secondary-medium);
+          color: ms.color('text-neutral-default-hover');
+          --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
         }
       }
     }
@@ -761,26 +761,26 @@
 
   .invitations-list-header,
   .requests-list-header {
-    padding: 0 1rem;
+    padding: 0 ms.spacing('padding-3xl');
   }
 
   .invitation-list-item,
   .request-list-item {
     display: flex;
     width: 100%;
-    padding: 0;
-    --background-hover: var(--parsec-color-light-secondary-background);
+    padding: ms.spacing('padding-none');
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
     --background-hover-opacity: 1;
 
     &::part(native) {
-      padding: 0.625rem 1rem;
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
       cursor: default;
 
       @include ms.responsive-breakpoint('sm') {
         flex-direction: column;
-        padding: 0;
-        border-radius: var(--parsec-radius-12);
-        border: 1px solid var(--parsec-color-light-secondary-medium);
+        padding: ms.spacing('padding-none');
+        border-radius: ms.radius('2xl');
+        border: ms.border('thin') solid ms.color('border-base-default');
       }
     }
 
