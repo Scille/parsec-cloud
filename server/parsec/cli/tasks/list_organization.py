@@ -19,7 +19,11 @@ from parsec.cli.options import asyncio_run, db_server_options, logging_config_op
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.components.memory.events import event_bus_factory
 from parsec.components.memory.organization import MemoryOrganizationComponent
-from parsec.components.organization import BaseOrganizationComponent, OrganizationDump
+from parsec.components.organization import (
+    BaseOrganizationComponent,
+    OrganizationDump,
+    TermsOfService,
+)
 from parsec.components.postgresql.handler import asyncpg_pool_factory
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.config import (
@@ -44,7 +48,7 @@ class OrganizationInfo:
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
     realm_minimum_archiving_period_before_deletion: int
-    # tos: TermsOfService | None
+    tos: TermsOfService | None
 
     @classmethod
     def from_dump(cls, dump: OrganizationDump) -> OrganizationInfo:
@@ -58,7 +62,7 @@ class OrganizationInfo:
             user_profile_outsider_allowed=dump.user_profile_outsider_allowed,
             active_users_limit=dump.active_users_limit,
             realm_minimum_archiving_period_before_deletion=dump.realm_minimum_archiving_period_before_deletion,
-            # tos=dump.tos,
+            tos=dump.tos,
         )
 
 

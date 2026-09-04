@@ -45,6 +45,7 @@ async def test_list_organization(coolorg: CoolorgRpcClients, testbed: TestbedBac
         user_profile_outsider_allowed=True,
         realm_minimum_archiving_period_before_deletion=testbed.backend.config.organization_initial_realm_deletion_min_archiving_period,
         active_users_limit=coolorg_org.active_users_limit,
+        tos=None,
     )
 
 
@@ -60,6 +61,7 @@ async def test_serialization(coolorg: CoolorgRpcClients):
         user_profile_outsider_allowed=True,
         realm_minimum_archiving_period_before_deletion=5,
         active_users_limit=ActiveUsersLimit.limited_to(5),
+        tos=None,
     )
 
     adapter = TypeAdapter(list_organization.OrganizationInfo)
