@@ -1223,10 +1223,18 @@ class BaseEditicsComponent:
             SaveChangeRecord(time=f.time_ms, authorIndexUser=f.author_index_user, change=f.blob)
             for f in in_flight.fragments
         ]
+        # The broadcast's `changesIndex` is the new total (`puckerIndex`), NOT the
+        # saver's save point -- this matches OnlyOffice's `saveChanges` publish
+        # (`changesIndex: puckerIndex`, see DocsCoServer.saveChanges). The saver
+        # gets its save point (`startIndex`/`-1`) in the `unSaveLock` reply below.
+        # Other participants set their `changesIndex` to this total so the editor's
+        # `onChangesIndex` UNDO guard (`GetAllChangesCount() - changesIndex`)
+        # doesn't wrongly roll back applied changes.
+        new_total = session.sync_changes_index
         broadcast = ServerEventSaveChanges(
             changes=broadcast_changes,
-            changesIndex=save_point,
-            syncChangesIndex=session.sync_changes_index,
+            changesIndex=new_total,
+            syncChangesIndex=new_total,
             endSaveChanges=True,
             locks=released_locks,
             excel_info=in_flight.excel_info,

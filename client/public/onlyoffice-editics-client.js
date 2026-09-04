@@ -278,16 +278,39 @@
       this.joinUrl = config.baseUrl + sessionPath + '/join';
       this.sendUrl = config.baseUrl + sessionPath + '/send';
       this.indexUser = 0; // provisional, overridden by the server-assigned index on auth
-      // [indexUser, deviceId, user_name] table (todo §2). Resolved lazily.
-      this._participants = new Map(); // indexUser -> { deviceId, userName }
+      // [indexUser, deviceId, user_name, userId] table (todo §2). Resolved lazily.
+      this._participants = new Map(); // indexUser -> { deviceId, userName, userId }
       // Seed ourselves as a provisional participant (index 0) so the editor's
       // initial `getParticipants()` call during `connectMockServer` has someone
       // to show before the server-assigned `indexUser` arrives over the auth
       // RPC. Mirrors the local mock server, which seeds presence on `onAuth`.
-      this._participants.set(0, { deviceId: config.deviceIdHex, userName: config.userName || config.userId || config.deviceIdHex, userId: config.userId || config.deviceIdHex });
+      this._participants.set(0, {
+        deviceId: config.deviceIdHex,
+        userName: config.userName || config.userId || config.deviceIdHex,
+        userId: config.userId || config.deviceIdHex,
+      });
       this._abort = null;
       this._closed = false;
-      Panel.setStatus(this._statusText('constructed (no session yet)'));
+      // Start the join flow as early as possible (in the constructor, before
+      // `connectMockServer`/`handleAuth` run) so the server-assigned `indexUser`
+      // is resolved before the editor reads `getParticipants().index` during
+      // `handleAuth`. The editor sets its `_indexUser` (and `_userId =
+      // editorConfig.user.id + _indexUser`) ONCE from that first `auth` OO event;
+      // if it reads the provisional 0 while the RPC is still in flight, every
+      // `getLock`/`saveChanges` `user` field (which must match `_userId` for
+      // self-detection) would mismatch and structural edits (region locks) would
+      // get stuck. The OnlyOffice editor takes time to load sdkjs, so a local
+      // RPC resolves well before `handleAuth` runs in practice.
+      this._join().catch((err) => {
+        console.warn('[editics] join flow failed, opening editor without collaboration', err);
+        Panel.log({
+          type: 'onAuth',
+          note: 'join failed: ' + ((err && err.message) || err),
+          net: { dir: 'in', payload: { error: String(err) } },
+        });
+        Panel.setStatus(this._statusText('join failed'));
+      });
+      Panel.setStatus(this._statusText('constructed (joining...)'));
     }
 
     _statusText(state) {
@@ -346,39 +369,15 @@
     }
 
     onAuth() {
-      // Open the SSE stream and post the `auth` RPC. This is the join flow
-      // (todo step_0 §6). The `auth` server event is returned as the RPC reply;
-      // the `connectState` broadcast arrives over SSE.
-      //
-      // The collaborative transport must never break the editor open flow: if
-      // the Parsec server is unreachable or rejects the join, we log and bail
-      // out so the editor still opens (degraded, local-only). The OnlyOffice
-      // `connectMockServer` contract (CryptPad fork) does not require a server
-      // `auth` reply to finish opening (the original mock server never sent
-      // one), so missing it is not fatal.
-      //
-      // `onAuth` intentionally does NOT return a promise: the editor calls it
-      // synchronously during `connectMockServer` and the original mock server's
-      // `onAuth` returns `undefined`. Returning a thenable here could make the
-      // editor branch on a truthy value, so the async join runs in the
-      // background instead.
-      // The OnlyOffice side of the join: the editor calls `onAuth()`. The
-      // Editics/network side is the SSE `GET .../join` + the `auth` RPC, logged
-      // individually as they happen below.
+      // The join flow is started in the constructor so the server-assigned
+      // `indexUser` is resolved before `handleAuth` reads `getParticipants()`
+      // (see the constructor comment). `onAuth` is called by `handleAuth` (in
+      // the vendored api.js) after the editor sends its `auth` message; by then
+      // the RPC is typically already done. Nothing to do here except log.
       Panel.log({
         type: 'onAuth',
-        note: 'editor triggers join',
+        note: 'editor triggers join (join already started in constructor)',
         oo: { dir: 'in', payload: {} },
-        net: { dir: 'out', payload: { GET: this.joinUrl, note: 'open SSE (pending connection)' } },
-      });
-      this._join().catch((err) => {
-        console.warn('[editics] join flow failed, opening editor without collaboration', err);
-        Panel.log({
-          type: 'onAuth',
-          note: 'join failed: ' + ((err && err.message) || err),
-          net: { dir: 'in', payload: { error: String(err) } },
-        });
-        Panel.setStatus(this._statusText('join failed'));
       });
     }
 
@@ -500,6 +499,13 @@
     async _post(body) {
       // Fire-and-forget RPC: the reply (a server event to the sender, or 204)
       // is logged but most flows get their sender-visible result over SSE.
+      // Log the outgoing editics/network side so the panel shows the full
+      // `OO -> editics -> server` path (the OO side is logged in `onMessage`).
+      Panel.log({
+        type: body.type,
+        note: 'forward to server',
+        net: { dir: 'out', payload: { POST: this.sendUrl, body } },
+      });
       try {
         const rep = await fetch(this.sendUrl, {
           method: 'POST',
@@ -510,7 +516,10 @@
           Panel.log({ type: body.type, note: 'RPC ' + rep.status, net: { dir: 'in', payload: { status: rep.status } } });
           return;
         }
-        if (rep.status === 204) return;
+        if (rep.status === 204) {
+          Panel.log({ type: body.type, note: '204 no reply', net: { dir: 'in', payload: { status: 204 } } });
+          return;
+        }
         const data = await rep.json();
         Panel.log({ type: body.type + ' reply', net: { dir: 'in', payload: data } });
         this._applyReply(body.type, data);
@@ -546,14 +555,22 @@
             syncChangesIndex: data.syncChangesIndex,
           });
           break;
-        case 'getLock':
-          // `getLock` reply == the broadcast (§6.6); the SSE broadcast also
-          // delivers it to others. The sender's view is identical, so push it
-          // once here (the SSE broadcast to self is also delivered, but the
-          // server excludes the sender from broadcasts — see §6.6 — so we
-          // push the sender's view here).
-          this._sendToClient({ type: 'getLock', locks: data.locks });
+        case 'getLock': {
+          // `getLock` reply == the broadcast (§6.6); translate the `user`
+          // field (server int indexUser) to OnlyOffice's composite
+          // `<userId><indexUser>` id so the editor matches it against its
+          // `_userId` (self = acquired, other = held by other).
+          const gl = {};
+          for (const key in data.locks || {}) {
+            const lock = data.locks[key];
+            const userId = this._userId(lock.user);
+            gl[key] = { time: lock.time, user: userId + String(lock.user), block: lock.block };
+          }
+          const glMsg = { type: 'getLock', locks: gl };
+          Panel.log({ type: 'getLock', note: 'reply -> editor (translated)', oo: { dir: 'out', payload: glMsg } });
+          this._sendToClient(glMsg);
           break;
+        }
         default:
           // Other replies (e.g. `auth`, `waitAuth`) are handled in `_sendAuth`.
           break;
@@ -582,15 +599,25 @@
       // server accepts in step 0 for the SSE route (the RPC route uses the real
       // header). This keeps the browser transport simple without a polyfill.
       const url = this.joinUrl + '?authorization=' + encodeURIComponent(this.authHeader);
-      this._sse = new EventSource(url, { withCredentials: false });
+      // Wait for the EventSource to actually connect (readyState OPEN) before
+      // resolving, so the `auth` RPC (sent next in `_join`) finds the pending
+      // SSE connection the server registered on the GET. Without this, the auth
+      // RPC can race ahead of the GET and the server rejects it (no pending
+      // connection).
+      await new Promise((resolve) => {
+        this._sse = new EventSource(url, { withCredentials: false });
+        const done = () => resolve(undefined);
+        this._sse.addEventListener('open', done, { once: true });
+        this._sse.addEventListener('error', done, { once: true }); // best-effort; retry below
+        // Safety timeout in case `open` never fires.
+        setTimeout(done, 2000);
+      });
       this._sse.onmessage = (ev) => this._onSseData(ev.data);
       // Keepalive uses the `event:keepalive` line; EventSource surfaces it as a
-      // named event listener. It only proves liveness, so we ignore it and don't
-      // log it (it would spam the panel every keepalive interval).
+      // named event listener. It only proves liveness, so we ignore it.
       this._sse.addEventListener('keepalive', () => {});
       this._sse.onerror = (ev) => {
         if (this._closed) return;
-        // EventSource auto-reconnects; in step 0 a real error is unexpected.
         console.warn('[editics] SSE error', ev);
         Panel.log({ type: 'SSE error', net: { dir: 'in', payload: { readyState: this._sse && this._sse.readyState } } });
         Panel.setStatus(this._statusText('SSE error'));
@@ -777,7 +804,7 @@
           // `<userId><indexUser>` id so the editor matches it against its
           // `_userId` (self = state 2 acquired, other = state 3).
           const ooLocks = {};
-          for (const key in (event.locks || {})) {
+          for (const key in event.locks || {}) {
             const lock = event.locks[key];
             const userId = this._userId(lock.user);
             ooLocks[key] = {
@@ -908,7 +935,9 @@
             try {
               const resolved = await this.config.resolveUserId(p.deviceId);
               if (resolved) existing.userId = resolved;
-            } catch (_e) { /* ignore */ }
+            } catch (_e) {
+              /* ignore */
+            }
           }
         }
       }
@@ -940,7 +969,7 @@
       // The per-person userId for `user`/`useridoriginal` fields (matches the
       // editor's `_userId = userId + indexUser`).
       const p = this._participants.get(indexUser);
-      return p ? (p.userId || p.deviceId) : String(indexUser);
+      return p ? p.userId || p.deviceId : String(indexUser);
     }
 
     _deviceId(indexUser) {

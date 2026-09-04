@@ -1189,6 +1189,9 @@ async def test_save_multi_fragment_single_chunk(minimalorg, backend) -> None:
 
         sc = await _next_data_event(bob_sse)
         assert len(sc["changes"]) == 3
+        # The broadcast's `changesIndex` is the new total (`puckerIndex`), NOT
+        # the saver's save point (OnlyOffice DocsCoServer.saveChanges publish).
+        assert sc["changesIndex"] == 3
         assert sc["syncChangesIndex"] == 3
         assert [base64.b64decode(c["change"]) for c in sc["changes"]] == [b"1", b"2", b"3"]
 
@@ -1256,9 +1259,14 @@ async def test_save_multi_chunk(minimalorg, backend) -> None:
         )
         assert rep.json()["type"] == "unSaveLock"
         assert rep.json()["syncChangesIndex"] == 3
+        # The saver's `unSaveLock.index` is its save point (startIndex), NOT the
+        # new total (OnlyOffice `unSaveLock` reply uses the local `changesIndex`).
+        assert rep.json()["index"] == 1
 
         sc = await _next_data_event(bob_sse)
         assert len(sc["changes"]) == 3
+        # The broadcast's `changesIndex` is the new total (`puckerIndex`).
+        assert sc["changesIndex"] == 3
         assert sc["syncChangesIndex"] == 3
         assert [base64.b64decode(c["change"]) for c in sc["changes"]] == [b"1", b"2", b"3"]
 
@@ -2034,12 +2042,24 @@ async def test_get_lock_keying_word_and_excel(minimalorg, backend) -> None:
         open_editics_sse(minimalorg.raw_client, join_url, alice_auth) as alice_sse,
         open_editics_sse(minimalorg.raw_client, join_url, bob_auth) as bob_sse,
     ):
-        await _send_event(minimalorg.raw_client, send_url, alice_auth, {"type": "auth", "indexUser": -1, "editorType": 0, "vlobVersion": 10})
+        await _send_event(
+            minimalorg.raw_client,
+            send_url,
+            alice_auth,
+            {"type": "auth", "indexUser": -1, "editorType": 0, "vlobVersion": 10},
+        )
         await _next_data_event(alice_sse)
-        await _send_event(minimalorg.raw_client, send_url, bob_auth, {"type": "auth", "indexUser": -1, "editorType": 0, "vlobVersion": 10})
+        await _send_event(
+            minimalorg.raw_client,
+            send_url,
+            bob_auth,
+            {"type": "auth", "indexUser": -1, "editorType": 0, "vlobVersion": 10},
+        )
         await _next_data_event(alice_sse)
         await _next_data_event(bob_sse)
-        await _send_event(minimalorg.raw_client, send_url, alice_auth, _unlock_document_body(unlock=True))
+        await _send_event(
+            minimalorg.raw_client, send_url, alice_auth, _unlock_document_body(unlock=True)
+        )
         await _next_data_event(alice_sse)
         await _next_data_event(bob_sse)
         await _next_data_event(bob_sse)
@@ -2056,9 +2076,389 @@ async def test_get_lock_keying_word_and_excel(minimalorg, backend) -> None:
 
         # Excel/Presentation-style: object block with a `guid` -> key = guid.
         guid = "abc-123"
-        rep = await _send_event(minimalorg.raw_client, send_url, alice_auth, _get_lock_body([{"guid": guid, "range": "A1:B2"}]))
+        rep = await _send_event(
+            minimalorg.raw_client,
+            send_url,
+            alice_auth,
+            _get_lock_body([{"guid": guid, "range": "A1:B2"}]),
+        )
         gl2 = rep.json()
         assert guid in gl2["locks"]
         assert gl2["locks"][guid]["block"] == {"guid": guid, "range": "A1:B2"}
         await _next_data_event(bob_sse)
         assert guid in backend.editics._sessions[(workspace_id, vlob_id)].region_locks
+
+
+# ---------------------------------------------------------------------------
+# Step 1 — Two-tab co-editing scenarios (protocol-level).
+#
+# These tests simulate two browser tabs at the editics-protocol level (HTTP
+# SSE + RPC) and exercise the locking-sensitive scenarios: inserting a line
+# (getLock + saveChanges + releaseLock), inserting multiple lines, typing on a
+# line, removing a line, concurrent edits, close/reopen, and save. After each
+# scenario the save lock and the region locks must be released (no stuck
+# lock), and the other tab must receive the broadcast changes.
+# ---------------------------------------------------------------------------
+
+
+class _Tab:
+    """A simulated editor tab: an SSE stream + an RPC sender.
+
+    It tracks the editor-side state needed to drive the save/lock handshake:
+    `syncChangesIndex` (echoed in `isSaveLock`) and the save-lock grant. The
+    translation layer (onlyoffice-editics-client.js) is covered by the vitest
+    suite; this drives the *editics* wire directly.
+    """
+
+    def __init__(self, client, auth, join_url, send_url, participant_uuid):
+        self.client = client
+        self.auth = auth
+        self.participant_uuid = participant_uuid
+        self.join_url = join_url
+        self.send_url = send_url
+        self.sse = None
+        self.indexUser = -1
+        self.syncChangesIndex = 0
+
+    async def __aenter__(self):
+        self.sse_ctx = open_editics_sse(self.client, self.join_url, self.auth)
+        self.sse = await self.sse_ctx.__aenter__()
+        return self
+
+    async def __aexit__(self, *exc):
+        await self.sse_ctx.__aexit__(*exc)
+
+    async def join(self, vlobVersion: int = 10) -> dict:
+        rep = await _send_event(
+            self.client,
+            self.send_url,
+            self.auth,
+            {"type": "auth", "indexUser": -1, "editorType": 0, "vlobVersion": vlobVersion},
+        )
+        data = rep.json()
+        if data.get("type") == "auth" and data.get("result") == 1:
+            self.indexUser = data["indexUser"]
+            # Drain the self-connectState; syncChangesIndex starts at the
+            # backlog (delivered as authChanges for a non-first participant).
+        return data
+
+    async def drain(self):
+        """Consume one SSE data event."""
+        return await _next_data_event(self.sse)
+
+    async def drain_auth_handshake(self, other: _Tab):
+        """Complete the auth-lock handshake: `other` holds the auth lock; this
+        tab is parked; `other` unlocks; this tab gets authChanges +
+        connectState{waitAuth:false}. Assumes `other` is the first participant.
+        """
+        # this tab's auth returned waitAuth; drain the waitAuth:true broadcast
+        cs_wait = await self.drain()  # connectState{waitAuth:true}
+        # The parked tab's indexUser is the participant that isn't the auth-lock
+        # holder (the `waitAuth` reply only carries `authLockedBy`, not the
+        # newcomer's index, so recover it from the participant map).
+        holder = other.indexUser
+        for p in cs_wait.get("participants", []):
+            if p["indexUser"] != holder:
+                self.indexUser = p["indexUser"]
+                break
+        # other releases the lock
+        await other.send(_unlock_document_body(unlock=True))
+        await other.drain()  # other: connectState{waitAuth:false}
+        ac = await self.drain()  # authChanges
+        assert ac["type"] == "authChanges"
+        self.syncChangesIndex = len(ac.get("changes", []))
+        cs = await self.drain()  # connectState{waitAuth:false}
+        assert cs["waitAuth"] is False
+
+    async def send(self, body: dict) -> httpx.Response:
+        return await _send_event(self.client, self.send_url, self.auth, body)
+
+    async def save(
+        self, fragments: list[bytes], *, releaseLocks: bool = False, deleteIndex=None
+    ) -> dict:
+        """Drive a full save cycle: isSaveLock -> saveChanges (single chunk) -> unSaveLock reply."""
+        rep = await self.send(_is_save_lock_body(self.syncChangesIndex))
+        assert rep.json()["saveLock"] is False, "save lock denied (desync or held)"
+        return await self.save_locked(fragments, releaseLocks=releaseLocks, deleteIndex=deleteIndex)
+
+    async def save_locked(
+        self, fragments: list[bytes], *, releaseLocks: bool = False, deleteIndex=None
+    ) -> dict:
+        """Send saveChanges assuming the save lock is already held (skip the
+        isSaveLock handshake). Returns the unSaveLock reply."""
+        rep = await self.send(
+            _save_changes_body(
+                encryptedChanges=fragments,
+                startSaveChanges=True,
+                endSaveChanges=True,
+                releaseLocks=releaseLocks,
+                deleteIndex=deleteIndex,
+            )
+        )
+        reply = rep.json()
+        assert reply["type"] == "unSaveLock", reply
+        self.syncChangesIndex = reply["syncChangesIndex"]
+        return reply
+
+    async def cancel_save(self) -> dict:
+        rep = await self.send(_un_save_lock_body())
+        return rep.json()
+
+    async def get_lock(self, blocks: list) -> dict:
+        rep = await self.send(_get_lock_body(blocks))
+        return rep.json()
+
+    async def unlock_document(self, *, releaseLocks: bool = False, deleteIndex=None) -> int:
+        rep = await self.send(
+            _unlock_document_body(releaseLocks=releaseLocks, deleteIndex=deleteIndex)
+        )
+        return rep.status_code
+
+    async def close(self) -> int:
+        rep = await self.send({"type": "close"})
+        return rep.status_code
+
+
+def _locks_held(backend, workspace_id, vlob_id) -> dict:
+    return backend.editics._sessions[(workspace_id, vlob_id)].region_locks
+
+
+def _save_lock_held(backend, workspace_id, vlob_id):
+    return backend.editics._sessions[(workspace_id, vlob_id)].save_lock_holder
+
+
+async def _setup_two_tabs(minimalorg, backend, vlobVersion: int = 10):
+    """Two tabs (same device, distinct participant_uuid) on a fresh session.
+    Returns (alice, bob, workspace_id, vlob_id, backend)."""
+    device_id = minimalorg.alice.device_id
+    workspace_id = VlobID.new()
+    vlob_id = VlobID.new()
+    a_uuid = uuid4()
+    b_uuid = uuid4()
+    alice = _Tab(
+        minimalorg.raw_client,
+        _auth_header(device_id, a_uuid),
+        _join_url(minimalorg.organization_id, workspace_id, vlob_id),
+        _send_url(minimalorg.organization_id, workspace_id, vlob_id),
+        participant_uuid=a_uuid,
+    )
+    bob = _Tab(
+        minimalorg.raw_client,
+        _auth_header(device_id, b_uuid),
+        _join_url(minimalorg.organization_id, workspace_id, vlob_id),
+        _send_url(minimalorg.organization_id, workspace_id, vlob_id),
+        participant_uuid=b_uuid,
+    )
+    return alice, bob, workspace_id, vlob_id, backend
+
+
+async def _join_both(alice: _Tab, bob: _Tab):
+    """Alice joins (takes auth lock), Bob joins (parked), Alice unlocks, both
+    co-editing. Drains the handshake on both sides."""
+    await alice.join()
+    await alice.drain()  # alice connectState{waitAuth:false}
+    bob_auth_reply = await bob.join()
+    assert bob_auth_reply["type"] == "waitAuth"
+    await alice.drain()  # alice: connectState{waitAuth:true} (bob joined)
+    await bob.drain_auth_handshake(alice)
+
+
+@pytest.mark.timeout(20)
+async def test_scenario_insert_line_then_type(minimalorg, backend) -> None:
+    """Insert a new line (getLock + saveChanges + releaseLocks), then type on it
+    (saveChanges). The other tab receives the changes; no lock is stuck."""
+    alice, bob, workspace_id, vlob_id, _ = await _setup_two_tabs(minimalorg, backend)
+    async with alice, bob:
+        await _join_both(alice, bob)
+
+        # Alice inserts a line: acquire a region lock on block "P1".
+        gl = await alice.get_lock(["P1"])
+        assert gl["locks"]["P1"]["user"] == alice.indexUser
+        await bob.drain()  # bob: getLock broadcast
+        assert "P1" in _locks_held(backend, workspace_id, vlob_id)
+
+        # Alice saves the structural change, releasing the lock.
+        rep = await alice.save([b"ins-P1"], releaseLocks=True)
+        assert rep["index"] >= 1
+        sc = await bob.drain()
+        assert sc["type"] == "saveChanges"
+        assert len(sc["changes"]) == 1
+        # The released lock is embedded in the broadcast.
+        assert any(r["block"] == "P1" for r in sc["locks"])
+        assert "P1" not in _locks_held(backend, workspace_id, vlob_id)
+        bob.syncChangesIndex = sc["syncChangesIndex"]
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None
+
+        # Alice types text on the new line (a plain saveChanges, no region lock).
+        rep = await alice.save([b"text-a", b"text-b"])
+        sc = await bob.drain()
+        assert len(sc["changes"]) == 2
+        bob.syncChangesIndex = sc["syncChangesIndex"]
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None
+
+
+@pytest.mark.timeout(20)
+async def test_scenario_insert_multiple_lines(minimalorg, backend) -> None:
+    """Insert several lines in sequence; each acquires+releases its own region
+    lock. No lock is left held between inserts."""
+    alice, bob, workspace_id, vlob_id, _ = await _setup_two_tabs(minimalorg, backend)
+    async with alice, bob:
+        await _join_both(alice, bob)
+        for i in range(1, 5):
+            block = f"P{i}"
+            await alice.get_lock([block])
+            assert block in _locks_held(backend, workspace_id, vlob_id)
+            await bob.drain()
+            await alice.save([f"ins-{block}".encode()], releaseLocks=True)
+            sc = await bob.drain()
+            assert any(r["block"] == block for r in sc["locks"])
+            assert block not in _locks_held(backend, workspace_id, vlob_id)
+            bob.syncChangesIndex = sc["syncChangesIndex"]
+            assert _save_lock_held(backend, workspace_id, vlob_id) is None
+
+
+@pytest.mark.timeout(20)
+async def test_scenario_remove_line(minimalorg, backend) -> None:
+    """Removing a line is a saveChanges with deleteIndex (UNDO) and releaseLocks."""
+    alice, bob, workspace_id, vlob_id, _ = await _setup_two_tabs(minimalorg, backend)
+    async with alice, bob:
+        await _join_both(alice, bob)
+        # Seed one change.
+        await alice.save([b"line1"])
+        sc = await bob.drain()  # bob: saveChanges broadcast for the seed
+        bob.syncChangesIndex = sc["syncChangesIndex"]
+        # Alice acquires a lock and saves a structural removal with deleteIndex.
+        await alice.get_lock(["P1"])
+        await bob.drain()  # bob: getLock broadcast (alice holds P1)
+        # deleteIndex=1 truncates history from index 1 (UNDO the seed).
+        await alice.save([b"remove-P1"], releaseLocks=True, deleteIndex=1)
+        sc = await bob.drain()  # bob: saveChanges broadcast with P1 released
+        assert any(r["block"] == "P1" for r in sc["locks"])
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None
+        assert "P1" not in _locks_held(backend, workspace_id, vlob_id)
+        # The history was truncated.
+        assert backend.editics._sessions[(workspace_id, vlob_id)].sync_changes_index >= 1
+
+
+@pytest.mark.timeout(20)
+async def test_scenario_concurrent_edits_no_deadlock(minimalorg, backend) -> None:
+    """Both tabs save concurrently (serialized by the save lock). Neither gets
+    stuck: the second waits for the lock, then saves."""
+    alice, bob, workspace_id, vlob_id, _ = await _setup_two_tabs(minimalorg, backend)
+    async with alice, bob:
+        await _join_both(alice, bob)
+        # Alice takes the save lock first.
+        rep = await alice.send(_is_save_lock_body(alice.syncChangesIndex))
+        assert rep.json()["saveLock"] is False
+        # Bob is denied while Alice holds it.
+        rep = await bob.send(_is_save_lock_body(bob.syncChangesIndex))
+        assert rep.json()["saveLock"] is True
+        # Alice completes her save (lock already held) -> lock released.
+        await alice.save_locked([b"a-change"])
+        sc = await bob.drain()
+        bob.syncChangesIndex = sc["syncChangesIndex"]
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None
+        # Bob can now take the lock and save.
+        rep = await bob.send(_is_save_lock_body(bob.syncChangesIndex))
+        assert rep.json()["saveLock"] is False
+        await bob.save_locked([b"b-change"])
+        sc = await alice.drain()
+        alice.syncChangesIndex = sc["syncChangesIndex"]
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None
+
+
+@pytest.mark.timeout(20)
+async def test_scenario_contended_region_lock(minimalorg, backend) -> None:
+    """Both tabs request the same region lock; the second is denied (sees the
+    first as holder). The holder releases via saveChanges{releaseLocks}; the
+    other can then acquire it."""
+    alice, bob, workspace_id, vlob_id, _ = await _setup_two_tabs(minimalorg, backend)
+    async with alice, bob:
+        await _join_both(alice, bob)
+        await alice.get_lock(["K"])
+        await bob.drain()  # bob sees alice hold K
+        gl = await bob.get_lock(["K"])
+        assert gl["locks"]["K"]["user"] == alice.indexUser
+        await alice.drain()  # alice sees bob's failed attempt (K still alice)
+        # Alice releases K via a save with releaseLocks.
+        await alice.save([b"x"], releaseLocks=True)
+        await bob.drain()  # bob: saveChanges broadcast with K released
+        assert "K" not in _locks_held(backend, workspace_id, vlob_id)
+        # Bob can now acquire K.
+        gl = await bob.get_lock(["K"])
+        assert gl["locks"]["K"]["user"] == bob.indexUser
+        await alice.drain()
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None
+
+
+@pytest.mark.timeout(20)
+async def test_scenario_close_releases_locks(minimalorg, backend) -> None:
+    """Closing a tab mid-edit releases its region lock and the save lock; the
+    other tab gets a releaseLock + connectState and is not stuck."""
+    alice, bob, workspace_id, vlob_id, _ = await _setup_two_tabs(minimalorg, backend)
+    async with alice, bob:
+        await _join_both(alice, bob)
+        await alice.get_lock(["K"])
+        await bob.drain()
+        # Alice holds a region lock and (simulate) a save lock.
+        await alice.send(_is_save_lock_body(alice.syncChangesIndex))
+        # Alice closes.
+        await alice.close()
+        # Bob gets a releaseLock for K and a connectState without Alice.
+        rl = await bob.drain()
+        assert rl["type"] == "releaseLock"
+        assert any(r["block"] == "K" for r in rl["locks"])
+        cs = await bob.drain()
+        assert cs["type"] == "connectState"
+        assert all(p["indexUser"] != alice.indexUser for p in cs["participants"])
+        assert "K" not in _locks_held(backend, workspace_id, vlob_id)
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None
+        # Bob can still save.
+        rep = await bob.send(_is_save_lock_body(bob.syncChangesIndex))
+        assert rep.json()["saveLock"] is False
+
+
+@pytest.mark.timeout(20)
+async def test_scenario_close_reopen_and_save_to_vlob(minimalorg, backend) -> None:
+    """Close both tabs (session GC'd), reopen, and bump the vlob version via
+    saveDone. A new joiner with the new version is accepted."""
+    from parsec.components.editics import EditicsClientContext
+
+    alice, bob, workspace_id, vlob_id, _ = await _setup_two_tabs(minimalorg, backend)
+    async with alice, bob:
+        await _join_both(alice, bob)
+        await alice.save([b"edit"])
+        await bob.drain()
+        # Alice bumps the vlob version (saveDone).
+        rep = await alice.send(_save_done_body(savedUpToIndex=1, newVersion=11))
+        assert rep.status_code == 204
+        assert backend.editics._sessions[(workspace_id, vlob_id)].latest_allowed_version == 11
+        # Both close (the SSE-disconnect leave isn't modelled by ASGITransport, so
+        # drive the leave explicitly, as `test_leave_removes_participant...` does).
+        await alice.close()
+        await bob.close()
+        for tab in (alice, bob):
+            await backend.editics.leave(
+                workspace_id,
+                vlob_id,
+                EditicsClientContext(
+                    device_id=minimalorg.alice.device_id, participant_uuid=tab.participant_uuid
+                ),
+            )
+    # Session is GC'd once both leave.
+    assert (workspace_id, vlob_id) not in backend.editics._sessions
+
+    # Reopen as a new tab with the new vlob version.
+    carol_uuid = uuid4()
+    carol = _Tab(
+        minimalorg.raw_client,
+        _auth_header(minimalorg.alice.device_id, carol_uuid),
+        _join_url(minimalorg.organization_id, workspace_id, vlob_id),
+        _send_url(minimalorg.organization_id, workspace_id, vlob_id),
+        participant_uuid=carol_uuid,
+    )
+    async with carol:
+        rep = await carol.join(vlobVersion=11)
+        assert rep["type"] == "auth"
+        assert rep["result"] == 1
+        assert _save_lock_held(backend, workspace_id, vlob_id) is None

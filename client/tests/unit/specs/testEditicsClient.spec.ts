@@ -1,10 +1,12 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 // Tests for the editics client translation layer (onlyoffice-editics-client.js).
 // Verifies the OnlyOffice <-> editics protocol mapping for `saveChanges`,
 // `authChanges`, `connectState`, `isSaveLock`/`saveLock` and the participant
 // `id`/`idOriginal` shape, against the real OnlyOffice wire shapes captured in
 // docs/rfcs/1030-collaborative-editics/oo_example_session.md.
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // The editics client is a browser IIFE that attaches to `window`. Load it by
 // evaluating the source in the test's global scope (happy-dom provides
@@ -12,10 +14,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-const source = readFileSync(
-  resolve(import.meta.dirname, '../../../public/onlyoffice-editics-client.js'),
-  'utf8',
-);
+const source = readFileSync(resolve(import.meta.dirname, '../../../public/onlyoffice-editics-client.js'), 'utf8');
 
 // Evaluate the IIFE in the current global scope so `window` is the test window.
 // eslint-disable-next-line no-eval
@@ -80,9 +79,7 @@ describe('editics client translation', () => {
     const { client, sentToOO } = makeClient();
     // Seed the participant table (indexUser 1 = this user) so `user`/`useridoriginal`
     // resolve to the person's userId (matches the editor's `_userId = userId+indexUser`).
-    await (client as any)._mergeParticipants([
-      { indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
-    ]);
+    await (client as any)._mergeParticipants([{ indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }]);
     (client as any).indexUser = 1;
 
     const fragment = '66;AgAAA';
@@ -123,12 +120,13 @@ describe('editics client translation', () => {
 
   it('maps an authChanges backlog to the OnlyOffice record shape', async () => {
     const { client, sentToOO } = makeClient();
-    await (client as any)._mergeParticipants([
-      { indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
-    ]);
+    await (client as any)._mergeParticipants([{ indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }]);
     const serverEvent = {
       type: 'authChanges',
-      changes: [[1, btoa('66;AgAAA')], [2, btoa('37;CAAA')]] as Array<[number, string]>,
+      changes: [
+        [1, btoa('66;AgAAA')],
+        [2, btoa('37;CAAA')],
+      ] as Array<[number, string]>,
     };
     await (client as any)._onSseData(JSON.stringify(serverEvent));
     expect(sentToOO.length).toBe(1);
@@ -149,11 +147,9 @@ describe('editics client translation', () => {
     expect(sentToOO[0]).toEqual({ type: 'saveLock', saveLock: true });
   });
 
-  it('translates a getLock reply: key by plain block id, user = userId+index', async () => {
+  it('translates a getLock SSE broadcast: key by plain block id, user = userId+index', async () => {
     const { client, sentToOO } = makeClient();
-    await (client as any)._mergeParticipants([
-      { indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
-    ]);
+    await (client as any)._mergeParticipants([{ indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }]);
     const serverEvent = {
       type: 'getLock',
       // The server keys word blocks by the plain string and uses int indexUser.
@@ -170,11 +166,23 @@ describe('editics client translation', () => {
     expect(msg.locks.K.block).toBe('K');
   });
 
+  it('translates a getLock RPC reply (via _applyReply): user = userId+index', async () => {
+    const { client, sentToOO } = makeClient();
+    await (client as any)._mergeParticipants([{ indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }]);
+    // The server's getLock reply uses int indexUser.
+    (client as any)._applyReply('getLock', {
+      type: 'getLock',
+      locks: { K: { time: 1, user: 1, block: 'K' } },
+    });
+    expect(sentToOO.length).toBe(1);
+    expect(sentToOO[0].type).toBe('getLock');
+    expect(sentToOO[0].locks.K.user).toBe('F89d8069ba2b1');
+    expect(sentToOO[0].locks.K.block).toBe('K');
+  });
+
   it('translates a releaseLock: user = userId+index', async () => {
     const { client, sentToOO } = makeClient();
-    await (client as any)._mergeParticipants([
-      { indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
-    ]);
+    await (client as any)._mergeParticipants([{ indexUser: 1, deviceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }]);
     const serverEvent = {
       type: 'releaseLock',
       locks: [{ block: 'K', user: 1, time: 1, changes: null }],
