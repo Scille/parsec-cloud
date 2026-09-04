@@ -186,9 +186,8 @@ async function resolveVlobVersion(
 }
 
 async function buildEditicsConfig(workspaceHandle: WorkspaceHandle): Promise<OpenDocumentOptions['editics'] | undefined> {
-  // Build the editics collaborative session config (RFC 1030, step 0) so the
-  // host page connects to the Parsec server's SSE + RPC routes instead of the
-  // localStorage/BroadcastChannel-only mock server. We resolve:
+  // Build the editics collaborative session config (RFC 1030) so the host page
+  // connects to the Parsec server's SSE + RPC routes. We resolve:
   //   - baseUrl:        the server's HTTP origin (from the device's server addr).
   //   - organizationId: from the client info.
   //   - workspaceId:    the workspace (realm) VlobID.
@@ -285,15 +284,13 @@ async function loadEditor(): Promise<void> {
     emits('fileError');
     return;
   }
-  // POC (step 3.2): identify the document independently of the workspace handle (a per-session
-  // local resource id, not shared across users/tabs) so that two clients opening the same file join
-  // the same simulated collaboration session in onlyoffice-mock-server.js.
-  //
-  // Keyed on the file's own VlobID (contentInfo.fileId), not its path: a path can be reused (delete
-  // + recreate, rename) across genuinely different files, and onlyoffice-mock-server.js's session
-  // state (localStorage) is durable across page reloads - keying on path let a brand-new file
-  // silently resume a stale collaboration session (locks, accumulated changes) from a past, unrelated
-  // file that happened to share the same name.
+  // POC: identify the document independently of the workspace handle (a per-session
+  // local resource id, not shared across users/tabs). The editics session is
+  // keyed on the server by the file's own VlobID (`contentInfo.fileId`, RFC
+  // §1.3), not its path: a path can be reused (delete + recreate, rename)
+  // across genuinely different files, so keying on path would let a brand-new
+  // file silently resume a stale collaboration session (locks, accumulated
+  // changes) from a past, unrelated file that happened to share the same name.
   const documentId = contentInfo.fileId;
   const editics = await buildEditicsConfig(workspaceHandle);
   session = await openDocument(

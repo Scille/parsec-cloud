@@ -4,15 +4,15 @@ import { detectOpenableFile, FileContentType } from '@/common/fileTypes';
 import { Env } from '@/services/environment';
 import { convertToNativeFormat } from '@/services/x2t';
 
-// POC: replaces the (broken) Cryptpad integration with a direct integration of OnlyOffice,
-// using CryptPad's own end-to-end-encrypted fork of OnlyOffice (client-side code only, vendored
-// in `client/vendors/onlyoffice`, see the README there).
+// POC: direct integration of OnlyOffice using CryptPad's own
+// end-to-end-encrypted fork of OnlyOffice (client-side code only, vendored in
+// `client/vendors/onlyoffice`, see the README there).
 //
-// There is no collaborative server yet: `client/editics/index.html` wires the editor to
-// CryptPad's `connectMockServer` API (their replacement for OnlyOffice's usual socket.io-based
-// server communication) with handlers that keep everything local to the current tab. Nothing is
-// ever sent back to Parsec: the caller is expected to read the file content ahead of time and pass
-// it in, and no "save" mechanism is implemented on top of this module yet.
+// `client/editics/index.html` wires the editor to CryptPad's `connectMockServer`
+// API (their replacement for OnlyOffice's usual socket.io-based server
+// communication) onto the real Parsec editics server (SSE + RPC, RFC 1030). The
+// host page requires an `editics` config; the local-only mock server that used
+// to serve as a fallback has been removed.
 
 // Should be the same on both sides (this file and editics/index.html), don't modify one
 // without updating the other.
@@ -45,10 +45,10 @@ namespace OnlyOfficeCommAPI {
     // editor, see services/x2t.ts.
     documentExtension: string;
     documentType: OnlyOfficeCommAPI.DocumentTypes;
-    // Stable identifier of the document being edited (e.g. `${workspaceId}:${path}`), used only to
-    // key the mock collaboration session in onlyoffice-mock-server.js (see step 3.2 in CLAUDE.md) so
-    // that two tabs/users opening the same file join the same simulated session. Not to be confused
-    // with `key` below, which is OnlyOffice's own per-editing-session key.
+    // Stable identifier of the document being edited (e.g. `${workspaceId}:${path}`).
+    // Not used by the editics transport (the session is keyed by
+    // `(workspaceId, vlobId)` on the server, RFC §1.3); kept for parity with the
+    // OnlyOffice editor config.
     documentId: string;
     key: string;
     userName: string;
@@ -56,10 +56,10 @@ namespace OnlyOfficeCommAPI {
     mode: OnlyOfficeCommAPI.OpenModes;
     locale: string;
     theme?: 'light' | 'dark';
-    // Editics collaborative session config (RFC 1030, step 0). When present, the
+    // Editics collaborative session config (RFC 1030). When present, the
     // host page connects to the Parsec server's SSE + RPC editics routes
-    // (see client/editics/main.js) instead of the
-    // localStorage/BroadcastChannel-only mock server. `deviceId` is the
+    // (see client/editics/main.js). It is required to open a document: there
+    // is no local-only fallback anymore. `deviceId` is the
     // hyphenated UUID form of the client's DeviceID (matches the server's
     // `DeviceID.from_hex`); `workspaceId`/`vlobId` are the VlobID UUID strings.
     editics?: {

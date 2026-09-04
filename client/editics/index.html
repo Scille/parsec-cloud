@@ -112,9 +112,6 @@
 
       function openDocument(options) {
         var scripts = ['/onlyoffice/web-apps/apps/api/documents/api.js'];
-        // Always load the local mock server (used as a fallback if the
-        // editics transport can't be set up, so the editor still opens).
-        scripts.push('/onlyoffice-mock-server.js');
         Promise.all(scripts.map(loadScript))
           .then(function () {
             if (!window.DocsAPI || !window.DocsAPI.DocEditor) {
@@ -127,92 +124,78 @@
             window.APP = window.APP || {};
             var config = buildConfig(options);
             var docEditor = new window.DocsAPI.DocEditor('placeholder', config);
-            var mockServer;
-            if (options.editics) {
-              // Real collaborative transport: connect to the Parsec server's
-              // editics SSE + RPC routes (RFC 1030). The participant-name
-              // resolver is bridged to the parent window (libparsec lives there,
-              // not in this iframe).
-              //
-              // If the editics client module isn't available or fails to
-              // initialize, fall back to the local mock server so the editor
-              // still opens (the collaborative transport must never block
-              // document editing).
-              try {
-                mockServer = OnlyOfficeEditicsClient.create({
-                  baseUrl: options.editics.baseUrl,
-                  organizationId: options.editics.organizationId,
-                  workspaceId: options.editics.workspaceId,
-                  vlobId: options.editics.vlobId,
-                  deviceIdHex: options.editics.deviceId,
-                  vlobVersion: options.editics.vlobVersion,
-                  editorType: options.editics.editorType,
-                  // Local user identity, used to seed the participant list
-                  // before the server-assigned `indexUser` arrives (the
-                  // editor calls `getParticipants` during init).
-                  userId: options.userId,
-                  userName: options.userName,
-                  mode: options.mode,
-                  resolveUserName: function (deviceIdHex) {
-                    return new Promise(function (resolve) {
-                      var channel = new MessageChannel();
-                      var timeout = setTimeout(function () {
-                        resolve(undefined);
-                      }, 2000);
-                      channel.port1.onmessage = function (ev) {
-                        clearTimeout(timeout);
-                        resolve(ev.data && ev.data.userName);
-                      };
-                      parentWindow.postMessage({ command: 'oo-resolve-user-name', deviceId: deviceIdHex }, '*', [channel.port2]);
-                    });
-                  },
-                  // Resolve a DeviceID hex to the user's `userId` (person id) so the
-                  // editics client can build OnlyOffice's composite
-                  // `<userId><indexUser>` participant id (the editor sets
-                  // `_userId = editorConfig.user.id + indexUser` and matches it
-                  // against the `user` field of lock/change records).
-                  resolveUserId: function (deviceIdHex) {
-                    return new Promise(function (resolve) {
-                      var channel = new MessageChannel();
-                      var timeout = setTimeout(function () {
-                        resolve(undefined);
-                      }, 2000);
-                      channel.port1.onmessage = function (ev) {
-                        clearTimeout(timeout);
-                        resolve(ev.data && ev.data.userId);
-                      };
-                      parentWindow.postMessage({ command: 'oo-resolve-user-id', deviceId: deviceIdHex }, '*', [channel.port2]);
-                    });
-                  },
-                });
-              } catch (editicsErr) {
-                console.warn('[editics] disabled, falling back to mock server:', editicsErr);
-                mockServer = null;
-              }
-              if (!mockServer) {
-                // Fall back to the local mock server.
-                mockServer = window.OnlyOfficeMockServer.create({
-                  documentId: options.documentId,
-                  userId: options.userId,
-                  userName: options.userName,
-                  mode: options.mode,
-                });
-              }
-            } else {
-              mockServer = window.OnlyOfficeMockServer.create({
-                documentId: options.documentId,
+            if (!options.editics) {
+              // The OnlyOffice editor needs a `connectMockServer` target. We only
+              // test against the real Parsec editics server now (the local
+              // localStorage/BroadcastChannel mock server has been removed), so
+              // an editics config is required to open a document.
+              postToParent('oo-error', { details: 'editics config is required to open a document' });
+              return;
+            }
+            // Real collaborative transport: connect to the Parsec server's
+            // editics SSE + RPC routes (RFC 1030). The participant-name
+            // resolver is bridged to the parent window (libparsec lives there,
+            // not in this iframe).
+            var editicsClient;
+            try {
+              editicsClient = OnlyOfficeEditicsClient.create({
+                baseUrl: options.editics.baseUrl,
+                organizationId: options.editics.organizationId,
+                workspaceId: options.editics.workspaceId,
+                vlobId: options.editics.vlobId,
+                deviceIdHex: options.editics.deviceId,
+                vlobVersion: options.editics.vlobVersion,
+                editorType: options.editics.editorType,
+                // Local user identity, used to seed the participant list
+                // before the server-assigned `indexUser` arrives (the
+                // editor calls `getParticipants` during init).
                 userId: options.userId,
                 userName: options.userName,
                 mode: options.mode,
+                resolveUserName: function (deviceIdHex) {
+                  return new Promise(function (resolve) {
+                    var channel = new MessageChannel();
+                    var timeout = setTimeout(function () {
+                      resolve(undefined);
+                    }, 2000);
+                    channel.port1.onmessage = function (ev) {
+                      clearTimeout(timeout);
+                      resolve(ev.data && ev.data.userName);
+                    };
+                    parentWindow.postMessage({ command: 'oo-resolve-user-name', deviceId: deviceIdHex }, '*', [channel.port2]);
+                  });
+                },
+                // Resolve a DeviceID hex to the user's `userId` (person id) so the
+                // editics client can build OnlyOffice's composite
+                // `<userId><indexUser>` participant id (the editor sets
+                // `_userId = editorConfig.user.id + indexUser` and matches it
+                // against the `user` field of lock/change records).
+                resolveUserId: function (deviceIdHex) {
+                  return new Promise(function (resolve) {
+                    var channel = new MessageChannel();
+                    var timeout = setTimeout(function () {
+                      resolve(undefined);
+                    }, 2000);
+                    channel.port1.onmessage = function (ev) {
+                      clearTimeout(timeout);
+                      resolve(ev.data && ev.data.userId);
+                    };
+                    parentWindow.postMessage({ command: 'oo-resolve-user-id', deviceId: deviceIdHex }, '*', [channel.port2]);
+                  });
+                },
               });
+            } catch (editicsErr) {
+              console.error('[editics] failed to initialize editics client:', editicsErr);
+              postToParent('oo-error', { details: 'editics client init failed: ' + editicsErr });
+              return;
             }
-            mockServer.setEditor(docEditor);
-            window.__ooMockServer = mockServer; // debugging hook
+            editicsClient.setEditor(docEditor);
+            window.__ooEditicsClient = editicsClient; // debugging hook (e2e)
             window.addEventListener('pagehide', function () {
-              mockServer.destroy();
+              editicsClient.destroy();
             });
             try {
-              docEditor.connectMockServer(mockServer);
+              docEditor.connectMockServer(editicsClient);
             } catch (connectErr) {
               // `connectMockServer` throwing must not fail the whole open: the
               // editor instance is already created and can still render the

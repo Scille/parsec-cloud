@@ -11,8 +11,8 @@
 // It captures the editics debug panel entries + console for each tab and prints
 // a summary, surfacing any `getLock`/`saveChanges`/`unSaveLock` that looks stuck.
 
-import { chromium } from 'playwright';
 import path from 'path';
+import { chromium } from 'playwright';
 
 const BASE = 'http://127.0.0.1:8080';
 const TESTBED_SERVER = 'parsec3://127.0.0.1:6770?no_ssl=true';
@@ -37,13 +37,13 @@ async function initApp(page, configPath) {
     window.TESTING_CRYPTPAD_SERVER = null;
     window.TESTING_CONFIG_PATH = cfg || null;
   }, configPath);
-  await page.goto(BASE + '/');
+  await page.goto(`${BASE}/`);
   await page.waitForFunction(() => window.libparsec && window.nextStageHook, null, { timeout: 30000 });
   if (!configPath) {
     configPath = await page.evaluate(async (srv) => {
       const [libparsec, nextStage] = window.nextStageHook();
       const r = await libparsec.testNewTestbed('coolorg', srv);
-      if (!r.ok) throw new Error('testbed init failed: ' + JSON.stringify(r.error));
+      if (!r.ok) throw new Error(`testbed init failed: ${JSON.stringify(r.error)}`);
       window.TESTING_CONFIG_PATH = r.value;
       await nextStage(r.value, 'en-US');
       return r.value;
@@ -62,17 +62,40 @@ async function loginAndGoToWksp1(page) {
   const cards = page.locator('.organization-card');
   const count = await cards.count();
   const texts = [];
-  for (let i = 0; i < count; i++) texts.push((await cards.nth(i).innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 80));
+  for (let i = 0; i < count; i++)
+    texts.push(
+      (
+        await cards
+          .nth(i)
+          .innerText()
+          .catch(() => '')
+      )
+        .replace(/\s+/g, ' ')
+        .slice(0, 80),
+    );
   console.log('org cards:', count, JSON.stringify(texts));
   // Click the Alice card (the testbed org owner).
   let aliceIdx = 0;
-  for (let i = 0; i < count; i++) if (texts[i].toLowerCase().includes('alice')) { aliceIdx = i; break; }
+  for (let i = 0; i < count; i++)
+    if (texts[i].toLowerCase().includes('alice')) {
+      aliceIdx = i;
+      break;
+    }
   await cards.nth(aliceIdx).click();
   // If already logged in (card shows "Logged in"), it goes straight to workspaces;
   // otherwise the password screen appears.
   const pw = page.locator('#password-input');
   const connected = page.locator('#connected-header');
-  await Promise.race([pw.waitFor({ state: 'visible', timeout: 10000 }).then(() => 'pw').catch(() => 'no'), connected.waitFor({ state: 'visible', timeout: 10000 }).then(() => 'connected').catch(() => 'no')]);
+  await Promise.race([
+    pw
+      .waitFor({ state: 'visible', timeout: 10000 })
+      .then(() => 'pw')
+      .catch(() => 'no'),
+    connected
+      .waitFor({ state: 'visible', timeout: 10000 })
+      .then(() => 'connected')
+      .catch(() => 'no'),
+  ]);
   if (await pw.isVisible().catch(() => false)) {
     await pw.locator('input').fill('P@ssw0rd.');
     await page.locator('.login-button').click();
@@ -87,14 +110,17 @@ async function importDocx(page) {
   await dropZone.waitFor({ state: 'visible', timeout: 10000 });
   const fs = await import('fs');
   const content = fs.readFileSync(DOCX).toString('base64');
-  const dt = await page.evaluateHandle(async (filesInfo) => {
-    const dt = new DataTransfer();
-    for (const f of filesInfo) {
-      const blob = await fetch(`data:application/octet-stream;base64,${f.content}`).then((r) => r.blob());
-      dt.items.add(new File([blob], f.name, { type: 'application/octet-stream' }));
-    }
-    return dt;
-  }, [{ content, name: 'document.docx' }]);
+  const dt = await page.evaluateHandle(
+    async (filesInfo) => {
+      const dt = new DataTransfer();
+      for (const f of filesInfo) {
+        const blob = await fetch(`data:application/octet-stream;base64,${f.content}`).then((r) => r.blob());
+        dt.items.add(new File([blob], f.name, { type: 'application/octet-stream' }));
+      }
+      return dt;
+    },
+    [{ content, name: 'document.docx' }],
+  );
   await dropZone.dispatchEvent('dragenter');
   await dropZone.dispatchEvent('drop', { dataTransfer: dt });
   await page.waitForSelector('.upload-menu', { timeout: 15000 });
@@ -127,18 +153,20 @@ async function readPanel(page) {
   const hostFrame = page.frames().find((f) => f !== page.mainFrame() && (f.url().includes('editics/index') || f.url().includes('host')));
   const frame = hostFrame || page.frames().find((f) => f !== page.mainFrame());
   if (!frame) return [];
-  return await frame.evaluate(() => {
-    const items = [];
-    document.querySelectorAll('#ed-panel .ed-entry').forEach((el) => {
-      const flow = el.querySelector('.ed-flow')?.textContent || '';
-      const type = el.querySelector('.ed-type')?.textContent || '';
-      const note = el.querySelector('.ed-dir')?.textContent || '';
-      const oo = el.querySelector('.ed-oo pre')?.textContent || '';
-      const net = el.querySelector('.ed-net pre')?.textContent || '';
-      items.push({ flow, type, note, oo, net });
-    });
-    return items;
-  }).catch(() => []);
+  return await frame
+    .evaluate(() => {
+      const items = [];
+      document.querySelectorAll('#ed-panel .ed-entry').forEach((el) => {
+        const flow = el.querySelector('.ed-flow')?.textContent || '';
+        const type = el.querySelector('.ed-type')?.textContent || '';
+        const note = el.querySelector('.ed-dir')?.textContent || '';
+        const oo = el.querySelector('.ed-oo pre')?.textContent || '';
+        const net = el.querySelector('.ed-net pre')?.textContent || '';
+        items.push({ flow, type, note, oo, net });
+      });
+      return items;
+    })
+    .catch(() => []);
 }
 
 async function main() {
@@ -160,19 +188,23 @@ async function main() {
   // (editics/index.html), not the top page. Find it and probe inside.
   const hostFrame = tabA.frames().find((f) => f.url().includes('editics/index') || f.url().includes('host'));
   const anyChild = tabA.frames().filter((f) => f !== tabA.mainFrame());
-  console.log('child frames:', anyChild.map((f) => f.url().slice(-70)));
+  console.log(
+    'child frames:',
+    anyChild.map((f) => f.url().slice(-70)),
+  );
   const probeFrame = hostFrame || anyChild[0];
   let diagA = {};
   if (probeFrame) {
     try {
       diagA = await probeFrame.evaluate(() => ({
-        hasMockServer: !!window.__ooMockServer,
-        mockType: window.__ooMockServer ? window.__ooMockServer.constructor.name : null,
-        indexUser: window.__ooMockServer ? window.__ooMockServer.indexUser : null,
+        hasEditicsClient: !!window.__ooEditicsClient,
+        indexUser: window.__ooEditicsClient ? window.__ooEditicsClient.translator.indexUser : null,
         panelPresent: !!document.querySelector('#ed-panel'),
         editorIframe: !!document.querySelector('iframe[name=frameEditor]'),
       }));
-    } catch (e) { diagA = { error: e.message }; }
+    } catch (e) {
+      diagA = { error: e.message };
+    }
   }
   console.log('=== Diag A (host iframe) ===', JSON.stringify(diagA));
 
@@ -195,23 +227,50 @@ async function main() {
     await tabB.waitForTimeout(5000);
   }
 
-  // Drive the editor's mock-server `onMessage` directly with synthetic OO
-  // events to exercise the editics translation + server round-trip (more
-  // reliable than fighting the editor's focus for keyboard input).
-  const mockA = await (tabA.frames().find((f) => f !== tabA.mainFrame() && (f.url().includes('editics/index') || f.url().includes('host')))).evaluateHandle(() => window.__ooMockServer).catch(() => null);
-  const mockB = tabB ? await (tabB.frames().find((f) => f !== tabB.mainFrame() && (f.url().includes('editics/index') || f.url().includes('host')))).evaluateHandle(() => window.__ooMockServer).catch(() => null) : null;
+  // Drive the editics client's `onMessage` directly with synthetic OO events
+  // to exercise the editics translation + server round-trip (more reliable
+  // than fighting the editor's focus for keyboard input).
+  async function getEditicsClient(tab) {
+    const frame = tab.frames().find((f) => f !== tab.mainFrame() && (f.url().includes('editics/index') || f.url().includes('host')));
+    if (!frame) return null;
+    return await frame.evaluateHandle(() => window.__ooEditicsClient).catch(() => null);
+  }
+  const clientA = await getEditicsClient(tabA);
+  // Tab B's client handle is reserved for future two-way driving; tab A is
+  // enough to exercise the translation + server round-trip here.
+  const _clientB = tabB ? await getEditicsClient(tabB) : null;
 
   // Tab A: insert a line = getLock + saveChanges(releaseLocks), then type = saveChanges.
-  if (mockA) {
-    await mockA.evaluate((m) => m.onMessage({ type: 'getLock', block: ['P1'] }));
+  if (clientA) {
+    await clientA.evaluate((m) => m.onMessage({ type: 'getLock', block: ['P1'] }));
     await tabA.waitForTimeout(500);
-    await mockA.evaluate((m) => m.onMessage({ type: 'isSaveLock', syncChangesIndex: 0 }));
+    await clientA.evaluate((m) => m.onMessage({ type: 'isSaveLock', syncChangesIndex: 0 }));
     await tabA.waitForTimeout(300);
-    await mockA.evaluate((m) => m.onMessage({ type: 'saveChanges', changes: JSON.stringify(['66;frag1']), startSaveChanges: true, endSaveChanges: true, deleteIndex: null, excelAdditionalInfo: null, releaseLocks: true }));
+    await clientA.evaluate((m) =>
+      m.onMessage({
+        type: 'saveChanges',
+        changes: JSON.stringify(['66;frag1']),
+        startSaveChanges: true,
+        endSaveChanges: true,
+        deleteIndex: null,
+        excelAdditionalInfo: null,
+        releaseLocks: true,
+      }),
+    );
     await tabA.waitForTimeout(1500);
     // Another save (typing).
-    await mockA.evaluate((m) => m.onMessage({ type: 'isSaveLock', syncChangesIndex: 1 }));
-    await mockA.evaluate((m) => m.onMessage({ type: 'saveChanges', changes: JSON.stringify(['66;frag2','37;frag3']), startSaveChanges: true, endSaveChanges: true, deleteIndex: null, excelAdditionalInfo: null, releaseLocks: false }));
+    await clientA.evaluate((m) => m.onMessage({ type: 'isSaveLock', syncChangesIndex: 1 }));
+    await clientA.evaluate((m) =>
+      m.onMessage({
+        type: 'saveChanges',
+        changes: JSON.stringify(['66;frag2', '37;frag3']),
+        startSaveChanges: true,
+        endSaveChanges: true,
+        deleteIndex: null,
+        excelAdditionalInfo: null,
+        releaseLocks: false,
+      }),
+    );
     await tabA.waitForTimeout(1500);
   }
   await tabA.waitForTimeout(2000);
