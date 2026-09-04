@@ -2106,7 +2106,7 @@ class _Tab:
 
     It tracks the editor-side state needed to drive the save/lock handshake:
     `syncChangesIndex` (echoed in `isSaveLock`) and the save-lock grant. The
-    translation layer (onlyoffice-editics-client.js) is covered by the vitest
+    translation layer (client/editics/protocol.js) is covered by the vitest
     suite; this drives the *editics* wire directly.
     """
 
