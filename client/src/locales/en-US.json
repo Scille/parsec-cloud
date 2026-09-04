@@ -351,6 +351,9 @@
         },
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session",
+        "shamir": {
+            "invalidLink": "Not a valid recovery link."
+        },
         "organizationRequest": {
             "notAvailable": "Requests to join an organization using a certificate is not yet supported on your system.",
             "title": "Pending requests",

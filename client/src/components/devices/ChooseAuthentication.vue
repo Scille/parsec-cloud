@@ -166,7 +166,6 @@ import {
   DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
   OpenBaoAuthConfigTag,
-  ParsecAddr,
   PrimaryProtectionStrategy,
   ServerConfig,
   constructSaveStrategy,
@@ -198,7 +197,6 @@ const props = defineProps<{
   showTitle?: boolean;
   activeAuth?: DevicePrimaryProtectionStrategyTag;
   serverConfig?: ServerConfig;
-  serverAddr: ParsecAddr;
 }>();
 
 defineExpose({

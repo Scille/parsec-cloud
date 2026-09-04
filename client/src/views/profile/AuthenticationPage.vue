@@ -125,9 +125,9 @@ import {
   TOTPSetupStatusTag,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import UpdateAuthenticationModal from '@/views/authentication/UpdateAuthenticationModal.vue';
 import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
 import DeleteTotpModal from '@/views/totp/DeleteTotpModal.vue';
-import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import { IonButton, IonIcon, IonText, IonToggle, modalController, ToggleCustomEvent } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
 import { Answer, askQuestion, MsModalResult, MsReportText, MsReportTheme, MsSpinner, Translatable } from 'megashark-lib';

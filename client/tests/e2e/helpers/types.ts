@@ -3,6 +3,7 @@
 import { Page } from '@playwright/test';
 import { OrganizationInformation, UserData } from '@tests/e2e/helpers/data';
 import { LibParsecFunction } from '@tests/e2e/helpers/libparsec';
+import { TestbedTemplate } from '@tests/e2e/helpers/testbed';
 
 export enum DisplaySize {
   Small = 'small',
@@ -36,6 +37,7 @@ export interface AdditionalUserData {
 
 export interface SetupOptions {
   testbedPath?: string;
+  tesbedTemplate?: TestbedTemplate;
   skipTestbed?: boolean;
   location?: string;
   skipGoto?: boolean;

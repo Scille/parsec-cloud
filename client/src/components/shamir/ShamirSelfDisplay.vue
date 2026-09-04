@@ -123,9 +123,8 @@
 
 <script setup lang="ts">
 import ShamirIconCircle from '@/assets/images/shamir-icon-circle.svg?raw';
-import { SelfShamirRecoveryInfo } from '@/parsec';
+import { SelfShamirRecoveryInfo, SelfShamirRecoveryInfoTag } from '@/parsec';
 import { deleteSelfShamirRecovery } from '@/parsec/shamir';
-import { SelfShamirRecoveryInfoTag } from '@/plugins/libparsec';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { checkmarkCircle, informationCircle, shieldCheckmark } from 'ionicons/icons';
 import { Answer, askQuestion, MsImage, MsReportText, MsReportTheme } from 'megashark-lib';

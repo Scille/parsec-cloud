@@ -197,7 +197,7 @@
 import RecoveryDeviceIcon from '@/assets/images/recovery-device-icon.svg?raw';
 import RecoveryFileIcon from '@/assets/images/recovery-file-icon.svg?raw';
 import RecoveryTrustIcon from '@/assets/images/recovery-trusted-user-icon.svg?raw';
-import { ShamirTab } from '@/components/profile/types';
+import { ShamirAction, ShamirTab } from '@/components/shamir/types';
 import {
   getClientInfo,
   getRequiredShamirThreshold,
@@ -205,6 +205,7 @@ import {
   listOwnDevices,
   OwnDeviceInfo,
   SelfShamirRecoveryInfo,
+  ShamirGreeter,
   UserProfile,
 } from '@/parsec';
 import { navigateTo, ProfilePages, Routes } from '@/router';
@@ -213,7 +214,8 @@ import { EventDistributor, EventDistributorKey, Events } from '@/services/eventD
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { openDeviceGreetModal } from '@/views/devices/utils';
 import ExportRecoveryDevice from '@/views/profile/ExportRecoveryDeviceModal.vue';
-import ShamirRecoveryModal from '@/views/profile/ShamirRecoveryModal.vue';
+import GreetShamirRecoveryModal from '@/views/shamir/GreetShamirRecoveryModal.vue';
+import ShamirRecoveryModal from '@/views/shamir/ShamirRecoveryModal.vue';
 import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Answer, askQuestion, MsImage, MsModalResult, MsSpinner, useWindowSize } from 'megashark-lib';
@@ -343,8 +345,38 @@ async function openShamirRecoveryModal(tab: ShamirTab): Promise<void> {
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
   });
   await modal.present();
-  await modal.onDidDismiss();
+  const result = await modal.onDidDismiss();
   await modal.dismiss();
+
+  if (result.role === MsModalResult.Confirm) {
+    switch (result.data.action) {
+      case ShamirAction.Greet: {
+        const greeter = new ShamirGreeter(result.data.handle);
+        const greetModal = await modalController.create({
+          component: GreetShamirRecoveryModal,
+          cssClass: 'greet-shamir-recovery-modal',
+          componentProps: {
+            informationManager: informationManager.value,
+            greeter: greeter,
+          },
+          canDismiss: true,
+          backdropDismiss: true,
+          showBackdrop: true,
+          handle: false,
+          breakpoints: [1],
+          initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+        });
+        await greetModal.present();
+        await greetModal.onDidDismiss();
+        await greetModal.dismiss();
+        break;
+      }
+      default: {
+        window.nativeAPI.log('error', `Unknown or missing shamir action: ${result.data}`);
+        break;
+      }
+    }
+  }
   await refreshShamirStatus();
 }
 

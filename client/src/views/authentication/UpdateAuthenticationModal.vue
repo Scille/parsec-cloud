@@ -123,7 +123,7 @@ import {
 } from '@/parsec';
 import { DevicePrimaryProtectionStrategyTag, SecretKey, TotpFetchOpaqueKeyErrorTag } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
+import PromptCurrentAuthentication from '@/views/authentication/PromptCurrentAuthentication.vue';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { MsInput, MsModalResult, MsReportText, MsReportTheme, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
