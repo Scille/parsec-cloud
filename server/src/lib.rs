@@ -15,6 +15,7 @@ mod enumerate;
 mod ids;
 mod misc;
 mod protocol;
+pub(crate) mod pydantic_support;
 #[cfg(feature = "test-utils")]
 mod testbed;
 mod time;

@@ -152,4 +152,45 @@ impl DateTime {
             + microseconds as i64;
         Ok(Self(self.0.add_us(us)))
     }
+
+    #[classmethod]
+    #[cfg(feature = "pydantic-support")]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::inner::{CoreSchemaModule, WhenUsed};
+
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        let str_schema = core_schema.str_schema()?;
+
+        // Serialize into string using `Self::to_rfc3339`
+        let ser_schema = core_schema.plain_serializer_function_ser_schema(
+            cls.getattr("to_rfc3339")?,
+            Some(str_schema.clone()),
+            Some(WhenUsed::Always),
+            py,
+        )?;
+
+        // Validate string using `Self::from_rfc3339`
+        let str_validator = core_schema.no_info_after_validator_function(
+            cls.getattr("from_rfc3339")?,
+            str_schema,
+            Some(ser_schema),
+            py,
+        )?;
+
+        let instance_validator = core_schema.instance_schema(cls)?;
+
+        // Support both instance and string schema
+        let union_validator = core_schema.union_schema([instance_validator, str_validator], py)?;
+
+        union_validator.into_pyobject(py).map_err(Into::into)
+    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(DateTime, type="string", format="date-time");
