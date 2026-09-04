@@ -8,13 +8,13 @@ import { convertToNativeFormat } from '@/services/x2t';
 // using CryptPad's own end-to-end-encrypted fork of OnlyOffice (client-side code only, vendored
 // in `client/vendors/onlyoffice`, see the README there).
 //
-// There is no collaborative server yet: `client/public/onlyoffice-host.html` wires the editor to
+// There is no collaborative server yet: `client/editics/index.html` wires the editor to
 // CryptPad's `connectMockServer` API (their replacement for OnlyOffice's usual socket.io-based
 // server communication) with handlers that keep everything local to the current tab. Nothing is
 // ever sent back to Parsec: the caller is expected to read the file content ahead of time and pass
 // it in, and no "save" mechanism is implemented on top of this module yet.
 
-// Should be the same on both sides (this file and public/onlyoffice-host.html), don't modify one
+// Should be the same on both sides (this file and editics/index.html), don't modify one
 // without updating the other.
 namespace OnlyOfficeCommAPI {
   export enum Commands {
@@ -58,7 +58,7 @@ namespace OnlyOfficeCommAPI {
     theme?: 'light' | 'dark';
     // Editics collaborative session config (RFC 1030, step 0). When present, the
     // host page connects to the Parsec server's SSE + RPC editics routes
-    // (see client/public/onlyoffice-editics-client.js) instead of the
+    // (see client/editics/main.js) instead of the
     // localStorage/BroadcastChannel-only mock server. `deviceId` is the
     // hyphenated UUID form of the client's DeviceID (matches the server's
     // `DeviceID.from_hex`); `workspaceId`/`vlobId` are the VlobID UUID strings.
@@ -117,7 +117,7 @@ export interface OnlyOfficeSession {
   controller: AbortController;
 }
 
-const HOST_PAGE = `${import.meta.env.BASE_URL}onlyoffice-host.html`;
+const HOST_PAGE = `${import.meta.env.BASE_URL}editics/index.html`;
 
 // OnlyOffice's own native format (see client/vendors/onlyoffice/README.md): anything else needs to
 // go through x2t first, see prepareDocumentContent() below.
@@ -249,7 +249,7 @@ export async function openDocument(
             case 'oo-resolve-user-id': {
               // The editics client asks for the user's `userId` (person id) given
               // a DeviceID hex, to build OnlyOffice's composite participant id
-              // (see onlyoffice-host.html's resolveUserId).
+              // (see editics/index.html's resolveUserId).
               const port = (event as MessageEvent).ports[0];
               if (port && options.editics?.resolveUserId) {
                 options.editics.resolveUserId(event.data.deviceId).then((userId) => {
@@ -298,8 +298,7 @@ export async function openDocument(
     // structured-clone across the iframe boundary; the host page bridges them
     // back to us via the `oo-resolve-user-name` / `oo-resolve-user-id` messages
     // above. Strip them before posting.
-    const { resolveUserName: _omitted, resolveUserId: _omitted2, ...editicsSerializable } =
-      options.editics;
+    const { resolveUserName: _omitted, resolveUserId: _omitted2, ...editicsSerializable } = options.editics;
     postOptions = { ...options, editics: editicsSerializable } as OpenDocumentOptions;
   }
   frame.contentWindow.postMessage(

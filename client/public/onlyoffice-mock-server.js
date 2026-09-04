@@ -1,5 +1,7 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 // POC (step 3.2 in the root CLAUDE.md): "server" side of the OnlyOffice client/server protocol,
-// mocked entirely client-side, loaded by onlyoffice-host.html.
+// mocked entirely client-side, loaded by editics/index.html.
 //
 // Goal: investigate what the OnlyOffice client actually sends/expects (see notes/communication_protocol.md
 // for the write-up) without talking to any real backend:
@@ -162,12 +164,12 @@
       this.userId = userId;
       this.userName = userName;
       this.mode = mode; // 'view' | 'edit'
-      this.clientId = (global.crypto && global.crypto.randomUUID) ? global.crypto.randomUUID() : String(Math.random());
+      this.clientId = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : String(Math.random());
       this.docEditor = null;
       this.channelKey = `oo-mock:${documentId}`;
       this.logStorageKey = `${this.channelKey}:log`;
       this.presenceStorageKey = `${this.channelKey}:presence`;
-      this.bc = ('BroadcastChannel' in global) ? new BroadcastChannel(this.channelKey) : null;
+      this.bc = 'BroadcastChannel' in global ? new BroadcastChannel(this.channelKey) : null;
       this._fakeParticipants = []; // manually-simulated (non-tab) participants, for single-tab testing
       this._cursorHistory = []; // this session's own recent real cursor values, see the 'cursor' case below
       this._lastParticipantsKey = '';
@@ -270,7 +272,7 @@
           //
           // The client also expects `locks` as an id-keyed map of `{time, user, block}` entries (per
           // CryptPad's `getLock()`), not the raw `block` array the *request* carries.
-          const uid = (global.crypto && global.crypto.randomUUID) ? global.crypto.randomUUID() : String(Math.random());
+          const uid = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : String(Math.random());
           const locks = { [uid]: { time: Date.now(), user: this.userId, block: msg.block && msg.block[0] } };
           this._sendToClient('getLock', { locks });
           this._broadcast({ kind: 'lock', from: this.clientId, locks });

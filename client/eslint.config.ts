@@ -179,4 +179,16 @@ export default defineConfig([
       ],
     },
   },
+  // The editics client module (todo step_2 §3.1) is a standalone plain-JS bundle
+  // that lives outside the `@`-aliased `src/` tree (its three JS files import each
+  // other by relative path so they can be loaded as-is by both the browser and
+  // the PyMiniRacer test bridge). The global rule forces the `@` prefix, which
+  // would break those imports; disable it for that folder only. Placed last so it
+  // overrides the global rule above.
+  {
+    files: ['editics/**/*.js'],
+    rules: {
+      'no-relative-import-paths/no-relative-import-paths': 'off',
+    },
+  },
 ]);
