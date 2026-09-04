@@ -19,8 +19,11 @@ from parsec.components.postgresql.utils import (
 _q_get_organizations = Q("""
 SELECT
     organization_id,
+    _created_on AS created_on,
     bootstrap_token,
+    _bootstrapped_on AS bootstrapped_on,
     is_expired,
+    _expired_on AS expired_on,
     active_users_limit,
     user_profile_outsider_allowed,
     realm_minimum_archiving_period_before_deletion,
