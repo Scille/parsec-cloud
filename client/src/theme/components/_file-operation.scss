@@ -1,14 +1,18 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
+// must be at the top of the file
+// at the moment, we are forced to put this in every scss file, since vite is not adding preprocessors additionalData to files imported by @use & @forward
+@use 'megashark-lib/theme' as ms;
+
 .file-operation-item {
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border: ms.border('thin') solid ms.color('border-base-default');
   transition: background 0.2s ease-in-out;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
   margin: 0.5rem 0.5rem 0;
-  box-shadow: var(--parsec-shadow-input);
+  box-shadow: ms.shadow('input');
 
   strong {
     font-weight: 700;
@@ -18,23 +22,23 @@
   }
 
   .element {
-    --background: var(--parsec-color-light-secondary-background);
-    --inner-padding-end: 0;
+    --background: #{ms.color('surface-base-default-secondary')};
+    --inner-padding-end: #{ms.spacing('padding-none')};
     overflow: hidden;
     position: relative;
     z-index: 3;
 
     &::part(native) {
-      padding: 0.825rem 1rem;
+      padding: 0.825rem ms.spacing('padding-3xl');
       cursor: default;
     }
 
     &:hover {
-      --background: var(--parsec-color-light-secondary-premiere);
+      --background: #{ms.color('surface-neutral-default-subtle-hover')};
     }
 
     &_open {
-      --background: var(--parsec-color-light-secondary-background);
+      --background: #{ms.color('surface-base-default-secondary')};
 
       &::part(native) {
         cursor: pointer;
@@ -55,20 +59,20 @@
       position: relative;
       margin-inline: 0.875rem;
       width: 100%;
-      gap: 0.2rem;
+      gap: ms.spacing('gap-sm');
 
       &-title {
         display: flex;
         align-items: center;
         overflow: hidden;
-        gap: 0.25rem;
+        gap: ms.spacing('gap-sm');
 
         &__name {
           width: fit-content;
-          color: var(--parsec-color-light-secondary-text);
+          color: ms.color('text-base-body');
           display: flex;
           align-items: center;
-          gap: 0.375rem;
+          gap: ms.spacing('gap-md');
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -76,7 +80,7 @@
         }
 
         .name-icon {
-          color: var(--parsec-color-light-secondary-grey);
+          color: ms.color('icon-neutral-default');
           margin-left: 0.125rem;
         }
 
@@ -87,9 +91,9 @@
       }
 
       &-info {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        color: ms.color('text-base-description');
         display: flex;
-        gap: 0.25rem;
+        gap: ms.spacing('gap-sm');
         overflow: hidden;
 
         &__size {
@@ -124,12 +128,12 @@
       cursor: pointer;
 
       .element-details-title__name {
-        border-bottom: 1px solid transparent;
+        border-bottom: ms.border('thin') solid transparent;
       }
 
       &:hover {
         .element-details-title__name {
-          border-bottom-color: var(--parsec-color-light-secondary-grey);
+          border-bottom-color: ms.color('border-neutral-default-hover');
         }
       }
     }
@@ -139,20 +143,20 @@
   &.waiting,
   &.progress {
     .cancel-button {
-      color: var(--parsec-color-light-secondary-text);
-      --background: var(--parsec-color-light-secondary-medium);
-      --background-hover: var(--parsec-color-light-secondary-disabled);
+      color: ms.color('text-base-body');
+      --background: #{ms.color('surface-neutral-default-subtle')};
+      --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
 
       &::part(native) {
-        padding: 0.375rem 0.625rem;
-        border-radius: var(--parsec-radius-8);
+        padding: ms.spacing('padding-md') ms.spacing('padding-xl');
+        border-radius: ms.radius('lg');
       }
     }
   }
 
   &.waiting {
     .waiting-info .waiting-text {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
     }
 
     .waiting-info .cancel-button {
@@ -175,7 +179,7 @@
       margin-left: auto;
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
 
       .hover-state {
         display: none;
@@ -183,7 +187,7 @@
     }
 
     .progress-percentage {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
     }
 
     .progress-spinner {
@@ -212,7 +216,7 @@
     }
 
     &:hover {
-      background: var(--parsec-color-light-primary-50);
+      background: ms.color('surface-brand-default-subtle-hover');
 
       .default-state {
         display: none;
@@ -223,10 +227,10 @@
     }
 
     .folder-icon {
-      color: var(--parsec-color-light-secondary-hard-grey);
-      background: var(--parsec-color-light-secondary-white);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      padding: 0.5rem;
+      color: ms.color('icon-neutral-default');
+      background: ms.color('surface-base-default');
+      border: ms.border('thin') solid ms.color('border-base-default');
+      padding: ms.spacing('padding-lg');
       width: 1.125rem;
       height: 1.125rem;
       flex-shrink: 0;
@@ -238,20 +242,20 @@
       z-index: 4;
 
       &:hover {
-        color: var(--parsec-color-light-secondary-text);
-        border-color: var(--parsec-color-light-secondary-light);
-        box-shadow: var(--parsec-shadow-input);
+        color: ms.color('icon-neutral-default-hover');
+        border-color: ms.color('border-base-default-hover');
+        box-shadow: ms.shadow('input');
       }
     }
 
     .checkmark-icon {
-      color: var(--parsec-color-light-success-700);
+      color: ms.color('icon-success-default');
       font-size: 1.25rem;
     }
   }
 
   &.cancelled {
-    --background: var(--parsec-color-light-danger-500);
+    --background: #{ms.color('surface-error-default')};
 
     .element {
       opacity: 0.8;
@@ -260,7 +264,7 @@
 
     .cancel-icon {
       font-size: 1.25rem;
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('icon-neutral-default-hover');
     }
   }
 }
