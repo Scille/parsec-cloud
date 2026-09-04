@@ -5,7 +5,7 @@ import json
 from click.testing import CliRunner
 from pydantic import TypeAdapter
 
-from parsec._parsec import DateTime
+from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.cli.tasks import list_organization
 from parsec.cli.testbed import TestbedBackend
 from parsec.components.organization import Organization
@@ -44,6 +44,7 @@ async def test_list_organization(coolorg: CoolorgRpcClients, testbed: TestbedBac
         is_expired=False,
         user_profile_outsider_allowed=True,
         realm_minimum_archiving_period_before_deletion=testbed.backend.config.organization_initial_realm_deletion_min_archiving_period,
+        active_users_limit=coolorg_org.active_users_limit,
     )
 
 
@@ -58,6 +59,7 @@ async def test_serialization(coolorg: CoolorgRpcClients):
         is_bootstrapped=True,
         user_profile_outsider_allowed=True,
         realm_minimum_archiving_period_before_deletion=5,
+        active_users_limit=ActiveUsersLimit.limited_to(5),
     )
 
     adapter = TypeAdapter(list_organization.OrganizationInfo)
@@ -66,6 +68,7 @@ async def test_serialization(coolorg: CoolorgRpcClients):
     print(raw_info)
     assert raw_info["id"] == info.id.str
     assert raw_info["bootstrapped_on"] == now.to_rfc3339()
+    assert raw_info["active_users_limit"] == 5
 
     got = adapter.validate_json(serialized)
     assert got == info

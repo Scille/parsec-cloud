@@ -7,7 +7,14 @@ from contextlib import asynccontextmanager
 import click
 import pydantic
 
-from parsec._parsec import DateTime, EmailAddress, OrganizationID, ParsecAddr, SecretKey
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    EmailAddress,
+    OrganizationID,
+    ParsecAddr,
+    SecretKey,
+)
 from parsec.cli.options import asyncio_run, db_server_options, logging_config_options
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.components.memory.events import event_bus_factory
@@ -34,7 +41,7 @@ class OrganizationInfo:
     bootstrapped_on: DateTime | None
     is_expired: bool
     expired_on: DateTime | None
-    # active_users_limit: ActiveUsersLimit
+    active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
     realm_minimum_archiving_period_before_deletion: int
     # tos: TermsOfService | None
@@ -49,7 +56,9 @@ class OrganizationInfo:
             expired_on=dump.expired_on,
             is_expired=dump.is_expired,
             user_profile_outsider_allowed=dump.user_profile_outsider_allowed,
+            active_users_limit=dump.active_users_limit,
             realm_minimum_archiving_period_before_deletion=dump.realm_minimum_archiving_period_before_deletion,
+            # tos=dump.tos,
         )
 
 
