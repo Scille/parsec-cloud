@@ -11,7 +11,7 @@
       class="back-button"
     >
       <ion-icon :icon="chevronBack" />
-      <ion-text class="button-medium">
+      <ion-text class="back-button__text">
         {{ $msTranslate(parentHistory.slice(-1)[0].name) }}
       </ion-text>
     </div>
@@ -97,19 +97,23 @@ function saveHeight(): void {
 .file-controls-dropdown-popover {
   overflow-y: auto;
   max-height: 20em;
-  padding: 0;
+  padding: ms.spacing('padding-none');
 
   .back-button {
     display: flex;
     align-items: center;
-    gap: 0.5em;
-    padding: 0.75rem;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-2xl');
     cursor: pointer;
-    color: var(--parsec-color-light-secondary-hard-grey);
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    color: ms.color('text-base-description');
+    border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
+
+    &__text {
+      @include ms.font('label-md-medium');
+    }
 
     &:hover {
-      color: var(--parsec-color-light-primary-700);
+      color: ms.color('text-brand-default-hover');
     }
 
     ion-icon {
@@ -119,9 +123,9 @@ function saveHeight(): void {
 }
 
 .dropdown-list-items {
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 </style>

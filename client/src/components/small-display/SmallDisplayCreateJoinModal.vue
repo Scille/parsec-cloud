@@ -21,10 +21,10 @@
             class="item-icon"
           />
           <div class="item-content">
-            <ion-label class="item-content__title subtitles-normal">
+            <ion-label class="item-content__title">
               {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationTitle') }}
             </ion-label>
-            <ion-text class="item-content__description body">
+            <ion-text class="item-content__description">
               {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationSubtitle') }}
             </ion-text>
           </div>
@@ -39,10 +39,10 @@
             class="item-icon"
           />
           <div class="item-content">
-            <ion-label class="item-content__title subtitles-normal">
+            <ion-label class="item-content__title">
               {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationTitle') }}
             </ion-label>
-            <ion-text class="item-content__description body">
+            <ion-text class="item-content__description">
               {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationSubtitle') }}
             </ion-text>
           </div>
@@ -76,13 +76,13 @@ async function onCloseRequested(): Promise<void> {
 }
 
 .create-join-modal-content {
-  padding: 0 1.5rem 1.5rem;
+  padding: ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-4xl');
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__description {
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-neutral-default');
     margin-bottom: 1rem;
   }
 }
@@ -90,21 +90,22 @@ async function onCloseRequested(): Promise<void> {
 .create-join-modal-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 0;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-none');
+  margin-bottom: 2rem;
 
   &__item {
-    --background-hover: var(--parsec-color-light-primary-50);
-    --background-hover-opacity: 1;
+    --background-hover: #{ms.color('surface-brand-default-subtle-hover')};
+    --background-hover-opacity: #{ms.opacity('10')};
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 
     &::part(native) {
-      border-radius: var(--parsec-radius-12);
-      background: var(--parsec-color-light-secondary-background);
-      border: 1px solid var(--parsec-color-light-secondary-premiere);
-      padding: 1.5rem;
-      gap: 1rem;
+      border-radius: ms.radius('2xl');
+      background: ms.color('surface-base-default-secondary');
+      border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+      padding: ms.spacing('padding-2xl');
+      gap: ms.spacing('gap-2xl');
     }
 
     &:hover {
@@ -112,22 +113,24 @@ async function onCloseRequested(): Promise<void> {
     }
 
     .item-icon {
-      color: var(--parsec-color-light-primary-600);
-      font-size: 2rem;
+      color: ms.color('icon-brand-default');
+      font-size: 1.5rem;
     }
 
     .item-content {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-xs');
 
       &__title {
-        color: var(--parsec-color-light-primary-600);
+        @include ms.font('label-lg-medium');
+        color: ms.color('text-brand-default');
       }
 
       &__description {
-        color: var(--parsec-color-light-secondary-soft-text);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-neutral-default');
       }
     }
   }

@@ -120,4 +120,8 @@ defineProps<{
 }>();
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.menu-secondary-collapse-buttons-item {
+  @include ms.font('label-lg-medium');
+}
+</style>

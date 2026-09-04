@@ -34,7 +34,7 @@
             v-if="singleEntry"
             class="element-details-title"
           >
-            <ion-text class="element-details-title__name form-input">
+            <ion-text class="element-details-title__name">
               <strong> {{ singleEntry.name }} </strong>
             </ion-text>
           </div>
@@ -45,7 +45,7 @@
             @click="toggleFileList"
           >
             <ms-rich-text
-              class="element-details-title__name form-input"
+              class="element-details-title__name"
               :text="{
                 key:
                   props.status === FileOperationEvents.Added
@@ -59,7 +59,7 @@
               :icon="chevronDown"
             />
           </div>
-          <div class="element-details-info button-small">
+          <div class="element-details-info">
             <ion-text
               v-if="singleEntry"
               v-show="props.status === FileOperationEvents.Progress || (props.status === FileOperationEvents.Finished && !isHovered)"
@@ -99,7 +99,7 @@
           class="waiting-info"
           v-if="props.status === FileOperationEvents.Added"
         >
-          <ion-text class="waiting-text form-input">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.waiting') }}
           </ion-text>
         </div>
@@ -109,7 +109,7 @@
           class="finalizing-info"
           v-if="props.status === FileOperationEvents.Finalizing"
         >
-          <ion-text class="waiting-text form-input">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.finalizing') }}
           </ion-text>
         </div>
@@ -119,9 +119,7 @@
           class="progress-info"
           v-if="props.status === FileOperationEvents.Progress && props.eventData"
         >
-          <ion-text class="progress-percentage button-small default-state">
-            {{ (eventData as OperationProgressEventData).global.progress }}%
-          </ion-text>
+          <ion-text class="progress-percentage default-state"> {{ (eventData as OperationProgressEventData).global.progress }}% </ion-text>
           <ms-spinner class="progress-spinner default-state" />
           <ion-button
             fill="clear"
@@ -222,6 +220,22 @@ const singleEntry = computed(() => {
 </script>
 
 <style scoped lang="scss">
+.file-operation-item .element-details-title__name {
+  @include ms.font('label-md-medium');
+}
+
+.file-operation-item .element-details-info {
+  @include ms.font('label-sm-medium');
+}
+
+.waiting-text {
+  @include ms.font('label-md-medium');
+}
+
+.progress-percentage {
+  @include ms.font('label-sm-medium');
+}
+
 .element {
   .file-icon {
     min-width: 1.825rem;
@@ -236,16 +250,16 @@ const singleEntry = computed(() => {
 }
 
 .failed-content {
-  color: var(--parsec-color-light-danger-500);
+  color: ms.color('text-error-default');
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: ms.spacing('gap-md');
 
   .information-icon {
     font-size: 1.375rem;
 
     &:hover {
-      color: var(--parsec-color-light-danger-700);
+      color: ms.color('icon-error-default-hover');
     }
   }
 }

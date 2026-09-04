@@ -5,13 +5,13 @@
     class="avatar-container"
     :class="{ clickable: clickable }"
   >
-    <ion-avatar class="avatar person-avatar button-small">
+    <ion-avatar class="avatar person-avatar">
       {{ userAvatar.substring(0, 2) }}
     </ion-avatar>
 
     <div class="person-name-container">
       <ion-text
-        class="person-name button-medium"
+        class="person-name"
         v-if="userName"
         :title="userName"
       >
@@ -19,7 +19,7 @@
       </ion-text>
 
       <ion-text
-        class="person-description button-medium"
+        class="person-description"
         :title="userAvatar"
         v-if="userDescription"
       >
@@ -45,7 +45,7 @@ defineProps<{
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-lg');
   overflow: hidden;
 
   --width: 2rem;
@@ -59,7 +59,8 @@ defineProps<{
     height: var(--height);
     min-width: var(--width);
     max-width: var(--width);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
+    @include ms.font('label-md-emphasis');
+    border: ms.border('thin') solid ms.color('border-base-default');
 
     &:first-of-type {
       margin-left: 0;
@@ -67,33 +68,33 @@ defineProps<{
   }
 
   .person-name {
+    @include ms.font('label-md-emphasis');
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  &.medium {
-    --width: 2.5rem;
-    --height: 2.5rem;
+  &.small {
+    --width: 1.5rem;
+    --height: 1.5rem;
+
+    .avatar,
+    .person-name {
+      @include ms.font('label-sm-emphasis');
+    }
   }
 
   &.large {
-    .avatar {
-      height: 3rem;
-      min-width: 3rem;
-    }
-    .person-avatar {
-      width: 100%;
-    }
+    --width: 2.5rem;
+    --height: 2.5rem;
 
-    .person-name {
-      padding-top: 0;
-      padding-left: 0;
+    .avatar {
+      @include ms.font('label-lg-emphasis');
     }
   }
 
   &:not(.main-cell) .person-name {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-label');
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -103,9 +104,9 @@ defineProps<{
     cursor: pointer;
     &:hover {
       .person-name {
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('text-base-label');
         text-decoration: underline;
-        text-decoration-color: var(--parsec-color-light-primary-500);
+        text-decoration-color: ms.color('text-brand-default');
       }
     }
   }
@@ -113,10 +114,11 @@ defineProps<{
   .person-name-container {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: ms.spacing('gap-none');
 
     .person-description {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-description');
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
@@ -126,11 +128,11 @@ defineProps<{
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .main-cell {
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-label');
 }
 
 .person-avatar {
-  color: var(--parsec-color-light-primary-500);
-  background-color: var(--parsec-color-light-primary-50);
+  color: ms.color('text-brand-default');
+  background-color: ms.color('surface-brand-default-subtle');
 }
 </style>

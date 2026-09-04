@@ -8,7 +8,7 @@
     <div class="circle-outer">
       <div class="circle-inner">
         <ion-text
-          class="circle__amount title-h5"
+          class="circle__amount"
           :class="state"
         >
           {{ amountValue }}%
@@ -38,38 +38,42 @@ const amountValueComputed = computed(() => {
   color: var(--color);
 
   &.default {
-    --color: var(--parsec-color-light-secondary-text);
+    --color: #{ms.color('text-neutral-default')};
   }
 
   &.warning {
-    --color: var(--parsec-color-light-warning-500);
+    --color: #{ms.color('text-warning-default')};
   }
 
   &.danger {
-    --color: var(--parsec-color-light-danger-500);
+    --color: #{ms.color('text-error-default')};
   }
 
   &.success {
-    --color: var(--parsec-color-light-success-500);
+    --color: #{ms.color('text-success-default')};
   }
 
   &.active {
-    --color: var(--parsec-color-light-primary-500);
+    --color: #{ms.color('text-brand-default')};
   }
+}
+
+.circle__amount {
+  @include ms.font('heading-h6');
 }
 
 .circle-container {
   --percentage: v-bind(amountValueComputed);
   --thickness: 0.5rem;
-  --color: var(--parsec-color-light-secondary-text);
+  --color: #{ms.color('text-neutral-default')};
   --size: 5rem;
 
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 0.75rem;
-  border-radius: var(--parsec-radius-circle);
+  gap: ms.spacing('gap-2xl');
+  border-radius: ms.radius('full');
   position: relative;
 
   .circle-outer {
@@ -79,16 +83,16 @@ const amountValueComputed = computed(() => {
     justify-content: center;
     width: var(--size);
     height: var(--size);
-    border-radius: var(--parsec-radius-circle);
+    border-radius: ms.radius('full');
 
     &::before {
       content: '';
       position: absolute;
       width: calc(100% - 1rem);
       height: calc(100% - 1rem);
-      border-radius: var(--parsec-radius-circle);
-      border: 0.5rem solid var(--parsec-color-light-secondary-text);
-      opacity: 0.1;
+      border-radius: ms.radius('full');
+      border: 0.5rem solid ms.color('border-neutral-default');
+      opacity: ms.opacity('1');
     }
   }
 
@@ -123,7 +127,7 @@ const amountValueComputed = computed(() => {
   }
 
   .circle__description {
-    color: var(--parsec-color-light-secondary-grey);
+    color: ms.color('text-base-description');
   }
 }
 </style>

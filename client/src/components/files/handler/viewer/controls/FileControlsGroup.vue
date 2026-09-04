@@ -13,10 +13,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   @include ms.responsive-breakpoint('sm') {
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 </style>

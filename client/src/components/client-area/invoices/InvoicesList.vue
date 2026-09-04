@@ -5,25 +5,27 @@
     <!-- row header -->
     <ion-list class="invoices-year-header-list ion-no-padding">
       <ion-item class="invoices-year-header-list-item invoices-date">
-        <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.date') }}</ion-text>
+        <ion-text class="invoices-year-header-list-item__label">{{ $msTranslate('clientArea.invoices.cell.date') }}</ion-text>
       </ion-item>
       <ion-item class="invoices-year-header-list-item invoices-number">
-        <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.number') }}</ion-text>
+        <ion-text class="invoices-year-header-list-item__label">{{ $msTranslate('clientArea.invoices.cell.number') }}</ion-text>
       </ion-item>
       <ion-item class="invoices-year-header-list-item invoices-organization">
-        <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.organization') }}</ion-text>
+        <ion-text class="invoices-year-header-list-item__label">{{ $msTranslate('clientArea.invoices.cell.organization') }}</ion-text>
       </ion-item>
       <ion-item class="invoices-year-header-list-item invoices-amount">
-        <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.price.title') }}</ion-text>
+        <ion-text class="invoices-year-header-list-item__label">{{ $msTranslate('clientArea.invoices.cell.price.title') }}</ion-text>
       </ion-item>
       <ion-item
         v-if="invoices.some((invoice: Invoice) => invoice.getType() === InvoiceType.Sellsy)"
         class="invoices-year-header-list-item invoices-contract-period"
       >
-        <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.contractPeriod.title') }}</ion-text>
+        <ion-text class="invoices-year-header-list-item__label">
+          {{ $msTranslate('clientArea.invoices.cell.contractPeriod.title') }}
+        </ion-text>
       </ion-item>
       <ion-item class="invoices-year-header-list-item invoices-status">
-        <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.status') }}</ion-text>
+        <ion-text class="invoices-year-header-list-item__label">{{ $msTranslate('clientArea.invoices.cell.status') }}</ion-text>
       </ion-item>
     </ion-list>
 
@@ -64,18 +66,22 @@ defineProps<{
   margin-bottom: 0.5rem;
   position: sticky;
   top: 0;
-  background: var(--parsec-color-light-secondary-premiere);
+  background: ms.color('surface-base-page-secondary');
   z-index: 2;
   min-width: 35rem;
 
   &-item {
-    --padding-start: 0;
-    --padding-end: 0;
-    --padding-top: 0;
-    --padding-bottom: 0;
+    --padding-start: #{ms.spacing('padding-none')};
+    --padding-end: #{ms.spacing('padding-none')};
+    --padding-top: #{ms.spacing('padding-none')};
+    --padding-bottom: #{ms.spacing('padding-none')};
     --background: none;
-    padding: 0.375rem 1rem;
-    color: var(--parsec-color-light-secondary-grey);
+    padding: ms.spacing('padding-md') ms.spacing('padding-3xl');
+    color: ms.color('text-base-description');
+
+    &__label {
+      @include ms.font('label-md-emphasis');
+    }
   }
 }
 
@@ -83,7 +89,7 @@ defineProps<{
   display: flex;
   flex-direction: column;
   --ion-safe-area-left: 0;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   background: none;
   min-width: fit-content;
 }
@@ -125,7 +131,7 @@ defineProps<{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     flex-grow: 1;
     flex-basis: var(--max-width-date);
     min-width: 12rem;

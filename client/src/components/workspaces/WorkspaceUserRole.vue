@@ -10,7 +10,7 @@
       />
       <span
         v-if="isCurrentUser"
-        class="body content-user--self"
+        class="content-user--self"
       >
         {{ $msTranslate('UsersPage.currentUser') }}
       </span>
@@ -79,7 +79,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
 
 <style scoped lang="scss">
 .workspace-user-role {
-  padding: 0.625rem 0.5rem;
+  padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -91,7 +91,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
     position: absolute;
     display: block;
     width: calc(100% - 3rem);
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
     bottom: 0;
     right: 0;
   }
@@ -101,15 +101,20 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
   flex-shrink: 0;
 }
 
+.workspace-user-role .dropdown.dropdown-container {
+  width: auto;
+}
+
 .content-user {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
   display: flex;
-  gap: 0.25rem;
+  gap: ms.spacing('gap-sm');
 
   &--self {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
   }
 }
 </style>

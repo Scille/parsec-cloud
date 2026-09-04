@@ -135,6 +135,6 @@ async function validateZoomLevel(value: string): Promise<string> {
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 </style>

@@ -17,7 +17,7 @@
         :image="item.image"
         class="left-icon"
       />
-      <ion-text class="left-text button-medium">{{ $msTranslate(item.label) }}</ion-text>
+      <ion-text class="left-text">{{ $msTranslate(item.label) }}</ion-text>
     </div>
     <ion-icon
       class="checkmark"
@@ -25,7 +25,7 @@
       :icon="checkmark"
     />
     <div
-      class="right-text button-medium"
+      class="right-text"
       v-if="item.children"
     >
       {{ $msTranslate(getActiveChildLabel()) }}
@@ -65,44 +65,46 @@ function getActiveChildLabel(): Translatable {
 .file-controls-dropdown-item {
   display: flex;
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
   justify-content: space-between;
   align-items: center;
-  border-radius: var(--parsec-radius-6);
+  border-radius: ms.radius('md');
 
   &-active {
-    background-color: var(--parsec-color-light-primary-50);
+    background-color: ms.color('surface-brand-default-subtle');
   }
 
   &:hover:not(.dropdown-item-active) {
-    color: var(--parsec-color-light-secondary-text);
-    background-color: var(--parsec-color-light-secondary-background);
+    color: ms.color('text-neutral-default');
+    background-color: ms.color('surface-neutral-default-subtle-hover');
   }
 
   .left {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('label-md-medium');
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-neutral-default');
 
     &-icon {
       font-size: 1.125rem;
       width: 1.125rem;
       height: 1.125rem;
-      color: var(--parsec-color-light-secondary-text);
-      --fill-color: var(--parsec-color-light-secondary-text);
+      color: ms.color('icon-neutral-default');
+      --fill-color: #{ms.color('icon-neutral-default')};
     }
   }
 
   .right-text {
     display: flex;
     align-items: center;
-    color: var(--parsec-color-light-secondary-grey);
-    gap: 0.5rem;
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-description');
+    gap: ms.spacing('gap-lg');
   }
 
   .checkmark {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('icon-brand-default-hover');
     font-size: 1rem;
   }
 }

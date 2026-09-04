@@ -3,7 +3,7 @@
 <!-- eslint-disable vue/html-indent -->
 <template>
   <div class="order-content-details">
-    <ion-text class="order-content-details-header subtitles-sm">
+    <ion-text class="order-content-details-header">
       {{ $msTranslate('clientArea.orders.new.details') }}
     </ion-text>
     <!-- No contract created at this step, users and storage estimation requested only -->
@@ -12,29 +12,29 @@
       v-if="[OrderStep.Received, OrderStep.Processing, OrderStep.Confirmed].includes(orderStep)"
     >
       <div class="details-list-item">
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="people" />
           {{ $msTranslate('clientArea.orders.new.usersNeed') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">{{ $msTranslate(getUserOptions(request.standardUsers)) }}</ion-text>
+        <ion-text class="details-list-item__data">{{ $msTranslate(getUserOptions(request.standardUsers)) }}</ion-text>
       </div>
       <div class="details-list-item">
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="pieChart" />
           {{ $msTranslate('clientArea.orders.new.dataNeeded') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">{{ $msTranslate(getStorageOptions(request.storage)) }}</ion-text>
+        <ion-text class="details-list-item__data">{{ $msTranslate(getStorageOptions(request.storage)) }}</ion-text>
       </div>
       <!-- comment -->
       <div
         class="details-list-item"
         id="detail-comment"
       >
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="chatbubbleEllipses" />
           {{ $msTranslate('clientArea.orders.new.comment') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{ request.describedNeeds }}
         </ion-text>
       </div>
@@ -46,11 +46,11 @@
       v-if="orderDetails && [OrderStep.InvoiceToBePaid, OrderStep.Available].includes(orderStep)"
     >
       <div class="details-list-item">
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="people" />
           {{ $msTranslate('clientArea.orders.new.usersNeed') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{
             $msTranslate({
               key: 'clientArea.orders.quantityOrdered.administrator',
@@ -63,7 +63,7 @@
             class="checkmark-icon"
           />
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{
             $msTranslate({
               key: 'clientArea.orders.quantityOrdered.standard',
@@ -76,7 +76,7 @@
             class="checkmark-icon"
           />
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{
             $msTranslate({
               key: 'clientArea.orders.quantityOrdered.outsider',
@@ -91,11 +91,11 @@
         </ion-text>
       </div>
       <div class="details-list-item">
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="pieChart" />
           {{ $msTranslate('clientArea.orders.new.dataNeeded') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{ $msTranslate(formatFileSize(orderDetails.storage.quantityOrdered)) }}
 
           <ion-icon
@@ -109,11 +109,11 @@
         class="details-list-item"
         v-if="request.organizationId"
       >
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="time" />
           {{ $msTranslate('clientArea.orders.new.startDate') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{ $msTranslate(I18n.formatDate(orderDetails.created, 'short')) }}
           <ion-icon
             :icon="checkmark"
@@ -126,11 +126,11 @@
         class="details-list-item"
         v-if="request.organizationId"
       >
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="time" />
           {{ $msTranslate('clientArea.orders.new.endDate') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{ $msTranslate(I18n.formatDate(orderDetails.dueDate, 'short')) }}
           <ion-icon
             :icon="checkmark"
@@ -142,11 +142,11 @@
         v-if="orderStep === OrderStep.Available && orderDetails"
         class="details-list-item"
       >
-        <ion-text class="details-list-item__title body-lg">
+        <ion-text class="details-list-item__title">
           <ion-icon :icon="wallet" />
           {{ $msTranslate('clientArea.orders.invoiceToBePaid.paid') }}
         </ion-text>
-        <ion-text class="details-list-item__data subtitles-normal">
+        <ion-text class="details-list-item__data">
           {{
             $msTranslate({
               key: 'clientArea.orders.invoiceToBePaid.price',
@@ -167,15 +167,15 @@
       class="details-invoice"
     >
       <div class="details-invoice-text">
-        <ion-text class="details-invoice-text__title title-h4">
+        <ion-text class="details-invoice-text__title">
           {{ $msTranslate('clientArea.orders.invoiceToBePaid.title') }}
         </ion-text>
-        <ion-text class="details-invoice-text__description body">
+        <ion-text class="details-invoice-text__description">
           {{ $msTranslate('clientArea.orders.invoiceToBePaid.description') }}
         </ion-text>
       </div>
       <ion-text class="details-invoice-price">
-        <span class="title-h4">
+        <span class="details-invoice-price__amount">
           {{
             $msTranslate({
               key: 'clientArea.orders.invoiceToBePaid.price',
@@ -262,39 +262,42 @@ onMounted(async () => {
 .order-content-details {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   max-width: 28rem;
   margin: 2.5rem;
   width: 100%;
 
   &-header {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('body-md-medium');
+    color: ms.color('text-base-description');
   }
 
   .details-list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     &-item {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
       justify-content: space-between;
       flex-wrap: wrap;
 
       &__title {
+        @include ms.font('body-lg-regular');
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-secondary-hard-grey);
+        gap: ms.spacing('gap-lg');
+        color: ms.color('text-base-description');
       }
 
       &__data {
-        color: var(--parsec-color-light-secondary-soft-text);
-        padding: 0.5rem 0.75rem;
-        background: var(--parsec-color-light-secondary-premiere);
-        border-radius: var(--parsec-radius-8);
+        @include ms.font('body-lg-medium');
+        color: ms.color('text-neutral-default');
+        padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
+        background: ms.color('surface-base-page-secondary');
+        border-radius: ms.radius('lg');
         max-width: 15rem;
         margin-left: auto;
         text-align: end;
@@ -304,7 +307,7 @@ onMounted(async () => {
         .checkmark-icon {
           position: absolute;
           right: -1.5rem;
-          color: var(--parsec-color-light-primary-700);
+          color: ms.color('icon-brand-default');
           margin-left: 0.5rem;
         }
       }
@@ -315,7 +318,6 @@ onMounted(async () => {
 
         .details-list-item__data {
           max-width: 100%;
-          padding: 1rem;
           text-align: start;
         }
       }
@@ -329,28 +331,34 @@ onMounted(async () => {
   .details-invoice {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     margin-top: 0.5rem;
-    border-top: 1px solid var(--parsec-color-light-secondary-medium);
-    padding-top: 1.5rem;
+    border-top: ms.border('thin') solid ms.color('border-base-default');
+    padding-top: ms.spacing('padding-4xl');
 
     &-text {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__title {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('heading-h5');
+        color: ms.color('text-base-body');
       }
 
       &__description {
-        color: var(--parsec-color-light-secondary-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
 
     &-price {
-      color: var(--parsec-color-light-secondary-soft-text);
+      color: ms.color('text-neutral-default');
       text-align: end;
+
+      &__amount {
+        @include ms.font('heading-h5');
+      }
     }
   }
 }

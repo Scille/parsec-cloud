@@ -101,17 +101,17 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
 .provider-card {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-content {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     position: relative;
     align-items: center;
 
     .disabled {
       pointer-events: none;
-      opacity: 0.2;
+      opacity: ms.opacity('2');
     }
   }
 
@@ -120,9 +120,9 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     top: 1.75rem;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: 50%;
-    padding: 0.125rem;
+    background: ms.color('surface-base-default');
+    border-radius: ms.radius('full');
+    padding: ms.spacing('padding-xs');
   }
 }
 </style>

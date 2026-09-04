@@ -4,7 +4,7 @@
   <div class="time-container">
     <ion-list class="time-list">
       <ion-text
-        class="time-list-item ion-no-padding button-medium"
+        class="time-list-item ion-no-padding"
         :class="{ selected: selected !== undefined && selected.includes(time.key) }"
         v-for="time in times.set"
         :key="time.key"
@@ -51,38 +51,40 @@ async function select(selected: any): Promise<void> {
 
 .time-container {
   display: flex;
-  --background: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 0.25rem;
+  --background: #{ms.color('surface-base-default')};
+  padding: ms.spacing('padding-sm');
 
   .time-list {
+    width: 100%;
     display: flex;
     flex-wrap: wrap;
-    padding: 0;
-    gap: 0.125rem;
+    padding: ms.spacing('padding-none');
+    gap: ms.spacing('gap-xs');
 
     &-item {
+      @include ms.font('label-md-medium');
       display: flex;
       justify-content: center;
-      color: var(--parsec-color-light-secondary-hard-grey);
-      padding: 0.5rem;
+      color: ms.color('text-base-description');
+      padding: ms.spacing('padding-lg');
       max-width: 4rem;
       width: 100%;
-      border-radius: var(--parsec-radius-6);
+      border-radius: ms.radius('md');
       cursor: pointer;
       user-select: none;
 
       &:hover {
-        background: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-primary-700);
+        background: ms.color('surface-neutral-default-subtle-hover');
+        color: ms.color('text-brand-default-hover');
       }
 
       &.selected {
-        background: var(--parsec-color-light-primary-100);
-        color: var(--parsec-color-light-primary-700);
+        background: ms.color('surface-brand-default-subtle');
+        color: ms.color('text-brand-default');
 
         &:hover {
-          background: var(--parsec-color-light-primary-50);
-          color: var(--parsec-color-light-primary-700);
+          background: ms.color('surface-brand-default-subtle-hover');
+          color: ms.color('text-brand-default');
         }
       }
     }

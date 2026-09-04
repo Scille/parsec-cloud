@@ -11,7 +11,7 @@
 
   <!-- no orders -->
   <ion-text
-    class="body-lg no-orders"
+    class="no-orders"
     v-else
   >
     {{ $msTranslate('clientArea.orders.noOrders') }}
@@ -28,4 +28,8 @@ defineProps<{
 }>();
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.no-orders {
+  @include ms.font('body-lg-regular');
+}
+</style>

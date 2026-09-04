@@ -2,17 +2,17 @@
 
 <template>
   <ion-item class="invoices-year-content-list-item ion-no-padding">
-    <ion-text class="invoices-year-content-list-item__data invoices-date subtitles-sm">
+    <ion-text class="invoices-year-content-list-item__data invoices-date">
       {{ $msTranslate(I18n.formatDate(invoice.getDate(), 'narrow')) }}
     </ion-text>
-    <ion-text class="invoices-year-content-list-item__data invoices-number body">{{ invoice.getNumber() }}</ion-text>
-    <ion-text class="invoices-year-content-list-item__data invoices-organization body">{{ invoice.getOrganizationId() }}</ion-text>
-    <ion-text class="invoices-year-content-list-item__data invoices-amount body">
+    <ion-text class="invoices-year-content-list-item__data invoices-number">{{ invoice.getNumber() }}</ion-text>
+    <ion-text class="invoices-year-content-list-item__data invoices-organization">{{ invoice.getOrganizationId() }}</ion-text>
+    <ion-text class="invoices-year-content-list-item__data invoices-amount">
       {{ $msFormatCurrency(invoice.getAmount()) }}
     </ion-text>
     <template v-if="invoice.getType() === InvoiceType.Sellsy">
       <ion-text
-        class="invoices-year-content-list-item__data invoices-contract-period body"
+        class="invoices-year-content-list-item__data invoices-contract-period"
         v-if="(invoice as SellsyInvoice).getLicenseStart() && (invoice as SellsyInvoice).getLicenseEnd()"
       >
         {{
@@ -27,7 +27,7 @@
       </ion-text>
       <ion-text
         v-else
-        class="subtitles-sm"
+        class="invoices-year-content-list-item__separator"
       >
         /
       </ion-text>
@@ -35,7 +35,7 @@
     <ion-text class="invoices-year-content-list-item__data invoices-status">
       <template v-if="invoice.getType() === InvoiceType.Sellsy">
         <span
-          class="badge-status body-sm"
+          class="badge-status"
           :class="{
             paid: (invoice as SellsyInvoice).getDueAmount() > 0,
             toBePaid: (invoice as SellsyInvoice).getDueAmount() === 0,
@@ -46,7 +46,7 @@
       </template>
       <template v-if="invoice.getType() === InvoiceType.Stripe">
         <span
-          class="badge-status body-sm"
+          class="badge-status"
           :class="{
             paid: invoice.getStatus() === 'paid',
             toBePaid: invoice.getStatus() === 'open',
@@ -56,17 +56,17 @@
           {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.getStatus())) }}
         </span>
       </template>
-      <a
-        class="custom-button custom-button-ghost button-medium"
+      <ion-button
+        fill="clear"
+        class="invoices-year-content-list-item__download color-secondary"
         @click="Env.Links.openUrl(invoice.getLink())"
-        download
       >
         <ms-image
           :image="DownloadIcon"
-          class="custom-button__icon"
+          class="invoices-year-content-list-item__download-icon button-icon-left"
         />
-        <span class="custom-button__label">{{ $msTranslate('clientArea.invoices.cell.download') }}</span>
-      </a>
+        <span class="invoices-year-content-list-item__download-label">{{ $msTranslate('clientArea.invoices.cell.download') }}</span>
+      </ion-button>
     </ion-text>
   </ion-item>
 </template>
@@ -75,7 +75,7 @@
 import { Invoice, InvoiceType, SellsyInvoice } from '@/services/bms';
 import { Env } from '@/services/environment';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
-import { IonItem, IonText } from '@ionic/vue';
+import { IonButton, IonItem, IonText } from '@ionic/vue';
 import { DownloadIcon, I18n, MsImage, Translatable } from 'megashark-lib';
 
 const props = defineProps<{
@@ -93,45 +93,47 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
 
 <style lang="scss" scoped>
 .invoices-year-content-list-item {
-  background: var(--parsec-color-light-secondary-white);
+  background: ms.color('surface-base-default');
   display: flex;
   justify-content: space-between;
   --background: none;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   position: relative;
-  --inner-padding-end: 0;
+  --inner-padding-end: #{ms.spacing('padding-none')};
   align-items: center;
 
   &:hover {
-    background: var(--parsec-color-light-secondary-background);
+    background: ms.color('surface-neutral-default-subtle-hover');
     .invoices-year-content-list-item__data {
-      color: var(--parsec-color-light-secondary-contrast);
+      color: ms.color('text-base-heading');
     }
   }
 
+  &__separator {
+    @include ms.font('body-md-medium');
+  }
+
   &__data {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
     align-self: stretch;
     display: flex;
     align-items: center;
-    padding: 0.5rem 1rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
 
-    .custom-button-ghost {
-      color: var(--parsec-color-light-primary-500);
+    &.invoices-date {
+      @include ms.font('body-md-medium');
+    }
+  }
 
-      .custom-button__icon {
-        width: 1rem;
-        --fill-color: var(--parsec-color-light-primary-500);
-        flex-shrink: 0;
-      }
-
-      &:hover {
-        color: var(--parsec-color-light-primary-600);
-        --fill-color: var(--parsec-color-light-primary-600);
-      }
+  &__download {
+    &-icon {
+      width: 1rem;
+      --fill-color: #{ms.color('icon-neutral-default')};
+      flex-shrink: 0;
     }
 
-    .custom-button__label {
+    &-label {
       @include ms.responsive-breakpoint('md') {
         display: none;
       }
@@ -139,41 +141,26 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
   }
 
   .badge-status {
-    border-radius: var(--parsec-radius-32);
-    padding-inline: 0.5rem;
+    @include ms.font('body-sm-regular');
+    border-radius: ms.radius('6xl');
+    padding-inline: ms.spacing('padding-lg');
     flex-shrink: 0;
-    background: var(--parsec-color-light-secondary-disabled);
-    color: var(--parsec-color-light-secondary-text);
+    background: ms.color('surface-disabled-default');
+    color: ms.color('text-neutral-default');
 
     &.paid {
-      background: var(--parsec-color-light-success-100);
-      color: var(--parsec-color-light-success-700);
+      background: ms.color('surface-success-default-subtle');
+      color: ms.color('text-success-default');
     }
 
     &.toBePaid {
-      background: var(--parsec-color-light-info-100);
-      color: var(--parsec-color-light-info-700);
+      background: ms.color('surface-information-default-subtle');
+      color: ms.color('text-information-default');
     }
 
     &.unavailable {
-      background: var(--parsec-color-light-secondary-medium);
-      color: var(--parsec-color-light-secondary-text);
-    }
-  }
-
-  .custom-button {
-    &__icon {
-      width: 1rem;
-      --fill-color: var(--parsec-color-light-primary-500);
-    }
-
-    &:hover {
-      color: var(--parsec-color-light-primary-600);
-      background: var(--parsec-color-light-primary-50);
-
-      .custom-button__icon {
-        --fill-color: var(--parsec-color-light-primary-600);
-      }
+      background: ms.color('surface-base-default-secondary');
+      color: ms.color('text-neutral-default');
     }
   }
 }
@@ -215,7 +202,7 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     flex-grow: 1;
     flex-basis: var(--max-width-date);
     min-width: 12rem;

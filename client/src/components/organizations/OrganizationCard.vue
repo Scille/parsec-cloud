@@ -11,7 +11,7 @@
     <div class="organization-card-header">
       <ion-text
         v-if="!isTrialOrg"
-        class="organization-card-header__initials subtitles-normal"
+        class="organization-card-header__initials"
       >
         {{ device.organizationId?.substring(0, 2) }}
       </ion-text>
@@ -23,7 +23,7 @@
     </div>
     <ion-card-content class="organization-card-content">
       <div class="organization-card-content-text">
-        <ion-text class="organization-name title-h4">{{ device.organizationId }}</ion-text>
+        <ion-text class="organization-name">{{ device.organizationId }}</ion-text>
       </div>
       <div class="organization-card-content-login">
         <div
@@ -35,7 +35,7 @@
             :icon="time"
             class="login-icon"
           />
-          <ion-text class="login-text body">
+          <ion-text class="login-text">
             {{ getLastLoginText() }}
           </ion-text>
         </div>
@@ -44,19 +44,19 @@
             :icon="person"
             class="login-icon"
           />
-          <ion-text class="login-text login-name body">{{ device.humanHandle.label }}</ion-text>
+          <ion-text class="login-text login-name">{{ device.humanHandle.label }}</ion-text>
         </div>
       </div>
     </ion-card-content>
     <!-- trial expiration badge -->
     <ion-text
       v-if="expirationDuration"
-      class="organization-card-expiration button-small"
+      class="organization-card-expiration"
     >
       {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
     </ion-text>
     <ion-text
-      class="organization-card-badge-connected button-small"
+      class="organization-card-badge-connected"
       v-if="loggedIn"
     >
       <ion-icon
@@ -70,21 +70,20 @@
         {{ $msTranslate('HomePage.organizationList.loggedIn') }}
       </span>
     </ion-text>
-    <ms-image
+    <ion-icon
       v-if="!orgNameOnly && !(isTrialOrg && isSmallDisplay) && !loggedIn"
       class="organization-card-icon"
-      :image="ArrowForwardCircleGradient"
+      :icon="arrowForwardCircle"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import ArrowForwardCircleGradient from '@/assets/images/arrow-forward-circle.svg?raw';
 import { formatExpirationTime, getDurationBeforeExpiration, isTrialOrganizationDevice } from '@/common/organization';
 import { AvailableDevice } from '@/parsec';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { IonCardContent, IonIcon, IonText } from '@ionic/vue';
-import { checkmarkCircle, person, time } from 'ionicons/icons';
+import { arrowForwardCircle, checkmarkCircle, person, time } from 'ionicons/icons';
 import { DateTime, Duration } from 'luxon';
 import { formatTimeSince, I18n, LogoIconWhite, MsImage, useWindowSize } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
@@ -120,16 +119,16 @@ function getLastLoginText(): string {
 
 <style lang="scss" scoped>
 .organization-card {
-  background: var(--parsec-color-light-secondary-premiere);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-12);
+  background: ms.color('surface-elevated-subtle');
+  border: ms.border('thin') solid ms.color('border-elevated-default');
+  border-radius: ms.radius('2xl');
   width: 100%;
   min-height: 5rem;
-  padding-right: 4rem;
+  padding-right: ms.spacing('padding-8xl');
   display: flex;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   user-select: none;
-  box-shadow: none;
+  box-shadow: ms.shadow('elevation-xs');
   overflow: hidden;
   cursor: pointer;
   transition:
@@ -139,25 +138,25 @@ function getLastLoginText(): string {
   flex-shrink: 0;
 
   &-logged-in {
-    padding-right: 1.5rem;
+    padding-right: ms.spacing('padding-4xl');
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding-right: 1rem;
+    padding-right: ms.spacing('padding-3xl');
   }
 
   // when using the card as a header only
   &.header-only {
-    padding: 0 0.5rem 0 0;
+    padding: ms.spacing('padding-none') ms.spacing('padding-lg') ms.spacing('padding-none') ms.spacing('padding-none');
     box-shadow: none;
     border: none;
-    background: var(--parsec-color-light-secondary-background);
     cursor: inherit;
   }
 
   &:hover:not(.header-only) {
+    background: ms.color('surface-elevated-subtle-hover');
     box-shadow: var(--parsec-shadow-light);
-    border: 1px solid var(--parsec-color-light-primary-600);
+    border-color: ms.color('border-brand-default');
 
     .organization-card-icon {
       right: 1rem;
@@ -169,10 +168,10 @@ function getLastLoginText(): string {
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 4rem;
     z-index: 1;
-    background: var(--parsec-color-light-gradient-background);
+    background: linear-gradient(113deg, ms.color('surface-gradient-from') -1.49%, ms.color('surface-gradient-to') 100%);
     position: relative;
 
     @include ms.responsive-breakpoint('xs') {
@@ -198,7 +197,8 @@ function getLastLoginText(): string {
     }
 
     &__initials {
-      color: var(--parsec-color-light-secondary-white);
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-on-color-label');
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -218,26 +218,27 @@ function getLastLoginText(): string {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 1rem 0;
-    gap: 0.25rem;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-none');
+    gap: ms.spacing('gap-sm');
     width: 100%;
     height: 100%;
     overflow: hidden;
     flex-shrink: 1;
 
     @include ms.responsive-breakpoint('xs') {
-      padding: 0.75rem 0;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-none');
       overflow: hidden;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
     }
 
     &-text {
       display: flex;
-      gap: 0.375rem;
+      gap: ms.spacing('gap-md');
       overflow-x: hidden;
 
       .organization-name {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('heading-h5');
+        color: ms.color('text-base-body');
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -246,28 +247,29 @@ function getLastLoginText(): string {
 
     &-login {
       display: flex;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
 
       @include ms.responsive-breakpoint('xs') {
         flex-direction: column;
-        gap: 0.25rem;
+        gap: ms.spacing('gap-sm');
       }
 
       .login-content {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0;
-        color: var(--parsec-color-light-secondary-hard-grey);
+        gap: ms.spacing('gap-lg');
+        padding: ms.spacing('padding-none');
         overflow: hidden;
 
         .login-icon {
-          color: var(--parsec-color-light-secondary-light);
+          color: ms.color('icon-disabled-default');
           font-size: 1rem;
           flex-shrink: 0;
         }
 
         .login-text {
+          @include ms.font('body-md-regular');
+          color: ms.color('text-base-description');
           overflow: hidden;
           white-space: nowrap;
           text-overflow: ellipsis;
@@ -297,6 +299,8 @@ function getLastLoginText(): string {
     margin-left: auto;
     flex-shrink: 0;
     transition: right 150ms linear;
+    color: ms.color('icon-brand-default');
+    font-size: 1.5rem;
 
     @include ms.responsive-breakpoint('xs') {
       position: relative;
@@ -305,20 +309,21 @@ function getLastLoginText(): string {
   }
 
   &-badge-connected {
+    @include ms.font('label-sm-medium');
     display: flex;
     margin: auto;
     align-items: center;
-    padding: 0.1875rem 0.5rem;
-    gap: 0.25rem;
-    color: var(--parsec-color-light-success-700);
-    background: var(--parsec-color-light-success-50);
-    border: 1px solid var(--parsec-color-light-success-700);
-    border-radius: var(--parsec-radius-12);
+    padding: 0.1875rem ms.spacing('padding-lg');
+    gap: ms.spacing('gap-sm');
+    color: ms.color('text-success-default');
+    background: ms.color('surface-success-default-subtle-hover');
+    border: ms.border('thin') solid ms.color('border-success-default');
+    border-radius: ms.radius('2xl');
     height: fit-content;
     flex-shrink: 0;
 
     ion-icon {
-      color: var(--parsec-color-light-success-700);
+      color: ms.color('icon-success-default');
       font-size: 0.8125rem;
     }
 
@@ -328,20 +333,21 @@ function getLastLoginText(): string {
 
       ion-icon {
         font-size: 1.375rem;
-        padding: 0;
+        padding: ms.spacing('padding-none');
       }
     }
   }
 
   &-expiration {
-    border-radius: var(--parsec-radius-12);
-    padding: 0.1875rem 0.5rem;
+    @include ms.font('label-sm-medium');
+    border-radius: ms.radius('2xl');
+    padding: 0.1875rem ms.spacing('padding-lg');
     width: fit-content;
     align-self: center;
     height: fit-content;
     flex-shrink: 0;
-    background: var(--parsec-color-light-secondary-text);
-    color: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-neutral-default');
+    color: ms.color('text-on-color-heading');
 
     @include ms.responsive-breakpoint('xs') {
       margin-left: auto;

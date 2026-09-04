@@ -7,8 +7,10 @@
       v-show="false"
     />
     <file-controls-button
+      class="file-controls-playback-main"
       :class="{ 'flip-horizontal-ion-icon': ended }"
       :icon="playbackIcon"
+      fill="solid"
     />
     <file-controls-button
       :icon="playForward"
@@ -38,5 +40,9 @@ const playbackIcon = computed((): string => {
 <style scoped lang="scss">
 .file-controls-playback::after {
   display: none !important;
+}
+
+.file-controls-playback .file-controls-playback-main::part(native) {
+  border-radius: ms.radius('full');
 }
 </style>

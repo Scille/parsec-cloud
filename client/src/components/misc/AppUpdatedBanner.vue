@@ -9,7 +9,7 @@
     <div class="update-banner-content">
       <ion-button
         id="app-updated-whats-new-button"
-        class="update-banner-whats-new title-h4"
+        class="update-banner-whats-new"
         fill="clear"
         @click="openChanges"
       >
@@ -28,6 +28,7 @@
     </div>
     <ion-button
       id="app-updated-close-button"
+      slot="icon-only"
       class="update-banner-close"
       fill="clear"
       :aria-label="$msTranslate('HomePage.appUpdated.close')"
@@ -77,11 +78,7 @@ async function openChanges(): Promise<void> {
   flex-shrink: 0;
   border-radius: var(--parsec-radius-8);
   z-index: 10;
-  background: linear-gradient(
-    93deg,
-    var(--parsec-color-surface-extra-purple-default, #6600cc) 1%,
-    var(--parsec-color-surface-extra-purple-default-pressed, #330066) 100%
-  );
+  background: linear-gradient(93deg, ms.color('surface-extra-purple-default') 1%, ms.color('surface-extra-purple-default-pressed') 100%);
 
   &-content {
     display: flex;
@@ -93,15 +90,16 @@ async function openChanges(): Promise<void> {
 
   &-whats-new {
     white-space: nowrap;
-    color: var(--parsec-color-text-on-color-label, #f6f6f9);
+    @include ms.font('heading-h5');
+    color: ms.color('text-on-color-label');
     --background: transparent;
     --background-hover: color-mix(in srgb, var(--parsec-color-light-secondary-white) 20%, transparent);
-    --border-radius: var(--parsec-radius-8);
+    --border-radius: #{ms.radius('none')};
     height: 100%;
     margin: 0;
 
     &::part(native) {
-      padding: 0.75rem;
+      padding: ms.spacing('padding-2xl');
     }
 
     @include ms.responsive-breakpoint('sm') {
@@ -109,14 +107,14 @@ async function openChanges(): Promise<void> {
     }
 
     &-text {
-      margin-inline: 0.5rem;
+      margin-inline: ms.spacing('padding-lg');
     }
 
     &-icon {
       width: 1.125rem;
       height: 1.125rem;
       flex-shrink: 0;
-      --fill-color: var(--parsec-color-light-secondary-white);
+      --fill-color: #{ms.color('icon-on-color-body')};
 
       &--open {
         position: relative;
@@ -133,25 +131,21 @@ async function openChanges(): Promise<void> {
   }
 
   &-close {
-    --color: var(--parsec-color-light-secondary-text);
-    --color-hover: var(--parsec-color-light-secondary-text);
-    --background: var(--parsec-color-light-secondary-white);
-    --background-hover: var(--parsec-color-light-secondary-white);
-    --border-radius: var(--parsec-radius-circle);
-    --box-shadow: var(--parsec-shadow-light);
+    --color: #{ms.color('icon-on-color-label')};
+    --color-hover: #{ms.color('surface-base-default')};
+    --background: transparent;
+    --background-hover: color-mix(in srgb, var(--parsec-color-light-secondary-white) 20%, transparent);
     position: absolute;
-    top: -0.5rem;
-    right: -0.5rem;
-    min-height: 0;
+    right: ms.spacing('padding-2xl');
     height: auto;
     margin: 0;
 
     &::part(native) {
-      padding: 0.125rem;
+      padding: ms.spacing('padding-xs');
     }
 
-    &__icon {
-      font-size: 1rem;
+    &:hover {
+      opacity: 1;
     }
   }
 }

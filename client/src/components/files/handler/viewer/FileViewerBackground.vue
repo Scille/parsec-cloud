@@ -2,7 +2,7 @@
 
 <template>
   <div class="file-viewer-background">
-    <img src="@/assets/images/background/background-fileviewer.svg" />
+    <img :src="isDarkTheme ? BackgroundFileViewerDark : BackgroundFileViewer" />
     <ion-icon
       v-if="icon"
       :icon="icon"
@@ -12,7 +12,12 @@
 </template>
 
 <script setup lang="ts">
+import BackgroundFileViewerDark from '@/assets/images/background/background-fileviewer-dark.svg';
+import BackgroundFileViewer from '@/assets/images/background/background-fileviewer.svg';
 import { IonIcon } from '@ionic/vue';
+import { useTheme } from 'megashark-lib';
+
+const { isDarkTheme } = useTheme();
 
 defineProps<{
   icon?: string;
@@ -25,16 +30,16 @@ defineProps<{
   width: 100%;
   max-height: 37.5rem;
   max-width: 75rem;
-  padding: 2rem;
+  padding: ms.spacing('padding-5xl');
   display: flex;
 
   img {
     height: 100%;
     margin: auto;
     width: 100%;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
     overflow: hidden;
-    box-shadow: var(--parsec-shadow-light);
+    box-shadow: ms.shadow('light');
     object-fit: cover;
   }
 
@@ -49,10 +54,9 @@ defineProps<{
     min-width: 3rem;
     min-height: 3rem;
     padding: 1vw;
-    background: var(--parsec-color-light-primary-30-opacity15);
-    border-radius: var(--parsec-radius-12);
-    color: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-3d-strong);
+    border-radius: ms.radius('2xl');
+    color: ms.color('icon-on-color-heading');
+    box-shadow: ms.shadow('3d-strong');
     backdrop-filter: blur(25px);
   }
 }

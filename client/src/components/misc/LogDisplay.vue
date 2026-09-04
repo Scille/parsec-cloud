@@ -51,8 +51,9 @@
           </div>
         </div>
         <ms-feedback-button
-          fill="clear"
-          class="logs-buttons__item button-medium"
+          fill="outline"
+          size="small"
+          class="logs-buttons__item color-secondary"
           id="log-copy-button"
           :callback="copyLogs"
           :normal-state="{ text: 'LogDisplayModal.copy', icon: copy }"
@@ -60,8 +61,9 @@
           :failure-state="{ text: 'LogDisplayModal.copyFailed' }"
         />
         <ms-feedback-button
-          fill="clear"
-          class="logs-buttons__item button-secondary"
+          fill="outline"
+          size="small"
+          class="logs-buttons__item color-secondary"
           id="log-download-button"
           :callback="downloadLogs"
           :normal-state="{ text: 'LogDisplayModal.download', icon: download }"
@@ -158,7 +160,6 @@ async function close(): Promise<void> {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  border-radius: var(--parsec-radius-8);
 }
 
 .log-container {
@@ -166,22 +167,25 @@ async function close(): Promise<void> {
   width: 100%;
   height: 100%;
   flex-direction: column;
-  background-color: var(--parsec-color-light-secondary-premiere);
+  background-color: ms.color('surface-base-page-secondary');
   position: relative;
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  overflow: hidden;
+  border-radius: ms.radius('lg');
 }
 
 .log-area {
-  padding: 1rem;
+  padding: ms.spacing('padding-3xl');
   scrollbar-width: thin;
   scrollbar-gutter: both-edges;
   display: flex;
   width: 100%;
   height: 100%;
   resize: none;
-  background-color: var(--parsec-color-light-secondary-premiere);
-  color: var(--parsec-color-light-primary-text);
+  background-color: ms.color('surface-base-default-secondary');
+  color: ms.color('text-base-body');
   border: none;
-  padding-top: 4rem;
+  padding-top: ms.spacing('padding-8xl');
 }
 
 .logs-buttons {
@@ -189,29 +193,16 @@ async function close(): Promise<void> {
   position: absolute;
   top: 0;
   left: 0;
-  padding: 0.75rem;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-2xl') ms.spacing('padding-2xl');
   display: flex;
   justify-content: flex-end;
-  background-color: var(--parsec-color-light-secondary-premiere);
-  gap: 1rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+  align-items: center;
+  background-color: ms.color('surface-base-page');
+  gap: ms.spacing('gap-3xl');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
   &__item {
-    color: var(--parsec-color-light-secondary-text);
-
-    &::part(native) {
-      box-shadow: var(--parsec-shadow-card);
-      padding: 0.5rem 1rem;
-      background-color: var(--parsec-color-light-secondary-white);
-      --background-hover: var(--parsec-color-light-secondary-disabled);
-      border-radius: var(--parsec-radius-8);
-      transition: background-color 0.15s ease-in-out;
-    }
-
-    &-icon {
-      font-size: 1rem;
-      margin-right: 0.5rem;
-    }
+    height: fit-content;
   }
 }
 
@@ -229,51 +220,49 @@ async function close(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   margin-right: auto;
 
   @include ms.responsive-breakpoint('sm') {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0;
+    gap: ms.spacing('gap-none');
   }
 
   .toggle-view {
     display: flex;
+    align-items: center;
     width: fit-content;
-    background: var(--parsec-color-light-secondary-white);
-    padding: 3px;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-10);
-    box-shadow: var(--parsec-shadow-input);
+    padding: ms.spacing('padding-none');
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    gap: ms.spacing('gap-xs');
+    background: ms.color('surface-base-page-secondary');
+    border-radius: ms.radius('lg');
+    flex-shrink: 0;
+    overflow: hidden;
 
     @include ms.responsive-breakpoint('sm') {
       width: 100%;
     }
 
     &-button {
-      --color: var(--parsec-color-light-secondary-hard-grey);
+      --color: #{ms.color('text-neutral-default')};
+      --color-hover: #{ms.color('text-neutral-default-hover')};
       --background: none;
-      --background-hover: var(--parsec-color-light-secondary-medium);
+      --background-hover: #{ms.color('surface-base-default')};
+      --background-hover-opacity: #{ms.opacity('10')};
+      --background-activated: #{ms.color('surface-base-default')};
+      --border-radius: #{ms.radius('md')};
       margin: 0;
+      opacity: ms.opacity('disabled');
 
       @include ms.responsive-breakpoint('sm') {
         flex: 1;
       }
 
-      &:hover {
-        --color: var(--parsec-color-light-secondary-soft-text);
-      }
-
       &::part(native) {
         display: flex;
-        padding: 0.5rem 0.75rem;
-      }
-
-      &__icon {
-        flex-shrink: 0;
-        font-size: 1.125rem;
-        margin-right: 0.5rem;
+        padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
       }
 
       &__label {
@@ -283,11 +272,11 @@ async function close(): Promise<void> {
       }
 
       &.active {
-        --background: var(--parsec-color-light-secondary-medium);
-        --border-radius: var(--parsec-radius-6);
-        --color: var(--parsec-color-light-primary-700);
+        --background: #{ms.color('surface-base-default')};
+        border-radius: ms.radius('md');
+        box-shadow: ms.shadow('toggle');
         cursor: default;
-        opacity: 1;
+        opacity: ms.opacity('10');
       }
     }
   }

@@ -3,46 +3,52 @@
 <template>
   <!-- header -->
   <div class="invoices-header">
-    <ion-text class="invoices-header-title title-h2">
+    <ion-text class="invoices-header-title">
       {{ $msTranslate(title) }}
     </ion-text>
     <div
       class="invoices-header-filter"
       v-if="invoices.size > 0"
     >
-      <ion-text class="invoices-header-filter__title body">{{ $msTranslate('clientArea.invoices.filter.title') }}</ion-text>
+      <ion-text class="invoices-header-filter__title">{{ $msTranslate('clientArea.invoices.filter.title') }}</ion-text>
       <!-- year filter -->
-      <ion-text
-        class="invoices-header-filter-button button-medium"
+      <ion-button
+        fill="outline"
+        class="invoices-header-filter-button color-secondary"
         @click="openYearFilterPopover($event)"
         :class="{ selected: selectedYears.length > 0 }"
       >
         <ion-icon
           :icon="calendar"
-          class="invoices-header-filter-button__calendar"
+          class="invoices-header-filter-button__calendar button-icon-left"
         />
-        {{ $msTranslate('clientArea.invoices.filter.year') }}
+        <ion-text class="invoices-header-filter-button__text">
+          {{ $msTranslate('clientArea.invoices.filter.year') }}
+        </ion-text>
         <ion-icon
-          class="invoices-header-filter-button__chevron"
+          class="invoices-header-filter-button__chevron button-icon-right"
           :icon="chevronDown"
         />
-      </ion-text>
+      </ion-button>
       <!-- month filter -->
-      <ion-text
-        class="invoices-header-filter-button button-medium"
+      <ion-button
+        fill="outline"
+        class="invoices-header-filter-button color-secondary"
         @click="openMonthFilterPopover($event)"
         :class="{ selected: selectedMonths.length > 0 }"
       >
         <ion-icon
           :icon="calendar"
-          class="invoices-header-filter-button__calendar"
+          class="invoices-header-filter-button__calendar button-icon-left"
         />
-        {{ $msTranslate('clientArea.invoices.filter.month') }}
+        <ion-text class="invoices-header-filter-button__text">
+          {{ $msTranslate('clientArea.invoices.filter.month') }}
+        </ion-text>
         <ion-icon
-          class="invoices-header-filter-button__chevron"
+          class="invoices-header-filter-button__chevron button-icon-right"
           :icon="chevronDown"
         />
-      </ion-text>
+      </ion-button>
     </div>
   </div>
 
@@ -53,7 +59,7 @@
     <ion-text
       v-for="selectedYear in selectedYears"
       :key="selectedYear"
-      class="selected-choice-item subtitles-sm"
+      class="selected-choice-item"
       @click="removeSelectedYear(selectedYear)"
     >
       {{ $msTranslate({ key: 'common.date.asIs', data: { date: selectedYear } }) }}
@@ -63,7 +69,7 @@
       />
     </ion-text>
     <ion-text
-      class="selected-choice-item subtitles-sm"
+      class="selected-choice-item"
       v-for="selectedMonth in selectedMonths"
       :key="selectedMonth"
       @click="removeSelectedMonth(selectedMonth)"
@@ -98,13 +104,13 @@
 
   <!-- no invoices -->
   <template v-if="!querying && invoices.size === 0 && !error">
-    <ion-text class="body-lg no-invoices">
+    <ion-text class="no-invoices">
       {{ $msTranslate('clientArea.invoices.noInvoice') }}
     </ion-text>
   </template>
   <span
     v-show="error"
-    class="form-error body"
+    class="form-error"
   >
     {{ $msTranslate(error) }}
   </span>
@@ -115,7 +121,7 @@ import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 import YearInvoicesListItem from '@/components/client-area/invoices/YearInvoicesListItem.vue';
 import YearInvoicesListSkeleton from '@/components/client-area/invoices/YearInvoicesListSkeleton.vue';
 import { Invoice } from '@/services/bms';
-import { IonIcon, IonText, popoverController } from '@ionic/vue';
+import { IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
 import { calendar, chevronDown, close } from 'ionicons/icons';
 import { Info } from 'luxon';
 import { I18n, MsOptions, Translatable } from 'megashark-lib';
@@ -217,55 +223,28 @@ function removeSelectedMonth(month: number): void {
 .invoices-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   flex-wrap: wrap;
 
   &-title {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('heading-h3');
+    color: ms.color('text-brand-default');
     width: fit-content;
   }
 
   &-filter {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     align-items: center;
     margin-left: auto;
 
     &__title {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
     }
 
     &-button {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-hard-grey);
-      padding: 0.375rem 0.625rem;
-      border-radius: var(--parsec-radius-6);
-      border: 1px solid var(--parsec-color-light-secondary-disabled);
-      cursor: pointer;
       position: relative;
-
-      &__calendar {
-        color: var(--parsec-color-light-secondary-light);
-      }
-
-      &__chevron {
-        color: var(--parsec-color-light-secondary-grey);
-      }
-
-      &:hover {
-        color: var(--parsec-color-light-secondary-text);
-        background: var(--parsec-color-light-secondary-background);
-
-        .invoices-header-filter-button__calendar {
-          color: var(--parsec-color-light-secondary-hard-grey);
-        }
-
-        .invoices-header-filter-button__chevron {
-          color: var(--parsec-color-light-secondary-text);
-        }
-      }
 
       // selected
       &.selected::after {
@@ -275,8 +254,8 @@ function removeSelectedMonth(month: number): void {
         right: -4px;
         width: 0.625rem;
         height: 0.625rem;
-        border-radius: var(--parsec-radius-12);
-        background: var(--parsec-color-light-primary-500);
+        border-radius: ms.radius('full');
+        background: ms.color('surface-brand-default');
       }
     }
   }
@@ -284,32 +263,33 @@ function removeSelectedMonth(month: number): void {
 
 .selected-choice {
   display: flex;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   width: 100%;
   flex-wrap: wrap;
 
   &-item {
-    background-color: var(--parsec-color-light-secondary-medium);
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('body-md-medium');
+    background-color: ms.color('surface-base-default-secondary');
+    color: ms.color('text-base-body');
     align-self: center;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.25rem 0.25rem 0.625rem;
-    border-radius: var(--parsec-radius-32);
+    gap: ms.spacing('gap-sm');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-xl');
+    border-radius: ms.radius('6xl');
 
     &__icon {
-      color: var(--parsec-color-light-secondary-grey);
-      border-radius: var(--parsec-radius-12);
-      padding: 0.125rem;
+      color: ms.color('icon-neutral-default');
+      border-radius: ms.radius('2xl');
+      padding: ms.spacing('padding-xs');
     }
 
     &:hover {
       cursor: pointer;
 
       .selected-choice-item__icon {
-        color: var(--parsec-color-light-secondary-white);
-        background-color: var(--parsec-color-light-secondary-text);
+        color: ms.color('icon-neutral-on-color');
+        background-color: ms.color('surface-neutral-default');
       }
     }
   }
@@ -318,7 +298,15 @@ function removeSelectedMonth(month: number): void {
 .invoices-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   position: relative;
+}
+
+.no-invoices {
+  @include ms.font('body-lg-regular');
+}
+
+.form-error {
+  @include ms.font('body-md-regular');
 }
 </style>
