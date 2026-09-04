@@ -81,16 +81,16 @@ import { IonSkeletonText } from '@ionic/vue';
 .skeleton {
   display: flex;
   flex-direction: column;
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   margin-top: 0.5rem;
-  background: var(--parsec-color-light-secondary-premiere);
+  background: ms.color('surface-base-page-secondary');
   --max-width-date: 12rem;
   --max-width-number: 12rem;
   --max-width-organization: 20rem;
   --max-width-contract-period: 20rem;
   --max-width-amount: 10rem;
   transition: padding 0.2s;
-  border-radius: var(--parsec-radius-12);
+  border-radius: ms.radius('2xl');
 
   [class^='invoices-'] {
     height: 1rem;
@@ -118,7 +118,7 @@ import { IonSkeletonText } from '@ionic/vue';
   }
 
   ion-skeleton-text {
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('lg');
   }
 
   &-year {
@@ -129,10 +129,10 @@ import { IonSkeletonText } from '@ionic/vue';
 
   &-header-list {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-8);
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-page-secondary');
+    border-radius: ms.radius('lg');
     position: relative;
     align-items: center;
   }
@@ -140,17 +140,17 @@ import { IonSkeletonText } from '@ionic/vue';
   &-content-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &-item {
-      background: var(--parsec-color-light-secondary-white);
+      background: ms.color('surface-base-default');
       display: flex;
       justify-content: space-between;
-      gap: 0.5rem;
-      border-radius: var(--parsec-radius-8);
+      gap: ms.spacing('gap-lg');
+      border-radius: ms.radius('lg');
       position: relative;
       align-items: center;
-      padding: 0.5rem 1rem;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
     }
   }
 }

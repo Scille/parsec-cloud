@@ -3,14 +3,14 @@
 <template>
   <div class="file-controls-input-container">
     <span
-      class="file-controls-input-prefix subtitles-sm"
+      class="file-controls-input-prefix"
       v-if="prefix"
     >
       {{ $msTranslate(prefix) }}
     </span>
     <ion-text
       v-if="!editing"
-      class="file-controls-input text-only subtitles-normal"
+      class="file-controls-input text-only"
       @click="onTextClick"
     >
       {{ modelValue }}
@@ -129,7 +129,7 @@ async function blur(): Promise<void> {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 
 .file-controls-input {
@@ -138,30 +138,31 @@ async function blur(): Promise<void> {
   margin-bottom: 0px;
   min-width: 3rem;
   text-align: center;
-  color: var(--parsec-color-light-secondary-soft-text);
+  color: ms.color('text-neutral-default');
   transition: all 0.15ms ease-in-out;
 
   &.editing-input {
     --background: none !important;
     --background-hover: none !important;
-    --padding-top: 0.5rem;
-    --padding-bottom: 0.5rem;
-    --padding-end: 0.5rem;
-    --padding-start: 0.5rem;
-    border-radius: var(--parsec-radius-6);
-    --border-width: 0 !important;
-    outline: 1px solid var(--parsec-color-light-secondary-text);
+    --padding-top: #{ms.spacing('padding-lg')};
+    --padding-bottom: #{ms.spacing('padding-lg')};
+    --padding-end: #{ms.spacing('padding-lg')};
+    --padding-start: #{ms.spacing('padding-lg')};
+    border-radius: ms.radius('md');
+    --border-width: #{ms.border('none')} !important;
+    outline: ms.border('thin') solid ms.color('border-neutral-default');
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
   }
 
   &.text-only {
+    @include ms.font('body-lg-medium');
     cursor: pointer;
-    background: var(--parsec-color-light-secondary-background);
-    padding: 0.5rem 0.625rem;
-    outline: 1px solid var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-6);
+    background: ms.color('surface-base-default-secondary');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-xl');
+    outline: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    border-radius: ms.radius('md');
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
@@ -170,15 +171,16 @@ async function blur(): Promise<void> {
   }
 
   &:hover {
-    outline: 1px solid var(--parsec-color-light-secondary-soft-grey);
+    outline: ms.border('thin') solid ms.color('border-base-default-hover');
   }
 
   &-prefix {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-md-medium');
+    color: ms.color('text-neutral-default');
   }
 
   &-suffix {
-    margin-inline-start: 0.25rem !important;
+    margin-inline-start: ms.spacing('gap-sm') !important;
   }
 }
 </style>

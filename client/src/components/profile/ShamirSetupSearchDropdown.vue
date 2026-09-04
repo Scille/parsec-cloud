@@ -17,10 +17,10 @@
         class="option__icon"
       />
       <ion-text class="option__text">
-        <span class="option__text-label subtitles-sm">
+        <span class="option__text-label">
           {{ user.humanHandle.label }}
         </span>
-        <span class="option__text-description body">
+        <span class="option__text-description">
           {{ user.humanHandle.email }}
         </span>
       </ion-text>
@@ -35,7 +35,7 @@
       class="option option--empty"
       lines="none"
     >
-      <ion-text class="option__text option__text--empty subtitles-sm">
+      <ion-text class="option__text option__text--empty">
         {{ $msTranslate('UserSelect.noMatch') }}
       </ion-text>
     </ion-item>
@@ -76,29 +76,29 @@ function onUserClick(user: UserInfo): void {
   flex-direction: column;
   position: absolute;
   width: 100%;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-white);
-  border-radius: var(--parsec-radius-12);
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  background: ms.color('surface-base-default');
+  border-radius: ms.radius('2xl');
   margin-top: 0.5rem;
   max-height: 18rem;
   overflow: auto;
-  padding: 0;
+  padding: ms.spacing('padding-none');
   scrollbar-width: auto;
 }
 
 .option {
   --background-hover: none;
   flex-shrink: 0;
-  --color: var(--parsec-color-light-secondary-hard-grey);
+  --color: #{ms.color('text-base-description')};
   --background: none;
   --min-height: 0;
-  --inner-padding-end: 0;
+  --inner-padding-end: #{ms.spacing('padding-none')};
   --ripple-color: transparent;
   position: relative;
   z-index: 2;
   pointer-events: auto;
   overflow: hidden;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -107,92 +107,95 @@ function onUserClick(user: UserInfo): void {
   }
 
   &::part(native) {
-    padding: 0.625rem 1rem;
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
   }
 
   &::part(container) {
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 
   &__text {
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
     width: 100%;
     overflow: hidden;
 
     &-label {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-base-body');
     }
 
     &-description {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     &--empty {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-base-description');
     }
   }
 
   &__icon {
     flex-shrink: 0;
     font-size: 1rem;
-    color: var(--parsec-color-light-secondary-grey);
+    color: ms.color('icon-neutral-default');
 
     &:first-child {
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('icon-brand-default');
     }
 
     &:last-child {
       opacity: 0;
-      padding: 0.125rem;
-      border-radius: var(--parsec-radius-18);
-      color: var(--parsec-color-light-secondary-grey);
+      padding: ms.spacing('padding-xs');
+      border-radius: ms.radius('4xl');
+      color: ms.color('icon-neutral-default');
       cursor: pointer;
       transform: rotate(45deg);
     }
   }
 
   &:hover:not(.option--selected) {
-    background: var(--parsec-color-light-primary-30);
+    background: ms.color('surface-brand-default-subtle');
 
     .option__icon {
-      opacity: 1;
+      opacity: ms.opacity('10');
       transition: transform 0.2s ease;
     }
   }
 
   &--selected {
-    background: var(--parsec-color-light-primary-50);
+    background: ms.color('surface-brand-default-subtle-hover');
 
     .option__text-label {
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default-hover');
     }
 
     .option__text-description {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
     }
 
     .option__icon:last-child {
       transition: transform 0.2s ease;
       transform: rotate(0deg);
-      opacity: 1;
+      opacity: ms.opacity('10');
     }
 
     &:hover {
-      background: var(--parsec-color-light-secondary-premiere);
+      background: ms.color('surface-base-page-secondary');
 
       .option__text-label {
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('text-base-body');
       }
 
       .option__icon:last-child {
-        color: var(--parsec-color-light-danger-500);
-        background: var(--parsec-color-light-danger-100);
+        color: ms.color('icon-error-default');
+        background: ms.color('surface-error-default-subtle-pressed');
       }
     }
   }

@@ -128,8 +128,11 @@
 </template>
 
 <script setup lang="ts">
+import RecoveryDeviceIconDark from '@/assets/images/recovery-device-icon-dark.svg?raw';
 import RecoveryDeviceIcon from '@/assets/images/recovery-device-icon.svg?raw';
+import RecoveryFileIconDark from '@/assets/images/recovery-file-icon-dark.svg?raw';
 import RecoveryFileIcon from '@/assets/images/recovery-file-icon.svg?raw';
+import RecoveryTrustIconDark from '@/assets/images/recovery-trusted-user-icon-dark.svg?raw';
 import RecoveryTrustIcon from '@/assets/images/recovery-trusted-user-icon.svg?raw';
 import { RecoveryMethod } from '@/views/devices/types';
 import { IonIcon, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';

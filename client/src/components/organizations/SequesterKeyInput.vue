@@ -6,7 +6,7 @@
       @ion-change="onAddKeyToggled"
       class="sequester-toggle"
     >
-      <ion-text class="sequester-toggle__title subtitles-sm">
+      <ion-text class="sequester-toggle__title">
         {{ $msTranslate('CreateOrganization.sequester.title') }}
       </ion-text>
     </ion-toggle>
@@ -42,8 +42,9 @@
           class="upload-key-update__icon"
           :icon="document"
         />
-        <ion-text class="button-medium">{{ fileName }}</ion-text>
+        <ion-text class="upload-key-update__name">{{ fileName }}</ion-text>
         <ion-button
+          size="small"
           class="upload-key-update__button"
           @click="onUploadKeyClicked"
         >
@@ -52,12 +53,12 @@
       </div>
     </div>
     <div class="sequester-info">
-      <ion-text class="sequester-info__text body">
+      <ion-text class="sequester-info__text">
         {{ $msTranslate('CreateOrganization.sequester.info') }}
       </ion-text>
       <ion-text
         button
-        class="sequester-info__button button-medium"
+        class="sequester-info__button"
         fill="clear"
         @click="Env.Links.openSequesterDocumentationLink"
       >
@@ -113,38 +114,44 @@ async function onUploadKeyClicked(): Promise<void> {
 
 <style scoped lang="scss">
 .sequester-container {
-  background: var(--parsec-color-light-secondary-background);
-  padding: 0.75rem;
+  margin-top: 1.5rem;
+  padding-left: ms.spacing('padding-2xl');
+  border-left: ms.border('thick') solid ms.color('border-base-default');
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  border-radius: var(--parsec-radius-8);
+  gap: ms.spacing('gap-2xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem;
+    padding: ms.spacing('padding-3xl');
     margin-top: 1rem;
   }
 }
 
 .sequester-toggle__title {
-  color: var(--parsec-color-light-secondary-text);
+  @include ms.font('body-md-medium');
+  color: ms.color('text-base-body');
   font-size: 0.9375rem;
 }
 
 .sequester-info {
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-description');
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 
   @include ms.responsive-breakpoint('sm') {
     flex-direction: column;
     align-items: start;
   }
 
+  &__text {
+    @include ms.font('body-md-regular');
+  }
+
   &__button {
+    @include ms.font('label-md-medium');
     height: fit-content;
-    color: var(--parsec-color-light-primary-500);
+    color: ms.color('text-brand-default');
     flex-shrink: 0;
     cursor: pointer;
     position: relative;
@@ -155,16 +162,16 @@ async function onUploadKeyClicked(): Promise<void> {
       bottom: -2px;
       left: 0;
       height: 1px;
-      background: var(--parsec-color-light-primary-500);
+      background: ms.color('surface-brand-default');
       transition: width 0.2s;
       width: 0;
     }
 
     &:hover {
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default-hover');
 
       &::after {
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default-hover');
         width: 100%;
       }
     }
@@ -175,14 +182,15 @@ async function onUploadKeyClicked(): Promise<void> {
   &__button {
     display: flex;
     align-items: center;
-    color: var(--parsec-color-light-secondary-text);
-    border: 1px dashed var(--parsec-color-light-secondary-light);
-    border-radius: var(--parsec-radius-8);
+    color: ms.color('text-base-body');
+    border-radius: ms.radius('lg');
     overflow: auto;
 
     &::part(native) {
-      --background: var(--parsec-color-light-secondary-white);
-      --background-hover: var(--parsec-color-light-secondary-medium);
+      border: ms.border('thin') dashed ms.color('border-base-default');
+      // --background: #{ms.color('surface-base-default')};
+      --background: #{ms.color('surface-neutral-default-subtle')};
+      --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
       --box-shadow: var(--parsec-shadow-2);
     }
 
@@ -192,32 +200,36 @@ async function onUploadKeyClicked(): Promise<void> {
   }
 
   &-update {
-    background: var(--parsec-color-light-secondary-medium);
-    color: var(--parsec-color-light-secondary-text);
+    background: ms.color('surface-neutral-default-subtle-pressed');
+    color: ms.color('text-base-body');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 1rem 0.25rem 0.5rem;
-    border-radius: var(--parsec-radius-8);
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-2xl');
+    border-radius: ms.radius('lg');
 
     &__icon {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('icon-neutral-default');
       font-size: 1rem;
+    }
+
+    &__name {
+      @include ms.font('label-md-medium');
     }
 
     &__button {
       margin-left: auto;
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
 
       &::part(native) {
         --background: none;
-        --background-hover: var(--parsec-color-light-secondary-medium);
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
         --box-shadow: var(--parsec-shadow-2);
-        padding-inline: 0;
+        padding-inline: ms.spacing('padding-none');
       }
 
       &:hover {
-        color: var(--parsec-color-light-secondary-contrast);
+        color: ms.color('text-base-heading');
       }
     }
   }

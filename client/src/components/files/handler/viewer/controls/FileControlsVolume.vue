@@ -7,6 +7,7 @@
         :icon="getVolumeIcon()"
         @click="toggleVolume"
         class="volume-button"
+        fill="clear"
       />
       <ms-slider
         class="volume-slider"
@@ -102,7 +103,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .volume {
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   .volume-button:hover {
     background-color: transparent;
@@ -110,8 +111,6 @@ onUnmounted(() => {
   }
 
   &-slider {
-    margin-right: 1rem;
-    opacity: 1;
     width: 5rem;
     display: flex;
 

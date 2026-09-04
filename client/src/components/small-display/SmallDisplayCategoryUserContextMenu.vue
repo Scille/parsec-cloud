@@ -38,6 +38,6 @@ async function onButtonClick(action: UserAction): Promise<boolean> {
 .content {
   display: flex;
   flex-direction: column;
-  height: 20rem;
+  min-height: 20rem;
 }
 </style>

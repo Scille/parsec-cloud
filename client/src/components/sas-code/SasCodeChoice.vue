@@ -35,8 +35,8 @@
       {{ choices[3] }}
     </ion-button>
     <ion-button
-      class="button-medium"
       id="noneChoicesButton"
+      class="color-secondary"
       fill="outline"
       :disabled="disabled"
       @click="onNoneClicked"
@@ -90,65 +90,50 @@ async function onNoneClicked(): Promise<void> {
   }
 }
 
-ion-button {
+#noneChoicesButton {
+  grid-column: 1 / -1;
   width: 100%;
+}
+
+.button-choice {
+  border-radius: ms.radius('lg');
+  @include ms.font('heading-h2');
+  font-weight: var(--parsec-font-weight-bold);
+  letter-spacing: 9px;
+  text-transform: uppercase;
   height: 4em;
-  border-radius: var(--parsec-radius-8);
+  --color: #{ms.color('text-base-label')};
+  --color-hover: #{ms.color('text-base-label')};
+  --color-focused: #{ms.color('text-base-label')};
+  --background: #{ms.color('surface-neutral-default-subtle')};
+  --background-hover-opacity: 0;
+  --background-focused-opacity: 0;
+  --background-activated: #{ms.color('surface-neutral-default-subtle-pressed')};
 
   &::part(native) {
-    margin: auto;
-    border: none;
-  }
-
-  &:focus-within {
-    outline: 2px solid var(--parsec-color-light-primary-400);
-    outline-offset: 3px;
-    background-color: var(--parsec-color-light-primary-100);
-    border-color: var(--parsec-color-light-primary-600);
-  }
-
-  &:hover {
-    background-color: var(--parsec-color-light-primary-100);
-    border-color: var(--parsec-color-light-primary-600);
-  }
-
-  &:last-child {
-    grid-area: 3 / 1 / 4 / 3;
-    position: relative;
-    height: 2.5rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      height: 3rem;
-      font-size: 1rem;
-    }
-
-    &::part(native) {
-      border: 1px solid var(--parsec-color-light-primary-200);
-    }
-
-    &:hover {
-      background-color: var(--parsec-color-light-primary-50);
-    }
-
-    &:focus-within::part(native) {
-      border: none;
-      color: var(--parsec-color-light-primary-700);
-    }
+    border: ms.border('thin') solid ms.color('border-base-default');
   }
 
   @include ms.responsive-breakpoint('sm') {
     height: 4rem;
     margin: 0;
   }
-}
 
-.button-choice {
-  background-color: var(--parsec-color-light-secondary-premiere);
-  overflow: hidden;
-  color: var(--parsec-color-light-primary-600);
-  transition: all 0.2s ease;
-  --background-focused: none;
-  --background-focused-opacity: 0;
-  --background-hover: none;
+  &:hover {
+    --background: #{ms.color('surface-neutral-default-subtle-hover')};
+
+    &::part(native) {
+      border-color: ms.color('border-base-default-hover');
+    }
+  }
+
+  &.ion-focused {
+    --background: #{ms.color('surface-neutral-default-subtle-pressed')};
+
+    &::part(native) {
+      border-color: transparent;
+      box-shadow: ms.shadow('focus-brand');
+    }
+  }
 }
 </style>

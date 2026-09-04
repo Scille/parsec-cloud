@@ -8,14 +8,14 @@
     />
     <div class="profile-info-card-content">
       <div class="profile-info-card-item">
-        <ion-text class="item-text title-h3">
+        <ion-text class="item-text item-text--name">
           {{ label }}
         </ion-text>
         <user-profile-tag :profile="currentProfile" />
       </div>
 
       <div class="profile-info-card-item">
-        <ion-text class="item-text body-lg">
+        <ion-text class="item-text item-text--email">
           {{ email }}
         </ion-text>
       </div>
@@ -40,11 +40,11 @@ defineProps<{
 <style lang="scss" scoped>
 .profile-info-card {
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__avatar {
     height: 3rem;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
     flex-shrink: 0;
   }
 
@@ -55,9 +55,17 @@ defineProps<{
 
   &-item {
     display: flex;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     justify-content: space-between;
-    color: var(--parsec-color-light-secondary-text);
+
+    .item-text--name {
+      @include ms.font('heading-h4');
+    }
+
+    .item-text--email {
+      @include ms.font('body-lg-regular');
+      color: ms.color('text-base-description');
+    }
   }
 }
 </style>

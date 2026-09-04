@@ -3,7 +3,7 @@
 <template>
   <file-controls-group class="file-controls-flux-container">
     <div class="file-controls-flux">
-      <div class="progress-label-start button-medium">
+      <div class="progress-label-start">
         {{ progressDuration.toFormat('hh:mm:ss') }}
       </div>
       <ms-slider
@@ -13,7 +13,7 @@
         :max-value="length"
         :increment-value="500"
       />
-      <div class="progress-label-end button-medium">
+      <div class="progress-label-end">
         {{ duration.toFormat('hh:mm:ss') }}
       </div>
     </div>
@@ -76,7 +76,7 @@ function updateSliderState(value: SliderState): void {
   .file-controls-flux {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     width: 100%;
   }
 
@@ -85,8 +85,9 @@ function updateSliderState(value: SliderState): void {
   }
 
   [class*='progress-label'] {
+    @include ms.font('label-md-medium');
     width: 3.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;

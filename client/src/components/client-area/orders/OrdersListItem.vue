@@ -12,7 +12,7 @@
         class="order-header"
         @click="toggleOpen"
       >
-        <ion-text class="order-header__title title-h3">
+        <ion-text class="order-header__title">
           {{
             $msTranslate({
               key: 'clientArea.orders.progress.orderNumber',
@@ -20,14 +20,14 @@
             })
           }}
           <span
-            class="order-tag button-small"
+            class="order-tag"
             :class="orderStep"
           >
             {{ $msTranslate(getOrderStepTranslations(orderStep!).tag) }}
           </span>
         </ion-text>
-        <ion-text class="order-header__date subtitles-normal">
-          <span class="date-title body-sm">
+        <ion-text class="order-header__date">
+          <span class="date-title">
             {{ $msTranslate('clientArea.orders.new.date') }}
           </span>
           {{ $msTranslate(I18n.formatDate(request.orderDate, 'short')) }}
@@ -144,22 +144,24 @@ function toggleOpen(): void {
 .order-progress {
   display: flex;
   flex-direction: column;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  outline: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-default');
+  outline: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   width: 100%;
   max-width: 80rem;
+  overflow: hidden;
+  height: fit-content;
 
   &:hover {
-    outline: 1px solid var(--parsec-color-light-secondary-light);
+    outline: ms.border('thin') solid ms.color('border-base-default-hover');
   }
 
   &.open {
-    box-shadow: var(--parsec-shadow-light);
+    box-shadow: ms.shadow('elevation-sm');
     outline-color: transparent;
 
     &:has(.order-header:hover) {
-      outline: 1px solid var(--parsec-color-light-secondary-light);
+      outline: ms.border('thin') solid ms.color('border-base-default-hover');
     }
   }
 }
@@ -168,88 +170,91 @@ function toggleOpen(): void {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
   cursor: pointer;
 
   &__title {
+    @include ms.font('heading-h4');
     display: flex;
     align-items: center;
-    color: var(--parsec-color-light-secondary-text);
-    gap: 1rem;
+    color: ms.color('text-base-body');
+    gap: ms.spacing('gap-3xl');
 
     .order-tag {
-      color: var(--parsec-color-tags-indigo-500);
-      padding: 0.15rem 0.5rem;
-      border-radius: var(--parsec-radius-32);
+      @include ms.font('label-sm-medium');
+      color: ms.color('text-extra-purple-default');
+      padding: ms.spacing('padding-xs') ms.spacing('padding-lg');
+      border-radius: ms.radius('6xl');
     }
 
     .received {
-      background-color: var(--parsec-color-tags-indigo-50);
-      color: var(--parsec-color-tags-indigo-700);
+      background-color: ms.color('surface-extra-purple-default-subtle');
+      color: ms.color('text-extra-purple-default');
     }
     .processing {
-      background-color: var(--parsec-color-light-secondary-premiere);
-      color: var(--parsec-color-light-secondary-text);
+      background-color: ms.color('surface-base-default-secondary');
+      color: ms.color('text-base-body');
     }
     .confirmed {
-      background-color: var(--parsec-color-tags-blue-50);
-      color: var(--parsec-color-tags-blue-700);
+      background-color: ms.color('surface-information-default-subtle');
+      color: ms.color('text-information-default');
     }
     .invoiceToBePaid {
-      background-color: var(--parsec-color-tags-orange-50);
-      color: var(--parsec-color-tags-orange-700);
+      background-color: ms.color('surface-extra-orange-default-subtle');
+      color: ms.color('text-extra-orange-default');
     }
     .available {
-      background-color: var(--parsec-color-light-success-50);
-      color: var(--parsec-color-light-success-700);
+      background-color: ms.color('surface-success-default-subtle');
+      color: ms.color('text-success-default');
     }
     .standby {
-      background-color: var(--parsec-color-tags-orange-50);
-      color: var(--parsec-color-tags-orange-700);
+      background-color: ms.color('surface-extra-orange-default-subtle');
+      color: ms.color('text-extra-orange-default');
     }
     .cancelled,
     .unknown {
-      background-color: var(--parsec-color-light-danger-50);
-      color: var(--parsec-color-light-danger-500);
+      background-color: ms.color('surface-error-default-subtle');
+      color: ms.color('text-error-default');
     }
   }
 
   &__date {
+    @include ms.font('body-lg-medium');
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     text-align: end;
 
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
 
     .date-title {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-description');
     }
   }
 }
 
 .order-content {
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  border-top: ms.border('thin') solid ms.color('border-base-default');
   display: flex;
   justify-content: space-between;
 
   &-tracking {
     width: fit-content;
     margin: 0;
-    border-left: 1px solid var(--parsec-color-light-secondary-medium);
   }
 }
 
 .skeleton-list {
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   justify-content: space-between;
-  padding: 1.5rem;
+  padding: ms.spacing('padding-4xl');
 
   .skeleton-item {
     width: 100%;
     height: 2rem;
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('lg');
 
     &:nth-child(1) {
       width: 50%;
@@ -262,8 +267,8 @@ function toggleOpen(): void {
 }
 
 .error-message {
-  color: var(--parsec-color-light-danger-500);
-  padding: 1rem;
+  color: ms.color('text-error-default');
+  padding: ms.spacing('padding-3xl');
   text-align: center;
 }
 </style>

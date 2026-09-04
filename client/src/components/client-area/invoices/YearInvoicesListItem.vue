@@ -10,7 +10,7 @@
       class="invoices-year-text"
       @click="isVisible = !isVisible"
     >
-      <ion-text class="invoices-year-text__title title-h3">
+      <ion-text class="invoices-year-text__title">
         {{ $msTranslate(title) }}
       </ion-text>
       <ion-icon
@@ -50,10 +50,10 @@ const isVisible = ref(true);
   display: flex;
   flex-direction: column;
   align-items: start;
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   margin-top: 0.5rem;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-premiere);
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page-secondary');
   --max-width-date: 12rem;
   --max-width-number: 12rem;
   --max-width-organization: 20rem;
@@ -64,39 +64,40 @@ const isVisible = ref(true);
   &-text {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
     cursor: pointer;
     position: sticky;
     top: -2rem;
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
     z-index: 3;
     transition: all 0.2s ease;
     width: 100%;
 
     &:hover {
-      background: var(--parsec-color-light-secondary-background);
-      border-radius: var(--parsec-radius-6);
+      background: ms.color('surface-neutral-default-subtle-hover');
+      border-radius: ms.radius('md');
 
       .invoices-year-text__title {
-        color: var(--parsec-color-light-primary-500);
+        color: ms.color('text-brand-default-hover');
       }
     }
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h4');
+      color: ms.color('text-base-body');
       transition: all 0.2s ease;
     }
 
     &__icon {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
       transform: rotate(0deg);
       transition: transform 0.2s;
     }
   }
 
   &.visible {
-    padding: 0.5rem;
+    padding: ms.spacing('padding-lg');
 
     .invoices-year-text__icon {
       transform: rotate(180deg);
