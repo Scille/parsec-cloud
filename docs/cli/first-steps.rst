@@ -63,7 +63,7 @@ or as an option available for any command,
     -w, --workspace <WORKSPACE>    Workspace ID [env: PARSEC_WORKSPACE_ID=]
         --password-stdin           Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var).
     -d, --device <DEVICE>          Device ID [env: PARSEC_DEVICE_ID=]
-    -c, --config-dir <CONFIG_DIR>  Parsec config directory [env: PARSEC_CONFIG_DIR=] [default: /home/aurelia/.config/parsec3/libparsec]
+    -c, --config-dir <CONFIG_DIR>  Parsec config directory [env: PARSEC_CONFIG_DIR=] [default: /home/redacted/.config/parsec3/libparsec]
     -h, --help                     Print help
 
 
@@ -100,7 +100,7 @@ or subcommand
     Usage: parsec-cli device list [OPTIONS]
 
     Options:
-    -c, --config-dir <CONFIG_DIR>  Parsec config directory [env: PARSEC_CONFIG_DIR=] [default: /home/aurelia/.config/parsec3/libparsec]
+    -c, --config-dir <CONFIG_DIR>  Parsec config directory [env: PARSEC_CONFIG_DIR=] [default: /home/redacted/.config/parsec3/libparsec]
     -h, --help                     Print help
 
 
