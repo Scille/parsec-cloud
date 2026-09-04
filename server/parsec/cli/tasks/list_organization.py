@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 import click
 import pydantic
 
-from parsec._parsec import EmailAddress, OrganizationID, ParsecAddr, SecretKey
+from parsec._parsec import DateTime, EmailAddress, OrganizationID, ParsecAddr, SecretKey
 from parsec.cli.options import asyncio_run, db_server_options, logging_config_options
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.components.memory.events import event_bus_factory
@@ -29,10 +29,11 @@ from parsec.webhooks import MockedWebhooksComponent
 @pydantic.dataclasses.dataclass()
 class OrganizationInfo:
     id: OrganizationID
+    created_on: DateTime
     is_bootstrapped: bool
-    # bootstrapped_on: DateTime | None
+    bootstrapped_on: DateTime | None
     is_expired: bool
-    # expired_on: DateTime | None
+    expired_on: DateTime | None
     # active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
     realm_minimum_archiving_period_before_deletion: int
@@ -42,7 +43,10 @@ class OrganizationInfo:
     def from_dump(cls, dump: OrganizationDump) -> OrganizationInfo:
         return OrganizationInfo(
             id=dump.organization_id,
+            created_on=dump.created_on,
+            bootstrapped_on=dump.bootstrapped_on,
             is_bootstrapped=dump.is_bootstrapped,
+            expired_on=dump.expired_on,
             is_expired=dump.is_expired,
             user_profile_outsider_allowed=dump.user_profile_outsider_allowed,
             realm_minimum_archiving_period_before_deletion=dump.realm_minimum_archiving_period_before_deletion,

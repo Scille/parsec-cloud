@@ -1,6 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyType, PyResult};
+use pyo3::{
+    exceptions::PyValueError,
+    ffi::PyObject,
+    prelude::*,
+    types::{PyDict, PyList, PyType},
+    PyResult,
+};
 
 crate::binding_utils::gen_py_wrapper_class!(
     DateTime,
@@ -151,5 +157,62 @@ impl DateTime {
         let us = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) as i64 * 1_000_000
             + microseconds as i64;
         Ok(Self(self.0.add_us(us)))
+    }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let core_schema = py.import("pydantic_core")?.getattr("core_schema")?;
+
+        // Serialize into string using `Self::to_rfc3339`
+        let ser_kwargs = PyDict::new(py);
+        ser_kwargs.set_item("return_schema", core_schema.call_method0("str_schema")?)?;
+        ser_kwargs.set_item("when_used", "always")?;
+        let ser_schema = core_schema.call_method(
+            "plain_serializer_function_ser_schema",
+            (cls.getattr("to_rfc3339")?,),
+            Some(&ser_kwargs),
+        )?;
+
+        let str_kwargs = PyDict::new(py);
+        str_kwargs.set_item("serialization", ser_schema)?;
+        // Validate string using `Self::from_rfc3339`
+        let str_validator = core_schema.call_method(
+            "no_info_after_validator_function",
+            (
+                cls.getattr("from_rfc3339")?,
+                core_schema.call_method0("str_schema")?,
+            ),
+            Some(&str_kwargs),
+        )?;
+
+        let instance_validator = core_schema.call_method1("is_instance_schema", (cls,))?;
+
+        // Support both instance and string schema
+        let union_validator = core_schema.call_method1(
+            "union_schema",
+            (PyList::new(py, vec![instance_validator, str_validator])?,),
+        )?;
+
+        Ok(union_validator)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_json_schema__")]
+    fn get_pydantic_json_schema<'py>(
+        _cls: &Bound<'_, PyType>,
+        _schema: &Bound<'_, PyAny>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyDict>> {
+        let dict = PyDict::new(py);
+        dict.set_item("type", "string")?;
+        dict.set_item("format", "date-time")?;
+        Ok(dict)
     }
 }

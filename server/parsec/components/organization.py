@@ -60,8 +60,11 @@ class TermsOfService:
 @dataclass(slots=True)
 class OrganizationDump:
     organization_id: OrganizationID
+    created_on: DateTime
     bootstrap_token: AccessToken | None
+    bootstrapped_on: DateTime | None
     is_bootstrapped: bool
+    expired_on: DateTime | None
     is_expired: bool
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
@@ -171,6 +174,7 @@ class Organization:
     organization_id: OrganizationID
     bootstrap_token: AccessToken | None
     is_expired: bool
+    expired_on: DateTime | None
     created_on: DateTime
     realm_minimum_archiving_period_before_deletion: int
     bootstrapped_on: DateTime | None

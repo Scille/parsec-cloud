@@ -5,8 +5,10 @@ import json
 from click.testing import CliRunner
 from pydantic import TypeAdapter
 
+from parsec._parsec import DateTime
 from parsec.cli.tasks import list_organization
 from parsec.cli.testbed import TestbedBackend
+from parsec.components.organization import Organization
 from parsec.config import BaseDatabaseConfig, PostgreSQLDatabaseConfig
 from tests.common.client import CoolorgRpcClients
 
@@ -29,20 +31,29 @@ def test_list_organization_cmd(db_config: BaseDatabaseConfig, db_args: list[str]
 
 async def test_list_organization(coolorg: CoolorgRpcClients, testbed: TestbedBackend):
     orgs = await list_organization.list_organizations(testbed.backend.organization)
+    coolorg_org = await testbed.backend.organization.get(coolorg.organization_id)
+    assert isinstance(coolorg_org, Organization)
 
     assert coolorg.organization_id in orgs
     assert orgs[coolorg.organization_id] == list_organization.OrganizationInfo(
         id=coolorg.organization_id,
-        is_expired=False,
+        created_on=coolorg_org.created_on,
+        bootstrapped_on=coolorg_org.bootstrapped_on,
         is_bootstrapped=True,
+        expired_on=coolorg_org.expired_on,
+        is_expired=False,
         user_profile_outsider_allowed=True,
         realm_minimum_archiving_period_before_deletion=testbed.backend.config.organization_initial_realm_deletion_min_archiving_period,
     )
 
 
 async def test_serialization(coolorg: CoolorgRpcClients):
+    now = DateTime.now()
     info = list_organization.OrganizationInfo(
         id=coolorg.organization_id,
+        created_on=now,
+        bootstrapped_on=now,
+        expired_on=None,
         is_expired=False,
         is_bootstrapped=True,
         user_profile_outsider_allowed=True,
@@ -54,6 +65,7 @@ async def test_serialization(coolorg: CoolorgRpcClients):
     raw_info = json.loads(serialized)
     print(raw_info)
     assert raw_info["id"] == info.id.str
+    assert raw_info["bootstrapped_on"] == now.to_rfc3339()
 
     got = adapter.validate_json(serialized)
     assert got == info
