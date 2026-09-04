@@ -9,6 +9,7 @@
     "demo:headless": "HEADLESS=1 STAY=20000 node run-demo.js"
   },
   "dependencies": {
-    "playwright": "^1.62.1"
+    "playwright": "^1.62.1",
+    "ws": "^8.21.3"
   }
 }
