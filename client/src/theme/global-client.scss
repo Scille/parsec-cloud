@@ -13,7 +13,7 @@
   height: 100%;
 
   &::part(scroll) {
-    padding: 2rem;
+    padding: ms.spacing('padding-5xl');
   }
 }
 
@@ -21,60 +21,50 @@
   height: 100%;
 }
 
-.title-h1-xl,
-.title-h1,
-.title-h2,
-.title-h3,
-.title-h4 {
-  padding: 0;
-}
-
 .list-md {
   background: none;
 }
 
 ion-item {
-  --inner-padding-end: 0;
+  --inner-padding-end: #{ms.spacing('padding-none')};
 }
 
 // ------custom button------ //
 
 // trying to add [attribute=^value] but it's not working for now
 .custom-button {
-  padding: 0.5em 0.75em;
-  border-radius: var(--parsec-radius-8);
+  padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
+  border-radius: ms.radius('lg');
   cursor: pointer;
   align-items: center;
   text-align: center;
   transition: all 150ms ease-in-out;
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
 
-.custom-button {
   &-fill {
-    color: var(--parsec-color-light-secondary-soft-text);
-    border: 1px solid var(--parsec-color-light-secondary-disabled);
-    background: var(--parsec-color-light-secondary-white);
+    color: ms.color('text-base-label');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    background: ms.color('surface-base-default');
 
     &:hover {
-      color: var(--parsec-color-light-secondary-contrast);
-      background: var(--parsec-color-light-secondary-premiere);
-      border: 1px solid var(--parsec-color-light-secondary-disabled);
+      color: ms.color('text-neutral-default-hover');
+      background: ms.color('surface-neutral-default-subtle-hover');
+      border: ms.border('thin') solid ms.color('border-base-default');
     }
   }
 
   &-outline:not(ion-button) {
-    border: 1px solid var(--parsec-color-light-secondary-disabled);
+    border: ms.border('thin') solid ms.color('border-base-default');
 
     &:hover {
-      color: var(--parsec-color-light-secondary-contrast);
-      background: var(--parsec-color-light-secondary-premiere);
-      border: 1px solid var(--parsec-color-light-secondary-disabled);
+      color: ms.color('text-neutral-default-hover');
+      background: ms.color('surface-neutral-default-subtle-hover');
+      border: ms.border('thin') solid ms.color('border-base-default');
     }
   }
 
@@ -83,32 +73,32 @@ ion-item {
   }
 
   &-danger {
-    color: var(--parsec-color-light-danger-500);
+    color: ms.color('text-error-default');
 
     &:hover {
-      color: var(--parsec-color-light-danger-700);
-      background: var(--parsec-color-light-danger-100);
+      color: ms.color('text-error-default-hover');
+      background: ms.color('surface-error-default-subtle-hover');
     }
   }
 }
 
 ion-skeleton-text {
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
 }
 
 .custom-order-processing {
   .header-content {
-    border: none !important;
+    border: ms.border('none') !important;
   }
 }
 
 .ms-summary-card .update-button {
   position: relative !important;
   margin-top: 0.5rem;
-  --background: var(--parsec-color-light-secondary-text);
-  color: var(--parsec-color-light-secondary-white);
+  --background: #{ms.color('surface-neutral-default')};
+  color: ms.color('text-neutral-on-color');
 
   &::part(native) {
-    border-width: 0px;
+    border-width: ms.border('none');
   }
 }
