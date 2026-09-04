@@ -21,8 +21,8 @@
  *
  * Flow control: an `auto-flow` / `manual-flow` toggle (next to copy/clear).
  * In auto-flow (default) frames pass through the proxy freely. In manual-flow
- * every non-noise frame is held at the proxy and shown as a ⏸ row with a ▶
- * `send` button; clicking it releases that one frame (recv → delivered to the
+ * every non-noise frame is held at the proxy and shown as a row (looks like a
+ * normal send/recv row — same icon, no special colour) with a `send` button; clicking it releases that one frame (recv → delivered to the
  * browser's socket.io; send → forwarded to OnlyOffice).
  *
  * Editor identity (John Smith / Kate Cage / Anonymous) is resolved in the proxy
@@ -30,9 +30,10 @@
  * by the active scenario tab: Collaborate → John & Kate; others → Anonymous.
  *
  * Kate's editor is deferred behind a "Start Kate's editor" overlay. A second
- * button "Re-start John's editor in manual-flow" tears down John's editor,
- * enables manual-flow, and rebuilds it — so John's whole socket handshake can
- * be stepped through frame by frame (useful to test concurrent joins).
+ * button "Re-start John's editor in manual-flow" reloads the whole page with
+ * `manual_flow=true` in the URL and arms manual-flow at the proxy first — so
+ * John's whole socket handshake can be stepped through frame by frame from a
+ * guaranteed clean state (useful to test concurrent joins).
  *
  * The XHR polling fallback is still captured in-page (capture-only; it can't
  * be held this way, but OO uses WebSockets in practice).
@@ -47,6 +48,9 @@
   if (window.__OO_MON) return; // guard against double injection
   var IS_TOP = (window === window.top);
   var PROXY_PORT = window.__OO_PROXY_PORT || 0;
+  // `manual_flow=true` in the page URL (set by the "Re-start John's editor in
+  // manual-flow" button) requests manual-flow from the very first frame.
+  var INITIAL_MANUAL_FLOW = /[?&]manual_flow=true/i.test(location.search || '');
   var MON = window.__OO_MON = {
     events: [], paused: false, sockets: 0,
     editorUser: {},            // editor -> username (from proxy 'user' msgs)
@@ -54,7 +58,8 @@
     users: {},                 // username -> {checked:bool}  (filter chips)
     mode: null,               // 'collab' | 'solo' | null (set by active tab)
     intercept: false,         // aka manual-flow: hold non-noise frames (from proxy)
-    connected: false          // /ctl control channel open?
+    connected: false,         // /ctl control channel open?
+    pageResetting: false      // true during the page-reload for manual-flow restart
   };
   var EDITOR_ID =
     (/[?&]frameEditorId=([^&]*)/.exec(location.search || '') || [, null])[1];
@@ -232,6 +237,22 @@
 
   // ---- top frame: control channel + scenario tabs + Kate deferral ---------
   if (IS_TOP) {
+    // When the page was reloaded with ?manual_flow=true (Re-start John's
+    // editor in manual-flow), click the "Collaborate" tab as early as
+    // possible — before the page builds the solo "Edit DOCX" editor. This
+    // avoids a stale held row from the solo editor being torn down when we
+    // later switch tabs, so the panel shows only John's handshake to step
+    // through.
+    if (INITIAL_MANUAL_FLOW) {
+      (function () {
+        var timer = setInterval(function () {
+          var btn = Array.from(document.querySelectorAll('button[class*="actions-tab-button"]'))
+            .find(function (b) { return /^collaborate$/i.test((b.textContent || '').trim()); });
+          if (btn) { try { btn.click(); } catch (e) {} clearInterval(timer); }
+        }, 20);
+        setTimeout(function () { clearInterval(timer); }, 20000);
+      })();
+    }
     // forwarded XHR-fallback events from child frames
     window.addEventListener('message', function (e) {
       var d = e.data;
@@ -252,6 +273,17 @@
       ctl.addEventListener('open', function () {
         MON.connected = true;
         syncInterceptBtn();
+        // If the page was opened with ?manual_flow=true (Re-start John's editor
+        // in manual-flow), arm manual-flow at the proxy before any OO socket
+        // opens. We do NOT reset the proxy here: on reload the previous page's
+        // sockets already closed (clearing those sessions + holds at the proxy),
+        // and closing active sessions now would race with John's reconnecting
+        // socket and kill it. Only stale event history lingers, which we just
+        // ignore by starting the panel empty (see INITIAL_MANUAL_FLOW below).
+        if (INITIAL_MANUAL_FLOW && !MON._initialFlowApplied) {
+          MON._initialFlowApplied = true;
+          sendCtl({ cmd: 'intercept', on: true });
+        }
       });
       ctl.addEventListener('close', function () {
         MON.connected = false; ctl = null;
@@ -271,14 +303,21 @@
         case 'hello': {
           MON.intercept = !!msg.intercept;
           syncInterceptBtn();
-          // replay history
-          if (Array.isArray(msg.events)) {
-            msg.events.forEach(function (ev) {
-              if (ev.user) { ensureUser(ev.user); MON.sidUser[ev.sid] = ev.user; MON.editorUser[ev.editor] = ev.user; }
-              storeProxyEvent(ev);
-            });
+          // In manual-flow-restart mode, start the panel empty (ignore stale
+          // history from the previous page; only show frames from this run).
+          var evs = Array.isArray(msg.events) ? msg.events : [];
+          if (INITIAL_MANUAL_FLOW && !MON._helloSeen) {
+            MON.events.length = 0; HOLD_STATE = {};
+            evs = [];
           }
-          if (msg.users) for (var ed in msg.users) { MON.editorUser[ed] = msg.users[ed]; ensureUser(msg.users[ed]); }
+          MON._helloSeen = true;
+          evs.forEach(function (ev) {
+            if (ev.user) { ensureUser(ev.user); MON.sidUser[ev.sid] = ev.user; MON.editorUser[ev.editor] = ev.user; }
+            storeProxyEvent(ev);
+          });
+          // backfill sid->user (getUsers() is keyed by sid)
+          if (msg.users) for (var sid in msg.users) { MON.sidUser[sid] = msg.users[sid]; ensureUser(msg.users[sid]); }
+          rebuild();
           break;
         }
         case 'event': {
@@ -311,6 +350,14 @@
           if (h2) { h2.released = true; h2.ok = false; if (h2.row) updateRowReleased(h2.row, false); }
           break;
         }
+        case 'releasedAll': {
+          // all held frames flushed (switching back to auto-flow)
+          for (var id in HOLD_STATE) {
+            var hh = HOLD_STATE[id];
+            if (!hh.released) { hh.released = true; hh.ok = true; if (hh.row) updateRowReleased(hh.row, true); }
+          }
+          break;
+        }
       }
     }
     function storeProxyEvent(ev) {
@@ -323,6 +370,10 @@
         try { ctl.send(JSON.stringify(obj)); } catch (e) {}
       }
     }
+    // Expose on the live MON so panel handlers always dispatch through the
+    // current run's ctl (robust to the demo page's internal reloads, which
+    // create a fresh __OO_MON and reconnect /ctl).
+    MON.sendCtl = sendCtl;
 
     // Initialize Kate-block state early (referenced by applyScenario below).
     MON.kateBlocked = true; MON.kateConfig = null; MON.kateOrig = null;
@@ -357,15 +408,11 @@
 
     // ---- Editor construction trap ----------------------------------------
     // The demo builds editors via `new DocsAPI.DocEditor(id, config)`. We
-    // wrap the constructor to:
-    //   - defer `document-editor-2` (Kate) until "Start Kate's editor" is
-    //     clicked (lets you edit solo in John first, then watch Kate's join).
-    //   - remember `document-editor` (John)'s config so "Re-start John's editor
-    //     in manual-flow" can tear it down + rebuild it with manual-flow armed
-    //     BEFORE its socket opens (so the whole handshake can be stepped).
+    // wrap the constructor to defer `document-editor-2` (Kate) until "Start
+    // Kate's editor" is clicked — so you can edit solo in John first, then
+    // watch Kate's late-join. (Re-starting John is handled by a full page
+    // reload, not by tearing down DocEditor here — see restartJohnManualFlow.)
     MON.kateBlocked = true; MON.kateConfig = null; MON.kateOrig = null;
-    MON.johnConfig = null;     // {id, cfg} captured from John's constructor
-    MON.johnInstance = null;   // last returned DocEditor instance for John
     (function installDocEditorTrap() {
       if (window.__oo_doceditor_trap) return;
       window.__oo_doceditor_trap = true;
@@ -379,12 +426,7 @@
               MON.kateConfig = { id: id, cfg: cfg };
               return { __ooDeferred: true };
             }
-            var inst = new orig(id, cfg);
-            if (id === 'document-editor') {
-              MON.johnConfig = { id: id, cfg: cfg };
-              MON.johnInstance = inst;
-            }
-            return inst;
+            return new orig(id, cfg);
           }
           W.__oo_wrapped = true; W.prototype = orig.prototype; W.__oo_orig = orig;
           D.DocEditor = W;
@@ -401,27 +443,21 @@
         new MON.kateOrig(k.id, k.cfg);
       }
     };
-    // Re-start John's editor: destroy the current instance, arm manual-flow,
-    // clear the panel, then rebuild John's editor so its socket handshake is
-    // captured frame-by-frame from the very first frame.
+    // Re-start John's editor in manual-flow: reload the whole page with
+    // `manual_flow=true` in the URL. On reload, the init script sees that
+    // param and (once the /ctl control channel opens) sends {intercept,on:true}
+    // to the proxy — so John's socket, which only opens after the page rebuilds,
+    // is gated from its very first frame and the whole handshake shows up as
+    // held rows. Reloading guarantees a fully clean state (the previous page's
+    // sockets close on unload, clearing those sessions/holds at the proxy).
     MON.restartJohnManualFlow = function () {
-      if (MON.johnInstance) {
-        try { if (typeof MON.johnInstance.destroy === 'function') MON.johnInstance.destroy(); } catch (e) {}
-        try { if (typeof MON.johnInstance.deInit === 'function') MON.johnInstance.deInit(); } catch (e) {}
-        MON.johnInstance = null;
-      }
-      // remove any leftover OO iframes for John so DocsAPI rebuilds cleanly
-      var slot = document.getElementById('document-editor');
-      if (slot) slot.innerHTML = '';
-      // arm manual-flow (both locally and at the proxy)
-      MON.intercept = true; syncInterceptBtn();
-      sendCtl({ cmd: 'intercept', on: true });
-      // clear the event log for a clean read of the handshake
-      MON.events.length = 0; HOLD_STATE = {}; rebuild(); updateStat();
-      if (MON.johnConfig && MON.kateOrig) {
-        var j = MON.johnConfig;
-        MON.johnConfig = null;
-        MON.johnInstance = new MON.kateOrig(j.id, j.cfg);
+      MON.pageResetting = true;
+      try {
+        var u = new URL(location.href);
+        u.searchParams.set('manual_flow', 'true');
+        location.href = u.toString();
+      } catch (e) {
+        location.href = location.href + (location.href.indexOf('?') >= 0 ? '&' : '?') + 'manual_flow=true';
       }
     };
     function removeKateOverlay() {
@@ -488,7 +524,7 @@
       '#oo-mon .row{border-bottom:1px solid #eee}',
       '#oo-mon .row.recv .head{background:#eef7ee} #oo-mon .row.send .head{background:#eef3fb}',
       '#oo-mon .row.engine .head{background:#f3eefb;color:#666}',
-      '#oo-mon .row.held .head{background:#fff4d6} #oo-mon .row.held.released .head{opacity:.5}',
+      '#oo-mon .row.held.released .head{opacity:.5}',
       '#oo-mon .head{display:flex;gap:6px;padding:3px 6px;cursor:pointer;align-items:baseline}',
       '#oo-mon .head:hover{filter:brightness(.97)}',
       '#oo-mon .head .d{flex:0 0 16px} #oo-mon .head .ed{flex:0 0 80px;color:#7a5b00;font-size:10px;overflow:hidden;text-overflow:ellipsis}',
@@ -513,7 +549,18 @@
     var st = document.createElement('style'); st.textContent = css;
     (document.head || document.documentElement).appendChild(st);
 
+    // Idempotency: if a previous injection (e.g. the demo page's internal
+    // reload/redirect re-running init scripts in the same window) already built
+    // a panel, drop the old one so there's exactly one #oo-mon — otherwise the
+    // later, empty panel would visually overlay the populated one.
+    var oldBox = document.getElementById('oo-mon');
+    if (oldBox && oldBox !== window.__OO_MON.__box) oldBox.remove();
+    // also drop any other stray #oo-mon panels (there can be more than one)
+    var strays = document.querySelectorAll('#oo-mon');
+    for (var si = 0; si < strays.length; si++) strays[si].remove();
+
     var box = document.createElement('div'); box.id = 'oo-mon';
+    window.__OO_MON.__box = box;
     box.innerHTML =
       '<div class="hdr" id="oo-mon-hdr"><span class="lbl">OO Protocol Monitor</span>' +
       '<button id="oo-mon-copy">copy</button><button id="oo-mon-clear">clear</button>' +
@@ -564,9 +611,17 @@
     });
     var flb = document.getElementById('oo-mon-flow');
     flb.addEventListener('click', function () {
-      MON.intercept = !MON.intercept;
+      var turningOn = !MON.intercept;
+      MON.intercept = turningOn;
       syncInterceptBtn();
-      sendCtl({ cmd: 'intercept', on: MON.intercept });
+      var live = window.__OO_MON || MON;
+      if (turningOn) {
+        live.sendCtl({ cmd: 'intercept', on: true });
+      } else {
+        // switching back to auto-flow: flush all held frames so they aren't lost
+        live.sendCtl({ cmd: 'releaseAll' });
+        live.sendCtl({ cmd: 'intercept', on: false });
+      }
     });
     document.getElementById('oo-mon-copy').addEventListener('click', function () {
       var text = MON.events.filter(visible).map(formatBlock).join('\n\n');
@@ -615,7 +670,7 @@
   function typeOf(ev) {
     if (ev.dir === 'open') return 'ws-open';
     if (ev.dir === 'engine') return ev.kind;
-    if (ev.dir === 'held') return 'HELD ' + (ev.kind === 'msg' ? ev.meta.type : (ev.meta && ev.meta.eio ? ev.meta.eio : ''));
+    if (ev.dir === 'held') return (ev.kind === 'msg' ? ev.meta.type : (ev.meta && ev.meta.eio ? ev.meta.eio : ''));
     if (ev.kind === 'msg') return ev.meta.type;
     if (ev.kind === 'eio') return ev.meta.eio + (ev.meta.sio ? '/' + ev.meta.sio : '');
     return ev.kind;
@@ -656,7 +711,10 @@
     if (ev.dir === 'open') { d = '🔌'; ty = 'ws-open'; sum = String(ev.meta).slice(-50); }
     else if (ev.dir === 'engine') { d = '⚙'; ty = ev.kind; sum = String(ev.meta).slice(-50); }
     else if (ev.dir === 'held') {
-      d = '⏸'; ty = typeOf(ev);
+      // Held rows look just like normal send/recv rows (same icon, no HELD
+      // prefix, no special colour) — only the `send` button signals the hold.
+      d = ev.holdDir === 'send' ? '⬆' : '⬇';
+      ty = typeOf(ev);
       sum = ev.kind === 'msg' ? summarize(ev.meta.payload) : (ev.meta && ev.meta.eio ? ev.meta.eio : '');
     }
     else if (ev.kind === 'msg') { d = ev.dir === 'send' ? '⬆' : '⬇'; ty = ev.meta.type; sum = summarize(ev.meta.payload); }
@@ -680,7 +738,7 @@
         rb.addEventListener('click', function (e) {
           e.stopPropagation();
           rb.disabled = true; rb.textContent = '…';
-          sendCtl({ cmd: 'release', id: ev.holdId });
+          (window.__OO_MON || MON).sendCtl({ cmd: 'release', id: ev.holdId });
         });
       }
       rl.appendChild(rb);
@@ -707,19 +765,28 @@
     return chip.checked;
   }
 
+  // Only auto-scroll to the bottom if the user is already near the bottom;
+  // otherwise keep their scroll position so reading older events isn't
+  // constantly disrupted by new arrivals.
+  function atBottom(el) {
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+  }
+
   function render(ev) {
     ensureUI(); if (!listEl) return;
     if (!visible(ev)) return;
+    var stick = atBottom(listEl);
     listEl.appendChild(makeRow(ev));
     while (listEl.childNodes.length > 1000) listEl.removeChild(listEl.firstChild);
-    listEl.scrollTop = listEl.scrollHeight;
+    if (stick) listEl.scrollTop = listEl.scrollHeight;
     updateStat();
   }
   function rebuild() {
     ensureUI(); if (!listEl) return;
+    var stick = atBottom(listEl);
     listEl.innerHTML = '';
     MON.events.forEach(function (ev) { if (visible(ev)) listEl.appendChild(makeRow(ev)); });
-    listEl.scrollTop = listEl.scrollHeight;
+    if (stick) listEl.scrollTop = listEl.scrollHeight;
     updateStat();
   }
   function updateStat() {

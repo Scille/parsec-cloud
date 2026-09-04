@@ -69,9 +69,9 @@ normally, no gating).
 1. Switch to **Collaborate**, edit solo in John's editor.
 2. Click **Start Kate's editor** (Kate's editor is deliberately deferred), OR
    click **Re-start John's editor in manual-flow** (under "Start Kate's
-   editor") to tear John down, arm manual-flow, and rebuild him so his whole
-   socket handshake can be stepped through frame by frame — useful to test
-   concurrent joins.
+   editor") to reload the whole page with manual-flow armed so John's whole
+   socket handshake can be stepped through frame by frame from a clean state —
+   useful to test concurrent joins.
 3. In manual-flow, drive the action (e.g. John takes a lock). Frames now pile
    up as ⏸ held rows; click each row's **`send`** to release it in the order
    you want to test (e.g. release Kate's lock send *before* releasing John's
