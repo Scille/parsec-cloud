@@ -173,7 +173,8 @@ const executablePath = findChromium();
   console.log('ping/pong frames are hidden; the filter auto-follows the active scenario tab.');
   console.log('Click "auto-flow" to switch to manual-flow: frames are held and each row shows a');
   console.log('"send" button to release it. Use "Re-start John\'s editor in manual-flow" (under');
-  console.log('"Start Kate\'s editor") to step through John\'s handshake frame by frame.\n');
+  console.log('"Start Kate\'s editor") to reload the page with manual-flow armed so John\'s handshake');
+  console.log('can be stepped through frame by frame from a clean state.\n');
 
   if (STAY_MS > 0) {
     console.log('→ staying for ' + STAY_MS + 'ms then closing');

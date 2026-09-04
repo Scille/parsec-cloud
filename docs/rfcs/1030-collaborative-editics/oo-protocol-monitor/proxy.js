@@ -276,7 +276,7 @@ function createProxy(opts) {
       const h = { id: hid, sid: sid, dir: dir, raw: raw, isBinary: !!isBinary, meta: meta, gen: gen, session: session };
       session.holds.set(hid, h);
       state.holds.set(hid, h);
-      emit('held', (c ? 'msg' : (dec && dec.eio ? 'eio' : 'raw')), meta, { holdId: hid });
+      emit('held', (c ? 'msg' : (dec && dec.eio ? 'eio' : 'raw')), meta, { holdId: hid, holdDir: dir });
     }
 
     // ---- release a held frame (called from /ctl) ------------------------
@@ -376,6 +376,13 @@ function createProxy(opts) {
           broadcast({ t: 'released', id: msg.id, ok: !!ok });
           break;
         }
+        case 'releaseAll': {
+          // Release every held frame across all sessions (used when switching
+          // back to auto-flow so paused frames are flushed, not lost).
+          for (const sess of state.sessions.values()) sess.releaseAll();
+          broadcast({ t: 'releasedAll' });
+          break;
+        }
         case 'getState': {
           ws.send(JSON.stringify({ t: 'state', intercept: state.intercept, users: getUsers(), holds: state.holds.size, sessions: state.sessions.size }));
           break;
@@ -387,7 +394,7 @@ function createProxy(opts) {
   }
   function getUsers() {
     const m = {};
-    for (const s of state.sessions.values()) if (s.user) m[s.editor || ('#' + s.sid)] = s.user;
+    for (const s of state.sessions.values()) if (s.user) m[s.sid] = s.user;
     return m;
   }
 
