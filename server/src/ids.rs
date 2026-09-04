@@ -5,7 +5,7 @@ use std::str::FromStr;
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
-    types::{PyDict, PyList, PyType, PyTypeMethods},
+    types::{PyType, PyTypeMethods},
 };
 
 // UUID based type
@@ -229,32 +229,27 @@ impl OrganizationID {
         _handler: &Bound<'_, PyAny>,
         py: Python<'py>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let core_schema = py.import("pydantic_core")?.getattr("core_schema")?;
+        use crate::pydantic_support::inner::CoreSchemaModule;
+        let core_schema = CoreSchemaModule::new(py)?;
 
-        let str_schema = core_schema.call_method0("str_schema")?;
-
-        // Indicate to pydantic that it just need to call `str(val)` to serialize the value
-        let kwargs = PyDict::new(py);
-        let serialization = core_schema.call_method0("to_string_ser_schema")?;
-        kwargs.set_item("serialization", serialization)?;
+        let str_schema = core_schema.str_schema()?;
 
         // Create a string schema to load the value from string.
-        let from_str = core_schema.call_method(
-            "no_info_after_validator_function",
-            (cls, str_schema),
-            Some(&kwargs),
+        let from_str = core_schema.no_info_after_validator_function(
+            cls,
+            str_schema,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            Some(core_schema.to_string_ser_schema()?),
+            py,
         )?;
 
         // Make pydantic accept own class as value
-        let instance_schema = core_schema.call_method1("is_instance_schema", (cls,))?;
+        let instance_schema = core_schema.instance_schema(cls)?;
 
         // Build schema that accept both string or instance value.
-        let union_schema = core_schema.call_method1(
-            "union_schema",
-            (PyList::new(py, vec![instance_schema, from_str])?,),
-        )?;
+        let union_schema = core_schema.union_schema([instance_schema, from_str], py)?;
 
-        Ok(union_schema)
+        union_schema.into_pyobject(py).map_err(Into::into)
     }
 }
 

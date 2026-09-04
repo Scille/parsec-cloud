@@ -1,11 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use pyo3::{
-    exceptions::PyValueError,
-    prelude::*,
-    types::{PyDict, PyList, PyType},
-    PyResult,
-};
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyType, PyResult};
 
 crate::binding_utils::gen_py_wrapper_class!(
     DateTime,
@@ -159,6 +154,7 @@ impl DateTime {
     }
 
     #[classmethod]
+    #[cfg(feature = "pydantic-support")]
     #[pyo3(name = "__get_pydantic_core_schema__")]
     fn get_pydantic_core_schema<'py>(
         cls: &Bound<'py, PyType>,
@@ -166,39 +162,34 @@ impl DateTime {
         _handler: &Bound<'_, PyAny>,
         py: Python<'py>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let core_schema = py.import("pydantic_core")?.getattr("core_schema")?;
+        use crate::pydantic_support::inner::{CoreSchemaModule, WhenUsed};
+
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        let str_schema = core_schema.str_schema()?;
 
         // Serialize into string using `Self::to_rfc3339`
-        let ser_kwargs = PyDict::new(py);
-        ser_kwargs.set_item("return_schema", core_schema.call_method0("str_schema")?)?;
-        ser_kwargs.set_item("when_used", "always")?;
-        let ser_schema = core_schema.call_method(
-            "plain_serializer_function_ser_schema",
-            (cls.getattr("to_rfc3339")?,),
-            Some(&ser_kwargs),
+        let ser_schema = core_schema.plain_serializer_function_ser_schema(
+            cls.getattr("to_rfc3339")?,
+            Some(str_schema.clone()),
+            Some(WhenUsed::Always),
+            py,
         )?;
 
-        let str_kwargs = PyDict::new(py);
-        str_kwargs.set_item("serialization", ser_schema)?;
         // Validate string using `Self::from_rfc3339`
-        let str_validator = core_schema.call_method(
-            "no_info_after_validator_function",
-            (
-                cls.getattr("from_rfc3339")?,
-                core_schema.call_method0("str_schema")?,
-            ),
-            Some(&str_kwargs),
+        let str_validator = core_schema.no_info_after_validator_function(
+            cls.getattr("from_rfc3339")?,
+            str_schema,
+            Some(ser_schema),
+            py,
         )?;
 
-        let instance_validator = core_schema.call_method1("is_instance_schema", (cls,))?;
+        let instance_validator = core_schema.instance_schema(cls)?;
 
         // Support both instance and string schema
-        let union_validator = core_schema.call_method1(
-            "union_schema",
-            (PyList::new(py, vec![instance_validator, str_validator])?,),
-        )?;
+        let union_validator = core_schema.union_schema([instance_validator, str_validator], py)?;
 
-        Ok(union_validator)
+        union_validator.into_pyobject(py).map_err(Into::into)
     }
 }
 
