@@ -15,6 +15,7 @@ from parsec._parsec import (
     ParsecOrganizationBootstrapAddr,
 )
 from parsec.components.organization import (
+    Organization,
     OrganizationDump,
     TermsOfService,
     UnsetType,
@@ -199,11 +200,16 @@ async def test_ok(
             expected_tos = TermsOfService(updated_on=ANY, per_locale_urls=tos)
 
     dump = await backend.organization.list_organizations()
+    org = await backend.organization.get(org_id)
+    assert isinstance(org, Organization)
     assert dump[org_id] == OrganizationDump(
         organization_id=org_id,
+        created_on=org.created_on,
         bootstrap_token=bootstrap_token,
         is_bootstrapped=False,
+        bootstrapped_on=None,
         is_expired=False,
+        expired_on=None,
         active_users_limit=expected_active_users_limit,
         user_profile_outsider_allowed=expected_user_profile_outsider_allowed,
         realm_minimum_archiving_period_before_deletion=expected_minimum_archiving_period,
@@ -232,11 +238,16 @@ async def test_overwrite_existing(
 
     # Sanity check
     dump = await backend.organization.list_organizations()
+    org = await backend.organization.get(org_id)
+    assert isinstance(org, Organization)
     assert dump[org_id] == OrganizationDump(
         organization_id=org_id,
+        created_on=org.created_on,
         bootstrap_token=bootstrap_token,
         is_bootstrapped=False,
+        bootstrapped_on=None,
         is_expired=False,
+        expired_on=None,
         active_users_limit=ActiveUsersLimit.limited_to(1),
         user_profile_outsider_allowed=False,
         realm_minimum_archiving_period_before_deletion=2,
@@ -263,11 +274,16 @@ async def test_overwrite_existing(
     assert new_bootstrap_token != bootstrap_token.hex
 
     dump = await backend.organization.list_organizations()
+    org = await backend.organization.get(org_id)
+    assert isinstance(org, Organization)
     assert dump[org_id] == OrganizationDump(
         organization_id=org_id,
+        created_on=org.created_on,
         bootstrap_token=new_bootstrap_token,
         is_bootstrapped=False,
+        bootstrapped_on=None,
         is_expired=False,
+        expired_on=None,
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         user_profile_outsider_allowed=True,
         realm_minimum_archiving_period_before_deletion=1000,

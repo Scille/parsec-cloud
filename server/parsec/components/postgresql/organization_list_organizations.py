@@ -48,6 +48,12 @@ async def organization_list_organizations(
         if skip_templates and organization_id.str.endswith("Template"):
             continue
 
+        match row["created_on"]:
+            case DateTime() as created_on:
+                pass
+            case _:
+                assert False, row
+
         match row["bootstrap_token"]:
             case str() as raw_bootstrap_token:
                 bootstrap_token = AccessToken.from_hex(raw_bootstrap_token)
@@ -62,8 +68,20 @@ async def organization_list_organizations(
             case _:
                 assert False, row
 
+        match row["bootstrapped_on"]:
+            case DateTime() as bootstrapped_on:
+                pass
+            case _:
+                assert False, row
+
         match row["is_expired"]:
             case bool() as is_expired:
+                pass
+            case _:
+                assert False, row
+
+        match row["expired_on"]:
+            case DateTime() as expired_on:
                 pass
             case _:
                 assert False, row
@@ -103,9 +121,12 @@ async def organization_list_organizations(
 
         items[organization_id] = OrganizationDump(
             organization_id=organization_id,
+            created_on=created_on,
             bootstrap_token=bootstrap_token,
             is_bootstrapped=is_bootstrapped,
+            bootstrapped_on=bootstrapped_on,
             is_expired=is_expired,
+            expired_on=expired_on,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             realm_minimum_archiving_period_before_deletion=realm_minimum_archiving_period_before_deletion,

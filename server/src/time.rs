@@ -2,7 +2,6 @@
 
 use pyo3::{
     exceptions::PyValueError,
-    ffi::PyObject,
     prelude::*,
     types::{PyDict, PyList, PyType},
     PyResult,
