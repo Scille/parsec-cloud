@@ -135,16 +135,17 @@ async def test_ok(
     dump = await backend.organization.list_organizations()
     org = await backend.organization.get(coolorg.organization_id)
     assert isinstance(org, Organization)
-    assert (
-        not params.get("is_expired", False) and org.expired_on is not None
-    ) or org.expired_on is None
+    is_expired = params.get("is_expired", False)
+    assert (is_expired and org.expired_on is not None) or (
+        not is_expired and org.expired_on is None
+    )
     assert dump[coolorg.organization_id] == OrganizationDump(
         organization_id=coolorg.organization_id,
         created_on=org.created_on,
         bootstrap_token=ANY,
         is_bootstrapped=True,
         bootstrapped_on=org.bootstrapped_on,
-        is_expired=params.get("is_expired", False),
+        is_expired=is_expired,
         expired_on=org.expired_on,
         active_users_limit=ActiveUsersLimit.from_maybe_int(params.get("active_users_limit", None)),
         user_profile_outsider_allowed=params.get("user_profile_outsider_allowed", True),
