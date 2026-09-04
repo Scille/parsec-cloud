@@ -1,38 +1,66 @@
 /*
- * OnlyOffice co-editing protocol monitor — injected in-page script.
+ * OnlyOffice co-editing protocol monitor — injected in-page script (MITM mode).
  *
- * Patches window.WebSocket (and XHR polling fallback) BEFORE OnlyOffice's
- * socket.io loads, decodes the Engine.IO v4 + Socket.IO v4 framing, and
- * surfaces OnlyOffice's own "message" protocol: {type:"auth"|"cursor"|...}.
+ * This script no longer decodes frames itself. Instead it works WITH a local
+ * WebSocket man-in-the-middle (proxy.js, started by run-demo.js):
  *
- * Architecture: capture happens inside the editor iframes (where the OO
- * WebSockets live). Each decoded event is forwarded to the top frame via
- * postMessage; the top frame renders ONE unified, draggable panel.
+ *   - It patches window.WebSocket to REDIRECT OnlyOffice's co-editing socket
+ *     URL (wss://.../doc/{id}/c/EIO=4) to ws://127.0.0.1:PORT/oo?u=<enc>&e=<editor>.
+ *     Everything else about the socket stays 100% native — socket.io/engine.io
+ *     gets a real WebSocket with real readyState/MessageEvent. This is the one
+ *     robust interception point: no proxy-quacking, no property hijacking.
  *
- * Editor identity is resolved from the `auth` message (payload.user.username),
- * so the two Collaborate editors show as "John Smith" / "Kate Cage" while the
- * solo scenarios show as "Anonymous". The panel auto-filters by the active
- * scenario tab: Collaborate → John & Kate; other scenarios → Anonymous.
+ *   - The proxy terminates both legs (browser<->proxy plain ws, proxy<->OO
+ *     real wss), decodes every frame in Node, and can HOLD any non-noise frame
+ *     until released. That is the ONLY way to gate RECV (the bytes cannot reach
+ *     the browser's socket.io until the proxy forwards them).
  *
- * Use standalone:  paste into DevTools Console / a Tampermonkey userscript
- *   matching both  https://www.onlyoffice.com/see-it-in-action*
- *   and            https://site.docs.onlyoffice.com/*
- * Use with Playwright: injected via ctx.addInitScript() (see run-demo.js).
+ *   - The top frame opens a control WebSocket to ws://127.0.0.1:PORT/ctl. The
+ *     proxy pushes decoded events (incl. held rows with holdIds); the panel
+ *     renders them. Releasing a row sends {cmd:'release', id} back over /ctl.
+ *
+ * Flow control: an `auto-flow` / `manual-flow` toggle (next to copy/clear).
+ * In auto-flow (default) frames pass through the proxy freely. In manual-flow
+ * every non-noise frame is held at the proxy and shown as a ⏸ row with a ▶
+ * `send` button; clicking it releases that one frame (recv → delivered to the
+ * browser's socket.io; send → forwarded to OnlyOffice).
+ *
+ * Editor identity (John Smith / Kate Cage / Anonymous) is resolved in the proxy
+ * from the `auth` event and pushed to the panel. The panel still auto-filters
+ * by the active scenario tab: Collaborate → John & Kate; others → Anonymous.
+ *
+ * Kate's editor is deferred behind a "Start Kate's editor" overlay. A second
+ * button "Re-start John's editor in manual-flow" tears down John's editor,
+ * enables manual-flow, and rebuilds it — so John's whole socket handshake can
+ * be stepped through frame by frame (useful to test concurrent joins).
+ *
+ * The XHR polling fallback is still captured in-page (capture-only; it can't
+ * be held this way, but OO uses WebSockets in practice).
+ *
+ * Use with Playwright: injected via ctx.addInitScript() (see run-demo.js),
+ *   with window.__OO_PROXY_PORT set BEFORE this script runs.
+ * Standalone (no proxy): the redirect is skipped and you get a passive panel
+ *   fed only by the XHR fallback — not very useful. Run via run-demo.js.
  */
 (function () {
   'use strict';
   if (window.__OO_MON) return; // guard against double injection
   var IS_TOP = (window === window.top);
+  var PROXY_PORT = window.__OO_PROXY_PORT || 0;
   var MON = window.__OO_MON = {
     events: [], paused: false, sockets: 0,
-    editorUser: {},            // editorId -> username (from auth)
+    editorUser: {},            // editor -> username (from proxy 'user' msgs)
+    sidUser: {},               // sid -> username (from proxy 'user' msgs)
     users: {},                 // username -> {checked:bool}  (filter chips)
-    mode: null                 // 'collab' | 'solo' | null (set by active tab)
+    mode: null,               // 'collab' | 'solo' | null (set by active tab)
+    intercept: false,         // aka manual-flow: hold non-noise frames (from proxy)
+    connected: false          // /ctl control channel open?
   };
   var EDITOR_ID =
     (/[?&]frameEditorId=([^&]*)/.exec(location.search || '') || [, null])[1];
 
-  // ---- Engine.IO v4 + Socket.IO v4 frame decoder ---------------------------
+  // ---- Engine.IO v4 + Socket.IO v4 frame decoder (used only for the XHR
+  // polling fallback capture, which still happens in-page) ------------------
   function decodeEIO(data) {
     if (typeof data !== 'string' || !data.length) return null;
     switch (data[0]) {
@@ -72,30 +100,19 @@
     if (!p || typeof p !== 'object') return null;
     return { type: p.type || '?', payload: p };
   }
-  // OnlyOffice also sends its `auth` inside the Socket.IO CONNECT packet
-  // (SIO type 0), as `40{"data":{"type":"auth","user":{...}}}`. Extract the
-  // username from there so we learn the editor's identity one frame earlier
-  // (before the first `42` auth event), which lets us label the opening
-  // handshake/auth handshake correctly.
   function authFromConnect(d) {
     if (!d || d.sio !== 'connect' || !d.payload) return null;
     var data = d.payload.data || d.payload;
     if (data && data.type === 'auth' && data.user && data.user.username) return data.user.username;
     return null;
   }
-
-  // ---- EIO noise filter ---------------------------------------------------
-  // ping/pong/noop are keepalive frames; drop them to keep the log readable.
   function isNoise(d) {
     return d && d.eio && (d.eio === 'ping' || d.eio === 'pong' || d.eio === 'noop');
   }
 
-  // ---- editor identity ----------------------------------------------------
-  // A `send auth` message carries payload.user.username for its editor frame.
-  // We snapshot the resolved username onto each event (ev.user) at capture time
-  // so an event keeps the identity it had when it occurred, even if the same
-  // editor frame is later reused by another user (e.g. switching scenarios
-  // reuses the `document-editor` frame id).
+  // ---- editor identity (in-page, for the XHR fallback only) ---------------
+  // The proxy is authoritative for identity over WS; this only labels the
+  // rare XHR-poll events.
   function noteAuth(ev) {
     if (ev.kind !== 'msg' || ev.dir !== 'send') return;
     var p = ev.meta && ev.meta.payload;
@@ -103,43 +120,32 @@
       var name = p.user.username;
       if (MON.editorUser[ev.editor] !== name) {
         MON.editorUser[ev.editor] = name;
-        var g = (ev.gen != null) ? ev.gen : GEN[ev.editor];
-        if (g != null) GEN_USER[ev.editor + '#' + g] = name;
         ensureUser(name);
       }
     }
   }
   function ensureUser(name) {
     if (!MON.users[name]) {
-      // default: checked (visible). Tab-driven auto-filter overrides later.
       MON.users[name] = { checked: true };
       if (IS_TOP) addUserChip(name);
     }
   }
-  var GEN = {}, GEN_USER = {}; // editor -> generation count ; (editor+gen) -> user
-  function bumpGen(editor) { GEN[editor] = (GEN[editor] || 0) + 1; return GEN[editor]; }
-  function genOf(ev) { return ev.editor && ev.gen != null ? ev.gen : null; }
   function resolveUser(ev) {
-    // prefer a user snapshotted on the event; else the per-generation map;
-    // else the current editor->user map.
+    // Identity is keyed by the proxy's per-connection sid (reliable); the
+    // editor id from the iframe URL is often empty ('?'), so keying by it
+    // would merge all sessions into one slot.
+    if (ev.sid && MON.sidUser[ev.sid]) return MON.sidUser[ev.sid];
     if (ev.user) return ev.user;
-    if (ev.editor && ev.gen != null && GEN_USER[ev.editor + '#' + ev.gen]) return GEN_USER[ev.editor + '#' + ev.gen];
     return (ev.editor && MON.editorUser[ev.editor]) || ev.editor || '?';
   }
   function userOf(ev) { return resolveUser(ev); }
 
-  // ---- record + transport -------------------------------------------------
+  // ---- XHR fallback capture (in-page, passive) ---------------------------
   function makeEv(dir, kind, meta) {
-    var gen = EDITOR_ID ? (GEN[EDITOR_ID] || 0) : null;
-    return { t: Date.now(), dir: dir, kind: kind, meta: meta, editor: EDITOR_ID || '?', gen: gen };
+    return { t: Date.now(), dir: dir, kind: kind, meta: meta, editor: EDITOR_ID || '?', source: 'xhr' };
   }
   function record(ev) {
     noteAuth(ev);
-    // Only snapshot a *resolved* username onto the event. Leave unresolved
-    // events (before their auth arrived) un-snapshotted so they pick up their
-    // generation's user later via GEN_USER (see resolveUser).
-    var u = resolveUser(ev);
-    if (u && u !== ev.editor) ev.user = u;
     if (IS_TOP) store(ev); else forward(ev);
   }
   function store(ev) {
@@ -151,49 +157,61 @@
     try { window.top.postMessage({ __oo_mon: 1, ev: ev }, '*'); } catch (e) {}
   }
 
-  // Patch WebSocket (capture only; OO sockets live in editor frames)
+  // =========================================================================
+  // Patch WebSocket: REDIRECT OO co-editing sockets to the local MITM proxy.
+  // The returned object is a NATIVE WebSocket — we only rewrite the URL.
+  // =========================================================================
   var OrigWS = window.WebSocket;
-  function PatchedWS(url, protocols) {
-    var ws = protocols ? new OrigWS(url, protocols) : new OrigWS(url);
-    if (/\/doc\/[^/]+\/c\/.*EIO=/.test(url)) {
-      MON.sockets++;
-      var gen = bumpGen(EDITOR_ID || '?');
-      record(makeEv('open', 'ws', url));
-      ws.addEventListener('message', function (e) {
-        var d = decodeEIO(e.data); if (isNoise(d)) return;
-        var c = classify(d);
-        if (c) record(makeEv('recv', 'msg', c));
-        else if (d && d.eio) record(makeEv('recv', 'eio', d));
-      });
-      var origSend = ws.send.bind(ws);
-      ws.send = function (d) {
-        var dec = decodeEIO(d); if (isNoise(dec)) return origSend(d);
-        // Learn the editor's username from the SIO CONNECT packet's auth payload
-        // (arrives before the first `42` auth event), so the opening handshake
-        // is labelled with the right user from the start.
-        var name = authFromConnect(dec);
-        if (name && EDITOR_ID && MON.editorUser[EDITOR_ID] !== name) {
-          MON.editorUser[EDITOR_ID] = name;
-          var g = GEN[EDITOR_ID]; if (g != null) GEN_USER[EDITOR_ID + '#' + g] = name;
-          ensureUser(name);
-        }
-        var c = classify(dec);
-        if (c) record(makeEv('send', 'msg', c));
-        else if (dec && dec.eio) record(makeEv('send', 'eio', dec));
-        return origSend(d);
-      };
-      ws.addEventListener('close', function () {
-        record(makeEv('engine', 'close', url));
-      });
+  var OO_RE = /\/doc\/[^/]+\/c\/.*EIO=/;
+  // Only redirect once we've confirmed the proxy is actually listening; if it's
+  // not (e.g. CSP blocked the probe, or proxy didn't start), fall through to the
+  // native URL so OO still loads instead of pointing at a dead port.
+  var PROXY_READY = false;
+  function probeProxy() {
+    if (!PROXY_PORT) return;
+    try {
+      // Synchronous probe: the init script runs before OO loads, and a local
+      // request returns instantly. This guarantees PROXY_READY is set before
+      // the first OO WebSocket is constructed (no race).
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'http://127.0.0.1:' + PROXY_PORT + '/health', false);
+      xhr.send(null);
+      if (xhr.status === 200 && /ok/.test(xhr.responseText || '')) {
+        PROXY_READY = true;
+        console.log('[OO Monitor] proxy ready, redirecting OO sockets to ws://127.0.0.1:' + PROXY_PORT);
+      } else {
+        console.log('[OO Monitor] proxy health unexpected:', xhr.status);
+      }
+    } catch (e) {
+      console.log('[OO Monitor] proxy NOT reachable at port ' + PROXY_PORT + '; running passive (no redirect)');
     }
-    return ws;
+  }
+  probeProxy();
+  function PatchedWS(url, protocols) {
+    if (PROXY_READY && typeof url === 'string' && OO_RE.test(url)) {
+      try {
+        // Pass the editor id + subprotocol through as query params so the proxy
+        // can label events and negotiate the same subprotocol upstream.
+        var enc = encodeURIComponent(url);
+        var editor = EDITOR_ID || '';
+        var p = protocols
+          ? (Array.isArray(protocols) ? protocols[0] : protocols)
+          : '';
+        var redir = 'ws://127.0.0.1:' + PROXY_PORT + '/oo?u=' + enc +
+          (editor ? '&e=' + encodeURIComponent(editor) : '') +
+          (p ? '&p=' + encodeURIComponent(p) : '');
+        if (protocols) return new OrigWS(redir, protocols);
+        return new OrigWS(redir);
+      } catch (e) { /* fall through to native */ }
+    }
+    return protocols ? new OrigWS(url, protocols) : new OrigWS(url);
   }
   PatchedWS.prototype = OrigWS.prototype;
   PatchedWS.CONNECTING = OrigWS.CONNECTING; PatchedWS.OPEN = OrigWS.OPEN;
   PatchedWS.CLOSING = OrigWS.CLOSING; PatchedWS.CLOSED = OrigWS.CLOSED;
   window.WebSocket = PatchedWS;
 
-  // Patch XHR (polling fallback)
+  // Patch XHR (polling fallback) — capture only, in-page.
   var Oo = XMLHttpRequest.prototype.open, Os = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open = function (m, u) { this.__u = u; this.__m = m; return Oo.apply(this, arguments); };
   XMLHttpRequest.prototype.send = function (body) {
@@ -212,18 +230,99 @@
     return Os.apply(this, arguments);
   };
 
-  // ---- top frame: receive forwarded events + observe scenario tabs ---------
+  // ---- top frame: control channel + scenario tabs + Kate deferral ---------
   if (IS_TOP) {
+    // forwarded XHR-fallback events from child frames
     window.addEventListener('message', function (e) {
       var d = e.data;
       if (!d || d.__oo_mon !== 1 || !d.ev) return;
       noteAuth(d.ev);
-      // Resolve the user live (deferred resolution): events that arrived
-      // before their generation's auth get the right user once that auth lands.
       var u = resolveUser(d.ev);
       if (u && u !== d.ev.editor) d.ev.user = u;
       store(d.ev);
     });
+
+    // ---- control channel to the local MITM proxy -------------------------
+    var ctl = null;
+    function connectCtl() {
+      if (!PROXY_PORT) return;
+      try {
+        ctl = new OrigWS('ws://127.0.0.1:' + PROXY_PORT + '/ctl');
+      } catch (e) { setTimeout(connectCtl, 1000); return; }
+      ctl.addEventListener('open', function () {
+        MON.connected = true;
+        syncInterceptBtn();
+      });
+      ctl.addEventListener('close', function () {
+        MON.connected = false; ctl = null;
+        syncInterceptBtn();
+        setTimeout(connectCtl, 1000); // auto-reconnect
+      });
+      ctl.addEventListener('error', function () { /* close will fire */ });
+      ctl.addEventListener('message', function (e) {
+        var msg; try { msg = JSON.parse(e.data); } catch (err) { return; }
+        handleProxyMsg(msg);
+      });
+    }
+    // per-row hold state (holdId -> {row, released, ok})
+    var HOLD_STATE = {};
+    function handleProxyMsg(msg) {
+      switch (msg.t) {
+        case 'hello': {
+          MON.intercept = !!msg.intercept;
+          syncInterceptBtn();
+          // replay history
+          if (Array.isArray(msg.events)) {
+            msg.events.forEach(function (ev) {
+              if (ev.user) { ensureUser(ev.user); MON.sidUser[ev.sid] = ev.user; MON.editorUser[ev.editor] = ev.user; }
+              storeProxyEvent(ev);
+            });
+          }
+          if (msg.users) for (var ed in msg.users) { MON.editorUser[ed] = msg.users[ed]; ensureUser(msg.users[ed]); }
+          break;
+        }
+        case 'event': {
+          var ev = msg.ev;
+          if (ev.user) { ensureUser(ev.user); MON.sidUser[ev.sid] = ev.user; MON.editorUser[ev.editor] = ev.user; }
+          storeProxyEvent(ev);
+          break;
+        }
+        case 'user': {
+          MON.sidUser[msg.sid] = msg.user;
+          MON.editorUser[msg.editor] = msg.user;
+          ensureUser(msg.user);
+          // Re-render rows for this session now that we know the user
+          // (e.g. ws-open was shown as '?' before the auth frame arrived).
+          rebuild();
+          break;
+        }
+        case 'intercept': {
+          MON.intercept = !!msg.on;
+          syncInterceptBtn();
+          break;
+        }
+        case 'released': {
+          var h = HOLD_STATE[msg.id];
+          if (h) { h.released = true; h.ok = !!msg.ok; if (h.row) updateRowReleased(h.row, h.ok); }
+          break;
+        }
+        case 'stale': {
+          var h2 = HOLD_STATE[msg.id];
+          if (h2) { h2.released = true; h2.ok = false; if (h2.row) updateRowReleased(h2.row, false); }
+          break;
+        }
+      }
+    }
+    function storeProxyEvent(ev) {
+      MON.events.push(ev);
+      if (MON.events.length > 5000) MON.events.shift();
+      if (!MON.paused && visible(ev)) render(ev);
+    }
+    function sendCtl(obj) {
+      if (ctl && ctl.readyState === OrigWS.OPEN) {
+        try { ctl.send(JSON.stringify(obj)); } catch (e) {}
+      }
+    }
 
     // Initialize Kate-block state early (referenced by applyScenario below).
     MON.kateBlocked = true; MON.kateConfig = null; MON.kateOrig = null;
@@ -232,7 +331,6 @@
     // every other scenario → "Anonymous".
     function activeScenario() {
       var btn = document.querySelector('[class*="actions-tab-button"][class*="active"], [class*="actions-tab-button"].active');
-      // fall back: scan by text
       if (!btn) {
         var btns = document.querySelectorAll('button[class*="actions-tab-button"]');
         for (var i = 0; i < btns.length; i++) if (/active/i.test(btns[i].className)) { btn = btns[i]; break; }
@@ -243,8 +341,6 @@
       if (!tabText) return;
       var collab = /collaborate/i.test(tabText);
       MON.mode = collab ? 'collab' : 'solo';
-      // Re-arm the Kate block each time we (re)enter Collaborate, so Kate's
-      // editor is held back until manually started.
       if (collab) MON.kateBlocked = true;
       for (var name in MON.users) {
         var isAnon = /anonymous/i.test(name);
@@ -253,24 +349,23 @@
       syncChips();
       rebuild();
     }
-    // The active scenario tab is polled below (interval) which is robust to
-    // React updates and any tab-switch trigger (click, keyboard, etc.).
-    // Re-apply when the active tab changes for any reason (e.g. launch click).
     var lastTab = null;
     setInterval(function () {
       var t = activeScenario();
       if (t && t !== lastTab) { lastTab = t; applyScenario(t); }
     }, 500);
 
-    // ---- Prevent Kate's editor (document-editor-2) from auto-starting -------
-    // The demo constructs both editors via `new DocsAPI.DocEditor(id, config)`.
-    // We intercept that constructor: let `document-editor` (John) build normally,
-    // but defer `document-editor-2` (Kate) — we keep its config and create the
-    // editor only when the user clicks "Start Kate's editor". This lets you
-    // edit solo in John first and then observe Kate's late-join behaviour.
-    MON.kateBlocked = true;       // Kate hasn't started yet
-    MON.kateConfig = null;        // {id, cfg} captured from the deferred constructor
-    MON.kateOrig = null;         // the real DocEditor constructor
+    // ---- Editor construction trap ----------------------------------------
+    // The demo builds editors via `new DocsAPI.DocEditor(id, config)`. We
+    // wrap the constructor to:
+    //   - defer `document-editor-2` (Kate) until "Start Kate's editor" is
+    //     clicked (lets you edit solo in John first, then watch Kate's join).
+    //   - remember `document-editor` (John)'s config so "Re-start John's editor
+    //     in manual-flow" can tear it down + rebuild it with manual-flow armed
+    //     BEFORE its socket opens (so the whole handshake can be stepped).
+    MON.kateBlocked = true; MON.kateConfig = null; MON.kateOrig = null;
+    MON.johnConfig = null;     // {id, cfg} captured from John's constructor
+    MON.johnInstance = null;   // last returned DocEditor instance for John
     (function installDocEditorTrap() {
       if (window.__oo_doceditor_trap) return;
       window.__oo_doceditor_trap = true;
@@ -284,13 +379,17 @@
               MON.kateConfig = { id: id, cfg: cfg };
               return { __ooDeferred: true };
             }
-            return new orig(id, cfg);
+            var inst = new orig(id, cfg);
+            if (id === 'document-editor') {
+              MON.johnConfig = { id: id, cfg: cfg };
+              MON.johnInstance = inst;
+            }
+            return inst;
           }
           W.__oo_wrapped = true; W.prototype = orig.prototype; W.__oo_orig = orig;
           D.DocEditor = W;
         }
       }
-      // DocsAPI may be defined after this script runs; poll until wrapped.
       setInterval(wrap, 50);
     })();
     MON.startKate = function () {
@@ -299,18 +398,38 @@
       if (MON.kateConfig && MON.kateOrig) {
         var k = MON.kateConfig;
         MON.kateConfig = null;
-        new MON.kateOrig(k.id, k.cfg); // create Kate's editor for real
+        new MON.kateOrig(k.id, k.cfg);
+      }
+    };
+    // Re-start John's editor: destroy the current instance, arm manual-flow,
+    // clear the panel, then rebuild John's editor so its socket handshake is
+    // captured frame-by-frame from the very first frame.
+    MON.restartJohnManualFlow = function () {
+      if (MON.johnInstance) {
+        try { if (typeof MON.johnInstance.destroy === 'function') MON.johnInstance.destroy(); } catch (e) {}
+        try { if (typeof MON.johnInstance.deInit === 'function') MON.johnInstance.deInit(); } catch (e) {}
+        MON.johnInstance = null;
+      }
+      // remove any leftover OO iframes for John so DocsAPI rebuilds cleanly
+      var slot = document.getElementById('document-editor');
+      if (slot) slot.innerHTML = '';
+      // arm manual-flow (both locally and at the proxy)
+      MON.intercept = true; syncInterceptBtn();
+      sendCtl({ cmd: 'intercept', on: true });
+      // clear the event log for a clean read of the handshake
+      MON.events.length = 0; HOLD_STATE = {}; rebuild(); updateStat();
+      if (MON.johnConfig && MON.kateOrig) {
+        var j = MON.johnConfig;
+        MON.johnConfig = null;
+        MON.johnInstance = new MON.kateOrig(j.id, j.cfg);
       }
     };
     function removeKateOverlay() {
       var o = document.getElementById('oo-kate-overlay'); if (o) o.remove();
     }
-    // Periodically ensure the placeholder for Kate's editor shows a
-    // "Start Kate's editor" button overlay while she is deferred.
     setInterval(function () {
       if (!MON.kateBlocked) { removeKateOverlay(); return; }
       if (MON.mode !== 'collab') { removeKateOverlay(); return; }
-      // Kate's slot is the 2nd actions-content div (grid column 2).
       var contents = Array.from(document.querySelectorAll('div[class*="actions-container"] > div[class*="actions-content"]'));
       var target = contents.length >= 2 ? contents[1] : null;
       if (!target) return;
@@ -326,14 +445,22 @@
         b.style.cssText = 'background:#3b5b8c;color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font:inherit';
         b.addEventListener('click', function () { MON.startKate(); });
         overlay.appendChild(b);
+        // second button: re-start John in manual-flow
+        var rb = document.createElement('button');
+        rb.textContent = 'Re-start John\'s editor in manual-flow';
+        rb.style.cssText = 'background:#7a5b00;color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font:inherit';
+        rb.addEventListener('click', function () { MON.restartJohnManualFlow(); });
+        overlay.appendChild(rb);
         var hint = document.createElement('div');
         hint.style.cssText = 'font-size:11px;color:#888';
-        hint.textContent = "edit in John's editor first, then start Kate to observe the late-join";
+        hint.textContent = "edit in John's editor first, then start Kate — or re-start John in manual-flow to step through his handshake";
         overlay.appendChild(hint);
       }
       if (target.style.position !== 'relative') target.style.position = 'relative';
       if (overlay.parentElement !== target) target.appendChild(overlay);
     }, 500);
+
+    connectCtl();
   }
 
   // ---- UI (top frame only) ------------------------------------------------
@@ -350,6 +477,7 @@
       '#oo-mon .hdr .lbl{flex:1}',
       '#oo-mon .hdr button{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:4px;padding:1px 6px;cursor:pointer;font:inherit}',
       '#oo-mon .hdr button:hover{background:rgba(255,255,255,.32)}',
+      '#oo-mon .hdr button.on{background:#ffd34d;color:#3a2a00;font-weight:700}',
       '#oo-mon .bar{display:flex;gap:4px;padding:4px 6px;background:#eef1f5;border-bottom:1px solid #d8dce3;font-size:11px;align-items:center;flex-wrap:wrap}',
       '#oo-mon .bar .stat{flex:1;color:#555;min-width:60px}',
       '#oo-mon .chips{display:flex;gap:4px;flex-wrap:wrap}',
@@ -360,11 +488,15 @@
       '#oo-mon .row{border-bottom:1px solid #eee}',
       '#oo-mon .row.recv .head{background:#eef7ee} #oo-mon .row.send .head{background:#eef3fb}',
       '#oo-mon .row.engine .head{background:#f3eefb;color:#666}',
+      '#oo-mon .row.held .head{background:#fff4d6} #oo-mon .row.held.released .head{opacity:.5}',
       '#oo-mon .head{display:flex;gap:6px;padding:3px 6px;cursor:pointer;align-items:baseline}',
       '#oo-mon .head:hover{filter:brightness(.97)}',
       '#oo-mon .head .d{flex:0 0 16px} #oo-mon .head .ed{flex:0 0 80px;color:#7a5b00;font-size:10px;overflow:hidden;text-overflow:ellipsis}',
       '#oo-mon .head .ts{flex:0 0 66px;color:#888} #oo-mon .head .ty{flex:0 0 96px;font-weight:600}',
       '#oo-mon .head .sum{flex:1;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '#oo-mon .head .rl{flex:0 0 56px;text-align:right}',
+      '#oo-mon .head .rl button{font:inherit;font-size:10px;padding:0 6px;border:1px solid #b5932b;border-radius:3px;background:#fff1c2;cursor:pointer;color:#5a4200}',
+      '#oo-mon .head .rl button:disabled{opacity:.5;cursor:default}',
       '#oo-mon .det{user-select:text;-webkit-user-select:text;white-space:pre-wrap;word-break:break-all;',
       'background:#fff;border-top:1px solid #e3e3e3;padding:6px 8px;margin:0;font-size:11px;max-height:40vh;overflow:auto;cursor:text}',
       '#oo-mon .row:not(.open) .det{display:none}',
@@ -384,7 +516,8 @@
     var box = document.createElement('div'); box.id = 'oo-mon';
     box.innerHTML =
       '<div class="hdr" id="oo-mon-hdr"><span class="lbl">OO Protocol Monitor</span>' +
-      '<button id="oo-mon-copy">copy</button><button id="oo-mon-clear">clear</button><button id="oo-mon-pause">pause</button></div>' +
+      '<button id="oo-mon-copy">copy</button><button id="oo-mon-clear">clear</button>' +
+      '<button id="oo-mon-flow" title="toggle manual flow (hold frames until released)">auto-flow</button></div>' +
       '<div class="bar"><div class="chips" id="oo-mon-chips"></div>' +
       '<span class="stat" id="oo-mon-stat">0 events</span></div>' +
       '<div class="list" id="oo-mon-list"></div>' +
@@ -404,14 +537,12 @@
     });
     document.addEventListener('mouseup', function () { dragging = false; });
 
-    // resize (drag the bottom-right handle; the top-left corner stays fixed).
+    // resize
     var resizer = document.getElementById('oo-mon-resize');
     var resizing = false, rsx = 0, rsy = 0, rsw = 0, rsh = 0;
     resizer.addEventListener('mousedown', function (e) {
       e.preventDefault(); e.stopPropagation();
       resizing = true;
-      // pin the top-left corner so resizing keeps it fixed regardless of the
-      // panel's current anchor (bottom/right or left/top after dragging).
       box.style.left = box.offsetLeft + 'px';
       box.style.top = box.offsetTop + 'px';
       box.style.right = 'auto';
@@ -429,11 +560,13 @@
     document.addEventListener('mouseup', function () { resizing = false; });
 
     document.getElementById('oo-mon-clear').addEventListener('click', function () {
-      MON.events.length = 0; rebuild(); updateStat();
+      MON.events.length = 0; HOLD_STATE = {}; rebuild(); updateStat();
     });
-    var pb = document.getElementById('oo-mon-pause');
-    pb.addEventListener('click', function () {
-      MON.paused = !MON.paused; pb.textContent = MON.paused ? 'resume' : 'pause';
+    var flb = document.getElementById('oo-mon-flow');
+    flb.addEventListener('click', function () {
+      MON.intercept = !MON.intercept;
+      syncInterceptBtn();
+      sendCtl({ cmd: 'intercept', on: MON.intercept });
     });
     document.getElementById('oo-mon-copy').addEventListener('click', function () {
       var text = MON.events.filter(visible).map(formatBlock).join('\n\n');
@@ -442,12 +575,19 @@
     listEl = document.getElementById('oo-mon-list');
     statEl = document.getElementById('oo-mon-stat');
     chipsEl = document.getElementById('oo-mon-chips');
-    // re-sync chips for users already known (e.g. events arrived before UI built)
     Object.keys(MON.users).forEach(addUserChip);
     syncChips();
+    syncInterceptBtn();
   }
 
   var listEl, statEl, chipsEl;
+
+  function syncInterceptBtn() {
+    var flb = document.getElementById('oo-mon-flow');
+    if (!flb) return;
+    flb.textContent = MON.intercept ? 'manual-flow' : 'auto-flow';
+    flb.classList.toggle('on', !!MON.intercept);
+  }
 
   function ensureUI() {
     if (listEl || !document.body) return;
@@ -472,22 +612,17 @@
     } catch (e) { return ''; }
   }
 
-  // Markdown block for one event: a heading line + the full JSON payload in a
-  // fenced code block.
-  //   ### 08:27:18.020  ->  John Smith    auth
-  //   ```json
-  //   { ...full payload... }
-  //   ```
   function typeOf(ev) {
     if (ev.dir === 'open') return 'ws-open';
     if (ev.dir === 'engine') return ev.kind;
+    if (ev.dir === 'held') return 'HELD ' + (ev.kind === 'msg' ? ev.meta.type : (ev.meta && ev.meta.eio ? ev.meta.eio : ''));
     if (ev.kind === 'msg') return ev.meta.type;
     if (ev.kind === 'eio') return ev.meta.eio + (ev.meta.sio ? '/' + ev.meta.sio : '');
     return ev.kind;
   }
   function formatLine(ev) {
     var ts = new Date(ev.t).toISOString().slice(11, 23);
-    var dir = ev.dir === 'send' ? '->' : ev.dir === 'recv' ? '<-' : '  ';
+    var dir = ev.dir === 'send' ? '->' : ev.dir === 'recv' ? '<-' : ev.dir === 'held' ? '##' : '  ';
     return pad(ts, 13) + '  ' + dir + '  ' + pad(userOf(ev), 14) + '  ' + typeOf(ev);
   }
   function formatBlock(ev) {
@@ -520,6 +655,10 @@
     var d, ty = ev.kind, sum = '';
     if (ev.dir === 'open') { d = '🔌'; ty = 'ws-open'; sum = String(ev.meta).slice(-50); }
     else if (ev.dir === 'engine') { d = '⚙'; ty = ev.kind; sum = String(ev.meta).slice(-50); }
+    else if (ev.dir === 'held') {
+      d = '⏸'; ty = typeOf(ev);
+      sum = ev.kind === 'msg' ? summarize(ev.meta.payload) : (ev.meta && ev.meta.eio ? ev.meta.eio : '');
+    }
     else if (ev.kind === 'msg') { d = ev.dir === 'send' ? '⬆' : '⬇'; ty = ev.meta.type; sum = summarize(ev.meta.payload); }
     else if (ev.kind === 'eio') { d = '⚙'; ty = ev.meta.eio + (ev.meta.sio ? '/' + ev.meta.sio : ''); }
     else { d = ev.dir === 'send' ? '⬆' : '⬇'; ty = ev.kind; }
@@ -529,6 +668,24 @@
       '<span class="d">' + d + '</span><span class="ed" title="' + esc(userOf(ev)) + '">' + esc(userOf(ev)) + '</span>' +
       '<span class="ts">' + ts.toISOString().slice(11, 23) + '</span>' +
       '<span class="ty">' + esc(ty) + '</span><span class="sum">' + esc(sum) + '</span>';
+    if (ev.dir === 'held' && ev.holdId) {
+      var rl = document.createElement('span'); rl.className = 'rl';
+      var rb = document.createElement('button');
+      rb.textContent = 'send'; rb.title = 'release this frame through the proxy';
+      var hs = HOLD_STATE[ev.holdId] = HOLD_STATE[ev.holdId] || { released: false, ok: null, row: row };
+      if (hs.released) {
+        row.classList.add('released');
+        rb.textContent = hs.ok === false ? 'stale' : 'sent'; rb.disabled = true;
+      } else {
+        rb.addEventListener('click', function (e) {
+          e.stopPropagation();
+          rb.disabled = true; rb.textContent = '…';
+          sendCtl({ cmd: 'release', id: ev.holdId });
+        });
+      }
+      rl.appendChild(rb);
+      head.appendChild(rl);
+    }
     head.addEventListener('click', function () { row.classList.toggle('open'); });
     var det = document.createElement('pre'); det.className = 'det';
     det.textContent = JSON.stringify(ev.meta, null, 2);
@@ -537,11 +694,16 @@
     row.appendChild(head); row.appendChild(det);
     return row;
   }
+  function updateRowReleased(row, ok) {
+    row.classList.add('released');
+    var btns = row.querySelectorAll('.rl button');
+    if (btns.length) { btns[0].textContent = ok ? 'sent' : 'stale'; btns[0].disabled = true; }
+  }
 
   function visible(ev) {
     var u = userOf(ev);
     var chip = MON.users[u];
-    if (!chip) return true;          // unknown user → always show
+    if (!chip) return true;
     return chip.checked;
   }
 
