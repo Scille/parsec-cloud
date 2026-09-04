@@ -1,0 +1,977 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+from __future__ import annotations
+
+import asyncio
+import json
+from collections.abc import AsyncGenerator, Awaitable, Callable
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any
+from uuid import UUID, uuid4
+
+import httpx_sse
+import py_mini_racer
+import pytest
+from py_mini_racer import JSPromise
+from pydantic import BaseModel
+
+from parsec._parsec import VlobID
+from parsec.components.editics import (
+    ClientEvent,
+    ServerEvent,
+    ServerEventAdapter,
+)
+from tests.common.backend import SERVER_DOMAIN
+from tests.common.client import AuthenticatedRpcClient, RpcTransportError
+
+type EditicsSessionSendClientEvent = Callable[[ClientEvent], Awaitable[BaseModel | None]]
+
+
+class EditicsSessionClient:
+    """
+    Connect to the server to join an editics session.
+    """
+
+    def __init__(
+        self,
+        sse_event_source: httpx_sse.EventSource,
+        send_events_raw: Callable[[str], Awaitable[str | None]],
+    ):
+        self._sse_event_source = sse_event_source
+        self._sse_event_source_iter = self._sse_event_source.aiter_sse()
+        self.send_raw = send_events_raw
+
+    @asynccontextmanager
+    async def join(
+        who: AuthenticatedRpcClient,
+        realm_id: VlobID,
+        document_id: VlobID,
+        participant_id: UUID,
+    ) -> AsyncGenerator[EditicsSessionClient, None]:
+        """
+        Open the editics SSE + RPC connection for an editics session.
+
+        Yields `(send_client_event, sse_listen_server_events)`
+        """
+        auth = f"Editics {who.device_id.hex}.{participant_id.hex}"
+        session_path = f"/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
+        join_url = f"http://{SERVER_DOMAIN}{session_path}/join"
+        send_url = f"http://{SERVER_DOMAIN}{session_path}/send"
+
+        async def send_events_raw(raw_event: str) -> str | None:
+            rep = await who.raw_client.post(
+                send_url,
+                headers={"Authorization": auth, "Content-Type": "application/json"},
+                content=raw_event,
+            )
+            match rep.status_code:
+                case 200:
+                    return rep.text()
+                case 204:
+                    return None
+                case bad_status_code:
+                    raise RpcTransportError(bad_status_code)
+
+        async with httpx_sse.aconnect_sse(
+            who.raw_client,
+            "GET",
+            join_url,
+            # `EventSource` cannot set headers; the server accepts the identity
+            # as an `authorization` query param on the SSE route (todo §6.2).
+            params={"authorization": auth},
+            headers={"Accept": "text/event-stream"},
+        ) as sse_event_source:
+            yield EditicsSessionClient(
+                send_events_raw=send_events_raw,
+                sse_event_source=sse_event_source,
+            )
+
+    async def send(self, event: ClientEvent) -> ServerEvent | None:
+        match await self.send_raw(event.model_dump_json()):
+            case None:
+                return None
+            case raw_server_event:
+                return ServerEventAdapter.validate_json(raw_server_event)
+
+    send_raw: Callable[[str], Awaitable[str | None]]  # Set in `__init__`
+    "Take and return the events in JSON encoded format"
+
+    async def recv(self) -> ServerEvent:
+        raw_event = await self.recv_raw()
+        return ServerEventAdapter.validate_json(raw_event)
+
+    async def recv_raw(self) -> str:
+        "Returns the event in JSON encoded format"
+        while True:
+            sse = await self._sse_event_source_iter.__anext__()
+            if sse.event == "keepalive":
+                continue
+            if not sse.data:
+                continue
+            return sse.data  # Expected to be a JSON-encoded ServerEvent
+
+
+@pytest.fixture(scope="session")
+def editics_js_runtime() -> EditicsJSRuntime:
+    return EditicsJSRuntime()
+
+
+async def _mini_racer_async_eval(js_runtime: py_mini_racer.MiniRacer, code: str) -> Any:
+    """
+    MiniRacer runs its own asyncio loop and convert the Javascript promise to an
+    asyncio future, so doing `await js_runtime.eval(...)` is theorically possible
+    but fails with a `Future <Future pending> attached to a different loop` error.
+
+    Hence this helper that allow awaiting the future from our own asyncio event loop.
+    """
+    loop = js_runtime._ctx.event_loop  # type: ignore[attr-defined]
+
+    async def _run() -> Any:
+        value = await js_runtime.eval_cancelable(code)
+        if isinstance(value, JSPromise):
+            value = await value
+        return value
+
+    future = asyncio.run_coroutine_threadsafe(_run(), loop)
+    return future.result()
+
+
+class EditicsJSRuntime:
+    """
+    Start a JavaScript runtime (V8 using PyMiniRacer) and load inside it the editics
+    client (i.e. `client/editics/protocol.js`).
+
+    Only a single instance of it is needed for the whole tests run: internally it
+    will create independant instances of the protocol object for each test.
+    """
+
+    def __init__(self):
+        protocol_js_path = Path(__file__).parent / "../../../client/editics/protocol.js"
+
+        src = protocol_js_path.read_text()
+        # The file is an ES module ending with `export { EditicsTranslator };`.
+        # V8 (PyMiniRacer) does not implement ESM `export`, so rewrite it to a
+        # global assignment that the bootstrap can pick up. This is the only
+        # transform; the rest of the source is loaded verbatim (no build step,
+        # todo §2.3).
+        assert "export { EditicsTranslator };" in src, "protocol.js export marker changed"
+        src = src.replace(
+            "export { EditicsTranslator };",
+            "globalThis.__EditicsTranslator = EditicsTranslator;",
+        )
+
+        self._js_runtime = py_mini_racer.MiniRacer()
+        self._js_runtime.eval(src)
+
+        self._js_runtime.eval("globalThis.__editics_instances = {};")
+
+    @property
+    def _event_loop(self) -> asyncio.AbstractEventLoop:
+        # The MiniRacer runs its own asyncio event loop on a dedicated background
+        # thread (created when the session-scoped fixture is initialized outside
+        # of any running loop). All py_mini_racer futures/promises are bound to
+        # that loop, so any `await` of a JSPromise must happen *on* that loop.
+        return
+
+    async def eval(self, code: str) -> Any:
+        """Evaluate JS code, awaiting any returned Promise on the MiniRacer loop.
+
+        `MiniRacer.eval` is synchronous and only returns the (un-awaited) JS
+        value. When the expression evaluates to a `JSPromise`, awaiting it from
+        the test's event loop raises "Future attached to a different loop",
+        because py_mini_racer creates the promise's future on its own background
+        loop. We therefore schedule the eval + promise await on the MiniRacer
+        loop with `run_coroutine_threadsafe` and block the caller until it's
+        done.
+        """
+        loop = self._js_runtime._ctx.event_loop  # type: ignore[attr-defined]
+
+        async def _run() -> Any:
+            value = await self._js_runtime.eval_cancelable(code)
+            if isinstance(value, JSPromise):
+                value = await value
+            return value
+
+        future = asyncio.run_coroutine_threadsafe(_run(), loop)
+        return future.result()
+
+    @asynccontextmanager
+    async def new_client(
+        self,
+        who: AuthenticatedRpcClient,
+        realm_id: VlobID,
+        document_id: VlobID,
+        vlob_version: int = 1,
+        editor_type: int = 0,
+    ) -> AsyncGenerator[EditicsJSClient, None]:
+        participant_id = uuid4()
+
+        self._js_runtime.eval(
+            f"""
+            globalThis.__editics_instances['{participant_id.hex}'] = new globalThis.__EditicsTranslator({{
+                workspaceId: '{realm_id.hex}',
+                vlobId: '{document_id.hex}',
+                deviceIdHex: '{who.device_id.hex}',
+                userId: '<dummy userId>',
+                userName: '<dummy userName>',
+                vlobVersion: {vlob_version},
+                editorType: {editor_type},
+                capabilities: {{
+                    resolveUserName: (d) => console.log('resolveUserName', d),
+                    resolveUserId: (d) => console.log('resolveUserId', d),
+                    encrypt: (p) => console.log('encrypt', p),
+                    decrypt: (c) => console.log('decrypt', c),
+                }},
+            }});
+            """,
+        )
+        async with EditicsSessionClient.join(
+            who=who,
+            realm_id=realm_id,
+            document_id=document_id,
+            participant_id=participant_id,
+        ) as editics_session_client:
+            client = EditicsJSClient(self._js_runtime, who, participant_id, editics_session_client)
+            try:
+                yield client
+            finally:
+                self._js_runtime.eval(
+                    f"""delete globalThis.__editics_instances['{participant_id.hex}'];"""
+                )
+
+
+class EditicsJSClient:
+    """
+    Combine an connection to the server (using `EditicsSessionClient`) with an
+    instance of the editics client running in the JavaScript runtime.
+
+    The should be used to test the OnlyOffice protocol going in and out of the
+    OnlyOffice editor (as this validate both our server-reimplementation and
+    the client-side OnlyOffice-to-editics-protocol translation layer).
+    """
+
+    def __init__(
+        self,
+        js_runtime: EditicsJSRuntime,
+        who: AuthenticatedRpcClient,
+        participant_id: UUID,
+        editics_session_client: EditicsSessionClient,
+    ):
+        self.js_runtime = js_runtime
+        self.who = who
+        self.participant_id = participant_id
+        self.editics_session_client = editics_session_client
+
+    async def inject_oo_client_event(self, oo_client_event: dict) -> dict | None:
+        """
+        Simulate the OnlyOffice editor (running on the client) wants to send a new
+        event to the server.
+        """
+        raw_editics_client_event: str | None = await _mini_racer_async_eval(
+            self.js_runtime,
+            f"""
+            globalThis.__editics_instances['{self.participant_id.hex}']
+                .cookClientEvent({json.dumps(oo_client_event)})
+                .then(obj => (obj != null ? JSON.stringify(obj) : null))
+            """,
+        )
+        if raw_editics_client_event is None:
+            # Ignored OnlyOffice event (e.g. `rpc`)
+            return
+
+        maybe_raw_editics_server_event = await self.editics_session_client.send_raw(
+            raw_editics_client_event
+        )
+        match maybe_raw_editics_server_event:
+            case None:
+                return None
+
+            case raw_editics_server_event:
+                raw_oo_client_event = await _mini_racer_async_eval(
+                    self.js_runtime,
+                    f"""
+                    globalThis.__editics_instances['{self.participant_id.hex}']
+                        .cookServerEvent({raw_editics_server_event})
+                        .then(obj => (obj != null ? JSON.stringify(obj) : null))
+                    """,
+                )
+                assert raw_oo_client_event is not None, (
+                    f"Server event unsupported on the client: {raw_oo_client_event}"
+                )
+                return json.loads(raw_oo_client_event)
+
+    async def listen_oo_server_event(self) -> dict:
+        """
+        Wait for a new event arriving to the OnlyOffice editor.
+        """
+        raw_editics_server_event = await self.editics_session_client.recv_raw()
+        # Sanity check to detect incorrect server output (since the Javascript
+        # part doesn't actually validate the schema)
+        editics_server_event = ServerEventAdapter.validate_json(raw_editics_server_event)
+        oo_server_event = await _mini_racer_async_eval(
+            self.js_runtime,
+            f"""
+            globalThis.__editics_instances['{self.participant_id.hex}'].cookServerEvent({raw_editics_server_event})
+            """,
+        )
+        assert oo_server_event is not None, (
+            f"Server event unsupported on the client: {editics_server_event}"
+        )
+        return json.loads(oo_server_event)
+
+
+# def _racer_eval(racer: py_mini_racer.MiniRacer, code: str) -> Any:
+#     """Wrap `racer.eval` returning `Any`.
+
+#     `MiniRacer.eval` is typed to return the broad `PythonJSConvertedTypes`
+#     union; pyright cannot know that evaluating an async IIFE yields an
+#     awaitable `JSPromise` or that a returned `JSFunction` is callable. The
+#     harness relies on both, so the call sites cast through `Any`.
+#     """
+#     return racer.eval(code)
+
+
+# # Path to the pure translator source, relative to the server root.
+# # `protocol.js` is plain JS (no build step — todo §2.3) so it is loaded as-is
+# # into the V8 isolate.
+# _PROTOCOL_JS_PATH = Path(__file__).resolve().parents[3] / "client" / "editics" / "protocol.js"
+
+
+# # --- ServerEvent parsing ----------------------------------------------------
+# #
+# # `ServerEvent` is a discriminated union on `type`, but two members
+# # (`ServerEventAuth` and `ServerEventAuthRejected`) share `type: "auth"` and
+# # differ by `result`. Pydantic's discriminator therefore rejects a single
+# # `TypeAdapter(ServerEvent)` (the `auth` value maps to multiple choices). The
+# # ASGI route never parses a `ServerEvent` from JSON (it only ever *produces*
+# # one), so this collision is harmless in production — but the test harness
+# # must parse the server's JSON replies into typed models. We dispatch on
+# # `type` (and `result` for the `auth` ambiguity) to the concrete model class.
+
+# _SERVER_EVENT_BY_TYPE: dict[str, type[BaseModel]] = {
+#     "connectState": ServerEventConnectState,
+#     "authChanges": ServerEventAuthChanges,
+#     "waitAuth": ServerEventWaitAuth,
+#     "message": ServerEventMessage,
+#     "cursor": ServerEventCursor,
+#     "getLock": ServerEventGetLock,
+#     "releaseLock": ServerEventReleaseLock,
+#     "saveLock": ServerEventSaveLock,
+#     "saveChanges": ServerEventSaveChanges,
+#     "savePartChanges": ServerEventSavePartChanges,
+#     "unSaveLock": ServerEventUnSaveLock,
+#     "drop": ServerEventDrop,
+#     "warning": ServerEventWarning,
+# }
+
+
+# def parse_server_event(data: dict[str, Any]) -> BaseModel:
+#     """Parse a JSON dict from the wire into the concrete `ServerEvent` model.
+
+#     The server serializes `bytes` fields to base64 over JSON; the returned
+#     model keeps them as `bytes` (pydantic deserializes base64 back to bytes
+#     automatically). The harness converts them to `Uint8Array` at the V8
+#     boundary (see `_event_to_js`).
+#     """
+#     typ = data.get("type")
+#     if typ == "auth":
+#         if data.get("result") == 1:
+#             return ServerEventAuth.model_validate(data)
+#         return ServerEventAuthRejected.model_validate(data)
+#     assert isinstance(typ, str), f"missing/invalid server event type: {typ!r}"
+#     cls = _SERVER_EVENT_BY_TYPE.get(typ)
+#     if cls is None:
+#         raise ValueError(f"unknown server event type: {typ!r}")
+#     return cls.model_validate(data)
+
+
+# # --- Bytes <-> Uint8Array at the V8 boundary --------------------------------
+# #
+# # The translator's interface uses `Uint8Array` for encrypted fields (todo
+# # §4.1). At the Python<->V8 boundary, `py_mini_racer` converts a JS
+# # `Uint8Array` to a Python `memoryview`/`bytes` and vice-versa. The harness
+# # must:
+# #   - turn the pydantic `bytes` of an `EditicsServerEvent` into a JS object
+# #     with `Uint8Array` for those fields before `cookServerEvent`;
+# #   - turn the JS `EditicsClientEvent` (with `Uint8Array` encrypted fields)
+# #     returned by `cookClientEvent` into a pydantic `ClientEvent` (with
+# #     `bytes`) before POSTing it to the server.
+# #
+# # Which fields are `bytes` depends on the event type (mirrors the pydantic
+# # `bytes` fields in `parsec/components/editics.py`).
+
+# # Top-level bytes fields per client-event type.
+# _CLIENT_BYTES_FIELDS: dict[str, list[str]] = {
+#     "message": ["encryptedMessage"],
+#     "cursor": ["encryptedCursor"],
+# }
+# # `saveChanges` has `encryptedChanges` (list[bytes]) and `encryptedCursor`
+# # (bytes|None).
+
+# # Per-record bytes sub-fields for server events.
+# _SERVER_RECORD_BYTES: dict[str, dict[str, str]] = {
+#     # event_type -> {array_field: bytes_sub_field}
+#     "message": {"messages": "encryptedMessage"},
+#     "cursor": {"messages": "encryptedCursor"},
+#     "saveChanges": {"changes": "change"},
+# }
+# # `authChanges.changes` is a list of [index, bytes] tuples.
+# # `saveChanges.encryptedCursor` is a top-level bytes|None.
+
+
+# def _event_to_js(model: BaseModel) -> dict[str, Any]:
+#     """Convert a pydantic `ServerEvent` model to a plain JS-shaped dict with
+#     `bytes` fields replaced by `bytes` (the V8 bridge turns `bytes` into a
+#     `Uint8Array` automatically when passed into JS)."""
+#     data = model.model_dump(mode="python")
+#     return _coerce_server_bytes_to_raw(data)
+
+
+# def _coerce_server_bytes_to_raw(data: dict[str, Any]) -> dict[str, Any]:
+#     """Ensure bytes fields are raw `bytes` (not base64 str) so the V8 bridge
+#     maps them to `Uint8Array`. `model_dump(mode="python")` already returns
+#     `bytes` for `bytes` fields, so this is mostly a no-op; kept for clarity
+#     and to strip any stray base64 if the dict came from JSON instead."""
+#     typ = data.get("type")
+#     if typ in _SERVER_RECORD_BYTES:
+#         arr_field, sub_field = next(iter(_SERVER_RECORD_BYTES[typ].items()))
+#         for rec in data.get(arr_field, []) or []:
+#             v = rec.get(sub_field)
+#             if isinstance(v, str):
+#                 rec[sub_field] = _b64_decode(v)
+#     if typ == "authChanges":
+#         for entry in data.get("changes", []) or []:
+#             if isinstance(entry, list) and len(entry) == 2 and isinstance(entry[1], str):
+#                 entry[1] = _b64_decode(entry[1])
+#     if typ == "saveChanges":
+#         v = data.get("encryptedCursor")
+#         if isinstance(v, str):
+#             data["encryptedCursor"] = _b64_decode(v)
+#     return data
+
+
+# def _b64_decode(s: str) -> bytes:
+#     import base64
+
+#     return base64.b64decode(s)
+
+
+# def _client_event_from_js(js_obj: dict[str, Any]) -> ClientEvent:
+#     """Build a pydantic `ClientEvent` from a JS object returned by
+#     `cookClientEvent`, converting `Uint8Array` (which crossed the V8
+#     boundary as `memoryview`/`bytes`) into the `bytes` pydantic expects."""
+#     typ = js_obj.get("type")
+#     out = dict(js_obj)
+#     if typ in _CLIENT_BYTES_FIELDS:
+#         for f in _CLIENT_BYTES_FIELDS[typ]:
+#             v = out.get(f)
+#             if v is not None and not isinstance(v, (bytes, bytearray)):
+#                 out[f] = _to_bytes(v)
+#     elif typ == "saveChanges":
+#         # `encryptedChanges` is a list[bytes]; `encryptedCursor` is bytes|None.
+#         ec = out.get("encryptedChanges")
+#         if isinstance(ec, list):
+#             out["encryptedChanges"] = [_to_bytes(x) for x in ec]
+#         v = out.get("encryptedCursor")
+#         if v is not None and not isinstance(v, (bytes, bytearray)):
+#             out["encryptedCursor"] = _to_bytes(v)
+#     return TypeAdapter(ClientEvent).validate_python(out)
+
+
+# def _to_bytes(v: Any) -> bytes:
+#     if isinstance(v, (bytes, bytearray, memoryview)):
+#         return bytes(v)
+#     if isinstance(v, list):
+#         return bytes(v)
+#     if isinstance(v, str):
+#         # base64 fallback (should not happen for the V8 bridge, but defensive).
+#         return _b64_decode(v)
+#     raise TypeError(f"cannot convert {type(v).__name__} to bytes")
+
+
+# # --- BaseEditicsClient mixin (§6.1 / §6.2) ----------------------------------
+
+
+# # --- Captured-session parser (§6.4) ----------------------------------------
+
+
+# @dataclass
+# class CapturedEvent:
+#     direction: str  # "<-" server->client, "->" client->server
+#     user: str  # "John Smith", "Kate Cage"
+#     type: str  # event type
+#     payload: dict[str, Any]  # the JSON block
+
+
+# _HEADING_RE = re.compile(
+#     r"^###\s+\S+\s+(?P<dir><-|->)\s+(?P<user>.+?)\s+(?P<type>\S+)\s*$",
+#     re.MULTILINE,
+# )
+
+
+# def load_captured_session(path: Path) -> list[CapturedEvent]:
+#     """Parse a captured-session markdown file into a list of `CapturedEvent`.
+
+#     The format (see `docs/rfcs/1030-collaborative-editics/oo_example_session.md`)
+#     is a sequence of `### <time>  <-|->  <user>  <event>` headings each
+#     followed by a ```` ```json ```` fenced block. Entries without a direction
+#     (`ws-open`, `open`) are skipped: they are engine.io transport events,
+#     not part of the OnlyOffice protocol (todo §6.4).
+#     """
+#     import json
+
+#     text = path.read_text()
+#     events: list[CapturedEvent] = []
+#     # Walk the fenced json blocks; the heading immediately preceding a block
+#     # describes the event.
+#     blocks = list(re.finditer(r"```json\n(.*?)\n```", text, re.DOTALL))
+#     # Build an index of heading positions to pair each block with the nearest
+#     # preceding heading.
+#     headings = list(_HEADING_RE.finditer(text))
+#     for b in blocks:
+#         # Find the last heading before this block.
+#         heading = None
+#         for h in headings:
+#             if h.start() < b.start():
+#                 heading = h
+#             else:
+#                 break
+#         if heading is None:
+#             continue
+#         m = _HEADING_RE.match(text[heading.start() : heading.end()])
+#         if m is None:
+#             continue
+#         direction = m.group("dir")
+#         user = m.group("user").strip()
+#         etype = m.group("type").strip()
+#         payload = json.loads(b.group(1))
+#         # Skip engine.io transport entries (ws-open / open) — they have no
+#         # direction arrow in the heading, so they never match _HEADING_RE and
+#         # are naturally excluded; keep this guard for robustness.
+#         if etype in ("ws-open", "open"):
+#             continue
+#         events.append(CapturedEvent(direction=direction, user=user, type=etype, payload=payload))
+#     return events
+
+
+# def assert_oo_shape(actual: Any, captured: Any, *, path: str = "") -> None:
+#     """Assert `actual` is structurally compatible with the captured event:
+#     same dict keys (recursively), same list lengths, same primitive *types*
+#     for non-opaque fields. Timestamps/ids/JWTs/opaque blobs are matched by
+#     type only (todo §6.4).
+
+#     "Structurally compatible" means the translator produced what the real
+#     OnlyOffice editor expects to receive: same `type`, same field presence
+#     and nesting. Exact values of opaque fields (change blobs, cursors,
+#     JWTs, connection ids, timestamps) are intentionally not compared.
+#     """
+#     if isinstance(captured, dict):
+#         assert isinstance(actual, dict), f"{path}: expected dict, got {type(actual).__name__}"
+#         # The editics translator intentionally drops some OnlyOffice fields
+#         # (e.g. `connectionId`, `isCloseCoAuthoring`, `encrypted` per RFC §2.2
+#         # editics changes), so the captured event may have MORE keys than the
+#         # translator's output. Assert every key the translator produced exists
+#         # in the captured shape with a compatible value (i.e. the translator's
+#         # output is a structural subset of the real OnlyOffice shape). This
+#         # validates the translator didn't invent fields and that the fields it
+#         # does emit are shaped like the real editor expects.
+#         for key in actual:
+#             assert key in captured, f"{path}: unexpected key {key!r} (not in captured shape)"
+#             assert_oo_shape(actual[key], captured[key], path=f"{path}.{key}" if path else key)
+#         return
+#     if isinstance(captured, list):
+#         assert isinstance(actual, list), f"{path}: expected list, got {type(actual).__name__}"
+#         # List lengths may differ between the captured session (which has real
+#         # edits) and the test (which may have an empty backlog); compare element
+#         # shapes only where both have entries (todo §6.4: the shape is what we
+#         # assert, not the count).
+#         if len(actual) == len(captured):
+#             for i, (a, c) in enumerate(zip(actual, captured)):
+#                 assert_oo_shape(a, c, path=f"{path}[{i}]")
+#         else:
+#             assert len(actual) >= 0  # list shape is what matters
+#         return
+#     # Primitives: match by type (bool before int, since bool is an int subclass).
+#     if isinstance(captured, bool):
+#         assert isinstance(actual, bool), f"{path}: expected bool, got {type(actual).__name__}"
+#         return
+#     if isinstance(captured, (int, float)):
+#         assert isinstance(actual, (int, float)) and not isinstance(actual, bool), (
+#             f"{path}: expected number, got {type(actual).__name__}"
+#         )
+#         return
+#     if isinstance(captured, str):
+#         assert isinstance(actual, str), f"{path}: expected str, got {type(actual).__name__}"
+#         return
+#     if captured is None:
+#         assert actual is None, f"{path}: expected None, got {type(actual).__name__}"
+#         return
+#     # Fallback: anything else (opaque objects) — accept as-is.
+
+
+# # --- PyMiniRacer bridge (§6.3) ----------------------------------------------
+# #
+# # The translator (`client/editics/protocol.js`) is loaded once per test
+# # process into a fresh V8 isolate per fake client (isolation). Capabilities
+# # are implemented in Python and bridged into V8 via `wrap_py_function` (the
+# # wrapped async Python functions become JS async functions returning
+# # Promises; the translator `await`s them).
+
+# _PROTOCOL_SOURCE_CACHE: str | None = None
+
+
+# def _load_protocol_source() -> str:
+#     global _PROTOCOL_SOURCE_CACHE
+#     if _PROTOCOL_SOURCE_CACHE is None:
+#         src = _PROTOCOL_JS_PATH.read_text()
+#         # The file is an ES module ending with `export { EditicsTranslator };`.
+#         # V8 (PyMiniRacer) does not implement ESM `export`, so rewrite it to a
+#         # global assignment that the bootstrap can pick up. This is the only
+#         # transform; the rest of the source is loaded verbatim (no build step,
+#         # todo §2.3).
+#         assert "export { EditicsTranslator };" in src, "protocol.js export marker changed"
+#         src = src.replace(
+#             "export { EditicsTranslator };",
+#             "globalThis.__EditicsTranslator = EditicsTranslator;",
+#         )
+#         _PROTOCOL_SOURCE_CACHE = src
+#     return _PROTOCOL_SOURCE_CACHE
+
+
+# # Fixed key byte for the test encrypt/decrypt fake (todo §6.3): the cipher is
+# # `[KEY_BYTE, ...plain]`. Deterministic, so the round-trip is checkable.
+# _KEY_BYTE = 0x42
+
+
+# class FakeEditicsClient:
+#     """One translator in V8 + one SSE/RPC connection.
+
+#     Surfaces (todo §6.3):
+#       - `inject_oo_client_event(oo)`: editor -> translator -> server. Returns
+#         the cooked editics client event (the dict the translator produced).
+#       - `oo_server_events()`: async generator pulling ServerEvents from the
+#         SSE stream, running each through `cookServerEvent` in V8, yielding the
+#         resulting OnlyOffice server event dicts.
+#       - `inject_editics_server_event(editics)`: isolated translator test
+#         (cookServerEvent only, no server).
+#       - `editics_client_events(oo)`: isolated translator test
+#         (cookClientEvent only, no server).
+#     """
+
+#     def __init__(
+#         self,
+#         rpc_client: Any,
+#         realm_id: VlobID,
+#         document_id: VlobID,
+#         *,
+#         vlob_version: int,
+#         editor_type: int = 0,
+#         user_names: dict[str, str] | None = None,
+#     ) -> None:
+#         self._rpc_client = rpc_client
+#         self._realm_id = realm_id
+#         self._document_id = document_id
+#         self._vlob_version = vlob_version
+#         self._editor_type = editor_type
+#         # device_id hex -> display name (the server is NOT trusted for names;
+#         # the test resolves them locally, todo §6.3).
+#         self._user_names = user_names or {}
+#         self._racer: py_mini_racer.MiniRacer | None = None
+#         self._cap_ctx: Any | None = None
+#         # The SSE/RPC session, opened on first use.
+#         self._session_cm: Any | None = None
+#         self._send: Callable[[ClientEvent], Awaitable[BaseModel | None]] | None = None
+#         self._sse: EditicsSessionSSE | None = None
+
+#     # --- lifecycle ---
+
+#     async def start(self) -> None:
+#         py_mini_racer.init_mini_racer(ignore_duplicate_init=True)
+#         self._racer = py_mini_racer.MiniRacer()
+#         _racer_eval(self._racer, _load_protocol_source())
+
+#         device_id_hex = self._rpc_client.device_id.hex
+
+#         async def py_encrypt(plain: Any) -> bytes:
+#             return bytes([_KEY_BYTE]) + bytes(plain)
+
+#         async def py_decrypt(cipher: Any) -> bytes:
+#             b = bytes(cipher)
+#             assert b[0] == _KEY_BYTE, f"bad key byte {b[0]}"
+#             return b[1:]
+
+#         async def py_resolve_user_name(device_id_hex: str) -> str:
+#             return self._user_names.get(device_id_hex, device_id_hex)
+
+#         async def py_resolve_user_id(device_id_hex: str) -> str:
+#             return device_id_hex
+
+#         self._cap_ctx = _CapabilitiesContext(
+#             self._racer, py_encrypt, py_decrypt, py_resolve_user_name, py_resolve_user_id
+#         )
+#         await self._cap_ctx.__aenter__()
+
+#         # Construct the translator in V8, wiring the injected capabilities
+#         # (the JSFunction handles are passed by reference, not JSON-serialized).
+#         await self._cap_ctx.construct_translator(
+#             device_id_hex=device_id_hex,
+#             user_name=self._user_names.get(device_id_hex, device_id_hex),
+#             vlob_version=self._vlob_version,
+#             editor_type=self._editor_type,
+#         )
+
+#         # Open the SSE + RPC session against the real server (in-process).
+#         self._session_cm = self._rpc_client.join_editics_session(
+#             self._realm_id,
+#             self._document_id,
+#             vlob_version=self._vlob_version,
+#             editor_type=self._editor_type,
+#         )
+#         self._send, self._sse = await cast(Any, self._session_cm).__aenter__()
+
+#     async def aclose(self) -> None:
+#         if self._session_cm is not None:
+#             await self._session_cm.__aexit__(None, None, None)
+#             self._session_cm = None
+#         if self._cap_ctx is not None:
+#             await self._cap_ctx.__aexit__(None, None, None)
+#             self._cap_ctx = None
+#         if self._racer is not None:
+#             self._racer.close()
+#             self._racer = None
+
+#     # --- V8 call helpers ---
+
+#     async def _cook_client_event(self, oo: dict[str, Any]) -> dict[str, Any] | None:
+#         """Run `cookClientEvent` in V8, return the JS result as a plain dict
+#         (encrypted fields as `bytes`, ready for `_client_event_from_js`)."""
+#         assert self._racer is not None
+#         import json
+
+#         oo_json = json.dumps(oo)
+#         # The cook methods are async (resolveUserName may be async); await the
+#         # returned promise. Serialize via a reviver that keeps Uint8Array as
+#         # a tagged object so we can recover bytes on the Python side.
+#         js = await _racer_eval(
+#             self._racer,
+#             f"""
+#             (async () => {{
+#               const r = await globalThis.__t.cookClientEvent({oo_json});
+#               if (r === null) return 'null';
+#               return JSON.stringify(r, (k, v) => v instanceof Uint8Array
+#                 ? {{__u8: Array.from(v)}} : v);
+#             }})()
+#             """,
+#         )
+#         if js == "null":
+#             return None
+#         return _decode_u8(js)
+
+#     async def _cook_server_event(self, editics: dict[str, Any]) -> dict[str, Any] | None:
+#         assert self._racer is not None
+#         import json
+
+#         # `editics` may contain `bytes` for encrypted fields (from the server
+#         # model). Serialize with a default that tags bytes as `{__u8: [...]}`;
+#         # the JS side revives those into `Uint8Array`. The resulting string is a
+#         # JSON object literal we can embed directly as a JS expression (no
+#         # extra string wrapping) so `JSON.parse` gets the object, not a string.
+#         editics_json = json.dumps(editics, default=_json_default)
+#         js = await _racer_eval(
+#             self._racer,
+#             f"""
+#             (async () => {{
+#               const revive = (k, v) => (v && v.__u8) ? new Uint8Array(v.__u8) : v;
+#               const ev = JSON.parse({json.dumps(editics_json)}, revive);
+#               const r = await globalThis.__t.cookServerEvent(ev);
+#               if (r === null) return 'null';
+#               return JSON.stringify(r, (k, v) => v instanceof Uint8Array
+#                 ? {{__u8: Array.from(v)}} : v);
+#             }})()
+#             """,
+#         )
+#         if js == "null":
+#             return None
+#         return _decode_u8(js)
+
+#     # --- public surfaces (§6.3) ---
+
+#     async def inject_oo_client_event(self, oo: dict[str, Any]) -> dict[str, Any] | None:
+#         """Feed an OnlyOffice client event (editor -> server) through the
+#         translator, forward the cooked editics event to the real server via
+#         `send`, and return the cooked editics event (for assertion)."""
+#         cooked = await self._cook_client_event(oo)
+#         if cooked is None:
+#             return None
+#         assert self._send is not None
+#         client_event = _client_event_from_js(cooked)
+#         self._last_reply = await self._send(client_event)
+#         return cooked
+
+#     async def oo_server_events(self) -> AsyncGenerator[dict[str, Any], None]:
+#         """Pull ServerEvents from the SSE generator, run each through
+#         cookServerEvent in V8, yield the resulting OnlyOffice server events."""
+#         assert self._sse is not None
+#         async for server_event in self._sse:
+#             editics_dict = _event_to_js(server_event)
+#             oo = await self._cook_server_event(editics_dict)
+#             if oo is None:
+#                 continue
+#             yield oo
+
+#     async def inject_editics_server_event(self, editics: dict[str, Any]) -> dict[str, Any] | None:
+#         """Run cookServerEvent directly (isolated translator test, no server)."""
+#         return await self._cook_server_event(editics)
+
+#     async def editics_client_events(self, oo: dict[str, Any]) -> dict[str, Any] | None:
+#         """Run cookClientEvent directly (isolated translator test, no server)."""
+#         return await self._cook_client_event(oo)
+
+#     async def raw_editics_server_events(self) -> AsyncGenerator[BaseModel, None]:
+#         """Yield the raw (pre-translation) `ServerEvent` models from the SSE
+#         stream, for tests that want to assert on the editics wire shape
+#         directly."""
+#         assert self._sse is not None
+#         async for server_event in self._sse:
+#             yield server_event
+
+#     async def send_raw(self, client_event: ClientEvent) -> BaseModel | None:
+#         """POST a raw pydantic `ClientEvent` directly (bypassing the
+#         translator), for tests that want to drive the editics wire shape
+#         directly."""
+#         assert self._send is not None
+#         return await self._send(client_event)
+
+
+# # --- JSON helpers for the V8 boundary (bytes <-> tagged __u8) ----------------
+
+
+# def _json_default(o: Any) -> Any:
+#     if isinstance(o, (bytes, bytearray, memoryview)):
+#         return {"__u8": list(o)}
+#     raise TypeError(f"not JSON serializable: {type(o).__name__}")
+
+
+# def _decode_u8(json_str: str) -> dict[str, Any]:
+#     """Parse a JSON string produced with the `__u8` reviver-tag convention
+#     back into a Python dict, converting `{__u8: [...]}` to `bytes`."""
+#     import json
+
+#     def revive(o: Any) -> Any:
+#         if isinstance(o, dict):
+#             if set(o.keys()) == {"__u8"} and isinstance(o["__u8"], list):
+#                 return bytes(o["__u8"])
+#             return {k: revive(v) for k, v in o.items()}
+#         if isinstance(o, list):
+#             return [revive(x) for x in o]
+#         return o
+
+#     return revive(json.loads(json_str))
+
+
+# # --- Capabilities context: wraps the `wrap_py_function` async context managers
+
+
+# class _CapabilitiesContext:
+#     """Holds the `wrap_py_function` async context managers alive for the life
+#     of the fake client and exposes a helper to construct the translator with
+#     the JSFunction handles wired as capabilities."""
+
+#     def __init__(self, racer: py_mini_racer.MiniRacer, *py_funcs: Any) -> None:
+#         self._racer = racer
+#         self._py_funcs = py_funcs
+#         self._cms: list[Any] = []
+#         self._js_funcs: list[Any] = []
+
+#     async def __aenter__(self) -> _CapabilitiesContext:
+#         for fn in self._py_funcs:
+#             cm = self._racer.wrap_py_function(fn)
+#             jsf = await cm.__aenter__()
+#             self._cms.append(cm)
+#             self._js_funcs.append(jsf)
+#         return self
+
+#     async def __aexit__(self, *exc: Any) -> None:
+#         for cm in reversed(self._cms):
+#             await cm.__aexit__(*exc)
+#         self._cms.clear()
+#         self._js_funcs.clear()
+
+#     async def construct_translator(
+#         self, *, device_id_hex: str, user_name: str, vlob_version: int, editor_type: int
+#     ) -> None:
+#         encrypt, decrypt, resolve_user_name, resolve_user_id = self._js_funcs
+#         # Define a factory that takes the cap functions + config, then call it
+#         # by passing the JSFunction handles as arguments (the JSFunction
+#         # __call__ passes them straight into JS without JSON serialization).
+#         factory = _racer_eval(
+#             self._racer,
+#             """
+#             (encrypt, decrypt, resolveUserName, resolveUserId,
+#              deviceIdHex, userName, vlobVersion, editorType) => {
+#               globalThis.__t = new globalThis.__EditicsTranslator({
+#                 workspaceId: 'wksp', vlobId: 'doc',
+#                 deviceIdHex, userId: deviceIdHex, userName,
+#                 vlobVersion, editorType,
+#                 capabilities: {
+#                   resolveUserName: (d) => resolveUserName(d),
+#                   resolveUserId: (d) => resolveUserId(d),
+#                   encrypt: (p) => encrypt(p),
+#                   decrypt: (c) => decrypt(c),
+#                 },
+#               });
+#               return 'ok';
+#             }
+#             """,
+#         )
+#         cast(Any, factory)(
+#             encrypt,
+#             decrypt,
+#             resolve_user_name,
+#             resolve_user_id,
+#             device_id_hex,
+#             user_name,
+#             vlob_version,
+#             editor_type,
+#         )
+
+
+# # --- pytest fixture (§6.3) --------------------------------------------------
+
+
+# @pytest.fixture
+# async def fake_editics_client_factory():
+#     """Return a factory `make(rpc_client, realm_id, document_id, **opts)` that
+#     builds and starts a `FakeEditicsClient`, closing it after the test.
+
+#     One fixture instance = one translator in V8 + one SSE/RPC connection. The
+#     factory pattern lets each test build as many clients (alice/bob) as it
+#     needs with per-client config (user names, vlob version).
+#     """
+#     created: list[FakeEditicsClient] = []
+
+#     async def make(
+#         rpc_client: Any,
+#         realm_id: VlobID,
+#         document_id: VlobID,
+#         *,
+#         vlob_version: int,
+#         editor_type: int = 0,
+#         user_names: dict[str, str] | None = None,
+#     ) -> FakeEditicsClient:
+#         client = FakeEditicsClient(
+#             rpc_client,
+#             realm_id,
+#             document_id,
+#             vlob_version=vlob_version,
+#             editor_type=editor_type,
+#             user_names=user_names,
+#         )
+#         await client.start()
+#         created.append(client)
+#         return client
+
+#     yield make
+#     for client in created:
+#         await client.aclose()
