@@ -3,7 +3,7 @@
 .. _doc_cli_install_cli:
 
 .. |parsec-cli| replace:: Parsec :abbr:`CLI (Command-Line Interface)`
-.. |parsec-version| replace:: ``parsec-cli 3.9.4-a.0+dev``
+.. |parsec-version| replace:: ``parsec-cli 3.9.4-a.0.dev.20700+72e13e8``
 
 ==========================
 Install Parsec CLI (Linux)
@@ -15,7 +15,7 @@ In order to deploy and maintain Parsec Server, you would need to perform some op
 |parsec-cli| is a standalone binary that can be downloaded from
 GitHub releases page.
 
-.. _Parsec CLI: https://github.com/Scille/parsec-cloud/releases/download/v3.9.4-a.0+dev/parsec-cli_3.9.4-a.0+dev_linux-x86_64-musl
+.. _Parsec CLI: https://github.com/Scille/parsec-cloud/releases/download/v3.9.4-a.0.dev.20700+72e13e8/parsec-cli_3.9.4-a.0.dev.20700+72e13e8_linux-x86_64-musl
 
 1. Download `Parsec CLI`_.
 
@@ -26,13 +26,13 @@ GitHub releases page.
 
      .. code-block:: shell
 
-        chmod +x parsec-cli_3.9.4-a.0+dev_linux-x86_64-musl
+        chmod +x parsec-cli_3.9.4-a.0.dev.20700+72e13e8_linux-x86_64-musl
 
 3. Verify the installation by running the following command:
 
    .. code-block:: shell
 
-      ./parsec-cli_3.9.4-a.0+dev_linux-x86_64-musl --version
+      ./parsec-cli_3.9.4-a.0.dev.20700+72e13e8_linux-x86_64-musl --version
 
    The Parsec CLI version should be displayed as |parsec-version|
 
@@ -40,14 +40,14 @@ GitHub releases page.
 
    .. code-block:: shell
 
-      cp parsec-cli_3.9.4-a.0+dev_linux-x86_64-musl ~/.local/bin
+      cp parsec-cli_3.9.4-a.0.dev.20700+72e13e8_linux-x86_64-musl ~/.local/bin
 
    and make a symbolic link
 
    .. code-block:: shell
 
       cd  ~/.local/bin
-      ln -s parsec-cli_3.9.4-a.0+dev_linux-x86_64-musl parsec-cli
+      ln -s parsec-cli_3.9.4-a.0.dev.20700+72e13e8_linux-x86_64-musl parsec-cli
 
    You will be able to execute ``parsec-cli`` from anywhere.
 

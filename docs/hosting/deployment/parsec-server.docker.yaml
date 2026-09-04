@@ -107,7 +107,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.4-a.0+dev
+    image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.4-a.0.dev.20700+72e13e8
     command: migrate
     restart: on-failure
     env_file:
@@ -123,7 +123,7 @@ services:
         condition: service_healthy
       pre-parsec:
         condition: service_completed_successfully
-    image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.4-a.0+dev
+    image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.4-a.0.dev.20700+72e13e8
     restart: on-failure
     container_name: parsec-server
     env_file:
