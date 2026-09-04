@@ -74,6 +74,8 @@ async def organization_list_organizations(
         match row["bootstrapped_on"]:
             case DateTime() as bootstrapped_on:
                 pass
+            case None:
+                bootstrapped_on = None
             case _:
                 assert False, row
 
@@ -86,6 +88,8 @@ async def organization_list_organizations(
         match row["expired_on"]:
             case DateTime() as expired_on:
                 pass
+            case None:
+                expired_on = None
             case _:
                 assert False, row
 
