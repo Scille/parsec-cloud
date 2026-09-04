@@ -10,7 +10,7 @@
       v-if="authentication === undefined"
     >
       <ion-text
-        class="body choose-auth-list__label"
+        class="choose-auth-list__label"
         v-show="showTitle"
       >
         {{ $msTranslate('Authentication.description') }}
@@ -145,7 +145,7 @@
       </div>
 
       <span
-        class="form-error subtitles-sm"
+        class="form-error"
         v-show="error"
       >
         {{ $msTranslate(error) }}
@@ -352,10 +352,11 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
 
 <style scoped lang="scss">
 .choose-auth-list {
-  padding: 0 0 0.25rem;
+  padding: 0 0 ms.spacing('padding-sm');
 
   &__label {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-brand-default');
     margin-bottom: 1rem;
     display: block;
   }
@@ -363,7 +364,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
   .radio-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
@@ -372,13 +373,13 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
 
     &.radio-disabled {
       &::part(container) {
-        opacity: 0.3;
+        opacity: ms.opacity('3');
       }
 
       &::part(label) {
-        opacity: 1;
+        opacity: ms.opacity('10');
         display: flex;
-        gap: 0.125rem;
+        gap: ms.spacing('gap-xs');
       }
     }
 
@@ -407,35 +408,35 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
   .method-chosen {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     margin-bottom: 1.5rem;
 
     &__title {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
     }
   }
 
   .choose-password {
-    padding: 1.5rem 1rem;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-12) 0 var(--parsec-radius-12) var(--parsec-radius-12);
-    box-shadow: var(--parsec-shadow-soft);
-    background: var(--parsec-color-light-secondary-inversed-contrast);
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl') 0 ms.radius('2xl') ms.radius('2xl');
+    box-shadow: ms.shadow('soft');
+    background: ms.color('surface-base-default');
 
     @include ms.responsive-breakpoint('sm') {
-      border-top: 1px solid var(--parsec-color-light-secondary-medium);
+      border-top: ms.border('thin') solid ms.color('border-base-default');
     }
   }
 }
 
 .choose-auth-page--web {
-  padding: 0;
+  padding: ms.spacing('padding-none');
 
   .choose-password {
     border-radius: none;
-    border: none;
+    border: ms.border('none');
     box-shadow: none;
-    padding: 0 0.25rem;
+    padding: 0 ms.spacing('padding-sm');
     background: none;
   }
 }
