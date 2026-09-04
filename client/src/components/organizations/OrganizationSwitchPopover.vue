@@ -17,21 +17,17 @@
           {{ currentOrg?.id }}
         </ion-text>
       </div>
-      <div
-        class="section-buttons custom-button custom-button-fill"
+      <ion-button
+        class="section-buttons"
+        fill="outline"
         @click="goToLogin"
       >
         <ion-icon
-          class="section-buttons-icon"
+          class="section-buttons-icon button-icon-left"
           :icon="repeat"
         />
-        <ion-text
-          class="button-medium"
-          button
-        >
-          {{ $msTranslate('OrganizationSwitch.goToLogin') }}
-        </ion-text>
-      </div>
+        {{ $msTranslate('OrganizationSwitch.goToLogin') }}
+      </ion-button>
     </div>
     <div
       class="connected-organization"
@@ -87,7 +83,7 @@ import { formatExpirationTime, getDurationBeforeExpiration, isTrialOrganizationD
 import { AvailableDevice, ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle } from '@/router';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
-import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
+import { IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
 import { repeat } from 'ionicons/icons';
 import { LogoIconGradient, MsImage, MsModalResult } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
