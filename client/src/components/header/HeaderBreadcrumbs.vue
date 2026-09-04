@@ -13,7 +13,7 @@
       <ion-breadcrumb
         v-for="path in pathNodes"
         :path="path"
-        class="breadcrumb-element breadcrumb-normal"
+        class="breadcrumb-element"
         :key="path.id"
         ref="breadcrumb"
       >
@@ -41,7 +41,7 @@
       :class="{ is_browsing: props.pathNodes.length > (fromHeaderPage ? 2 : 1) }"
       @click="props.pathNodes.length > (fromHeaderPage ? 2 : 1) ? openPopover($event) : null"
     >
-      <ion-text class="breadcrumb-file-mobile__title title-h3">{{ currentFolderName }}</ion-text>
+      <ion-text class="breadcrumb-file-mobile__title">{{ currentFolderName }}</ion-text>
       <ion-icon
         v-if="props.pathNodes.length > (fromHeaderPage ? 2 : 1)"
         class="breadcrumb-file-mobile__icon"
@@ -244,6 +244,8 @@ async function openPopover(event: Event): Promise<void> {
   }
 
   &-element {
+    @include ms.font('label-md-medium');
+
     .main-icon {
       font-size: 1.125rem;
     }
@@ -312,6 +314,7 @@ async function openPopover(event: Event): Promise<void> {
   }
 
   &__title {
+    @include ms.font('heading-h4');
     color: var(--parsec-color-light-primary-800);
     white-space: nowrap;
     text-overflow: ellipsis;

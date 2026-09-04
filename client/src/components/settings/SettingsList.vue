@@ -21,7 +21,6 @@
           />
         </settings-option>
         <!-- change theme -->
-        <!-- TODO: REMOVE "disabled=true' : " WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427 -->
         <settings-option
           class="settings-list__item"
           title="SettingsModal.theme.label"
@@ -32,7 +31,6 @@
             :options="themeOptions"
             :default-option-key="config.theme"
             @change="changeTheme($event.option.key)"
-            :disabled="true"
           />
         </settings-option>
       </div>

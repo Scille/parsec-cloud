@@ -13,7 +13,7 @@
 }
 
 ion-modal {
-  scrollbar-color: var(--parsec-color-light-scrollbar-thumb) #ffffff;
+  scrollbar-color: ms.color('scrollbar-thumb') #ffffff;
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -23,11 +23,11 @@ ion-modal {
   @media screen and (max-height: 700px) {
     align-items: start;
     overflow: auto;
-    padding: 1.5rem 0;
+    padding: ms.spacing('padding-4xl') 0;
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding-bottom: 0;
+    padding-bottom: ms.spacing('padding-none');
   }
 
   &::part(backdrop) {
@@ -84,10 +84,10 @@ ion-modal {
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       overflow: auto;
     }
 
@@ -95,7 +95,7 @@ ion-modal {
       margin-bottom: 1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
 
       @include ms.responsive-breakpoint('sm') {
         margin-bottom: 1.5rem;
@@ -106,15 +106,15 @@ ion-modal {
       }
 
       &__title {
-        padding: 0;
-        color: var(--parsec-color-light-primary-800);
+        padding: ms.spacing('padding-none');
+        color: ms.color('text-neutral-default');
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: ms.spacing('gap-3xl');
       }
 
       &__text {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        color: ms.color('text-base-description');
       }
     }
 
@@ -130,10 +130,10 @@ ion-modal {
       .step {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: ms.spacing('gap-4xl');
 
         @include ms.responsive-breakpoint('sm') {
-          padding: 0 1.5rem;
+          padding: 0 ms.spacing('padding-4xl');
         }
       }
     }
@@ -142,7 +142,7 @@ ion-modal {
       flex-shrink: 0;
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 1rem 1.5rem 3rem;
+        padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl') ms.spacing('padding-7xl');
       }
 
       &:first-child:not([hidden]),
@@ -158,13 +158,13 @@ ion-modal {
       &-buttons {
         display: flex;
         justify-content: end;
-        gap: 1rem;
+        gap: ms.spacing('gap-3xl');
 
         @include ms.responsive-breakpoint('sm') {
           justify-content: center;
           flex-direction: column-reverse;
           margin-top: 1rem;
-          gap: 0.5rem;
+          gap: ms.spacing('gap-lg');
           width: 100%;
         }
 
@@ -181,28 +181,28 @@ ion-modal {
   }
 
   .label-waiting {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('text-base-description');
     font-style: italic;
     padding-left: 2em;
     padding-right: 2em;
   }
 
   .spinner-container {
-    padding-top: 1rem;
+    padding-top: ms.spacing('padding-3xl');
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100%;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     ion-text {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
     }
   }
 
   &#device-join-organization-modal:is(.Finish) {
     .modal {
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
   }
 }
@@ -214,7 +214,7 @@ ion-modal {
   }
 
   #fab-modal {
-    padding-bottom: 2rem;
+    padding-bottom: ms.spacing('padding-5xl');
   }
 }
 
@@ -241,28 +241,28 @@ ion-modal {
   }
 
   &::part(content) {
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
     max-width: var(--parsec-modal-width-sm);
 
     @include ms.responsive-breakpoint('sm') {
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
     }
   }
 
   .modal-header-title {
     max-width: none;
-    padding: 1.5rem 2rem 0;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl') 0;
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
   }
 
   .modal-content {
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
   }
 }
 
@@ -275,7 +275,7 @@ ion-modal {
 
     @include ms.responsive-breakpoint('sm') {
       position: inherit;
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
     }
   }
 
@@ -292,13 +292,13 @@ ion-modal {
     .modal-footer {
       position: sticky;
       bottom: 0;
-      padding-bottom: 2rem;
+      padding-bottom: ms.spacing('padding-5xl');
       right: -2rem;
-      background: var(--parsec-color-light-secondary-white);
+      background: ms.color('surface-base-default');
 
       @include ms.responsive-breakpoint('sm') {
-        box-shadow: var(--parsec-shadow-light);
-        border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+        box-shadow: ms.shadow('light');
+        border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
       }
 
       #next-button {
@@ -312,7 +312,7 @@ ion-modal {
 
     .wizardTrue {
       position: relative;
-      padding: 2rem 2rem 0 2rem;
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-5xl') 0 ms.spacing('padding-5xl');
       height: auto;
     }
   }
@@ -332,13 +332,13 @@ ion-modal {
   }
 
   .page-modal-container {
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
     display: flex;
     height: auto;
     width: 100%;
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
   }
 
@@ -374,7 +374,7 @@ ion-modal {
 
     .modal-header {
       @include ms.responsive-breakpoint('sm') {
-        padding: 0;
+        padding: ms.spacing('padding-none');
       }
     }
   }
@@ -424,11 +424,11 @@ ion-modal {
       position: sticky;
       bottom: 0;
       right: -2rem;
-      background: var(--parsec-color-light-secondary-white);
+      background: ms.color('surface-base-default');
 
       @include ms.responsive-breakpoint('sm') {
-        box-shadow: var(--parsec-shadow-light);
-        border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+        box-shadow: ms.shadow('light');
+        border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
       }
 
       #next-button {
@@ -494,12 +494,12 @@ ion-modal {
     margin-top: 2rem;
 
     @include ms.responsive-breakpoint('sm') {
-      border-top: 1px solid var(--parsec-color-light-secondary-medium);
+      border-top: ms.border('thin') solid ms.color('border-base-default');
     }
 
     .modal-footer-buttons {
       display: flex;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
     }
 
     ion-icon {
@@ -511,8 +511,8 @@ ion-modal {
   [class*='-page-footer'] {
     @include ms.responsive-breakpoint('sm') {
       margin: 1rem auto 0 !important;
-      padding: 1rem 1.5rem 2rem;
-      gap: 1rem;
+      padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl') ms.spacing('padding-5xl');
+      gap: ms.spacing('gap-3xl');
       flex-direction: column;
       box-shadow: var(--parsec-shadow-soft);
     }
@@ -527,7 +527,7 @@ ion-modal {
 
   .form-error ion-icon {
     align-self: baseline;
-    padding-top: 0.25rem;
+    padding-top: ms.spacing('padding-sm');
   }
 }
 
@@ -549,12 +549,12 @@ ion-modal {
   }
 
   .settings-list {
-    gap: 0.5rem !important;
+    gap: ms.spacing('gap-lg') !important;
 
     &-group {
-      padding: 1rem 0 0 !important;
+      padding: ms.spacing('padding-3xl') 0 0 !important;
       box-shadow: none !important;
-      border: 1px solid var(--parsec-color-light-secondary-medium);
+      border: ms.border('thin') solid ms.color('border-base-default');
 
       &:not(:last-child) {
         margin-bottom: 1rem !important;
@@ -566,7 +566,7 @@ ion-modal {
     }
 
     &__item {
-      padding: 1.25rem 1.5rem 1.25rem 1.5rem !important;
+      padding: 1.25rem ms.spacing('padding-4xl') 1.25rem ms.spacing('padding-4xl') !important;
     }
   }
 }
@@ -580,7 +580,7 @@ ion-modal {
 
     @include ms.responsive-breakpoint('sm') {
       position: inherit;
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
       min-height: 22rem;
     }
   }
@@ -617,7 +617,7 @@ ion-modal {
   .Summary {
     .modal-content {
       @include ms.responsive-breakpoint('sm') {
-        padding-inline: 1.5rem;
+        padding-inline: ms.spacing('padding-4xl');
       }
     }
   }
@@ -653,7 +653,7 @@ ion-modal {
 
       @include ms.responsive-breakpoint('sm') {
         width: 100%;
-        --border-color: var(--parsec-color-light-secondary-medium);
+        --border-color: #{ms.color('border-base-default')};
       }
     }
   }
@@ -667,7 +667,7 @@ ion-modal {
     }
 
     .ms-modal {
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
   }
 }
@@ -677,20 +677,20 @@ ion-modal {
 .device-join-organization-modal,
 .join-organization-modal {
   .final-step {
-    padding: 4rem;
+    padding: ms.spacing('padding-8xl');
     display: flex;
     width: 100%;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     position: relative;
     z-index: 1;
     justify-content: center;
-    background: var(--parsec-color-light-gradient-background);
+    background: linear-gradient(113deg, #{ms.color('surface-gradient-from')} -1.49%, #{ms.color('surface-gradient-to')} 100%);
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 2rem 1rem 6rem;
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl') 6rem;
       height: 100vh;
     }
 
@@ -725,7 +725,7 @@ ion-modal {
     }
 
     &__title {
-      color: var(--parsec-color-light-secondary-white);
+      color: ms.color('text-on-color-heading');
       text-align: center;
       line-height: 1.7rem;
       max-width: 18rem;
@@ -741,11 +741,11 @@ ion-modal {
       }
 
       &::part(native) {
-        border-radius: var(--parsec-radius-8);
-        --background-hover: var(--parsec-color-light-secondary-premiere);
+        border-radius: ms.radius('lg');
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
         font-size: 1rem;
-        color: var(--parsec-color-light-primary-600);
-        background: var(--parsec-color-light-secondary-white);
+        color: ms.color('text-brand-default');
+        background: ms.color('surface-base-default');
       }
     }
   }
@@ -767,7 +767,7 @@ ion-modal {
 
   .ms-modal {
     overflow: hidden;
-    padding: 0;
+    padding: ms.spacing('padding-none');
 
     .current-user {
       .dropdown-button::part(native) {
@@ -779,16 +779,16 @@ ion-modal {
       }
 
       &.dropdown-button-content .input-text {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('text-base-description');
       }
     }
 
     &-header {
-      padding: 2rem 2rem 0;
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-5xl') 0;
       margin-bottom: 0.5rem;
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 1.5rem 0 0 1.5rem;
+        padding: ms.spacing('padding-4xl') 0 0 ms.spacing('padding-4xl');
       }
     }
 
@@ -797,11 +797,11 @@ ion-modal {
       height: 100%;
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 0;
+        padding: ms.spacing('padding-none');
       }
 
       .person-name-container {
-        gap: 0.25rem !important;
+        gap: ms.spacing('gap-sm') !important;
       }
 
       .person-name {
@@ -816,8 +816,8 @@ ion-modal {
 
         &:hover {
           &::part(native) {
-            box-shadow: var(--parsec-shadow-light);
-            border-color: var(--parsec-color-light-secondary-medium);
+            box-shadow: ms.shadow('light');
+            border-color: ms.color('border-base-default-hover');
           }
         }
       }
@@ -842,12 +842,12 @@ ion-modal {
 
     .modal-footer {
       .dropdown-button {
-        --background: var(--parsec-color-light-secondary-white);
-        --background-hover: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-secondary-text);
+        --background: #{ms.color('surface-base-default')};
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+        color: ms.color('text-base-body');
 
         &::part(native) {
-          border: 1px solid var(--parsec-color-light-secondary-disabled);
+          border: ms.border('thin') solid ms.color('border-base-default');
         }
 
         .ms-dropdown-icon {
@@ -892,7 +892,7 @@ ion-modal {
   }
 
   @media only screen and (max-height: 580px) {
-    padding: 1rem;
+    padding: ms.spacing('padding-3xl');
 
     &::part(content) {
       --height: 100%;
@@ -900,7 +900,7 @@ ion-modal {
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem 0 0;
+    padding: ms.spacing('padding-3xl') 0 0;
 
     &::part(content) {
       --height: 100%;
@@ -914,12 +914,12 @@ ion-modal {
       width: 100%;
     }
 
-    .breadcrumb-normal:not(.breadcrumb-small-active) {
+    .breadcrumb-element:not(.breadcrumb-small-active) {
       flex-shrink: 0;
     }
 
     .breadcrumb-popover-button {
-      padding: 0.25rem;
+      padding: ms.spacing('padding-sm');
     }
   }
 
@@ -962,15 +962,15 @@ ion-modal {
 
     .inputs-container {
       flex-direction: column;
-      gap: 1.5rem;
+      gap: ms.spacing('gap-4xl');
     }
 
     .inputs-container {
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
     }
 
     .password-criteria {
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
     }
 
     .info {
@@ -980,7 +980,7 @@ ion-modal {
 }
 
 .question-modal {
-  padding: 2rem;
+  padding: ms.spacing('padding-5xl');
 
   &::part(content) {
     max-width: var(--parsec-modal-width-sm);
@@ -1042,13 +1042,13 @@ ion-modal {
   }
 
   .ms-modal {
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
   }
 
   .ms-modal-content {
     @include ms.responsive-breakpoint('sm') {
       margin-top: 0;
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
   }
 }
@@ -1059,13 +1059,13 @@ ion-modal {
   }
 
   .ms-modal {
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
   }
 
   .ms-modal-content {
     @include ms.responsive-breakpoint('sm') {
       margin-top: 0;
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
   }
 }
@@ -1091,7 +1091,7 @@ ion-modal {
 .tab-menu-modal {
   &::part(handle) {
     top: 1rem;
-    background: var(--parsec-color-light-secondary-light);
+    background: ms.color('surface-disabled-default');
     display: none;
 
     @include ms.responsive-breakpoint('sm') {
@@ -1101,7 +1101,7 @@ ion-modal {
 
   @include ms.responsive-breakpoint('sm') {
     margin-bottom: 4.78rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
   }
 }
 
@@ -1120,12 +1120,12 @@ ion-modal {
 
   &::part(content) {
     bottom: 0;
-    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
   }
 
   &::part(handle) {
     top: 0.5rem;
-    background: var(--parsec-color-light-secondary-light);
+    background: ms.color('surface-disabled-default');
   }
 
   @include ms.responsive-breakpoint('sm') {
@@ -1142,7 +1142,7 @@ ion-modal {
     display: flex;
     align-items: center;
     flex-direction: column;
-    --fill-color: var(--parsec-color-light-primary-900);
+    --fill-color: #{ms.color('icon-brand-default')};
     overflow: visible;
   }
 
@@ -1150,23 +1150,23 @@ ion-modal {
   .notification-center-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.25rem 0.5rem 1rem;
-    background: var(--parsec-color-light-secondary-background);
-    color: var(--parsec-color-light-secondary-text);
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-sm') ms.spacing('padding-lg') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-default-secondary');
+    color: ms.color('text-base-body');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
     &__title {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       display: flex;
       align-items: center;
     }
 
     &__counter {
       margin-right: auto;
-      padding: 0 0.25rem;
-      background: var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-12);
+      padding: 0 ms.spacing('padding-sm');
+      background: ms.color('surface-neutral-default-subtle-pressed');
+      border-radius: ms.radius('2xl');
       display: flex;
       height: fit-content;
       align-items: center;
@@ -1175,15 +1175,15 @@ ion-modal {
 
   .notification-center-content,
   .invitations-list-content {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-primary-900);
+    background: ms.color('surface-base-default');
+    color: ms.color('text-brand-default');
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    padding: 0;
+    padding: ms.spacing('padding-none');
     height: 40vh;
     max-height: 25rem;
-    border-radius: 0 0 var(--parsec-radius-6) var(--parsec-radius-6);
+    border-radius: 0 0 ms.radius('md') ms.radius('md');
     transition: all 250ms ease-in-out;
 
     @include ms.responsive-breakpoint('sm') {
@@ -1196,9 +1196,9 @@ ion-modal {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       margin: auto;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
     }
   }
 }
@@ -1243,17 +1243,17 @@ ion-modal {
 
   .ms-modal-footer {
     #cancel-button::part(native) {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
 
       &:hover {
-        --background-hover: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-secondary-contrast);
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+        color: ms.color('text-neutral-default-hover');
       }
     }
 
     #next-button::part(native) {
-      background: var(--parsec-color-light-danger-500);
-      --background-hover: var(--parsec-color-light-danger-700);
+      background: ms.color('surface-error-default');
+      --background-hover: #{ms.color('surface-error-default-hover')};
     }
   }
 }
@@ -1331,7 +1331,7 @@ ion-modal {
 
   &:has(.sso-provider-card) {
     .ms-modal-content {
-      gap: 1.5rem;
+      gap: ms.spacing('gap-4xl');
       margin-top: 2.5rem;
     }
   }
@@ -1359,14 +1359,14 @@ ion-modal {
     &-header {
       display: flex;
       flex-direction: row;
-      border-radius: var(--parsec-radius-8);
+      border-radius: ms.radius('lg');
       width: 100%;
       align-items: start;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
       margin: 0;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-      background: var(--parsec-color-light-secondary-premiere);
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+      border-bottom: ms.border('thin') solid ms.color('border-base-default');
+      background: ms.color('surface-neutral-default-subtle-pressed');
 
       &__icon {
         width: 1.5rem;
@@ -1375,18 +1375,18 @@ ion-modal {
       }
 
       &-text {
-        color: var(--parsec-color-light-primary-700);
+        color: ms.color('text-brand-default');
         display: flex;
         flex-direction: column;
 
         &__description {
-          color: var(--parsec-color-light-secondary-hard-grey);
+          color: ms.color('text-base-description');
         }
       }
     }
 
     &-text {
-      color: var(--parsec-color-light-secondary-soft-text);
+      color: ms.color('text-neutral-default');
       line-height: 1.5rem;
       margin-bottom: 1.5rem;
     }
@@ -1434,16 +1434,16 @@ ion-modal {
 
   .ms-modal-footer-buttons {
     .button-clear {
-      --background-hover: var(--parsec-color-light-secondary-premiere);
-      --color: var(--parsec-color-light-secondary-text);
+      --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+      --color: #{ms.color('text-base-body')};
     }
   }
 
   &:has(.enter-code) {
     .ms-modal-footer-buttons {
       .button-solid {
-        --background: var(--parsec-color-light-danger-500);
-        --background-hover: var(--parsec-color-light-danger-700);
+        --background: #{ms.color('surface-error-default')};
+        --background-hover: #{ms.color('surface-error-default-hover')};
       }
     }
   }
@@ -1471,7 +1471,7 @@ ion-modal {
 .shamir-recovery-modal {
   .ms-modal-content {
     @include ms.responsive-breakpoint('sm') {
-      padding-bottom: 1.5rem !important;
+      padding-bottom: ms.spacing('padding-4xl') !important;
     }
   }
   &:has(.shamir-information) {
@@ -1487,7 +1487,7 @@ ion-modal {
     }
 
     .ms-modal-content {
-      padding-top: 1.5rem !important;
+      padding-top: ms.spacing('padding-4xl') !important;
     }
   }
 }

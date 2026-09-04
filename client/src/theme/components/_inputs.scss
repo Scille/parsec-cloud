@@ -7,7 +7,7 @@
 // Workspace Sharing Modal
 .saas-login-content__input .input-content,
 .saas-forgot-password-content__input .input-content {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
+  background: ms.color('surface-base-page');
 }
 
 .sc-ion-input-md-h:not(.legacy-input) {
@@ -15,8 +15,8 @@
 }
 
 .organization-filter .ms-search-input {
-  border-color: var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-background);
+  border-color: ms.color('border-base-default');
+  background: ms.color('surface-base-default-secondary');
   transition: border-color 0.15s ease-in-out;
 
   @include ms.responsive-breakpoint('xs') {
@@ -24,16 +24,16 @@
   }
 
   input::placeholder {
-    color: var(--parsec-color-light-secondary-grey);
+    color: ms.color('text-base-placeholder');
   }
 
   &:hover {
-    border-color: var(--parsec-color-light-secondary-light);
+    border-color: ms.color('border-base-default-hover');
   }
 }
 
 .create-account-page .code-input-list {
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 
 .account-login,
@@ -41,7 +41,7 @@
 .create-account-page {
   .form-input-disabled.input-valid,
   .form-input-disabled.input-default {
-    border: none !important;
+    border: ms.border('none') !important;
   }
 
   .login-server-input {
@@ -54,13 +54,15 @@
   }
 
   .input-edit-button {
+    @include ms.font('label-sm-medium');
+
     position: absolute;
     right: 0.25rem;
     z-index: 10;
     width: fit-content;
     text-align: right;
-    color: var(--parsec-color-light-primary-500);
-    padding: 0.125rem 0;
+    color: ms.color('text-brand-default');
+    padding: ms.spacing('padding-xs') 0;
 
     &:hover {
       cursor: pointer;
@@ -81,23 +83,23 @@
   .input-action {
     display: flex;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
-    color: var(--parsec-color-light-secondary-text);
-    background-color: var(--parsec-color-light-secondary-white);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-12);
-    padding: 0.625rem;
+    color: ms.color('text-base-body');
+    background-color: ms.color('surface-base-default');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl');
+    padding: ms.spacing('padding-xl');
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     overflow: hidden;
     width: 100%;
     min-height: 2.5rem;
 
     &:has(.input-action-buttons) {
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
       flex-direction: column;
     }
 
@@ -107,28 +109,28 @@
 
     // single button
     &-button {
-      border-radius: var(--parsec-radius-8);
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-600);
-      box-shadow: var(--parsec-shadow-input);
+      border-radius: ms.radius('lg');
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('text-brand-default-hover');
+      box-shadow: ms.shadow('input');
       transition: all 0.2s;
-      padding: 0.5rem 0.625rem;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-xl');
       cursor: pointer;
 
       &::part(native) {
-        padding: 0;
+        padding: ms.spacing('padding-none');
         --background: none;
         --background-hover: none;
         --border-radius: none;
       }
 
       &:hover {
-        background: var(--parsec-color-light-primary-100);
+        background: ms.color('surface-brand-default-subtle-pressed');
       }
 
       .button-icon {
-        color: var(--parsec-color-light-primary-600);
-        --fill-color: var(--parsec-color-light-primary-600);
+        color: ms.color('icon-brand-default-hover');
+        --fill-color: #{ms.color('icon-brand-default-hover')};
         font-size: 1rem;
         width: 1rem;
         height: 1rem;
@@ -140,19 +142,19 @@
     // multiple buttons
     &-buttons {
       display: flex;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       width: 100%;
 
       .input-action-button {
         flex: 1;
         display: flex;
-        padding: 0.75rem 0.625rem;
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-xl');
         justify-content: center;
       }
     }
 
     &-error {
-      color: var(--parsec-color-light-danger-500);
+      color: ms.color('text-error-default');
     }
   }
 }

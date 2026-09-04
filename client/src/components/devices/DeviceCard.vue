@@ -12,10 +12,10 @@
       />
       <div class="card-text">
         <div class="card-text-info">
-          <ion-text class="device-name subtitles-sm">
+          <ion-text class="device-name">
             {{ $msTranslate(deviceInfo.label) }}
           </ion-text>
-          <ion-text class="join-date body-sm">
+          <ion-text class="join-date">
             {{ $msTranslate('DevicesPage.joinedOn') }}
             <span>{{ $msTranslate(formatTimeSince(device.createdOn, '--', 'short', true)) }}</span>
           </ion-text>
@@ -23,7 +23,7 @@
       </div>
 
       <ion-text
-        class="badge-active button-medium"
+        class="badge-active"
         v-show="isCurrent"
         :outline="true"
       >
@@ -74,57 +74,59 @@ const deviceInfo = computed(() => {
 
 <style scoped lang="scss">
 .card {
-  background-color: var(--parsec-color-light-secondary-white);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
-  padding: 1em;
+  background-color: ms.color('surface-base-default');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  padding: ms.spacing('padding-3xl');
   width: 100%;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-content {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
   }
 
   .icon-device {
     font-size: 1.5rem;
     flex-shrink: 0;
-    padding: 0.5rem;
-    border-radius: var(--parsec-radius-circle);
-    color: var(--parsec-color-light-secondary-grey);
-    background-color: var(--parsec-color-light-secondary-premiere);
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('full');
+    color: ms.color('icon-neutral-default');
+    background-color: ms.color('surface-base-page-secondary');
   }
 
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     overflow: hidden;
 
     &-info {
       display: flex;
       flex-direction: column;
-      gap: 0.125rem;
+      gap: ms.spacing('gap-xs');
     }
 
     .device-name {
-      color: var(--parsec-color-light-primary-700);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-brand-default');
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
     }
 
     .join-date {
-      color: var(--parsec-color-light-secondary-soft-text);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-neutral-default');
 
       &:has(.join-date-now) {
         position: relative;
         display: flex;
         align-items: center;
-        gap: 0.125rem;
+        gap: ms.spacing('gap-xs');
 
         &::before {
           content: '';
@@ -132,32 +134,33 @@ const deviceInfo = computed(() => {
           display: block;
           width: 0.5em;
           height: 0.5em;
-          border-radius: var(--parsec-radius-circle);
-          background-color: var(--parsec-color-light-primary-500);
+          border-radius: ms.radius('full');
+          background-color: ms.color('surface-brand-default');
         }
       }
     }
   }
 
   &.device-active {
-    background-color: var(--parsec-color-light-secondary-background);
+    background-color: ms.color('surface-base-default-secondary');
 
     .icon-device {
-      color: var(--parsec-color-light-secondary-hard-grey);
-      background-color: var(--parsec-color-light-secondary-medium);
+      color: ms.color('icon-neutral-default');
+      background-color: ms.color('surface-neutral-default-subtle-pressed');
     }
   }
 }
 
 .badge-active {
+  @include ms.font('label-md-medium');
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: var(--parsec-color-light-primary-50);
-  color: var(--parsec-color-light-primary-500);
+  background: ms.color('surface-brand-default-subtle-hover');
+  color: ms.color('text-brand-default');
   flex-shrink: 0;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--parsec-radius-12);
+  padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+  border-radius: ms.radius('2xl');
   white-space: nowrap;
 }
 </style>

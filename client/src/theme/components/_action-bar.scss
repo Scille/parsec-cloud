@@ -15,19 +15,19 @@
   #search-input-users,
   #search-input-files {
     height: auto;
-    border: none;
-    padding: 0.5rem 0 0.5rem 0.75rem !important;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border: ms.border('none');
+    padding: ms.spacing('padding-lg') 0 ms.spacing('padding-lg') ms.spacing('padding-2xl') !important;
+    border: ms.border('thin') solid ms.color('border-base-default');
     outline: none;
-    background: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-base-default');
     transition: all 0.15s ease;
 
     &:hover {
-      border: 1px solid var(--parsec-color-light-secondary-light);
+      border: ms.border('thin') solid ms.color('border-base-default-hover');
     }
 
     &:focus-within {
-      border: 1px solid var(--parsec-color-light-primary-300);
+      border: ms.border('thin') solid ms.color('border-brand-default');
       outline: none;
     }
 
@@ -38,7 +38,7 @@
     }
 
     .input {
-      --placeholder-color: var(--parsec-color-light-secondary-grey) !important;
+      --placeholder-color: #{ms.color('text-base-placeholder')} !important;
       transition: all 0.2s ease;
     }
 
@@ -63,17 +63,16 @@
 
   .filter-button,
   .sorter-button {
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-white);
-    --background: var(--parsec-color-light-secondary-white);
-    --background-hover: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-8);
-    box-shadow: var(--parsec-shadow-input);
+    background: ms.color('surface-base-default');
+    --background: #{ms.color('surface-base-default')};
+    --background-hover: #{ms.color('surface-base-default')};
+    border-radius: ms.radius('lg');
+    box-shadow: ms.shadow('input');
     display: flex;
     align-self: stretch;
 
     &:hover {
-      background: var(--parsec-color-light-secondary-white);
+      background: ms.color('surface-base-default');
     }
 
     .sorter-button-content__text,

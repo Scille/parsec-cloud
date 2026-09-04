@@ -1,5 +1,9 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
+// must be at the top of the file
+// at the moment, we are forced to put this in every scss file, since vite is not adding preprocessors additionalData to files imported by @use & @forward
+@use 'megashark-lib/theme' as ms;
+
 .menu-secondary-collapse {
   &-logo {
     width: 2rem;
@@ -9,66 +13,62 @@
   }
 
   &__close {
-    color: var(--parsec-color-light-secondary-grey);
+    color: ms.color('icon-neutral-default');
     font-size: 1.5rem;
     position: absolute;
     right: 0;
     top: -0.75rem;
-    padding: 0.5rem;
+    padding: ms.spacing('padding-lg');
     border-radius: var(--parsec-radius-circle);
     cursor: pointer;
 
     &:hover {
-      background: var(--parsec-color-light-secondary-premiere);
-      color: var(--parsec-color-light-secondary-hard-grey);
+      background: ms.color('surface-neutral-default-subtle-hover');
+      color: ms.color('icon-neutral-default-hover');
     }
   }
 
   &::part(container) {
-    background: linear-gradient(
-      117deg,
-      var(--parsec-color-light-secondary-inversed-contrast, #fcfcfc) 0%,
-      var(--parsec-color-light-secondary-background, #f9f9fb) 100%
-    );
+    background: linear-gradient(117deg, #{ms.color('surface-base-page')} 0%, #{ms.color('surface-base-default-secondary')} 100%);
     margin: 1rem;
-    padding: 2rem 1rem;
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
     height: auto;
-    box-shadow: var(--parsec-shadow-light);
-    border-radius: var(--parsec-radius-12);
+    box-shadow: ms.shadow('light');
+    border-radius: ms.radius('2xl');
   }
 
   &-buttons {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     height: 100%;
     position: relative;
     z-index: 2;
 
     &-item {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
       transition: all 150ms linear;
       display: flex;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
 
       &::part(native) {
         justify-content: flex-start;
-        padding: 0.75rem 0.5rem !important;
-        --background: var(--parsec-color-light-secondary-background);
-        --background-hover: var(--parsec-color-light-secondary-premiere);
-        border-radius: var(--parsec-radius-8);
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-lg') !important;
+        --background: #{ms.color('surface-neutral-default-subtle')};
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+        border-radius: ms.radius('lg');
       }
 
       ion-icon {
         font-size: 1rem;
-        color: var(--parsec-color-light-secondary-soft-grey);
+        color: ms.color('icon-neutral-default');
       }
 
       &:hover {
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('text-neutral-default-hover');
 
         ion-icon {
-          color: var(--parsec-color-light-secondary-hard-grey);
+          color: ms.color('icon-neutral-default-hover');
         }
       }
 
@@ -85,22 +85,22 @@
     }
 
     #trigger-customer-area-button {
-      color: var(--parsec-color-light-primary-500);
-      border-radius: var(--parsec-radius-8);
+      color: ms.color('text-brand-default');
+      border-radius: ms.radius('lg');
       width: 100%;
 
       &::part(native) {
-        --background: var(--parsec-color-light-primary-50);
-        --background-hover: var(--parsec-color-light-primary-100);
+        --background: #{ms.color('surface-brand-default-subtle-hover')};
+        --background-hover: #{ms.color('surface-brand-default-subtle-pressed')};
         width: 100%;
       }
 
       &:hover {
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default-hover');
 
         &::before {
           width: 100%;
-          background: var(--parsec-color-light-primary-600);
+          background: ms.color('surface-brand-default-hover');
         }
       }
     }
@@ -109,10 +109,10 @@
 
 .upload-menu .progress-spinner {
   circle.bg {
-    stroke: var(--parsec-color-light-secondary-disabled);
+    stroke: ms.color('border-disabled-default');
   }
 
   circle.fg {
-    stroke: var(--parsec-color-light-secondary-text);
+    stroke: ms.color('icon-neutral-default-hover');
   }
 }
