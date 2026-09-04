@@ -27,7 +27,7 @@ from uuid import UUID, uuid4
 
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream
-from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer
+from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, TypeAdapter
 
 from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.config import BackendConfig
@@ -253,6 +253,7 @@ ClientEvent = Annotated[
     | ClientEventSaveDone,
     Field(discriminator="type"),
 ]
+ClientEventAdapter = TypeAdapter(ClientEvent)
 
 
 # --- Server -> client events -------------------------------------------------
@@ -285,7 +286,7 @@ class ServerEventAuthRejected(BaseModel):
     codes; we reuse the field (bad name documented at the definition site).
     """
 
-    type: Literal["auth"] = "auth"
+    type: Literal["auth_rejected"] = "auth_rejected"  # TODO: dummy type not to clash with auth
     result: int = 0  # 0 = rejected (OnlyOffice: non-1 = failure)
     # RFC §1.2: the version the client should reload to before retrying.
     latestAllowedVersion: int
@@ -511,6 +512,7 @@ ServerEvent = Annotated[
     | ServerEventWarning,
     Field(discriminator="type"),
 ]
+ServerEventAdapter = TypeAdapter(ServerEvent)
 
 
 # --- SSE channel (component-layer handle) ---------------------------------
