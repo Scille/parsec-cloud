@@ -24,7 +24,11 @@
               class="organization-card-header organization-card-header-desktop"
               @click="openOrganizationChoice($event)"
             >
-              <ion-avatar class="organization-avatar body-lg">
+              <!-- Restricted to large display to prevent duplicate v-html id in small display -->
+              <ion-avatar
+                class="organization-avatar body-lg"
+                v-if="isLargeDisplay"
+              >
                 <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
                 <!-- prettier-ignore -->
                 <ms-image
@@ -465,7 +469,7 @@ const securityWarningsCount = computed(() => {
   );
 });
 
-const { isSmallDisplay, windowWidth } = useWindowSize();
+const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const isReadOnly = computed(() => {
   if (currentWorkspace.value) {
     return (
