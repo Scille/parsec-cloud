@@ -8,6 +8,183 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.9.4-a.0.dev.20701+72e13e8 (2026-09-05)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* [CLI] Add user (un)freeze command.
+  (`#7425 <https://github.com/Scille/parsec-cloud/issues/7425>`__)
+
+* [CLI] Merge options ``--recipients`` and ``--weights`` of the command
+  ``shared-recovery create`` into ``--recipients``.
+  (`#9131 <https://github.com/Scille/parsec-cloud/issues/9131>`__)
+
+* Enable ODP file type in edit mode
+  (`#12110 <https://github.com/Scille/parsec-cloud/issues/12110>`__)
+
+* [CLI][Breaking] Add --auth common option to setup new authentication method.
+  Impacted commands: - device import-recovery-device - organization bootstrap -
+  invite claim (replaces use_keyring option) - device change-authentication
+  (replaces password and keyring options)
+  (`#10028 <https://github.com/Scille/parsec-cloud/issues/10028>`__)
+
+* CLI revamped:  - Adding 3 global arguments:   - ``--format={plain,json}``
+  control how the output data is formatted (default to ``JSON``)   -
+  ``--color={auto,always,never}`` to stylize message & data (default to
+  ``auto``)   - ``--progress={quiet,plain,spinner}`` how progress are shown
+  (default to ``spinner`` on a TTY else ``plain``)
+  +--------------------------------------------+--------+-------+----------+   |
+  Command                                    | Format | Color | Progress |
+  +============================================+========+=======+==========+   |
+  ``certificate forget-all-certificates``    | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``certificate poll``                       | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``device change-authentication``           | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``device export-recovery-device``          | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``device forget-local``                    | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``device import-recovery-device``          | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``device list``                            | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``device overwrite-server-url``            | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``invite cancel``                          | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``invite claim``                           | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``invite device``                          | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``invite greet``                           | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``invite list``                            | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``invite shared-recovery``                 | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``invite user``                            | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``organization bootstrap``                 | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``organization create``                    | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``organization stats``                     | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``organization status``                    | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``sequester generate-service-certificate`` | N/a    | N/a   | N/a      |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``server stats``                           | ✅     | N/a   | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``shared-recovery create``                 | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``shared-recovery delete``                 | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``shared-recovery info``                   | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``shared-recovery list``                   | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``tos accept``                             | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``tos config``                             | N/a    | N/a   | N/a      |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``tos list``                               | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``user list``                              | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``user revoke``                            | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``user totp-reset``                        | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace archive``                      | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace create``                       | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace import``                       | N/a    | N/a   | N/a      |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace list``                         | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace list-users``                   | ✅     | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace mount``                        | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace share``                        | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``workspace sync``                         | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``auto-complete``                          | N/a    | N/a   | N/a      |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``ls``                                     | ✅     | N/a   | N/a      |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``man-page``                               | N/a    | N/a   | N/a      |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``mount-realm-export``                     | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``rm``                                     | N/a    | N/a   | N/a      |
+  +--------------------------------------------+--------+-------+----------+   |
+  ``run-testenv``                            | N/a    | ✅    | ✅       |
+  +--------------------------------------------+--------+-------+----------+
+  Legend:    - ``<empty>``: Not changed   - ✅: Support new feature correspond to
+  the column   - _N/a_: Feature is not applicable to command  - ``device forget-
+  local``:    - **BREAKING CHANGE**:      - Require to pass ``--force`` when
+  stdout is not a TTY     - Most message are shown on stderr   - Add ``--force``
+  flag to skip confirmation - ``device list``:    - devices are listed on stdout
+  - message indicating how much devices are found on stderr (if you want to
+  count the number of devices you could pipe output into ``wc -l``)  -
+  **BREAKING CHANGE**:    - ``invite device``: Return a redirection link to
+  support web client   - ``invite shared-recovery``: Return a redirection link
+  to support web client   - ``invite user``: Return a redirection link to
+  support web client   - ``server stats``:      - Replace local ``--format``
+  with global one, plain format correspond to CSV style     - Using global
+  ``--format`` cause using CSV format by default over JSON unless the format is
+  specified
+  (`#0000 <https://github.com/Scille/parsec-cloud/issues/0000>`__)
+
+*  [CLI][Breaking] Harmonize ``--force`` option.      Impacted commands:     -
+  forget local device     - tos accept (replace ``--yes`` by ``--force``)     -
+  device overwrite server_url     - shared-recovery create (replace ``--no-
+  confirmation`` by ``--force``)
+  (`#8787 <https://github.com/Scille/parsec-cloud/issues/8787>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug in the display of active user limit in electron.
+  (`#12873 <https://github.com/Scille/parsec-cloud/issues/12873>`__)
+
+* Fixed a bug preventing some file operations using the Finder in MacOS
+  (`#10086 <https://github.com/Scille/parsec-cloud/issues/10086>`__)
+
+* Fixed CLI server run's `--scws-web-application-private-key-content` parameter
+  incorrectly expecting a PEM content encoded in base64
+  (`#12920 <https://github.com/Scille/parsec-cloud/issues/12920>`__)
+
+* Fix files created in the GUI through the "New file" button not appearing right
+  away
+  (`#13002 <https://github.com/Scille/parsec-cloud/issues/13002>`__)
+
+* Fix the CLI ``device forget-local`` command failing with ``No such file or
+  directory`` when the device has no associated data directory (devices created
+  on old organizations).
+  (`#12807 <https://github.com/Scille/parsec-cloud/issues/12807>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* [CLI] Renamed command ``mount-realm-export`` to ``sequester mount``
+  (`#13265 <https://github.com/Scille/parsec-cloud/issues/13265>`__)
+
+* Added the server version in the organization information page
+  (`#5557 <https://github.com/Scille/parsec-cloud/issues/5557>`__)
+
+
+
 Parsec v3.9.3 (2026-07-24)
 --------------------------
 

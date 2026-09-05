@@ -1,3 +1,0 @@
-Fix the CLI ``device forget-local`` command failing with ``No such file or
-directory`` when the device has no associated data directory (devices created
-on old organizations).
