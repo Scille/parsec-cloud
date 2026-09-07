@@ -67,7 +67,9 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
     await expect(requestModal.locator('.modal-info')).toBeHidden();
     await expect(requestModal.locator('.user-information')).toBeVisible();
     await fillIonInput(requestModal.locator('.user-information').locator('ion-input'), expectedPersonName);
-    await expect(requestModal.locator('.user-information').locator('.dropdown-button-content')).toHaveText(/^[a-f0-9-]+@example\.invalid$/);
+    await expect(requestModal.locator('.user-information').locator('.dropdown-button').locator('.input-text')).toHaveText(
+      /^[a-f0-9-]+@example\.invalid$/,
+    );
   }
   await expect(nextButton).toBeTrulyEnabled();
   await nextButton.click();
