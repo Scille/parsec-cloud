@@ -18,12 +18,12 @@
         :icon="icon"
         class="modal-header-stepper__icon"
       />
-      <ion-text class="modal-header-stepper__text button-medium">
+      <ion-text class="modal-header-stepper__text">
         {{ $msTranslate(title) }}
       </ion-text>
     </div>
     <div class="modal-header-content">
-      <ion-text class="modal-header__step body">
+      <ion-text class="modal-header__step">
         {{
           $msTranslate({
             key: 'HeaderPage.modalHeader.step',
@@ -34,12 +34,12 @@
           })
         }}
       </ion-text>
-      <ion-text class="modal-header__title title-h3">
+      <ion-text class="modal-header__title">
         {{ $msTranslate(steps[currentStep].title) }}
       </ion-text>
     </div>
     <ion-text
-      class="modal-header__subtitle body-lg"
+      class="modal-header__subtitle"
       v-if="steps[currentStep]?.subtitle"
     >
       {{ $msTranslate(steps[currentStep]?.subtitle) }}
@@ -74,49 +74,53 @@ defineEmits<{
   flex-direction: column;
   text-wrap: wrap;
   margin-bottom: 1.5rem;
-  gap: 1rem;
-  padding: 0 0 1.5rem;
+  gap: ms.spacing('gap-3xl');
+  padding: 0 0 ms.spacing('padding-4xl');
 
   @include ms.responsive-breakpoint('sm') {
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
   }
 
   &-stepper {
-    background: var(--parsec-color-light-primary-50);
+    background: ms.color('surface-brand-default-subtle');
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
-    gap: 0.5rem;
+    padding: ms.spacing('padding-lg');
+    gap: ms.spacing('gap-lg');
 
     &__icon {
-      color: var(--parsec-color-light-primary-600);
-      border-radius: var(--parsec-radius-6);
+      color: ms.color('icon-brand-default-hover');
+      border-radius: ms.radius('md');
       font-size: 1rem;
     }
 
     &__text {
-      color: var(--parsec-color-light-primary-600);
+      @include ms.font('label-md-medium');
+      color: ms.color('text-brand-default-hover');
     }
   }
 
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
-    padding: 0.5rem 2rem 0;
+    gap: ms.spacing('gap-md');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl') 0;
 
     .modal-header__step {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-neutral-default');
     }
 
     .modal-header__title {
-      color: var(--parsec-color-light-primary-800);
+      @include ms.font('heading-h4');
+      color: ms.color('text-brand-default');
     }
   }
 
   &__subtitle {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-base-label');
 
     @include ms.responsive-breakpoint('sm') {
       display: none;
@@ -128,6 +132,6 @@ defineEmits<{
   position: absolute;
   top: 2.75rem;
   right: 1rem;
-  padding: 0.25rem;
+  padding: ms.spacing('padding-sm');
 }
 </style>
