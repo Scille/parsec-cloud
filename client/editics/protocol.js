@@ -44,14 +44,8 @@
  */
 
 // ---------------------------------------------------------------------------
-// OnlyOffice protocol types (payload shapes, RFC §2.2 / captured sessions)
+// OnlyOffice protocol types
 // ---------------------------------------------------------------------------
-//
-// OnlyOffice wraps each event as `{ type, payload }`; the translator works on
-// the `payload` (the `msg`/`event` objects the editor's `connectMockServer`
-// API hands to `onMessage` / `sendMessageToOO`). These `@typedef`s document
-// the payload shapes observed in the captured sessions
-// (`docs/rfcs/1030-collaborative-editics/oo_example_session.md`).
 
 /**
  * @typedef {Object} OOParticipantEntry
@@ -323,21 +317,16 @@
  * @property {string} message
  */
 
-/** @typedef {OOServerEventAuth|OOServerEventWaitAuth|OOServerEventConnectState|OOServerEventAuthChanges|
+/**
+ * @typedef {OOServerEventAuth|OOServerEventWaitAuth|OOServerEventConnectState|OOServerEventAuthChanges|
  *   OOServerEventMessage|OOServerEventCursor|OOServerEventGetLock|OOServerEventReleaseLock|
  *   OOServerEventSaveChanges|OOServerEventSavePartChanges|OOServerEventSaveLock|OOServerEventUnSaveLock|
- *   OOServerEventDrop|OOServerEventWarning} OOServerEvent */
+ *   OOServerEventDrop|OOServerEventWarning} OOServerEvent
+ */
 
 // ---------------------------------------------------------------------------
-// Editics protocol types (mirror `server/parsec/components/editics.py` exactly)
+// Editics protocol types
 // ---------------------------------------------------------------------------
-//
-// Field-name parity with the server is a hard requirement (todo §4.2): the test
-// harness serializes `EditicsClientEvent` to JSON and POSTs it to the server,
-// and parses the server's JSON reply into `EditicsServerEvent`. Any name drift
-// breaks the round-trip. Encrypted `bytes` fields are `Uint8Array` in JS (they
-// are base64-encoded only at the JSON wire boundary by the connection layer /
-// pydantic — `protocol.js` never sees base64).
 
 /**
  * @typedef {Object} EditicsParticipantEntry
@@ -421,9 +410,11 @@
  * @property {number} newVersion
  */
 
-/** @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|
+/**
+ * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|
  *   EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|
- *   EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent */
+ *   EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent
+ */
 
 /**
  * @typedef {Object} EditicsServerEventAuth
@@ -533,11 +524,13 @@
  * @property {string} message
  */
 
-/** @typedef {EditicsServerEventAuth|EditicsServerEventAuthRejected|EditicsServerEventConnectState|
+/**
+ * @typedef {EditicsServerEventAuth|EditicsServerEventAuthRejected|EditicsServerEventConnectState|
  *   EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|
  *   EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|
  *   EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDrop|
- *   EditicsServerEventWarning} EditicsServerEvent */
+ *   EditicsServerEventWarning} EditicsServerEvent
+ */
 
 // ---------------------------------------------------------------------------
 // Small byte <-> string helpers (the only "encoding" the translator does; it
@@ -844,10 +837,17 @@ class EditicsTranslator {
   /**
    * On a successful `auth` (result: 1) the translator sets `indexUser`,
    * rebuilds the participant table from `data.participants` (resolving names
-   * via `resolveUserName`) and produces an OO `connectState` event — the mock
-   * server never sent an OO `auth` event; the editor gets participants via
-   * `connectState`. On rejection (result: 0) the translator produces nothing
+   * via `resolveUserName`) and produces an OO `auth` (server→client) event —
+   * the editor's handshake expects this as the positive reply to its own
+   * `auth` (c→s). On rejection (result: 0) the translator produces nothing
    * to forward (the rejection is handled by `main.js` / the test).
+   *
+   * OnlyOffice's `auth` (s→c) carries many integrator-specific fields (jwt,
+   * build info, settings, …) that the Parsec server doesn't provide (RFC §2.2
+   * editics changes drop them). The translator re-injects sensible defaults
+   * so the editor's state machine gets the shape it expects; their values
+   * are opaque to the editor's collaboration logic (only `result`,
+   * `indexUser`, `participants` and `sessionId` are meaningful).
    * @param {EditicsServerEventAuth|EditicsServerEventAuthRejected} editics
    * @returns {Promise<OOServerEvent|null>}
    */
@@ -861,10 +861,29 @@ class EditicsTranslator {
     this._participants.clear();
     await this._mergeParticipants(editics.participants || []);
     return {
-      type: 'connectState',
-      participantsTimestamp: Date.now(),
+      type: 'auth',
+      result: 1,
+      sessionId: editics.sessionId,
+      sessionTimeConnect: editics.sessionTimeConnect,
       participants: this._onlyofficeParticipants(),
-      waitAuth: false,
+      locks: {},
+      indexUser: editics.indexUser,
+      hasForgotten: false,
+      jwt: '',
+      g_cAscSpellCheckUrl: '',
+      buildVersion: '',
+      buildNumber: 0,
+      licenseType: 0,
+      settings: {
+        spellcheckerUrl: '',
+        reconnection: { attempts: 50, delay: 2000 },
+        binaryChanges: false,
+        websocketMaxPayloadSize: 1572864,
+        maxChangesSize: 157286400,
+        limits_image_size: 26214400,
+        limits_image_types_upload: 'jpg;jpeg;jpe;png;gif;bmp;svg;tiff;tif;webp;heic;heif;avif',
+      },
+      openedAt: editics.sessionTimeConnect,
     };
   }
 

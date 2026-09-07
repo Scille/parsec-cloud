@@ -117,4 +117,8 @@ class BaseEditicsComponent:
         document_id: VlobID,
         event: EditicsProtocolClientEvent,
     ) -> EditicsProtocolServerEvent | EditicsSendInSessionBadOutcome | None:
-        raise NotImplementedError
+        match event.type:
+            case "auth":
+                pass
+            case _:
+                raise NotImplementedError(event)
