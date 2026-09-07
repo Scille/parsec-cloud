@@ -1,5 +1,6 @@
 pub mod archive;
 pub mod create;
+pub mod export;
 pub mod import;
 pub mod list;
 pub mod list_users;
@@ -19,6 +20,10 @@ pub enum Group {
     List(list::Args),
     /// Import a local file to a remote workspace
     Import(import::Args),
+    /// Export a remote file to local storage
+    /// /!\ This removes the encryption from the file,
+    /// Proceed with caution.
+    Export(export::Args),
     /// Share workspace
     Share(share::Args),
     /// Sync workspace data with the server
@@ -34,6 +39,7 @@ pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<(
         Group::Create(args) => create::main(ui, args).await,
         Group::List(args) => list::main(ui, args).await,
         Group::Import(args) => import::main(ui, args).await,
+        Group::Export(args) => export::main(ui, args).await,
         Group::Share(args) => share::main(ui, args).await,
         Group::Sync(args) => sync::main(ui, args).await,
         Group::Mount(args) => mount::main(ui, args).await,
