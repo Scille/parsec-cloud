@@ -5,12 +5,45 @@
 @use 'global-client' as globalClient;
 
 /**** Global CSS overloads ****/
-// scroll behavior: user(revoked, active, invitation)/folder/workspace
+// should be move to megashark-lib - Ok for now
+ion-button {
+  &.link {
+    width: fit-content !important;
+    max-width: fit-content !important;
+    min-height: 1.5rem !important;
+    background: none !important;
+
+    &::part(native) {
+      --background: none !important;
+      --background-hover: none !important;
+      --background-hover: none !important;
+      padding: ms.spacing('padding-none') !important;
+    }
+
+    &:hover {
+      color: ms.color('text-brand-default-hover');
+    }
+  }
+
+  &.button-outline[slot='icon-only'] {
+    --background: #{ms.color('surface-base-default')};
+    --background-hover: inherit;
+    --background-focused: inherit;
+  }
+}
 
 .connected-layout {
   background: ms.color('surface-base-page');
 }
 
+// Ionic's `.in-toolbar` rule makes an outline button's border fall back to --color
+// (text/icon color) instead of --border-color once it sits inside an ion-toolbar.
+// Force the border back to the design-system token without touching --color.
+ion-toolbar ion-button.button-outline::part(native) {
+  border-color: #{ms.color('border-base-default')} !important;
+}
+
+// scroll behavior: user(revoked, active, invitation)/folder/workspace
 .content-scroll {
   --overflow: hidden;
 
