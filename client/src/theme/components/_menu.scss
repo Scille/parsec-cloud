@@ -19,7 +19,7 @@
     right: 0;
     top: -0.75rem;
     padding: ms.spacing('padding-lg');
-    border-radius: var(--parsec-radius-circle);
+    border-radius: ms.radius('full');
     cursor: pointer;
 
     &:hover {

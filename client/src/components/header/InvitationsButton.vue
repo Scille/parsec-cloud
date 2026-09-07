@@ -5,35 +5,19 @@
     v-show="invitations.length > 0"
     @click="openInvitationsMenu($event)"
     id="invitations-button"
-    class="button-medium"
-    :class="{
-      unread: invitations.length > 0,
-      'gradient-button': isGradientButton,
-    }"
+    size="large"
+    :fill="isSmallDisplay ? 'outline' : 'clear'"
+    :class="{ unread: invitations.length > 0 }"
+    slot="icon-only"
   >
-    <ion-text
-      v-if="isGradientButton"
-      :class="{ 'gradient-button-text': isGradientButton }"
-    >
-      <span class="title-h2">{{ invitations.length }}</span>
-      <span class="button-large">
-        {{ $msTranslate({ key: 'HeaderPage.invitations.smallDisplayTitle', data: { count: invitations.length } }) }}
-      </span>
-    </ion-text>
     <span
       class="unread-count"
       :class="{ 'unread-count--more': invitations.length > 99 }"
-      v-if="invitations.length > 0 && !isGradientButton"
+      v-if="invitations.length > 0"
     >
       {{ invitations.length > 99 ? '99+' : invitations.length }}
     </span>
     <ion-icon
-      v-if="!isGradientButton"
-      :icon="mail"
-      class="invitation-button-icon"
-    />
-    <ion-icon
-      v-else
       :icon="mailUnread"
       class="gradient-button-icon"
     />
@@ -49,8 +33,8 @@ import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import { IonButton, IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
-import { mail, mailUnread } from 'ionicons/icons';
+import { IonButton, IonIcon, modalController, popoverController } from '@ionic/vue';
+import { mailUnread } from 'ionicons/icons';
 import { Answer, MsModalResult, askQuestion, useWindowSize } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
@@ -58,11 +42,7 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
-const { isLargeDisplay } = useWindowSize();
-
-defineProps<{
-  isGradientButton?: boolean;
-}>();
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 onMounted(async () => {
   eventCbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated], async (event: Events, _data?: EventData) => {
@@ -205,26 +185,9 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-#invitations-button:not(.gradient-button) {
+#invitations-button {
+  @include ms.font('label-md-medium');
   overflow: visible;
-  --background: var(--parsec-color-light-primary-50);
-  --color: var(--parsec-color-light-primary-500);
-
-  &::part(native) {
-    --background-hover: none;
-    padding: 0.625rem;
-    transition: all 150ms ease-in-out;
-    border-radius: var(--parsec-radius-12);
-
-    &:hover {
-      --background: var(--parsec-color-light-primary-100);
-      color: var(--parsec-color-light-primary-700);
-    }
-  }
-
-  .invitation-button-icon {
-    font-size: 1.375rem;
-  }
 
   .button-text {
     @include ms.responsive-breakpoint('lg') {
@@ -238,9 +201,9 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     .unread-count {
       position: absolute;
       z-index: 3;
-      right: -8px;
-      top: -8px;
-      padding-inline: 2px;
+      right: -7px;
+      top: -9px;
+      padding-inline: ms.spacing('padding-xs');
       min-width: 1.125rem;
       width: fit-content;
       height: 1.125rem;
@@ -249,15 +212,15 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
       justify-content: center;
       font-size: 11px;
       font-weight: 600;
-      color: var(--parsec-color-light-secondary-white);
-      background: var(--parsec-color-light-danger-500);
-      border: 2px solid var(--parsec-color-light-primary-50);
-      border-radius: var(--parsec-radius-12);
+      color: ms.color('text-error-on-color');
+      background: ms.color('surface-error-default');
+      border: ms.border('thick') solid ms.color('surface-brand-default-subtle');
+      border-radius: ms.radius('2xl');
 
       @include ms.responsive-breakpoint('sm') {
         left: 12px;
         right: auto;
-        border-color: var(--parsec-color-light-secondary-white);
+        border-color: ms.color('border-base-on-color');
       }
 
       &--more {
@@ -270,40 +233,8 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
 
   @include ms.responsive-breakpoint('sm') {
     &::part(native) {
-      padding: 0.5rem;
-      border-radius: var(--parsec-radius-circle);
-      --background: var(--parsec-color-light-secondary-white);
-      box-shadow: var(--parsec-shadow-soft);
       overflow: visible;
     }
-  }
-}
-
-.gradient-button {
-  position: relative;
-
-  &::part(native) {
-    --background: var(--parsec-color-light-gradient-background);
-    --background-hover: var(--parsec-color-light-primary-600);
-    --color: var(--parsec-color-light-secondary-white);
-    justify-content: flex-start;
-    text-align: start;
-    padding: 0.75rem 1rem;
-  }
-
-  &-text {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    text-wrap: auto;
-  }
-
-  &-icon {
-    font-size: 3.25rem;
-    color: var(--parsec-color-light-secondary-white);
-    position: absolute;
-    right: -1.5rem;
-    opacity: 0.2;
   }
 }
 </style>
