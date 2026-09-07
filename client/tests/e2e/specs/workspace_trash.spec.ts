@@ -45,9 +45,9 @@ msTest('Trash a workspace', async ({ workspaces }) => {
   await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await answerQuestion(workspaces, true);
   const inputModal = workspaces.locator('.text-input-modal');
-  await fillIonInput(inputModal.locator('.form-input'), 'wksp2');
+  await fillIonInput(inputModal.locator('ion-input'), 'wksp2');
   await expect(inputModal.locator('#next-button')).toHaveAttribute('disabled');
-  await fillIonInput(inputModal.locator('.form-input'), 'wksp1');
+  await fillIonInput(inputModal.locator('ion-input'), 'wksp1');
   await expect(inputModal.locator('#next-button')).toBeEnabled();
   await inputModal.locator('#next-button').click();
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
