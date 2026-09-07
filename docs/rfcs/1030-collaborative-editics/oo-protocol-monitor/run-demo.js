@@ -26,25 +26,6 @@ const MONITOR = path.join(__dirname, 'monitor.js');
 const URL = 'https://www.onlyoffice.com/see-it-in-action.aspx';
 const STAY_MS = parseInt(process.env.STAY || '0', 10); // 0 = keep open
 
-// Locate a usable Chromium. Try Playwright's bundled build first, then a
-// system Chromium so we don't require `npx playwright install`.
-function findChromium() {
-  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
-  const cands = [
-    '/snap/chromium/current/usr/lib/chromium-browser/chrome',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  ];
-  for (const p of cands) {
-    try { if (fs.existsSync(p) && fs.statSync(p).isFile()) return p; } catch (e) {}
-  }
-  return undefined; // fall back to Playwright's bundled browser
-}
-const executablePath = findChromium();
-
 (async () => {
   // ---- start the local MITM proxy first -------------------------------
   const proxy = await createProxy({ port: 0, verbose: !!process.env.PROXY_VERBOSE });
@@ -57,7 +38,8 @@ const executablePath = findChromium();
   const initScript = 'window.__OO_PROXY_PORT = ' + proxyPort + ';\n' + monitorSrc;
 
   const browser = await chromium.launch({
-    executablePath,
+    // Use Playwright's bundled Chromium, this requires `npx playwright install`
+    executablePath: undefined,
     headless: process.env.HEADLESS === '1',
     args: [
       '--disable-blink-features=AutomationControlled',
