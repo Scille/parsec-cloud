@@ -366,42 +366,39 @@ Format of the client → server `auth` event:
 ```json5
 {
   "type": "auth",
-  "payload": {
-    "type": "auth",
-    "docid": <string>,  // Shared identifier of the document session
-    "token": <string>,  // Integrator-provided document token (also in the JWT below)
-    "user": {
-      "id": <string>,  // Integrator-provided user ID (e.g. the device ID)
-      "username": <string>,
-      "firstname": <string|null>,
-      "lastname": <string|null>,
-      "indexUser": <integer>  // Client's participant index (provided by server's `auth` event), `-1` on first open
-    },
-    "editorType": <integer>,  // 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio
-    "lastOtherSaveTime": <integer>,  // Last save timestamp the client knows about, -1 on first open
-    "block": <array>,  // Region lock block IDs the client believes it still owns (restore)
-    "sessionId": <string|null>,  // Per-connection identifier (provided by server's `auth` event), `null` on first open
-    "sessionTimeConnect": <integer|null>,  // Server-provided connect time on reconnection, `null` on first open
-    "sessionTimeIdle": <integer>,  // How long the client considers itself idle (ms)
-    "documentFormatSave": <integer>,  // Output format ID the server should use when exporting (see forceSave)
-    "isCloseCoAuthoring": <boolean>,
-    "openCmd": <object|null>,  // The `open` command that triggered the session (contains doc url, format, etc.)
-    "lang": <string>,
-    "mode": <string>,  // "edit" | "view"
-    "permissions": {
-      "edit": <boolean>,
-      "review": <boolean>
-    },
-    "encrypted": <boolean>,
-    "IsAnonymousUser": <boolean>,
-    "timezoneOffset": <integer>,
-    "headingsColor": <string|null>,  // Overwrite the color for the built-in Heading 1–9 styles used by the document.
-    "coEditingMode": <string>,  // "fast" | "strict"
-    "jwtOpen": <string>,  // Opening JWT token (proves authorization to open this document)
-    "jwtSession": <string>,  // Session JWT token (proves a previously-established session), takes precedence over `jwtOpen`
-    "time": <integer>,   // client-side `performance.now()`, for server-side timing logs
-    "supportAuthChangesAck": <boolean>  // Support for `authChanges` chunks acknowledgement (modern clients)
-  }
+  "docid": <string>,  // Shared identifier of the document session
+  "token": <string>,  // Integrator-provided document token (also in the JWT below)
+  "user": {
+    "id": <string>,  // Integrator-provided user ID (e.g. the device ID)
+    "username": <string>,
+    "firstname": <string|null>,
+    "lastname": <string|null>,
+    "indexUser": <integer>  // Client's participant index (provided by server's `auth` event), `-1` on first open
+  },
+  "editorType": <integer>,  // 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio
+  "lastOtherSaveTime": <integer>,  // Last save timestamp the client knows about, -1 on first open
+  "block": <array>,  // Region lock block IDs the client believes it still owns (restore)
+  "sessionId": <string|null>,  // Per-connection identifier (provided by server's `auth` event), `null` on first open
+  "sessionTimeConnect": <integer|null>,  // Server-provided connect time on reconnection, `null` on first open
+  "sessionTimeIdle": <integer>,  // How long the client considers itself idle (ms)
+  "documentFormatSave": <integer>,  // Output format ID the server should use when exporting (see forceSave)
+  "isCloseCoAuthoring": <boolean>,
+  "openCmd": <object|null>,  // The `open` command that triggered the session (contains doc url, format, etc.)
+  "lang": <string>,
+  "mode": <string>,  // "edit" | "view"
+  "permissions": {
+    "edit": <boolean>,
+    "review": <boolean>
+  },
+  "encrypted": <boolean>,
+  "IsAnonymousUser": <boolean>,
+  "timezoneOffset": <integer>,
+  "headingsColor": <string|null>,  // Overwrite the color for the built-in Heading 1–9 styles used by the document.
+  "coEditingMode": <string>,  // "fast" | "strict"
+  "jwtOpen": <string>,  // Opening JWT token (proves authorization to open this document)
+  "jwtSession": <string>,  // Session JWT token (proves a previously-established session), takes precedence over `jwtOpen`
+  "time": <integer>,   // client-side `performance.now()`, for server-side timing logs
+  "supportAuthChangesAck": <boolean>  // Support for `authChanges` chunks acknowledgement (modern clients)
 }
 ```
 
@@ -428,14 +425,11 @@ Format:
 ```json5
 {
   "type": "waitAuth",
-  "payload": {
-    "type": "waitAuth",
-    // The participant currently holding the auth lock (i.e. the established
-    // editor the newcomer must wait for). Same shape as a `participants` entry:
-    //   { id, idOriginal, username, indexUser, view, connectionId,
-    //     isCloseCoAuthoring, isLiveViewer, encrypted }
-    "lockDocument": <object>
-  }
+  // The participant currently holding the auth lock (i.e. the established
+  // editor the newcomer must wait for). Same shape as a `participants` entry:
+  //   { id, idOriginal, username, indexUser, view, connectionId,
+  //     isCloseCoAuthoring, isLiveViewer, encrypted }
+  "lockDocument": <object>
 }
 ```
 
@@ -451,24 +445,21 @@ Format of the client → server `auth` event:
 ```json5
 {
   "type": "auth",
-  "payload": {
-    "type": "auth",
-    "result": <integer>,          // 1 = success
-    "sessionId": <string>,        // The connection's session ID (used on reconnection)
-    "sessionTimeConnect": <integer>, // Server timestamp (ms) at connect (used on reconnection)
-    "participants": <array>,      // Current participant map (same shape as in `connectState`)
-    "messages": <array|undefined>, // Chat messages (in practice the server leaves this empty; see `getMessages`)
-    "locks": <object|array>,      // Current region lock table (same shape as server `getLock` reply)
-    "indexUser": <integer>,       // This connection's participant index
-    "hasForgotten": <boolean>,    // Whether the document has unsaved "forgotten" changes
-    "jwt": <string>,             // Fresh session JWT token (replaces `jwtSession`)
-    "g_cAscSpellCheckUrl": <string>,
-    "buildVersion": <string>,
-    "buildNumber": <integer>,
-    "licenseType": <integer>,
-    "settings": <object>,        // Editor config: reconnection params, `binaryChanges`, `websocketMaxPayloadSize`, `maxChangesSize`, image limits, etc.
-    "openedAt": <integer>        // Server timestamp (ms) passed through to `documentOpen`
-  }
+  "result": <integer>,          // 1 = success
+  "sessionId": <string>,        // The connection's session ID (used on reconnection)
+  "sessionTimeConnect": <integer>, // Server timestamp (ms) at connect (used on reconnection)
+  "participants": <array>,      // Current participant map (same shape as in `connectState`)
+  "messages": <array|undefined>, // Chat messages (in practice the server leaves this empty; see `getMessages`)
+  "locks": <object|array>,      // Current region lock table (same shape as server `getLock` reply)
+  "indexUser": <integer>,       // This connection's participant index
+  "hasForgotten": <boolean>,    // Whether the document has unsaved "forgotten" changes
+  "jwt": <string>,             // Fresh session JWT token (replaces `jwtSession`)
+  "g_cAscSpellCheckUrl": <string>,
+  "buildVersion": <string>,
+  "buildNumber": <integer>,
+  "licenseType": <integer>,
+  "settings": <object>,        // Editor config: reconnection params, `binaryChanges`, `websocketMaxPayloadSize`, `maxChangesSize`, image limits, etc.
+  "openedAt": <integer>        // Server timestamp (ms) passed through to `documentOpen`
 }
 ```
 
@@ -514,19 +505,16 @@ Format:
 ```json5
 {
   "type": "authChanges",
-  "payload": {
-    "type": "authChanges",
-    // A slice of the document's change history, in order. Each entry is one
-    // stored change:
-    //   { docid, change, time, user, useridoriginal }
-    //  - `change`: an opaque OnlyOffice change fragment (JSON or binary,
-    //     depending on `settings.binaryChanges`).
-    //  - `time`: server timestamp (ms) the change was stored.
-    //  - `user`: composite `<userId><indexUser>` of the change's author.
-    //  - `useridoriginal`: integrator-provided user id of the author.
-    // The whole array is at most `websocketMaxPayloadSize`-worth of changes.
-    "changes": <array>
-  }
+  // A slice of the document's change history, in order. Each entry is one
+  // stored change:
+  //   { docid, change, time, user, useridoriginal }
+  //  - `change`: an opaque OnlyOffice change fragment (JSON or binary,
+  //     depending on `settings.binaryChanges`).
+  //  - `time`: server timestamp (ms) the change was stored.
+  //  - `user`: composite `<userId><indexUser>` of the change's author.
+  //  - `useridoriginal`: integrator-provided user id of the author.
+  // The whole array is at most `websocketMaxPayloadSize`-worth of changes.
+  "changes": <array>
 }
 ```
 
@@ -536,10 +524,7 @@ Format:
 
 ```json5
 {
-  "type": "authChangesAck",
-  "payload": {
-    "type": "authChangesAck"
-  }
+  "type": "authChangesAck"
 }
 ```
 
@@ -569,26 +554,23 @@ Format:
 ```json5
 {
   "type": "connectState",
-  "payload": {
-    "type": "connectState",
-    // Monotonic timestamp (ms) of this participant-set update, used by the client
-    // to ignore any outadated message.
-    "participantsTimestamp": <integer>,
-    // List of participants, each entry:
-    //   { id, idOriginal, username, indexUser, view, connectionId,
-    //     isCloseCoAuthoring, isLiveViewer, encrypted }
-    //  - `id`: `<userId><indexUser>` composite ID used as the participant key.
-    //  - `idOriginal`: integrator-provided user ID.
-    //  - `indexUser`: the participant index (order of arrival in the session).
-    //  - `view`: whether the participant is a viewer (read-only).
-    //  - `connectionId`: the underlying connection's ID (= `sessionId`).
-    //  - `isLiveViewer`/`isCloseCoAuthoring`/`encrypted`: feature flags.
-    "participants": <array>,
-    // true while the document auth lock is held (see `waitAuth`).
-    // When true it tells the established editor it must send `unLockDocument { unlock: true }`
-    // once its document is loaded, to release the lock and let newcomers proceed.
-    "waitAuth": <boolean>
-  }
+  // Monotonic timestamp (ms) of this participant-set update, used by the client
+  // to ignore any outadated message.
+  "participantsTimestamp": <integer>,
+  // List of participants, each entry:
+  //   { id, idOriginal, username, indexUser, view, connectionId,
+  //     isCloseCoAuthoring, isLiveViewer, encrypted }
+  //  - `id`: `<userId><indexUser>` composite ID used as the participant key.
+  //  - `idOriginal`: integrator-provided user ID.
+  //  - `indexUser`: the participant index (order of arrival in the session).
+  //  - `view`: whether the participant is a viewer (read-only).
+  //  - `connectionId`: the underlying connection's ID (= `sessionId`).
+  //  - `isLiveViewer`/`isCloseCoAuthoring`/`encrypted`: feature flags.
+  "participants": <array>,
+  // true while the document auth lock is held (see `waitAuth`).
+  // When true it tells the established editor it must send `unLockDocument { unlock: true }`
+  // once its document is loaded, to release the lock and let newcomers proceed.
+  "waitAuth": <boolean>
 }
 ```
 
@@ -608,10 +590,7 @@ Format:
 ```json5
 {
   "type": "message",
-  "payload": {
-    "type": "message",
-    "message": <string>  // Actual message
-  }
+  "message": <string>  // Actual message
 }
 ```
 
@@ -630,19 +609,16 @@ Format:
 ```json5
 {
   "type": "message",
-  "payload": {
-    "type": "message",
-    "messages": [
-      {
-        "docid": <string>,
-        "message": <string>,  // Actual message
-        "time": <integer>,  // timestamp in ms
-        "user": <string>,
-        "useridoriginal": <string>,
-        "username": <string>
-      }
-    ]
-  }
+  "messages": [
+    {
+      "docid": <string>,
+      "message": <string>,  // Actual message
+      "time": <integer>,  // timestamp in ms
+      "user": <string>,
+      "useridoriginal": <string>,
+      "username": <string>
+    }
+  ]
 }
 ```
 
@@ -661,10 +637,7 @@ Format:
 
 ```json5
 {
-  "type": "getMessages",
-  "payload": {
-    "type": "getMessages"
-  }
+  "type": "getMessages"
 }
 ```
 
@@ -686,10 +659,7 @@ Format:
 ```json5
 {
   "type": "cursor",
-  "payload": {
-    "type": "cursor",
-    "cursor": <string> // Opaque string in OnlyOffice internal format
-  }
+  "cursor": <string> // Opaque string in OnlyOffice internal format
 }
 ```
 
@@ -704,17 +674,14 @@ Format:
 ```json5
 {
   "type": "cursor",
-  "payload": {
-    "type": "cursor",
-    "messages": [
-      {
-        "cursor": <string>, // Opaque string in OnlyOffice internal format
-        "time": <integer>,  // timestamp as ms
-        "user": <string>,
-        "useridoriginal": <string>
-      }
-    ]
-  }
+  "messages": [
+    {
+      "cursor": <string>, // Opaque string in OnlyOffice internal format
+      "time": <integer>,  // timestamp as ms
+      "user": <string>,
+      "useridoriginal": <string>
+    }
+  ]
 }
 ```
 
@@ -739,15 +706,12 @@ Client format:
 ```json5
 {
   "type": "getLock",
-  "payload": {
-    "type": "getLock",
-    // Array of block descriptors the client wants to acquire a lock on.
-    // Shape depends on editor type:
-    //  - Word: a plain string block id (a "guid").
-    //  - Spreadsheet: { sheetId, type, rangeOrObjectId, guid }
-    //  - Presentation/diagram: { type, val } or { type, slideId, objId }
-    "block": <array>
-  }
+  // Array of block descriptors the client wants to acquire a lock on.
+  // Shape depends on editor type:
+  //  - Word: a plain string block id (a "guid").
+  //  - Spreadsheet: { sheetId, type, rangeOrObjectId, guid }
+  //  - Presentation/diagram: { type, val } or { type, slideId, objId }
+  "block": <array>
 }
 ```
 
@@ -760,29 +724,26 @@ Server format:
 ```json5
 {
   "type": "getLock",
-  "payload": {
-    "type": "getLock",
-    // Map of block-id → lock record, describing the full lock table as it
-    // stands after the server attempted to acquire the requested blocks for
-    // the requester. In other words: the locks the client just asked for are
-    // now present in this map, attributed to the requester's `user` id (if
-    // they were free); locks held by others appear with their `user` id. Each
-    // record:
-    //   { time, user, block }
-    //  - `time`: server timestamp (ms) when the lock was taken/checked.
-    //  - `user`: id of the user holding the lock. For the blocks the
-    //     requester just acquired, this is the requester's own id.
-    //  - `block`: the original block descriptor (same shape the client sent).
-    //
-    // For the Document editor the map is keyed by the plain block id and the
-    // value's `block` is the string id. For Spreadsheet/Presentation/PDF the
-    // client re-keys by `block.guid`.
-    //
-    // A record is never null in this event (null is only used in releaseLock
-    // to signal "gone"). The `user` field tells each receiver whether the
-    // lock is theirs or someone else's.
-    "locks": <object | array>
-  }
+  // Map of block-id → lock record, describing the full lock table as it
+  // stands after the server attempted to acquire the requested blocks for
+  // the requester. In other words: the locks the client just asked for are
+  // now present in this map, attributed to the requester's `user` id (if
+  // they were free); locks held by others appear with their `user` id. Each
+  // record:
+  //   { time, user, block }
+  //  - `time`: server timestamp (ms) when the lock was taken/checked.
+  //  - `user`: id of the user holding the lock. For the blocks the
+  //     requester just acquired, this is the requester's own id.
+  //  - `block`: the original block descriptor (same shape the client sent).
+  //
+  // For the Document editor the map is keyed by the plain block id and the
+  // value's `block` is the string id. For Spreadsheet/Presentation/PDF the
+  // client re-keys by `block.guid`.
+  //
+  // A record is never null in this event (null is only used in releaseLock
+  // to signal "gone"). The `user` field tells each receiver whether the
+  // lock is theirs or someone else's.
+  "locks": <object | array>
 }
 ```
 
@@ -805,22 +766,19 @@ Format:
 ```json5
 {
   "type": "releaseLock",
-  "payload": {
-    "type": "releaseLock",
 
-    // Array of locks that the originator just released. Each entry:
-    //   { block, user, time, changes }
-    //  - `block`: the locked region identifier. Shape depends on editor type
-    //     (same as `getLock`'s `block`):
-    //     * Document Editor: a plain block ID (string).
-    //     * Spreadsheet / Presentation / PDF: an object containing a `guid`
-    //       (and the range/object metadata). The client re-keys by `block.guid`.
-    //  - `user`: ID of the user who held the lock (now releasing it).
-    //  - `time`: server timestamp (ms) at release time (`Date.now()` on send).
-    //  - `changes`: associated change info, so always `null` here (present for
-    //    consisency with `saveChanges` event).
-    "locks": <array>
-  }
+  // Array of locks that the originator just released. Each entry:
+  //   { block, user, time, changes }
+  //  - `block`: the locked region identifier. Shape depends on editor type
+  //     (same as `getLock`'s `block`):
+  //     * Document Editor: a plain block ID (string).
+  //     * Spreadsheet / Presentation / PDF: an object containing a `guid`
+  //       (and the range/object metadata). The client re-keys by `block.guid`.
+  //  - `user`: ID of the user who held the lock (now releasing it).
+  //  - `time`: server timestamp (ms) at release time (`Date.now()` on send).
+  //  - `changes`: associated change info, so always `null` here (present for
+  //    consisency with `saveChanges` event).
+  "locks": <array>
 }
 ```
 
@@ -939,54 +897,51 @@ Format:
 ```json5
 {
   "type": "saveChanges",
-  "payload": {
-    "type": "saveChanges",
-    // List of opaque OnlyOffice-internal change fragment, see the note about its format.
-    "changes": <string | binary>,
-    // true on the first chunk of this save operation.
-    // The server only honors `deleteIndex` and establishes the new "save point"
-    // when this is true.
-    "startSaveChanges": <boolean>,
-    // true on the last chunk of this save operation.
-    // The server only finalizes the save when this is true: it then broadcasts
-    // the changes to other participants, optionally releases locks, and sends
-    // back an `unSaveLock` event. Intermediate chunks get a `savePartChanges`
-    // ack instead.
-    "endSaveChanges": <boolean>,
-    // Whether more than one user is currently co-editing the document.
-    // Maintained by the client (toggled by the `startCoAuthoring` /
-    // `endCoAuthoring` server events). The server only uses it for the
-    // spreadsheet editor, to gate the `excelAdditionalInfo` lock recalculation.
-    "isCoAuthoring": <boolean>,
-    // true if the editor is the Spreadsheet Editor.
-    // The server uses it to decide whether to apply the `excelAdditionalInfo`
-    // column/row lock recalculation. Other editor types ignore that field.
-    "isExcel": <boolean>,
-    // Ask the server to truncate changes up to (including) this index. This is
-    // used to rollback when the user use the undo changes in the document.
-    // Can by `null` or `-1` to indicate no truncate is needed.
-    // Ignored if `startSaveChanges` is not set.
-    "deleteIndex": <null|integer>,
-    // JSON-serialized opaque blob for the Spreadsheet Editor:
-    //   { "UserId": ..., "UserShortId": ..., "CursorInfo": ...,
-    //     "indexCols": ..., "indexRows": ... }
-    // - `CursorInfo` is broadcast as-is to other participants (cursor display).
-    // - `indexCols` / `indexRows` describe inserted columns/rows; the server
-    //   uses them to recalculate the locked ranges of other users so their
-    //   locks follow the shifted cells. Only used for the spreadsheet editor.
-    "excelAdditionalInfo": <null|string>,
-    // Whether the server should release the document's auth lock (not the region locks !)
-    // after this save.
-    // This is only true when switch from solo to collaborative edition (note this
-    // flag is also carride by an `unLockDocument` event since `saveChanges` is
-    // only send if the document has been modified).
-    "unlock": <boolean>,
-    // Whether the server should release the region locks held by this user.
-    "releaseLocks": <boolean>,
-    // Set by the client when re-sending a failed save (server closes connection
-    // or timeouts). Only used on the server for logging purpose.
-    "reSave": <integer | undefined>
-  }
+  // List of opaque OnlyOffice-internal change fragment, see the note about its format.
+  "changes": <string | binary>,
+  // true on the first chunk of this save operation.
+  // The server only honors `deleteIndex` and establishes the new "save point"
+  // when this is true.
+  "startSaveChanges": <boolean>,
+  // true on the last chunk of this save operation.
+  // The server only finalizes the save when this is true: it then broadcasts
+  // the changes to other participants, optionally releases locks, and sends
+  // back an `unSaveLock` event. Intermediate chunks get a `savePartChanges`
+  // ack instead.
+  "endSaveChanges": <boolean>,
+  // Whether more than one user is currently co-editing the document.
+  // Maintained by the client (toggled by the `startCoAuthoring` /
+  // `endCoAuthoring` server events). The server only uses it for the
+  // spreadsheet editor, to gate the `excelAdditionalInfo` lock recalculation.
+  "isCoAuthoring": <boolean>,
+  // true if the editor is the Spreadsheet Editor.
+  // The server uses it to decide whether to apply the `excelAdditionalInfo`
+  // column/row lock recalculation. Other editor types ignore that field.
+  "isExcel": <boolean>,
+  // Ask the server to truncate changes up to (including) this index. This is
+  // used to rollback when the user use the undo changes in the document.
+  // Can by `null` or `-1` to indicate no truncate is needed.
+  // Ignored if `startSaveChanges` is not set.
+  "deleteIndex": <null|integer>,
+  // JSON-serialized opaque blob for the Spreadsheet Editor:
+  //   { "UserId": ..., "UserShortId": ..., "CursorInfo": ...,
+  //     "indexCols": ..., "indexRows": ... }
+  // - `CursorInfo` is broadcast as-is to other participants (cursor display).
+  // - `indexCols` / `indexRows` describe inserted columns/rows; the server
+  //   uses them to recalculate the locked ranges of other users so their
+  //   locks follow the shifted cells. Only used for the spreadsheet editor.
+  "excelAdditionalInfo": <null|string>,
+  // Whether the server should release the document's auth lock (not the region locks !)
+  // after this save.
+  // This is only true when switch from solo to collaborative edition (note this
+  // flag is also carride by an `unLockDocument` event since `saveChanges` is
+  // only send if the document has been modified).
+  "unlock": <boolean>,
+  // Whether the server should release the region locks held by this user.
+  "releaseLocks": <boolean>,
+  // Set by the client when re-sending a failed save (server closes connection
+  // or timeouts). Only used on the server for logging purpose.
+  "reSave": <integer | undefined>
 }
 ```
 
@@ -1012,49 +967,46 @@ Format:
  ```json5
 {
   "type": "saveChanges",
-  "payload": {
-    "type": "saveChanges",
-    // Array of { docid, change, time, user, useridoriginal }, with:
-    // - `change`: the opaque change fragment
-    // - `time`: server timestamp (ms) of the change.
-    // - `user`: id of the user who made the change.
-    // - `useridoriginal`: original (integrator-provided) user id.
-    //
-    // Null when the change set was too large to publish inline; in that case
-    // the client refetches the missing changes (via the auth/changes flow).
-    "changes": <array | null>,
-    // New total number of changes stored for the document after this save
-    "changesIndex": <integer>,
+  // Array of { docid, change, time, user, useridoriginal }, with:
+  // - `change`: the opaque change fragment
+  // - `time`: server timestamp (ms) of the change.
+  // - `user`: id of the user who made the change.
+  // - `useridoriginal`: original (integrator-provided) user id.
+  //
+  // Null when the change set was too large to publish inline; in that case
+  // the client refetches the missing changes (via the auth/changes flow).
+  "changes": <array | null>,
+  // New total number of changes stored for the document after this save
+  "changesIndex": <integer>,
 
-    // `syncChangesIndex` is the always-advancing sync point, while `changesIndex`
-    // might be lower (in case of undo, see )
-    // Same value as `changesIndex` here (= `puckerIndex`). Tracked separately
-    // by the client as `syncChangesIndex` (the "always-advancing" sync point,
-    // used in the `isSaveLock` / `unSaveLock` handshake). `changesIndex` can
-    // lag behind it (it is reset to the save point on the saver's
-    // `unSaveLock.index`), while `syncChangesIndex` always reflects the total.
-    "syncChangesIndex": <integer>,
+  // `syncChangesIndex` is the always-advancing sync point, while `changesIndex`
+  // might be lower (in case of undo, see )
+  // Same value as `changesIndex` here (= `puckerIndex`). Tracked separately
+  // by the client as `syncChangesIndex` (the "always-advancing" sync point,
+  // used in the `isSaveLock` / `unSaveLock` handshake). `changesIndex` can
+  // lag behind it (it is reset to the save point on the saver's
+  // `unSaveLock.index`), while `syncChangesIndex` always reflects the total.
+  "syncChangesIndex": <integer>,
 
-    // Mirrors the originator's `endSaveChanges`
-    "endSaveChanges": <boolean>,
+  // Mirrors the originator's `endSaveChanges`
+  "endSaveChanges": <boolean>,
 
-    // Locks released by the originator (only when its `releaseLocks` was true).
-    // Each entry: { block, user, time, changes }. For spreadsheet/presentation/
-    // pdf editors, `block` is an object with a `guid`; for the document editor
-    // it's a plain block id. The receiver marks those locks as released and
-    // notifies its lock manager (`onLocksReleased`).
-    // Array of { block, user, time, changes }, with:
-    // - `block`
-    // - `user`
-    // - `time`: server timestamp (ms) of the change.
-    "locks": <array>,
+  // Locks released by the originator (only when its `releaseLocks` was true).
+  // Each entry: { block, user, time, changes }. For spreadsheet/presentation/
+  // pdf editors, `block` is an object with a `guid`; for the document editor
+  // it's a plain block id. The receiver marks those locks as released and
+  // notifies its lock manager (`onLocksReleased`).
+  // Array of { block, user, time, changes }, with:
+  // - `block`
+  // - `user`
+  // - `time`: server timestamp (ms) of the change.
+  "locks": <array>,
 
-    // The originator's `excelAdditionalInfo`, passed through unchanged.
-    // Spreadsheet clients use it to recalculate their own lock ranges
-    // (`onRecalcLocks`) and for cursor display; other editors ignore it
-    // (or use only the cursor portion).
-    "excelAdditionalInfo": <string | undefined>
-  }
+  // The originator's `excelAdditionalInfo`, passed through unchanged.
+  // Spreadsheet clients use it to recalculate their own lock ranges
+  // (`onRecalcLocks`) and for cursor display; other editors ignore it
+  // (or use only the cursor portion).
+  "excelAdditionalInfo": <string | undefined>
 }
  ```
 
@@ -1067,33 +1019,30 @@ receives `unSaveLock` (and `savePartChanges` for intermediate chunks) instead.
 ```json5
 {
   "type": "savePartChanges",
-  "payload": {
-    "type": "savePartChanges",
 
-    // The client's new SAVE POINT for the chunk just committed. This is the
-    // SAME `changesIndex` value the server computes once at the top of
-    // `saveChanges`:
-    //   changesIndex = (-1 === deleteIndex && startSaveChanges) ? startIndex : -1
-    //
-    // i.e. it is a real index ONLY when this is the FIRST chunk of a save
-    // operation that did NOT also truncate history (deleteIndex == -1).
-    // For all other intermediate chunks it is -1.
-    //
-    // -1 → "don't move your save point": the client ignores it and keeps its
-    //      previous `changesIndex`. A new save point is only established on
-    //      the first chunk of a fresh (non-truncating) save.
-    "changesIndex": <integer>,
+  // The client's new SAVE POINT for the chunk just committed. This is the
+  // SAME `changesIndex` value the server computes once at the top of
+  // `saveChanges`:
+  //   changesIndex = (-1 === deleteIndex && startSaveChanges) ? startIndex : -1
+  //
+  // i.e. it is a real index ONLY when this is the FIRST chunk of a save
+  // operation that did NOT also truncate history (deleteIndex == -1).
+  // For all other intermediate chunks it is -1.
+  //
+  // -1 → "don't move your save point": the client ignores it and keeps its
+  //      previous `changesIndex`. A new save point is only established on
+  //      the first chunk of a fresh (non-truncating) save.
+  "changesIndex": <integer>,
 
-    // The new total number of changes stored for the document (= server's
-    // `puckerIndex` after inserting this chunk's changes). The client stores
-    // it as its `syncChangesIndex` — the always-advancing sync point it echoes
-    // back in its next `isSaveLock`.
-    //
-    // Unlike `changesIndex`, this advances on EVERY chunk (intermediate or
-    // final), so the client stays in sync with the document-wide total even
-    // mid-save. It is never -1 here (the server passes the real `puckerIndex`).
-    "syncChangesIndex": <integer>
-  }
+  // The new total number of changes stored for the document (= server's
+  // `puckerIndex` after inserting this chunk's changes). The client stores
+  // it as its `syncChangesIndex` — the always-advancing sync point it echoes
+  // back in its next `isSaveLock`.
+  //
+  // Unlike `changesIndex`, this advances on EVERY chunk (intermediate or
+  // final), so the client stays in sync with the document-wide total even
+  // mid-save. It is never -1 here (the server passes the real `puckerIndex`).
+  "syncChangesIndex": <integer>
 }
 ```
 
@@ -1109,16 +1058,13 @@ Try to take the lock to save the document.
 ```json5
 {
   "type": "isSaveLock",
-  "payload": {
-  "type": "isSaveLock",
-    // The client's current change index (i.e. the total number of changes it
-    // has observed for the document so far from the server's `saveChanges` and
-    // `unSaveLock` events).
-    // This is used by the server to detect a desynchronized client, in such
-    // case the server keeps returning `saveLock: true` (denied) so that the
-    // client should catch up before retrying.
-    "syncChangesIndex": <integer>
-  }
+  // The client's current change index (i.e. the total number of changes it
+  // has observed for the document so far from the server's `saveChanges` and
+  // `unSaveLock` events).
+  // This is used by the server to detect a desynchronized client, in such
+  // case the server keeps returning `saveLock: true` (denied) so that the
+  // client should catch up before retrying.
+  "syncChangesIndex": <integer>
 }
  ```
 
@@ -1127,11 +1073,8 @@ This leads to the server to send its own event to the client:
 ```json5
 {
   "type": "saveLock",
-  "payload": {
-  "type": "saveLock",
-    // true means somebody else already holds the lock (i.e. the lock wasn denied)
-    "saveLock": <boolean>
-  }
+  // true means somebody else already holds the lock (i.e. the lock wasn denied)
+  "saveLock": <boolean>
 }
  ```
 
@@ -1165,16 +1108,13 @@ Format:
  ```json5
 {
   "type": "unSaveLock",
-  "payload": {
-    "type": "unSaveLock",
-    // The client's new save point (the absolute change index at which this
-    // user's changes were committed) or `-1` in case of cancellation.
-    "index": <integer>,
-    // Server timestamp (ms) of the last change in this save or `-1` in case of cancellation.
-    "time": <integer>,
-    // The new total number of changes stored for the document or `-1` in case of cancellation.
-    "syncChangesIndex": <integer>
-  }
+  // The client's new save point (the absolute change index at which this
+  // user's changes were committed) or `-1` in case of cancellation.
+  "index": <integer>,
+  // Server timestamp (ms) of the last change in this save or `-1` in case of cancellation.
+  "time": <integer>,
+  // The new total number of changes stored for the document or `-1` in case of cancellation.
+  "syncChangesIndex": <integer>
 }
 ```
 
@@ -1191,18 +1131,15 @@ Format:
 ```json5
 {
   "type": "unLockDocument",
-  "payload": {
-    "type": "unLockDocument",
-    // Indicates if the client is currently in a save operation. If so, its save
-    // lock will be released and a `unSaveLock` event is sent by the server.
-    "isSave": <boolean>,
-    // Indi
-    "unlock": <boolean>,  // TODO: document
-    // Ignored if `null` or `-1`, otherwise inform the server that the changes
-    // up to this index can be destroyed ().
-    "deleteIndex": <integer|null>,  // TODO
-    "releaseLocks": <boolean>  // TODO: document
-  }
+  // Indicates if the client is currently in a save operation. If so, its save
+  // lock will be released and a `unSaveLock` event is sent by the server.
+  "isSave": <boolean>,
+  // Indi
+  "unlock": <boolean>,  // TODO: document
+  // Ignored if `null` or `-1`, otherwise inform the server that the changes
+  // up to this index can be destroyed ().
+  "deleteIndex": <integer|null>,  // TODO
+  "releaseLocks": <boolean>  // TODO: document
 }
 ```
 
@@ -1213,44 +1150,41 @@ TODO
  Format:
 
  ```json5
-   {
-     "type": "unLockDocument",
-     "payload": {
-       "type": "unLockDocument",
+{
+  "type": "unLockDocument",
 
-      // Indicates if the client is currently in a save operation. If so, its save
-      // lock will be released and a `unSaveLock` event is sent by the server.
-       "isSave": <boolean>,
+  // Indicates if the client is currently in a save operation. If so, its save
+  // lock will be released and a `unSaveLock` event is sent by the server.
+  "isSave": <boolean>,
 
-       // Whether the server should release the document's auth lock for this client.
-       //
-       // False during ordinary saves; set true when the client genuinely leaves
-       // the document (disconnect, or handing off to another editor).
-       "unlock": <boolean>,
+  // Whether the server should release the document's auth lock for this client.
+  //
+  // False during ordinary saves; set true when the client genuinely leaves
+  // the document (disconnect, or handing off to another editor).
+  "unlock": <boolean>,
 
-       // Same semantics as the `deleteIndex` field of `saveChanges` (UNDO support):
-       //  - null  → no truncation of change history.
-       //  - -1    → no truncation (sentinel, same effect as null).
-       //  - <int> → ABSOLUTE index; the server deletes all stored changes with
-       //            index >= deleteIndex before doing anything else. Used so the
-       //            client can throw away its last changes during an undo that
-       //            coincides with leaving the document.
-       "deleteIndex": <integer | null>,
+  // Same semantics as the `deleteIndex` field of `saveChanges` (UNDO support):
+  //  - null  → no truncation of change history.
+  //  - -1    → no truncation (sentinel, same effect as null).
+  //  - <int> → ABSOLUTE index; the server deletes all stored changes with
+  //            index >= deleteIndex before doing anything else. Used so the
+  //            client can throw away its last changes during an undo that
+  //            coincides with leaving the document.
+  "deleteIndex": <integer | null>,
 
-       // Whether the server should release the REGION locks held by this user
-       // (so other users can lock those areas). Maps to the client's
-       // `canReleaseLocks` flag. When true, the server removes the user's locks
-       // via `removeUserLocks`, sends a `releaseLock` event directly to the
-       // client, AND broadcasts a `releaseLock` event to all other participants
-       // (each lock: `{ block, user, time, changes }`).
-       //
-       // Note the difference from `saveChanges`'s `releaseLocks`: in `saveChanges`
-       // the released locks are returned to OTHER participants embedded inside
-       // the server→client `saveChanges` message (`locks` field). Here, in
-       // `unLockDocument`, they are sent as a standalone `releaseLock` event.
-       "releaseLocks": <boolean>
-     }
-   }
+  // Whether the server should release the REGION locks held by this user
+  // (so other users can lock those areas). Maps to the client's
+  // `canReleaseLocks` flag. When true, the server removes the user's locks
+  // via `removeUserLocks`, sends a `releaseLock` event directly to the
+  // client, AND broadcasts a `releaseLock` event to all other participants
+  // (each lock: `{ block, user, time, changes }`).
+  //
+  // Note the difference from `saveChanges`'s `releaseLocks`: in `saveChanges`
+  // the released locks are returned to OTHER participants embedded inside
+  // the server→client `saveChanges` message (`locks` field). Here, in
+  // `unLockDocument`, they are sent as a standalone `releaseLock` event.
+  "releaseLocks": <boolean>
+}
  ```
 
 *Editics protocol changes*: Keep as-is.
@@ -1265,10 +1199,7 @@ Format:
 
 ```json5
 {
-  "type": "close",
-  "payload": {
-    "type": "close"
-  }
+  "type": "close"
 }
 ```
 
@@ -1284,13 +1215,10 @@ Format:
 ```json5
 {
   "type": "drop",
-  "payload": {
-    "type": "drop",
-    // Always the DROP_CODE constant (4007), included for symmetry with `disconnectReason`.
-    "code": 4007,
-    // A free-form description string, usually empty.
-    "description": <string>
-  }
+  // Always the DROP_CODE constant (4007), included for symmetry with `disconnectReason`.
+  "code": 4007,
+  // A free-form description string, usually empty.
+  "description": <string>
 }
 ```
 
@@ -1304,9 +1232,9 @@ Format:
 
 ```json5
 {
-    "type": "warning",
-    "code": <integer>, // `-200`: FORCED_VIEW_MODE, `-201`: FILE_NOT_ASSEMBLED
-    "message": <string>
+  "type": "warning",
+  "code": <integer>, // `-200`: FORCED_VIEW_MODE, `-201`: FILE_NOT_ASSEMBLED
+  "message": <string>
 }
 ```
 
@@ -1322,41 +1250,38 @@ Format:
 ```json5
 {
   "type": "license",
-  "payload": {
-    "type": "license",
 
-    // License descriptor. Fields:
-    //  - type:               license type ID (integer; e.g. 3 in the logs).
-    //  - light:              legacy boolean, always false.
-    //  - mode:               license mode (integer; 0 in the logs).
-    //  - rights:             bitmask of rights (integer; 1 in the logs).
-    //  - buildVersion:       server build version string (e.g. "9.4.1").
-    //  - buildNumber:        server build number (integer; e.g. 15).
-    //  - protectionSupport:  whether protected-file opening is supported.
-    //  - isAnonymousSupport: whether anonymous users are supported.
-    //  - liveViewerSupport:  whether the live viewer feature is supported.
-    //  - branding:           whether branding/white-label is allowed.
-    //  - customization:      whether UI customization is allowed.
-    //  - advancedApi:        whether the advanced editor API is available.
-    "license": {
-      "type": <integer>,
-      "light": <boolean>,
-      "mode": <integer>,
-      "rights": <integer>,
-      "buildVersion": <string>,
-      "buildNumber": <integer>,
-      "protectionSupport": <boolean>,
-      "isAnonymousSupport": <boolean>,
-      "liveViewerSupport": <boolean>,
-      "branding": <boolean>,
-      "customization": <boolean>,
-      "advancedApi": <boolean>
-    },
+  // License descriptor. Fields:
+  //  - type:               license type ID (integer; e.g. 3 in the logs).
+  //  - light:              legacy boolean, always false.
+  //  - mode:               license mode (integer; 0 in the logs).
+  //  - rights:             bitmask of rights (integer; 1 in the logs).
+  //  - buildVersion:       server build version string (e.g. "9.4.1").
+  //  - buildNumber:        server build number (integer; e.g. 15).
+  //  - protectionSupport:  whether protected-file opening is supported.
+  //  - isAnonymousSupport: whether anonymous users are supported.
+  //  - liveViewerSupport:  whether the live viewer feature is supported.
+  //  - branding:           whether branding/white-label is allowed.
+  //  - customization:      whether UI customization is allowed.
+  //  - advancedApi:        whether the advanced editor API is available.
+  "license": {
+    "type": <integer>,
+    "light": <boolean>,
+    "mode": <integer>,
+    "rights": <integer>,
+    "buildVersion": <string>,
+    "buildNumber": <integer>,
+    "protectionSupport": <boolean>,
+    "isAnonymousSupport": <boolean>,
+    "liveViewerSupport": <boolean>,
+    "branding": <boolean>,
+    "customization": <boolean>,
+    "advancedApi": <boolean>
+  },
 
-    // AI plugin settings for the editor UI (may be absent). Forwarded to
-    // the editor via `onAiPluginSettings` if the license init is happening.
-    "aiPluginSettings": <object | undefined>
-  }
+  // AI plugin settings for the editor UI (may be absent). Forwarded to
+  // the editor via `onAiPluginSettings` if the license init is happening.
+  "aiPluginSettings": <object | undefined>
 }
 ```
 
@@ -1389,16 +1314,13 @@ Client event format:
 ```json5
 {
   "type": "openDocument",
-  "payload": {
-    "type": "openDocument",
-    // Dispatch key is `message.c`, which can be:
-    // - "reopen": re-open with advanced open options (TXT codepage,
-    //   CSV delimiter, or a DRM password).
-    // - "setpassword": set/change/remove the document password.
-    // - "changedocinfo": change the user's display name.
-    // - "imgurls"/"pathurl"/"pathurls": resolve image/asset URLs.
-    "message": <object>
-  }
+  // Dispatch key is `message.c`, which can be:
+  // - "reopen": re-open with advanced open options (TXT codepage,
+  //   CSV delimiter, or a DRM password).
+  // - "setpassword": set/change/remove the document password.
+  // - "changedocinfo": change the user's display name.
+  // - "imgurls"/"pathurl"/"pathurls": resolve image/asset URLs.
+  "message": <object>
 }
 ```
 
@@ -1407,22 +1329,19 @@ Server event format:
 ```json5
 {
   "type": "documentOpen",
-  "payload": {
-    "type": "documentOpen",
+  "data": {
+    "type": <string>, // "reopen"/"imgurls"/etc.
+    "status": "ok", // Also "ok" when the original URL couldn't be fetched...
     "data": {
-      "type": <string>, // "reopen"/"imgurls"/etc.
-      "status": "ok", // Also "ok" when the original URL couldn't be fetched...
-      "data": {
-        "error": <integer>,  // `0`: no error
-        "urls": [
-          {
-            // URL pointing on the server to download the file
-            "url": <string>,
-            // Path of the file, e.g. "media/563ce5bc334c20e2db00d7c8337df009_image1.jpg"
-            "path": <string>,
-          }
-        ]
-      }
+      "error": <integer>,  // `0`: no error
+      "urls": [
+        {
+          // URL pointing on the server to download the file
+          "url": <string>,
+          // Path of the file, e.g. "media/563ce5bc334c20e2db00d7c8337df009_image1.jpg"
+          "path": <string>,
+        }
+      ]
     }
   }
 }
@@ -1452,11 +1371,8 @@ Format:
 ```json5
 {
   "type": "clientLog",
-  "payload": {
-    "type": "clientLog",
-    "level": <string>,  // e.g. "debug"
-    "msg": <string>  // e.g. "onDownloadFile time:168"
-  }
+  "level": <string>,  // e.g. "debug"
+  "msg": <string>  // e.g. "onDownloadFile time:168"
 }
 ```
 
@@ -1473,12 +1389,12 @@ In both case, the server send a `session` event:
 
 ```json5
 {
-    "type": "session",
-    "messages": {
+  "type": "session",
+  "messages": {
     "code": <integer>,      // 4002 = idle, 4003 = absolute
     "reason": <string>,    // "idle session expires" | "absolute session expires"
     "interval": <number>   // present only for idle (the idle threshold in ms)
-    }
+  }
 }
 ```
 
@@ -1491,10 +1407,10 @@ Format:
 
 ```json5
 {
-    "type": "extendSession",
-    // For how long the client considers itself idle, the server uses this to
-    // determine when it should send the next `session` event.
-    "idletime": <integer>  // timestamp in ms
+  "type": "extendSession",
+  // For how long the client considers itself idle, the server uses this to
+  // determine when it should send the next `session` event.
+  "idletime": <integer>  // timestamp in ms
 }
 ```
 
@@ -1517,10 +1433,7 @@ Format:
 ```json5
 {
   "type": "refreshToken",
-  "payload": {
-    "type": "refreshToken",
-    "messages": <string>  // Freshly signed session JWT token
-  }
+  "messages": <string>  // Freshly signed session JWT token
 }
 ```
 
@@ -1545,7 +1458,7 @@ client → server format:
 
 ```json5
 {
-    "type": "forceSaveStart",
+  "type": "forceSaveStart",
 }
 ```
 
@@ -1553,13 +1466,13 @@ The server then replies with:
 
 ```json5
 {
-    "type": "forceSaveStart",
-    "messages": {
-        "code": <integer>,
-        "time": <integer|null>, // timestamp in ms
-        "inProgress": <boolean|undefined>,
-        "url": <string|null|undefined>
-    }
+  "type": "forceSaveStart",
+  "messages": {
+    "code": <integer>,
+    "time": <integer|null>, // timestamp in ms
+    "inProgress": <boolean|undefined>,
+    "url": <string|null|undefined>
+  }
 }
 ```
 
@@ -1567,15 +1480,15 @@ Later (on save completion or timeout) the server sends:
 
 ```json5
 {
-    "type": "forceSave",
-    "messages": {
-        "type": <integer>,   // e.g. 2 = Timeout
-        "time": <integer>, // timestamp in ms
-        "inProgress": <boolean|undefined>,
-        "url": <string|null|undefined>,
-        "success": <boolean|undefined>,
-        "start": <boolean|undefined>
-    }
+  "type": "forceSave",
+  "messages": {
+    "type": <integer>,   // e.g. 2 = Timeout
+    "time": <integer>, // timestamp in ms
+    "inProgress": <boolean|undefined>,
+    "url": <string|null|undefined>,
+    "success": <boolean|undefined>,
+    "start": <boolean|undefined>
+  }
 }
 ```
 
@@ -1599,20 +1512,20 @@ Format:
 
 ```json5
 {
-    "type": "rpc",
-    "responseKey": <integer>,  // Monotonic counter
-    "data": {
-        "type": <string>, // e.g. "pathurls"
-        ...
-    }
+  "type": "rpc",
+  "responseKey": <integer>,  // Monotonic counter
+  "data": {
+    "type": <string>, // e.g. "pathurls"
+    ...
+  }
 }
 ```
 
  ```json5
 {
-    "type": "rpc",
-    "responseKey": <integer>,
-    "data": <result>
+  "type": "rpc",
+  "responseKey": <integer>,
+  "data": <result>
 }
  ```
 
@@ -1629,12 +1542,9 @@ Format:
 ```json5
 {
   "type": "meta",
-  "payload": {
-    "type": "meta",
-    // Metadata object. Currently produced fields:
-    //   { title: <string> }: new document title (WOPI rename).
-    "messages": <object>
-  }
+  // Metadata object. Currently produced fields:
+  //   { title: <string> }: new document title (WOPI rename).
+  "messages": <object>
 }
 ```
 
@@ -1655,21 +1565,18 @@ Format:
  Format:
 
  ```json5
-   {
-     "type": "disconnectReason",
-     "payload": {
-       "type": "disconnectReason",
-       // 4001  SHUTDOWN_CODE         "server shutdown"
-       // 4002  SESSION_IDLE_CODE     "idle session expires"
-       // 4003  SESSION_ABSOLUTE_CODE "absolute session expires"
-       // 4004  ACCESS_DENIED_CODE    "access deny"
-       // 4006  JWT_ERROR_CODE        "token:" + <jwt error message>
-       // 4007  DROP_CODE             "drop" (also used for auth-lock-taken)
-       "code": <integer>,
-       // Human-readable reason (e.g. "server shutdown", "idle session expires")
-       "description": <string>
-     }
-   }
+{
+  "type": "disconnectReason",
+  // 4001  SHUTDOWN_CODE         "server shutdown"
+  // 4002  SESSION_IDLE_CODE     "idle session expires"
+  // 4003  SESSION_ABSOLUTE_CODE "absolute session expires"
+  // 4004  ACCESS_DENIED_CODE    "access deny"
+  // 4006  JWT_ERROR_CODE        "token:" + <jwt error message>
+  // 4007  DROP_CODE             "drop" (also used for auth-lock-taken)
+  "code": <integer>,
+  // Human-readable reason (e.g. "server shutdown", "idle session expires")
+  "description": <string>
+}
  ```
 
 *Editics protocol changes*: Ignored since Parsec has its own logic (based on
@@ -1683,17 +1590,14 @@ on how to load the document the session is editing.
 ```json5
 {
   "type": "documentOpen",
-  "payload": {
-    "type": "documentOpen",
+  "data": {
+    // TODO: type can also be set to reopen|imgurls|pathurl|pathurls|setpassword|changedocinfo
+    "type": "open",
+    "status": "ok",
     "data": {
-      // TODO: type can also be set to reopen|imgurls|pathurl|pathurls|setpassword|changedocinfo
-      "type": "open",
-      "status": "ok",
-      "data": {
-        <string>: <string> // {<Document name>: <URL to fetch document content>}
-      },
-      "openedAt": <integer> // timestamp in ms
-    }
+      <string>: <string> // {<Document name>: <URL to fetch document content>}
+    },
+    "openedAt": <integer> // timestamp in ms
   }
 }
 ```
@@ -1717,11 +1621,8 @@ Format:
 ```json5
 {
   "type": "error",
-  "payload": {
-    "type": "error",
-    "description": <string>,
-    "code": <integer>
-  }
+  "description": <string>,
+  "code": <integer>
 }
 ```
 
@@ -1743,8 +1644,8 @@ Format:
 
 ```json5
 {
-    "type": "updateVersion",
-    "success": <boolean>
+  "type": "updateVersion",
+  "success": <boolean>
 }
 ```
 
@@ -1758,8 +1659,7 @@ between the Parsec client and server that replaces the OnlyOffice protocol.
 It main charateristics:
 
 - Largerly based on the OnlyOffice protocol for its client and server events.
-  Basically for each event we keep the content of the `payload` field, remove the
-  uneeded fields (e.g. `username`), encrypt the sensitive fields.
+  Basically for each event we remove the uneeded fields (e.g. `username`) and encrypt the sensitive fields.
 - JSON-based: unlike other Parsec communication protocol (e.g. authenticated API) normally rely on msgpack,
   however
 - Unlike OnlyOffice that uses websocket, its transport is achieved with two types of connections:
