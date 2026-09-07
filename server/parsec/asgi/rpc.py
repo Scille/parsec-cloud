@@ -933,7 +933,7 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         device_verify_key=auth_info.device_verify_key,
     )
 
-    return StreamingResponseMiddleware(
+    return AuthenticatedListenSseStreamingResponse(
         backend,
         client_ctx,
         parsed.last_event_id,
@@ -953,7 +953,7 @@ type ApiEventListenOutcome = (
 )
 
 
-class StreamingResponseMiddleware(StreamingResponse):
+class AuthenticatedListenSseStreamingResponse(StreamingResponse):
     """
     StreamingResponse is subclassed to have better control over the stream
     throughout the lifetime of the response.

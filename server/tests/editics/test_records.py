@@ -15,7 +15,7 @@ from anyio.abc import TaskStatus
 
 from parsec._parsec import VlobID
 from tests.common import CoolorgRpcClients, EditicsJSRuntime
-from tests.common.editics2 import EditicsJSClient
+from tests.common.editics import EditicsJSClient
 
 RECORDS_DIR = Path(__file__).resolve().parent / "records"
 
@@ -95,12 +95,8 @@ class RecordEvent:
 
 
 def _compare_server_event(event_from_record: OOEvent, actual_event: OOEvent) -> bool:
-    breakpoint()
-    return True
-    # match event_from_record["type"]:
-    #     case "auth":
-    #     case _:
-    #         return event_from_record == actual_event
+    # TODO: handle specific type that have non stable fields (e.g. timestamp)
+    return event_from_record == actual_event
 
 
 async def _do_test_record(
