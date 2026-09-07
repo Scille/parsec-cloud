@@ -37,7 +37,7 @@ msTest.describe(() => {
       const modal = documents.locator('.text-input-modal');
       await expect(modal).toBeVisible();
       await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
-      await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+      await expect(modal.locator('.input-container').locator('.input-label')).toHaveText('Choose the new file name');
       await expect(modal.locator('ion-input').locator('input')).toHaveValue(`${file[2]}.${file[1]}`);
       await fillIonInput(modal.locator('ion-input'), `MyFile.${file[1]}`);
       await expect(modal.locator('#next-button')).toHaveText('Create the new file');
@@ -62,7 +62,7 @@ msTest.describe(() => {
       const modal = documents.locator('.text-input-modal');
       await expect(modal).toBeVisible();
       await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
-      await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+      await expect(modal.locator('.input-container').locator('.input-label')).toHaveText('Choose the new file name');
       await fillIonInput(modal.locator('ion-input'), `${file[1]}.${file[0]}`);
       await expect(modal.locator('#next-button')).toHaveText('Create the new file');
       await modal.locator('#next-button').click();
@@ -86,7 +86,7 @@ msTest.describe(() => {
     const modal = documents.locator('.text-input-modal');
     await expect(modal).toBeVisible();
     await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
-    await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+    await expect(modal.locator('.input-container').locator('.input-label')).toHaveText('Choose the new file name');
     await fillIonInput(modal.locator('ion-input'), 'Document.docx');
     await expect(modal.locator('#next-button')).toHaveText('Create the new file');
     await modal.locator('#next-button').click();
@@ -111,7 +111,7 @@ msTest.describe(() => {
     const modal = documents.locator('.text-input-modal');
     await expect(modal).toBeVisible();
     await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
-    await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+    await expect(modal.locator('.input-container').locator('.input-label')).toHaveText('Choose the new file name');
     const input = modal.locator('ion-input').locator('input');
     await input.fill('document.docx');
     await input.blur();
@@ -134,7 +134,7 @@ msTest.describe(() => {
     const modal = documents.locator('.text-input-modal');
     await expect(modal).toBeVisible();
     await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
-    await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+    await expect(modal.locator('.input-container').locator('.input-label')).toHaveText('Choose the new file name');
     await expect(modal.locator('ion-input').locator('input')).toHaveValue('New document.docx');
     await expect(modal.locator('#next-button')).toHaveText('Create the new file');
     await modal.locator('#next-button').click();
