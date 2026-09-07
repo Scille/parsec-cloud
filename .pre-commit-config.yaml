@@ -67,12 +67,12 @@ repos:
         files: ^server/parsec/static/
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v9.2.0
+    rev: v10.0.1
     hooks:
       - id: cspell
         stages:
