@@ -119,11 +119,12 @@ def editics_js_runtime() -> EditicsJSRuntime:
 
 async def _mini_racer_async_eval(js_runtime: py_mini_racer.MiniRacer, code: str) -> Any:
     """
-    MiniRacer runs its own asyncio loop and convert the Javascript promise to an
+    MiniRacer runs its own asyncio loop in a background thread (created when the
+    session-scoped fixture is initialized) and convert the Javascript promise to an
     asyncio future, so doing `await js_runtime.eval(...)` is theorically possible
     but fails with a `Future <Future pending> attached to a different loop` error.
 
-    Hence this helper that allow awaiting the future from our own asyncio event loop.
+    Hence this helper that allows awaiting the future from our own asyncio event loop.
     """
     loop = js_runtime._ctx.event_loop  # type: ignore[attr-defined]
 
@@ -155,7 +156,7 @@ class EditicsJSRuntime:
         # global assignment that the bootstrap can pick up. This is the only
         # transform; the rest of the source is loaded verbatim (no build step,
         # todo §2.3).
-        assert "export { EditicsTranslator };" in src, "protocol.js export marker changed"
+        assert "export { EditicsTranslator };" in src, "`protocol.js` export marker changed"
         src = src.replace(
             "export { EditicsTranslator };",
             "globalThis.__EditicsTranslator = EditicsTranslator;",
@@ -165,36 +166,6 @@ class EditicsJSRuntime:
         self._js_runtime.eval(src)
 
         self._js_runtime.eval("globalThis.__editics_instances = {};")
-
-    @property
-    def _event_loop(self) -> asyncio.AbstractEventLoop:
-        # The MiniRacer runs its own asyncio event loop on a dedicated background
-        # thread (created when the session-scoped fixture is initialized outside
-        # of any running loop). All py_mini_racer futures/promises are bound to
-        # that loop, so any `await` of a JSPromise must happen *on* that loop.
-        return
-
-    async def eval(self, code: str) -> Any:
-        """Evaluate JS code, awaiting any returned Promise on the MiniRacer loop.
-
-        `MiniRacer.eval` is synchronous and only returns the (un-awaited) JS
-        value. When the expression evaluates to a `JSPromise`, awaiting it from
-        the test's event loop raises "Future attached to a different loop",
-        because py_mini_racer creates the promise's future on its own background
-        loop. We therefore schedule the eval + promise await on the MiniRacer
-        loop with `run_coroutine_threadsafe` and block the caller until it's
-        done.
-        """
-        loop = self._js_runtime._ctx.event_loop  # type: ignore[attr-defined]
-
-        async def _run() -> Any:
-            value = await self._js_runtime.eval_cancelable(code)
-            if isinstance(value, JSPromise):
-                value = await value
-            return value
-
-        future = asyncio.run_coroutine_threadsafe(_run(), loop)
-        return future.result()
 
     @asynccontextmanager
     async def new_client(
@@ -207,6 +178,7 @@ class EditicsJSRuntime:
     ) -> AsyncGenerator[EditicsJSClient, None]:
         participant_id = uuid4()
 
+        # TODO: mock capabilities callbacks
         self._js_runtime.eval(
             f"""
             globalThis.__editics_instances['{participant_id.hex}'] = new globalThis.__EditicsTranslator({{
