@@ -8,7 +8,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import anyio
 from anyio.abc import TaskStatus
@@ -60,6 +60,10 @@ def _parse_record(record: str) -> list[RecordEvent]:
     return events
 
 
+type OOEvent = dict[str, Any]
+"JSON-based OnlyOffice protocol event"
+
+
 # TODO
 @dataclass(slots=True)
 class RecordPart:
@@ -83,14 +87,14 @@ class RecordEvent:
     type: (
         Literal["license"] | str
     )  # `license` event identifies the fact a new participant connects to the server
-    payload: dict
+    payload: OOEvent
 
     def __repr__(self) -> str:
         direction = "->" if self.direction == "client-to-server" else "<-"
         return f"{self.timestamp}\t{direction}\t{self.participant}\t{self.type}"
 
 
-def _compare_server_event(event_from_record: dict, actual_event: dict) -> bool:
+def _compare_server_event(event_from_record: OOEvent, actual_event: OOEvent) -> bool:
     breakpoint()
     return True
     # match event_from_record["type"]:
@@ -115,7 +119,7 @@ async def _do_test_record(
         record_path.read_text()  # noqa: ASYNC240
     )
 
-    async def _start_editics_js_client(task_status: TaskStatus):
+    async def _start_editics_js_client(task_status: TaskStatus[EditicsJSClient]):
         async with editics_js_runtime.new_client(
             # All participants connect to the server as Alice for simplicity
             who=coolorg.alice,
@@ -136,7 +140,7 @@ async def _do_test_record(
         # Handling server events is hard: the order in which they have been received
         # in the record might be arbitrary (e.g. multiple unrelated event sent
         # by concurrent operations).
-        per_client_unacknowlegde_server_events: dict[str, list[dict]] = defaultdict(list)
+        per_client_unacknowlegde_server_events: dict[str, list[OOEvent]] = defaultdict(list)
 
         for event in events:
             print(f"Record event: {event!s}")
@@ -229,5 +233,3 @@ for _record_path in sorted(RECORDS_DIR.glob("*.md")):
         return _test
 
     globals()[_test_name] = _make_test(_record_path, _test_name)
-
-del _record_path
