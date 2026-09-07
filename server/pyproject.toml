@@ -61,7 +61,7 @@ cache-keys = [{ file = "pyproject.toml" }]
 dev = [
     # build
     "cibuildwheel>=4.0,<4.3",
-    "maturin~=1.14.1",
+    "maturin>=1.14.1,<1.16.0",
     "patchelf>=0.17.2.4,<0.19.2.0; platform_system=='Linux'",
     # lint
     "deptry~=0.25.1",
@@ -150,7 +150,7 @@ bindings = "pyo3"
 # Be careful `build-system` entry works out of uv,
 # hence those dependencies are not resolved & pinned into `uv.lock`
 requires = [
-    "maturin>=1.14.1,<2.0", # Need to build rust lib
+    "maturin<2.0,>=1.14.1", # Need to build rust lib
     # Fix rust lib 3rd lib dependencies
     "maturin[patchelf]>=1.14.1,<2.0; platform_system=='Linux'",
     "patchelf>=0.17.2.1,<0.19.2.0; platform_system=='Linux'",
