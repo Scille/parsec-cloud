@@ -25,22 +25,18 @@
 
 <script setup lang="ts">
 import { copyToClipboard } from '@/common/clipboard';
-import ShamirOthers from '@/components/profile/ShamirOthers.vue';
-import ShamirSelf from '@/components/profile/ShamirSelf.vue';
-import { ShamirTab } from '@/components/profile/types';
-import { OtherShamirRecoveryInfo, shamirRecoveryInvite } from '@/parsec';
+import ShamirOthers from '@/components/shamir/ShamirOthers.vue';
+import ShamirSelf from '@/components/shamir/ShamirSelf.vue';
+import { ShamirAction, ShamirTab } from '@/components/shamir/types';
+import { OtherShamirRecoveryInfo, shamirRecoveryInvite, startShamirGreet } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { modalController } from '@ionic/vue';
-import { MsModal, Translatable } from 'megashark-lib';
+import { MsModal, MsModalResult, Translatable } from 'megashark-lib';
 import { computed } from 'vue';
 
 const props = defineProps<{
   informationManager: InformationManager;
   tab: ShamirTab;
-}>();
-
-defineEmits<{
-  (e: 'startRecovery', info: OtherShamirRecoveryInfo): void;
 }>();
 
 interface ShamirRecoveryModalTexts {
@@ -78,7 +74,7 @@ async function onCopyLinkClicked(info: OtherShamirRecoveryInfo): Promise<void> {
       'OrganizationRecovery.shamir.modalOthers.toasts.linkNotCopied',
     );
   } else {
-    await props.informationManager.present(
+    props.informationManager.present(
       new Information({
         message: {
           key: 'OrganizationRecovery.shamir.errors.failedToGetLink',
@@ -90,8 +86,34 @@ async function onCopyLinkClicked(info: OtherShamirRecoveryInfo): Promise<void> {
   }
 }
 
-async function onStartRecovery(_info: OtherShamirRecoveryInfo): Promise<void> {
-  // TODO: implement recovery greet flow
+async function onStartRecovery(info: OtherShamirRecoveryInfo): Promise<void> {
+  const invitationResult = await shamirRecoveryInvite(info.owner.id, false);
+  if (!invitationResult.ok) {
+    props.informationManager.present(
+      new Information({
+        message: {
+          key: 'START FAILED',
+        },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+  const startResult = await startShamirGreet(invitationResult.value.token);
+  if (!startResult.ok) {
+    props.informationManager.present(
+      new Information({
+        message: {
+          key: 'GREET FAILED',
+        },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+  await modalController.dismiss({ action: ShamirAction.Greet, handle: startResult.value.handle }, MsModalResult.Confirm);
 }
 
 async function close(): Promise<void> {

@@ -210,7 +210,7 @@
 
 <script setup lang="ts">
 import ShamirIconCircle from '@/assets/images/shamir-icon-circle.svg?raw';
-import ShamirSetupSearchDropdown from '@/components/profile/ShamirSetupSearchDropdown.vue';
+import ShamirSetupSearchDropdown from '@/components/shamir/ShamirSetupSearchDropdown.vue';
 import { getClientInfo, listUsers, UserInfo, UserProfile } from '@/parsec';
 import { getRequiredShamirThreshold, setupShamirRecovery } from '@/parsec/shamir';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
