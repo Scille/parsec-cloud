@@ -38,12 +38,12 @@ from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization_bootstrap import organization_bootstrap
 from parsec.components.postgresql.organization_create import organization_create
 from parsec.components.postgresql.organization_get_tos import organization_get_tos
+from parsec.components.postgresql.organization_list_organizations import (
+    organization_list_organizations,
+)
 from parsec.components.postgresql.organization_stats import (
     organization_server_stats,
     organization_stats,
-)
-from parsec.components.postgresql.organization_test_dump_organizations import (
-    organization_test_dump_organizations,
 )
 from parsec.components.postgresql.organization_test_dump_topics import organization_test_dump_topics
 from parsec.components.postgresql.organization_update import organization_update
@@ -69,6 +69,7 @@ SELECT
     bootstrap_token,
     root_verify_key,
     is_expired,
+    _expired_on AS expired_on,
     _bootstrapped_on AS bootstrapped_on,
     _created_on AS created_on,
     active_users_limit,
@@ -247,6 +248,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             bootstrap_token=bootstrap_token,
             root_verify_key=rvk,
             is_expired=row["is_expired"],
+            expired_on=row["expired_on"],
             created_on=row["created_on"],
             bootstrapped_on=row["bootstrapped_on"],
             active_users_limit=ActiveUsersLimit.from_maybe_int(row["active_users_limit"]),
@@ -355,10 +357,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     @override
     @no_transaction
-    async def test_dump_organizations(
+    async def list_organizations(
         self, conn: AsyncpgConnection, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
-        return await organization_test_dump_organizations(conn, skip_templates)
+        return await organization_list_organizations(conn, skip_templates)
 
     @override
     @no_transaction

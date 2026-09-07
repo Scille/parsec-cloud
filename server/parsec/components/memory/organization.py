@@ -135,6 +135,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             organization_id=org.organization_id,
             bootstrap_token=org.bootstrap_token,
             is_expired=org.is_expired,
+            expired_on=org.expired_on,
             created_on=org.created_on,
             bootstrapped_on=org.bootstrapped_on,
             root_verify_key=org.root_verify_key,
@@ -366,6 +367,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         if is_expired is not Unset:
             org.is_expired = is_expired
+            org.expired_on = now if is_expired else None
         if active_users_limit is not Unset:
             org.active_users_limit = active_users_limit
         if user_profile_outsider_allowed is not Unset:
@@ -402,7 +404,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         return org.tos
 
     @override
-    async def test_dump_organizations(
+    async def list_organizations(
         self, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
         items = {}
@@ -413,8 +415,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             org.active_users_limit
             items[org.organization_id] = OrganizationDump(
                 organization_id=org.organization_id,
+                created_on=org.created_on,
                 bootstrap_token=org.bootstrap_token,
+                bootstrapped_on=org.bootstrapped_on,
                 is_bootstrapped=org.is_bootstrapped,
+                expired_on=org.expired_on,
                 is_expired=org.is_expired,
                 active_users_limit=org.active_users_limit,
                 user_profile_outsider_allowed=org.user_profile_outsider_allowed,

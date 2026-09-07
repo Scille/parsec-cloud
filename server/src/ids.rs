@@ -2,7 +2,11 @@
 
 use std::str::FromStr;
 
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
+use pyo3::{
+    exceptions::PyValueError,
+    prelude::*,
+    types::{PyType, PyTypeMethods},
+};
 
 // UUID based type
 
@@ -203,13 +207,49 @@ impl OrganizationID {
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             }
         } else {
-            Err(PyValueError::new_err("Unimplemented"))
+            // NOTE: We return `ValueError` instead of `TypeError` to be able to use it with
+            // pydantic `PlainValidator`
+            Err(PyValueError::new_err(format!(
+                "Does not support converting {} to OrganizationID",
+                organization_id.get_type().name()?.to_str()?
+            )))
         }
     }
 
     #[getter]
     fn str(&self) -> &str {
         self.0.as_ref()
+    }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::inner::CoreSchemaModule;
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        let str_schema = core_schema.str_schema()?;
+
+        // Create a string schema to load the value from string.
+        let from_str = core_schema.no_info_after_validator_function(
+            cls,
+            str_schema,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            Some(core_schema.to_string_ser_schema()?),
+            py,
+        )?;
+
+        // Make pydantic accept own class as value
+        let instance_schema = core_schema.instance_schema(cls)?;
+
+        // Build schema that accept both string or instance value.
+        let union_schema = core_schema.union_schema([instance_schema, from_str], py)?;
+
+        union_schema.into_pyobject(py).map_err(Into::into)
     }
 }
 

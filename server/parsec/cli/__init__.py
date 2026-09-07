@@ -18,6 +18,7 @@ from parsec.cli.run import run_cmd
 from parsec.cli.sequester_create import create_service, generate_service_certificate
 from parsec.cli.sequester_list import list_services
 from parsec.cli.sequester_revoke import generate_service_revocation_certificate, revoke_service
+from parsec.cli.tasks import server_tasks_cmd_group
 from parsec.cli.testbed import TESTBED_AVAILABLE, testbed_cmd
 
 __all__ = ("cli",)
@@ -53,6 +54,8 @@ cli.add_command(human_accesses, "human_accesses")
 cli.add_command(list_deletable_realms, "list_deletable_realms")
 cli.add_command(delete_realm, "delete_realm")
 cli.add_command(server_sequester_cmd, "sequester")
+cli.add_command(server_tasks_cmd_group)
+
 if TESTBED_AVAILABLE:
     cli.add_command(testbed_cmd, "testbed")
     # Since `render_email` is only for debugging purpose, we don't expose it
