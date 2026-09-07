@@ -319,9 +319,6 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "cli/tests/integration/version.rs": {
         Tool.Parsec: [ReplaceRegex(r'"parsec-cli .*", ', '"parsec-cli {version}", ')]
     },
-    ROOT_DIR / "client/.nvmrc": {
-        Tool.Node: [NODE_NVMRC_VERSION],
-    },
     ROOT_DIR / "client/electron/assets/installer.nsh": {
         Tool.WinFSP: [ReplaceRegex(r'WINFSP_VERSION ".*"', 'WINFSP_VERSION "{version}"')],
     },
@@ -481,6 +478,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
         Tool.License: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
+    },
+    ROOT_DIR / ".nvmrc": {
+        Tool.Node: [NODE_NVMRC_VERSION],
     },
     ROOT_DIR / ".pre-commit-config.yaml": {
         Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
