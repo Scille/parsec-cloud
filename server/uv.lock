@@ -1051,14 +1051,14 @@ wheels = [
 
 [[package]]
 name = "python-swiftclient"
-version = "4.10.0"
+version = "4.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/d4/1db31bea9052c16f0215409f1749cae991bdb0b8d1eb4c3abfb61a9a0bf0/python_swiftclient-4.10.0.tar.gz", hash = "sha256:981891abc7fb355b266e823df3ecb80e5c267c57934fb5094bb102ddaf7e51be", size = 210948, upload-time = "2026-02-25T21:01:27.654Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/91/631ff6c1f6420f8e5017e60d0e66246d1dd5b9a61a70038a198bab404416/python_swiftclient-4.11.0.tar.gz", hash = "sha256:9d96146f5c2948c08cbf221eecfc3b87f2f631f1995e5e5d6e1b800ea74233cc", size = 210953, upload-time = "2026-08-28T09:13:37.188Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/a8/afbe7a509bf178f620d0a11131c84fa855b98639ed90f86ea53dfb564124/python_swiftclient-4.10.0-py3-none-any.whl", hash = "sha256:6fb8187b736b63c1bc306aba203314510244cdf731dc54031d1cc5d5962e78e6", size = 88576, upload-time = "2026-02-25T21:01:26.32Z" },
+    { url = "https://files.pythonhosted.org/packages/25/0d/e0edd370dd69d7db633ef1d97910dd1118d8ccafab48854fde9143cae8f0/python_swiftclient-4.11.0-py3-none-any.whl", hash = "sha256:5c48a8cda1ddee6366ed6efcd262bbf0c99f72b635c634bc829a08ea2c7c33c0", size = 88543, upload-time = "2026-08-28T09:13:36.146Z" },
 ]
 
 [[package]]
