@@ -331,7 +331,7 @@ repos:
   # JSON
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.3
+    rev: 0.38.0
     hooks:
       - id: check-jsonschema
         name: Validate protocol files with jsonschema
@@ -358,8 +358,8 @@ repos:
         files: .github/dependabot.yml
         args:
           [
-            --schemafile,
-            https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/dependabot-2.0.json,
+            --builtin-schema,
+            vendor.dependabot,
           ]
 
       - id: check-jsonschema
@@ -368,8 +368,8 @@ repos:
         files: .readthedocs.yml
         args:
           [
-            --schemafile,
-            https://raw.githubusercontent.com/readthedocs/readthedocs.org/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json,
+            --builtin-schema,
+            vendor.readthedocs,
           ]
 
       - id: check-jsonschema
@@ -378,6 +378,6 @@ repos:
         files: ^packaging/snap/snap/snapcraft.yaml
         args:
           [
-            --schemafile,
-            https://raw.githubusercontent.com/snapcore/snapcraft/main/schema/snapcraft.json,
+            --builtin-schema,
+            vendor.snapcraft,
           ]
