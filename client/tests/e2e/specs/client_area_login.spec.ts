@@ -165,7 +165,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 }
 
 msTest('Open settings modal', async ({ clientArea }) => {
-  const settingsButton = clientArea.locator('.topbar').locator('.custom-button');
+  const settingsButton = clientArea.locator('.topbar').locator('.topbar-settings');
   const modal = clientArea.locator('.settings-modal');
   await expect(modal).toBeHidden();
   await settingsButton.click();

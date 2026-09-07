@@ -331,7 +331,7 @@ msTest('Empty home page recover', async ({ context }) => {
   const container = page.locator('.no-devices');
   await expect(container).toBeVisible();
 
-  const recoverBtn = container.locator('.recovery-no-devices').locator('ion-button');
+  const recoverBtn = container.locator('.buttons-container').locator('ion-button').nth(1);
   await expect(page.locator('.choose-recovery-device-modal')).toBeHidden();
   await recoverBtn.click();
   await expect(page.locator('.choose-recovery-device-modal')).toBeVisible();

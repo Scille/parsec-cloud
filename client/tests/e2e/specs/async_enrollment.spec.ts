@@ -48,7 +48,7 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
 
   await expect(requestModal.locator('.choose-method')).toBeVisible();
   const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
-  await expect(options.locator('.title-h4')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
+  await expect(options.locator('.choose-method-options-item__label')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
   if (identitySystem === 'pki') {
     await options.nth(0).click();
   } else {
@@ -67,7 +67,9 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
     await expect(requestModal.locator('.modal-info')).toBeHidden();
     await expect(requestModal.locator('.user-information')).toBeVisible();
     await fillIonInput(requestModal.locator('.user-information').locator('ion-input'), expectedPersonName);
-    await expect(requestModal.locator('.user-information').locator('.dropdown-button-content')).toHaveText(/^[a-f0-9-]+@example\.invalid$/);
+    await expect(requestModal.locator('.user-information').locator('.dropdown-button').locator('.input-text')).toHaveText(
+      /^[a-f0-9-]+@example\.invalid$/,
+    );
   }
   await expect(nextButton).toBeTrulyEnabled();
   await nextButton.click();
@@ -335,7 +337,7 @@ msTest('Cannot accept PKI request', async ({ context }) => {
 
   await expect(requestModal.locator('.choose-method')).toBeVisible();
   const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
-  await expect(options.locator('.title-h4')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
+  await expect(options.locator('.choose-method-options-item__label')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
   await options.nth(0).click();
   await nextButton.click();
   await expect(requestModal.locator('.modal-info')).toBeVisible();

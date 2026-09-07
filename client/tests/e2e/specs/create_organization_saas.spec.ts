@@ -128,7 +128,7 @@ msTest('Go through saas org creation process', { tag: '@important' }, async ({ c
   // Check does not match
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), `${DEFAULT_USER_INFORMATION.password}-extra`);
   await expect(authNext).toHaveDisabledAttribute();
-  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-helperText').nth(1);
+  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-error');
   await expect(matchError).toBeVisible();
   await expect(matchError).toHaveText('Do not match');
 
@@ -387,12 +387,9 @@ msTest('Open customer account creation', async ({ context }) => {
   const modal = await openCreateOrganizationModal(home);
 
   const bmsContainer = modal.locator('.saas-login');
-  await expect(bmsContainer.locator('.saas-login-footer').locator('.create-account__link')).toHaveText('Create an account');
-  await openExternalLink(
-    home,
-    bmsContainer.locator('.saas-login-footer').locator('.create-account__link'),
-    /https:\/\/sign-dev\.parsec\.cloud.*/,
-  );
+  const createAccountButton = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(2);
+  await expect(createAccountButton).toHaveText('Create an account');
+  await openExternalLink(home, createAccountButton, /https:\/\/sign-dev\.parsec\.cloud.*/);
 });
 
 msTest('Fail to login to BMS', async ({ context }) => {

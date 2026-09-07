@@ -123,7 +123,7 @@ export async function selectDropdown(button: Locator, select: string, currentlyS
 export async function sortBy(sortButton: Locator, clickOnLabel: string): Promise<void> {
   await sortButton.click();
   const popover = sortButton.page().locator('.sorter-popover');
-  await popover.getByRole('listitem').filter({ hasText: clickOnLabel }).click();
+  await popover.locator('ion-item').filter({ hasText: clickOnLabel }).click();
   await expect(popover).toBeHidden();
 }
 
@@ -831,7 +831,7 @@ export async function checkUserContextMenu(
       : []),
     ...(userRole !== 'multi-users' ? ['Copy workspace roles'] : []),
     ...(userRole !== 'External' && !options?.isRevoked ? (userRole === 'multi-users' ? ['Change profiles'] : ['Change profile']) : []),
-    ...(userRole !== 'multi-users' ? ['View details'] : []),
+    ...(userRole !== 'multi-users' ? ['Details'] : []),
   ];
 
   await expect(menu).toBeVisible();

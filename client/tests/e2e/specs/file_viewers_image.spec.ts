@@ -55,8 +55,8 @@ msTest.describe(() => {
     const wrapper = documents.locator('.file-viewer-wrapper');
     const zoom = bottomBar.locator('.zoom-controls');
     const zoomReset = bottomBar.locator('#reset-zoom');
-    const zoomOut = zoom.locator('.file-controls-button-container').nth(0);
-    const zoomIn = zoom.locator('.file-controls-button-container').nth(1);
+    const zoomOut = zoom.locator('.file-controls-button').nth(0);
+    const zoomIn = zoom.locator('.file-controls-button').nth(1);
     const zoomLevel = zoom.locator('ion-text.file-controls-input');
     const zoomLevelInput = zoom.locator('ion-input.file-controls-input');
 

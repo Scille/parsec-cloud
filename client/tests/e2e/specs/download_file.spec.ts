@@ -191,8 +191,8 @@ msTest.describe(() => {
     await sorterPopoverButton.click();
     const sorterPopover = documents.locator('.sorter-popover');
     await expect(sorterPopover).toBeVisible();
-    await expect(sorterPopover.getByRole('listitem').nth(4)).toHaveText('Size');
-    await sorterPopover.getByRole('listitem').nth(4).click();
+    await expect(sorterPopover.locator('ion-item').nth(4)).toHaveText('Size');
+    await sorterPopover.locator('ion-item').nth(4).click();
     await expect(sorterPopover).toBeHidden();
 
     await createFolder(documents, 'Folder');

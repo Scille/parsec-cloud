@@ -161,7 +161,7 @@ msTest('Go through custom org creation process', { tag: '@important' }, async ({
   // Check does not match
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), `${DEFAULT_USER_INFORMATION.password}-extra`);
   await expect(authNext).toHaveDisabledAttribute();
-  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-helperText').nth(1);
+  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-error');
   await expect(matchError).toBeVisible();
   await expect(matchError).toHaveText('Do not match');
 

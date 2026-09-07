@@ -77,7 +77,7 @@ msTest('Submit bug report', async ({ connected }, testInfo: TestInfo) => {
 
   await expect(modal.locator('.report-logs__toggle')).not.toHaveTheClass('toggle-checked');
   await modal.locator('.report-logs__toggle').click();
-  await expect(modal.locator('.report-logs__toggle')).toHaveTheClass('toggle-checked');
+  await expect(modal.locator('.report-logs__toggle')).toHaveClass(/toggle-checked/);
 
   await sendButton.click();
   await expect(error).toBeHidden();

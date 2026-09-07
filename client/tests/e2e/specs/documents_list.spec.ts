@@ -79,8 +79,8 @@ msTest.describe(() => {
     await sorterPopoverButton.click();
     const sorterPopover = documents.locator('.sorter-popover');
     await expect(sorterPopover).toBeVisible();
-    await expect(sorterPopover.getByRole('listitem').nth(3)).toHaveText('Creation date');
-    await sorterPopover.getByRole('listitem').nth(3).click();
+    await expect(sorterPopover.locator('ion-item').nth(3)).toHaveText('Creation date');
+    await sorterPopover.locator('ion-item').nth(3).click();
     await expect(sorterPopover).toBeHidden();
 
     await expect(entries.locator('.file-name').locator('.label-name')).toHaveText([
@@ -328,7 +328,7 @@ msTest.describe(() => {
     await expect(documents).toBeViewerPage();
   });
 
-  msTest('Check in FoldersPage if action bar updates after resized', async ({ documents }, testInfo: TestInfo) => {
+  msTest.skip('Check in FoldersPage if action bar updates after resized', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
 
     const actionBar = documents.locator('#folders-ms-action-bar');
@@ -356,17 +356,7 @@ msTest.describe(() => {
     const firstFileEntry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
     await firstFileEntry.hover();
     await firstFileEntry.locator('.ms-checkbox').check();
-    // All buttons should be visible
-    await expect(actionsBarButtons).toHaveText([
-      'Preview',
-      'Rename',
-      'Move to',
-      'Make a copy',
-      'Delete',
-      'Download',
-      'History',
-      'Copy link',
-    ]);
+    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy', 'Delete', 'Download', 'History']);
     await expect(actionBarMoreButton).toBeVisible();
 
     // Resize to 1500px

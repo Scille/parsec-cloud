@@ -167,7 +167,7 @@ msTest('Reset totp', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
   // Whoopsie, we forgot to save the secret
   await setupTotp(myProfilePage);
-  const orgName = (await myProfilePage.locator('.large-display-menu-container').locator('.organization-text').textContent()) || '';
+  const orgName = (await myProfilePage.locator('.large-display-menu-container').locator('.organization-name').textContent()) || '';
   expect(orgName).toBeTruthy();
   expect(email).toBeTruthy();
 

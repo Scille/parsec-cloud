@@ -21,7 +21,7 @@ msTest('Switch back and forth', async ({ connected }) => {
   // Switch to home page
   connected.locator('.sidebar').locator('.sidebar-header').locator('.organization-card-header-desktop').click();
   const popover = connected.locator('.popover-switch');
-  const switchButton = popover.locator('.button-switch');
+  const switchButton = popover.locator('.switch-button');
   const connectedOrgs = popover.locator('.connected-organization');
   const currentOrg = popover.locator('.current-organization');
   await expect(currentOrg.locator('.organization-name')).toHaveText(/^TestbedOrg\d+$/);

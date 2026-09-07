@@ -262,7 +262,7 @@ msTest('Check settings section', async ({ myProfilePage }) => {
   ]);
   await expect(theme.locator('.settings-option__content').locator('.title')).toHaveText('Thème');
   await expect(theme.locator('.settings-option__content').locator('.description')).toHaveText("Choisir l'apparence de l'application");
-  await expect(theme.locator('.dropdown-container')).toHaveText('Clair');
+  await expect(theme.locator('.dropdown-container')).toHaveText('Système');
 
   const telemetry = options.nth(2);
   await expect(telemetry.locator('.settings-option__content').locator('.title')).toHaveText("Envoyer les rapports d'erreur");

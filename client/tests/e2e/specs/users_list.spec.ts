@@ -99,7 +99,11 @@ for (const displaySize of ['small', 'large']) {
         await expect(item.locator('.user-profile')).toBeHidden();
         await expect(item.locator('.user-email')).toBeHidden();
         await expect(item.locator('.user-status')).toBeHidden();
-        await expect(item.locator('.user-options')).toBeVisible();
+        if (user.currentUser) {
+          await expect(item.locator('.user-options').locator('.options-button')).toBeHidden();
+        } else {
+          await expect(item.locator('.user-options').locator('.options-button')).toBeVisible();
+        }
       } else {
         await expect(item.locator('.user-name').locator('.person-name')).toHaveText(user.name);
         await expect(item.locator('.user-profile')).toHaveText(user.profile);
@@ -445,7 +449,7 @@ msTest('User sort popover default state', async ({ usersPage }) => {
   await sortButton.click();
   await expect(usersPage.locator('.sorter-popover')).toBeVisible();
   const popover = usersPage.locator('.sorter-popover');
-  const items = popover.locator('.sorter-container').getByRole('listitem');
+  const items = popover.locator('.sorter-container').locator('ion-item');
   await expect(items).toHaveCount(5);
   await expect(items).toHaveText(['Ascending', 'Name', 'Joining date', 'Profile', 'Email']);
   for (const [index, item] of (await items.all()).entries()) {
@@ -768,7 +772,7 @@ msTest('Small display selection', async ({ usersPage }) => {
   const topbar = usersPage.locator('.topbar');
   const topbarTitle = topbar.locator('.topbar-left-text__title');
   const headerSelection = usersPage.locator('.small-display-selection-header');
-  const headerOption = usersPage.locator('.topbar-right-buttons').locator('ion-button').nth(1);
+  const headerOption = usersPage.locator('.topbar-right-buttons').locator('#trigger-contextual-menu-button');
 
   await expect(topbarTitle).toHaveText('Users');
   const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
@@ -822,9 +826,9 @@ for (const gridOrList of ['grid', 'list']) {
         .locator(gridOrList === 'list' ? '.user-list-item' : '.user-card-item')
         .nth(1);
       await user.click({ button: 'right' });
-      // Forced to use `View details` as the action. In grid mode, when the action is `dismiss` and the user is nth(1), it doesn't
+      // Forced to use `Details` as the action. In grid mode, when the action is `dismiss` and the user is nth(1), it doesn't
       // work. It works in list mode, it works with user nth(2), it makes absolutely no sense at all.
-      await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'View details');
+      await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'Details');
     });
 
     msTest(`External external context menu in ${displaySize} display in ${gridOrList} mode`, async ({ usersPage }) => {
@@ -840,9 +844,9 @@ for (const gridOrList of ['grid', 'list']) {
         .locator(gridOrList === 'list' ? '.user-list-item' : '.user-card-item')
         .nth(2);
       await user.click({ button: 'right' });
-      // Forced to use `View details` as the action. In grid mode, when the action is `dismiss` and the user is nth(1), it doesn't
+      // Forced to use `Details` as the action. In grid mode, when the action is `dismiss` and the user is nth(1), it doesn't
       // work. It works in list mode, it works with user nth(2), it makes absolutely no sense at all.
-      await checkUserContextMenu(usersPage, 'Administrator', 'External', 'View details');
+      await checkUserContextMenu(usersPage, 'Administrator', 'External', 'Details');
     });
 
     msTest(`Multiple users context menu in ${displaySize} display in ${gridOrList} mode`, async ({ usersPage }) => {
@@ -903,7 +907,7 @@ msTest('Check in UsersPage if action bar updates after resized', async ({ usersP
   await firstUserEntry.locator('.ms-checkbox').check();
   await expect(actionsBarButtons).toHaveText(['Revoke this user']);
   await actionBarMoreButton.click();
-  await expect(usersPage.locator('.popover-viewport').getByRole('listitem')).toHaveText(['Change profile', 'View details']);
+  await expect(usersPage.locator('.popover-viewport').getByRole('listitem')).toHaveText(['Change profile', 'Details']);
   await usersPage.keyboard.press('Escape');
   await expect(usersPage.locator('.popover-viewport')).toBeHidden();
   await expect(actionBarMoreButton).toBeVisible();
@@ -912,7 +916,7 @@ msTest('Check in UsersPage if action bar updates after resized', async ({ usersP
   const topbarButton = usersPage.locator('#connected-header').locator('#trigger-toggle-menu-button');
   await expect(topbarButton).toBeVisible();
   await topbarButton.click();
-  await expect(actionsBarButtons).toHaveText(['Revoke this user', 'Change profile', 'View details']);
+  await expect(actionsBarButtons).toHaveText(['Revoke this user', 'Change profile', 'Details']);
   await expect(actionBarMoreButton).toBeHidden();
 });
 

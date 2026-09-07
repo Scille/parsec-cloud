@@ -31,7 +31,7 @@ msTest('Test dashboard', async ({ clientArea }) => {
     /^€[\d.,]+$/,
     /^(Paid|In progress|To pay)\s*Download$/,
   ]);
-  const paymentButton = clientArea.locator('.payment-container').locator('.custom-button');
+  const paymentButton = clientArea.locator('.payment-container').locator('.payment-update-button');
   await expect(paymentButton).toHaveText('Update');
   await paymentButton.click();
   await expect(title).toHaveText('Payment methods');
