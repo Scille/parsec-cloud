@@ -66,7 +66,12 @@ function classify(d) {
   if (!d || d.sio !== 'event' || d.name !== 'message') return null;
   var p = d.args && d.args[0];
   if (!p || typeof p !== 'object') return null;
-  return { type: p.type || '?', payload: p };
+  // Return the actual OnlyOffice wire event (`p`) directly — NOT a synthetic
+  // {type, payload} wrapper. The event already carries its own `type` field
+  // (OO's convention), so hoisting it into an envelope only produced a
+  // misleading double-`type` in the exported logs. Consumers read the result
+  // as the real event (c.type, c.user, ...).
+  return p;
 }
 function authFromConnect(d) {
   if (!d || d.sio !== 'connect' || !d.payload) return null;
@@ -75,8 +80,8 @@ function authFromConnect(d) {
   return null;
 }
 function authFromMessage(c) {
-  if (c && c.type === 'auth' && c.payload && c.payload.user && c.payload.user.username)
-    return c.payload.user.username;
+  if (c && c.type === 'auth' && c.user && c.user.username)
+    return c.user.username;
   return null;
 }
 function isNoise(d) {

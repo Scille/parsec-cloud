@@ -103,7 +103,12 @@
     if (!d || d.sio !== 'event' || d.name !== 'message') return null;
     var p = d.args && d.args[0];
     if (!p || typeof p !== 'object') return null;
-    return { type: p.type || '?', payload: p };
+    // Return the actual OnlyOffice wire event (`p`) directly — NOT a synthetic
+    // {type, payload} wrapper. The event already carries its own `type` field
+    // (OO's convention), so hoisting it into an envelope only produced a
+    // misleading double-`type` in the exported logs. Consumers read `ev.meta`
+    // as the real event (ev.meta.type, ev.meta.user, ...).
+    return p;
   }
   function authFromConnect(d) {
     if (!d || d.sio !== 'connect' || !d.payload) return null;
@@ -120,7 +125,7 @@
   // rare XHR-poll events.
   function noteAuth(ev) {
     if (ev.kind !== 'msg' || ev.dir !== 'send') return;
-    var p = ev.meta && ev.meta.payload;
+    var p = ev.meta;
     if (p && p.type === 'auth' && p.user && p.user.username && ev.editor) {
       var name = p.user.username;
       if (MON.editorUser[ev.editor] !== name) {
@@ -675,10 +680,27 @@
     if (ev.kind === 'eio') return ev.meta.eio + (ev.meta.sio ? '/' + ev.meta.sio : '');
     return ev.kind;
   }
+  // Layer tag prefix for non-OnlyOffice (transport) events, so the exported
+  // title and the panel row make the protocol layer explicit. OO application
+  // events (Socket.IO `message` payloads: auth, cursor, saveChanges, ...) get
+  // no prefix; everything below them in the stack does.
+  //   [Transport WebSocket]  — raw socket open / proxy engine errors
+  //   [Transport Engine.IO]  — Engine.IO v4 frames (open, ping/pong, ...)
+  function layerTag(ev) {
+    if (ev.dir === 'open' || ev.dir === 'engine') return '[Transport WebSocket] ';
+    if (ev.dir === 'held') {
+      if (ev.kind === 'msg') return '';                       // OO event, held
+      if (ev.meta && ev.meta.eio) return '[Transport Engine.IO] ';
+      return '[Transport WebSocket] ';
+    }
+    if (ev.kind === 'msg') return '';                        // OO event
+    if (ev.kind === 'eio') return '[Transport Engine.IO] ';
+    return '';
+  }
   function formatLine(ev) {
     var ts = new Date(ev.t).toISOString().slice(11, 23);
     var dir = ev.dir === 'send' ? '->' : ev.dir === 'recv' ? '<-' : ev.dir === 'held' ? '##' : '  ';
-    return pad(ts, 13) + '  ' + dir + '  ' + pad(userOf(ev), 14) + '  ' + typeOf(ev);
+    return pad(ts, 13) + '  ' + dir + '  ' + pad(userOf(ev), 14) + '  ' + layerTag(ev) + typeOf(ev);
   }
   function formatBlock(ev) {
     var body = (ev.meta === undefined || ev.meta === null) ? '' : JSON.stringify(ev.meta, null, 2);
@@ -708,17 +730,17 @@
     var row = document.createElement('div');
     row.className = 'row ' + (ev.dir === 'open' ? 'engine' : ev.dir);
     var d, ty = ev.kind, sum = '';
-    if (ev.dir === 'open') { d = '🔌'; ty = 'ws-open'; sum = String(ev.meta).slice(-50); }
-    else if (ev.dir === 'engine') { d = '⚙'; ty = ev.kind; sum = String(ev.meta).slice(-50); }
+    if (ev.dir === 'open') { d = '🔌'; ty = layerTag(ev) + 'ws-open'; sum = String(ev.meta).slice(-50); }
+    else if (ev.dir === 'engine') { d = '⚙'; ty = layerTag(ev) + ev.kind; sum = String(ev.meta).slice(-50); }
     else if (ev.dir === 'held') {
       // Held rows look just like normal send/recv rows (same icon, no HELD
       // prefix, no special colour) — only the `send` button signals the hold.
       d = ev.holdDir === 'send' ? '⬆' : '⬇';
-      ty = typeOf(ev);
-      sum = ev.kind === 'msg' ? summarize(ev.meta.payload) : (ev.meta && ev.meta.eio ? ev.meta.eio : '');
+      ty = layerTag(ev) + typeOf(ev);
+      sum = ev.kind === 'msg' ? summarize(ev.meta) : (ev.meta && ev.meta.eio ? ev.meta.eio : '');
     }
-    else if (ev.kind === 'msg') { d = ev.dir === 'send' ? '⬆' : '⬇'; ty = ev.meta.type; sum = summarize(ev.meta.payload); }
-    else if (ev.kind === 'eio') { d = '⚙'; ty = ev.meta.eio + (ev.meta.sio ? '/' + ev.meta.sio : ''); }
+    else if (ev.kind === 'msg') { d = ev.dir === 'send' ? '⬆' : '⬇'; ty = ev.meta.type; sum = summarize(ev.meta); }
+    else if (ev.kind === 'eio') { d = '⚙'; ty = layerTag(ev) + ev.meta.eio + (ev.meta.sio ? '/' + ev.meta.sio : ''); }
     else { d = ev.dir === 'send' ? '⬆' : '⬇'; ty = ev.kind; }
     var ts = new Date(ev.t);
     var head = document.createElement('div'); head.className = 'head';
