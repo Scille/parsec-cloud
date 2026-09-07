@@ -729,7 +729,7 @@ requires-dist = [
     { name = "botocore", specifier = ">=1.42,<2" },
     { name = "click", specifier = ">=8.0,<9" },
     { name = "cryptography", specifier = ">=46.0.6" },
-    { name = "fastapi", specifier = ">=0.121.2,<1" },
+    { name = "fastapi", specifier = ">=0.135.0,<1" },
     { name = "httpx", specifier = ">=0.28.1,<0.29" },
     { name = "jinja2", specifier = ">=3.0,<4" },
     { name = "pbr", specifier = ">=6.1.1,<8" },
