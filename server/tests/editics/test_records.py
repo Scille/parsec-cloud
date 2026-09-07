@@ -148,6 +148,10 @@ async def _do_test_record(
                 running_js_clients[participant] = await tg.start(
                     _start_editics_js_client, name=f"{participant} editics"
                 )
+                # In the OnlyOffice fork we use, the client generates its own license
+                # event instead of waiting for the server to send it
+                # see https://github.com/cryptpad/onlyoffice-editor/blame/b5d78add4608a76b28d14467d44c5c001da768db/sdkjs/common/docscoapi.js#L1783
+                continue
 
             match event.direction:
                 case "client-to-server":
