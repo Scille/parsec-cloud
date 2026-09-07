@@ -895,7 +895,18 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventConnectState>}
    */
   async _cookConnectState(editics) {
-    await this._mergeParticipants(editics.participants || []);
+    // The server's participant list is authoritative: drop the provisional
+    // self-seed (index 0) and any participant no longer present, the first
+    // time an authoritative list arrives. Mirrors `_cookServerAuth` which
+    // clears the table before merging the auth reply.
+    const incoming = editics.participants || [];
+    const incomingIdx = new Set(incoming.map((p) => p.indexUser));
+    if (incoming.length > 0) {
+      for (const idx of [...this._participants.keys()]) {
+        if (!incomingIdx.has(idx)) this._participants.delete(idx);
+      }
+    }
+    await this._mergeParticipants(incoming);
     return {
       type: 'connectState',
       participantsTimestamp: editics.participantsTimestamp,
