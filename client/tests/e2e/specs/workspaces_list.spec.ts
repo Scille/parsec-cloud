@@ -103,7 +103,7 @@ for (const gridMode of [false, true]) {
     await expect(workspacesStandard.locator('.popover-viewport')).toBeHidden();
     await sortSelector.click();
     const popover = workspacesStandard.locator('.popover-viewport');
-    const sortItems = popover.getByRole('listitem');
+    const sortItems = popover.locator('ion-item');
     await expect(sortItems).toHaveCount(3);
     await expect(sortItems).toHaveText(['Ascending', 'Name', 'Role']);
     for (const [index, checked] of [false, true].entries()) {
@@ -123,7 +123,7 @@ for (const gridMode of [false, true]) {
     } else {
       await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
-    await expect(workspacesStandard.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
+    await expect(workspacesStandard.locator('.popover-viewport').locator('ion-item').nth(0)).toHaveText('Descending');
 
     // Order by role desc
     await sortItems.nth(2).click();

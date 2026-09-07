@@ -52,8 +52,8 @@ msTest.skip('Spreadsheet viewer zoom', async ({ documents }) => {
   await expect(spreadsheet.locator('.rgCell')).toHaveText(['A', '1', 'B', '2', 'C', '3', 'D', '4']);
   const zoom = bottomBar.locator('.zoom-controls');
   const zoomReset = bottomBar.locator('#reset-zoom');
-  const zoomOut = zoom.locator('.file-controls-button-container').nth(0);
-  const zoomIn = zoom.locator('.file-controls-button-container').nth(1);
+  const zoomOut = zoom.locator('.file-controls-button').nth(0);
+  const zoomIn = zoom.locator('.file-controls-button').nth(1);
   const zoomLevel = zoom.locator('ion-text.file-controls-input');
   const zoomLevelInput = zoom.locator('ion-input.file-controls-input');
 

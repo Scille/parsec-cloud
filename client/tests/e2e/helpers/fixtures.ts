@@ -515,7 +515,7 @@ export const msTest = debugTest.extend<{
     const saasContainer = home.locator('.saas-login');
     await expect(saasContainer).toBeVisible();
     await expect(saasContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
-    const loginButton = saasContainer.locator('.saas-login-button').locator('ion-button');
+    const loginButton = saasContainer.locator('.saas-login-button').locator('.saas-login-button__login');
     await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
@@ -569,7 +569,7 @@ export const msTest = debugTest.extend<{
     const saasContainer = home.locator('.saas-login');
     await expect(saasContainer).toBeVisible();
     await expect(saasContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
-    const loginButton = saasContainer.locator('.saas-login-button').locator('ion-button');
+    const loginButton = saasContainer.locator('.saas-login-button').locator('.saas-login-button__login');
     await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);

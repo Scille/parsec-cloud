@@ -51,8 +51,8 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   );
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
-  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('Waiting for the administrator');
+  await expect(joinData.modal.locator('.spinner-container').first()).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container').first()).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -86,7 +86,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
   await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
-  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.info-cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
@@ -170,8 +170,8 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   );
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
-  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('Waiting for the administrator');
+  await expect(joinData.modal.locator('.spinner-container').first()).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container').first()).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -206,7 +206,7 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
   await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
-  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.info-cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
@@ -601,8 +601,8 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   );
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
-  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('Waiting for the administrator');
+  await expect(joinData.modal.locator('.spinner-container').first()).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container').first()).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -637,7 +637,7 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
   await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
-  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.info-cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');

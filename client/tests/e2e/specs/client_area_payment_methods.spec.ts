@@ -9,8 +9,8 @@ msTest('List payment methods', async ({ clientArea }) => {
 
   const activeContainer = clientArea.locator('.client-page-method').locator('.method-cards-active');
   const activeCard = activeContainer.locator('.ms-stripe-card');
-  await expect(activeCard.locator('.title-h4').nth(0)).toHaveText('**** **** **** 4444');
-  await expect(activeCard.locator('.title-h4').nth(1)).toHaveText(/^\d{2}\/\d{2}$/);
+  await expect(activeCard.locator('.card-heading').nth(0)).toHaveText('**** **** **** 4444');
+  await expect(activeCard.locator('.card-heading').nth(1)).toHaveText(/^\d{2}\/\d{2}$/);
   await expect(clientArea.locator('.client-page-method').locator('.no-additional-payment-method')).toBeVisible();
   await expect(clientArea.locator('.client-page-method').locator('.no-additional-payment-method')).toHaveText(
     "You haven't added additional payment methods.",
@@ -30,7 +30,7 @@ msTest('List payment methods', async ({ clientArea }) => {
     );
 
     await clientAreaNavigateTo(clientArea, 'Payment methods');
-    const addButton = clientArea.locator('.client-page-method').locator('.method-cards-saved-header').locator('.custom-button');
+    const addButton = clientArea.locator('.client-page-method').locator('.method-cards-saved-header__add-button');
     await expect(addButton).toHaveText('Add a new card');
     const modal = clientArea.locator('.credit-card-modal');
     await expect(modal).toBeHidden();

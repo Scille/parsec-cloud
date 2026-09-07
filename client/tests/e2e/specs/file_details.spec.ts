@@ -36,38 +36,38 @@ msTest.describe(() => {
         await expect(modal.locator('.ms-modal-header__title ')).toHaveText('Details on the folder');
       }
 
-      const generalDetails = modal.locator('.file-info-details-content').nth(0);
-      const generalDetailsItem = generalDetails.locator('.file-info-details-item');
-      await expect(generalDetails.locator('.file-info-details-content__title')).toHaveText('General information');
+      const generalDetails = modal.locator('.file-section').nth(0);
+      const generalDetailsItem = generalDetails.locator('.file-info-item');
+      await expect(generalDetails.locator('.file-section__title')).toHaveText('General information');
       await expect(generalDetailsItem).toHaveCount(isFile ? 3 : 2);
-      await expect(generalDetailsItem.nth(0).locator('.file-info-details-item__title')).toHaveText('Created');
-      await expect(generalDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(
+      await expect(generalDetailsItem.nth(0).locator('.file-info-item__title')).toHaveText('Created');
+      await expect(generalDetailsItem.nth(0).locator('.file-info-item__value')).toHaveText(
         /^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/,
       );
 
       if (isFile) {
-        await expect(generalDetailsItem.nth(1).locator('.file-info-details-item__title')).toHaveText('Size');
-        await expect(generalDetailsItem.nth(1).locator('.file-info-details-item__value')).toHaveText(/^[\d.]{1,4} (K|M)?B$/);
+        await expect(generalDetailsItem.nth(1).locator('.file-info-item__title')).toHaveText('Size');
+        await expect(generalDetailsItem.nth(1).locator('.file-info-item__value')).toHaveText(/^[\d.]{1,4} (K|M)?B$/);
       }
 
-      await expect(generalDetailsItem.nth(isFile ? 2 : 1).locator('.file-info-details-item__title')).toHaveText('Version');
-      await expect(generalDetailsItem.nth(isFile ? 2 : 1).locator('.file-info-details-item__value')).toHaveText(/^\d+$/);
+      await expect(generalDetailsItem.nth(isFile ? 2 : 1).locator('.file-info-item__title')).toHaveText('Version');
+      await expect(generalDetailsItem.nth(isFile ? 2 : 1).locator('.file-info-item__value')).toHaveText(/^\d+$/);
 
       await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9-]+$/);
 
-      const updateDetails = modal.locator('.file-info-details-content').nth(1);
-      const updateDetailsItem = updateDetails.locator('.file-info-details-item');
-      await expect(updateDetails.locator('.file-info-details-content__title')).toHaveText('Last updated');
+      const updateDetails = modal.locator('.file-section').nth(1);
+      const updateDetailsItem = updateDetails.locator('.file-info-item');
+      await expect(updateDetails.locator('.file-section__title')).toHaveText('Last updated');
       await expect(updateDetailsItem).toHaveCount(2);
-      await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__title')).toHaveText('Updated');
-      await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(
+      await expect(updateDetailsItem.nth(0).locator('.file-info-item__title')).toHaveText('Updated');
+      await expect(updateDetailsItem.nth(0).locator('.file-info-item__value')).toHaveText(
         /^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/,
       );
 
-      await expect(updateDetailsItem.nth(1).locator('.file-info-details-item__title')).toHaveText('Editor');
-      await expect(updateDetailsItem.nth(1).locator('.file-info-details-item__value')).toHaveText('Alicey McAliceFace');
+      await expect(updateDetailsItem.nth(1).locator('.file-info-item__title')).toHaveText('Editor');
+      await expect(updateDetailsItem.nth(1).locator('.file-info-item__value')).toHaveText('Alicey McAliceFace');
 
-      await expect(modal.locator('.file-info-path-value__text')).toHaveText(new RegExp(`^/${nameMatcher}$`));
+      await expect(modal.locator('.file-path__text')).toHaveText(new RegExp(`^/${nameMatcher}$`));
 
       const icon = modal.locator('.cloud-overlay');
       const syncPopover = documents.locator('.tooltip-popover');
