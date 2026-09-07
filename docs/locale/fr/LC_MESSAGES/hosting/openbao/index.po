@@ -425,8 +425,8 @@ msgstr ""
 "Compose pour y ajouter ``parsec-openbao.env`` :"
 
 #: ../../hosting/openbao/index.rst:260
-msgid "parsec-server.docker.yaml"
-msgstr "parsec-server.docker.yaml"
+msgid "docker-compose.parsec-server.yaml"
+msgstr "docker-compose.parsec-server.yaml"
 
 #: ../../hosting/openbao/index.rst:274 ../../hosting/openbao/index.rst:304
 msgid "And then restart the server."
