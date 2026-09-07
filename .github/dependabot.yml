@@ -29,6 +29,27 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
+  ##############
+  # Pre-commit #
+  ##############
+
+  - package-ecosystem: pre-commit
+    directory: /
+    labels:
+      - I-Dependency
+      - I-CICD
+    cooldown:
+      default-days: 10
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:20"
+      timezone: Europe/Paris
+    groups:
+      pre-commit:
+        patterns:
+          - "*"
+
   ########
   # Rust #
   ########
