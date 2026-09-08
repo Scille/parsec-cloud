@@ -9,6 +9,9 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
+from unittest.mock import ANY
+import pprint
+import textwrap
 
 import anyio
 from anyio.abc import TaskStatus
@@ -95,8 +98,19 @@ class RecordEvent:
 
 
 def _compare_server_event(event_from_record: OOEvent, actual_event: OOEvent) -> bool:
-    # TODO: handle specific type that have non stable fields (e.g. timestamp)
-    return event_from_record == actual_event
+    if event_from_record == actual_event:
+        return True
+    elif event_from_record["type"] == actual_event["type"]:
+        def _assert_field_type(field_name: str):
+            assert type(event_from_record[field_name]) == type(actual_event[field_name])
+            # Patch out this field from the expected event since it has already been checked now
+            event_from_record[field_name] = ANY
+
+        if event_from_record["type"] == "auth":
+            _assert_field_type("sessionId")
+            _assert_field_type("openedAt")
+
+    return False
 
 
 async def _do_test_record(
@@ -164,7 +178,7 @@ async def _do_test_record(
                         )
 
                 case "server-to-client":
-                    # Look for the event in the unacknowledged ones...
+                    # Look for the event in the unacknowledgedd ones...
                     unacknowlegde_server_events = per_client_unacknowlegde_server_events[
                         participant
                     ]
@@ -180,7 +194,7 @@ async def _do_test_record(
                         # should be minimal (just for some already scheduled work to
                         # settle).
                         try:
-                            with anyio.fail_after(delay=3):
+                            with anyio.fail_after(delay=1):  # TODO: increase this delay for CI
                                 while True:
                                     server_event = await running_js_clients[
                                         participant
@@ -191,23 +205,25 @@ async def _do_test_record(
                                         # This event is not the one we are waiting for, enqueue it for later
                                         unacknowlegde_server_events.append(server_event)
                         except TimeoutError as exc:
+                            pink = "\x1b[35m"
+                            no_color = "\x1b[0;0m"
                             exc.add_note(
-                                f"Participant {participant} was waiting for event: {event.payload}"
+                                f"{pink}Participant {participant} was waiting for event:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix="\t")}"
                             )
 
-                            display_unacknowledge_events = ""
+                            display_unacknowledged_events = ""
                             for (
                                 participant,
                                 events,
                             ) in per_client_unacknowlegde_server_events.items():
                                 if not events:
                                     continue
-                                display_unacknowledge_events += f"\t{participant}:"
+                                display_unacknowledged_events += f"\t{participant}:\n"
                                 for event in events:
-                                    display_unacknowledge_events += f"\t\t{event}:"
-                            if display_unacknowledge_events:
+                                    display_unacknowledged_events += f"{textwrap.indent(pprint.pformat(event), prefix="\t\t")}\n"
+                            if display_unacknowledged_events:
                                 exc.add_note(
-                                    f"Participant {participant} has some unacknowledge events: {display_unacknowledge_events}"
+                                    f"{pink}Received but unacknowledged yet events:{no_color}\n{display_unacknowledged_events}"
                                 )
 
                             raise

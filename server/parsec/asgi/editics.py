@@ -14,6 +14,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterable
 from typing import Annotated
 from uuid import UUID
+from anyio.streams.memory import MemoryObjectReceiveStream
 
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import Response
@@ -110,8 +111,8 @@ async def editics_join(
         last_event_id=last_event_id,
     ) as outcome:
         match outcome:
-            case list() as events:
-                for event in events:
+            case MemoryObjectReceiveStream() as channel_receive:
+                async for event in channel_receive:
                     yield event
             case EditicsJoinSessionBadOutcome.ORGANIZATION_NOT_FOUND:
                 raise NotImplementedError  # TODO
