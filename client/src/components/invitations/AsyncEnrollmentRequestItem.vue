@@ -16,21 +16,21 @@
         v-if="isSmallDisplay"
       >
         <div class="request-mobile-header">
-          <ion-text class="request-mobile-header__name subtitles-normal">
+          <ion-text class="request-mobile-header__name">
             <span v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted">
               {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.errors.unknownName') }}
             </span>
             <span v-else>{{ humanHandle.label }}</span>
           </ion-text>
-          <ion-text class="request-mobile-header__email button-medium">
+          <ion-text class="request-mobile-header__email">
             {{ humanHandle.email }}
           </ion-text>
         </div>
         <div class="request-mobile-content">
-          <ion-text class="request-mobile-content__createdOn body-sm">
+          <ion-text class="request-mobile-content__createdOn">
             {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
           </ion-text>
-          <div class="button-small request-type">
+          <div class="request-type">
             <ion-text
               class="request-type__label"
               v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao"
@@ -94,7 +94,7 @@
 
       <!-- request type -->
       <div
-        class="list-item-column request-type button-medium"
+        class="list-item-column request-type"
         v-if="isLargeDisplay"
       >
         <ion-text
@@ -124,7 +124,7 @@
           <ion-button
             v-show="canAccept"
             @click="$emit('acceptClick', request)"
-            class="primary-button button-medium button-default"
+            class="primary-button button-default"
             size="default"
           >
             {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.accept') }}
@@ -132,7 +132,7 @@
         </div>
 
         <ion-text
-          class="request-actions-secondary__text button-medium"
+          class="request-actions-secondary__text"
           :class="{ 'request-actions-secondary__text--active': showErrorDetails }"
           v-if="!canAccept"
           @click="toggleErrorDetails"
@@ -151,7 +151,7 @@
         <ion-button
           v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
           @click="$emit('rejectClick', request)"
-          class="primary-button button-medium button-default"
+          class="primary-button button-default"
           size="default"
         >
           {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.reject') }}
@@ -272,12 +272,12 @@ onMounted(async () => {
 }
 
 .request-name {
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-body');
 }
 
 .request-email,
 .request-createdOn {
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-description');
 }
 
 .request-type {
@@ -285,15 +285,23 @@ onMounted(async () => {
   align-items: center;
 
   &__label {
-    background: var(--parsec-color-light-secondary-premiere);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    color: var(--parsec-color-light-secondary-text);
-    border-radius: var(--parsec-radius-12);
-    padding: 3px 0.5rem;
+    background: ms.color('surface-base-page-secondary');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    color: ms.color('text-base-body');
+    border-radius: ms.radius('2xl');
+    padding: 3px ms.spacing('padding-lg');
     width: fit-content;
     flex-shrink: 0;
     margin: 0;
   }
+}
+
+.request-mobile-content .request-type {
+  @include ms.font('label-sm-medium');
+}
+
+.list-item-column.request-type {
+  @include ms.font('label-md-medium');
 }
 
 .request-actions {
@@ -308,28 +316,33 @@ onMounted(async () => {
     display: flex;
     flex-direction: row-reverse;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
-    background: var(--parsec-color-light-secondary-background);
-    padding: 0.5rem 0.75rem;
+    background: ms.color('surface-base-default-secondary');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
+  }
+
+  .primary-button {
+    @include ms.font('label-md-medium');
   }
 
   &-secondary__text {
+    @include ms.font('label-md-medium');
     display: flex;
     cursor: pointer;
-    gap: 0.25rem;
-    color: var(--parsec-color-light-danger-500);
+    gap: ms.spacing('gap-sm');
+    color: ms.color('text-error-default');
     align-self: center;
-    padding: 0.5rem 0.5rem;
-    border-radius: var(--parsec-radius-8);
+    padding: ms.spacing('padding-lg') ms.spacing('padding-lg');
+    border-radius: ms.radius('lg');
 
     &:hover {
-      background: var(--parsec-color-light-danger-50);
+      background: ms.color('surface-error-default-subtle-hover');
     }
 
     &--active {
-      background: var(--parsec-color-light-danger-50);
-      border: 1px solid var(--parsec-color-light-danger-100);
+      background: ms.color('surface-error-default-subtle-hover');
+      border: ms.border('thin') solid ms.color('border-error-default-subtle-hover');
     }
   }
 }
@@ -337,27 +350,28 @@ onMounted(async () => {
 .request-mobile {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   width: 100%;
-  gap: 1rem;
-  padding: 1rem 0.75rem;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-2xl');
 
   &-header {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
 
     &__name {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('label-lg-medium');
+      color: ms.color('text-base-body');
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
     }
 
     &__email {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
@@ -370,7 +384,8 @@ onMounted(async () => {
     align-items: center;
 
     &__createdOn {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-description');
     }
   }
 }
@@ -383,8 +398,8 @@ onMounted(async () => {
 }
 
 .request-list-item--corrupted {
-  --background: var(--parsec-color-light-danger-50);
-  --background-hover: var(--parsec-color-light-danger-50);
+  --background: #{ms.color('surface-error-default-subtle-hover')};
+  --background-hover: #{ms.color('surface-error-default-subtle-hover')};
 
   .label-email {
     display: flex;
@@ -392,16 +407,16 @@ onMounted(async () => {
 
   .request-type__label {
     background: transparent;
-    border: 1px solid var(--parsec-color-light-danger-100);
-    color: var(--parsec-color-light-danger-500);
+    border: ms.border('thin') solid ms.color('border-error-default-subtle-hover');
+    color: ms.color('text-error-default');
   }
 
   .request-actions .primary-button {
-    color: var(--parsec-color-light-secondary-white);
+    color: ms.color('text-on-color-label');
 
     &::part(native) {
-      background: var(--parsec-color-light-danger-500);
-      --background-hover: var(--parsec-color-light-danger-700);
+      background: ms.color('surface-error-default');
+      --background-hover: #{ms.color('surface-error-default-hover')};
     }
   }
 }
@@ -410,11 +425,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   width: 100%;
-  gap: 0.5rem;
-  padding: 0 0.75rem;
+  gap: ms.spacing('gap-lg');
+  padding: ms.spacing('padding-none') ms.spacing('padding-2xl');
   margin: 0 0.25rem;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-danger-50);
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-error-default-subtle-hover');
   max-height: 0;
   overflow: hidden;
   opacity: 0;
@@ -426,25 +441,25 @@ onMounted(async () => {
 
   &--visible {
     max-height: 10rem;
-    opacity: 1;
-    padding: 0.5rem 0.75rem;
+    opacity: ms.opacity('10');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
     margin: 1rem 0.25rem 0.25rem;
   }
 
   @include ms.responsive-breakpoint('sm') {
     flex-direction: column;
     align-items: start;
-    border-radius: 0;
+    border-radius: ms.radius('none');
     margin: 0;
   }
 
   .request-error__title {
-    color: var(--parsec-color-light-secondary-text);
-    padding-top: 0.25rem;
+    color: ms.color('text-base-body');
+    padding-top: ms.spacing('padding-sm');
   }
 
   .request-error__details {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 }
 </style>

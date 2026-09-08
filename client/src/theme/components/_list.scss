@@ -722,46 +722,15 @@
       justify-content: flex-start;
     }
 
-    .primary-button {
-      --background: #{ms.color('surface-neutral-default')};
-      --background-hover: #{ms.color('surface-neutral-default-hover')};
-      color: ms.color('text-on-color-label');
-
-      &::part(native) {
-        padding: 0.7rem ms.spacing('padding-3xl');
-      }
-    }
-
     &-secondary {
       display: flex;
       gap: ms.spacing('gap-2xl');
-
-      &__button {
-        --background: transparent;
-        color: ms.color('text-neutral-default');
-
-        &::part(native) {
-          border: ms.border('thin') solid ms.color('border-base-default');
-          box-shadow: ms.shadow('input');
-          padding: ms.spacing('padding-lg');
-        }
-
-        .button-icon {
-          flex-shrink: 0;
-          font-size: 1.25rem;
-        }
-
-        &:hover {
-          color: ms.color('text-neutral-default-hover');
-          --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
-        }
-      }
     }
   }
 
   .invitations-list-header,
   .requests-list-header {
-    padding: 0 ms.spacing('padding-3xl');
+    padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
   }
 
   .invitation-list-item,
