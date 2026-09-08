@@ -10,12 +10,12 @@
       <ion-item-group class="list-group">
         <div class="list-group-header">
           <ion-text
-            class="body-sm list-group-title"
+            class="list-group-title"
             id="filter-title-role"
           >
             {{ $msTranslate('WorkspacesPage.filter.roles') }}
           </ion-text>
-          <ion-button
+          <ion-text
             v-if="!filters.owner || !filters.manager || !filters.contributor || !filters.reader"
             @click="
               filters.owner = true;
@@ -24,10 +24,9 @@
               filters.reader = true;
             "
             class="reset-filters-button"
-            fill="clear"
           >
             {{ $msTranslate('WorkspacesPage.filter.reset') }}
-          </ion-button>
+          </ion-text>
         </div>
         <ion-item
           class="list-group-item ion-no-padding"
@@ -87,7 +86,7 @@
 
 <script setup lang="ts">
 import { WorkspacesPageFilters } from '@/components/workspaces/types';
-import { IonButton, IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
+import { IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
 import { MsCheckbox } from 'megashark-lib';
 
 defineProps<{

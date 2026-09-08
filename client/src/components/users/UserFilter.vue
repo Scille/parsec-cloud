@@ -9,7 +9,7 @@
   >
     <ion-icon
       :icon="filter"
-      class="filter-button__icon"
+      class="filter-button__icon button-icon-left"
     />
     <span :class="{ 'missing-filters': missingFilters }">{{ $msTranslate('UsersPage.filter.title') }}</span>
   </ion-button>
