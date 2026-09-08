@@ -67,7 +67,7 @@ function strToBytes(s) {
 // For now (step 2) encryption is a base64 passthrough (wrap the existing
 // `_toB64`/`_fromB64` as `Uint8Array` ↔ base64 at the transport boundary): the
 // *interface* is locked down so real libparsec sealing drops in later without
-// touching the translator (todo §2.4 / §8). `resolveUserName`/`resolveUserId`
+// touching the translator (todo §2.4 / §8). `resolveUser`
 // bridge to the parent window (libparsec lives there).
 
 /**
@@ -76,8 +76,7 @@ function strToBytes(s) {
  */
 function buildCapabilities(editics) {
   return {
-    resolveUserName: editics.resolveUserName || (async () => undefined),
-    resolveUserId: editics.resolveUserId || (async () => undefined),
+    resolveUser: editics.resolveUser || (async () => [undefined, undefined]),
     // Pass opaque content through as base64 for now. Real encryption is layered
     // in a later step (§2.4); the interface is the only thing that matters here.
     encrypt: (plain) => strToBytes(bytesToB64(plain)),
@@ -108,8 +107,7 @@ function bytesToStr(bytes) {
  * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
  * @property {string} [userId] - per-person userId (provisional self seed).
  * @property {string} [userName] - display name (provisional self seed).
- * @property {(deviceIdHex:string)=>Promise<string|undefined>} [resolveUserName]
- * @property {(deviceIdHex:string)=>Promise<string|undefined>} [resolveUserId]
+ * @property {(deviceIdHex:string)=>Promise<[string, string]|[undefined, undefined]>} [resolveUser]
  */
 
 class EditicsClient {

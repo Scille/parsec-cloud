@@ -75,12 +75,8 @@ namespace OnlyOfficeCommAPI {
       vlobVersion: number;
       // 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
       editorType: number;
-      // Resolve a DeviceID hex to a display name (libparsec lookup). The server
-      // is not trusted for names; the client keeps its own table.
-      resolveUserName: (deviceId: string) => Promise<string | undefined>;
-      // Resolve a DeviceID hex to the user's `userId` (person id), to build
-      // OnlyOffice's composite `<userId><indexUser>` participant id.
-      resolveUserId: (deviceId: string) => Promise<string | undefined>;
+      // Resolve a DeviceID hex to a user ID + display name (libparsec lookup)
+      resolveUser: (deviceId: string) => Promise<[string, string] | undefined>;
     };
   }
 }
@@ -232,31 +228,24 @@ export async function openDocument(
               handlers.onError(new OnlyOfficeError(OnlyOfficeErrorCodes.EventError, event.data.details));
               break;
             }
-            case 'oo-resolve-user-name': {
+            case 'oo-resolve-user': {
               // The editics client in the host iframe asks for a user name given
               // a DeviceID hex (the server is not trusted for names, RFC §3.3).
               // Reply on the MessagePort it provided, if any.
               const port = (event as MessageEvent).ports[0];
-              if (port && options.editics?.resolveUserName) {
-                options.editics.resolveUserName(event.data.deviceId).then((userName) => {
-                  port.postMessage({ userName });
+              if (port && options.editics?.resolveUser) {
+                options.editics.resolveUser(event.data.deviceId).then((x) => {
+                  let userId = undefined;
+                  let userName = undefined;
+                  if (x) {
+                    [userId, userName] = x;
+                    port.postMessage({ userId, userName });
+                  } else {
+                    port.postMessage({ userId: undefined, userName: undefined });
+                  }
                 });
               } else if (port) {
-                port.postMessage({ userName: undefined });
-              }
-              break;
-            }
-            case 'oo-resolve-user-id': {
-              // The editics client asks for the user's `userId` (person id) given
-              // a DeviceID hex, to build OnlyOffice's composite participant id
-              // (see editics/index.html's resolveUserId).
-              const port = (event as MessageEvent).ports[0];
-              if (port && options.editics?.resolveUserId) {
-                options.editics.resolveUserId(event.data.deviceId).then((userId) => {
-                  port.postMessage({ userId });
-                });
-              } else if (port) {
-                port.postMessage({ userId: undefined });
+                port.postMessage({ userId: undefined, userName: undefined });
               }
               break;
             }
@@ -289,16 +278,16 @@ export async function openDocument(
     return undefined;
   }
 
-  // `resolveUserName` is a function and cannot survive structured-clone across
+  // `resolveUser` is a function and cannot survive structured-clone across
   // the iframe boundary; the host page bridges it back to us via the
-  // `oo-resolve-user-name` message above. Strip it before posting.
+  // `oo-resolve-user` message above. Strip it before posting.
   let postOptions: OpenDocumentOptions = options;
   if (options.editics) {
     // `resolveUserName` and `resolveUserId` are functions and cannot survive
     // structured-clone across the iframe boundary; the host page bridges them
-    // back to us via the `oo-resolve-user-name` / `oo-resolve-user-id` messages
+    // back to us via the `oo-resolve-user` / `oo-resolve-user-id` messages
     // above. Strip them before posting.
-    const { resolveUserName: _omitted, resolveUserId: _omitted2, ...editicsSerializable } = options.editics;
+    const { resolveUser: _omitted, ...editicsSerializable } = options.editics;
     postOptions = { ...options, editics: editicsSerializable } as OpenDocumentOptions;
   }
   frame.contentWindow.postMessage(

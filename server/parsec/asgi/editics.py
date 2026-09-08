@@ -14,8 +14,8 @@ from __future__ import annotations
 from collections.abc import AsyncIterable
 from typing import Annotated
 from uuid import UUID
-from anyio.streams.memory import MemoryObjectReceiveStream
 
+from anyio.streams.memory import MemoryObjectReceiveStream
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse

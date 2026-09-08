@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import itertools
 import json
+import pprint
 import re
+import textwrap
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
-from unittest.mock import ANY
-import pprint
-import textwrap
 
 import anyio
 from anyio.abc import TaskStatus
@@ -35,6 +34,24 @@ _HEADING_RE = re.compile(
 )
 
 
+class TypePlaceholder:
+    """
+    Placeholder replacing a field's value in an expected event to only check its
+    type (useful for non-deterministic values such as timestamps).
+    """
+
+    __slots__ = ("_type",)
+
+    def __init__(self, from_value: Any) -> None:
+        self._type = type(from_value)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, self._type)
+
+    def __repr__(self) -> str:
+        return f"<{self._type.__name__}>"
+
+
 def _parse_record(record: str) -> list[RecordEvent]:
     events = []
     e1s, e2s = itertools.tee(_HEADING_RE.finditer(record), 2)
@@ -48,14 +65,30 @@ def _parse_record(record: str) -> list[RecordEvent]:
             event_content = record[e1.start() :]
         payload = json.loads(event_content.split("```json")[1].split("```")[0].strip())
 
+        direction = "client-to-server" if e1.group("direction") == "->" else "server-to-client"
+        type_ = e1.group("type")
+
+        # Patch the non-deterministic fields from the server events
+        if direction == "server-to-client" and type_ == "auth":
+            # Hardcoded values in `client/editics/protocol.js`
+            payload["hasForgotten"] = False
+            payload["jwt"] = ""
+            payload["g_cAscSpellCheckUrl"] = ""
+            payload["buildVersion"] = ""
+            payload["buildNumber"] = 0
+            payload["licenseType"] = 0
+            for field in ("sessionId", "sessionTimeConnect", "openedAt"):
+                if field in payload:
+                    payload[field] = TypePlaceholder(payload[field])
+            for p in payload["participants"]:
+                p["connectionId"] = TypePlaceholder(p["connectionId"])
+
         events.append(
             RecordEvent(
                 timestamp=e1.group("timestamp"),
-                direction="client-to-server"
-                if e1.group("direction") == "->"
-                else "server-to-client",
+                direction=direction,
                 participant=e1.group("participant"),
-                type=e1.group("type"),
+                type=type_,
                 payload=payload,
             )
         )
@@ -98,19 +131,11 @@ class RecordEvent:
 
 
 def _compare_server_event(event_from_record: OOEvent, actual_event: OOEvent) -> bool:
-    if event_from_record == actual_event:
-        return True
-    elif event_from_record["type"] == actual_event["type"]:
-        def _assert_field_type(field_name: str):
-            assert type(event_from_record[field_name]) == type(actual_event[field_name])
-            # Patch out this field from the expected event since it has already been checked now
-            event_from_record[field_name] = ANY
-
-        if event_from_record["type"] == "auth":
-            _assert_field_type("sessionId")
-            _assert_field_type("openedAt")
-
-    return False
+    # The expected event may contain `TypePlaceholder` placeholders (installed by the
+    # cooking step in `_parse_record`) for fields whose exact value is
+    # non-deterministic; those placeholders only check the value's type through
+    # their `__eq__`, so a plain dict equality is enough here.
+    return event_from_record == actual_event
 
 
 async def _do_test_record(
@@ -208,7 +233,7 @@ async def _do_test_record(
                             pink = "\x1b[35m"
                             no_color = "\x1b[0;0m"
                             exc.add_note(
-                                f"{pink}Participant {participant} was waiting for event:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix="\t")}"
+                                f"{pink}Participant {participant} was waiting for event:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix='\t')}"
                             )
 
                             display_unacknowledged_events = ""
@@ -220,7 +245,9 @@ async def _do_test_record(
                                     continue
                                 display_unacknowledged_events += f"\t{participant}:\n"
                                 for event in events:
-                                    display_unacknowledged_events += f"{textwrap.indent(pprint.pformat(event), prefix="\t\t")}\n"
+                                    display_unacknowledged_events += (
+                                        f"{textwrap.indent(pprint.pformat(event), prefix='\t\t')}\n"
+                                    )
                             if display_unacknowledged_events:
                                 exc.add_note(
                                     f"{pink}Received but unacknowledged yet events:{no_color}\n{display_unacknowledged_events}"

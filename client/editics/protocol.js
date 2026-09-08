@@ -26,12 +26,8 @@
 
 /**
  * @typedef {Object} EditicsCapabilities
- * @property {(deviceIdHex: string) => (string|Promise<string>)} resolveUserName
- *    Resolve a deviceId (hex) to a display name. The server is NOT trusted
- *    for names (RFC §3.3); the client resolves them locally (libparsec lookup
- *    in the browser, a fixed map in tests).
- * @property {(deviceIdHex: string) => (string|Promise<string>)} [resolveUserId]
- *    Resolve a deviceId (hex) to the per-person userId used to build
+ * @property {(deviceIdHex: string) => Promise<[string, string] | undefined>)} resolveUser
+ *    Resolve a deviceId (hex) to the per-person userId + userName used to build
  *    OnlyOffice's composite `<userId><indexUser>` id. Defaults to the deviceId
  *    hex when omitted.
  * @property {(plain: Uint8Array) => Uint8Array} encrypt
@@ -1066,21 +1062,9 @@ class EditicsTranslator {
       if (!this._participants.has(p.indexUser)) {
         let userName = p.deviceId;
         let userId = p.deviceId;
-        try {
-          if (this.capabilities.resolveUserName) {
-            const resolved = await this.capabilities.resolveUserName(p.deviceId);
-            if (resolved) userName = resolved;
-          }
-        } catch (_e) {
-          // Fall back to the device id (the server is not trusted for names).
-        }
-        try {
-          if (this.capabilities.resolveUserId) {
-            const resolved = await this.capabilities.resolveUserId(p.deviceId);
-            if (resolved) userId = resolved;
-          }
-        } catch (_e) {
-          // Fall back to the device id.
+        const resolved = await this.capabilities.resolveUser(p.deviceId);
+        if (resolved) {
+          [userId, userName] = resolved;
         }
         this._participants.set(p.indexUser, { deviceId: p.deviceId, userName, userId });
       } else {

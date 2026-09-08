@@ -32,7 +32,7 @@
       // The actual client/server protocol translation lives in `./main.js`
       // (which imports the pure `./protocol.js` translator). This page only
       // wires capabilities that need the parent window (libparsec lives there,
-      // not in this iframe): `resolveUserName` / `resolveUserId`.
+      // not in this iframe): `resolveUser`.
       //
       // Dev: the three JS files are served as-is by Vite (see `vite.config.ts`
       // `serve-editics` middleware) — no build step. Release: a single inlined
@@ -152,7 +152,7 @@
                 userId: options.userId,
                 userName: options.userName,
                 mode: options.mode,
-                resolveUserName: function (deviceIdHex) {
+                resolveUser: function (deviceIdHex) {
                   return new Promise(function (resolve) {
                     var channel = new MessageChannel();
                     var timeout = setTimeout(function () {
@@ -162,25 +162,7 @@
                       clearTimeout(timeout);
                       resolve(ev.data && ev.data.userName);
                     };
-                    parentWindow.postMessage({ command: 'oo-resolve-user-name', deviceId: deviceIdHex }, '*', [channel.port2]);
-                  });
-                },
-                // Resolve a DeviceID hex to the user's `userId` (person id) so the
-                // editics client can build OnlyOffice's composite
-                // `<userId><indexUser>` participant id (the editor sets
-                // `_userId = editorConfig.user.id + indexUser` and matches it
-                // against the `user` field of lock/change records).
-                resolveUserId: function (deviceIdHex) {
-                  return new Promise(function (resolve) {
-                    var channel = new MessageChannel();
-                    var timeout = setTimeout(function () {
-                      resolve(undefined);
-                    }, 2000);
-                    channel.port1.onmessage = function (ev) {
-                      clearTimeout(timeout);
-                      resolve(ev.data && ev.data.userId);
-                    };
-                    parentWindow.postMessage({ command: 'oo-resolve-user-id', deviceId: deviceIdHex }, '*', [channel.port2]);
+                    parentWindow.postMessage({ command: 'oo-resolve-user', deviceId: deviceIdHex }, '*', [channel.port2]);
                   });
                 },
               });

@@ -8,12 +8,18 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import auto
 from uuid import UUID, uuid4
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
+
 import anyio
+from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.config import BackendConfig
-from parsec.editics_protocol import EditicsProtocolClientEvent, EditicsProtocolParticipantEntry, EditicsProtocolServerEvent, EditicsProtocolServerEventAuth
+from parsec.editics_protocol import (
+    EditicsProtocolClientEvent,
+    EditicsProtocolParticipantEntry,
+    EditicsProtocolServerEvent,
+    EditicsProtocolServerEventAuth,
+)
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
 
@@ -26,6 +32,7 @@ type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsProtocolSe
 @dataclass(slots=True)
 class ChatMessage:
     """One chat message kept in the session history."""
+
     time_ms: int
     author_index_user: int
     key_index: int
@@ -141,7 +148,8 @@ class BaseEditicsComponent:
                             indexUser=p.index,
                             deviceId=p.device_id,
                             view=False,
-                        ) for p in session.participants.values()
+                        )
+                        for p in session.participants.values()
                     ],
                     indexUser=participant_index,
                     sessionId=session.session_id.hex,
