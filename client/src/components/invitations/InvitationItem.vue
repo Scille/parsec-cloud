@@ -11,10 +11,10 @@
       v-if="isSmallDisplay"
     >
       <div class="invitation-mobile-header">
-        <ion-text class="invitation-mobile-header__email subtitles-normal">{{ invitation.claimerEmail }}</ion-text>
+        <ion-text class="invitation-mobile-header__email">{{ invitation.claimerEmail }}</ion-text>
       </div>
       <div class="invitation-mobile-content">
-        <ion-text class="invitation-mobile-content__createdOn body-sm">
+        <ion-text class="invitation-mobile-content__createdOn">
           {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
         </ion-text>
       </div>
@@ -31,7 +31,7 @@
       class="list-item-column invitation-email"
       v-if="isLargeDisplay"
     >
-      <ion-text class="list-item-label label-email cell">
+      <ion-text class="list-item-label label-email">
         {{ invitation.claimerEmail }}
       </ion-text>
     </div>
@@ -41,7 +41,7 @@
       class="list-item-column invitation-sentOn"
       v-if="isLargeDisplay"
     >
-      <ion-text class="list-item-label label-sent-on cell">
+      <ion-text class="list-item-label label-sent-on">
         {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
       </ion-text>
     </div>
@@ -61,8 +61,7 @@
       <div class="invitation-actions-primary">
         <ion-button
           @click="$emit('greetClick', invitation)"
-          class="primary-button button-medium button-default"
-          size="default"
+          class="primary-button button-default"
         >
           {{ $msTranslate('InvitationsPage.emailInvitation.greet') }}
         </ion-button>
@@ -71,8 +70,9 @@
         <ion-button
           @click="$emit('copyLinkClick', invitation)"
           class="invitation-actions-secondary__button"
-          fill="clear"
+          fill="outline"
           ref="copyLinkButton"
+          slot="icon-only"
         >
           <ion-icon
             :icon="link"
@@ -82,8 +82,9 @@
         <ion-button
           @click="$emit('sendEmailClick', invitation)"
           class="invitation-actions-secondary__button"
-          fill="clear"
+          fill="outline"
           ref="resendEmailButton"
+          slot="icon-only"
         >
           <ion-icon
             :icon="mail"
@@ -93,8 +94,9 @@
         <ion-button
           @click.stop="$emit('deleteClick', invitation)"
           class="invitation-actions-secondary__button"
-          fill="clear"
+          fill="outline"
           ref="deleteButton"
+          slot="icon-only"
         >
           <ion-icon
             :icon="trash"
@@ -152,11 +154,13 @@ const inviterLabel = computed(() => {
 
 <style scoped lang="scss">
 .invitation-email {
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-body');
+  @include ms.font('label-md-medium');
 }
 
 .invitation-sentOn {
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('text-base-description');
+  @include ms.font('label-md-medium');
 }
 
 .invitation-sentBy {
@@ -173,27 +177,27 @@ const inviterLabel = computed(() => {
     display: flex;
     flex-direction: row-reverse;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
-    background: var(--parsec-color-light-secondary-background);
-    padding: 0.5rem 0.75rem;
+    background: ms.color('surface-base-default-secondary');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
   }
 }
 
 .invitation-mobile {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   width: 100%;
-  gap: 1rem;
-  padding: 1rem 0.75rem;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-2xl');
 
   &-header {
     display: flex;
     overflow: hidden;
 
     &__email {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('label-lg-medium');
+      color: ms.color('text-base-body');
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
@@ -206,7 +210,8 @@ const inviterLabel = computed(() => {
     align-items: center;
 
     &__createdOn {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-description');
     }
   }
 }
@@ -216,14 +221,15 @@ const inviterLabel = computed(() => {
     position: relative;
     display: flex;
     align-items: center;
+    margin-left: 1rem;
 
     &::before {
       content: '';
-      position: relative;
-      display: block;
-      width: 2px;
+      position: absolute;
+      left: -1rem;
+      width: 1px;
       height: calc(100% - 0.825rem);
-      background: var(--parsec-color-light-secondary-medium);
+      background: ms.color('border-base-default');
       margin-right: 0.75rem;
     }
   }
