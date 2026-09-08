@@ -12,7 +12,7 @@
           <ion-text class="body-sm list-group-title">
             {{ $msTranslate('UsersPage.filter.status') }}
           </ion-text>
-          <ion-button
+          <ion-text
             v-if="!users.filters.statusActive || !users.filters.statusRevoked || !users.filters.statusFrozen"
             @click="
               users.filters.statusActive = true;
@@ -23,7 +23,7 @@
             fill="clear"
           >
             {{ $msTranslate('UsersPage.filter.reset') }}
-          </ion-button>
+          </ion-text>
         </div>
         <ion-item
           class="list-group-item ion-no-padding"
@@ -80,7 +80,8 @@
           <ion-text class="body-sm list-group-title">
             {{ $msTranslate('UsersPage.filter.profile') }}
           </ion-text>
-          <ion-button
+          <ion-text
+            button
             v-if="!users.filters.profileAdmin || !users.filters.profileStandard || !users.filters.profileOutsider"
             @click="
               users.filters.profileAdmin = true;
@@ -88,10 +89,9 @@
               users.filters.profileOutsider = true;
             "
             class="reset-filters-button"
-            fill="clear"
           >
             {{ $msTranslate('UsersPage.filter.reset') }}
-          </ion-button>
+          </ion-text>
         </div>
         <ion-item
           class="list-group-item ion-no-padding"
@@ -144,7 +144,7 @@
 <script setup lang="ts">
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserCollection } from '@/components/users/types';
-import { IonButton, IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
+import { IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
 import { MsCheckbox } from 'megashark-lib';
 
 defineProps<{

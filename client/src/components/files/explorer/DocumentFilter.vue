@@ -5,7 +5,7 @@
     fill="clear"
     @click="openPopover($event)"
     id="select-filter-popover-button"
-    class="filter-button button-medium"
+    class="filter-button"
     :class="{ 'has-filters': hasFilters }"
   >
     <ion-icon
