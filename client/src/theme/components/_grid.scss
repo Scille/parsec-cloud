@@ -5,7 +5,7 @@
 @use 'megashark-lib/theme' as ms;
 
 .grid-container {
-  padding-top: 2rem;
+  padding-top: ms.spacing('padding-5xl');
 
   @include ms.responsive-breakpoint('sm') {
     padding-top: 0;
@@ -16,27 +16,27 @@
 .user-card-item,
 .workspace-card-item {
   position: relative;
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid #{ms.color('border-base-default')};
 
   &::part(native) {
-    --inner-padding-end: 0px;
+    --inner-padding-end: #{ms.spacing('padding-none')};
     height: 100%;
   }
 
   &:hover {
-    --background: var(--parsec-color-light-primary-30);
-    --background-hover: var(--parsec-color-light-primary-30);
+    --background: #{ms.color('surface-brand-default-subtle')};
+    --background-hover: #{ms.color('surface-brand-default-subtle')};
     --background-hover-opacity: 1;
   }
 
   &.selected {
-    --background: var(--parsec-color-light-primary-100) !important;
-    --background-hover: var(--parsec-color-light-primary-100);
-    border: 1px solid var(--parsec-color-light-primary-100);
+    --background: #{ms.color('surface-brand-default-subtle-pressed')} !important;
+    --background-hover: #{ms.color('surface-brand-default-subtle-pressed')};
+    border: ms.border('thin') solid ms.color('border-brand-default-subtle-hover');
 
     .file-card-last-update {
-      color: var(--parsec-color-light-secondary-soft-text);
+      color: ms.color('text-base-label');
     }
   }
 }
@@ -48,15 +48,15 @@
 }
 
 .card-option {
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('icon-neutral-default');
   text-align: right;
   display: flex;
   align-items: center;
   font-size: 1.5rem;
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   cursor: pointer;
 
   &:hover {
-    color: var(--parsec-color-light-primary-500);
+    color: ms.color('icon-brand-default');
   }
 }

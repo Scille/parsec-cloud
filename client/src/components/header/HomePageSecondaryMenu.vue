@@ -6,31 +6,37 @@
       <!-- about button -->
       <ion-button
         id="trigger-version-button"
-        class="menu-secondary-buttons-item"
+        class="menu-secondary-buttons-item link"
         @click="openAboutModal"
       >
         {{ $msTranslate('MenuPage.about') }}
       </ion-button>
       <!-- doc button -->
       <ion-button
-        class="menu-secondary-buttons-item"
+        class="menu-secondary-buttons-item link"
         @click="Env.Links.openDocumentationLink"
       >
         {{ $msTranslate('MenuPage.documentation') }}
-        <ion-icon :icon="open" />
+        <ion-icon
+          :icon="open"
+          class="button-icon-right"
+        />
       </ion-button>
       <!-- contact button -->
       <ion-button
-        class="menu-secondary-buttons-item"
+        class="menu-secondary-buttons-item link"
         @click="Env.Links.openContactLink"
       >
         {{ $msTranslate('MenuPage.contact') }}
-        <ion-icon :icon="open" />
+        <ion-icon
+          :icon="open"
+          class="button-icon-right"
+        />
       </ion-button>
       <!-- settings button -->
       <ion-button
         id="trigger-settings-button"
-        class="menu-secondary-buttons-item"
+        class="menu-secondary-buttons-item link"
         @click="openSettings"
       >
         {{ $msTranslate('MenuPage.settings') }}
@@ -38,14 +44,14 @@
       <!-- bug report button -->
       <ion-button
         id="bug-report-button"
-        class="menu-secondary-buttons-item"
+        class="menu-secondary-buttons-item link"
         @click="$emit('reportBugClick')"
       >
         {{ $msTranslate('MenuPage.reportBug') }}
       </ion-button>
       <!-- customer area button -->
       <ion-button
-        class="menu-secondary-buttons-item"
+        class="menu-secondary-buttons-item link"
         v-show="!Env.isStripeDisabled()"
         id="trigger-customer-area-button"
         @click="$emit('customerAreaClick')"
@@ -81,87 +87,70 @@ const emits = defineEmits<{
 <style lang="scss" scoped>
 .menu-secondary {
   display: flex;
-  padding: 0 0 2rem;
+  padding: 0 0 ms.spacing('padding-5xl');
   justify-content: space-between;
 
   @include ms.responsive-breakpoint('md') {
     flex-direction: column;
-    gap: 1rem;
-    padding: 0 0 1rem;
+    gap: ms.spacing('gap-3xl');
+    padding: 0 0 ms.spacing('padding-3xl');
   }
 
   &-buttons {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-2xl');
     flex-wrap: wrap;
     -webkit-app-region: no-drag;
 
     &-item {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
       transition: all 150ms linear;
       position: relative;
-      --background-hover: none;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      margin-right: ms.spacing('padding-lg');
 
       &::part(native) {
-        padding: 0;
-        border-radius: 0;
+        padding: ms.spacing('padding-none');
+        border-radius: ms.radius('none');
         background: none;
-        --background-hover: none;
-      }
-
-      ion-icon {
-        margin-left: 0.5rem;
-        font-size: 1rem;
-        color: var(--parsec-color-light-secondary-soft-grey);
       }
 
       &:not(:last-child)::after {
         content: '';
-        position: relative;
-        display: block;
-        height: 1rem;
-        width: 1px;
-        background: var(--parsec-color-light-secondary-disabled);
+        position: absolute;
+        right: -0.5rem;
+        top: 0;
+        height: 1.5rem;
+        width: ms.border('thin');
+        background: ms.color('border-base-default');
         transition: all 150ms linear;
 
         @include ms.responsive-breakpoint('xs') {
           display: none;
         }
       }
-
-      &:hover {
-        color: var(--parsec-color-light-secondary-text);
-
-        ion-icon {
-          color: var(--parsec-color-light-secondary-soft-text);
-        }
-      }
     }
 
     #trigger-customer-area-button {
-      color: var(--parsec-color-light-primary-500);
-      border-radius: var(--parsec-radius-8);
+      color: ms.color('text-brand-default');
       position: relative;
 
       &::before {
         content: '';
         position: absolute;
         bottom: -0.25rem;
-        height: 1px;
+        left: 0;
+        height: ms.border('thin');
         width: 0px;
         background: transparent;
         transition: all 150ms linear;
       }
 
       &:hover {
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default-hover');
 
         &::before {
           width: 100%;
-          background: var(--parsec-color-light-primary-600);
+          background: ms.color('surface-brand-default-hover');
         }
       }
     }

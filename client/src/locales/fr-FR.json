@@ -1318,7 +1318,7 @@
             "unknown": "Inconnu ({label})",
             "mobileWeb": "Mobile Web"
         },
-        "sortBy": "Trier par :",
+        "sortBy": "Trier par",
         "technicalId": "ID interne :"
     },
     "SideMenu": {

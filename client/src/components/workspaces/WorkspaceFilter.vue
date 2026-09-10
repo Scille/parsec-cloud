@@ -2,14 +2,14 @@
 
 <template>
   <ion-button
-    fill="clear"
+    fill="outline"
     @click="openPopover($event)"
     id="select-filter-popover-button"
-    class="filter-button button-small"
+    class="filter-button"
   >
     <ion-icon
       :icon="filter"
-      class="filter-button__icon"
+      class="filter-button__icon button-icon-left"
     />
     <span :class="{ 'missing-filters': missingFilters }">{{ $msTranslate('WorkspacesPage.filter.title') }}</span>
   </ion-button>

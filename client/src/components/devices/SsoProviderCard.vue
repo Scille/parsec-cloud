@@ -30,7 +30,7 @@
           :icon="checkmarkCircle"
           class="connected-icon"
         />
-        <ion-text class="button-large connected-text">
+        <ion-text class="connected-text">
           {{ $msTranslate('Authentication.method.sso.connected') }}
         </ion-text>
       </div>
@@ -179,33 +179,34 @@ button {
 .proconnect-group--connected {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  background: var(--parsec-color-light-success-50);
-  border: 1px solid var(--parsec-color-light-success-500);
-  padding: 0.75rem 1rem 0.75rem 1rem;
-  border-radius: var(--parsec-radius-12);
+  gap: ms.spacing('gap-xl');
+  background: ms.color('surface-success-default-subtle-hover');
+  border: ms.border('thin') solid ms.color('border-success-default');
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl') ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+  border-radius: ms.radius('2xl');
   box-shadow: var(--parsec-shadow-input);
   justify-content: space-between;
   width: 100%;
 
   .proconnect-button {
-    opacity: 0.5;
+    opacity: ms.opacity('5');
     pointer-events: none;
   }
 
   .connected {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
   }
 
   .connected-icon {
     font-size: 1.25rem;
-    color: var(--parsec-color-light-success-700);
+    color: ms.color('icon-success-default');
   }
 
   .connected-text {
-    color: var(--parsec-color-light-success-700);
+    @include ms.font('label-lg-medium');
+    color: ms.color('text-success-default');
     line-height: 22px;
   }
 }

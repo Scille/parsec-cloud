@@ -18,7 +18,7 @@
 /* --- notification center popover --- */
 .notification-center-popover {
   --background: none;
-  --box-shadow: var(--parsec-shadow-strong);
+  --box-shadow: #{ms.shadow('strong')};
   --width: var(--popover-notification-center-width);
   --offset-y: 0.5rem;
   --offset-x: -5%;
@@ -27,7 +27,7 @@
 /* --- invitations list popover --- */
 .invitations-list-popover {
   --background: none;
-  --box-shadow: var(--parsec-shadow-strong);
+  --box-shadow: #{ms.shadow('strong')};
   --width: var(--popover-notification-center-width);
   --offset-y: 0.5rem;
   --offset-x: -5%;
@@ -48,7 +48,7 @@
   --backdrop-opacity: 0.15;
 
   &::part(content) {
-    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
   }
 
   &::part(handle) {
@@ -65,7 +65,7 @@
 #viewer-action-menu-modal,
 #fab-modal,
 .filter-container {
-  background-color: var(--parsec-color-light-secondary-inverted-contrast);
+  background-color: ms.color('surface-base-default');
 
   .menu-list,
   .group,
@@ -78,10 +78,10 @@
 
   .menu-list,
   .filter-list {
-    padding: 0.75rem 0;
+    padding: ms.spacing('padding-md') 0;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     .filter-checkbox {
       width: 100%;
@@ -98,7 +98,7 @@
   }
 
   .list-group {
-    padding: 0 0.75rem;
+    padding: 0 ms.spacing('padding-md');
     display: flex;
     flex-direction: column;
 
@@ -106,28 +106,35 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-right: 0.5rem;
+      margin: 0.25rem 0.5rem;
       position: relative;
 
       .reset-filters-button {
         position: absolute;
         right: 0;
-        font-size: 0.75rem;
         --padding-start: 0;
         --padding-end: 0;
         --min-width: 0;
         --height: auto;
         --background-hover: transparent;
+        @include ms.font('label-md-medium');
+        color: ms.color('text-brand-default');
+        cursor: pointer;
+
+        &:hover {
+          color: ms.color('text-brand-default-hover');
+        }
       }
     }
 
     &-title {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-sm-medium');
+      color: ms.color('text-base-description');
+      opacity: ms.opacity('7');
       user-select: none;
-      opacity: 0.7;
 
       &::part(native) {
-        padding-left: 0.5rem;
+        padding-left: ms.spacing('padding-lg');
       }
 
       &__label {
@@ -136,48 +143,45 @@
     }
 
     &:not(:last-of-type) {
-      padding-bottom: 1rem;
-      border-bottom: solid 1px var(--parsec-color-light-secondary-disabled);
+      padding-bottom: ms.spacing('padding-3xl');
+      border-bottom: solid ms.border('thin') ms.color('border-base-default');
     }
 
     &-item {
-      --inner-padding-end: 0;
-      --padding-start: 0.5rem;
-      --padding-end: 0.5rem;
-      --padding-top: 0.375rem;
-      --padding-bottom: 0.375rem;
-      border-radius: var(--parsec-radius-6);
+      --inner-padding-end: #{ms.spacing('padding-none')};
+      border-radius: ms.radius('md');
       cursor: pointer;
       transition: all 0.15s ease-in-out;
 
       &::part(native) {
         overflow: visible;
+        padding: 0.375rem 0.5rem;
       }
 
       &__label,
       &__label-small {
-        color: var(--parsec-color-light-secondary-hard-grey);
-        --color: var(--parsec-color-light-secondary-hard-grey);
+        color: ms.color('text-neutral-default');
+        --color: #{ms.color('text-neutral-default')};
       }
 
       &__icon {
         font-size: 1.125rem;
         margin-right: 0.5em;
-        color: var(--parsec-color-light-secondary-hard-grey);
-        --fill-color: var(--parsec-color-light-secondary-hard-grey);
+        color: ms.color('icon-neutral-default');
+        --fill-color: #{ms.color('icon-neutral-default')};
         width: 1.125rem;
       }
 
       &:hover {
-        background: var(--parsec-color-light-primary-30);
+        background: ms.color('surface-neutral-default-subtle-hover');
 
         .filter-text,
         .filter-icon,
         .list-group-item__icon,
         .list-group-item__label,
         .list-group-item__label-small {
-          color: var(--parsec-color-light-primary-600);
-          --fill-color: var(--parsec-color-light-primary-600);
+          color: ms.color('text-neutral-default-hover');
+          --fill-color: #{ms.color('icon-neutral-default-hover')};
         }
       }
 
@@ -185,16 +189,16 @@
         .list-group-item__label,
         .list-group-item__label-small,
         .list-group-item__icon {
-          color: var(--parsec-color-light-danger-500);
+          color: ms.color('text-error-default');
         }
 
         &:hover {
-          background: var(--parsec-color-light-danger-50);
+          background: ms.color('surface-error-default-subtle-hover');
 
           .list-group-item__label,
           .list-group-item__label-small,
           .list-group-item__icon {
-            color: var(--parsec-color-light-danger-700);
+            color: ms.color('text-error-default-hover');
           }
         }
       }
@@ -203,16 +207,16 @@
         .list-group-item__label,
         .list-group-item__label-small,
         .list-group-item__icon {
-          color: var(--parsec-color-light-primary-500);
+          color: ms.color('text-brand-default');
         }
 
         &:hover {
-          background: var(--parsec-color-light-primary-50);
+          background: ms.color('surface-brand-default-subtle-hover');
 
           .list-group-item__label,
           .list-group-item__label-small,
           .list-group-item__icon {
-            color: var(--parsec-color-light-primary-700);
+            color: ms.color('text-brand-default-hover');
           }
         }
       }
@@ -221,7 +225,7 @@
 
   .menu-list-small {
     .list-group {
-      padding-inline: 0.75rem;
+      padding-inline: ms.spacing('padding-2xl');
     }
 
     .list-group-item {
@@ -229,7 +233,7 @@
       --padding-end: 0.75rem;
       --padding-top: 0.75rem;
       --padding-bottom: 0.75rem;
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-neutral-default');
 
       .item-icon {
         font-size: 1.25rem;
@@ -238,10 +242,10 @@
       }
 
       &:hover {
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-neutral-default-hover');
 
         .list-group-item__label-small {
-          color: var(--parsec-color-light-primary-600);
+          color: ms.color('text-neutral-default-hover');
         }
       }
     }
@@ -252,7 +256,7 @@
 #file-context-menu,
 #user-context-menu {
   .list-group {
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
   }
 }
 
@@ -299,30 +303,30 @@
   --offset-y: 0.5rem;
 
   .import-container {
-    padding: 0.5rem;
+    padding: ms.spacing('padding-lg');
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     .option {
       --background-hover: none;
-      --color: var(--parsec-color-light-secondary-soft-text);
-      padding: 0.375rem 0.75rem;
+      --color: #{ms.color('text-base-label')};
+      padding: ms.spacing('padding-md') ms.spacing('padding-2xl');
       --background: none;
-      border-radius: var(--parsec-radius-6);
+      border-radius: ms.radius('md');
       --min-height: 0;
-      --inner-padding-end: 0;
+      --inner-padding-end: #{ms.spacing('padding-none')};
       position: relative;
       z-index: 2;
       pointer-events: auto;
 
       &::part(native) {
-        padding: 0;
+        padding: ms.spacing('padding-none');
       }
 
       &:hover:not(.item-disabled) {
-        background: var(--parsec-color-light-primary-50);
-        --background-hover: var(--parsec-color-light-primary-50);
+        background: ms.color('surface-neutral-default-subtle-hover');
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
         cursor: pointer;
       }
 

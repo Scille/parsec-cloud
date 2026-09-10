@@ -1315,7 +1315,7 @@
             "unknown": "Unknown ({label})",
             "mobileWeb": "Mobile Web"
         },
-        "sortBy": "Sort by:",
+        "sortBy": "Sort by",
         "technicalId": "Internal ID:"
     },
     "SideMenu": {

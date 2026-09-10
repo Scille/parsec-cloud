@@ -13,7 +13,7 @@
           :icon="breadcrumb.popoverIcon ? breadcrumb.popoverIcon : returnDownForward"
           class="breadcrumb-item__icon"
         />
-        <ion-text class="breadcrumb-item__text button-medium">{{ breadcrumb.display }}</ion-text>
+        <ion-text class="breadcrumb-item__text">{{ breadcrumb.display }}</ion-text>
       </ion-item>
     </ion-list>
   </ion-content>
@@ -38,19 +38,20 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
 <style scoped lang="scss">
 .breadcrumb {
   &-item {
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-base-label');
     --background: none;
 
     &::part(native) {
-      padding: 0.75rem 1rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
     }
 
     &:hover {
       cursor: pointer;
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-default-secondary');
     }
 
     &__text {
+      @include ms.font('label-md-medium');
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
@@ -58,17 +59,17 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
 
     &__icon {
       font-size: 1rem;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-neutral-default');
       margin-right: 0.625rem;
     }
 
     &--disabled {
       pointer-events: none;
-      color: var(--parsec-color-light-secondary-text);
-      opacity: 0.5;
+      color: ms.color('text-base-body');
+      opacity: ms.opacity('5');
 
-      & .breadcrumb-item__icon {
-        color: var(--parsec-color-light-secondary-text);
+      &.breadcrumb-item__icon {
+        color: ms.color('text-base-body');
       }
     }
   }
