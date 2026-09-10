@@ -64,10 +64,10 @@ To deploy cryptpad using :ref:`the docker-compose stack <doc_hosting_deployment_
    - ``CRYPTPAD_HTTP_SAFE_ORIGIN``: The URL that Cryptpad should considered safe/sandboxed, it should be different than ``CRYPTPAD_HTTP_UNSAFE_ORIGIN`` (more information on `Cryptpad domain documentation <cryptpad-domain-doc_>`_).
    - ``CRYPTPAD_HTTP_UNSAFE_ORIGIN``: The URL used to reach the Cryptpad server.
 
-   .. admonition:: editics/parsec-server.docker.yaml.cryptpad.patch
+   .. admonition:: editics/docker-compose.parsec-server.yaml.cryptpad.patch
       :collapsible: open
 
-      .. literalinclude:: ./parsec-server.docker.yaml.cryptpad.patch
+      .. literalinclude:: ./docker-compose.parsec-server.yaml.cryptpad.patch
          :language: diff
 
    .. important::
@@ -89,7 +89,7 @@ To deploy cryptpad using :ref:`the docker-compose stack <doc_hosting_deployment_
    .. code-block:: shell
 
       patch -t -i editics/parsec-nginx.conf.cryptpad.patch
-      patch -t -i editics/parsec-server.docker.yaml.cryptpad.patch
+      patch -t -i editics/docker-compose.parsec-server.yaml.cryptpad.patch
 
 .. note::
 
@@ -100,7 +100,7 @@ Next you need to start the updated ``docker-compose`` stack:
 
 .. code-block:: shell
 
-   docker compose --file ./parsec-server.docker.yaml up --detach
+   docker compose --file ./docker-compose.parsec-server.yaml up --detach
 
 If you have an already running stack, you need to:
 
@@ -108,14 +108,14 @@ If you have an already running stack, you need to:
 
    .. code-block:: shell
 
-      docker compose --file ./parsec-server.docker.yaml up --detach parsec-cryptpad
+      docker compose --file ./docker-compose.parsec-server.yaml up --detach parsec-cryptpad
 
 #. Stop & Start parsec server (``restart`` is not enough to reload the service configuration):
 
    .. code-block:: shell
 
-      docker compose --file ./parsec-server.docker.yaml stop parsec-server
-      docker compose --file ./parsec-server.docker.yaml up --detach parsec-server
+      docker compose --file ./docker-compose.parsec-server.yaml stop parsec-server
+      docker compose --file ./docker-compose.parsec-server.yaml up --detach parsec-server
 
 Other deployment methods
 ========================

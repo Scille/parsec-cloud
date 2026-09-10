@@ -45,7 +45,7 @@ But if you just want to deploy a Parsec server locally you can do it with the fo
    cd parsec-cloud/docs/hosting/deployment
    bash setup-tls.sh
    bash gen-secrets.sh
-   docker compose --file parsec-server.docker.yaml up
+   docker compose --file docker-compose.parsec-server.yaml up
 
 .. _doc_hosting_deployment_prerequisites:
 
@@ -269,10 +269,10 @@ The Docker Compose file
 
 You can use the following Docker Compose file to deploy Parsec Server for testing:
 
-.. admonition:: parsec-server.docker.yaml
+.. admonition:: docker-compose.parsec-server.yaml
    :collapsible: open
 
-   .. literalinclude:: parsec-server.docker.yaml
+   .. literalinclude:: docker-compose.parsec-server.yaml
      :language: yaml
      :linenos:
 
@@ -302,7 +302,7 @@ The docker containers can be started as follows:
 
 .. code-block:: bash
 
-  docker compose -f parsec-server.docker.yaml up
+  docker compose -f docker-compose.parsec-server.yaml up
 
 Initial configuration
 ---------------------
@@ -436,10 +436,10 @@ If this option is not set, the gunicorn/uvicorn ``FORWARDED_ALLOW_IPS`` environm
 
 An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`the Docker Compose file <doc_hosting_deployment_the_docker_compose_file>`:
 
-.. admonition:: parsec-server.docker.yaml
+.. admonition:: docker-compose.parsec-server.yaml
    :collapsible: open
 
-   .. literalinclude:: parsec-server.docker.yaml
+   .. literalinclude:: docker-compose.parsec-server.yaml
      :language: yaml
      :linenos:
      :lineno-match:
