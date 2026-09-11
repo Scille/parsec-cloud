@@ -1,1 +1,0 @@
-Fixed CLI server run's `--scws-web-application-private-key-content` parameter incorrectly expecting a PEM content encoded in base64

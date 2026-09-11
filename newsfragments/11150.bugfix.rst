@@ -1,1 +1,0 @@
-Prevent navigating on the previous page after a logout, which resulted in a blank screen
