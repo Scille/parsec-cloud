@@ -24,7 +24,7 @@ use libparsec::{
 use libparsec_client::ShamirRecoveryClaimFinalizeCtx;
 
 use crate::{
-    ui::{compat::AvailableDeviceDisplay, Color},
+    ui::{compat::ShortAvailableDeviceDisplay, Color},
     utils::*,
 };
 use dialoguer::{Confirm, FuzzySelect, Input};
@@ -498,7 +498,7 @@ async fn save_user(
     let new_device = ctx
         .save_local_device(&save_strategy, &key_file)
         .await
-        .map(AvailableDeviceDisplay)?;
+        .map(ShortAvailableDeviceDisplay::from)?;
 
     print_new_device(ui, &new_device)
 }
@@ -512,7 +512,7 @@ async fn save_device(
     let new_device = ctx
         .save_local_device(&save_strategy, &key_file)
         .await
-        .map(AvailableDeviceDisplay)?;
+        .map(ShortAvailableDeviceDisplay::from)?;
 
     print_new_device(ui, &new_device)
 }
@@ -526,12 +526,12 @@ async fn save_shamir_recovery(
     let new_device = ctx
         .save_local_device(&save_strategy, &key_file)
         .await
-        .map(AvailableDeviceDisplay)?;
+        .map(ShortAvailableDeviceDisplay::from)?;
 
     print_new_device(ui, &new_device)
 }
 
-fn print_new_device(ui: &crate::Ui, device: &AvailableDeviceDisplay) -> anyhow::Result<()> {
+fn print_new_device(ui: &crate::Ui, device: &ShortAvailableDeviceDisplay) -> anyhow::Result<()> {
     ui.with_message(|_, out| writeln!(out, "New device created:"))?;
     ui.data_print(device)?;
 

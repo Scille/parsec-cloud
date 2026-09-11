@@ -7,7 +7,7 @@ use libparsec::{
 };
 
 use crate::{
-    ui::{compat::AvailableDeviceDisplay, Color},
+    ui::{compat::ShortAvailableDeviceDisplay, Color},
     utils::*,
 };
 
@@ -85,7 +85,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         }
     };
 
-    let device = AvailableDeviceDisplay(device);
+    let device = ShortAvailableDeviceDisplay::from(device);
 
     ui.with_message(|_, out| write!(out, "You are about to update the following device:"))?;
     ui.message_println(&device)?;

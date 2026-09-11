@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use libparsec::DeviceLabel;
 
-use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
+use crate::{ui::compat::ShortAvailableDeviceDisplay, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, password_stdin, auth]
@@ -52,7 +52,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         strategy,
     )
     .await
-    .map(AvailableDeviceDisplay)?;
+    .map(ShortAvailableDeviceDisplay::from)?;
 
     ui.with_message(|_, out| writeln!(out, "New device created:"))?;
     ui.data_print(&new_device)?;

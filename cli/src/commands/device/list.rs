@@ -3,7 +3,7 @@
 use libparsec::list_available_devices;
 use std::io::Write as _;
 
-use crate::ui::{compat::AvailableDeviceDisplay, Color};
+use crate::ui::{compat::ShortAvailableDeviceDisplay, Color};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir]
@@ -16,7 +16,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let devices = list_available_devices(&config_dir)
         .await?
         .into_iter()
-        .map(AvailableDeviceDisplay)
+        .map(ShortAvailableDeviceDisplay::from)
         .collect::<Vec<_>>();
 
     if devices.is_empty() {
