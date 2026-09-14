@@ -1,4 +1,8 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!--
+TODO: "session" is misleading here: in OnlyOffice it represents the fact a participant
+is connected (this ID is kept when the websocket is lost and a reconnection occurs)
+-->
 
 # Collaborative editics
 
@@ -97,6 +101,15 @@ workspace can then modify a document by creating a session with his tempered doc
 then wait for a user with write access to join and do the save for them...).
 
 ### 1.3 - Session ID vs document ID
+
+- idOriginal: the integrator-defined user id (the human).
+- indexUser: server-assigned per-document-open sequence number (the "which opening of this document is this").
+- id: idOriginal + indexUser — the server's primary per-participant key (one human's one logical editing session on one document).
+- sessionId: the logical session id surviving websocket reconnects (initially = first socket id; reused on restore).
+- connectionId: the raw socket.io id, changed on every physical connect.
+- username: the human's display name.
+
+TODO
 
 Each OnlyOffice session is identified by an ID that is used by the clients to join the session.
 We use the couple (workspace ID + document vlob ID) as the session ID.
@@ -369,7 +382,7 @@ Format of the client → server `auth` event:
   "docid": <string>,  // Shared identifier of the document session
   "token": <string>,  // Integrator-provided document token (also in the JWT below)
   "user": {
-    "id": <string>,  // Integrator-provided user ID (e.g. the device ID)
+    "id": <string>,  // Integrator-provided user ID
     "username": <string>,
     "firstname": <string|null>,
     "lastname": <string|null>,
@@ -414,7 +427,7 @@ Format of the client → server `auth` event:
 - Remove `headingsColor`: heading colors would is a client-only concern.
 - Remove `timezoneOffset`: all timestamp are UTC-based.
 - Remove `time`: Parsec authentication already provides the timestamp in the `Authorization` header.
-- Remove `supportAuthChangesAck`: considired always supported.
+- Remove `supportAuthChangesAck`: considered always supported.
 
 If the session is currently in single-editor mode, the server sends a `waitAuth`
 to signify the new client it has to wait for the initial client to apply the full
@@ -437,15 +450,16 @@ Format:
 
 - Remove `lockDocument` and replace it by a `authLockedBy` field containing the
   ID of the connection currently holding the auth lock.
+- Remove `connectionId` as this field is never actually used by the OnlyOffice client.
 
 Once the session is in co-editing mode, the server sends its `auth` event.
 
-Format of the client → server `auth` event:
+Format of the server → client `auth` event:
 
 ```json5
 {
   "type": "auth",
-  "result": <integer>,          // 1 = success
+  "result": <integer>,          // 1 = success, the server never sends any other value (legacy field ?)
   "sessionId": <string>,        // The connection's session ID (used on reconnection)
   "sessionTimeConnect": <integer>, // Server timestamp (ms) at connect (used on reconnection)
   "participants": <array>,      // Current participant map (same shape as in `connectState`)
@@ -466,6 +480,7 @@ Format of the client → server `auth` event:
 *Editics protocol changes*:
 TODO
 
+- Remove `result`: just close the connection if the auth fails.
 - Remove `jwtOpen` / `jwtSession` / `jwt`: Parsec has its own authentication
   (the SSE endpoint is already authenticated), so OnlyOffice JWTs are not needed.
 - Remove `documentCallbackUrl`, `documentFormatSave`, `headingsColor`,
@@ -474,7 +489,9 @@ TODO
 - Remove `openCmd`: the document is loaded entirely client-side (see `documentOpen`).
 - Remove `mode`/`permissions`: access control is enforced by the Parsec server
   (realm roles) before the SSE connection is even established.
-- Remove `messages`, `g_cAscSpellCheckUrl`, `buildVersion`/`buildNumber`,
+- Remove `messages` the client seems to ignore this field and always send a `getMessages`
+  event instead.
+- Remove `g_cAscSpellCheckUrl`, `buildVersion`/`buildNumber`,
   `licenseType`, `settings`: those are OnlyOffice integrator features the Parsec
   server has no business providing.
 - Remove `lastOtherSaveTime`: the save flow in the editics protocol relies on the
@@ -485,6 +502,7 @@ TODO
 - The server `auth` (s→c) reply is replaced by the `bootstrap` SSE event (see
   §3.1) which carries the participant map and the encrypted change backlog in a
   single message; the separate `authChanges` flow is folded into it.
+- For `participants` field, see `connectState` server event
 
 #### `authChanges` (server → client) & `authChangesAck` (client → server)
 
@@ -564,7 +582,7 @@ Format:
   //  - `idOriginal`: integrator-provided user ID.
   //  - `indexUser`: the participant index (order of arrival in the session).
   //  - `view`: whether the participant is a viewer (read-only).
-  //  - `connectionId`: the underlying connection's ID (= `sessionId`).
+  //  - `connectionId`: the websocket connection ID of this participant.
   //  - `isLiveViewer`/`isCloseCoAuthoring`/`encrypted`: feature flags.
   "participants": <array>,
   // true while the document auth lock is held (see `waitAuth`).
@@ -580,6 +598,7 @@ Format:
   - Remove `encrypted` (we never rely on OnlyOffice encryption system)
   - Replace fields `id`/`idOriginal`/`username`  by `device_id` (the client
     has already a single source of truth on those info).
+  - Remove `connectionId` as this field is never actually used by the OnlyOffice client.
 
 #### `message` (client → server) & `message` (server → client)
 
