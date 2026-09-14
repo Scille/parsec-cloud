@@ -300,6 +300,14 @@ def blockstore_config(db_config: BaseDatabaseConfig) -> BaseBlockStoreConfig:
         return PostgreSQLBlockStoreConfig()
 
 
+@pytest.fixture
+def blockstore_args(db_config: BaseDatabaseConfig) -> list[str]:
+    if isinstance(db_config, PostgreSQLDatabaseConfig):
+        return ["--blockstore=POSTGRESQL"]
+    else:
+        return ["--blockstore=MOCKED"]
+
+
 # Finally other fixtures
 
 

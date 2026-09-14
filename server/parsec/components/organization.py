@@ -25,8 +25,11 @@ from parsec.api import api
 from parsec.ballpark import TimestampOutOfBallpark, timestamps_in_the_ballpark
 from parsec.client_context import AnonymousClientContext, AuthenticatedClientContext
 from parsec.config import BackendConfig
+from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum, Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
+
+logger = get_logger()
 
 
 @dataclass(slots=True)
@@ -231,6 +234,10 @@ class OrganizationUpdateBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+class WipeOrganizationBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+
+
 @dataclass(slots=True)
 class OrganizationDumpTopics:
     common: DateTime
@@ -339,6 +346,9 @@ class BaseOrganizationComponent:
     async def test_duplicate_organization(
         self, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:
+        raise NotImplementedError
+
+    async def wipe_organization(self, id: OrganizationID) -> WipeOrganizationBadOutcome | None:
         raise NotImplementedError
 
     #
