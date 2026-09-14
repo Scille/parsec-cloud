@@ -25,6 +25,7 @@ from parsec.components.memory.datamodel import (
 )
 from parsec.components.organization import (
     BaseOrganizationComponent,
+    DeleteOrganizationBadOutcome,
     Organization,
     OrganizationBootstrapStoreBadOutcome,
     OrganizationBootstrapValidateBadOutcome,
@@ -456,3 +457,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     ) -> None:
         duplicated_org = self._data.organizations[source_id].clone_as(target_id)
         self._data.organizations[target_id] = duplicated_org
+
+    @override
+    async def delete_organization(self, id: OrganizationID) -> DeleteOrganizationBadOutcome | None:
+        try:
+            # Enough to remove everything related to a given organization (users, data, ...)
+            del self._data.organizations[id]
+        except KeyError:
+            return DeleteOrganizationBadOutcome.ORGANIZATION_NOT_FOUND

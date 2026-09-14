@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any
 
 from parsec._parsec import (
     AccessToken,
-    DateTime,
     DeviceCertificate,
     DeviceID,
     OrganizationID,
@@ -170,9 +169,23 @@ class Backend:
         await self.organization.test_drop_organization(id)
 
     async def test_load_template(self, template: TestbedTemplateContent) -> OrganizationID:
+        from parsec._parsec import testbed
+
         org_id = OrganizationID(f"{template.id.title().replace('_', '')}OrgTemplate")
+        bootstrap_event = next(
+            event
+            for event in template.events
+            if isinstance(event, testbed.TestbedEventBootstrapOrganization)
+        )
+        creation_date = bootstrap_event.timestamp.add(days=-1)
+        logger.info(
+            "Load org template",
+            ord_id=org_id.str,
+            creation_date=creation_date,
+            template=template.id,
+        )
         match await self.organization.create(
-            now=DateTime(1970, 1, 1), id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
+            now=creation_date, id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
         ):
             case AccessToken():
                 pass

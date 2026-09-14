@@ -186,3 +186,11 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
             return
 
         org.block_store[block_id] = block
+
+    @override
+    async def delete_whole_organization_data(self, organization_id: OrganizationID) -> None:
+        try:
+            del self._data.organizations[organization_id]
+        except KeyError:
+            # Data already deleted, nothing to do.
+            pass
