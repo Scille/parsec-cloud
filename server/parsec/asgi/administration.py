@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
 from parsec._parsec import (
     AccessToken,
+    ActiveUsersLimit,
     DateTime,
     OrganizationID,
     ParsecOrganizationBootstrapAddr,
@@ -50,7 +51,7 @@ from parsec.components.sequester import (
 )
 from parsec.components.totp import TOTPResetBadOutcome
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListActiveUsersBadOutcome
-from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
+from parsec.events import UserIDField
 from parsec.logging import get_logger
 from parsec.types import (
     Base64BytesField,
@@ -183,12 +184,12 @@ tos_example = {
 
 class CreateOrganizationIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | UnsetType = Field(Unset, examples=[True])
-    active_users_limit: ActiveUsersLimitField | UnsetType = Field(Unset, examples=[50])
+    active_users_limit: ActiveUsersLimit | UnsetType = Field(Unset, examples=[50])
     realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Field(
         Unset, examples=[2592000]
     )
@@ -266,7 +267,7 @@ async def administration_create_organizations(
 class GetOrganizationOutTos(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     per_locale_urls: dict[TosLocale, TosUrl] = Field(examples=[tos_example])
-    updated_on: DateTimeField
+    updated_on: DateTime
 
 
 class GetOrganizationOut(BaseModel):
@@ -280,13 +281,13 @@ class GetOrganizationOut(BaseModel):
 
 
 @administration_router.get(
-    "/administration/organizations/{raw_organization_id}",
+    "/administration/organizations/{organization_id}",
     summary="Get an Organization status and configuration",
     tags=["Organization"],
 )
 @log_request
 async def administration_get_organization(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     request: Request,
     auth: Annotated[None, Depends(check_administration_auth)],
 ) -> GetOrganizationOut:
@@ -299,8 +300,6 @@ async def administration_get_organization(
     The organization configuration is described by the same options used during organization creation.
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     # Check whether the organization actually exists
     outcome = await backend.organization.get(id=organization_id)
@@ -336,7 +335,7 @@ class PatchOrganizationIn(BaseModel):
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | UnsetType = Field(Unset, examples=[True])
-    active_users_limit: ActiveUsersLimitField | UnsetType = Field(Unset, examples=[50])
+    active_users_limit: ActiveUsersLimit | UnsetType = Field(Unset, examples=[50])
     realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Field(
         Unset, examples=[2592000]
     )
