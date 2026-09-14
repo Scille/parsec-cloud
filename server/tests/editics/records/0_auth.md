@@ -1,12 +1,12 @@
 ## Events
 
-### 08:58:09.979       John Smith      [Transport WebSocket] ws-open
+### 08:58:09.979       Alice      [Transport WebSocket] ws-open
 
 ```json
 "wss://site.docs.onlyoffice.com/9.4.1-e9f43897e5cfcbabaf9c2dac6f595fee/web-apps/apps/documenteditor/main/../../../../doc/32965127-3f24-4b0d-9759-be2515530d61/c/?shardkey=32965127-3f24-4b0d-9759-be2515530d61&EIO=4&transport=websocket"
 ```
 
-### 08:58:10.310   <-  John Smith      [Transport Engine.IO] open
+### 08:58:10.310   <-  Alice      [Transport Engine.IO] open
 
 ```json
 {
@@ -21,7 +21,7 @@
 }
 ```
 
-### 08:58:10.465   <-  John Smith      license
+### 08:58:10.465   <-  Alice      license
 
 ```json
 {
@@ -43,7 +43,7 @@
 }
 ```
 
-### 08:58:10.563   ->  John Smith      auth
+### 08:58:10.563   ->  Alice      auth
 
 ```json
 {
@@ -51,8 +51,8 @@
   "docid": "32965127-3f24-4b0d-9759-be2515530d61",
   "token": "fghhfgsjdgfjs",
   "user": {
-    "id": "78e1e841",
-    "username": "John Smith",
+    "id": "de10a11cec0010000000000000000000",
+    "username": "Alice",
     "firstname": null,
     "lastname": null,
     "indexUser": -1
@@ -68,7 +68,7 @@
   "openCmd": {
     "c": "open",
     "id": "32965127-3f24-4b0d-9759-be2515530d61",
-    "userid": "78e1e841",
+    "userid": "de10a11cec0010000000000000000000",
     "format": "docx",
     "url": "https://static.onlyoffice.com/assets/docs/samples/demo.docx",
     "title": "Example Document Title.docx",
@@ -93,7 +93,7 @@
 }
 ```
 
-### 08:58:10.739   <-  John Smith      auth
+### 08:58:10.739   <-  Alice      auth
 
 ```json
 {
@@ -103,9 +103,9 @@
   "sessionTimeConnect": 1788771490389,
   "participants": [
     {
-      "id": "78e1e8411",
-      "idOriginal": "78e1e841",
-      "username": "John Smith",
+      "id": "de10a11cec00100000000000000000001",
+      "idOriginal": "de10a11cec0010000000000000000000",
+      "username": "Alice",
       "indexUser": 1,
       "view": false,
       "connectionId": "5-InCfhp8AgLcw47AHyc",
@@ -138,7 +138,7 @@
 }
 ```
 
-### 08:58:11.172   <-  John Smith      documentOpen
+### 08:58:11.172   <-  Alice      documentOpen
 
 ```json
 {
@@ -154,7 +154,7 @@
 }
 ```
 
-### 08:58:11.798   ->  John Smith      clientLog
+### 08:58:11.798   ->  Alice      clientLog
 
 ```json
 {
@@ -164,7 +164,7 @@
 }
 ```
 
-### 08:58:11.902   ->  John Smith      clientLog
+### 08:58:11.902   ->  Alice      clientLog
 
 ```json
 {
@@ -174,7 +174,7 @@
 }
 ```
 
-### 08:58:12.004   ->  John Smith      clientLog
+### 08:58:12.004   ->  Alice      clientLog
 
 ```json
 {
@@ -184,7 +184,7 @@
 }
 ```
 
-### 08:58:12.293   ->  John Smith      getMessages
+### 08:58:12.293   ->  Alice      getMessages
 
 ```json
 {
@@ -192,7 +192,7 @@
 }
 ```
 
-### 08:58:12.294   ->  John Smith      clientLog
+### 08:58:12.294   ->  Alice      clientLog
 
 ```json
 {
@@ -202,7 +202,7 @@
 }
 ```
 
-### 08:58:12.446   <-  John Smith      message
+### 08:58:12.446   <-  Alice      message
 
 ```json
 {

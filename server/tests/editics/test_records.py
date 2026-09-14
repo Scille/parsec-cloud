@@ -69,19 +69,20 @@ def _parse_record(record: str) -> list[RecordEvent]:
         type_ = e1.group("type")
 
         # Patch the non-deterministic fields from the server events
-        if direction == "server-to-client" and type_ == "auth":
-            # Hardcoded values in `client/editics/protocol.js`
-            payload["hasForgotten"] = False
-            payload["jwt"] = ""
-            payload["g_cAscSpellCheckUrl"] = ""
-            payload["buildVersion"] = ""
-            payload["buildNumber"] = 0
-            payload["licenseType"] = 0
-            for field in ("sessionId", "sessionTimeConnect", "openedAt"):
-                if field in payload:
-                    payload[field] = TypePlaceholder(payload[field])
-            for p in payload["participants"]:
-                p["connectionId"] = TypePlaceholder(p["connectionId"])
+        if direction == "server-to-client":
+            if type_ == "auth":
+                # Hardcoded values in `client/editics/protocol.js`
+                payload["hasForgotten"] = False
+                payload["jwt"] = ""
+                payload["g_cAscSpellCheckUrl"] = ""
+                payload["buildVersion"] = ""
+                payload["buildNumber"] = 0
+                payload["licenseType"] = 0
+                for field in ("sessionId", "sessionTimeConnect", "openedAt"):
+                    if field in payload:
+                        payload[field] = TypePlaceholder(payload[field])
+                for p in payload["participants"]:
+                    p["connectionId"] = TypePlaceholder(p["connectionId"])
 
         events.append(
             RecordEvent(
@@ -100,7 +101,7 @@ type OOEvent = dict[str, Any]
 "JSON-based OnlyOffice protocol event"
 
 
-# TODO
+# TODO: Needed more complex test scenarios
 @dataclass(slots=True)
 class RecordPart:
     """
@@ -192,6 +193,12 @@ async def _do_test_record(
                 # see https://github.com/cryptpad/onlyoffice-editor/blame/b5d78add4608a76b28d14467d44c5c001da768db/sdkjs/common/docscoapi.js#L1783
                 continue
 
+            elif event.type == "documentOpen":
+                # In the OnlyOffice fork we use, the client sends its own `documentOpen`
+                # event when it receives the server `auth` event.
+                # See https://github.com/cryptpad/onlyoffice-editor/blob/b5d78add4608a76b28d14467d44c5c001da768db/onlyoffice-editor/src/index.ts#L155-L160
+                continue
+
             match event.direction:
                 case "client-to-server":
                     maybe_server_event = await running_js_clients[
@@ -254,6 +261,7 @@ async def _do_test_record(
                                 )
 
                             raise
+        tg.cancel()  # Test is done, stop the editics JavaScript clients
 
 
 # Generate one test per record file (e.g. `records/0_auth.md` -> `test_0_auth`)

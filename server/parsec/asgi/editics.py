@@ -12,11 +12,10 @@ Editics ASGI routes:
 from __future__ import annotations
 
 from collections.abc import AsyncIterable
-from typing import Annotated
 from uuid import UUID
 
 from anyio.streams.memory import MemoryObjectReceiveStream
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse
 from pydantic import BaseModel
@@ -88,11 +87,12 @@ async def editics_join(
     raw_realm_id: str,
     raw_document_id: str,
     request: Request,
-    last_event_id: Annotated[int | None, Header()] = None,
 ) -> AsyncIterable[EditicsProtocolServerEvent]:
-    backend: Backend = request.app.state.backend
+    # Note we do not handle SSE's last-event-ID here, this is because OnlyOffice
+    # protocol (on which the editics protocol is based) already has its own
+    # re-connection logic
 
-    # TODO: handle last_event_id
+    backend: Backend = request.app.state.backend
 
     # TODO: add test to check request missing the `Accept: text/event-stream` header
     # TODO: add tests to check request with incorrect organization/realm/document ID
@@ -108,7 +108,6 @@ async def editics_join(
         participant_id,
         realm_id,
         document_id,
-        last_event_id=last_event_id,
     ) as outcome:
         match outcome:
             case MemoryObjectReceiveStream() as channel_receive:

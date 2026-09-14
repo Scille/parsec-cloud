@@ -19,6 +19,8 @@ from parsec.editics_protocol import (
     EditicsProtocolParticipantEntry,
     EditicsProtocolServerEvent,
     EditicsProtocolServerEventAuth,
+    EditicsProtocolServerEventMessage,
+    MessageRecord,
 )
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
@@ -121,7 +123,6 @@ class BaseEditicsComponent:
         participant_id: UUID,
         realm_id: VlobID,
         document_id: VlobID,
-        last_event_id: int | None = None,
     ) -> AsyncGenerator[EditicsSessionJoinEventStream | EditicsJoinSessionBadOutcome]:
         try:
             session = self._sessions[(organization_id, realm_id, document_id)]
@@ -171,10 +172,24 @@ class BaseEditicsComponent:
         document_id: VlobID,
         event: EditicsProtocolClientEvent,
     ) -> EditicsProtocolServerEvent | EditicsSendInSessionBadOutcome | None:
+        try:
+            session = self._sessions[(organization_id, realm_id, document_id)]
+        except KeyError:
+            raise NotImplementedError  # TODO
+
         match event.type:
             case "auth":
                 pass
-            case "message":
-                pass
+            case "getMessages":
+                return EditicsProtocolServerEventMessage(
+                    messages=[
+                        MessageRecord(
+                            time=m.time_ms,
+                            authorIndexUser=m.author_index_user,
+                            encryptedMessage=m.encrypted_message,
+                        )
+                        for m in session.chat_messages
+                    ],
+                )
             case _:
                 raise NotImplementedError(event)  # TODO

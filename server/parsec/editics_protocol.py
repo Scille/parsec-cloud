@@ -77,12 +77,12 @@ class EditicsProtocolClientEventAuthChangesAck(BaseModel):
     type: Literal["authChangesAck"] = "authChangesAck"
 
 
-class EditicsProtocolClientEventMessage(BaseModel):
-    """OnlyOffice `message` (c->s). Name kept. The chat message is encrypted
-    (§2.4); renamed to `encryptedMessage` per RFC §2.2 editics changes."""
+class EditicsProtocolClientEventGetMessages(BaseModel):
+    type: Literal["getMessages"] = "getMessages"
 
+
+class EditicsProtocolClientEventMessage(BaseModel):
     type: Literal["message"] = "message"
-    # base64 over JSON (§2.4). Opaque; the server never inspects the content.
     encryptedMessage: bytes
 
 
@@ -194,6 +194,7 @@ EditicsProtocolClientEvent = Annotated[
     EditicsProtocolClientEventAuth
     | EditicsProtocolClientEventAuthChangesAck
     | EditicsProtocolClientEventMessage
+    | EditicsProtocolClientEventGetMessages
     | EditicsProtocolClientEventCursor
     | EditicsProtocolClientEventGetLock
     | EditicsProtocolClientEventIsSaveLock
@@ -211,36 +212,12 @@ EditicsProtocolClientEventAdapter = TypeAdapter(EditicsProtocolClientEvent)
 
 
 class EditicsProtocolServerEventAuth(BaseModel):
-    """OnlyOffice server `auth` reply, trimmed. Name kept.
-
-    See RFC §2.2 / todo step_0 §4.4 for the fields dropped from the OnlyOffice
-    `auth` (server->client): jwt, messages, locks, hasForgotten,
-    g_cAscSpellCheckUrl, buildVersion, buildNumber, licenseType, settings,
-    openedAt, docid (carried by the URL path). The change backlog is NOT folded
-    in: it is delivered as a separate `authChanges` SSE event (RFC §2.2).
-    """
-
     type: Literal["auth"] = "auth"
-    result: int = 1  # 1 = success (OnlyOffice convention)
     participants: list[EditicsProtocolParticipantEntry]  # current participant map
     indexUser: EditicsProtocolIndexUser  # this connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
     sessionId: str
     sessionTimeConnect: int  # server timestamp (ms) at connect
-
-
-class EditicsProtocolServerEventAuthRejected(BaseModel):
-    """`auth` reply shape reused for rejection (RFC §1.2).
-
-    On rejection the RPC returns this instead of `EditicsProtocolServerEventAuth`, with a
-    non-success `result` and the allowed version. OnlyOffice uses `result`
-    codes; we reuse the field (bad name documented at the definition site).
-    """
-
-    type: Literal["auth_rejected"] = "auth_rejected"  # TODO: dummy type not to clash with auth
-    result: int = 0  # 0 = rejected (OnlyOffice: non-1 = failure)
-    # RFC §1.2: the version the client should reload to before retrying.
-    latestAllowedVersion: int
 
 
 class EditicsProtocolServerEventConnectState(BaseModel):
@@ -297,13 +274,6 @@ class MessageRecord(BaseModel):
 
 
 class EditicsProtocolServerEventMessage(BaseModel):
-    """OnlyOffice `message` (s->c). Name kept. Per RFC §2.2 editics changes:
-    drop `docid`; replace `user`/`useridoriginal`/`username` by `authorIndexUser`;
-    `message` -> `encryptedMessage` (bytes, §2.4). OnlyOffice wraps the payload
-    in `messages: [...]`; we keep the array shape (bad name documented) for
-    translation-layer symmetry. In step 1 the server sends exactly one entry
-    per broadcast (to all participants, including the sender, §6.4)."""
-
     type: Literal["message"] = "message"
     messages: list[MessageRecord]
 
@@ -447,7 +417,6 @@ class EditicsProtocolServerEventWarning(BaseModel):
 
 EditicsProtocolServerEvent = Annotated[
     EditicsProtocolServerEventAuth
-    | EditicsProtocolServerEventAuthRejected
     | EditicsProtocolServerEventConnectState
     | EditicsProtocolServerEventAuthChanges
     | EditicsProtocolServerEventWaitAuth

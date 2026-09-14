@@ -7,17 +7,16 @@ import json
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 from uuid import UUID, uuid4
 
-import anyio
 import httpx_sse
 import py_mini_racer
 import pytest
 from py_mini_racer import JSPromise
 from pydantic import BaseModel
 
-from parsec._parsec import DeviceID, UserID, VlobID
+from parsec._parsec import VlobID
 from parsec.editics_protocol import (
     EditicsProtocolClientEvent,
     EditicsProtocolServerEvent,
@@ -151,58 +150,6 @@ class EditicsJSRuntime:
 
         self._js_runtime.eval("globalThis.__editics_instances = {};")
 
-        self._per_participant_libparsec_callback: dict[str, Callable[..., Awaitable[Any]]] = {}
-
-        async def _libparsec_callback(
-            participant_id_hex: str,
-            method_name: Literal["resolveUser"] | Literal["encrypt"] | Literal["decrypt"],
-            *args,
-        ):
-            breakpoint()
-            match method_name:
-                case "resolveUser":
-                    (raw_device_id,) = args
-                    device_id = DeviceID.from_hex(raw_device_id)
-                    match device_id.test_nickname:
-                        case "alice@dev1":
-                            return [UserID.test_from_nickname("alice").hex, "Alice"]
-                        case "bob@dev1":
-                            return [UserID.test_from_nickname("bob").hex, "Bob"]
-                        case _:
-                            assert False, f"Unknown device ID {device_id}"
-
-                case "encrypt":
-                    (cleartext,) = args
-                    assert isinstance(cleartext, bytes)
-                    key_index = 1
-                    ciphertext = f"encrypted.{key_index}.".encode("ascii") + cleartext
-                    return [key_index, ciphertext]
-
-                case "decrypt":
-                    (ciphertext,) = args
-                    assert isinstance(ciphertext, bytes)
-                    (header, raw_key_index, cleartext) = ciphertext.split(b".", 2)
-                    assert header == b"encrypted"
-                    assert raw_key_index == "1"
-                    return cleartext
-
-            return await self._per_participant_libparsec_callback[participant_id_hex](
-                method_name, *args
-            )
-
-        async def _connect_libparsec_callback():
-            async with self._js_runtime.wrap_py_function(
-                _libparsec_callback
-            ) as libparsec_callback_js:
-                self._js_runtime.eval("globalThis")["__libparsecCallback"] = libparsec_callback_js
-                await anyio.sleep_forever()
-
-        assert self._js_runtime._ctx is not None
-        loop = self._js_runtime._ctx.event_loop
-        self._libparsec_callback_js_future = asyncio.run_coroutine_threadsafe(
-            _connect_libparsec_callback(), loop
-        )
-
     @asynccontextmanager
     async def new_client(
         self,
@@ -215,9 +162,6 @@ class EditicsJSRuntime:
         participant_id = uuid4()
         participant_id_hex = participant_id.hex
 
-        self._per_participant_libparsec_callback[participant_id_hex] = None
-
-        # TODO: mock capabilities callbacks
         self._js_runtime.eval(
             f"""
             globalThis.__editics_instances['{participant_id_hex}'] = new globalThis.__EditicsTranslator({{
@@ -229,9 +173,49 @@ class EditicsJSRuntime:
                 vlobVersion: {vlob_version},
                 editorType: {editor_type},
                 capabilities: {{
-                    resolveUser: (deviceId) => globalThis.__libparsecCallback('{participant_id_hex}', 'resolveUser', deviceId),
-                    encrypt: (cleartext) => globalThis.__libparsecCallback('{participant_id_hex}', 'encrypt', cleartext),
-                    decrypt: (ciphertext) => globalThis.__libparsecCallback('{participant_id_hex}', 'decrypt', ciphertext),
+                    getHumanLabelFromDeviceId: (deviceId) => {{
+                        // Hardcoded common values used for the test
+                        switch (deviceId) {{
+                            case "de10a11cec0010000000000000000000":
+                              return "Alice";
+                            case "de10808c001000000000000000000000":
+                              return "Bob";
+                            default:
+                              throw new Error(`Unknown device ID (you may want to patch the test code): ${{ deviceId }}`)
+                        }}
+                    }},
+                    encrypt: (cleartext) => {{
+                        const keyIndex = 1;
+                        const prefix = new TextEncoder().encode(`encrypted.${{keyIndex}}.`);
+                        const ciphertext = new Uint8Array(prefix.length + cleartext.length);
+                        ciphertext.set(prefix, 0);
+                        ciphertext.set(cleartext, prefix.length);
+                        return [keyIndex, ciphertext];
+                    }},
+                    decrypt: (ciphertext) => {{
+                        const textDecoder = new TextDecoder();
+                        const prefix = "encrypted.";
+
+                        // Decode the whole thing as ASCII to find the prefix
+                        const asString = textDecoder.decode(ciphertext);
+                        if (!asString.startsWith(prefix)) {{
+                            throw new Error("Invalid ciphertext: missing encryption prefix");
+                        }}
+
+                        // Find the end of the prefix: "encrypted.{{keyIndex}}."
+                        const firstDot = prefix.length; // index of the first dot after "encrypted"
+                        const secondDot = asString.indexOf(".", firstDot + 1);
+                        if (secondDot === -1) {{
+                            throw new Error("Invalid ciphertext: missing key index end delimiter");
+                        }}
+
+                        const keyIndex = parseInt(asString.slice(firstDot + 1, secondDot), 10);
+                        if (keyIndex != 1) {{
+                            throw new Error(`Invalid keyIndex: Expected 1, got ${{keyIndex}}`);
+                        }}
+                        const cleartext = ciphertext.subarray(secondDot + 1);
+                        return cleartext;
+                    }},
                 }},
             }});
             """,
