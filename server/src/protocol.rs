@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::PyValueError,
     prelude::{PyAnyMethods, PyModuleMethods},
     pyclass, pymethods,
-    types::{PyInt, PyModule, PyType},
+    types::{PyDict, PyInt, PyList, PyModule, PyType},
     Bound, IntoPyObjectExt, Py, PyAny, PyResult, Python,
 };
 
@@ -72,6 +72,47 @@ impl ActiveUsersLimit {
             }
             libparsec_types::ActiveUsersLimit::NoLimit => None,
         }
+    }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let core_schema = py.import("pydantic_core")?.getattr("core_schema")?;
+
+        let int_schema = core_schema.call_method0("int_schema")?;
+        let nullable_int_schema = core_schema.call_method1("nullable_schema", (int_schema,))?;
+
+        let validator_kwargs = PyDict::new(py);
+
+        let ser_kwargs = PyDict::new(py);
+        ser_kwargs.set_item("return_schema", nullable_int_schema.clone())?;
+        ser_kwargs.set_item("when_used", "always")?;
+        let ser_schema = core_schema.call_method(
+            "plain_serializer_function_ser_schema",
+            (cls.getattr("to_maybe_int")?,),
+            Some(&ser_kwargs),
+        )?;
+        validator_kwargs.set_item("serialization", ser_schema)?;
+
+        let int_validator = core_schema.call_method(
+            "no_info_after_validator_function",
+            (cls.getattr("from_maybe_int")?, nullable_int_schema),
+            Some(&validator_kwargs),
+        )?;
+
+        let instance_schema = core_schema.call_method1("is_instance_schema", (cls,))?;
+
+        let union_schema = core_schema.call_method1(
+            "union_schema",
+            (PyList::new(py, vec![instance_schema, int_validator])?,),
+        )?;
+
+        Ok(union_schema)
     }
 }
 

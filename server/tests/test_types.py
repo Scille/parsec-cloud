@@ -21,13 +21,11 @@ from parsec.types import (
     AccessToken,
     ActiveUsersLimitField,
     Base64BytesField,
-    DateTimeField,
     DeviceIDField,
     EmailAddressField,
     GreetingAttemptIDField,
     InvitationStatusField,
     InvitationTokenField,
-    OrganizationIDField,
     RealmRoleField,
     SequesterServiceIDField,
     Unset,
@@ -44,7 +42,7 @@ class AllTypesSchema(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
 
     base64_bytes: Base64BytesField | UnsetType = Unset
-    organization_id: OrganizationIDField | UnsetType = Unset
+    organization_id: OrganizationID | UnsetType = Unset
     user_id: UserIDField | UnsetType = Unset
     device_id: DeviceIDField | UnsetType = Unset
     sequester_service_id: SequesterServiceIDField | UnsetType = Unset
@@ -53,7 +51,7 @@ class AllTypesSchema(BaseModel):
     invitation_status: InvitationStatusField | UnsetType = Unset
     realm_role: RealmRoleField | UnsetType = Unset
     vlob_id: VlobIDField | UnsetType = Unset
-    date_time: DateTimeField | UnsetType = Unset
+    date_time: DateTime | UnsetType = Unset
     user_profile: UserProfileField | UnsetType = Unset
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     email_address: EmailAddressField | UnsetType = Unset
@@ -117,7 +115,14 @@ def test_good(field: str):
     out = AllTypesSchema(**data)  # type: ignore
     assert getattr(out, field) == expected
     # serialization
-    dump = {k: v for k, v in out.model_dump().items() if k in data.keys()}
+    dump = {
+        k: v
+        for k, v in out.model_dump(
+            # Set `mode` to force usage of primitive type
+            mode="json"
+        ).items()
+        if k in data.keys()
+    }
     assert dump == data
 
 
