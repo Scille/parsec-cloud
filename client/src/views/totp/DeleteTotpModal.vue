@@ -80,7 +80,7 @@ import {
   updateDeviceChangeAuthentication,
 } from '@/parsec';
 import { Env } from '@/services/environment';
-import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
+import PromptCurrentAuthentication from '@/views/authentication/PromptCurrentAuthentication.vue';
 import { IonPage, IonText, modalController } from '@ionic/vue';
 import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
 import { computed, onMounted, ref, toRaw } from 'vue';

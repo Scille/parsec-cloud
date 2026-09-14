@@ -79,6 +79,8 @@ export {
   RealmArchivingConfigurationTag,
   RequestedRealmArchivingConfigurationTag,
   SelfShamirRecoveryInfoTag,
+  ShamirRecoveryClaimMaybeFinalizeInfoTag,
+  ShamirRecoveryClaimMaybeRecoverDeviceInfoTag,
   ShowCertificateSelectionDialogErrorTag,
   SubmitAsyncEnrollmentErrorTag,
   SubmitAsyncEnrollmentIdentityStrategyTag,
@@ -136,7 +138,9 @@ export type {
   AccountRecoverSendValidationEmailError,
   AccountRegisterNewDeviceError,
   AccountVaultItemOpaqueKeyID,
+  AnyClaimRetrievedInfo,
   AnyClaimRetrievedInfoDevice,
+  AnyClaimRetrievedInfoShamirRecovery,
   AnyClaimRetrievedInfoUser,
   ApiVersion,
   ArchiveDeviceError,
@@ -193,6 +197,7 @@ export type {
   ClientShareWorkspaceError,
   ClientStartError,
   ClientStartInvitationGreetError,
+  ClientStartShamirRecoveryInvitationGreetError,
   ClientStartWorkspaceError,
   ClientStopError,
   ClientTotpCreateOpaqueKeyError,
@@ -259,6 +264,23 @@ export type {
   Result,
   SASCode,
   SecretKey,
+  ShamirRecoveryClaimAddShareError,
+  ShamirRecoveryClaimInitialInfo,
+  ShamirRecoveryClaimInProgress1Info,
+  ShamirRecoveryClaimInProgress2Info,
+  ShamirRecoveryClaimInProgress3Info,
+  ShamirRecoveryClaimMaybeFinalizeInfo,
+  ShamirRecoveryClaimMaybeRecoverDeviceInfo,
+  ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient,
+  ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice,
+  ShamirRecoveryClaimPickRecipientError,
+  ShamirRecoveryClaimRecoverDeviceError,
+  ShamirRecoveryClaimShareInfo,
+  ShamirRecoveryGreetInitialInfo,
+  ShamirRecoveryGreetInProgress1Info,
+  ShamirRecoveryGreetInProgress2Info,
+  ShamirRecoveryGreetInProgress3Info,
+  ShamirRecoveryRecipient,
   ShowCertificateSelectionDialogError,
   SizeInt,
   SubmitAsyncEnrollmentError,
@@ -365,6 +387,8 @@ type MountpointHandle = Handle;
 type SystemPath = Path;
 type AccountHandle = Handle;
 type PkiHandle = Handle;
+type ExchangeHandle = Handle;
+type CancelHandle = Handle;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean;
@@ -595,6 +619,7 @@ export {
   AccountInvitation,
   AsyncEnrollmentRequest,
   AuthMethodInfo,
+  CancelHandle,
   CertificatePart,
   CertificatePurpose,
   CertificateWithDetailsValid,
@@ -606,6 +631,7 @@ export {
   EntryStat,
   EntryStatFile,
   EntryStatFolder,
+  ExchangeHandle,
   FsPath,
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,

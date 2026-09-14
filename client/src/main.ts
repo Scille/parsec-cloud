@@ -46,6 +46,8 @@ import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
 import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, ThemeManager, askQuestion } from 'megashark-lib';
 
+(window as any).DEV_TESTBED_TEMPLATE = 'shamir';
+
 enum AppState {
   Ready = 'ready',
   Initializing = 'initializing',
@@ -474,7 +476,10 @@ async function setupApp(): Promise<void> {
     window.nativeAPI.log('debug', msg);
 
     // Dev mode, provide a default testbed
-    const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.PARSEC_APP_TESTBED_SERVER);
+    const configResult = await libparsec.testNewTestbed(
+      (window as any).DEV_TESTBED_TEMPLATE ?? 'coolorg',
+      import.meta.env.PARSEC_APP_TESTBED_SERVER,
+    );
     if (configResult.ok) {
       nextStage(configResult.value); // Fire-and-forget call
     } else {

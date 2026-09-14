@@ -1,8 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { getClientConfig } from '@/parsec/internals';
 import { getClientInfo } from '@/parsec/login';
 import {
   AccessToken,
+  AnyClaimRetrievedInfo,
+  ClaimerRetrieveInfoError,
   ClientCancelInvitationError,
   ClientInfo,
   ClientNewUserInvitationError,
@@ -89,4 +92,8 @@ export async function cancelInvitation(token: AccessToken): Promise<Result<null,
     return await libparsec.clientCancelInvitation(handle, token);
   }
   return generateNoHandleError<ClientCancelInvitationError>();
+}
+
+export async function retrieveInvitationInfo(link: string): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>> {
+  return await libparsec.claimerRetrieveInfo(getClientConfig(), link);
 }
