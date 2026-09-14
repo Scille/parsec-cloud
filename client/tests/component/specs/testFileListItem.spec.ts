@@ -1,12 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockLibParsec } from '@tests/component/support/mocks';
-
-mockLibParsec();
-
 import { FileModel, FolderModel } from '@/components/files';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import { FileType, UserInfo, UserProfile } from '@/parsec';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
