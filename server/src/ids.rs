@@ -2,7 +2,11 @@
 
 use std::str::FromStr;
 
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
+use pyo3::{
+    exceptions::PyValueError,
+    prelude::*,
+    types::{PyType, PyTypeMethods},
+};
 
 // UUID based type
 
@@ -203,7 +207,12 @@ impl OrganizationID {
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             }
         } else {
-            Err(PyValueError::new_err("Unimplemented"))
+            // NOTE: We return `ValueError` instead of `TypeError` to be able to use it with
+            // pydantic `PlainValidator`
+            Err(PyValueError::new_err(format!(
+                "Does not support converting {} to OrganizationID",
+                organization_id.get_type().name()?.to_str()?
+            )))
         }
     }
 
@@ -211,7 +220,36 @@ impl OrganizationID {
     fn str(&self) -> &str {
         self.0.as_ref()
     }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{inner::CoreSchemaModule, str_like_validator};
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        str_like_validator!(
+            core_schema,
+            cls,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            ser = core_schema.to_string_ser_schema()?,
+            // Use constructor to deserialize the value
+            der = cls,
+            py
+        )
+    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(
+    OrganizationID,
+    type = "string",
+    description = "The organization name",
+    examples = ["MyOrganization"]
+);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     UserID,

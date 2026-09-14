@@ -9,18 +9,18 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    OrganizationID,
     UserProfile,
     authenticated_cmds,
 )
 from parsec.types import (
-    ActiveUsersLimitField,
     Base64BytesField,
-    DateTimeField,
     DeviceIDField,
     GreetingAttemptIDField,
     InvitationStatusField,
     InvitationTokenField,
-    OrganizationIDField,
     UserIDField,
     UserProfileField,
     VlobIDField,
@@ -68,7 +68,7 @@ class EventPinged(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["PINGED"] = "PINGED"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     ping: str
 
     @override
@@ -97,7 +97,7 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["INVITATION"] = "INVITATION"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     token: InvitationTokenField
     possible_greeters: set[UserIDField]
     status: InvitationStatusField
@@ -131,7 +131,7 @@ class EventGreetingAttemptReady(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["GREETING_ATTEMPT_READY"] = "GREETING_ATTEMPT_READY"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     token: InvitationTokenField
     greeter: UserIDField
     greeting_attempt: GreetingAttemptIDField
@@ -162,7 +162,7 @@ class EventGreetingAttemptCancelled(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["GREETING_ATTEMPT_CANCELLED"] = "GREETING_ATTEMPT_CANCELLED"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     token: InvitationTokenField
     greeter: UserIDField
     greeting_attempt: GreetingAttemptIDField
@@ -193,7 +193,7 @@ class EventGreetingAttemptJoined(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["GREETING_ATTEMPT_JOINED"] = "GREETING_ATTEMPT_JOINED"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     token: InvitationTokenField
     greeter: UserIDField
     greeting_attempt: GreetingAttemptIDField
@@ -225,7 +225,7 @@ class EventPkiEnrollment(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["PKI_ENROLLMENT"] = "PKI_ENROLLMENT"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -252,7 +252,7 @@ class EventAsyncEnrollment(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ASYNC_ENROLLMENT"] = "ASYNC_ENROLLMENT"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -279,15 +279,15 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["VLOB"] = "VLOB"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     author: DeviceIDField
     realm_id: VlobIDField
-    timestamp: DateTimeField
+    timestamp: DateTime
     vlob_id: VlobIDField
     version: int
     blob: Base64BytesField | None
-    last_common_certificate_timestamp: DateTimeField
-    last_realm_certificate_timestamp: DateTimeField
+    last_common_certificate_timestamp: DateTime
+    last_realm_certificate_timestamp: DateTime
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -330,8 +330,8 @@ class EventCommonCertificate(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(strict=True)
     type: Literal["COMMON_CERTIFICATE"] = "COMMON_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
-    timestamp: DateTimeField
+    organization_id: OrganizationID
+    timestamp: DateTime
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -358,8 +358,8 @@ class EventSequesterCertificate(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["SEQUESTER_CERTIFICATE"] = "SEQUESTER_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
-    timestamp: DateTimeField
+    organization_id: OrganizationID
+    timestamp: DateTime
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -390,8 +390,8 @@ class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["SHAMIR_RECOVERY_CERTIFICATE"] = "SHAMIR_RECOVERY_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
-    timestamp: DateTimeField
+    organization_id: OrganizationID
+    timestamp: DateTime
     participants: tuple[UserIDField, ...]
 
     @override
@@ -428,8 +428,8 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["REALM_CERTIFICATE"] = "REALM_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
-    timestamp: DateTimeField
+    organization_id: OrganizationID
+    timestamp: DateTime
     realm_id: VlobIDField
     user_id: UserIDField
     role_removed: bool
@@ -461,9 +461,9 @@ class EventOrganizationConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_CONFIG"] = "ORGANIZATION_CONFIG"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     user_profile_outsider_allowed: bool
-    active_users_limit: ActiveUsersLimitField
+    active_users_limit: ActiveUsersLimit
     realm_minimum_archiving_period_before_deletion: int
 
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -491,7 +491,7 @@ class EventOrganizationExpired(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_EXPIRED"] = "ORGANIZATION_EXPIRED"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
 
 
 class EventOrganizationTosUpdated(BaseModel):
@@ -507,7 +507,7 @@ class EventOrganizationTosUpdated(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_TOS_UPDATED"] = "ORGANIZATION_TOS_UPDATED"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
 
 
 class EventUserRevokedOrFrozen(BaseModel):
@@ -522,7 +522,7 @@ class EventUserRevokedOrFrozen(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["USER_REVOKED_OR_FROZEN"] = "USER_REVOKED_OR_FROZEN"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     user_id: UserIDField
 
 
@@ -536,7 +536,7 @@ class EventUserUnfrozen(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["USER_UNFROZEN"] = "USER_UNFROZEN"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     user_id: UserIDField
 
 
@@ -551,7 +551,7 @@ class EventUserUpdated(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["USER_UPDATED"] = "USER_UPDATED"
     event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
+    organization_id: OrganizationID
     user_id: UserIDField
     new_profile: UserProfileField
 
