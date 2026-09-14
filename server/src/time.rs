@@ -152,4 +152,39 @@ impl DateTime {
             + microseconds as i64;
         Ok(Self(self.0.add_us(us)))
     }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{
+            inner::CoreSchemaModule, str_like_serializer, str_like_validator,
+        };
+
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        // Serialize into string using `Self::to_rfc3339`
+        let ser_schema = str_like_serializer!(core_schema, cls.getattr("to_rfc3339")?, py)?;
+
+        str_like_validator!(
+            core_schema,
+            cls,
+            ser = ser_schema,
+            // Validate string using `Self::from_rfc3339`
+            der = cls.getattr("from_rfc3339")?,
+            py
+        )
+    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(
+    DateTime,
+    type="string",
+    format="date-time",
+    description="A datetime in RFC 3339 format",
+    examples=["2024-08-31T10:15:18Z"]
+);
