@@ -37,7 +37,7 @@
         "knip:fix": "knip --fix"
     },
     "dependencies": {
-        "@capacitor/core": "^8.5.0",
+        "@capacitor/core": "^8.5.1",
         "@ionic/core": "^8.8.18",
         "@ionic/storage": "^4.0.0",
         "@ionic/vue": "^8.8.18",
