@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import override
 
 import anyio
-from anyio.abc import CancelScope, TaskGroup
+from anyio.abc import TaskGroup
 
 from parsec._parsec import BlockID, OrganizationID
 from parsec.components.blockstore import (
@@ -64,7 +64,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
         at_least_one_error = False
 
         async def _single_blockstore_create(
-            cancel_scope: CancelScope, blockstore: BaseBlockStoreComponent
+            cancel_scope: anyio.CancelScope, blockstore: BaseBlockStoreComponent
         ) -> None:
             nonlocal at_least_one_success
             nonlocal at_least_one_error
