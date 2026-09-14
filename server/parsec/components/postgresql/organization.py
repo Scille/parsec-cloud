@@ -33,6 +33,7 @@ from parsec.components.organization import (
     TermsOfService,
     TosLocale,
     TosUrl,
+    WipeOrganizationBadOutcome,
 )
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization_bootstrap import organization_bootstrap
@@ -47,6 +48,7 @@ from parsec.components.postgresql.organization_stats import (
 )
 from parsec.components.postgresql.organization_test_dump_topics import organization_test_dump_topics
 from parsec.components.postgresql.organization_update import organization_update
+from parsec.components.postgresql.organization_wipe import organization_wipe
 from parsec.components.postgresql.test_queries import (
     q_test_drop_organization,
     q_test_duplicate_organization,
@@ -361,6 +363,13 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self, conn: AsyncpgConnection, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
         return await organization_list_organizations(conn, skip_templates)
+
+    @override
+    @transaction
+    async def wipe_organization(
+        self, conn: AsyncpgConnection, id: OrganizationID
+    ) -> WipeOrganizationBadOutcome | None:
+        return await organization_wipe(conn, id)
 
     @override
     @no_transaction

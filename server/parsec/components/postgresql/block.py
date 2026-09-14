@@ -32,6 +32,9 @@ from parsec.components.postgresql.utils import (
     transaction,
 )
 from parsec.components.realm import BadKeyIndex
+from parsec.logging import get_logger
+
+logger = get_logger()
 
 
 class PGBlockComponent(BaseBlockComponent):
@@ -99,6 +102,11 @@ VALUES ($organization_id, $block_id, $data)
 """
 )
 
+_q_delete_block_data_of_org_id = Q("""
+DELETE FROM block_data
+WHERE organization_id = $organization_id
+""")
+
 
 class PGBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, pool: AsyncpgPool):
@@ -132,3 +140,16 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
             except UniqueViolationError:
                 # Keep calm and stay idempotent
                 pass
+
+    async def wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        async with self.pool.acquire() as conn:
+            ret = await conn.execute(
+                *_q_delete_block_data_of_org_id(organization_id=organization_id.str)
+            )
+            # Retrieve affected rows from message `DELETE N`
+            count = int(ret.split()[-1])
+            logger.info(
+                "Wiped organization data",
+                organization_id=organization_id,
+                deleted_block_data=count,
+            )
