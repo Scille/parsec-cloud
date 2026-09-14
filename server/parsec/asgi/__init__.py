@@ -19,13 +19,13 @@ from fastapi.templating import Jinja2Templates
 from starlette.datastructures import Headers
 from starlette.staticfiles import PathLike
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
-from structlog import get_logger
 
 from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
 from parsec.asgi.redirect import redirect_router
 from parsec.asgi.rpc import Backend, rpc_router
 from parsec.config import BackendConfig
+from parsec.logging import get_logger
 
 logger = get_logger()
 

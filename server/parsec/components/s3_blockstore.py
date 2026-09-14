@@ -10,6 +10,7 @@ import anyio
 # see https://github.com/microsoft/pyright/issues/10912
 import anyio.to_thread
 import boto3
+from botocore.client import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 from parsec._parsec import BlockID, OrganizationID
@@ -38,14 +39,13 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
         s3_secret: str,
         s3_endpoint_url: str | None = None,
     ):
-        self._s3_bucket = None
-        self._s3 = boto3.client(
-            "s3",
+        self._s3_session = boto3.Session(
             region_name=s3_region,
             aws_access_key_id=s3_key,
             aws_secret_access_key=s3_secret,
-            endpoint_url=s3_endpoint_url,
         )
+        config = Config()
+        self._s3 = self._s3_session.client("s3", config=config, endpoint_url=s3_endpoint_url)
         self._s3_bucket = s3_bucket
         self._s3.head_bucket(Bucket=s3_bucket)
         self._logger = logger.bind(blockstore_type="S3", s3_region=s3_region, s3_bucket=s3_bucket)
@@ -87,3 +87,22 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
                 exc_info=exc,
             )
             return BlockStoreCreateBadOutcome.STORE_UNAVAILABLE
+
+    async def wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        await anyio.to_thread.run_sync(
+            partial(self.sync_wipe_organization_data, organization_id=organization_id)
+        )
+
+    def sync_wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        # Each object uploaded to the bucket are prefixed by the org id
+        prefix = f"{organization_id}/"
+
+        # Get Bucket resource
+        s3_resource = self._s3_session.resource(
+            "s3", config=self._s3.meta.config, endpoint_url=self._s3.meta.endpoint_url
+        )
+        bucket = s3_resource.Bucket(self._s3_bucket)
+
+        # Delete every objects and versions having the same prefix
+        # https://docs.aws.amazon.com/boto3/latest/reference/services/s3/bucket/object_versions.html
+        bucket.object_versions.filter(Prefix=prefix).delete()

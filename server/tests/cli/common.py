@@ -5,7 +5,7 @@ import os
 import re
 from functools import partial
 from pathlib import Path
-from typing import IO
+from typing import IO, Sequence
 
 try:
     import fcntl
@@ -196,11 +196,15 @@ async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
 
 
 async def cli_invoke_in_thread(
-    cmd: str, runner: CliRunner | None = None, input: str | None = None, env: dict[str, str] = {}
+    cmd: str | Sequence[str],
+    runner: CliRunner | None = None,
+    input: str | None = None,
+    env: dict[str, str] = {},
+    command: click.Command = cli,
 ) -> Result:
     runner = runner or CliRunner()
     # We must run the command from another thread given it will create it own asyncio loop
     # Pass DEBUG environment variable for better output on crash
     return await anyio.to_thread.run_sync(
-        lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1", **env})
+        lambda: runner.invoke(command, cmd, input=input, env={"DEBUG": "1", **env})
     )

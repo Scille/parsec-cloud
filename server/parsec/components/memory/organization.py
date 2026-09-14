@@ -41,6 +41,7 @@ from parsec.components.organization import (
     TermsOfService,
     TosLocale,
     TosUrl,
+    WipeOrganizationBadOutcome,
     organization_bootstrap_validate,
 )
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
@@ -456,3 +457,10 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     ) -> None:
         duplicated_org = self._data.organizations[source_id].clone_as(target_id)
         self._data.organizations[target_id] = duplicated_org
+
+    async def wipe_organization(self, id: OrganizationID) -> WipeOrganizationBadOutcome | None:
+        try:
+            # Enough to remove everything related to a given organization (users, data, ...)
+            del self._data.organizations[id]
+        except KeyError:
+            return WipeOrganizationBadOutcome.ORGANIZATION_NOT_FOUND

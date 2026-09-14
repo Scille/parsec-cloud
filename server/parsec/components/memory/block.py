@@ -18,6 +18,9 @@ from parsec.components.blockstore import (
     BlockStoreReadBadOutcome,
 )
 from parsec.components.memory.datamodel import MemoryBlock, MemoryDatamodel
+from parsec.logging import get_logger
+
+logger = get_logger()
 
 
 class MemoryBlockComponent(BaseBlockComponent):
@@ -186,3 +189,10 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
             return
 
         org.block_store[block_id] = block
+
+    async def wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        try:
+            del self._data.organizations[organization_id]
+        except KeyError:
+            logger.warn("Organization not found", organization_id=organization_id.str)
+            # Data already deleted, nothing to do.
