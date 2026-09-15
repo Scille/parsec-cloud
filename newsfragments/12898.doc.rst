@@ -1,1 +1,0 @@
-[Hosting] Added a section on setting up S3 storage

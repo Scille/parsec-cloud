@@ -1,1 +1,0 @@
-Enhanced application startup time, making it faster on slow internet connections and more stable on faster connections

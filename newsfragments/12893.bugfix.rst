@@ -1,1 +1,0 @@
-Fixed a bug where clicking on a collapsed breadcrumb would navigate to the first element on top of displaying the navigation popover

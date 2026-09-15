@@ -1,1 +1,0 @@
-Added auto numbering when creating multiple new files with the default name
