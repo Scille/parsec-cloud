@@ -1,7 +1,0 @@
-[CLI][Breaking] Add --auth common option to setup new authentication method.
-
-Impacted commands:
-- device import-recovery-device
-- organization bootstrap
-- invite claim (replaces use_keyring option)
-- device change-authentication (replaces password and keyring options)
