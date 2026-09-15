@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import json
-from datetime import timedelta
+import math
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from click.testing import CliRunner
@@ -13,11 +14,19 @@ from parsec.components.organization import Organization, OrganizationGetBadOutco
 from tests.common.client import CoolorgRpcClients
 
 
-def test_delete_old_organization_cmd(db_args: list[str], testbed: TestbedBackend):
+@pytest.mark.parametrize("kind", ("interval", "date"))
+def test_delete_old_organization_cmd(kind: str, db_args: list[str], testbed: TestbedBackend):
     runner = CliRunner()
-    args = [*db_args, "--remove-older-than=9999d", "--blockstore=MOCKED"]
+    now = datetime.now(tz=UTC)
+    args = [*db_args, "--blockstore=MOCKED"]
+    match kind:
+        case "interval":
+            args.append(f"--remove-older-than={math.ceil(now.timestamp())}s")
+        case "date":
+            args.append(f"--remove-date={datetime.fromtimestamp(0, tz=UTC).isoformat()}")
+        case _:
+            assert False
     result = runner.invoke(delete_old_organization.cmd, args)
-    # assert result.stderr_bytes == b""
     assert result.exception is None, result.exc_info[1]  # pyright: ignore[reportOptionalSubscript]
     assert result.exit_code == 0
     data = json.loads(result.stdout)

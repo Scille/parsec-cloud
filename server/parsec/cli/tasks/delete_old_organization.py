@@ -39,6 +39,9 @@ logger = get_logger()
 @click.option(
     "--remove-older-than", type=Duration(), help="Remove organization older than provided duration"
 )
+@click.option(
+    "--remove-date", type=DateTime.from_rfc3339, help="Remove organization older than provided date"
+)
 @db_server_options
 @blockstore_server_options
 # Add --log-level/--log-format/--log-file
@@ -49,7 +52,8 @@ logger = get_logger()
 @asyncio_run
 async def cmd(
     force: bool,
-    remove_older_than: timedelta,
+    remove_older_than: timedelta | None,
+    remove_date: DateTime | None,
     db: BaseDatabaseConfig,
     db_min_connections: int,
     db_max_connections: int,
@@ -68,7 +72,12 @@ async def cmd(
     debug: bool,
 ):
     now = datetime.now(tz=UTC)
-    old_date = now - remove_older_than
+    if remove_older_than:
+        old_date = DateTime.from_rfc3339((now - remove_older_than).isoformat())
+    elif remove_date:
+        old_date = remove_date
+    else:
+        raise click.UsageError("Must provide either `--remove-older-than` or `--remove-date`")
     logger.info("Will remove old organizations", old_date=old_date, interval=remove_older_than)
     await configure_sentry()
     config = BackendConfig(
@@ -82,9 +91,7 @@ async def cmd(
     )
 
     async with organization_component_factory(config) as component:
-        deleted_orgs = await delete_old_organizations(
-            DateTime.from_rfc3339(old_date.isoformat()), component
-        )
+        deleted_orgs = await delete_old_organizations(old_date, component)
 
     adapter = pydantic.TypeAdapter(list[OrganizationID])
     click.echo_via_pager(adapter.dump_json(deleted_orgs, indent=4).decode())
