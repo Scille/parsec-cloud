@@ -178,6 +178,12 @@ class Backend:
             if isinstance(event, testbed.TestbedEventBootstrapOrganization)
         )
         creation_date = boostrap_event.timestamp.add(days=-1)
+        logger.info(
+            "Load org template",
+            ord_id=org_id.str,
+            creation_date=creation_date,
+            template=template.id,
+        )
         match await self.organization.create(
             now=creation_date, id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
         ):
