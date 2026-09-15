@@ -4,47 +4,59 @@
   <component
     :is="viewerComponent"
     :content-info="contentInfo"
+    v-bind="viewerComponent === TextViewer ? { readOnly: readOnly } : {}"
+    v-on="viewerComponent === TextViewer ? { onSaveStateChange: onSaveStateChange } : {}"
   />
 </template>
 
 <script setup lang="ts">
 import { FileContentType } from '@/common/fileTypes';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { AudioViewer, ImageViewer, PdfViewer, VideoViewer } from '@/views/files/handler/viewer';
+import { SaveState } from '@/views/files/handler/types';
+import { AudioViewer, ImageViewer, PdfViewer, TextViewer, VideoViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { inject, onMounted, onUnmounted, Ref, shallowRef, type Component } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, shallowRef } from 'vue';
+
+type ViewerType = typeof AudioViewer | typeof ImageViewer | typeof PdfViewer | typeof TextViewer | typeof VideoViewer;
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
-const viewerComponent: Ref<Component | null> = shallowRef(null);
+const viewerComponent: Ref<ViewerType | undefined> = shallowRef(undefined);
 
 const { contentInfo } = defineProps<{
   contentInfo: FileContentInfo;
+  readOnly: boolean;
 }>();
 
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
   (event: 'fileError'): void;
+  (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
+
+defineExpose({ save });
 
 onMounted(async () => {
   await loadFile();
 });
 
 onUnmounted(() => {
-  viewerComponent.value = null;
+  viewerComponent.value = undefined;
 });
 
+function onSaveStateChange(state: SaveState): void {
+  emits('onSaveStateChange', state);
+}
+
 async function loadFile(): Promise<void> {
-  const component = await getComponent();
-  if (!component) {
+  viewerComponent.value = await getComponent();
+  if (!viewerComponent.value) {
     emitError(`No component for file with extension '${contentInfo.extension}'`);
     return;
   }
-  viewerComponent.value = component;
   emits('fileLoaded');
 }
 
-async function getComponent(): Promise<Component | undefined> {
+async function getComponent(): Promise<ViewerType | undefined> {
   switch (contentInfo.contentType) {
     case FileContentType.Image:
       return ImageViewer;
@@ -54,7 +66,17 @@ async function getComponent(): Promise<Component | undefined> {
       return AudioViewer;
     case FileContentType.PdfDocument:
       return PdfViewer;
+    case FileContentType.Text:
+      return TextViewer;
   }
+}
+
+async function save(): Promise<boolean> {
+  if (viewerComponent.value?.saveDocument) {
+    window.nativeAPI.log('debug', 'Forced save on a viewer');
+    return await viewerComponent.value.saveDocument();
+  }
+  return true;
 }
 
 function emitError(message: string): void {

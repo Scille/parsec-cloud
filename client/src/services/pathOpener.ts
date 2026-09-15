@@ -22,7 +22,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { FileHandlerMode } from '@/views/files/handler';
 import { DateTime } from 'luxon';
-import { Base64 } from 'megashark-lib';
+import { Base64, openSpinnerModal } from 'megashark-lib';
 import { inject, Ref, ref } from 'vue';
 
 const currentlyOpening = ref(false);
@@ -35,7 +35,13 @@ interface OpenPathOptions {
   readOnly?: boolean;
 }
 
-const ENABLED_FILE_VIEWERS = [FileContentType.Audio, FileContentType.Image, FileContentType.PdfDocument, FileContentType.Video];
+const ENABLED_FILE_VIEWERS = [
+  FileContentType.Audio,
+  FileContentType.Image,
+  FileContentType.PdfDocument,
+  FileContentType.Video,
+  FileContentType.Text,
+];
 
 interface PathOpener {
   openPath: (workspaceHandle: WorkspaceHandle, path: FsPath, options: OpenPathOptions) => Promise<void>;
@@ -185,73 +191,96 @@ export default function useFileOpener(): PathOpener {
       window.nativeAPI.log('info', 'openPath() called while a file is already being opened.');
       return;
     }
-    currentlyOpening.value = true;
-    // Make sure that the state gets reset if we miss something
-    timeoutId = window.setTimeout(() => {
-      window.nativeAPI.log('warn', 'Resolved path opened with timeout, might be worth investigating...');
-      pathOpened();
-    }, 30000);
-    const entry = await _getEntryStat(workspaceHandle, path, options);
+    const spinnerModal = await openSpinnerModal();
+    try {
+      currentlyOpening.value = true;
+      // Make sure that the state gets reset if we miss something
+      timeoutId = window.setTimeout(() => {
+        window.nativeAPI.log('warn', 'Resolved path opened with timeout, might be worth investigating...');
+        pathOpened();
+      }, 30000);
+      const entry = await _getEntryStat(workspaceHandle, path, options);
 
-    if (!entry) {
-      pathOpened();
-      return;
-    }
+      if (!entry) {
+        pathOpened();
+        return;
+      }
 
-    // The entry is not a file. If allowed, we open it using the system
-    if (!entry.isFile()) {
-      if (!options.disallowSystem) {
-        await _openWithSystem(workspaceHandle, entry);
-      } else {
+      // The entry is not a file. If allowed, we open it using the system
+      if (!entry.isFile()) {
+        if (!options.disallowSystem) {
+          await _openWithSystem(workspaceHandle, entry);
+        } else {
+          await informationManager.value.present(
+            new Information({
+              message: 'fileViewers.errors.noFolderPreview',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+        }
+        pathOpened();
+        return;
+      }
+
+      // Check if we're online, and otherwise, check if we have the complete file available
+      const [clientInfoResult, available] = await Promise.all([getClientInfo(), isFileContentAvailable(workspaceHandle, entry.path)]);
+      if (clientInfoResult.ok && !clientInfoResult.value.isServerOnline && !available) {
         await informationManager.value.present(
           new Information({
-            message: 'fileViewers.errors.noFolderPreview',
+            message: 'FoldersPage.open.fileUnavailable',
             level: InformationLevel.Error,
           }),
           PresentationMode.Modal,
         );
+        pathOpened();
+        return;
       }
-      pathOpened();
-      return;
-    }
 
-    // Check if we're online, and otherwise, check if we have the complete file available
-    const [clientInfoResult, available] = await Promise.all([getClientInfo(), isFileContentAvailable(workspaceHandle, entry.path)]);
-    if (clientInfoResult.ok && !clientInfoResult.value.isServerOnline && !available) {
-      await informationManager.value.present(
-        new Information({
-          message: 'FoldersPage.open.fileUnavailable',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
-      pathOpened();
-      return;
-    }
-
-    // We're on desktop and not using viewers and we're allowed to use the system
-    if (isDesktop() && options.skipViewers && !options.disallowSystem) {
-      await _openWithSystem(workspaceHandle, entry);
-      pathOpened();
-      return;
-    }
-
-    // The file is already opened
-    const query = getCurrentRouteQuery();
-
-    if (currentRouteIs(Routes.FileHandler) && getDocumentPath() === path && Boolean(options.readOnly) === Boolean(query.readOnly)) {
-      window.nativeAPI.log('debug', 'File is already opened.');
-      pathOpened();
-      return;
-    }
-
-    const contentType = detectOpenableFile(entry.name);
-
-    if (contentType.type === FileContentType.Unknown) {
-      // Couldn't detect the file type, try with the system if allowed/available, otherwise display a message
-      if (isDesktop() && !options.disallowSystem) {
+      // We're on desktop and not using viewers and we're allowed to use the system
+      if (isDesktop() && options.skipViewers && !options.disallowSystem) {
         await _openWithSystem(workspaceHandle, entry);
+        pathOpened();
+        return;
+      }
+
+      // The file is already opened
+      const query = getCurrentRouteQuery();
+
+      if (currentRouteIs(Routes.FileHandler) && getDocumentPath() === path && Boolean(options.readOnly) === Boolean(query.readOnly)) {
+        window.nativeAPI.log('debug', 'File is already opened.');
+        pathOpened();
+        return;
+      }
+
+      const contentType = detectOpenableFile(entry.name);
+
+      if (contentType.type === FileContentType.Unknown) {
+        // Couldn't detect the file type, try with the system if allowed/available, otherwise display a message
+        if (isDesktop() && !options.disallowSystem) {
+          await _openWithSystem(workspaceHandle, entry);
+        } else {
+          await informationManager.value.present(
+            new Information({
+              title: isWeb() ? 'FoldersPage.open.noVisibleOnWebTitle' : undefined,
+              message: isWeb() ? 'FoldersPage.open.noVisibleOnWeb' : 'FoldersPage.open.unhandledFileType',
+              level: isWeb() ? InformationLevel.Info : InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+        }
+        pathOpened();
+        return;
+      }
+      if (Env.isEditicsEnabled() && isCryptpadEnabledForDocumentType(contentType.type)) {
+        return await _openInEditor(entry, workspaceHandle, options, contentType);
+      } else if (ENABLED_FILE_VIEWERS.includes(contentType.type)) {
+        return await _openInViewer(entry, workspaceHandle, options, contentType);
       } else {
+        window.nativeAPI.log(
+          'warn',
+          `No way to open file of type '${contentType.type}' (ext '${contentType.extension}'), should not happen`,
+        );
         await informationManager.value.present(
           new Information({
             title: isWeb() ? 'FoldersPage.open.noVisibleOnWebTitle' : undefined,
@@ -260,25 +289,10 @@ export default function useFileOpener(): PathOpener {
           }),
           PresentationMode.Modal,
         );
+        pathOpened();
       }
-      pathOpened();
-      return;
-    }
-    if (Env.isEditicsEnabled() && isCryptpadEnabledForDocumentType(contentType.type)) {
-      return await _openInEditor(entry, workspaceHandle, options, contentType);
-    } else if (ENABLED_FILE_VIEWERS.includes(contentType.type)) {
-      return await _openInViewer(entry, workspaceHandle, options, contentType);
-    } else {
-      window.nativeAPI.log('warn', `No way to open file of type '${contentType.type}' (ext '${contentType.extension}'), should not happen`);
-      await informationManager.value.present(
-        new Information({
-          title: isWeb() ? 'FoldersPage.open.noVisibleOnWebTitle' : undefined,
-          message: isWeb() ? 'FoldersPage.open.noVisibleOnWeb' : 'FoldersPage.open.unhandledFileType',
-          level: isWeb() ? InformationLevel.Info : InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
-      pathOpened();
+    } finally {
+      await spinnerModal.dismiss();
     }
   }
 

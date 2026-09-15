@@ -540,7 +540,7 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
       if ((window as any).TESTING === true && level === 'debug' && !(window as any).TESTING_ALLOW_LOGS) {
         return;
       }
-      console[level](`[MOCKED-ELECTRON-LOG] ${message}`);
+      console[level](`[PARSEC-LOG] ${message}`);
       if ((window as any).TESTING === true && !(window as any).TESTING_ALLOW_LOGS) {
         return;
       }

@@ -33,15 +33,19 @@ const OPENABLE_FILES = {
     'xml',
     'json',
     'js',
+    'jsx',
+    'mjs',
+    'cjs',
     'html',
     'htm',
     'xhtml',
     'sh',
     'csv',
     'css',
+    'scss',
+    'less',
     'py',
     'php',
-    'sh',
     'tex',
     'txt',
     'h',
@@ -51,7 +55,9 @@ const OPENABLE_FILES = {
     'rs',
     'java',
     'ts',
+    'tsx',
     'ini',
+    'properties',
     'cs',
     'vb',
     'swift',
@@ -67,6 +73,29 @@ const OPENABLE_FILES = {
     'kt',
     'yml',
     'yaml',
+    'go',
+    'dart',
+    'sql',
+    'ps1',
+    'psm1',
+    'psd1',
+    'pl',
+    'm',
+    'bat',
+    'cmd',
+    'graphql',
+    'gql',
+    'proto',
+    'fs',
+    'fsx',
+    'hbs',
+    'tf',
+    'scala',
+    'sbt',
+    'conf',
+    'cfg',
+    'diff',
+    'patch',
   ],
 };
 
@@ -89,7 +118,7 @@ async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefin
     }
     return undefined;
   } catch (err: any) {
-    console.log(`Cannot detect mimetype: ${String(err)}`);
+    window.nativeAPI.log('error', `Cannot detect mimetype: ${String(err)}`);
     return undefined;
   }
 }
