@@ -1,1 +1,0 @@
-Fix files created in the GUI through the "New file" button not appearing right away

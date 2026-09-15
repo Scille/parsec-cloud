@@ -1,1 +1,0 @@
-Fixed a bug where revoked users could be selected in the users page, and restricted user selection to Administrators

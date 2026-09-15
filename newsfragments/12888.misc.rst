@@ -1,1 +1,0 @@
-Added auto-focus to multiple text inputs across the application

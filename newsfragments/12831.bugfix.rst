@@ -1,1 +1,0 @@
-Fixed inconsistent behavior when failing to open a file

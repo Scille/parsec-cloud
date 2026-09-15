@@ -1,1 +1,0 @@
-[Hosting Guide] Added a section on Client application deployment

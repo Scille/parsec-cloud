@@ -1,1 +1,0 @@
-In small display, the **+** button is now visible at all times for Members and disabled if no action is available instead of hidden
