@@ -99,7 +99,7 @@
         />
 
         <ms-spinner
-          v-show="querying"
+          v-if="querying"
           class="ms-spinner loading-files-content"
           title="FoldersPage.loading"
         />
