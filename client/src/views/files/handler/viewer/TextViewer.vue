@@ -65,7 +65,20 @@ onMounted(async () => {
       throw new Error('failed to load content');
     }
     const content = new TextDecoder().decode(raw);
-    editor = monaco.editor.create(containerRef.value, { value: content, language: detectLanguage(), readOnly: isReadOnly.value });
+    editor = monaco.editor.create(containerRef.value, {
+      value: content,
+      language: detectLanguage(),
+      readOnly: isReadOnly.value,
+      automaticLayout: true,
+      stickyScroll: { enabled: false },
+      wordWrap: 'on',
+      scrollBeyondLastLine: false,
+      unicodeHighlight: { ambiguousCharacters: false, invisibleCharacters: false },
+      minimap: { enabled: false },
+      glyphMargin: false,
+      codeLens: false,
+      quickSuggestions: false,
+    });
     if (!isReadOnly.value) {
       subscription = editor.onDidChangeModelContent((_event: monaco.editor.IModelContentChangedEvent) => {
         isDirty.value = true;
@@ -133,8 +146,102 @@ async function saveDocument(): Promise<void> {
 
 function detectLanguage(): string | undefined {
   switch (props.contentInfo.extension) {
+    case 'xml':
+      return 'xml';
+    case 'json':
+      return 'json';
+    case 'js':
+    case 'jsx':
+    case 'mjs':
+    case 'cjs':
+      return 'javascript';
+    case 'html':
+    case 'htm':
+    case 'xhtml':
+      return 'html';
+    case 'sh':
+      return 'shell';
+    case 'css':
+      return 'css';
+    case 'scss':
+      return 'scss';
+    case 'less':
+      return 'less';
     case 'py':
       return 'python';
+    case 'php':
+      return 'php';
+    case 'h':
+    case 'c':
+      return 'c';
+    case 'hpp':
+    case 'cpp':
+      return 'cpp';
+    case 'rs':
+      return 'rust';
+    case 'java':
+      return 'java';
+    case 'ts':
+    case 'tsx':
+      return 'typescript';
+    case 'ini':
+    case 'properties':
+      return 'ini';
+    case 'cs':
+      return 'csharp';
+    case 'vb':
+    case 'vbs':
+      return 'vb';
+    case 'swift':
+      return 'swift';
+    case 'lua':
+      return 'lua';
+    case 'rb':
+      return 'ruby';
+    case 'md':
+      return 'markdown';
+    case 'rst':
+      return 'restructuredtext';
+    case 'kt':
+      return 'kotlin';
+    case 'yml':
+    case 'yaml':
+      return 'yaml';
+    case 'go':
+      return 'go';
+    case 'dart':
+      return 'dart';
+    case 'sql':
+      return 'sql';
+    case 'ps1':
+    case 'psm1':
+    case 'psd1':
+      return 'powershell';
+    case 'pl':
+      return 'perl';
+    case 'm':
+      return 'objective-c';
+    case 'bat':
+    case 'cmd':
+      return 'bat';
+    case 'graphql':
+    case 'gql':
+      return 'graphql';
+    case 'proto':
+      return 'proto';
+    case 'fs':
+    case 'fsx':
+      return 'fsharp';
+    case 'hbs':
+      return 'handlebars';
+    case 'tf':
+    case 'tfvars':
+      return 'hcl';
+    case 'scala':
+    case 'sbt':
+      return 'scala';
+    // No Monaco basic-language registered for these, falls back to plaintext:
+    // csv, tex, txt, log, toml, po, vue, conf, cfg, diff, patch
     default:
       return undefined;
   }
@@ -146,12 +253,5 @@ function detectLanguage(): string | undefined {
   background-color: var(--parsec-color-light-secondary-premiere);
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: start;
-  align-items: center;
-  overflow-y: auto;
-  gap: 2em;
-  padding: 3em 0;
 }
 </style>
