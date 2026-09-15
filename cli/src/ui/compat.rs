@@ -49,14 +49,7 @@ impl CLIDisplay for AvailableDeviceDisplay {
         write!(
             w,
             "{dev_id} - {org_id}: {handle} @ {label} ({ty})",
-            dev_id = fmt.wrap_in_color(
-                Color::Yellow,
-                format_args!(
-                    "{id:.prec$}",
-                    id = self.device_id.hex(),
-                    prec = crate::utils::MINIMAL_SHORT_ID_SIZE
-                )
-            ),
+            dev_id = fmt.wrap_in_color(Color::Yellow, self.device_id.hex()),
             org_id = self.organization_id,
             handle = self.human_handle,
             label = self.device_label,
