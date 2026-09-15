@@ -1,0 +1,1 @@
+Fixed a bug where files being imported would not appear in the operations manager window
