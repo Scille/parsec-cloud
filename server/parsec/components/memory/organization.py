@@ -456,3 +456,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     ) -> None:
         duplicated_org = self._data.organizations[source_id].clone_as(target_id)
         self._data.organizations[target_id] = duplicated_org
+
+    @override
+    async def inner_delete_organization(self, id: OrganizationID) -> None:
+        # Enough to remove everything related to a given organization (users, data, ...)
+        del self._data.organizations[id]

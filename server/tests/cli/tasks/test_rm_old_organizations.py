@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from parsec.cli.options import Duration
 from parsec.cli.tasks import delete_old_organization
 from parsec.cli.testbed import TestbedBackend
-from parsec.components.organization import Organization
+from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from tests.common.client import CoolorgRpcClients
 
 
@@ -18,7 +18,7 @@ def test_delete_old_organization_cmd(db_args: list[str], testbed: TestbedBackend
     args = [*db_args, "--remove-older-than=9999d", "--blockstore=MOCKED"]
     result = runner.invoke(delete_old_organization.cmd, args)
     # assert result.stderr_bytes == b""
-    assert result.exception is None, result.exc_info[1]
+    assert result.exception is None, result.exc_info[1]  # pyright: ignore[reportOptionalSubscript]
     assert result.exit_code == 0
     data = json.loads(result.stdout)
     assert data == []
@@ -45,7 +45,8 @@ async def test_rm_old_orga(coolorg: CoolorgRpcClients, testbed: TestbedBackend):
     coolorg_org = await testbed.backend.organization.get(coolorg.organization_id)
     assert isinstance(coolorg_org, Organization)
 
-    deletion_date = coolorg_org.created_on.add(microseconds=1)
+    deletion_date = coolorg_org.created_on.subtract(microseconds=1)
+    assert coolorg_org.created_on > deletion_date
 
     deleted_orgs = await delete_old_organization.delete_old_organizations(
         deletion_date, testbed.backend.organization
@@ -58,3 +59,7 @@ async def test_rm_old_orga(coolorg: CoolorgRpcClients, testbed: TestbedBackend):
         deletion_date, testbed.backend.organization
     )
     assert coolorg.organization_id in deleted_orgs
+
+    assert (
+        await testbed.backend.organization.get(coolorg.organization_id)
+    ) is OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND
