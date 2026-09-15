@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
+from typing import final
 
 from structlog import get_logger
 
@@ -345,6 +346,7 @@ class BaseOrganizationComponent:
     ) -> None:
         raise NotImplementedError
 
+    @final
     async def delete_organization(self, id: OrganizationID) -> None:
         logger.info("Deleting organization", organization_id=id.str)
         return await self.inner_delete_organization(id)
