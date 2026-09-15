@@ -4,3 +4,12 @@ export enum FileHandlerMode {
   View = 'view',
   Edit = 'edit',
 }
+
+export enum SaveState {
+  None = 'none',
+  Unsaved = 'unsaved',
+  Saving = 'saving',
+  Saved = 'saved',
+  Error = 'save-error',
+  Offline = 'offline',
+}

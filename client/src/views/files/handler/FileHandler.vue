@@ -60,7 +60,7 @@
               {{ $msTranslate('fileEditors.saving.readOnly') }}
             </div>
             <div
-              v-if="isComponentEditor() && !readOnly"
+              v-if="!readOnly"
               class="save-info"
             >
               <ion-icon
@@ -201,8 +201,9 @@
             :content-info="contentInfo"
             @file-loaded="pathOpener.pathOpened()"
             @file-error="pathOpener.pathOpened()"
-            v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
-            v-bind="isComponentEditor() ? { userInfo: userInfo, readOnly: readOnly } : {}"
+            @on-save-state-change="onSaveStateChange"
+            :read-only="readOnly"
+            v-bind="isComponentEditor() ? { userInfo: userInfo } : {}"
           />
         </div>
       </div>
@@ -248,8 +249,8 @@ import usePathOpener from '@/services/pathOpener';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { downloadFiles, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
-import { FileHandlerMode } from '@/views/files/handler';
-import { FileEditor, SaveState } from '@/views/files/handler/editor';
+import { FileHandlerMode, SaveState } from '@/views/files/handler';
+import { FileEditor } from '@/views/files/handler/editor';
 import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
 import { FileViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';

@@ -4,13 +4,16 @@
   <component
     :is="viewerComponent"
     :content-info="contentInfo"
+    v-bind="viewerComponent === TextViewer ? { readOnly: readOnly } : {}"
+    v-on="viewerComponent === TextViewer ? { onSaveStateChange: onSaveStateChange } : {}"
   />
 </template>
 
 <script setup lang="ts">
 import { FileContentType } from '@/common/fileTypes';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { AudioViewer, ImageViewer, PdfViewer, VideoViewer } from '@/views/files/handler/viewer';
+import { SaveState } from '@/views/files/handler/types';
+import { AudioViewer, ImageViewer, PdfViewer, TextViewer, VideoViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { inject, onMounted, onUnmounted, Ref, shallowRef, type Component } from 'vue';
 
@@ -19,11 +22,13 @@ const viewerComponent: Ref<Component | null> = shallowRef(null);
 
 const { contentInfo } = defineProps<{
   contentInfo: FileContentInfo;
+  readOnly: boolean;
 }>();
 
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
   (event: 'fileError'): void;
+  (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
 
 onMounted(async () => {
@@ -33,6 +38,11 @@ onMounted(async () => {
 onUnmounted(() => {
   viewerComponent.value = null;
 });
+
+function onSaveStateChange(state: SaveState): void {
+  console.log('Save state change', state);
+  emits('onSaveStateChange', state);
+}
 
 async function loadFile(): Promise<void> {
   const component = await getComponent();
@@ -54,6 +64,8 @@ async function getComponent(): Promise<Component | undefined> {
       return AudioViewer;
     case FileContentType.PdfDocument:
       return PdfViewer;
+    case FileContentType.Text:
+      return TextViewer;
   }
 }
 

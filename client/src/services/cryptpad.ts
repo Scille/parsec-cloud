@@ -94,8 +94,6 @@ export class CryptpadError extends Error {
 
 export function getCryptpadEditor(contentType: FileContentType): CryptpadEditors {
   switch (contentType) {
-    case FileContentType.Text:
-      return CryptpadEditors.Code;
     case FileContentType.Spreadsheet:
       return CryptpadEditors.Sheet;
     case FileContentType.Document:
@@ -111,13 +109,7 @@ export function isCryptpadEnabledForDocumentType(contentType: FileContentType): 
   if (!Env.isEditicsEnabled()) {
     return false;
   }
-  const ENABLED_EDITORS = [
-    CryptpadEditors.Pad,
-    CryptpadEditors.Sheet,
-    CryptpadEditors.Doc,
-    CryptpadEditors.Presentation,
-    CryptpadEditors.Code,
-  ];
+  const ENABLED_EDITORS = [CryptpadEditors.Pad, CryptpadEditors.Sheet, CryptpadEditors.Doc, CryptpadEditors.Presentation];
 
   return ENABLED_EDITORS.includes(getCryptpadEditor(contentType));
 }

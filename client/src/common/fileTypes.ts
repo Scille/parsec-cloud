@@ -89,7 +89,7 @@ async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefin
     }
     return undefined;
   } catch (err: any) {
-    console.log(`Cannot detect mimetype: ${String(err)}`);
+    window.nativeAPI.log('error', `Cannot detect mimetype: ${String(err)}`);
     return undefined;
   }
 }
