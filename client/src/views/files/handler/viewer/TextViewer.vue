@@ -43,6 +43,11 @@ let editor: monaco.editor.IStandaloneCodeEditor | undefined = undefined;
 let subscription: monaco.IDisposable | undefined = undefined;
 let saveTimeout: any = undefined;
 
+// Used to save when exiting if needed
+const isDirty = ref(false);
+// Used as a lock to avoid concurrent saves
+const saving = ref(false);
+
 const isReadOnly = computed(() => {
   return Boolean(props.contentInfo.timestamp || props.readOnly);
 });
@@ -63,6 +68,7 @@ onMounted(async () => {
     editor = monaco.editor.create(containerRef.value, { value: content, language: detectLanguage(), readOnly: isReadOnly.value });
     if (!isReadOnly.value) {
       subscription = editor.onDidChangeModelContent((_event: monaco.editor.IModelContentChangedEvent) => {
+        isDirty.value = true;
         if (saveTimeout) {
           clearTimeout(saveTimeout);
           saveTimeout = undefined;
@@ -87,6 +93,9 @@ onUnmounted(async () => {
   if (saveTimeout) {
     clearTimeout(saveTimeout);
   }
+  if (isDirty.value) {
+    await saveDocument();
+  }
   if (subscription) {
     subscription.dispose();
   }
@@ -96,9 +105,10 @@ onUnmounted(async () => {
 });
 
 async function saveDocument(): Promise<void> {
-  if (!editor) {
+  if (!editor || saving.value || !isDirty.value) {
     return;
   }
+  saving.value = true;
   emits('onSaveStateChange', SaveState.Saving);
   const openResult = await openFile(props.contentInfo.workspaceHandle, props.contentInfo.path, { write: true, truncate: true });
 
@@ -116,6 +126,8 @@ async function saveDocument(): Promise<void> {
     emits('onSaveStateChange', SaveState.Saved);
   } finally {
     await closeFile(props.contentInfo.workspaceHandle, openResult.value);
+    isDirty.value = false;
+    saving.value = false;
   }
 }
 
@@ -124,7 +136,7 @@ function detectLanguage(): string | undefined {
     case 'py':
       return 'python';
     default:
-      undefined;
+      return undefined;
   }
 }
 </script>
