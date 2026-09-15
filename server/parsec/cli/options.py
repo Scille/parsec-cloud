@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import sys
 from collections import defaultdict
 from collections.abc import Callable, Coroutine, Generator, Iterable
 from contextlib import contextmanager
+from datetime import timedelta
 from functools import wraps
 from itertools import count
 from typing import (
     Any,
+    ClassVar,
     Concatenate,
     TextIO,
     cast,
@@ -542,3 +545,33 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     for decorator in decorators:
         fn = decorator(fn)
     return fn
+
+
+class Duration(click.ParamType):
+    name = "duration"
+
+    _UNITS: ClassVar = {
+        "d": 24 * 60 * 60,
+        "h": 60 * 60,
+        "m": 60,
+        "s": 1,
+    }
+
+    _PATTERN = re.compile(r"^(?:(?P<d>\d+)d)?(?:(?P<h>\d+)h)?(?:(?P<m>\d+)m)?(?:(?P<s>\d+)s)?$")
+
+    def convert(
+        self, value: str | timedelta, param: click.Parameter | None, ctx: click.Context | None
+    ) -> timedelta:
+        if isinstance(value, timedelta):
+            return value
+
+        match = Duration._PATTERN.match(value.strip())
+        if not match or not any(match.groups()):
+            self.fail(f"{value!r} is not a valid duration (e.g. '5s', '1m30s', '1d')", param, ctx)
+
+        total_seconds = 0
+        for unit, amount in match.groupdict().items():
+            if amount:
+                total_seconds += int(amount) * Duration._UNITS[unit]
+
+        return timedelta(seconds=total_seconds)
