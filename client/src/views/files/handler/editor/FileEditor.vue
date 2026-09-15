@@ -80,9 +80,9 @@ import {
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
-import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
+import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus } from '@/views/files/handler/editor';
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
-import { FileHandlerMode } from '@/views/files/handler/types';
+import { FileHandlerMode, SaveState } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
@@ -116,6 +116,8 @@ const emits = defineEmits<{
   (event: 'fileError'): void;
   (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
+
+defineExpose({ save });
 
 onMounted(async () => {
   documentType.value = getCryptpadEditor(contentInfo.contentType);
@@ -388,8 +390,6 @@ async function save(): Promise<boolean> {
     }, SAVE_TIMEOUT_MS);
   });
 }
-
-defineExpose({ save });
 </script>
 
 <style scoped lang="scss">
