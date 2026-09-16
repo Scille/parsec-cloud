@@ -538,7 +538,10 @@ for (const entryType of ['file', 'folder']) {
     const detailsModal = workspaces.locator('.file-details-modal');
     await expect(detailsModal).toBeHidden();
     await searchItems.nth(0).click({ button: 'right' });
-    await checkEntryContextMenu(workspaces, entryType === 'file' ? 'file-full' : 'folder-full', 'Details', { fromSearch: true });
+    await checkEntryContextMenu(workspaces, entryType === 'file' ? 'file-full' : 'folder-full', 'Details', {
+      fromSearch: true,
+      canEdit: entryType === 'file',
+    });
     await expect(detailsModal).toBeVisible();
   });
 }
