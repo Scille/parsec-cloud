@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
+from typing import final
+
+from structlog import get_logger
 
 from parsec._parsec import (
     AccessToken,
@@ -27,6 +30,8 @@ from parsec.client_context import AnonymousClientContext, AuthenticatedClientCon
 from parsec.config import BackendConfig
 from parsec.types import BadOutcomeEnum, Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
+
+logger = get_logger()
 
 
 @dataclass(slots=True)
@@ -339,6 +344,14 @@ class BaseOrganizationComponent:
     async def test_duplicate_organization(
         self, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:
+        raise NotImplementedError
+
+    @final
+    async def delete_organization(self, id: OrganizationID) -> None:
+        logger.info("Deleting organization", organization_id=id.str)
+        return await self.inner_delete_organization(id)
+
+    async def inner_delete_organization(self, id: OrganizationID) -> None:
         raise NotImplementedError
 
     #
