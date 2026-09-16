@@ -179,6 +179,7 @@ export default function useFileOpener(): PathOpener {
         documentPath: entry.path,
         timestamp: options.atTime?.toMillis().toString(),
         fileTypeInfo: Base64.fromObject(contentType),
+        readOnly: options.readOnly,
       },
       params: {
         mode: FileHandlerMode.View,

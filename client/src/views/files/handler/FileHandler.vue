@@ -60,7 +60,7 @@
               {{ $msTranslate('fileEditors.saving.readOnly') }}
             </div>
             <div
-              v-if="!readOnly"
+              v-if="!readOnly && saveState !== SaveState.None"
               class="save-info"
             >
               <ion-icon
@@ -94,7 +94,7 @@
                 :icon="warning"
               />
               <ion-text
-                v-show="saveState !== SaveState.None && showSaveStateText && isLargeDisplay"
+                v-show="showSaveStateText && isLargeDisplay"
                 class="save-info-text button-small"
                 :class="{
                   'save-info-text-fade-out': saveState === SaveState.Saved || saveState === SaveState.Error,
