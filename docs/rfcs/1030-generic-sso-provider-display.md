@@ -65,7 +65,7 @@ like:
 interface SsoProviderDisplay {
   id: string; // opaque identifier, passed back unchanged to select this provider
   name: string; // display name, e.g. "ProConnect", "Acme Corp SSO"
-  mountPath: string; // currently implemented
+  mountPath: string; // where to mount the secrets engine, provided currently by OpenBaoAuthConfig
   link?: string; // URL to documentation/help about this provider, if any
   icon?: string; // something the GUI can render as an image (see 4.)
 }
@@ -76,6 +76,15 @@ languages, and the concrete encoding of `icon`) is for the libparsec RFC to defi
 requires that the GUI can render an image and a string, and can round-trip an opaque identifier
 back into the existing `openBaoConnect(..., provider, ...)` call in place of today's
 `OpenBaoAuthConfigTag`.
+
+No attributes are added to control the style of the button (ie `color` or `backgroundColor`).
+While those would seem like a good idea to keep the identity of each SSO intact, two problems
+have been identified:
+
+- colors can clash with the theme, and would have to work for both light and dark theme
+- it lets the server admin make design decisions
+
+It make the implementation of a generic button that work with every SSO more complicated.
 
 ### 2. A single generic provider button
 
@@ -99,7 +108,9 @@ Sensible fallbacks are needed since data comes from an arbitrary server config:
 
 - no `icon` -> a generic placeholder icon (e.g. a lock/key `ion-icon`) shipped with the GUI,
 - no `link` -> the secondary line is simply not rendered,
-- missing/empty id/name/mountPath -> the button is not displayed.
+- missing/empty id/name/mountPath -> the button is not displayed. This should not happen as
+  libparsec will enforce it, but we can display a warning if we even find ourselves in that
+  situation.
 
 ### 3. `ConnectSso.vue` becomes provider-agnostic
 
@@ -139,7 +150,8 @@ catalog, a generic `name`/`link` supplied by the server config has no notion of 
 unless the future libparsec/server API explicitly carries multiple translations. For this RFC, the
 GUI simply displays `name` verbatim, in whatever language the operator configured it in. If
 localization turns out to matter, it needs to be solved server-side (e.g. a `Translatable`-like
-structure), not by the GUI guessing a locale.
+structure), not by the GUI guessing a locale. While names do not generally change across
+languages, it may matter more for the `link`.
 
 ## Alternatives Considered
 
