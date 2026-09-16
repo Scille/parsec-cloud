@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { EntryName, Path } from '@/parsec';
+import { isFileEditableWithCryptpad } from '@/services/cryptpad';
 import { fileTypeFromBuffer } from 'file-type';
 
 enum FileContentType {
@@ -161,4 +162,18 @@ function detectFileContentType(name: EntryName): DetectedFileType {
   return detectFile(name, DETECTABLE_FILES);
 }
 
-export { DetectedFileType, detectFileContentType, detectOpenableFile, FileContentType, getMimeTypeFromBuffer, OPENABLE_FILES };
+function isFileEditable(name: EntryName): boolean {
+  const fileContentType = detectOpenableFile(name);
+
+  return fileContentType.type === FileContentType.Text || isFileEditableWithCryptpad(fileContentType);
+}
+
+export {
+  DetectedFileType,
+  detectFileContentType,
+  detectOpenableFile,
+  FileContentType,
+  getMimeTypeFromBuffer,
+  isFileEditable,
+  OPENABLE_FILES,
+};
