@@ -85,7 +85,6 @@ onMounted(async () => {
     });
     if (!isReadOnly.value) {
       subscription = editor.onDidChangeModelContent((_event: monaco.editor.IModelContentChangedEvent) => {
-        console.log(_event);
         isDirty.value = true;
         if (saveTimeout) {
           clearTimeout(saveTimeout);

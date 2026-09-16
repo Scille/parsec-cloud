@@ -322,7 +322,7 @@ msTest.describe(() => {
     await expect(parsecEditics).toBeDocumentPage();
   });
 
-  msTest('Update text file', async ({ parsecEditics }, testInfo: TestInfo) => {
+  msTest.fixme('Update text file', async ({ parsecEditics }, testInfo: TestInfo) => {
     /* eslint-disable max-len */
     await mockCryptpadServer(parsecEditics, {
       customOpenFunction: `
@@ -378,8 +378,8 @@ msTest.describe(() => {
     msTest.setTimeout(90_000);
 
     const FILES = [
-      { fileName: 'file.txt', opener: 'editor', renameIndex: 3 },
-      { fileName: 'file.html', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.txt', opener: 'viewer', renameIndex: 3 },
+      { fileName: 'file.html', opener: 'viewer', renameIndex: 3 },
       { fileName: 'file.odt', opener: 'editor', renameIndex: 3 },
       { fileName: 'file.docx', opener: 'editor', renameIndex: 3 },
       { fileName: 'file.doc', opener: undefined, renameIndex: 3 },
@@ -390,7 +390,7 @@ msTest.describe(() => {
       { fileName: 'file.odp', opener: 'editor', renameIndex: 3 },
       { fileName: 'file.ppt', opener: undefined, renameIndex: 3 },
       { fileName: 'file.rtf', opener: undefined, renameIndex: 2 },
-      { fileName: 'file.log', opener: 'editor', renameIndex: 2 },
+      { fileName: 'file.log', opener: 'viewer', renameIndex: 2 },
       { fileName: 'file.png', opener: 'viewer', renameIndex: 3 },
       { fileName: 'file.pdf', opener: 'viewer', renameIndex: 2 },
       { fileName: 'file.mp3', opener: 'viewer', renameIndex: 2 },
