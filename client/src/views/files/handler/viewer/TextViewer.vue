@@ -71,6 +71,7 @@ onMounted(async () => {
     const content = new TextDecoder().decode(raw);
     editor = monaco.editor.create(containerRef.value, {
       value: content,
+      contextmenu: false,
       language: detectLanguage(),
       readOnly: isReadOnly.value,
       automaticLayout: true,

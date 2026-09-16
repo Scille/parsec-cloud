@@ -322,53 +322,40 @@ msTest.describe(() => {
     await expect(parsecEditics).toBeDocumentPage();
   });
 
-  msTest.fixme('Update text file', async ({ parsecEditics }, testInfo: TestInfo) => {
-    /* eslint-disable max-len */
-    await mockCryptpadServer(parsecEditics, {
-      customOpenFunction: `
-        sendToParent({ command: 'editics-open-result', success: true });
-        document.getElementById('editor-container').innerText = new TextDecoder().decode(data.documentContent);
-        setTimeout(() => {
-          sendToParent({ command: 'editics-event', event: 'ready' });
-        }, 100);
-        setTimeout(() => {
-          const bytes = new TextEncoder().encode('A simple text file with updates');
-          sendToParent({ command: 'editics-event', event: 'save', documentContent: new Blob([new Uint8Array(bytes)], { type: 'application/octet-stream' }) });
-        }, 300);
-      `,
-    });
-    /* eslint-enable max-len */
-    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Txt, false);
-    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
-
+  msTest('Update text file', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Txt, false);
+    const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
     await expect(entry.locator('.file-size')).toHaveText('19 B');
 
     await entry.click({ button: 'right' });
-    const menu = parsecEditics.locator('#file-context-menu');
-    await expect(menu).toBeVisible();
-    await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
-    await menu.getByRole('listitem').nth(2).click();
-    await expect(menu).toBeHidden();
+    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
 
-    const frame = parsecEditics.frameLocator('.file-editor');
-    await expect(frame.locator('#editor-container')).toBeVisible();
-    await expect(frame.locator('#editor-container')).toHaveText('A simple text file');
-    await expect(parsecEditics.locator('.file-editor-error')).toBeHidden();
-    const topbar = parsecEditics.locator('.file-handler-topbar');
-    await parsecEditics.waitForTimeout(800);
+    await expect(documents).toBeViewerPage();
+    const editor = documents.locator('.monaco-editor');
+    await expect(editor).toBeVisible();
+    const lines = editor.locator('.view-line');
+    await expect(lines).toHaveText(['A simple text file', '']);
+
+    await editor.click();
+    // Update the text
+    await documents.keyboard.insertText('\nAnd some additional text');
+
+    await expect(lines).toHaveText(['A simple text file', '', 'And some additional text']);
+
+    // Back to the list of files
+    const topbar = documents.locator('.file-handler-topbar');
     await topbar.locator('.back-button').click();
-    await expect(parsecEditics).toBeDocumentPage();
-    await expect(entry.locator('.file-size')).toHaveText('31 B');
+    await expect(documents).toBeDocumentPage();
+    // Check that the file size increased
+    await expect(entry.locator('.file-size')).toHaveText('44 B');
 
     await entry.click({ button: 'right' });
-    parsecEditics.locator('#file-context-menu');
-    await expect(menu).toBeVisible();
-    await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
-    await menu.getByRole('listitem').nth(2).click();
-    await expect(menu).toBeHidden();
+    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
 
-    await expect(frame.locator('#editor-container')).toBeVisible();
-    await expect(frame.locator('#editor-container')).toHaveText('A simple text file with updates');
+    // Check that the content has been properly saved and restored
+    await expect(documents).toBeViewerPage();
+    await expect(editor).toBeVisible();
+    await expect(lines).toHaveText(['A simple text file', '', 'And some additional text']);
   });
 
   msTest('Check files handled', async ({ parsecEditics }, testInfo: TestInfo) => {
