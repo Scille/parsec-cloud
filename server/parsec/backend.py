@@ -172,12 +172,12 @@ class Backend:
         from parsec._parsec import testbed
 
         org_id = OrganizationID(f"{template.id.title().replace('_', '')}OrgTemplate")
-        boostrap_event = next(
+        bootstrap_event = next(
             event
             for event in template.events
             if isinstance(event, testbed.TestbedEventBootstrapOrganization)
         )
-        creation_date = boostrap_event.timestamp.add(days=-1)
+        creation_date = bootstrap_event.timestamp.add(days=-1)
         logger.info(
             "Load org template",
             ord_id=org_id.str,
