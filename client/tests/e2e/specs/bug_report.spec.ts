@@ -15,6 +15,12 @@ import {
 import fs from 'fs/promises';
 import path from 'path';
 
+const LOG_START = '\\[[\\d\\.:T\\-+]+\\] \\[(?:info|debug)\\]';
+const LOG_REGEX = new RegExp(
+  // eslint-disable-next-line max-len
+  `^${LOG_START} Custom branding is not enabled, not loading resources\n${LOG_START} Init PDF worker\n${LOG_START} Init Monaco worker\n${LOG_START} Init Streaming worker$`,
+);
+
 msTest('Submit bug report', async ({ connected }, testInfo: TestInfo) => {
   MockBms.mockReportBug(connected);
 
@@ -128,9 +134,8 @@ msTest('Show logs on homepage', async ({ context }) => {
   await settingsModal.locator('.see-logs-button').click();
   await expect(settingsModal).toBeHidden();
   await expect(logModal).toBeVisible();
-  await expect(logModal.locator('.log-area')).toHaveValue(
-    /^\[[\d\.:T\-+]+\] \[info\] Custom branding is not enabled, not loading resources$/,
-  );
+
+  await expect(logModal.locator('.log-area')).toHaveValue(LOG_REGEX);
   await logModal.locator('.closeBtn').click();
   await expect(settingsModal).toBeVisible();
   await expect(logModal).toBeHidden();
@@ -153,7 +158,7 @@ msTest('Copy logs', async ({ context }) => {
   await expect(logModal.locator('#log-copy-button')).toHaveText('Copy');
   await logModal.locator('#log-copy-button').click();
   await expect(logModal.locator('#log-copy-button')).toHaveText('Copied!');
-  expect(await getClipboardText(home)).toMatch(/^\[[\d\.:T\-+]+\] \[info\] Custom branding is not enabled, not loading resources$/);
+  expect(await getClipboardText(home)).toMatch(LOG_REGEX);
   await logModal.locator('.closeBtn').click();
   await expect(settingsModal).toBeVisible();
   await expect(logModal).toBeHidden();
@@ -179,7 +184,7 @@ msTest('Download logs', async ({ context }) => {
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^parsec_[\d\-_]+\.log$/);
   const content = await fs.readFile(await download.path(), 'utf-8');
-  expect(content).toMatch(/^\[[\d\.:T\-+]+\] \[info\] Custom branding is not enabled, not loading resources$/);
+  expect(content).toMatch(LOG_REGEX);
   await logModal.locator('.closeBtn').click();
   await expect(settingsModal).toBeVisible();
   await expect(logModal).toBeHidden();

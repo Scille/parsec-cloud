@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { detectOpenableFile, FileContentType } from '@/common/fileTypes';
+import { DetectedFileType, FileContentType } from '@/common/fileTypes';
 import { Env } from '@/services/environment';
 
 // Should be the same on both sides, don't modify one
@@ -114,11 +114,10 @@ export function isCryptpadEnabledForDocumentType(contentType: FileContentType): 
   return ENABLED_EDITORS.includes(getCryptpadEditor(contentType));
 }
 
-export function isFileEditable(name: string): boolean {
+export function isFileEditableWithCryptpad(fileContentType: DetectedFileType): boolean {
   if (!Env.isEditicsEnabled()) {
     return false;
   }
-  const fileContentType = detectOpenableFile(name);
   return isCryptpadEnabledForDocumentType(fileContentType.type);
 }
 

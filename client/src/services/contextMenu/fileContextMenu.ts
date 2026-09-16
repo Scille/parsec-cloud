@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { isFileEditable } from '@/common/fileTypes';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
 import { EntryStat, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { useFileActions } from '@/services/contextMenu/fileActions';
-import { isFileEditable } from '@/services/cryptpad';
 import { FileAction, FileContextMenu, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
 import { modalController, popoverController } from '@ionic/vue';
 import { useWindowSize } from 'megashark-lib';

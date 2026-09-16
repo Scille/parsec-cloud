@@ -267,7 +267,7 @@ import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
 import ZipFolderIcon from '@/assets/images/zip-folder.svg?raw';
 import { findAvailableFileName } from '@/common/file';
-import { FileContentType, OPENABLE_FILES } from '@/common/fileTypes';
+import { FileContentType, OPENABLE_FILES, isFileEditable } from '@/common/fileTypes';
 import {
   EntryCollection,
   EntryModel,
@@ -304,7 +304,6 @@ import {
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { useFileContextMenu } from '@/services/contextMenu';
 import { useFileActions } from '@/services/contextMenu/fileActions';
-import { isFileEditable } from '@/services/cryptpad';
 import {
   EntrySyncData,
   EventData,
