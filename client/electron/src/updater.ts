@@ -105,8 +105,10 @@ class CustomGithubProvider extends GitHubProvider {
     switch (this.runtimeOptions.platform) {
       case 'darwin':
         platform = 'mac';
+        break;
       case 'win32':
         platform = 'win';
+        break;
     }
     const base = FEATURE_FLAGS.hardened() ? '-hardened' : '';
     return `${base}-${platform}-${arch}`;
