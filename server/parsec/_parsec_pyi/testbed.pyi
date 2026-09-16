@@ -51,6 +51,7 @@ class TestbedTemplateContent:
     def compute_crc(self) -> int: ...
 
 class TestbedEventBootstrapOrganization:
+    created_on: DateTime
     timestamp: DateTime
     root_signing_key: SigningKey
     sequester_authority_signing_key: SequesterSigningKeyDer | None

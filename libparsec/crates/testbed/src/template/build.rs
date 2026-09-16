@@ -487,7 +487,7 @@ impl TestbedEventBootstrapOrganizationBuilder<'_> {
             });
         })
     }
-    impl_customize_field_meth!(first_user_id, UserID);
+    impl_customize_field_meth!(created_on, DateTime);
     impl_customize_field_meth!(first_user_human_handle, HumanHandle);
     impl_customize_field_meth!(first_user_first_device_id, DeviceID);
     impl_customize_field_meth!(first_user_first_device_label, DeviceLabel);

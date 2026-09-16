@@ -76,6 +76,7 @@ macro_rules! event_wrapper {
 event_wrapper!(
     TestbedEventBootstrapOrganization,
     [
+        created_on: DateTime,
         timestamp: DateTime,
         root_signing_key: SigningKey,
         sequester_authority_signing_key: Option<SequesterSigningKeyDer>,
@@ -101,7 +102,8 @@ event_wrapper!(
     ],
     |_py, x: &TestbedEventBootstrapOrganization| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, sequestered={}, first_user={:?}, first_device={:?}",
+            "created_on={:?}, timestamp={:?}, sequestered={}, first_user={:?}, first_device={:?}",
+            x.created_on.0,
             x.timestamp.0,
             if x.sequester_authority_signing_key.is_some() {
                 "true"
@@ -670,6 +672,7 @@ fn event_to_pyobject(
                     _ => unreachable!(),
                 };
             let obj = TestbedEventBootstrapOrganization {
+                created_on: x.created_on.into(),
                 timestamp: x.timestamp.into(),
                 root_signing_key: x.root_signing_key.clone().into(),
                 sequester_authority_signing_key: x

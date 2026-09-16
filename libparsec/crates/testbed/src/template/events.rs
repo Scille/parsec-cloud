@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU8;
+use std::ops::Add;
 use std::sync::{Arc, Mutex};
 
 use libparsec_types::prelude::*;
@@ -476,6 +477,7 @@ pub struct TestbedEventBootstrapOrganizationSequesterAuthority {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventBootstrapOrganization {
+    pub created_on: DateTime,
     pub timestamp: DateTime,
     pub root_signing_key: SigningKey,
     pub sequester_authority: Option<TestbedEventBootstrapOrganizationSequesterAuthority>,
@@ -512,6 +514,7 @@ impl std::fmt::Debug for TestbedEventBootstrapOrganization {
 impl CrcHash for TestbedEventBootstrapOrganization {
     fn crc_hash(&self, state: &mut crc32fast::Hasher) {
         b"BootstrapOrganization".crc_hash(state);
+        self.created_on.crc_hash(state);
         self.timestamp.crc_hash(state);
         self.root_signing_key.crc_hash(state);
         if let Some(sequester_authority) = self.sequester_authority.as_ref() {
@@ -579,8 +582,13 @@ impl TestbedEventBootstrapOrganization {
             None => device_id.hex().parse().unwrap(),
         };
 
+        let timestamp = builder.counters.next_timestamp();
+        // Organization bootstrap cannot occur before it creation !
+        let created_on = timestamp.add(Duration::seconds(-1));
+
         Self {
-            timestamp: builder.counters.next_timestamp(),
+            created_on,
+            timestamp,
             root_signing_key: builder.counters.next_signing_key(),
             sequester_authority: None,
             first_user_id,
