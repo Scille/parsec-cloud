@@ -161,7 +161,7 @@ msTest.describe(() => {
     const pyEntry = documents.locator('.folder-container').locator('.file-list-item').last();
     await pyEntry.hover();
     await pyEntry.locator('.options-button').click();
-    await checkEntryContextMenu(documents, 'file-full', 'Download');
+    await checkEntryContextMenu(documents, 'file-full', 'Download', { canEdit: true });
     // This time the warning doesn't show up
     await documents.waitForTimeout(1000);
     await expect(opItems).toHaveCount(3);
