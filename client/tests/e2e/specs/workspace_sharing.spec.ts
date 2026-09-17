@@ -207,6 +207,10 @@ msTest('Change workspace role from and to reader while navigating inside it', as
   await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeHidden();
   await wks2.nth(0).click();
   await expect(secondTab).toBeDocumentPage();
+  await expect(secondTab.locator('.action-bar').locator('.ms-action-bar-button')).toHaveCount(0);
+  await expect(secondTab.locator('.action-bar').locator('.workspace-role-tag')).toHaveText('Reader');
+  await secondTab.locator('.folder-container').locator('.file-list-item').nth(0).click({ button: 'right' });
+  await checkEntryContextMenu(secondTab, 'file-readonly', 'dismiss');
 
   // On the first tab, make Bob a manager
   const content = modal.locator('.ms-modal-content');
