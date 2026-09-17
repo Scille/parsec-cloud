@@ -56,6 +56,8 @@ const config = {
     'regedit',
     // commented most of the time, but can be useful in dev
     '@vitejs/plugin-basic-ssl',
+    // pin version to avoid a bug on snap
+    'vue-router',
   ],
 } satisfies KnipConfig;
 
