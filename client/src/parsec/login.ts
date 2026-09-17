@@ -69,10 +69,10 @@ export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
   return loggedInDevices;
 }
 
-export async function isDeviceLoggedIn(device: AvailableDevice): Promise<boolean> {
+export async function isDeviceLoggedIn(deviceId: DeviceID): Promise<boolean> {
   const startedDevices = await libparsec.listStartedClients();
 
-  return startedDevices.find(([_handle, deviceId]) => deviceId === device.deviceId) !== undefined;
+  return startedDevices.find(([_handle, dId]) => dId === deviceId) !== undefined;
 }
 
 export async function getDeviceHandle(device: AvailableDevice): Promise<ConnectionHandle | undefined> {
