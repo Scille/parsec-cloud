@@ -21,6 +21,10 @@ export async function getServerConfig(serverAddr: string): Promise<Result<Server
     [DevicePrimaryProtectionStrategyTag.Password, AdvisoryDeviceFilePrimaryProtection.Password],
   ]);
 
+  if (!serverAddr.startsWith('http://') && !serverAddr.startsWith('https://') && !serverAddr.startsWith('parsec3://')) {
+    serverAddr = `parsec3://${serverAddr}`;
+  }
+
   const result = await libparsec.getServerConfig(getClientConfig().configDir, serverAddr);
 
   if (result.ok) {
@@ -50,6 +54,8 @@ export async function getServerConfig(serverAddr: string): Promise<Result<Server
     if (result.value.openbao?.serverUrl) {
       result.value.openbao.serverUrl = ensureHttpsProtocol(result.value.openbao.serverUrl);
     }
+  } else {
+    window.nativeAPI.log('warn', `Failed to contact server ${serverAddr}`);
   }
   return result as Result<ServerConfig, GetServerConfigError>;
 }
