@@ -185,6 +185,89 @@ msTest('Unshare workspace while navigating inside it', async ({ workspaceSharing
   await expect(secondTab).toShowInformationModal('The workspace wksp1 is no longer shared with you.', 'Error');
   // Redirected to workspaces
   await expect(secondTab).toBeWorkspacePage();
+  await expect(workspaces).toHaveCount(0);
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+});
+
+msTest.describe(() => {
+  msTest.use({
+    documentsOptions: {
+      empty: true,
+    },
+  });
+  msTest('Unshare and re-share workspace with new role', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(45_000);
+
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf, true);
+    await documents.locator('#connected-header').locator('.back-button').click();
+
+    await documents
+      .locator('.workspaces-container-grid')
+      .locator('.workspace-card-item')
+      .nth(0)
+      .locator('.workspace-card-bottom__icons')
+      .locator('.icon-share-container')
+      .nth(0)
+      .click();
+    const modal = documents.locator('.workspace-sharing-modal');
+    await expect(modal).toBeVisible();
+
+    const secondTab = await documents.openNewTab();
+    // Login on the second tab with Bob, should have one workspace shared by default
+    await login(secondTab, 'Boby McBobFace');
+    const workspaces = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
+    await expect(workspaces).toHaveCount(1);
+    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+    await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeHidden();
+    await workspaces.nth(0).click();
+    await expect(secondTab).toBeDocumentPage();
+    // Boby is Reader
+    await expect(secondTab.locator('.action-bar').locator('.ms-action-bar-button')).toHaveCount(0);
+    await expect(secondTab.locator('.action-bar').locator('.workspace-role-tag')).toHaveText('Reader');
+    await secondTab.locator('.folder-container').locator('.file-list-item').nth(1).click({ button: 'right' });
+    await checkEntryContextMenu(secondTab, 'file-readonly', 'dismiss');
+
+    // On the first tab, unshare the workspace with Bob
+    const content = modal.locator('.ms-modal-content');
+    await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(2);
+    await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(1);
+    const user2 = content.locator('.user-list-members').locator('.workspace-user-role').nth(1);
+    await expect(user2.locator('.dropdown-button')).toHaveText('Reader');
+    await user2.locator('.dropdown-button').click();
+    const roleDropdown = documents.locator('.dropdown-popover');
+    await expect(roleDropdown).toBeVisible();
+    const roles = roleDropdown.getByRole('list').getByRole('listitem');
+    await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
+    await roles.nth(4).click();
+    await expect(documents).toShowToast('The workspace is no longer shared with Boby McBobFace.', 'Success');
+    await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(1);
+    await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(2);
+
+    await expect(secondTab).toShowInformationModal('The workspace wksp1 is no longer shared with you.', 'Error');
+    // Redirected to workspaces
+    await expect(secondTab).toBeWorkspacePage();
+    await expect(workspaces).toHaveCount(0);
+    await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+
+    // Re-share the workspace but as Manager instead
+    await content.locator('.user-list-suggestions').locator('.workspace-user-role').nth(0).locator('.dropdown-button').click();
+    await expect(roleDropdown).toBeVisible();
+    await roles.nth(1).click();
+    await expect(roleDropdown).toBeHidden();
+    await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(2);
+    await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(1);
+
+    await expect(workspaces).toHaveCount(1);
+    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+    await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeHidden();
+    await workspaces.nth(0).click();
+    await expect(secondTab).toBeDocumentPage();
+    await expect(secondTab.locator('.folder-container').locator('.file-list-item')).toHaveCount(3);
+    await expect(secondTab.locator('.action-bar').locator('.ms-action-bar-button')).toHaveCount(3);
+    await expect(secondTab.locator('.action-bar').locator('.workspace-role-tag')).toHaveText('Manager');
+    await secondTab.locator('.folder-container').locator('.file-list-item').nth(1).click({ button: 'right' });
+    await checkEntryContextMenu(secondTab, 'file-full', 'dismiss');
+  });
 });
 
 msTest('Change workspace role from and to reader while navigating inside it', async ({ workspaces }, testInfo: TestInfo) => {
