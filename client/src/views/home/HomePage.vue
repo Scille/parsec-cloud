@@ -816,7 +816,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
 }
 
 async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
-  if (await isDeviceLoggedIn(device)) {
+  if (await isDeviceLoggedIn(device.deviceId)) {
     window.nativeAPI.log('debug', 'Selected organization is already logged in, switching to it');
     const handle = await getDeviceHandle(device);
     switchOrganization(handle ?? null, false);
