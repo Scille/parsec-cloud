@@ -44,7 +44,7 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
 
 msTest('Go through saas org creation process', { tag: '@important' }, async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -106,7 +106,7 @@ msTest('Go through saas org creation process', { tag: '@important' }, async ({ c
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: true });
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
   await authRadio.nth(0).click();
 
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
@@ -214,7 +214,7 @@ for (const testInfo of [
 ])
   msTest(`Org creation error (${testInfo.status} - ${testInfo.code})`, async ({ context }) => {
     const home = (await context.newPage()) as MsPage;
-    await setupNewPage(home, { enableStripe: true });
+    await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
     const modal = await openCreateOrganizationModal(home);
 
@@ -250,7 +250,7 @@ for (const testInfo of [
     const authContainer = modal.locator('.authentication-page');
 
     const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: true });
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
     await authRadio.nth(0).click();
     const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
@@ -382,7 +382,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
 
 msTest('Open customer account creation', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -397,7 +397,7 @@ msTest('Open customer account creation', async ({ context }) => {
 
 msTest('Fail to login to BMS', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -420,7 +420,7 @@ msTest('Fail to login to BMS', async ({ context }) => {
 
 msTest('Cannot reach the BMS', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   await MockBms.mockLogin(home, { POST: { timeout: true } });
   const modal = await openCreateOrganizationModal(home);
@@ -444,7 +444,7 @@ msTest('Cannot reach the BMS', async ({ context }) => {
 
 msTest('Edit from summary', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -474,7 +474,7 @@ msTest('Edit from summary', async ({ context }) => {
 
   await expect(authContainer).toBeVisible();
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: true });
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
   await authRadio.nth(0).click();
 
   await expect(authNext).toBeTrulyDisabled();
@@ -527,7 +527,7 @@ msTest('Edit from summary', async ({ context }) => {
 
 msTest('Try to create an org with custom order', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -551,7 +551,7 @@ msTest('Try to create an org with custom order', async ({ context }) => {
 
 msTest('Try to create an org without being a client', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -572,7 +572,7 @@ msTest('Try to create an org without being a client', async ({ context }) => {
 for (const displaySize of ['small', 'large']) {
   msTest(`Go through saas org creation process with authority key on ${displaySize} display`, async ({ context }, testInfo: TestInfo) => {
     const home = (await context.newPage()) as MsPage;
-    await setupNewPage(home, { enableStripe: true });
+    await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
     if (displaySize === DisplaySize.Small) {
       await home.setDisplaySize(DisplaySize.Small);
@@ -651,7 +651,7 @@ for (const displaySize of ['small', 'large']) {
     await expect(authNext).toHaveDisabledAttribute();
 
     const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: true });
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
     await authRadio.nth(0).click();
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
     await expect(authNext).toHaveDisabledAttribute();
@@ -722,7 +722,7 @@ for (const displaySize of ['small', 'large']) {
     `Go through saas org creation process with invalid authority key on ${displaySize} display`,
     async ({ context }, testInfo: TestInfo) => {
       const home = (await context.newPage()) as MsPage;
-      await setupNewPage(home, { enableStripe: true });
+      await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
       if (displaySize === DisplaySize.Small) {
         await home.setDisplaySize(DisplaySize.Small);
@@ -789,7 +789,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toHaveDisabledAttribute();
 
       const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-      await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: true });
+      await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
       await authRadio.nth(0).click();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
       await expect(authNext).toHaveDisabledAttribute();

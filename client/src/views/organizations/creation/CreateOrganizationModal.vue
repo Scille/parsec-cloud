@@ -68,6 +68,7 @@ const props = defineProps<{
 }>();
 
 const serverType = ref<ServerType | undefined>(props.defaultChoice);
+const forced = ref(false);
 
 onMounted(async () => {
   if (props.bootstrapLink) {
@@ -78,17 +79,17 @@ onMounted(async () => {
   } else if ((window as any).TESTING === true || window.isDev()) {
     // On Playwright, everything's available
     serverType.value = undefined;
-  } else if (currentLocationIsSaasServer()) {
-    // We're on the Saas server, letting the user chose
-    serverType.value = undefined;
   } else if (currentLocationIsTrialServer()) {
-    // We're on the trial server, using trial by default
+    // Trial server, can't have custom or saas
     serverType.value = ServerType.Trial;
-  } else if (isWeb()) {
-    // We're on web but not on trial nor saas, use custom by default
+    forced.value = true;
+  } else if (!currentLocationIsSaasServer() && !currentLocationIsTrialServer()) {
+    // Custom server, can't have saas or trial
     serverType.value = ServerType.Custom;
-  } else {
-    serverType.value = undefined;
+    forced.value = true;
+  } else if (currentLocationIsSaasServer()) {
+    serverType.value = ServerType.Saas;
+    forced.value = true;
   }
 });
 
@@ -130,7 +131,11 @@ async function onOrganizationCreated(
 }
 
 async function onBackToServerChoice(): Promise<void> {
-  serverType.value = undefined;
+  if (!forced.value) {
+    serverType.value = undefined;
+  } else {
+    await onCloseRequested(true);
+  }
 }
 </script>
 
