@@ -26,7 +26,7 @@ Downgrade with Docker
 
 The following steps show how to downgrade the ``parsec-server`` service from version ``v3.1.0`` to ``v3.0.0``.
 
-#. Downgrade the ``parsec-server`` docker image tag in ``parsec-server.docker.yaml``.
+#. Downgrade the ``parsec-server`` docker image tag in ``docker-compose.parsec-server.yaml``.
 
    This is equivalent to the first step in :ref:`Upgrade with Docker <doc_hosting_maintenance_upgrade_docker>`.
 
