@@ -1,1 +1,0 @@
-[Desktop] Combined app window and title into a unified title bar

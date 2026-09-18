@@ -1,1 +1,0 @@
-Improved error management when trying to drag & drop files in an empty workspace as a `Reader`

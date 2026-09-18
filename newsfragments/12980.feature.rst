@@ -1,1 +1,0 @@
-[Web] Added a direct download option for multiple files and folders
