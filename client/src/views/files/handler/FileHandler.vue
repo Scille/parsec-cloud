@@ -242,7 +242,6 @@ import {
 } from '@/router';
 import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
@@ -289,7 +288,6 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 
 const { isLargeDisplay, windowWidth } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
 const loaded = ref(false);
@@ -647,15 +645,6 @@ async function downloadFile(): Promise<void> {
     window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
-  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
-  if (!workspaceInfoResult.ok) {
-    window.nativeAPI.log(
-      'error',
-      `Failed to retrieve workspace info: ${workspaceInfoResult.error.tag} (${workspaceInfoResult.error.error})`,
-    );
-    return;
-  }
-
   if (!contentInfo.value) {
     window.nativeAPI.log('error', 'No content info when trying to download a file');
     return;
@@ -674,9 +663,7 @@ async function downloadFile(): Promise<void> {
   await downloadFiles({
     entries: [entryResult.value as EntryStatFile],
     workspaceHandle: workspaceHandle,
-    workspaceId: workspaceInfoResult.value.id,
     informationManager: informationManager.value,
-    fileOperationManager: fileOperationManager.value,
   });
 }
 

@@ -5,13 +5,16 @@ import {
   DisplaySize,
   expect,
   expectMedia,
-  getDownloadedFile,
+  expectSameContent,
   importDefaultFiles,
   ImportDocuments,
   Media,
   msTest,
   openFileType,
+  readDownload,
+  readImportedFile,
   sliderClick,
+  waitForDownload,
 } from '@tests/e2e/helpers';
 
 msTest.describe(() => {
@@ -198,40 +201,29 @@ msTest.describe(() => {
 
       const modal = documents.locator('.download-warning-modal');
 
-      // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
-      if (displaySize === 'small') {
-        const actionMenuButton = documents.locator('.file-handler-topbar-buttons__item.action-menu');
-        const actionMenuModal = documents.locator('.viewer-action-menu-modal');
-        await expect(actionMenuModal).toBeHidden();
-        await expect(actionMenuButton).toBeVisible();
-        await expect(documents.locator('.file-handler-topbar-buttons')).toBeHidden();
-        await actionMenuButton.click();
+      const download = await waitForDownload(documents, async () => {
+        if (displaySize === 'small') {
+          const actionMenuButton = documents.locator('.file-handler-topbar-buttons__item.action-menu');
+          const actionMenuModal = documents.locator('.viewer-action-menu-modal');
+          await expect(actionMenuModal).toBeHidden();
+          await expect(actionMenuButton).toBeVisible();
+          await expect(documents.locator('.file-handler-topbar-buttons')).toBeHidden();
+          await actionMenuButton.click();
 
-        await expect(documents.locator('.list-group-item__label-small').nth(2)).toBeVisible();
-        await documents.locator('.list-group-item__label-small').nth(2).click();
+          await expect(documents.locator('.list-group-item__label-small').nth(2)).toBeVisible();
+          await documents.locator('.list-group-item__label-small').nth(2).click();
 
-        await expect(actionMenuModal).toBeVisible();
-        await modal.locator('#next-button').click();
-      } else {
-        await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
-        await modal.locator('#next-button').click();
-      }
+          await expect(actionMenuModal).toBeVisible();
+          await modal.locator('#next-button').click();
+        } else {
+          await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
+          await modal.locator('#next-button').click();
+        }
+      });
 
       await expect(modal).toBeHidden();
-      await documents.waitForTimeout(1000);
-
-      const uploadMenu = documents.locator('.upload-menu');
-      await expect(uploadMenu).toBeVisible();
-      const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
-      await expect(opItems).toHaveCount(2);
-      await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading pdfDocument.pdf');
-      await expect(opItems.nth(0).locator('.element-details-info').locator('ion-text').nth(0)).toHaveText(' wksp1');
-
-      const content = await getDownloadedFile(documents);
-      expect(content).toBeTruthy();
-      if (content) {
-        expect(content.length).toEqual(78731);
-      }
+      expect(download.suggestedFilename()).toBe('pdfDocument.pdf');
+      expectSameContent(await readDownload(download), readImportedFile(testInfo, 'pdfDocument.pdf'));
     });
   }
 

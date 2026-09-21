@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryName, EntryStat, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { EntryName, EntryStat, EntryStatFile, FsPath, WorkspaceHandle } from '@/parsec';
+import { startDownload } from '@/services/download';
 import { DuplicatePolicy } from '@/services/fileOperation';
-import { FileOperationManager } from '@/services/fileOperation/manager';
-import { InformationManager } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
 import { FileOperationConflictsModal } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
@@ -43,20 +43,54 @@ export async function openDownloadConfirmationModal(storageManager: StorageManag
 
 interface DownloadOptions {
   workspaceHandle: WorkspaceHandle;
-  workspaceId: WorkspaceID;
   informationManager: InformationManager;
-  fileOperationManager: FileOperationManager;
   entries: Array<EntryStat>;
+  // A download is an archive if this is set
   asArchive?: {
     archiveName: EntryName;
-    relativePath: string;
+    // The entries are in the archive with their path relative to this folder
+    relativePath: FsPath;
   };
 }
 
-// TODO: downloads are being moved to the streaming worker (public/streaming-worker.js), so that
-// the browser handles them like any other download. Nothing is downloaded until that is done.
-export async function downloadFiles(_options: DownloadOptions): Promise<void> {
-  window.nativeAPI.log('error', 'Downloads are not available yet');
+// The download is handled by the browser, as any other download: see the streaming worker.
+export async function downloadFiles(options: DownloadOptions): Promise<void> {
+  if (options.entries.length === 0) {
+    return;
+  }
+
+  try {
+    if (options.asArchive) {
+      await startDownload({
+        workspaceHandle: options.workspaceHandle,
+        name: options.asArchive.archiveName,
+        archive: true,
+        root: options.asArchive.relativePath,
+        entries: options.entries.map((entry) => ({
+          path: entry.path,
+          isFile: entry.isFile(),
+          size: entry.isFile() ? (entry as EntryStatFile).size : undefined,
+        })),
+      });
+    } else {
+      await startDownload({
+        workspaceHandle: options.workspaceHandle,
+        name: options.entries[0].name,
+        archive: false,
+        root: '/',
+        entries: [{ path: options.entries[0].path, isFile: true, size: (options.entries[0] as EntryStatFile).size }],
+      });
+    }
+  } catch (e: any) {
+    window.nativeAPI.log('error', `Failed to start the download: ${e.toString()}`);
+    options.informationManager.present(
+      new Information({
+        message: 'FoldersPage.DownloadFile.allFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 export async function getDuplicatePolicy(files: Array<EntryStat | File>): Promise<DuplicatePolicy | undefined> {
