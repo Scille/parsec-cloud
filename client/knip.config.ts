@@ -43,6 +43,8 @@ const config = {
     'src/views/home/SummaryStep.vue',
     'src/services/performanceMonitor.ts',
     'public/streaming-worker.js',
+    // loaded by the streaming worker with `importScripts()`
+    'public/vendor/zip-native.min.js',
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
