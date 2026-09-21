@@ -1,15 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryName, EntryStat, EntryStatFile, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { EntryName, EntryStat, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager } from '@/services/fileOperation/manager';
-import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { InformationManager } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
 import { FileOperationConflictsModal } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
-import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
 
 export async function askDownloadConfirmation(multipleFiles?: boolean): Promise<{ result: MsModalResult; noReminder?: boolean }> {
   const modal = await modalController.create({
@@ -54,60 +53,10 @@ interface DownloadOptions {
   };
 }
 
-export async function downloadFiles(options: DownloadOptions): Promise<void> {
-  if (options.entries.length === 0) {
-    return;
-  }
-
-  try {
-    if (options.asArchive) {
-      const saveHandle = await showSaveFilePicker({
-        _preferPolyfill: false,
-        suggestedName: options.asArchive.archiveName,
-      });
-      await options.fileOperationManager.downloadArchive(
-        options.workspaceHandle,
-        options.entries,
-        saveHandle,
-        options.asArchive.relativePath,
-      );
-    } else if (options.entries.length === 1 && options.entries[0].isFile()) {
-      const saveHandle = await showSaveFilePicker({
-        _preferPolyfill: false,
-        suggestedName: options.entries[0].name,
-      });
-      await options.fileOperationManager.download(options.workspaceHandle, options.entries[0] as EntryStatFile, saveHandle);
-    } else {
-      const saveHandle = await showDirectoryPicker({ _preferPolyfill: false });
-      await options.fileOperationManager.downloadFiles(options.workspaceHandle, options.entries, saveHandle);
-    }
-  } catch (e: any) {
-    if (e.name === 'NotAllowedError') {
-      window.nativeAPI.log('error', 'No permission for showSaveFilePicker');
-      options.informationManager.present(
-        new Information({
-          message: 'FoldersPage.DownloadFile.noPermissions',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
-    } else if (e.name === 'AbortError') {
-      if ((e.toString() as string).toLocaleLowerCase().includes('user aborted')) {
-        window.nativeAPI.log('debug', 'User cancelled the showSaveFilePicker');
-      } else {
-        options.informationManager.present(
-          new Information({
-            message: 'FoldersPage.DownloadFile.selectFolderFailed',
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Toast,
-        );
-        window.nativeAPI.log('error', `Could not create the file: ${e.toString()}`);
-      }
-    } else {
-      window.nativeAPI.log('error', `Failed to select destination file: ${e.toString()}`);
-    }
-  }
+// TODO: downloads are being moved to the streaming worker (public/streaming-worker.js), so that
+// the browser handles them like any other download. Nothing is downloaded until that is done.
+export async function downloadFiles(_options: DownloadOptions): Promise<void> {
+  window.nativeAPI.log('error', 'Downloads are not available yet');
 }
 
 export async function getDuplicatePolicy(files: Array<EntryStat | File>): Promise<DuplicatePolicy | undefined> {
