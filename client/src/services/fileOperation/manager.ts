@@ -2,8 +2,6 @@
 
 import {
   createFolder,
-  createReadStream,
-  EntryName,
   EntryStat,
   EntryStatFile,
   EntryStatFolder,
@@ -16,7 +14,6 @@ import {
   listTreeAt,
   moveEntry,
   Path,
-  statFolderChildren,
   WorkspaceCreateFolderErrorTag,
   WorkspaceHandle,
   WorkspaceHistory,
@@ -35,27 +32,14 @@ import {
   FileOperationCopyData,
   FileOperationData,
   FileOperationDataType,
-  FileOperationDownloadArchiveData,
-  FileOperationDownloadData,
-  FileOperationDownloadFilesData,
   FileOperationID,
   FileOperationImportData,
   FileOperationMoveData,
   FileOperationRestoreData,
 } from '@/services/fileOperation/operationData';
-import {
-  copyFile,
-  copyFolder,
-  getAvailableFileHandle,
-  importFile,
-  moveWithCounter,
-  OperationTransaction,
-  restoreFile,
-} from '@/services/fileOperation/operations';
+import { copyFile, copyFolder, importFile, moveWithCounter, OperationTransaction, restoreFile } from '@/services/fileOperation/operations';
 import { DuplicatePolicy, FileOperationCancelled, FileOperationException, OperationFailedErrors } from '@/services/fileOperation/types';
-import * as zipjs from '@zip.js/zip.js';
 import { DateTime } from 'luxon';
-import { FileSystemDirectoryHandle, FileSystemFileHandle, FileSystemWritableFileStream } from 'native-file-system-adapter';
 import { v4 as uuid4 } from 'uuid';
 
 const MAX_SIMULTANEOUS_OPERATIONS = 3;
@@ -260,95 +244,6 @@ export class FileOperationManager {
       entries: entries,
       dateTime: dateTime,
       dupPolicy: dupPolicy,
-    };
-    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
-    this.pendingOperations.unshift(data);
-    if (!this.isRunning) {
-      this.start();
-    }
-    return true;
-  }
-
-  async download(
-    workspaceHandle: WorkspaceHandle,
-    entry: EntryStatFile,
-    saveHandle: FileSystemFileHandle,
-    dateTime?: DateTime,
-  ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
-    if (!workspaceResult.ok) {
-      return false;
-    }
-
-    const data: FileOperationDownloadData = {
-      type: FileOperationDataType.Download,
-      id: uuid4(),
-      workspaceHandle: workspaceHandle,
-      workspaceId: workspaceResult.value.id,
-      workspaceName: workspaceResult.value.name,
-      entry: entry,
-      saveHandle: saveHandle,
-      dateTime: dateTime,
-    };
-    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
-    this.pendingOperations.unshift(data);
-    if (!this.isRunning) {
-      this.start();
-    }
-    return true;
-  }
-
-  async downloadArchive(
-    workspaceHandle: WorkspaceHandle,
-    entries: Array<EntryStat>,
-    saveHandle: FileSystemFileHandle,
-    root: FsPath,
-  ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
-    if (!workspaceResult.ok) {
-      return false;
-    }
-
-    const data: FileOperationDownloadArchiveData = {
-      type: FileOperationDataType.DownloadArchive,
-      id: uuid4(),
-      workspaceHandle: workspaceHandle,
-      workspaceId: workspaceResult.value.id,
-      workspaceName: workspaceResult.value.name,
-      entries: entries,
-      saveHandle: saveHandle,
-      rootPath: root,
-      totalFiles: 0,
-      totalSize: 0,
-    };
-    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
-    this.pendingOperations.unshift(data);
-    if (!this.isRunning) {
-      this.start();
-    }
-    return true;
-  }
-
-  async downloadFiles(
-    workspaceHandle: WorkspaceHandle,
-    entries: Array<EntryStat>,
-    saveHandle: FileSystemDirectoryHandle,
-    dateTime?: DateTime,
-  ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
-    if (!workspaceResult.ok) {
-      return false;
-    }
-
-    const data: FileOperationDownloadFilesData = {
-      type: FileOperationDataType.DownloadFiles,
-      id: uuid4(),
-      workspaceHandle: workspaceHandle,
-      workspaceId: workspaceResult.value.id,
-      workspaceName: workspaceResult.value.name,
-      entries: entries,
-      saveHandle: saveHandle,
-      dateTime: dateTime,
     };
     await this.eventDistributor.distribute(FileOperationEvents.Added, data);
     this.pendingOperations.unshift(data);
@@ -638,277 +533,6 @@ export class FileOperationManager {
     }
   }
 
-  private async _doDownload(signal: AbortSignal, data: FileOperationDownloadData): Promise<void> {
-    let writtenSize = 0;
-
-    const rStream = await createReadStream(data.workspaceHandle, data.entry.path);
-    const wStream = await data.saveHandle.createWritable();
-    const reader = rStream.getReader();
-
-    try {
-      while (true) {
-        // Check if the download has been cancelled
-        if (signal.aborted) {
-          throw new FileOperationCancelled();
-        }
-
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        } else {
-          const chunk = value as Uint8Array;
-          await wStream.write(chunk);
-          writtenSize += chunk.byteLength;
-          this.eventDistributor.distribute(FileOperationEvents.Progress, data, {
-            currentFile: {
-              name: data.entry.name,
-              currentSize: writtenSize,
-              totalSize: data.entry.size,
-              progress: Math.min(100, Math.round((writtenSize / data.entry.size) * 100)),
-            },
-            global: {
-              totalSize: data.entry.size,
-              currentSize: writtenSize,
-              fileCount: 1,
-              fileIndex: 0,
-              progress: Math.min(100, Math.round((writtenSize / data.entry.size) * 100)),
-            },
-          });
-        }
-      }
-      wStream.close();
-    } catch (err: unknown) {
-      await wStream.abort();
-      data.saveHandle.remove();
-      throw err;
-    }
-  }
-
-  private async _doDownloadArchive(signal: AbortSignal, data: FileOperationDownloadArchiveData): Promise<void> {
-    async function _writeEntry(
-      entry: EntryStatFile,
-      writer: zipjs.ZipWriter<any>,
-      eventDistributor: FileOperationEventDistributor,
-      signal: AbortSignal,
-      totalSize: number,
-      currentFileIndex: number,
-    ): Promise<number> {
-      try {
-        let fileSize = 0;
-        const rStream = await createReadStream(data.workspaceHandle, entry.path, async (sizeRead: number) => {
-          if (signal.aborted) {
-            window.nativeAPI.log('info', 'Cancelling import...');
-            throw new FileOperationCancelled();
-          }
-          fileSize += sizeRead;
-          eventDistributor.distribute(FileOperationEvents.Progress, data, {
-            currentFile: {
-              name: entry.name,
-              currentSize: fileSize,
-              totalSize: entry.size,
-              progress: Math.min(100, Math.round((fileSize / entry.size) * 100.0)),
-            },
-            global: {
-              currentSize: totalSize + fileSize,
-              fileIndex: currentFileIndex,
-              progress: 0,
-              totalSize: totalSize + fileSize,
-              fileCount: currentFileIndex,
-            },
-          });
-        });
-        const relPath = entry.path.startsWith(data.rootPath) ? entry.path.slice(data.rootPath.length) : entry.path;
-        await writer.add(relPath, rStream);
-        return fileSize;
-      } catch (e: any) {
-        window.nativeAPI.log('error', 'Failed to add file to archive');
-        throw e;
-      }
-    }
-
-    async function* _iterDir(entry: EntryStatFolder, signal: AbortSignal): AsyncGenerator<EntryStatFile> {
-      const result = await statFolderChildren(data.workspaceHandle, entry.path);
-      if (result.ok) {
-        for (const child of result.value) {
-          if (signal.aborted) {
-            window.nativeAPI.log('info', 'Cancelling import...');
-            throw new FileOperationCancelled();
-          }
-
-          if (child.isFile()) {
-            yield child as EntryStatFile;
-          } else {
-            yield* _iterDir(child as EntryStatFolder, signal);
-          }
-        }
-      } else {
-        throw new Error(`${result.error.tag} (${result.error.error})`);
-      }
-    }
-
-    let zipWriter: zipjs.ZipWriter<any> | undefined;
-    let wStream: FileSystemWritableFileStream | undefined;
-
-    try {
-      wStream = await data.saveHandle.createWritable();
-      zipWriter = new zipjs.ZipWriter(wStream, {
-        level: 3,
-        compressionMethod: 0x08,
-        useUnicodeFileNames: true,
-        supportZip64SplitFile: false,
-        zip64: false,
-      });
-
-      let totalSizeRead = 0;
-      let fileIndex = 1;
-      for (const entry of data.entries) {
-        // Check if the download has been cancelled
-        if (signal.aborted) {
-          throw new FileOperationCancelled();
-        }
-
-        if (entry.isFile()) {
-          totalSizeRead += await _writeEntry(entry as EntryStatFile, zipWriter, this.eventDistributor, signal, totalSizeRead, fileIndex);
-          fileIndex += 1;
-        } else {
-          for await (const fileEntry of _iterDir(entry as EntryStatFolder, signal)) {
-            totalSizeRead += await _writeEntry(fileEntry, zipWriter, this.eventDistributor, signal, totalSizeRead, fileIndex);
-            fileIndex += 1;
-          }
-        }
-      }
-    } catch (err: unknown) {
-      if (wStream) {
-        await wStream.abort();
-      }
-      data.saveHandle.remove();
-      throw err;
-    } finally {
-      if (zipWriter) {
-        zipWriter.close();
-      }
-    }
-  }
-
-  private async _doDownloadFiles(signal: AbortSignal, data: FileOperationDownloadFilesData): Promise<void> {
-    async function _resolveDirHandle(root: FileSystemDirectoryHandle, parts: Array<EntryName>): Promise<FileSystemDirectoryHandle> {
-      let current = root;
-      for (const part of parts) {
-        current = await current.getDirectoryHandle(part, { create: true });
-      }
-      return current;
-    }
-
-    async function _writeEntry(
-      entry: EntryStatFile,
-      dirHandle: FileSystemDirectoryHandle,
-      eventDistributor: FileOperationEventDistributor,
-      signal: AbortSignal,
-      totalSize: number,
-      currentFileIndex: number,
-    ): Promise<number> {
-      let fileHandle: FileSystemFileHandle | undefined = undefined;
-      let wStream: FileSystemWritableFileStream | undefined = undefined;
-      try {
-        fileHandle = await getAvailableFileHandle(dirHandle, entry.name);
-        wStream = await fileHandle.createWritable();
-        let fileSize = 0;
-        const rStream = await createReadStream(data.workspaceHandle, entry.path, async (sizeRead: number) => {
-          if (signal.aborted) {
-            window.nativeAPI.log('info', 'Cancelling download...');
-            throw new FileOperationCancelled();
-          }
-          fileSize += sizeRead;
-          eventDistributor.distribute(FileOperationEvents.Progress, data, {
-            currentFile: {
-              name: entry.name,
-              currentSize: fileSize,
-              totalSize: entry.size,
-              progress: Math.min(100, Math.round((fileSize / entry.size) * 100.0)),
-            },
-            global: {
-              currentSize: totalSize + fileSize,
-              fileIndex: currentFileIndex,
-              progress: 0,
-              totalSize: totalSize + fileSize,
-              fileCount: currentFileIndex,
-            },
-          });
-        });
-        const reader = rStream.getReader();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
-          await wStream.write(value as Uint8Array);
-        }
-        await wStream.close();
-        return fileSize;
-      } catch (e: any) {
-        window.nativeAPI.log('error', `Failed to write file '${entry.name}' to disk: ${e.toString()}`);
-        if (wStream) {
-          await wStream.abort();
-        }
-        if (fileHandle) {
-          await fileHandle.remove();
-        }
-        throw e;
-      }
-    }
-
-    async function* _iterDir(entry: EntryStatFolder, signal: AbortSignal): AsyncGenerator<EntryStatFile> {
-      const result = await statFolderChildren(data.workspaceHandle, entry.path);
-      if (result.ok) {
-        for (const child of result.value) {
-          if (signal.aborted) {
-            window.nativeAPI.log('info', 'Cancelling download...');
-            throw new FileOperationCancelled();
-          }
-
-          if (child.isFile()) {
-            yield child as EntryStatFile;
-          } else {
-            yield* _iterDir(child as EntryStatFolder, signal);
-          }
-        }
-      } else {
-        throw new Error(`${result.error.tag} (${result.error.error})`);
-      }
-    }
-
-    let totalSizeWritten = 0;
-    let fileIndex = 1;
-    for (const entry of data.entries) {
-      if (signal.aborted) {
-        throw new FileOperationCancelled();
-      }
-
-      if (entry.isFile()) {
-        totalSizeWritten += await _writeEntry(
-          entry as EntryStatFile,
-          data.saveHandle,
-          this.eventDistributor,
-          signal,
-          totalSizeWritten,
-          fileIndex,
-        );
-        fileIndex += 1;
-      } else {
-        const folderEntry = entry as EntryStatFolder;
-        const targetDir = await data.saveHandle.getDirectoryHandle(folderEntry.name, { create: true });
-        for await (const fileEntry of _iterDir(folderEntry, signal)) {
-          const relPath = fileEntry.path.slice(folderEntry.path.length);
-          const parts = await Path.parse(relPath);
-          parts.pop();
-          const dirHandle = parts.length > 0 ? await _resolveDirHandle(targetDir, parts) : targetDir;
-          totalSizeWritten += await _writeEntry(fileEntry, dirHandle, this.eventDistributor, signal, totalSizeWritten, fileIndex);
-          fileIndex += 1;
-        }
-      }
-    }
-  }
-
   private async _doImport(signal: AbortSignal, data: FileOperationImportData): Promise<void> {
     const transaction = new OperationTransaction(data.workspaceHandle);
     const globalTotalSize = data.files.reduce((sum, file) => sum + file.size, 0);
@@ -1003,18 +627,6 @@ export class FileOperationManager {
         }
         case FileOperationDataType.Restore: {
           job = this._doRestore(aborter.signal, elem as FileOperationRestoreData);
-          break;
-        }
-        case FileOperationDataType.Download: {
-          job = this._doDownload(aborter.signal, elem as FileOperationDownloadData);
-          break;
-        }
-        case FileOperationDataType.DownloadArchive: {
-          job = this._doDownloadArchive(aborter.signal, elem as FileOperationDownloadArchiveData);
-          break;
-        }
-        case FileOperationDataType.DownloadFiles: {
-          job = this._doDownloadFiles(aborter.signal, elem as FileOperationDownloadFilesData);
           break;
         }
         default:
