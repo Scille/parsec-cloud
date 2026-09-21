@@ -383,6 +383,8 @@ ion-modal {
   &:has(.organization-name-and-server-page.active),
   &:has(.user-information-page.active) {
     @include ms.responsive-breakpoint('sm') {
+      --height: 80vh;
+
       .ion-page {
         position: absolute;
       }
@@ -466,6 +468,10 @@ ion-modal {
 
   &:has(.creation-page.active),
   &:has(.created-page.active) {
+    @include ms.responsive-breakpoint('sm') {
+      --height: 90vh;
+    }
+
     .ion-page {
       min-height: 18.75rem;
       max-height: 20rem;
