@@ -71,6 +71,7 @@ ignorePaths:
   - "**/bindings/web/src/meths.rs"
   - "**/buildscript-gradle.lockfile"
   - "**/client/.env.*"
+  - "**/client/public/vendor"
   - "**/client/tests/e2e/data"
   - "**/client/tests/unit/data"
   - "**/default_pattern.ignore"
