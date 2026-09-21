@@ -13,6 +13,10 @@ autotests = false
 name = "minimal_short_id"
 harness = false
 
+[[bench]]
+name = "upload_speed"
+harness = false
+
 [[test]]
 name = "integration"
 path = "tests/integration/mod.rs"
@@ -72,6 +76,7 @@ rstest = { workspace = true }
 uuid = { workspace = true, features = ["v6", "std", "rng"] }
 
 criterion = { workspace = true }
+rand = { workspace = true, features = ["std", "std_rng"] }
 
 [build-dependencies]
 shadow-rs = { workspace = true, features = ["git2", "build"] }
