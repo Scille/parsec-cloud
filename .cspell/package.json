@@ -12,6 +12,6 @@
     "@cspell/dict-fr-fr": "^2.3.2",
     "@cspell/dict-fr-reforme": "^2.3.2",
     "@cspell/dict-win32": "^2.0.10",
-    "cspell": "^10.2.1"
+    "cspell": "^10.3.0"
   }
 }
