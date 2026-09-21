@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import type { FileDescriptor } from '@/plugins/libparsec';
 import { libparsec } from '@/plugins/libparsec';
 import * as pdfjs from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
@@ -11,98 +10,90 @@ async function _initPdf(): Promise<void> {
   pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 }
 
+// The streaming worker is stateless, for every read, it sends us a `READ` request along with a dedicated port to answer on.
+interface WorkerReadRequest {
+  type: 'READ';
+  workspaceHandle: number;
+  filePath: string;
+  offset: number;
+  size: number;
+  historyHandle: number | null;
+}
+
+type ReadOutcome = { data: Uint8Array } | { error: unknown };
+
+async function _readWorkspaceHistoryFile(historyHandle: number, filePath: string, offset: number, size: number): Promise<ReadOutcome> {
+  const openResult = await libparsec.workspaceHistoryOpenFile(historyHandle, filePath);
+  if (!openResult.ok) {
+    return { error: openResult.error };
+  }
+  const fd = openResult.value;
+  try {
+    const readResult = await libparsec.workspaceHistoryFdRead(historyHandle, fd, BigInt(offset), BigInt(size));
+    return readResult.ok ? { data: readResult.value } : { error: readResult.error };
+  } finally {
+    await libparsec.workspaceHistoryFdClose(historyHandle, fd);
+  }
+}
+
+async function _readWorkspaceFile(workspaceHandle: number, filePath: string, offset: number, size: number): Promise<ReadOutcome> {
+  const openResult = await libparsec.workspaceOpenFile(workspaceHandle, filePath, {
+    read: true,
+    write: false,
+    truncate: false,
+    create: false,
+    createNew: false,
+  });
+  if (!openResult.ok) {
+    return { error: openResult.error };
+  }
+  const fd = openResult.value;
+  try {
+    const readResult = await libparsec.workspaceFdRead(workspaceHandle, fd, BigInt(offset), BigInt(size));
+    return readResult.ok ? { data: readResult.value } : { error: readResult.error };
+  } finally {
+    await libparsec.workspaceFdClose(workspaceHandle, fd);
+  }
+}
+
+async function _readFile({ workspaceHandle, filePath, offset, size, historyHandle }: WorkerReadRequest): Promise<ReadOutcome> {
+  try {
+    return historyHandle !== null
+      ? await _readWorkspaceHistoryFile(historyHandle, filePath, offset, size)
+      : await _readWorkspaceFile(workspaceHandle, filePath, offset, size);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+async function _onWorkerMessage(event: MessageEvent): Promise<void> {
+  const request = event.data as WorkerReadRequest | undefined;
+  const port = event.ports[0];
+  if (request?.type !== 'READ' || !port) {
+    return;
+  }
+  const outcome = await _readFile(request);
+  if ('data' in outcome) {
+    // Transfer the buffer to avoid a copy across the message channel.
+    port.postMessage({ type: 'READ_REPLY', data: outcome.data, error: null }, [outcome.data.buffer]);
+  } else {
+    port.postMessage({ type: 'READ_REPLY', data: null, error: outcome.error });
+  }
+  port.close();
+}
+
 async function _initStreamingWorker(): Promise<void> {
   if (!('serviceWorker' in navigator)) {
     console.warn('Streaming worker: service workers not supported, video/audio streaming unavailable');
     return;
   }
 
-  const registration = await navigator.serviceWorker.register(`${BASE}streaming-worker.js`, { scope: BASE });
-
-  // On first install the worker goes through installing → activated.
-  // On subsequent page loads registration.active is already set.
-  let sw: ServiceWorker;
-  if (registration.active) {
-    sw = registration.active;
-  } else {
-    const pending = registration.installing ?? registration.waiting;
-    if (!pending) {
-      console.warn('Streaming worker: unexpected registration state');
-      return;
-    }
-    sw = await new Promise<ServiceWorker>((resolve) => {
-      pending.addEventListener('statechange', function onStateChange() {
-        if (registration.active) {
-          pending.removeEventListener('statechange', onStateChange);
-          resolve(registration.active!);
-        }
-      });
-    });
-  }
-
-  // port1 lives in this tab and proxies read requests to libparsec.
-  // port2 is transferred to the service worker so it can send read requests here.
-  const { port1, port2 } = new MessageChannel();
-
-  port1.onmessage = async (event: MessageEvent): Promise<void> => {
-    const { id, workspaceHandle, filePath, offset, size, historyHandle } = event.data as {
-      id: number;
-      workspaceHandle: number;
-      filePath: string;
-      offset: number;
-      size: number;
-      historyHandle: number | null;
-    };
-    let fd: FileDescriptor | undefined;
-    try {
-      if (historyHandle !== null) {
-        const openResult = await libparsec.workspaceHistoryOpenFile(historyHandle, filePath);
-        if (!openResult.ok) {
-          port1.postMessage({ type: 'READ_REPLY', id, data: null, error: openResult.error });
-          return;
-        }
-        fd = openResult.value;
-        const readResult = await libparsec.workspaceHistoryFdRead(historyHandle, fd, BigInt(offset), BigInt(size));
-        if (!readResult.ok) {
-          port1.postMessage({ type: 'READ_REPLY', id, data: null, error: readResult.error });
-        } else {
-          port1.postMessage({ type: 'READ_REPLY', id, data: readResult.value, error: null }, [readResult.value.buffer]);
-        }
-      } else {
-        const openResult = await libparsec.workspaceOpenFile(workspaceHandle, filePath, {
-          read: true,
-          write: false,
-          truncate: false,
-          create: false,
-          createNew: false,
-        });
-        if (!openResult.ok) {
-          port1.postMessage({ type: 'READ_REPLY', id, data: null, error: openResult.error });
-          return;
-        }
-        fd = openResult.value;
-        const readResult = await libparsec.workspaceFdRead(workspaceHandle, fd, BigInt(offset), BigInt(size));
-        if (!readResult.ok) {
-          port1.postMessage({ type: 'READ_REPLY', id, data: null, error: readResult.error });
-        } else {
-          // Transfer the buffer to avoid a copy across the message channel.
-          port1.postMessage({ type: 'READ_REPLY', id, data: readResult.value, error: null }, [readResult.value.buffer]);
-        }
-      }
-    } catch (err) {
-      port1.postMessage({ type: 'READ_REPLY', id, data: null, error: err instanceof Error ? err.message : 'Unknown error' });
-    } finally {
-      if (fd !== undefined) {
-        if (historyHandle !== null) {
-          await libparsec.workspaceHistoryFdClose(historyHandle, fd);
-        } else {
-          await libparsec.workspaceFdClose(workspaceHandle, fd);
-        }
-      }
-    }
-  };
-
-  sw.postMessage({ type: 'INIT' }, [port2]);
+  // Assigning `onmessage` (unlike `addEventListener`) also starts the delivery of the messages
+  // sent by the worker, this must be done before it can send us anything.
+  navigator.serviceWorker.onmessage = _onWorkerMessage;
+  await navigator.serviceWorker.register(`${BASE}streaming-worker.js`, { scope: BASE });
+  // Requests can only be served once the worker is active (and controls this page).
+  await navigator.serviceWorker.ready;
 }
 
 export function getStreamUrl(workspaceHandle: number, path: string, size: number, historyHandle?: number): string {
