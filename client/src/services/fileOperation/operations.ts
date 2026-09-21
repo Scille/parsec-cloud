@@ -6,7 +6,6 @@ import {
   DEFAULT_READ_SIZE,
   deleteFile,
   deleteFolder,
-  EntryName,
   EntryStatFile,
   EntryStatFolder,
   EntryTree,
@@ -35,7 +34,6 @@ import {
   FolderProgressCallback,
   OperationFailedErrors,
 } from '@/services/fileOperation/types';
-import { FileSystemDirectoryHandle, FileSystemFileHandle } from 'native-file-system-adapter';
 
 export async function importFile(
   signal: AbortSignal,
@@ -263,35 +261,6 @@ export async function moveWithCounter(workspace: WorkspaceHandle, source: FsPath
       return undefined;
     }
   }
-}
-
-export async function getAvailableFileHandle(dirHandle: FileSystemDirectoryHandle, name: EntryName): Promise<FileSystemFileHandle> {
-  const MAX_COUNTER = 10;
-  const split = Path.splitName(name);
-  let counter = 1;
-
-  while (counter <= MAX_COUNTER) {
-    let candidate!: EntryName;
-    if (counter === 1) {
-      candidate = name;
-    } else {
-      candidate = split.extension.length
-        ? `${split.nameWithoutExtension} (${counter}).${split.extension}`
-        : `${split.nameWithoutExtension} (${counter})`;
-    }
-
-    try {
-      // Throws if the entry does not exist, meaning the name is free to use
-      await dirHandle.getFileHandle(candidate, { create: false });
-      counter += 1;
-    } catch (e: any) {
-      if (e.name === 'NotFoundError') {
-        return dirHandle.getFileHandle(candidate, { create: true });
-      }
-      throw e;
-    }
-  }
-  throw new FileOperationException(OperationFailedErrors.OneFailed, `Could not find an available name for '${name}'`);
 }
 
 export async function copyFile(

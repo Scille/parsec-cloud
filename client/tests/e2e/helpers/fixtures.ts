@@ -33,34 +33,6 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
 
   await page.addInitScript(
     (options: SetupOptions & { testbedServer: string }) => {
-      async function createMockWritableStream(): Promise<FileSystemWritableFileStream> {
-        const record = (data: any): void => {
-          const chunk: Uint8Array = data instanceof Uint8Array ? data : new Uint8Array(data && data.data !== undefined ? data.data : data);
-          if ((window as any).__downloadedFiles === undefined) {
-            (window as any).__downloadedFiles = { default: chunk };
-          } else if ((window as any).__downloadedFiles.default === undefined) {
-            (window as any).__downloadedFiles.default = chunk;
-          } else {
-            (window as any).__downloadedFiles.default = new Uint8Array([...(window as any).__downloadedFiles.default, ...chunk]);
-          }
-        };
-        const stream = new WritableStream({
-          write: (chunk: any): void => record(chunk),
-          abort: (): void => {
-            console.log('Stream aborted');
-          },
-        });
-        // `FileSystemWritableFileStream` extends `WritableStream` with these helpers.
-        (stream as any).write = async (data: any): Promise<void> => record(data);
-        (stream as any).seek = async (): Promise<void> => {};
-        (stream as any).truncate = async (): Promise<void> => {};
-        (stream as any).close = async (): Promise<void> => {};
-        (stream as any).abort = async (): Promise<void> => {
-          console.log('Stream aborted');
-        };
-        return stream as unknown as FileSystemWritableFileStream;
-      }
-
       (window as any).TESTING = true;
       (window as any).TESTING_DISABLE_STRIPE = !options.enableStripe;
       if (options.enableUpdateEvent) {
@@ -112,50 +84,6 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.additionalUsers) {
         (window as any).TESTING_ADD_USERS = options.additionalUsers.map((user) => `${user.label}:${user.profile}`).join(';');
       }
-      (window as any).showSaveFilePicker = (opts?: { suggestedName?: string }): Promise<FileSystemFileHandle> => {
-        return new Promise((resolve) => {
-          resolve({
-            kind: 'file',
-            name: opts?.suggestedName ?? 'downloadedFile.tmp',
-            createWritable: createMockWritableStream,
-            remove: async (): Promise<undefined> => {
-              if ((window as any).__downloadedFiles) {
-                (window as any).__downloadedFiles.default = undefined;
-              }
-            },
-          } as unknown as FileSystemFileHandle);
-        });
-      };
-      (window as any).showDirectoryPicker = async (): Promise<FileSystemDirectoryHandle> => {
-        return {
-          kind: 'directory',
-          name: 'folder',
-          getFileHandle: async (name: string, _options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle> => {
-            return {
-              kind: 'file',
-              name: name,
-              createWritable: async () => ({
-                write: async (data: Uint8Array): Promise<any> => {
-                  if ((window as any).__downloadedFiles === undefined) {
-                    (window as any).__downloadedFiles = {
-                      [name]: data,
-                    };
-                  } else {
-                    (window as any).__downloadedFiles[name] = new Uint8Array([...(window as any).__downloadedFiles[name], ...data]);
-                  }
-                },
-                close: async (): Promise<any> => {},
-              }),
-            } as FileSystemFileHandle;
-          },
-          getDirectoryHandle: async (_name: string, _options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle> => {
-            return {} as FileSystemDirectoryHandle;
-          },
-          removeEntry: async (_name: string, _options?: FileSystemRemoveOptions): Promise<void> => {},
-          resolve: async (_descendant: FileSystemHandle): Promise<string[] | null> => null,
-          isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
-        } as unknown as FileSystemDirectoryHandle;
-      };
     },
     { ...opts, testbedServer: TESTBED_SERVER },
   );
