@@ -65,9 +65,7 @@
             </ion-text>
             <ion-text
               class="hover-state"
-              v-if="
-                props.status === FileOperationEvents.Finished && isHovered && props.operationData.type !== FileOperationDataType.Download
-              "
+              v-if="props.status === FileOperationEvents.Finished && isHovered"
             >
               {{ $msTranslate('FoldersPage.ImportFile.browse') }}
             </ion-text>
@@ -144,21 +142,18 @@
         />
       </div>
     </ion-item>
-    <template v-if="props.operationData.type !== FileOperationDataType.Download">
-      <transition name="file-list">
-        <file-operation-file-list
-          v-if="info.entries.length > 1 && showFileList"
-          :files="info.entries"
-          :status="props.status"
-        />
-      </transition>
-    </template>
+    <transition name="file-list">
+      <file-operation-file-list
+        v-if="info.entries.length > 1 && showFileList"
+        :files="info.entries"
+        :status="props.status"
+      />
+    </transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import CopyFile from '@/assets/images/copy-file.svg?raw';
-import DownloadFile from '@/assets/images/download-file.svg?raw';
 import MoveFile from '@/assets/images/move-file.svg?raw';
 import RestoreFile from '@/assets/images/restore-file.svg?raw';
 import FileOperationFileList from '@/components/files/operations/FileOperationFileList.vue';
@@ -166,8 +161,6 @@ import {
   FileOperationCopyData,
   FileOperationData,
   FileOperationDataType,
-  FileOperationDownloadData,
-  FileOperationDownloadFilesData,
   FileOperationEventData,
   FileOperationEvents,
   FileOperationMoveData,
@@ -180,8 +173,7 @@ import { MsImage, MsRichText, MsSpinner } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{
-  operationData:
-    FileOperationCopyData | FileOperationMoveData | FileOperationRestoreData | FileOperationDownloadData | FileOperationDownloadFilesData;
+  operationData: FileOperationCopyData | FileOperationMoveData | FileOperationRestoreData;
   status: FileOperationEvents;
   eventData?: FileOperationEventData;
 }>();
@@ -213,13 +205,6 @@ const info = computed(() => {
         translation: 'FoldersPage.RestoreFile.restore',
         translationMultiple: 'FoldersPage.RestoreFile.restoreMultipleFiles',
       };
-    case FileOperationDataType.Download:
-      return {
-        entries: [(props.operationData as FileOperationDownloadData).entry],
-        icon: DownloadFile,
-        translation: 'FoldersPage.DownloadFile.downloadSingle',
-        translationMultiple: '',
-      };
     default:
       return undefined;
   }
@@ -238,16 +223,13 @@ const singleEntry = computed(() => {
     (props.operationData as FileOperationRestoreData).entries.length === 1
   ) {
     return (props.operationData as FileOperationRestoreData).entries.at(0);
-  } else if (props.operationData.type === FileOperationDataType.Download) {
-    return (props.operationData as FileOperationDownloadData).entry;
   }
   return undefined;
 });
 
 const showDestinationFolderIcon = computed(() => {
-  return (
-    props.operationData.type !== FileOperationDataType.Download &&
-    !(props.operationData.type === FileOperationDataType.Restore && (props.operationData as FileOperationRestoreData).entries.length > 1)
+  return !(
+    props.operationData.type === FileOperationDataType.Restore && (props.operationData as FileOperationRestoreData).entries.length > 1
   );
 });
 
