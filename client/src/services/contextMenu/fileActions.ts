@@ -316,7 +316,7 @@ export function useFileActions() {
     await fileOperationManager.value.copy(workspaceInfo.handle, entries, folder, dupPolicy);
   }
 
-  async function downloadEntries(entries: EntryStat[], workspaceInfo: WorkspaceInfo, asArchive?: boolean): Promise<void> {
+  async function downloadEntries(entries: EntryStat[], workspaceInfo: WorkspaceInfo): Promise<void> {
     if (entries.length < 1) {
       return;
     }
@@ -342,21 +342,14 @@ export function useFileActions() {
       return `${workspaceInfo.name}_${currentFolder}.zip`;
     }
 
-    let archiveOpts: any = undefined;
-    if (asArchive) {
-      archiveOpts = {
-        archiveName: _getArchiveName(),
-        relativePath: currentPath ?? '/',
-      };
-    }
+    // Anything but a single file can only be downloaded as an archive
+    const archive = entries.length > 1 || !entries[0].isFile();
 
     await downloadFiles({
       entries: entries,
       workspaceHandle: workspaceInfo.handle,
-      workspaceId: workspaceInfo.id,
       informationManager: informationManager.value,
-      fileOperationManager: fileOperationManager.value,
-      asArchive: archiveOpts,
+      asArchive: archive ? { archiveName: _getArchiveName(), relativePath: currentPath ?? '/' } : undefined,
     });
   }
 
