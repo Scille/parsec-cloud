@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BrowserContext, Locator, Page, request, TestInfo } from '@playwright/test';
+import { BrowserContext, Download, Locator, Page, request, TestInfo } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { DisplaySize, ImportAllDocuments, ImportDocuments, MsPage } from '@tests/e2e/helpers/types';
 import { readFileSync } from 'fs';
@@ -194,23 +194,27 @@ export async function testFileViewerZoomLevel(fileWrapper: Locator, zoom: string
   expect(value).toMatch(new RegExp(`^--[a-f0-9]+-zoomLevel: ${zoom};$`));
 }
 
-export async function addDownloadedFile(win: Window, data: Uint8Array, name: string = 'default'): Promise<void> {
-  if ((win as any).__downloadedFiles === undefined) {
-    (win as any).__downloadedFiles = {
-      [name]: data,
-    };
-  } else {
-    (win as any).__downloadedFiles[name] = data;
-  }
+// Runs `trigger`, which must make the browser start a download, and returns that download.
+export async function waitForDownload(page: Page, trigger: () => Promise<void>): Promise<Download> {
+  const [download] = await Promise.all([page.waitForEvent('download'), trigger()]);
+  return download;
 }
 
-export async function getDownloadedFile(page: Page, name: string = 'default'): Promise<Uint8Array | undefined> {
-  return await page.evaluate((name) => {
-    if ((window as any).__downloadedFiles && (window as any).__downloadedFiles[name]) {
-      return Array.from((window as any).__downloadedFiles[name]) as unknown as Uint8Array;
-    }
-    return undefined;
-  }, name);
+// Content of a download, once the browser is done with it. Fails if the download failed.
+export async function readDownload(download: Download): Promise<Buffer> {
+  expect(await download.failure()).toBeNull();
+  return readFileSync(await download.path());
+}
+
+// Content of one of the files that the tests import (`tests/e2e/data/imports`)
+export function readImportedFile(testInfo: TestInfo, name: string): Buffer {
+  return readFileSync(path.join(testInfo.config.rootDir, 'data', 'imports', name));
+}
+
+// Same content, without printing everything if it differs
+export function expectSameContent(actual: Uint8Array, expected: Uint8Array): void {
+  expect(actual.length).toEqual(expected.length);
+  expect(Buffer.compare(Buffer.from(actual), Buffer.from(expected))).toEqual(0);
 }
 
 export async function sliderClick(page: Page, slider: Locator, progressPercent: number): Promise<void> {
@@ -646,7 +650,6 @@ export async function checkEntryContextMenu(
       ...(options?.onDesktop ? ['Show in explorer'] : []),
       'History',
       ...(options?.onDesktop ? [] : ['Download']),
-      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
       'Details',
       'Delete',
       'Copy link',
@@ -663,7 +666,6 @@ export async function checkEntryContextMenu(
       ...(options?.onDesktop ? ['Show in explorer'] : []),
       'History',
       ...(options?.onDesktop ? [] : ['Download']),
-      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
       'Details',
       'Delete',
       'Copy link',
@@ -676,7 +678,6 @@ export async function checkEntryContextMenu(
       'Preview',
       ...(options?.fromSearch ? ['Show enclosing folder'] : []),
       ...(options?.onDesktop ? [] : ['Download']),
-      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
       ...(options?.onDesktop ? ['Open with default app'] : []),
       ...(options?.onDesktop ? ['Show in explorer'] : []),
       'Details',
@@ -689,7 +690,6 @@ export async function checkEntryContextMenu(
     await expect(labels).toHaveText([
       ...(options?.fromSearch ? ['Show enclosing folder'] : []),
       ...(options?.onDesktop ? [] : ['Download']),
-      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
       ...(options?.onDesktop ? ['Show in explorer'] : []),
       'Details',
       'Copy link',
@@ -698,12 +698,12 @@ export async function checkEntryContextMenu(
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Folder management']);
     }
-    await expect(labels).toHaveText(['Move to', 'Make a copy', 'Download', 'Download as a ZIP file', 'Delete']);
+    await expect(labels).toHaveText(['Move to', 'Make a copy', 'Download', 'Delete']);
   } else if (mode === 'multiple-entries-readonly') {
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Folder management']);
     }
-    await expect(labels).toHaveText(['Download', 'Download as a ZIP file']);
+    await expect(labels).toHaveText(['Download']);
   }
   if (action === 'dismiss') {
     await menu.locator('ion-backdrop').click();

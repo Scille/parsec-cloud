@@ -22,6 +22,7 @@ export default defineConfig([
       'electron/live-runner.js',
       'electron/node_modules/**',
       'public/vendor/**',
+      'test-results/**',
       'src/views/testing/**',
       'bindings/**',
       'playwright.config.ts',

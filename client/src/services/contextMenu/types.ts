@@ -25,7 +25,6 @@ export enum FileAction {
   Edit = 'file-edit',
   ShowHistory = 'file-show-history',
   Download = 'file-download',
-  DownloadAsArchive = 'file-download-as-archive',
   ShowDetails = 'file-show-details',
   CopyLink = 'file-copy-link',
   SeeInExplorer = 'file-see-in-explorer',
