@@ -245,6 +245,7 @@ nonstopmode
 noout
 noserver
 nosetests
+nosniff
 notarytool
 notifs
 npmkeep
