@@ -160,8 +160,8 @@ msTest.describe(() => {
     await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
     await expect(entries.nth(3).locator('.ms-checkbox')).toBeChecked();
 
-    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(3);
-    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete']);
+    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(4);
+    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete', 'Download']);
     await expect(actionBar.locator('.counter')).toHaveText('4 selected items');
 
     await unselectFile(entries.nth(1));
@@ -364,7 +364,8 @@ msTest.describe(() => {
       'Make a copy',
       'Delete',
       'Download',
-      'Download as a ZIP file',
+      'History',
+      'Copy link',
     ]);
     await expect(actionBarMoreButton).toBeVisible();
 
@@ -376,7 +377,6 @@ msTest.describe(() => {
     await expect(documents.locator('.popover-viewport').getByRole('listitem')).toHaveText([
       'Delete',
       'Download',
-      'Download as a ZIP file',
       'History',
       'Copy link',
       'Details',
@@ -394,7 +394,6 @@ msTest.describe(() => {
       'Make a copy',
       'Delete',
       'Download',
-      'Download as a ZIP file',
       'History',
       'Copy link',
       'Details',
@@ -408,14 +407,7 @@ msTest.describe(() => {
     await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
-    await expect(popover.getByRole('listitem')).toHaveText([
-      'Delete',
-      'Download',
-      'Download as a ZIP file',
-      'History',
-      'Copy link',
-      'Details',
-    ]);
+    await expect(popover.getByRole('listitem')).toHaveText(['Delete', 'Download', 'History', 'Copy link', 'Details']);
   });
 
   for (const gridMode of [false, true]) {

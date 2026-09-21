@@ -154,21 +154,6 @@
 
           <ion-item
             button
-            v-if="!isDesktop()"
-            @click="onClick(FileAction.DownloadAsArchive)"
-            class="ion-no-padding list-group-item"
-          >
-            <ms-image
-              :image="ZipFolderIcon"
-              class="list-group-item__icon"
-            />
-            <ion-text class="button-large list-group-item__label-small">
-              {{ $msTranslate('FoldersPage.fileContextMenu.actionDownloadAsArchive') }}
-            </ion-text>
-          </ion-item>
-
-          <ion-item
-            button
             v-if="!multipleFiles"
             @click="onClick(FileAction.ShowDetails)"
             class="ion-no-padding list-group-item"
@@ -223,7 +208,6 @@
 
 <script setup lang="ts">
 import FolderParentIcon from '@/assets/images/folder-parent.svg?raw';
-import ZipFolderIcon from '@/assets/images/zip-folder.svg?raw';
 import { isDesktop } from '@/parsec';
 import { FileAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';

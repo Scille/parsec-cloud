@@ -1022,7 +1022,6 @@
             "actionOpen": "Open with default app",
             "actionHistory": "History",
             "actionDownload": "Download",
-            "actionDownloadAsArchive": "Download as a ZIP file",
             "actionDetails": "Details",
             "actionCopyLink": "Copy link",
             "actionDelete": "Delete",

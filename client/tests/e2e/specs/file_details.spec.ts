@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { TestInfo } from '@playwright/test';
-import { expect, importDefaultFiles, ImportDocuments, msTest } from '@tests/e2e/helpers';
+import { checkEntryContextMenu, expect, importDefaultFiles, ImportDocuments, msTest } from '@tests/e2e/helpers';
 
 msTest.describe(() => {
   msTest.use({
@@ -24,13 +24,9 @@ msTest.describe(() => {
       await files.nth(0).hover();
       await files.nth(0).locator('.options-button').click();
       if (isFile) {
-        expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(12);
-        expect(documents.locator('.file-context-menu').getByRole('listitem').nth(8)).toHaveText('Details');
-        await documents.locator('.file-context-menu').getByRole('listitem').nth(8).click();
+        await checkEntryContextMenu(documents, 'file-full', 'Details');
       } else {
-        expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(11);
-        expect(documents.locator('.file-context-menu').getByRole('listitem').nth(7)).toHaveText('Details');
-        await documents.locator('.file-context-menu').getByRole('listitem').nth(7).click();
+        await checkEntryContextMenu(documents, 'folder-full', 'Details');
       }
       await expect(documents.locator('.file-details-modal')).toBeVisible();
       const modal = documents.locator('.file-details-modal');
@@ -93,9 +89,7 @@ msTest.describe(() => {
     await expect(documents.locator('.file-details-modal')).toBeHidden();
     await files.nth(0).hover();
     await files.nth(0).locator('.card-option').click();
-    await expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(12);
-    await expect(documents.locator('.file-context-menu').getByRole('listitem').nth(8)).toHaveText('Details');
-    await documents.locator('.file-context-menu').getByRole('listitem').nth(8).click();
+    await checkEntryContextMenu(documents, 'file-full', 'Details');
     await expect(documents.locator('.file-details-modal')).toBeVisible();
     const modal = documents.locator('.file-details-modal');
     await expect(modal.locator('.ms-modal-header__title ')).toHaveText('Details on the file');

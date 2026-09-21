@@ -148,11 +148,7 @@ export function useFileContextMenu() {
         break;
       }
       case FileAction.Download: {
-        await fileActions.downloadEntries(entries, workspaceInfo, false);
-        break;
-      }
-      case FileAction.DownloadAsArchive: {
-        await fileActions.downloadEntries(entries, workspaceInfo, true);
+        await fileActions.downloadEntries(entries, workspaceInfo);
         break;
       }
       case FileAction.ShowDetails: {

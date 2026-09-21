@@ -265,7 +265,6 @@ import {
 
 import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
-import ZipFolderIcon from '@/assets/images/zip-folder.svg?raw';
 import { findAvailableFileName } from '@/common/file';
 import { FileContentType, OPENABLE_FILES } from '@/common/fileTypes';
 import {
@@ -572,17 +571,6 @@ const tabBarActions = computed(() => {
             label: 'FoldersPage.fileContextMenu.actionDownload',
             action: async () => await dispatchContextMenuAction(FileAction.Download, selectedEntries),
             icon: download,
-          },
-        ]
-      : []),
-  );
-  actions.push(
-    ...(isWeb() && selectedEntries.length >= 1
-      ? [
-          {
-            label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
-            action: async () => await dispatchContextMenuAction(FileAction.DownloadAsArchive, selectedEntries),
-            image: ZipFolderIcon,
           },
         ]
       : []),
@@ -1535,7 +1523,7 @@ async function dispatchContextMenuAction(action: FileAction, entries: Array<pars
   if ([FileAction.ShowHistory, FileAction.Open, FileAction.MakeACopy, FileAction.MoveTo].includes(action)) {
     selectionEnabled.value = false;
   }
-  if ([FileAction.Rename, FileAction.Download, FileAction.DownloadAsArchive, FileAction.Delete].includes(action)) {
+  if ([FileAction.Rename, FileAction.Download, FileAction.Delete].includes(action)) {
     await onSelectionCancel();
   }
   if ([FileAction.Delete, FileAction.Rename, FileAction.MoveTo, FileAction.MakeACopy].includes(action)) {
