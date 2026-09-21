@@ -401,6 +401,7 @@ defineEmits<{
   }
 }
 .form-error {
-  margin-bottom: 1rem;
+  margin: 0 1rem 1rem 1rem;
+  height: auto;
 }
 </style>
