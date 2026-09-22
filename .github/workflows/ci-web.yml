@@ -104,17 +104,17 @@ jobs:
         timeout-minutes: 5
 
       - name: Check lint with eslint
-        run: npx eslint . --max-warnings=0
+        run: npm run lint:eslint
         working-directory: client
         timeout-minutes: 2
 
       - name: Check lint with vue-tsc
-        run: npx vue-tsc --noEmit
+        run: npm run lint:tsc
         working-directory: client
         timeout-minutes: 2
 
       - name: Check prettier
-        run: npx prettier . --check
+        run: npm run prettier:check
         working-directory: client
         timeout-minutes: 5
 
