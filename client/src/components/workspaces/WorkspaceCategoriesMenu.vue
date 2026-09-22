@@ -26,8 +26,9 @@ import { IonIcon, IonText } from '@ionic/vue';
 import { eyeOff, star, time } from 'ionicons/icons';
 import { computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   activeMenu: WorkspaceMenu;
+  showHidden: boolean;
 }>();
 
 defineEmits<{
@@ -46,14 +47,17 @@ const workspaceMenuList = computed(() => {
       key: WorkspaceMenu.Favorites,
       label: 'WorkspacesPage.categoriesMenu.favorites',
     },
-    {
+  ];
+
+  if (props.showHidden) {
+    allMenus.push({
       icon: eyeOff,
       key: WorkspaceMenu.Hidden,
       label: 'WorkspacesPage.categoriesMenu.hidden',
-    },
-  ];
+    });
+  }
 
-  return allMenus.filter((menu) => [WorkspaceMenu.Recent, WorkspaceMenu.Favorites, WorkspaceMenu.Hidden].includes(menu.key));
+  return allMenus;
 });
 </script>
 

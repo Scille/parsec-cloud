@@ -62,6 +62,7 @@
       >
         <workspace-categories-menu
           :active-menu="workspaceMenuState"
+          :show-hidden="someHiddenWorkspaces"
           @update-menu="onMenuUpdate"
         />
       </div>
@@ -95,6 +96,7 @@
           <workspace-categories-menu
             v-show="!search"
             :active-menu="workspaceMenuState"
+            :show-hidden="someHiddenWorkspaces"
             @update-menu="onMenuUpdate"
           />
           <ms-search-input
@@ -347,6 +349,7 @@ const search = ref<FileSearch | undefined>(undefined);
 let searchAborter: AbortController | undefined = undefined;
 const searchPattern = ref('');
 const searchInputValue = ref('');
+const someHiddenWorkspaces = computed(() => workspaceList.value.some((wk) => workspaceAttributes.isHidden(wk.id)));
 
 let eventCbId: string | null = null;
 
@@ -586,7 +589,7 @@ async function refreshWorkspacesList(): Promise<void> {
       }
     }
     await recentDocumentManager.saveToStorage(storageManager);
-    if (workspaceMenuState.value === WorkspaceMenu.Hidden && workspaceList.value.every((wk) => !workspaceAttributes.isHidden(wk.id))) {
+    if (workspaceMenuState.value === WorkspaceMenu.Hidden && !someHiddenWorkspaces.value) {
       workspaceMenuState.value = WorkspaceMenu.All;
     }
   } else {
