@@ -300,8 +300,9 @@ repos:
           node -e "
             const { spawnSync } = require('child_process');
             const { exit, argv } = require('process');
-            let files = argv.slice(1).map(function (x) { return x.replace(/^client\//, '') });
-            let ret = spawnSync('npx', ['vue-tsc', '--noEmit'].concat(files), {cwd: './client', stdio: 'inherit'});
+            // Don't pass the files as argument since type checking must be done
+            // on the whole project.
+            let ret = spawnSync('npx', ['vue-tsc', '--noEmit'], {cwd: './client', stdio: 'inherit'});
             exit(ret.status);
           "
         require_serial: true
