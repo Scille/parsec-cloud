@@ -33,13 +33,16 @@ CREATE TABLE account (
 
 CREATE TABLE vault (
     _id SERIAL PRIMARY KEY,
-    account INTEGER REFERENCES account (_id) NOT NULL
+    account INTEGER CONSTRAINT vault_account_fkey REFERENCES account (_id) ON DELETE CASCADE
+    NOT NULL
 );
 
 
 CREATE TABLE vault_item (
     _id SERIAL PRIMARY KEY,
-    vault INTEGER REFERENCES vault (_id) NOT NULL,
+    vault INTEGER
+    CONSTRAINT vault_item_vault_fkey REFERENCES vault (_id) ON DELETE CASCADE
+    NOT NULL,
     fingerprint BYTEA NOT NULL,
     data BYTEA NOT NULL,
     UNIQUE (vault, fingerprint)
@@ -52,7 +55,9 @@ CREATE TYPE PASSWORD_ALGORITHM AS ENUM ('ARGON2ID');
 CREATE TABLE vault_authentication_method (
     _id SERIAL PRIMARY KEY,
     auth_method_id UUID UNIQUE NOT NULL,
-    vault INTEGER REFERENCES vault (_id) NOT NULL,
+    vault INTEGER
+    CONSTRAINT vault_authentication_method_vault_fkey REFERENCES vault (_id) ON DELETE CASCADE
+    NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     -- IP address of the HTTP request that created the authentication method
     -- (either by account creation, vault key rotation or account recovery)
@@ -95,7 +100,10 @@ CREATE TABLE account_create_validation_code (
 
 
 CREATE TABLE account_delete_validation_code (
-    account INTEGER REFERENCES account (_id) NOT NULL PRIMARY KEY,
+    account INTEGER
+    CONSTRAINT account_delete_validation_code_pkey PRIMARY KEY
+    CONSTRAINT account_delete_validation_code_account_fkey REFERENCES account (_id) ON DELETE CASCADE
+    NOT NULL,
     validation_code VARCHAR(6) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     failed_attempts INTEGER DEFAULT 0
@@ -103,7 +111,10 @@ CREATE TABLE account_delete_validation_code (
 
 
 CREATE TABLE account_recover_validation_code (
-    account INTEGER REFERENCES account (_id) NOT NULL PRIMARY KEY,
+    account INTEGER
+    CONSTRAINT account_recover_validation_code_pkey PRIMARY KEY
+    CONSTRAINT account_recover_validation_code_account_fkey REFERENCES account (_id) ON DELETE CASCADE
+    NOT NULL,
     validation_code VARCHAR(6) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     failed_attempts INTEGER DEFAULT 0
