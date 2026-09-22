@@ -162,7 +162,7 @@ for (const gridMode of [false, true]) {
     const categoriesMenu = workspaces.locator('.workspace-categories-menu');
     const recentWorkspacesButton = categoriesMenu.locator('.workspace-categories-menu-item').nth(0);
     await recentWorkspacesButton.click();
-    await verifyActiveCategory(workspaces, 0);
+    await verifyActiveCategory(workspaces, 0, 2);
     const recentWorkspaces = workspaces.locator('.workspaces-container');
 
     if (!gridMode) {
@@ -207,7 +207,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     ]);
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
     const starredWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Starred');
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
     await expect(workspaceCategoriesMenu).toBeVisible();
     await expect(starredWorkspacesButton).toBeVisible();
     await starredWorkspacesButton.click({ force: true });
@@ -246,37 +246,35 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const sidebarAllWorkspacesButton = workspaces.locator('#sidebar-all-workspaces');
 
     await expect(workspaceCategoriesMenu).toBeVisible();
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
     await expect(sidebarAllWorkspacesButton).toContainClass('active');
 
     const recentWorkspacesButton = workspaceCategoriesMenuItems.getByText('Recent');
     const starredWorkspacesButton = workspaceCategoriesMenuItems.getByText('Starred');
-    const hiddenWorkspacesButton = workspaceCategoriesMenuItems.getByText('Hidden');
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       await expect(workspaceCategoriesMenuItems.nth(i)).not.toHaveClass(/active/);
     }
 
     await recentWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 0);
+    await verifyActiveCategory(workspaces, 0, 2);
 
     await recentWorkspacesButton.click({ force: true });
     await expect(sidebarAllWorkspacesButton).toContainClass('active');
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       await expect(workspaceCategoriesMenuItems.nth(i)).not.toHaveClass(/active/);
     }
 
     await starredWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 1);
-
-    await hiddenWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 2);
+    await verifyActiveCategory(workspaces, 1, 2);
   });
 
   msTest(`Show/hide workspace ${displaySize} display`, async ({ workspaces }) => {
     if (displaySize === DisplaySize.Small) {
       await workspaces.setDisplaySize(DisplaySize.Small);
     }
+    const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
 
     await createWorkspace(workspaces, 'The Copper Coronet');
     const workspaceCard = workspaces.locator('.workspace-card-item');
@@ -286,6 +284,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const noWorkspaces = workspaces.locator('.no-all-workspaces');
     await expect(noWorkspaces).toBeHidden();
 
+    // Hide workspaces
     await workspaceCard.nth(0).click({ button: 'right' });
     let popover;
 
@@ -324,6 +323,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
 
     await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
 
     await expect(workspaceCard.nth(0).locator('.workspace-card-content__title')).toHaveText('wksp1');
     await expect(workspaceCard.nth(1)).toBeHidden();
@@ -351,6 +351,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(workspaceCard.nth(1).locator('.workspace-hidden')).toHaveText('Hidden');
     await expect(workspaceCard.nth(0)).toBeVisible();
 
+    // Show workspaces
     await workspaceCard.nth(0).click({ button: 'right' });
     await expect(popover).toBeVisible();
     if (displaySize === DisplaySize.Large) {
@@ -385,6 +386,20 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Add as starred',
       ]);
       await popover.getByRole('listitem').nth(2).click();
+    }
+
+    await workspaceCard.nth(0).click({ button: 'right' });
+    await expect(popover).toBeVisible();
+    if (displaySize === DisplaySize.Large) {
+      await workspaces.locator('#workspace-context-menu').getByRole('listitem').nth(3).click();
+    } else {
+      await workspaces.locator('.workspace-context-sheet-modal').getByRole('listitem').nth(2).click();
+    }
+
+    // Auto redirect to default tab, hidden tab inaccessible
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
+    for (let i = 0; i < 2; i++) {
+      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(i)).not.toHaveClass(/active/);
     }
   });
 }
