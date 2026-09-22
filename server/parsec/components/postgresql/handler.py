@@ -127,6 +127,7 @@ async def _apply_migrations(
 
 async def _apply_migration(conn: AsyncpgConnection, migration: MigrationItem) -> None:
     async with conn.transaction():
+        logger.debug("Applying migration", name=migration.file_name)
         await conn.execute(migration.sql)
         sql = f"INSERT INTO {MIGRATION_TABLE} (_id, name, applied) VALUES ($1, $2, $3)"
         result = await conn.execute(sql, migration.index, migration.name, datetime.now())
