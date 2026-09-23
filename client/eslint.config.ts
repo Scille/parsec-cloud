@@ -26,7 +26,6 @@ export default defineConfig([
       'playwright.config.ts',
       'merge-playwright.ts',
       'src/parsec/mock_files/**',
-      'scripts/vite_plugin_wasm_pack.ts',
       'src/vite-env.d.ts',
     ],
   },
@@ -168,6 +167,11 @@ export default defineConfig([
         },
       ],
       'vue/singleline-html-element-content-newline': 'off',
+    },
+  },
+  {
+    files: ['src/**'],
+    rules: {
       'no-relative-import-paths/no-relative-import-paths': [
         'error',
         {

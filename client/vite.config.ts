@@ -10,7 +10,6 @@ import { promisify } from 'util';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { brotliCompress } from 'zlib';
-// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack.ts';
 
 // Vue hoists static template parts into module-level constants, created once at import time
