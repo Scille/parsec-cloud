@@ -3,7 +3,7 @@
 use libparsec::list_available_devices;
 use std::io::Write as _;
 
-use crate::ui::{compat::AvailableDeviceDisplay, Color};
+use crate::ui::{Color, compat::AvailableDeviceDisplay};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir]

@@ -4,8 +4,8 @@ use libparsec_client_connection::AnonymousCmds;
 use libparsec_types::prelude::*;
 
 use crate::{
-    handle::{borrow_from_handle, Handle, HandleItem},
     ClientConfig,
+    handle::{Handle, HandleItem, borrow_from_handle},
 };
 
 pub use libparsec_totp::{

@@ -18,14 +18,14 @@ mod strategy {
     };
     use libparsec_crypto::{Password, SecretKey};
     use libparsec_openbao::{OpenBaoCmds, OpenBaoFetchOpaqueKeyError, OpenBaoUploadOpaqueKeyError};
-    use libparsec_platform_async::{pretend_future_is_send_on_web, PinBoxFutureResult};
+    use libparsec_platform_async::{PinBoxFutureResult, pretend_future_is_send_on_web};
     use libparsec_platform_device_loader::{
         AccountVaultOperationsFetchOpaqueKeyError, AccountVaultOperationsUploadOpaqueKeyError,
         OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
     };
     use libparsec_types::prelude::*;
 
-    use crate::handle::{borrow_from_handle, Handle, HandleItem};
+    use crate::handle::{Handle, HandleItem, borrow_from_handle};
 
     /*
      * PKI operations

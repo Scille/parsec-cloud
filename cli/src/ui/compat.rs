@@ -4,7 +4,7 @@ use super::{CLIDisplay, Color, ColorFormatter};
 use std::{borrow::Cow, io::Write, ops::Deref};
 
 use reqwest::Url;
-use serde::{ser::SerializeStruct, Serialize};
+use serde::{Serialize, ser::SerializeStruct};
 
 const DEVICE_ID_FIELD: &str = "device_id";
 const ORGANIZATION_ID_FIELD: &str = "organization_id";

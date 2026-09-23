@@ -1,14 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use itertools::Itertools;
-use libparsec_platform_filesystem::{list_files, ListFilesError};
+use libparsec_platform_filesystem::{ListFilesError, list_files};
 use std::path::Path;
 
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed;
-use crate::{get_devices_dir, load_available_device, AvailableDevice, DEVICE_FILE_EXT};
+use crate::{AvailableDevice, DEVICE_FILE_EXT, get_devices_dir, load_available_device};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ListAvailableDeviceError {

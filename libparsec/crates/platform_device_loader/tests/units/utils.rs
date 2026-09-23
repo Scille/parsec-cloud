@@ -12,7 +12,7 @@ pub use crate::{
     PkiDeviceOperations, PkiOperationsDecryptOpaqueKeyError, PkiOperationsEncryptOpaqueKeyError,
 };
 
-use libparsec_platform_filesystem::{load_file, save_content, LoadFileError};
+use libparsec_platform_filesystem::{LoadFileError, load_file, save_content};
 
 use crate::get_device_archive_path;
 use std::path::Path;

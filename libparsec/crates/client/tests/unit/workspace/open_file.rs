@@ -11,11 +11,12 @@ use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
-    workspace::{
-        tests::utils::restart_workspace_ops, EntryStat, OpenOptions, WorkspaceFdReadError,
-        WorkspaceFdWriteError, WorkspaceIsFileContentLocalError, WorkspaceOpenFileError,
-    },
     EventWorkspaceOpsOutboundSyncNeeded,
+    workspace::{
+        EntryStat, OpenOptions, WorkspaceFdReadError, WorkspaceFdWriteError,
+        WorkspaceIsFileContentLocalError, WorkspaceOpenFileError,
+        tests::utils::restart_workspace_ops,
+    },
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -119,10 +120,11 @@ async fn is_file_content_local_ok(env: &TestbedEnv) {
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    assert!(ops
-        .is_file_content_local("/bar.txt".parse().unwrap())
-        .await
-        .unwrap());
+    assert!(
+        ops.is_file_content_local("/bar.txt".parse().unwrap())
+            .await
+            .unwrap()
+    );
 
     spy.assert_no_events();
 
@@ -176,10 +178,11 @@ async fn is_file_content_local_new_file(env: &TestbedEnv) {
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    assert!(ops
-        .is_file_content_local("/new_file.txt".parse().unwrap())
-        .await
-        .unwrap());
+    assert!(
+        ops.is_file_content_local("/new_file.txt".parse().unwrap())
+            .await
+            .unwrap()
+    );
 
     spy.assert_no_events();
 

@@ -5,8 +5,8 @@
 // Hence no unique violation should occur under normal circumstances here.
 
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, Sqlite, SqliteConnection, Transaction,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
 };
 use std::{collections::HashMap, path::Path};
 

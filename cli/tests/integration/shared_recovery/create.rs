@@ -1,11 +1,11 @@
 use std::{num::NonZeroU8, str::FromStr};
 
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 
 use parsec_cli::commands::shared_recovery::create::WeightedEmailParseError;

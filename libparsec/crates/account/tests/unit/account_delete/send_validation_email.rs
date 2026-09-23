@@ -5,8 +5,8 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_client_connection::{
-    protocol::authenticated_account_cmds, test_register_sequence_of_send_hooks, ConnectionError,
-    ProxyConfig,
+    ConnectionError, ProxyConfig, protocol::authenticated_account_cmds,
+    test_register_sequence_of_send_hooks,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

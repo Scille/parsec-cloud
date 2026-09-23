@@ -7,7 +7,7 @@ use digest::{
 use generic_array::{ArrayLength, GenericArray};
 use libsodium_rs::{
     crypto_pwhash::argon2id::SALTBYTES,
-    crypto_secretbox::{open, seal, Key, Nonce, KEYBYTES, MACBYTES, NONCEBYTES},
+    crypto_secretbox::{KEYBYTES, Key, MACBYTES, NONCEBYTES, Nonce, open, seal},
     random,
 };
 use serde::Deserialize;

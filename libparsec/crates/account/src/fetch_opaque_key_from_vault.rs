@@ -3,7 +3,7 @@
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
-use super::{fetch_vault_items, Account, FetchVaultItemsError};
+use super::{Account, FetchVaultItemsError, fetch_vault_items};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountFetchOpaqueKeyFromVaultError {
@@ -11,7 +11,9 @@ pub enum AccountFetchOpaqueKeyFromVaultError {
     BadVaultKeyAccess(DataError),
     #[error("No opaque key with this ID among the vault items in the Parsec account server")]
     UnknownOpaqueKey,
-    #[error("The vault item returned by the Parsec account server and containing this opaque key is corrupted")]
+    #[error(
+        "The vault item returned by the Parsec account server and containing this opaque key is corrupted"
+    )]
     CorruptedOpaqueKey,
     #[error("Cannot communicate with the Parsec account server: {0}")]
     Offline(#[from] ConnectionError),

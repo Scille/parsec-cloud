@@ -8,8 +8,8 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifAddCertificatesBatchError, CertificateOps,
-    InvalidCertificateError, MaybeRedactedSwitch,
+    CertifAddCertificatesBatchError, CertificateOps, InvalidCertificateError, MaybeRedactedSwitch,
+    store::CertifStoreError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -66,10 +66,10 @@ pub(super) async fn poll_server_for_new_certificates(
             .await??;
         // `requirements` is useful to detect outdated `CertificatesUpdated`
         // events given the server has already been polled in the meantime.
-        if let Some(requirements) = requirements {
-            if last_stored_timestamps.is_up_to_date(requirements) {
-                return Ok(0);
-            }
+        if let Some(requirements) = requirements
+            && last_stored_timestamps.is_up_to_date(requirements)
+        {
+            return Ok(0);
         }
 
         let new_certificates = poll_server(ops, last_stored_timestamps).await?;

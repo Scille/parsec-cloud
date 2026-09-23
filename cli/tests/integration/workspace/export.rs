@@ -1,10 +1,10 @@
-use libparsec::{tmp_path, FsPath, OpenOptions, TmpPath};
+use libparsec::{FsPath, OpenOptions, TmpPath, tmp_path};
 use std::str::FromStr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 use parsec_cli::{ui::Ui, utils::start_client};
 

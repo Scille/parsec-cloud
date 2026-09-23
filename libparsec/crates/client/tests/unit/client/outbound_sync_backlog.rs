@@ -45,8 +45,10 @@ async fn includes_started_workspaces_only(env: &TestbedEnv) {
         backlog.total_pending_bytes_for_started_workspaces,
         backlog.per_workspace[0].pending_bytes
     );
-    assert!(backlog
-        .per_workspace
-        .iter()
-        .all(|item| item.realm_id != not_started_workspace_id));
+    assert!(
+        backlog
+            .per_workspace
+            .iter()
+            .all(|item| item.realm_id != not_started_workspace_id)
+    );
 }

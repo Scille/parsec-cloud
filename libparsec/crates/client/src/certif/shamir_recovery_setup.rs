@@ -8,9 +8,8 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    greater_timestamp,
+    CertifPollServerError, GreaterTimestampOffset, greater_timestamp,
     store::{CertifStoreError, LastShamirRecovery, LastUserExistAndRevokedInfo},
-    CertifPollServerError, GreaterTimestampOffset,
 };
 use crate::{CertificateOps, EventTooMuchDriftWithServerClock, InvalidCertificateError};
 
@@ -32,7 +31,9 @@ pub enum CertifSetupShamirRecoveryError {
     RecipientRevoked,
     #[error("Shamir recovery already exists")]
     ShamirRecoveryAlreadyExists,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -198,10 +199,10 @@ async fn check_against_local_certificates(
                     {
                         LastUserExistAndRevokedInfo::Valid(certif) => certif.public_key.clone(),
                         LastUserExistAndRevokedInfo::Revoked(_, _) => {
-                            return Err(CertifSetupShamirRecoveryError::RecipientRevoked)
+                            return Err(CertifSetupShamirRecoveryError::RecipientRevoked);
                         }
                         LastUserExistAndRevokedInfo::Unknown => {
-                            return Err(CertifSetupShamirRecoveryError::RecipientNotFound)
+                            return Err(CertifSetupShamirRecoveryError::RecipientNotFound);
                         }
                     };
 

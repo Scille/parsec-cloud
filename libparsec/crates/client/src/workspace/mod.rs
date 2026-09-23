@@ -17,7 +17,7 @@ use libparsec_platform_storage::workspace::WorkspaceOutboundSyncBacklog;
 use libparsec_types::prelude::*;
 
 pub use crate::workspace::store::WorkspaceGetOutboundSyncBacklogError;
-use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
+use crate::{ClientConfig, certif::CertificateOps, event_bus::EventBus};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;

@@ -10,10 +10,10 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClaimerRetrieveInfoError, ClientConfig,
-    MountpointMountStrategy, ProxyConfig, ShamirRecoveryClaimAddShareError,
-    ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
-    ShamirRecoveryClaimPickRecipientError, ShamirRecoveryClaimShare, WorkspaceStorageCacheSize,
+    AnyClaimRetrievedInfoCtx, ClaimerRetrieveInfoError, ClientConfig, MountpointMountStrategy,
+    ProxyConfig, ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimMaybeFinalizeCtx,
+    ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimPickRecipientError,
+    ShamirRecoveryClaimShare, WorkspaceStorageCacheSize, claimer_retrieve_info,
 };
 
 #[parsec_test(testbed = "shamir", with_server)]
@@ -125,9 +125,11 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     let mike_ctx = second.unwrap();
 
     p_assert_eq!(mike_ctx.greeter_sas(), alice_with_mike_ctx.greeter_sas());
-    assert!(alice_with_mike_ctx
-        .generate_greeter_sas_choices(4)
-        .contains(mike_ctx.greeter_sas()));
+    assert!(
+        alice_with_mike_ctx
+            .generate_greeter_sas_choices(4)
+            .contains(mike_ctx.greeter_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_mike_ctx.do_signify_trust(),
@@ -138,9 +140,11 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     let mike_ctx = second.unwrap();
 
     p_assert_eq!(mike_ctx.claimer_sas(), alice_with_mike_ctx.claimer_sas());
-    assert!(mike_ctx
-        .generate_claimer_sas_choices(4)
-        .contains(alice_with_mike_ctx.claimer_sas()));
+    assert!(
+        mike_ctx
+            .generate_claimer_sas_choices(4)
+            .contains(alice_with_mike_ctx.claimer_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_mike_ctx.do_wait_peer_trust(),
@@ -183,9 +187,11 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     let bob_ctx = second.unwrap();
 
     p_assert_eq!(bob_ctx.greeter_sas(), alice_with_bob_ctx.greeter_sas());
-    assert!(alice_with_bob_ctx
-        .generate_greeter_sas_choices(4)
-        .contains(bob_ctx.greeter_sas()));
+    assert!(
+        alice_with_bob_ctx
+            .generate_greeter_sas_choices(4)
+            .contains(bob_ctx.greeter_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_bob_ctx.do_signify_trust(),
@@ -196,9 +202,11 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     let bob_ctx = second.unwrap();
 
     p_assert_eq!(bob_ctx.claimer_sas(), alice_with_bob_ctx.claimer_sas());
-    assert!(bob_ctx
-        .generate_claimer_sas_choices(4)
-        .contains(alice_with_bob_ctx.claimer_sas()));
+    assert!(
+        bob_ctx
+            .generate_claimer_sas_choices(4)
+            .contains(alice_with_bob_ctx.claimer_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_bob_ctx.do_wait_peer_trust(),
@@ -531,9 +539,11 @@ async fn already_picked_recipient(env: &TestbedEnv) {
     let mike_ctx = second.unwrap();
 
     p_assert_eq!(mike_ctx.greeter_sas(), alice_with_mike_ctx.greeter_sas());
-    assert!(alice_with_mike_ctx
-        .generate_greeter_sas_choices(4)
-        .contains(mike_ctx.greeter_sas()));
+    assert!(
+        alice_with_mike_ctx
+            .generate_greeter_sas_choices(4)
+            .contains(mike_ctx.greeter_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_mike_ctx.do_signify_trust(),
@@ -544,9 +554,11 @@ async fn already_picked_recipient(env: &TestbedEnv) {
     let mike_ctx = second.unwrap();
 
     p_assert_eq!(mike_ctx.claimer_sas(), alice_with_mike_ctx.claimer_sas());
-    assert!(mike_ctx
-        .generate_claimer_sas_choices(4)
-        .contains(alice_with_mike_ctx.claimer_sas()));
+    assert!(
+        mike_ctx
+            .generate_claimer_sas_choices(4)
+            .contains(alice_with_mike_ctx.claimer_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_mike_ctx.do_wait_peer_trust(),
@@ -706,9 +718,11 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
     let mike_ctx = second.unwrap();
 
     p_assert_eq!(mike_ctx.greeter_sas(), alice_with_mike_ctx.greeter_sas());
-    assert!(alice_with_mike_ctx
-        .generate_greeter_sas_choices(4)
-        .contains(mike_ctx.greeter_sas()));
+    assert!(
+        alice_with_mike_ctx
+            .generate_greeter_sas_choices(4)
+            .contains(mike_ctx.greeter_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_mike_ctx.do_signify_trust(),
@@ -719,9 +733,11 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
     let mike_ctx = second.unwrap();
 
     p_assert_eq!(mike_ctx.claimer_sas(), alice_with_mike_ctx.claimer_sas());
-    assert!(mike_ctx
-        .generate_claimer_sas_choices(4)
-        .contains(alice_with_mike_ctx.claimer_sas()));
+    assert!(
+        mike_ctx
+            .generate_claimer_sas_choices(4)
+            .contains(alice_with_mike_ctx.claimer_sas())
+    );
 
     let (first, second) = future::join(
         alice_with_mike_ctx.do_wait_peer_trust(),

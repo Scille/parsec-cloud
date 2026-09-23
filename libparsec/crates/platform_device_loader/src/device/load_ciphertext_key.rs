@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
-    platform, AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy,
+    AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy,
     DevicePrimaryProtectionStrategy, OpenBaoOperationsFetchOpaqueKeyError,
-    PkiOperationsDecryptOpaqueKeyError, RemoteOperationServer,
+    PkiOperationsDecryptOpaqueKeyError, RemoteOperationServer, platform,
 };
 use libparsec_types::prelude::*;
 

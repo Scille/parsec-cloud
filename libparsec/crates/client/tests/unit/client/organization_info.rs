@@ -3,7 +3,7 @@
 use libparsec_tests_fixtures::TestbedEnv;
 use libparsec_tests_lite::{p_assert_eq, parsec_test};
 
-use crate::{client::tests::utils::client_factory, OrganizationInfo};
+use crate::{OrganizationInfo, client::tests::utils::client_factory};
 
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn ok(env: &TestbedEnv) {

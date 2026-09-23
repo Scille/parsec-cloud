@@ -3,8 +3,8 @@
 use libparsec_types::prelude::*;
 
 use super::{
-    populate_cache::populate_manifest_cache, CacheResolvedEntry, PopulateManifestCacheError,
-    WorkspaceHistoryStore,
+    CacheResolvedEntry, PopulateManifestCacheError, WorkspaceHistoryStore,
+    populate_cache::populate_manifest_cache,
 };
 
 pub(crate) type WorkspaceHistoryStoreResolvePathError = PopulateManifestCacheError;
@@ -41,7 +41,7 @@ pub(super) async fn resolve_path(
         match cache_only_outcome {
             CacheOnlyPathResolutionOutcome::Done(manifest) => return Ok(manifest),
             CacheOnlyPathResolutionOutcome::EntryNotFound => {
-                return Err(WorkspaceHistoryStoreResolvePathError::EntryNotFound)
+                return Err(WorkspaceHistoryStoreResolvePathError::EntryNotFound);
             }
             // We got a cache miss
             CacheOnlyPathResolutionOutcome::NeedPopulateCache(cache_miss_entry_id) => {
@@ -67,7 +67,7 @@ fn cache_only_path_resolution(
         CacheResolvedEntry::Exists(manifest) => manifest,
         CacheResolvedEntry::NotFound => return CacheOnlyPathResolutionOutcome::EntryNotFound,
         CacheResolvedEntry::CacheMiss => {
-            return CacheOnlyPathResolutionOutcome::NeedPopulateCache(store.realm_id)
+            return CacheOnlyPathResolutionOutcome::NeedPopulateCache(store.realm_id);
         }
     };
 
@@ -94,7 +94,7 @@ fn cache_only_path_resolution(
             CacheResolvedEntry::Exists(manifest) => manifest,
             CacheResolvedEntry::NotFound => return CacheOnlyPathResolutionOutcome::EntryNotFound,
             CacheResolvedEntry::CacheMiss => {
-                return CacheOnlyPathResolutionOutcome::NeedPopulateCache(child_id)
+                return CacheOnlyPathResolutionOutcome::NeedPopulateCache(child_id);
             }
         };
 

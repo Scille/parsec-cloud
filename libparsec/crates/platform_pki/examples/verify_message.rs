@@ -6,7 +6,7 @@ mod utils;
 use anyhow::Context;
 use bytes::Bytes;
 use clap::Parser;
-use libparsec_platform_pki::{verify_message, PkiSystem};
+use libparsec_platform_pki::{PkiSystem, verify_message};
 use libparsec_types::{DateTime, PkiSignatureAlgorithm, X509CertificateHash};
 
 #[derive(Debug, Parser)]

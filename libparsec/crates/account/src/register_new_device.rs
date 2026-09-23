@@ -5,12 +5,12 @@ use std::sync::Arc;
 use libparsec_client::RegisterNewDeviceError;
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_device_loader::{
-    get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy, RemoteOperationServer,
-    SaveDeviceError,
+    AvailableDevice, DeviceSaveStrategy, RemoteOperationServer, SaveDeviceError,
+    get_default_key_file, save_device,
 };
 use libparsec_types::prelude::*;
 
-use super::{fetch_vault_items, Account, FetchVaultItemsError};
+use super::{Account, FetchVaultItemsError, fetch_vault_items};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountRegisterNewDeviceError {
@@ -28,7 +28,9 @@ pub enum AccountRegisterNewDeviceError {
     NoSpaceAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

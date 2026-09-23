@@ -289,10 +289,7 @@ fn notify_sync_completion(
     let notify2 = notify.clone();
 
     let event_conn = event_bus.connect(move |event| {
-        let libparsec_client::EventWorkspaceOpsOutboundSyncDone {
-            ref realm_id,
-            entry_id,
-        } = event;
+        let libparsec_client::EventWorkspaceOpsOutboundSyncDone { realm_id, entry_id } = event;
         let mut files_to_sync = files_to_sync.lock().expect("Mutex poisoned");
         if realm_id == &wid && files_to_sync.remove(entry_id) {
             log::debug!("Outbound sync done for file ({realm_id}:{entry_id})");

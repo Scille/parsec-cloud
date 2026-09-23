@@ -5,8 +5,8 @@ use crypto_box::aead::Aead;
 use crypto_secretbox::{AeadCore, Key, XSalsa20Poly1305};
 use digest::{KeyInit, Mac};
 use generic_array::{
-    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
+    typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
 use rand::rngs::OsRng;
 use serde::Deserialize;

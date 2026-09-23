@@ -22,6 +22,8 @@ fn test_sign_pkcs1v15_unprefixed() {
     let data = hex!("fb6fdfe5fa570e544ee91335613c30a7eb54a24e970d7c7108bdee392b4abe5f");
 
     let signature = key.sign_pkcs1v15_unprefixed(&data).unwrap();
-    let expected_signature = hex!("222193e6b850b46b18abffb745cb856e284e15bbe9e28487f2b6f041274ccf847e18b4c749795cb0b71cb23f4972984e2a43f5bd8d6bef58db683eb406854d8b");
+    let expected_signature = hex!(
+        "222193e6b850b46b18abffb745cb856e284e15bbe9e28487f2b6f041274ccf847e18b4c749795cb0b71cb23f4972984e2a43f5bd8d6bef58db683eb406854d8b"
+    );
     assert_eq!(signature, expected_signature);
 }

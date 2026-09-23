@@ -1,5 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-use crate::{tests::CONTENT, RemoveFileError};
+use crate::{RemoveFileError, tests::CONTENT};
 
 use crate::{list_files, remove_file, save_content};
 use libparsec_tests_fixtures::prelude::*;

@@ -5,8 +5,8 @@ use libparsec_platform_async::PinBoxFutureResult;
 use libparsec_types::prelude::*;
 
 use crate::{
-    greater_timestamp, utils::create_user_and_device_certificates, EventBus,
-    EventTooMuchDriftWithServerClock, GreaterTimestampOffset, PkiErrorDetail,
+    EventBus, EventTooMuchDriftWithServerClock, GreaterTimestampOffset, PkiErrorDetail,
+    greater_timestamp, utils::create_user_and_device_certificates,
 };
 
 #[derive(Debug)]
@@ -36,7 +36,9 @@ pub enum AcceptAsyncEnrollmentError {
     ActiveUsersLimitReached,
     #[error("Human handle (i.e. email address) already taken")]
     HumanHandleAlreadyTaken,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -121,7 +123,7 @@ pub(crate) async fn accept_async_enrollment(
                     return Err(AcceptAsyncEnrollmentError::Internal(anyhow::anyhow!(
                         "Unexpected server response: {:?}",
                         bad_rep
-                    )))
+                    )));
                 }
             }
         };

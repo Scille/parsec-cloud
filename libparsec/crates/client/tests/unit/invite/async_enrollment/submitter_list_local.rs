@@ -4,8 +4,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    submitter_list_local_async_enrollments, AvailablePendingAsyncEnrollment,
-    AvailablePendingAsyncEnrollmentIdentitySystem,
+    AvailablePendingAsyncEnrollment, AvailablePendingAsyncEnrollmentIdentitySystem,
+    submitter_list_local_async_enrollments,
 };
 
 #[parsec_test(testbed = "empty")]

@@ -5,12 +5,12 @@
 mod sealed_box {
 
     use blake2::{
-        digest::{Update, VariableOutput},
         Blake2bVar,
+        digest::{Update, VariableOutput},
     };
     use crypto_box::{
-        aead::{self, Aead},
         SalsaBox,
+        aead::{self, Aead},
     };
 
     //re-export keys

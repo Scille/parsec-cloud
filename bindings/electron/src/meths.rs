@@ -7,7 +7,7 @@
 #[allow(unused_imports)]
 use neon::{
     prelude::*,
-    types::{buffer::TypedArray, JsBigInt},
+    types::{JsBigInt, buffer::TypedArray},
 };
 use std::str::FromStr;
 
@@ -20807,7 +20807,7 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
                                         match custom_to_rs_string(x1) {
                                             Ok(ok) => ok,
                                             Err(err) => {
-                                                return cx.throw_type_error(err.to_string())
+                                                return cx.throw_type_error(err.to_string());
                                             }
                                         }
                                     })
@@ -28754,7 +28754,7 @@ fn test_check_mailbox(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                         match custom_to_rs_string(x0) {
                                             Ok(ok) => ok,
                                             Err(err) => {
-                                                return cx.throw_type_error(err.to_string())
+                                                return cx.throw_type_error(err.to_string());
                                             }
                                         }
                                     })

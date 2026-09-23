@@ -6,13 +6,12 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    realm_keys_bundle::CertifGetLatestRealmKeyForEncryptionError, store::CertifStoreError,
     CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError, InvalidKeysBundleError,
-    UpTo,
+    UpTo, realm_keys_bundle::CertifGetLatestRealmKeyForEncryptionError, store::CertifStoreError,
 };
 use crate::{
-    certif::CertifPollServerError, greater_timestamp, EncryptionUsage,
-    EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    EncryptionUsage, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    certif::CertifPollServerError, greater_timestamp,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -27,7 +26,9 @@ pub enum CertifRenameRealmError {
     RealmDeleted,
     #[error("Not allowed")]
     AuthorNotAllowed,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

@@ -9,7 +9,7 @@ use libparsec_types::prelude::*;
 
 use super::super::utils::make_config;
 use super::utils::MockedAsyncEnrollmentIdentityStrategy;
-use crate::{submitter_finalize_async_enrollment, SubmitterFinalizeAsyncEnrollmentError};
+use crate::{SubmitterFinalizeAsyncEnrollmentError, submitter_finalize_async_enrollment};
 
 async fn generate_submit(
     env: &TestbedEnv,

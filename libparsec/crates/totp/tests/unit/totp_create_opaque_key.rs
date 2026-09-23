@@ -5,7 +5,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::alice_cmds_factory;
-use crate::{totp_create_opaque_key, TotpCreateOpaqueKeyError};
+use crate::{TotpCreateOpaqueKeyError, totp_create_opaque_key};
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {

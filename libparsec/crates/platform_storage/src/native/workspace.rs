@@ -6,8 +6,8 @@
 
 use libparsec_platform_async::future::TryFutureExt;
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, SqliteConnection,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
 };
 use std::{ops::DerefMut, path::Path};
 
@@ -45,9 +45,11 @@ pub(crate) async fn workspace_storage_remove_data(
         {
             path_info.db_relative_path =
                 get_workspace_cache_storage_db_relative_path(device, realm_id);
-            assert!(super::testbed::maybe_destroy_sqlite_in_memory(&path_info)
-                .await
-                .is_some());
+            assert!(
+                super::testbed::maybe_destroy_sqlite_in_memory(&path_info)
+                    .await
+                    .is_some()
+            );
 
             return Ok(());
         }

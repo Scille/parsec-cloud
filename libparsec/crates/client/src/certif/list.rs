@@ -3,8 +3,8 @@
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertifStoreError, GetCertificateError},
     CertificateOps, UpTo,
+    store::{CertifStoreError, GetCertificateError},
 };
 
 pub type CertifGetCurrentSelfProfileError = super::store::CertifStoreError;
@@ -198,10 +198,10 @@ pub(super) async fn get_user_info(
                     unreachable!("query up to current")
                 }
                 Err(GetCertificateError::NonExisting) => {
-                    return Err(CertifGetUserInfoError::NonExisting)
+                    return Err(CertifGetUserInfoError::NonExisting);
                 }
                 Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserInfoError::Internal(err))
+                    return Err(CertifGetUserInfoError::Internal(err));
                 }
             };
             let revoked_certificate = store
@@ -296,10 +296,10 @@ pub(super) async fn get_user_device(
                     unreachable!("query up to current")
                 }
                 Err(GetCertificateError::NonExisting) => {
-                    return Err(CertifGetUserDeviceError::NonExisting)
+                    return Err(CertifGetUserDeviceError::NonExisting);
                 }
                 Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserDeviceError::Internal(err))
+                    return Err(CertifGetUserDeviceError::Internal(err));
                 }
             };
 
@@ -321,7 +321,7 @@ pub(super) async fn get_user_device(
                     return Err(CertifGetUserDeviceError::NonExisting);
                 }
                 Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserDeviceError::Internal(err))
+                    return Err(CertifGetUserDeviceError::Internal(err));
                 }
             };
 

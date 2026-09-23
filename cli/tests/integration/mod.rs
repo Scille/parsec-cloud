@@ -26,15 +26,15 @@ use std::{
 
 use libparsec::LocalDevice;
 use libparsec::{
-    ClientConfig, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
-    PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
+    ClientConfig, OrganizationID, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR,
+    PARSEC_BASE_HOME_DIR, ParsecAddr, TmpPath,
 };
 use std::sync::Arc;
 
 pub use parsec_cli::testenv_utils;
 use parsec_cli::testenv_utils::{
-    initialize_test_organization, new_environment, parsec_addr_from_http_url, TestOrganization,
-    TestenvConfig, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER,
+    DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER, TestOrganization, TestenvConfig,
+    initialize_test_organization, new_environment, parsec_addr_from_http_url,
 };
 
 fn get_testenv_config() -> TestenvConfig {
@@ -48,23 +48,26 @@ fn get_testenv_config() -> TestenvConfig {
 }
 
 fn set_env(tmp_dir: &str, url: &ParsecAddr) {
-    std::env::set_var(TESTBED_SERVER, url.to_url().to_string());
-    std::env::set_var(PARSEC_BASE_HOME_DIR, format!("{tmp_dir}/cache"));
-    std::env::set_var(PARSEC_BASE_DATA_DIR, format!("{tmp_dir}/share"));
-    std::env::set_var(PARSEC_BASE_CONFIG_DIR, format!("{tmp_dir}/config"));
-    // Hidden environ variable only used for CLI testing to customize the throttling time
-    // in invitation polling, without that the tests would be much slower for no reason.
-    std::env::set_var("_PARSEC_INVITE_POLLING_THROTTLE_MS", "10");
+    #[expect(clippy::undocumented_unsafe_blocks)]
+    unsafe {
+        std::env::set_var(TESTBED_SERVER, url.to_url().to_string());
+        std::env::set_var(PARSEC_BASE_HOME_DIR, format!("{tmp_dir}/cache"));
+        std::env::set_var(PARSEC_BASE_DATA_DIR, format!("{tmp_dir}/share"));
+        std::env::set_var(PARSEC_BASE_CONFIG_DIR, format!("{tmp_dir}/config"));
+        // Hidden environ variable only used for CLI testing to customize the throttling time
+        // in invitation polling, without that the tests would be much slower for no reason.
+        std::env::set_var("_PARSEC_INVITE_POLLING_THROTTLE_MS", "10");
 
-    // Remove the PARSEC_* variables that will conflict with the CLI tests
-    std::env::remove_var("PARSEC_DEVICE_ID");
-    std::env::remove_var("PARSEC_WORKSPACE_ID");
-    std::env::remove_var("PARSEC_ORGANISATION_ID");
-    std::env::remove_var("PARSEC_SERVER_ADDR");
-    std::env::remove_var("PARSEC_ADMINISTRATION_TOKEN");
-    std::env::remove_var("PARSEC_CONFIG_DIR");
-    std::env::remove_var("PARSEC_DATA_DIR");
-    std::env::remove_var(env_logger::DEFAULT_FILTER_ENV);
+        // Remove the PARSEC_* variables that will conflict with the CLI tests
+        std::env::remove_var("PARSEC_DEVICE_ID");
+        std::env::remove_var("PARSEC_WORKSPACE_ID");
+        std::env::remove_var("PARSEC_ORGANISATION_ID");
+        std::env::remove_var("PARSEC_SERVER_ADDR");
+        std::env::remove_var("PARSEC_ADMINISTRATION_TOKEN");
+        std::env::remove_var("PARSEC_CONFIG_DIR");
+        std::env::remove_var("PARSEC_DATA_DIR");
+        std::env::remove_var(env_logger::DEFAULT_FILTER_ENV);
+    }
 }
 
 fn unique_org_id() -> OrganizationID {

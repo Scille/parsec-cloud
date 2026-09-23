@@ -7,17 +7,16 @@ use std::{
 };
 
 use libparsec_testbed::{
-    test_get_testbed, test_get_testbed_component_store, TestbedEnv, TestbedEvent,
+    TestbedEnv, TestbedEvent, test_get_testbed, test_get_testbed_component_store,
 };
 use libparsec_types::prelude::*;
 
 use crate::{
-    device::ArchiveDeviceError, AvailableDevice, AvailableDeviceType,
-    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
-    DeviceSaveStrategy, ListPendingAsyncEnrollmentsError, LoadDeviceError,
-    LoadPendingAsyncEnrollmentError, RemoteOperationServer, RemoveDeviceError,
+    AvailableDevice, AvailableDeviceType, AvailablePendingAsyncEnrollment, DeviceAccessStrategy,
+    DevicePrimaryProtectionStrategy, DeviceSaveStrategy, ListPendingAsyncEnrollmentsError,
+    LoadDeviceError, LoadPendingAsyncEnrollmentError, RemoteOperationServer, RemoveDeviceError,
     RemovePendingAsyncEnrollmentError, SaveAsyncEnrollmentLocalPendingError, SaveDeviceError,
-    UpdateDeviceError,
+    UpdateDeviceError, device::ArchiveDeviceError,
 };
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
@@ -451,7 +450,7 @@ pub(crate) fn maybe_load_device(
                     | (_, DevicePrimaryProtectionStrategy::PKI { .. })
                     | (_, DevicePrimaryProtectionStrategy::AccountVault { .. })
                     | (_, DevicePrimaryProtectionStrategy::OpenBao { .. }) => {
-                        return Some(Err(LoadDeviceError::BadAccessStrategy { what: "type" }))
+                        return Some(Err(LoadDeviceError::BadAccessStrategy { what: "type" }));
                     }
                 };
 

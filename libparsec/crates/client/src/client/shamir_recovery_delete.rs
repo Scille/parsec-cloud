@@ -6,8 +6,8 @@ use libparsec_types::prelude::*;
 
 use super::Client;
 use crate::{
-    certif::{CertifPollServerError, InvalidCertificateError},
     CertifDeleteShamirRecoveryError, CertificateBasedActionOutcome,
+    certif::{CertifPollServerError, InvalidCertificateError},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -16,7 +16,9 @@ pub enum ClientDeleteShamirRecoveryError {
     Stopped,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

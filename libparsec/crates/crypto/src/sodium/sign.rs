@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libsodium_rs::crypto_sign::{
-    sign, sign_detached, verify_detached, KeyPair, PublicKey, SecretKey, BYTES as SIGNATUREBYTES,
-    PUBLICKEYBYTES, SECRETKEYBYTES, SEEDBYTES,
+    BYTES as SIGNATUREBYTES, KeyPair, PUBLICKEYBYTES, PublicKey, SECRETKEYBYTES, SEEDBYTES,
+    SecretKey, sign, sign_detached, verify_detached,
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;

@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 
 use libparsec_types::prelude::*;
 
-use crate::{test_drop_testbed, test_new_testbed, TestbedEnv, TestbedTimeToLive};
+use crate::{TestbedEnv, TestbedTimeToLive, test_drop_testbed, test_new_testbed};
 
 /// Keep track of testbed's lifetime, don't drop this before the test is done !
 pub struct TestbedScope {

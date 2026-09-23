@@ -6,7 +6,7 @@ use libparsec::{EmailAddress, UserID, UserProfile};
 use crate::{
     ui::Color,
     utils::{
-        maybe_plural, poll_server_for_new_certificates, StartedClient, BULLET_CHAR, CHECKMARK,
+        BULLET_CHAR, CHECKMARK, StartedClient, maybe_plural, poll_server_for_new_certificates,
     },
 };
 

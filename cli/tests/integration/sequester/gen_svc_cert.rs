@@ -1,4 +1,4 @@
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 use predicates::boolean::PredicateBooleanExt;
 
 // Generated with `openssl genrsa 512`

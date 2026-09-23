@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_platform_filesystem::{remove_file, RemoveFileError};
+use libparsec_platform_filesystem::{RemoveFileError, remove_file};
 
 use std::path::Path;
 

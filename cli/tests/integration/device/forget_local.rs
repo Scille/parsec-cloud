@@ -1,5 +1,5 @@
 #[cfg(target_family = "unix")]
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 #[cfg(target_family = "unix")]
 use parsec_cli::ui::Ui;
 

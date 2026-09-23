@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use libparsec_types::{anyhow, DeviceID};
+use libparsec_types::{DeviceID, anyhow};
 
 pub async fn remove_device_data(
     data_base_dir: &Path,

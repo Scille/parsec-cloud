@@ -63,8 +63,7 @@ impl PlatformPkiSystem {
         let expected_cert_hash = &cert_ref.hash;
         let uri = &cert_ref.uri;
         log::debug!("Looking for certificate matching the reference: {cert_ref:?}");
-        let cert = self
-            .scws
+        self.scws
             .iter_working_reader()
             .filter_map(|token| async move {
                 let cert_it = token
@@ -87,10 +86,10 @@ impl PlatformPkiSystem {
                     // Apply some pre-filter on the certificate using the URI
                     .filter(|cert| {
                         if let Maybe::Present(uri) = uri {
-                            if let Some(expected_label) = &uri.label {
-                                if expected_label != cert.ck_label().as_bytes() {
-                                    return false;
-                                }
+                            if let Some(expected_label) = &uri.label
+                                && expected_label != cert.ck_label().as_bytes()
+                            {
+                                return false;
                             }
                             if let Some(expected_id) = &uri.id {
                                 let Ok(id) = cert.ck_id() else {
@@ -141,8 +140,7 @@ impl PlatformPkiSystem {
             .boxed_local()
             .try_next()
             .await
-            .and_then(|maybe_cert| maybe_cert.ok_or(PkiSystemOpenCertificateError::NotFound));
-        cert
+            .and_then(|maybe_cert| maybe_cert.ok_or(PkiSystemOpenCertificateError::NotFound))
     }
 
     pub async fn list_user_certificates(

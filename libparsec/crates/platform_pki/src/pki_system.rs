@@ -76,7 +76,7 @@ impl AvailablePkiCertificate {
                 return Self::Invalid {
                     reference: partial_ref,
                     invalid_reason: UserX509CertificateLoadError::InvalidCertificateDer,
-                }
+                };
             }
         };
         match crate::x509::X509CertificateInformation::try_from(parsed_cert)

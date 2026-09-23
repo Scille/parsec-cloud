@@ -2,7 +2,7 @@
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_protocol::authenticated_cmds::latest::organization_info::{Rep, Req};
-use libparsec_types::{anyhow, DateTime};
+use libparsec_types::{DateTime, anyhow};
 
 use crate::{CertifListUsersError, CertifPollServerError, InvalidCertificateError};
 

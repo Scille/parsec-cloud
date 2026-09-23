@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use generic_array::{
-    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
+    typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
-use libsodium_rs::crypto_pwhash::{argon2id, pwhash, ALG_ARGON2ID13};
+use libsodium_rs::crypto_pwhash::{ALG_ARGON2ID13, argon2id, pwhash};
 
 use crate::{CryptoError, Password, PasswordAlgorithm};
 

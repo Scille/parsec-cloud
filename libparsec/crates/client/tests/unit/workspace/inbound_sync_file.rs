@@ -12,8 +12,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{InboundSyncOutcome, OpenOptions},
     EventWorkspaceOpsInboundSyncDone,
+    workspace::{InboundSyncOutcome, OpenOptions},
 };
 
 enum RemoteModification {

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use schannel::{cert_context::CertContext, cert_store::CertStore, RawPointer};
+use schannel::{RawPointer, cert_context::CertContext, cert_store::CertStore};
 use windows_sys::Win32::Security::Cryptography;
 
 pub(super) fn get_raw_store(store: &CertStore) -> Cryptography::HCERTSTORE {

@@ -2,13 +2,13 @@
 
 use std::path::PathBuf;
 
-use libparsec_platform_filesystem::{save_content, SaveContentError};
+use libparsec_platform_filesystem::{SaveContentError, save_content};
 use libparsec_types::prelude::*;
 
 use crate::{
-    encrypt_device, platform, AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice,
-    DevicePrimaryProtectionStrategy, DeviceSaveStrategy, OpenBaoOperationsUploadOpaqueKeyError,
-    PkiOperationsEncryptOpaqueKeyError, RemoteOperationServer,
+    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DevicePrimaryProtectionStrategy,
+    DeviceSaveStrategy, OpenBaoOperationsUploadOpaqueKeyError, PkiOperationsEncryptOpaqueKeyError,
+    RemoteOperationServer, encrypt_device, platform,
 };
 
 #[derive(Debug, thiserror::Error)]

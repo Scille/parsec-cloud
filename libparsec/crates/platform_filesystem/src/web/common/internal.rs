@@ -2,8 +2,8 @@
 
 use super::wrapper::{DirEntry, DirOrFileHandle};
 use super::{error::*, wrapper::Directory};
-use crate::platform::common::wrapper::OpenOptions;
 use crate::RenameFileError;
+use crate::platform::common::wrapper::OpenOptions;
 use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use std::{
     ffi::OsStr,

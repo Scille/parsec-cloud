@@ -1,8 +1,8 @@
-use libparsec::{tmp_path, RealmRole, TmpPath};
+use libparsec::{RealmRole, TmpPath, tmp_path};
 
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 use parsec_cli::{ui::Ui, utils::start_client};
 
@@ -27,7 +27,9 @@ async fn create_workspace(tmp_path: TmpPath, test_ui: &Ui) {
     let workspaces = client.list_workspaces().await;
 
     let workspace_name = "new-workspace".parse().unwrap();
-    assert!(workspaces
-        .iter()
-        .any(|w| w.name == workspace_name && w.self_role == RealmRole::Owner));
+    assert!(
+        workspaces
+            .iter()
+            .any(|w| w.name == workspace_name && w.self_role == RealmRole::Owner)
+    );
 }

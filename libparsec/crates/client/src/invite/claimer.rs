@@ -7,7 +7,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
+use libparsec_client_connection::{ConnectionError, InvitedCmds, protocol::invited_cmds};
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_async::future::{join_all, select_all};
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
@@ -20,9 +20,9 @@ use libparsec_protocol::invited_cmds::latest::invite_info::{
 };
 use libparsec_types::prelude::*;
 
-use crate::client::{register_new_device, RegisterNewDeviceError};
-use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 use crate::ClientConfig;
+use crate::client::{RegisterNewDeviceError, register_new_device};
+use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClaimerRetrieveInfoError {
@@ -628,7 +628,7 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
                 // On the contrary, other errors are deemed irrecoverable and are turned into a specific error type.
                 Ok(Rep::Ok { ciphered_data }) => Ok(ciphered_data),
                 Err(ConnectionError::NoResponse(_)) => {
-                    return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
+                    return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self));
                 }
                 // Errors
                 Ok(Rep::BadRevealToken) => {
@@ -696,7 +696,7 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
             Ok(_) => Ok(()),
             // Offline, let the caller retry the operation later
             Err(RegisterNewDeviceError::Offline(_)) => {
-                return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
+                return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self));
             }
             // Unrecoverable error, propagate it
             Err(e) => Err(ShamirRecoveryClaimRecoverDeviceError::RegisterNewDeviceError(e)),
@@ -876,7 +876,7 @@ impl BaseClaimInitialCtx {
                 _ => {
                     return Err(
                         anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into(),
-                    )
+                    );
                 }
             };
         };
@@ -916,7 +916,7 @@ impl BaseClaimInitialCtx {
                 _ => {
                     return Err(
                         anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into(),
-                    )
+                    );
                 }
             };
         };
@@ -1058,10 +1058,9 @@ impl UserClaimInitialCtx {
                 ClaimInProgressError::GreeterNotAllowed
                 | ClaimInProgressError::GreetingAttemptCancelled { .. },
             ) = &result
+                && !wait_peer_handles.is_empty()
             {
-                if !wait_peer_handles.is_empty() {
-                    continue;
-                }
+                continue;
             }
 
             // Cancel the remaining greeting attempts
@@ -1472,7 +1471,7 @@ impl BaseClaimInProgress3Ctx {
                 _ => {
                     return Err(
                         anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into(),
-                    )
+                    );
                 }
             };
         }

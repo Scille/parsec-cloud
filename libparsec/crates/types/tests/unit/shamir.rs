@@ -5,7 +5,7 @@ use std::num::NonZeroU8;
 use libparsec_tests_lite::prelude::*;
 
 use crate::{
-    fixtures::{alice, Device},
+    fixtures::{Device, alice},
     prelude::*,
 };
 

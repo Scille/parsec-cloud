@@ -4,7 +4,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::certificates;
-use crate::{encrypt_message, verify_message, PkiSystem, PkiSystemOpenCertificateError};
+use crate::{PkiSystem, PkiSystemOpenCertificateError, encrypt_message, verify_message};
 
 async fn init_pki(env: &TestbedEnv) -> PkiSystem {
     // We initialize the testbed mocked version of the PKI system, hence we never

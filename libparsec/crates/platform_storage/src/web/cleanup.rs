@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use libparsec_types::{anyhow, DeviceID};
+use libparsec_types::{DeviceID, anyhow};
 
 use super::{certificates::get_certificates_storage_db_name, user::get_user_storage_db_name};
 

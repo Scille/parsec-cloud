@@ -6,11 +6,10 @@ use libparsec_crypto::{SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, DataError, DateTime, DeviceID, VlobID,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DateTime, DeviceID, VlobID,
 };
-use crate::{impl_transparent_data_format_conversion, DataResult};
+use crate::{DataResult, impl_transparent_data_format_conversion};
 
 /*
  * CryptpadSessionKey

@@ -2,8 +2,8 @@
 
 use libparsec_platform_async::stream::StreamExt;
 use libparsec_platform_filesystem::{
-    list_files, load_file, remove_file, save_content, ListFilesError, LoadFileError,
-    SaveContentError,
+    ListFilesError, LoadFileError, SaveContentError, list_files, load_file, remove_file,
+    save_content,
 };
 use libparsec_types::prelude::*;
 
@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed;
-use crate::{device::RemoveDeviceError, get_pending_async_enrollment_dir, LOCAL_PENDING_EXT};
+use crate::{LOCAL_PENDING_EXT, device::RemoveDeviceError, get_pending_async_enrollment_dir};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveAsyncEnrollmentLocalPendingError {
@@ -267,15 +267,16 @@ pub(crate) fn load_pending_async_enrollment_frow_raw(
         })
         .map_err(|_| ())?;
 
-    let cooked_cleartext_content =
-        AsyncEnrollmentLocalPendingCleartextContent::load(&cooked.cleartext_content)
-            .inspect_err(|err| {
-                log::warn!(
+    let cooked_cleartext_content = AsyncEnrollmentLocalPendingCleartextContent::load(
+        &cooked.cleartext_content,
+    )
+    .inspect_err(|err| {
+        log::warn!(
             "Failed to load cleartext part of async enrollment local pending file {}: {err}",
             path.display()
         )
-            })
-            .map_err(|_| ())?;
+    })
+    .map_err(|_| ())?;
 
     Ok((cooked, cooked_cleartext_content))
 }

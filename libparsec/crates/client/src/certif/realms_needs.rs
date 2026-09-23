@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use libparsec_platform_storage::certificates::UpTo;
 use libparsec_types::prelude::*;
 
-use super::{store::CertifStoreError, CertificateOps};
+use super::{CertificateOps, store::CertifStoreError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifGetRealmNeedsError {

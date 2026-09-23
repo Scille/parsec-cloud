@@ -966,7 +966,7 @@ impl ParsecInvitationAddr {
                     help: format!(
                         "Expected `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_USER}`, `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_DEVICE}` or `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY}`"
                     ),
-                })
+                });
             }
         };
         let token =

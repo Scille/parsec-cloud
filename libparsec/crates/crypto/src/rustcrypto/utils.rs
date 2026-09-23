@@ -2,10 +2,10 @@
 
 use blake2::{Blake2b, Digest};
 use generic_array::{
-    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
+    typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
-use rand::{rngs::OsRng, RngCore};
+use rand::{RngCore, rngs::OsRng};
 
 pub(crate) fn generate_rand(out: &mut [u8]) {
     OsRng.fill_bytes(out);

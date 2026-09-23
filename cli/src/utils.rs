@@ -12,13 +12,14 @@ use anyhow::anyhow;
 use clap::ValueEnum;
 use dialoguer::FuzzySelect;
 use libparsec::{
+    AuthenticatedCmds, AvailableDevice, AvailableDeviceType, DeviceLabel, HumanHandle, LocalDevice,
+    Password, ProxyConfig, SASCode, UserProfile,
     internal::{Client, EventBus},
-    list_available_devices, AuthenticatedCmds, AvailableDevice, AvailableDeviceType, DeviceLabel,
-    HumanHandle, LocalDevice, Password, ProxyConfig, SASCode, UserProfile,
+    list_available_devices,
 };
 use libparsec_client::{DeviceAccessStrategy, DevicePrimaryProtectionStrategy};
 use libparsec_platform_ipc::{
-    lock_device_for_use, try_lock_device_for_use, InUseDeviceLockGuard, TryLockDeviceForUseError,
+    InUseDeviceLockGuard, TryLockDeviceForUseError, lock_device_for_use, try_lock_device_for_use,
 };
 use spinners::{Spinner, Spinners, Stream};
 
@@ -534,11 +535,7 @@ pub fn read_password(read_from: ReadPasswordFrom) -> anyhow::Result<libparsec::P
 }
 
 pub fn maybe_plural(number: u8) -> &'static str {
-    if number == 1 {
-        ""
-    } else {
-        "s"
-    }
+    if number == 1 { "" } else { "s" }
 }
 
 #[derive(Clone)]

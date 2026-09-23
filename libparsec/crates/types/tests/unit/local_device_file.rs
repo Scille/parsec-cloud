@@ -2,7 +2,7 @@
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::fixtures::{alice, Device};
+use crate::fixtures::{Device, alice};
 use crate::prelude::*;
 
 #[rstest]
@@ -1429,14 +1429,20 @@ fn test_advisory_device_file_protection_parse_ok() {
 #[test]
 fn test_advisory_device_file_protection_parse_ko() {
     assert!("DUMMY".parse::<AdvisoryDeviceFileProtection>().is_err());
-    assert!("PASSWORD+DUMMY"
-        .parse::<AdvisoryDeviceFileProtection>()
-        .is_err());
-    assert!("DUMMY+TOTP"
-        .parse::<AdvisoryDeviceFileProtection>()
-        .is_err());
+    assert!(
+        "PASSWORD+DUMMY"
+            .parse::<AdvisoryDeviceFileProtection>()
+            .is_err()
+    );
+    assert!(
+        "DUMMY+TOTP"
+            .parse::<AdvisoryDeviceFileProtection>()
+            .is_err()
+    );
     assert!("".parse::<AdvisoryDeviceFileProtection>().is_err());
-    assert!("TOTP+PASSWORD"
-        .parse::<AdvisoryDeviceFileProtection>()
-        .is_err());
+    assert!(
+        "TOTP+PASSWORD"
+            .parse::<AdvisoryDeviceFileProtection>()
+            .is_err()
+    );
 }

@@ -2,7 +2,7 @@
 
 use std::{io::Write, path::PathBuf, sync::Arc};
 
-use libparsec_client::{workspace::WorkspaceOps, Client};
+use libparsec_client::{Client, workspace::WorkspaceOps};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -102,10 +102,10 @@ async fn file(
                     assert_eq!(stat.uid(), current_uid);
                     assert_eq!(stat.gid(), current_gid);
                     assert_eq!(stat.nlink(), 1); // We do not handle file link so the file will have a
-                                                 // single link
+                    // single link
                     assert_eq!(stat.blocks(), expected_size.div_ceil(BLK_SIZE));
                     assert_eq!(stat.blksize(), 512 * 1024); // Value of blocksize that we define during the
-                                                            // filesystem impl
+                    // filesystem impl
                 }
             })
             .await
@@ -160,11 +160,11 @@ async fn folder(
                     assert_eq!(stat.uid(), current_uid);
                     assert_eq!(stat.gid(), current_gid);
                     assert_eq!(stat.nlink(), 1); // We do not handle file link so the file will have a
-                                                 // single link
+                    // single link
                     assert_eq!(stat.size(), 0); // A dir does not have a size
                     assert_eq!(stat.blocks(), 0); // no size mean no block used
                     assert_eq!(stat.blksize(), 512 * 1024); // Value of blocksize that we define during the
-                                                            // filesystem impl
+                    // filesystem impl
                 }
             })
             .await

@@ -36,7 +36,7 @@ pub use invite::*;
 pub use libparsec_client::{ClientExportRecoveryDeviceError, ImportRecoveryDeviceError};
 pub use libparsec_client_connection::*;
 pub use libparsec_platform_device_loader::{
-    get_default_key_file, is_keyring_available, load_device, save_device, LoadDeviceError,
+    LoadDeviceError, get_default_key_file, is_keyring_available, load_device, save_device,
 };
 pub use libparsec_platform_storage as storage;
 pub use libparsec_protocol::*;
@@ -56,19 +56,19 @@ pub use libparsec_types::anyhow::Error as AnyhowError;
 
 pub mod internal {
     pub use libparsec_client::{
-        claimer_retrieve_info, AnyClaimRetrievedInfoCtx, Client, ClientConfig,
-        DeviceClaimFinalizeCtx, DeviceClaimInProgress1Ctx, DeviceClaimInProgress2Ctx,
-        DeviceClaimInProgress3Ctx, DeviceClaimInitialCtx, DeviceGreetInProgress1Ctx,
-        DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx, DeviceGreetInProgress4Ctx,
-        DeviceGreetInitialCtx, EventBus, ShamirRecoveryClaimInProgress1Ctx,
-        ShamirRecoveryClaimInProgress2Ctx, ShamirRecoveryClaimInProgress3Ctx,
-        ShamirRecoveryClaimInitialCtx, ShamirRecoveryClaimMaybeFinalizeCtx,
-        ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimPickRecipientCtx,
-        ShamirRecoveryClaimRecoverDeviceCtx, ShamirRecoveryClaimShare, UserClaimFinalizeCtx,
-        UserClaimInProgress1Ctx, UserClaimInProgress2Ctx, UserClaimInProgress3Ctx,
-        UserClaimInitialCtx, UserClaimListAdministratorsCtx, UserGreetInProgress1Ctx,
-        UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
-        UserGreetInitialCtx,
+        AnyClaimRetrievedInfoCtx, Client, ClientConfig, DeviceClaimFinalizeCtx,
+        DeviceClaimInProgress1Ctx, DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx,
+        DeviceClaimInitialCtx, DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx,
+        DeviceGreetInProgress3Ctx, DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, EventBus,
+        ShamirRecoveryClaimInProgress1Ctx, ShamirRecoveryClaimInProgress2Ctx,
+        ShamirRecoveryClaimInProgress3Ctx, ShamirRecoveryClaimInitialCtx,
+        ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
+        ShamirRecoveryClaimPickRecipientCtx, ShamirRecoveryClaimRecoverDeviceCtx,
+        ShamirRecoveryClaimShare, UserClaimFinalizeCtx, UserClaimInProgress1Ctx,
+        UserClaimInProgress2Ctx, UserClaimInProgress3Ctx, UserClaimInitialCtx,
+        UserClaimListAdministratorsCtx, UserGreetInProgress1Ctx, UserGreetInProgress2Ctx,
+        UserGreetInProgress3Ctx, UserGreetInProgress4Ctx, UserGreetInitialCtx,
+        claimer_retrieve_info,
     };
 }
 
@@ -189,4 +189,4 @@ fn init_logger(config: &ClientConfig) {
 }
 
 #[cfg(feature = "cli-tests")]
-pub use libparsec_tests_fixtures::{tmp_path, TmpPath};
+pub use libparsec_tests_fixtures::{TmpPath, tmp_path};

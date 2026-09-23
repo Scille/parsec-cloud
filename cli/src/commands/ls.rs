@@ -1,5 +1,5 @@
 use libparsec::{EntryName, EntryStat, FsPath};
-use serde::{ser::SerializeSeq, Serialize};
+use serde::{Serialize, ser::SerializeSeq};
 
 use crate::{ui::CLIDisplay, utils::StartedClient};
 

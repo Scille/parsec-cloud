@@ -8,9 +8,9 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace_history::{
-        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
         InvalidManifestHistoryError, WorkspaceHistoryEntryStat, WorkspaceHistoryOps,
         WorkspaceHistoryStatEntryError,
+        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
     },
 };
 
@@ -120,7 +120,7 @@ impl WorkspaceHistoryFolderReader {
                     // invalid (e.g. the entry has been reparented during a move) and
                     // should just be ignored.
                     WorkspaceHistoryStatEntryError::EntryNotFound => {
-                        return Ok(WorkspaceHistoryFolderReaderStatNextOutcome::InvalidChild)
+                        return Ok(WorkspaceHistoryFolderReaderStatNextOutcome::InvalidChild);
                     }
                     WorkspaceHistoryStatEntryError::Offline(e) => {
                         WorkspaceHistoryFolderReaderStatEntryError::Offline(e)
@@ -213,7 +213,7 @@ impl WorkspaceHistoryFolderReader {
                                 invalid_manifest_error,
                             ),
                             WorkspaceHistoryStoreGetEntryError::Internal(err) => err.into(),
-                        })
+                        });
                     }
                 };
 

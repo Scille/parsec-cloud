@@ -94,10 +94,8 @@ pub async fn workspace_export(
         return Err(anyhow::anyhow!("File already exists."));
     }
 
-    if parents {
-        if let Some(p) = dest.parent() {
-            tokio::fs::create_dir_all(p).await?
-        }
+    if parents && let Some(p) = dest.parent() {
+        tokio::fs::create_dir_all(p).await?
     }
 
     let dest_file = tokio::fs::OpenOptions::new()

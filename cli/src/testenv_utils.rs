@@ -6,11 +6,12 @@ use std::{
 };
 
 use libparsec::{
-    authenticated_cmds::latest::{device_create, user_create},
     AuthenticatedCmds, Bytes, CertificateSigner, ClientConfig, DateTime, DeviceCertificate,
     DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice, MaybeRedacted, OrganizationID,
-    ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
-    UserProfile, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
+    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME, ParsecAddr,
+    PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
+    UserProfile,
+    authenticated_cmds::latest::{device_create, user_create},
 };
 use libparsec_client::{DeviceAccessStrategy, DeviceSaveStrategy};
 
@@ -359,8 +360,10 @@ pub async fn new_environment(
     }
 
     for (key, value) in env {
+        // SAFETY: It's the only place where we set own env variables, and the function is expected
+        // to be called only once
         // We set var for the current process
-        std::env::set_var(key, &value);
+        unsafe { std::env::set_var(key, &value) };
 
         ui.with_message(|_, out| writeln!(out, "   {export_keyword} {key}={value}"))?;
     }

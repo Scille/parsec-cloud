@@ -1,4 +1,4 @@
-use clap::{builder::PossibleValue, ValueEnum};
+use clap::{ValueEnum, builder::PossibleValue};
 use std::{fmt::Display, io::IsTerminal};
 
 /// How message should be styled.

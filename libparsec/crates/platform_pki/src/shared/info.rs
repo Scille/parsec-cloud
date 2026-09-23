@@ -62,12 +62,12 @@ pub fn get_root_x509_certificate_info_from_trustchain<'cert>(
         Ok(None) => {
             return Err(
                 GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateNoCommonName,
-            )
+            );
         }
         Err(err) => {
             return Err(
                 GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateDer(err.into()),
-            )
+            );
         }
     };
 

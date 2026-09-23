@@ -6,28 +6,36 @@ use libparsec_types::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidManifestHistoryError {
-    #[error("Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: manifest timestamp is more recent than the lookup")]
+    #[error(
+        "Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: manifest timestamp is more recent than the lookup"
+    )]
     TooRecent {
         at: DateTime,
         entry_id: VlobID,
         manifest_version: VersionInt,
         manifest_timestamp: DateTime,
     },
-    #[error("Manifest `{entry_id}` lookup at `{at}` resolved as `NoFound` breaks consistency: resolution is already known and should be `Exists{{ version={expected_manifest_version}, timestamp={expected_manifest_timestamp} }}`")]
+    #[error(
+        "Manifest `{entry_id}` lookup at `{at}` resolved as `NoFound` breaks consistency: resolution is already known and should be `Exists{{ version={expected_manifest_version}, timestamp={expected_manifest_timestamp} }}`"
+    )]
     AlreadyKnownToExist {
         at: DateTime,
         entry_id: VlobID,
         expected_manifest_version: VersionInt,
         expected_manifest_timestamp: DateTime,
     },
-    #[error("Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: resolution is already known to be not found at the time of the lookup")]
+    #[error(
+        "Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: resolution is already known to be not found at the time of the lookup"
+    )]
     AlreadyKnownToBeNotFound {
         at: DateTime,
         entry_id: VlobID,
         manifest_version: VersionInt,
         manifest_timestamp: DateTime,
     },
-    #[error("Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: resolution is already known and should be `Exists{{ version={expected_manifest_version}, timestamp={expected_manifest_timestamp} }}`")]
+    #[error(
+        "Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: resolution is already known and should be `Exists{{ version={expected_manifest_version}, timestamp={expected_manifest_timestamp} }}`"
+    )]
     AlreadyKnownAndDiffers {
         at: DateTime,
         entry_id: VlobID,
@@ -36,7 +44,9 @@ pub enum InvalidManifestHistoryError {
         expected_manifest_version: VersionInt,
         expected_manifest_timestamp: DateTime,
     },
-    #[error("Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: a more recent resolution is known to have a smaller version `Exists{{ version={known_manifest_version}, timestamp={known_manifest_timestamp} }}`")]
+    #[error(
+        "Manifest `{entry_id}` lookup at `{at}` resolved as `Exists{{ version={manifest_version}, timestamp={manifest_timestamp} }}` breaks consistency: a more recent resolution is known to have a smaller version `Exists{{ version={known_manifest_version}, timestamp={known_manifest_timestamp} }}`"
+    )]
     AlreadyKnownToHaveMoreRecentSmallerVersion {
         at: DateTime,
         entry_id: VlobID,

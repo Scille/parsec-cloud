@@ -1,16 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    IntoPyObjectExt,
     exceptions::PyValueError,
     prelude::*,
     types::{PyBool, PyBytes, PyDict, PyList, PyString},
-    IntoPyObjectExt,
 };
 use std::collections::HashMap;
 use std::num::NonZeroU8;
 use std::sync::Arc;
 
 use crate::{
+    AccessToken, BlockID, DateTime, DeviceID, DeviceLabel, EmailAddress, HumanHandle, PrivateKey,
+    RealmRole, SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
+    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
     data::{
         DeviceCertificate, RealmArchivingCertificate, RealmKeyRotationCertificate,
         RealmNameCertificate, RealmRoleCertificate, RevokedUserCertificate,
@@ -20,9 +23,6 @@ use crate::{
         UserUpdateCertificate,
     },
     protocol::ActiveUsersLimit,
-    AccessToken, BlockID, DateTime, DeviceID, DeviceLabel, EmailAddress, HumanHandle, PrivateKey,
-    RealmRole, SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
-    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
 };
 
 #[pyclass(from_py_object)]

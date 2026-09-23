@@ -1,4 +1,4 @@
-use libparsec::{tmp_path, SequesterKeySize, SequesterSigningKeyDer, TmpPath};
+use libparsec::{SequesterKeySize, SequesterSigningKeyDer, TmpPath, tmp_path};
 
 use crate::{
     bootstrap_cli_test, test_ui,

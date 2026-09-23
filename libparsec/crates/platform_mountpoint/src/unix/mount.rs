@@ -78,7 +78,7 @@ impl Mountpoint {
         let mountpoint_base_dir = match mount_strategy {
             MountpointMountStrategy::Directory { base_dir } => base_dir.clone(),
             MountpointMountStrategy::DriveLetter => {
-                return Err(anyhow::anyhow!("Mount strategy not supported !"))
+                return Err(anyhow::anyhow!("Mount strategy not supported !"));
             }
             MountpointMountStrategy::Disabled => return Err(anyhow::anyhow!("Mount disabled !")),
         };
@@ -167,10 +167,10 @@ impl Mountpoint {
 
             for _ in 0..100 {
                 log::debug!("polling for the start...");
-                if let Ok(new_st_dev) = std::fs::metadata(&mount_path).map(|stat| stat.st_dev()) {
-                    if new_st_dev != initial_st_dev {
-                        break;
-                    }
+                if let Ok(new_st_dev) = std::fs::metadata(&mount_path).map(|stat| stat.st_dev())
+                    && new_st_dev != initial_st_dev
+                {
+                    break;
                 }
                 std::thread::sleep(std::time::Duration::from_millis(30));
             }
@@ -388,12 +388,14 @@ async fn create_suitable_mountpoint_dir(
         };
 
         // On POSIX systems, mounting target must exists
-        ok_or_continue!(tokio::fs::create_dir_all(&mountpoint_path)
-            .await
-            .inspect_err(|e| log::warn!(
-                "Failed to create directory for mount path '{}': {e}",
-                mountpoint_path.display()
-            )));
+        ok_or_continue!(
+            tokio::fs::create_dir_all(&mountpoint_path)
+                .await
+                .inspect_err(|e| log::warn!(
+                    "Failed to create directory for mount path '{}': {e}",
+                    mountpoint_path.display()
+                ))
+        );
 
         let initial_st_dev = ok_or_continue!(tokio::fs::metadata(&mountpoint_path).await).st_dev();
 
@@ -434,7 +436,9 @@ fn try_unmount_path_using_command(command: &str, prefix_args: &[&str], path: &Pa
                 log::debug!("Unmount of {display_path} successful using `{command}`");
                 return true;
             } else {
-                log::warn!("Bad exit status when trying to unmount {display_path} with `{command}`: {status}")
+                log::warn!(
+                    "Bad exit status when trying to unmount {display_path} with `{command}`: {status}"
+                )
             }
         }
         Err(err) => {

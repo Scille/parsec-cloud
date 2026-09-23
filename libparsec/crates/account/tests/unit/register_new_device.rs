@@ -6,7 +6,7 @@
 
 use libparsec_client::ProxyConfig;
 use libparsec_client_connection::{
-    test_register_sequence_of_send_hooks, test_send_hook_vault_item_list, AuthenticatedCmds,
+    AuthenticatedCmds, test_register_sequence_of_send_hooks, test_send_hook_vault_item_list,
 };
 use libparsec_platform_device_loader::{
     AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy,

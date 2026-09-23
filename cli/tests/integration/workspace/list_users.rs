@@ -1,9 +1,9 @@
-use libparsec::{tmp_path, RealmRole, TmpPath};
+use libparsec::{RealmRole, TmpPath, tmp_path};
 use predicates::boolean::PredicateBooleanExt;
 
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 use parsec_cli::{ui::Ui, utils::start_client};
 

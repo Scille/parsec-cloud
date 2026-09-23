@@ -8,8 +8,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    submit_async_enrollment, submitter_list_local_async_enrollments, SubmitAsyncEnrollmentError,
-    SubmitAsyncEnrollmentIdentityStrategy,
+    SubmitAsyncEnrollmentError, SubmitAsyncEnrollmentIdentityStrategy, submit_async_enrollment,
+    submitter_list_local_async_enrollments,
 };
 
 use super::utils::MockedAsyncEnrollmentIdentityStrategy;

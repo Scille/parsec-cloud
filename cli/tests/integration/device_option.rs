@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use libparsec::{tmp_path, HumanHandle, LocalDevice, ParsecAddr, TmpPath};
+use libparsec::{HumanHandle, LocalDevice, ParsecAddr, TmpPath, tmp_path};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{create_new_device, create_new_user, TestOrganization},
+    testenv_utils::{TestOrganization, create_new_device, create_new_user},
 };
 use parsec_cli::{
     ui::Ui,
-    utils::{get_minimal_short_id_size, RESET, YELLOW},
+    utils::{RESET, YELLOW, get_minimal_short_id_size},
 };
 
 #[rstest::rstest]
@@ -32,10 +32,11 @@ async fn device_not_found(tmp_path: TmpPath, test_ui: &Ui) {
 
     // Ensure that A_DEVICE_THAT_DOES_NOT_EXIST is not the prefix of one of the known devices.
     devices.iter().for_each(|dev| {
-        assert!(!dev
-            .device_id
-            .hex()
-            .starts_with(A_DEVICE_THAT_DOES_NOT_EXIST));
+        assert!(
+            !dev.device_id
+                .hex()
+                .starts_with(A_DEVICE_THAT_DOES_NOT_EXIST)
+        );
     });
 
     let mut available_devices_string_list = String::new();

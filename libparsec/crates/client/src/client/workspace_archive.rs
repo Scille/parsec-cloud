@@ -6,12 +6,12 @@ use libparsec_types::prelude::*;
 
 use super::Client;
 use crate::{
+    ClientRefreshWorkspacesListError,
     certif::{
         CertifArchiveRealmError, CertifBootstrapWorkspaceError, CertifPollServerError,
         CertificateBasedActionOutcome, InvalidCertificateError, InvalidEncryptedRealmNameError,
         InvalidKeysBundleError, RequestedRealmArchivingConfiguration,
     },
-    ClientRefreshWorkspacesListError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -28,7 +28,9 @@ pub enum ClientArchiveWorkspaceError {
     Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -74,10 +76,10 @@ pub async fn archive_workspace(
                 CertificateBasedActionOutcome::LocalIdempotent
             }
             CertifBootstrapWorkspaceError::Offline(e) => {
-                return Err(ClientArchiveWorkspaceError::Offline(e))
+                return Err(ClientArchiveWorkspaceError::Offline(e));
             }
             CertifBootstrapWorkspaceError::Stopped => {
-                return Err(ClientArchiveWorkspaceError::Stopped)
+                return Err(ClientArchiveWorkspaceError::Stopped);
             }
             CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                 server_timestamp,
@@ -90,21 +92,21 @@ pub async fn archive_workspace(
                     client_timestamp,
                     ballpark_client_early_offset,
                     ballpark_client_late_offset,
-                })
+                });
             }
             CertifBootstrapWorkspaceError::RealmDeleted => {
-                return Err(ClientArchiveWorkspaceError::WorkspaceDeleted)
+                return Err(ClientArchiveWorkspaceError::WorkspaceDeleted);
             }
             CertifBootstrapWorkspaceError::InvalidKeysBundle(err) => {
-                return Err(ClientArchiveWorkspaceError::InvalidKeysBundle(err))
+                return Err(ClientArchiveWorkspaceError::InvalidKeysBundle(err));
             }
             CertifBootstrapWorkspaceError::InvalidCertificate(err) => {
-                return Err(ClientArchiveWorkspaceError::InvalidCertificate(err))
+                return Err(ClientArchiveWorkspaceError::InvalidCertificate(err));
             }
             CertifBootstrapWorkspaceError::Internal(err) => {
                 return Err(err
                     .context("Cannot ensure workspace is bootstrapped")
-                    .into())
+                    .into());
             }
         },
     };

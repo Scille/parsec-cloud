@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    Bound, PyResult, Python,
     exceptions::PyValueError,
     prelude::*,
     pyclass, pymethods,
     types::{PyBytes, PyString, PyType},
-    Bound, PyResult, Python,
 };
 
 use crate::ids::HumanHandle;

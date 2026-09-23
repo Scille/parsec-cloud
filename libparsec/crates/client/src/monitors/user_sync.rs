@@ -6,11 +6,11 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
+    EventMonitorCrashed,
     event_bus::{
         EventBus, EventMissedServerEvents, EventRealmVlobUpdated, EventUserOpsOutboundSyncNeeded,
     },
     user::{UserOps, UserSyncError},
-    EventMonitorCrashed,
 };
 
 const USER_SYNC_MONITOR_NAME: &str = "user_sync";

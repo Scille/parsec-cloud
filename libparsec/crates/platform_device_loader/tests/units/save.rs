@@ -7,10 +7,9 @@
 use std::sync::Arc;
 
 use crate::{
-    load_device, save_device, tests::utils::MockedAccountVaultOperations,
     AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, AvailableDeviceType,
     DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy, LoadDeviceError,
-    SaveDeviceError,
+    SaveDeviceError, load_device, save_device, tests::utils::MockedAccountVaultOperations,
 };
 use libparsec_client_connection::ConnectionError;
 use libparsec_tests_fixtures::prelude::*;

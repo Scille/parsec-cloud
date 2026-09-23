@@ -10,8 +10,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
 use crate::{
-    workspace::{EntryStat, WorkspaceStatEntryError},
     ClientRefreshWorkspacesListError, EventWorkspacesSelfListChanged, WorkspaceInfo,
+    workspace::{EntryStat, WorkspaceStatEntryError},
 };
 
 #[parsec_test(testbed = "coolorg")]

@@ -5,8 +5,8 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    greater_timestamp, store::CertifStoreError, CertificateBasedActionOutcome, CertificateOps,
-    GreaterTimestampOffset,
+    CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset, greater_timestamp,
+    store::CertifStoreError,
 };
 use crate::EventTooMuchDriftWithServerClock;
 
@@ -46,7 +46,9 @@ pub enum CertifArchiveRealmError {
     AuthorNotAllowed,
     #[error("Archiving period is too short")]
     ArchivingPeriodTooShort,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

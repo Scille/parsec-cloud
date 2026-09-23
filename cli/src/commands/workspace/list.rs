@@ -2,7 +2,7 @@
 use std::io::Write;
 
 use crate::{
-    ui::{compat::WorkspaceInfoDisplay, Color},
+    ui::{Color, compat::WorkspaceInfoDisplay},
     utils::*,
 };
 

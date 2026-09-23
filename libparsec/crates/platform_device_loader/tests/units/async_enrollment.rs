@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
+    AvailablePendingAsyncEnrollment, AvailablePendingAsyncEnrollmentIdentitySystem,
+    RemovePendingAsyncEnrollmentError, SaveAsyncEnrollmentLocalPendingError,
     list_pending_async_enrollments, load_pending_async_enrollment, remove_pending_async_enrollment,
-    save_pending_async_enrollment, AvailablePendingAsyncEnrollment,
-    AvailablePendingAsyncEnrollmentIdentitySystem, RemovePendingAsyncEnrollmentError,
-    SaveAsyncEnrollmentLocalPendingError,
+    save_pending_async_enrollment,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_tests_lite::{p_assert_eq, p_assert_matches};

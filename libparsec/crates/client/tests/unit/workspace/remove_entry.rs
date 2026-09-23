@@ -9,8 +9,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::workspace::{
-    store::ReadChunkOrBlockLocalOnlyError, EntryStat, MoveEntryMode, OpenOptions,
-    WorkspaceRemoveEntryError,
+    EntryStat, MoveEntryMode, OpenOptions, WorkspaceRemoveEntryError,
+    store::ReadChunkOrBlockLocalOnlyError,
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]

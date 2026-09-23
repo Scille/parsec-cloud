@@ -9,7 +9,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::{
-    inbound_sync_monitor_loop, InboundSyncManagerIO, IncomingEvent, WaitForNextIncomingEventOutcome,
+    InboundSyncManagerIO, IncomingEvent, WaitForNextIncomingEventOutcome, inbound_sync_monitor_loop,
 };
 use crate::event_bus::AnySpiedEvent;
 use crate::monitors::workspace_inbound_sync::RealInboundSyncManagerIO;

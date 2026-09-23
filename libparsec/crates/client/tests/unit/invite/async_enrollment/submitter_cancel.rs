@@ -5,7 +5,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::super::utils::make_config;
-use crate::{submitter_cancel_async_enrollment, SubmitterCancelAsyncEnrollmentError};
+use crate::{SubmitterCancelAsyncEnrollmentError, submitter_cancel_async_enrollment};
 
 #[parsec_test(testbed = "empty")]
 async fn ok(env: &TestbedEnv) {

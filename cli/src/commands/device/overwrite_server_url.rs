@@ -7,7 +7,7 @@ use libparsec::{
 };
 
 use crate::{
-    ui::{compat::AvailableDeviceDisplay, Color},
+    ui::{Color, compat::AvailableDeviceDisplay},
     utils::*,
 };
 

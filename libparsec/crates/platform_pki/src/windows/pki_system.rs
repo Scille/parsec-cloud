@@ -7,7 +7,7 @@ use schannel::{
 
 use libparsec_types::prelude::*;
 
-use super::{find_in_store, schannel_utils, PlatformPkiCertificate};
+use super::{PlatformPkiCertificate, find_in_store, schannel_utils};
 use crate::{
     AvailablePkiCertificate, PkiCertificate, PkiScwsConfig,
     PkiSystemGetCertificateRevocationListsError, PkiSystemInitError,
@@ -161,8 +161,8 @@ pub(crate) fn get_issuer_serial_from_pkcs11_uri(
 
 pub(super) type ListX509CertificateRevocationListsError = ListX509CertificatesError;
 
-pub(super) async fn list_x509_certificate_revocation_lists(
-) -> Result<Vec<X509CertificateRevocationList<'static>>, ListX509CertificateRevocationListsError> {
+pub(super) async fn list_x509_certificate_revocation_lists()
+-> Result<Vec<X509CertificateRevocationList<'static>>, ListX509CertificateRevocationListsError> {
     let mut crls = vec![];
     // Need to look in both stores to get CRL from root *and* intermediate CAs
     for store_name in [INTERMEDIATE_CERTIFICATE_STORE, ROOT_CERTIFICATE_STORE] {
@@ -219,8 +219,8 @@ pub(super) enum ListX509CertificatesError {
 
 pub(super) type ListX509TrustAnchors = ListX509CertificatesError;
 
-pub(super) async fn list_x509_trust_anchors(
-) -> Result<Vec<X509TrustAnchor<'static>>, ListX509TrustAnchors> {
+pub(super) async fn list_x509_trust_anchors()
+-> Result<Vec<X509TrustAnchor<'static>>, ListX509TrustAnchors> {
     let store = CertStore::open_current_user(ROOT_CERTIFICATE_STORE)
         .map_err(ListX509TrustAnchors::CannotOpenStore)?;
 
@@ -258,8 +258,8 @@ pub(super) async fn list_x509_trust_anchors(
 
 pub(super) type ListIntermediateX509CertificatesError = ListX509CertificatesError;
 
-pub(super) async fn list_intermediate_x509_certificates(
-) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateX509CertificatesError> {
+pub(super) async fn list_intermediate_x509_certificates()
+-> Result<Vec<X509CertificateDer<'static>>, ListIntermediateX509CertificatesError> {
     let store = CertStore::open_current_user(INTERMEDIATE_CERTIFICATE_STORE)
         .map_err(ListIntermediateX509CertificatesError::CannotOpenStore)?;
 
@@ -269,8 +269,8 @@ pub(super) async fn list_intermediate_x509_certificates(
         .collect::<Vec<_>>())
 }
 
-pub fn show_certificate_selection_dialog_windows_only(
-) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
+pub fn show_certificate_selection_dialog_windows_only()
+-> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
     let store = CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
         .map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
 

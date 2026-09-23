@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-use crate::tests::{create_dir_all, CONTENT};
+use crate::tests::{CONTENT, create_dir_all};
 
-use crate::{list_files, rename_file, save_content, RenameFileError};
+use crate::{RenameFileError, list_files, rename_file, save_content};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_tests_lite::p_assert_matches;
 

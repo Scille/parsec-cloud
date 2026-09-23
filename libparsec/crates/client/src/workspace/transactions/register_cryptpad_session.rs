@@ -1,15 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::protocol::authenticated_cmds;
 use libparsec_client_connection::ConnectionError;
+use libparsec_client_connection::protocol::authenticated_cmds;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 pub use crate::CryptpadSessionKeys;
 use crate::{
-    workspace::WorkspaceOps, CertifGetLatestRealmKeyForEncryptionError, CertifPollServerError,
+    CertifGetLatestRealmKeyForEncryptionError, CertifPollServerError,
     CertifValidateCryptpadSessionKeysError, EncryptionUsage, InvalidCertificateError,
-    InvalidCryptpadSessionKeysError, InvalidKeysBundleError,
+    InvalidCryptpadSessionKeysError, InvalidKeysBundleError, workspace::WorkspaceOps,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -32,7 +32,9 @@ pub enum WorkspaceRegisterCryptpadSessionError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     InvalidCryptpadSessionKeys(#[from] Box<InvalidCryptpadSessionKeysError>),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

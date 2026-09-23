@@ -15,7 +15,7 @@ mod unix_only {
         object::{Attribute, AttributeInfo, AttributeType, ObjectClass},
     };
     use libparsec_types::X509CertificateHash;
-    use percent_encoding::{percent_encode, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+    use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, percent_encode, utf8_percent_encode};
     use sha2::Digest;
 
     /// The unreserved charset from the URI [RFC-3986] (meaning available chars to the user), the ABNF notation is like so:

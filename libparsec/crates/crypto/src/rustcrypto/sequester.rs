@@ -2,19 +2,19 @@
 
 use rand::rngs::OsRng;
 use rsa::{
+    PublicKey, PublicKeyParts, RsaPublicKey,
     oaep::Oaep,
-    pkcs8::{der::zeroize::Zeroizing, DecodePublicKey, EncodePrivateKey, EncodePublicKey},
+    pkcs8::{DecodePublicKey, EncodePrivateKey, EncodePublicKey, der::zeroize::Zeroizing},
     pss::{Signature, SigningKey, VerifyingKey},
     signature::{RandomizedSigner, Verifier},
-    PublicKey, PublicKeyParts, RsaPublicKey,
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 use sha2::Sha256;
 
 use crate::{
-    deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, RsaPrivateKey,
-    SecretKey, SequesterKeySize,
+    CryptoError, CryptoResult, RsaPrivateKey, SecretKey, SequesterKeySize, deserialize_with_armor,
+    serialize_with_armor,
 };
 
 /*
@@ -67,7 +67,7 @@ impl SequesterPrivateKeyDer {
         let clearkey = SecretKey::try_from(
             &self
                 .0
-                 .0
+                .0
                 .decrypt(padding, cipherkey)
                 .map_err(|_| CryptoError::Decryption)?[..],
         )?;

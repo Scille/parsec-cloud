@@ -9,9 +9,9 @@
 #[allow(unused_imports)]
 use js_sys::*;
 use std::str::FromStr;
+use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
@@ -4720,7 +4720,7 @@ fn struct_started_workspace_info_rs_to_js(
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -10653,7 +10653,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -13725,7 +13725,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -13827,7 +13827,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -14901,7 +14901,7 @@ fn variant_invite_list_item_rs_to_js(
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -14979,7 +14979,7 @@ fn variant_invite_list_item_rs_to_js(
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -15080,7 +15080,7 @@ fn variant_invite_list_item_rs_to_js(
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -15718,7 +15718,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -15888,7 +15888,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -16026,7 +16026,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -16194,7 +16194,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -16331,7 +16331,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -16454,7 +16454,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -16554,7 +16554,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -16592,7 +16592,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -16679,7 +16679,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -16717,7 +16717,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -18646,7 +18646,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -18799,7 +18799,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -18919,7 +18919,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -19069,7 +19069,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -19191,7 +19191,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -19308,7 +19308,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -19394,7 +19394,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -19432,7 +19432,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -19505,7 +19505,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -19543,7 +19543,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -19822,7 +19822,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -19992,7 +19992,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -24621,7 +24621,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                             Err(err) => {
                                                 return Err(JsValue::from(TypeError::new(
                                                     &err.to_string(),
-                                                )))
+                                                )));
                                             }
                                         }
                                     }
@@ -24721,7 +24721,7 @@ pub fn accountListRegistrationDevices(account: u32) -> Promise {
                                         Err(err) => {
                                             return Err(JsValue::from(TypeError::new(
                                                 &err.to_string(),
-                                            )))
+                                            )));
                                         }
                                     }
                                 }
@@ -26174,7 +26174,7 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -26331,7 +26331,7 @@ pub fn clientGetAsyncEnrollmentAddr(client: u32) -> Promise {
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -26622,7 +26622,9 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                                     Ok(ok) => ok,
                                     #[allow(clippy::unnecessary_to_owned)]
                                     Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                        return Err(JsValue::from(TypeError::new(
+                                            &err.to_string(),
+                                        )));
                                     }
                                 }
                             }
@@ -27563,7 +27565,7 @@ pub fn clientTotpCreateOpaqueKey(client: u32) -> Promise {
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -28504,7 +28506,7 @@ pub fn listStartedClients() -> Promise {
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -28550,7 +28552,7 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -29394,7 +29396,7 @@ pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
                                         Err(err) => {
                                             return Err(JsValue::from(TypeError::new(
                                                 &err.to_string(),
-                                            )))
+                                            )));
                                         }
                                     }
                                 }
@@ -29638,7 +29640,7 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -29841,7 +29843,7 @@ pub fn tryConvertHttpToParsecAddr(http_url: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -29954,7 +29956,7 @@ pub fn updateDeviceOverwriteServerAddr(
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -30118,7 +30120,7 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -30165,7 +30167,7 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -30212,7 +30214,7 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -30261,7 +30263,7 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }
@@ -30597,7 +30599,7 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -30903,7 +30905,7 @@ pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) ->
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -31349,7 +31351,7 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -31513,7 +31515,7 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                                 Ok(ok) => ok,
                                 #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())));
                                 }
                             }
                         }
@@ -32178,7 +32180,7 @@ pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
                             Ok(ok) => ok,
                             #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
                             }
                         }
                     }

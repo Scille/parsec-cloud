@@ -2,8 +2,8 @@
 
 use argon2::{Algorithm, Argon2, Params, Version};
 use generic_array::{
-    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
+    typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
 
 use crate::{CryptoError, Password, PasswordAlgorithm};

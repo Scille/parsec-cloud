@@ -4,14 +4,14 @@ use hex_literal::hex;
 use paste::paste;
 use std::{
     collections::{HashMap, HashSet},
-    num::{NonZeroU64, NonZeroU8},
+    num::{NonZeroU8, NonZeroU64},
     sync::Arc,
 };
 
 use libparsec_types::prelude::*;
 
-use super::events::*;
 use super::TestbedTemplate;
+use super::events::*;
 
 // The size must be greater than `512` bits, because it's not enough to
 // encrypt the secret key size of `32` bytes long in our algorithm.

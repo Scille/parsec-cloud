@@ -4,15 +4,15 @@ mod subject_alt_names;
 
 use x509_cert::{
     der::{
+        Decode, Error as DERError, SliceReader,
         flagset::FlagSet,
         oid::db::rfc5280::{ID_CE_EXT_KEY_USAGE, ID_CE_KEY_USAGE, ID_CE_SUBJECT_ALT_NAME},
-        Decode, Error as DERError, SliceReader,
     },
     ext::{self, pkix::KeyUsage},
 };
 
-use subject_alt_names::parse_san_octet_string;
 pub use subject_alt_names::SubjectAltName;
+use subject_alt_names::parse_san_octet_string;
 
 #[derive(Debug, Clone)]
 pub struct Extensions {

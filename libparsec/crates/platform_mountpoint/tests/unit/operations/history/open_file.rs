@@ -2,7 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec_client::{workspace_history::WorkspaceHistoryOps, Client};
+use libparsec_client::{Client, workspace_history::WorkspaceHistoryOps};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
