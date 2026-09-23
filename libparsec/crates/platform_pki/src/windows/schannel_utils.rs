@@ -10,10 +10,17 @@ pub(super) fn get_raw_store(store: &CertStore) -> Cryptography::HCERTSTORE {
     (unsafe { RawPointer::as_ptr(store) }) as Cryptography::HCERTSTORE
 }
 
-pub(super) unsafe fn cert_context_from_raw(
+pub(super) fn cert_context_from_raw(
     raw_context: *mut Cryptography::CERT_CONTEXT,
-) -> CertContext {
-    RawPointer::from_ptr(raw_context as *mut std::os::raw::c_void)
+) -> Option<CertContext> {
+    if raw_context.is_null() {
+        None
+    } else {
+        Some(
+            // SAFETY: We check that raw_context is not null
+            unsafe { RawPointer::from_ptr(raw_context as *mut std::os::raw::c_void) },
+        )
+    }
 }
 
 pub(crate) fn cert_context_to_raw(cert_context: &CertContext) -> *const Cryptography::CERT_CONTEXT {
