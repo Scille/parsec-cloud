@@ -163,7 +163,9 @@ CREATE TYPE SEQUESTER_SERVICE_TYPE AS ENUM ('STORAGE', 'WEBHOOK');
 CREATE TABLE sequester_service (
     _id SERIAL PRIMARY KEY,
     service_id UUID NOT NULL,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT sequester_service_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     service_certificate BYTEA NOT NULL,
     service_label VARCHAR(254) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
@@ -627,7 +629,11 @@ ON realm_keys_bundle_access (
 
 CREATE TABLE realm_sequester_keys_bundle_access (
     _id SERIAL PRIMARY KEY,
-    sequester_service INTEGER REFERENCES sequester_service (_id) NOT NULL,
+    sequester_service INTEGER
+    CONSTRAINT realm_sequester_keys_bundle_access_sequester_service_fkey REFERENCES sequester_service (
+        _id
+    ) ON DELETE CASCADE
+    NOT NULL,
     realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
 
     access BYTEA NOT NULL,
@@ -725,7 +731,9 @@ CREATE TABLE common_topic (
 
 CREATE TABLE sequester_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT sequester_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization)
 );

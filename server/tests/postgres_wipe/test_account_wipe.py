@@ -16,9 +16,7 @@ type Conn = PoolConnectionProxy[Record]
 
 
 @pytest.mark.postgresql
-async def test_verify_cascade_deletion(
-    alice_account: AuthenticatedAccountRpcClient, backend: Backend
-):
+async def test_account_cascade_wipe(alice_account: AuthenticatedAccountRpcClient, backend: Backend):
     account = backend.account
     now = DateTime.now()
 
