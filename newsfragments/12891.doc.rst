@@ -1,0 +1,1 @@
+[Hosting Guide] Added a section on User Authentication
