@@ -69,6 +69,12 @@ class BaseBlockStoreComponent:
     ) -> BlockStoreCreateBadOutcome | None:
         raise NotImplementedError
 
+    async def delete_whole_organization_data(self, organization_id: OrganizationID) -> None:
+        """
+        Delete data associated with the given organization.
+        """
+        raise NotImplementedError
+
 
 def blockstore_factory(
     config: BaseBlockStoreConfig,

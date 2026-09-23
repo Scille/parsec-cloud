@@ -132,3 +132,6 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
             except UniqueViolationError:
                 # Keep calm and stay idempotent
                 pass
+
+    async def delete_whole_organization_data(self, organization_id: OrganizationID) -> None:
+        raise NotImplementedError

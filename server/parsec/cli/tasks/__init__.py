@@ -4,7 +4,7 @@ import click
 
 from parsec.cli.options import version_option
 
-from . import list_organization
+from . import delete_organization, list_organization
 
 
 @click.group(name="tasks", short_help="Server tasks collections")
@@ -14,3 +14,4 @@ def server_tasks_cmd_group() -> None:
 
 
 server_tasks_cmd_group.add_command(list_organization.cmd)
+server_tasks_cmd_group.add_command(delete_organization.cmd)
