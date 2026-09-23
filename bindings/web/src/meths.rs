@@ -467,28 +467,33 @@ fn struct_account_info_js_to_rs(obj: JsValue) -> Result<libparsec::AccountInfo, 
 #[allow(dead_code)]
 fn struct_account_info_rs_to_js(rs_obj: libparsec::AccountInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_server_addr = JsValue::from_str({
-        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-            Ok(addr.to_url().into())
-        };
-        match custom_to_rs_string(rs_obj.server_addr) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_server_addr = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(rs_obj.server_addr) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
-    let js_in_use_auth_method = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.in_use_auth_method) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_in_use_auth_method = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.in_use_auth_method) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"inUseAuthMethod".into(), &js_in_use_auth_method)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -652,16 +657,18 @@ fn struct_account_organizations_active_user_rs_to_js(
     let js_obj = Object::new().into();
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-    let js_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -830,16 +837,18 @@ fn struct_account_organizations_revoked_user_rs_to_js(
     let js_obj = Object::new().into();
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-    let js_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -984,16 +993,18 @@ fn struct_async_enrollment_untrusted_rs_to_js(
     rs_obj: libparsec::AsyncEnrollmentUntrusted,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_enrollment_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.enrollment_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_enrollment_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.enrollment_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
     let js_submitted_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -1097,16 +1108,18 @@ fn struct_auth_method_info_js_to_rs(obj: JsValue) -> Result<libparsec::AuthMetho
 #[allow(dead_code)]
 fn struct_auth_method_info_rs_to_js(rs_obj: libparsec::AuthMethodInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_auth_method_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.auth_method_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_auth_method_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.auth_method_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"authMethodId".into(), &js_auth_method_id)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -1322,19 +1335,21 @@ fn struct_available_device_rs_to_js(
     rs_obj: libparsec::AvailableDevice,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_key_file_path = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.key_file_path) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_key_file_path = JsValue::from_str(
+        {
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(rs_obj.key_file_path) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -1358,57 +1373,66 @@ fn struct_available_device_rs_to_js(
         JsValue::from(v)
     };
     Reflect::set(&js_obj, &"protectedOn".into(), &js_protected_on)?;
-    let js_server_addr = JsValue::from_str({
-        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-            Ok(addr.to_url().into())
-        };
-        match custom_to_rs_string(rs_obj.server_addr) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_server_addr = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(rs_obj.server_addr) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-    let js_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
-    let js_device_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.device_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_device_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.device_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
     let js_totp_opaque_key_id = match rs_obj.totp_opaque_key_id {
-        Some(val) => JsValue::from_str({
-            let custom_to_rs_string =
-                |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
-            match custom_to_rs_string(val) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Some(val) => JsValue::from_str(
+            {
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(val) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }),
+            .as_ref(),
+        ),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"totpOpaqueKeyId".into(), &js_totp_opaque_key_id)?;
@@ -1527,19 +1551,21 @@ fn struct_available_pending_async_enrollment_rs_to_js(
     rs_obj: libparsec::AvailablePendingAsyncEnrollment,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_file_path = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.file_path) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_file_path = JsValue::from_str(
+        {
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(rs_obj.file_path) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"filePath".into(), &js_file_path)?;
     let js_submitted_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -1552,29 +1578,33 @@ fn struct_available_pending_async_enrollment_rs_to_js(
         JsValue::from(v)
     };
     Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
-    let js_addr = JsValue::from_str({
-        let custom_to_rs_string =
-            |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> {
-                Ok(addr.to_url().into())
-            };
-        match custom_to_rs_string(rs_obj.addr) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_addr = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(rs_obj.addr) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
-    let js_enrollment_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.enrollment_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_enrollment_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.enrollment_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
     let js_requested_device_label = JsValue::from_str(rs_obj.requested_device_label.as_ref());
     Reflect::set(
@@ -1689,33 +1719,37 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
 #[allow(dead_code)]
 fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_config_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.config_dir) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_config_dir = JsValue::from_str(
+        {
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(rs_obj.config_dir) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
-    let js_data_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.data_base_dir) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_data_base_dir = JsValue::from_str(
+        {
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(rs_obj.data_base_dir) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"dataBaseDir".into(), &js_data_base_dir)?;
     let js_mountpoint_mount_strategy =
         variant_mountpoint_mount_strategy_rs_to_js(rs_obj.mountpoint_mount_strategy)?;
@@ -1884,16 +1918,18 @@ fn struct_client_get_outbound_sync_backlog_item_rs_to_js(
     rs_obj: libparsec::ClientGetOutboundSyncBacklogItem,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_realm_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.realm_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_realm_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.realm_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
     let js_pending_entries = JsValue::from(rs_obj.pending_entries);
     Reflect::set(&js_obj, &"pendingEntries".into(), &js_pending_entries)?;
@@ -2049,42 +2085,48 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
 #[allow(dead_code)]
 fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_organization_addr = JsValue::from_str({
-        let custom_to_rs_string =
-            |addr: libparsec::ParsecOrganizationAddr| -> Result<String, &'static str> {
-                Ok(addr.to_url().into())
-            };
-        match custom_to_rs_string(rs_obj.organization_addr) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_organization_addr = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecOrganizationAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(rs_obj.organization_addr) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"organizationAddr".into(), &js_organization_addr)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-    let js_device_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.device_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_device_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.device_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
-    let js_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
@@ -2269,35 +2311,41 @@ fn struct_device_access_strategy_rs_to_js(
     rs_obj: libparsec::DeviceAccessStrategy,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_key_file = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.key_file) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_key_file = JsValue::from_str(
+        {
+            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                path.into_os_string()
+                    .into_string()
+                    .map_err(|_| "Path contains non-utf8 characters")
+            };
+            match custom_to_rs_string(rs_obj.key_file) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
     let js_totp_protection = match rs_obj.totp_protection {
         Some(val) => {
             let (x1, x2) = val;
             // Array::new_with_length allocates with `undefined` value, that's why we `set` value
             let js_array = Array::new_with_length(2);
-            let js_value = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(x1) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_value = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> {
+                            Ok(x.hex())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             js_array.set(0, js_value);
             let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
             js_array.set(1, js_value);
@@ -2444,16 +2492,18 @@ fn struct_device_claim_in_progress1_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_greeter_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.greeter_user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_greeter_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.greeter_user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
     let js_greeter_human_handle = struct_human_handle_rs_to_js(rs_obj.greeter_human_handle)?;
     Reflect::set(
@@ -2935,16 +2985,18 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
 #[allow(dead_code)]
 fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_purpose = JsValue::from_str(enum_device_purpose_rs_to_js(rs_obj.purpose));
     Reflect::set(&js_obj, &"purpose".into(), &js_purpose)?;
@@ -2962,16 +3014,18 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
     };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
-        Some(val) => JsValue::from_str({
-            let custom_to_rs_string =
-                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-            match custom_to_rs_string(val) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Some(val) => JsValue::from_str(
+            {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(val) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }),
+            .as_ref(),
+        ),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
@@ -3044,16 +3098,20 @@ fn struct_device_save_strategy_rs_to_js(
             let (x1, x2) = val;
             // Array::new_with_length allocates with `undefined` value, that's why we `set` value
             let js_array = Array::new_with_length(2);
-            let js_value = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(x1) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_value = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> {
+                            Ok(x.hex())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             js_array.set(0, js_value);
             let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
             js_array.set(1, js_value);
@@ -3165,16 +3223,18 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
 #[allow(dead_code)]
 fn struct_file_stat_rs_to_js(rs_obj: libparsec::FileStat) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_created = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -3252,17 +3312,19 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
     let js_email = {
         let custom_getter =
             |obj: &libparsec::HumanHandle| -> libparsec::EmailAddress { obj.email().clone() };
-        JsValue::from_str({
-            let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                Ok(std::string::ToString::to_string(&v))
-            };
-            match custom_to_rs_string(custom_getter(&rs_obj)) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        JsValue::from_str(
+            {
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(custom_getter(&rs_obj)) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        })
+            .as_ref(),
+        )
     };
     Reflect::set(&js_obj, &"email".into(), &js_email)?;
     let js_label = {
@@ -3370,43 +3432,49 @@ fn struct_new_invitation_info_rs_to_js(
         let (x1, x2) = rs_obj.addr;
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
         let js_array = Array::new_with_length(2);
-        let js_value = JsValue::from_str({
-            let custom_to_rs_string =
-                |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                    Ok(addr.to_url().into())
-                };
-            match custom_to_rs_string(x1) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        let js_value = JsValue::from_str(
+            {
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(x1) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        });
+            .as_ref(),
+        );
         js_array.set(0, js_value);
-        let js_value = JsValue::from_str({
-            let custom_to_rs_string =
-                |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
-            match custom_to_rs_string(x2) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        let js_value = JsValue::from_str(
+            {
+                let custom_to_rs_string =
+                    |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+                match custom_to_rs_string(x2) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        });
+            .as_ref(),
+        );
         js_array.set(1, js_value);
         js_array.into()
     };
     Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
-    let js_token = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.token) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_token = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.token) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"token".into(), &js_token)?;
     let js_email_sent_status = JsValue::from_str(enum_invitation_email_sent_status_rs_to_js(
         rs_obj.email_sent_status,
@@ -3871,16 +3939,18 @@ fn struct_shamir_recovery_claim_in_progress1_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_greeter_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.greeter_user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_greeter_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.greeter_user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
     let js_greeter_human_handle = struct_human_handle_rs_to_js(rs_obj.greeter_human_handle)?;
     Reflect::set(
@@ -4047,16 +4117,18 @@ fn struct_shamir_recovery_claim_initial_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_greeter_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.greeter_user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_greeter_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.greeter_user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
     let js_greeter_human_handle = struct_human_handle_rs_to_js(rs_obj.greeter_human_handle)?;
     Reflect::set(
@@ -4402,16 +4474,18 @@ fn struct_shamir_recovery_recipient_rs_to_js(
     rs_obj: libparsec::ShamirRecoveryRecipient,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -4589,16 +4663,18 @@ fn struct_started_workspace_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_client = JsValue::from(rs_obj.client);
     Reflect::set(&js_obj, &"client".into(), &js_client)?;
-    let js_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_name = JsValue::from_str(rs_obj.name.as_ref());
     Reflect::set(&js_obj, &"name".into(), &js_name)?;
@@ -4633,19 +4709,23 @@ fn struct_started_workspace_info_rs_to_js(
                 let js_array = Array::new_with_length(2);
                 let js_value = JsValue::from(x1);
                 js_array.set(0, js_value);
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(x2) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                            path.into_os_string()
+                                .into_string()
+                                .map_err(|_| "Path contains non-utf8 characters")
+                        };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 js_array.set(1, js_value);
                 js_array.into()
             };
@@ -4881,16 +4961,18 @@ fn struct_user_claim_in_progress1_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_greeter_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.greeter_user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_greeter_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.greeter_user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
     let js_greeter_human_handle = struct_human_handle_rs_to_js(rs_obj.greeter_human_handle)?;
     Reflect::set(
@@ -5087,16 +5169,18 @@ fn struct_user_claim_initial_info_rs_to_js(
     let js_obj = Object::new().into();
     let js_handle = JsValue::from(rs_obj.handle);
     Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-    let js_greeter_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.greeter_user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_greeter_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.greeter_user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
     let js_greeter_human_handle = struct_human_handle_rs_to_js(rs_obj.greeter_human_handle)?;
     Reflect::set(
@@ -5479,16 +5563,18 @@ fn struct_user_greeting_administrator_rs_to_js(
     rs_obj: libparsec::UserGreetingAdministrator,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -5642,16 +5728,18 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
 #[allow(dead_code)]
 fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -5669,16 +5757,18 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
-        Some(val) => JsValue::from_str({
-            let custom_to_rs_string =
-                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-            match custom_to_rs_string(val) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Some(val) => JsValue::from_str(
+            {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(val) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }),
+            .as_ref(),
+        ),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
@@ -5697,16 +5787,18 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     };
     Reflect::set(&js_obj, &"revokedOn".into(), &js_revoked_on)?;
     let js_revoked_by = match rs_obj.revoked_by {
-        Some(val) => JsValue::from_str({
-            let custom_to_rs_string =
-                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-            match custom_to_rs_string(val) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Some(val) => JsValue::from_str(
+            {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(val) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }),
+            .as_ref(),
+        ),
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"revokedBy".into(), &js_revoked_by)?;
@@ -5900,17 +5992,19 @@ fn struct_user_x509_certificate_details_rs_to_js(
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
         let js_array = Array::new_with_length(rs_obj.emails.len() as u32);
         for (i, elem) in rs_obj.emails.into_iter().enumerate() {
-            let js_elem = JsValue::from_str({
-                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                    Ok(std::string::ToString::to_string(&v))
-                };
-                match custom_to_rs_string(elem) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_elem = JsValue::from_str(
+                {
+                    let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                        Ok(std::string::ToString::to_string(&v))
+                    };
+                    match custom_to_rs_string(elem) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             js_array.set(i as u32, js_elem);
         }
         js_array.into()
@@ -6008,16 +6102,18 @@ fn struct_workspace_history_file_stat_rs_to_js(
     rs_obj: libparsec::WorkspaceHistoryFileStat,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_created = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -6151,16 +6247,18 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
 #[allow(dead_code)]
 fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_is_started = rs_obj.is_started.into();
     Reflect::set(&js_obj, &"isStarted".into(), &js_is_started)?;
@@ -6260,16 +6358,18 @@ fn struct_workspace_user_access_info_rs_to_js(
     rs_obj: libparsec::WorkspaceUserAccessInfo,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_user_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            #[allow(clippy::unnecessary_to_owned)]
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    let js_user_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.user_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
         }
-        .as_ref()
-    });
+        .as_ref(),
+    );
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -6350,17 +6450,19 @@ fn struct_x509_certificate_reference_rs_to_js(
     let js_hash = {
         let custom_getter =
             |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash { o.hash };
-        JsValue::from_str({
-            let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                Ok(std::string::ToString::to_string(&v))
-            };
-            match custom_to_rs_string(custom_getter(&rs_obj)) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        JsValue::from_str(
+            {
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(custom_getter(&rs_obj)) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        })
+            .as_ref(),
+        )
     };
     Reflect::set(&js_obj, &"hash".into(), &js_hash)?;
     Ok(js_obj)
@@ -7425,17 +7527,19 @@ fn variant_account_login_strategy_rs_to_js(
                 &"tag".into(),
                 &"AccountLoginStrategyPassword".into(),
             )?;
-            let js_email = JsValue::from_str({
-                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                    Ok(std::string::ToString::to_string(&v))
-                };
-                match custom_to_rs_string(email) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_email = JsValue::from_str(
+                {
+                    let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                        Ok(std::string::ToString::to_string(&v))
+                    };
+                    match custom_to_rs_string(email) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"email".into(), &js_email)?;
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
@@ -8056,16 +8160,18 @@ fn variant_any_claim_retrieved_info_rs_to_js(
             )?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_greeter_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(greeter_user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_greeter_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(greeter_user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
             let js_greeter_human_handle = struct_human_handle_rs_to_js(greeter_human_handle)?;
             Reflect::set(
@@ -8093,16 +8199,18 @@ fn variant_any_claim_retrieved_info_rs_to_js(
             )?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_claimer_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(claimer_user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_claimer_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(claimer_user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"claimerUserId".into(), &js_claimer_user_id)?;
             let js_claimer_human_handle = struct_human_handle_rs_to_js(claimer_human_handle)?;
             Reflect::set(
@@ -8167,17 +8275,19 @@ fn variant_any_claim_retrieved_info_rs_to_js(
             Reflect::set(&js_obj, &"tag".into(), &"AnyClaimRetrievedInfoUser".into())?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_claimer_email = JsValue::from_str({
-                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                    Ok(std::string::ToString::to_string(&v))
-                };
-                match custom_to_rs_string(claimer_email) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_claimer_email = JsValue::from_str(
+                {
+                    let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                        Ok(std::string::ToString::to_string(&v))
+                    };
+                    match custom_to_rs_string(claimer_email) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_created_by = variant_invite_info_invitation_created_by_rs_to_js(created_by)?;
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
@@ -10342,31 +10452,35 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ClientStarted { device_id, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventClientStarted".into())?;
-            let js_device_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(device_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_device_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(device_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ClientStopped { device_id, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventClientStopped".into())?;
-            let js_device_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(device_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_device_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(device_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10392,29 +10506,33 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventGreetingAttemptCancelled".into(),
             )?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_greeting_attempt = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(greeting_attempt) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_greeting_attempt = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
+                            Ok(x.hex())
+                        };
+                    match custom_to_rs_string(greeting_attempt) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10428,29 +10546,33 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventGreetingAttemptJoined".into(),
             )?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_greeting_attempt = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(greeting_attempt) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_greeting_attempt = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
+                            Ok(x.hex())
+                        };
+                    match custom_to_rs_string(greeting_attempt) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10464,29 +10586,33 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventGreetingAttemptReady".into(),
             )?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
-            let js_greeting_attempt = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(greeting_attempt) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_greeting_attempt = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
+                            Ok(x.hex())
+                        };
+                    match custom_to_rs_string(greeting_attempt) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10500,35 +10626,39 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventIncompatibleServer".into(),
             )?;
-            let js_api_version = JsValue::from_str({
-                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                    Ok(std::string::ToString::to_string(&v))
-                };
-                match custom_to_rs_string(api_version) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_api_version = JsValue::from_str(
+                {
+                    let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                        Ok(std::string::ToString::to_string(&v))
+                    };
+                    match custom_to_rs_string(api_version) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"apiVersion".into(), &js_api_version)?;
             let js_supported_api_version = {
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(supported_api_version.len() as u32);
                 for (i, elem) in supported_api_version.into_iter().enumerate() {
-                    let js_elem = JsValue::from_str({
-                        let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                            Ok(std::string::ToString::to_string(&v))
-                        };
-                        match custom_to_rs_string(elem) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_elem = JsValue::from_str(
+                        {
+                            let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                                Ok(std::string::ToString::to_string(&v))
+                            };
+                            match custom_to_rs_string(elem) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(i as u32, js_elem);
                 }
                 js_array.into()
@@ -10567,16 +10697,18 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventInvitationChanged".into(),
             )?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
@@ -10728,27 +10860,31 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceOpsInboundSyncDone".into(),
             )?;
-            let js_realm_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(realm_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_realm_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(realm_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
-            let js_entry_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(entry_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_entry_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(entry_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10760,27 +10896,31 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceOpsOutboundSyncAborted".into(),
             )?;
-            let js_realm_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(realm_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_realm_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(realm_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
-            let js_entry_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(entry_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_entry_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(entry_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10792,27 +10932,31 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceOpsOutboundSyncDone".into(),
             )?;
-            let js_realm_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(realm_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_realm_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(realm_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
-            let js_entry_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(entry_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_entry_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(entry_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10829,27 +10973,31 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceOpsOutboundSyncProgress".into(),
             )?;
-            let js_realm_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(realm_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_realm_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(realm_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
-            let js_entry_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(entry_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_entry_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(entry_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
             let js_blocks = JsValue::from(blocks);
             Reflect::set(&js_obj, &"blocks".into(), &js_blocks)?;
@@ -10867,27 +11015,31 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceOpsOutboundSyncStarted".into(),
             )?;
-            let js_realm_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(realm_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_realm_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(realm_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
-            let js_entry_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(entry_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_entry_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(entry_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -10899,27 +11051,31 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceWatchedEntryChanged".into(),
             )?;
-            let js_realm_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(realm_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_realm_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(realm_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
-            let js_entry_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(entry_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_entry_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(entry_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -13561,40 +13717,48 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"EntryStatFile".into())?;
             let js_confinement_point = match confinement_point {
-                Some(val) => JsValue::from_str({
+                Some(val) => JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(val) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
+                    }
+                    .as_ref(),
+                ),
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"confinementPoint".into(), &js_confinement_point)?;
+            let js_id = JsValue::from_str(
+                {
                     let custom_to_rs_string =
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(val) {
+                    match custom_to_rs_string(id) {
                         Ok(ok) => ok,
                         #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
-                    .as_ref()
-                }),
-                None => JsValue::NULL,
-            };
-            Reflect::set(&js_obj, &"confinementPoint".into(), &js_confinement_point)?;
-            let js_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
-            let js_parent = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(parent) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_parent = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(parent) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -13626,16 +13790,18 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
-            let js_last_updater = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(last_updater) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_last_updater = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(last_updater) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -13653,40 +13819,48 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"EntryStatFolder".into())?;
             let js_confinement_point = match confinement_point {
-                Some(val) => JsValue::from_str({
+                Some(val) => JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(val) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
+                    }
+                    .as_ref(),
+                ),
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"confinementPoint".into(), &js_confinement_point)?;
+            let js_id = JsValue::from_str(
+                {
                     let custom_to_rs_string =
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(val) {
+                    match custom_to_rs_string(id) {
                         Ok(ok) => ok,
                         #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
-                    .as_ref()
-                }),
-                None => JsValue::NULL,
-            };
-            Reflect::set(&js_obj, &"confinementPoint".into(), &js_confinement_point)?;
-            let js_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
-            let js_parent = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(parent) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_parent = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(parent) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -13716,16 +13890,18 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"isPlaceholder".into(), &js_is_placeholder)?;
             let js_need_sync = need_sync.into();
             Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
-            let js_last_updater = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(last_updater) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_last_updater = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(last_updater) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
     }
@@ -14208,16 +14384,18 @@ fn variant_invite_info_invitation_created_by_rs_to_js(
                 &"tag".into(),
                 &"InviteInfoInvitationCreatedByUser".into(),
             )?;
-            let js_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
             let js_human_handle = struct_human_handle_rs_to_js(human_handle)?;
             Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -14311,16 +14489,18 @@ fn variant_invite_list_invitation_created_by_rs_to_js(
                 &"tag".into(),
                 &"InviteListInvitationCreatedByUser".into(),
             )?;
-            let js_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
             let js_human_handle = struct_human_handle_rs_to_js(human_handle)?;
             Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -14703,44 +14883,46 @@ fn variant_invite_list_item_rs_to_js(
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(2);
                 let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                            Ok(addr.to_url().into())
-                        };
-                    match custom_to_rs_string(x1) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                    }
-                    .as_ref()
-                });
+    let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref());
                 js_array.set(0, js_value);
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::Url| -> Result<String, &'static str> {
-                            Ok(addr.to_string())
-                        };
-                    match custom_to_rs_string(x2) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |addr: libparsec::Url| -> Result<String, &'static str> {
+                                Ok(addr.to_string())
+                            };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 js_array.set(1, js_value);
                 js_array.into()
             };
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -14779,44 +14961,46 @@ fn variant_invite_list_item_rs_to_js(
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(2);
                 let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                            Ok(addr.to_url().into())
-                        };
-                    match custom_to_rs_string(x1) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                    }
-                    .as_ref()
-                });
+    let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref());
                 js_array.set(0, js_value);
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::Url| -> Result<String, &'static str> {
-                            Ok(addr.to_string())
-                        };
-                    match custom_to_rs_string(x2) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |addr: libparsec::Url| -> Result<String, &'static str> {
+                                Ok(addr.to_string())
+                            };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 js_array.set(1, js_value);
                 js_array.into()
             };
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -14831,16 +15015,18 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
             let js_created_by = variant_invite_list_invitation_created_by_rs_to_js(created_by)?;
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
-            let js_claimer_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(claimer_user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_claimer_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(claimer_user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"claimerUserId".into(), &js_claimer_user_id)?;
             let js_shamir_recovery_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -14876,44 +15062,46 @@ fn variant_invite_list_item_rs_to_js(
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(2);
                 let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                            Ok(addr.to_url().into())
-                        };
-                    match custom_to_rs_string(x1) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                    }
-                    .as_ref()
-                });
+    let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref());
                 js_array.set(0, js_value);
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::Url| -> Result<String, &'static str> {
-                            Ok(addr.to_string())
-                        };
-                    match custom_to_rs_string(x2) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |addr: libparsec::Url| -> Result<String, &'static str> {
+                                Ok(addr.to_string())
+                            };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 js_array.set(1, js_value);
                 js_array.into()
             };
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -14928,17 +15116,19 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
             let js_created_by = variant_invite_list_invitation_created_by_rs_to_js(created_by)?;
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
-            let js_claimer_email = JsValue::from_str({
-                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                    Ok(std::string::ToString::to_string(&v))
-                };
-                match custom_to_rs_string(claimer_email) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_claimer_email = JsValue::from_str(
+                {
+                    let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                        Ok(std::string::ToString::to_string(&v))
+                    };
+                    match custom_to_rs_string(claimer_email) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
@@ -15059,19 +15249,21 @@ fn variant_mountpoint_mount_strategy_rs_to_js(
                 &"tag".into(),
                 &"MountpointMountStrategyDirectory".into(),
             )?;
-            let js_base_dir = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(base_dir) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_base_dir = JsValue::from_str(
+                {
+                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                        path.into_os_string()
+                            .into_string()
+                            .map_err(|_| "Path contains non-utf8 characters")
+                    };
+                    match custom_to_rs_string(base_dir) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"baseDir".into(), &js_base_dir)?;
         }
         libparsec::MountpointMountStrategy::Disabled => {
@@ -16079,16 +16271,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 &"tag".into(),
                 &"OtherShamirRecoveryInfoDeleted".into(),
             )?;
-            let js_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -16101,16 +16295,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -16125,18 +16321,22 @@ fn variant_other_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -16166,16 +16366,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"deletedOn".into(), &js_deleted_on)?;
-            let js_deleted_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(deleted_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_deleted_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(deleted_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"deletedBy".into(), &js_deleted_by)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -16192,16 +16394,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 &"tag".into(),
                 &"OtherShamirRecoveryInfoSetupAllValid".into(),
             )?;
-            let js_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -16214,16 +16418,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -16238,18 +16444,22 @@ fn variant_other_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -16284,16 +16494,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 &"tag".into(),
                 &"OtherShamirRecoveryInfoSetupButUnusable".into(),
             )?;
-            let js_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -16306,16 +16518,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -16330,18 +16544,22 @@ fn variant_other_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -16364,18 +16582,22 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(revoked_recipients.len() as u32);
                 for (i, elem) in revoked_recipients.into_iter().enumerate() {
-                    let js_elem = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(elem) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_elem = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(elem) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(i as u32, js_elem);
                 }
                 js_array.into()
@@ -16397,16 +16619,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 &"tag".into(),
                 &"OtherShamirRecoveryInfoSetupWithRevokedRecipients".into(),
             )?;
-            let js_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -16419,16 +16643,18 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -16443,18 +16669,22 @@ fn variant_other_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -16477,18 +16707,22 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(revoked_recipients.len() as u32);
                 for (i, elem) in revoked_recipients.into_iter().enumerate() {
-                    let js_elem = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(elem) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_elem = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(elem) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(i as u32, js_elem);
                 }
                 js_array.into()
@@ -17370,16 +17604,18 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -17410,16 +17646,18 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -17450,16 +17688,18 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -17602,27 +17842,31 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-            let js_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
-            let js_token = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(token) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_token = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(token) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -17655,16 +17899,18 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
-            let js_workspace_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(workspace_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_workspace_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(workspace_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"workspaceId".into(), &js_workspace_id)?;
             let js_key_index = JsValue::from(key_index);
             Reflect::set(&js_obj, &"keyIndex".into(), &js_key_index)?;
@@ -18909,16 +19155,18 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -18933,18 +19181,22 @@ fn variant_self_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -18974,16 +19226,18 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"deletedOn".into(), &js_deleted_on)?;
-            let js_deleted_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(deleted_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_deleted_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(deleted_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"deletedBy".into(), &js_deleted_by)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -19018,16 +19272,18 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -19042,18 +19298,22 @@ fn variant_self_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -19098,16 +19358,18 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -19122,18 +19384,22 @@ fn variant_self_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -19156,18 +19422,22 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(revoked_recipients.len() as u32);
                 for (i, elem) in revoked_recipients.into_iter().enumerate() {
-                    let js_elem = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(elem) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_elem = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(elem) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(i as u32, js_elem);
                 }
                 js_array.into()
@@ -19199,16 +19469,18 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-            let js_created_by = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(created_by) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_created_by = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(created_by) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
             let js_threshold = {
                 let custom_to_rs_u8 =
@@ -19223,18 +19495,22 @@ fn variant_self_shamir_recovery_info_rs_to_js(
             let js_per_recipient_shares = {
                 let js_map = Map::new();
                 for (key, value) in per_recipient_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -19257,18 +19533,22 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(revoked_recipients.len() as u32);
                 for (i, elem) in revoked_recipients.into_iter().enumerate() {
-                    let js_elem = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(elem) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_elem = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(elem) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(i as u32, js_elem);
                 }
                 js_array.into()
@@ -19645,16 +19925,18 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
             )?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_claimer_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(claimer_user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_claimer_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(claimer_user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"claimerUserId".into(), &js_claimer_user_id)?;
             let js_claimer_human_handle = struct_human_handle_rs_to_js(claimer_human_handle)?;
             Reflect::set(
@@ -19700,18 +19982,22 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
             let js_recovered_shares = {
                 let js_map = Map::new();
                 for (key, value) in recovered_shares.into_iter() {
-                    let js_key = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(key) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_key = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::UserID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(key) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     let js_value = {
                         let custom_to_rs_u8 =
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
@@ -19743,16 +20029,18 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
             )?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_claimer_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(claimer_user_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_claimer_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(claimer_user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"claimerUserId".into(), &js_claimer_user_id)?;
             let js_claimer_human_handle = struct_human_handle_rs_to_js(claimer_human_handle)?;
             Reflect::set(
@@ -21783,27 +22071,31 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                 &"tag".into(),
                 &"WorkspaceHistoryEntryStatFile".into(),
             )?;
-            let js_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
-            let js_parent = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(parent) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_parent = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(parent) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -21831,16 +22123,18 @@ fn variant_workspace_history_entry_stat_rs_to_js(
             Reflect::set(&js_obj, &"version".into(), &js_version)?;
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
-            let js_last_updater = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(last_updater) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_last_updater = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(last_updater) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -21858,27 +22152,31 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                 &"tag".into(),
                 &"WorkspaceHistoryEntryStatFolder".into(),
             )?;
-            let js_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
-            let js_parent = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(parent) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_parent = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(parent) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -21904,16 +22202,18 @@ fn variant_workspace_history_entry_stat_rs_to_js(
             Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
             let js_version = JsValue::from(version);
             Reflect::set(&js_obj, &"version".into(), &js_version)?;
-            let js_last_updater = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(last_updater) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_last_updater = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(last_updater) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
     }
@@ -22283,36 +22583,40 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
                 &"tag".into(),
                 &"WorkspaceHistoryRealmExportDecryptorSequesterService".into(),
             )?;
-            let js_sequester_service_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::SequesterServiceID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(sequester_service_id) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_sequester_service_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::SequesterServiceID| -> Result<String, &'static str> {
+                            Ok(x.hex())
+                        };
+                    match custom_to_rs_string(sequester_service_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(
                 &js_obj,
                 &"sequesterServiceId".into(),
                 &js_sequester_service_id,
             )?;
-            let js_private_key_pem_path = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(private_key_pem_path) {
-                    Ok(ok) => ok,
-                    #[allow(clippy::unnecessary_to_owned)]
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            let js_private_key_pem_path = JsValue::from_str(
+                {
+                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                        path.into_os_string()
+                            .into_string()
+                            .map_err(|_| "Path contains non-utf8 characters")
+                    };
+                    match custom_to_rs_string(private_key_pem_path) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
                 }
-                .as_ref()
-            });
+                .as_ref(),
+            );
             Reflect::set(
                 &js_obj,
                 &"privateKeyPemPath".into(),
@@ -24297,35 +24601,32 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                 // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                                 let js_array = Array::new_with_length(2);
                                 let js_value = JsValue::from_str({
-                                    let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                                    match custom_to_rs_string(x1) {
-                                        Ok(ok) => ok,
-                                        #[allow(clippy::unnecessary_to_owned)]
-                                        Err(err) => {
-                                            return Err(JsValue::from(TypeError::new(
-                                                &err.to_string(),
-                                            )))
-                                        }
-                                    }
-                                    .as_ref()
-                                });
+    let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref());
                                 js_array.set(0, js_value);
-                                let js_value = JsValue::from_str({
-                                    let custom_to_rs_string =
-                                        |addr: libparsec::Url| -> Result<String, &'static str> {
-                                            Ok(addr.to_string())
-                                        };
-                                    match custom_to_rs_string(x2) {
-                                        Ok(ok) => ok,
-                                        #[allow(clippy::unnecessary_to_owned)]
-                                        Err(err) => {
-                                            return Err(JsValue::from(TypeError::new(
-                                                &err.to_string(),
-                                            )))
+                                let js_value = JsValue::from_str(
+                                    {
+                                        let custom_to_rs_string =
+                                            |addr: libparsec::Url| -> Result<String, &'static str> {
+                                                Ok(addr.to_string())
+                                            };
+                                        match custom_to_rs_string(x2) {
+                                            Ok(ok) => ok,
+                                            #[allow(clippy::unnecessary_to_owned)]
+                                            Err(err) => {
+                                                return Err(JsValue::from(TypeError::new(
+                                                    &err.to_string(),
+                                                )))
+                                            }
                                         }
                                     }
-                                    .as_ref()
-                                });
+                                    .as_ref(),
+                                );
                                 js_array.set(1, js_value);
                                 js_array.into()
                             };
@@ -24333,19 +24634,13 @@ pub fn accountListInvitations(account: u32) -> Promise {
                             let js_value = JsValue::from_str(x2.as_ref());
                             js_array.set(1, js_value);
                             let js_value = JsValue::from_str({
-                                let custom_to_rs_string =
-                                    |x: libparsec::AccessToken| -> Result<String, &'static str> {
-                                        Ok(x.hex())
-                                    };
-                                match custom_to_rs_string(x3) {
-                                    Ok(ok) => ok,
-                                    #[allow(clippy::unnecessary_to_owned)]
-                                    Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
-                                    }
-                                }
-                                .as_ref()
-                            });
+    let custom_to_rs_string = |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+    match custom_to_rs_string(x3) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref());
                             js_array.set(2, js_value);
                             let js_value = JsValue::from_str(enum_invitation_type_rs_to_js(x4));
                             js_array.set(3, js_value);
@@ -24414,20 +24709,24 @@ pub fn accountListRegistrationDevices(account: u32) -> Promise {
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
                             js_array.set(0, js_value);
-                            let js_value = JsValue::from_str({
-                                let custom_to_rs_string =
-                                    |x: libparsec::UserID| -> Result<String, &'static str> {
-                                        Ok(x.hex())
-                                    };
-                                match custom_to_rs_string(x2) {
-                                    Ok(ok) => ok,
-                                    #[allow(clippy::unnecessary_to_owned)]
-                                    Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            let js_value = JsValue::from_str(
+                                {
+                                    let custom_to_rs_string =
+                                        |x: libparsec::UserID| -> Result<String, &'static str> {
+                                            Ok(x.hex())
+                                        };
+                                    match custom_to_rs_string(x2) {
+                                        Ok(ok) => ok,
+                                        #[allow(clippy::unnecessary_to_owned)]
+                                        Err(err) => {
+                                            return Err(JsValue::from(TypeError::new(
+                                                &err.to_string(),
+                                            )))
+                                        }
                                     }
                                 }
-                                .as_ref()
-                            });
+                                .as_ref(),
+                            );
                             js_array.set(1, js_value);
                             js_array.into()
                         };
@@ -24857,18 +25156,20 @@ pub fn buildParsecAddr(hostname: String, port: Option<u16>, use_ssl: bool) -> Pr
             None => None,
         };
         let ret = libparsec::build_parsec_addr(hostname, port, use_ssl);
-        Ok(JsValue::from_str({
-            let custom_to_rs_string =
-                |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                    Ok(addr.to_url().into())
-                };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Ok(JsValue::from_str(
+            {
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(ret) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     }))
 }
 
@@ -24897,17 +25198,13 @@ pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: Strin
         }?;
         let ret = libparsec::build_parsec_organization_bootstrap_addr(addr, organization_id);
         Ok(JsValue::from_str({
-            let custom_to_rs_string =
-                |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> {
-                    Ok(addr.to_url().into())
-                };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-            }
-            .as_ref()
-        }))
+    let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(ret) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref()))
     }))
 }
 
@@ -25869,16 +26166,20 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -26012,31 +26313,30 @@ pub fn clientGetAsyncEnrollmentAddr(client: u32) -> Promise {
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = JsValue::from_str({
-                        let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
-                            }
-                        }
-                        .as_ref()
-                    });
+    let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref());
                     js_array.set(0, js_value);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |addr: libparsec::Url| -> Result<String, &'static str> {
-                                Ok(addr.to_string())
-                            };
-                        match custom_to_rs_string(x2) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_value = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |addr: libparsec::Url| -> Result<String, &'static str> {
+                                    Ok(addr.to_string())
+                                };
+                            match custom_to_rs_string(x2) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(1, js_value);
                     js_array.into()
                 };
@@ -26312,20 +26612,22 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(value.len() as u32);
                     for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = JsValue::from_str({
-                            let custom_to_rs_string =
-                                |x: libparsec::UserID| -> Result<String, &'static str> {
-                                    Ok(x.hex())
-                                };
-                            match custom_to_rs_string(elem) {
-                                Ok(ok) => ok,
-                                #[allow(clippy::unnecessary_to_owned)]
-                                Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                        let js_elem = JsValue::from_str(
+                            {
+                                let custom_to_rs_string =
+                                    |x: libparsec::UserID| -> Result<String, &'static str> {
+                                        Ok(x.hex())
+                                    };
+                                match custom_to_rs_string(elem) {
+                                    Ok(ok) => ok,
+                                    #[allow(clippy::unnecessary_to_owned)]
+                                    Err(err) => {
+                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                    }
                                 }
                             }
-                            .as_ref()
-                        });
+                            .as_ref(),
+                        );
                         js_array.set(i as u32, js_elem);
                     }
                     js_array.into()
@@ -27251,20 +27553,22 @@ pub fn clientTotpCreateOpaqueKey(client: u32) -> Promise {
                     let (x1, x2) = value;
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> {
-                                Ok(x.hex())
-                            };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_value = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(x1) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(0, js_value);
                     let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
                     js_array.set(1, js_value);
@@ -27384,19 +27688,21 @@ pub fn clientUpdateUserProfile(client_handle: u32, user: String, new_profile: St
 pub fn getDefaultConfigDir() -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_default_config_dir();
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Ok(JsValue::from_str(
+            {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(ret) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     }))
 }
 
@@ -27406,19 +27712,21 @@ pub fn getDefaultConfigDir() -> Promise {
 pub fn getDefaultDataBaseDir() -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_default_data_base_dir();
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Ok(JsValue::from_str(
+            {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(ret) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     }))
 }
 
@@ -27428,19 +27736,21 @@ pub fn getDefaultDataBaseDir() -> Promise {
 pub fn getDefaultMountpointBaseDir() -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_default_mountpoint_base_dir();
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Ok(JsValue::from_str(
+            {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(ret) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     }))
 }
 
@@ -28184,20 +28494,22 @@ pub fn listStartedClients() -> Promise {
                     let js_array = Array::new_with_length(2);
                     let js_value = JsValue::from(x1);
                     js_array.set(0, js_value);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::DeviceID| -> Result<String, &'static str> {
-                                Ok(x.hex())
-                            };
-                        match custom_to_rs_string(x2) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_value = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::DeviceID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(x2) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(1, js_value);
                     js_array.into()
                 };
@@ -28227,19 +28539,23 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                            path.into_os_string()
+                                .into_string()
+                                .map_err(|_| "Path contains non-utf8 characters")
+                        };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -28413,17 +28729,19 @@ pub fn pathJoin(parent: String, child: String) -> Promise {
             })
         }?;
         let ret = libparsec::path_join(&parent, &child);
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                Ok(std::string::ToString::to_string(&v))
-            };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Ok(JsValue::from_str(
+            {
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(ret) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     }))
 }
 
@@ -28442,17 +28760,19 @@ pub fn pathNormalize(path: String) -> Promise {
             })
         }?;
         let ret = libparsec::path_normalize(path);
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                Ok(std::string::ToString::to_string(&v))
-            };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Ok(JsValue::from_str(
+            {
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(ret) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     }))
 }
 
@@ -28471,17 +28791,19 @@ pub fn pathParent(path: String) -> Promise {
             })
         }?;
         let ret = libparsec::path_parent(&path);
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                Ok(std::string::ToString::to_string(&v))
-            };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                #[allow(clippy::unnecessary_to_owned)]
-                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        Ok(JsValue::from_str(
+            {
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(ret) {
+                    Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
             }
-            .as_ref()
-        }))
+            .as_ref(),
+        ))
     }))
 }
 
@@ -29060,20 +29382,24 @@ pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
                             let (x1, x2, x3) = elem;
                             // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(3);
-                            let js_value = JsValue::from_str({
-                                let custom_to_rs_string =
-                                    |v| -> Result<_, std::convert::Infallible> {
-                                        Ok(std::string::ToString::to_string(&v))
-                                    };
-                                match custom_to_rs_string(x1) {
-                                    Ok(ok) => ok,
-                                    #[allow(clippy::unnecessary_to_owned)]
-                                    Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            let js_value = JsValue::from_str(
+                                {
+                                    let custom_to_rs_string =
+                                        |v| -> Result<_, std::convert::Infallible> {
+                                            Ok(std::string::ToString::to_string(&v))
+                                        };
+                                    match custom_to_rs_string(x1) {
+                                        Ok(ok) => ok,
+                                        #[allow(clippy::unnecessary_to_owned)]
+                                        Err(err) => {
+                                            return Err(JsValue::from(TypeError::new(
+                                                &err.to_string(),
+                                            )))
+                                        }
                                     }
                                 }
-                                .as_ref()
-                            });
+                                .as_ref(),
+                            );
                             js_array.set(0, js_value);
                             let js_value = {
                                 let custom_to_rs_f64 =
@@ -29169,19 +29495,16 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = match value {
-                    Some(val) => JsValue::from_str({
-                        let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                        match custom_to_rs_string(val) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
-                            }
-                        }
-                        .as_ref()
-                    }),
-                    None => JsValue::NULL,
-                };
+    Some(val) => JsValue::from_str({
+    let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(val) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref()),
+    None => JsValue::NULL,
+};
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -29304,19 +29627,23 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                            path.into_os_string()
+                                .into_string()
+                                .map_err(|_| "Path contains non-utf8 characters")
+                        };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -29504,18 +29831,22 @@ pub fn tryConvertHttpToParsecAddr(http_url: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                            Ok(addr.to_url().into())
-                        };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                                Ok(addr.to_url().into())
+                            };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -29613,18 +29944,22 @@ pub fn updateDeviceOverwriteServerAddr(
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                            Ok(addr.to_url().into())
-                        };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                                Ok(addr.to_url().into())
+                            };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -29775,16 +30110,20 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -29818,16 +30157,20 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -29861,16 +30204,20 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -29905,17 +30252,21 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                        Ok(std::string::ToString::to_string(&v))
-                    };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                            Ok(std::string::ToString::to_string(&v))
+                        };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -30228,31 +30579,30 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = JsValue::from_str({
-                        let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
-                            }
-                        }
-                        .as_ref()
-                    });
+    let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+    }
+}.as_ref());
                     js_array.set(0, js_value);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |addr: libparsec::Url| -> Result<String, &'static str> {
-                                Ok(addr.to_string())
-                            };
-                        match custom_to_rs_string(x2) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_value = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |addr: libparsec::Url| -> Result<String, &'static str> {
+                                    Ok(addr.to_string())
+                                };
+                            match custom_to_rs_string(x2) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(1, js_value);
                     js_array.into()
                 };
@@ -30543,18 +30893,22 @@ pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) ->
                         JsValue::from(v)
                     };
                     js_array.set(0, js_value);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(x2) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_value = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(x2) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(1, js_value);
                     js_array.into()
                 };
@@ -30984,21 +31338,23 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                     let js_array = Array::new_with_length(2);
                     let js_value = JsValue::from(x1);
                     js_array.set(0, js_value);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                            path.into_os_string()
-                                .into_string()
-                                .map_err(|_| "Path contains non-utf8 characters")
-                        };
-                        match custom_to_rs_string(x2) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_value = JsValue::from_str(
+                        {
+                            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                                path.into_os_string()
+                                    .into_string()
+                                    .map_err(|_| "Path contains non-utf8 characters")
+                            };
+                            match custom_to_rs_string(x2) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(1, js_value);
                     js_array.into()
                 };
@@ -31147,18 +31503,22 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                         JsValue::from(v)
                     };
                     js_array.set(0, js_value);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string =
-                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(x2) {
-                            Ok(ok) => ok,
-                            #[allow(clippy::unnecessary_to_owned)]
-                            Err(err) => {
-                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                    let js_value = JsValue::from_str(
+                        {
+                            let custom_to_rs_string =
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(x2) {
+                                Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
+                                }
                             }
                         }
-                        .as_ref()
-                    });
+                        .as_ref(),
+                    );
                     js_array.set(1, js_value);
                     js_array.into()
                 };
@@ -31810,16 +32170,20 @@ pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                let js_value = JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(value) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
                     }
-                    .as_ref()
-                });
+                    .as_ref(),
+                );
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
