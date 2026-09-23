@@ -46,6 +46,12 @@ const config = {
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
+    // OnlyOffice editor and x2t converter, installed as npm dependencies but
+    // used as raw vendored assets:
+    // - Dev: served from node_modules by the dev server
+    // - Release: copied verbatim into the dist folder (see staticCopyPlugin in vite.config.ts)
+    'onlyoffice-editor',
+    'onlyoffice-x2t',
     // used during signature of electron artifact for macOS
     '@electron/notarize',
     // an electron-builder utility, only used in partial imports for typing
