@@ -594,8 +594,8 @@ JsValue::from_str({%- if type.custom_to_rs_string -%}
         Ok(ok) => ok,
         #[allow(clippy::unnecessary_to_owned)]
         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-    }.as_ref()
-}
+    }
+}.as_ref()
 {%- else -%}
 {{ rs_value }}.as_ref()
 {%- endif -%}
