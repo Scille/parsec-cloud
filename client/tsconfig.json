@@ -1,3 +1,6 @@
+// This configuration is only used for type checking (run with `vue-tsc --noEmit`).
+// The actual .ts -> .js transpilation is done in vite and doesn't need this config
+// since it only does dump type erasing instead of actual full type checking.
 {
     "compilerOptions": {
         "target": "ESNext",
@@ -10,6 +13,7 @@
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
+        "noEmit": true,
         "strictFunctionTypes": true,
         "useDefineForClassFields": true,
         "sourceMap": true,
