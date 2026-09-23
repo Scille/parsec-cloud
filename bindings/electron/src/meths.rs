@@ -2012,7 +2012,7 @@ fn struct_device_access_strategy_js_to_rs<'a>(
                             #[allow(clippy::unnecessary_mut_passed)]
                             match js_item.as_slice(cx).try_into() {
                                 Ok(val) => val,
-                                // err can't infer type in some case, because of the previous `try_into`
+                                // err can't infer type in some cases, because of the previous `try_into`
                                 #[allow(clippy::useless_format)]
                                 Err(err) => return cx.throw_type_error(format!("{}", err)),
                             }
@@ -2713,7 +2713,7 @@ fn struct_device_save_strategy_js_to_rs<'a>(
                             #[allow(clippy::unnecessary_mut_passed)]
                             match js_item.as_slice(cx).try_into() {
                                 Ok(val) => val,
-                                // err can't infer type in some case, because of the previous `try_into`
+                                // err can't infer type in some cases, because of the previous `try_into`
                                 #[allow(clippy::useless_format)]
                                 Err(err) => return cx.throw_type_error(format!("{}", err)),
                             }
@@ -5798,7 +5798,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
                     #[allow(clippy::unnecessary_mut_passed)]
                     match custom_from_rs_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
+                        // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
@@ -5819,7 +5819,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
                     #[allow(clippy::unnecessary_mut_passed)]
                     match custom_from_rs_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
+                        // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
@@ -5834,7 +5834,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
+                // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
@@ -5847,7 +5847,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
+                // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
@@ -5860,7 +5860,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
+                // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
@@ -6071,7 +6071,7 @@ fn variant_account_auth_method_strategy_js_to_rs<'a>(
                     #[allow(clippy::unnecessary_mut_passed)]
                     match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
+                        // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
@@ -6662,7 +6662,7 @@ fn variant_account_login_strategy_js_to_rs<'a>(
                     #[allow(clippy::unnecessary_mut_passed)]
                     match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
+                        // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
@@ -19998,7 +19998,7 @@ fn account_create_1_send_validation_email(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20083,7 +20083,7 @@ fn account_create_2_check_validation_code(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20167,7 +20167,7 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20232,7 +20232,7 @@ fn account_create_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20291,7 +20291,7 @@ fn account_create_registration_device(mut cx: FunctionContext) -> JsResult<JsPro
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20351,7 +20351,7 @@ fn account_delete_1_send_validation_email(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20411,7 +20411,7 @@ fn account_delete_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20477,7 +20477,7 @@ fn account_disable_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20570,7 +20570,7 @@ fn account_list_auth_methods(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20629,7 +20629,7 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
         let ret = libparsec::account_list_invitations(
@@ -20725,7 +20725,7 @@ fn account_list_organizations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20776,7 +20776,7 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20872,7 +20872,7 @@ fn account_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20988,7 +20988,7 @@ fn account_recover_1_send_validation_email(mut cx: FunctionContext) -> JsResult<
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21077,7 +21077,7 @@ fn account_recover_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21178,7 +21178,7 @@ fn account_register_new_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21247,7 +21247,7 @@ fn archive_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21333,7 +21333,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21522,7 +21522,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21584,7 +21584,7 @@ fn claimer_device_in_progress_1_do_deny_trust(mut cx: FunctionContext) -> JsResu
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21650,7 +21650,7 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21712,7 +21712,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21786,7 +21786,7 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21852,7 +21852,7 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21902,7 +21902,7 @@ fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21962,7 +21962,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22068,7 +22068,7 @@ fn claimer_shamir_recovery_finalize_save_local_device(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22135,7 +22135,7 @@ fn claimer_shamir_recovery_in_progress_1_do_deny_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22204,7 +22204,7 @@ fn claimer_shamir_recovery_in_progress_1_do_signify_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22271,7 +22271,7 @@ fn claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22336,7 +22336,7 @@ fn claimer_shamir_recovery_in_progress_3_do_claim(mut cx: FunctionContext) -> Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22399,7 +22399,7 @@ fn claimer_shamir_recovery_initial_do_wait_peer(mut cx: FunctionContext) -> JsRe
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22513,7 +22513,7 @@ fn claimer_shamir_recovery_recover_device(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22573,7 +22573,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22635,7 +22635,7 @@ fn claimer_user_in_progress_1_do_deny_trust(mut cx: FunctionContext) -> JsResult
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22700,7 +22700,7 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22762,7 +22762,7 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22840,7 +22840,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22907,7 +22907,7 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23014,7 +23014,7 @@ fn claimer_user_wait_all_peers(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23091,7 +23091,7 @@ fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23163,7 +23163,7 @@ fn client_accept_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23233,7 +23233,7 @@ fn client_archive_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23299,7 +23299,7 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23365,7 +23365,7 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23425,7 +23425,7 @@ fn client_delete_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23492,7 +23492,7 @@ fn client_export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23554,7 +23554,7 @@ fn client_forget_all_certificates(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23671,7 +23671,7 @@ fn client_get_organization_bootstrap_date(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23732,7 +23732,7 @@ fn client_get_outbound_sync_backlog(mut cx: FunctionContext) -> JsResult<JsPromi
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23784,7 +23784,7 @@ fn client_get_self_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23835,7 +23835,7 @@ fn client_get_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23897,7 +23897,7 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23967,7 +23967,7 @@ fn client_get_user_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24017,7 +24017,7 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24067,7 +24067,7 @@ fn client_list_async_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24127,7 +24127,7 @@ fn client_list_frozen_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24195,7 +24195,7 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24253,7 +24253,7 @@ fn client_list_shamir_recoveries_for_others(mut cx: FunctionContext) -> JsResult
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24327,7 +24327,7 @@ fn client_list_user_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24389,7 +24389,7 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24459,7 +24459,7 @@ fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24519,7 +24519,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24581,7 +24581,7 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24648,7 +24648,7 @@ fn client_new_shamir_recovery_invitation(mut cx: FunctionContext) -> JsResult<Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24721,7 +24721,7 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24773,7 +24773,7 @@ fn client_organization_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24835,7 +24835,7 @@ fn client_reject_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24914,7 +24914,7 @@ fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24980,7 +24980,7 @@ fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25046,7 +25046,7 @@ fn client_self_promote_to_workspace_owner(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25184,7 +25184,7 @@ fn client_setup_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25278,7 +25278,7 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25329,7 +25329,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25391,7 +25391,7 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25454,7 +25454,7 @@ fn client_start_shamir_recovery_invitation_greet(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25520,7 +25520,7 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25583,7 +25583,7 @@ fn client_start_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25645,7 +25645,7 @@ fn client_start_workspace_history(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25695,7 +25695,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25749,7 +25749,7 @@ fn client_totp_create_opaque_key(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
         let ret = libparsec::client_totp_create_opaque_key(
@@ -25821,7 +25821,7 @@ fn client_totp_setup_confirm(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25876,7 +25876,7 @@ fn client_totp_setup_status(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25945,7 +25945,7 @@ fn client_update_user_profile(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26085,7 +26085,7 @@ fn get_server_config(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26146,7 +26146,7 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26208,7 +26208,7 @@ fn greeter_device_in_progress_2_do_deny_trust(mut cx: FunctionContext) -> JsResu
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26274,7 +26274,7 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26338,7 +26338,7 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26413,7 +26413,7 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26480,7 +26480,7 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26543,7 +26543,7 @@ fn greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26610,7 +26610,7 @@ fn greeter_shamir_recovery_in_progress_2_do_deny_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26679,7 +26679,7 @@ fn greeter_shamir_recovery_in_progress_2_do_signify_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26746,7 +26746,7 @@ fn greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26814,7 +26814,7 @@ fn greeter_shamir_recovery_initial_do_wait_peer(mut cx: FunctionContext) -> JsRe
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26877,7 +26877,7 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26939,7 +26939,7 @@ fn greeter_user_in_progress_2_do_deny_trust(mut cx: FunctionContext) -> JsResult
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27004,7 +27004,7 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27068,7 +27068,7 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27154,7 +27154,7 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27226,7 +27226,7 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27293,7 +27293,7 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27378,7 +27378,7 @@ fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27399,13 +27399,13 @@ fn libparsec_init_set_on_event_callback(mut cx: FunctionContext) -> JsResult<JsP
     crate::init_sentry();
     let on_event_callback = {
         let js_val = cx.argument::<JsFunction>(0)?;
-        // The Javascript function object is going to be shared between the closure
+        // The JavaScript function object is going to be shared between the closure
         // called by rust (that can be called multiple times) and the single-use
         // closure sent to the js runtime.
         // So we must use an Arc to ensure the resource is shared correctly, but
         // that's not all of it !
-        // When the resource is no longer use, we must consume the reference we
-        // had on the javascript function in a neon context so that it can itself
+        // When the resource is no longer used, we must consume the reference we
+        // had on the JavaScript function in a neon context so that it can itself
         // notify the js runtime's garbage collector.
         struct Callback {
             js_fn: Option<neon::handle::Root<JsFunction>>,
@@ -27470,7 +27470,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27592,7 +27592,7 @@ fn mountpoint_to_os_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27653,7 +27653,7 @@ fn mountpoint_unmount(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27726,7 +27726,7 @@ fn openbao_list_self_emails(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27982,7 +27982,7 @@ fn pki_init_for_native(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28048,7 +28048,7 @@ fn pki_init_for_scws(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28091,7 +28091,7 @@ fn pki_list_user_certificates(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28144,7 +28144,7 @@ fn pki_open_user_certificate_private_key(mut cx: FunctionContext) -> JsResult<Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28196,7 +28196,7 @@ fn pki_private_key_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28255,7 +28255,7 @@ fn remove_device_data(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28298,7 +28298,7 @@ fn show_certificate_selection_dialog_windows_only(mut cx: FunctionContext) -> Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28380,7 +28380,7 @@ fn submit_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28455,7 +28455,7 @@ fn submitter_cancel_async_enrollment(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28523,7 +28523,7 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28598,7 +28598,7 @@ fn submitter_get_async_enrollment_info(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28651,7 +28651,7 @@ fn submitter_list_async_enrollments(mut cx: FunctionContext) -> JsResult<JsPromi
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28726,7 +28726,7 @@ fn test_check_mailbox(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28816,7 +28816,7 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28963,7 +28963,7 @@ fn test_new_account(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29033,7 +29033,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29139,7 +29139,7 @@ fn totp_fetch_opaque_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29210,7 +29210,7 @@ fn totp_setup_confirm_anonymous(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29271,7 +29271,7 @@ fn totp_setup_status_anonymous(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29371,7 +29371,7 @@ fn update_device_change_authentication(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29439,7 +29439,7 @@ fn update_device_overwrite_server_addr(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29614,7 +29614,7 @@ fn wait_for_device_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29681,7 +29681,7 @@ fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29753,7 +29753,7 @@ fn workspace_create_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29825,7 +29825,7 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29897,7 +29897,7 @@ fn workspace_decrypt_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29971,7 +29971,7 @@ fn workspace_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30039,7 +30039,7 @@ fn workspace_fd_flush(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30125,7 +30125,7 @@ fn workspace_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30205,7 +30205,7 @@ fn workspace_fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30273,7 +30273,7 @@ fn workspace_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30350,7 +30350,7 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30427,7 +30427,7 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30496,7 +30496,7 @@ fn workspace_fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30558,7 +30558,7 @@ fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
         let ret = libparsec::workspace_generate_path_addr(
@@ -30717,7 +30717,7 @@ fn workspace_history_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30786,7 +30786,7 @@ fn workspace_history_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30987,7 +30987,7 @@ fn workspace_history_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31059,7 +31059,7 @@ fn workspace_history_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31150,7 +31150,7 @@ fn workspace_history_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31225,7 +31225,7 @@ fn workspace_history_set_timestamp_of_interest(mut cx: FunctionContext) -> JsRes
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31302,7 +31302,7 @@ fn workspace_history_start_with_realm_export(mut cx: FunctionContext) -> JsResul
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31369,7 +31369,7 @@ fn workspace_history_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31432,7 +31432,7 @@ fn workspace_history_stat_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPro
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31496,7 +31496,7 @@ fn workspace_history_stat_folder_children(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31579,7 +31579,7 @@ fn workspace_history_stat_folder_children_by_id(mut cx: FunctionContext) -> JsRe
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31695,7 +31695,7 @@ fn workspace_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31757,7 +31757,7 @@ fn workspace_is_file_content_local(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31808,7 +31808,7 @@ fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31906,7 +31906,7 @@ fn workspace_move_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31976,7 +31976,7 @@ fn workspace_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32051,7 +32051,7 @@ fn workspace_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32144,7 +32144,7 @@ fn workspace_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32223,7 +32223,7 @@ fn workspace_register_cryptpad_session(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32293,7 +32293,7 @@ fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32359,7 +32359,7 @@ fn workspace_remove_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32425,7 +32425,7 @@ fn workspace_remove_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32491,7 +32491,7 @@ fn workspace_remove_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32585,7 +32585,7 @@ fn workspace_rename_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32680,7 +32680,7 @@ fn workspace_save_and_sync_file_with_cryptpad(mut cx: FunctionContext) -> JsResu
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32756,7 +32756,7 @@ fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32818,7 +32818,7 @@ fn workspace_stat_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32882,7 +32882,7 @@ fn workspace_stat_entry_by_id_ignore_confinement_point(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -32946,7 +32946,7 @@ fn workspace_stat_folder_children(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -33026,7 +33026,7 @@ fn workspace_stat_folder_children_by_id(mut cx: FunctionContext) -> JsResult<JsP
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -33094,7 +33094,7 @@ fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -33160,7 +33160,7 @@ fn workspace_watch_entry_oneshot(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
