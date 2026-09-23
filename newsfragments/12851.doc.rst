@@ -1,0 +1,1 @@
+[Hosting Guide] Added a section explaining how to configure the web application

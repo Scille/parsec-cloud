@@ -1,0 +1,1 @@
+[Hosting Guide] Improved section on how to setup SSO with OpenBAO
