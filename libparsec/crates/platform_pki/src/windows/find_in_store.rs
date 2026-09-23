@@ -123,13 +123,15 @@ impl<'a> Iterator for CertInStore<'a> {
                 cur,
             );
 
-            if next.is_null() {
-                self.cur = None;
-                None
-            } else {
-                let next = schannel_utils::cert_context_from_raw(next);
-                self.cur = Some(next.clone());
-                Some(next)
+            match schannel_utils::cert_context_from_raw(next) {
+                Some(cert) => {
+                    self.cur = Some(cert.clone());
+                    Some(cert)
+                }
+                None => {
+                    self.cur = None;
+                    None
+                }
             }
         }
     }

@@ -310,11 +310,7 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
             0,                     // Not used by windows per documentation
             core::ptr::null(),     // Reversed for future use per documentation
         );
-        if raw_cert_context.is_null() {
-            None
-        } else {
-            Some(schannel_utils::cert_context_from_raw(raw_cert_context))
-        }
+        schannel_utils::cert_context_from_raw(raw_cert_context)
     }
 }
 
