@@ -1,0 +1,1 @@
+[Hosting] Added a section on workspace deletion

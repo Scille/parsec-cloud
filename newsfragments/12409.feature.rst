@@ -1,0 +1,1 @@
+When all workspace Owners have been revoked, Administrators and Members having the current highest non-Owner role in the workspace can now self-promote to workspace Owner.
