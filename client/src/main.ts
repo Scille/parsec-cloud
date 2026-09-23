@@ -189,13 +189,14 @@ window.addEventListener('securitypolicyviolation', (e) => {
 const injectionProvider = new InjectionProvider();
 
 async function setupApp(): Promise<void> {
-  await WebLogger.init();
-
-  const configDir = await libparsec.getDefaultConfigDir();
-  const dataBaseDir = await libparsec.getDefaultDataBaseDir();
-  const mountpointBaseDir = await libparsec.getDefaultMountpointBaseDir();
+  const [configDir, dataBaseDir, mountpointBaseDir, platform] = await Promise.all([
+    libparsec.getDefaultConfigDir(),
+    libparsec.getDefaultDataBaseDir(),
+    libparsec.getDefaultMountpointBaseDir(),
+    libparsec.getPlatform(),
+    WebLogger.init(),
+  ]);
   const isDesktop = !('TESTING' in window) && isPlatform('electron');
-  const platform = await libparsec.getPlatform();
   const isLinux = isDesktop && platform === Platform.Linux;
 
   window.getConfigDir = (): string => configDir;
@@ -210,9 +211,7 @@ async function setupApp(): Promise<void> {
   if (!isElectron()) {
     setupWebNativeAPI(injectionProvider);
   }
-  await ResourcesManager.instance().loadAll();
-
-  await storageManagerInstance.init();
+  await Promise.all([ResourcesManager.instance().loadAll(), storageManagerInstance.init()]);
   const storageManager = storageManagerInstance.get();
 
   const config = await storageManager.retrieveConfig();
@@ -255,7 +254,7 @@ async function setupApp(): Promise<void> {
     },
     stripeConfig: stripeConfig,
   });
-  await megasharkPlugin.init();
+  const megasharkInit = megasharkPlugin.init();
 
   if (!Env.isAccountEnabled() || config.skipAccount) {
     ParsecAccount.markSkipped();
@@ -265,8 +264,7 @@ async function setupApp(): Promise<void> {
     .use(IonicVue, {
       rippleEffect: false,
     })
-    .use(router)
-    .use(megasharkPlugin);
+    .use(router);
 
   if (!Env.isSentryDisabled()) {
     await Sentry.init(app, router);
@@ -276,7 +274,11 @@ async function setupApp(): Promise<void> {
   app.provide(InjectionProviderKey, injectionProvider);
   app.provide(HotkeyManagerKey, hotkeyManager);
 
-  await initViewers();
+  // Only needed when opening a file viewer, no need to wait for it
+  initViewers(); // Fire-and-forget call
+
+  await megasharkInit;
+  app.use(megasharkPlugin);
 
   // We get the app element
   const appElem = window.document.getElementById('app');
@@ -304,12 +306,11 @@ async function setupApp(): Promise<void> {
       window.usesTestbed = (): boolean => false;
     }
 
-    await initPki();
-    await ParsecAccount.init();
+    const [, , browser] = await Promise.all([initPki(), ParsecAccount.init(), detectBrowser()]);
 
     await router.isReady();
 
-    if ((await detectBrowser()) === 'Safari') {
+    if (browser === 'Safari') {
       const modal = await modalController.create({
         component: IncompatibleEnvironmentModal,
         cssClass: 'incompatible-environment-modal',

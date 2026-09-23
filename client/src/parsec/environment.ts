@@ -2,7 +2,6 @@
 
 import { Platform } from '@/parsec/types';
 import { isPlatform } from '@ionic/vue';
-import detectIncognito from 'detectincognitojs';
 
 // Vue templates cannot access `window`
 
@@ -38,14 +37,6 @@ export function isElectron(): boolean {
   return isPlatform('electron');
 }
 
-export async function isIncognito(): Promise<boolean> {
-  if (!isWeb()) {
-    return false;
-  }
-  const result = await detectIncognito();
-  return result.isPrivate;
-}
-
 type Browser = 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
 
 export async function detectBrowser(): Promise<Browser | undefined> {
@@ -55,6 +46,34 @@ export async function detectBrowser(): Promise<Browser | undefined> {
   if ((window as any).TESTING_MOCK_BROWSER !== undefined) {
     return (window as any).TESTING_MOCK_BROWSER as Browser;
   }
-  const result = await detectIncognito();
-  return result.browserName as Browser;
+  // Inspired from https://github.com/Joe12387/detectIncognito, but lighter.
+  // Not really reliable.
+  let errorLength = 0;
+  try {
+    (-1).toFixed(-1);
+  } catch (err: any) {
+    errorLength = err.message.length;
+  }
+  switch (errorLength) {
+    // JavaScriptCore
+    case 43:
+    case 44:
+      return 'Safari';
+    // SpiderMonkey
+    case 25:
+      return 'Firefox';
+    // V8
+    case 51: {
+      const ua = navigator.userAgent;
+      if (!ua.match(/Chrome/)) {
+        return 'Chromium';
+      }
+      if ((navigator as any).brave !== undefined) {
+        return 'Brave';
+      }
+      return ua.match(/Edg/) ? 'Edge' : 'Chrome';
+    }
+    default:
+      return undefined;
+  }
 }
