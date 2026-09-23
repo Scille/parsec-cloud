@@ -1,0 +1,1 @@
+Significant improvement when uploading large numbers of files

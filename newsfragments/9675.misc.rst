@@ -1,0 +1,1 @@
+Clicking in the middle of the audio and video viewers now pauses/unpauses the media
