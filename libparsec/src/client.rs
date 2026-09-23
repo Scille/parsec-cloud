@@ -19,15 +19,15 @@ pub use libparsec_client::{
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::RemoteOperationServer;
-use libparsec_types::prelude::*;
 pub use libparsec_types::RealmRole;
+use libparsec_types::prelude::*;
 
 use crate::{
-    handle::{
-        borrow_from_handle, filter_close_handles, iter_opened_handles, register_handle_with_init,
-        take_and_close_handle, FilterCloseHandle, Handle, HandleItem,
-    },
     ClientConfig, ClientEvent, DeviceAccessStrategy, OnEventCallbackPlugged,
+    handle::{
+        FilterCloseHandle, Handle, HandleItem, borrow_from_handle, filter_close_handles,
+        iter_opened_handles, register_handle_with_init, take_and_close_handle,
+    },
 };
 
 fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
@@ -237,7 +237,7 @@ pub(super) async fn client_start_from_local_device(
     // On web there is no other processes able to use the devices we have access of.
     #[cfg(not(target_arch = "wasm32"))]
     let device_in_use_guard = {
-        use libparsec_platform_ipc::{try_lock_device_for_use, TryLockDeviceForUseError};
+        use libparsec_platform_ipc::{TryLockDeviceForUseError, try_lock_device_for_use};
 
         try_lock_device_for_use(&config.config_dir, device.device_id).map_err(|err| match err {
             TryLockDeviceForUseError::AlreadyInUse => ClientStartError::DeviceUsedByAnotherProcess,

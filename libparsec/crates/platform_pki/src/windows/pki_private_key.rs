@@ -3,8 +3,8 @@
 use schannel::cert_context::PrivateKey as SchannelPKey;
 use sha2::Digest as _;
 use windows_sys::Win32::Security::Cryptography::{
-    self, NCryptDecrypt, NCryptSignHash, BCRYPT_OAEP_PADDING_INFO, BCRYPT_PSS_PADDING_INFO,
-    NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
+    self, BCRYPT_OAEP_PADDING_INFO, BCRYPT_PSS_PADDING_INFO, NCRYPT_PAD_OAEP_FLAG,
+    NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM, NCryptDecrypt, NCryptSignHash,
 };
 
 use libparsec_types::prelude::*;

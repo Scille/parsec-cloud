@@ -5,7 +5,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::alice_cmds_factory;
-use crate::{totp_setup_status_authenticated, TOTPSetupStatus, TotpSetupStatusAuthenticatedError};
+use crate::{TOTPSetupStatus, TotpSetupStatusAuthenticatedError, totp_setup_status_authenticated};
 
 #[parsec_test(testbed = "minimal")]
 async fn ok_stalled(env: &TestbedEnv) {

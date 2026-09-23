@@ -5,7 +5,7 @@ mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::{encrypt_message, PkiSystem};
+use libparsec_platform_pki::{PkiSystem, encrypt_message};
 use libparsec_types::X509CertificateHash;
 
 #[derive(Debug, Parser)]

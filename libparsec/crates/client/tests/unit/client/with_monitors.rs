@@ -6,11 +6,11 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
+    Client, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceInfo,
+    WorkspaceStorageCacheSize,
     workspace::{
         EntryStat, OpenOptions, WorkspaceOpenFileError, WorkspaceOps, WorkspaceStatEntryError,
     },
-    Client, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceInfo,
-    WorkspaceStorageCacheSize,
 };
 
 // Those tests are quite heavy and might be flaky, due to hard-polling for events.

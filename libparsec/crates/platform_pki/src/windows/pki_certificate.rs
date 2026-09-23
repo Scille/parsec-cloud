@@ -4,9 +4,9 @@ use libparsec_types::prelude::*;
 
 use super::PlatformPkiPrivateKey;
 use crate::{
-    verify_certificate, PkiCertificateGetDerError, PkiCertificateGetValidationPathError,
+    PkiCertificateGetDerError, PkiCertificateGetValidationPathError,
     PkiCertificateRequestPrivateKeyError, PkiCertificateToReferenceError, PkiPrivateKey,
-    X509CertificateDer, X509EndCertificate, X509ValidationPathOwned,
+    X509CertificateDer, X509EndCertificate, X509ValidationPathOwned, verify_certificate,
 };
 
 pub struct PlatformPkiCertificate(pub(crate) schannel::cert_context::CertContext);

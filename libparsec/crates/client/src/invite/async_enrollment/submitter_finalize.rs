@@ -207,7 +207,7 @@ pub async fn submitter_finalize_async_enrollment(
                 return Err(SubmitterFinalizeAsyncEnrollmentError::EnrollmentNotFoundOnServer);
             }
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
             }
         }
     };

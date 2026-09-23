@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use parsec_cli::{commands::*, ui, Arg, Command};
+use parsec_cli::{Arg, Command, commands::*, ui};
 
 use clap::Parser;
 

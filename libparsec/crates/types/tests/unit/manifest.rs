@@ -6,9 +6,9 @@ use libparsec_crypto::{SecretKey, SigningKey};
 use libparsec_tests_lite::prelude::*;
 
 use crate::{
-    fixtures::{alice, Device},
     BlockAccess, BlockID, Blocksize, ChildManifest, DataError, DateTime, DeviceID, FileManifest,
     FileManifestOrigin, FolderManifest, HashDigest, UserManifest, VlobID,
+    fixtures::{Device, alice},
 };
 
 #[rstest]

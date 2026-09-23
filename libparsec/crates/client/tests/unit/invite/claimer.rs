@@ -11,8 +11,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy,
-    ProxyConfig, WorkspaceStorageCacheSize,
+    AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy, ProxyConfig,
+    WorkspaceStorageCacheSize, claimer_retrieve_info,
 };
 
 #[parsec_test(testbed = "minimal")]

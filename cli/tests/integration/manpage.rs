@@ -1,4 +1,4 @@
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 use parsec_cli::commands::man_page::Mode;
 
 #[rstest::rstest]

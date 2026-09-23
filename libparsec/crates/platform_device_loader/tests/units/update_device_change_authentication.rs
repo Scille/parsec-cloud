@@ -4,11 +4,11 @@ use std::{path::Path, sync::Arc};
 
 use super::utils::MockedAccountVaultOperations;
 use crate::{
-    load_device, save_device, update_device_change_authentication, DeviceAccessStrategy,
-    DevicePrimaryProtectionStrategy, LoadDeviceError,
+    DeviceAccessStrategy, DevicePrimaryProtectionStrategy, LoadDeviceError, load_device,
+    save_device, update_device_change_authentication,
 };
 use libparsec_testbed::TestbedEnv;
-use libparsec_tests_fixtures::{tmp_path, TmpPath};
+use libparsec_tests_fixtures::{TmpPath, tmp_path};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 

@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use libparsec_client::{workspace_history::WorkspaceHistoryOps, Client};
+use libparsec_client::{Client, workspace_history::WorkspaceHistoryOps};
 use libparsec_client_connection::test_send_hook_block_read;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

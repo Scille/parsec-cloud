@@ -6,9 +6,9 @@ use libparsec_types::prelude::*;
 use rustls_pki_types::CertificateDer;
 
 use crate::{
-    platform::PlatformPkiPrivateKey, PkiCertificateGetDerError,
-    PkiCertificateGetValidationPathError, PkiCertificateRequestPrivateKeyError,
-    PkiCertificateToReferenceError, PkiPrivateKey, X509ValidationPathOwned,
+    PkiCertificateGetDerError, PkiCertificateGetValidationPathError,
+    PkiCertificateRequestPrivateKeyError, PkiCertificateToReferenceError, PkiPrivateKey,
+    X509ValidationPathOwned, platform::PlatformPkiPrivateKey,
 };
 
 #[derive(Debug, Clone)]

@@ -6,12 +6,12 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
+    InvalidBlockAccessError, InvalidKeysBundleError,
     certif::{InvalidCertificateError, InvalidManifestError},
     workspace::{
         FdWriteStrategy, OpenOptions, OutboundSyncOutcome, WorkspaceFdCloseError,
         WorkspaceFdWriteError, WorkspaceOpenFileError, WorkspaceOps, WorkspaceSyncError,
     },
-    InvalidBlockAccessError, InvalidKeysBundleError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -46,7 +46,9 @@ pub enum WorkspaceSaveAndSyncFileWithOriginError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -172,7 +174,7 @@ pub async fn save_and_sync_file_with_origin(
                 continue;
             }
             OutboundSyncOutcome::EntryIsUnreachable => {
-                return Err(WorkspaceSaveAndSyncFileWithOriginError::EntryNotFound)
+                return Err(WorkspaceSaveAndSyncFileWithOriginError::EntryNotFound);
             }
             // Confined entries never get synced with the server, nothing more to do.
             OutboundSyncOutcome::EntryIsConfined { .. } => break,

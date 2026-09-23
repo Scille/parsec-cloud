@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
-    encrypt_device, LoadCiphertextKeyError, LoadDeviceError, SaveDeviceError,
-    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
+    LoadCiphertextKeyError, LoadDeviceError, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR,
+    PARSEC_BASE_HOME_DIR, SaveDeviceError, encrypt_device,
 };
 use libparsec_types::prelude::*;
 

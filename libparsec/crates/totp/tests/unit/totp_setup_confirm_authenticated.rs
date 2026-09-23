@@ -4,7 +4,7 @@ use libparsec_client_connection::{protocol::authenticated_cmds, test_register_se
 use libparsec_tests_fixtures::prelude::*;
 
 use super::utils::alice_cmds_factory;
-use crate::{totp_setup_confirm_authenticated, TotpSetupConfirmAuthenticatedError};
+use crate::{TotpSetupConfirmAuthenticatedError, totp_setup_confirm_authenticated};
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {

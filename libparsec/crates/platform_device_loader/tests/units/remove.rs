@@ -7,8 +7,8 @@
 use libparsec_tests_fixtures::prelude::*;
 
 use crate::{
-    load_device, remove_device, save_device, tests::utils::key_present_in_system,
-    DeviceAccessStrategy, DeviceSaveStrategy, LoadDeviceError,
+    DeviceAccessStrategy, DeviceSaveStrategy, LoadDeviceError, load_device, remove_device,
+    save_device, tests::utils::key_present_in_system,
 };
 
 #[parsec_test(testbed = "minimal")]

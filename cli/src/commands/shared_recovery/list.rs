@@ -159,31 +159,36 @@ impl<'a> CLIDisplay for OtherShamirRecoveryInfoDisplay<'a> {
         mut w: W,
     ) -> std::io::Result<()> {
         match &self.info {
-                OtherShamirRecoveryInfo::Deleted {
-                    user_id,
-                    deleted_on,
-                    deleted_by,
-                    ..
-                } => write!(
+            OtherShamirRecoveryInfo::Deleted {
+                user_id,
+                deleted_on,
+                deleted_by,
+                ..
+            } => write!(
+                w,
+                "Deleted shared recovery for {user_id} - deleted by {deleted_by} on {deleted_on}",
+                user_id = fmt.wrap_in_color(Color::Red, user_id)
+            ),
+            OtherShamirRecoveryInfo::SetupAllValid {
+                user_id,
+                threshold,
+                per_recipient_shares,
+                ..
+            } => {
+                let name = if let Some(user) = self.users.get(user_id) {
+                    format_args!("{}", user.human_handle)
+                } else {
+                    format_args!("uid={user_id}")
+                };
+                writeln!(
                     w,
-                    "Deleted shared recovery for {user_id} - deleted by {deleted_by} on {deleted_on}",
-                    user_id = fmt.wrap_in_color(Color::Red, user_id)
-                ),
-                OtherShamirRecoveryInfo::SetupAllValid {
-                    user_id, threshold, per_recipient_shares,..
-                } => {
-                    let name = if let Some(user) = self.users.get(user_id) {
-                        format_args!("{}", user.human_handle)
-                    } else {
-                        format_args!("uid={user_id}")
-                    };
-                    writeln!(
-                        w,
-                        "Shared recovery for {} with threshold {threshold}",
-                        fmt.wrap_in_color(Color::Green, name)
-                    )?;
+                    "Shared recovery for {} with threshold {threshold}",
+                    fmt.wrap_in_color(Color::Green, name)
+                )?;
 
-                    per_recipient_shares.iter().try_for_each(|(recipient, share)| {
+                per_recipient_shares
+                    .iter()
+                    .try_for_each(|(recipient, share)| {
                         // this means that a user disappeared completely, it should not happen
                         let user = self.users.get(recipient);
                         let name = if let Some(user) = user {
@@ -191,37 +196,43 @@ impl<'a> CLIDisplay for OtherShamirRecoveryInfoDisplay<'a> {
                         } else {
                             format_args!("uid={recipient}")
                         };
-                        writeln!(w,"\t- User {name} has {share} share{}",  maybe_plural(share.get()))
+                        writeln!(
+                            w,
+                            "\t- User {name} has {share} share{}",
+                            maybe_plural(share.get())
+                        )
                     })
-                },
-                OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
-                    user_id,
-                    threshold,
-                    per_recipient_shares,
-                    revoked_recipients,..
-                } => write!(
-                    w,
-                    "Shared recovery for {user_id} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
-                    user_id = fmt.wrap_in_color(Color::Yellow, user_id),
-                    maybe_plural = maybe_plural(revoked_recipients.len() as u8),
-                    revoked = revoked_recipients.iter().join(", "),
-                    revoked_len = revoked_recipients.len(),
-                    total = per_recipient_shares.len()
-                ),
-                OtherShamirRecoveryInfo::SetupButUnusable {
-                    user_id,
-                    threshold,
-                    per_recipient_shares,
-                    revoked_recipients,..
-                } => write!(
-                    w,
-                    "Unusable shared recovery for {user_id} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
-                    user_id = fmt.wrap_in_color(Color::Red, user_id),
-                    maybe_plural = maybe_plural(revoked_recipients.len() as u8),
-                    revoked = revoked_recipients.iter().join(", "),
-                    revoked_len = revoked_recipients.len(),
-                    total = per_recipient_shares.len()
-                ),
             }
+            OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
+                user_id,
+                threshold,
+                per_recipient_shares,
+                revoked_recipients,
+                ..
+            } => write!(
+                w,
+                "Shared recovery for {user_id} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                user_id = fmt.wrap_in_color(Color::Yellow, user_id),
+                maybe_plural = maybe_plural(revoked_recipients.len() as u8),
+                revoked = revoked_recipients.iter().join(", "),
+                revoked_len = revoked_recipients.len(),
+                total = per_recipient_shares.len()
+            ),
+            OtherShamirRecoveryInfo::SetupButUnusable {
+                user_id,
+                threshold,
+                per_recipient_shares,
+                revoked_recipients,
+                ..
+            } => write!(
+                w,
+                "Unusable shared recovery for {user_id} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                user_id = fmt.wrap_in_color(Color::Red, user_id),
+                maybe_plural = maybe_plural(revoked_recipients.len() as u8),
+                revoked = revoked_recipients.iter().join(", "),
+                revoked_len = revoked_recipients.len(),
+                total = per_recipient_shares.len()
+            ),
+        }
     }
 }

@@ -5,7 +5,7 @@ use libparsec_tests_lite::prelude::*;
 #[cfg_attr(not(target_os = "windows"), expect(unused))]
 use libparsec_types::prelude::*;
 
-use super::utils::{certificates, InstalledCertificates};
+use super::utils::{InstalledCertificates, certificates};
 
 #[parsec_test]
 async fn encrypt_decrypt(certificates: &InstalledCertificates) {

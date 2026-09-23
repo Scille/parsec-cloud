@@ -17,9 +17,9 @@ use libparsec_serialization_format::parsec_data;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{self as libparsec_types, IndexInt};
 use crate::{
-    serialization::{format_v0_dump, format_vx_load},
     DataError, DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, MaybeRedacted,
     RealmArchivingConfiguration, RealmRole, SequesterServiceID, UserID, UserProfile, VlobID,
+    serialization::{format_v0_dump, format_vx_load},
 };
 
 fn check_author_allow_root(
@@ -33,13 +33,13 @@ fn check_author_allow_root(
             return Err(DataError::UnexpectedAuthor {
                 expected: expected_author_id,
                 got: Some(author_id),
-            })
+            });
         }
         (CertificateSigner::Root, CertificateSigner::User(expected_author_id)) => {
             return Err(DataError::UnexpectedAuthor {
                 expected: expected_author_id,
                 got: None,
-            })
+            });
         }
         _ => (),
     }
@@ -253,22 +253,22 @@ impl UserCertificate {
         let r = Self::base_verify_and_load(signed, author_verify_key)?;
         check_author_allow_root(r.author, expected_author)?;
 
-        if let Some(expected_user_id) = expected_user_id {
-            if r.user_id != expected_user_id {
-                return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id,
-                    got: r.user_id,
-                });
-            }
+        if let Some(expected_user_id) = expected_user_id
+            && r.user_id != expected_user_id
+        {
+            return Err(DataError::UnexpectedUserID {
+                expected: expected_user_id,
+                got: r.user_id,
+            });
         }
 
-        if let Some(expected_human_handle) = expected_human_handle {
-            if r.human_handle.as_ref() != expected_human_handle {
-                return Err(DataError::UnexpectedHumanHandle {
-                    expected: Box::new(expected_human_handle.clone()),
-                    got: Box::new(r.human_handle.as_ref().to_owned()),
-                });
-            }
+        if let Some(expected_human_handle) = expected_human_handle
+            && r.human_handle.as_ref() != expected_human_handle
+        {
+            return Err(DataError::UnexpectedHumanHandle {
+                expected: Box::new(expected_human_handle.clone()),
+                got: Box::new(r.human_handle.as_ref().to_owned()),
+            });
         }
 
         Ok(r)
@@ -358,13 +358,13 @@ impl RevokedUserCertificate {
             });
         }
 
-        if let Some(expected_user_id) = expected_user_id {
-            if r.user_id != expected_user_id {
-                return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id,
-                    got: r.user_id,
-                });
-            }
+        if let Some(expected_user_id) = expected_user_id
+            && r.user_id != expected_user_id
+        {
+            return Err(DataError::UnexpectedUserID {
+                expected: expected_user_id,
+                got: r.user_id,
+            });
         }
 
         Ok(r)
@@ -423,13 +423,13 @@ impl UserUpdateCertificate {
             });
         }
 
-        if let Some(expected_user_id) = expected_user_id {
-            if r.user_id != expected_user_id {
-                return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id,
-                    got: r.user_id,
-                });
-            }
+        if let Some(expected_user_id) = expected_user_id
+            && r.user_id != expected_user_id
+        {
+            return Err(DataError::UnexpectedUserID {
+                expected: expected_user_id,
+                got: r.user_id,
+            });
         }
 
         Ok(r)
@@ -502,13 +502,13 @@ impl DeviceCertificate {
         let r = Self::base_verify_and_load(signed, author_verify_key)?;
         check_author_allow_root(r.author, expected_author)?;
 
-        if let Some(expected_device_id) = expected_device_id {
-            if r.device_id != expected_device_id {
-                return Err(DataError::UnexpectedDeviceID {
-                    expected: expected_device_id,
-                    got: r.device_id,
-                });
-            }
+        if let Some(expected_device_id) = expected_device_id
+            && r.device_id != expected_device_id
+        {
+            return Err(DataError::UnexpectedDeviceID {
+                expected: expected_device_id,
+                got: r.device_id,
+            });
         }
 
         Ok(r)
@@ -614,22 +614,22 @@ impl RealmRoleCertificate {
             });
         }
 
-        if let Some(expected_realm_id) = expected_realm_id {
-            if r.realm_id != expected_realm_id {
-                return Err(DataError::UnexpectedRealmID {
-                    expected: expected_realm_id,
-                    got: r.realm_id,
-                });
-            }
+        if let Some(expected_realm_id) = expected_realm_id
+            && r.realm_id != expected_realm_id
+        {
+            return Err(DataError::UnexpectedRealmID {
+                expected: expected_realm_id,
+                got: r.realm_id,
+            });
         }
 
-        if let Some(expected_user_id) = expected_user_id {
-            if r.user_id != expected_user_id {
-                return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id,
-                    got: r.user_id,
-                });
-            }
+        if let Some(expected_user_id) = expected_user_id
+            && r.user_id != expected_user_id
+        {
+            return Err(DataError::UnexpectedUserID {
+                expected: expected_user_id,
+                got: r.user_id,
+            });
         }
 
         Ok(r)
@@ -696,13 +696,13 @@ impl RealmKeyRotationCertificate {
             });
         }
 
-        if let Some(expected_realm_id) = expected_realm_id {
-            if r.realm_id != expected_realm_id {
-                return Err(DataError::UnexpectedRealmID {
-                    expected: expected_realm_id,
-                    got: r.realm_id,
-                });
-            }
+        if let Some(expected_realm_id) = expected_realm_id
+            && r.realm_id != expected_realm_id
+        {
+            return Err(DataError::UnexpectedRealmID {
+                expected: expected_realm_id,
+                got: r.realm_id,
+            });
         }
 
         Ok(r)
@@ -775,13 +775,13 @@ impl RealmNameCertificate {
             });
         }
 
-        if let Some(expected_realm_id) = expected_realm_id {
-            if r.realm_id != expected_realm_id {
-                return Err(DataError::UnexpectedRealmID {
-                    expected: expected_realm_id,
-                    got: r.realm_id,
-                });
-            }
+        if let Some(expected_realm_id) = expected_realm_id
+            && r.realm_id != expected_realm_id
+        {
+            return Err(DataError::UnexpectedRealmID {
+                expected: expected_realm_id,
+                got: r.realm_id,
+            });
         }
 
         Ok(r)
@@ -845,13 +845,13 @@ impl RealmArchivingCertificate {
             });
         }
 
-        if let Some(expected_realm_id) = expected_realm_id {
-            if r.realm_id != expected_realm_id {
-                return Err(DataError::UnexpectedRealmID {
-                    expected: expected_realm_id,
-                    got: r.realm_id,
-                });
-            }
+        if let Some(expected_realm_id) = expected_realm_id
+            && r.realm_id != expected_realm_id
+        {
+            return Err(DataError::UnexpectedRealmID {
+                expected: expected_realm_id,
+                got: r.realm_id,
+            });
         }
 
         Ok(r)
@@ -1162,13 +1162,13 @@ impl ShamirRecoveryShareCertificate {
             });
         }
 
-        if let Some(expected_recipient) = expected_recipient {
-            if r.recipient != expected_recipient {
-                return Err(DataError::UnexpectedUserID {
-                    expected: expected_recipient,
-                    got: r.recipient,
-                });
-            }
+        if let Some(expected_recipient) = expected_recipient
+            && r.recipient != expected_recipient
+        {
+            return Err(DataError::UnexpectedUserID {
+                expected: expected_recipient,
+                got: r.recipient,
+            });
         }
 
         Ok(r)

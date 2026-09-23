@@ -224,10 +224,10 @@ pub(crate) fn filter_close_handles(
     let mut guard = get_handles();
 
     for maybe_running in guard.iter_mut().skip(start_at as usize) {
-        if let RegisteredHandleItem::Open(item) = maybe_running {
-            if let FilterCloseHandle::Close = filter(item) {
-                *maybe_running = RegisteredHandleItem::Closed;
-            }
+        if let RegisteredHandleItem::Open(item) = maybe_running
+            && let FilterCloseHandle::Close = filter(item)
+        {
+            *maybe_running = RegisteredHandleItem::Closed;
         }
     }
 }

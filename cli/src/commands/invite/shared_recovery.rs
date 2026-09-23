@@ -5,7 +5,7 @@ use libparsec::{EmailAddress, InvitationEmailSentStatus, InvitationType, ParsecI
 
 use crate::{
     ui::compat::InvitationLink,
-    utils::{poll_server_for_new_certificates, StartedClient},
+    utils::{StartedClient, poll_server_for_new_certificates},
 };
 
 crate::clap_parser_with_shared_opts_builder!(

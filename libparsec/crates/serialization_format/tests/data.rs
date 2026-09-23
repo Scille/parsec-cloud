@@ -120,7 +120,9 @@ fn introduce_in_field() {
     assert_eq!(loaded_without, data_without);
 
     // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
-    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
+    let raw = hex!(
+        "83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3"
+    );
     let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
     assert_eq!(loaded_without, data_with);
 
@@ -166,7 +168,9 @@ fn deprecate_in_field() {
     assert_eq!(loaded_without, data);
 
     // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
-    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
+    let raw = hex!(
+        "83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3"
+    );
     let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
@@ -209,7 +213,9 @@ fn introduce_then_deprecate_in_field() {
     assert_eq!(loaded_without, data);
 
     // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
-    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
+    let raw = hex!(
+        "83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3"
+    );
     let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
     assert_eq!(loaded_without, data);
 

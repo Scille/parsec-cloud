@@ -155,31 +155,42 @@ impl<'a> CLIDisplay for SelfShamirRecoveryInfoDisplay<'a> {
                 per_recipient_shares,
                 ..
             } => {
-                writeln!(w, "Shared recovery {} with threshold {threshold}", fmt.wrap_in_color(Color::Green, "set up"))?;
+                writeln!(
+                    w,
+                    "Shared recovery {} with threshold {threshold}",
+                    fmt.wrap_in_color(Color::Green, "set up")
+                )?;
 
-                per_recipient_shares.iter().try_for_each(|(recipient, share)| {
-                    let user = self.users.get(recipient);
-                    // this means that a user disappeared completely, it should not happen
-                    let name = if let Some(user) = user {
-                        format_args!("{}", user.human_handle)
-                    } else {
-                        format_args!("uid={recipient}")
-                    };
-                    writeln!(w, "{BULLET_CHAR} User {name} has {share} share{plural}", plural=maybe_plural(share.get()))
-                })
-            },
+                per_recipient_shares
+                    .iter()
+                    .try_for_each(|(recipient, share)| {
+                        let user = self.users.get(recipient);
+                        // this means that a user disappeared completely, it should not happen
+                        let name = if let Some(user) = user {
+                            format_args!("{}", user.human_handle)
+                        } else {
+                            format_args!("uid={recipient}")
+                        };
+                        writeln!(
+                            w,
+                            "{BULLET_CHAR} User {name} has {share} share{plural}",
+                            plural = maybe_plural(share.get())
+                        )
+                    })
+            }
             SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
                 threshold,
                 per_recipient_shares,
                 revoked_recipients,
                 ..
-            } => write!(w,
-                 "Shared recovery {} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} ouf of {total} total recipients, with threshold {threshold})",
-                 fmt.wrap_in_color(Color::Yellow, "set up"),
-                 maybe_plural = maybe_plural(revoked_recipients.len() as u8),
-                 revoked = revoked_recipients.iter().join(", "),
-                 revoked_len = revoked_recipients.len(),
-                 total = per_recipient_shares.len()
+            } => write!(
+                w,
+                "Shared recovery {} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} ouf of {total} total recipients, with threshold {threshold})",
+                fmt.wrap_in_color(Color::Yellow, "set up"),
+                maybe_plural = maybe_plural(revoked_recipients.len() as u8),
+                revoked = revoked_recipients.iter().join(", "),
+                revoked_len = revoked_recipients.len(),
+                total = per_recipient_shares.len()
             ),
             SelfShamirRecoveryInfo::SetupButUnusable {
                 threshold,

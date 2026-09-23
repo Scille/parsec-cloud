@@ -50,7 +50,7 @@ pub async fn submitter_cancel_async_enrollment(
             //   unlikely this case is (how does the user know the ID in the first place?).
             Rep::Ok | Rep::EnrollmentNoLongerAvailable | Rep::EnrollmentNotFound => {}
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
             }
         }
     };

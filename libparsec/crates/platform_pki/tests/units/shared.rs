@@ -3,10 +3,10 @@
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{certificates, InstalledCertificates};
+use super::utils::{InstalledCertificates, certificates};
 use crate::{
-    get_root_x509_certificate_info_from_trustchain, verify_certificate,
     GetRootX509CertificateInfoFromTrustchainError, RootX509CertificateInfo, X509EndCertificate,
+    get_root_x509_certificate_info_from_trustchain, verify_certificate,
 };
 
 #[rstest]

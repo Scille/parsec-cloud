@@ -13,8 +13,8 @@ use std::sync::Arc;
 use libparsec_testbed::test_get_testbed;
 use libparsec_types::prelude::*;
 use rsa::RsaPrivateKey;
-use rustls_pki_types::pem::PemObject;
 use rustls_pki_types::CertificateDer;
+use rustls_pki_types::pem::PemObject;
 use sha2::Digest;
 
 use crate::{

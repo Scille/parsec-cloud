@@ -7,10 +7,10 @@
 use std::{path::PathBuf, sync::Arc};
 
 use crate::{
-    archive_device, list_available_devices, load_available_device, load_device, remove_device,
-    save_device, tests::utils::MockedAccountVaultOperations, update_device_change_authentication,
-    update_device_overwrite_server_addr, AvailableDevice, AvailableDeviceType,
-    DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy,
+    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+    DeviceSaveStrategy, archive_device, list_available_devices, load_available_device, load_device,
+    remove_device, save_device, tests::utils::MockedAccountVaultOperations,
+    update_device_change_authentication, update_device_overwrite_server_addr,
 };
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;

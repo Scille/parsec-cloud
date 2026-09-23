@@ -7,10 +7,10 @@ use std::{
 };
 
 use pyo3::{
+    Bound, IntoPyObjectExt,
     exceptions::PyValueError,
     prelude::*,
     types::{PyBytes, PyDict, PySet, PyType},
-    Bound, IntoPyObjectExt,
 };
 
 use libparsec_types::{CertificateSigner, IndexInt, UnsecureSkipValidationReason};

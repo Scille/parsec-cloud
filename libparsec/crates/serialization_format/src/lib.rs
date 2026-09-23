@@ -13,7 +13,7 @@ use std::{
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
 };
-use syn::{parse_macro_input, LitStr};
+use syn::{LitStr, parse_macro_input};
 
 fn path_from_str(path: &str) -> PathBuf {
     let manifest_dir_path: PathBuf = std::env::var("CARGO_MANIFEST_DIR")

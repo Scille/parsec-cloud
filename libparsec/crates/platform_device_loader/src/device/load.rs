@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_platform_filesystem::{load_file, LoadFileError};
+use libparsec_platform_filesystem::{LoadFileError, load_file};
 
 use std::{
     path::{Path, PathBuf},
@@ -12,9 +12,9 @@ use libparsec_types::prelude::*;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed;
 use crate::{
-    decrypt_device_file, device::load_ciphertext_key::load_ciphertext_key, AvailableDevice,
-    AvailableDeviceType, DecryptDeviceFileError, DeviceAccessStrategy, LoadCiphertextKeyError,
-    RemoteOperationServer,
+    AvailableDevice, AvailableDeviceType, DecryptDeviceFileError, DeviceAccessStrategy,
+    LoadCiphertextKeyError, RemoteOperationServer, decrypt_device_file,
+    device::load_ciphertext_key::load_ciphertext_key,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -54,13 +54,12 @@ pub async fn load_available_device(
     device_file: PathBuf,
 ) -> Result<AvailableDevice, LoadAvailableDeviceError> {
     #[cfg(feature = "test-with-testbed")]
-    if let Some(all_available_devices) = testbed::maybe_list_available_devices(config_dir) {
-        if let Some(result) = all_available_devices
+    if let Some(all_available_devices) = testbed::maybe_list_available_devices(config_dir)
+        && let Some(result) = all_available_devices
             .into_iter()
             .find(|c_access| c_access.key_file_path == device_file)
-        {
-            return Ok(result);
-        }
+    {
+        return Ok(result);
     }
 
     let file_content = load_file(&device_file).await?;

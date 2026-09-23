@@ -1,14 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_platform_filesystem::{rename_file, RenameFileError};
+use libparsec_platform_filesystem::{RenameFileError, rename_file};
 
 use std::path::{Path, PathBuf};
 
 use libparsec_types::prelude::*;
 
+use crate::ARCHIVE_DEVICE_EXT;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed;
-use crate::ARCHIVE_DEVICE_EXT;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ArchiveDeviceError {

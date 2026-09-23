@@ -15,7 +15,9 @@ use crate::{ClientConfig, PkiErrorDetail};
 pub enum SubmitAsyncEnrollmentError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("An enrollment request already exists for the requested email (submitted on: {submitted_on})")]
+    #[error(
+        "An enrollment request already exists for the requested email (submitted on: {submitted_on})"
+    )]
     EmailAlreadySubmitted { submitted_on: DateTime },
     #[error("A user already exists for the requested email")]
     EmailAlreadyEnrolled,

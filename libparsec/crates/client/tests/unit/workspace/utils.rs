@@ -6,9 +6,9 @@ use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_types::prelude::*;
 
 use crate::{
+    ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
     certif::CertificateOps,
     workspace::{LocalUserManifestWorkspaceEntry, WorkspaceExternalInfo, WorkspaceOps},
-    ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
 };
 
 pub(crate) async fn workspace_ops_factory(

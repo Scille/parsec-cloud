@@ -2,7 +2,7 @@
 
 use std::str::FromStr;
 
-use rand::{seq::SliceRandom, Rng};
+use rand::{Rng, seq::SliceRandom};
 
 use libparsec_crypto::SecretKey;
 

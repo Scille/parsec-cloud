@@ -6,8 +6,8 @@ use libparsec_types::prelude::*;
 
 use super::super::utils::make_config;
 use crate::{
-    submitter_get_async_enrollment_info, PendingAsyncEnrollmentInfo,
-    SubmitterGetAsyncEnrollmentInfoError,
+    PendingAsyncEnrollmentInfo, SubmitterGetAsyncEnrollmentInfoError,
+    submitter_get_async_enrollment_info,
 };
 
 #[parsec_test(testbed = "empty")]

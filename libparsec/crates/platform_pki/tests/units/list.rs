@@ -2,7 +2,7 @@
 
 use libparsec_tests_lite::prelude::*;
 
-use super::utils::{certificates, initialize_pki_system, InstalledCertificates};
+use super::utils::{InstalledCertificates, certificates, initialize_pki_system};
 use crate::{
     AvailablePkiCertificate, PkiCertificateGetValidationPathError, PkiSystemOpenCertificateError,
 };
@@ -29,7 +29,7 @@ async fn list_user_certificates(certificates: &InstalledCertificates) {
         expected_can_sign: bool,
         expected_can_encrypt: bool,
     ) {
-        let cert = certs.iter().find(|c| matches!(c, AvailablePkiCertificate::Valid { reference: ref r, .. } if r.hash == reference.hash));
+        let cert = certs.iter().find(|c| matches!(c, AvailablePkiCertificate::Valid { reference: r, .. } if r.hash == reference.hash));
         if let AvailablePkiCertificate::Valid { details, .. } = cert.expect("certificate not found")
         {
             p_assert_eq!(details.can_sign, expected_can_sign);

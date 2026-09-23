@@ -3,20 +3,20 @@
 use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{
+    WorkspaceHistoryOpsStartError as WorkspaceHistoryStartError,
     workspace_history::{
         WorkspaceHistoryEntryStat, WorkspaceHistoryFdCloseError, WorkspaceHistoryFdReadError,
         WorkspaceHistoryFdStatError, WorkspaceHistoryFileStat, WorkspaceHistoryOpenFileError,
         WorkspaceHistorySetTimestampOfInterestError, WorkspaceHistoryStatEntryError,
         WorkspaceHistoryStatFolderChildrenError,
     },
-    WorkspaceHistoryOpsStartError as WorkspaceHistoryStartError,
 };
 use libparsec_types::prelude::*;
 
 use crate::{
     device::DeviceAccessStrategy,
     handle::{
-        borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+        Handle, HandleItem, borrow_from_handle, register_handle_with_init, take_and_close_handle,
     },
 };
 

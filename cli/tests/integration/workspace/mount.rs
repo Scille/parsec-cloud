@@ -1,9 +1,9 @@
 use std::{os::linux::fs::MetadataExt, sync::Arc};
 
 use libparsec::{LocalDevice, OpenOptions, VlobID};
-use libparsec_tests_fixtures::{tmp_path, TmpPath};
+use libparsec_tests_fixtures::{TmpPath, tmp_path};
 use parsec_cli::{
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
     ui::Ui,
     utils::start_client,
 };

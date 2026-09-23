@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use libparsec::{tmp_path, EntryName, LocalDevice, TmpPath, VlobID};
+use libparsec::{EntryName, LocalDevice, TmpPath, VlobID, tmp_path};
 
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 use parsec_cli::{ui::Ui, utils::start_client};
 

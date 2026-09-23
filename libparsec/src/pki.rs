@@ -4,17 +4,17 @@ use std::sync::Arc;
 
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 pub use libparsec_platform_pki::{
-    x509::DistinguishedNameValue, AvailablePkiCertificate, PkiCertificateRequestPrivateKeyError,
-    PkiScwsConfig, PkiSystemInitError, PkiSystemListUserCertificateError,
-    PkiSystemOpenCertificateError, ShowCertificateSelectionDialogError, UserX509CertificateDetails,
-    UserX509CertificateLoadError,
+    AvailablePkiCertificate, PkiCertificateRequestPrivateKeyError, PkiScwsConfig,
+    PkiSystemInitError, PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
+    ShowCertificateSelectionDialogError, UserX509CertificateDetails, UserX509CertificateLoadError,
+    x509::DistinguishedNameValue,
 };
 use libparsec_types::prelude::*;
 
-use crate::handle::{register_handle, take_and_close_handle, Handle, HandleItem};
+use crate::handle::{Handle, HandleItem, register_handle, take_and_close_handle};
 
-pub async fn show_certificate_selection_dialog_windows_only(
-) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
+pub async fn show_certificate_selection_dialog_windows_only()
+-> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
     libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
 }
 
@@ -55,8 +55,8 @@ pub async fn pki_init_for_scws(
     Ok(())
 }
 
-pub(crate) async fn get_pki_system(
-) -> anyhow::Result<std::sync::Arc<libparsec_platform_pki::PkiSystem>> {
+pub(crate) async fn get_pki_system()
+-> anyhow::Result<std::sync::Arc<libparsec_platform_pki::PkiSystem>> {
     let guard = PKI_SYSTEM.lock().await;
     guard
         .as_ref()
@@ -64,8 +64,8 @@ pub(crate) async fn get_pki_system(
         .cloned()
 }
 
-pub async fn pki_list_user_certificates(
-) -> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
+pub async fn pki_list_user_certificates()
+-> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
     let pki_system = get_pki_system()
         .await
         .map_err(libparsec_platform_pki::PkiSystemListUserCertificateError::Internal)?;

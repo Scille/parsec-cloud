@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::platform::common::internal::Storage;
 use crate::RenameFileError;
+use crate::platform::common::internal::Storage;
 use std::path::Path;
 
 pub async fn rename_file(old: &Path, new: &Path) -> Result<(), RenameFileError> {

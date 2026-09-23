@@ -14,9 +14,9 @@ use libparsec_types::prelude::*;
 
 use super::utils::make_config;
 use crate::{
-    bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
     BootstrapOrganizationError, Client, EventBus,
-    OrganizationBootstrapFinalizeSaveLocalDeviceError,
+    OrganizationBootstrapFinalizeSaveLocalDeviceError, bootstrap_organization,
+    test_organization_bootstrap_finalize_ctx_factory,
 };
 
 // should be the same as bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN

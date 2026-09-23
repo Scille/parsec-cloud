@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 
 use crate::{
-    deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, RsaPrivateKey,
-    SecretKey, SequesterKeySize,
+    CryptoError, CryptoResult, RsaPrivateKey, SecretKey, SequesterKeySize, deserialize_with_armor,
+    serialize_with_armor,
 };
 
 /*
@@ -63,7 +63,7 @@ impl SequesterPrivateKeyDer {
 
         let mut decrypted_key_der = vec![0; cipherkey.len()];
         let mut decrypter =
-            openssl::encrypt::Decrypter::new(&self.0 .0).expect("Cannot create decrypter");
+            openssl::encrypt::Decrypter::new(&self.0.0).expect("Cannot create decrypter");
         decrypter
             .set_rsa_padding(Padding::PKCS1_OAEP)
             .expect("Cannot set RSA padding to OAEP");
@@ -251,7 +251,7 @@ impl SequesterSigningKeyDer {
         // detection when verifying.
         // Rustcrypto uses maximum salt length, so we do the same, to not call `set_rsa_pss_saltlen()`.
         let mut signer =
-            Signer::new(MessageDigest::sha256(), &self.0 .0).expect("Unable to build a Signer");
+            Signer::new(MessageDigest::sha256(), &self.0.0).expect("Unable to build a Signer");
 
         signer
             .set_rsa_padding(Padding::PKCS1_PSS)

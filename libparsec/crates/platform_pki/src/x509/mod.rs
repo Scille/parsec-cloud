@@ -5,15 +5,15 @@ mod extensions;
 
 use rsa::pkcs8::DecodePublicKey;
 use x509_cert::{
+    Version,
     der::{Decode, Encode, Error as DERError, SliceReader},
     time::Validity,
-    Version,
 };
 
 use libparsec_types::prelude::*;
 
 pub(crate) use distinguished_name::extract_common_name_from_subject;
-pub use distinguished_name::{extract_dn_list_from_rnd_seq, DistinguishedNameValue};
+pub use distinguished_name::{DistinguishedNameValue, extract_dn_list_from_rnd_seq};
 pub(crate) use extensions::{Extensions, SubjectAltName};
 
 error_set::error_set! {

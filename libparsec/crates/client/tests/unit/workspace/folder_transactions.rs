@@ -7,8 +7,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::{ls, workspace_ops_factory, workspace_ops_with_prevent_sync_pattern_factory};
 use crate::{
-    workspace::{EntryStat, MoveEntryMode, OutboundSyncOutcome},
     EventWorkspaceOpsOutboundSyncNeeded, WorkspaceOps,
+    workspace::{EntryStat, MoveEntryMode, OutboundSyncOutcome},
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -229,9 +229,11 @@ async fn add_confined_entry(
         .await
         .expect("unable to retrieve local manifest");
     if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
-        assert!(folder_manifest
-            .local_confinement_points
-            .contains(&confined_child_id));
+        assert!(
+            folder_manifest
+                .local_confinement_points
+                .contains(&confined_child_id)
+        );
     } else {
         panic!("parent expected to be a folder")
     }
@@ -279,12 +281,16 @@ async fn add_confined_entry(
         .await
         .expect("unable to retrieve local manifest");
     if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
-        assert!(folder_manifest
-            .local_confinement_points
-            .contains(&confined_child_id));
-        assert!(!folder_manifest
-            .local_confinement_points
-            .contains(&not_confined_child_id));
+        assert!(
+            folder_manifest
+                .local_confinement_points
+                .contains(&confined_child_id)
+        );
+        assert!(
+            !folder_manifest
+                .local_confinement_points
+                .contains(&not_confined_child_id)
+        );
     } else {
         panic!("parent expected to be a folder")
     }
@@ -329,18 +335,26 @@ async fn add_confined_entry(
         .await
         .expect("unable to retrieve local manifest");
     if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
-        assert!(folder_manifest
-            .local_confinement_points
-            .contains(&confined_child_id));
-        assert!(!folder_manifest
-            .local_confinement_points
-            .contains(&not_confined_child_id));
-        assert!(!folder_manifest
-            .remote_confinement_points
-            .contains(&confined_child_id));
-        assert!(!folder_manifest
-            .remote_confinement_points
-            .contains(&not_confined_child_id));
+        assert!(
+            folder_manifest
+                .local_confinement_points
+                .contains(&confined_child_id)
+        );
+        assert!(
+            !folder_manifest
+                .local_confinement_points
+                .contains(&not_confined_child_id)
+        );
+        assert!(
+            !folder_manifest
+                .remote_confinement_points
+                .contains(&confined_child_id)
+        );
+        assert!(
+            !folder_manifest
+                .remote_confinement_points
+                .contains(&not_confined_child_id)
+        );
     } else {
         panic!("parent expected to be a folder")
     }

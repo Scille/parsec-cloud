@@ -1,12 +1,12 @@
 #[cfg(target_family = "unix")]
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 #[cfg(target_family = "unix")]
 use parsec_cli::ui::Ui;
 
 #[cfg(target_family = "unix")]
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_platform_filesystem::{load_file, remove_file, LoadFileError};
+use libparsec_platform_filesystem::{LoadFileError, load_file, remove_file};
 use std::path::Path;
 
 use libparsec_types::prelude::*;
@@ -8,9 +8,9 @@ use libparsec_types::prelude::*;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed;
 use crate::{
-    decrypt_device_file, device::load_ciphertext_key::load_ciphertext_key, AvailableDevice,
-    DecryptDeviceFileError, DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError,
-    RemoteOperationServer, SaveDeviceError,
+    AvailableDevice, DecryptDeviceFileError, DeviceAccessStrategy, DeviceSaveStrategy,
+    LoadCiphertextKeyError, RemoteOperationServer, SaveDeviceError, decrypt_device_file,
+    device::load_ciphertext_key::load_ciphertext_key,
 };
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateDeviceError {
@@ -91,10 +91,10 @@ pub async fn update_device(
     let available_device =
         super::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
 
-    if current_key_file != new_key_file {
-        if let Err(err) = remove_file(current_key_file).await {
-            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
-        }
+    if current_key_file != new_key_file
+        && let Err(err) = remove_file(current_key_file).await
+    {
+        log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
     }
 
     Ok(available_device)

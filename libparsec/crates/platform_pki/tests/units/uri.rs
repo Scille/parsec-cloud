@@ -3,7 +3,7 @@
 use libparsec_tests_lite::parsec_test;
 use x509_cert::der::Decode;
 
-use crate::test::utils::{certificates, initialize_pki_system, InstalledCertificates};
+use crate::test::utils::{InstalledCertificates, certificates, initialize_pki_system};
 
 /// Check that serial number contained in the certificate reference is similar to the serial number in
 /// the certificate DER.
@@ -84,6 +84,9 @@ async fn ensure_corresponding_serial_number(certificates: &InstalledCertificates
 
         let (issuer, serial) = crate::platform::get_issuer_serial_from_pkcs11_uri(&mut got_uri);
         assert_eq!(cert_info_issuer, issuer);
-        assert_eq!(cert_info_serial, serial, "get_issuer_serial_from_pkcs11_uri transform the serial to be similar to the one obtain from cert info");
+        assert_eq!(
+            cert_info_serial, serial,
+            "get_issuer_serial_from_pkcs11_uri transform the serial to be similar to the one obtain from cert info"
+        );
     }
 }

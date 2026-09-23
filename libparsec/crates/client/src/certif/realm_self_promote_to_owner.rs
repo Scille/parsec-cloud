@@ -7,10 +7,9 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    greater_timestamp,
-    store::{CertifStoreError, GetCertificateError},
     CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset, InvalidCertificateError,
-    UpTo,
+    UpTo, greater_timestamp,
+    store::{CertifStoreError, GetCertificateError},
 };
 use crate::EventTooMuchDriftWithServerClock;
 
@@ -121,7 +120,9 @@ pub enum CertifSelfPromoteToOwnerError {
     ActiveOwnerAlreadyExists,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

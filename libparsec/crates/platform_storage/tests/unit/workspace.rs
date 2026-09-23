@@ -10,15 +10,15 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
+    PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
     workspace::{
         DebugBlock, DebugChunk, DebugDump, DebugVlob, MarkPreventSyncPatternFullyAppliedError,
         UpdateManifestData, WorkspaceOutboundSyncBacklog,
     },
-    PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
 };
 
 use super::{
-    workspace_storage_non_speculative_init, workspace_storage_remove_data, WorkspaceStorage,
+    WorkspaceStorage, workspace_storage_non_speculative_init, workspace_storage_remove_data,
 };
 
 #[cfg(target_arch = "wasm32")]

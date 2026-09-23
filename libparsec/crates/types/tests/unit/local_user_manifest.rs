@@ -4,7 +4,7 @@
 // decorator, so we must do global ignore instead :(
 #![allow(clippy::too_many_arguments)]
 
-use crate::fixtures::{alice, timestamp, Device};
+use crate::fixtures::{Device, alice, timestamp};
 use crate::prelude::*;
 use libparsec_tests_lite::prelude::*;
 

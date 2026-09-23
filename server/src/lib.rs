@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyException,
-    prelude::{pymodule, PyModule, PyResult, Python},
-    types::{PyAnyMethods, PyModuleMethods, PyTuple},
     Bound,
+    exceptions::PyException,
+    prelude::{PyModule, PyResult, Python, pymodule},
+    types::{PyAnyMethods, PyModuleMethods, PyTuple},
 };
 
 mod addrs;

@@ -22,12 +22,12 @@ use libparsec_platform_device_loader::{LoadDeviceError, RemoteOperationServer};
 use libparsec_types::prelude::*;
 
 use crate::{
-    handle::{
-        borrow_from_handle, iter_opened_handles, register_handle, take_and_close_handle, Handle,
-        HandleItem,
-    },
     AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy,
     ParsecInvitationAddrAndRedirectionURL,
+    handle::{
+        Handle, HandleItem, borrow_from_handle, iter_opened_handles, register_handle,
+        take_and_close_handle,
+    },
 };
 
 // TODO: must reimplement this structure since the bindings doesn't support
@@ -385,7 +385,9 @@ pub enum AccountCreateRegistrationDeviceError {
     Internal(#[from] anyhow::Error),
     #[error("error while attempting to use the keyring: {0}")]
     KeyringError(anyhow::Error),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

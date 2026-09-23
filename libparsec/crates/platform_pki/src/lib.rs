@@ -48,8 +48,8 @@ pub enum ShowCertificateSelectionDialogError {
 // This is specific to windows, it cannot be replicated on other platform.
 // Instead, we likely need to go the manual way and show a custom dialog on the client side with a
 // list of certificate that we retrieve from the platform certstore.
-pub fn show_certificate_selection_dialog_windows_only(
-) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
+pub fn show_certificate_selection_dialog_windows_only()
+-> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
     #[cfg(target_os = "windows")]
     {
         platform::show_certificate_selection_dialog_windows_only()

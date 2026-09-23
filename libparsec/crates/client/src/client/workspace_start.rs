@@ -7,9 +7,9 @@ use libparsec_types::prelude::*;
 
 use super::Client;
 use crate::{
+    WorkspaceOps,
     monitors::{start_workspace_inbound_sync_monitor, start_workspace_outbound_sync_monitor},
     workspace::WorkspaceExternalInfo,
-    WorkspaceOps,
 };
 
 #[derive(Debug, thiserror::Error)]

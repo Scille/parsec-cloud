@@ -6,10 +6,9 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    submit_async_enrollment, submitter_finalize_async_enrollment,
-    submitter_get_async_enrollment_info, submitter_list_local_async_enrollments,
     AsyncEnrollmentIdentitySystem, AsyncEnrollmentUntrusted, ClientAcceptTosError,
-    PendingAsyncEnrollmentInfo,
+    PendingAsyncEnrollmentInfo, submit_async_enrollment, submitter_finalize_async_enrollment,
+    submitter_get_async_enrollment_info, submitter_list_local_async_enrollments,
 };
 
 use super::utils::MockedAsyncEnrollmentIdentityStrategy;

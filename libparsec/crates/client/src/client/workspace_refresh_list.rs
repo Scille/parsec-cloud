@@ -328,7 +328,9 @@ pub async fn refresh_workspaces_list(
         )
         .await
         {
-            log::warn!("Cannot remove local database for (no longer needed) workspace {workspace_id}: {err}")
+            log::warn!(
+                "Cannot remove local database for (no longer needed) workspace {workspace_id}: {err}"
+            )
         }
     }
 

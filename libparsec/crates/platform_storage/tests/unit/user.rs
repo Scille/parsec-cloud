@@ -7,7 +7,7 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::{user_storage_non_speculative_init, UserStorage};
+use super::{UserStorage, user_storage_non_speculative_init};
 
 #[cfg(target_arch = "wasm32")]
 libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser);
@@ -227,9 +227,11 @@ async fn start_with_on_disk_db(tmp_path: TmpPath, alice: &Device) {
     storage.stop().await.unwrap();
 
     // Check the db files have been created
-    assert!(tmp_path
-        .join("de10a11cec0010000000000000000000/user_data-v1.sqlite")
-        .exists());
+    assert!(
+        tmp_path
+            .join("de10a11cec0010000000000000000000/user_data-v1.sqlite")
+            .exists()
+    );
 
     // Start when the db file already exists
     let storage = UserStorage::start(&tmp_path, &alice.local_device())

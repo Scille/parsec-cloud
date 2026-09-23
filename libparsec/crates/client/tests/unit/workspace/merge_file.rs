@@ -5,7 +5,7 @@ use std::num::NonZeroU64;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::workspace::merge::{merge_local_file_manifest, MergeLocalFileManifestOutcome};
+use crate::workspace::merge::{MergeLocalFileManifestOutcome, merge_local_file_manifest};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn no_remote_change(

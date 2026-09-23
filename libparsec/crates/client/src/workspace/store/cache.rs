@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
-    server_fetch::{server_fetch_child_manifest, ServerFetchManifestError},
+    server_fetch::{ServerFetchManifestError, server_fetch_child_manifest},
 };
 
 use super::per_manifest_update_lock::PerManifestUpdateLock;
@@ -198,7 +198,7 @@ pub(super) async fn populate_cache_from_local_storage(
                 Err(err) => {
                     return Err(PopulateCacheFromLocalStorageError::Internal(
                         anyhow::anyhow!("Local database contains invalid data: {}", err),
-                    ))
+                    ));
                 }
             }
         }
@@ -251,12 +251,12 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
             PopulateCacheFromLocalStorageError::EntryNotFound => (),
             // Actual errors
             PopulateCacheFromLocalStorageError::Stopped => {
-                return Err(PopulateCacheFromLocalStorageOrServerError::Stopped)
+                return Err(PopulateCacheFromLocalStorageOrServerError::Stopped);
             }
             PopulateCacheFromLocalStorageError::Internal(err) => {
                 return Err(err
                     .context("cannot populate cache from local storage")
-                    .into())
+                    .into());
             }
         },
     }
@@ -395,12 +395,12 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                         PopulateCacheFromLocalStorageError::EntryNotFound => continue,
                         // Actual errors
                         PopulateCacheFromLocalStorageError::Stopped => {
-                            return Err(PopulateCacheFromLocalStorageOrServerError::Stopped)
+                            return Err(PopulateCacheFromLocalStorageOrServerError::Stopped);
                         }
                         PopulateCacheFromLocalStorageError::Internal(err) => {
                             return Err(err
                                 .context("cannot populate cache from local storage")
-                                .into())
+                                .into());
                         }
                     },
                 };

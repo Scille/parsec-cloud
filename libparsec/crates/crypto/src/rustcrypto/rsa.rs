@@ -2,8 +2,8 @@
 
 use rand::rngs::OsRng;
 use rsa::{
-    pkcs8::{DecodePrivateKey, EncodePrivateKey},
     PublicKeyParts,
+    pkcs8::{DecodePrivateKey, EncodePrivateKey},
 };
 
 use crate::{CryptoError, CryptoResult};

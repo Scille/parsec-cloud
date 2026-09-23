@@ -3,7 +3,7 @@
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{certificates, InstalledCertificates};
+use super::utils::{InstalledCertificates, certificates};
 
 #[cfg(target_os = "windows")]
 #[parsec_test]

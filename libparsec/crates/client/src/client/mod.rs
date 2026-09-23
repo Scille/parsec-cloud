@@ -55,9 +55,9 @@ use crate::{
     config::{ClientConfig, ServerOrganizationConfig},
     event_bus::EventBus,
     monitors::{
-        start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
+        Monitor, start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
         start_workspaces_bootstrap_monitor, start_workspaces_process_needs_monitor,
-        start_workspaces_refresh_list_monitor, Monitor,
+        start_workspaces_refresh_list_monitor,
     },
     user::UserOps,
     workspace::WorkspaceGetOutboundSyncBacklogError,
@@ -71,8 +71,8 @@ pub use organization_info::{
     ClientGetOrganizationBootstrapDateError, ClientOrganizationInfoError, OrganizationInfo,
 };
 pub use recovery_device::{
-    import_recovery_device, register_new_device, ClientExportRecoveryDeviceError,
-    ImportRecoveryDeviceError, RegisterNewDeviceError,
+    ClientExportRecoveryDeviceError, ImportRecoveryDeviceError, RegisterNewDeviceError,
+    import_recovery_device, register_new_device,
 };
 
 // Re-exposed for public API

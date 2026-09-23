@@ -3,7 +3,7 @@
 use std::fmt::Debug;
 
 use crate::{PkiPrivateKeyDecryptError, PkiPrivateKeySignError};
-use libparsec_types::prelude::{anyhow, Bytes, PKIEncryptionAlgorithm, PkiSignatureAlgorithm};
+use libparsec_types::prelude::{Bytes, PKIEncryptionAlgorithm, PkiSignatureAlgorithm, anyhow};
 
 #[derive(Debug)]
 pub struct PlatformPkiPrivateKey(pub(super) scwsapi::PrivateKey);
@@ -30,7 +30,7 @@ impl PlatformPkiPrivateKey {
                         PkiSignatureAlgorithm::RsassaPssSha256
                     }
                     scwsapi::SignatureAlgorithm::Pkcs1Sha256 => {
-                        return Err(PkiPrivateKeySignError::UnsupportedAlgorithm)
+                        return Err(PkiPrivateKeySignError::UnsupportedAlgorithm);
                     }
                 };
                 Ok((algo, signature.into()))

@@ -8,9 +8,9 @@ use std::{path::PathBuf, sync::Arc};
 
 use super::utils::MockedAccountVaultOperations;
 use crate::{
-    archive_device, load_device, remove_device, save_device, update_device_overwrite_server_addr,
     AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy,
-    DevicePrimaryProtectionStrategy, DeviceSaveStrategy, LoadDeviceError,
+    DevicePrimaryProtectionStrategy, DeviceSaveStrategy, LoadDeviceError, archive_device,
+    load_device, remove_device, save_device, update_device_overwrite_server_addr,
 };
 
 use libparsec_client_connection::ConnectionError;

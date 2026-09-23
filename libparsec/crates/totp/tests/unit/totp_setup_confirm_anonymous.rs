@@ -5,7 +5,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::anonymous_cmds_factory;
-use crate::{totp_setup_confirm_anonymous, TotpSetupConfirmAnonymousError};
+use crate::{TotpSetupConfirmAnonymousError, totp_setup_confirm_anonymous};
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {

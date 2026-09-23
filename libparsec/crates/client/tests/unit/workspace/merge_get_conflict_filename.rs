@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::{get_conflict_filename, FILENAME_CONFLICT_SUFFIX};
+use super::{FILENAME_CONFLICT_SUFFIX, get_conflict_filename};
 
 #[test]
 fn simple_with_extension() {
@@ -147,9 +147,9 @@ fn name_too_long() {
     // EntryName is max 255 bytes long
     let expected_suffix = " (Parsec - name conflict)";
     assert_eq!(expected_suffix.len(), 25); // Sanity check, see below
-                                           // When there is not enough space, name is truncated multiple times with
-                                           // a 10 characters step until it fits.
-                                           // Hence with our suffix, 30 characters should have been removed.
+    // When there is not enough space, name is truncated multiple times with
+    // a 10 characters step until it fits.
+    // Hence with our suffix, 30 characters should have been removed.
     let name: EntryName = "a".repeat(255).parse().unwrap();
     p_assert_eq!(name.as_ref().len(), 255); // Sanity check
     let expected: EntryName = format!("{}{}", &name.as_ref()[..255 - 30], expected_suffix)
@@ -165,9 +165,9 @@ fn name_too_long_with_extension() {
     // EntryName is max 255 bytes long
     let expected_suffix = " (Parsec - name conflict)";
     assert_eq!(expected_suffix.len(), 25); // Sanity check, see below
-                                           // When there is not enough space, name is truncated multiple times with
-                                           // a 10 characters step until it fits.
-                                           // Hence with our suffix, 30 characters should have been removed.
+    // When there is not enough space, name is truncated multiple times with
+    // a 10 characters step until it fits.
+    // Hence with our suffix, 30 characters should have been removed.
     let name: EntryName = format!("{}.txt", "a".repeat(251)).parse().unwrap();
     p_assert_eq!(name.as_ref().len(), 255); // Sanity check
     let expected: EntryName = format!("{}{}.txt", "a".repeat(251 - 30), expected_suffix)
@@ -183,9 +183,9 @@ fn name_too_long_with_leading_dot() {
     // EntryName is max 255 bytes long
     let expected_suffix = " (Parsec - name conflict)";
     assert_eq!(expected_suffix.len(), 25); // Sanity check, see below
-                                           // When there is not enough space, name is truncated multiple times with
-                                           // a 10 characters step until it fits.
-                                           // Hence with our suffix, 30 characters should have been removed.
+    // When there is not enough space, name is truncated multiple times with
+    // a 10 characters step until it fits.
+    // Hence with our suffix, 30 characters should have been removed.
     let name: EntryName = format!(".{}", "a".repeat(254)).parse().unwrap();
     p_assert_eq!(name.as_ref().len(), 255); // Sanity check
     let expected: EntryName = format!(".{}{}", "a".repeat(254 - 30), expected_suffix)
@@ -201,9 +201,9 @@ fn name_too_long_with_leading_dot_and_extension() {
     // EntryName is max 255 bytes long
     let expected_suffix = " (Parsec - name conflict)";
     assert_eq!(expected_suffix.len(), 25); // Sanity check, see below
-                                           // When there is not enough space, name is truncated multiple times with
-                                           // a 10 characters step until it fits.
-                                           // Hence with our suffix, 30 characters should have been removed.
+    // When there is not enough space, name is truncated multiple times with
+    // a 10 characters step until it fits.
+    // Hence with our suffix, 30 characters should have been removed.
     let name: EntryName = format!(".{}.txt", "a".repeat(250)).parse().unwrap();
     p_assert_eq!(name.as_ref().len(), 255); // Sanity check
     let expected: EntryName = format!(".{}{}.txt", "a".repeat(250 - 30), expected_suffix)

@@ -22,8 +22,8 @@ use libparsec_types::prelude::*;
 
 use crate::ParsecAsyncEnrollmentAddrAndRedirectionURL;
 use crate::{
-    handle::{borrow_from_handle, Handle, HandleItem},
     ClientConfig, DeviceSaveStrategy,
+    handle::{Handle, HandleItem, borrow_from_handle},
 };
 
 mod strategy {
@@ -39,7 +39,7 @@ mod strategy {
         OpenBaoCmds, OpenBaoFetchOpaqueKeyError, OpenBaoSignError, OpenBaoUploadOpaqueKeyError,
         OpenBaoVerifyError,
     };
-    use libparsec_platform_async::{pretend_future_is_send_on_web, PinBoxFutureResult};
+    use libparsec_platform_async::{PinBoxFutureResult, pretend_future_is_send_on_web};
     use libparsec_platform_pki::PkiCertificateGetValidationPathError as PKIGetValidationPathError;
     use libparsec_types::prelude::*;
 
@@ -110,7 +110,7 @@ mod strategy {
                     pki_sign_private_key_handle,
                     pki_encrypt_private_key_handle,
                 } => {
-                    use crate::handle::{borrow_from_handle, HandleItem};
+                    use crate::handle::{HandleItem, borrow_from_handle};
 
                     let (pki_sign_certificate, pki_sign_private_key) =
                         borrow_from_handle(pki_sign_private_key_handle, |x| match x {
@@ -150,11 +150,9 @@ mod strategy {
                             )
                             .map_err(|e| anyhow::anyhow!("Cannot load certificate info: {}", e))?;
 
-                        let human_handle = cert_info.human_handle().map_err(|e| {
+                        cert_info.human_handle().map_err(|e| {
                             anyhow::anyhow!("Cannot extract human handle from certificate: {}", e)
-                        })?;
-
-                        human_handle
+                        })?
                     };
 
                     Ok(Box::new(SubmitAsyncEnrollmentPKIIdentityStrategy {
@@ -408,7 +406,7 @@ mod strategy {
                     pki_sign_private_key_handle,
                     pki_encrypt_private_key_handle,
                 } => {
-                    use crate::handle::{borrow_from_handle, HandleItem};
+                    use crate::handle::{HandleItem, borrow_from_handle};
 
                     let (pki_sign_certificate, pki_sign_private_key) =
                         borrow_from_handle(pki_sign_private_key_handle, |x| match x {
@@ -591,7 +589,7 @@ mod strategy {
                     AsyncEnrollmentLocalPendingIdentitySystem::PKI { .. } => {
                         return Err(SubmitterFinalizeAsyncEnrollmentError::Internal(
                             anyhow::anyhow!("Identity system mismatch: expected OpenBao, got PKI"),
-                        ))
+                        ));
                     }
                 };
                 cmds.fetch_opaque_key(&openbao_ciphertext_key_path)
@@ -728,7 +726,7 @@ mod strategy {
                             "Signature is valid, but doesn't come from the expected author (expected `{}` according to the X509 certificate, got `{}`)",
                             expected_author,
                             cert_first_email
-                        )
+                        ),
                     ));
                 }
 

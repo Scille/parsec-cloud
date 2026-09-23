@@ -3,13 +3,13 @@
 use blake2::Blake2bMac;
 use digest::Mac;
 use generic_array::{
-    typenum::{
-        consts::{U32, U64},
-        IsLessOrEqual, LeEq, NonZero,
-    },
     ArrayLength, GenericArray,
+    typenum::{
+        IsLessOrEqual, LeEq, NonZero,
+        consts::{U32, U64},
+    },
 };
-use rand::{rngs::OsRng, RngCore};
+use rand::{RngCore, rngs::OsRng};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 

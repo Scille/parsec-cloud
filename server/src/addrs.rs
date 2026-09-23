@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyValueError,
-    prelude::{pyclass, pymethods, IntoPyObject, PyResult, Python},
-    types::{PyAnyMethods, PyBytes, PyDict, PyDictMethods, PyType},
     Bound, BoundObject, Py, PyAny,
+    exceptions::PyValueError,
+    prelude::{IntoPyObject, PyResult, Python, pyclass, pymethods},
+    types::{PyAnyMethods, PyBytes, PyDict, PyDictMethods, PyType},
 };
 use std::str::FromStr;
 

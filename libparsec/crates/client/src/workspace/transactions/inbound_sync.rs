@@ -82,11 +82,12 @@
 ///   file in conflict from its parent \o/
 use std::sync::Arc;
 
-use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError};
+use libparsec_client_connection::{ConnectionError, protocol::authenticated_cmds};
 use libparsec_types::prelude::*;
 
 use super::super::WorkspaceOps;
 use crate::{
+    EventWorkspaceOpsInboundSyncDone, InvalidBlockAccessError,
     certif::{
         CertifValidateManifestError, CertificateOps, InvalidCertificateError,
         InvalidKeysBundleError, InvalidManifestError,
@@ -98,7 +99,6 @@ use crate::{
             RetrievePathFromIDEntry, SyncUpdater, WorkspaceStore, WorkspaceStoreOperationError,
         },
     },
-    EventWorkspaceOpsInboundSyncDone, InvalidBlockAccessError,
 };
 
 pub type WorkspaceGetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
@@ -131,7 +131,9 @@ pub enum WorkspaceSyncError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     // No `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -171,7 +173,7 @@ pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), Workspac
             Rep::RealmNotFound => return Err(WorkspaceSyncError::NoRealm),
             Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
             }
         }
     };
@@ -342,19 +344,19 @@ pub async fn inbound_sync(
             Err(ForUpdateSyncError::WouldBlock) => return Ok(InboundSyncOutcome::EntryIsBusy),
             Err(ForUpdateSyncError::Offline(e)) => return Err(WorkspaceSyncError::Offline(e)),
             Err(ForUpdateSyncError::InvalidKeysBundle(e)) => {
-                return Err(WorkspaceSyncError::InvalidKeysBundle(e))
+                return Err(WorkspaceSyncError::InvalidKeysBundle(e));
             }
             Err(ForUpdateSyncError::InvalidCertificate(e)) => {
-                return Err(WorkspaceSyncError::InvalidCertificate(e))
+                return Err(WorkspaceSyncError::InvalidCertificate(e));
             }
             Err(ForUpdateSyncError::InvalidManifest(e)) => {
-                return Err(WorkspaceSyncError::InvalidManifest(e))
+                return Err(WorkspaceSyncError::InvalidManifest(e));
             }
             Err(ForUpdateSyncError::NoRealmAccess) => return Err(WorkspaceSyncError::NotAllowed),
             Err(ForUpdateSyncError::RealmDeleted) => return Err(WorkspaceSyncError::RealmDeleted),
             Err(ForUpdateSyncError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncError::Internal(err)) => {
-                return Err(err.context("cannot lock entry for update").into())
+                return Err(err.context("cannot lock entry for update").into());
             }
         }
     };

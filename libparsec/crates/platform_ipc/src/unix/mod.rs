@@ -6,7 +6,7 @@ use std::fs::{File, OpenOptions};
 use std::os::unix::io::AsRawFd;
 use std::path::Path;
 
-use super::{get_lock_file_path, TryLockDeviceForUseError};
+use super::{TryLockDeviceForUseError, get_lock_file_path};
 
 // Note exclusive lock gets automatically released on file close (i.e. on drop).
 #[derive(Debug)]

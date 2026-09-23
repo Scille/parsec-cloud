@@ -4,10 +4,10 @@ use std::{path::Path, sync::Arc};
 
 use super::utils::{MockedAccountVaultOperations, MockedOpenBaoOperations, MockedPkiOperations};
 use crate::{
-    load_available_device, load_device, save_device, AvailableDevice, AvailableDeviceType,
-    DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+    load_available_device, load_device, save_device,
 };
-use libparsec_tests_fixtures::{tmp_path, TmpPath};
+use libparsec_tests_fixtures::{TmpPath, tmp_path};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 

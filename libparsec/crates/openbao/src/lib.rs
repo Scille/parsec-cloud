@@ -41,7 +41,9 @@ pub enum OpenBaoVerifyError {
     BadSignature,
     #[error("Author (OpenBao entity ID `{openbao_entity_id}`) has no email address defined")]
     AuthorOpenBaoEntityHasNoEmail { openbao_entity_id: String },
-    #[error("Signature is valid, but doesn't come from the expected author (expected `{expected}` according to OpenBao, got `{got}`)")]
+    #[error(
+        "Signature is valid, but doesn't come from the expected author (expected `{expected}` according to OpenBao, got `{got}`)"
+    )]
     UnexpectedAuthor { expected: String, got: String },
     #[error("Invalid OpenBao server URL: {0}")]
     BadURL(anyhow::Error),

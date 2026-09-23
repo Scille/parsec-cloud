@@ -160,17 +160,14 @@ pub(super) fn merge_local_file_manifest(
             timestamp: remote_origin_timestamp,
         },
     ) = (&local.origin, &remote.origin)
+        && local_channel_id == remote_channel_id
     {
-        if local_channel_id == remote_channel_id {
-            if local_origin_timestamp >= remote_origin_timestamp {
-                let mut new_local = local.to_owned();
-                new_local.base = remote;
-                return MergeLocalFileManifestOutcome::Merged(new_local);
-            } else {
-                return MergeLocalFileManifestOutcome::Merged(LocalFileManifest::from_remote(
-                    remote,
-                ));
-            }
+        if local_origin_timestamp >= remote_origin_timestamp {
+            let mut new_local = local.to_owned();
+            new_local.base = remote;
+            return MergeLocalFileManifestOutcome::Merged(new_local);
+        } else {
+            return MergeLocalFileManifestOutcome::Merged(LocalFileManifest::from_remote(remote));
         }
     }
 

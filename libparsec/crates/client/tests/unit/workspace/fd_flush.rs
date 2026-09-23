@@ -7,8 +7,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{EntryStat, OpenOptions, WorkspaceFdFlushError},
     EventWorkspaceOpsOutboundSyncNeeded,
+    workspace::{EntryStat, OpenOptions, WorkspaceFdFlushError},
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]

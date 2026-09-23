@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::workspace::{
-    transactions::FolderReaderStatNextOutcome, EntryStat, MoveEntryMode, OpenOptions,
+    EntryStat, MoveEntryMode, OpenOptions, transactions::FolderReaderStatNextOutcome,
 };
 
 fn expect_entry(stat: FolderReaderStatNextOutcome<'_>) -> (&EntryName, EntryStat) {

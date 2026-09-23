@@ -5,10 +5,9 @@ use std::fmt::Display;
 use x509_cert::{
     attr::AttributeTypeAndValue,
     der::{
-        self, asn1,
+        self, Choice, Decode, DecodeValue, ErrorKind as DERErrorKind, Reader, Result as DERResult,
+        SliceReader, Tag, asn1,
         oid::db::{rfc3280::EMAIL_ADDRESS, rfc4519::COMMON_NAME},
-        Choice, Decode, DecodeValue, ErrorKind as DERErrorKind, Reader, Result as DERResult,
-        SliceReader, Tag,
     },
     name::Name,
 };

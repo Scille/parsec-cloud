@@ -2,21 +2,21 @@
 
 use bytes::Bytes;
 use reqwest::{
-    header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
+    header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HeaderMap, HeaderValue},
 };
 use std::fmt::Debug;
 use std::path::Path;
 
 use libparsec_platform_http_proxy::ProxyConfig;
-use libparsec_protocol::{api_version_major_to_full, API_LATEST_VERSION};
+use libparsec_protocol::{API_LATEST_VERSION, api_version_major_to_full};
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
-use crate::testbed::{get_send_hook, SendHookConfig};
+use crate::testbed::{SendHookConfig, get_send_hook};
 use crate::{
-    error::{ConnectionError, ConnectionResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    error::{ConnectionError, ConnectionResult},
 };
 
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;

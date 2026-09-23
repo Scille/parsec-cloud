@@ -11,10 +11,9 @@ use super::utils::{impl_decrypt_and_load, impl_dump, impl_dump_and_encrypt, impl
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, AccountVaultItemOpaqueKeyID, DataError, OrganizationID, UserID,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    AccountVaultItemOpaqueKeyID, DataError, OrganizationID, UserID,
 };
 
 // The auth method master secret is the root secret from which are derived

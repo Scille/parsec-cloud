@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use libparsec::{tmp_path, OrganizationID, ParsecAddr, TmpPath};
+use libparsec::{OrganizationID, ParsecAddr, TmpPath, tmp_path};
 #[cfg(target_family = "unix")]
 use parsec_cli::ui::Ui;
 
@@ -8,9 +8,9 @@ use parsec_cli::ui::Ui;
 use crate::test_ui;
 use crate::{
     bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::commands::tos::config::{config_tos_for_org_req, TosReq};
+use parsec_cli::commands::tos::config::{TosReq, config_tos_for_org_req};
 
 async fn config_tos(
     addr: &ParsecAddr,

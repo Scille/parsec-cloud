@@ -10,8 +10,8 @@ use libparsec_platform_async::{
     future::{self, FutureExt},
     stream::{Stream, StreamExt},
 };
-use wasm_bindgen_futures::{stream::JsStream, JsFuture};
-use web_sys::{js_sys, wasm_bindgen::JsCast, DomException};
+use wasm_bindgen_futures::{JsFuture, stream::JsStream};
+use web_sys::{DomException, js_sys, wasm_bindgen::JsCast};
 
 use super::error::{
     CastError, GetDirectoryHandleError, GetFileHandleError, GetRootDirectoryError, ReadToEndError,

@@ -5,8 +5,8 @@ use std::{
     sync::Arc,
 };
 use winfsp_wrs::{
-    filetime_now, u16cstr, FileSystem, FileSystemInterface, Params, U16CStr, U16CString,
-    VolumeParams,
+    FileSystem, FileSystemInterface, Params, U16CStr, U16CString, VolumeParams, filetime_now,
+    u16cstr,
 };
 
 use libparsec_client::{MountpointMountStrategy, WorkspaceHistoryOps, WorkspaceOps};

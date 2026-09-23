@@ -7,8 +7,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::workspace::{
-    store::{PathConfinementPoint, RetrievePathFromIDEntry, RetrievePathFromIDError},
     MoveEntryMode,
+    store::{PathConfinementPoint, RetrievePathFromIDEntry, RetrievePathFromIDError},
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]

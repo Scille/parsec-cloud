@@ -1,13 +1,13 @@
 use libparsec::{
-    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path, AccessToken,
-    AuthenticatedCmds, ProxyConfig, TmpPath,
+    AccessToken, AuthenticatedCmds, ProxyConfig, TmpPath,
+    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
 };
 use parsec_cli::ui::Ui;
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 
 async fn invite_device(cmds: &AuthenticatedCmds) -> AccessToken {

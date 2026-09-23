@@ -5,13 +5,13 @@ use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::realm_keys_bundle::{self, EncryptionUsage},
     CertifDecryptForRealmError,
+    certif::realm_keys_bundle::{self, EncryptionUsage},
 };
 
 use super::{
-    store::{CertifForReadWithRequirementsError, CertificatesStoreReadGuard, GetCertificateError},
     CertificateOps, InvalidCertificateError, InvalidKeysBundleError, UpTo,
+    store::{CertifForReadWithRequirementsError, CertificatesStoreReadGuard, GetCertificateError},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,7 +22,9 @@ pub struct CryptpadSessionKeys {
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidCryptpadSessionKeysError {
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !"
+    )]
     CannotDecrypt {
         realm: VlobID,
         document: VlobID,
@@ -30,7 +32,9 @@ pub enum InvalidCryptpadSessionKeysError {
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}"
+    )]
     CleartextCorrupted {
         realm: VlobID,
         document: VlobID,
@@ -38,7 +42,9 @@ pub enum InvalidCryptpadSessionKeysError {
         timestamp: DateTime,
         error: Box<DataError>,
     },
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time, key index {key_index} didn't exist !")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time, key index {key_index} didn't exist !"
+    )]
     NonExistentKeyIndex {
         realm: VlobID,
         document: VlobID,
@@ -46,7 +52,9 @@ pub enum InvalidCryptpadSessionKeysError {
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): encrypted by key index {key_index} which appears corrupted !")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): encrypted by key index {key_index} which appears corrupted !"
+    )]
     CorruptedKey {
         realm: VlobID,
         document: VlobID,
@@ -54,28 +62,36 @@ pub enum InvalidCryptpadSessionKeysError {
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time author didn't exist !")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time author didn't exist !"
+    )]
     NonExistentAuthor {
         realm: VlobID,
         document: VlobID,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time author was already revoked !")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time author was already revoked !"
+    )]
     RevokedAuthor {
         realm: VlobID,
         document: VlobID,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time author didn't have access to the realm")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): at that time author didn't have access to the realm"
+    )]
     AuthorNoAccessToRealm {
         realm: VlobID,
         document: VlobID,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): edit key provided, but at that time author couldn't write in the realm given its role was `{author_role:?}`")]
+    #[error(
+        "Cryptpad session key for document `{document}` (in realm `{realm}`, created by `{author}` on {timestamp}): edit key provided, but at that time author couldn't write in the realm given its role was `{author_role:?}`"
+    )]
     AuthorRealmRoleCannotWrite {
         realm: VlobID,
         document: VlobID,
@@ -186,7 +202,7 @@ pub(super) async fn validate_cryptpad_session_keys(
 
                 // D'oh :/
                 Err(err @ GetCertificateError::Internal(_)) => {
-                    return Err(CertifValidateCryptpadSessionKeysError::Internal(err.into()))
+                    return Err(CertifValidateCryptpadSessionKeysError::Internal(err.into()));
                 }
             };
             let author_user_id = author_certif.user_id;

@@ -5,12 +5,12 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    authenticated_account_cmds::AccountAuthMethod, test_register_low_level_send_hook,
     AuthenticatedAccountCmds, Bytes, ConnectionError, HeaderMap, HeaderName, HeaderValue,
-    ProxyConfig, ResponseMock, StatusCode,
+    ProxyConfig, ResponseMock, StatusCode, authenticated_account_cmds::AccountAuthMethod,
+    test_register_low_level_send_hook,
 };
 use libparsec_protocol::{
-    authenticated_account_cmds::latest as authenticated_account_cmds, API_LATEST_VERSION,
+    API_LATEST_VERSION, authenticated_account_cmds::latest as authenticated_account_cmds,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -55,11 +55,13 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
                 Some(&HeaderValue::from_static("application/msgpack"))
             );
 
-            assert!(headers
-                .get(AUTHORIZATION)
-                .unwrap()
-                .as_bytes()
-                .starts_with(b"Bearer PARSEC-MAC-BLAKE2B.9aae259f748045cc9fe7146eab0b132e."));
+            assert!(
+                headers
+                    .get(AUTHORIZATION)
+                    .unwrap()
+                    .as_bytes()
+                    .starts_with(b"Bearer PARSEC-MAC-BLAKE2B.9aae259f748045cc9fe7146eab0b132e.")
+            );
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = authenticated_account_cmds::AnyCmdReq::load(body).unwrap();

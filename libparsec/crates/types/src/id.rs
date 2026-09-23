@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DeserializeFromStr, SerializeDisplay};
+use serde_with::{DeserializeFromStr, SerializeDisplay, serde_as};
 use std::{convert::TryFrom, fmt::Display, hash::Hash, ops::Deref, str::FromStr};
 use unicode_normalization::UnicodeNormalization;
 

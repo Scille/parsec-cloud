@@ -60,7 +60,7 @@ pub async fn submitter_get_async_enrollment_info(
                 return Err(SubmitterGetAsyncEnrollmentInfoError::EnrollmentNotFound);
             }
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
             }
         }
     };

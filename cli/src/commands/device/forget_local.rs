@@ -6,7 +6,7 @@ use dialoguer::Confirm;
 use libparsec_client::remove_device;
 
 use crate::{
-    ui::{compat::AvailableDeviceDisplay, CLIDisplay},
+    ui::{CLIDisplay, compat::AvailableDeviceDisplay},
     utils::*,
 };
 

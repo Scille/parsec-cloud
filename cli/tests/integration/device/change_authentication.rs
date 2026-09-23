@@ -1,12 +1,12 @@
 use std::io::{BufReader, Write};
 
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 use libparsec_tests_fixtures::prelude::*;
 use parsec_cli::ui::Ui;
 
 use crate::{
     bootstrap_cli_test, test_ui,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
     wait_for,
 };
 

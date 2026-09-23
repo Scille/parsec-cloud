@@ -61,7 +61,7 @@ pub(crate) async fn list_async_enrollments(
             Rep::Ok { enrollments } => enrollments,
             Rep::AuthorNotAllowed => return Err(ListAsyncEnrollmentsError::AuthorNotAllowed),
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
             }
         }
     };

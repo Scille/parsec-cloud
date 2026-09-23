@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::tests::get_real_path;
+use crate::{LoadFileError, tests::CONTENT};
 use crate::{load_file, save_content};
-use crate::{tests::CONTENT, LoadFileError};
 use libparsec_tests_fixtures::prelude::*;
 use std::path::PathBuf;
 

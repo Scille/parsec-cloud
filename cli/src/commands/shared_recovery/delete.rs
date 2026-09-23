@@ -1,7 +1,7 @@
 use crate::{
     build_main_with_client,
     ui::Color,
-    utils::{poll_server_for_new_certificates, StartedClient, CHECKMARK},
+    utils::{CHECKMARK, StartedClient, poll_server_for_new_certificates},
 };
 use std::fmt::Write;
 
