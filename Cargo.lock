@@ -2391,7 +2391,7 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "libparsec"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "env_logger",
  "libparsec_account",
@@ -2417,7 +2417,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_account"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "libparsec_client",
  "libparsec_client_connection",
@@ -2433,7 +2433,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_bindings_electron"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "lazy_static",
  "libparsec",
@@ -2447,7 +2447,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_bindings_web"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "console_error_panic_hook",
  "console_log",
@@ -2460,7 +2460,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_client"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "blahaj",
  "data-encoding",
@@ -2487,7 +2487,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_client_connection"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "bytes",
  "data-encoding",
@@ -2509,7 +2509,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_crypto"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "argon2",
  "blake2",
@@ -2545,7 +2545,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_openbao"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "data-encoding",
  "libparsec_platform_async",
@@ -2562,7 +2562,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_async"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "async-broadcast",
  "async-lock",
@@ -2581,7 +2581,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_device_loader"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "crc32fast",
  "data-encoding",
@@ -2609,7 +2609,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_filesystem"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "anyhow",
  "libparsec_platform_async",
@@ -2625,7 +2625,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_http_proxy"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "libparsec_types",
  "reqwest",
@@ -2635,7 +2635,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_ipc"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "libc",
  "libparsec_platform_async",
@@ -2651,7 +2651,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_mountpoint"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "ctrlc",
  "env_logger",
@@ -2674,7 +2674,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_pki"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2714,7 +2714,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_realm_export"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "libparsec_platform_async",
  "libparsec_tests_fixtures",
@@ -2728,7 +2728,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_storage"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "indexed-db",
  "js-sys",
@@ -2752,7 +2752,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_protocol"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "bytes",
  "futures",
@@ -2772,7 +2772,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_serialization_format"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "bytes",
  "hex-literal",
@@ -2790,7 +2790,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_testbed"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "crc32fast",
  "data-encoding",
@@ -2809,7 +2809,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_tests_fixtures"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_device_loader",
@@ -2824,7 +2824,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_tests_lite"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "console_error_panic_hook",
  "console_log",
@@ -2840,7 +2840,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_tests_macros"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2849,7 +2849,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_totp"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "data-encoding",
  "libparsec_client_connection",
@@ -2862,7 +2862,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_types"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "anyhow",
  "blahaj",
@@ -2900,7 +2900,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_zstd"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "ruzstd",
  "zstd",
@@ -3513,7 +3513,7 @@ dependencies = [
 
 [[package]]
 name = "parsec"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "chrono",
  "futures",
@@ -3538,7 +3538,7 @@ dependencies = [
 
 [[package]]
 name = "parsec-cli"
-version = "3.9.4-a.0+dev"
+version = "3.9.4-a.0.dev.20720+02d584a"
 dependencies = [
  "anyhow",
  "assert_cmd",
