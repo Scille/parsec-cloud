@@ -317,7 +317,7 @@ import {
   NoWorkspace,
   useWindowSize,
 } from 'megashark-lib';
-import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref } from 'vue';
 
 enum SortWorkspaceBy {
   Name = 'name',
@@ -763,6 +763,7 @@ async function startSearch(pattern: string): Promise<void> {
   for (const wkInfo of filteredWorkspaces.value) {
     for await (const result of fileSearch(wkInfo.handle, '/', pattern, searchAborter.signal)) {
       search.value.results.push(result);
+      await nextTick();
     }
   }
   if (search.value) {
