@@ -1320,7 +1320,7 @@ ion-modal {
 }
 
 .async-enrollment-modal:has(.certificate-list) {
-  --height: 650px;
+  --min-height: 650px;
 }
 
 .async-enrollment-openbao-modal,
