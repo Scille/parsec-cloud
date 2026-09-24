@@ -743,7 +743,7 @@ export async function checkFolderGlobalContextMenu(page: MsPage, mode: 'full' | 
 
 interface WorkspaceContextMenuOptions {
   isHidden?: boolean;
-  isStarred?: boolean;
+  isFavorite?: boolean;
 }
 
 export async function checkWorkspaceContextMenu(
@@ -771,7 +771,7 @@ export async function checkWorkspaceContextMenu(
       'Delete this workspace',
       'Copy link',
       'Sharing and roles',
-      options?.isStarred ? 'Removed as starred' : 'Add as starred',
+      options?.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
     ]);
   } else if (mode === 'archived') {
     if (page.displaySize === DisplaySize.Large) {
@@ -792,7 +792,7 @@ export async function checkWorkspaceContextMenu(
       options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
       'Copy link',
       'Sharing and roles',
-      options?.isStarred ? 'Removed as starred' : 'Add as starred',
+      options?.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
     ]);
   }
 

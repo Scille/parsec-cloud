@@ -769,8 +769,8 @@
             "actionRestore": "Restore this workspace",
             "actionDelete": "Delete this workspace",
             "actionCopyLink": "Copy link",
-            "actionAddFavorite": "Add as starred",
-            "actionRemoveFavorite": "Remove as starred",
+            "actionAddFavorite": "Add to Favorites",
+            "actionRemoveFavorite": "Remove from Favorites",
             "actionTakeOwnership": "Claim ownership"
         },
         "missingOwnership": {
@@ -834,10 +834,10 @@
         "categoriesMenu": {
             "myWorkspaces": "My workspaces",
             "recent": "Recent",
-            "favorites": "Starred",
+            "favorites": "Favorites",
             "hidden": "Hidden",
             "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",
-            "noFavoriteWorkspaces": "You have not set starred any workspaces yet. Starred workspaces will be listed here.",
+            "noFavoriteWorkspaces": "You have not set any workspaces to Favorites yet. Favorite workspaces will be listed here.",
             "noHiddenWorkspaces": "You have not hidden any workspaces yet. Hidden workspaces will be listed here.",
             "noArchivedWorkspaces": "Your archived workspaces can be consulted here in read-only. Sharing is disabled unless the workspace is restored. Archived workspace owners can restore them.",
             "noTrashedWorkspaces": "Workspaces scheduled for deletion can be consulted here in read-only for {duration}, after that time they will be permanently deleted. Workspace Owners can restore them before this date.",
@@ -1313,7 +1313,7 @@
         "organization": "Organization",
         "workspaces": "Workspaces",
         "recent": "Recent",
-        "favorites": "Starred",
+        "favorites": "Favorites",
         "hidden": "Hidden",
         "archived": "Archived",
         "trashed": "Bin",
