@@ -698,7 +698,9 @@ CREATE TABLE realm_vlob_update (
 CREATE TABLE block (
     _id SERIAL PRIMARY KEY,
     block_id UUID NOT NULL,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT block_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
