@@ -8,7 +8,7 @@ Parsec v3.x
 .. towncrier release notes start
 
 
-Parsec v3.10.0-rc.0 (2026-09-15)
+Parsec v3.10.0-rc.1 (2026-09-24)
 --------------------------------
 
 This version includes several changes to the Parsec CLI,
@@ -21,7 +21,7 @@ Features
 * Enable ODP file type in edit mode
   (`#12110 <https://github.com/Scille/parsec-cloud/issues/12110>`__)
 
-* [Web] Added a direct download option for multiple files and folders
+* [Web] Added a download option for multiple files and folders
   (`#12980 <https://github.com/Scille/parsec-cloud/issues/12980>`__)
 
 * [Desktop] Combined app window and title into a unified title bar
@@ -33,6 +33,28 @@ Features
 
 * Added the server version in the organization information page
   (`#5557 <https://github.com/Scille/parsec-cloud/issues/5557>`__)
+
+* Improved file viewers and removed the 15MB file size limitation for preview
+  (`#13018 <https://github.com/Scille/parsec-cloud/issues/13018>`__)
+
+* Added filter by profile in workspace sharing modal
+  (`#13004 <https://github.com/Scille/parsec-cloud/issues/13004>`__)
+
+* Hovering over a file during server synchronization now shows the upload
+  progress percentage
+  (`#12892 <https://github.com/Scille/parsec-cloud/issues/12892>`__)
+
+* Significant improvement when uploading large numbers of files
+  (`#12913 <https://github.com/Scille/parsec-cloud/issues/12913>`__)
+
+* When all workspace Owners have been revoked, Administrators and Members having
+  the current highest non-Owner role in the workspace can now self-promote to
+  workspace Owner.
+  (`#12409 <https://github.com/Scille/parsec-cloud/issues/12409>`__)
+
+* Added cross-workspace file search from the *My workspaces* page
+  (`#13010 <https://github.com/Scille/parsec-cloud/issues/13010>`__)
+
 
 Bugfixes
 ~~~~~~~~
@@ -63,6 +85,100 @@ Bugfixes
 * Prevent navigating on the previous page after a logout, which resulted in a
   blank screen
   (`#11150 <https://github.com/Scille/parsec-cloud/issues/11150>`__)
+
+* Added auto numbering when creating multiple new files with the default name
+  (`#12782 <https://github.com/Scille/parsec-cloud/issues/12782>`__)
+
+* Fixed a bug where revoked users could be selected in the users page, and
+  restricted user selection to Administrators
+  (`#13040 <https://github.com/Scille/parsec-cloud/issues/13040>`__)
+
+* Fixed a bug where clicking on a collapsed breadcrumb would navigate to the
+  first element on top of displaying the navigation popover
+  (`#12893 <https://github.com/Scille/parsec-cloud/issues/12893>`__)
+
+* Fixed inconsistent behavior when failing to open a file
+  (`#12831 <https://github.com/Scille/parsec-cloud/issues/12831>`__)
+
+* Added better error handling when keyring authentication fails
+  (`#12951 <https://github.com/Scille/parsec-cloud/issues/12951>`__)
+
+* Fixed navigation breadcrumb clickable area to make it consistent with the
+  visuals
+  (`#13205 <https://github.com/Scille/parsec-cloud/issues/13205>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* [User Guide] Added a File Edit section and updated the File Preview section
+  (`#12864 <https://github.com/Scille/parsec-cloud/issues/12864>`__)
+
+* [User Guide] Added a section on file operational limits and tested volumes
+  (`#13001 <https://github.com/Scille/parsec-cloud/issues/13001>`__)
+
+* [Hosting Guide] Improved Sequester Service section with more details and steps
+  to set up
+  (`#13079 <https://github.com/Scille/parsec-cloud/issues/13079>`__)
+
+* [Hosting Guide] Added a section on Client application deployment
+  (`#12869 <https://github.com/Scille/parsec-cloud/issues/12869>`__)
+
+* [Hosting Guide] Added a section for PKI and SmartCard configuration on Web
+  (`#12861 <https://github.com/Scille/parsec-cloud/issues/12861>`__)
+
+* [Hosting Guide] Improved section on how to setup SSO with OpenBAO
+  (`#12852 <https://github.com/Scille/parsec-cloud/issues/12852>`__)
+
+* [Hosting Guide] Added a section on how to create organizations
+  (`#12874 <https://github.com/Scille/parsec-cloud/issues/12874>`__)
+
+* [Hosting Guide] Added a section on User Authentication
+  (`#12891 <https://github.com/Scille/parsec-cloud/issues/12891>`__)
+
+* [Hosting Guide] Added CryptPad deployment instructions
+  (`#13049 <https://github.com/Scille/parsec-cloud/issues/13049>`__)
+
+* [Hosting Guide] Added a section on setting up S3 storage
+  (`#12898 <https://github.com/Scille/parsec-cloud/issues/12898>`__)
+
+* [Hosting Guide] Added a section explaining how to configure the web
+  application
+  (`#12851 <https://github.com/Scille/parsec-cloud/issues/12851>`__)
+
+* [Hosting Guide] Added a section on workspace deletion
+  (`#12917 <https://github.com/Scille/parsec-cloud/issues/12917>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Enhanced application startup time, making it faster on slow internet
+  connections and more stable on faster connections
+  (`#12944 <https://github.com/Scille/parsec-cloud/issues/12944>`__)
+
+* Removed workspace filters in the sidebar
+  (`#13011 <https://github.com/Scille/parsec-cloud/issues/13011>`__)
+
+* Enhanced the integrated log viewer, which now allows to copy or download the
+  application logs
+  (`#12923 <https://github.com/Scille/parsec-cloud/issues/12923>`__)
+
+* Updated the email sent when a join request is accepted, now includes
+  instructions on how to log in to the organization
+  (`#13157 <https://github.com/Scille/parsec-cloud/issues/13157>`__)
+
+* Added auto-focus to multiple text inputs across the application
+  (`#12888 <https://github.com/Scille/parsec-cloud/issues/12888>`__)
+
+* Clicking in the middle of the audio and video viewers now pauses/unpauses the
+  media
+  (`#9675 <https://github.com/Scille/parsec-cloud/issues/9675>`__)
+
+* In small display, the **+** button is now visible at all times for Members and
+  disabled if no action is available instead of hidden
+  (`#12834 <https://github.com/Scille/parsec-cloud/issues/12834>`__)
+
 
 CLI
 ~~~
@@ -123,6 +239,7 @@ Non-breaking changes:
 
 * Add ``man-page`` command to generate man pages for ``parsec-cli``.
   (`#13206 <https://github.com/Scille/parsec-cloud/pull/13206>`__)
+
 
 
 Parsec v3.9.3 (2026-07-24)

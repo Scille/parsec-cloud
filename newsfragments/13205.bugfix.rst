@@ -1,1 +1,0 @@
-Fixed navigation breadcrumb clickable area to make it consistent with the visuals

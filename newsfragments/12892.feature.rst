@@ -1,1 +1,0 @@
-Hovering over a file during server synchronization now shows the upload progress percentage

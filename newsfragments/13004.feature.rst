@@ -1,1 +1,0 @@
-Added filter by profile in workspace sharing modal
