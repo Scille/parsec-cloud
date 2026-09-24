@@ -1,18 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import itertools
-from collections.abc import Iterable
 
 import pytest
-from asyncpg import Record
-from asyncpg.pool import PoolConnectionProxy
 
 from parsec._parsec import AccountAuthMethodID, DateTime, ValidationCode
 from parsec.backend import Backend
 from parsec.components.postgresql.account import PGAccountComponent
 from tests.common.client import AuthenticatedAccountRpcClient
-
-type Conn = PoolConnectionProxy[Record]
+from tests.postgres_wipe.utils import (
+    Conn,
+    fetch_many_row_ids_from_references,
+    fetch_references_across_tables,
+    gen_table_ids,
+)
 
 
 @pytest.mark.postgresql
@@ -40,15 +41,13 @@ async def test_account_cascade_wipe(alice_account: AuthenticatedAccountRpcClient
         )
         assert vault_ids
 
-        vault_item_ids = await fetch_many_row_ids_from_references(
-            conn, "vault_item", "vault", vault_ids
+        vault_item_ids, vault_authentication_method_ids = await fetch_references_across_tables(
+            conn, (("vault_item", "vault"), ("vault_authentication_method", "vault")), vault_ids
         )
+
         # TODO: Alice does not have vault items for now
         assert not vault_item_ids
 
-        vault_authentication_method_ids = await fetch_many_row_ids_from_references(
-            conn, "vault_authentication_method", "vault", vault_ids
-        )
         assert vault_authentication_method_ids
 
         for table in ("account_delete_validation_code", "account_recover_validation_code"):
@@ -68,8 +67,9 @@ async def test_account_cascade_wipe(alice_account: AuthenticatedAccountRpcClient
         for table, id in itertools.chain(
             (("account", account_id),),
             (("vault", id) for id in vault_ids),
-            (("vault_item", id) for id in vault_item_ids),
-            (("vault_authentication_method", id) for id in vault_authentication_method_ids),
+            gen_table_ids("vault", vault_ids),
+            gen_table_ids("vault_item", vault_item_ids),
+            gen_table_ids("vault_authentication_method", vault_authentication_method_ids),
         ):
             row_id = await conn.fetchval(f"SELECT _id FROM {table} WHERE _id = $1", id)
             assert row_id is None, f"Table {table} still has a row linked to the deleted account"
@@ -88,13 +88,3 @@ async def fetch_account_id_from_auth_method_id(conn: Conn, method_id: AccountAut
     account_id = await conn.fetchval("SELECT account FROM vault WHERE _id = $1", vault_id)
     assert isinstance(account_id, int)
     return account_id
-
-
-async def fetch_many_row_ids_from_references(
-    conn: Conn, table: str, fkey_col_name: str, references: Iterable[int]
-) -> list[int]:
-    rows = await conn.fetchmany(
-        f"SELECT _id as id FROM {table} WHERE {fkey_col_name} = $1",
-        ((id,) for id in references),
-    )
-    return [int(row["id"]) for row in rows]

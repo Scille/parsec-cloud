@@ -3,7 +3,7 @@
 -------------------------------------------------------
 --  Migration
 --
--- Add delete constraints for account tables to simplify removal of sequester
+-- Add delete constraints to simplify removal of sequester
 --
 -------------------------------------------------------
 
