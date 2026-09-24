@@ -659,7 +659,9 @@ CREATE TABLE realm_name (
 
 CREATE TABLE vlob_atom (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT vlob_atom_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     key_index INTEGER NOT NULL,
     vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,
@@ -676,9 +678,13 @@ CREATE TABLE vlob_atom (
 
 CREATE TABLE realm_vlob_update (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_vlob_update_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     index INTEGER NOT NULL,
-    vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
+    vlob_atom INTEGER
+    CONSTRAINT realm_vlob_update_vlob_atom_fkey REFERENCES vlob_atom (_id) ON DELETE CASCADE
+    NOT NULL,
 
     UNIQUE (realm, index)
 );
