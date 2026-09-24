@@ -57,6 +57,7 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
     }
 
     &__icon {
+      min-width: 1rem;
       font-size: 1rem;
       color: var(--parsec-color-light-secondary-grey);
       margin-right: 0.625rem;

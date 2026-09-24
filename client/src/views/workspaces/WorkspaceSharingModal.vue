@@ -810,6 +810,7 @@ async function openDocumentation(): Promise<void> {
   .sharing-modal__workspace {
     display: flex;
     width: fit-content;
+    max-width: 35%;
     align-items: center;
     gap: 0.25rem;
     color: var(--parsec-color-light-primary-500);
@@ -823,11 +824,15 @@ async function openDocumentation(): Promise<void> {
 
     &__title {
       font-weight: 600;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     &__icon {
       color: var(--parsec-color-light-primary-500);
       font-size: 1rem;
+      min-width: 1rem;
     }
   }
 }
