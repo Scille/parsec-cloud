@@ -7,7 +7,7 @@ fn version(#[case] version_arg: &str) {
     crate::assert_cmd_success!(version_arg).stdout(
         predicates::str::contains(
             // Using `concat!` simplify updating the version using `version-updater`
-            concat!("parsec-cli 3.10.0-rc.1", "\n"),
+            concat!("parsec-cli 3.10.0-rc.2+dev", "\n"),
         )
         .and(predicates::str::is_match("branch: .*").unwrap())
         .and(predicates::str::is_match("commit_hash: .*").unwrap())
