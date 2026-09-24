@@ -3,6 +3,7 @@
 import { Locator, Page } from '@playwright/test';
 import {
   answerQuestion,
+  checkWorkspaceContextMenu,
   createWorkspace,
   expect,
   fillInputModal,
@@ -78,7 +79,7 @@ const MENU = [
   },
   {
     title: 'Miscellaneous',
-    actions: ['Add as starred'],
+    actions: ['Add to Favorites'],
   },
 ];
 
@@ -93,7 +94,7 @@ const READER_MENU = [
   },
   {
     title: 'Miscellaneous',
-    actions: ['Add as starred'],
+    actions: ['Add to Favorites'],
   },
 ];
 
@@ -210,6 +211,10 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       await expect(wk.locator('.workspace-name')).toHaveText('wksp1');
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
+
+    await wk.click({ button: 'right' });
+    await checkWorkspaceContextMenu(workspaces, 'owner', 'Remove from Favorites', { isFavorite: true });
+    await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__off');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ workspaces }) => {
@@ -305,7 +310,7 @@ for (const method of ['button', 'context']) {
         'Hide this workspace',
         'Copy link',
         'Sharing and roles',
-        'Add as starred',
+        'Add to Favorites',
       ]);
       await wkContextMenu.locator('.list-group-item__label:visible').nth(0).click();
       await expect(wkContextMenu).toBeHidden();
@@ -331,7 +336,7 @@ for (const method of ['button', 'context']) {
       'Delete this workspace',
       'Copy link',
       'Sharing and roles',
-      'Add as starred',
+      'Add to Favorites',
     ]);
   });
 }
@@ -358,7 +363,7 @@ msTest('Test workspace unmount/mount', async ({ connected }) => {
     'Delete this workspace',
     'Copy link',
     'Sharing and roles',
-    'Add as starred',
+    'Add to Favorites',
   ]);
 
   const modal = connected.locator('.workspace-hidden-modal');
@@ -386,7 +391,7 @@ msTest('Test workspace unmount/mount', async ({ connected }) => {
     'Delete this workspace',
     'Copy link',
     'Sharing and roles',
-    'Add as starred',
+    'Add to Favorites',
   ]);
   await newContextMenu.locator('.list-group-item__label:visible').nth(3).click();
   await expect(connected).toShowToast('The workspace is now visible in Parsec and your explorer.', 'Success');
