@@ -515,7 +515,9 @@ CREATE TYPE REALM_STATUS AS ENUM ('AVAILABLE', 'ARCHIVED_OR_DELETION_PLANNED', '
 
 CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT realm_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     realm_id UUID NOT NULL,
     key_index INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
@@ -545,7 +547,9 @@ CREATE TYPE REALM_ROLE AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
 
 CREATE TABLE realm_user_role (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_user_role_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
     -- NULL if access revocation
     role REALM_ROLE,
@@ -560,7 +564,9 @@ CREATE TYPE REALM_ARCHIVING_CONFIGURATION AS ENUM (
 
 CREATE TABLE realm_archiving (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_archiving_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     configuration REALM_ARCHIVING_CONFIGURATION NOT NULL,
     -- NULL if not DELETION_PLANNED
     deletion_date TIMESTAMPTZ,
@@ -572,7 +578,9 @@ CREATE TABLE realm_archiving (
 
 CREATE TABLE realm_keys_bundle (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_keys_bundle_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     key_index INTEGER NOT NULL,
 
     realm_key_rotation_certificate BYTEA NOT NULL,
@@ -590,9 +598,13 @@ CREATE TABLE realm_keys_bundle (
 
 CREATE TABLE realm_keys_bundle_access (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_keys_bundle_access_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
+    realm_keys_bundle INTEGER
+    CONSTRAINT realm_keys_bundle_access_realm_keys_bundle_fkey REFERENCES realm_keys_bundle (_id) ON DELETE CASCADE
+    NOT NULL,
 
     access BYTEA NOT NULL,
 
@@ -634,11 +646,17 @@ CREATE TABLE realm_sequester_keys_bundle_access (
         _id
     ) ON DELETE CASCADE
     NOT NULL,
-    realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
+    realm_keys_bundle INTEGER
+    CONSTRAINT realm_sequester_keys_bundle_access_realm_keys_bundle_fkey REFERENCES realm_keys_bundle (
+        _id
+    ) ON DELETE CASCADE
+    NOT NULL,
 
     access BYTEA NOT NULL,
 
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_sequester_keys_bundle_access_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
 
     UNIQUE (sequester_service, realm_keys_bundle)
 );
@@ -646,7 +664,9 @@ CREATE TABLE realm_sequester_keys_bundle_access (
 
 CREATE TABLE realm_name (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_name_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     realm_name_certificate BYTEA NOT NULL,
     certified_by INTEGER REFERENCES device (_id) NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
@@ -756,7 +776,9 @@ CREATE TABLE shamir_recovery_topic (
 CREATE TABLE realm_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_topic_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization, realm)
 );
