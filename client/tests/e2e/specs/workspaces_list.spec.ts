@@ -206,12 +206,12 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       'The Copper Coronet',
     ]);
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
-    const starredWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Starred');
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
+    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Favorites');
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
     await expect(workspaceCategoriesMenu).toBeVisible();
-    await expect(starredWorkspacesButton).toBeVisible();
-    await starredWorkspacesButton.click({ force: true });
-    await starredWorkspacesButton.click({ force: true });
+    await expect(favoriteWorkspacesButton).toBeVisible();
+    await favoriteWorkspacesButton.click({ force: true });
+    await favoriteWorkspacesButton.click({ force: true });
     await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
       'wksp1',
       'The Copper Coronet',
@@ -246,11 +246,11 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const sidebarAllWorkspacesButton = workspaces.locator('#sidebar-all-workspaces');
 
     await expect(workspaceCategoriesMenu).toBeVisible();
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
     await expect(sidebarAllWorkspacesButton).toContainClass('active');
 
     const recentWorkspacesButton = workspaceCategoriesMenuItems.getByText('Recent');
-    const starredWorkspacesButton = workspaceCategoriesMenuItems.getByText('Starred');
+    const favoriteWorkspacesButton = workspaceCategoriesMenuItems.getByText('Favorites');
 
     for (let i = 0; i < 2; i++) {
       await expect(workspaceCategoriesMenuItems.nth(i)).not.toHaveClass(/active/);
@@ -265,7 +265,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(workspaceCategoriesMenuItems.nth(i)).not.toHaveClass(/active/);
     }
 
-    await starredWorkspacesButton.click({ force: true });
+    await favoriteWorkspacesButton.click({ force: true });
     await verifyActiveCategory(workspaces, 1, 2);
   });
 
@@ -274,7 +274,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await workspaces.setDisplaySize(DisplaySize.Small);
     }
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
 
     await createWorkspace(workspaces, 'The Copper Coronet');
     const workspaceCard = workspaces.locator('.workspace-card-item');
@@ -303,7 +303,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Copy link',
         'Sharing and roles',
         'Miscellaneous',
-        'Add as starred',
+        'Add to Favorites',
       ]);
       await popover.getByRole('listitem').nth(3).click();
     } else {
@@ -317,13 +317,13 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Delete this workspace',
         'Copy link',
         'Sharing and roles',
-        'Add as starred',
+        'Add to Favorites',
       ]);
       await popover.getByRole('listitem').nth(2).click();
     }
 
     await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites', 'Hidden']);
 
     await expect(workspaceCard.nth(0).locator('.workspace-card-content__title')).toHaveText('wksp1');
     await expect(workspaceCard.nth(1)).toBeHidden();
@@ -369,7 +369,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Copy link',
         'Sharing and roles',
         'Miscellaneous',
-        'Add as starred',
+        'Add to Favorites',
       ]);
       await popover.getByRole('listitem').nth(3).click();
     } else {
@@ -383,7 +383,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Delete this workspace',
         'Copy link',
         'Sharing and roles',
-        'Add as starred',
+        'Add to Favorites',
       ]);
       await popover.getByRole('listitem').nth(2).click();
     }
@@ -397,7 +397,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
 
     // Auto redirect to default tab, hidden tab inaccessible
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred']);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
     for (let i = 0; i < 2; i++) {
       await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(i)).not.toHaveClass(/active/);
     }
@@ -718,7 +718,7 @@ msTest('Check no favorite or recent workspaces', async ({ connected }) => {
   await favoriteWorkspacesButton.click({ force: true });
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces')).toBeVisible();
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces').locator('ion-text')).toHaveText(
-    'You have not set starred any workspaces yet. Starred workspaces will be listed here.',
+    'You have not set any workspaces to Favorites yet. Favorite workspaces will be listed here.',
   );
 });
 
