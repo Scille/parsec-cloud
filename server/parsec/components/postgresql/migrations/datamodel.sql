@@ -358,7 +358,9 @@ CREATE TYPE GREETER_OR_CLAIMER AS ENUM (
 
 CREATE TABLE invitation (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT invitation_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     token VARCHAR(32) NOT NULL,
     type INVITATION_TYPE NOT NULL,
 
@@ -404,7 +406,9 @@ CREATE TABLE invitation (
 
 CREATE TABLE greeting_session (
     _id SERIAL PRIMARY KEY,
-    invitation INTEGER REFERENCES invitation (_id) NOT NULL,
+    invitation INTEGER
+    CONSTRAINT greeting_session_invitation_fkey REFERENCES invitation (_id) ON DELETE CASCADE
+    NOT NULL,
     greeter INTEGER REFERENCES user_ (_id) NOT NULL,
 
     UNIQUE (invitation, greeter)
@@ -414,7 +418,9 @@ CREATE TABLE greeting_attempt (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     greeting_attempt_id UUID NOT NULL,
-    greeting_session INTEGER REFERENCES greeting_session (_id) NOT NULL,
+    greeting_session INTEGER
+    CONSTRAINT greeting_attempt_greeting_session_fkey REFERENCES greeting_session (_id) ON DELETE CASCADE
+    NOT NULL,
 
     claimer_joined TIMESTAMPTZ DEFAULT NULL,
     greeter_joined TIMESTAMPTZ DEFAULT NULL,
@@ -432,7 +438,9 @@ WHERE cancelled_on IS NULL;
 
 CREATE TABLE greeting_step (
     _id SERIAL PRIMARY KEY,
-    greeting_attempt INTEGER REFERENCES greeting_attempt (_id) NOT NULL,
+    greeting_attempt INTEGER
+    CONSTRAINT greeting_step_greeting_attempt_fkey REFERENCES greeting_attempt (_id) ON DELETE CASCADE
+    NOT NULL,
     step INTEGER NOT NULL,
     greeter_data BYTEA,
     claimer_data BYTEA,
