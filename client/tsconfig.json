@@ -1,3 +1,6 @@
+// This configuration is only used for type checking (run with `vue-tsc --noEmit`).
+// The actual .ts -> .js transpilation is done in vite and doesn't need this config
+// since it only does dump type erasing instead of actual full type checking.
 {
     "compilerOptions": {
         "target": "ESNext",
@@ -10,16 +13,20 @@
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
+        "noEmit": true,
         "strictFunctionTypes": true,
         "useDefineForClassFields": true,
         "sourceMap": true,
         "types": ["node", "vite/client", "w3c-image-capture"],
         "paths": {
             "@/*": ["./src/*"],
-            "@tests/*": ["./tests/*"]
+            "@tests/*": ["./tests/*"],
+            // `./editics` is isolated from the main app, expected for  `parent_host_api.ts`
+            // which defines how the two communicate.
+            "@editics_parent_host_api": ["./editics/parent_host_api.ts"]
         },
         "lib": ["ESNext", "DOM", "DOM.Iterable", "ScriptHost"]
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "editics/**/*.ts", "tests/**/*.ts", "tests/**/*.tsx"],
     "exclude": ["node_modules"]
 }

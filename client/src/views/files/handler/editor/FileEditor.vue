@@ -66,40 +66,41 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
+import { ClientInfo, closeFile, openFile, WorkspaceHandle, writeFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
-  CryptpadEditors,
-  CryptpadError,
-  CryptpadErrorCodes,
-  CryptpadOpenModes,
-  CryptpadSession,
-  getCryptpadEditor,
+  EditicsError,
+  EditicsErrorCodes,
+  EditicsHostSession,
+  EditicsSaveState,
+  getEditicsDocumentType,
   openDocument,
-} from '@/services/cryptpad';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+} from '@/services/editics';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
-import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus } from '@/views/files/handler/editor';
+import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus } from '@/views/files/handler/editor';
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
 import { FileHandlerMode, SaveState } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import type { EditicsDocumentTypes } from '@editics_parent_host_api';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+
+// Time to wait for the document to be fully loaded (fonts, dictionaries, etc.) before offering
+// the user the option to keep waiting or give up, see openTimeoutModal(). OnlyOffice's own assets
+// (sdkjs, fonts, dictionaries) are heavy and can take a while to load on first use, so this is
+// generous on purpose (the editor shows a loading state in the meantime).
+const READY_TIMEOUT_MS = 60_000;
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
-const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
 const error = ref('');
 const showErrorTips = ref(false);
-const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
-let eventCbId: null | string = null;
 const loadFinished = ref(false);
-let session: CryptpadSession | undefined = undefined;
+let session: EditicsHostSession | undefined = undefined;
 const frameReady = ref(false);
-let initialSaveDone = false;
-let pendingSaveResolve: ((success: boolean) => void) | null = null;
+let readyTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
 const {
   contentInfo,
@@ -120,40 +121,73 @@ const emits = defineEmits<{
 defineExpose({ save });
 
 onMounted(async () => {
-  documentType.value = getCryptpadEditor(contentInfo.contentType);
+  // The document type is resolved from the file content type detected on this
+  // side (see getEditicsDocumentType), so it is always known by the time
+  // the open options are constructed.
+  const documentType = getEditicsDocumentType(contentInfo.contentType);
 
-  if (documentType.value === CryptpadEditors.Unsupported) {
+  if (documentType === undefined) {
     error.value = EditorErrorTitle.UnsupportedFileType;
     await openIssueModal(EditorIssueStatus.UnsupportedFileType);
     return;
   }
 
-  await loadEditor();
-
-  eventCbId = await eventDistributor.value.registerCallback([Events.Online, Events.Offline], async (event: Events) => {
-    if (event === Events.Offline) {
-      window.nativeAPI.log('warn', 'Network connection lost while editing');
-      emits('onSaveStateChange', SaveState.Offline);
-      await openIssueModal(EditorIssueStatus.NetworkOffline, false);
-    } else if (event === Events.Online) {
-      window.nativeAPI.log('info', 'Network connection restored');
-      emits('onSaveStateChange', SaveState.None);
-    }
-  });
+  await loadEditor(documentType);
 });
 
 onUnmounted(() => {
+  if (readyTimeoutId) {
+    clearTimeout(readyTimeoutId);
+  }
   if (session) {
     session.controller.abort();
     session = undefined;
   }
-
-  if (eventCbId) {
-    eventDistributor.value.removeCallback(eventCbId);
-  }
 });
 
-async function loadEditor(): Promise<void> {
+// Persists the original-format document bytes prepared by the offline host
+// into the workspace file it was opened from. This is the workspace-access
+// side of the offline editor: the iframe hosting the editor only gets to send
+// us `save` requests (see services/onlyoffice.ts), never libparsec itself.
+async function saveToWorkspace(workspaceHandle: WorkspaceHandle, data: Uint8Array): Promise<void> {
+  if (!contentInfo) {
+    throw new Error('missing content info');
+  }
+  const { path } = contentInfo;
+
+  // Overwrite the file in place: opening with truncate keeps the same entry
+  // (id, path, history), unlike the create-temporary-then-rename dance used
+  // for new files.
+  const fdResult = await openFile(workspaceHandle, path, { write: true, truncate: true });
+  if (!fdResult.ok) {
+    throw new Error(`failed to open the file for writing: ${JSON.stringify(fdResult.error)}`);
+  }
+  try {
+    const writeResult = await writeFile(workspaceHandle, fdResult.value, 0, data);
+    if (!writeResult.ok) {
+      throw new Error(`failed to write the file: ${JSON.stringify(writeResult.error)}`);
+    }
+  } finally {
+    await closeFile(workspaceHandle, fdResult.value);
+  }
+}
+
+// Maps the save states reported by the OnlyOffice service onto the states
+// displayed by the file handler topbar.
+function mapSaveState(state: EditicsSaveState): SaveState {
+  switch (state) {
+    case EditicsSaveState.Unsaved:
+      return SaveState.Unsaved;
+    case EditicsSaveState.Saving:
+      return SaveState.Saving;
+    case EditicsSaveState.Saved:
+      return SaveState.Saved;
+    case EditicsSaveState.Error:
+      return SaveState.Error;
+  }
+}
+
+async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
 
   if (!workspaceHandle) {
@@ -172,128 +206,54 @@ async function loadEditor(): Promise<void> {
     session = undefined;
   }
 
-  let isSaving = false;
-  const content = await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp);
-  if (!content) {
+  const documentContent = await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp);
+  if (!documentContent) {
     emits('fileError');
     return;
   }
   session = await openDocument(
     {
-      documentContent: content,
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
-      cryptpadEditor: documentType.value as CryptpadEditors,
-      key: crypto.randomUUID(),
+      documentType,
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
-      autosaveInterval: 10,
-      mode: readOnly || contentInfo.timestamp ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
+      mode: readOnly || contentInfo.timestamp ? 'view' : 'edit',
       locale: longLocaleCodeToShort(I18n.getLocale()),
     },
+    documentContent,
     {
       onReady: (): void => {
-        window.nativeAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
+        window.nativeAPI.log('info', 'OnlyOffice editor is ready and document loaded successfully');
+        if (readyTimeoutId) {
+          clearTimeout(readyTimeoutId);
+          readyTimeoutId = undefined;
+        }
         loadFinished.value = true;
         emits('fileLoaded');
       },
-      onSave: async (file: Blob): Promise<void> => {
-        let hasError = false;
-        let fd: FileDescriptor | undefined = undefined;
-        const start = Date.now();
-        try {
-          if (readOnly) {
-            return;
-          }
-          isSaving = true;
-          emits('onSaveStateChange', SaveState.Saving);
-          // Handle save logic here
-          const openResult = await openFile(workspaceHandle, contentInfo.path, { write: true, truncate: true });
-
-          if (!openResult.ok) {
-            window.nativeAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
-            hasError = true;
-            return;
-          }
-          fd = openResult.value;
-          const arrayBuffer = await file.arrayBuffer();
-          const writeResult = await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
-          if (!writeResult.ok) {
-            hasError = true;
-            window.nativeAPI.log('error', `Failed to write file: ${writeResult.error.tag} (${writeResult.error.error})`);
-          }
-        } catch (e: any) {
-          window.nativeAPI.log('error', `Failed to save file: ${e.toString()}`);
-          hasError = true;
-        } finally {
-          if (fd) {
-            await closeFile(workspaceHandle, fd);
-          }
-          const end = Date.now();
-          setTimeout(
-            () => {
-              if (isSaving === true) {
-                isSaving = false;
-                if (!hasError) {
-                  emits('onSaveStateChange', SaveState.Saved);
-                } else {
-                  emits('onSaveStateChange', SaveState.Error);
-                }
-                // Resolve pending manual save promise
-                if (pendingSaveResolve) {
-                  pendingSaveResolve(!hasError);
-                  pendingSaveResolve = null;
-                }
-              }
-            },
-            (window as any).TESTING === true ? 0 : Math.max(1000 - (end - start), 0),
-          );
-        }
+      // The editor iframe asks us to persist the document (it has no
+      // workspace access itself): convert the OnlyOffice native serialization
+      // back to the file's office format and write it to the workspace.
+      onSave: async (data: Uint8Array): Promise<void> => {
+        await saveToWorkspace(workspaceHandle, data);
       },
-      onHasUnsavedChanges: (unsaved: boolean): void => {
-        if (unsaved) {
-          isSaving = false;
-          // Auto-save on initial unsaved changes (e.g. OO conversion artifacts)
-          if (!initialSaveDone) {
-            initialSaveDone = true;
-            window.nativeAPI.log('info', 'Auto-saving initial unsaved changes');
-            save();
-            return;
-          }
-          emits('onSaveStateChange', SaveState.Unsaved);
-        }
+      onSaveStateChange: (state: EditicsSaveState): void => {
+        emits('onSaveStateChange', mapSaveState(state));
       },
       onError: async (err: unknown): Promise<void> => {
         error.value = 'fileViewers.errors.titles.genericError';
         showErrorTips.value = true;
 
-        if (err instanceof CryptpadError) {
-          window.nativeAPI.log('info', `Failed to load Cryptpad: ${err}`);
+        if (err instanceof EditicsError) {
+          window.nativeAPI.log('info', `Failed to load OnlyOffice: ${err}`);
           switch (err.code) {
-            case CryptpadErrorCodes.InitFailed:
-              error.value = EditorErrorMessage.EditableOnlyOnSystem;
-              break;
-            case CryptpadErrorCodes.OpenFailed:
-            case CryptpadErrorCodes.OpenInvalidConfig:
-              error.value = 'fileEditors.errors.titles.openFailed';
-              break;
-            case CryptpadErrorCodes.FrameLoadFailed:
-            case CryptpadErrorCodes.FrameNotLoaded:
+            case EditicsErrorCodes.FrameLoadFailed:
+            case EditicsErrorCodes.FrameNotLoaded:
               error.value = 'fileEditors.errors.titles.frameLoadFailed';
               break;
-            case CryptpadErrorCodes.EventError:
-              if (err.details && err.details.toString() === 'ready-timeout') {
-                error.value = '';
-                await openTimeoutModal();
-                // Don't process it as a normal error
-                return;
-              } else {
-                window.nativeAPI.log('error', `Unhandled event error: ${err.details}`);
-              }
-              break;
-            case CryptpadErrorCodes.NotAvailable:
-              showErrorTips.value = false;
-              error.value = 'fileEditors.errors.titles.cryptpadNotAvailable';
+            case EditicsErrorCodes.EventError:
+              window.nativeAPI.log('error', `Unhandled event error: ${err.details}`);
               break;
           }
         } else {
@@ -306,6 +266,18 @@ async function loadEditor(): Promise<void> {
     editorFrame.value,
   );
   frameReady.value = true;
+
+  // Give the user the option to keep waiting rather than silently doing nothing if the
+  // document takes too long to load. The e2e tests manage their own waits and skip the
+  // timeout modal entirely (it would otherwise pop up while the editor assets are still
+  // loading and intercept the test's clicks).
+  if ((window as any).TESTING !== true) {
+    readyTimeoutId = setTimeout(() => {
+      if (!loadFinished.value) {
+        openTimeoutModal();
+      }
+    }, READY_TIMEOUT_MS);
+  }
 }
 
 async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = true): Promise<MsModalResult> {
@@ -369,26 +341,14 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
 }
 
 async function save(): Promise<boolean> {
+  // Ask the editor to save now (its serialization goes through `onSave` →
+  // saveToWorkspace above) and wait for the completion. Returns false when it
+  // could not be saved, in which case the file handler asks the user whether
+  // to discard the changes or stay (see FileHandler.vue checkSaved).
   if (!session) {
-    return false;
+    return true;
   }
-  // If a save is already pending, resolve it as failed before starting a new one
-  if (pendingSaveResolve) {
-    pendingSaveResolve(false);
-    pendingSaveResolve = null;
-  }
-  return new Promise<boolean>((resolve) => {
-    const SAVE_TIMEOUT_MS = 5000;
-    pendingSaveResolve = resolve;
-    session!.save();
-    // Timeout in case save never completes
-    setTimeout(() => {
-      if (pendingSaveResolve === resolve) {
-        pendingSaveResolve = null;
-        resolve(false);
-      }
-    }, SAVE_TIMEOUT_MS);
-  });
+  return await session.save();
 }
 </script>
 

@@ -14,7 +14,13 @@ const config = {
     '.': {
       // Add entry files not added by knip's default entry file patterns
       // See: https://knip.dev/explanations/entry-files#default-entry-file-patterns
-      entry: ['merge-playwright.ts', 'src/parsec/types.ts', 'src/theme/components/index.scss'],
+      entry: [
+        'merge-playwright.ts',
+        'src/parsec/types.ts',
+        'src/theme/components/index.scss',
+        // Editics host page is not part of the app's import graph since it is loaded in an iframe.
+        'editics/offline.ts',
+      ],
     },
     // Refers to client/electron/package.json
     electron: {
@@ -46,6 +52,12 @@ const config = {
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
+    // OnlyOffice editor and x2t converter, installed as npm dependencies but
+    // used as raw vendored assets:
+    // - Dev: served from node_modules by the dev server
+    // - Release: copied verbatim into the dist folder (see staticCopyPlugin in vite.config.ts)
+    'onlyoffice-editor',
+    'onlyoffice-x2t',
     // used during signature of electron artifact for macOS
     '@electron/notarize',
     // an electron-builder utility, only used in partial imports for typing

@@ -83,7 +83,7 @@ function vitePluginWasmPack(
       }
     },
 
-    transform(code: string, id: string): void {
+    transform(_code: string, id: string): void {
       // Add watchers to detect changes on the crate
       if (id.indexOf(prefix) === 0) {
         const source = id.replace(prefix, '');

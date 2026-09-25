@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DataCache } from '@/common/cache';
-import { ConnectionHandle, getCurrentServerConfig, isWeb } from '@/parsec';
-import { getConnectionHandle } from '@/router';
+import { isWeb } from '@/parsec';
 import { EnvironmentType, I18n } from 'megashark-lib';
 
 export const APP_VERSION = __APP_VERSION__;
@@ -268,49 +266,12 @@ async function openTOS(tosLink: string): Promise<void> {
   await openUrl(tosLink);
 }
 
-/* Editics / Cryptpad variables */
+/* Editics variables */
 
 const ENABLE_EDITICS_VARIABLE = 'PARSEC_APP_ENABLE_EDITICS';
-const CRYPTPAD_FORCE_SERVER_VARIABLE = 'PARSEC_APP_FORCE_CRYPTPAD_SERVER';
 
 function isEditicsEnabled(): boolean {
   return import.meta.env[ENABLE_EDITICS_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_EDITICS === true;
-}
-
-const CryptpadServerCache = new DataCache<ConnectionHandle, string | null>();
-
-async function getCryptpadServer(): Promise<string | null> {
-  if ((window as any).TESTING_CRYPTPAD_SERVER !== undefined) {
-    return (window as any).TESTING_CRYPTPAD_SERVER;
-  }
-  if (!isEditicsEnabled()) {
-    return null;
-  }
-  if (import.meta.env[CRYPTPAD_FORCE_SERVER_VARIABLE]) {
-    return import.meta.env[CRYPTPAD_FORCE_SERVER_VARIABLE];
-  }
-  const connHandle = getConnectionHandle();
-
-  if (!connHandle) {
-    window.nativeAPI.log('warn', 'Cannot get the current connection handle');
-    return null;
-  }
-  const cachedServer = CryptpadServerCache.get(connHandle);
-  if (cachedServer || cachedServer === null) {
-    return cachedServer;
-  }
-  const result = await getCurrentServerConfig();
-  if (!result.ok) {
-    window.nativeAPI.log('warn', `Failed to retrieve server config: ${result.error.tag}`);
-    return null;
-  }
-  if (!result.value.cryptpad) {
-    window.nativeAPI.log('info', "Server doesn't have a cryptpad configuration");
-    CryptpadServerCache.set(connHandle, null);
-    return null;
-  }
-  CryptpadServerCache.set(connHandle, result.value.cryptpad.serverUrl);
-  return result.value.cryptpad.serverUrl;
 }
 
 export function ensureHttpsProtocol(server: string): string {
@@ -333,7 +294,6 @@ export const Env = {
   getAccountServer,
   isAccountEnabled,
   isEditicsEnabled,
-  getCryptpadServer,
   isAccountAutoLoginEnabled,
   isCustomBrandingEnabled,
   ensureHttpsProtocol,

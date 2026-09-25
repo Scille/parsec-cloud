@@ -140,7 +140,7 @@
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
-                v-if="!contentInfo.timestamp && readOnly && isCryptpadEnabledForDocumentType(contentInfo.contentType) && !isReader"
+                v-if="!contentInfo.timestamp && readOnly && isEditicsEnabledForDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
@@ -240,7 +240,7 @@ import {
   Routes,
   watchRoute,
 } from '@/router';
-import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
+import { isEditicsEnabledForDocumentType } from '@/services/editics';
 import { Env } from '@/services/environment';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useHeaderControl from '@/services/headerControl';
@@ -439,8 +439,9 @@ async function checkSaved(): Promise<boolean> {
   if (saveState.value === SaveState.None) {
     return true;
   }
-  // Always try to save when leaving the editor, since the editor/viewer
-  // may have unsaved changes not yet reported via onHasUnsavedChanges
+  // Always try to save when leaving the editor, since the editor/viewer may have
+  // unsaved changes not yet reported via `onSaveStateChange` (and saving a document
+  // with no modification is a noop).
   if (handlerRef.value?.save) {
     const saved = await handlerRef.value.save();
     if (saved) {
@@ -707,10 +708,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     componentProps: {
       canOpenWithSystem: !contentInfo.value.timestamp && isDesktop(),
       canEdit:
-        !contentInfo.value.timestamp &&
-        readOnly.value &&
-        isCryptpadEnabledForDocumentType(contentInfo.value.contentType) &&
-        !isReader.value,
+        !contentInfo.value.timestamp && readOnly.value && isEditicsEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value,
     },
   });
   await modal.present();
