@@ -898,6 +898,8 @@
                 "success": "The workspace {workspace} has successfully been archived.",
                 "fail": "Failed to archive the workspace {workspace}."
             },
+            "success": "The {workspace} workspace has been archived.",
+            "restoreSuccess": "The {workspace} workspace has been restored.",
             "readOnly": "Read only",
             "timestamp": "Archived on: {timestamp}",
             "count": "1 workspace | {count} workspaces",
@@ -1186,6 +1188,7 @@
             "archiveYes": "Download archive",
             "archiveDownload": "Downloading files (archive)",
             "archiveNo": "Cancel",
+            "archive": "Create archive",
             "downloadedCount": "{count} downloaded"
         },
         "ConflictsFile": {
