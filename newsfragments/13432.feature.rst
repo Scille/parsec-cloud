@@ -1,1 +1,1 @@
-Ask for `local network access` permission before enabling PKI web
+Ask for ``local network access`` permission before enabling PKI web
