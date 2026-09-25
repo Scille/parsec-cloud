@@ -33,7 +33,8 @@ CREATE TABLE account (
 
 CREATE TABLE vault (
     _id SERIAL PRIMARY KEY,
-    account INTEGER CONSTRAINT vault_account_fkey REFERENCES account (_id) ON DELETE CASCADE
+    account INTEGER
+    CONSTRAINT vault_account_fkey REFERENCES account (_id) ON DELETE CASCADE
     NOT NULL
 );
 
@@ -288,8 +289,12 @@ REFERENCES device (_id);
 
 CREATE TABLE shamir_recovery_setup (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT shamir_recovery_setup_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
+    user_ INTEGER
+    CONSTRAINT shamir_recovery_setup_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
 
     brief_certificate BYTEA NOT NULL,
     reveal_token VARCHAR(32) NOT NULL,
@@ -313,10 +318,16 @@ WHERE deleted_on IS NULL;
 
 CREATE TABLE shamir_recovery_share (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT shamir_recovery_share_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
 
-    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id) NOT NULL,
-    recipient INTEGER REFERENCES user_ (_id) NOT NULL,
+    shamir_recovery INTEGER
+    CONSTRAINT shamir_recovery_share_shamir_recovery_fkey REFERENCES shamir_recovery_setup (_id) ON DELETE CASCADE
+    NOT NULL,
+    recipient INTEGER
+    CONSTRAINT shamir_recovery_share_recipient_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
 
     share_certificate BYTEA NOT NULL,
     shares INTEGER NOT NULL,
@@ -327,8 +338,8 @@ CREATE TABLE shamir_recovery_share (
 
 -- Alter user table to introduce a cross-reference between user id and shamir id
 ALTER TABLE user_
-ADD FOREIGN KEY (shamir_recovery)
-REFERENCES shamir_recovery_setup (_id);
+ADD CONSTRAINT user_shamir_recovery_fkey FOREIGN KEY (shamir_recovery)
+REFERENCES shamir_recovery_setup (_id) ON DELETE CASCADE;
 
 
 -------------------------------------------------------
@@ -394,7 +405,8 @@ CREATE TABLE invitation (
     deleted_reason INVITATION_DELETED_REASON,
 
     -- Required when type=SHAMIR_RECOVERY
-    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
+    shamir_recovery INTEGER
+    CONSTRAINT invitation_shamir_recovery_fkey REFERENCES shamir_recovery_setup (_id) ON DELETE CASCADE,
 
     -- Added in migration 0009
     created_by_service_label VARCHAR(254),
@@ -776,7 +788,9 @@ CREATE TABLE sequester_topic (
 
 CREATE TABLE shamir_recovery_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT shamir_recovery_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization)
 );
