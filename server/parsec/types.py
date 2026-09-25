@@ -6,10 +6,9 @@ from collections.abc import Buffer
 from enum import Enum, auto
 from typing import Annotated, Final
 
-from pydantic import Field, GetPydanticSchema, PlainSerializer, PlainValidator
+from pydantic import GetPydanticSchema, PlainSerializer, PlainValidator
 from pydantic_core.core_schema import (
     chain_schema,
-    int_schema,
     is_instance_schema,
     json_or_python_schema,
     no_info_plain_validator_function,
@@ -21,13 +20,10 @@ from pydantic_core.core_schema import (
 
 from parsec._parsec import (
     AccessToken,
-    ActiveUsersLimit,
-    DateTime,
     DeviceID,
     EmailAddress,
     GreetingAttemptID,
     InvitationStatus,
-    OrganizationID,
     RealmRole,
     SequesterServiceID,
     UserID,
@@ -179,25 +175,20 @@ Base64BytesField = Annotated[
 ]
 
 
-OrganizationIDField = Annotated[
-    OrganizationID,
-    Field(description="The organization name", examples=["MyOrganization"]),
-    PlainValidator(lambda x: x if isinstance(x, OrganizationID) else OrganizationID(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
-]
-
 UserIDField = Annotated[
     UserID,
     get_pydantic_schema(
         UserID, lambda v: UserID.from_hex(v), lambda v: v.hex if isinstance(v, UserID) else v
     ),
 ]
+
 DeviceIDField = Annotated[
     DeviceID,
     get_pydantic_schema(
         DeviceID, lambda v: DeviceID.from_hex(v), lambda v: v.hex if isinstance(v, DeviceID) else v
     ),
 ]
+
 SequesterServiceIDField = Annotated[
     SequesterServiceID,
     get_pydantic_schema(
@@ -206,6 +197,7 @@ SequesterServiceIDField = Annotated[
         lambda v: v.hex if isinstance(v, SequesterServiceID) else v,
     ),
 ]
+
 InvitationTokenField = Annotated[
     AccessToken,
     get_pydantic_schema(
@@ -214,6 +206,7 @@ InvitationTokenField = Annotated[
         lambda v: v.hex if isinstance(v, AccessToken) else v,
     ),
 ]
+
 GreetingAttemptIDField = Annotated[
     GreetingAttemptID,
     get_pydantic_schema(
@@ -222,6 +215,7 @@ GreetingAttemptIDField = Annotated[
         lambda v: v.hex if isinstance(v, GreetingAttemptID) else v,
     ),
 ]
+
 InvitationStatusField = Annotated[
     InvitationStatus,
     get_pydantic_schema(
@@ -230,6 +224,7 @@ InvitationStatusField = Annotated[
         lambda v: v.str if isinstance(v, InvitationStatus) else v,
     ),
 ]
+
 RealmRoleField = Annotated[
     RealmRole,
     get_pydantic_schema(
@@ -238,17 +233,12 @@ RealmRoleField = Annotated[
         lambda v: v.str if isinstance(v, RealmRole) else v,
     ),
 ]
+
 VlobIDField = Annotated[
     VlobID,
     get_pydantic_schema(
         VlobID, lambda v: VlobID.from_hex(v), lambda v: v.hex if isinstance(v, VlobID) else v
     ),
-]
-DateTimeField = Annotated[
-    DateTime,
-    Field(description="A datetime in RFC 3339 format", examples=["2024-08-31T10:15:18Z"]),
-    PlainValidator(lambda v: v if isinstance(v, DateTime) else DateTime.from_rfc3339(str(v))),
-    PlainSerializer(lambda v: v.to_rfc3339() if isinstance(v, DateTime) else v, return_type=str),
 ]
 
 UserProfileField = Annotated[
@@ -259,16 +249,7 @@ UserProfileField = Annotated[
         lambda v: v.str if isinstance(v, UserProfile) else v,
     ),
 ]
-ActiveUsersLimitField = Annotated[
-    ActiveUsersLimit,
-    get_pydantic_schema(
-        ActiveUsersLimit,
-        lambda v: ActiveUsersLimit.from_maybe_int(v),
-        lambda v: v.to_maybe_int() if isinstance(v, ActiveUsersLimit) else v,
-        from_schema=int_schema(),
-        allowed_none=True,
-    ),
-]
+
 EmailAddressField = Annotated[
     EmailAddress,
     get_pydantic_schema(

@@ -73,6 +73,38 @@ impl ActiveUsersLimit {
             libparsec_types::ActiveUsersLimit::NoLimit => None,
         }
     }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{inner::CoreSchemaModule, serializer, validator};
+
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        let int_schema = core_schema.int_schema()?;
+        let nullable_int_schema = core_schema.nullable_schema(int_schema)?;
+
+        let ser_schema = serializer!(
+            core_schema,
+            cls.getattr("to_maybe_int")?,
+            Some(nullable_int_schema.clone()),
+            py
+        )?;
+
+        validator!(
+            core_schema,
+            cls,
+            schema = nullable_int_schema,
+            ser = ser_schema,
+            der = cls.getattr("from_maybe_int")?,
+            py
+        )
+    }
 }
 
 python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/anonymous_cmds");
