@@ -10,6 +10,7 @@ import { promisify } from 'util';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { brotliCompress } from 'zlib';
+import generateEditicsPlugins from './scripts/vite_plugin_editics.ts';
 import wasmPack from './scripts/vite_plugin_wasm_pack.ts';
 
 // Vue hoists static template parts into module-level constants, created once at import time
@@ -138,12 +139,17 @@ if (platform === 'web') {
 
 // 5) Finally configure Vite
 
+// For native, Electron 41 ships Chrome 146 (see https://www.electronjs.org/blog/electron-41-0).
+// For web, we pin these minimums so the build target is explicit and stable across Vite versions.
+// See https://oxc.rs/docs/guide/usage/transformer/lowering#target for allowed target values.
+const BUILD_TARGET = platform === 'native' ? 'chrome146' : ['chrome107', 'edge107', 'firefox104', 'safari16'];
+
 // scss additionalData is used to inject the theme variables in SCSS files imported in main.ts & .vue files
 // for SCSS files imported with sass @use / @forward methods, you need to add manually the theme import
 const additionalData = '@use "megashark-lib/theme" as ms;';
 
 // https://vitejs.dev/config/
-const config: UserConfigFnObject = (_env: ConfigEnv) => ({
+const config: UserConfigFnObject = (env: ConfigEnv) => ({
   css: {
     preprocessorOptions: {
       scss: {
@@ -167,6 +173,9 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     alias: {
       '@libparsec_trampoline': path.resolve(import.meta.dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
       '@': path.resolve(import.meta.dirname, './src'),
+      // `./editics` is isolated from the main app, expected for  `parent_host_api.ts`
+      // which defines how the two communicate.
+      '@editics_parent_host_api': path.resolve(import.meta.dirname, './editics/parent_host_api.ts'),
       '@tests': path.resolve(import.meta.dirname, './tests'),
     },
     fakeTimers: {
@@ -175,6 +184,7 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
   },
   plugins: [
     ...plugins,
+    ...generateEditicsPlugins(env, BUILD_TARGET),
     {
       // Serve `dist/custom/*` at `/custom/*` in dev mode.
       // This folder is optional and may not be present.
@@ -194,10 +204,7 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
   ],
   build: {
     sourcemap: true,
-    // For native, Electron 41 ships Chrome 146 (see https://www.electronjs.org/blog/electron-41-0).
-    // For web, we pin these minimums so the build target is explicit and stable across Vite versions.
-    // See https://oxc.rs/docs/guide/usage/transformer/lowering#target for allowed target values.
-    target: platform === 'native' ? 'chrome146' : ['chrome107', 'edge107', 'firefox104', 'safari16'],
+    target: BUILD_TARGET,
     minify: 'esbuild',
     cssCodeSplit: false,
     rolldownOptions: {
@@ -210,6 +217,9 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     alias: {
       '@libparsec_trampoline': path.resolve(import.meta.dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
       '@': path.resolve(import.meta.dirname, './src'),
+      // `./editics` is isolated from the main app, expected for  `parent_host_api.ts`
+      // which defines how the two communicate.
+      '@editics_parent_host_api': path.resolve(import.meta.dirname, './editics/parent_host_api.ts'),
     },
   },
   define: {

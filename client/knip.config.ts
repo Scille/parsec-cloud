@@ -14,7 +14,13 @@ const config = {
     '.': {
       // Add entry files not added by knip's default entry file patterns
       // See: https://knip.dev/explanations/entry-files#default-entry-file-patterns
-      entry: ['merge-playwright.ts', 'src/parsec/types.ts', 'src/theme/components/index.scss'],
+      entry: [
+        'merge-playwright.ts',
+        'src/parsec/types.ts',
+        'src/theme/components/index.scss',
+        // Editics host page is not part of the app's import graph since it is loaded in an iframe.
+        'editics/offline.ts',
+      ],
     },
     // Refers to client/electron/package.json
     electron: {

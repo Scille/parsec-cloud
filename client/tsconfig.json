@@ -20,10 +20,13 @@
         "types": ["node", "vite/client", "w3c-image-capture"],
         "paths": {
             "@/*": ["./src/*"],
-            "@tests/*": ["./tests/*"]
+            "@tests/*": ["./tests/*"],
+            // `./editics` is isolated from the main app, expected for  `parent_host_api.ts`
+            // which defines how the two communicate.
+            "@editics_parent_host_api": ["./editics/parent_host_api.ts"],
         },
         "lib": ["ESNext", "DOM", "DOM.Iterable", "ScriptHost"]
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "editics/**/*.ts", "tests/**/*.ts", "tests/**/*.tsx"],
     "exclude": ["node_modules"]
 }
