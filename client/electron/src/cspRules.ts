@@ -14,13 +14,19 @@ enum CspDirective {
   MediaSrc = 'media-src',
 }
 
-// Set a CSP up for our application based on the custom scheme
-export function setupContentSecurityPolicy(customScheme: string): void {
-  const customProtocol = `${customScheme}:`;
+function buildContentSecurityPolicy(customProtocol: string, allowWasmEvaluation: boolean, allowJavaScriptEvaluation: boolean): string {
+  const scriptSources = [customProtocol, "'unsafe-inline'"];
+  if (allowWasmEvaluation) {
+    scriptSources.push("'wasm-unsafe-eval'");
+  }
+  if (allowJavaScriptEvaluation) {
+    scriptSources.push("'unsafe-eval'");
+  }
+  scriptSources.push('https://*.stripe.com');
 
-  const CspRules: Array<[CspDirective, Array<string>]> = [
+  const cspRules: Array<[CspDirective, Array<string>]> = [
     [CspDirective.DefaultSrc, [customProtocol, 'devtools:']],
-    [CspDirective.ScriptSrc, [customProtocol, "'unsafe-inline'", 'https://*.stripe.com']],
+    [CspDirective.ScriptSrc, scriptSources],
     [CspDirective.ImgSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
     [CspDirective.StyleSrc, [customProtocol, "'unsafe-inline'", 'data:', 'https:', 'http:']],
     [CspDirective.FontSrc, [customProtocol, 'data:', 'https:*', 'http:*']],
@@ -30,19 +36,38 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     [CspDirective.MediaSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
   ];
 
-  const rules: Array<string> = [];
-  for (const [directive, hosts] of CspRules) {
-    rules.push(`${directive} ${hosts.join(' ')}`);
-  }
-  const CSP_RULE = rules.join('; ');
+  return cspRules.map(([directive, sources]) => `${directive} ${sources.join(' ')}`).join('; ');
+}
+
+// Set a CSP up for our application based on the custom scheme.
+export function setupContentSecurityPolicy(customScheme: string): void {
+  const customProtocol = `${customScheme}:`;
+  const parsecCsp = buildContentSecurityPolicy(customProtocol, false, false);
+  // Editics iframe contains loads onlyoffice-x2t, which itself compiles its
+  // packaged WASM module, but does not need JavaScript eval.
+  const editicsHostCsp = buildContentSecurityPolicy(customProtocol, true, false);
+  // OnlyOffice itself also uses `new Function()` for its templates and
+  // localization, hence this deliberately narrower document-only exception.
+  const onlyOfficeEditorCsp = buildContentSecurityPolicy(customProtocol, true, true);
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    if (details.resourceType !== 'mainFrame') {
-      return callback({ responseHeaders: details.responseHeaders });
+    const responseHeaders = { ...details.responseHeaders };
+
+    if (details.resourceType === 'mainFrame') {
+      // Keep WebAssembly compilation disabled for the Parsec application.
+      responseHeaders['Content-Security-Policy'] = [parsecCsp];
+    } else if (details.resourceType === 'subFrame') {
+      const parsedUrl = new URL(details.url);
+      if (parsedUrl.protocol === customProtocol) {
+        if (parsedUrl.pathname.startsWith('/editics/')) {
+          responseHeaders['Content-Security-Policy'] = [editicsHostCsp];
+        }
+        if (parsedUrl.pathname.startsWith('/onlyoffice/')) {
+          responseHeaders['Content-Security-Policy'] = [onlyOfficeEditorCsp];
+        }
+      }
     }
 
-    const responseHeaders = { ...details.responseHeaders };
-    responseHeaders['Content-Security-Policy'] = [CSP_RULE];
     callback({ responseHeaders });
   });
 }
