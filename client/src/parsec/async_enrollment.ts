@@ -54,6 +54,11 @@ import {
 } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { OpenBaoClient } from '@/services/openBao';
+import {
+  getLocalNetworkAccessPermissions,
+  LocalNetworkAccessPermission,
+  promptLocalNetworkAccessPermissions,
+} from '@/services/permissions';
 import { DateTime } from 'luxon';
 import { toRaw } from 'vue';
 
@@ -197,6 +202,16 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       if (!scwsapiAppCertificate) {
         console.log(`PKI: No meta tag '${SCWS_APP_CERTIFICATE}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_APP_CERTIFICATE}' present` } };
+      }
+
+      const perms = await getLocalNetworkAccessPermissions();
+      if (perms !== LocalNetworkAccessPermission.Granted) {
+        window.nativeAPI.log(
+          'warn',
+          // eslint-disable-next-line max-len
+          `Permissions to access loopback address is '${perms}'. Please enable 'Local Network Access Checks' on Chrome or 'network.lna.skip-domains' on Firefox.`,
+        );
+        await promptLocalNetworkAccessPermissions();
       }
 
       // Signature differs between what the proxy expects and what libparsec has defined,
