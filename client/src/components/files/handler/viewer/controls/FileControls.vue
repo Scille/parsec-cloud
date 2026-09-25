@@ -1,12 +1,20 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="toolbar ion-margin-bottom secondary file-controls">
+  <div
+    class="toolbar ion-margin-bottom secondary file-controls"
+    :class="{ 'file-controls-disabled': disabled }"
+    :inert="disabled"
+  >
     <slot />
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineProps<{
+  disabled?: boolean;
+}>();
+</script>
 
 <style scoped lang="scss">
 .file-controls {
@@ -44,6 +52,10 @@
 
   &:hover {
     box-shadow: var(--parsec-shadow-light);
+  }
+
+  &-disabled {
+    opacity: 0.5;
   }
 }
 </style>
