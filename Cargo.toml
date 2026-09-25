@@ -245,6 +245,7 @@ features = [
     "rayon",               # Allow to run benchmarks in parallel
     "html_reports",        # Generate HTML reports
     "csv_output",          # Generate CSV reports
+    "async_tokio",         # Support benchmarking async functions
 ]
 
 # Rust unoptimized code is really slow with crypto algorithm and regex compilation,
