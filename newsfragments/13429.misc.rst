@@ -1,1 +1,0 @@
-Reworded *Starred* workspaces to *Favorites*

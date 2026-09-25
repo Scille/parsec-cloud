@@ -8,7 +8,7 @@ Parsec v3.x
 .. towncrier release notes start
 
 
-Parsec v3.10.0-rc.1 (2026-09-24)
+Parsec v3.10.0-rc.2 (2026-09-25)
 --------------------------------
 
 This version includes several changes to the Parsec CLI,
@@ -54,6 +54,9 @@ Features
 
 * Added cross-workspace file search from the *My workspaces* page
   (`#13010 <https://github.com/Scille/parsec-cloud/issues/13010>`__)
+
+* Ask for ``local network access`` permission before enabling PKI web
+  (`#13432 <https://github.com/Scille/parsec-cloud/issues/13432>`__)
 
 
 Bugfixes
@@ -178,6 +181,9 @@ Miscellaneous internal changes
 * In small display, the **+** button is now visible at all times for Members and
   disabled if no action is available instead of hidden
   (`#12834 <https://github.com/Scille/parsec-cloud/issues/12834>`__)
+
+* Reworded *Starred* workspaces to *Favorites*
+  (`#13429 <https://github.com/Scille/parsec-cloud/issues/13429>`__)
 
 
 CLI
