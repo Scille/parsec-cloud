@@ -14,6 +14,7 @@
           v-if="src.length"
           ref="videoElement"
           class="video"
+          :src="src"
           @click="togglePlayback"
           @play="updateMediaData"
           @playing="updateMediaData"
@@ -31,13 +32,11 @@
           @leavepictureinpicture="onTogglePictureInPicture(false)"
           @loadstart="loading = true"
           @waiting="loading = true"
-        >
-          <source :src="src" />
-        </video>
+        />
       </div>
     </template>
     <template #controls>
-      <file-controls>
+      <file-controls :disabled="Boolean(loading || error)">
         <file-controls-playback
           :paused="fluxProgress.paused"
           :ended="ended"
@@ -184,7 +183,7 @@ function onTimeUpdate(): void {
 }
 
 function togglePlayback(): void {
-  if (videoElementRef.value) {
+  if (videoElementRef.value && !loading.value && !error.value) {
     videoElementRef.value.paused ? videoElementRef.value.play() : videoElementRef.value.pause();
   }
 }
@@ -228,21 +227,12 @@ async function toggleLoop(): Promise<void> {
 }
 
 function updateMediaData(event: Event): void {
-  // in some cases, the `error` event is not emitted, probably
-  // because the video element waits for more data to make up
-  // its mind, even if there's no more data. So instead, when
-  // trying to update the media data, we check if the `duration`
-  // is set or not.
-  if (Number.isNaN((event.target as HTMLVideoElement).duration)) {
-    error.value = 'fileViewers.errors.mediaNotSupported';
-  } else {
-    volume.value = Math.floor((event.target as HTMLAudioElement).volume * 100);
-    muted.value = (event.target as HTMLAudioElement).muted;
-    ended.value = (event.target as HTMLVideoElement).ended;
-    length.value = Math.floor((event.target as HTMLVideoElement).duration * 100);
-    fluxProgress.value.progress = Math.floor((event.target as HTMLVideoElement).currentTime * 100);
-    fluxProgress.value.paused = (event.target as HTMLVideoElement).paused;
-  }
+  volume.value = Math.floor((event.target as HTMLAudioElement).volume * 100);
+  muted.value = (event.target as HTMLAudioElement).muted;
+  ended.value = (event.target as HTMLVideoElement).ended;
+  length.value = Math.floor((event.target as HTMLVideoElement).duration * 100);
+  fluxProgress.value.progress = Math.floor((event.target as HTMLVideoElement).currentTime * 100);
+  fluxProgress.value.paused = (event.target as HTMLVideoElement).paused;
 }
 </script>
 
