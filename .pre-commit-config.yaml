@@ -273,6 +273,24 @@ repos:
   # from the GUI project directory to reuse the installed dependencies.
   - repo: local
     hooks:
+      - id: prettier
+        name: prettier (using `npx`)
+        # Note we don't use `npx prettier` with `--prefix=./client` because it causes
+        # random compat issues since every sub-command expects to be run from
+        # the root of the node project.
+        entry: |
+          node -e "
+            const { spawnSync } = require('child_process');
+            const { exit, argv } = require('process');
+            let files = argv.slice(1).map(function (x) { return x.replace(/^client\//, '') });
+            let ret = spawnSync('npx', ['prettier', '--write'].concat(files), {cwd: './client', stdio: 'inherit'});
+            exit(ret.status);
+          "
+        require_serial: true
+        language: system
+        files: ^client/
+        types_or: [vue, ts, tsx, javascript, jsx, html]
+
       - id: eslint
         name: eslint (using `npx`)
         # Note we don't use `npx eslint` with `--prefix=./client` because it causes
@@ -309,24 +327,6 @@ repos:
         language: system
         files: ^client/
         types_or: [vue, ts, tsx]
-
-      - id: prettier
-        name: prettier (using `npx`)
-        # Note we don't use `npx prettier` with `--prefix=./client` because it causes
-        # random compat issues since every sub-command expects to be run from
-        # the root of the node project.
-        entry: |
-          node -e "
-            const { spawnSync } = require('child_process');
-            const { exit, argv } = require('process');
-            let files = argv.slice(1).map(function (x) { return x.replace(/^client\//, '') });
-            let ret = spawnSync('npx', ['prettier', '--write'].concat(files), {cwd: './client', stdio: 'inherit'});
-            exit(ret.status);
-          "
-        require_serial: true
-        language: system
-        files: ^client/
-        types_or: [vue, ts, tsx, javascript, jsx, html]
 
   ######
   # JSON
