@@ -181,4 +181,11 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // Editics host page is not part of the app's import graph since it is loaded in an iframe.
+    files: ['editics/**'],
+    rules: {
+      'no-relative-import-paths/no-relative-import-paths': 'off',
+    },
+  },
 ]);
