@@ -7,6 +7,7 @@ import {
   DocumentsPage,
   dragAndDropFile,
   expect,
+  FileOperationMenu,
   importDefaultFiles,
   ImportDocuments,
   msTest,
@@ -45,8 +46,9 @@ msTest.describe(() => {
       await okButton.click();
       await expect(modal).toBeHidden();
 
-      const uploadMenu = documents.locator('.upload-menu');
-      await expect(uploadMenu).toBeVisible();
+      const menu = new FileOperationMenu(documents);
+      await menu.expectVisible();
+      const uploadMenu = menu.getLocator();
       const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
       await expect(opItems).toHaveCount(2);
       await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving image.png');
@@ -98,13 +100,14 @@ msTest.describe(() => {
       await okButton.click();
       await expect(modal).toBeHidden();
 
-      const uploadMenu = documents.locator('.upload-menu');
-      await expect(uploadMenu).toBeVisible();
+      const menu = new FileOperationMenu(documents);
+      await menu.expectVisible();
+      const uploadMenu = menu.getLocator();
       const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
       await expect(opItems).toHaveCount(2);
       await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving image.png');
       await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
-      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+      await menu.close();
 
       // File should not be here anymore
       if (gridMode) {
@@ -160,8 +163,10 @@ msTest.describe(() => {
     await okButton.click();
     await expect(modal).toBeHidden();
 
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
+    const menu = new FileOperationMenu(documents);
+    await menu.expectVisible();
+    const uploadMenu = menu.getLocator();
+
     const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
     await expect(opItems).toHaveCount(2);
     await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving image.png');
@@ -188,15 +193,17 @@ msTest.describe(() => {
       // Drop a file with the content '12345' in the current folder
       await dragAndDropFile(documents, dropZone, [], [{ name: 'file.txt', content: 'MTIzNDU=' }]);
 
-      const uploadMenu = documents.locator('.upload-menu');
-      await expect(uploadMenu).toBeVisible();
+      const menu = new FileOperationMenu(documents);
+      await menu.expectVisible();
+      const uploadMenu = menu.getLocator();
+
       const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
       await expect(opItems).toHaveCount(2);
       await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('file.txt');
       await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('5 B •  wksp1');
       await expect(opItems.nth(1).locator('.element-details-title__name')).toHaveText('file.txt');
       await expect(opItems.nth(1).locator('.element-details-info')).toHaveText('1 B •  wksp1');
-      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+      await menu.close();
 
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
@@ -224,7 +231,7 @@ msTest.describe(() => {
       if (dupPolicy === 'replace') {
         await buttons.nth(1).click();
         await expect(dupModal).toBeHidden();
-        await expect(uploadMenu).toBeVisible();
+        await menu.expectVisible();
         await expect(opItems).toHaveCount(3);
         await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving file.txt');
         await expect(entries).toHaveCount(1);
@@ -237,7 +244,6 @@ msTest.describe(() => {
         await buttons.nth(0).click();
         await expect(dupModal).toBeHidden();
         await expect(documents).toShowToast('No files to move.', 'Info');
-        await expect(uploadMenu).toBeHidden();
         await expect(entries).toHaveCount(2);
         await expect(entries.locator('.label-name')).toHaveText(['Folder', 'file.txt']);
         await entries.nth(0).dblclick();
@@ -247,7 +253,7 @@ msTest.describe(() => {
       } else {
         await buttons.nth(2).click();
         await expect(dupModal).toBeHidden();
-        await expect(uploadMenu).toBeVisible();
+        await menu.expectVisible();
         await expect(opItems).toHaveCount(3);
         await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving file.txt');
         await expect(entries).toHaveCount(1);
@@ -291,15 +297,16 @@ msTest.describe(() => {
         [{ name: 'file.txt', content: 'MTIzNDU=' }],
       );
 
-      const uploadMenu = documents.locator('.upload-menu');
-      await expect(uploadMenu).toBeVisible();
+      const menu = new FileOperationMenu(documents);
+      await menu.expectVisible();
+      const uploadMenu = menu.getLocator();
       const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
       await expect(opItems).toHaveCount(2);
       await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('file.txt');
       await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('5 B •  wksp1');
       await expect(opItems.nth(1).locator('.element-details-title__name')).toHaveText('file.txt');
       await expect(opItems.nth(1).locator('.element-details-info')).toHaveText('1 B •  wksp1');
-      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+      await menu.close();
 
       const modal = documents.locator('.folder-selection-modal');
       const dupModal = documents.locator('.file-operation-conflicts-modal');
@@ -337,12 +344,11 @@ msTest.describe(() => {
       // Folder is not here anymore for replace and count
       if (dupPolicy === 'replace' || dupPolicy === 'addCount') {
         await expect(entries).toHaveCount(0);
-        await expect(uploadMenu).toBeVisible();
+        await menu.expectVisible();
         await expect(opItems).toHaveCount(3);
         await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving Folder');
       } else {
         await expect(documents).toShowToast('No files to move.', 'Info');
-        await expect(uploadMenu).toBeHidden();
         await expect(entries.locator('.label-name')).toHaveText('Folder');
       }
 
