@@ -16,8 +16,7 @@ import {
   WorkspaceHistoryEntryStat,
 } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, navigateTo, Routes } from '@/router';
-import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
-import { Env } from '@/services/environment';
+import { isEditicsEnabledForDocumentType } from '@/services/editics';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { FileHandlerMode } from '@/views/files/handler';
@@ -273,7 +272,7 @@ export default function useFileOpener(): PathOpener {
         pathOpened();
         return;
       }
-      if (Env.isEditicsEnabled() && isCryptpadEnabledForDocumentType(contentType.type)) {
+      if (isEditicsEnabledForDocumentType(contentType.type)) {
         return await _openInEditor(entry, workspaceHandle, options, contentType);
       } else if (ENABLED_FILE_VIEWERS.includes(contentType.type)) {
         return await _openInViewer(entry, workspaceHandle, options, contentType);

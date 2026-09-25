@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { EntryName, Path } from '@/parsec';
-import { isFileEditableWithCryptpad } from '@/services/cryptpad';
+import { isEditicsEnabledForDocumentType } from '@/services/editics';
 import { fileTypeFromBuffer } from 'file-type';
 
 enum FileContentType {
@@ -24,7 +24,8 @@ interface DetectedFileType {
 const OPENABLE_FILES = {
   IMAGES: ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'],
   SPREADSHEETS: ['xlsx', 'xls', 'ods'],
-  DOCUMENTS: ['docx', 'odt'],
+  // `bin` is OnlyOffice's own native document format, used as-is without any conversion step.
+  DOCUMENTS: ['docx', 'odt', 'bin'],
   PDF_DOCUMENTS: ['pdf'],
   AUDIOS: ['wav', 'mp3', 'ogg'],
   VIDEOS: ['mp4', 'mpeg', 'webm'],
@@ -165,7 +166,7 @@ function detectFileContentType(name: EntryName): DetectedFileType {
 function isFileEditable(name: EntryName): boolean {
   const fileContentType = detectOpenableFile(name);
 
-  return fileContentType.type === FileContentType.Text || isFileEditableWithCryptpad(fileContentType);
+  return fileContentType.type === FileContentType.Text || isEditicsEnabledForDocumentType(fileContentType.type);
 }
 
 export {
