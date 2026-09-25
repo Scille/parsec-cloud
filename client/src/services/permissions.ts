@@ -16,9 +16,30 @@ export async function getLocalNetworkAccessPermissions(): Promise<LocalNetworkAc
   }
 }
 
+function* generateUrl(protocol: 'http:' | 'https:'): Generator<string> {
+  const startingPort = protocol === 'http:' ? 41231 : 41232;
+  const endPort = protocol === 'http:' ? 41321 : 41322;
+
+  for (let port = startingPort; port <= endPort; port += 10) {
+    yield `${protocol}//127.0.0.1:${port}`;
+  }
+}
+
 export async function promptLocalNetworkAccessPermissions(): Promise<void> {
-  try {
-    window.nativeAPI.log('debug', 'Prompting access to local network');
-    await fetch('http://127.0.0.1', { targetAddressSpace: 'loopback' } as any);
-  } catch {}
+  window.nativeAPI.log('debug', 'Prompting access to local network');
+
+  if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+    window.nativeAPI.log('error', `Invalid protocol for location: ${window.location.protocol}`);
+    return;
+  }
+
+  for (const url of generateUrl(window.location.protocol)) {
+    try {
+      const req = await fetch(url, { targetAddressSpace: 'loopback' } as any);
+      if (req.ok) {
+        window.nativeAPI.log('debug', `Found a service running on ${url}`);
+        break;
+      }
+    } catch {}
+  }
 }
