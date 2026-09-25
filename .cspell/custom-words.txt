@@ -358,6 +358,7 @@ sbox
 scalarmult
 schemafile
 scwsapi
+sdkjs
 sdkmanager
 sealedbox
 secho
@@ -371,6 +372,7 @@ seedable
 seedbytes
 Sellsy
 SEPA
+serviceworker
 setmainfont
 setmonofont
 setsansfont
