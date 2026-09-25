@@ -86,6 +86,12 @@ jobs:
         working-directory: client
         timeout-minutes: 5
 
+      # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
+      # stripping locales and dictionaries (only keeping English and French).
+      - name: Prune node_modules/onlyoffice-editor
+        run: bash .github/scripts/prune_node_modules_onlyoffice.sh
+        timeout-minutes: 1
+
       - name: Install electron dependencies
         shell: bash -o pipefail -ex {0}
         run: |
@@ -256,6 +262,12 @@ jobs:
         run: npm install --ignore-scripts --no-audit
         working-directory: client
 
+      # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
+      # stripping locales and dictionaries (only keeping English and French).
+      - name: Prune node_modules/onlyoffice-editor
+        run: bash .github/scripts/prune_node_modules_onlyoffice.sh
+        timeout-minutes: 1
+
       - name: Check testbed server is running
         run: curl http://localhost:6777
 
@@ -352,6 +364,13 @@ jobs:
         if: inputs.enable-coverage
         run: npm install --ignore-scripts --no-audit
         working-directory: client
+
+      # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
+      # stripping locales and dictionaries (only keeping English and French).
+      - name: Prune node_modules/onlyoffice-editor
+        if: inputs.enable-coverage
+        run: bash .github/scripts/prune_node_modules_onlyoffice.sh
+        timeout-minutes: 1
 
       - name: Generate coverage report
         if: inputs.enable-coverage
