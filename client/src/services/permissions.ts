@@ -19,6 +19,6 @@ export async function getLocalNetworkAccessPermissions(): Promise<LocalNetworkAc
 export async function promptLocalNetworkAccessPermissions(): Promise<void> {
   try {
     window.nativeAPI.log('debug', 'Prompting access to local network');
-    await fetch('http://127.0.0.1', { targetAddressSpace: 'loopback' } as any);
+    fetch(`${window.location.protocol}//127.0.0.1`, { targetAddressSpace: 'loopback' } as any);
   } catch {}
 }
