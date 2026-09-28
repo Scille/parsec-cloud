@@ -37,7 +37,7 @@
         "knip:fix": "knip --fix"
     },
     "dependencies": {
-        "@capacitor/core": "^8.5.1",
+        "@capacitor/core": "^8.5.2",
         "@ionic/core": "^8.8.18",
         "@ionic/storage": "^4.0.0",
         "@ionic/vue": "^8.8.18",
@@ -63,7 +63,7 @@
     },
     "//": "⚠️ Updating ViteJS requires to also update `build.target` config in `client/vite.config.ts`",
     "devDependencies": {
-        "@capacitor/cli": "^8.5.0",
+        "@capacitor/cli": "^8.5.2",
         "@eslint/compat": "^2.1.1",
         "@playwright/test": "^1.62.1",
         "@sentry/vite-plugin": "^5.4.0",
