@@ -884,7 +884,8 @@ ion-modal {
   max-width: var(--parsec-modal-width-sm);
 }
 
-.folder-selection-modal {
+.folder-selection-modal,
+.image-selection-modal {
   &::part(content) {
     --height: 580px;
     --width: 100%;

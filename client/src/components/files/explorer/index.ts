@@ -13,6 +13,7 @@ import FileListItemProcessing from '@/components/files/explorer/FileListItemProc
 import FileSearchResults from '@/components/files/explorer/FileSearchResults.vue';
 import FolderSelectionModal from '@/components/files/explorer/FolderSelectionModal.vue';
 import HistoryFileListItem from '@/components/files/explorer/HistoryFileListItem.vue';
+import ImageSelectionModal from '@/components/files/explorer/ImageSelectionModal.vue';
 import NewFilePopover from '@/components/files/explorer/NewFilePopover.vue';
 
 export {
@@ -29,5 +30,6 @@ export {
   FileSearchResults,
   FolderSelectionModal,
   HistoryFileListItem,
+  ImageSelectionModal,
   NewFilePopover,
 };
