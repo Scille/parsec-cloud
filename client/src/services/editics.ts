@@ -1,6 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { getFileContent } from '@/common/file';
 import { FileContentType } from '@/common/fileTypes';
+import ImageSelectionModal from '@/components/files/explorer/ImageSelectionModal.vue';
+import { FsPath, WorkspaceHandle } from '@/parsec';
+import { getWorkspaceHandle } from '@/router';
 import { Env } from '@/services/environment';
 import type {
   EditicsDocumentTypes,
@@ -9,6 +13,8 @@ import type {
   EditicsParentToHostMessage,
   EditicsRequestParentSaveReply,
 } from '@editics_parent_host_api';
+import { modalController } from '@ionic/vue';
+import { MsModalResult } from 'megashark-lib';
 
 export enum EditicsErrorCodes {
   FrameNotLoaded = 'frame-not-loaded',
@@ -199,6 +205,16 @@ export async function openDocument(
               }
               break;
             }
+
+            case 'oo-insert-image': {
+              // The editor's user wants to insert an image: present a workspace
+              // file picker and send its content back to the host.
+              if (!frame.contentWindow) {
+                return;
+              }
+              handleRequestImage(frame.contentWindow, event.data.requestId);
+              break;
+            }
           }
         },
         { signal: controller.signal },
@@ -259,4 +275,64 @@ export async function openDocument(
   );
 
   return session;
+}
+
+async function handleRequestImage(host: Window, requestId: number): Promise<void> {
+  const postReply = (reply: Omit<Extract<EditicsParentToHostMessage, { command: 'oo-image-reply' }>, 'command' | 'requestId'>): void => {
+    host.postMessage({ command: 'oo-insert-image-result', requestId, ...reply } satisfies EditicsParentToHostMessage, '*');
+  };
+
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({
+      // @ts-expect-error
+      error: 'cannot get the workspace handle',
+    });
+    return;
+  }
+
+  const path = await selectImage({ workspaceHandle });
+  if (path === null) {
+    postReply({
+      // @ts-expect-error
+      error: 'cancelled',
+    });
+    return;
+  }
+
+  const content = await getFileContent(workspaceHandle, path as FsPath);
+  if (!content) {
+    postReply({
+      // @ts-expect-error
+      error: `failed to read ${path} from the workspace`,
+    });
+    return;
+  }
+
+  postReply({
+    // @ts-expect-error
+    fileName: path.split('/').pop() ?? 'image',
+    // @ts-expect-error
+    data: content,
+  });
+}
+
+// Opens the workspace image picker (see `ImageSelectionModal`) and resolves
+// with the workspace-absolute path of the selected image, or `null` if the
+// user cancelled.
+async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promise<string | null> {
+  const modal = await modalController.create({
+    component: ImageSelectionModal,
+    canDismiss: true,
+    cssClass: 'image-selection-modal',
+    componentProps: {
+      workspaceHandle: options.workspaceHandle,
+      title: 'fileEditors.insertImage.title',
+      okButtonLabel: 'fileEditors.insertImage.insert',
+    },
+  });
+  await modal.present();
+  const result = await modal.onWillDismiss();
+  await modal.dismiss();
+  return result.role === MsModalResult.Confirm ? (result.data as string | null) : null;
 }

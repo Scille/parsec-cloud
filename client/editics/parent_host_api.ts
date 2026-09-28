@@ -40,7 +40,13 @@ export type EditicsHostToParentMessage =
   | { command: 'oo-save'; data: Uint8Array }
   // Completion of an `oo-save-request`: `nothingToSave` is set when there was
   // simply nothing modified to write back.
-  | { command: 'oo-save-result'; success: boolean; error?: string; nothingToSave?: boolean };
+  | { command: 'oo-save-result'; success: boolean; error?: string; nothingToSave?: boolean }
+  // The user wants to insert an image into the document: the parents should
+  // display a file picker to the user, load the selected file and return its
+  // content to the host.
+  | { command: 'oo-insert-image'; requestId: number };
 
 export type EditicsParentToHostMessage =
-  { command: 'oo-open'; options: EditicsOpenOptions; documentContent: Uint8Array } | { command: 'oo-save-request' };
+  | { command: 'oo-open'; options: EditicsOpenOptions; documentContent: Uint8Array }
+  | { command: 'oo-save-request' }
+  | { command: 'oo-insert-image-result'; requestId: number; fileName?: string; data?: Uint8Array; error?: string };
