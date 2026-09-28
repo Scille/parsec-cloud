@@ -31,3 +31,11 @@ DROP CONSTRAINT vlob_atom_realm_fkey;
 
 ALTER TABLE ONLY vlob_atom
 ADD CONSTRAINT vlob_atom_realm_fkey FOREIGN KEY (realm) REFERENCES realm (_id) ON DELETE CASCADE;
+
+-- Update vlob_atom's author link
+
+ALTER TABLE ONLY vlob_atom
+DROP CONSTRAINT vlob_atom_author_fkey;
+
+ALTER TABLE ONLY vlob_atom
+ADD CONSTRAINT vlob_atom_author_fkey FOREIGN KEY (author) REFERENCES device (_id) ON DELETE CASCADE;
