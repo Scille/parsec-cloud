@@ -210,7 +210,7 @@ class OfflineMockServer implements OO.MockServer {
           view: false,
         };
 
-        this.editor.sendMessageToOO({ type: 'authChanges', changes: [] });
+        this.editor.sendMessageToOO({ type: 'authChanges', changes: [] } satisfies OO.OOServerEventAuthChanges);
 
         this.editor.sendMessageToOO({
           type: 'auth',
@@ -226,19 +226,19 @@ class OfflineMockServer implements OO.MockServer {
           settings: {
             binaryChanges: true,
           },
-        });
+        } satisfies OO.OOServerEventAuth);
         break;
 
       case 'isSaveLock':
         // Grant the save lock immediately so `asc_Save`'s `askSaveChanges`
         // resolves without the ~10 s timeout.
-        this.editor.sendMessageToOO({ type: 'saveLock', saveLock: false });
+        this.editor.sendMessageToOO({ type: 'saveLock', saveLock: false } satisfies OO.OOServerEventSaveLock);
         break;
 
       case 'unSaveLock':
         // Cancellation of an in-progress save: release the save lock and
         // acknowledge with -1 indices (RFC 1030 §2.2).
-        this.editor.sendMessageToOO({ type: 'unSaveLock', index: -1, time: -1, syncChangesIndex: -1 });
+        this.editor.sendMessageToOO({ type: 'unSaveLock', index: -1, time: -1, syncChangesIndex: -1 } satisfies OO.OOServerEventUnSaveLock);
         break;
 
       case 'saveChanges':
@@ -258,7 +258,7 @@ class OfflineMockServer implements OO.MockServer {
             index: this.saveChangesIndex,
             time: Date.now(),
             syncChangesIndex: this.syncChangesIndex,
-          });
+          } satisfies OO.OOServerEventUnSaveLock);
         } else {
           // Acknowledge the chunk so the client emits the next one (the -1
           // index leaves the client's save point unchanged).
@@ -266,7 +266,7 @@ class OfflineMockServer implements OO.MockServer {
             type: 'savePartChanges',
             changesIndex: msg.startSaveChanges ? this.saveChangesIndex : -1,
             syncChangesIndex: this.syncChangesIndex,
-          });
+          } satisfies OO.OOServerEventSavePartChanges);
         }
         break;
 
@@ -288,7 +288,7 @@ class OfflineMockServer implements OO.MockServer {
             };
           }
         }
-        this.editor.sendMessageToOO({ type: 'getLock', locks: locks });
+        this.editor.sendMessageToOO({ type: 'getLock', locks: locks } satisfies OO.OOServerEventGetLock);
         break;
 
       case 'unLockDocument':
@@ -296,7 +296,12 @@ class OfflineMockServer implements OO.MockServer {
         // and no auth lock to manage in single-user offline mode); only an
         // in-progress save needs an answer (RFC 1030 §2.2).
         if (msg.isSave) {
-          this.editor.sendMessageToOO({ type: 'unSaveLock', index: -1, time: -1, syncChangesIndex: -1 });
+          this.editor.sendMessageToOO({
+            type: 'unSaveLock',
+            index: -1,
+            time: -1,
+            syncChangesIndex: -1,
+          } satisfies OO.OOServerEventUnSaveLock);
         }
         break;
 
@@ -524,7 +529,7 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
       buildVersion: '7.3.3',
       buildNumber: 8,
     },
-  });
+  } satisfies OO.OOServerEventLicense);
 
   const binDocumentContent = await prepareDocumentPromise;
   editor.loadBinary(binDocumentContent);
