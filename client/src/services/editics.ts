@@ -67,6 +67,11 @@ export interface EditicsHostSession {
 const BASE_URL = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
 const HOST_PAGE = `${BASE_URL}editics/offline.html`;
 
+// The host page is always served from the same origin as the app: use this
+// origin both as the `postMessage` target origin (never '*') and to validate
+// the origin of incoming messages.
+const HOST_ORIGIN = new URL(HOST_PAGE, window.location.href).origin;
+
 // Time we give the host page to signal it is ready after its iframe is loaded.
 // Short in tests to fail fast.
 const HOST_READY_TIMEOUT_MS = 5000;
@@ -135,7 +140,9 @@ export async function openDocument(
       window.addEventListener(
         'message',
         (event: MessageEvent<EditicsHostToParentMessage>): void => {
-          if (event.source !== frame.contentWindow) {
+          // Defense in depth: only accept messages from our host frame, and
+          // only from the origin it is expected to be served from.
+          if (event.source !== frame.contentWindow || event.origin !== HOST_ORIGIN) {
             return;
           }
 
@@ -260,7 +267,7 @@ export async function openDocument(
           clearTimeout(timer);
           resolve(success);
         };
-        frame.contentWindow!.postMessage({ command: 'oo-save-request' } satisfies EditicsParentToHostMessage, '*');
+        frame.contentWindow!.postMessage({ command: 'oo-save-request' } satisfies EditicsParentToHostMessage, HOST_ORIGIN);
       });
     },
   };
@@ -271,7 +278,7 @@ export async function openDocument(
       options,
       documentContent,
     } satisfies EditicsParentToHostMessage,
-    '*',
+    HOST_ORIGIN,
   );
 
   return session;
@@ -279,7 +286,7 @@ export async function openDocument(
 
 async function handleRequestImage(host: Window, requestId: number): Promise<void> {
   const postReply = (reply: Omit<Extract<EditicsParentToHostMessage, { command: 'oo-image-reply' }>, 'command' | 'requestId'>): void => {
-    host.postMessage({ command: 'oo-insert-image-result', requestId, ...reply } satisfies EditicsParentToHostMessage, '*');
+    host.postMessage({ command: 'oo-insert-image-result', requestId, ...reply } satisfies EditicsParentToHostMessage, HOST_ORIGIN);
   };
 
   const workspaceHandle = getWorkspaceHandle();
