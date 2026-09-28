@@ -541,7 +541,7 @@ window.addEventListener('message', function (event: MessageEvent) {
   switch (data.command) {
     case 'oo-open':
       openDocument(data.options, data.documentContent).catch(function (err: Error) {
-        postToParent({ command: 'oo-error', details: err.message });
+        postToParent({ command: 'oo-error', details: JSON.stringify(err) });
       });
       break;
     case 'oo-save-request':
