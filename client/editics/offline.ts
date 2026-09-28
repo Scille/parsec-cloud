@@ -38,11 +38,23 @@ function loadScript(src: string): Promise<void> {
 //
 // OnlyOffice only supports its .bin internal format, so we use x2t to convert
 // the document (e.g. docx -x2t-> bin for opening, then bin -x2t-> docx for saving).
+//
+// The conversion process produces two things:
+// - The .bin file to be loaded by OnlyOffice.
+// - Additional media files (e.g. images) that are referenced in the document. They
+//   are referenced by name in the document (e.g. `foo.png`) and end up exported in
+//   a `media` folder next to the .bin file.
+//
+// The `media` folder is kept in the in-memory file system, this is because it is
+// needed whenever we convert back the document ot its original format (i.e.
+// when saving it).
 
 interface X2TFileSystem {
   mkdir: (path: string) => void;
   writeFile: (path: string, data: Uint8Array | string) => void;
   readFile: (path: string) => Uint8Array;
+  readdir: (path: string) => string[];
+  unlink: (path: string) => void;
 }
 
 interface X2TModule {
@@ -51,6 +63,7 @@ interface X2TModule {
   onRuntimeInitialized?: () => void;
 }
 
+// Type the interface exposed by `onlyoffice-x2t/x2t.js`
 declare global {
   interface Window {
     // onlyoffice-x2t needs this global object for its own initialization.
@@ -96,34 +109,175 @@ function sanitizeFileName(name: string): string {
   return sanitized || 'file';
 }
 
-function runConversion(module: X2TModule, fileName: string, data: Uint8Array, outputFormat: string): Uint8Array {
-  module.FS.writeFile(`/working/${fileName}`, data);
+function runConversion(module: X2TModule, inputFileName: string, data: Uint8Array, outputFormat: string): Uint8Array {
+  const inputFilePath = `/working/${inputFileName}`;
+  module.FS.writeFile(inputFilePath, data);
 
-  const outputFileName = `${fileName}.${outputFormat}`;
+  const outputFileName = `${inputFileName}.${outputFormat}`;
+  const outputFilePath = `/working/${outputFileName}`;
+  const paramsFileName = '/working/params.xml';
   const params =
     '<?xml version="1.0" encoding="utf-8"?>' +
     '<TaskQueueDataConvert xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">' +
-    `<m_sFileFrom>/working/${fileName}</m_sFileFrom>` +
+    `<m_sFileFrom>${inputFilePath}</m_sFileFrom>` +
     '<m_sThemeDir>/working/themes</m_sThemeDir>' +
-    `<m_sFileTo>/working/${outputFileName}</m_sFileTo>` +
+    `<m_sFileTo>${outputFilePath}</m_sFileTo>` +
     '<m_bIsNoBase64>false</m_bIsNoBase64>' +
     '</TaskQueueDataConvert>';
-  module.FS.writeFile('/working/params.xml', params);
+  module.FS.writeFile(paramsFileName, params);
 
-  module.ccall('main1', 'number', ['string'], ['/working/params.xml']);
-  return module.FS.readFile(`/working/${outputFileName}`);
+  module.ccall('main1', 'number', ['string'], [paramsFileName]);
+  const output = module.FS.readFile(outputFilePath);
+
+  module.FS.unlink(paramsFileName);
+  module.FS.unlink(inputFilePath);
+  module.FS.unlink(outputFilePath);
+  // Additional medias in the document got extracted to `/working/media`.
+  // We must keep this directory since it will be used when converting back the
+  // document to its original format (i.e. when saving the document).
+
+  return output;
 }
 
 async function convertToNativeFormat(data: Uint8Array, fileName: string, extension: string): Promise<Uint8Array> {
   const module = await loadX2T();
+
+  // The media of the document being converted are extracted into the x2t
+  // virtual filesystem (see `collectMediaFiles` below): start fresh so a
+  // document opened after another one in the same host page cannot pick up
+  // the media of its predecessor.
+  resetMediaFiles(module);
+
   const safeName = sanitizeFileName(fileName);
   const intermediaryFormat = ODF_INTERMEDIARY_FORMAT[extension];
 
+  let nativeContent: Uint8Array;
   if (intermediaryFormat) {
     const intermediaryData = runConversion(module, safeName, data, intermediaryFormat);
-    return runConversion(module, `${safeName}.${intermediaryFormat}`, intermediaryData, NATIVE_EXTENSION);
+    nativeContent = runConversion(module, `${safeName}.${intermediaryFormat}`, intermediaryData, NATIVE_EXTENSION);
+  } else {
+    nativeContent = runConversion(module, safeName, data, NATIVE_EXTENSION);
   }
-  return runConversion(module, safeName, data, NATIVE_EXTENSION);
+
+  collectMediaFiles(module);
+  return nativeContent;
+}
+
+// --- document media (images) ---------------------------------------------
+//
+// Converting a document to the native .bin format makes x2t extract its
+// embedded media files (images) next to the output file, under `media/`:
+// the .bin itself only references them by name (e.g. `image1.png`). The
+// editor asks for a loadable URL for each of those names through the
+// `getImageURL` host hook (see `window.APP.getImageURL`), which we answer
+// with a blob URL wrapping the bytes kept in memory.
+//
+// The files are also left in the x2t virtual filesystem so that converting
+// the .bin back to the original document format on save re-embeds them.
+
+const MEDIA_DIR = '/working/media';
+// Media name (e.g. `image1.png`) -> content, as extracted by the last
+// conversion to the native format.
+const mediaFiles = new Map<string, Uint8Array>();
+// Media name -> blob URL already handed to the editor (kept so that repeated
+// requests for the same image reuse the same blob instead of leaking one
+// per request).
+const mediaUrls = new Map<string, string>();
+
+const IMAGE_MIME_TYPES: Record<string, string> = {
+  bmp: 'image/bmp',
+  gif: 'image/gif',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  svg: 'image/svg+xml',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  webp: 'image/webp',
+};
+
+function mediaName(name: string): string {
+  // The editor refers to the media files with their bare name, but be lenient
+  // and accept the `media/`-prefixed form too.
+  return name.startsWith('media/') ? name.slice('media/'.length) : name;
+}
+
+function imageMimeType(name: string): string {
+  const extension = name.slice(name.lastIndexOf('.') + 1).toLowerCase();
+  return IMAGE_MIME_TYPES[extension] ?? 'application/octet-stream';
+}
+
+// Drops the media of any previously converted document (both from the x2t
+// virtual filesystem and from memory).
+function resetMediaFiles(module: X2TModule): void {
+  for (const name of module.FS.readdir(MEDIA_DIR)) {
+    if (name !== '.' && name !== '..') {
+      module.FS.unlink(`${MEDIA_DIR}/${name}`);
+    }
+  }
+  mediaFiles.clear();
+  for (const url of mediaUrls.values()) {
+    URL.revokeObjectURL(url);
+  }
+  mediaUrls.clear();
+}
+
+// Keeps the media extracted by the conversion of the document being opened.
+function collectMediaFiles(module: X2TModule): void {
+  for (const name of module.FS.readdir(MEDIA_DIR)) {
+    if (name === '.' || name === '..') {
+      continue;
+    }
+    try {
+      mediaFiles.set(name, module.FS.readFile(`${MEDIA_DIR}/${name}`));
+    } catch {
+      // Unreadable entry (should not happen): skip it, the editor will just
+      // render the corresponding image as unloaded.
+    }
+  }
+}
+
+// `MockServer.getImageURL`: resolves a media name referenced by the document
+// into a URL the editor can load. An empty string makes the editor fall back
+// to loading the name directly as a URL, which is the right thing for the
+// names that are already loadable as-is (e.g. the data: URLs of images
+// inserted during the session).
+function getMediaUrl(name: string): string {
+  const key = mediaName(name);
+  let url = mediaUrls.get(key);
+  if (url === undefined) {
+    const content = mediaFiles.get(key);
+    if (content === undefined) {
+      return '';
+    }
+    url = URL.createObjectURL(new Blob([content.slice()], { type: imageMimeType(key) }));
+    mediaUrls.set(key, url);
+    registerMediaUrl(key, url);
+  }
+  return url;
+}
+
+// The subset of the editor iframe's window we need to register media URLs
+// (see `registerMediaUrl`).
+interface EditorWindowWithUrlMaps {
+  AscCommon?: {
+    g_oDocumentUrls?: {
+      addImageUrl?: (name: string, url: string) => void;
+    };
+  };
+}
+
+// Registers a media blob URL in the editor's URL maps (`g_oDocumentUrls`):
+// the editor uses them to resolve media names into loadable URLs and, the
+// other way around, to map an image URL back to its media name when
+// serializing (e.g. so that an image referenced by its blob URL keeps its
+// plain `image1.png` name in the saved document).
+// This mirrors what the reference CryptPad integration does when serving
+// an image.
+function registerMediaUrl(key: string, url: string): void {
+  const editorFrame = document.querySelector('iframe[name="frameEditor"]') as HTMLIFrameElement | null;
+  const editorWindow = editorFrame?.contentWindow as EditorWindowWithUrlMaps | undefined;
+  editorWindow?.AscCommon?.g_oDocumentUrls?.addImageUrl?.(key, url);
 }
 
 async function convertFromNativeFormat(data: Uint8Array, fileName: string, extension: string): Promise<Uint8Array> {
@@ -305,9 +459,84 @@ class OfflineMockServer implements OO.MockServer {
         }
         break;
 
+      case 'openDocument':
+        console.log('openDocument', msg);
+        // cspell: ignore imgurls
+        if (msg.message.c === 'imgurls') {
+          // e.g.:
+          // {
+          //   "type": "openDocument",
+          //   "message": {
+          //     "id": "778b08ca879aa0da2fed",
+          //     "c": "imgurls",
+          //     "userid": "a11cec00100000000000000000000000",
+          //     "saveindex": 18,
+          //     "data": [
+          //       "http://foo.com/bar/spam.png"
+          //     ]
+          //   }
+          // }
+
+          const urls = msg.message.data as string[];
+          if (urls.length !== 1) {
+            console.error('Expected a single URL in imgurls');
+          }
+          const url = urls[0];
+          const fileName = url.split('/').pop();
+          fetch(url).then(
+            async (success) => {
+              console.log('openDocument fetched ok', success);
+
+              if (!success.ok) {
+                this.editor.sendMessageToOO({
+                  type: 'documentOpen',
+                  status: 'ok', // Also "ok" when the original URL couldn't be fetched...
+                  data: {
+                    // @ts-expect-error
+                    error: 1,
+                    // TODO: how to pass the error message to the GUI ?
+                  },
+                } satisfies OO.OOServerEventDocumentOpen);
+                return;
+              }
+
+              const content = await success.blob();
+              this.editor.sendMessageToOO({
+                type: 'documentOpen',
+                status: 'ok', // Also "ok" when the original URL couldn't be fetched...
+                data: {
+                  // @ts-expect-error
+                  error: 0, // `0`: no error
+                  urls: [
+                    {
+                      url: URL.createObjectURL(content),
+                      path: `media/${fileName}`,
+                    },
+                  ],
+                },
+              } satisfies OO.OOServerEventDocumentOpen);
+            },
+
+            (error) => {
+              console.log('openDocument fetched error', error);
+              this.editor.sendMessageToOO({
+                type: 'documentOpen',
+                status: 'ok', // Also "ok" when the original URL couldn't be fetched...
+                data: {
+                  // @ts-expect-error
+                  error: 1,
+                  // TODO: how to pass the error message to the GUI ?
+                },
+              } satisfies OO.OOServerEventDocumentOpen);
+            },
+          );
+        }
+        break;
+
       default:
         // Other message types (cursor, meta, authChangesAck, ...) are not
         // relevant in single-user offline mode: ignore them.
+        console.debug('ignored message', msg);
         break;
     }
   }
@@ -398,6 +627,40 @@ function onSaveRequest(): void {
   window.ooDocEditor.save();
 }
 
+// --- image insertion -------------------------------------------------------
+//
+// When the user inserts an image into the document, the editor calls the
+// `AddImage` host hook (see `window.APP.AddImage`). The file lives in the
+// Parsec workspace, which only the parent can read (libparsec), so the host
+// asks the parent to prompt for the workspace-absolute path of the file (e.g.
+// `/foo/bar.png`) and to load its content. Once received, the content is
+// handed to the editor as a data URL so it doesn't need to fetch anything.
+
+type EditicsImageReply = Extract<EditicsParentToHostMessage, { command: 'oo-insert-image-result' }>;
+
+// Pending `AddImage` requests, waiting for the parent's `oo-insert-image-result`.
+const pendingImageRequests = new Map<number, (reply: EditicsImageReply) => void>();
+let imageRequestCounter = 0;
+
+function requestParentImage(): Promise<{ fileName?: string; data: Uint8Array }> {
+  return new Promise((resolve, reject) => {
+    const requestId = ++imageRequestCounter;
+    pendingImageRequests.set(requestId, (reply) => {
+      if (reply.data !== undefined) {
+        resolve({ fileName: reply.fileName, data: reply.data });
+      } else {
+        reject(new Error(reply.error ?? 'no image data'));
+      }
+    });
+    postToParent({ command: 'oo-insert-image', requestId });
+  });
+}
+
+function bytesToDataUrl(bytes: Uint8Array, fileName?: string): string {
+  const mimeType = fileName ? imageMimeType(fileName) : 'application/octet-stream';
+  return `data:${mimeType};base64,${bytes.toBase64()}`;
+}
+
 // --- editor dirty state (for the Parsec topbar save indicator) -----------
 
 let lastModified = false;
@@ -485,16 +748,6 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
       onSave: async function (bytes: Uint8Array) {
         await onSaveBytes(bytes, options);
       },
-      // Print and Download-as are bridged by the wrapper onto `window.APP`
-      // instead of POSTing to a converter endpoint. They are disabled in the
-      // permissions above; end the editor action cleanly in case the code path
-      // still triggers.
-      onPrintPdf: function (_dataContainer: unknown, cb: (result: unknown) => void) {
-        cb(null);
-      },
-      onDownloadAs: function (_dataContainer: unknown, cb: (result: unknown) => void) {
-        cb(null);
-      },
       onError: function (event: { data?: unknown }) {
         postToParent({
           command: 'oo-error',
@@ -505,18 +758,59 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
   };
 }
 
+// `openDocument` is expected to be called only once since it loads OnlyOffice
+// scripts and set global variables (e.g. `window.APP`, `window.ooDocEditor`).
 async function openDocument(options: EditicsOpenOptions, documentContent: Uint8Array): Promise<void> {
   const prepareDocumentPromise = prepareDocumentContent(options, documentContent);
 
   await loadScript(ONLYOFFICE_API_URL);
+
+  // 1. Create & initialize the editor
 
   const config = buildConfig(options);
   const editor = new window.DocsAPI.DocEditor('placeholder');
   const mockServer = new OfflineMockServer(editor, {
     user: { id: options.userId, username: options.userName },
   });
+  window.APP = {
+    // TODO: PDF print is disabled for now
+    onPrintPdf: (_dataContainer: unknown, cb: (result: unknown) => void) => {
+      cb(null);
+    },
+    // TODO: Download-as is disabled for now
+    onDownloadAs: (_dataContainer: unknown, cb: (result: unknown) => void) => {
+      cb(null);
+    },
+    // Resolves the media names referenced by the document
+    getImageURL: (name: string, callback: (url: string) => void) => {
+      // The name can in fact be a self-containing data URL (i.e. `data:[<media-type>][;base64],<data>`).
+      // This is typically the case when inserting a new image during the edition session.
+      if (name.startsWith('data:')) {
+        callback(name);
+      } else {
+        callback(getMediaUrl(name));
+      }
+    },
+
+    AddImage: (callback: (res: { url: string; [key: string]: unknown }) => void, errorCallback: () => void) => {
+      // The parent prompts for the path of a workspace file and loads it; the
+      // editor gets a data URL so it doesn't have to fetch the file itself.
+      requestParentImage().then(
+        (reply) => {
+          // Don't use `URL.createObjectURL` here: on document save, this URL is
+          // persisted verbatim into the saved Editor.bin, then x2t only supports
+          // data URL (and hence the image would vanish from the document).
+          const url = bytesToDataUrl(reply.data, reply.fileName);
+          callback({url });
+        },
+        () => errorCallback(),
+      );
+    },
+  };
   await editor.init(config, mockServer);
   window.ooDocEditor = editor;
+
+  // 2. Load the document and start the actual edition
 
   // Without a license the editor idles in WaitAuth with no permissions and
   // never opens the document.
@@ -549,9 +843,19 @@ window.addEventListener('message', function (event: MessageEvent) {
         postToParent({ command: 'oo-error', details: JSON.stringify(err) });
       });
       break;
+
     case 'oo-save-request':
       onSaveRequest();
       break;
+
+    case 'oo-insert-image-result': {
+      const resolver = pendingImageRequests.get(data.requestId);
+      if (resolver) {
+        pendingImageRequests.delete(data.requestId);
+        resolver(data);
+      }
+      break;
+    }
   }
 });
 
