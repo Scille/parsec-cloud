@@ -813,7 +813,9 @@ CREATE TABLE realm_topic (
 
 CREATE TABLE totp_opaque_key (
     _id SERIAL PRIMARY KEY,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    user_ INTEGER
+    CONSTRAINT totp_opaque_key_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     opaque_key_id UUID NOT NULL UNIQUE,
     opaque_key BYTEA NOT NULL,
     -- Throttle fields for rate-limiting OTP attempts
