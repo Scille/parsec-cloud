@@ -269,18 +269,22 @@ CREATE TABLE device (
 );
 
 ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_user_certifier
+ADD CONSTRAINT user_user_certifier_fkey
 FOREIGN KEY (user_certifier)
-REFERENCES device (_id);
+REFERENCES device (_id)
+ON DELETE CASCADE;
 
 ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_revoked_user_certifier
+ADD CONSTRAINT user_revoked_user_certifier_fkey
 FOREIGN KEY (revoked_user_certifier)
-REFERENCES device (_id);
+REFERENCES device (_id)
+ON DELETE CASCADE;
 
 ALTER TABLE profile
-ADD FOREIGN KEY (certified_by)
-REFERENCES device (_id);
+ADD CONSTRAINT profile_certified_by_fkey
+FOREIGN KEY (certified_by)
+REFERENCES device (_id)
+ON DELETE CASCADE;
 
 -------------------------------------------------------
 --  Shamir recovery
