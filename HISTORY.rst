@@ -8,7 +8,7 @@ Parsec v3.x
 .. towncrier release notes start
 
 
-Parsec v3.10.0-rc.2 (2026-09-25)
+Parsec v3.10.0-rc.3 (2026-09-28)
 --------------------------------
 
 This version includes several changes to the Parsec CLI,
