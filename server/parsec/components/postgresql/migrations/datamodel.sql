@@ -707,7 +707,9 @@ CREATE TABLE vlob_atom (
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,
     size INTEGER NOT NULL,
-    author INTEGER REFERENCES device (_id) NOT NULL,
+    author INTEGER
+    CONSTRAINT vlob_atom_author_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
