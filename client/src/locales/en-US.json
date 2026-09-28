@@ -3220,6 +3220,11 @@
             "wait": "Wait",
             "close": "Close"
         },
+        "insertImage": {
+            "title": "Insert an image",
+            "emptyFolder": "No image in this folder",
+            "insert": "Insert"
+        },
         "saving": {
             "unsaved": "Changes unsaved",
             "saving": "Saving...",

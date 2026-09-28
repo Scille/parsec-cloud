@@ -1,0 +1,415 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
+<template>
+  <ms-modal
+    :title="title"
+    :close-button="{ visible: true }"
+    :cancel-button="{
+      label: 'TextInputModal.cancel',
+      disabled: false,
+      onClick: cancel,
+    }"
+    :confirm-button="{
+      label: okButtonLabel,
+      disabled: selectedEntry === null,
+      onClick: confirm,
+    }"
+  >
+    <div
+      class="navigation"
+      ref="navigation"
+    >
+      <div
+        v-if="isLargeDisplay"
+        ref="buttons"
+      >
+        <div class="navigation-buttons">
+          <ion-button
+            fill="clear"
+            @click="back()"
+            class="navigation-back-button"
+            :disabled="backStack.length === 0"
+            :class="{ disabled: backStack.length === 0 }"
+          >
+            <ion-icon :icon="chevronBack" />
+          </ion-button>
+          <ion-button
+            fill="clear"
+            @click="forward()"
+            :disabled="forwardStack.length === 0"
+            :class="{ disabled: forwardStack.length === 0 }"
+            class="navigation-forward-button"
+          >
+            <ion-icon :icon="chevronForward" />
+          </ion-button>
+        </div>
+      </div>
+      <header-breadcrumbs
+        v-if="workspaceInfo"
+        :path-nodes="headerPath"
+        @change="onPathChange"
+        class="navigation-breadcrumb"
+        :items-before-collapse="1"
+        :items-after-collapse="2"
+        :available-width="breadcrumbsWidth"
+        :workspace-name="workspaceInfo.name"
+      />
+    </div>
+    <ion-list class="folder-list">
+      <ion-text
+        class="current-folder button-medium"
+        v-if="headerPath.length > 0 && pathLength > 1"
+      >
+        <ms-image
+          :image="Folder"
+          class="current-folder__icon"
+        />
+        <span class="current-folder__text">{{ `${headerPath[headerPath.length - 1].display}` }}</span>
+      </ion-text>
+
+      <ion-text
+        class="folder-list__empty body"
+        v-if="currentEntries.length === 0"
+      >
+        {{ $msTranslate('fileEditors.insertImage.emptyFolder') }}
+      </ion-text>
+      <div
+        class="folder-container"
+        ref="folder-list"
+        v-if="currentEntries.length > 0"
+      >
+        <ion-item
+          class="file-item"
+          v-for="entry in currentEntries"
+          :key="entry.id"
+          :class="{ 'file-item--selected': selectedEntry !== null && selectedEntry.id === entry.id }"
+          @click="onEntryClick(entry)"
+          @dblclick="onEntryDoubleClick(entry)"
+        >
+          <div class="file-item-image">
+            <ms-image
+              :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+              class="file-item-image__icon"
+            />
+          </div>
+          <ion-label class="file-item__name cell">
+            {{ entry.name }}
+          </ion-label>
+          <!-- last update -->
+          <div
+            class="file-last-update"
+            v-if="isLargeDisplay"
+          >
+            <ion-label class="list-item-label label-last-update cell">
+              {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
+            </ion-label>
+          </div>
+        </ion-item>
+      </div>
+    </ion-list>
+  </ms-modal>
+</template>
+
+<script setup lang="ts">
+// Workspace file picker limited to image files, used to insert an image into
+// an editics document (see `src/services/editics.ts`). Modeled after
+// `FolderSelectionModal`, minus the folder-creation abilities, and returning
+// the selected file's path instead of a folder.
+import { getFileIcon } from '@/common/file';
+import { FileContentType, detectOpenableFile } from '@/common/fileTypes';
+import { pxToRem } from '@/common/utils';
+import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { EntryStat, FsPath, Path, WorkspaceHandle, WorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
+import { Routes } from '@/router';
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, modalController } from '@ionic/vue';
+import { chevronBack, chevronForward, home } from 'ionicons/icons';
+import { Folder, MsImage, MsModal, MsModalResult, Translatable, formatTimeSince, useWindowSize } from 'megashark-lib';
+import { Ref, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+
+interface Props {
+  workspaceHandle: WorkspaceHandle;
+  startingPath?: FsPath;
+  title?: Translatable;
+  okButtonLabel?: Translatable;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  startingPath: '/',
+  title: 'fileEditors.insertImage.title',
+  okButtonLabel: 'fileEditors.insertImage.insert',
+});
+
+const selectedPath: Ref<FsPath> = ref(props.startingPath);
+const selectedEntry: Ref<EntryStat | null> = ref(null);
+const currentEntries: Ref<EntryStat[]> = ref([]);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
+const headerPath: Ref<RouterPathNode[]> = ref([]);
+const pathLength = ref(0);
+const backStack: FsPath[] = [];
+const forwardStack: FsPath[] = [];
+const breadcrumbsWidth = ref(0);
+const navigationRef = useTemplateRef<HTMLDivElement>('navigation');
+const buttonsRef = useTemplateRef<HTMLDivElement>('buttons');
+
+const { windowWidth, isSmallDisplay, isLargeDisplay } = useWindowSize();
+
+const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
+  if (navigationRef.value?.offsetWidth && buttonsRef.value?.offsetWidth) {
+    breadcrumbsWidth.value = pxToRem(navigationRef.value.offsetWidth - buttonsRef.value.offsetWidth);
+    if (isSmallDisplay.value) {
+      breadcrumbsWidth.value += pathLength.value > 1 ? 2 : 1;
+    }
+  }
+});
+
+onMounted(async () => {
+  const result = await getWorkspaceInfo(props.workspaceHandle);
+  if (result.ok) {
+    workspaceInfo.value = result.value;
+  }
+  await update();
+});
+
+onUnmounted(() => topbarWidthWatchCancel());
+
+async function update(): Promise<void> {
+  if (!workspaceInfo.value) {
+    return;
+  }
+  const workspaceHandle = workspaceInfo.value.handle;
+  const components = await Path.parse(selectedPath.value);
+
+  const result = await statFolderChildren(workspaceHandle, selectedPath.value);
+  if (result.ok) {
+    // Only show folders and image files: the picker is meant to select an
+    // image to insert into the document.
+    currentEntries.value = result.value
+      .filter((entry) => !entry.isConfined() && (!entry.isFile() || detectOpenableFile(entry.name).type === FileContentType.Image))
+      .sort((item1, item2) => {
+        if (item1.isFile() !== item2.isFile()) {
+          return Number(item1.isFile()) - Number(item2.isFile());
+        }
+        return item1.name.localeCompare(item2.name);
+      });
+  }
+
+  let path = '/';
+  headerPath.value = [];
+  headerPath.value.push({
+    id: 0,
+    display: workspaceInfo.value ? workspaceInfo.value.name : '',
+    route: Routes.Documents,
+    popoverIcon: home,
+    query: { documentPath: path },
+  });
+  let id = 1;
+  for (const comp of components) {
+    path = await Path.join(path, comp);
+    headerPath.value.push({
+      id: id,
+      display: comp === '/' ? '' : comp,
+      route: Routes.Documents,
+      query: { documentPath: path },
+    });
+    id += 1;
+  }
+  pathLength.value = headerPath.value.length;
+}
+
+async function forward(): Promise<void> {
+  const forwardPath = forwardStack.pop();
+
+  if (!forwardPath) {
+    return;
+  }
+  backStack.push(selectedPath.value);
+  selectedPath.value = forwardPath;
+  selectedEntry.value = null;
+  await update();
+}
+
+async function back(): Promise<void> {
+  const backPath = backStack.pop();
+
+  if (!backPath) {
+    return;
+  }
+  forwardStack.push(selectedPath.value);
+  selectedPath.value = backPath;
+  selectedEntry.value = null;
+  await update();
+}
+
+async function onPathChange(node: RouterPathNode): Promise<void> {
+  forwardStack.splice(0, forwardStack.length);
+  if (node.query && node.query.documentPath) {
+    selectedPath.value = node.query.documentPath;
+    selectedEntry.value = null;
+    await update();
+  }
+}
+
+function isImageFile(entry: EntryStat): boolean {
+  return entry.isFile() && detectOpenableFile(entry.name).type === FileContentType.Image;
+}
+
+async function onEntryClick(entry: EntryStat): Promise<void> {
+  if (!entry.isFile()) {
+    await enterFolder(entry);
+  } else if (isImageFile(entry)) {
+    selectedEntry.value = entry;
+  }
+}
+
+async function onEntryDoubleClick(entry: EntryStat): Promise<void> {
+  if (isImageFile(entry)) {
+    selectedEntry.value = entry;
+    await confirm();
+  }
+}
+
+async function enterFolder(entry: EntryStat): Promise<void> {
+  backStack.push(selectedPath.value);
+  forwardStack.splice(0, forwardStack.length);
+  selectedPath.value = await Path.join(selectedPath.value, entry.name);
+  selectedEntry.value = null;
+  await update();
+}
+
+async function confirm(): Promise<boolean> {
+  if (!selectedEntry.value) {
+    return false;
+  }
+  return await modalController.dismiss(selectedEntry.value.path, MsModalResult.Confirm);
+}
+
+async function cancel(): Promise<boolean> {
+  return modalController.dismiss(null, MsModalResult.Cancel);
+}
+</script>
+
+<style scoped lang="scss">
+.navigation {
+  display: flex;
+  margin-bottom: 1rem;
+
+  @include ms.responsive-breakpoint('md') {
+    border-bottom: none;
+    overflow: visible;
+  }
+
+  .disabled {
+    pointer-events: none;
+    color: var(--parsec-color-light-secondary-light);
+    opacity: 1;
+  }
+
+  &-buttons {
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+  }
+}
+
+.folder-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--parsec-color-light-secondary-background);
+  box-shadow: var(--parsec-shadow-input);
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  height: -webkit-fill-available;
+  border-radius: var(--parsec-radius-8);
+  height: 100%;
+  padding: 0;
+
+  &__empty {
+    align-self: center;
+    text-align: center;
+    color: var(--parsec-color-light-secondary-soft-text);
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  .current-folder {
+    color: var(--parsec-color-light-secondary-text);
+    background: var(--parsec-color-light-secondary-white);
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+
+    &__text {
+      flex-grow: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__icon {
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}
+
+.folder-container {
+  overflow-y: auto;
+  width: 100%;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  scroll-behavior: smooth;
+}
+
+.file-item {
+  flex-shrink: 0;
+  --show-full-highlight: 0;
+  --background: var(--parsec-color-light-secondary-white);
+  cursor: pointer;
+  position: relative;
+
+  &::part(native) {
+    --padding-start: 0px;
+    padding: 0.125rem 0.75rem;
+    border-radius: var(--parsec-radius-8);
+  }
+
+  &:hover {
+    --background: var(--parsec-color-light-secondary-medium);
+    box-shadow: var(--parsec-shadow-input);
+  }
+
+  &:focus,
+  &:active {
+    --background: var(--parsec-color-light-secondary-medium);
+    --background-focused: var(--parsec-color-light-secondary-medium);
+    --background-focused-opacity: 1;
+    --border-width: 0;
+  }
+
+  &--selected,
+  &--selected:hover {
+    --background: var(--parsec-color-light-primary-100);
+    box-shadow: var(--parsec-shadow-input);
+  }
+
+  &__name {
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  &-image {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+</style>
