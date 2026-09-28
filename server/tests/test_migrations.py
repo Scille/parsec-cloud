@@ -232,13 +232,13 @@ async def test_migrations(
     # table is entirely populated before switching to `device`. So the
     # constraint should break as soon as an `user_` row references a device_id.
     data_from_migrations = f"""
-ALTER TABLE public."user_" ALTER CONSTRAINT fk_user_device_user_certifier DEFERRABLE;
-ALTER TABLE public."user_" ALTER CONSTRAINT fk_user_device_revoked_user_certifier DEFERRABLE;
+ALTER TABLE public."user_" ALTER CONSTRAINT user_user_certifier_fkey DEFERRABLE;
+ALTER TABLE public."user_" ALTER CONSTRAINT user_revoked_user_certifier_fkey DEFERRABLE;
 
 BEGIN;
 
-SET CONSTRAINTS fk_user_device_user_certifier DEFERRED;
-SET CONSTRAINTS fk_user_device_revoked_user_certifier DEFERRED;
+SET CONSTRAINTS user_user_certifier_fkey DEFERRED;
+SET CONSTRAINTS user_revoked_user_certifier_fkey DEFERRED;
 
 {data_from_migrations}
 
