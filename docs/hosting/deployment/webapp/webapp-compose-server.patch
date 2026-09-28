@@ -1,7 +1,7 @@
-diff --git a/docs/hosting/deployment/parsec-server.docker.yaml b/docs/hosting/deployment/parsec-server.docker.yaml
+diff --git a/docs/hosting/deployment/docker-compose.parsec-server.yaml b/docs/hosting/deployment/docker-compose.parsec-server.yaml
 index e5e8e18946..19c4c92474 100644
---- a/docs/hosting/deployment/parsec-server.docker.yaml
-+++ b/docs/hosting/deployment/parsec-server.docker.yaml
+--- a/docs/hosting/deployment/docker-compose.parsec-server.yaml
++++ b/docs/hosting/deployment/docker-compose.parsec-server.yaml
 @@ -124,6 +124,7 @@ services:
          condition: service_completed_successfully
      image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.2

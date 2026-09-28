@@ -258,7 +258,7 @@ Parsec Server with Docker
 If you deployed Parsec Server with Docker, edit the Docker Compose file to add
 ``parsec-openbao.env``:
 
-.. admonition:: parsec-server.docker.yaml
+.. admonition:: docker-compose.parsec-server.yaml
    :collapsible: open
 
    .. code-block:: yaml

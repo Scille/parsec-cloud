@@ -90,11 +90,11 @@ msgstr ""
 
 #: ../../hosting/maintenance/upgrade.rst:36
 msgid ""
-"Update the ``parsec-server`` Docker image tag in ``parsec-server.docker."
-"yaml`` from this:"
+"Update the ``parsec-server`` Docker image tag in ``docker-compose.parsec-"
+"server.yaml`` from this:"
 msgstr ""
-"Mettre à jour le tag de l'image Docker de ``parsec-server`` dans ``parsec-"
-"server.docker.yaml``, de ceci :"
+"Mettre à jour le tag de l'image Docker de ``parsec-server`` dans ``docker-"
+"compose.parsec-server.yaml``, de ceci :"
 
 #: ../../hosting/maintenance/upgrade.rst:48
 msgid "To this:"

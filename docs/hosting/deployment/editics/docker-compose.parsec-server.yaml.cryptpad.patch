@@ -1,7 +1,7 @@
-diff --git a/docs/hosting/deployment/parsec-server.docker.yaml b/docs/hosting/deployment/parsec-server.docker.yaml
+diff --git a/docs/hosting/deployment/docker-compose.parsec-server.yaml b/docs/hosting/deployment/docker-compose.parsec-server.yaml
 index e5e8e18946..8ce8901916 100644
---- a/docs/hosting/deployment/parsec-server.docker.yaml
-+++ b/docs/hosting/deployment/parsec-server.docker.yaml
+--- a/docs/hosting/deployment/docker-compose.parsec-server.yaml
++++ b/docs/hosting/deployment/docker-compose.parsec-server.yaml
 @@ -3,6 +3,8 @@ services:
      depends_on:
        parsec:

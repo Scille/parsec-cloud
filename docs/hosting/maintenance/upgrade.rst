@@ -33,7 +33,7 @@ Upgrade with Docker
 
 The following steps show how to upgrade the ``parsec-server`` service from version ``v3.0.0`` to ``v3.1.0``.
 
-#. Update the ``parsec-server`` Docker image tag in ``parsec-server.docker.yaml`` from this:
+#. Update the ``parsec-server`` Docker image tag in ``docker-compose.parsec-server.yaml`` from this:
 
    .. code-block:: yaml
      :linenos:
@@ -61,7 +61,7 @@ The following steps show how to upgrade the ``parsec-server`` service from versi
 
    .. code-block:: bash
 
-     docker compose -f parsec-server.docker.yaml run parsec-server migrate --dry-run
+     docker compose -f docker-compose.parsec-server.yaml run parsec-server migrate --dry-run
 
    The output should look like this:
 
@@ -93,7 +93,7 @@ The following steps show how to upgrade the ``parsec-server`` service from versi
 
    .. code-block:: bash
 
-     docker compose -f parsec-server.docker.yaml run parsec-server migrate
+     docker compose -f docker-compose.parsec-server.yaml run parsec-server migrate
 
 .. _restart_parsec_server_container:
 
@@ -101,7 +101,7 @@ The following steps show how to upgrade the ``parsec-server`` service from versi
 
    .. code-block:: bash
 
-     docker compose -f parsec-server.docker.yaml restart parsec-server
+     docker compose -f docker-compose.parsec-server.yaml restart parsec-server
 
 
 .. _doc_hosting_maintenance_upgrade_linux:

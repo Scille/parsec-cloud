@@ -395,7 +395,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR / "docs/hosting/deployment/parsec-server.docker.yaml": {
+    ROOT_DIR / "docs/hosting/deployment/docker-compose.parsec-server.yaml": {
         Tool.Parsec: [
             ReplaceRegex(
                 r"ghcr.io/scille/parsec-cloud/parsec-server:.+$",
