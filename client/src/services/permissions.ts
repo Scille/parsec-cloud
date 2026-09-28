@@ -33,13 +33,21 @@ export async function promptLocalNetworkAccessPermissions(): Promise<void> {
     return;
   }
 
-  for (const url of generateUrl(window.location.protocol)) {
-    try {
-      const req = await fetch(url, { targetAddressSpace: 'loopback' } as any);
-      if (req.ok) {
-        window.nativeAPI.log('debug', `Found a service running on ${url}`);
-        break;
-      }
-    } catch {}
+  const controller = new AbortController();
+  try {
+    const url = await Promise.any(
+      Array.from(generateUrl(window.location.protocol), async (url) => {
+        const resp = await fetch(url, { signal: controller.signal, targetAddressSpace: 'loopback' } as any);
+        if (!resp.ok) {
+          throw new Error(`Service on ${url} answered with status ${resp.status}`);
+        }
+        return url;
+      }),
+    );
+    window.nativeAPI.log('debug', `Found a service running on ${url}`);
+  } catch {
+    window.nativeAPI.log('debug', 'No service found running on localhost');
+  } finally {
+    controller.abort();
   }
 }
