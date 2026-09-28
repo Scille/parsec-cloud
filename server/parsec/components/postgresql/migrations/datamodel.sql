@@ -828,9 +828,13 @@ CREATE TABLE totp_opaque_key (
 
 CREATE TABLE cryptpad_session (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT cryptpad_session_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     document_id UUID NOT NULL,
-    author INTEGER REFERENCES device (_id) NOT NULL,
+    author INTEGER
+    CONSTRAINT cryptpad_session_author_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     key_index INTEGER NOT NULL,
     encrypted_view_key BYTEA NOT NULL,
