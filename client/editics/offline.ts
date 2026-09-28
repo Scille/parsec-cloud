@@ -16,8 +16,12 @@ const X2T_SCRIPT_URL = new URL('../onlyoffice-x2t/x2t.js', window.location.href)
 
 const parentWindow = window.parent;
 
+// The parent window is same-origin (the host page is served next to the app),
+// so we can always restrict the target origin instead of using '*'.
+const PARENT_ORIGIN = window.location.origin;
+
 function postToParent(message: EditicsHostToParentMessage): void {
-  parentWindow.postMessage(message, '*');
+  parentWindow.postMessage(message, PARENT_ORIGIN);
 }
 
 function loadScript(src: string): Promise<void> {
@@ -575,7 +579,7 @@ function requestParentSave(bytes: Uint8Array): Promise<EditicsRequestParentSaveR
     channel.port1.onmessage = function (ev: MessageEvent<EditicsRequestParentSaveReply>) {
       resolve(ev.data ?? { success: false, error: 'empty save reply' });
     };
-    parentWindow.postMessage({ command: 'oo-save', data: bytes }, '*', [channel.port2]);
+    parentWindow.postMessage({ command: 'oo-save', data: bytes }, PARENT_ORIGIN, [channel.port2]);
   });
 }
 
@@ -801,7 +805,7 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
           // persisted verbatim into the saved Editor.bin, then x2t only supports
           // data URL (and hence the image would vanish from the document).
           const url = bytesToDataUrl(reply.data, reply.fileName);
-          callback({url });
+          callback({ url });
         },
         () => errorCallback(),
       );
@@ -830,7 +834,9 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
-  if (event.source !== parentWindow) {
+  // Defense in depth: only accept messages from our parent window, and only
+  // from the origin it is expected to be served from.
+  if (event.source !== parentWindow || event.origin !== PARENT_ORIGIN) {
     return;
   }
   const data = event.data as EditicsParentToHostMessage | undefined | null;
