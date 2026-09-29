@@ -21,7 +21,6 @@ from parsec._parsec import (
 from parsec.types import (
     Base64BytesField,
     EmailAddressField,
-    RealmRoleField,
     Unset,
     UnsetType,
     UserProfileField,
@@ -41,7 +40,7 @@ class AllTypesSchema(BaseModel):
     invitation_token: AccessToken | UnsetType = Unset
     greeting_attempt_id: GreetingAttemptID | UnsetType = Unset
     invitation_status: InvitationStatus | UnsetType = Unset
-    realm_role: RealmRoleField | UnsetType = Unset
+    realm_role: RealmRole | UnsetType = Unset
     vlob_id: VlobID | UnsetType = Unset
     date_time: DateTime | UnsetType = Unset
     user_profile: UserProfileField | UnsetType = Unset
