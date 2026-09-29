@@ -152,7 +152,7 @@ const options = {
     buildResources: 'assets',
   },
 
-  files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*'],
+  files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*', 'app-editics/**/*'],
 
   publish: publishConfig,
 
