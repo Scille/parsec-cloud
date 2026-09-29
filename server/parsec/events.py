@@ -13,6 +13,7 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     DeviceID,
+    GreetingAttemptID,
     OrganizationID,
     UserID,
     UserProfile,
@@ -20,7 +21,6 @@ from parsec._parsec import (
 )
 from parsec.types import (
     Base64BytesField,
-    GreetingAttemptIDField,
     InvitationStatusField,
     UserProfileField,
     VlobIDField,
@@ -134,7 +134,7 @@ class EventGreetingAttemptReady(BaseModel, ClientBroadcastableEvent):
     organization_id: OrganizationID
     token: AccessToken
     greeter: UserID
-    greeting_attempt: GreetingAttemptIDField
+    greeting_attempt: GreetingAttemptID
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -165,7 +165,7 @@ class EventGreetingAttemptCancelled(BaseModel, ClientBroadcastableEvent):
     organization_id: OrganizationID
     token: AccessToken
     greeter: UserID
-    greeting_attempt: GreetingAttemptIDField
+    greeting_attempt: GreetingAttemptID
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -196,7 +196,7 @@ class EventGreetingAttemptJoined(BaseModel, ClientBroadcastableEvent):
     organization_id: OrganizationID
     token: AccessToken
     greeter: UserID
-    greeting_attempt: GreetingAttemptIDField
+    greeting_attempt: GreetingAttemptID
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
