@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     DateTime,
     DeviceID,
@@ -21,7 +22,6 @@ from parsec.types import (
     Base64BytesField,
     GreetingAttemptIDField,
     InvitationStatusField,
-    InvitationTokenField,
     UserProfileField,
     VlobIDField,
 )
@@ -98,7 +98,7 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
     type: Literal["INVITATION"] = "INVITATION"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    token: InvitationTokenField
+    token: AccessToken
     possible_greeters: set[UserID]
     status: InvitationStatusField
 
@@ -132,7 +132,7 @@ class EventGreetingAttemptReady(BaseModel, ClientBroadcastableEvent):
     type: Literal["GREETING_ATTEMPT_READY"] = "GREETING_ATTEMPT_READY"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    token: InvitationTokenField
+    token: AccessToken
     greeter: UserID
     greeting_attempt: GreetingAttemptIDField
 
@@ -163,7 +163,7 @@ class EventGreetingAttemptCancelled(BaseModel, ClientBroadcastableEvent):
     type: Literal["GREETING_ATTEMPT_CANCELLED"] = "GREETING_ATTEMPT_CANCELLED"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    token: InvitationTokenField
+    token: AccessToken
     greeter: UserID
     greeting_attempt: GreetingAttemptIDField
 
@@ -194,7 +194,7 @@ class EventGreetingAttemptJoined(BaseModel, ClientBroadcastableEvent):
     type: Literal["GREETING_ATTEMPT_JOINED"] = "GREETING_ATTEMPT_JOINED"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    token: InvitationTokenField
+    token: AccessToken
     greeter: UserID
     greeting_attempt: GreetingAttemptIDField
 
