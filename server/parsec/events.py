@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
+    DeviceID,
     OrganizationID,
     UserID,
     UserProfile,
@@ -18,7 +19,6 @@ from parsec._parsec import (
 )
 from parsec.types import (
     Base64BytesField,
-    DeviceIDField,
     GreetingAttemptIDField,
     InvitationStatusField,
     InvitationTokenField,
@@ -280,7 +280,7 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
     type: Literal["VLOB"] = "VLOB"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    author: DeviceIDField
+    author: DeviceID
     realm_id: VlobIDField
     timestamp: DateTime
     vlob_id: VlobIDField

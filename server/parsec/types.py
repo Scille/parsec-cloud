@@ -20,7 +20,6 @@ from pydantic_core.core_schema import (
 
 from parsec._parsec import (
     AccessToken,
-    DeviceID,
     EmailAddress,
     GreetingAttemptID,
     InvitationStatus,
@@ -174,14 +173,6 @@ Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
 
-
-# TODO: Move annotations to rust code
-DeviceIDField = Annotated[
-    DeviceID,
-    get_pydantic_schema(
-        DeviceID, lambda v: DeviceID.from_hex(v), lambda v: v.hex if isinstance(v, DeviceID) else v
-    ),
-]
 
 # TODO: Move annotations to rust code
 SequesterServiceIDField = Annotated[
