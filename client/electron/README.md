@@ -1,5 +1,16 @@
 # Electron app for Parsec
 
+## Debugging the build content
+
+On Linux, you can do:
+
+```bash
+# Generate the build in `client/electron/dist/linux-unpacked/`
+cd client/electron && node package.cjs --mode test --platform linux dir
+# Extract the app.asar archive containing the .js/.html/.css etc. files
+npx @electron/asar extract dist/linux-unpacked/resources/app.asar dist/linux-unpacked/resources/app.asar.extracted/
+```
+
 ## Signing a Windows release
 
 The `package-client` workflow produces an artefact called `Windows-X64-electron-app-exe-pre-built`.
