@@ -84,9 +84,7 @@ macro_rules! gen_uuid {
                 str_like_validator!(
                     core_schema,
                     cls,
-                    // Indicate to pydantic that it just need to call `str(val)` to serialize the value
                     ser = ser_schema,
-                    // Use constructor to deserialize the value
                     der = cls.getattr("from_hex")?,
                     py
                 )
@@ -452,7 +450,37 @@ impl EmailAddress {
     fn str(&self) -> String {
         self.0.to_string()
     }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'py, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{inner::CoreSchemaModule, str_like_validator};
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        str_like_validator!(
+            core_schema,
+            cls,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            ser = core_schema.to_string_ser_schema()?,
+            // Use constructor to deserialize the value
+            der = cls,
+            py
+        )
+    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(
+    EmailAddress,
+    type = "string",
+    format = "email",
+    description = "An email address",
+    examples = ["zack@example.com"]
+);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     AccessToken,

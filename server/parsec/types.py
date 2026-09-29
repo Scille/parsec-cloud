@@ -18,10 +18,6 @@ from pydantic_core.core_schema import (
     union_schema,
 )
 
-from parsec._parsec import (
-    EmailAddress,
-)
-
 
 # The Unset singleton is used as default value in functions when `None` can be a
 # valid value (so `None` and `Unset` will have a different meaning).
@@ -164,15 +160,4 @@ def base64_bytes_serializer(val: Buffer) -> str:
 # TODO: Move annotations to rust code
 Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
-]
-
-
-# TODO: Move annotations to rust code
-EmailAddressField = Annotated[
-    EmailAddress,
-    get_pydantic_schema(
-        EmailAddress,
-        lambda v: EmailAddress(v),
-        lambda v: v.str if isinstance(v, EmailAddress) else v,
-    ),
 ]

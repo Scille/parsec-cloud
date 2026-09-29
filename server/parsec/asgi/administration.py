@@ -21,6 +21,7 @@ from parsec._parsec import (
     AccessToken,
     ActiveUsersLimit,
     DateTime,
+    EmailAddress,
     OrganizationID,
     ParsecOrganizationBootstrapAddr,
     SequesterRevokedServiceCertificate,
@@ -56,7 +57,6 @@ from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListA
 from parsec.logging import get_logger
 from parsec.types import (
     Base64BytesField,
-    EmailAddressField,
     Unset,
     UnsetType,
 )
@@ -656,7 +656,7 @@ async def administration_organization_users(
 class UserFreezeIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     frozen: bool
-    user_email: EmailAddressField | None = None
+    user_email: EmailAddress | None = None
     user_id: UserID | None = None
 
 
@@ -716,7 +716,7 @@ async def administration_organization_users_freeze(
 
 class UserResetTOTPIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    user_email: EmailAddressField | None = None
+    user_email: EmailAddress | None = None
     user_id: UserID | None = None
     send_email: bool = False
 
