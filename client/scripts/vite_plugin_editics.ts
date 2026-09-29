@@ -140,7 +140,81 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
         });
       },
     });
+
+    // Serve the editics origin (i.e. `editics.<host>`) with the CSP it is expected
+    // to have in release, so missing directives show up early.
+    // By default the policy is only reported (violations are logged in the Vite
+    // terminal, nothing is blocked); set `PARSEC_APP_EDITICS_DEV_CSP=enforce` to
+    // enforce it instead.
+    const DEV_CSP_VARIABLE = 'PARSEC_APP_EDITICS_DEV_CSP';
+    const enforceDevCsp = loadEnv(env.mode, process.cwd(), DEV_CSP_VARIABLE)[DEV_CSP_VARIABLE] === 'enforce';
+    plugins.push({
+      name: 'editics-dev-csp',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.method === 'POST' && req.url === EDITICS_DEV_CSP_REPORT_PATH) {
+            let body = '';
+            req.setEncoding('utf8');
+            req.on('data', (chunk: string) => {
+              body += chunk;
+            });
+            req.on('end', () => {
+              server.config.logger.warn(formatCspReport(body), { timestamp: true });
+              res.statusCode = 204;
+              res.end();
+            });
+            return;
+          }
+
+          const host = req.headers.host;
+          if (host?.startsWith('editics.')) {
+            const protocol = server.config.server.https ? 'https' : 'http';
+            const parentOrigin = `${protocol}://${host.slice('editics.'.length)}`;
+            res.setHeader(
+              enforceDevCsp ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only',
+              buildEditicsDevCsp(parentOrigin),
+            );
+          }
+          next();
+        });
+      },
+    });
   }
 
   return plugins;
+}
+
+const EDITICS_DEV_CSP_REPORT_PATH = '/__editics-csp-report';
+
+// Starting point of the editics origin's policy, meant to be tightened/extended
+// according to the reported violations.
+function buildEditicsDevCsp(parentOrigin: string): string {
+  return [
+    "default-src 'self'",
+    // x2t compiles its WASM module, OnlyOffice uses `new Function()`
+    "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' blob: data:",
+    "font-src 'self' blob: data:",
+    "connect-src 'self' blob: data:",
+    "worker-src 'self' blob:",
+    "frame-src 'self'",
+    "media-src 'self' blob: data:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'none'",
+    `frame-ancestors ${parentOrigin}`,
+    `report-uri ${EDITICS_DEV_CSP_REPORT_PATH}`,
+  ].join('; ');
+}
+
+function formatCspReport(body: string): string {
+  try {
+    const report = JSON.parse(body)['csp-report'] as Record<string, unknown>;
+    const directive = report['effective-directive'] ?? report['violated-directive'];
+    const location = report['source-file'] ? ` at ${report['source-file']}:${report['line-number']}` : '';
+    return `[editics CSP] ${directive} blocked ${report['blocked-uri']} (in ${report['document-uri']}${location})`;
+  } catch {
+    return `[editics CSP] unparsable report: ${body}`;
+  }
 }

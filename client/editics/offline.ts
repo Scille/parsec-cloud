@@ -16,9 +16,18 @@ const X2T_SCRIPT_URL = new URL('../onlyoffice-x2t/x2t.js', window.location.href)
 
 const parentWindow = window.parent;
 
-// The parent window is same-origin (the host page is served next to the app),
-// so we can always restrict the target origin instead of using '*'.
-const PARENT_ORIGIN = window.location.origin;
+// The host page is served from a dedicated origin, so the parent (Parsec app)
+// origin is provided by the parent in the URL.
+function getParentOrigin(): string {
+  const param = new URLSearchParams(window.location.search).get('parentOrigin');
+  if (!param) {
+    throw new Error('Missing `parentOrigin` URL parameter');
+  }
+  // Normalize (and reject anything that is not a valid URL)
+  return new URL(param).origin;
+}
+
+const PARENT_ORIGIN = getParentOrigin();
 
 function postToParent(message: EditicsHostToParentMessage): void {
   parentWindow.postMessage(message, PARENT_ORIGIN);
@@ -834,8 +843,7 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
-  // Defense in depth: only accept messages from our parent window, and only
-  // from the origin it is expected to be served from.
+  // Filter messages that are not from the parent window.
   if (event.source !== parentWindow || event.origin !== PARENT_ORIGIN) {
     return;
   }
