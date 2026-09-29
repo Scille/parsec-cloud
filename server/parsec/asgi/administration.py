@@ -25,6 +25,7 @@ from parsec._parsec import (
     ParsecOrganizationBootstrapAddr,
     SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
+    SequesterServiceID,
     UserID,
     UserProfile,
 )
@@ -56,7 +57,6 @@ from parsec.logging import get_logger
 from parsec.types import (
     Base64BytesField,
     EmailAddressField,
-    SequesterServiceIDField,
     Unset,
     UnsetType,
 )
@@ -992,7 +992,7 @@ async def administration_organization_sequester_service_revoke(
 
 class PutSequesterServiceIn(BaseModel):
     model_config = ConfigDict(strict=True)
-    service_id: SequesterServiceIDField
+    service_id: SequesterServiceID
     config: SequesterServiceConfigField
 
 

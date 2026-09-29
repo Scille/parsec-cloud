@@ -24,7 +24,6 @@ from parsec._parsec import (
     GreetingAttemptID,
     InvitationStatus,
     RealmRole,
-    SequesterServiceID,
     UserProfile,
     VlobID,
 )
@@ -173,16 +172,6 @@ Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
 
-
-# TODO: Move annotations to rust code
-SequesterServiceIDField = Annotated[
-    SequesterServiceID,
-    get_pydantic_schema(
-        SequesterServiceID,
-        lambda v: SequesterServiceID.from_hex(v),
-        lambda v: v.hex if isinstance(v, SequesterServiceID) else v,
-    ),
-]
 
 # TODO: Move annotations to rust code
 InvitationTokenField = Annotated[

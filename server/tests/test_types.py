@@ -25,7 +25,6 @@ from parsec.types import (
     InvitationStatusField,
     InvitationTokenField,
     RealmRoleField,
-    SequesterServiceIDField,
     Unset,
     UnsetType,
     UserProfileField,
@@ -42,7 +41,7 @@ class AllTypesSchema(BaseModel):
     organization_id: OrganizationID | UnsetType = Unset
     user_id: UserID | UnsetType = Unset
     device_id: DeviceID | UnsetType = Unset
-    sequester_service_id: SequesterServiceIDField | UnsetType = Unset
+    sequester_service_id: SequesterServiceID | UnsetType = Unset
     invitation_token: InvitationTokenField | UnsetType = Unset
     greeting_attempt_id: GreetingAttemptIDField | UnsetType = Unset
     invitation_status: InvitationStatusField | UnsetType = Unset
