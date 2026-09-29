@@ -17,6 +17,7 @@ export default defineConfig([
       'node_modules/**',
       'electron/build/**',
       'electron/app/**',
+      'electron/app-editics/**',
       'electron/src/**',
       'electron/dist/**',
       'electron/live-runner.js',
