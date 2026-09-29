@@ -23,7 +23,6 @@ from parsec._parsec import (
 )
 from parsec.types import (
     Base64BytesField,
-    UserProfileField,
 )
 
 if TYPE_CHECKING:
@@ -553,7 +552,7 @@ class EventUserUpdated(BaseModel):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     user_id: UserID
-    new_profile: UserProfileField
+    new_profile: UserProfile
 
 
 type Event = (
