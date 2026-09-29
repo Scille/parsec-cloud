@@ -45,8 +45,8 @@ SCHEMES: dict[str, SchemesInternalType] = {
     "dots": {"interval": 80, "frames": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]}
 }
 
-ok = click.style("✔", fg="green")
-ko = click.style("✘", fg="red")
+OK = click.style("✔", fg="green")
+KO = click.style("✘", fg="red")
 
 
 @contextmanager
@@ -56,11 +56,11 @@ def operation(txt: str) -> Generator[None]:
         yield
 
     except Exception:
-        click.echo(f"\r\033[K{txt} {ko}")
+        click.echo(f"\r\033[K{txt} {KO}")
         raise
 
     else:
-        click.echo(f"\r\033[K{txt} {ok}")
+        click.echo(f"\r\033[K{txt} {OK}")
 
 
 @asynccontextmanager
@@ -96,11 +96,11 @@ async def spinner(
             yield
 
         except Exception:
-            result = ko
+            result = KO
             raise
 
         else:
-            result = ok
+            result = OK
 
         finally:
             task_group.cancel_scope.cancel()
