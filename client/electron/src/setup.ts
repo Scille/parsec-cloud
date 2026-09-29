@@ -130,6 +130,11 @@ export class ParsecApp {
       scheme: this.customScheme,
     });
 
+    electronServe({
+      directory: join(app.getAppPath(), 'app-editics'),
+      scheme: 'parsec-editics',
+    });
+
     if (FEATURE_FLAGS.updatesEnabled()) {
       this.log('info', 'Setting up application updates');
       this.updater = createAppUpdater();

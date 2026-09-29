@@ -20,7 +20,7 @@ async function getEditicsOrigin(): Promise<string> {
   // Page is served on a different origin for security reasons.
   // Use this to filter the message we get.
   if (isElectron()) {
-    throw new Error('Not implemented');
+    return 'parsec-editics://-';
   } else if (window.isDev()) {
     return `${window.location.protocol}//editics.${window.location.host}`;
   }
