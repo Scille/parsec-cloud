@@ -120,18 +120,6 @@ def check_administration_auth(
         raise HTTPException(status_code=403, detail="Bad authorization token")
 
 
-# This function is a workaround for FastAPI's broken custom type in query parameters
-# (see https://github.com/tiangolo/fastapi/issues/10259)
-def parse_organization_id_or_die(raw_organization_id: str) -> OrganizationID:
-    try:
-        return OrganizationID(raw_organization_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=404,
-            detail="Invalid organization ID",
-        )
-
-
 def log_request[**P, T: BaseModel | Response](
     func: Callable[P, Awaitable[T]],
 ) -> Callable[P, Awaitable[T]]:
@@ -343,13 +331,13 @@ class PatchOrganizationIn(BaseModel):
 
 
 @administration_router.patch(
-    "/administration/organizations/{raw_organization_id}",
+    "/administration/organizations/{organization_id}",
     summary="Update Organization status and configuration",
     tags=["Organization"],
 )
 @log_request
 async def administration_patch_organization(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     body: PatchOrganizationIn,
     request: Request,
     auth: Annotated[None, Depends(check_administration_auth)],
@@ -364,8 +352,6 @@ async def administration_patch_organization(
     Fields that you do not want to be updated should be omitted from the request.
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.organization.update(
         now=DateTime.now(),
@@ -415,7 +401,7 @@ class GetOrganizationStatsOut(BaseModel):
 
 
 @administration_router.get(
-    "/administration/organizations/{raw_organization_id}/stats",
+    "/administration/organizations/{organization_id}/stats",
     summary="Get Organization usage statistics",
     tags=["Stats"],
     responses={
@@ -428,7 +414,7 @@ class GetOrganizationStatsOut(BaseModel):
 )
 @log_request
 async def administration_organization_stat(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> GetOrganizationStatsOut:
@@ -445,8 +431,6 @@ async def administration_organization_stat(
        - `OUTSIDER`: number of active/revoked users with **EXTERNAL** profile
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.organization.organization_stats(organization_id)
     match outcome:
@@ -519,7 +503,7 @@ class StatsFormat(StrEnum):
 
 class GetServerStatsOrganizationDetail(BaseModel):
     model_config = ConfigDict(strict=True)
-    organization_id: str
+    organization_id: OrganizationID
     realms: NonNegativeInt
     data_size: NonNegativeInt
     metadata_size: NonNegativeInt
@@ -603,7 +587,7 @@ async def administration_server_stats(
             return GetServerStatsOut(
                 stats=[
                     GetServerStatsOrganizationDetail(
-                        organization_id=organization_id.str,
+                        organization_id=organization_id,
                         realms=org_stats.realms,
                         data_size=org_stats.data_size,
                         metadata_size=org_stats.metadata_size,
@@ -634,13 +618,13 @@ class GetOrganizationUsersOut(BaseModel):
 
 
 @administration_router.get(
-    "/administration/organizations/{raw_organization_id}/users",
+    "/administration/organizations/{organization_id}/users",
     summary="Get organization Users",
     tags=["Users"],
 )
 @log_request
 async def administration_organization_users(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> GetOrganizationUsersOut:
@@ -648,8 +632,6 @@ async def administration_organization_users(
     Get the list of all Users in the organization
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.user.list_active_users(organization_id)
     match outcome:
@@ -686,13 +668,13 @@ class UserFreezeOut(BaseModel):
 
 
 @administration_router.post(
-    "/administration/organizations/{raw_organization_id}/users/freeze",
+    "/administration/organizations/{organization_id}/users/freeze",
     summary="Update User frozen status",
     tags=["Users"],
 )
 @log_request
 async def administration_organization_users_freeze(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     auth: Annotated[None, Depends(check_administration_auth)],
     body: UserFreezeIn,
     request: Request,
@@ -706,8 +688,6 @@ async def administration_organization_users_freeze(
     See [Freeze Users](https://docs.parsec.cloud/en/latest/hosting/administration/freeze-users.html).
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.user.freeze_user(
         organization_id, user_id=body.user_id, user_email=body.user_email, frozen=body.frozen
@@ -750,13 +730,13 @@ class UserResetTOTPOut(BaseModel):
 
 
 @administration_router.post(
-    "/administration/organizations/{raw_organization_id}/users/reset_totp",
+    "/administration/organizations/{organization_id}/users/reset_totp",
     summary="Reset User TOTP setup for MFA",
     tags=["Users"],
 )
 @log_request
 async def administration_organization_users_reset_totp(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     auth: Annotated[None, Depends(check_administration_auth)],
     body: UserResetTOTPIn,
     request: Request,
@@ -770,8 +750,6 @@ async def administration_organization_users_reset_totp(
     See [MFA Setup reset](https://docs.parsec.cloud/en/latest/hosting/administration/user-authentication.html#mfa-setup-reset).
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.totp.reset(
         organization_id,
@@ -829,13 +807,13 @@ class GetSequesterServiceOut(BaseModel):
 
 
 @administration_router.get(
-    "/administration/organizations/{raw_organization_id}/sequester/services",
+    "/administration/organizations/{organization_id}/sequester/services",
     summary="Get Sequester Services",
     tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_services(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> GetSequesterServiceOut:
@@ -843,8 +821,6 @@ async def administration_organization_sequester_services(
     Get the list of all sequester services configured in the server.
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.sequester.get_organization_services(organization_id)
     match outcome:
@@ -915,13 +891,13 @@ class CreateSequesterServiceOut(BaseModel):
 
 
 @administration_router.post(
-    "/administration/organizations/{raw_organization_id}/sequester/services",
+    "/administration/organizations/{organization_id}/sequester/services",
     summary="Create a Sequester Service",
     tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_service_create(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     body: CreateSequesterServiceIn,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
@@ -930,8 +906,6 @@ async def administration_organization_sequester_service_create(
     Create a sequester service with the specified configuration.
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.sequester.create_service(
         now=DateTime.now(),
@@ -971,13 +945,13 @@ class RevokeSequesterServiceOut(BaseModel):
 
 
 @administration_router.post(
-    "/administration/organizations/{raw_organization_id}/sequester/services/revoke",
+    "/administration/organizations/{organization_id}/sequester/services/revoke",
     summary="Revoke a Sequester Service",
     tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_service_revoke(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     body: RevokeSequesterServiceIn,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
@@ -986,8 +960,6 @@ async def administration_organization_sequester_service_revoke(
     Revoke an existing sequester service.
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.sequester.revoke_service(
         now=DateTime.now(),
@@ -1029,13 +1001,13 @@ class PutSequesterServiceOut(BaseModel):
 
 
 @administration_router.put(
-    "/administration/organizations/{raw_organization_id}/sequester/services/config",
+    "/administration/organizations/{organization_id}/sequester/services/config",
     summary="Update a Sequester Service",
     tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_service_update_config(
-    raw_organization_id: str,
+    organization_id: OrganizationID,
     body: PutSequesterServiceIn,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
@@ -1044,8 +1016,6 @@ async def administration_organization_sequester_service_update_config(
     Update the sequester service with the specified configuration.
     """
     backend: Backend = request.app.state.backend
-
-    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.sequester.update_config_for_service(
         organization_id=organization_id,
