@@ -12,6 +12,7 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     OrganizationID,
+    UserID,
     UserProfile,
     authenticated_cmds,
 )
@@ -21,7 +22,6 @@ from parsec.types import (
     GreetingAttemptIDField,
     InvitationStatusField,
     InvitationTokenField,
-    UserIDField,
     UserProfileField,
     VlobIDField,
 )
@@ -99,7 +99,7 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     token: InvitationTokenField
-    possible_greeters: set[UserIDField]
+    possible_greeters: set[UserID]
     status: InvitationStatusField
 
     @override
@@ -133,7 +133,7 @@ class EventGreetingAttemptReady(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     token: InvitationTokenField
-    greeter: UserIDField
+    greeter: UserID
     greeting_attempt: GreetingAttemptIDField
 
     @override
@@ -164,7 +164,7 @@ class EventGreetingAttemptCancelled(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     token: InvitationTokenField
-    greeter: UserIDField
+    greeter: UserID
     greeting_attempt: GreetingAttemptIDField
 
     @override
@@ -195,7 +195,7 @@ class EventGreetingAttemptJoined(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     token: InvitationTokenField
-    greeter: UserIDField
+    greeter: UserID
     greeting_attempt: GreetingAttemptIDField
 
     @override
@@ -392,7 +392,7 @@ class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     timestamp: DateTime
-    participants: tuple[UserIDField, ...]
+    participants: tuple[UserID, ...]
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -431,7 +431,7 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
     organization_id: OrganizationID
     timestamp: DateTime
     realm_id: VlobIDField
-    user_id: UserIDField
+    user_id: UserID
     role_removed: bool
 
     @override
@@ -523,7 +523,7 @@ class EventUserRevokedOrFrozen(BaseModel):
     type: Literal["USER_REVOKED_OR_FROZEN"] = "USER_REVOKED_OR_FROZEN"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    user_id: UserIDField
+    user_id: UserID
 
 
 class EventUserUnfrozen(BaseModel):
@@ -537,7 +537,7 @@ class EventUserUnfrozen(BaseModel):
     type: Literal["USER_UNFROZEN"] = "USER_UNFROZEN"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    user_id: UserIDField
+    user_id: UserID
 
 
 class EventUserUpdated(BaseModel):
@@ -552,7 +552,7 @@ class EventUserUpdated(BaseModel):
     type: Literal["USER_UPDATED"] = "USER_UPDATED"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
-    user_id: UserIDField
+    user_id: UserID
     new_profile: UserProfileField
 
 

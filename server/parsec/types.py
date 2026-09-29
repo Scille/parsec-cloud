@@ -26,7 +26,6 @@ from parsec._parsec import (
     InvitationStatus,
     RealmRole,
     SequesterServiceID,
-    UserID,
     UserProfile,
     VlobID,
 )
@@ -175,14 +174,6 @@ Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
 
-
-# TODO: Move annotations to rust code
-UserIDField = Annotated[
-    UserID,
-    get_pydantic_schema(
-        UserID, lambda v: UserID.from_hex(v), lambda v: v.hex if isinstance(v, UserID) else v
-    ),
-]
 
 # TODO: Move annotations to rust code
 DeviceIDField = Annotated[
