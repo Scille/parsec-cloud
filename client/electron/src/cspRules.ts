@@ -55,7 +55,7 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     [CspDirective.BaseUri, [EDITICS_PROTOCOL]],
     [CspDirective.FormAction, ["'none'"]],
     // Only the app can embed editics
-    [CspDirective.FrameAncestors, [customProtocol]],
+    [CspDirective.FrameAncestors, [customProtocol, EDITICS_PROTOCOL]],
   ]);
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {

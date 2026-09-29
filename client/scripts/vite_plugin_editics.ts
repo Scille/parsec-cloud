@@ -242,7 +242,7 @@ function buildEditicsDevCsp(parentOrigin: string): string {
   return [
     "default-src 'self'",
     // x2t compiles its WASM module, OnlyOffice uses `new Function()`
-    "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
+    "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self' blob: data:",
@@ -253,7 +253,7 @@ function buildEditicsDevCsp(parentOrigin: string): string {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'none'",
-    `frame-ancestors ${parentOrigin}`,
+    `frame-ancestors 'self' ${parentOrigin}`,
     `report-uri ${EDITICS_DEV_CSP_REPORT_PATH}`,
   ].join('; ');
 }
