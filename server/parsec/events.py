@@ -17,13 +17,13 @@ from parsec._parsec import (
     OrganizationID,
     UserID,
     UserProfile,
+    VlobID,
     authenticated_cmds,
 )
 from parsec.types import (
     Base64BytesField,
     InvitationStatusField,
     UserProfileField,
-    VlobIDField,
 )
 
 if TYPE_CHECKING:
@@ -281,9 +281,9 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     author: DeviceID
-    realm_id: VlobIDField
+    realm_id: VlobID
     timestamp: DateTime
-    vlob_id: VlobIDField
+    vlob_id: VlobID
     version: int
     blob: Base64BytesField | None
     last_common_certificate_timestamp: DateTime
@@ -430,7 +430,7 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationID
     timestamp: DateTime
-    realm_id: VlobIDField
+    realm_id: VlobID
     user_id: UserID
     role_removed: bool
 
