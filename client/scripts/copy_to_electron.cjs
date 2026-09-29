@@ -12,7 +12,7 @@ const EDITICS_DEST = path.join(WORKDIR, 'electron', 'app-editics');
 // the app, see `electron/src/setup.ts`), so they are kept out of `app`.
 // The folder names must be preserved: `editics/offline.html` loads the others
 // with relative URLs (e.g. `../onlyoffice/...`).
-const EDITICS_DIRS = ['editics', 'onlyoffice', 'onlyoffice-x2t', 'onlyoffice-templates'];
+const EDITICS_DIRS = ['editics', 'onlyoffice', 'onlyoffice-x2t'];
 
 if (!fs.existsSync(SRC)) {
   console.error(`Source directory not found: ${SRC}`);
@@ -27,7 +27,7 @@ for (const dest of [DEST, EDITICS_DEST]) {
   }
 }
 
-console.log(`>>> cp -r ${path.relative(WORKDIR, SRC)} ${path.relative(WORKDIR, DEST)} (without editics)`);
+console.log(`>>> cp -r ${path.relative(WORKDIR, SRC)}/!(editics|onlyoffice|onlyoffice-x2t) ${path.relative(WORKDIR, DEST)}`);
 fs.cpSync(SRC, DEST, {
   recursive: true,
   filter: (src) => !EDITICS_DIRS.includes(path.relative(SRC, src).split(path.sep)[0]),
