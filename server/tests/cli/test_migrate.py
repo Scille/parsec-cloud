@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
+from parsec._version import __version__ as version
 from parsec.cli import cli
 from parsec.components.postgresql import MigrationItem
 from tests.common import execute_pg_queries
@@ -49,14 +50,18 @@ TRUNCATE TABLE migration_dummy RESTART IDENTITY CASCADE;
         runner = CliRunner()
         result = runner.invoke(cli, dry_run_args)
         assert result.exit_code == 0, result.output
+        assert f"Will apply migrations for version {version}" in result.output
         assert "100001_migration1.sql ✔" in result.output
         assert "100002_migration2.sql ✔" in result.output
+        assert "No migrations applied" not in result.output
 
         runner = CliRunner()
         result = runner.invoke(cli, apply_args)
         assert result.exit_code == 0, result.output
+        assert f"Will apply migrations for version {version}" in result.output
         assert "100001_migration1.sql ✔" in result.output
         assert "100002_migration2.sql ✔" in result.output
+        assert "No migrations applied" not in result.output
 
         retrieve_migrations.return_value.append(
             MigrationItem(
@@ -66,18 +71,24 @@ TRUNCATE TABLE migration_dummy RESTART IDENTITY CASCADE;
 
         result = runner.invoke(cli, dry_run_args)
         assert result.exit_code == 0, result.output
+        assert f"Will apply migrations for version {version}" in result.output
         assert "100001_migration1.sql (already applied)" in result.output
         assert "100002_migration2.sql (already applied)" in result.output
         assert "100003_migration3.sql ✔" in result.output
+        assert "No migrations applied" not in result.output
 
         result = runner.invoke(cli, apply_args)
         assert result.exit_code == 0, result.output
+        assert f"Will apply migrations for version {version}" in result.output
         assert "100001_migration1.sql (already applied)" in result.output
         assert "100002_migration2.sql (already applied)" in result.output
         assert "100003_migration3.sql ✔" in result.output
+        assert "No migrations applied" not in result.output
 
         result = runner.invoke(cli, apply_args)
         assert result.exit_code == 0, result.output
+        assert f"Will apply migrations for version {version}" in result.output
         assert "100001_migration1.sql (already applied)" in result.output
         assert "100002_migration2.sql (already applied)" in result.output
         assert "100003_migration3.sql (already applied)" in result.output
+        assert "No migrations applied, is this expected?" in result.output
