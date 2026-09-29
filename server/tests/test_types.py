@@ -20,7 +20,6 @@ from parsec._parsec import (
 from parsec.types import (
     AccessToken,
     Base64BytesField,
-    DeviceIDField,
     EmailAddressField,
     GreetingAttemptIDField,
     InvitationStatusField,
@@ -42,7 +41,7 @@ class AllTypesSchema(BaseModel):
     base64_bytes: Base64BytesField | UnsetType = Unset
     organization_id: OrganizationID | UnsetType = Unset
     user_id: UserID | UnsetType = Unset
-    device_id: DeviceIDField | UnsetType = Unset
+    device_id: DeviceID | UnsetType = Unset
     sequester_service_id: SequesterServiceIDField | UnsetType = Unset
     invitation_token: InvitationTokenField | UnsetType = Unset
     greeting_attempt_id: GreetingAttemptIDField | UnsetType = Unset
