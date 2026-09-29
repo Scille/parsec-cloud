@@ -95,11 +95,6 @@ declare global {
 }
 
 const NATIVE_EXTENSION = 'bin';
-const BLANK_TEMPLATE_PATHS: Partial<Record<EditicsOpenOptions['documentType'], string>> = {
-  word: '../onlyoffice-templates/word.bin',
-  cell: '../onlyoffice-templates/cell.bin',
-  slide: '../onlyoffice-templates/slide.bin',
-};
 const ODF_INTERMEDIARY_FORMAT: Record<string, string> = {
   odt: 'docx',
   ods: 'xlsx',
@@ -317,22 +312,9 @@ async function convertFromNativeFormat(data: Uint8Array, fileName: string, exten
   return runConversion(module, safeName, data, extension);
 }
 
-async function loadBlankTemplate(documentType: EditicsOpenOptions['documentType'], fallback: Uint8Array): Promise<Uint8Array> {
-  const templatePath = BLANK_TEMPLATE_PATHS[documentType];
-  if (!templatePath) {
-    return fallback;
-  }
-  try {
-    const response = await fetch(new URL(templatePath, window.location.href));
-    return new Uint8Array(await response.arrayBuffer());
-  } catch (error: unknown) {
-    throw new Error(`Failed to load blank document template: ${String(error)}`);
-  }
-}
-
 async function prepareDocumentContent(options: EditicsOpenOptions, documentContent: Uint8Array): Promise<Uint8Array> {
   if (documentContent.byteLength === 0) {
-    return loadBlankTemplate(options.documentType, documentContent);
+    throw new Error(`Cannot open an empty document: ${options.documentName}`);
   }
   if (options.documentExtension === NATIVE_EXTENSION) {
     return documentContent;
