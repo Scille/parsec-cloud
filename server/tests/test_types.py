@@ -29,7 +29,6 @@ from parsec.types import (
     SequesterServiceIDField,
     Unset,
     UnsetType,
-    UserIDField,
     UserProfileField,
     VlobIDField,
 )
@@ -42,7 +41,7 @@ class AllTypesSchema(BaseModel):
 
     base64_bytes: Base64BytesField | UnsetType = Unset
     organization_id: OrganizationID | UnsetType = Unset
-    user_id: UserIDField | UnsetType = Unset
+    user_id: UserID | UnsetType = Unset
     device_id: DeviceIDField | UnsetType = Unset
     sequester_service_id: SequesterServiceIDField | UnsetType = Unset
     invitation_token: InvitationTokenField | UnsetType = Unset
