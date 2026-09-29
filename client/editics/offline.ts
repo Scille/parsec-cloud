@@ -11,8 +11,16 @@ import type {
 // Resolve assets relative to this standalone host page. In a web release the
 // application may be mounted below a path prefix (e.g. `/client/`), unlike
 // Electron and the Vite development server where it is served at the origin.
-const ONLYOFFICE_API_URL = new URL('../onlyoffice/web-apps/apps/api/documents/api.js', window.location.href).href;
-const X2T_SCRIPT_URL = new URL('../onlyoffice-x2t/x2t.js', window.location.href).href;
+//
+// `__EDITICS_ONLYOFFICE_BASE__` & `__EDITICS_X2T_BASE__` are build-time
+// constants injected by the `editics-build-time-paths` plugin (see
+// `scripts/vite_plugin_editics.ts`): they point to the versioned OnlyOffice
+// asset folders (e.g. `../onlyoffice/9.3.0.140-parsec0/`), in order to handle
+// cache busting when upgrading the dependencies.
+declare const __EDITICS_ONLYOFFICE_BASE__: string;
+declare const __EDITICS_X2T_BASE__: string;
+const ONLYOFFICE_API_URL = new URL(`${__EDITICS_ONLYOFFICE_BASE__}web-apps/apps/api/documents/api.js`, window.location.href).href;
+const X2T_SCRIPT_URL = new URL(`${__EDITICS_X2T_BASE__}x2t.js`, window.location.href).href;
 
 const parentWindow = window.parent;
 
