@@ -20,7 +20,6 @@ from parsec._parsec import (
 )
 from parsec.types import (
     Base64BytesField,
-    EmailAddressField,
     Unset,
     UnsetType,
 )
@@ -44,7 +43,7 @@ class AllTypesSchema(BaseModel):
     date_time: DateTime | UnsetType = Unset
     user_profile: UserProfile | UnsetType = Unset
     active_users_limit: ActiveUsersLimit | UnsetType = Unset
-    email_address: EmailAddressField | UnsetType = Unset
+    email_address: EmailAddress | UnsetType = Unset
 
 
 @pytest.mark.parametrize(
