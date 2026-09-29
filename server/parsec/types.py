@@ -23,7 +23,6 @@ from parsec._parsec import (
     InvitationStatus,
     RealmRole,
     UserProfile,
-    VlobID,
 )
 
 
@@ -191,13 +190,6 @@ RealmRoleField = Annotated[
     ),
 ]
 
-# TODO: Move annotations to rust code
-VlobIDField = Annotated[
-    VlobID,
-    get_pydantic_schema(
-        VlobID, lambda v: VlobID.from_hex(v), lambda v: v.hex if isinstance(v, VlobID) else v
-    ),
-]
 
 # TODO: Move annotations to rust code
 UserProfileField = Annotated[

@@ -26,7 +26,6 @@ from parsec.types import (
     Unset,
     UnsetType,
     UserProfileField,
-    VlobIDField,
 )
 
 
@@ -44,7 +43,7 @@ class AllTypesSchema(BaseModel):
     greeting_attempt_id: GreetingAttemptID | UnsetType = Unset
     invitation_status: InvitationStatusField | UnsetType = Unset
     realm_role: RealmRoleField | UnsetType = Unset
-    vlob_id: VlobIDField | UnsetType = Unset
+    vlob_id: VlobID | UnsetType = Unset
     date_time: DateTime | UnsetType = Unset
     user_profile: UserProfileField | UnsetType = Unset
     active_users_limit: ActiveUsersLimit | UnsetType = Unset
