@@ -41,9 +41,8 @@ export function setupContentSecurityPolicy(customScheme: string): void {
   ]);
   const EDITICS_CSP_RULE = buildPolicy([
     [CspDirective.DefaultSrc, [EDITICS_PROTOCOL]],
-    // x2t compiles its WASM module, OnlyOffice uses `new Function()`.
-    // `'unsafe-inline'` is needed by the release build of `editics/offline.html`,
-    // which inlines its script.
+    // x2t compiles its WASM module, OnlyOffice uses `new Function()`, and
+    // the vendor editor pages contain inline `<script>` blocks.
     [CspDirective.ScriptSrc, [EDITICS_PROTOCOL, "'wasm-unsafe-eval'", "'unsafe-eval'", "'unsafe-inline'"]],
     [CspDirective.StyleSrc, [EDITICS_PROTOCOL, "'unsafe-inline'"]],
     [CspDirective.ImgSrc, [EDITICS_PROTOCOL, 'blob:', 'data:']],

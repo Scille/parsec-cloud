@@ -50,9 +50,10 @@ bundle, no `@/` imports).
 
 - **Dev**: the Vite dev server serves `editics/offline.html` and transpiles
   `offline.ts` on the fly.
-- **Release**: `scripts/vite_plugin_editics.ts` bundles each entry with
-  esbuild and inlines the code into the emitted HTML, so each page ships as a
-  single self-contained asset (e.g. `dist/editics/offline.html`).
+- **Release**: `scripts/vite_plugin_editics.ts` copies as-is `editics/offline.html`
+  and bundles each typescript entry with esbuild to emit `offline-<hash>.js`.
 
 On top of that, the OnlyOffice editor and x2t assets trees are exposed/copied
-(using `viteStaticCopy` plugin) verbatim.
+(using `viteStaticCopy` plugin) verbatim, but into versioned folders (e.g.
+`onlyoffice/<version>/`) in order to handle cache busting when upgrading the
+dependencies (see `scripts/vite_plugin_editics.ts`).
