@@ -23,7 +23,6 @@ from parsec.types import (
     EmailAddressField,
     Unset,
     UnsetType,
-    UserProfileField,
 )
 
 
@@ -43,7 +42,7 @@ class AllTypesSchema(BaseModel):
     realm_role: RealmRole | UnsetType = Unset
     vlob_id: VlobID | UnsetType = Unset
     date_time: DateTime | UnsetType = Unset
-    user_profile: UserProfileField | UnsetType = Unset
+    user_profile: UserProfile | UnsetType = Unset
     active_users_limit: ActiveUsersLimit | UnsetType = Unset
     email_address: EmailAddressField | UnsetType = Unset
 

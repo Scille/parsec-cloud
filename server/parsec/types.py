@@ -20,7 +20,6 @@ from pydantic_core.core_schema import (
 
 from parsec._parsec import (
     EmailAddress,
-    UserProfile,
 )
 
 
@@ -167,16 +166,6 @@ Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
 
-
-# TODO: Move annotations to rust code
-UserProfileField = Annotated[
-    UserProfile,
-    get_pydantic_schema(
-        UserProfile,
-        lambda v: UserProfile.from_str(v),
-        lambda v: v.str if isinstance(v, UserProfile) else v,
-    ),
-]
 
 # TODO: Move annotations to rust code
 EmailAddressField = Annotated[
