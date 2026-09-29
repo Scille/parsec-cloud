@@ -20,6 +20,8 @@ async function getEditicsOrigin(): Promise<string> {
   // Page is served on a different origin for security reasons.
   // Use this to filter the message we get.
   if (isElectron()) {
+    // Using a custom scheme for Electron as it does count as a different origin
+    // and provides a good isolation automatically.
     return 'parsec-editics://-';
   } else if (window.isDev()) {
     // Web dev mode
