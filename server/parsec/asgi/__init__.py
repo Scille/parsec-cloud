@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import mimetypes
 import os
+import socket
+from collections.abc import Sequence
 from pathlib import Path
 from typing import cast
 
 import anyio
 import uvicorn
+from anyio.abc import TaskStatus
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
@@ -203,12 +206,13 @@ class Server(uvicorn.Server):
 
     _should_exit: bool
 
+    def __init__(self, config: uvicorn.Config) -> None:
+        super().__init__(config)
+        self._should_exit = False
+
     @property
     def should_exit(self) -> bool:
-        try:
-            return self._should_exit
-        except AttributeError:
-            return False
+        return self._should_exit
 
     @should_exit.setter
     def should_exit(self, value: bool) -> None:
@@ -217,6 +221,41 @@ class Server(uvicorn.Server):
             app = cast(AsgiApp, self.config.app)
             backend = cast(Backend, app.state.backend)
             backend.events.stop()
+
+    def _log_started_message(self, listeners: Sequence[socket.SocketType]) -> None:
+        config = self.config
+
+        if config.fd is not None:  # pragma: py-win32
+            sock = listeners[0]
+            server_url = sock.getsockname()
+            logger.info(f"Uvicorn running on socket {server_url} (Press CTRL+C to quit)")
+
+        elif config.uds is not None:  # pragma: py-win32
+            server_url = config.uds
+            logger.info(f"Uvicorn running on unix socket {server_url} (Press CTRL+C to quit)")
+
+        else:
+            addr_format = "{schema}://{host}:{port}"
+            host = config.host
+            if ":" in host:
+                # It's an IPv6 address.
+                addr_format = "{schema}://[{host}]:{port}"
+
+            port = config.port
+            if port == 0:
+                port = listeners[0].getsockname()[1]
+
+            protocol_name = "https" if config.ssl else "http"
+            server_url = addr_format.format(schema=protocol_name, host=host, port=port)
+            logger.info(f"Uvicorn running on {server_url} (Press CTRL+C to quit)")
+
+        if isinstance(config.app, FastAPI) and config.app.openapi_url:
+            logger.info(
+                "OpenAPI URLS",
+                redoc=f"{server_url}{config.app.redoc_url}",
+                openapi_json=f"{server_url}{config.app.openapi_url}",
+                docs=f"{server_url}{config.app.docs_url}",
+            )
 
 
 async def serve_parsec_asgi_app(
@@ -277,7 +316,7 @@ async def serve_parsec_asgi_app(
     )
     server = Server(config)
 
-    async def server_task(task_status):
+    async def server_task(task_status: TaskStatus):
         # Protect server against cancellation
         with anyio.CancelScope(shield=True):
             task_status.started()
@@ -286,6 +325,7 @@ async def serve_parsec_asgi_app(
 
     async with anyio.create_task_group() as tg:
         await tg.start(server_task)
+
         try:
             await anyio.sleep_forever()
         finally:
