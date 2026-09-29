@@ -261,7 +261,8 @@ CREATE TABLE device (
     verify_key BYTEA NOT NULL,
     device_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
-    device_certifier INTEGER REFERENCES device (_id),
+    device_certifier INTEGER
+    CONSTRAINT device_device_certifier_fkey REFERENCES device (_id) ON DELETE CASCADE,
     created_on TIMESTAMPTZ NOT NULL,
     redacted_device_certificate BYTEA NOT NULL,
 
@@ -399,7 +400,8 @@ CREATE TABLE invitation (
     --     deleted_reason INVITATION_DELETED_REASON,
 
     -- Updated in migration 0009
-    created_by_device INTEGER REFERENCES device (_id),
+    created_by_device INTEGER
+    CONSTRAINT invitation_created_by_device_fkey REFERENCES device (_id) ON DELETE CASCADE,
 
     -- Required when type=USER
     user_invitation_claimer_email VARCHAR(255),
@@ -578,7 +580,9 @@ CREATE TABLE realm_user_role (
     -- NULL if access revocation
     role REALM_ROLE,
     certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_user_role_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
@@ -595,7 +599,9 @@ CREATE TABLE realm_archiving (
     -- NULL if not DELETION_PLANNED
     deletion_date TIMESTAMPTZ,
     certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_archiving_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
@@ -608,7 +614,9 @@ CREATE TABLE realm_keys_bundle (
     key_index INTEGER NOT NULL,
 
     realm_key_rotation_certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_keys_bundle_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL,
     key_canary BYTEA NOT NULL,
     -- Note `keys_bundle` is set to an empty buffer if the realm has been deleted
@@ -692,7 +700,9 @@ CREATE TABLE realm_name (
     CONSTRAINT realm_name_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
     NOT NULL,
     realm_name_certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_name_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
@@ -747,7 +757,9 @@ CREATE TABLE block (
     realm INTEGER
     CONSTRAINT block_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
     NOT NULL,
-    author INTEGER REFERENCES device (_id) NOT NULL,
+    author INTEGER
+    CONSTRAINT block_author_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     size INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted
