@@ -3,7 +3,7 @@
 import { getFileContent } from '@/common/file';
 import { FileContentType } from '@/common/fileTypes';
 import ImageSelectionModal from '@/components/files/explorer/ImageSelectionModal.vue';
-import { FsPath, WorkspaceHandle } from '@/parsec';
+import { FsPath, isElectron, WorkspaceHandle } from '@/parsec';
 import { getWorkspaceHandle } from '@/router';
 import { Env } from '@/services/environment';
 import type {
@@ -15,6 +15,25 @@ import type {
 } from '@editics_parent_host_api';
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
+
+async function getEditicsOrigin(): Promise<string> {
+  // Page is served on a different origin for security reasons.
+  // Use this to filter the message we get.
+  if (isElectron()) {
+    throw new Error('Not implemented');
+  } else if (window.isDev()) {
+    return `${window.location.protocol}//editics.${window.location.host}`;
+  }
+  throw new Error('Unavailable for now, needs a different origin for proper isolation');
+}
+
+function getEditicsFrameUrl(editicsOrigin: string): URL {
+  const BASE_URL = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+  const url = new URL(`${BASE_URL}editics/offline.html`, editicsOrigin);
+  // Passing our origin to the frame, so it knows how to contact us and check for us
+  url.searchParams.set('parentOrigin', window.location.origin);
+  return url;
+}
 
 export enum EditicsErrorCodes {
   FrameNotLoaded = 'frame-not-loaded',
@@ -63,14 +82,6 @@ export interface EditicsHostSession {
   // too: there was simply nothing modified to write back.
   save: () => Promise<boolean>;
 }
-
-const BASE_URL = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
-const HOST_PAGE = `${BASE_URL}editics/offline.html`;
-
-// The host page is always served from the same origin as the app: use this
-// origin both as the `postMessage` target origin (never '*') and to validate
-// the origin of incoming messages.
-const HOST_ORIGIN = new URL(HOST_PAGE, window.location.href).origin;
 
 // Time we give the host page to signal it is ready after its iframe is loaded.
 // Short in tests to fail fast.
@@ -131,6 +142,15 @@ export async function openDocument(
 
   let session: EditicsHostSession | undefined = undefined;
 
+  let frameUrl: URL;
+  try {
+    frameUrl = getEditicsFrameUrl(await getEditicsOrigin());
+  } catch (e: unknown) {
+    handlers.onError(new EditicsError(EditicsErrorCodes.FrameLoadFailed, String(e)));
+    return undefined;
+  }
+  const hostOrigin = frameUrl.origin;
+
   try {
     await new Promise<void>((resolve, reject) => {
       const hostReadyTimeoutId = setTimeout(() => {
@@ -142,7 +162,7 @@ export async function openDocument(
         (event: MessageEvent<EditicsHostToParentMessage>): void => {
           // Defense in depth: only accept messages from our host frame, and
           // only from the origin it is expected to be served from.
-          if (event.source !== frame.contentWindow || event.origin !== HOST_ORIGIN) {
+          if (event.source !== frame.contentWindow || event.origin !== hostOrigin) {
             return;
           }
 
@@ -226,7 +246,8 @@ export async function openDocument(
         },
         { signal: controller.signal },
       );
-      frame.src = HOST_PAGE;
+      window.nativeAPI.log('debug', `Loading frame at ${frameUrl}`);
+      frame.src = frameUrl.href;
     });
   } catch (e: unknown) {
     controller.abort();
@@ -267,7 +288,7 @@ export async function openDocument(
           clearTimeout(timer);
           resolve(success);
         };
-        frame.contentWindow!.postMessage({ command: 'oo-save-request' } satisfies EditicsParentToHostMessage, HOST_ORIGIN);
+        frame.contentWindow!.postMessage({ command: 'oo-save-request' } satisfies EditicsParentToHostMessage, hostOrigin);
       });
     },
   };
@@ -278,15 +299,17 @@ export async function openDocument(
       options,
       documentContent,
     } satisfies EditicsParentToHostMessage,
-    HOST_ORIGIN,
+    hostOrigin,
   );
 
   return session;
 }
 
 async function handleRequestImage(host: Window, requestId: number): Promise<void> {
+  const hostOrigin = await getEditicsOrigin();
+
   const postReply = (reply: Omit<Extract<EditicsParentToHostMessage, { command: 'oo-image-reply' }>, 'command' | 'requestId'>): void => {
-    host.postMessage({ command: 'oo-insert-image-result', requestId, ...reply } satisfies EditicsParentToHostMessage, HOST_ORIGIN);
+    host.postMessage({ command: 'oo-insert-image-result', requestId, ...reply } satisfies EditicsParentToHostMessage, hostOrigin);
   };
 
   const workspaceHandle = getWorkspaceHandle();
