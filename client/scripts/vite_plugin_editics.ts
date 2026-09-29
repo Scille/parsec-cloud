@@ -5,6 +5,7 @@
 // hence must stay standalone (no shared chunks with the app bundle, no `@/` imports).
 
 import { build as esbuildBundle } from 'esbuild';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { Plugin, ConfigEnv, PluginOption, loadEnv } from 'vite';
@@ -18,6 +19,8 @@ interface EditicsHostPagesOptions {
   htmlPath: string;
   // e.g. `offline.ts`
   scriptEntry: string;
+  // Build-time injected constants (see the `editics-build-time-paths` plugin).
+  define: Record<string, string>;
 }
 
 function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
@@ -54,6 +57,7 @@ function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
         sourcemap: true,
         write: false,
         logLevel: 'silent',
+        define: options.define,
       });
       const jsOutput = result.outputFiles.find((file) => file.path.endsWith('.js'));
       const mapOutput = result.outputFiles.find((file) => file.path.endsWith('.js.map'));
@@ -61,14 +65,19 @@ function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
         throw new Error(`${htmlPath}: unexpected esbuild output for ${options.scriptEntry}`);
       }
 
-      // esbuild emits `<basename>.js.map`; rename it after the HTML file so
-      // the `sourceMappingURL` of the inlined script resolves relative to
-      // the document URL.
-      const mapFileName = path.posix.join(path.dirname(options.htmlPath), `${path.basename(options.htmlPath)}.map`);
+      // Add hash to the bundle's name for cache busting
+      const hash = crypto.createHash('sha256').update(jsOutput.text).digest('hex').slice(0, 8);
+      const basename = path.basename(options.htmlPath, '.html');
+      // esbuild emits `<entry>.js.map`; rename it after the hashed script so
+      // the `sourceMappingURL` of the script resolves relative to its URL.
+      const jsFileName = path.posix.join(path.dirname(options.htmlPath), `${basename}-${hash}.js`);
+      const mapFileName = path.posix.join(path.dirname(options.htmlPath), `${basename}-${hash}.js.map`);
       const code = jsOutput.text.replace(/^\/\/# sourceMappingURL=.*$/m, `//# sourceMappingURL=${path.basename(mapFileName)}`);
 
-      const inlined = htmlSource.replace(scriptTag, () => `<script type="module">\n${code}\n</script>`);
-      this.emitFile({ type: 'asset', fileName: options.htmlPath, source: inlined });
+      const externalScript = `<script type="module" src="./${path.basename(jsFileName)}"></script>`;
+      const htmlWithScript = htmlSource.replace(scriptTag, () => externalScript);
+      this.emitFile({ type: 'asset', fileName: options.htmlPath, source: htmlWithScript });
+      this.emitFile({ type: 'asset', fileName: jsFileName, source: code });
       this.emitFile({ type: 'asset', fileName: mapFileName, source: mapOutput.text });
     },
   };
@@ -83,23 +92,59 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
     return plugins;
   }
 
+  // The OnlyOffice assets are copied verbatim: they are not part of Vite's
+  // build, hence they get no hashed name nor cache busting query parameter.
+  // Cache busting is instead provided by the dependency version: the packages
+  // are copied into versioned folders (e.g. `dist/onlyoffice/9.3.0/`), and the
+  // host page URLs are injected at build time (see the
+  // `editics-build-time-paths` plugin below).
+  function readPackageVersion(pkgName: string): string {
+    const pkgJsonPath = path.join(import.meta.dirname, '..', 'node_modules', pkgName, 'package.json');
+    const { version } = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+    // `+` (e.g. `9.3.0.140+parsec0`) is decoded as a space by some
+    // servers/CDNs, hence it is not a safe character for a URL path.
+    return version.replace(/\+/g, '-');
+  }
+
+  const onlyofficeVersion = readPackageVersion('onlyoffice-editor');
+  const x2tVersion = readPackageVersion('onlyoffice-x2t');
+  // Paths relative to the host page (i.e. `editics/offline.html`, which lives
+  // one level below the dist root).
+  const onlyofficeBase = `../onlyoffice/${onlyofficeVersion}/`;
+  const x2tBase = `../onlyoffice-x2t/${x2tVersion}/`;
+
+  const define: Record<string, string> = {
+    __EDITICS_ONLYOFFICE_BASE__: JSON.stringify(onlyofficeBase),
+    __EDITICS_X2T_BASE__: JSON.stringify(x2tBase),
+  };
+
+  // Expose the versioned asset paths to the host page sources at dev time
+  // (for the release build they are provided to esbuild instead, see
+  // `buildEditicsHostPage` below).
+  plugins.push({
+    name: 'editics-build-time-paths',
+    config() {
+      return { define };
+    },
+  });
+
   const targets = [
     {
       src: ['node_modules/onlyoffice-editor/**/*', '!node_modules/onlyoffice-editor/**/package.json'],
-      dest: 'onlyoffice',
+      dest: `onlyoffice/${onlyofficeVersion}`,
       rename: { stripBase: 2 },
     },
     // OnlyOffice's editor pages register this worker at the root of their
-    // asset tree (`/onlyoffice/document_editor_service_worker.js`), while
-    // the vendor package stores it under `sdkjs/common/serviceworker`...
+    // asset tree (`/onlyoffice/<version>/document_editor_service_worker.js`),
+    // while the vendor package stores it under `sdkjs/common/serviceworker`...
     {
       src: 'node_modules/onlyoffice-editor/sdkjs/common/serviceworker/document_editor_service_worker.js',
-      dest: 'onlyoffice',
+      dest: `onlyoffice/${onlyofficeVersion}`,
       rename: { stripBase: 5 },
     },
     {
       src: ['node_modules/onlyoffice-x2t/**/*', '!node_modules/onlyoffice-x2t/**/package.json'],
-      dest: 'onlyoffice-x2t',
+      dest: `onlyoffice-x2t/${x2tVersion}`,
       rename: { stripBase: 2 },
     },
     {
@@ -122,19 +167,24 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
         htmlPath: 'editics/offline.html',
         scriptEntry: 'offline.ts',
         buildTarget,
+        define,
       }),
     );
   } else {
     // OnlyOffice  builds font URLs by concatenating the fonts directory (i.e.
-    // `/onlyoffice/fonts/`) with `/fonts/<name>.ttf` (see `onlyoffice-editor/sdkjs/common/AllFonts.js`).
-    // So we end up with a doubled slash in the URL (e.g. `onlyoffice/fonts//fonts/arial.ttf`),
+    // `/onlyoffice/<version>/fonts/`) with `/fonts/<name>.ttf` (see
+    // `onlyoffice-editor/sdkjs/common/AllFonts.js`).
+    // So we end up with a doubled slash in the URL (e.g.
+    // `onlyoffice/<version>/fonts//fonts/arial.ttf`),
     // but `vite-plugin-static-copy` only recognizes canonized paths...
+    const doubledSlashFontPrefix = `/onlyoffice/${onlyofficeVersion}/fonts//fonts/`;
+    const canonizedFontPrefix = `/onlyoffice/${onlyofficeVersion}/fonts/fonts/`;
     plugins.push({
       name: 'normalize-onlyoffice-font-urls',
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
-          if (req.url?.startsWith('/onlyoffice/fonts//fonts/')) {
-            req.url = req.url.replace('/onlyoffice/fonts//fonts/', '/onlyoffice/fonts/fonts/');
+          if (req.url?.startsWith(doubledSlashFontPrefix)) {
+            req.url = req.url.replace(doubledSlashFontPrefix, canonizedFontPrefix);
           }
           next();
         });
