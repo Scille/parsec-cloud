@@ -22,7 +22,12 @@ async function getEditicsOrigin(): Promise<string> {
   if (isElectron()) {
     return 'parsec-editics://-';
   } else if (window.isDev()) {
-    return `${window.location.protocol}//editics.${window.location.host}`;
+    if (window.location.host.startsWith('127.0.0.1')) {
+      // `editics.127.0.0.1` is not a valid host, must force the use of localhost instead!
+      return `${window.location.protocol}//editics.${window.location.host.replace('127.0.0.1', 'localhost')}`;
+    } else {
+      return `${window.location.protocol}//editics.${window.location.host}`;
+    }
   }
   throw new Error('Unavailable for now, needs a different origin for proper isolation');
 }
