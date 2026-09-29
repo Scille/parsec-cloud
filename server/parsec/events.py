@@ -14,6 +14,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     GreetingAttemptID,
+    InvitationStatus,
     OrganizationID,
     UserID,
     UserProfile,
@@ -22,7 +23,6 @@ from parsec._parsec import (
 )
 from parsec.types import (
     Base64BytesField,
-    InvitationStatusField,
     UserProfileField,
 )
 
@@ -100,7 +100,7 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
     organization_id: OrganizationID
     token: AccessToken
     possible_greeters: set[UserID]
-    status: InvitationStatusField
+    status: InvitationStatus
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
