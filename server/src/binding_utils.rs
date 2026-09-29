@@ -337,12 +337,41 @@ macro_rules! gen_py_wrapper_class_for_enum {
                 })
             }
 
-
-            #[getter]
-            fn str(&self) -> &'static str {
+            fn to_str(&self) -> &'static str {
                 match self.0 {
                     $($field_value => $pyo3_name),*
                 }
+            }
+
+            #[getter]
+            fn str(&self) -> &'static str {
+                self.to_str()
+            }
+
+            #[classmethod]
+            #[pyo3(name = "__get_pydantic_core_schema__")]
+            fn get_pydantic_core_schema<'py>(
+                cls: &::pyo3::Bound<'py, ::pyo3::types::PyType>,
+                _source_type: &::pyo3::Bound<'_, ::pyo3::types::PyType>,
+                _handler: &::pyo3::Bound<'py, ::pyo3::PyAny>,
+                py: Python<'py>,
+            ) -> ::pyo3::PyResult<::pyo3::Bound<'py, ::pyo3::PyAny>> {
+                use $crate::pydantic_support::{
+                    inner::CoreSchemaModule, str_like_serializer, str_like_validator,
+                };
+                use ::pyo3::prelude::*;
+
+                let core_schema = CoreSchemaModule::new(py)?;
+
+                let ser_schema = str_like_serializer!(core_schema, cls.getattr("to_str")?, py)?;
+
+                str_like_validator!(
+                    core_schema,
+                    cls,
+                    ser = ser_schema,
+                    der = cls.getattr("from_str")?,
+                    py
+                )
             }
         }
     };
