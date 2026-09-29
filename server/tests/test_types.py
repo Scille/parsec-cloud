@@ -4,6 +4,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     DateTime,
     DeviceID,
@@ -18,12 +19,10 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.types import (
-    AccessToken,
     Base64BytesField,
     EmailAddressField,
     GreetingAttemptIDField,
     InvitationStatusField,
-    InvitationTokenField,
     RealmRoleField,
     Unset,
     UnsetType,
@@ -42,7 +41,7 @@ class AllTypesSchema(BaseModel):
     user_id: UserID | UnsetType = Unset
     device_id: DeviceID | UnsetType = Unset
     sequester_service_id: SequesterServiceID | UnsetType = Unset
-    invitation_token: InvitationTokenField | UnsetType = Unset
+    invitation_token: AccessToken | UnsetType = Unset
     greeting_attempt_id: GreetingAttemptIDField | UnsetType = Unset
     invitation_status: InvitationStatusField | UnsetType = Unset
     realm_role: RealmRoleField | UnsetType = Unset

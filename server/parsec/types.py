@@ -19,7 +19,6 @@ from pydantic_core.core_schema import (
 )
 
 from parsec._parsec import (
-    AccessToken,
     EmailAddress,
     GreetingAttemptID,
     InvitationStatus,
@@ -172,16 +171,6 @@ Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
 
-
-# TODO: Move annotations to rust code
-InvitationTokenField = Annotated[
-    AccessToken,
-    get_pydantic_schema(
-        AccessToken,
-        lambda v: AccessToken.from_hex(v),
-        lambda v: v.hex if isinstance(v, AccessToken) else v,
-    ),
-]
 
 # TODO: Move annotations to rust code
 GreetingAttemptIDField = Annotated[

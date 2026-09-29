@@ -492,8 +492,46 @@ impl AccessToken {
         self.0.as_bytes()
     }
 
+    fn to_hex(&self) -> String {
+        self.0.hex()
+    }
+
     #[getter]
     fn hex(&self) -> String {
         self.0.hex()
     }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'py, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{
+            inner::CoreSchemaModule, str_like_serializer, str_like_validator,
+        };
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        let ser_schema = str_like_serializer!(core_schema, cls.getattr("to_hex")?, py)?;
+
+        str_like_validator!(
+            core_schema,
+            cls,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            ser = ser_schema,
+            // Use constructor to deserialize the value
+            der = cls.getattr("from_hex")?,
+            py
+        )
+    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(
+    AccessToken,
+    type = "string",
+    format = "uuid",
+    description = "A Token",
+    examples = ["4263b5fb763b48e897bbef8228f71a45"]
+);
