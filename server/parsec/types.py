@@ -20,7 +20,6 @@ from pydantic_core.core_schema import (
 
 from parsec._parsec import (
     EmailAddress,
-    RealmRole,
     UserProfile,
 )
 
@@ -166,17 +165,6 @@ def base64_bytes_serializer(val: Buffer) -> str:
 # TODO: Move annotations to rust code
 Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
-]
-
-
-# TODO: Move annotations to rust code
-RealmRoleField = Annotated[
-    RealmRole,
-    get_pydantic_schema(
-        RealmRole,
-        lambda v: RealmRole.from_str(v),
-        lambda v: v.str if isinstance(v, RealmRole) else v,
-    ),
 ]
 
 
