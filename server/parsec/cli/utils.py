@@ -50,63 +50,6 @@ KO = click.style("✘", fg="red")
 
 
 @contextmanager
-def operation(txt: str) -> Generator[None]:
-    click.echo(txt, nl=False)
-    try:
-        yield
-
-    except Exception:
-        click.echo(f"\r\033[K{txt} {KO}")
-        raise
-
-    else:
-        click.echo(f"\r\033[K{txt} {OK}")
-
-
-@asynccontextmanager
-async def spinner(
-    txt: str, sep: str = " ", scheme: str = "dots", color: str = "magenta"
-) -> AsyncGenerator[None]:
-    scheme_theme = SCHEMES[scheme]
-    interval = scheme_theme["interval"]
-    frames = scheme_theme["frames"]
-    result: str | None = None
-
-    def _render_line(frame: str | None) -> None:
-        # Clear line then re-print it
-        click.echo(f"\r\033[K{txt}{sep}{frame}", nl=False)
-
-    async def _update_spinner() -> NoReturn:
-        try:
-            i: int = 1
-            while True:
-                await anyio.sleep(interval / 1000)
-                _render_line(click.style(frames[i], fg=color))
-                i = (i + 1) % len(frames)
-        finally:
-            # Last render for result
-            _render_line(result)
-            click.echo()
-
-    async with anyio.create_task_group() as task_group:
-        _render_line(frames[0])
-        task_group.start_soon(_update_spinner)
-
-        try:
-            yield
-
-        except Exception:
-            result = KO
-            raise
-
-        else:
-            result = OK
-
-        finally:
-            task_group.cancel_scope.cancel()
-
-
-@contextmanager
 def cli_exception_handler(debug: bool) -> Generator[bool]:
     # NOTE: since anyio>=4, functions using task groups always wrap exceptions in groups (thus, the except* syntax below)
     #       See: https://anyio.readthedocs.io/en/stable/migration.html#task-groups-now-wrap-single-exceptions-in-groups

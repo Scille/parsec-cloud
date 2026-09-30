@@ -12,7 +12,6 @@ from parsec.cli.utils import (
     KO,
     OK,
     cli_exception_handler,
-    spinner,
 )
 from parsec.components.postgresql import apply_migrations, retrieve_migrations
 
@@ -47,8 +46,8 @@ def migrate(db: str, debug: bool, dry_run: bool, **kwargs: Any) -> None:
         migrations = retrieve_migrations()
 
         async def _migrate(db: str) -> None:
-            async with spinner("Migrate"):
-                result = await apply_migrations(db, migrations, dry_run)
+            with click.progressbar(migrations, label="Migrate", show_pos=True) as migs:
+                result = await apply_migrations(db, migs, dry_run)
 
             for migration in result.already_applied:
                 click.secho(f"{migration.file_name} (already applied)", fg="white")
