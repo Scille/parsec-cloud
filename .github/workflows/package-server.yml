@@ -115,7 +115,7 @@ jobs:
       # Previously, with some bad luck on the runner, `cibuildwheel` would fail when `maturin` invoking `cargo`
       # fail to install the effective toolchain
       - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
-        if: matrix.platform == 'macos'
+        if: matrix.platform == 'macos' || matrix.platform == 'windows'
         with:
           # We setup the cache by hand, see below
           cache: false
