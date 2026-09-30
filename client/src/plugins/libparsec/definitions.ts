@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+
 /*
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
@@ -2100,6 +2101,7 @@ export enum ClientEventTag {
     WorkspaceOpsOutboundSyncDone = 'ClientEventWorkspaceOpsOutboundSyncDone',
     WorkspaceOpsOutboundSyncProgress = 'ClientEventWorkspaceOpsOutboundSyncProgress',
     WorkspaceOpsOutboundSyncStarted = 'ClientEventWorkspaceOpsOutboundSyncStarted',
+    WorkspaceOutboundSyncBacklog = 'ClientEventWorkspaceOutboundSyncBacklog',
     WorkspaceWatchedEntryChanged = 'ClientEventWorkspaceWatchedEntryChanged',
     WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
@@ -2228,6 +2230,13 @@ export interface ClientEventWorkspaceOpsOutboundSyncStarted {
     realmId: VlobID
     entryId: VlobID
 }
+export interface ClientEventWorkspaceOutboundSyncBacklog {
+    tag: ClientEventTag.WorkspaceOutboundSyncBacklog
+    numberOfFilesToSync: SizeInt
+    sizeToSync: SizeInt
+    realmId: VlobID
+    entryCurrentlyBeingSynced: VlobID | null
+}
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: ClientEventTag.WorkspaceWatchedEntryChanged
     realmId: VlobID
@@ -2267,6 +2276,7 @@ export type ClientEvent =
   | ClientEventWorkspaceOpsOutboundSyncDone
   | ClientEventWorkspaceOpsOutboundSyncProgress
   | ClientEventWorkspaceOpsOutboundSyncStarted
+  | ClientEventWorkspaceOutboundSyncBacklog
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
 
