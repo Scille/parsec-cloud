@@ -10,9 +10,9 @@ const DEST = path.join(WORKDIR, 'electron', 'app');
 const EDITICS_DEST = path.join(WORKDIR, 'electron', 'app-editics');
 // Served by Electron from their own custom scheme (i.e. a different origin than
 // the app, see `electron/src/setup.ts`), so they are kept out of `app`.
-// The folder names must be preserved: `editics/offline.html` loads the others
-// with relative URLs (e.g. `../onlyoffice/...`).
-const EDITICS_DIRS = ['editics', 'onlyoffice', 'onlyoffice-x2t'];
+// In the dist folder, everything editics-related lives in `editics/` (including
+// the OnlyOffice & x2t).
+const EDITICS_SRC_DIR = path.join(SRC, 'editics');
 
 if (!fs.existsSync(SRC)) {
   console.error(`Source directory not found: ${SRC}`);
@@ -27,19 +27,15 @@ for (const dest of [DEST, EDITICS_DEST]) {
   }
 }
 
-console.log(`>>> cp -r ${path.relative(WORKDIR, SRC)}/!(editics|onlyoffice|onlyoffice-x2t) ${path.relative(WORKDIR, DEST)}`);
+console.log(`>>> cp -r ${path.relative(WORKDIR, SRC)}/!(editics) ${path.relative(WORKDIR, DEST)}`);
 fs.cpSync(SRC, DEST, {
   recursive: true,
-  filter: (src) => !EDITICS_DIRS.includes(path.relative(SRC, src).split(path.sep)[0]),
+  filter: (src) => path.relative(SRC, src).split(path.sep)[0] !== 'editics',
 });
 
-for (const dir of EDITICS_DIRS) {
-  const src = path.join(SRC, dir);
-  // Not built when editics is disabled (e.g. hardened builds)
-  if (fs.existsSync(src)) {
-    const dest = path.join(EDITICS_DEST, dir);
-    console.log(`>>> cp -r ${path.relative(WORKDIR, src)} ${path.relative(WORKDIR, dest)}`);
-    fs.cpSync(src, dest, { recursive: true });
-  }
+// Not built when editics is disabled (e.g. hardened builds)
+if (fs.existsSync(EDITICS_SRC_DIR)) {
+  console.log(`>>> cp -r ${path.relative(WORKDIR, EDITICS_SRC_DIR)} ${path.relative(WORKDIR, EDITICS_DEST)}`);
+  fs.cpSync(EDITICS_SRC_DIR, path.join(EDITICS_DEST, 'editics'), { recursive: true });
 }
 console.log('Done!');
