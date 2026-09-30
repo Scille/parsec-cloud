@@ -27,58 +27,83 @@ function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
   return {
     name: 'build-editics-host-pages',
     apply: 'build',
-    async generateBundle() {
-      const htmlPath = path.resolve(options.rootDir, options.htmlPath);
-      const htmlSource = await fs.promises.readFile(htmlPath, 'utf8');
+    // `post` is required for the `editics-offline-page` meta tag injection into `index.html`
+    generateBundle: {
+      order: 'post',
+      async handler(_options, bundle) {
+        const htmlPath = path.resolve(options.rootDir, options.htmlPath);
+        const htmlSource = await fs.promises.readFile(htmlPath, 'utf8');
 
-      // The script entry file must be in the same directory as the HTML file
-      if (options.scriptEntry.indexOf('/') !== -1) {
-        throw new Error(`Invalid script entry \`${options.scriptEntry}\`: should be a file name, not a path`);
-      }
+        // The script entry file must be in the same directory as the HTML file
+        if (options.scriptEntry.indexOf('/') !== -1) {
+          throw new Error(`Invalid script entry \`${options.scriptEntry}\`: should be a file name, not a path`);
+        }
 
-      // Replace the `<script type="module" src="./<entry>">` tag with the
-      // bundled code inlined.
-      const scriptTag = new RegExp(`<script\\s+[^>]*src="\\./${options.scriptEntry}"[^>]*>\\s*</script>`);
-      if (htmlSource.match(scriptTag)?.length !== 1) {
-        throw new Error(`${htmlPath}: cannot find \`<script type="module" src="./${options.scriptEntry}">\``);
-      }
+        // Replace the `<script type="module" src="./<entry>">` tag with the
+        // bundled code inlined.
+        const scriptTag = new RegExp(`<script\\s+[^>]*src="\\./${options.scriptEntry}"[^>]*>\\s*</script>`);
+        if (htmlSource.match(scriptTag)?.length !== 1) {
+          throw new Error(`${htmlPath}: cannot find \`<script type="module" src="./${options.scriptEntry}">\``);
+        }
 
-      const result = await esbuildBundle({
-        entryPoints: [path.resolve(options.rootDir, path.dirname(options.htmlPath), options.scriptEntry)],
-        // Only used to name the in-memory outputs (nothing is written, see
-        // `write: false` below); the sourcemap output path requires it.
-        outdir: options.scriptEntry,
-        bundle: true,
-        // Keep the module semantics of the replaced tag (isolated scope,
-        // deferred execution); the bundle is self-contained anyway.
-        format: 'esm',
-        target: options.buildTarget,
-        minify: true,
-        sourcemap: true,
-        write: false,
-        logLevel: 'silent',
-        define: options.define,
-      });
-      const jsOutput = result.outputFiles.find((file) => file.path.endsWith('.js'));
-      const mapOutput = result.outputFiles.find((file) => file.path.endsWith('.js.map'));
-      if (!jsOutput || !mapOutput) {
-        throw new Error(`${htmlPath}: unexpected esbuild output for ${options.scriptEntry}`);
-      }
+        const result = await esbuildBundle({
+          entryPoints: [path.resolve(options.rootDir, path.dirname(options.htmlPath), options.scriptEntry)],
+          // Only used to name the in-memory outputs (nothing is written, see
+          // `write: false` below); the sourcemap output path requires it.
+          outdir: options.scriptEntry,
+          bundle: true,
+          // Keep the module semantics of the replaced tag (isolated scope,
+          // deferred execution); the bundle is self-contained anyway.
+          format: 'esm',
+          target: options.buildTarget,
+          minify: true,
+          sourcemap: true,
+          write: false,
+          logLevel: 'silent',
+          define: options.define,
+        });
+        const jsOutput = result.outputFiles.find((file) => file.path.endsWith('.js'));
+        const mapOutput = result.outputFiles.find((file) => file.path.endsWith('.js.map'));
+        if (!jsOutput || !mapOutput) {
+          throw new Error(`${htmlPath}: unexpected esbuild output for ${options.scriptEntry}`);
+        }
 
-      // Add hash to the bundle's name for cache busting
-      const hash = crypto.createHash('sha256').update(jsOutput.text).digest('hex').slice(0, 8);
-      const basename = path.basename(options.htmlPath, '.html');
-      // esbuild emits `<entry>.js.map`; rename it after the hashed script so
-      // the `sourceMappingURL` of the script resolves relative to its URL.
-      const jsFileName = path.posix.join(path.dirname(options.htmlPath), `${basename}-${hash}.js`);
-      const mapFileName = path.posix.join(path.dirname(options.htmlPath), `${basename}-${hash}.js.map`);
-      const code = jsOutput.text.replace(/^\/\/# sourceMappingURL=.*$/m, `//# sourceMappingURL=${path.basename(mapFileName)}`);
+        // The bundle is inlined in the page: since the page name is hashed
+        // for cache busting (see below), the script does not need a hashed
+        // name of its own.
+        const basename = path.basename(options.htmlPath, '.html');
+        // esbuild emits `<entry>.js.map`; rename it after the HTML file so the
+        // `sourceMappingURL` of the inlined script resolves relative to the
+        // document URL.
+        const mapFileName = path.posix.join(path.dirname(options.htmlPath), `${basename}.html.map`);
+        const code = jsOutput.text.replace(/^\/\/# sourceMappingURL=.*$/m, `//# sourceMappingURL=${path.basename(mapFileName)}`);
 
-      const externalScript = `<script type="module" src="./${path.basename(jsFileName)}"></script>`;
-      const htmlWithScript = htmlSource.replace(scriptTag, () => externalScript);
-      this.emitFile({ type: 'asset', fileName: options.htmlPath, source: htmlWithScript });
-      this.emitFile({ type: 'asset', fileName: jsFileName, source: code });
-      this.emitFile({ type: 'asset', fileName: mapFileName, source: mapOutput.text });
+        const htmlWithScript = htmlSource.replace(scriptTag, () => `<script type="module">\n${code}\n</script>`);
+        this.emitFile({ type: 'asset', fileName: mapFileName, source: mapOutput.text });
+
+        // Hash the final HTML for cache busting: since the script is inlined,
+        // the hash covers the whole editics host page (including the bundle).
+        const htmlHash = crypto.createHash('sha256').update(htmlWithScript).digest('hex').slice(0, 8);
+        const htmlFileName = path.posix.join(path.dirname(options.htmlPath), `${basename}-${htmlHash}.html`);
+        this.emitFile({ type: 'asset', fileName: htmlFileName, source: htmlWithScript });
+
+        // Advertise the hashed host page name to the app through a meta tag
+        // injected in `index.html`.
+        // This must run after Vite's HTML plugin has emitted the final `index.html`,
+        // hence the `post` ordering in this bundler.
+        const indexHtml = Object.values(bundle).find(
+          (file): file is Extract<typeof file, { type: 'asset' }> => file.type === 'asset' && file.fileName === 'index.html',
+        );
+        if (!indexHtml) {
+          throw new Error('Cannot find the emitted `index.html` to inject `editics-offline-page` tag');
+        }
+        const indexHtmlSource = indexHtml.source;
+        const metaTag = `<meta name="editics-offline-page" content="${htmlFileName}">`;
+        if (!/<head>/i.test(indexHtmlSource)) {
+          throw new Error('Cannot find `<head>` in `index.html` to inject the editics host page name');
+        }
+        indexHtml.source = indexHtmlSource.replace(/<head>/i, `<head>\n    ${metaTag}`);
+      },
     },
   };
 }
