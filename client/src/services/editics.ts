@@ -22,14 +22,26 @@ async function getEditicsOrigin(): Promise<string> {
   if (isElectron()) {
     return 'parsec-editics://-';
   } else if (window.isDev()) {
+    // Web dev mode
+
     if (window.location.host.startsWith('127.0.0.1')) {
       // `editics.127.0.0.1` is not a valid host, must force the use of localhost instead!
       return `${window.location.protocol}//editics.${window.location.host.replace('127.0.0.1', 'localhost')}`;
     } else {
       return `${window.location.protocol}//editics.${window.location.host}`;
     }
+  } else {
+    // Web release mode
+
+    // Just add a prefix (e.g. `app.parsec.cloud` -> `editics.app.parsec.cloud`).
+    // This would fail if the host is an IP address, but this is highly unlikely
+    // in release since a website is expected to always be accessed by its hostname.
+    // TODO: when collaborative mode is available, we should modify this to use the
+    // address of the editics server here (and, since we are in web, if the editics
+    // server cannot be joined we error out instead of going in offline mode, as
+    // fetching `editics/offline.html` would most likely fail anyway).
+    return `${window.location.protocol}//editics.${window.location.host}`;
   }
-  throw new Error('Unavailable for now, needs a different origin for proper isolation');
 }
 
 function getEditicsFrameUrl(editicsOrigin: string): URL {
