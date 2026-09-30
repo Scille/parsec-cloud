@@ -20,6 +20,7 @@ pub use crate::workspace::store::WorkspaceGetOutboundSyncBacklogError;
 use crate::{ClientConfig, certif::CertificateOps, event_bus::EventBus};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
+pub(crate) use store::{PathConfinementPoint, RetrievePathFromIDEntry, RetrievePathFromIDError};
 use transactions::RemoveEntryExpect;
 pub use transactions::{
     CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
@@ -293,6 +294,16 @@ impl WorkspaceOps {
         limit: u32,
     ) -> Result<Vec<VlobID>, WorkspaceGetNeedOutboundSyncEntriesError> {
         transactions::get_need_outbound_sync(self, limit).await
+    }
+
+    /// Unlike `stat_entry_by_id`, this tells if the entry is unreachable (i.e. its path
+    /// is broken, typically because it has been removed) instead of treating it as a
+    /// regular entry.
+    pub(crate) async fn retrieve_path_from_id(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<RetrievePathFromIDEntry, RetrievePathFromIDError> {
+        self.store.retrieve_path_from_id(entry_id).await
     }
 
     /*

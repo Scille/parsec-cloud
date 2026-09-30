@@ -69,6 +69,11 @@ class ClientEvent(Variant):
         realm_id: VlobID
         entry_id: VlobID
 
+    class WorkspaceOutboundSyncBacklog:
+        number_of_files_to_sync: U64
+        size_to_sync: U64
+        realm_id: VlobID
+
     class InvitationChanged:
         token: AccessToken
         status: InvitationStatus

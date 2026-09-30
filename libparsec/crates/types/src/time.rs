@@ -271,6 +271,10 @@ mod time_provider {
             }
         }
 
+        pub async fn sleep_until(&self, until: super::DateTime) {
+            self.sleep(until - self.now()).await
+        }
+
         pub fn new_child(&self) -> Self {
             Self(())
         }
@@ -506,6 +510,10 @@ mod time_provider {
                     recompute_time_we_have_to_sleep();
                 }
             }
+        }
+
+        pub async fn sleep_until(&self, until: DateTime) {
+            self.sleep(until - self.now()).await
         }
 
         pub fn new_child(&self) -> Self {

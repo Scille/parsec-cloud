@@ -14,6 +14,9 @@ enum RegisteredHandleItem {
     Closed,
 }
 
+// OnEventCallbackPlugged in the Client variant
+// has a field per type of event so it has slowly grown big
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum HandleItem {
     StartingClient {
         device_id: DeviceID,
