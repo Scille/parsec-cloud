@@ -575,6 +575,11 @@ impl_events!(
         realm_id: VlobID,
         entry_id: VlobID,
     },
+    /// This is fired by the workspace monitor to keep track of how much is left to sync
+    WorkspaceOutboundSyncBacklog {
+        number_of_files_to_sync: u64,
+        size_to_sync: u64,
+    },
 
     // ***********************************************************************
     // Misc events

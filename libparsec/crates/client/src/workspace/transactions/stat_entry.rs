@@ -62,6 +62,25 @@ impl EntryStat {
             EntryStat::Folder { parent, .. } => *parent,
         }
     }
+
+    pub fn is_confined(&self) -> bool {
+        match self {
+            EntryStat::File {
+                confinement_point, ..
+            } => confinement_point.is_some(),
+            EntryStat::Folder {
+                confinement_point, ..
+            } => confinement_point.is_some(),
+        }
+    }
+
+    // For a folder size is 0
+    pub fn size(&self) -> SizeInt {
+        match self {
+            EntryStat::File { size, .. } => *size,
+            EntryStat::Folder { .. } => 0,
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
