@@ -15,7 +15,7 @@ import type {
 // `__EDITICS_ONLYOFFICE_BASE__` & `__EDITICS_X2T_BASE__` are build-time
 // constants injected by the `editics-build-time-paths` plugin (see
 // `scripts/vite_plugin_editics.ts`): they point to the versioned OnlyOffice
-// asset folders (e.g. `../onlyoffice/9.3.0.140-parsec0/`), in order to handle
+// asset folders (e.g. `onlyoffice/9.3.0.140-parsec0/`), in order to handle
 // cache busting when upgrading the dependencies.
 declare const __EDITICS_ONLYOFFICE_BASE__: string;
 declare const __EDITICS_X2T_BASE__: string;

@@ -95,8 +95,9 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
   // The OnlyOffice assets are copied verbatim: they are not part of Vite's
   // build, hence they get no hashed name nor cache busting query parameter.
   // Cache busting is instead provided by the dependency version: the packages
-  // are copied into versioned folders (e.g. `dist/onlyoffice/9.3.0/`), and the
-  // host page URLs are injected at build time (see the
+  // are copied into versioned folders inside the editics folder (e.g.
+  // `dist/editics/onlyoffice/9.3.0/`, since they are only used by editics),
+  // and the host page URLs are injected at build time (see the
   // `editics-build-time-paths` plugin below).
   function readPackageVersion(pkgName: string): string {
     const pkgJsonPath = path.join(import.meta.dirname, '..', 'node_modules', pkgName, 'package.json');
@@ -109,9 +110,9 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
   const onlyofficeVersion = readPackageVersion('onlyoffice-editor');
   const x2tVersion = readPackageVersion('onlyoffice-x2t');
   // Paths relative to the host page (i.e. `editics/offline.html`, which lives
-  // one level below the dist root).
-  const onlyofficeBase = `../onlyoffice/${onlyofficeVersion}/`;
-  const x2tBase = `../onlyoffice-x2t/${x2tVersion}/`;
+  // in the same folder as the OnlyOffice asset trees).
+  const onlyofficeBase = `onlyoffice/${onlyofficeVersion}/`;
+  const x2tBase = `onlyoffice-x2t/${x2tVersion}/`;
 
   const define: Record<string, string> = {
     __EDITICS_ONLYOFFICE_BASE__: JSON.stringify(onlyofficeBase),
@@ -131,20 +132,20 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
   const targets = [
     {
       src: ['node_modules/onlyoffice-editor/**/*', '!node_modules/onlyoffice-editor/**/package.json'],
-      dest: `onlyoffice/${onlyofficeVersion}`,
+      dest: `editics/onlyoffice/${onlyofficeVersion}`,
       rename: { stripBase: 2 },
     },
     // OnlyOffice's editor pages register this worker at the root of their
-    // asset tree (`/onlyoffice/<version>/document_editor_service_worker.js`),
+    // asset tree (`/editics/onlyoffice/<version>/document_editor_service_worker.js`),
     // while the vendor package stores it under `sdkjs/common/serviceworker`...
     {
       src: 'node_modules/onlyoffice-editor/sdkjs/common/serviceworker/document_editor_service_worker.js',
-      dest: `onlyoffice/${onlyofficeVersion}`,
+      dest: `editics/onlyoffice/${onlyofficeVersion}`,
       rename: { stripBase: 5 },
     },
     {
       src: ['node_modules/onlyoffice-x2t/**/*', '!node_modules/onlyoffice-x2t/**/package.json'],
-      dest: `onlyoffice-x2t/${x2tVersion}`,
+      dest: `editics/onlyoffice-x2t/${x2tVersion}`,
       rename: { stripBase: 2 },
     },
     {
@@ -172,13 +173,13 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
     );
   } else {
     // OnlyOffice  builds font URLs by concatenating the fonts directory (i.e.
-    // `/onlyoffice/<version>/fonts/`) with `/fonts/<name>.ttf` (see
+    // `/editics/onlyoffice/<version>/fonts/`) with `/fonts/<name>.ttf` (see
     // `onlyoffice-editor/sdkjs/common/AllFonts.js`).
     // So we end up with a doubled slash in the URL (e.g.
-    // `onlyoffice/<version>/fonts//fonts/arial.ttf`),
+    // `editics/onlyoffice/<version>/fonts//fonts/arial.ttf`),
     // but `vite-plugin-static-copy` only recognizes canonized paths...
-    const doubledSlashFontPrefix = `/onlyoffice/${onlyofficeVersion}/fonts//fonts/`;
-    const canonizedFontPrefix = `/onlyoffice/${onlyofficeVersion}/fonts/fonts/`;
+    const doubledSlashFontPrefix = `/editics/onlyoffice/${onlyofficeVersion}/fonts//fonts/`;
+    const canonizedFontPrefix = `/editics/onlyoffice/${onlyofficeVersion}/fonts/fonts/`;
     plugins.push({
       name: 'normalize-onlyoffice-font-urls',
       configureServer(server) {
