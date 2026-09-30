@@ -115,6 +115,7 @@ msTest.describe(() => {
   msTest('Document actions default state on desktop mode for file and folder', async ({ documents }, testInfo: TestInfo) => {
     await mockDesktop(documents);
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+    await documents.waitForTimeout(500);
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     const entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
     await entry.hover();
@@ -139,18 +140,11 @@ msTest.describe(() => {
     await checkEntryContextMenu(documentsReadOnly, 'folder-readonly', 'dismiss', { onDesktop: true });
   });
 
-  msTest('Document popover on right click for file with editics', async ({ parsecEditics }, testInfo: TestInfo) => {
-    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
-    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+  msTest('Document popover on right click for file with editics on non-editable file', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+    const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
     await entry.click({ button: 'right' });
-    await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss', { canEdit: true });
-  });
-
-  msTest('Document popover on right click for file with editics on non-editable file', async ({ parsecEditics }, testInfo: TestInfo) => {
-    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Png, false);
-    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
-    await entry.click({ button: 'right' });
-    await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss');
+    await checkEntryContextMenu(documents, 'file-full', 'dismiss', { canEdit: false });
   });
 
   msTest('Document popover on right click on multiple files only files', async ({ documents }, testInfo: TestInfo) => {
@@ -373,26 +367,23 @@ msTest.describe(() => {
     );
   }
 
-  msTest('Small display popover on right click for file with editics', async ({ parsecEditics }, testInfo: TestInfo) => {
-    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
-    await parsecEditics.setDisplaySize(DisplaySize.Small);
-    await parsecEditics.waitForTimeout(300);
-    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+  msTest('Small display popover on right click for file with editics', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
+    await documents.setDisplaySize(DisplaySize.Small);
+    await documents.waitForTimeout(300);
+    const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
     await entry.click({ button: 'right' });
-    await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss', { canEdit: true });
+    await checkEntryContextMenu(documents, 'file-full', 'dismiss', { canEdit: true });
   });
 
-  msTest(
-    'Small display popover on right click for file with editics on non-editable file',
-    async ({ parsecEditics }, testInfo: TestInfo) => {
-      await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Png, false);
-      await parsecEditics.setDisplaySize(DisplaySize.Small);
-      await parsecEditics.waitForTimeout(300);
-      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
-      await entry.click({ button: 'right' });
-      await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss');
-    },
-  );
+  msTest('Small display popover on right click for file with editics on non-editable file', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+    await documents.setDisplaySize(DisplaySize.Small);
+    await documents.waitForTimeout(300);
+    const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+    await entry.click({ button: 'right' });
+    await checkEntryContextMenu(documents, 'file-full', 'dismiss');
+  });
 
   msTest('Small display popover with right click on empty space', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Txt, false);

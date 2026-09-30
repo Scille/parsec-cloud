@@ -2,9 +2,9 @@
 
 export * from '@tests/e2e/helpers/assertions';
 export * from '@tests/e2e/helpers/bms';
-export * from '@tests/e2e/helpers/cryptpad';
 export * from '@tests/e2e/helpers/data';
 export * from '@tests/e2e/helpers/documents';
+export * from '@tests/e2e/helpers/editics';
 export * from '@tests/e2e/helpers/externalWebsites';
 export * from '@tests/e2e/helpers/fixtures';
 export * from '@tests/e2e/helpers/greet';
