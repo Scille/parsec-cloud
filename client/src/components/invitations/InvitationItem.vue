@@ -18,6 +18,12 @@
           {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
         </ion-text>
       </div>
+      <div class="invitation-mobile-content">
+        <ion-text class="invitation-mobile-content__createdOn body-sm">
+          <ion-icon :icon="person" />
+          {{ inviterLabel }}
+        </ion-text>
+      </div>
     </div>
 
     <!-- invitation mail -->
@@ -37,6 +43,16 @@
     >
       <ion-text class="list-item-label label-sent-on cell">
         {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
+      </ion-text>
+    </div>
+
+    <!-- invitation created by -->
+    <div
+      class="list-item-column invitation-sentBy"
+      v-if="windowWidth > WindowSizeBreakpoints.XL"
+    >
+      <ion-text class="list-item-label label-sent-on cell">
+        {{ inviterLabel }}
       </ion-text>
     </div>
 
@@ -92,14 +108,19 @@
 
 <script setup lang="ts">
 import { UserInvitation } from '@/parsec';
+import {
+  InviteListInvitationCreatedByExternalService,
+  InviteListInvitationCreatedByTag,
+  InviteListInvitationCreatedByUser,
+} from '@/plugins/libparsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
-import { link, mail, trash } from 'ionicons/icons';
-import { attachMouseOverTooltip, formatTimeSince, useWindowSize } from 'megashark-lib';
-import { onMounted, useTemplateRef } from 'vue';
+import { link, mail, person, trash } from 'ionicons/icons';
+import { attachMouseOverTooltip, formatTimeSince, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { computed, onMounted, useTemplateRef } from 'vue';
 
-const { isSmallDisplay, isLargeDisplay } = useWindowSize();
+const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
 
-defineProps<{
+const props = defineProps<{
   invitation: UserInvitation;
 }>();
 
@@ -119,6 +140,14 @@ defineEmits<{
   (e: 'sendEmailClick', invitation: UserInvitation): void;
   (e: 'deleteClick', invitation: UserInvitation): void;
 }>();
+
+const inviterLabel = computed(() => {
+  if (props.invitation.createdBy.tag === InviteListInvitationCreatedByTag.User) {
+    return (props.invitation.createdBy as InviteListInvitationCreatedByUser).humanHandle.label;
+  } else {
+    return (props.invitation.createdBy as InviteListInvitationCreatedByExternalService).serviceLabel;
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -127,6 +156,10 @@ defineEmits<{
 }
 
 .invitation-sentOn {
+  color: var(--parsec-color-light-secondary-grey);
+}
+
+.invitation-sentBy {
   color: var(--parsec-color-light-secondary-grey);
 }
 

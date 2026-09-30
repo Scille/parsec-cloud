@@ -2044,7 +2044,8 @@
             "inviteUser": "Invite a user",
             "listDisplayTitles": {
                 "email": "Email",
-                "sentOn": "Sent on"
+                "sentOn": "Sent on",
+                "sentBy": "Sent by"
             },
             "greet": "Greet",
             "tooltips": {

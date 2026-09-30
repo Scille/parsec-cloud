@@ -13,6 +13,12 @@
       <ion-text class="list-header-label cell-title label-sentOn">
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentOn') }}
       </ion-text>
+      <ion-text
+        v-if="windowWidth > WindowSizeBreakpoints.XL"
+        class="list-header-label cell-title label-sentBy"
+      >
+        {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentBy') }}
+      </ion-text>
       <ion-text class="list-header-label list-item-end cell-title label-space" />
     </ion-list-header>
     <invitation-item
@@ -32,13 +38,13 @@
 import InvitationItem from '@/components/invitations/InvitationItem.vue';
 import { UserInvitation } from '@/parsec';
 import { IonList, IonListHeader, IonText } from '@ionic/vue';
-import { useWindowSize } from 'megashark-lib';
+import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 
 defineProps<{
   invitations: Array<UserInvitation>;
 }>();
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, windowWidth } = useWindowSize();
 
 defineEmits<{
   (e: 'greetClick', invitation: UserInvitation): void;

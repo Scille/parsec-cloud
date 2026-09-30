@@ -3,11 +3,17 @@
 import { answerQuestion, expect, fillIonInput, getClipboardText, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
 msTest('Email invitations default state', async ({ invitationsPage }) => {
-  await expect(invitationsPage.locator('.invitations-list-container').locator('.list-header-label')).toHaveText(['Email', 'Sent on', '']);
+  await expect(invitationsPage.locator('.invitations-list-container').locator('.list-header-label')).toHaveText([
+    'Email',
+    'Sent on',
+    'Sent by',
+    '',
+  ]);
   const invites = invitationsPage.locator('.invitations-list-container').locator('.invitation-list-item');
   await expect(invites).toHaveCount(1);
   await expect(invites.nth(0).locator('.invitation-email')).toHaveText('zack@example.invalid');
   await expect(invites.nth(0).locator('.invitation-sentOn')).toHaveText('Jan 7, 2000');
+  await expect(invites.nth(0).locator('.invitation-sentBy')).toHaveText('Alicey McAliceFace');
   const actions = invites.nth(0).locator('.invitation-actions').locator('ion-button');
   await expect(actions.nth(0)).toHaveText('Greet');
   const tooltip = invitationsPage.locator('.tooltip-popover');
