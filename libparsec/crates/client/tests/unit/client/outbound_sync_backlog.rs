@@ -3,7 +3,7 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{workspace::OpenOptions, ClientGetOutboundSyncBacklog};
+use crate::{ClientGetOutboundSyncBacklog, workspace::OpenOptions};
 
 use super::utils::client_factory;
 
