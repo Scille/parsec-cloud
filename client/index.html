@@ -83,6 +83,15 @@
       name="msapplication-tap-highlight"
       content="no"
     />
+    <!--
+      <meta name="editics-offline-page" content="editics/offline.html">  // Intentionally commented (see below)
+
+      Path of the entrypoint to be loaded in the offline editics iframe.
+      This is needed since in release the name will contains a cache-busting hash
+      (e.g. `editics/offline-8bdb1067.html`) computed by `scripts/vite_plugin_editics.ts`.
+
+      Defaults to `editics/offline.html` if not set (i.e. in dev mode).
+     -->
 
     <link
       rel="shortcut icon"
