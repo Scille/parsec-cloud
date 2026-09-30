@@ -398,7 +398,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
-        timeout-minutes: 1
+        timeout-minutes: 2
 
       # Install syft
       - uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # pin v2.87.15
