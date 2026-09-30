@@ -274,7 +274,7 @@ class CustomGithubProvider extends GitHubProvider {
     if (this.options.nightlyBuild) {
       return PreReleaseTypes.Nightly;
     }
-    const rawCurrentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null;
+    const rawCurrentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion.version)?.[0] as string) || null;
     if (!rawCurrentChannel) {
       throw new Error('No rawCurrentChannel');
     }
