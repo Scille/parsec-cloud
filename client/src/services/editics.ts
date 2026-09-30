@@ -46,9 +46,24 @@ async function getEditicsOrigin(): Promise<string> {
   }
 }
 
+// In release builds, `scripts/vite_plugin_editics.ts` emits the page with a
+// content hash for cache busting (e.g. `editics/offline-1234abcd.html`), and
+// advertises the actual name through a `editics-offline-page` meta tag injected
+// in the main app's `index.html`.
+//
+// In dev mode, the Vite dev server serves the page un-hashed, hence the
+// fallback (the meta tag is only injected in release builds).
+const EDITICS_OFFLINE_PAGE_META_NAME = 'editics-offline-page';
+const EDITICS_OFFLINE_PAGE_DEV = 'editics/offline.html';
+
+function getEditicsHostPage(): string {
+  const content = document.querySelector<HTMLMetaElement>(`meta[name="${EDITICS_OFFLINE_PAGE_META_NAME}"]`)?.content;
+  return !!content ? content : EDITICS_OFFLINE_PAGE_DEV;
+}
+
 function getEditicsFrameUrl(editicsOrigin: string): URL {
   const BASE_URL = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
-  const url = new URL(`${BASE_URL}editics/offline.html`, editicsOrigin);
+  const url = new URL(`${BASE_URL}${getEditicsHostPage()}`, editicsOrigin);
   // Passing our origin to the frame, so it knows how to contact us and check for us
   url.searchParams.set('parentOrigin', window.location.origin);
   return url;
