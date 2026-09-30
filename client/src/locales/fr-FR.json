@@ -2047,7 +2047,8 @@
             "inviteUser": "Inviter un utilisateur",
             "listDisplayTitles": {
                 "email": "Adresse email",
-                "sentOn": "Envoyée le"
+                "sentOn": "Envoyée le",
+                "sentBy": "Envoyée par"
             },
             "greet": "Accueillir",
             "tooltips": {
