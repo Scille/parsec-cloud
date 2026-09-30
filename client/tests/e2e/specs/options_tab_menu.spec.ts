@@ -69,15 +69,15 @@ msTest.skip('Files options tab menu display', async ({ documents }) => {
 });
 
 // Too unstable
-msTest.skip('Files options tab menu display with editics', async ({ parsecEditics }) => {
-  await toggleViewMode(parsecEditics);
-  await parsecEditics.setDisplaySize(DisplaySize.Small);
-  const optionsTab = parsecEditics.locator('#tab-bar-options');
-  const optionsTabModal = parsecEditics.locator('#tab-bar-options-modal');
+msTest.skip('Files options tab menu display with editics', async ({ documents }) => {
+  await toggleViewMode(documents);
+  await documents.setDisplaySize(DisplaySize.Small);
+  const optionsTab = documents.locator('#tab-bar-options');
+  const optionsTabModal = documents.locator('#tab-bar-options-modal');
   await expect(optionsTab).not.toBeVisible();
   await expect(optionsTabModal).not.toBeVisible();
-  const entryFolder = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(0);
-  const entryFile = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(2);
+  const entryFolder = documents.locator('.folder-container').locator('.folder-grid-item').nth(0);
+  const entryFile = documents.locator('.folder-container').locator('.folder-grid-item').nth(2);
 
   // With 1 folder selected
   await entryFolder.hover();
@@ -122,15 +122,15 @@ msTest.skip('Files options tab menu display with editics', async ({ parsecEditic
 });
 
 // Too unstable
-msTest.skip('Files options tab menu display with editics on non-editable file', async ({ parsecEditics }) => {
-  await toggleViewMode(parsecEditics);
-  await parsecEditics.setDisplaySize(DisplaySize.Small);
-  const optionsTab = parsecEditics.locator('#tab-bar-options');
-  const optionsTabModal = parsecEditics.locator('#tab-bar-options-modal');
+msTest.skip('Files options tab menu display with editics on non-editable file', async ({ documents }) => {
+  await toggleViewMode(documents);
+  await documents.setDisplaySize(DisplaySize.Small);
+  const optionsTab = documents.locator('#tab-bar-options');
+  const optionsTabModal = documents.locator('#tab-bar-options-modal');
   await expect(optionsTab).not.toBeVisible();
   await expect(optionsTabModal).not.toBeVisible();
-  const entryFolder = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(0);
-  const entryFile = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(1);
+  const entryFolder = documents.locator('.folder-container').locator('.folder-grid-item').nth(0);
+  const entryFile = documents.locator('.folder-container').locator('.folder-grid-item').nth(1);
 
   // With 1 folder selected
   await entryFolder.hover();

@@ -40,14 +40,12 @@ export interface SetupOptions {
   location?: string;
   skipGoto?: boolean;
   withParsecAccount?: boolean;
-  withEditics?: boolean;
   parsecAccountAutoLogin?: boolean;
   withCustomBranding?: boolean;
   displaySize?: DisplaySize;
   mockBrowser?: 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
   trialServers?: string;
   saasServers?: string;
-  cryptpadServer?: string;
   openBaoServer?: string;
   expectTimeout?: number;
   libparsecMockFunctions?: Array<LibParsecFunction>;
