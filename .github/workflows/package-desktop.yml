@@ -77,7 +77,7 @@ jobs:
 
   electron-snap:
     needs: version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: inputs.version_patch_run_id != '' && always() || success()
     steps:
@@ -116,8 +116,7 @@ jobs:
 
       - name: Patch snapcraft for nightly build
         if: inputs.nightly_build
-        run:
-          sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
+        run: sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
         working-directory: client/electron
 
       # We need to patch the vite.config.js because we cannot pass the secret to the snap build (either via build-args or env).
@@ -206,7 +205,7 @@ jobs:
             artifact_tag: macos-dmg
           - name: 🐧 AppImage 4 Linux
             platform: linux-gnu
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             raw_latest_file: latest-linux.yml
             os_alias: linux
             extensions: AppImage
@@ -236,7 +235,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # pin v7.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # pin v7.0.0
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2

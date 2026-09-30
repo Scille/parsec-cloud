@@ -18,7 +18,6 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-
 permissions:
   contents: read
   packages: read
@@ -26,7 +25,7 @@ permissions:
 
 jobs:
   dispatch:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       rust: ${{ steps.need-check.outputs.rust }}
       python: ${{ steps.need-check.outputs.python }}
@@ -39,7 +38,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # pin v4.0.3
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin v4.0.3
         id: changes
         with:
           list-files: shell
@@ -126,7 +125,7 @@ jobs:
   quality-assurance:
     name: 📊 Q&A
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 10
     steps:
@@ -147,7 +146,7 @@ jobs:
           fi
         timeout-minutes: 1
 
-      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # pin v4.0.3
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin v4.0.3
         id: newsfragment-have-changed
         with:
           filters: |
@@ -155,7 +154,7 @@ jobs:
               - newsfragments/**
 
       - name: Install python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # pin v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # pin v7.0.0
         id: setup-python
         with:
           python-version: 3.14

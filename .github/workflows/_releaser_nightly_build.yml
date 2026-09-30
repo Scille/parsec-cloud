@@ -18,7 +18,7 @@ on:
 jobs:
   nightly-build:
     name: 🌙 Nightly build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       commit_sha: ${{ steps.commit.outputs.id }}
       version_full: ${{ steps.version.outputs.full }}
@@ -29,7 +29,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Install python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # pin v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # pin v7.0.0
         id: setup-python
         with:
           python-version: 3.14
