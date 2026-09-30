@@ -66,7 +66,7 @@ on:
 jobs:
   parse:
     name: Parse Version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       full: ${{ steps.version.outputs.full }}
       pep440: ${{ steps.version.outputs.pep440 }}
@@ -85,7 +85,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Install python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # pin v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # pin v7.0.0
         id: setup-python
         with:
           python-version: 3.14

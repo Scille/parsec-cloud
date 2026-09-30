@@ -63,7 +63,7 @@ jobs:
     needs: version
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: ⚡ Package web app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
@@ -71,7 +71,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # pin v7.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # pin v7.0.0
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
