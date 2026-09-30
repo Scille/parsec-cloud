@@ -71,6 +71,7 @@ bundle, no `@/` imports).
   and bundles each typescript entry with esbuild to emit `offline-<hash>.js`.
 
 On top of that, the OnlyOffice editor and x2t assets trees are exposed/copied
-(using `viteStaticCopy` plugin) verbatim, but into versioned folders (e.g.
-`onlyoffice/<version>/`) in order to handle cache busting when upgrading the
-dependencies (see `scripts/vite_plugin_editics.ts`).
+(using `viteStaticCopy` plugin) verbatim, but into versioned folders inside the
+editics folder (e.g. `editics/onlyoffice/<version>/`, since they are only used
+by editics) in order to handle cache busting when upgrading the dependencies
+(see `scripts/vite_plugin_editics.ts`).
