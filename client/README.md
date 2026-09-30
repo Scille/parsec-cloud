@@ -128,7 +128,6 @@ Those variables are used when testing the app in Playwright. They will mostly be
 | `TESTING_ACCOUNT_AUTO_LOGIN`     | `boolean`                                         | Automatically logs into Parsec Account                                                                         |
 | `TESTING_ENABLE_ACCOUNT`         | `boolean`                                         | Enables Parsec Account                                                                                         |
 | `TESTING_ACCOUNT_SERVER`         | `url`                                             | Sets the Parsec Account server                                                                                 |
-| `TESTING_ENABLE_EDITICS`         | `boolean`                                         | Enables the Editics (OnlyOffice)                                                                               |
 | `TESTING_ENABLE_CUSTOM_BRANDING` | `boolean`                                         | Enables custom branding                                                                                        |
 | `TESTING_MOCK_BROWSER`           | `Chrome\|Firefox\|Safari\|Edge\|\Brave\|Chromium` | Simulates navigating with a specific browser                                                                   |
 | `TESTING_SAAS_SERVERS`           | `server1;server2;server3;...`                     | Servers recognized as Saas                                                                                     |
