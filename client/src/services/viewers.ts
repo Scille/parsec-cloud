@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { Path } from '@/parsec';
+import { EntryStatTag, libparsec } from '@/plugins/libparsec';
 import MonacoEditorWorker from 'monaco-editor/editor/editor.worker?worker';
 import MonacoCssWorker from 'monaco-editor/language/css/css.worker?worker';
 import MonacoHtmlWorker from 'monaco-editor/language/html/html.worker?worker';
 import MonacoJsonWorker from 'monaco-editor/language/json/json.worker?worker';
 import MonacoTsWorker from 'monaco-editor/language/typescript/ts.worker?worker';
-import { Path } from '@/parsec';
-import { EntryStatTag, libparsec } from '@/plugins/libparsec';
 import * as pdfjs from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
 
