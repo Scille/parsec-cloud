@@ -33,7 +33,7 @@
                 {{ $msTranslate('FileDetails.stats.created') }}
               </ion-label>
               <ion-text class="file-info-details-item__value body">
-                {{ $msTranslate(I18n.formatDate(entry.created, 'short')) }}
+                {{ $msTranslate(I18n.formatDate(entry.created, 'full')) }}
               </ion-text>
             </div>
             <!-- Size (only for files) -->
@@ -68,7 +68,7 @@
                 {{ $msTranslate('FileDetails.stats.updated') }}
               </ion-label>
               <ion-text class="file-info-details-item__value body">
-                {{ $msTranslate(I18n.formatDate(entry.updated, 'short')) }}
+                {{ $msTranslate(I18n.formatDate(entry.updated, 'full')) }}
               </ion-text>
             </div>
             <!-- Editor -->

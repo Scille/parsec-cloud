@@ -53,7 +53,7 @@
           <span v-if="workspace.isArchived && workspace.archivedOn">{{
             $msTranslate({
               key: 'WorkspacesPage.archiveWorkspace.timestamp',
-              data: { timestamp: $msTranslate(I18n.formatDate(workspace.archivedOn, 'short')) },
+              data: { timestamp: $msTranslate(I18n.formatDate(workspace.archivedOn, 'full')) },
             })
           }}</span>
           <span v-if="workspace.isTrashed && workspace.deletionDate">{{ $msTranslate('WorkspacesPage.trashWorkspace.timestamp') }}</span>
@@ -61,7 +61,7 @@
             v-if="workspace.isTrashed && workspace.deletionDate"
             class="deletion-date"
           >
-            {{ $msTranslate(I18n.formatDate(workspace.deletionDate)) }}
+            {{ $msTranslate(I18n.formatDate(workspace.deletionDate, 'full')) }}
           </span>
         </ion-text>
         <ion-text

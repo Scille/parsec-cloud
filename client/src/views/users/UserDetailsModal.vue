@@ -39,7 +39,7 @@
               <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}</span>
             </ion-text>
             <ion-text class="time-list-item__text body-lg">
-              {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
+              {{ $msTranslate(I18n.formatDate(user.createdOn, 'full')) }}
             </ion-text>
           </div>
 
@@ -56,7 +56,7 @@
               <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}</span>
             </ion-text>
             <ion-text class="time-list-item__text body-lg">
-              {{ $msTranslate(I18n.formatDate(user.revokedOn, 'short')) }}
+              {{ $msTranslate(I18n.formatDate(user.revokedOn, 'full')) }}
             </ion-text>
           </div>
         </div>
@@ -110,7 +110,7 @@ import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonCard, IonCardContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, personAdd, personRemove } from 'ionicons/icons';
-import { I18n, MsModal, formatTimeSince } from 'megashark-lib';
+import { I18n, MsModal } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);

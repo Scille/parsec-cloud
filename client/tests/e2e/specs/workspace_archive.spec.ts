@@ -184,16 +184,14 @@ msTest('Check archived workspace displayed timestamp', async ({ workspaces }) =>
   // Archive workspace
   await wk.click({ button: 'right' });
   await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
-  const archivingTimestamp = DateTime.now();
   await answerQuestion(workspaces, true);
+  const archivingTimestamp = DateTime.now();
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
 
   // Check timestamp
   await sidebarArchiveButton.click();
   const wkTimestamp = wk.locator('.workspace-card-content__update');
-  await expect(wkTimestamp).toContainText('Archived on: ');
-  await expect(wkTimestamp).toContainText(`${archivingTimestamp.day}`);
-  await expect(wkTimestamp).toContainText(`${archivingTimestamp.year}`);
+  await expect(wkTimestamp).toContainText(`Archived on: ${archivingTimestamp.month}/${archivingTimestamp.day}/${archivingTimestamp.year}`);
 });
 
 msTest('Archived workspaces list error', async ({ workspaces }) => {

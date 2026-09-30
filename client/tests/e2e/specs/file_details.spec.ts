@@ -45,7 +45,9 @@ msTest.describe(() => {
       await expect(generalDetails.locator('.file-info-details-content__title')).toHaveText('General information');
       await expect(generalDetailsItem).toHaveCount(isFile ? 3 : 2);
       await expect(generalDetailsItem.nth(0).locator('.file-info-details-item__title')).toHaveText('Created');
-      await expect(generalDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(/^[A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
+      await expect(generalDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(
+        /^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/,
+      );
 
       if (isFile) {
         await expect(generalDetailsItem.nth(1).locator('.file-info-details-item__title')).toHaveText('Size');
@@ -62,7 +64,9 @@ msTest.describe(() => {
       await expect(updateDetails.locator('.file-info-details-content__title')).toHaveText('Last updated');
       await expect(updateDetailsItem).toHaveCount(2);
       await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__title')).toHaveText('Updated');
-      await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(/^[A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
+      await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(
+        /^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/,
+      );
 
       await expect(updateDetailsItem.nth(1).locator('.file-info-details-item__title')).toHaveText('Editor');
       await expect(updateDetailsItem.nth(1).locator('.file-info-details-item__value')).toHaveText('Alicey McAliceFace');

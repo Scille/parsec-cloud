@@ -1980,7 +1980,7 @@
             "title": "User details",
             "subtitles": {
                 "name": "Name",
-                "joined": "Joined",
+                "joined": "Joined on",
                 "commonWorkspaces": "Shared workspaces",
                 "revoked": "Revoked",
                 "revokedSince": "Revoked since"
