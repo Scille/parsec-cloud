@@ -1974,7 +1974,7 @@
             "title": "Détails de l'utilisateur",
             "subtitles": {
                 "name": "Nom",
-                "joined": "Rejoint",
+                "joined": "Rejoint le",
                 "commonWorkspaces": "Espaces de travail communs",
                 "revoked": "Révoqué",
                 "revokedSince": "Révoqué depuis le"

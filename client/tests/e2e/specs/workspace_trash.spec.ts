@@ -268,7 +268,5 @@ msTest('Check deleted workspace displayed timestamp', async ({ workspaces }) => 
   await sidebarTrashButton.click();
   const wkTimestamp = wk.locator('.workspace-card-content__update');
   await expect(wkTimestamp).toContainText('Planned deletion date:');
-  await expect(wkTimestamp).toContainText(`${deletionTimestamp.day}`);
-  await expect(wkTimestamp).toContainText(`${deletionTimestamp.year}`);
-  await expect(wkTimestamp).toContainText(`${deletionTimestamp.minute}`);
+  await expect(wkTimestamp).toContainText(`${deletionTimestamp.month}/${deletionTimestamp.day}/${deletionTimestamp.year}`);
 });
