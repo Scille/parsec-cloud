@@ -8997,6 +8997,65 @@ fn variant_client_event_js_to_rs<'a>(
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted { realm_id, entry_id })
         }
+        "ClientEventWorkspaceOutboundSyncBacklog" => {
+            let number_of_files_to_sync = {
+                let js_val: Handle<JsBigInt> = obj.get(cx, "numberOfFilesToSync")?;
+                {
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+                    v
+                }
+            };
+            let size_to_sync = {
+                let js_val: Handle<JsBigInt> = obj.get(cx, "sizeToSync")?;
+                {
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+                    v
+                }
+            };
+            let realm_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let entry_currently_being_synced = {
+                let js_val: Handle<JsValue> = obj.get(cx, "entryCurrentlyBeingSynced")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::VlobID, _> {
+                                    libparsec::VlobID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_val.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOutboundSyncBacklog {
+                number_of_files_to_sync,
+                size_to_sync,
+                realm_id,
+                entry_currently_being_synced,
+            })
+        }
         "ClientEventWorkspaceWatchedEntryChanged" => {
             let realm_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
@@ -9487,6 +9546,49 @@ fn variant_client_event_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "entryId", js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOutboundSyncBacklog {
+            number_of_files_to_sync,
+            size_to_sync,
+            realm_id,
+            entry_currently_being_synced,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceOutboundSyncBacklog").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_number_of_files_to_sync = JsBigInt::from_u64(cx, number_of_files_to_sync);
+            js_obj.set(cx, "numberOfFilesToSync", js_number_of_files_to_sync)?;
+            let js_size_to_sync = JsBigInt::from_u64(cx, size_to_sync);
+            js_obj.set(cx, "sizeToSync", js_size_to_sync)?;
+            let js_realm_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "realmId", js_realm_id)?;
+            let js_entry_currently_being_synced = match entry_currently_being_synced {
+                Some(elem) => JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(elem) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?
+                .as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(
+                cx,
+                "entryCurrentlyBeingSynced",
+                js_entry_currently_being_synced,
+            )?;
         }
         libparsec::ClientEvent::WorkspaceWatchedEntryChanged {
             realm_id, entry_id, ..
