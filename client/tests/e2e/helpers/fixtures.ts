@@ -3,7 +3,6 @@
 import { BrowserContext, Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
-import { CRYPTPAD_SERVER } from '@tests/e2e/helpers/cryptpad';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
 import { mockLibParsec } from '@tests/e2e/helpers/libparsec';
@@ -87,11 +86,6 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.withParsecAccount) {
         (window as any).TESTING_ENABLE_ACCOUNT = true;
         (window as any).TESTING_ACCOUNT_SERVER = options.testbedServer;
-      }
-      if (options.withEditics) {
-        (window as any).TESTING_ENABLE_EDITICS = true;
-        (window as any).TESTING_CRYPTPAD_SERVER = options.cryptpadServer ? `https://${options.cryptpadServer}` : null;
-        (window as any).TESTING_EDITICS_SAVE_TIMEOUT = 1;
       }
       if (options.withCustomBranding) {
         (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
@@ -293,7 +287,6 @@ export const msTest = debugTest.extend<{
   clientAreaInitialParams: ClientAreaInitialParams;
   parsecAccount: MsPage;
   parsecAccountLoggedIn: MsPage;
-  parsecEditics: MsPage;
 }>({
   context: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -692,38 +685,6 @@ export const msTest = debugTest.extend<{
     const page = (await context.newPage()) as MsPage;
     await setupNewPage(page, { withParsecAccount: true, parsecAccountAutoLogin: true, location: '/home' });
     await expect(page).toHaveURL(/.+\/home$/);
-    await use(page);
-    await page.release();
-  },
-
-  parsecEditics: async ({ context, documentsOptions }, use, testInfo: TestInfo) => {
-    const page = (await context.newPage()) as MsPage;
-    await setupNewPage(page, {
-      withParsecAccount: false,
-      withEditics: true,
-      location: '/home',
-      cryptpadServer: CRYPTPAD_SERVER,
-      expectTimeout: 15000,
-    });
-    await page.locator('.organization-card').first().click();
-    await expect(page.locator('#password-input')).toBeVisible();
-
-    await expect(page.locator('.login-button')).toHaveDisabledAttribute();
-
-    await page.locator('#password-input').locator('input').fill('P@ssw0rd.');
-    await expect(page.locator('.login-button')).toBeEnabled();
-    await page.locator('.login-button').click();
-    await expect(page.locator('#connected-header')).toContainText('My workspaces');
-    await expect(page.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
-    await expect(page).toBeWorkspacePage();
-    await expect(page).toHaveURL(/.+\/workspaces$/);
-    await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(page).toHaveHeader(['wksp1'], true, true);
-    await expect(page.locator('.folder-container').locator('.no-files')).toBeVisible();
-    if (!documentsOptions.empty) {
-      await importDefaultFiles(page, testInfo);
-      await expect(page.locator('.folder-container').locator('.no-files')).toBeHidden();
-    }
     await use(page);
     await page.release();
   },

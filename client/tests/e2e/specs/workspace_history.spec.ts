@@ -8,6 +8,7 @@ import {
   DisplaySize,
   expect,
   fillInputModal,
+  getEditorFrame,
   importDefaultFiles,
   ImportDocuments,
   mockLibParsec,
@@ -144,37 +145,35 @@ msTest.describe(() => {
     await expect(documents.locator('.image-viewer-container').locator('.image-error')).toHaveText('Could not display the image.');
   });
 
-  // TODO: This test was for the deprecated Cryptpad integration, convert it for the editics
-  // msTest('Test editor in history', async ({ parsecEditics }, testInfo: TestInfo) => {
-  //   await mockCryptpadServer(parsecEditics);
-  //   await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
-  //   // Give it some time to upload the file
-  //   await parsecEditics.waitForTimeout(1000);
+  msTest('Test editor in history', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
+    // Give it some time to upload the file
+    await documents.waitForTimeout(1000);
 
-  //   await parsecEditics.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
-  //   await expect(parsecEditics).toBeWorkspacePage();
-  //   await parsecEditics.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-  //   await checkWorkspaceContextMenu(parsecEditics, 'owner', 'History');
-  //   await expect(parsecEditics.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
-  //   const container = parsecEditics.locator('.history-container');
-  //   await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
+    await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
+    await expect(documents).toBeWorkspacePage();
+    await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
+    await checkWorkspaceContextMenu(documents, 'owner', 'History');
+    await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
+    const container = documents.locator('.history-container');
+    await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
 
-  //   const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+    const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
 
-  //   await entry.locator('.file-last-update').dblclick();
-  //   await expect(parsecEditics.locator('.file-editor')).toBeVisible();
-  //   const frame = parsecEditics.frameLocator('.file-editor');
-  //   await expect(frame.locator('#editor-container')).toBeVisible();
-  //   const topbar = parsecEditics.locator('.file-handler-topbar');
-  //   await expect(topbar.locator('.file-handler-topbar__title')).toContainText('document.docx');
-  //   await expect(topbar.locator('.back-button')).toBeVisible();
-  //   const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
-  //   await expect(topbar.locator('.save-info')).toBeVisible();
-  //   await expect(topbar.locator('.save-info')).toHaveText('Read only');
-  //   await expect(topbarButtons).toHaveCount(4);
-  //   await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
-  //   await expect(frame.locator('#editor-container')).toHaveText('document.docx');
-  // });
+    await entry.locator('.file-last-update').dblclick();
+
+    await expect(documents.locator('.file-editor')).toBeVisible();
+    const topbar = documents.locator('.file-handler-topbar');
+    await expect(topbar.locator('.file-handler-topbar__title').locator('ion-text').nth(0)).toHaveText('document.docx');
+    await expect(topbar.locator('.back-button')).toBeVisible();
+    const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
+    await expect(topbar.locator('.save-info')).toBeVisible();
+    await expect(topbar.locator('.save-info')).toHaveText('Read only');
+    await expect(topbarButtons).toHaveCount(4);
+    await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+    const editicsFrame = await getEditorFrame(documents);
+    await expect(editicsFrame.locator('#editor-container')).toBeVisible();
+  });
 
   msTest('Workspace history breadcrumbs', async ({ documents }, testInfo: TestInfo) => {
     msTest.setTimeout(45_000);

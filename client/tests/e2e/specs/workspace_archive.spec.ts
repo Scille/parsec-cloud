@@ -75,25 +75,25 @@ msTest('Restore an archived workspace', async ({ workspaces }) => {
   await expect(wk).toBeVisible();
 });
 
-msTest('Check archived workspace is read-only', async ({ parsecEditics }) => {
-  const sidebarArchiveButton = parsecEditics.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
-  const sidebarWorkspacesButton = parsecEditics.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
+msTest('Check archived workspace is read-only', async ({ documents }) => {
+  const sidebarArchiveButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
+  const sidebarWorkspacesButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
   await sidebarWorkspacesButton.click();
-  const wk = parsecEditics.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  const wk = documents.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
 
   // Check file context menu
   await wk.click();
-  await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
-  const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(2);
+  await expect(documents.locator('.file-context-menu')).toBeHidden();
+  const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
   await entry.click({ button: 'right' });
-  await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss', { canEdit: true });
+  await checkEntryContextMenu(documents, 'file-full', 'dismiss', { canEdit: true });
   await sidebarWorkspacesButton.click();
 
   // Archive workspace
   await wk.click({ button: 'right' });
-  await checkWorkspaceContextMenu(parsecEditics, 'owner', 'Archive this workspace');
-  await answerQuestion(parsecEditics, true);
-  await expect(parsecEditics).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
+  await checkWorkspaceContextMenu(documents, 'owner', 'Archive this workspace');
+  await answerQuestion(documents, true);
+  await expect(documents).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
   await expect(wk).not.toBeVisible();
   await sidebarArchiveButton.click();
   await expect(wk).toBeVisible();
@@ -102,7 +102,7 @@ msTest('Check archived workspace is read-only', async ({ parsecEditics }) => {
   await wk.click();
   await entry.click({ button: 'right' });
 
-  await checkEntryContextMenu(parsecEditics, 'file-readonly', 'dismiss');
+  await checkEntryContextMenu(documents, 'file-readonly', 'dismiss');
 });
 
 msTest('Archive workspace in small display', async ({ workspaces }) => {

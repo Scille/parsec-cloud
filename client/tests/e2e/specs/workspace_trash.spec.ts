@@ -71,6 +71,7 @@ msTest('Trash a workspace with no deletion delay', async ({ workspaces }) => {
         ok: true,
         value: {
           serverOrganizationConfig: { realmMinimumArchivingPeriodBeforeDeletion: 0 },
+          currentProfile: 'UserProfileAdmin',
         },
       },
     },
@@ -147,26 +148,26 @@ msTest('Restore a trashed workspace', async ({ workspaces }) => {
   await expect(wk).toBeVisible();
 });
 
-msTest('Check trashed workspace is read-only', async ({ parsecEditics }) => {
-  const sidebarTrashButton = parsecEditics.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
-  const sidebarWorkspacesButton = parsecEditics.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
+msTest('Check trashed workspace is read-only', async ({ documents }) => {
+  const sidebarTrashButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+  const sidebarWorkspacesButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
   await sidebarWorkspacesButton.click();
-  const wk = parsecEditics.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  const wk = documents.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
 
   // Check file context menu
   await wk.click();
-  await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
-  const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(2);
+  await expect(documents.locator('.file-context-menu')).toBeHidden();
+  const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
   await entry.click({ button: 'right' });
-  await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss', { canEdit: true });
+  await checkEntryContextMenu(documents, 'file-full', 'dismiss', { canEdit: true });
 
   // Move workspace to bin
   await sidebarWorkspacesButton.click();
   await wk.click({ button: 'right' });
-  await checkWorkspaceContextMenu(parsecEditics, 'owner', 'Delete this workspace');
-  await answerQuestion(parsecEditics, true);
-  await fillInputModal(parsecEditics, 'wksp1');
-  await expect(parsecEditics).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+  await checkWorkspaceContextMenu(documents, 'owner', 'Delete this workspace');
+  await answerQuestion(documents, true);
+  await fillInputModal(documents, 'wksp1');
+  await expect(documents).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
   await expect(wk).not.toBeVisible();
   await sidebarTrashButton.click();
   await expect(wk).toBeVisible();
@@ -174,7 +175,7 @@ msTest('Check trashed workspace is read-only', async ({ parsecEditics }) => {
   // Check file context menu
   await wk.click();
   await entry.click({ button: 'right' });
-  await checkEntryContextMenu(parsecEditics, 'file-readonly', 'dismiss', { canEdit: true });
+  await checkEntryContextMenu(documents, 'file-readonly', 'dismiss', { canEdit: true });
 });
 
 msTest('Trash a workspace in small display', async ({ workspaces }) => {

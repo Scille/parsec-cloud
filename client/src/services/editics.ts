@@ -90,7 +90,7 @@ export interface EditicsHostSession {
 
 // Time we give the host page to signal it is ready after its iframe is loaded.
 // Short in tests to fail fast.
-const HOST_READY_TIMEOUT_MS = 5000;
+const HOST_READY_TIMEOUT_MS = (window as any).TESTING === true ? 500 : 5000;
 
 // Time we give the host page to complete a save round-trip: it serializes the
 // document, converts it back to its original office format with x2t, and asks
@@ -159,7 +159,7 @@ export async function openDocument(
   try {
     await new Promise<void>((resolve, reject) => {
       const hostReadyTimeoutId = setTimeout(() => {
-        reject();
+        reject('timeout');
       }, HOST_READY_TIMEOUT_MS);
 
       window.addEventListener(
@@ -256,7 +256,7 @@ export async function openDocument(
     });
   } catch (e: unknown) {
     controller.abort();
-    handlers.onError(new EditicsError(EditicsErrorCodes.FrameLoadFailed, JSON.stringify(e)));
+    handlers.onError(new EditicsError(EditicsErrorCodes.FrameLoadFailed, String(e)));
     return undefined;
   }
 
