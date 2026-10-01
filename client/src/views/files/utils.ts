@@ -53,7 +53,7 @@ interface DownloadOptions {
   };
 }
 
-// The download is handled by the browser, as any other download: see the streaming worker.
+// The download is handled by the browser, as any other download: see the file service worker.
 export async function downloadFiles(options: DownloadOptions): Promise<void> {
   if (options.entries.length === 0) {
     return;

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BASE } from '@/services/viewers';
+import { BASE } from '@/services/worker';
 
 export interface DownloadEntry {
   path: string;
@@ -26,7 +26,7 @@ async function _getClientId(worker: ServiceWorker): Promise<string> {
   if (_clientId === undefined) {
     _clientId = await new Promise<string>((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
-      const timer = setTimeout(() => reject(new Error('The streaming worker did not answer')), 5000);
+      const timer = setTimeout(() => reject(new Error('The file service worker did not answer')), 5000);
       port1.onmessage = (event: MessageEvent): void => {
         clearTimeout(timer);
         port1.close();
@@ -55,7 +55,7 @@ function _getDownloadFrame(): HTMLIFrameElement {
 export async function startDownload(request: DownloadRequest): Promise<void> {
   const worker = 'serviceWorker' in navigator ? navigator.serviceWorker.controller : null;
   if (!worker) {
-    throw new Error('The streaming worker is not available');
+    throw new Error('The file service worker is not available');
   }
   const clientId = await _getClientId(worker);
 

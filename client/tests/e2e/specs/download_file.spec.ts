@@ -315,7 +315,7 @@ msTest.describe(() => {
     const cdp = await documents.context().newCDPSession(documents);
     const states: Array<string> = [];
     cdp.on('ServiceWorker.workerVersionUpdated', (event) => {
-      for (const version of event.versions.filter((version) => version.scriptURL.endsWith('/streaming-worker.js'))) {
+      for (const version of event.versions.filter((version) => version.scriptURL.endsWith('/file-service-worker.js'))) {
         states.push(version.runningStatus);
       }
     });
