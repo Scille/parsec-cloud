@@ -18,13 +18,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import Headers
 from starlette.staticfiles import PathLike
-from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from structlog import get_logger
 
 from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
 from parsec.asgi.redirect import redirect_router
 from parsec.asgi.rpc import Backend, rpc_router
+from parsec.config import BackendConfig
 
 logger = get_logger()
 
@@ -65,6 +66,22 @@ WEB_APP_EDITICS_URL = "/client/editics/"
 # static resources (including the optional web app) are designed to use
 # cache-busting naming (i.e. having content hash in their name, e.g. `base-jFjh9D00.css`).
 STATIC_ASSETS_CACHE_CONTROL = "max-age=31536000, public, immutable"
+EDITICS_CONTENT_SECURITY_PROTOCOL_TEMPLATE = (
+    "default-src 'self'"
+    # x2t compiles its WASM module, OnlyOffice uses `new Function()`
+    "; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' 'unsafe-inline'"
+    "; style-src 'self' 'unsafe-inline'"
+    "; img-src 'self' blob: data:"
+    "; font-src 'self' blob: data:"
+    "; connect-src 'self' blob: data:"
+    "; worker-src 'self' blob:"
+    "; frame-src 'self'"
+    "; media-src 'self' blob: data:"
+    "; object-src 'none'"
+    "; base-uri 'self'"
+    "; form-action 'none'"
+    "; frame-ancestors 'self' {web_app_addr}"
+)
 
 
 def _try_brotli_response(full_path: PathLike, scope: Scope, status_code: int) -> Response | None:
@@ -127,10 +144,21 @@ class EditicsHostIsolationMiddleware:
     as the RPC ones queried by the editics pages, are shared by both domains).
     """
 
-    def __init__(self, app: ASGIApp, editics_netloc: bytes | None, mount_path: str) -> None:
+    def __init__(self, app: ASGIApp, mount_path: str, config: BackendConfig) -> None:
         self.app = app
-        self.editics_netloc = editics_netloc
+        self.editics_netloc = (
+            config.editics_server_addr.netloc.encode("latin-1")
+            if config.editics_server_addr
+            else None
+        )
         self.is_editics_path = mount_path.startswith(WEB_APP_EDITICS_URL)
+        if self.is_editics_path:
+            web_app_addr = (
+                "https://" if config.server_addr.use_ssl else "http://"
+            ) + config.server_addr.netloc
+            self.editics_content_security_policy = (
+                EDITICS_CONTENT_SECURITY_PROTOCOL_TEMPLATE.format(web_app_addr=web_app_addr)
+            )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -140,11 +168,26 @@ class EditicsHostIsolationMiddleware:
         is_editics_host = (
             next((v for k, v in scope["headers"] if k == b"host"), b"") == self.editics_netloc
         )
-        if (is_editics_host and not self.is_editics_path) or (
-            not is_editics_host and self.is_editics_path
-        ):
-            raise HTTPException(403)
-        await self.app(scope, receive, send)
+        if is_editics_host:
+            if self.is_editics_path:
+
+                async def _send_with_csp(message: Message) -> None:
+                    if message["type"] == "http.response.start":
+                        message["headers"].append(
+                            (b"content-security-policy", self.editics_content_security_policy)
+                        )
+                    await send(message)
+
+                await self.app(scope, receive, _send_with_csp)
+
+            else:
+                raise HTTPException(403)
+
+        else:
+            if self.is_editics_path:
+                raise HTTPException(403)
+            else:
+                await self.app(scope, receive, send)
 
 
 def app_factory(
@@ -180,16 +223,8 @@ def app_factory(
         # The `/client/editics` is *only* available from the editics domain (and
         # hence never available if `backend.config.editics_server_addr` is `None`).
         # And, conversely, other `/client/*` routes are not allowed from the editics domain.
-        editics_netloc = (
-            backend.config.editics_server_addr.netloc.encode("latin-1")
-            if backend.config.editics_server_addr
-            else None
-        )
-
         def _with_editics_isolation(app: ASGIApp, mount_path: str) -> ASGIApp:
-            return EditicsHostIsolationMiddleware(
-                app, editics_netloc=editics_netloc, mount_path=mount_path
-            )
+            return EditicsHostIsolationMiddleware(app, mount_path=mount_path, config=backend.config)
 
         app.mount(
             WEB_APP_ASSETS_URL,
