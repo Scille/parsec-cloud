@@ -50,6 +50,7 @@ async def assert_route(
     route: str,
     expected: tuple[int, str, str] | int,
     expected_cached: bool = False,
+    expected_editics_csp: bool = False,
 ) -> Response:
     rep = await client.get(f"http://{domain}{route}")
     match expected:
@@ -63,6 +64,15 @@ async def assert_route(
         assert rep.headers["Cache-Control"] == "max-age=31536000, public, immutable"
     else:
         assert "Cache-Control" not in rep.headers
+
+    if expected_editics_csp:
+        assert (
+            f"frame-ancestors 'self' https://{MAIN_SERVER_DOMAIN}"
+            in rep.headers["Content-Security-Policy"]
+        )
+    else:
+        assert "Content-Security-Policy" not in rep.headers
+
     return rep
 
 
@@ -106,6 +116,7 @@ async def test_web_app_served(backend: Backend, web_app_dir: Path, editics_serve
             "/client/editics/offline-abc123456.html",
             (200, "text/html; charset=utf-8", EDITICS_OFFLINE_HTML),
             expected_cached=True,
+            expected_editics_csp=True,
         )
 
         await main_assert_route("/client/editics/", 403)
