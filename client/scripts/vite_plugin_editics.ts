@@ -173,11 +173,6 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
       dest: `editics/onlyoffice-x2t/${x2tVersion}`,
       rename: { stripBase: 2 },
     },
-    {
-      src: 'editics/templates/*',
-      dest: 'onlyoffice-templates',
-      rename: { stripBase: 2 },
-    },
   ];
   plugins.push(viteStaticCopy({ targets }));
 
