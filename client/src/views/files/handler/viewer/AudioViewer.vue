@@ -67,7 +67,7 @@ import {
   FileViewerBackground,
 } from '@/components/files/handler/viewer';
 import { startHistoryAt, stopHistory } from '@/parsec/history';
-import { getStreamUrl } from '@/services/viewers';
+import { getStreamUrl } from '@/services/worker';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
 import { cog, infinite, musicalNotes, timer } from 'ionicons/icons';

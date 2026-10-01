@@ -18,7 +18,7 @@ import path from 'path';
 const LOG_START = '\\[[\\d\\.:T\\-+]+\\] \\[(?:info|debug)\\]';
 const LOG_REGEX = new RegExp(
   // eslint-disable-next-line max-len
-  `^${LOG_START} Custom branding is not enabled, not loading resources\n${LOG_START} Init PDF worker\n${LOG_START} Init Monaco worker\n${LOG_START} Init Streaming worker$`,
+  `^${LOG_START} Custom branding is not enabled, not loading resources\n${LOG_START} Init PDF worker\n${LOG_START} Init Monaco worker\n${LOG_START} Init file service worker$`,
 );
 
 msTest('Submit bug report', async ({ connected }, testInfo: TestInfo) => {

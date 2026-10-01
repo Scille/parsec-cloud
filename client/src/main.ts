@@ -42,6 +42,7 @@ import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
 import { LogLevel, WebLogger } from '@/services/webLogger';
+import { initFileServiceWorker } from '@/services/worker';
 import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
 import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, ThemeManager, askQuestion } from 'megashark-lib';
@@ -274,8 +275,9 @@ async function setupApp(): Promise<void> {
   app.provide(InjectionProviderKey, injectionProvider);
   app.provide(HotkeyManagerKey, hotkeyManager);
 
-  // Only needed when opening a file viewer, no need to wait for it
+  // Only needed when opening or downloading a file, no need to wait
   initViewers(); // Fire-and-forget call
+  initFileServiceWorker(); // Fire-and-forget call
 
   await megasharkInit;
   app.use(megasharkPlugin);
