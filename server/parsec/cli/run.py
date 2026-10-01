@@ -421,6 +421,15 @@ for any given email address).
     help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option(
+    "--editics-server-addr",
+    envvar="PARSEC_EDITICS_SERVER_ADDR",
+    show_envvar=True,
+    metavar="URL",
+    type=ParsecAddr.from_url,
+    default=None,
+    help="URL to reach this server from the editics domain (typically used to serve the editics pages in an isolated iframe)",
+)
+@click.option(
     "--template-dir",
     type=click.Path(dir_okay=True, file_okay=False, exists=True, path_type=Path),
     help="Load templates from the specified directory instead of using the default one",
@@ -607,6 +616,7 @@ async def run_cmd(
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
+    editics_server_addr: ParsecAddr | None,
     template_dir: Path | None,
     email_host: str,
     email_port: int,
@@ -708,6 +718,7 @@ async def run_cmd(
             email_config=email_config,
             proxy_trusted_addresses=proxy_trusted_addresses,
             server_addr=server_addr,
+            editics_server_addr=editics_server_addr,
             debug=debug,
             account_config=account_config,
             advisory_device_file_protection=advisory_device_file_protection,
