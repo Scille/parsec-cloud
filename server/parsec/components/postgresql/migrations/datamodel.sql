@@ -187,7 +187,9 @@ CREATE TABLE sequester_service (
 
 CREATE TABLE human (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT human_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     email VARCHAR(254) NOT NULL,
     label VARCHAR(254) NOT NULL,
 
@@ -200,7 +202,9 @@ CREATE TYPE USER_PROFILE AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
 
 CREATE TABLE user_ (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT user_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     user_id UUID NOT NULL,
     user_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
@@ -258,7 +262,9 @@ CREATE TABLE profile (
 
 CREATE TABLE device (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT device_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     user_ INTEGER
     CONSTRAINT device_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
     NOT NULL,
@@ -443,7 +449,9 @@ CREATE TABLE greeting_session (
 
 CREATE TABLE greeting_attempt (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT greeting_attempt_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     greeting_attempt_id UUID NOT NULL,
     greeting_session INTEGER
     CONSTRAINT greeting_attempt_greeting_session_fkey REFERENCES greeting_session (_id) ON DELETE CASCADE
@@ -503,7 +511,9 @@ CREATE TYPE ASYNC_ENROLLMENT_STATE AS ENUM ('SUBMITTED', 'ACCEPTED', 'REJECTED',
 
 CREATE TABLE async_enrollment (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT async_enrollment_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     enrollment_id UUID NOT NULL,
 
     submitted_on TIMESTAMPTZ NOT NULL,
@@ -802,7 +812,9 @@ CREATE TABLE block_data (
 
 CREATE TABLE common_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT common_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization)
 
@@ -828,7 +840,9 @@ CREATE TABLE shamir_recovery_topic (
 
 CREATE TABLE realm_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT realm_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     realm INTEGER
     CONSTRAINT realm_topic_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
     NOT NULL,
