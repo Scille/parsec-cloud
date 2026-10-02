@@ -187,6 +187,13 @@ jobs:
         working-directory: client
         timeout-minutes: 2
 
+      - name: Check for missing translation keys
+        working-directory: client
+        timeout-minutes: 2
+        shell: bash -ex {0}
+        run: |
+          python scripts/check_unused_translations.py src/ --skip-unused --no-color
+
       - name: Unit tests
         run: npm run test:unit
         working-directory: client
