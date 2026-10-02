@@ -1,11 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from datetime import timedelta
-
-import pytest
 from click.testing import CliRunner
 
-from parsec.cli.options import Duration
 from parsec.cli.tasks import wipe_organization
 from parsec.cli.testbed import TestbedBackend
 from parsec.components.organization import (
@@ -29,23 +25,6 @@ def test_wipe_organization_cmd(
         raise ValueError("CLI failed with an exception") from result.exception
     assert result.exit_code == 0
     assert result.stdout == ""
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    (
-        pytest.param("1s", timedelta(seconds=1)),
-        pytest.param("1m", timedelta(minutes=1)),
-        pytest.param("1h", timedelta(hours=1)),
-        pytest.param("1d", timedelta(days=1)),
-        pytest.param("60s", timedelta(minutes=1)),
-        pytest.param("1m30s", timedelta(minutes=1, seconds=30)),
-    ),
-)
-def test_parse_duration(value: str, expected: timedelta):
-    parser = Duration()
-    got = parser.convert(value, None, None)
-    assert got == expected
 
 
 async def test_wipe_organization(minimalorg: MinimalorgRpcClients, testbed: TestbedBackend):
