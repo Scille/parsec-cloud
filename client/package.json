@@ -49,6 +49,7 @@
         "file-type": "^22.0.2",
         "ionicons": "^8.1.0",
         "luxon": "^3.5.0",
+        "markdown-it": "^15.0.2",
         "megashark-lib": "https://github.com/Scille/megashark-lib/releases/download/build-8d8b5265596f93f1062475bcb7f4b80ae4c0b672/megashark-lib-8d8b5265596f93f1062475bcb7f4b80ae4c0b672.tgz",
         "monaco-editor": "^0.57.0",
         "pdfjs-dist": "^6.3.289",

@@ -612,25 +612,39 @@ async function onClick(event: MouseEvent): Promise<void> {
   if (!event.target) {
     return;
   }
-  const target = event.target as Element;
-  let linkTag!: HTMLAnchorElement;
-  if (target.tagName === 'A') {
-    linkTag = target as HTMLAnchorElement;
-  } else if (target.tagName === 'SPAN' && target.parentElement && target.parentElement.tagName === 'A') {
-    linkTag = target.parentElement as HTMLAnchorElement;
-  } else {
+  // Links can contain other elements (`<strong>`, `<code>`, `<img>`, ...)
+  const linkTag = (event.target as Element).closest('a');
+  if (!linkTag) {
     return;
   }
-  // `.href` get resolved, `getAttribute('href') is what actually in the href`
-  const link = linkTag.href;
+  // Use the raw attribute rather than `.href`, which gets resolved against the app URL.
+  // Parsing it without a base rejects relative links and anchors, which would otherwise
+  // open the app itself (a new window on Electron).
   const href = linkTag.getAttribute('href') ?? '';
-  // We exclude invalid links or anchors
-  if (!link || href.startsWith('#') || !URL.canParse(link)) {
+  if (!URL.canParse(href)) {
+    informationManager.value.present(
+      new Information({
+        message: 'fileViewers.openLink.invalid',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+  const url = new URL(href);
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    informationManager.value.present(
+      new Information({
+        message: 'fileViewers.openLink.invalid',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
     return;
   }
   const answer = await askQuestion('fileViewers.openLink.title', 'fileViewers.openLink.question', { yesText: 'fileViewers.openLink.yes' });
   if (answer === Answer.Yes) {
-    Env.Links.openUrl(link);
+    Env.Links.openUrl(url.href);
   }
 }
 

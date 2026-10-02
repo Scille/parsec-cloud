@@ -3139,7 +3139,8 @@
         "openLink": {
             "title": "Open an external link",
             "question": "This will open the link outside of the application. Do you want to continue?",
-            "yes": "Open the link"
+            "yes": "Open the link",
+            "invalid": "The link is invalid."
         },
         "controls": {
             "zoom": {
@@ -3170,7 +3171,8 @@
         },
         "text": {
             "loadDocumentError": "Could not load this document.",
-            "loadingDocument": "Loading document..."
+            "loadingDocument": "Loading document...",
+            "imagePlaceholder": "Images cannot be loaded."
         },
         "players": {
             "playback": {
