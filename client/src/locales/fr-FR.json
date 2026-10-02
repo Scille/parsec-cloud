@@ -3222,6 +3222,11 @@
             "wait": "Attendre",
             "close": "Fermer"
         },
+        "insertImage": {
+            "title": "Insérer une image",
+            "emptyFolder": "Aucune image dans ce dossier",
+            "insert": "Insérer"
+        },
         "saving": {
             "unsaved": "Modifications non sauvegardées",
             "saving": "Enregistrement...",

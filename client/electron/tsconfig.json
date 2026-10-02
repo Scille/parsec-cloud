@@ -1,3 +1,5 @@
+// Unlike the root `tsconfig.json` that is only used for type checking, this
+// config is actually used to do the .ts -> .js transpilation.
 {
     "compileOnSave": true,
     "include": ["./src/**/*", "./capacitor.config.ts", "./capacitor.config.js"],

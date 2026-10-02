@@ -1,6 +1,7 @@
 # Avoid auto-generated files
 android
 electron/app
+electron/app-editics
 electron/build
 electron/dist
 electron/node_modules

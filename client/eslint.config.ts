@@ -17,6 +17,7 @@ export default defineConfig([
       'node_modules/**',
       'electron/build/**',
       'electron/app/**',
+      'electron/app-editics/**',
       'electron/src/**',
       'electron/dist/**',
       'electron/live-runner.js',
@@ -28,7 +29,6 @@ export default defineConfig([
       'playwright.config.ts',
       'merge-playwright.ts',
       'src/parsec/mock_files/**',
-      'scripts/vite_plugin_wasm_pack.ts',
       'src/vite-env.d.ts',
     ],
   },
@@ -170,6 +170,11 @@ export default defineConfig([
         },
       ],
       'vue/singleline-html-element-content-newline': 'off',
+    },
+  },
+  {
+    files: ['src/**'],
+    rules: {
       'no-relative-import-paths/no-relative-import-paths': [
         'error',
         {
@@ -177,6 +182,13 @@ export default defineConfig([
           prefix: '@',
         },
       ],
+    },
+  },
+  {
+    // Editics host page is not part of the app's import graph since it is loaded in an iframe.
+    files: ['editics/**'],
+    rules: {
+      'no-relative-import-paths/no-relative-import-paths': 'off',
     },
   },
 ]);

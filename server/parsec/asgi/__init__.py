@@ -18,13 +18,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import Headers
 from starlette.staticfiles import PathLike
-from starlette.types import Receive, Scope, Send
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from structlog import get_logger
 
 from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
 from parsec.asgi.redirect import redirect_router
 from parsec.asgi.rpc import Backend, rpc_router
+from parsec.config import BackendConfig
 
 logger = get_logger()
 
@@ -55,10 +56,32 @@ openapi_tags = [
 WEB_APP_BASE_URL = "/client/"
 WEB_APP_ASSETS_URL = "/client/assets/"
 WEB_APP_CUSTOM_ASSETS_URL = "/client/custom/"
+# Editics is a special case since it requires two origins in order to achieve
+# iframe isolation on the client-side: one for Parsec client app and another
+# for the editics document editor.
+# This is achieved by configuring two domain names for Parsec server, and choosing
+# which app can be served depending on the request's host info.
+WEB_APP_EDITICS_URL = "/client/editics/"
 # We use a very aggressive one-size-fits-all cache config here since all our
 # static resources (including the optional web app) are designed to use
 # cache-busting naming (i.e. having content hash in their name, e.g. `base-jFjh9D00.css`).
 STATIC_ASSETS_CACHE_CONTROL = "max-age=31536000, public, immutable"
+EDITICS_CONTENT_SECURITY_PROTOCOL_TEMPLATE = (
+    "default-src 'self'"
+    # x2t compiles its WASM module, OnlyOffice uses `new Function()`
+    "; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' 'unsafe-inline'"
+    "; style-src 'self' 'unsafe-inline'"
+    "; img-src 'self' blob: data:"
+    "; font-src 'self' blob: data:"
+    "; connect-src 'self' blob: data:"
+    "; worker-src 'self' blob:"
+    "; frame-src 'self'"
+    "; media-src 'self' blob: data:"
+    "; object-src 'none'"
+    "; base-uri 'self'"
+    "; form-action 'none'"
+    "; frame-ancestors 'self' {web_app_addr}"
+)
 
 
 def _try_brotli_response(full_path: PathLike, scope: Scope, status_code: int) -> Response | None:
@@ -107,6 +130,66 @@ class StaticFilesWithSPARedirect(StaticFiles):
                 return found
 
 
+class EditicsHostIsolationMiddleware:
+    """Ensure the editics pages are only served from the editics domain.
+
+    The server can be reached from two different domains:
+    - the main server domain (e.g. `app.parsec.cloud`), which must never serve
+      the `editics/` pages (they are meant to be isolated in an iframe)
+    - the editics domain (e.g. `editics.app.parsec.cloud`), which must only
+      serve the `editics/` pages (in particular the main web app entry points
+      such as `index.html` or `assets/` must not be reachable from it)
+
+    This middleware only wraps the `/client/*` mounts (the other routes, such
+    as the RPC ones queried by the editics pages, are shared by both domains).
+    """
+
+    def __init__(self, app: ASGIApp, mount_path: str, config: BackendConfig) -> None:
+        self.app = app
+        self.editics_netloc = (
+            config.editics_server_addr.netloc.encode("latin-1")
+            if config.editics_server_addr
+            else None
+        )
+        self.is_editics_path = mount_path.startswith(WEB_APP_EDITICS_URL)
+        if self.is_editics_path:
+            web_app_addr = (
+                "https://" if config.server_addr.use_ssl else "http://"
+            ) + config.server_addr.netloc
+            self.editics_content_security_policy = (
+                EDITICS_CONTENT_SECURITY_PROTOCOL_TEMPLATE.format(web_app_addr=web_app_addr)
+            )
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        is_editics_host = (
+            next((v for k, v in scope["headers"] if k == b"host"), b"") == self.editics_netloc
+        )
+        if is_editics_host:
+            if self.is_editics_path:
+
+                async def _send_with_csp(message: Message) -> None:
+                    if message["type"] == "http.response.start":
+                        message["headers"].append(
+                            (b"content-security-policy", self.editics_content_security_policy)
+                        )
+                    await send(message)
+
+                await self.app(scope, receive, _send_with_csp)
+
+            else:
+                raise HTTPException(403)
+
+        else:
+            if self.is_editics_path:
+                raise HTTPException(403)
+            else:
+                await self.app(scope, receive, send)
+
+
 def app_factory(
     backend: Backend,
     cors_allow_origins: list[str] = [],
@@ -132,13 +215,23 @@ def app_factory(
     templates = Jinja2Templates(env=backend.config.jinja_env)
 
     if with_client_web_app:
-        # Note we must declare `/client/` route *after* `/client/assets/` & `/client/custom/`
-        # given the router tries each route according to their order of declaration!
+        # Note we must declare `/client/` route *after* `/client/.../` narrower routes
+        # (e.g. `/client/custom/`) given the router tries each route according to
+        # their order of declaration!
         # (See `Route priority` in https://starlette.dev/routing/)
+
+        # The `/client/editics` is *only* available from the editics domain (and
+        # hence never available if `backend.config.editics_server_addr` is `None`).
+        # And, conversely, other `/client/*` routes are not allowed from the editics domain.
+        def _with_editics_isolation(app: ASGIApp, mount_path: str) -> ASGIApp:
+            return EditicsHostIsolationMiddleware(app, mount_path=mount_path, config=backend.config)
 
         app.mount(
             WEB_APP_ASSETS_URL,
-            StaticFilesWithCacheControl(directory=with_client_web_app / "assets"),
+            _with_editics_isolation(
+                StaticFilesWithCacheControl(directory=with_client_web_app / "assets"),
+                WEB_APP_ASSETS_URL,
+            ),
         )
 
         custom_assets_dir = with_client_web_app / "custom"
@@ -155,10 +248,28 @@ def app_factory(
                     raise HTTPException(status_code=404)
 
             custom_assets_app = NoCustomDirAlways404()
-        app.mount(WEB_APP_CUSTOM_ASSETS_URL, custom_assets_app)
+        app.mount(
+            WEB_APP_CUSTOM_ASSETS_URL,
+            _with_editics_isolation(custom_assets_app, WEB_APP_CUSTOM_ASSETS_URL),
+        )
+
+        editics_dir = with_client_web_app / "editics"
+        if editics_dir.is_dir():
+            # All editics resources (including the html entrypoints, e.g.
+            # `offline-abc123456.html`) have cache-busting names
+            app.mount(
+                WEB_APP_EDITICS_URL,
+                _with_editics_isolation(
+                    StaticFilesWithCacheControl(directory=editics_dir), WEB_APP_EDITICS_URL
+                ),
+            )
 
         app.mount(
-            WEB_APP_BASE_URL, StaticFilesWithSPARedirect(directory=with_client_web_app, html=True)
+            WEB_APP_BASE_URL,
+            _with_editics_isolation(
+                StaticFilesWithSPARedirect(directory=with_client_web_app, html=True),
+                WEB_APP_BASE_URL,
+            ),
         )
 
         def root(request: Request) -> Response:

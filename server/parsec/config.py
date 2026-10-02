@@ -304,6 +304,9 @@ class BackendConfig:
     # - For invitation URL in emails
     # - In the redirect API (e.g. `GET /redirect/FOO` -> `302 <server_addr>/FOO`)
     server_addr: ParsecAddr
+    # URL to reach this server from the editics domain
+    # This is typically used to serve the editics pages in an isolated iframe.
+    editics_server_addr: ParsecAddr | None = None
 
     # Bearer token used to authenticate the administration API
     administration_token: str
