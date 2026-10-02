@@ -1640,7 +1640,9 @@ async function startSearch(pattern: string): Promise<void> {
   };
   searchAborter = new AbortController();
   for await (const result of parsec.fileSearch(workspaceInfo.value.handle, '/', pattern, searchAborter.signal)) {
-    search.value.results.push(result);
+    if (search.value) {
+      search.value.results.push(result);
+    }
     await nextTick();
   }
   if (search.value) {
