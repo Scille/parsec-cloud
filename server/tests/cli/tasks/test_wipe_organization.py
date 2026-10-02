@@ -1,0 +1,44 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+from click.testing import CliRunner
+
+from parsec.cli.tasks import wipe_organization
+from parsec.cli.testbed import TestbedBackend
+from parsec.components.organization import (
+    Organization,
+    OrganizationGetBadOutcome,
+    WipeOrganizationBadOutcome,
+)
+from tests.common.client import MinimalorgRpcClients
+
+
+def test_wipe_organization_cmd(
+    db_args: list[str],
+    blockstore_args: list[str],
+    minimalorg: MinimalorgRpcClients,
+    testbed: TestbedBackend,
+):
+    runner = CliRunner()
+    args = [*db_args, *blockstore_args, minimalorg.organization_id.str]
+    result = runner.invoke(wipe_organization.cmd, args)
+    if result.exception is not None:
+        raise ValueError("CLI failed with an exception") from result.exception
+    assert result.exit_code == 0
+    assert result.stdout == ""
+
+
+async def test_wipe_organization(minimalorg: MinimalorgRpcClients, testbed: TestbedBackend):
+    minimal_org = await testbed.backend.organization.get(minimalorg.organization_id)
+    assert isinstance(minimal_org, Organization)
+
+    res_wipe = await wipe_organization.wipe_organization(
+        testbed.backend.organization, testbed.backend.blockstore, minimalorg.organization_id
+    )
+
+    res_get = await testbed.backend.organization.get(minimalorg.organization_id)
+
+    assert res_get is OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND
+
+    res_wipe = await testbed.backend.organization.wipe_organization(minimalorg.organization_id)
+
+    assert res_wipe is WipeOrganizationBadOutcome.ORGANIZATION_NOT_FOUND
