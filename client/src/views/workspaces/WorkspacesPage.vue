@@ -762,7 +762,9 @@ async function startSearch(pattern: string): Promise<void> {
   searchAborter = new AbortController();
   for (const wkInfo of filteredWorkspaces.value) {
     for await (const result of fileSearch(wkInfo.handle, '/', pattern, searchAborter.signal)) {
-      search.value.results.push(result);
+      if (search.value) {
+        search.value.results.push(result);
+      }
       await nextTick();
     }
   }
