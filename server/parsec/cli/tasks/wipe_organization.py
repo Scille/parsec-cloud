@@ -58,7 +58,7 @@ async def cmd(
     configure_sentry: Callable[[], Coroutine[Any, Any, None]],
     debug: bool,
 ):
-    # Early exit is not organizations is provided
+    # Early exit if no organization is provided
     if not organizations:
         return
 
