@@ -86,6 +86,6 @@ async def wipe_organization(
     await blockstore.wipe_organization_data(id)
     match await component.wipe_organization(id):
         case WipeOrganizationBadOutcome.ORGANIZATION_NOT_FOUND:
-            pass
+            logger.warn("Organization not found", organization_id=id.str)
         case None:
-            pass
+            logger.info("Organization wiped", organization_id=id.str)
