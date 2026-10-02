@@ -212,7 +212,9 @@ CREATE TABLE user_ (
     revoked_user_certificate BYTEA,
     -- NULL if not yet revoked
     revoked_user_certifier INTEGER,
-    human INTEGER REFERENCES human (_id) NOT NULL,
+    human INTEGER
+    CONSTRAINT user_human_fkey REFERENCES human (_id) ON DELETE CASCADE
+    NOT NULL,
     redacted_user_certificate BYTEA NOT NULL,
     initial_profile USER_PROFILE NOT NULL,
     -- This field is altered in an `ALTER TABLE` statement below
@@ -244,7 +246,9 @@ CREATE TABLE user_ (
 
 CREATE TABLE profile (
     _id SERIAL PRIMARY KEY,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    user_ INTEGER
+    CONSTRAINT profile_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     profile USER_PROFILE NOT NULL,
     profile_certificate BYTEA NOT NULL,
     certified_by INTEGER NOT NULL,
@@ -255,7 +259,9 @@ CREATE TABLE profile (
 CREATE TABLE device (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    user_ INTEGER
+    CONSTRAINT device_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     device_id UUID NOT NULL,
     device_label VARCHAR(254) NOT NULL,
     verify_key BYTEA NOT NULL,
@@ -417,7 +423,8 @@ CREATE TABLE invitation (
     -- Added in migration 0009
     created_by_service_label VARCHAR(254),
     -- Required when type=DEVICE
-    device_invitation_claimer INTEGER REFERENCES user_ (_id),
+    device_invitation_claimer INTEGER
+    CONSTRAINT invitation_device_invitation_claimer_fkey REFERENCES user_ (_id) ON DELETE CASCADE,
 
     UNIQUE (organization, token)
 );
@@ -427,7 +434,9 @@ CREATE TABLE greeting_session (
     invitation INTEGER
     CONSTRAINT greeting_session_invitation_fkey REFERENCES invitation (_id) ON DELETE CASCADE
     NOT NULL,
-    greeter INTEGER REFERENCES user_ (_id) NOT NULL,
+    greeter INTEGER
+    CONSTRAINT greeting_session_greeter_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
 
     UNIQUE (invitation, greeter)
 );
@@ -576,7 +585,9 @@ CREATE TABLE realm_user_role (
     realm INTEGER
     CONSTRAINT realm_user_role_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
     NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    user_ INTEGER
+    CONSTRAINT realm_user_role_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     -- NULL if access revocation
     role REALM_ROLE,
     certificate BYTEA NOT NULL,
@@ -633,7 +644,9 @@ CREATE TABLE realm_keys_bundle_access (
     realm INTEGER
     CONSTRAINT realm_keys_bundle_access_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
     NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    user_ INTEGER
+    CONSTRAINT realm_keys_bundle_access_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     realm_keys_bundle INTEGER
     CONSTRAINT realm_keys_bundle_access_realm_keys_bundle_fkey REFERENCES realm_keys_bundle (_id) ON DELETE CASCADE
     NOT NULL,
