@@ -3141,7 +3141,8 @@
         "openLink": {
             "title": "Ouvrir un lien externe",
             "question": "Ce lien sera ouvert en dehors de l'application. Voulez-vous continuer ?",
-            "yes": "Ouvrir le lien"
+            "yes": "Ouvrir le lien",
+            "invalid": "Ce lien n'est pas valide."
         },
         "controls": {
             "zoom": {
@@ -3172,7 +3173,8 @@
         },
         "text": {
             "loadDocumentError": "Impossible de charger ce document.",
-            "loadingDocument": "Chargement du document..."
+            "loadingDocument": "Chargement du document...",
+            "imagePlaceholder": "Les images ne peuvent pas être chargées."
         },
         "players": {
             "playback": {
