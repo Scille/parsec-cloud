@@ -40,6 +40,7 @@ import {
   AvailableDevice,
   constructAccessStrategy,
   DeviceSaveStrategy,
+  isElectron,
   isWeb,
   OrganizationID,
   ParsedParsecAddrTag,
@@ -76,6 +77,8 @@ onMounted(async () => {
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       serverType.value = getServerTypeFromParsedParsecAddr(result.value);
     }
+  } else if (isElectron()) {
+    serverType.value = undefined;
   } else if ((window as any).TESTING === true || window.isDev()) {
     // On Playwright, everything's available
     serverType.value = undefined;
