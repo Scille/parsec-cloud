@@ -4,13 +4,13 @@ import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, nativeTheme, shell } from 'electron';
 import log from 'electron-log/main.js';
-import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels.js';
 import { Env } from './envVariables.js';
 import { FEATURE_FLAGS } from './features.js';
+import { serveDirectories } from './serveDirectory.js';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater.js';
 import { electronIsDev } from './utils.js';
 import { WinRegistry } from './winRegistry.js';
@@ -70,7 +70,7 @@ export class ParsecApp {
     { role: 'viewMenu' },
   ];
   private mainWindowState!: windowStateKeeper.State;
-  private loadWebApp;
+  private loadWebApp: (window: BrowserWindow) => Promise<void>;
   private customScheme: string;
   private config: object;
   public forceClose: boolean;
@@ -125,15 +125,10 @@ export class ParsecApp {
 
     // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
     this.log('debug', 'Setting up web app loader');
-    this.loadWebApp = electronServe({
-      directory: join(app.getAppPath(), 'app'),
-      scheme: this.customScheme,
-    });
-
-    electronServe({
-      directory: join(app.getAppPath(), 'app-editics'),
-      scheme: 'parsec-editics',
-    });
+    [this.loadWebApp] = serveDirectories([
+      { scheme: this.customScheme, directory: 'app' },
+      { scheme: 'parsec-editics', directory: 'app-editics' },
+    ]);
 
     if (FEATURE_FLAGS.updatesEnabled()) {
       this.log('info', 'Setting up application updates');
