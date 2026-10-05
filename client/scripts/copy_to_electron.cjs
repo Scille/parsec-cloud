@@ -61,7 +61,10 @@ function compressWithBrotli(dir) {
     const size = fs.statSync(file).size;
     const compressedFile = `${file}.br`;
 
-    if (COMPRESSIBLE.test(file) && size >= MIN_SIZE) {
+    if (fs.existsSync(compressedFile)) {
+      // Already shipped compressed by OnlyOffice
+      fs.rmSync(file);
+    } else if (COMPRESSIBLE.test(file) && size >= MIN_SIZE) {
       const compressed = zlib.brotliCompressSync(fs.readFileSync(file), {
         params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9, [zlib.constants.BROTLI_PARAM_SIZE_HINT]: size },
       });
