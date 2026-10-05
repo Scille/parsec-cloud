@@ -30,10 +30,10 @@
         "builder-util-runtime": "9.7.0",
         "chokidar": "~5.0.0",
         "electron-log": "^5.4.3",
-        "electron-serve": "~3.0.1",
         "electron-unhandled": "~6.0.0",
         "electron-updater": "6.8.9",
         "electron-window-state": "~5.0.3",
+        "mime-types": "~3.0.1",
         "regedit": "^5.1.4",
         "semver": "^7.8.1",
         "tslib": "^2.8.1"
@@ -42,6 +42,7 @@
     "devDependencies": {
         "@electron/notarize": "^3.1.1",
         "@sentry/cli": "^3.3.5",
+        "@types/mime-types": "^3.0.1",
         "@types/node": "^26.2.0",
         "@types/semver": "^7.7.1",
         "commander": "^15.0.0",

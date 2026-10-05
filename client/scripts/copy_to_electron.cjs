@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 
 const WORKDIR = path.join(__dirname, '..');
 const SRC = path.join(WORKDIR, 'dist');
@@ -37,5 +38,35 @@ fs.cpSync(SRC, DEST, {
 if (fs.existsSync(EDITICS_SRC_DIR)) {
   console.log(`>>> cp -r ${path.relative(WORKDIR, EDITICS_SRC_DIR)} ${path.relative(WORKDIR, EDITICS_DEST)}`);
   fs.cpSync(EDITICS_SRC_DIR, path.join(EDITICS_DEST, 'editics'), { recursive: true });
+
+  console.log(`>>> compress with brotli ${path.relative(WORKDIR, EDITICS_DEST)}`);
+  compressWithBrotli(EDITICS_DEST);
 }
 console.log('Done!');
+
+// OnlyOffice is huge (hundreds of MB, mostly text), and the asar archive is not
+// compressed. So each file `X` worth compressing is replaced by `X.br`, which is
+// decompressed on the fly by Electron (see `electron/src/serveDirectory.ts`).
+// Note OnlyOffice already ships `.br` files for most of its assets.
+function compressWithBrotli(dir) {
+  const COMPRESSIBLE = /\.(js|css|html|svg|json|wasm|ttf|dic|aff|dat|bin|idx|txt)$/;
+  const MIN_SIZE = 64 * 1024; // files of at least 64KB
+
+  const files = fs
+    .readdirSync(dir, { recursive: true })
+    .map((file) => path.join(dir, file))
+    .filter((file) => fs.statSync(file).isFile());
+
+  for (const file of files) {
+    const size = fs.statSync(file).size;
+    const compressedFile = `${file}.br`;
+
+    if (COMPRESSIBLE.test(file) && size >= MIN_SIZE) {
+      const compressed = zlib.brotliCompressSync(fs.readFileSync(file), {
+        params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9, [zlib.constants.BROTLI_PARAM_SIZE_HINT]: size },
+      });
+      fs.writeFileSync(compressedFile, compressed);
+      fs.rmSync(file);
+    }
+  }
+}
