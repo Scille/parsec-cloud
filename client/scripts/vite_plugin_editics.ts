@@ -156,7 +156,14 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
 
   const targets = [
     {
-      src: ['node_modules/onlyoffice-editor/**/*', '!node_modules/onlyoffice-editor/**/package.json'],
+      src: [
+        'node_modules/onlyoffice-editor/**/*',
+        '!node_modules/onlyoffice-editor/**/package.json',
+        // Fallbacks of the wasm engines (e.g. `sdkjs/common/zlib/engine/zlib_ie.js`)
+        // for browsers without WebAssembly support, which all our targets have.
+        '!node_modules/onlyoffice-editor/**/*_ie.js',
+        '!node_modules/onlyoffice-editor/**/*_ie.js.br',
+      ],
       dest: `editics/onlyoffice/${onlyofficeVersion}`,
       rename: { stripBase: 2 },
     },
