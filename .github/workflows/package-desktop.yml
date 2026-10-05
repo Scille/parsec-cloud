@@ -343,7 +343,7 @@ jobs:
       - name: Copy client build result to electron
         run: npm run electron:copy:webapp
         working-directory: client
-        timeout-minutes: 1
+        timeout-minutes: 5
 
       # Do not prepare codesign if the PR is from dependabot (it does not have access to secrets).
       - name: Prepare codesign
