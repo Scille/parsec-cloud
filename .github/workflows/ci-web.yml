@@ -198,7 +198,7 @@ jobs:
         timeout-minutes: 2
         shell: bash -ex {0}
         run: |
-          python scripts/check_unused_translations.py src/ --skip-unused --no-color
+          python scripts/check_unused_translations.py src/ --no-color
 
       - name: Unit tests
         run: npm run test:unit
