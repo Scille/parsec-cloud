@@ -79,9 +79,7 @@
             "insufficientRole": "Seuls les Gérants et les Propriétaires peuvent changer les rôles",
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
-            "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire",
-            "sameRole": "Rôle actuel",
-            "alreadyNotShared": "Déjà non partagé avec cet utilisateur"
+            "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire"
         },
         "reader": {
             "label": "Lecteur",
@@ -130,17 +128,10 @@
         "noInvitations": "Aucune invitation"
     },
     "browseFiles": {
-        "title": "Joindre un fichier",
-        "noFilesFound": "Aucun fichier ajouté",
-        "browse": "Parcourir",
         "maxFileSize": "taille maximum : {maxFileSize}",
         "addFile": "Ajouter un fichier",
         "removeFile": "Supprimer",
-        "currentFilesCount": "Fichiers inclus: {current} / {limit}",
-        "errors": {
-            "generic": "Impossible de lister les fichiers.",
-            "offline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet."
-        }
+        "currentFilesCount": "Fichiers inclus: {current} / {limit}"
     },
     "notification": {
         "changeRole": "Votre rôle a été modifié en tant que <b>{role}</b> dans l'espace de travail <b>{workspace}</b>",
@@ -150,10 +141,7 @@
         "userSharedDocument": "<b>{name}</b> a partagé un nouveau document",
         "allImportedElements": "Tous vos fichiers ont été importés",
         "newDeviceAdded": "Un nouvel appareil a été ajouté",
-        "serverOnline": "Vous êtes connecté au serveur Parsec",
-        "serverOffline": "Vous n'êtes plus connecté au serveur Parsec",
         "incompatibleServer": "Votre application n'est pas compatible avec le serveur.",
-        "nextButton": "fermer",
         "expiredOrganization": "Cette organisation a expiré."
     },
     "HomePage": {
@@ -167,13 +155,8 @@
             "authentication": "Authentification"
         },
         "profile": {
-            "settings": {
-                "title": "Paramètres",
-                "description": "Gérer vos paramètres Parsec"
-            },
             "account": {
                 "title": "Mon compte",
-                "description": "Gérer votre compte Parsec",
                 "personalData": {
                     "title": "Données personnelles",
                     "name": "Nom",
@@ -192,10 +175,8 @@
                     "codeModal": {
                         "title": "Entrez le code pour supprimer votre compte",
                         "description": "Nous avons envoyé un code de vérification à l'adresse e-mail associée à votre compte.",
-                        "irreversible": "Cette action est irréversible. Une fois votre compte supprimé, vous ne pourrez plus accéder à vos données ou services associés.",
                         "resendCode": "Renvoyer le code",
-                        "button": "Supprimer mon compte",
-                        "cancel": "Annuler"
+                        "button": "Supprimer mon compte"
                     },
                     "success": "Votre compte a été supprimé avec succès.",
                     "error": {
@@ -229,20 +210,16 @@
             "authentication": "Authentification",
             "account": "Compte",
             "recovery": "Récupération d'accès",
-            "contactUs": "Nous contacter",
             "documentation": "Documentation",
             "logout": "Déconnexion",
             "customerArea": "Espace client",
             "feedback": "Commentaires",
-            "myProfile": "Mon profil",
             "logoutConfirmTitle": "Déconnexion",
             "logoutConfirmQuestion": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
             "logoutImportsConfirmQuestion": "Les imports en cours seront annulés. Êtes-vous sûr(e) de vouloir vous déconnecter ?",
             "logoutYes": "Se déconnecter",
             "logoutNo": "Rester connecté(e)",
             "logoutWait": "Déconnexion. Veuillez patienter...",
-            "logoutFailed": "Une erreur est survenue lors de la déconnexion.",
-            "updateConfirmTitle": "Mettre à jour Parsec",
             "updateConfirmQuestion": "Vous serez déconnecté(e) et l'application sera fermée. Assurez vous de ne pas avoir d'opérations en cours. Souhaitez-vous continuer ?",
             "updateYes": "Mettre à jour Parsec",
             "updateNo": "Plus tard",
@@ -265,7 +242,6 @@
             "search": "Rechercher",
             "loggedIn": "Connecté",
             "noMatch": "Aucune organisation trouvée qui correspond à la recherche '{query}'.",
-            "trialOrganization": "Version d'essai",
             "expiration": {
                 "days": "1 jour restant | {days} jours restants",
                 "hours": "Moins d'une heure | {hours} heures restantes",
@@ -298,7 +274,6 @@
             "passwordLabel": "Mot de passe",
             "passwordError": "Le mot de passe est invalide.",
             "deviceNotFound": "Le fichier de l'appareil n'a pas été trouvé.",
-            "invalidData": "Le fichier de l'appareil contient des données invalides.",
             "unknownError": "Erreur inconnue.",
             "login": "Se connecter à une organisation",
             "loginButton": "Se connecter",
@@ -314,7 +289,6 @@
             "archiveSuccess": "L'appareil a été archivé.",
             "archiveFailure": "Impossible d'archiver l'appareil."
         },
-        "organizationActionSheet": "Organisation",
         "loginErrors": {
             "keyringFailed": "Impossible de se connecter",
             "keyringFailedTitle": "Impossible de se connecter",
@@ -343,7 +317,6 @@
                 "two": "Dans le menu de votre compte (en haut à droite), sélectionnez <b>Mes appareils</b>, puis cliquez sur <b>Ajouter un nouvel appareil</b> et <b>copiez le lien</b>.",
                 "three": "<b>Collez le lien</b> ci-dessous et suivez les instructions pour configurer votre navigateur web."
             },
-            "pasteLinkLabel": "Coller le lien d'invitation",
             "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
             "joinButton": "Continuer",
             "info": "Parsec stocke en toute sécurité vos clés d'accès dans votre navigateur. Assurez-vous que le stockage du navigateur est activé et qu'il n'est pas supprimé lorsque vous fermez votre navigateur ({more}).",
@@ -352,7 +325,6 @@
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session",
         "organizationRequest": {
-            "notAvailable": "Les requêtes pour rejoindre une organisation en utilisant un certificat ne sont pas encore disponibles sur votre système.",
             "title": "Demandes en attente",
             "status": {
                 "pending": "En attente",
@@ -363,12 +335,7 @@
                 "invalidLink": "Ce lien n'est pas un lien de réinitialisation d'authentification multifacteur valide."
             },
             "requestSent": {
-                "success": "Votre demande pour rejoindre l'organisation a été envoyée.",
-                "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard.",
-                "emailUsed": "Cet email est déjà utilisé.",
-                "alreadyEnrolled": "Un utilisateur avec ce certificat est déjà membre de l'organisation.",
-                "alreadySubmitted": "Une requête pour rejoindre l'organisation a déjà été soumise avec ce certificat.",
-                "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet."
+                "success": "Votre demande pour rejoindre l'organisation a été envoyée."
             },
             "requestCancelled": "Votre demande pour rejoindre l'organisation a bien été annulée.",
             "requestCancelError": "Impossible d'annuler la requête.",
@@ -383,10 +350,7 @@
                 "tooltip": "Votre demande pour rejoindre cette organisation est en attente d'approbation par un administrateur."
             },
             "rejected": {
-                "title": "Demande d'organisation rejetée",
-                "message": "Votre demande pour rejoindre l'organisation a été rejetée par un administrateur. Voulez-vous la supprimer ?",
                 "yes": "Supprimer la demande",
-                "no": "Conserver la demande",
                 "tooltip": "Votre demande pour rejoindre cette organisation a été rejetée par un administrateur."
             },
             "accepted": {
@@ -403,7 +367,6 @@
                 "sso": {
                     "label": "Continuer avec SSO",
                     "title": "Authentification unique (SSO)",
-                    "description": "Connectez-vous avec le SSO pour accéder à l'organisation.",
                     "noEmail": "Aucun email enregistré sur OpenBAO.",
                     "join": "Rejoindre avec SSO",
                     "connected": "Vous êtes connecté avec ProConnect.",
@@ -432,7 +395,6 @@
                     "cancel": "Annuler"
                 },
                 "certificate": {
-                    "selectCertificate": "Sélectionnez un certificat pour rejoindre l'organisation",
                     "noEmail": "Aucun email lié.",
                     "expired": "Expiré",
                     "serialNb": "Numéro de série : {serial}",
@@ -493,16 +455,12 @@
         "title": {
             "create": "Créer une nouvelle organisation",
             "personalDetails": "Saisissez vos informations",
-            "server": "Choisissez votre serveur adapté",
             "authentication": "Authentification",
             "overview": "Récapitulatif de votre organisation",
-            "done": "Votre organisation a bien été créée !",
             "nameAndServer": "Créer une organisation sur mon serveur Parsec"
         },
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
-            "personalDetails": "Renseignez votre nom et votre email.",
-            "server": "Choisissez le type de serveur dont vous avez besoin.",
             "needs": "Choisissez l'option qui correspond le mieux à vos besoins :",
             "authentication": "Choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
@@ -526,7 +484,6 @@
         },
         "server": {
             "saas": "Créer mon organisation sur Parsec",
-            "soon": "Bientôt disponible",
             "trial": {
                 "title": "Essayer Parsec pendant 15 jours",
                 "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)"
@@ -563,10 +520,6 @@
         "pleaseEnterUrl": "Veuillez coller ci-dessous le lien que vous avez récupéré depuis votre autre appareil/navigateur.",
         "join": "Rejoindre"
     },
-    "QuestionModal": {
-        "yes": "Oui",
-        "no": "Non"
-    },
     "TextInputModal": {
         "moveHere": "Déplacer ici",
         "cancel": "Annuler"
@@ -587,7 +540,6 @@
         "doc": "Doc.",
         "settings": "Paramètres",
         "downloadParsec": "Télécharger l'application de bureau",
-        "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/fr/{version}",
         "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html#{anchor}",
@@ -609,16 +561,12 @@
                 "information": "Informations"
             },
             "myProfile": "Mon profil",
-            "recoveryExport": "Fichier de récupération",
             "history": "Historique",
-            "viewer": "Aperçu du fichier",
-            "editor": "Édition du fichier",
             "archived": "Espaces archivés",
             "trashed": "Espaces à la corbeille"
         },
         "previous": "Précédent",
         "invitations": {
-            "title": "Aucune invitation | Une invitation | {count} invitations",
             "smallDisplayTitle": "invitation en cours | invitations en cours"
         },
         "workspaceSwitchModal": {
@@ -637,7 +585,6 @@
     "WorkspaceSharing": {
         "title": "Partager l'espace de travail",
         "searchPlaceholder": "Jean Martin",
-        "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
         "updateRoleSuccess": "Le rôle de {user} est désormais {role}.",
         "updateRoleFailure": "Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
@@ -647,15 +594,10 @@
             "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
         },
         "batchSharing": {
-            "outsiderRoleWarning": "Les profils {external} ne peuvent avoir que les rôles {contributor} ou {reader}.",
-            "external": "Externe",
-            "contributor": "Contributeur",
-            "reader": "Lecteur",
             "buttonSelect": "Sélectionner",
             "buttonCancel": "Annuler",
             "counter": "{count} utilisateur sélectionné | {count} utilisateurs sélectionnés",
             "chooseRole": "Choisir un rôle",
-            "noChanges": "Les membres sélectionnés étaient déjà {role}.",
             "someFailed": "Certaines assignations de rôle ont échoué.",
             "allFailed": "Une erreur est survenue, les assignations de rôle ont échoué. (Raison : {reason})",
             "updateRoleSuccess": "Le rôle des membres sélectionnées est désormais {role}.",
@@ -664,8 +606,6 @@
         "onlyUserWarning": "Afin d'éviter toute perte de données, partagez cet espace de travail avec d'autres utilisateurs ({link}).",
         "seeMore": "en savoir plus",
         "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'.",
-        "information": "Informations sur le partage",
-        "buttonClose": "Fermer",
         "filter": {
             "all": "Tous",
             "admins": "Administrateurs",
@@ -675,9 +615,6 @@
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",
-        "description": "Accédez à l'ensemble des paramètres de langue, de thème et de confidentialité de l'application.",
-        "general": "Général",
-        "advanced": "Avancé",
         "titles": {
             "display": "Affichage",
             "config": "Configuration",
@@ -720,11 +657,7 @@
         },
         "language": {
             "label": "Langue",
-            "description": "Choisir la langue de l'application",
-            "values": {
-                "frFR": "Français",
-                "enUS": "English"
-            }
+            "description": "Choisir la langue de l'application"
         },
         "theme": {
             "label": "Thème",
@@ -786,11 +719,7 @@
             "pageTitle": "Créer un nouvel espace de travail",
             "label": "Nom de l'espace de travail",
             "placeholder": "Mon espace",
-            "create": "Créer",
-            "sameNameExistsTitle": "Nom d'espace dupliqué",
-            "sameNameExistsQuestion": "Un autre espace de travail existe avec ce nom ou un nom similaire. Souhaitez-vous créer cet espace?",
-            "createAnyway": "Créer",
-            "cancel": "Annuler"
+            "create": "Créer"
         },
         "RenameWorkspaceModal": {
             "pageTitle": "Renommer l'espace de travail",
@@ -805,16 +734,8 @@
             }
         },
         "Workspace": {
-            "lastUpdate": "Dernière modification :",
             "notShared": "Non partagé",
             "hidden": "Masqué"
-        },
-        "listDisplayTitles": {
-            "name": "Nom",
-            "role": "Rôle",
-            "sharedWith": "Utilisateurs",
-            "lastUpdate": "Dernière modif.",
-            "size": "Taille"
         },
         "sort": {
             "sortByName": "Nom",
@@ -828,11 +749,9 @@
         "filter": {
             "title": "Filtrer",
             "roles": "Rôle",
-            "show": "Afficher",
             "reset": "Réinitialiser"
         },
         "categoriesMenu": {
-            "myWorkspaces": "Mes espaces",
             "recent": "Récents",
             "favorites": "Favoris",
             "hidden": "Masqués",
@@ -844,7 +763,6 @@
             "showHiddenWorkspaces": "Afficher les espaces masqués"
         },
         "showHideWorkspace": {
-            "failedStarted": "Impossible d'obtenir les informations relatives à l'espace de travail. Veuillez réessayer.",
             "successDesktopHidden": "L'espace de travail est maintenant masqué et n'apparaîtra plus dans votre explorateur.",
             "successWebHidden": "L'espace de travail est maintenant masqué dans Parsec.",
             "failedHidden": "Impossible de masquer l'espace de travail. Veuillez réessayer.",
@@ -855,18 +773,9 @@
         "workspaceHiddenModal": {
             "title": "Masquer un espace de travail",
             "affectedWorkspaces": "Vous êtes sur le point de masquer l'espace de travail <b>{workspace}</b>. Cet espace de travail ne sera plus visible depuis l'explorateur de fichiers.",
-            "info": "Vous pouvez cocher “Afficher les espaces masqués” pour le voir dans Parsec.",
             "actionConfirm": "Masquer l'espace de travail",
             "actionCancel": "Annuler",
-            "noReminder": "Ne plus me rappeler",
-            "showWorkspace": {
-                "toastSuccess": "L'espace de travail {workspace} est maintenant visible.",
-                "toastFailure": "Impossible d'afficher l'espace de travail {workspace}. Veuillez réessayer."
-            },
-            "hideWorkspace": {
-                "toastSuccess": "L'espace de travail {workspace} est maintenant masqué.",
-                "toastFailure": "Impossible de masquer l'espace de travail {workspace}. Veuillez réessayer."
-            }
+            "noReminder": "Ne plus me rappeler"
         },
         "openInExplorerModal": {
             "file": {
@@ -898,18 +807,12 @@
                 "success": "L'espace {workspace} a bien été archivé.",
                 "fail": "Impossible d'archiver l'espace {workspace}."
             },
-            "success": "L'espace {workspace} a bien été archivé.",
-            "restoreSuccess": "L'espace {workspace} a bien été restauré.",
             "readOnly": "Lecture seule",
             "timestamp": "Archivé le : {timestamp}",
-            "count": "1 espace de travail | {count} espaces de travail",
-            "isArchived": "Espace de travail archivé (lecture seule)",
-            "isTrashed": "Espace de travail supprimé (lecture seule)"
+            "count": "1 espace de travail | {count} espaces de travail"
         },
         "restoreWorkspace": {
             "title": "Restaurer cet espace de travail",
-            "subtitleArchived": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Les précédents accès en lecture et écriture seront restaurés.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
-            "subtitleTrashed": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Sa suppression programmée sera annulée.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
             "yes": "Restaurer",
             "no": "Annuler",
             "restore": {
@@ -954,8 +857,7 @@
                 "minutes": "{amount} minute | {amount} minutes",
                 "hours": "{amount} heure | {amount} heures",
                 "days": "{amount} jour | {amount} jours"
-            },
-            "noClientInfo": "Impossible de contacter le serveur pour récupérer les délais de suppression d'espace de travail. Assurez-vous d'être en ligne pour cette opération."
+            }
         }
     },
     "FoldersPage": {
@@ -1007,7 +909,6 @@
             "desc": "Décroissant"
         },
         "File": {
-            "lastUpdate": "Dernière modification :",
             "importing": "Importation...",
             "copying": "Copie...",
             "moving": "Déplacement..."
@@ -1030,19 +931,11 @@
             "actionSeeInExplorer": "Afficher dans l'explorateur",
             "actionSelect": "Sélection",
             "actionSelectAll": "Tout sélectionner",
-            "actionUnselectAll": "Tout désélectionner",
             "actionShare": "Partager",
             "actionShowEnclosingFolder": "Voir dans le dossier"
         },
         "importModal": {
-            "title": "Importer vos fichiers",
-            "dragAndDrop": "Glisser/Déposer vos fichiers ici",
-            "or": "ou",
-            "browse": "Parcourir",
-            "replaceTitle": "Remplacer ou ignorer le fichier | Remplacer ou ignorer les fichiers",
-            "replaceQuestion": "Un fichier avec le nom `{file}` existe déjà. Souhaitez-vous le remplacer ? | {count} fichiers existent déjà. Souhaitez-vous les remplacer ?",
-            "skipText": "Ignorer | Tout ignorer",
-            "replaceText": "Remplacer | Tout remplacer"
+            "or": "ou"
         },
         "errors": {
             "deleteFailed": "Le fichier `{name}` n'a pas pu être supprimé, veuillez réessayer.",
@@ -1050,17 +943,9 @@
             "renameFailedAlreadyExists": "Un fichier du même nom existe déjà dans ce répertoire.",
             "createFolderFailed": "Le dossier `{name}` n'a pas pu être créé, veuillez réessayer.",
             "createFolderAlreadyExists": "Impossible de créer le répertoire `{name}` car un élément du même nom existe déjà.",
-            "listFailed": "Le contenu du dossier `{path}` n'a pas pu être listé.",
             "deleteMultipleAllFailed": "Aucun élément n'a pu être supprimé.",
             "deleteMultipleSomeFailed": "Certains éléments n'ont pas pu être supprimés.",
-            "copyOneFailed": "Le fichier `{name}` n'a pas pu être copié, veuillez réessayer.",
-            "copyMultipleAllFailed": "Aucun élément n'a pu être copié.",
-            "copyMultipleSomeFailed": "Certains éléments n'ont pas pu être copiés.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail (raison: {reason}).",
-            "copyFailedTooManyFiles": "Trop d'éléments à copier.",
-            "copyFailedMaxRecursion": "Trop d'éléments à copier.",
-            "copyFailedOneFailed": "Un ou plusieurs éléments n'ont pas pu être copiés.",
-            "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas.",
             "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
             "failedToListContent": "Impossible de lister le contenu de ce dossier.",
             "createFileFailed": "Failed to create the file.",
@@ -1101,15 +986,10 @@
         "copySelectFolderTitle": "Copier un élément | Copier {count} éléments",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
         "copyMoveFolderNoElement": "Aucun élément dans ce dossier",
-        "moveAlreadyExistTitle": "Remplacer ou ignorer l'élément | Remplacer ou ignorer les éléments",
-        "moveAlreadyExistQuestion": "Un élément nommé `{file}` existe déjà dans le dossier de destination. Que souhaitez-vous faire ? | Plusieurs éléments du même nom existent déjà dans le dossier de destination. Que souhaitez-vous faire ?",
-        "moveAlreadyExistSkip": "Ignorer | Tout ignorer",
-        "moveAlreadyExistReplace": "Remplacer | Tout remplacer",
         "open": {
             "fileFailed": "Le fichier `{name}` n'a pas pu être ouvert.",
             "fileFailedGeneric": "Impossible d'ouvrir ce fichier.",
             "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",
-            "unavailableOnWeb": "Cette fonctionnalité n'est pas encore disponible en mode web.",
             "unhandledFileType": "Impossible d'afficher le contenu de ce fichier.",
             "noVisibleOnWeb": "Parsec ne peut pas afficher ce type de document. Vous pouvez télécharger ce fichier en le sélectionnant ou en ouvrant les options puis en cliquant sur 'Télécharger'.",
             "noVisibleOnWebTitle": "Impossible d'afficher ce fichier",
@@ -1132,7 +1012,6 @@
             "importFilesAction": "Importer des fichiers",
             "importFolderAction": "Importer un dossier",
             "title": "Tâches de fond",
-            "failedDetails": "Vérifier votre connexion internet",
             "browse": "Aller à l'emplacement",
             "tabs": {
                 "inProgress": "En cours",
@@ -1142,8 +1021,6 @@
             },
             "noTasks": "Aucune tâche",
             "noCurrentTasks": "Aucun tâche dans cette catégorie",
-            "noImportDone": "Pas d'import terminé",
-            "noImportFailed": "Pas d'import échoué",
             "dropInstructions": "Glissez & déposez vos fichiers pour les importer",
             "noDropForReader": "Vous êtes Lecteur sur cet espace de travail et ne pouvez pas importer des fichiers."
         },
@@ -1153,34 +1030,21 @@
         },
         "MoveFile": {
             "moveMultipleFiles": "Déplacement de <b>{count} fichiers</b>",
-            "move": "Déplacement de <b>{name}</b>",
-            "failedDetails": "Veuillez vous assurer que vous êtes en ligne."
+            "move": "Déplacement de <b>{name}</b>"
         },
         "RestoreFile": {
             "restoreMultipleFiles": "Restauration de <b>{count} fichiers</b>",
-            "restore": "Restauration de <b>{name}</b>",
-            "failedDetails": "Impossible de restaurer ce fichier ou dossier."
+            "restore": "Restauration de <b>{name}</b>"
         },
         "DownloadFile": {
             "downloadWarningTitle": "Êtes-vous sûr de vouloir télécharger ce fichier ?|Êtes-vous sûr de vouloir télécharger ces fichiers ?",
             "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité.|SI vous téléchargez ces fichiers en dehors de Parsec, nous ne pourrons plus garantir leur sécurité.",
             "downloadWarningDocMessage": "Pour plus d'informations, vous pouvez consulter notre {0}.",
             "downloadWarningDoc": "documentation",
-            "cannotDownloadFolders": "Impossible de télécharger des dossiers.",
-            "foldersNotDownloaded": "Les dossiers ne seront pas téléchargés.",
             "allFailed": "Impossible de démarrer le téléchargement des fichiers.",
-            "someFailed": "Impossible de démarrer le téléchargement de certains fichiers.",
-            "openFailed": "Impossible d'ouvrir le fichier. Vous pouvez essayer en utilisant la liste des téléchargement de votre navigateur.",
             "cancel": "Annuler",
             "downloadButton": "Télécharger le fichier|Télécharger les fichiers",
-            "notRemindMe": "Ne plus me le rappeler",
-            "maximumRecursionReached": "Profondeur maximale de sous-dossiers atteinte, impossible de télécharger",
-            "maximumFilesReached": "Trop de fichiers sélectionnés, impossible de télécharger",
-            "archiveTitle": "Téléchargement de fichiers",
-            "archiveQuestion": "Les fichiers sélectionnées seront téléchargés dans une archive, avec une taille totale de {size}. Souhaitez-vous continuer ?",
-            "archiveYes": "Télécharger l'archive",
-            "archiveNo": "Annuler",
-            "archive": "Création de l'archive"
+            "notRemindMe": "Ne plus me le rappeler"
         },
         "ConflictsFile": {
             "title": "Conflits: noms de fichiers déjà existants",
@@ -1193,12 +1057,6 @@
                 "keepAll": "Conserver les deux"
             }
         },
-        "uploadsLeft": "{amount} imports en attente",
-        "copiesLeft": "{amount} copies en attente",
-        "movesLeft": "{amount} déplacements en attente",
-        "itemsDoneAmount": "Une autre opération terminée | {amount} autres opérations terminées",
-        "itemsErrorAmount": "Une autre opération annulée ou échouée | {amount} autres opérations annulées ou échouées",
-        "operationAmount": "{amount} opération",
         "search": {
             "title": "Résultats de la recherche",
             "resultsCount": "{count} résultat | {count} résultats",
@@ -1249,7 +1107,6 @@
         "folderSyncKo": "Ce dossier n'est pas synchronisé avec le serveur."
     },
     "OrganizationPage": {
-        "title": "Informations",
         "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
         "users": {
             "revokedUsers": "Révoqué | Révoqués",
@@ -1257,7 +1114,6 @@
             "frozenUsers": "Suspendu | Suspendus",
             "title": "Utilisateurs",
             "seeUsers": "Voir tous les utilisateurs",
-            "addUser": "Ajouter un utilisateur",
             "invitations": {
                 "emailInvitations": "Invitations par e-mail",
                 "linkRequests": "Demandes par lien"
@@ -1286,12 +1142,7 @@
     },
     "common": {
         "date": {
-            "asIs": "{date}",
-            "fewSeconds": "à l'instant",
-            "lessThanAMinute": "< 1 minute",
-            "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
-            "lastLoginHours": "il y a une heure | il y a {hours} heures",
-            "lastLoginDays": "Aujourd'hui | Hier | il y a {days} jours"
+            "asIs": "{date}"
         },
         "filesize": {
             "bytes": "{size} o",
@@ -1309,27 +1160,20 @@
             "unknown": "Inconnu ({label})",
             "mobileWeb": "Mobile Web"
         },
-        "sortBy": "Trier par :",
         "technicalId": "ID interne :"
     },
     "SideMenu": {
         "organization": "Organisation",
         "workspaces": "Espaces de travail",
         "recent": "Récents",
-        "favorites": "Favoris",
-        "hidden": "Masqués",
         "archived": "Archivés",
         "trashed": "Corbeille",
-        "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
         "invitationsRequests": "Invitations & Demandes",
-        "storage": "Stockage",
         "information": "Informations",
-        "goToHome": "Mes espaces",
         "myWorkspaces": "Mes espaces",
         "recentDocuments": "Documents récents",
         "noRecentDocuments": "Aucun document récent",
-        "back": "Retour",
         "checklist": {
             "title": "Recommandations de sécurité",
             "description": "Pour réduire le risque de perte de données, nous vous recommandons d'effectuer les tâches suivantes.",
@@ -1344,15 +1188,7 @@
         "tabbar": {
             "workspaces": "Espaces de travail",
             "files": "Fichiers",
-            "organization": "Organisation",
-            "myProfile": "Mon profil",
-            "newWorkspace": "Créer un espace de travail",
-            "newFolder": "Nouveau dossier",
-            "importFile": "Importer un fichier",
-            "importFolder": "Importer un dossier",
-            "scanDocument": "Scanner un document",
-            "importPhoto": "Importer une photo",
-            "addUser": "Ajouter un utilisateur"
+            "organization": "Organisation"
         },
         "tabbarOptions": {
             "more": "Plus",
@@ -1367,7 +1203,6 @@
             "title": "Votre organisation est gelée",
             "description": "Vous avez toujours accès à vos données, mais vous ne pouvez pas créer de nouveaux espaces de travail ni partager les espaces existants.",
             "contact": "Contacter le service technique",
-            "contactAdmin": "Contacter un administrateur",
             "email": "contact{'@'}parsec.cloud"
         }
     },
@@ -1376,10 +1211,8 @@
         "description": "Les appareils listés ci-dessous vous permettent d'accéder à cette organisation.",
         "addDevice": "Ajouter un nouvel appareil",
         "greetDevice": "Accueillir un nouvel appareil",
-        "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
         "joinedOn": "Rejoint :",
-        "now": "À l'instant",
         "greet": {
             "steps": {
                 "hostCode": "Code hôte",
@@ -1398,18 +1231,12 @@
                 "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché sur l'appareil invité.",
                 "summary": "L'appareil {label} a été ajouté à votre profil.",
                 "getDeviceInfo": "En attente des informations de l'appareil invité.",
-                "scanOrShare2": "ou ",
-                "cancelGreet": "Êtes-vous sûr(e) de vouloir annuler le processus d'ajout d'appareil ?",
-                "copiedToClipboard": "Copié dans le presse-papier"
+                "cancelGreet": "Êtes-vous sûr(e) de vouloir annuler le processus d'ajout d'appareil ?"
             },
             "step1": {
                 "title": "Ouvrez Parsec sur le nouvel appareil",
                 "description": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout.",
                 "info": "Avant de commencer, assurez-vous d'utiliser la version la plus récente de Parsec sur vos deux appareils."
-            },
-            "step2": {
-                "title": "Scannez le code QR ou copiez le lien",
-                "description": "Scannez le code QR avec votre nouvel appareil ou copiez le lien et ouvrez-le sur le nouvel appareil."
             },
             "errors": {
                 "retrieveDeviceInfoFailed": "Impossible de récupérer les informations.",
@@ -1450,15 +1277,7 @@
     },
     "Password": {
         "password": "Mot de passe",
-        "currentPassword": "Mot de passe actuel",
-        "newPassword": "Nouveau mot de passe",
-        "confirmPassword": "Confirmer le mot de passe",
-        "passwordInfo": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail.",
-        "passwordLevelLow": "Faible",
-        "passwordLevelMedium": "Moyen",
-        "passwordLevelHigh": "Fort",
-        "passwordCriteria": "Assurez-vous qu'il correspond à un niveau fort : évitez les répétitions, les mots trop communs et les suites.",
-        "noMatch": "Ne correspondent pas"
+        "currentPassword": "Mot de passe actuel"
     },
     "Authentication": {
         "title": "Authentification",
@@ -1477,14 +1296,7 @@
                     "yes": "Continuer",
                     "no": "Conserver la méthode actuelle"
                 },
-                "selectButton": "Ajouter un certificat",
-                "selectOther": "Modifier",
-                "selectInstructions": "Une fenêtre va s'ouvrir pour vous demander de sélectionner le certificat.",
-                "certificateSelected": "Certificat sélectionné",
                 "errors": {
-                    "noCertificate": "Aucun certificat n'a été sélectionné.",
-                    "invalidCertificate": "Le certificat sélectionné est invalide. Veuillez en choisir un autre.",
-                    "globalError": "Une erreur est survenue lors de la sélection du certificat. Veuillez réessayer.",
                     "listCertificatesFailed": "Impossible de lister les certificats."
                 }
             },
@@ -1500,7 +1312,6 @@
         "active": "Méthode active",
         "update": "Change de méthode",
         "changeAuthenticationButton": "Changer de méthode",
-        "changePasswordButton": "Modifier le mot de passe",
         "useKeyring": "Authentification du système",
         "usePassword": "Mot de passe",
         "useSmartcard": "Carte à puce",
@@ -1533,17 +1344,11 @@
                 "buttonCopy": "Copier la clé",
                 "buttonCopied": "Clé copiée"
             },
-            "step3": {
-                "title": "Saisir le code à 6 chiffres",
-                "description": "Après avoir scanné le QR code ou coller la clé, l'application d'authentification générera un code à 6 chiffres à saisir."
-            },
             "buttons": {
                 "next": "Suivant",
                 "done": "Terminé",
                 "back": "Précédent",
-                "configure": "Configurer MFA",
-                "delete": "Supprimer MFA",
-                "activate": "Activer MFA"
+                "configure": "Configurer MFA"
             },
             "error": {
                 "invalidCode": "Le code que vous avez saisi est invalide. Veuillez réessayer.",
@@ -1569,14 +1374,11 @@
                 "subtitle": "L'authentification multifacteur sera désactivée sur cet appareil, mais restera configurée pour l'organisation. Vous pouvez décider de la réactiver à tout moment.",
                 "moreInformation": "Plus d'informations",
                 "warning": "La désactivation de l'authentification multifacteur sur cet appareil réduira la sécurité.",
-                "authenticationTitle": "Authentification actuelle",
                 "totpCodeTitle": "Code MFA",
                 "confirmButton": "Supprimer le MFA",
                 "cancelButton": "Annuler",
-                "success": "L'authentification multifacteur a été supprimée avec succès.",
                 "error": {
-                    "notSetup": "L'authentification multifacteur n'est pas configurée.",
-                    "wrongAuthentication": "L'authentification est incorrecte. Veuillez réessayer."
+                    "notSetup": "L'authentification multifacteur n'est pas configurée."
                 }
             },
             "modalRequired": {
@@ -1593,28 +1395,12 @@
             "noText": "Se déconnecter"
         }
     },
-    "PasswordInputModal": {
-        "passwordNeeded": "Mot de passe requis",
-        "enterPassword": "Veuillez saisir le mot de passe {org} pour continuer.",
-        "password": "Mot de passe",
-        "validate": "Valider",
-        "invalid": "Mot de passe invalide.",
-        "otherError": "Une erreur est survenue."
-    },
     "ImportRecoveryDevicePage": {
-        "titles": {
-            "forgottenPassword": "Mot de passe oublié",
-            "authChanged": "L'authentification a bien été modifiée"
-        },
         "subtitles": {
-            "recoveryFilesMustExistWarning": "Vous devez avoir créé un fichier de récupération pour réinitialiser votre authentification.",
-            "setNewAuthentication": "Choisissez une méthode d'authentification"
+            "recoveryFilesMustExistWarning": "Vous devez avoir créé un fichier de récupération pour réinitialiser votre authentification."
         },
         "actions": {
-            "browse": "Parcourir",
-            "next": "Suivant",
-            "validateAuth": "Confirmer",
-            "login": "Se connecter"
+            "validateAuth": "Confirmer"
         },
         "modal": {
             "title": "Comment souhaitez-vous restaurer votre appareil ?",
@@ -1661,16 +1447,7 @@
                     "updateRecoveryFile": "Modifier"
                 }
             },
-            "shamir": {
-                "title": "Récupération via les utilisateurs de confiance",
-                "subtitle": "Suivez les étapes ci-dessous pour restaurer votre session grâce à votre cercle de confiance.",
-                "steps": {
-                    "contactTrustedMembers": "Contactez les membres de votre cercle de confiance",
-                    "requestRecovery": "Demandez-leur de partager les informations de récupération",
-                    "enterVerificationCode": "Saisissez le code de vérification reçu",
-                    "chooseNewAuthentication": "Choisissez votre nouvelle méthode d'authentification"
-                }
-            },
+            "shamir": {},
             "authentication": {
                 "title": "Choisissez une nouvelle méthode d'authentification",
                 "subtitle": "Sélectionnez une méthode d'authentification disponible pour récupérer cet appareil/navigateur. Vous pourrez ensuite utiliser cette nouvelle méthode d'authentification pour vous connecter à l'organisation et la modifier à tout moment."
@@ -1683,8 +1460,6 @@
         "errors": {
             "fileErrorMessage": "Le fichier de récupération est invalide.",
             "keyErrorMessage": "La clé secrète ne correspond pas au fichier de récupération.",
-            "passwordErrorMessage": "Les mots de passe ne correspondent pas ou ne sont pas assez forts.",
-            "saveDeviceErrorMessage": "Une erreur est survenue, la récupération d'appareil a échoué.",
             "internalErrorMessage": "Une erreur est survenue"
         },
         "secretKeyPlaceholder": "FH3H-N3DW-ABED-A6Q7-.."
@@ -1695,19 +1470,14 @@
             "recoveryKey": "Clé secrète"
         },
         "subtitles": {
-            "aboutRecoveryFiles": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "keepFilesSeparate": "Vous devez enregistrer le fichier de récupération et sa clé secrète. Assurez-vous que les deux ne sont pas stockés au même endroit.",
-            "warningUniqueness": "Veuillez noter que ces fichiers ne sont pas stockés par Parsec. Si vous perdez l'un de ces fichiers ou les deux, vous devrez créer un nouveau fichier de récupération.",
-            "keyExplanation": "La clé secrète est un code qui doit être utilisé avec le fichier de récupération pour créer un nouveau mot de passe."
+            "aboutRecoveryFiles": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils."
         },
         "actions": {
-            "createRecoveryButton": "Créer des fichiers de récupération",
             "download": "Télécharger",
             "downloadAgain": "Télécharger à nouveau",
             "backToDevices": "Retour à mes appareils"
         },
         "toasts": {
-            "fileDownloadOk": "Le fichier de récupération a bien été téléchargé",
             "keyDownloadOk": "La clé secrète a bien été téléchargée"
         },
         "filenames": {
@@ -1733,7 +1503,6 @@
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
         "continueWith": "Continuer avec {greeter}",
-        "waitingForAnyHost": "En attente d'un administrateur",
         "waitingForHost": "En attente de l'administrateur",
         "linkFormLabel": "Coller le lien d'invitation",
         "linkFormPlaceholder": "parsec3://exemple.com/Org?...",
@@ -1865,8 +1634,7 @@
             "titleUpdateProfile": "Profil",
             "actionUpdateProfile": "Modifier le profil | Modifier les profils",
             "actionSelect": "Sélection",
-            "actionSelectAll": "Tout sélectionner",
-            "actionUnselectAll": "Tout désélectionner"
+            "actionSelectAll": "Tout sélectionner"
         },
         "greet": {
             "titles": {
@@ -1923,7 +1691,6 @@
         },
         "invitation": {
             "greetUser": "Accueillir",
-            "rejectUser": "Annuler",
             "sendEmailTitle": "Renvoyer le lien par email",
             "sendEmailMessage": "L'utilisateur devrait déjà avoir reçu un email contenant le lien. Êtes-vous sûr(e) de vouloir en envoyer un autre ?",
             "sendEmail": "Renvoyer l'email",
@@ -1931,7 +1698,6 @@
             "inviteSuccessMailSent": "Une invitation à rejoindre l'organisation a été envoyée à {email}. | Les invitations à rejoindre l'organisation ont été envoyées à {count} emails.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé à {email}. Veuillez transmettre le lien d'invitation manuellement. | Les invitations ont été créées mais certains emails n'ont pas pu être envoyés. Veuillez transmettre les liens d'invitation manuellement.",
             "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation. | Les invitations ont été envoyées avec succès, mais une ou plusieurs adresses appartiennent déjà à des membres de cette organisation.",
-            "inviteFailedAlreadyInvited": "Une invitation a déjà été créée par un autre administrateur pour l'email {email}.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
@@ -2079,7 +1845,6 @@
                 "failed": "Impossible de copier le lien. Votre navigateur ou votre appareil ne semble pas prendre en charge le copier-coller."
             },
             "tooltips": {
-                "reject": "Refuser la demande",
                 "copyLinkInfo": "Partagez ce lien avec les utilisateurs souhaitant rejoindre l'organisation avec une carte à puce (PKI) ou un compte ProConnect (SSO)."
             },
             "selectProfileModal": {
@@ -2089,9 +1854,6 @@
                 "actions": {
                     "confirm": "Valider la demande",
                     "cancel": "Annuler"
-                },
-                "errors": {
-                    "noProfile": "Vous devez sélectionner un profil."
                 }
             },
             "rejectModal": {
@@ -2103,10 +1865,6 @@
                 }
             },
             "validationModal": {
-                "button": {
-                    "cancel": "Annuler",
-                    "confirm": "Confirmer l'ajout de l'utilisateur"
-                },
                 "acceptedFailed": "Échec de l'acceptation de cette demande",
                 "acceptedSuccess": "Cette demande a été acceptée",
                 "rejectedFailed": "Échec du rejet de cette demande",
@@ -2116,20 +1874,14 @@
                 "modal": {
                     "title": "Sélectionner un certificat",
                     "info": "Un certificat est requis pour accepter la demande",
-                    "description": "Un certificat est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation.",
-                    "next": "Continuer",
-                    "cancel": "Annuler",
-                    "setRootCertificate": "Sélectionner un certificat",
-                    "updateRootCertificate": "Mettre à jour le certificat"
+                    "description": "Un certificat est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation."
                 }
             },
             "ssoRequests": {
-                "connectWithSSO": "Se connecter avec SSO",
                 "modal": {
                     "title": "Vous devez être connecté pour accepter la demande",
                     "description": "L'utilisateur a demandé à rejoindre l'organisation en utilisant SSO. Veuillez vous connecter ci-dessous pour accepter la demande.",
-                    "next": "Continuer",
-                    "cancel": "Annuler"
+                    "next": "Continuer"
                 }
             },
             "errors": {
@@ -2143,8 +1895,7 @@
                 "offline": "Vous êtes hors ligne. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
                 "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
                 "canNotAccept": "Impossible à accepter",
-                "errorDetail": "Détails de l'erreur :",
-                "reduceButton": "Réduire"
+                "errorDetail": "Détails de l'erreur :"
             }
         },
         "confirm": "Confirmer"
@@ -2171,7 +1922,6 @@
             "email": "Votre email",
             "description": "Description du problème",
             "joinFile": "Joindre un fichier",
-            "browse": "Parcourir",
             "cancel": "Annuler",
             "submit": "Envoyer le rapport"
         },
@@ -2209,8 +1959,7 @@
             "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée du processus d'accueil.",
             "getCode": "Sélectionnez le code que vous apercevez sur l'appareil principal.",
             "provideCode": "Sur l'appareil principal, veuillez sélectionner le code que vous voyez ci-dessous.",
-            "authentication": "Pour finir, choisissez une méthode d'authentification pour votre nouvel appareil.",
-            "done": "L'appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connecter à Parsec avec celui-ci."
+            "authentication": "Pour finir, choisissez une méthode d'authentification pour votre nouvel appareil."
         },
         "buttons": {
             "understand": "J'ai compris !",
@@ -2255,11 +2004,8 @@
         "titleCurrentCertificate": "Connectez-vous avec votre PKI",
         "titleNewAuthentication": "Changer de méthode d'authentification",
         "titleTotp": "Code d'authentification multi-facteurs",
-        "password": "Mot de passe",
-        "systemAuthentication": "Votre session est gérée avec l'authentification votre appareil.",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
-        "passwordPlaceholder": "••••••••••",
         "changeAuthenticationButton": "Confirmer le changement",
         "authenticationUpdated": "L'authentification a été mise à jour.",
         "tabs": {
@@ -2290,7 +2036,6 @@
     "OrganizationRecovery": {
         "title": "Récupération d'accès",
         "description": "Activez des moyens de récupération en cas de perte de votre accès (mot de passe oublié, authentification perdue, etc.) depuis un appareil ou un navigateur.",
-        "advice": "Nous vous conseillons de créer des fichiers de récupération pour chaque organisation.",
         "file": {
             "title": "Fichiers de récupération",
             "description": "Un fichier de récupération et une clé secrète vous permettent, une fois assemblés, de retrouver l'accès à vos données.",
@@ -2389,11 +2134,6 @@
             "recreateQuestionMessage": "Vous avez déjà créé des fichiers de récupération dans le passé. Souhaitez-vous en créer de nouveaux ?",
             "recreateYes": "Créer de nouveaux fichiers",
             "recreateNo": "Annuler"
-        },
-        "notDone": {
-            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
-            "button": "Créer des fichiers de récupération"
         }
     },
     "validators": {
@@ -2453,17 +2193,10 @@
     },
     "OrganizationSwitch": {
         "loggedInOrgs": "Organisations connectées",
-        "myOrgs": "Mes organisations",
-        "invite": "Inviter un membre",
-        "manage": "Gérer",
         "goToLogin": "Changer d'organisation"
     },
     "lib": {
-        "components": {
-            "msChoosePasswordInput": {
-                "description": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail."
-            }
-        }
+        "components": {}
     },
     "UserSelect": {
         "defaultLabel": "Chercher un utilisateur",
@@ -2475,14 +2208,12 @@
         "title": "Mon compte Parsec",
         "logIn": "Se connecter",
         "forgotPassword": "Mot de passe oublié ?",
-        "noAccount": "Pas de compte Parsec ?",
         "createAccount": {
             "title": {
                 "default": "Créer un compte",
                 "codeTitle": "Validez votre email",
                 "authenticationTitle": "Choisissez votre méthode d'authentification",
-                "creatingTitle": "Création de votre compte",
-                "createdTitle": "Compte créé !"
+                "creatingTitle": "Création de votre compte"
             },
             "subtitle": {
                 "default": "Saisissez vos coordonnées pour commencer votre inscription.",
@@ -2492,7 +2223,6 @@
             "description": "Pas encore de compte Parsec ?",
             "createAccountButton": "Créer un compte",
             "alreadyHaveAnAccount": "Vous avez déjà un compte ?",
-            "loginButton": "Se connecter",
             "nextButton": "Suivant",
             "sendCode": "Envoyer un code de validation",
             "resendCode": "Renvoyer un code",
@@ -2517,22 +2247,19 @@
             "firstname": "Prénom",
             "lastname": "Nom de famille",
             "email": "Adresse email",
-            "password": "Mot de passe",
-            "confirmPassword": "Confirmer le mot de passe"
+            "password": "Mot de passe"
         },
         "recoverAccount": {
             "step1": {
                 "title": "Récupérer votre compte",
-                "description": "Veuillez renseigner l'adresse email liée à votre compte pour continuer.",
-                "nextButton": "Envoyer un code de validation"
+                "description": "Veuillez renseigner l'adresse email liée à votre compte pour continuer."
             },
             "step2": {
                 "title": "Vérification de votre email",
                 "description": "Un code de vérification a été envoyé à votre adresse électronique. Veuillez le saisir pour mettre à jour votre mot de passe.",
                 "resendCode": "Renvoyer un code",
                 "nextButton": "Valider",
-                "update": "Modifier",
-                "info": "Si vous ne recevez pas le code, veuillez vérifier votre dossier de spam ou de courrier indésirable."
+                "update": "Modifier"
             },
             "step3": {
                 "title": "Choisissez votre nouveau mot de passe",
@@ -2558,7 +2285,6 @@
             "title": "Espace client",
             "button": "Accéder"
         },
-        "logOut": "Se déconnecter",
         "skip": "Passer cette étape",
         "storeAccountTitle": "Stocker dans Parsec Account",
         "storeAccountQuestion": "Cet appareil n'est pas stocké dans Parsec Account. Voulez-vous le stocker pour qu'il soit disponible partout ?",
@@ -2578,7 +2304,6 @@
             "saveLogin": "Se souvenir de moi",
             "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
             "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
-            "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
             "noAccount": "Vous n'avez pas encore d'espace client ?",
             "createAccount": "Créer un compte"
         },
@@ -2586,7 +2311,6 @@
             "getEmailStep": {
                 "title": "Mot de passe oublié",
                 "description": "Pas d'inquiétude, nous allons vous aider à réinitialiser votre mot de passe.",
-                "email": "Adresse mail",
                 "nextButton": "Soumettre",
                 "previousButton": "Retour à la connexion",
                 "error": "Impossible de réinitialiser votre mot de passe. Veuillez vérifier votre email."
@@ -2605,7 +2329,6 @@
             "logoutConfirmQuestion": "Souhaitez-vous vous déconnecter?",
             "logoutYes": "Me déconnecter",
             "logoutNo": "Rester connecté",
-            "createNewOrganization": "Créer une nouvelle organisation",
             "createFirstOrganization": "Créer mon organisation",
             "allOrganization": "Toutes les organisations",
             "noOrganization": "Aucune organisation",
@@ -2644,9 +2367,7 @@
                 "personalData": "Mon profil",
                 "statistics": "Statistiques",
                 "customOrderBillingDetails": "Coordonnées de facturation",
-                "customOrderInvoices": "Factures",
                 "customOrderStatistics": "Statistiques",
-                "customOrderProcessing": "Suivi de commande",
                 "orders": "Commandes"
             },
             "settings": "Paramètres",
@@ -2654,29 +2375,16 @@
         },
         "personalDataPage": {
             "personalInfo": {
-                "title": "Informations personnelles",
-                "firstname": "Prénom",
-                "lastname": "Nom",
-                "phone": "Téléphone",
-                "notDefined": "Non défini"
+                "title": "Informations personnelles"
             },
             "professionalInfo": {
-                "title": "Informations professionnelles",
-                "representCompany": {
-                    "title": "Je représente une entreprise",
-                    "yes": "Oui",
-                    "no": "Non"
-                },
-                "company": "Entreprise",
-                "job": "Poste"
+                "title": "Informations professionnelles"
             },
             "authentication": {
-                "title": "Authentification",
-                "email": "Email"
+                "title": "Authentification"
             },
             "security": {
-                "title": "Sécurité",
-                "password": "Mot de passe"
+                "title": "Sécurité"
             },
             "modals": {
                 "personalInfo": {
@@ -2708,7 +2416,6 @@
                     "newEmail": "Nouvel email",
                     "password": "Mot de passe",
                     "resend": "Vous n'avez pas reçu de code ?",
-                    "confirmPassword": "Confirmation de mot de passe",
                     "errors": {
                         "wrongPassword": "Le mot de passe est incorrect.",
                         "invalidCode": "Le code est incorrect.",
@@ -2716,7 +2423,6 @@
                         "emailAlreadyUsed": "Cet email est déjà utilisé.",
                         "resendFailed": "Impossible d'envoyer un autre email."
                     },
-                    "noEmptyFields": "Aucun champ ne doit être vide.",
                     "newEmailMustBeDifferent": "Le nouvel email doit être différent de l'actuel.",
                     "success": "L'adresse email a bien été mise à jour.",
                     "continue": "Continuer",
@@ -2740,12 +2446,8 @@
                 }
             }
         },
-        "billingDetails": {
-            "retrieveFailed": "Impossible de récupérer les informations de paiement."
-        },
         "statistics": {
             "titles": {
-                "stats": "Statistiques",
                 "users": "Utilisateurs",
                 "active": "actifs",
                 "revoked": "révoqués",
@@ -2769,8 +2471,7 @@
             "used": "utilisé",
             "additionalCost": "(Coût supplémentaire par tranche de 100 Go)",
             "almostFullUsed": "Vous avez presque atteint votre limite de stockage.",
-            "fullUsed": "Vous avez consommé toute la quantité de stockage prévue dans votre contrat.",
-            "overUsed": "Vous avez dépassé la quantité de stockage prévue dans votre contrat, veuillez réajuster."
+            "fullUsed": "Vous avez consommé toute la quantité de stockage prévue dans votre contrat."
         },
         "invoices": {
             "title": "Aperçu de vos factures",
@@ -2785,8 +2486,7 @@
                 "organization": "Organisation",
                 "date": "Date de facturation",
                 "price": {
-                    "title": "Montant",
-                    "amount": "{count} €"
+                    "title": "Montant"
                 },
                 "contractPeriod": {
                     "title": "Période du contrat",
@@ -2806,14 +2506,6 @@
         },
         "invoicesCustomOrder": {
             "contract": "Contrat n°{number}",
-            "contractStatus": {
-                "unknown": "Inconnu",
-                "contractEnded": "Contrat terminé",
-                "estimateLinked": "Devis lié",
-                "invoicePaid": "Actif",
-                "invoiceToBePaid": "Facture à payer",
-                "nothingLinked": "En cours de traitement"
-            },
             "number": "Numéro de facture",
             "information": "Informations",
             "startingDate": "Date de début",
@@ -2896,7 +2588,6 @@
             },
             "invoices": {
                 "title": "Dernières factures",
-                "noBill": "Aucune facture à afficher.",
                 "date": "Date",
                 "organization": "Organisation",
                 "price": {
@@ -2978,17 +2669,9 @@
         },
         "contracts": {
             "loading": "Votre contrat arrive...",
-            "title": "Contrat n°{number}",
             "previewOrganization": "Utilisation de votre organisation",
-            "noContract": "Vous n'avez pas encore de contrat.",
-            "duration": "Durée",
-            "from": "Depuis",
-            "to": "Jusqu'au",
-            "amount": "Montant",
             "multipleOrganizations": "Vous possédez plusieurs organisations. Veuillez en choisir une en utilisant le bouton dans le coin supérieur gauche ou sélectionnez-là ci-dessous pour voir le contrat.",
-            "selectAnOrganization": "Veuillez sélectionner une organisation",
             "errors": {
-                "noOrganizations": "Impossible de lister vos organisations",
                 "noInfo": "Impossible de récupérer les informations",
                 "unavailable": "Non disponible"
             },
@@ -2997,28 +2680,14 @@
                 "admin": "Administrateur | Administrateurs",
                 "external": "Externe | Externes",
                 "remaining": "{number} restant | {number} restants",
-                "fullAccess": "Tous les accès",
-                "allFeaturesAccess": "Accès à toutes les fonctionnalités",
-                "rightLimited": "Droits limités",
                 "onTotal": "/ {count} membres",
                 "errorExceed": "Vous dépassez le nombre de membres prévu dans votre contrat. Pensez à supprimer des membres."
             },
             "storage": {
                 "title": "Stockage",
-                "stack": "par tranche de 100 Go",
                 "used": "{percentage}% utilisés",
                 "onTotal": "/ {count}",
                 "errorExceed": "Vous dépassez le stockage prévu dans votre contract. Pensez à supprimer des fichiers."
-            },
-            "invoice": {
-                "title": "Facture",
-                "noInvoice": "Vous n'avez pas encore de facture.",
-                "paymentMethod": "Méthode de paiement",
-                "transfer": "Virement bancaire",
-                "date": "Date : ",
-                "payment": "Paiement : ",
-                "price": "{count} €",
-                "download": "Télécharger"
             }
         },
         "orders": {
@@ -3066,19 +2735,9 @@
                 "serverFailure": "Un problème est survenu (requête serveur refusée)."
             },
             "progress": {
-                "orderNumber": "Commande n°{number}",
-                "noOrder": "Vous n'avez pas de commande en cours."
+                "orderNumber": "Commande n°{number}"
             },
-            "passed": {
-                "title": "Commande terminée",
-                "header": {
-                    "orderNumber": "Numéro de commande",
-                    "period": "Période",
-                    "users": "Nombre d'utilisateurs",
-                    "storage": "Volume de données",
-                    "status": "Statut"
-                }
-            },
+            "passed": {},
             "quantityOrdered": {
                 "administrator": "{count} administrateur | {count} administrateurs",
                 "standard": "{count} membre | {count} membres",
@@ -3088,10 +2747,7 @@
                 "title": "À régler par virement",
                 "description": "La facture est à payer par virement bancaire.",
                 "price": "{amount} €",
-                "paid": "Montant payé",
-                "waiting": "En attente",
-                "download": "Télécharger",
-                "extend": "Prolonger le contrat"
+                "paid": "Montant payé"
             }
         }
     },
@@ -3120,20 +2776,13 @@
         "download": "Télécharger",
         "hideMenu": "Cacher le menu",
         "showMenu": "Afficher le menu",
-        "menu": "Menu",
-        "openingFile": "Ouverture du fichier...",
         "errors": {
             "titles": {
-                "fileTooBig": "Fichier trop volumineux",
-                "impossibleToOpen": "Impossible d'éditer ce fichier",
                 "genericError": "Impossible d'ouvrir ce fichier",
                 "unsupportedFileType": "Type de fichier non pris en charge par Parsec",
                 "editionNotAvailable": "L'édition de documents n'est pas disponible"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
-            "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
-            "unknownFileExtension": "L'extension de ce fichier n'a pas pu être reconnue. Veuillez vérifier qu'elle est correctement écrite (.txt, .pdf, .doc, etc.).",
-            "noContentFileType": "Impossible d'ouvrir ce fichier, son type n'ayant pas pu être reconnu dans l'éditeur de Parsec.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
             "mediaNotSupported": "Ce média ne peut pas être joué.",
             "statsFailed": "Impossible de récupérer les informations du fichier."
@@ -3156,25 +2805,15 @@
                 "suffix": "/ {totalPages}"
             }
         },
-        "spreadsheet": {
-            "loadSheetError": "Impossible de charger cette feuille.",
-            "loadDocumentError": "Impossible de charger ce document.",
-            "loadingDocument": "Chargement du document...",
-            "loadingSheet": "Chargement de la feuille `{page}`"
-        },
         "pdf": {
             "loadDocumentError": "Impossible de charger ce document.",
             "loadPageError": "Impossible de charger cette page."
-        },
-        "document": {
-            "loadDocumentError": "Impossible de charger ce document."
         },
         "image": {
             "loadImageError": "Impossible d'afficher l'image."
         },
         "text": {
             "loadDocumentError": "Impossible de charger ce document.",
-            "loadingDocument": "Chargement du document...",
             "imagePlaceholder": "Les images ne peuvent pas être chargées."
         },
         "players": {
@@ -3205,12 +2844,7 @@
             },
             "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
             "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",
-            "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut').",
-            "contentInfoMissing": "Les informations sur le contenu du fichier sont vides ou manquantes.",
-            "fileExtensionMissing": "Le type de fichier (extension) est manquant ou vide.",
-            "fileNameMissing": "Le nom du fichier est vide ou manquant.",
-            "fileIdMissing": "L'identifiant du fichier est vide ou manquant.",
-            "fileDataMissing": "Les données du fichier sont vides ou manquantes."
+            "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut')."
         },
         "advices": {
             "title": "Quelques conseils pour résoudre ce problème",
@@ -3219,9 +2853,6 @@
         },
         "actions": {
             "backToFiles": "Retour aux fichiers",
-            "retry": "Recharger la page",
-            "openWithDefaultApp": "Ouvrir avec l'app par défaut",
-            "downloadFile": "Télécharger le fichier",
             "wait": "Attendre",
             "close": "Fermer"
         },
@@ -3250,8 +2881,7 @@
     "openFallback": {
         "title": "Parsec Edition n'est pas disponible",
         "subtitle": {
-            "download": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
-            "previewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil."
+            "download": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil."
         },
         "actions": {
             "viewer": "Prévisualiser",
