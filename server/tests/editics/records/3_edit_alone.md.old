@@ -1,0 +1,255 @@
+### 09:06:22.564       Alice      [Transport WebSocket] ws-open
+
+```json
+"wss://site.docs.onlyoffice.com/9.4.1-e9f43897e5cfcbabaf9c2dac6f595fee/web-apps/apps/documenteditor/main/../../../../doc/8297a896-de2e-4bc5-884b-95b726fa8ce6/c/?shardkey=8297a896-de2e-4bc5-884b-95b726fa8ce6&EIO=4&transport=websocket"
+```
+
+### 09:06:22.913   <-  Alice      [Transport Engine.IO] open
+
+```json
+{
+  "eio": "open",
+  "payload": {
+    "sid": "4sKy9njOPPTB_KDXAI4m",
+    "upgrades": [],
+    "pingInterval": 25000,
+    "pingTimeout": 20000,
+    "maxPayload": 100000000
+  }
+}
+```
+
+### 09:06:23.068   <-  Alice      license
+
+```json
+{
+  "type": "license",
+  "license": {
+    "type": 3,
+    "light": false,
+    "mode": 0,
+    "rights": 1,
+    "buildVersion": "9.4.1",
+    "buildNumber": 15,
+    "protectionSupport": true,
+    "isAnonymousSupport": true,
+    "liveViewerSupport": true,
+    "branding": true,
+    "customization": true,
+    "advancedApi": true
+  }
+}
+```
+
+### 09:06:23.174   ->  Alice      auth
+
+```json
+{
+  "type": "auth",
+  "docid": "8297a896-de2e-4bc5-884b-95b726fa8ce6",
+  "token": "fghhfgsjdgfjs",
+  "user": {
+    "id": "de10a11cec0010000000000000000000",
+    "username": "Alice",
+    "firstname": null,
+    "lastname": null,
+    "indexUser": -1
+  },
+  "editorType": 0,
+  "lastOtherSaveTime": -1,
+  "block": [],
+  "sessionId": null,
+  "sessionTimeConnect": null,
+  "sessionTimeIdle": 0,
+  "documentFormatSave": 65,
+  "isCloseCoAuthoring": false,
+  "openCmd": {
+    "c": "open",
+    "id": "8297a896-de2e-4bc5-884b-95b726fa8ce6",
+    "userid": "de10a11cec0010000000000000000000",
+    "format": "docx",
+    "url": "https://static.onlyoffice.com/assets/docs/samples/demo.docx",
+    "title": "Example Document Title.docx",
+    "lcid": 9,
+    "nobase64": true,
+    "outputformat": 8193,
+    "convertToOrigin": ".pdf.xps.oxps.djvu"
+  },
+  "lang": "en",
+  "permissions": {
+    "edit": true,
+    "review": true
+  },
+  "encrypted": false,
+  "IsAnonymousUser": false,
+  "timezoneOffset": -120,
+  "headingsColor": null,
+  "coEditingMode": "fast",
+  "jwtOpen": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkb2N1bWVudCI6eyJmaWxlVHlwZSI6ImRvY3giLCJrZXkiOiI4Mjk3YTg5Ni1kZTJlLTRiYzUtODg0Yi05NWI3MjZmYThjZTYiLCJ0aXRsZSI6IkV4YW1wbGUgRG9jdW1lbnQgVGl0bGUuZG9jeCIsInVybCI6Imh0dHBzOi8vc3RhdGljLm9ubHlvZmZpY2UuY29tL2Fzc2V0cy9kb2NzL3NhbXBsZXMvZGVtby5kb2N4IiwicGVybWlzc2lvbnMiOnsiZWRpdCI6dHJ1ZSwicmV2aWV3Ijp0cnVlfX0sImRvY3VtZW50VHlwZSI6IndvcmQiLCJlZGl0b3JDb25maWciOnsibGFuZyI6ImVuIiwidXNlciI6eyJpZCI6Ijc4ZTFlODQxIiwibmFtZSI6IkpvaG4gU21pdGgifSwiY3VzdG9taXphdGlvbiI6eyJoaWRlUmlnaHRNZW51Ijp0cnVlLCJpbnRlZ3JhdGlvbk1vZGUiOiJlbWJlZCIsImFub255bW91cyI6eyJyZXF1ZXN0IjpmYWxzZX19LCJwbHVnaW5zIjp7InBsdWdpbnNEYXRhIjpbImh0dHBzOi8vd3d3Lm9ubHlvZmZpY2UuY29tL3BsdWdpbi1yYWluYm93L2NvbmZpZy5qc29uIl19fSwid2lkdGgiOiIxMDAlIiwiaGVpZ2h0IjoiMTAwJSIsImlhdCI6MTc5MTE5MTE4MX0.MR8DRyaUU-WF_wifF_PYcZcBOmjKwGOJeLSWz1HWeS0",
+  "time": 947,
+  "supportAuthChangesAck": true
+}
+```
+
+### 09:06:23.357   <-  Alice      auth
+
+```json
+{
+  "type": "auth",
+  "result": 1,
+  "sessionId": "2wyGqZ8G2xc4BBRiAI4n",
+  "sessionTimeConnect": 1791191182991,
+  "participants": [
+    {
+      "id": "de10a11cec00100000000000000000001",
+      "idOriginal": "de10a11cec0010000000000000000000",
+      "username": "Alice",
+      "indexUser": 1,
+      "view": false,
+      "connectionId": "2wyGqZ8G2xc4BBRiAI4n",
+      "isCloseCoAuthoring": false,
+      "isLiveViewer": false,
+      "encrypted": false
+    }
+  ],
+  "locks": {},
+  "indexUser": 1,
+  "hasForgotten": false,
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkb2N1bWVudCI6eyJrZXkiOiI4Mjk3YTg5Ni1kZTJlLTRiYzUtODg0Yi05NWI3MjZmYThjZTYiLCJwZXJtaXNzaW9ucyI6eyJlZGl0Ijp0cnVlLCJyZXZpZXciOnRydWV9LCJkc19lbmNyeXB0ZWQiOmZhbHNlfSwiZWRpdG9yQ29uZmlnIjp7InVzZXIiOnsiaWQiOiI3OGUxZTg0MSIsIm5hbWUiOiJKb2huIFNtaXRoIiwiaW5kZXgiOjF9LCJkc19pc0Nsb3NlQ29BdXRob3JpbmciOmZhbHNlLCJkc19zZXNzaW9uVGltZUNvbm5lY3QiOjE3OTExOTExODI5OTF9LCJpYXQiOjE3OTExOTExODMsImV4cCI6MTc5Mzc4MzE4M30.XMMTh1fXnKt2d4JarWKUDWgXT3xjsmvfx8-gH5dPQQs",
+  "g_cAscSpellCheckUrl": "",
+  "buildVersion": "9.4.1",
+  "buildNumber": 15,
+  "licenseType": 3,
+  "settings": {
+    "spellcheckerUrl": "",
+    "reconnection": {
+      "attempts": 50,
+      "delay": 2000
+    },
+    "binaryChanges": false,
+    "websocketMaxPayloadSize": 1572864,
+    "maxChangesSize": 157286400,
+    "limits_image_size": 26214400,
+    "limits_image_types_upload": "jpg;jpeg;jpe;png;gif;bmp;svg;tiff;tif;webp;heic;heif;avif"
+  },
+  "openedAt": 1791198383254
+}
+```
+
+### 09:06:23.798   <-  Alice      documentOpen
+
+```json
+{
+  "type": "documentOpen",
+  "data": {
+    "type": "open",
+    "status": "ok",
+    "data": {
+      "Editor.bin": "https://site.docs.onlyoffice.com/cache/files/9.4.1-15/data/site/8297a896-de2e-4bc5-884b-95b726fa8ce6/Editor.bin/Editor.bin?md5=OG0Oai0BMw9eIfLIGbc46g&expires=1793785776&shardkey=8297a896-de2e-4bc5-884b-95b726fa8ce6&filename=Editor.bin"
+    },
+    "openedAt": 1791198383254
+  }
+}
+```
+
+### 09:06:24.279   ->  Alice      clientLog
+
+```json
+{
+  "type": "clientLog",
+  "level": "debug",
+  "msg": "onDownloadFile time:480"
+}
+```
+
+### 09:06:24.387   ->  Alice      clientLog
+
+```json
+{
+  "type": "clientLog",
+  "level": "debug",
+  "msg": "onOpenDocument time:107"
+}
+```
+
+### 09:06:24.489   ->  Alice      clientLog
+
+```json
+{
+  "type": "clientLog",
+  "level": "debug",
+  "msg": "onLoadFonts time:102"
+}
+```
+
+### 09:06:24.789   ->  Alice      getMessages
+
+```json
+{
+  "type": "getMessages"
+}
+```
+
+### 09:06:24.790   ->  Alice      clientLog
+
+```json
+{
+  "type": "clientLog",
+  "level": "debug",
+  "msg": "onDocumentContentReady time:2299 memory:{\"totalJSHeapSize\":172282928,\"usedJSHeapSize\":118646440,\"jsHeapSizeLimit\":4395630592}"
+}
+```
+
+### 09:06:24.943   <-  Alice      message
+
+```json
+{
+  "type": "message"
+}
+```
+
+### 09:06:42.530   ->  Alice      isSaveLock
+
+```json
+{
+  "type": "isSaveLock",
+  "syncChangesIndex": 0
+}
+```
+
+### 09:06:42.683   <-  Alice      saveLock
+
+```json
+{
+  "type": "saveLock",
+  "saveLock": false
+}
+```
+
+### 09:06:42.686   ->  Alice      saveChanges
+
+```json
+{
+  "type": "saveChanges",
+  "changes": "[\"66;AgAAADEA//8BAJaq/QAwjg4AjgAAAAMAAAAAAAAAAAAAAAEAAAAAAAAA9v///xAAAAA5AC4ANAAuADEALgAxADUA\",\"72;CAAAADEAMQAzADQAAgADAAMAAAABAAAACAAAADEAMQAzADgAAQAAAAgAAAAxADEAMwA5AAEAAAAIAAAAMQAxADQAMAAAAAAA\",\"165;CAAAADEAMQAzADcAAgAcAAsAAAAAAAAAAQAAAFcAAAAAAAAAAAEAAABlAAAAAAAAAAABAAAAbAAAAAAAAAAAAQAAAGMAAAAAAAAAAAEAAABvAAAAAAAAAAABAAAAbQAAAAAAAAAAAQAAAGUAAAAAAAAAAAIAAAAgAAAAAAAAAAEAAAB0AAAAAAAAAAABAAAAbwAAAAAAAAAAAgAAACAAAAAAAAAA\",\"40;CAAAADEAMQAzADQAAgADAAEAAAAAAAAACAAAADEAMQAzADcAAAAAAA==\",\"66;AgAAADEA//8BAJaq/QAwjg4AjgAAAAEAAAABAAAAAAAAAAEAAAAAAAAA9v///xAAAAA5AC4ANAAuADEALgAxADUA\",\"37;CAAAADEAMQA0ADEAAgAcAAEAAAAAAAAAAQAAAE8AAAAAAAAAAA==\"]",
+  "startSaveChanges": true,
+  "endSaveChanges": true,
+  "isCoAuthoring": false,
+  "isExcel": false,
+  "deleteIndex": null,
+  "excelAdditionalInfo": "{\"UserId\":\"de10a11cec00100000000000000000001\",\"UserShortId\":\"de10a11cec0010000000000000000000\",\"CursorInfo\":\"16;CAAAADEAMQA0ADcAAAAAAA==\"}",
+  "unlock": false,
+  "releaseLocks": false
+}
+```
+
+### 09:06:42.850   <-  Alice      unSaveLock
+
+```json
+{
+  "type": "unSaveLock",
+  "index": 0,
+  "time": 1791191202000,
+  "syncChangesIndex": 6
+}
+```
