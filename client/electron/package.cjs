@@ -152,7 +152,19 @@ const options = {
     buildResources: 'assets',
   },
 
-  files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*', 'app-editics/**/*'],
+  // Source maps are not shipped: they are uploaded to Sentry instead (see `sentryVitePlugin` in
+  // `client/vite.config.ts` for the web app, and the `sentry:sourcemaps` script for `build`).
+  files: [
+    'assets/**/*',
+    '!assets/installer.nsh',
+    'build/**/*',
+    '!build/**/*.js.map',
+    '!build/**/*.msi',
+    'app/**/*',
+    '!app/**/*.map',
+    'app-editics/**/*',
+    '!app-editics/**/*.map',
+  ],
 
   publish: publishConfig,
 
