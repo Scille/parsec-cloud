@@ -88,9 +88,10 @@ fs.mkdirSync('build/assets', { recursive: true });
 fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
 
 /**
+ * Certum certificate (valid until november 2027), kept as a fallback signing backend.
  * @type {Partial<import('app-builder-lib').WindowsConfiguration>}
  */
-const WIN_SIGN_OPTIONS = {
+const CERTUM_SIGN_OPTIONS = {
   signtoolOptions: {
     certificateSubjectName: 'Scille',
     certificateSha1: '4505A81975EF724601813DF296AB74A07ECFA991',
@@ -99,6 +100,24 @@ const WIN_SIGN_OPTIONS = {
     signingHashAlgorithms: ['sha256'],
   },
 };
+
+/**
+ * Azure Trusted Signing, the default signing backend.
+ * Note: electron-builder silently ignores `signtoolOptions` when both backends are set.
+ * @type {Partial<import('app-builder-lib').WindowsConfiguration>}
+ */
+const AZURE_SIGN_OPTIONS = {
+  azureSignOptions: {
+    publisherName: 'Scille',
+    endpoint: process.env.AZURE_TRUSTED_SIGNING_ENDPOINT,
+    certificateProfileName: process.env.AZURE_TRUSTED_SIGNING_PROFILE_NAME,
+    codeSigningAccountName: process.env.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME,
+  },
+};
+
+// Azure Trusted Signing is the default backend, the Certum certificate is kept as
+// a fallback: set PARSEC_WINDOWS_SIGN_BACKEND=certum to use it instead.
+const WIN_SIGN_OPTIONS = process.env.PARSEC_WINDOWS_SIGN_BACKEND === 'certum' ? CERTUM_SIGN_OPTIONS : AZURE_SIGN_OPTIONS;
 
 /**
  * @type {Partial<import('app-builder-lib').MacConfiguration>}
