@@ -22,7 +22,7 @@
             v-model="newEmailRef"
             @change="error = ''"
             @on-enter-keyup="submit"
-            :label="`${translationPrefix}.newEmail`"
+            :label="`clientArea.personalDataPage.modals.authentication.newEmail`"
             :validator="newEmailValidator"
             ref="newEmailInput"
           />
@@ -35,7 +35,7 @@
             v-model="passwordRef"
             @change="error = ''"
             @on-enter-keyup="submit"
-            :label="`${translationPrefix}.password`"
+            :label="`clientArea.personalDataPage.modals.authentication.password`"
             ref="passwordInput"
           />
         </div>
@@ -55,7 +55,7 @@
               :disabled="resendDisabled"
               class="send-code subtitles-sm"
             >
-              {{ $msTranslate(`${translationPrefix}.resend`) }}
+              {{ $msTranslate(`clientArea.personalDataPage.modals.authentication.resend`) }}
             </ion-text>
             <ion-icon
               :icon="checkmark"
@@ -107,7 +107,6 @@ enum Steps {
 }
 
 const step = ref(Steps.NewEmail);
-const translationPrefix = 'clientArea.personalDataPage.modals.authentication';
 const newEmailRef = ref('');
 const passwordRef = ref('');
 const error = ref('');
@@ -139,7 +138,7 @@ const canProgress = asyncComputed(async () => {
 const newEmailValidator: IValidator = async function (value: string) {
   const result = await emailValidator(value);
   if (result.validity === Validity.Valid && value === props.email) {
-    return { validity: Validity.Invalid, reason: `${translationPrefix}.newEmailMustBeDifferent` };
+    return { validity: Validity.Invalid, reason: 'clientArea.personalDataPage.modals.authentication.newEmailMustBeDifferent' };
   }
   return result;
 };
@@ -182,19 +181,19 @@ async function submit(): Promise<boolean> {
           if (response.errors && response.errors.length) {
             switch (response.errors[0].code) {
               case 'EMAIL_ALREADY_VALIDATED':
-                error.value = `${translationPrefix}.errors.emailAlreadyUsed`;
+                error.value = 'clientArea.personalDataPage.modals.authentication.errors.emailAlreadyUsed';
                 break;
               case 'EMAIL_VALIDATION_CODE_TRIES_EXCEEDED':
-                error.value = `${translationPrefix}.errors.tooManyTries`;
+                error.value = 'clientArea.personalDataPage.modals.authentication.errors.tooManyTries';
                 break;
               case 'EMAIL_VALIDATION_INVALID_CODE':
-                error.value = `${translationPrefix}.errors.invalidCode`;
+                error.value = 'clientArea.personalDataPage.modals.authentication.errors.invalidCode';
                 break;
             }
           }
           break;
         case 403:
-          error.value = `${translationPrefix}.errors.wrongPassword`;
+          error.value = 'clientArea.personalDataPage.modals.authentication.errors.wrongPassword';
           switchStep(Steps.Password);
           break;
         default:
@@ -214,17 +213,17 @@ async function switchStep(newStep: Steps): Promise<void> {
     case Steps.NewEmail:
       await newEmailInputRef.value?.setFocus();
       labels.value = {
-        title: `${translationPrefix}.emailTitle`,
-        subtitle: `${translationPrefix}.emailSubtitle`,
-        button: `${translationPrefix}.continue`,
+        title: 'clientArea.personalDataPage.modals.authentication.emailTitle',
+        subtitle: 'clientArea.personalDataPage.modals.authentication.emailSubtitle',
+        button: 'clientArea.personalDataPage.modals.authentication.continue',
       };
       break;
     case Steps.Password:
       await passwordInputRef.value?.setFocus();
       labels.value = {
-        title: `${translationPrefix}.passwordTitle`,
+        title: 'clientArea.personalDataPage.modals.authentication.passwordTitle',
         subtitle: '',
-        button: `${translationPrefix}.continue`,
+        button: 'clientArea.personalDataPage.modals.authentication.continue',
       };
       break;
     case Steps.Code:
@@ -232,9 +231,9 @@ async function switchStep(newStep: Steps): Promise<void> {
       // keeping it anyway in case it's fixed in megashark-lib
       await codeValidationInputRef.value?.setFocus();
       labels.value = {
-        title: `${translationPrefix}.validateTitle`,
-        subtitle: `${translationPrefix}.validateSubtitle`,
-        button: `${translationPrefix}.validate`,
+        title: 'clientArea.personalDataPage.modals.authentication.validateTitle',
+        subtitle: 'clientArea.personalDataPage.modals.authentication.validateSubtitle',
+        button: 'clientArea.personalDataPage.modals.authentication.validate',
       };
       break;
   }
@@ -245,7 +244,7 @@ async function resendCode(): Promise<void> {
 
   const response = await BmsAccessInstance.get().updateEmailSendCode(newEmailRef.value, longLocaleCodeToShort(I18n.getLocale()) as BmsLang);
   if (response.isError) {
-    error.value = `${translationPrefix}.errors.resendFailed`;
+    error.value = 'clientArea.personalDataPage.modals.authentication.errors.resendFailed';
   }
   resendOk.value = !response.isError;
 

@@ -3,10 +3,10 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="`${translationPrefix}.title`"
+      :title="`clientArea.personalDataPage.modals.professionalInfo.title`"
       :close-button="{ visible: true }"
       :confirm-button="{
-        label: `${translationPrefix}.nextButton`,
+        label: `clientArea.personalDataPage.modals.professionalInfo.nextButton`,
         disabled: !isFormValid() || querying,
         onClick: submit,
       }"
@@ -14,7 +14,7 @@
       <div class="modal-container">
         <div class="input-container represent-company">
           <p class="form-label">
-            {{ $msTranslate(`${translationPrefix}.representCompany`) }}
+            {{ $msTranslate(`clientArea.personalDataPage.modals.professionalInfo.representCompany`) }}
           </p>
           <ms-boolean-toggle
             v-model="representCompanyRef"
@@ -25,14 +25,14 @@
           v-show="representCompanyRef === Answer.Yes"
           v-model="companyRef"
           :maxlength="128"
-          :label="`${translationPrefix}.company`"
+          :label="`clientArea.personalDataPage.modals.professionalInfo.company`"
           @on-enter-keyup="submit"
         />
         <ms-input
           v-show="representCompanyRef === Answer.Yes"
           v-model="jobRef"
           :maxlength="128"
-          :label="`${translationPrefix}.job`"
+          :label="`clientArea.personalDataPage.modals.professionalInfo.job`"
           @on-enter-keyup="submit"
         />
         <ms-report-text
@@ -57,7 +57,6 @@ const props = defineProps<{
   job?: string;
 }>();
 
-const translationPrefix = 'clientArea.personalDataPage.modals.professionalInfo';
 const companyRef = ref(props.company);
 const jobRef = ref(props.job);
 const representCompanyRef = ref(areFieldsFilled() ? Answer.Yes : Answer.No);

@@ -20,48 +20,46 @@ export interface OrderStepTranslations {
   description: Translatable;
 }
 
-const translationPrefix = 'clientArea.dashboard.step';
-
 const OrderStepsTranslations: Record<OrderStep, OrderStepTranslations> = {
   [OrderStep.Received]: {
-    tag: `${translationPrefix}.requestSent.tag`,
-    title: `${translationPrefix}.requestSent.title`,
-    description: `${translationPrefix}.requestSent.description`,
+    tag: 'clientArea.dashboard.step.requestSent.tag',
+    title: 'clientArea.dashboard.step.requestSent.title',
+    description: 'clientArea.dashboard.step.requestSent.description',
   },
   [OrderStep.Processing]: {
-    tag: `${translationPrefix}.processing.tag`,
-    title: `${translationPrefix}.processing.title`,
-    description: `${translationPrefix}.processing.description`,
+    tag: 'clientArea.dashboard.step.processing.tag',
+    title: 'clientArea.dashboard.step.processing.title',
+    description: 'clientArea.dashboard.step.processing.description',
   },
   [OrderStep.Confirmed]: {
-    tag: `${translationPrefix}.confirmed.tag`,
-    title: `${translationPrefix}.confirmed.title`,
-    description: `${translationPrefix}.confirmed.description`,
+    tag: 'clientArea.dashboard.step.confirmed.tag',
+    title: 'clientArea.dashboard.step.confirmed.title',
+    description: 'clientArea.dashboard.step.confirmed.description',
   },
   [OrderStep.InvoiceToBePaid]: {
-    tag: `${translationPrefix}.invoiceToBePaid.tag`,
-    title: `${translationPrefix}.invoiceToBePaid.title`,
-    description: `${translationPrefix}.invoiceToBePaid.description`,
+    tag: 'clientArea.dashboard.step.invoiceToBePaid.tag',
+    title: 'clientArea.dashboard.step.invoiceToBePaid.title',
+    description: 'clientArea.dashboard.step.invoiceToBePaid.description',
   },
   [OrderStep.Available]: {
-    tag: `${translationPrefix}.organizationAvailable.tag`,
-    title: `${translationPrefix}.organizationAvailable.title`,
-    description: `${translationPrefix}.organizationAvailable.description`,
+    tag: 'clientArea.dashboard.step.organizationAvailable.tag',
+    title: 'clientArea.dashboard.step.organizationAvailable.title',
+    description: 'clientArea.dashboard.step.organizationAvailable.description',
   },
   [OrderStep.Standby]: {
-    tag: `${translationPrefix}.standby.tag`,
-    title: `${translationPrefix}.standby.title`,
-    description: `${translationPrefix}.standby.description`,
+    tag: 'clientArea.dashboard.step.standby.tag',
+    title: 'clientArea.dashboard.step.standby.title',
+    description: 'clientArea.dashboard.step.standby.description',
   },
   [OrderStep.Cancelled]: {
-    tag: `${translationPrefix}.cancel.tag`,
-    title: `${translationPrefix}.cancel.title`,
-    description: `${translationPrefix}.cancel.description`,
+    tag: 'clientArea.dashboard.step.cancel.tag',
+    title: 'clientArea.dashboard.step.cancel.title',
+    description: 'clientArea.dashboard.step.cancel.description',
   },
   [OrderStep.Unknown]: {
-    tag: `${translationPrefix}.error.tag`,
-    title: `${translationPrefix}.error.title`,
-    description: `${translationPrefix}.error.description`,
+    tag: 'clientArea.dashboard.step.error.tag',
+    title: 'clientArea.dashboard.step.error.title',
+    description: 'clientArea.dashboard.step.error.description',
   },
 };
 

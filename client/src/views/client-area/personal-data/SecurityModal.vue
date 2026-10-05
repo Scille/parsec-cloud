@@ -21,7 +21,7 @@
             v-model="passwordRef"
             @change="errors.password = ''"
             @on-enter-keyup="submit"
-            :label="`${translationPrefix}.passwordStep.password`"
+            :label="`clientArea.personalDataPage.modals.security.passwordStep.password`"
             ref="passwordInput"
           />
           <div
@@ -75,7 +75,6 @@ const enum UpdatePasswordStep {
   NewPassword,
 }
 const currentStep = ref<UpdatePasswordStep>(UpdatePasswordStep.Password);
-const translationPrefix = 'clientArea.personalDataPage.modals.security';
 const querying = ref(false);
 
 const passwordRef = ref('');
@@ -115,10 +114,10 @@ async function updatePassword(): Promise<boolean> {
     if (response.isError) {
       switch (response.status) {
         case 400:
-          errors.value.global = `${translationPrefix}.newPasswordStep.invalidPassword`;
+          errors.value.global = 'clientArea.personalDataPage.modals.security.newPasswordStep.invalidPassword';
           break;
         case 403:
-          errors.value.password = `${translationPrefix}.passwordStep.wrongPassword`;
+          errors.value.password = 'clientArea.personalDataPage.modals.security.passwordStep.wrongPassword';
           currentStep.value = UpdatePasswordStep.Password;
           break;
         default:
@@ -148,18 +147,18 @@ function arePasswordsDifferent(): boolean {
 function getStepTitle(): Translatable {
   switch (currentStep.value) {
     case UpdatePasswordStep.Password:
-      return `${translationPrefix}.passwordStep.title`;
+      return 'clientArea.personalDataPage.modals.security.passwordStep.title';
     case UpdatePasswordStep.NewPassword:
-      return `${translationPrefix}.newPasswordStep.title`;
+      return 'clientArea.personalDataPage.modals.security.newPasswordStep.title';
   }
 }
 
 function getStepButtonLabel(): Translatable {
   switch (currentStep.value) {
     case UpdatePasswordStep.Password:
-      return `${translationPrefix}.passwordStep.nextButton`;
+      return 'clientArea.personalDataPage.modals.security.passwordStep.nextButton';
     case UpdatePasswordStep.NewPassword:
-      return `${translationPrefix}.newPasswordStep.nextButton`;
+      return 'clientArea.personalDataPage.modals.security.newPasswordStep.nextButton';
   }
 }
 
@@ -174,7 +173,7 @@ function getPreviousButton():
   if (currentStep.value === UpdatePasswordStep.NewPassword) {
     return {
       disabled: false,
-      label: `${translationPrefix}.newPasswordStep.previousButton`,
+      label: 'clientArea.personalDataPage.modals.security.newPasswordStep.previousButton',
       onClick: onPreviousButtonClick,
     };
   }
@@ -190,7 +189,7 @@ async function onPreviousButtonClick(): Promise<boolean> {
 function onNewPasswordKeyup(): void {
   errors.value.global = '';
   if (!arePasswordsDifferent()) {
-    errors.value.global = `${translationPrefix}.newPasswordStep.newPasswordMustBeDifferent`;
+    errors.value.global = 'clientArea.personalDataPage.modals.security.newPasswordStep.newPasswordMustBeDifferent';
   }
 }
 </script>
