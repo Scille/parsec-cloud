@@ -149,8 +149,11 @@ this will trigger the `releaser` workflow that will:
 > [!IMPORTANT]
 > This step requires specific access that not all team members have. Before proceeding, make sure you have:
 > - **Windows** OS
-> - **SimplySign Desktop (proCertum)** — installed and configured
-> - A **signing token** delivered by an authorized (sworn) team member
+> - **Azure Trusted Signing credentials** — the `AZURE_CLIENT_SECRET` of the signing app registration
+>   (ask the DevOps team), plus access to the Azure resources (tenant, client id, endpoint, account
+>   name & certificate profile name, provided as environment variables, see below)
+> - **.NET SDK** installed (e.g. `winget install Microsoft.DotNet.SDK.8`) — required by the
+>   `TrustedSigning` PowerShell module
 >
 > If you don't have these, delegate this step to a team member who does.
 
@@ -161,6 +164,24 @@ python misc/sign_windows_release.py --version X.Y.Z
 ```
 
 This command will download the GUI & CLI artifacts, sign them, and re-upload the result on the release.
+
+Signing is done through **Azure Trusted Signing** (the same service the CI now uses to sign the
+Windows electron installers). Authentication uses the standard Azure environment variables, and the
+Trusted Signing resources are provided through the same variables used by the electron packaging:
+
+```shell
+export AZURE_TENANT_ID=<tenant id>
+export AZURE_CLIENT_ID=<client id>
+export AZURE_CLIENT_SECRET=<client secret>
+export AZURE_TRUSTED_SIGNING_ENDPOINT=https://weu.codesigning.azure.net/
+export AZURE_TRUSTED_SIGNING_ACCOUNT_NAME=parsec-cloud-signing
+export AZURE_TRUSTED_SIGNING_PROFILE_NAME=parsec-cloud-release-profile
+```
+
+> [!NOTE]
+> On first use, the `TrustedSigning` PowerShell module and its dependencies (signtool,
+> Microsoft.Trusted.Signing.Client) are downloaded & installed automatically for the current user.
+> This requires the .NET SDK to be available in `PATH`.
 
 #### After the release build script: publishing
 

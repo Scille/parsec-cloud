@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import functools
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -38,16 +39,21 @@ CLI_ARTIFACT_NAME = "Windows-x86_64-pc-windows-msvc-cli-pre-build"
 CLI_EXECUTABLE_PATTERN = r"^parsec-cli_.*_windows-x86_64-msvc.exe$"
 GUI_ARTIFACT_NAME = "windows-exe-X64-electron-pre-built"
 GUI_HARDENED_ARTIFACT_NAME = "windows-exe-hardened-X64-electron-pre-built"
-WINDOWS_KITS_BIN_DIR = Path("C:/Program Files (x86)/Windows Kits/10/bin")
 # Note the signing strategy differs between the CLI and the GUI:
-# - CLI: We just need to call signtool.exe on the executable and call it a day.
+# - CLI: We just need to sign the executable and call it a day.
 # - GUI: We need to sign the main executable, build an installer, and sign it.
 #
 # For this reason, this script takes care of the whole CLI signing process, while
 # relying on another sub-script embedded in the artifact to do the GUI signing.
-CLI_SIGN_CERTIFICATE_SUBJECT_NAME = "Scille"
-CLI_SIGN_CERTIFICATE_SHA1 = "4505A81975EF724601813DF296AB74A07ECFA991"
-CLI_SIGN_TIMESTAMP_SERVER = "http://time.certum.pl"
+#
+# Signing uses Azure Trusted Signing, just like the GUI sub-script does (through
+# electron-builder). Authentication is done through the standard Azure environment
+# variables (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET), and the
+# Trusted Signing resources are configured through the same variables as the GUI
+# (AZURE_TRUSTED_SIGNING_ENDPOINT, AZURE_TRUSTED_SIGNING_ACCOUNT_NAME and
+# AZURE_TRUSTED_SIGNING_PROFILE_NAME).
+# Note this also requires the .NET SDK, PowerShell and the `TrustedSigning`
+# PowerShell module (installed on first use by the GUI signing process).
 GUI_SIGN_SCRIPT_NAME = "sign-windows-package.cmd"
 
 
@@ -213,24 +219,6 @@ def upload_assets(path: Path, version: str, expected_files: int) -> None:
     )
 
 
-def get_signtool_path() -> str:
-    signtool_exe = "signtool.exe"
-    if shutil.which(signtool_exe) is None:
-        print(
-            f"signtool.exe not found in $PATH, looking for it in SDKs in {WINDOWS_KITS_BIN_DIR}..."
-        )
-        signtool_exe = None
-        for sdk in WINDOWS_KITS_BIN_DIR.absolute().iterdir():
-            candidate = sdk / "x64/signtool.exe"
-            if candidate.exists():
-                signtool_exe = str(candidate)
-                print(f"Found {signtool_exe} !")
-                break
-        if signtool_exe is None:
-            raise RuntimeError("signtool.exe not found :(")
-    return signtool_exe
-
-
 def download_and_unzip_artifact(artifact: Artifact, token: str, workdir: Path) -> Path:
     zip_path = workdir / f"{artifact.name}-{artifact.version}.zip"
     download_artifact(artifact.url, token, artifact.size, zip_path)
@@ -258,27 +246,26 @@ def sign_cli(version: str | None, workdir: Path) -> None:
 
     # 3) Sign
 
-    # Sign executable
-    signtool_exe = get_signtool_path()
+    # Sign the executable using Azure Trusted Signing, through the very same
+    # PowerShell module used by the GUI signing process.
+    # Note the module requires the .NET SDK to be installed.
+    endpoint = os.environ["AZURE_TRUSTED_SIGNING_ENDPOINT"]
+    account_name = os.environ["AZURE_TRUSTED_SIGNING_ACCOUNT_NAME"]
+    profile_name = os.environ["AZURE_TRUSTED_SIGNING_PROFILE_NAME"]
 
     run_cmds(
         [
-            # see https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool#sign-command-options
-            signtool_exe,
-            "sign",
-            "/a",
-            "/n",
-            CLI_SIGN_CERTIFICATE_SUBJECT_NAME,
-            "/t",
-            CLI_SIGN_TIMESTAMP_SERVER,
-            "/sha1",
-            CLI_SIGN_CERTIFICATE_SHA1,
-            "/fd",
-            "sha256",
-            "/d",
-            f"Parsec CLI {artifact.version}",
-            "/v",
-            f"{target}",
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            "Invoke-TrustedSigning"
+            f" -Endpoint '{endpoint}'"
+            f" -CodeSigningAccountName '{account_name}'"
+            f" -CertificateProfileName '{profile_name}'"
+            f" -FileDigest 'SHA256'"
+            f" -Description 'Parsec CLI {artifact.version}'"
+            f" -Files '{target}'",
         ],
         check=True,
     )
