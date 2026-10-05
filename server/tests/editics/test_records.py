@@ -52,7 +52,8 @@ class TypePlaceholder:
         return f"<{self._type.__name__}>"
 
 
-def _parse_record(record: str) -> list[RecordEvent]:
+def _parse_record(record_path: Path) -> list[RecordEvent]:
+    record = record_path.read_text()  # noqa: ASYNC240
     events = []
     e1s, e2s = itertools.tee(_HEADING_RE.finditer(record), 2)
     next(e2s)
@@ -71,7 +72,7 @@ def _parse_record(record: str) -> list[RecordEvent]:
         # Patch the non-deterministic fields from the server events
         if direction == "server-to-client":
             if type_ == "auth":
-                # Hardcoded values in `client/editics/protocol.js`
+                # Hardcoded values in `client/editics/collaborative_protocol.js`
                 payload["hasForgotten"] = False
                 payload["jwt"] = ""
                 payload["g_cAscSpellCheckUrl"] = ""
@@ -84,11 +85,27 @@ def _parse_record(record: str) -> list[RecordEvent]:
                 for p in payload["participants"]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
 
+        participant = e1.group("participant")
+        # We generate tests by recording session
+        # (see docs/rfcs/1030-collaborative-editics/oo-protocol-monitor/) from
+        # the official OnlyOffice website's demo page. So we endup with the
+        # wrong participant names and IDs that must be manually changed.
+        assert participant in ("Alice", "Bob"), (
+            "Unexpected participant name, tl;dr: run `"
+            "sed -i"
+            " -e 's/John Smith/Alice/g'"
+            " -e 's/Kate Cage/Bob/g'"
+            " -e 's/F89d8069ba2b/de10a11cec0010000000000000000000/g'"
+            " -e 's/78e1e841/de10808c001000000000000000000000/g'"
+            f"{record_path.resolve()}"
+            "`"
+        )
+
         events.append(
             RecordEvent(
                 timestamp=e1.group("timestamp"),
                 direction=direction,
-                participant=e1.group("participant"),
+                participant=participant,
                 type=type_,
                 payload=payload,
             )
@@ -158,9 +175,7 @@ async def _do_test_record(
     events (`<-`) are expected to reach the client as OnlyOffice events
     produced by the translator from the server's SSE broadcasts.
     """
-    events = _parse_record(
-        record_path.read_text()  # noqa: ASYNC240
-    )
+    events = _parse_record(record_path)
 
     async def _start_editics_js_client(task_status: TaskStatus[EditicsJSClient]):
         async with editics_js_runtime.new_client(
@@ -244,9 +259,10 @@ async def _do_test_record(
                                         unacknowlegde_server_events.append(server_event)
                         except TimeoutError as exc:
                             pink = "\x1b[35m"
+                            blue = "\x1b[34m"
                             no_color = "\x1b[0;0m"
                             exc.add_note(
-                                f"{pink}Participant {participant} was waiting for event:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix='\t')}"
+                                f"{pink}Participant {participant} was waiting for event {blue}{event.type}{pink}:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix='\t')}"
                             )
 
                             display_unacknowledged_events = ""
@@ -259,11 +275,14 @@ async def _do_test_record(
                                 display_unacknowledged_events += f"\t{participant}:\n"
                                 for event in events:
                                     display_unacknowledged_events += (
+                                        f"\n\t\t{blue}{event['type']}{no_color}:\n"
+                                    )
+                                    display_unacknowledged_events += (
                                         f"{textwrap.indent(pprint.pformat(event), prefix='\t\t')}\n"
                                     )
                             if display_unacknowledged_events:
                                 exc.add_note(
-                                    f"{pink}Received but unacknowledged yet events:{no_color}\n{display_unacknowledged_events}"
+                                    f"\n{pink}Received but unacknowledged yet events:{no_color}\n{display_unacknowledged_events}"
                                 )
 
                             raise
