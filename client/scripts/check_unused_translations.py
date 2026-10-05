@@ -38,36 +38,6 @@ def process_translation_file(translation_source: Path) -> list[str]:
     return _flatten_dict(content, "")
 
 
-def process_typescript(filepath: Path):
-    found_keys = []
-    try:
-        # Check if file defines a 'translationPrefix' constant.
-        # This is not bulletproof, but it seems to be an established convention :shrug:
-        output = subprocess.check_output(["grep", "const translationPrefix", filepath], text=True)
-        # Extract base key from the line where prefix is defined
-        # e.g. "const translationPrefix = 'my.base.key';" --> my.base.key
-        base_key = output.split("'")[1]
-
-        # Look for lines using the translationPrefix variable and replace it with the base key
-        # e.g. "... `${translationPrefix}.title`;" --> my.base.key.title
-        with open(filepath) as vue_file:
-            TRANSLATION_PREFIX_TAG = "${translationPrefix}"
-            found_keys.extend(
-                line.split("`")[1].replace(TRANSLATION_PREFIX_TAG, base_key)
-                for line in vue_file
-                if TRANSLATION_PREFIX_TAG in line
-            )
-
-        print(f"-> Found prefixed keys in '{filepath}' ({len(found_keys)} keys)")
-
-    except Exception:
-        # The parsing above is the *antithesis* of bulletproof,
-        # so just skip the file in case of error
-        pass
-
-    return found_keys
-
-
 def is_present_in_sources(translation_key: str, src: str):
     res = subprocess.run(["git", "grep", "-q", translation_key, src])
     return res.returncode == 0
@@ -121,16 +91,8 @@ if __name__ == "__main__":
     unused_keys = 0
     if not args.skip_unused:
         print("Checking for unused translations...")
-        # Check for translations keys used with a prefix (e.g. `${translationPrefix}.title`) in typescript code
-        used_with_prefix = []
-        for subdir, _, files in os.walk(args.src):
-            for file in files:
-                if file.endswith((".vue", ".ts")):
-                    used_with_prefix.extend(process_typescript(os.path.join(subdir, file)))
-
-        # Check if translation keys are present in sources
         for key in sorted(translation_keys[ref_lang]):
-            if not is_present_in_sources(key, args.src) and key not in used_with_prefix:
+            if not is_present_in_sources(key, args.src):
                 print(f"{HIGHLIGHT}{key}{RESET} was not found in sources", file=sys.stderr)
                 unused_keys += 1
 
