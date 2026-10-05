@@ -193,6 +193,7 @@ const options = {
     entitlementsInherit: './macOS/entitlements.plist',
     // https://www.electron.build/mac#binaries
     binaries: ['build/src/libparsec.node'],
+    icon: './macOS/parsec.icns',
   },
 
   linux: {
