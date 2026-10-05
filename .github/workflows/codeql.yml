@@ -60,7 +60,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # pin v4.38.1
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # pin v4.38.2
         with:
           languages: python
           setup-python-dependencies: false
@@ -72,7 +72,7 @@ jobs:
           # queries: security-extended,security-and-quality
 
       - name: Install uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           working-directory: server
           version: 0.11.29 # marker:uv-version
@@ -85,7 +85,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # pin v4.38.1
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # pin v4.38.2
         with:
           category: /language:python
 
@@ -114,7 +114,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # pin v4.38.1
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # pin v4.38.2
         with:
           languages: typescript
 
@@ -131,12 +131,12 @@ jobs:
 
       - name: Autobuild for typescript
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/autobuild@1c5b675653bb5c22dbe9b12b556ec555138e09fd # pin v4.38.1
+        uses: github/codeql-action/autobuild@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # pin v4.38.2
         with:
           working-directory: client
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # pin v4.38.1
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # pin v4.38.2
         with:
           category: /language:typescript
