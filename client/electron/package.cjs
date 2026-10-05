@@ -202,6 +202,7 @@ const options = {
     category: 'Office Network FileTransfer FileSystem Security',
     mimeTypes: [`x-scheme-handler/${PARSEC_SCHEME}`],
     target: 'snap',
+    icon: './assets/icon.png',
   },
 
   snap: {
