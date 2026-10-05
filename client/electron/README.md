@@ -47,10 +47,22 @@ WinFSP downloaded to build/winfsp-2.0.23075.msi
 [...]
 ```
 
-There are two requirements:
+There are three requirements:
 
 - `node` has to be available at the right version (see `misc/version_updater.py`)
-- `SimplySign` has to be installed (you will be prompted for a token during the first signing operation)
+- **Azure Trusted Signing credentials** — provided through the environment variables
+  `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` (authentication) and
+  `AZURE_TRUSTED_SIGNING_ENDPOINT`, `AZURE_TRUSTED_SIGNING_ACCOUNT_NAME`,
+  `AZURE_TRUSTED_SIGNING_PROFILE_NAME` (Trusted Signing resources).
+  Ask the DevOps team for the values.
+- **.NET SDK** has to be installed (e.g. `winget install Microsoft.DotNet.SDK.8`): the
+  `TrustedSigning` PowerShell module — used by electron-builder to sign — requires the `dotnet` CLI
+  to install its `sign` dependency (installed automatically on first use, along with signtool
+  and Microsoft.Trusted.Signing.Client).
+
+The signing backend is Azure Trusted Signing by default. The legacy Certum certificate (valid until
+November 2027) is kept as a fallback backend: set `PARSEC_WINDOWS_SIGN_BACKEND=certum` to use it
+(requires SimplySign & a signing token, as before).
 
 Then the installer is available in `dist`, for instance as `dist/Parsec_3.0.0-b.11.dev.19916+299b464_win_x86_64.exe`.
 

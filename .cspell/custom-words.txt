@@ -463,6 +463,7 @@ widestring
 windowscng
 WINDOWSICONHANDLER
 WinFsp
+winget
 winified
 winify
 winres
