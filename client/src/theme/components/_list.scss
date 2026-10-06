@@ -203,12 +203,17 @@
         padding: 0;
         flex-basis: 2.5rem;
         max-width: 2.5rem;
+        min-width: 2.5rem;
       }
     }
 
     .header-label-name,
     .file-name {
-      flex-basis: calc(40% - 8rem);
+      flex-basis: 40rem;
+
+      @include ms.responsive-breakpoint('xxl') {
+        flex-basis: calc(65% - 8rem);
+      }
 
       @include ms.responsive-breakpoint('xl') {
         flex-basis: calc(45% - 8rem);
@@ -224,15 +229,6 @@
 
       @include ms.responsive-breakpoint('sm') {
         flex-basis: calc(100% - 4rem);
-        padding: 0.75rem 1rem;
-      }
-    }
-
-    .files-list-header .header-label-name,
-    .result-list-item .file-name {
-      flex-basis: 40rem;
-
-      @include ms.responsive-breakpoint('sm') {
         padding: 0.75rem 1rem;
       }
     }
@@ -678,6 +674,7 @@
   right: 0.5rem !important;
   bottom: 0.25rem !important;
   background: hsla(214, 100%, 60%, 0.3);
+  outline: none !important;
 }
 
 // Set special style when search results are displayed

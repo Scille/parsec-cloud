@@ -140,6 +140,8 @@ function reset(): void {
     @include ms.responsive-breakpoint('sm') {
       top: 0.75rem;
       bottom: 0.75rem;
+      left: 0.5rem;
+      right: 0.5rem;
     }
 
     &.drop-active {
