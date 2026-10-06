@@ -257,7 +257,10 @@ class EditicsProtocolServerEventWaitAuth(BaseModel):
     """OnlyOffice `waitAuth` (s->c). Name kept. Per RFC §2.2 editics changes,
     `lockDocument` is replaced by `authLockedBy` (the indexUser holding the
     auth lock). Sent to a joining non-view participant when the auth lock is
-    held (§6.2), as the RPC reply (the newcomer is "parked")."""
+    held (§6.2): the newcomer is "parked" until the holder releases the lock.
+    Pushed on the newcomer's SSE channel, after the `connectState` broadcast
+    that carried the holder's participant entry (which the client needs to
+    translate this event into the OnlyOffice `lockDocument` field)."""
 
     type: Literal["waitAuth"] = "waitAuth"
     authLockedBy: EditicsProtocolIndexUser
