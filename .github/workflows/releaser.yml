@@ -146,12 +146,9 @@ jobs:
           cp ${CP_ARGS} artifacts/*-electron/Parsec_${{ needs.version.outputs.full }}_* release-files
           cp ${CP_ARGS} artifacts/*-electron/latest-*.yml release-files
 
-          # TODO: Currently, Windows electron client is not signed by the CI, thus
-          # it should not be uploaded when creating the draft release.
-          # These artifacts are uploaded manually by someone who is able to sign them.
-          # # EXE
-          # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
-          # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
+          # Copy Windows installer (signed by the CI using Azure Trusted Signing)
+          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
 
           # Copy client CLI
           cp ${CP_ARGS} artifacts/cli-*/parsec-cli-${{ needs.version.outputs.full }}-* release-files
@@ -178,7 +175,7 @@ jobs:
             # Get the leaf values of the artifacts.yml file.
             # This correspond to filename that need to be uploaded.
             # But we need to add the prefix `release-files`
-            yq . artifacts.yml -o json | jq -r '"release-files/" + (.. | scalars)' | grep -v 'Parsec_.*_win_.*.unsigned.exe'
+            yq . artifacts.yml -o json | jq -r '"release-files/" + (.. | scalars)'
             echo 'EOF_files_to_upload'
           ) | tee -a $GITHUB_OUTPUT
 
@@ -263,7 +260,6 @@ jobs:
             echo 'sha256sum -c checksums.sha256 --ignore-missing'
             echo '```'
             echo
-            echo '> The Windows files does not have a checksum because they are signed manually'
             echo
             echo "You can [download \`checksums.sha256\`]($ASSET_DL_PATH/checksums.sha256) or copy the following content into \`checksums.sha256\`:"
             echo
