@@ -54,7 +54,7 @@ origin depends on how the app is deployed (see `getEditicsOrigin` in
 | ---------------------------- | ------------------------------ | ---------------------------------------------------------------------------- |
 | Electron                     | `parsec-desktop://-`           | `parsec-editics://-`                                                         |
 | Web dev (Vite dev server)    | `http://localhost:8080`        | `http://editics.localhost:8080`                                              |
-| Web release with `serverUrl` | e.g. `https://app.example.com` | ``serverUrl`used as-is, e.g.`https://editics0.example.com`                   |
+| Web release with `serverUrl` | e.g. `https://app.example.com` | `serverUrl` used as-is, e.g. `https://editics0.example.com`                  |
 | Web release without prefix   | e.g. `https://app.example.com` | `editics.` always used as the prefix, e.g. `https://editics.app.example.com` |
 
 Electron uses a custom scheme for editics (`parsec-editics:`) as it ensures a high level of isolation automatically.
