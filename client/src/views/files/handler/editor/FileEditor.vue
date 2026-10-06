@@ -93,6 +93,7 @@ import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 // (sdkjs, fonts, dictionaries) are heavy and can take a while to load on first use, so this is
 // generous on purpose (the editor shows a loading state in the meantime).
 const READY_TIMEOUT_MS = 60_000;
+const AUTOSAVE_INTERVAL = 600_000;
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
 const error = ref('');
@@ -101,6 +102,7 @@ const loadFinished = ref(false);
 let session: EditicsHostSession | undefined = undefined;
 const frameReady = ref(false);
 let readyTimeoutId: ReturnType<typeof setTimeout> | undefined;
+let autoSaveTimeoutId: any = undefined;
 
 const {
   contentInfo,
@@ -138,6 +140,9 @@ onMounted(async () => {
 onUnmounted(() => {
   if (readyTimeoutId) {
     clearTimeout(readyTimeoutId);
+  }
+  if (autoSaveTimeoutId) {
+    clearTimeout(autoSaveTimeoutId);
   }
   if (session) {
     session.controller.abort();
@@ -239,6 +244,13 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
         await saveToWorkspace(workspaceHandle, data);
       },
       onSaveStateChange: (state: EditicsSaveState): void => {
+        if (autoSaveTimeoutId) {
+          clearTimeout(autoSaveTimeoutId);
+          autoSaveTimeoutId = undefined;
+        }
+        if (state === EditicsSaveState.Unsaved || state === EditicsSaveState.Error) {
+          autoSaveTimeoutId = setTimeout(save, AUTOSAVE_INTERVAL);
+        }
         emits('onSaveStateChange', mapSaveState(state));
       },
       onError: async (err: unknown): Promise<void> => {
