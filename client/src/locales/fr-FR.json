@@ -809,10 +809,14 @@
             },
             "readOnly": "Lecture seule",
             "timestamp": "Archivé le : {timestamp}",
-            "count": "1 espace de travail | {count} espaces de travail"
+            "count": "1 espace de travail | {count} espaces de travail",
+            "isArchived": "Espace de travail archivé (lecture seule)",
+            "isTrashed": "Espace de travail supprimé (lecture seule)"
         },
         "restoreWorkspace": {
             "title": "Restaurer cet espace de travail",
+            "subtitleArchived": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Les précédents accès en lecture et écriture seront restaurés.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
+            "subtitleTrashed": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Sa suppression programmée sera annulée.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
             "yes": "Restaurer",
             "no": "Annuler",
             "restore": {
@@ -2380,16 +2384,29 @@
         },
         "personalDataPage": {
             "personalInfo": {
-                "title": "Informations personnelles"
+                "title": "Personal information",
+                "firstname": "Firstname",
+                "lastname": "Lastname",
+                "phone": "Phone",
+                "notDefined": "Not defined"
             },
             "professionalInfo": {
-                "title": "Informations professionnelles"
+                "title": "Professional information",
+                "representCompany": {
+                    "title": "I represent a company",
+                    "yes": "Yes",
+                    "no": "No"
+                },
+                "company": "Company",
+                "job": "Job"
             },
             "authentication": {
-                "title": "Authentification"
+                "title": "Authentication",
+                "email": "Email"
             },
             "security": {
-                "title": "Sécurité"
+                "title": "Security",
+                "password": "Password"
             },
             "modals": {
                 "personalInfo": {
@@ -2843,9 +2860,7 @@
             "titles": {
                 "networkOffline": "Connexion réseau perdue",
                 "tooLongToOpen": "Le fichier semble mettre trop de temps à s'ouvrir",
-                "frameLoadFailed": "Impossible de charger l'éditeur. Veuillez vérifier votre connexion.",
-                "openFailed": "Impossible d'ouvrir ce fichier.",
-                "cryptpadNotAvailable": "La fonction d'édition de documents n'est pas disponible pour votre organisation."
+                "frameLoadFailed": "Impossible de charger l'éditeur. Veuillez vérifier votre connexion."
             },
             "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
             "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",

@@ -21,7 +21,7 @@
             v-model="passwordRef"
             @change="errors.password = ''"
             @on-enter-keyup="submit"
-            :label="`clientArea.personalDataPage.modals.security.passwordStep.password`"
+            label="clientArea.personalDataPage.modals.security.passwordStep.password"
             ref="passwordInput"
           />
           <div

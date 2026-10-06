@@ -72,7 +72,7 @@ function createItem(
   secondLineError?: Translatable,
 ): MsSummaryCardItemData | undefined {
   return createSummaryCardItem(
-    `clientArea.personalDataPage.${label}`,
+    label,
     I18n.valueAsTranslatable(text),
     error,
     secondLineText ? I18n.valueAsTranslatable(secondLineText) : undefined,
@@ -87,13 +87,7 @@ function createItemWithTranslatable(
   secondLineText?: Translatable,
   secondLineError?: Translatable,
 ): MsSummaryCardItemData | undefined {
-  return createSummaryCardItem(
-    `clientArea.personalDataPage.${label}`,
-    `clientArea.personalDataPage.${text}`,
-    error,
-    secondLineText ? `clientArea.personalDataPage.${secondLineText}` : undefined,
-    secondLineError,
-  );
+  return createSummaryCardItem(label, text, error, secondLineText ? secondLineText : undefined, secondLineError);
 }
 
 onMounted(async () => {
@@ -107,8 +101,8 @@ async function getPersonalData(): Promise<void> {
 function getPersonalInfoRows(): MsSummaryCardRowData[] {
   return [
     {
-      item: createItem('personalInfo.firstname', personalData.value?.firstName) as MsSummaryCardItemData,
-      secondItem: createItem('personalInfo.lastname', personalData.value?.lastName),
+      item: createItem('clientArea.personalDataPage.personalInfo.firstname', personalData.value?.firstName) as MsSummaryCardItemData,
+      secondItem: createItem('clientArea.personalDataPage.personalInfo.lastname', personalData.value?.lastName),
     },
     {
       item:
@@ -126,15 +120,17 @@ function getProfessionalInfoRows(): MsSummaryCardRowData[] {
   const rows = [
     {
       item: createItemWithTranslatable(
-        'professionalInfo.representCompany.title',
-        isRepresentingCompany.value ? 'professionalInfo.representCompany.yes' : 'professionalInfo.representCompany.no',
+        'clientArea.personalDataPage.professionalInfo.representCompany.title',
+        isRepresentingCompany.value
+          ? 'clientArea.personalDataPage.professionalInfo.representCompany.yes'
+          : 'clientArea.personalDataPage.professionalInfo.representCompany.no',
       ) as MsSummaryCardItemData,
     },
   ];
   if (isRepresentingCompany.value) {
     rows.push({
-      item: createItem('professionalInfo.company', personalData.value?.company) as MsSummaryCardItemData,
-      secondItem: createItem('professionalInfo.job', personalData.value?.job),
+      item: createItem('clientArea.personalDataPage.professionalInfo.company', personalData.value?.company) as MsSummaryCardItemData,
+      secondItem: createItem('clientArea.personalDataPage.professionalInfo.job', personalData.value?.job),
     } as MsSummaryCardRowData);
   }
   return rows;
@@ -143,7 +139,7 @@ function getProfessionalInfoRows(): MsSummaryCardRowData[] {
 function getAuthenticationRows(): MsSummaryCardRowData[] {
   return [
     {
-      item: createItem('authentication.email', personalData.value?.email) as MsSummaryCardItemData,
+      item: createItem('clientArea.personalDataPage.authentication.email', personalData.value?.email) as MsSummaryCardItemData,
     },
   ];
 }
@@ -151,7 +147,7 @@ function getAuthenticationRows(): MsSummaryCardRowData[] {
 function getSecurityRows(): MsSummaryCardRowData[] {
   return [
     {
-      item: createItem('security.password', '*********') as MsSummaryCardItemData,
+      item: createItem('clientArea.personalDataPage.security.password', '*********') as MsSummaryCardItemData,
     },
   ];
 }

@@ -629,7 +629,6 @@ const tabBarActions = computed(() => {
         ]
       : []),
   );
-
   return actions;
 });
 

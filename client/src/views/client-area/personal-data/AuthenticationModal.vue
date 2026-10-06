@@ -22,7 +22,7 @@
             v-model="newEmailRef"
             @change="error = ''"
             @on-enter-keyup="submit"
-            :label="`clientArea.personalDataPage.modals.authentication.newEmail`"
+            label="clientArea.personalDataPage.modals.authentication.newEmail"
             :validator="newEmailValidator"
             ref="newEmailInput"
           />
@@ -35,7 +35,7 @@
             v-model="passwordRef"
             @change="error = ''"
             @on-enter-keyup="submit"
-            :label="`clientArea.personalDataPage.modals.authentication.password`"
+            label="clientArea.personalDataPage.modals.authentication.password"
             ref="passwordInput"
           />
         </div>
@@ -55,7 +55,7 @@
               :disabled="resendDisabled"
               class="send-code subtitles-sm"
             >
-              {{ $msTranslate(`clientArea.personalDataPage.modals.authentication.resend`) }}
+              {{ $msTranslate('clientArea.personalDataPage.modals.authentication.resend') }}
             </ion-text>
             <ion-icon
               :icon="checkmark"
