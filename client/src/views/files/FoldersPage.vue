@@ -458,7 +458,6 @@ const tabBarActions = computed(() => {
   }
 
   // disagreement between prettier and eslint
-  /* eslint-disable indent */
   actions.push(
     ...(isLargeDisplay.value && !isReadOnly.value && selectedEntries.length === 0
       ? [
@@ -630,7 +629,7 @@ const tabBarActions = computed(() => {
         ]
       : []),
   );
-  /* eslint-enable indent */
+
   return actions;
 });
 

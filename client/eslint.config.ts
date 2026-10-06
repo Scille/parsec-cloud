@@ -101,7 +101,7 @@ export default defineConfig([
           functions: 'always-multiline',
         },
       ],
-      indent: ['error', 2, { SwitchCase: 1 }],
+      indent: ['error', 2, { SwitchCase: 1, offsetTernaryExpressions: true }],
       camelcase: 'error',
       'max-len': ['error', 140],
       quotes: ['error', 'single', { avoidEscape: true }],

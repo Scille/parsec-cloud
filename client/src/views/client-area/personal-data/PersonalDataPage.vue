@@ -113,8 +113,11 @@ function getPersonalInfoRows(): MsSummaryCardRowData[] {
     {
       item:
         personalData.value?.phone === undefined || personalData.value?.phone === null
-          ? (createItemWithTranslatable('personalInfo.phone', 'personalInfo.notDefined') as MsSummaryCardItemData)
-          : (createItem('personalInfo.phone', personalData.value?.phone) as MsSummaryCardItemData),
+          ? (createItemWithTranslatable(
+              'clientArea.personalDataPage.personalInfo.phone',
+              'clientArea.personalDataPage.personalInfo.notDefined',
+            ) as MsSummaryCardItemData)
+          : (createItem('clientArea.personalDataPage.personalInfo.phone', personalData.value?.phone) as MsSummaryCardItemData),
     },
   ];
 }
