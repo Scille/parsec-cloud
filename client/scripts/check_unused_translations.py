@@ -21,6 +21,16 @@ languages = (
 )
 ref_lang = languages[0]
 
+# These keys will be ignored when checking for unused keys
+ignore_keys = [
+    # common.date.* keys come from megashark-lib but are used in parsec-cloud client unit tests
+    "common.date.fewSeconds",
+    "common.date.lessThanAMinute",
+    "common.date.lastLoginMinutes",
+    "common.date.lastLoginHours",
+    "common.date.lastLoginDays",
+]
+
 
 def process_translation_file(translation_source: Path) -> list[str]:
     content: dict[str, Any] = json.loads(translation_source.read_text())
@@ -111,7 +121,7 @@ if __name__ == "__main__":
         unused_subkeys = [
             subkey
             for subkey in sorted(translation_subkeys[ref_lang])
-            if not is_present_in_sources(subkey, args.src)
+            if not is_present_in_sources(subkey, args.src) and subkey not in ignore_keys
         ]
 
     # fix

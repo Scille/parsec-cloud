@@ -1142,7 +1142,12 @@
     },
     "common": {
         "date": {
-            "asIs": "{date}"
+            "asIs": "{date}",
+            "fewSeconds": "now",
+            "lessThanAMinute": "< 1 minute",
+            "lastLoginMinutes": "one minute ago | {minutes} minutes ago",
+            "lastLoginHours": "one hour ago | {hours} hours ago",
+            "lastLoginDays": "Today | Yesterday | {days} days ago"
         },
         "filesize": {
             "bytes": "{size} B",
