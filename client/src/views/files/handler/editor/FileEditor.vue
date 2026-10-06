@@ -92,7 +92,7 @@ import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 // the user the option to keep waiting or give up, see openTimeoutModal(). OnlyOffice's own assets
 // (sdkjs, fonts, dictionaries) are heavy and can take a while to load on first use, so this is
 // generous on purpose (the editor shows a loading state in the meantime).
-const READY_TIMEOUT_MS = 60_000;
+const READY_TIMEOUT_MS = 30_000;
 const AUTOSAVE_INTERVAL = 600_000;
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
