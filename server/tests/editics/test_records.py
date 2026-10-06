@@ -16,8 +16,12 @@ import anyio
 from anyio.abc import TaskStatus
 
 from parsec._parsec import VlobID
-from tests.common import CoolorgRpcClients, EditicsJSRuntime
-from tests.common.editics import EditicsJSClient
+from tests.common import (
+    AuthenticatedRpcClient,
+    CoolorgRpcClients,
+    EditicsJSClient,
+    EditicsJSRuntime,
+)
 
 RECORDS_DIR = Path(__file__).resolve().parent / "records"
 
@@ -53,7 +57,7 @@ class TypePlaceholder:
 
 
 def _parse_record(record_path: Path) -> list[RecordEvent]:
-    record = record_path.read_text()  # noqa: ASYNC240
+    record = record_path.read_text()
     events = []
     e1s, e2s = itertools.tee(_HEADING_RE.finditer(record), 2)
     next(e2s)
@@ -145,9 +149,7 @@ class RecordEvent:
     # - `license`: identifies the fact a new participant connects to the server
     # - `documentOpen`: in our OnlyOffice fork, this event is never sent by the server
     #   and instead is injected by the client when it receives the server `auth` event.
-    type: (
-        Literal["license", "documentOpen"] | str
-    ) 
+    type: Literal["license", "documentOpen"] | str
     payload: OOEvent
 
     def __repr__(self) -> str:
@@ -177,12 +179,16 @@ async def _do_test_record(
     """
     events = _parse_record(record_path)
 
-    async def _start_editics_js_client(task_status: TaskStatus[EditicsJSClient]):
+    document_id = VlobID.new()
+    per_participant_client = {"Alice": coolorg.alice, "Bob": coolorg.bob}
+
+    async def _start_editics_js_client(
+        who: AuthenticatedRpcClient, *, task_status: TaskStatus[EditicsJSClient]
+    ):
         async with editics_js_runtime.new_client(
-            # All participants connect to the server as Alice for simplicity
-            who=coolorg.alice,
+            who=who,
             realm_id=coolorg.wksp1_id,
-            document_id=VlobID.new(),
+            document_id=document_id,
         ) as editics_js_client:
             task_status.started(editics_js_client)
             await anyio.sleep_forever()
@@ -197,7 +203,9 @@ async def _do_test_record(
         # Hence we store the received server events here until the record actually
         # mention them (which should be the case very soon, but is not guaranteed
         # to actually be from the next event).
-        per_client_unacknowlegde_server_events: dict[ParticipantID, list[OOEvent]] = defaultdict(list)
+        per_client_unacknowlegde_server_events: dict[ParticipantID, list[OOEvent]] = defaultdict(
+            list
+        )
 
         for event in events:
             print(f"Record event: {event!s}")
@@ -206,8 +214,9 @@ async def _do_test_record(
             # Initial event signifies the need to start an editics JavaScript client
             if event.type == "license":
                 assert participant not in running_js_clients
+                who = per_participant_client[participant]
                 running_js_clients[participant] = await tg.start(
-                    _start_editics_js_client, name=f"{participant} editics"
+                    _start_editics_js_client, who, name=f"{participant} editics"
                 )
                 # In the OnlyOffice fork we use, the client generates its own license
                 # event instead of waiting for the server to send it
