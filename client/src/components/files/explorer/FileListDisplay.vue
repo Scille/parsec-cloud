@@ -239,6 +239,10 @@ async function scrollToSelected(): Promise<void> {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  @include ms.responsive-breakpoint('sm') {
+    overflow: visible;
+  }
 }
 
 .container-scroll {
@@ -246,7 +250,7 @@ async function scrollToSelected(): Promise<void> {
   overflow: auto;
 
   @include ms.responsive-breakpoint('sm') {
-    overflow: hidden;
+    overflow: visible;
   }
 }
 
