@@ -15,7 +15,11 @@
           :icon="currentWorkspace?.isArchived ? archive : trash"
           class="header-archived__icon"
         />
-        {{ $msTranslate(`WorkspacesPage.archiveWorkspace.${currentWorkspace?.isArchived ? 'isArchived' : 'isTrashed'}`) }}
+        {{
+          currentWorkspace?.isArchived
+            ? $msTranslate('WorkspacesPage.archiveWorkspace.isArchived')
+            : $msTranslate('WorkspacesPage.archiveWorkspace.isTrashed')
+        }}
       </ion-text>
 
       <ion-toolbar

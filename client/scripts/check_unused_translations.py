@@ -70,10 +70,14 @@ def remove_subkeys(json_data, subkeys_to_remove):
     return count
 
 
-def clean_data(obj):
-    if isinstance(obj, dict):
-        return {k: clean_data(v) for k, v in obj.items() if v != {}}
-    return obj
+def remove_empty(json_data):
+    cleaned = {}
+    for k, v in json_data.items():
+        if isinstance(v, dict):
+            v = remove_empty(v)
+        if v != {}:
+            cleaned[k] = v
+    return cleaned
 
 
 if __name__ == "__main__":
@@ -109,19 +113,19 @@ if __name__ == "__main__":
 
     locales = Path(args.locales_dir) if args.locales_dir else Path(args.src) / "locales"
 
-    # Process translation files to extract subkeys (as a flatten dict)
-    translation_subkeys = {}
+    # Process translation files to extract keys (as a flatten dict)
+    translation_keys = {}
     for lang in languages:
-        translation_subkeys[lang] = set(process_translation_file(locales / lang))
+        translation_keys[lang] = set(process_translation_file(locales / lang))
 
-    # Compute unused subkeys only if needed
-    unused_subkeys = []
+    # Compute unused keys only if needed
+    unused_keys = []
     if args.fix or not args.skip_unused:
         print("Computing unused translation keys. This may take a while...")
-        unused_subkeys = [
-            subkey
-            for subkey in sorted(translation_subkeys[ref_lang])
-            if not is_present_in_sources(subkey, args.src) and subkey not in ignore_keys
+        unused_keys = [
+            key
+            for key in sorted(translation_keys[ref_lang])
+            if not is_present_in_sources(key, args.src) and key not in ignore_keys
         ]
 
     # fix
@@ -132,10 +136,11 @@ if __name__ == "__main__":
                 json_data = json.load(f)
 
             # 2. remove unused subkeys
-            count = remove_subkeys(json_data, unused_subkeys)
+            count = remove_subkeys(json_data, unused_keys)
 
-            # 3. clean empty objects that may remain after subkey removal
-            json_data = clean_data(json_data)
+            # 3. remove empty objects that may remain after subkey removal
+            # e.g. {"a":{"b":"text"},"c":"text"} --remove "b"-> {"a":{},"c":"text"} --remove empty-> {"c":"text"}
+            json_data = remove_empty(json_data)
 
             # 4. write
             with open(locales / lang, mode="w", encoding="utf-8") as f:
@@ -146,28 +151,26 @@ if __name__ == "__main__":
     # check
     else:
         if not args.skip_unused:
-            for subkey in unused_subkeys:
-                print(f"{HIGHLIGHT}{subkey}{RESET} was not found in sources", file=sys.stderr)
+            for key in unused_keys:
+                print(f"{HIGHLIGHT}{key}{RESET} was not found in sources", file=sys.stderr)
 
-            if unused_subkeys:
-                unused, total = len(unused_subkeys), len(translation_subkeys[ref_lang])
+            if unused_keys:
+                unused, total = len(unused_keys), len(translation_keys[ref_lang])
                 print(
                     f"Unused {unused}/{total} (~{unused / total * 100:.2f}%). Re-run with --fix to remove them."
                 )
 
-        missing_subkeys = False
+        missing_keys = False
         if not args.skip_missing:
             for from_lang, to_lang in permutations(languages):
-                for missing_subkey in sorted(
-                    translation_subkeys[from_lang] - translation_subkeys[to_lang]
-                ):
-                    missing_subkeys = True
+                for missing_key in sorted(translation_keys[from_lang] - translation_keys[to_lang]):
+                    missing_keys = True
                     print(
-                        f"{HIGHLIGHT}{missing_subkey}{RESET} is present in {BOLD}{from_lang}{RESET} but missing in {BOLD}{to_lang}{RESET}",
+                        f"{HIGHLIGHT}{missing_key}{RESET} is present in {BOLD}{from_lang}{RESET} but missing in {BOLD}{to_lang}{RESET}",
                         file=sys.stderr,
                     )
-            if missing_subkeys:
+            if missing_keys:
                 print(f"{HIGHLIGHT}Missing translation keys cannot be fixed automatically{RESET}")
 
-        if missing_subkeys or unused_subkeys:
+        if missing_keys or unused_keys:
             sys.exit(1)

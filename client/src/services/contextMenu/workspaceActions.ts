@@ -94,7 +94,9 @@ export function useWorkspaceActions() {
     const answer = await askQuestion(
       'WorkspacesPage.restoreWorkspace.title',
       {
-        key: `WorkspacesPage.restoreWorkspace.subtitle${workspace.isTrashed ? 'Trashed' : 'Archived'}`,
+        key: `${
+          workspace.isTrashed ? 'WorkspacesPage.restoreWorkspace.subtitleTrashed' : 'WorkspacesPage.restoreWorkspace.subtitleArchived'
+        }`,
         data: { workspace: workspace.name },
       },
       { yesText: 'WorkspacesPage.restoreWorkspace.yes', noText: 'WorkspacesPage.restoreWorkspace.no' },
