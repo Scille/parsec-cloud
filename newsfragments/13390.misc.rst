@@ -1,1 +1,0 @@
-Added a field in pending user invitations displaying which administrator created the invitation
