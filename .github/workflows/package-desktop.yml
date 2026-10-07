@@ -338,6 +338,7 @@ jobs:
         working-directory: client
         timeout-minutes: 5
         env:
+          PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=8092
 
       - name: Copy client build result to electron
