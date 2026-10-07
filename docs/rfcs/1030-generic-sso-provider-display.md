@@ -309,8 +309,10 @@ Since all SSO info have to be provided from the server, we must update the serve
 Considering the amount of items to configure a single SSO (and the fact we can configure multiple SSO), we should use JSON payload as argument of the parameter:
 
 ```bash
-parsec run ... --openbao-auth '{"id": "PRO_CONNECT", "name": "ProConnect", ...}'
+parsec run ... --openbao-auth '[{"id": "PRO_CONNECT", "name": "ProConnect", ...}, ...]'
 ```
+
+> The JSON object correspond to a list of `OpenBaoAuthConfig`
 
 ### libparsec
 
