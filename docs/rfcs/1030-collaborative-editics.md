@@ -102,6 +102,8 @@ then wait for a user with write access to join and do the save for them...).
 
 ### 1.3 - Session ID vs document ID
 
+TODO: this is incomplete and partially wrong, update it with documentation from `server/parsec/editics_protocol.py`
+
 - idOriginal: the integrator-defined user id (the human).
 - indexUser: server-assigned per-document-open sequence number (the "which opening of this document is this").
 - id: idOriginal + indexUser — the server's primary per-participant key (one human's one logical editing session on one document).
@@ -146,6 +148,9 @@ have joined the session.
 > with this index so we cannot just use an UUID here.
 
 TODO: talk about user ID used in OnlyOffice server to decide to broadcast changes
+TODO: talk about indexUser being used by the clients to create ID for everything
+they insert (e.g. table, paragraph), while ensure no ID clash can occur between clients.
+TODO: talk about the fact we merge session and participant concepts together in the editcs protocol
 
 ### 1.5 - Multiple server instances vs sessions
 
@@ -428,6 +433,9 @@ Format of the client → server `auth` event:
 - Remove `timezoneOffset`: all timestamp are UTC-based.
 - Remove `time`: Parsec authentication already provides the timestamp in the `Authorization` header.
 - Remove `supportAuthChangesAck`: considered always supported.
+- Remove `sessionId`/`sessionTimeConnect`/`sessionTimeIdle` and replace by a `reconnect` optional
+  field containing `{"participantId": str, "participantTimeConnect": int, "timeIdle": int}`:
+  as session and participant concepts can be merged together, see TODO.
 
 If the session is currently in single-editor mode, the server sends a `waitAuth`
 to signify the new client it has to wait for the initial client to apply the full
@@ -496,9 +504,11 @@ TODO
   server has no business providing.
 - Remove `lastOtherSaveTime`: the save flow in the editics protocol relies on the
   change index, not on a save timestamp.
-- Keep `docid` (the session id), `user.id` (the device id), `editorType`,
-  `sessionId`/`sessionTimeConnect` (restore detection), `indexUser`,
+- Keep `docid` (the session id), `user.id` (the device id), `editorType`, `indexUser`,
   `supportAuthChangesAck`, and `time` (telemetry).
+- Remove `sessionId` and replace by `participantId`: as session and participant concepts
+  can be merged together, see TODO.
+- Rename `sessionTimeConnect` as `participantTimeConnect`
 - The server `auth` (s→c) reply is replaced by the `bootstrap` SSE event (see
   §3.1) which carries the participant map and the encrypted change backlog in a
   single message; the separate `authChanges` flow is folded into it.
@@ -596,7 +606,7 @@ Format:
 
 - In `participants`:
   - Remove `encrypted` (we never rely on OnlyOffice encryption system)
-  - Replace fields `id`/`idOriginal`/`username`  by `device_id` (the client
+  - Replace fields `idOriginal`/`username`  by `device_id` (the client
     has already a single source of truth on those info).
   - Remove `connectionId` as this field is never actually used by the OnlyOffice client.
 
