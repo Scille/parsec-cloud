@@ -23,7 +23,7 @@
         :image="DocumentImport"
         class="restore-password-header-img"
       />
-      <ion-text class="subtitles-sm">
+      <ion-text class="drop-message__text">
         {{ $msTranslate('FoldersPage.ImportFile.dropInstructions') }}
       </ion-text>
     </div>
@@ -145,8 +145,8 @@ function reset(): void {
     }
 
     &.drop-active {
-      outline: 1px dashed var(--parsec-color-light-primary-400);
-      border-radius: var(--parsec-radius-8);
+      outline: 1px dashed ms.color('border-brand-default');
+      border-radius: ms.radius('lg');
     }
   }
 }
@@ -157,15 +157,19 @@ function reset(): void {
   bottom: 2em;
   transform: translate(-50%, -50%);
   width: fit-content;
-  background-color: var(--parsec-color-light-secondary-premiere);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-8);
-  box-shadow: var(--parsec-shadow-strong);
-  padding: 0.75rem;
+  background-color: ms.color('surface-base-page-secondary');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
+  border-radius: ms.radius('lg');
+  box-shadow: ms.shadow('strong');
+  padding: ms.spacing('padding-2xl');
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--parsec-color-light-secondary-text);
+  gap: ms.spacing('gap-lg');
+  color: ms.color('text-base-body');
   z-index: 10;
+
+  &__text {
+    @include ms.font('body-md-medium');
+  }
 }
 </style>

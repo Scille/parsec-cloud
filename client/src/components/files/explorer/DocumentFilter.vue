@@ -3,9 +3,10 @@
 <template>
   <ion-button
     fill="clear"
+    size="default"
     @click="openPopover($event)"
     id="select-filter-popover-button"
-    class="filter-button button-medium"
+    class="filter-button"
     :class="{ 'has-filters': hasFilters }"
   >
     <ion-icon
@@ -89,48 +90,35 @@ async function openPopover(event: Event): Promise<void> {
 
 <style lang="scss" scoped>
 .filter-button {
-  padding: 0.625rem;
-  border-radius: var(--parsec-radius-8);
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
-  color: var(--parsec-color-light-secondary-soft-text);
-  box-shadow: var(--parsec-shadow-input);
-  cursor: pointer;
-
-  &::part(native) {
-    padding: 0 !important;
-    --background-hover: transparent;
-  }
+  @include ms.font('label-md-medium');
+  color: ms.color('text-neutral-default');
 
   &[class^='button-icon'] {
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-neutral-default');
   }
 
   .button-icon-left {
-    margin-right: 0.25rem;
+    margin-right: ms.spacing('gap-sm');
   }
 
   .button-icon-right {
-    margin-left: 0.5rem;
+    margin-left: ms.spacing('gap-lg');
     font-size: 1rem;
   }
 }
 
 .has-filters {
-  border-color: var(--parsec-color-light-primary-200);
-  background-color: var(--parsec-color-light-primary-50);
-  color: var(--parsec-color-light-primary-500);
+  color: ms.color('text-brand-default');
 
   [class^='button-icon'] {
-    color: var(--parsec-color-light-primary-500) !important;
+    color: ms.color('icon-brand-default') !important;
   }
 
   &:hover {
-    background-color: var(--parsec-color-light-primary-100) !important;
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('text-brand-default-hover');
 
     [class^='button-icon'] {
-      color: var(--parsec-color-light-primary-600) !important;
+      color: ms.color('icon-brand-default-hover') !important;
     }
   }
 }
