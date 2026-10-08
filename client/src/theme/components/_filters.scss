@@ -5,18 +5,7 @@
 @use 'megashark-lib/theme' as ms;
 
 #select-filter-popover-button {
-  position: relative;
-  --color: #{ms.color('text-neutral-default')};
-  --color-hover: #{ms.color('text-neutral-default-hover')};
-  --background-hover: none;
-  border-radius: ms.radius('lg');
-
-  &::part(native) {
-    overflow: visible;
-  }
-
   &:has(.missing-filters) {
-    border-color: ms.color('border-brand-default');
     color: ms.color('text-brand-default');
 
     .filter-button__icon {

@@ -133,16 +133,16 @@ async function scrollToSelected(): Promise<void> {
 .files-grid-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   overflow-y: auto;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1rem 0;
-    gap: 1.5rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl') ms.spacing('padding-none');
+    gap: ms.spacing('gap-4xl');
   }
 
   @include ms.responsive-breakpoint('xs') {
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 </style>

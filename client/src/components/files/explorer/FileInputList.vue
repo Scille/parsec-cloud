@@ -2,7 +2,7 @@
 
 <template>
   <div class="file-input-list">
-    <ion-text class="body file-number">
+    <ion-text class="file-number">
       {{ $msTranslate({ key: 'browseFiles.currentFilesCount', data: { current: files.length, limit: limit } }) }}
     </ion-text>
     <div
@@ -14,7 +14,7 @@
         class="file-icon"
         :icon="documentOutline"
       />
-      <span class="file-name subtitles-sm">{{ file.name }}</span>
+      <span class="file-name">{{ file.name }}</span>
       <ion-button
         fill="clear"
         class="remove-button"
@@ -37,8 +37,8 @@
             class="button-icon"
             :icon="documentOutline"
           />
-          <span class="button-medium button-label">{{ $msTranslate('browseFiles.addFile') }}</span>
-          <span class="body button-file-size">
+          <span class="button-label">{{ $msTranslate('browseFiles.addFile') }}</span>
+          <span class="button-file-size">
             {{ $msTranslate('browseFiles.maxFileSize') }} {{ $msTranslate(formatFileSize(MAX_FILE_SIZE)) }}
           </span>
         </div>
@@ -111,49 +111,51 @@ function getFiles(): Array<File> {
 .file-input-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   position: relative;
   width: 100%;
 }
 
 .file-number {
+  @include ms.font('body-md-regular');
   position: absolute;
   top: -1.75rem;
   right: 0;
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-description');
   margin-bottom: 0.5rem;
 }
 
 .file-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   position: relative;
-  background: var(--parsec-color-light-secondary-premiere);
-  border-radius: var(--parsec-radius-8);
-  padding: 0.625rem;
-  color: var(--parsec-color-light-secondary-text);
+  background: ms.color('surface-base-page-secondary');
+  border-radius: ms.radius('lg');
+  padding: ms.spacing('padding-xl');
+  color: ms.color('text-base-body');
 
   .file-name {
+    @include ms.font('body-md-medium');
     width: fit-content;
   }
 
   .file-icon {
-    color: var(--parsec-color-light-secondary-contrast);
+    color: ms.color('text-base-heading');
     font-size: 1.125rem;
   }
 
   .remove-button {
-    --color: var(--parsec-color-light-danger-500);
+    --color: #{ms.color('text-error-default')};
     --background: transparent;
     --background-hover: transparent;
-    --color-hover: var(--parsec-color-light-danger-700);
+    --color-hover: #{ms.color('text-error-default-hover')};
     min-height: 1rem;
     margin-left: auto;
     margin-right: 0.5rem;
 
     &::part(native) {
-      padding: 0.125rem;
+      padding: ms.spacing('padding-xs');
     }
   }
 }
@@ -161,40 +163,42 @@ function getFiles(): Array<File> {
 .file-input {
   display: flex;
   align-items: center;
-  border: 1px dashed var(--parsec-color-light-secondary-light);
-  border-radius: var(--parsec-radius-8);
-  gap: 0.5rem;
+  border: ms.border('thin') dashed ms.color('border-base-default-hover');
+  border-radius: ms.radius('lg');
+  gap: ms.spacing('gap-lg');
 
   &:hover {
-    background: var(--parsec-color-light-secondary-background);
+    background: ms.color('surface-base-default-secondary');
   }
 
   &__button {
-    color: var(--parsec-color-light-secondary-contrast);
+    color: ms.color('text-base-heading');
     width: 100%;
 
     &::part(native) {
       --background: transparent;
       --background-hover: transparent;
-      --color-hover: var(--parsec-color-light-secondary-contrast);
+      --color-hover: #{ms.color('text-base-heading')};
     }
 
     .button-content {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       .button-icon {
-        color: var(--parsec-color-light-secondary-contrast);
+        color: ms.color('text-base-heading');
         font-size: 1.125rem;
       }
 
       .button-label {
-        color: var(--parsec-color-light-secondary-contrast);
+        @include ms.font('label-md-medium');
+        color: ms.color('text-base-heading');
       }
 
       .button-file-size {
-        color: var(--parsec-color-light-secondary-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
   }
