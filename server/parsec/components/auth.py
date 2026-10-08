@@ -140,12 +140,12 @@ class AuthenticatedToken:
     HEADER: bytes = b"PARSEC-SIGN-ED25519"
 
     # Only used for tests, but coherent to have it here
-    @staticmethod
-    def generate_raw(device_id: DeviceID, timestamp: DateTime, key: SigningKey) -> bytes:
+    @classmethod
+    def generate_raw(cls, device_id: DeviceID, timestamp: DateTime, key: SigningKey) -> bytes:
         raw_device_id = device_id.hex.encode("ascii")
         raw_timestamp_us = str(timestamp.as_timestamp_seconds()).encode("ascii")
         header_and_payload = b"%s.%s.%s" % (
-            AuthenticatedToken.HEADER,
+            cls.HEADER,
             raw_device_id,
             raw_timestamp_us,
         )

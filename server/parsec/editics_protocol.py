@@ -68,7 +68,7 @@ class EditicsProtocolParticipantEntry(BaseModel):
 
 
 class EditicsProtocolReconnect(BaseModel):
-    participantID: EditicsProtocolParticipantID
+    participantId: EditicsProtocolParticipantID
     # TODO: document if it is in seconds or ms etc.
     participantTimeConnect: int
     timeIdle: int
@@ -237,6 +237,7 @@ EditicsProtocolClientEventAdapter = TypeAdapter(EditicsProtocolClientEvent)
 class EditicsProtocolServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     participants: list[EditicsProtocolParticipantEntry]  # current participant map
+    participantId: EditicsProtocolParticipantID
     indexUser: EditicsProtocolIndexUser  # this connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
     participantTimeConnect: int  # server timestamp (ms) at connect

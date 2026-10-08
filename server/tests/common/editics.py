@@ -90,8 +90,8 @@ class EditicsSessionClient:
             listen_url,
             # `EventSource` cannot set headers; the server accepts the identity
             # as an `authorization` query param on the SSE route (todo §6.2).
-            params={"authorization": authorization},
-            headers={"Accept": "text/event-stream"},
+            # params={"authorization": authorization},
+            headers={"Authorization": authorization, "Accept": "text/event-stream"},
         ) as sse_event_source:
             yield cls(
                 send_events_raw=send_events_raw,
@@ -339,6 +339,9 @@ class EditicsJSClient:
                 return None
 
             case raw_editics_server_event:
+                # Sanity check to detect incorrect server output (since the Javascript
+                # part doesn't actually validate the schema)
+                EditicsProtocolServerEventAdapter.validate_json(raw_editics_server_event)
                 raw_oo_client_event = await self.js_runtime.async_eval(
                     f"""
                     globalThis.__editics_instances['{self.participant_id.hex}']
@@ -347,7 +350,7 @@ class EditicsJSClient:
                     """
                 )
                 assert raw_oo_client_event is not None, (
-                    f"Server event unsupported on the client: {raw_oo_client_event}"
+                    f"Editics server event failed to be translated: {raw_editics_server_event}"
                 )
                 return json.loads(raw_oo_client_event)
 
@@ -358,9 +361,7 @@ class EditicsJSClient:
         raw_editics_server_event = await self.editics_session_client.recv_raw()
         # Sanity check to detect incorrect server output (since the Javascript
         # part doesn't actually validate the schema)
-        editics_server_event = EditicsProtocolServerEventAdapter.validate_json(
-            raw_editics_server_event
-        )
+        EditicsProtocolServerEventAdapter.validate_json(raw_editics_server_event)
         oo_server_event = await self.js_runtime.async_eval(
             f"""
             globalThis.__editics_instances['{self.participant_id.hex}'].cookServerEvent({raw_editics_server_event})
@@ -368,6 +369,6 @@ class EditicsJSClient:
             """
         )
         assert oo_server_event is not None, (
-            f"Server event unsupported on the client: {editics_server_event}"
+            f"Editics server event failed to be translated: {raw_editics_server_event}"
         )
         return json.loads(oo_server_event)

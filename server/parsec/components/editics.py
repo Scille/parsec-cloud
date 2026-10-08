@@ -390,15 +390,17 @@ class BaseEditicsComponent:
                 # Send `waitAuth` if another participant holds the auth lock (i.e.
                 # the newcomer must wait until the other participant sends a
                 # `unLockDocument{unlock:true}`)
-                if session.auth_lock_holder is None:
+                if participant.parked:
+                    assert session.auth_lock_holder is not None
+                    return EditicsProtocolServerEventWaitAuth(authLockedBy=session.auth_lock_holder)
+
+                else:
                     return EditicsProtocolServerEventAuth(
                         participants=_participant_entries(session),
                         indexUser=participant.index,
+                        participantId=participant_id,
                         participantTimeConnect=participant.connected_at,
                     )
-
-                else:
-                    return EditicsProtocolServerEventWaitAuth(authLockedBy=session.auth_lock_holder)
 
             case EditicsProtocolClientEventGetMessages():
                 return EditicsProtocolServerEventMessage(

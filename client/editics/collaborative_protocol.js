@@ -217,6 +217,7 @@ class EditicsTranslator {
           indexUser: -1,
           editorType: this.config.editorType,
           vlobVersion: this.config.vlobVersion,
+          reconnect: null,
         };
 
       case 'getMessages':
@@ -394,8 +395,10 @@ class EditicsTranslator {
     return {
       type: 'auth',
       result: 1,
-      sessionId: editics.sessionId,
-      sessionTimeConnect: editics.sessionTimeConnect,
+      // Editics protocol merge together the session and participant concepts
+      sessionId: editics.participantId,
+      // TODO: Check the relashionship between sessionTimeConnect and openedAt.
+      sessionTimeConnect: editics.participantTimeConnect,
       participants,
       locks: {},
       indexUser: editics.indexUser,
@@ -417,7 +420,7 @@ class EditicsTranslator {
         // eslint-disable-next-line camelcase -- OnlyOffice wire field name
         limits_image_types_upload: 'jpg;jpeg;jpe;png;gif;bmp;svg;tiff;tif;webp;heic;heif;avif',
       },
-      openedAt: editics.sessionTimeConnect,
+      openedAt: editics.participantTimeConnect,
     };
   }
 
@@ -901,16 +904,25 @@ export { EditicsTranslator };
 /* eslint-disable max-len */
 
 /**
+ * @typedef {string} EditicsParticipantID
+ *
  * @typedef {Object} EditicsParticipantEntry
+ * @property {EditicsParticipantID} id
  * @property {number} indexUser
  * @property {string} deviceId - DeviceID hex
  * @property {boolean} view
+ *
+ * @typedef {Object} EditicsProtocolReconnect
+ * @property {EditicsParticipantID} participantId
+ * @property {int} participantTimeConnect
+ * @property {int} timeIdle
  *
  * @typedef {Object} EditicsClientEventAuth
  * @property {'auth'} type
  * @property {number} indexUser - -1 on first open
  * @property {number} editorType
  * @property {number} vlobVersion
+ * @property {EditicsProtocolReconnect|null} reconnect
  *
  * @typedef {Object} EditicsClientEventAuthChangesAck
  * @property {'authChangesAck'} type
@@ -967,10 +979,9 @@ export { EditicsTranslator };
  * @typedef {Object} EditicsServerEventAuth
  * @property {'auth'} type
  * @property {EditicsParticipantEntry[]} participants
- * @property {Array<{docid:string, message:string, time:number, deviceId: string}>} messages
  * @property {number} indexUser
- * @property {string} sessionId
- * @property {number} sessionTimeConnect
+ * @property {EditicsParticipantID} participantId
+ * @property {number} participantTimeConnect
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type
