@@ -50,4 +50,4 @@ proptest = { workspace = true, features = ["default"] }
 proptest-state-machine = { workspace = true }
 # Async stateful test currently relies on Tokio runtime, which is not available on web.
 # This is no big deal though, since the tested code is supposed to be platform agnostic.
-tokio = { workspace = true, features = ["rt"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }

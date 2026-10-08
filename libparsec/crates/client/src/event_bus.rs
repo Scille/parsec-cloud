@@ -877,6 +877,13 @@ mod spy {
                 )
             }
         }
+
+        pub fn ack_remaining_events(&mut self) {
+            if let Ok(guard) = self.internal.lock() {
+                // Ensure all events have been acknowledged
+                self.acknowledged_offset = guard.events.len();
+            }
+        }
     }
 
     impl Drop for EventBusSpyExpectContext {
