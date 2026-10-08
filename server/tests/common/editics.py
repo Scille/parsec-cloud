@@ -17,6 +17,7 @@ from py_mini_racer import JSPromise
 from pydantic import BaseModel
 
 from parsec._parsec import VlobID
+from parsec.components.auth import EditicsToken
 from parsec.editics_protocol import (
     EditicsProtocolClientEvent,
     EditicsProtocolServerEvent,
@@ -58,15 +59,21 @@ class EditicsSessionClient:
 
         Yields `(send_client_event, sse_listen_server_events)`
         """
-        auth = f"Editics {who.device_id.hex}.{participant_id.hex}"
+        token = EditicsToken.generate_raw(
+            device_id=who.device_id,
+            timestamp=who.now_factory(),
+            key=who.signing_key,
+        )
+        authorization = f"Bearer {token.decode()}"
+
         session_path = f"/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
-        join_url = f"http://{SERVER_DOMAIN}{session_path}/join"
-        send_url = f"http://{SERVER_DOMAIN}{session_path}/send"
+        listen_url = f"http://{SERVER_DOMAIN}{session_path}/listen/{participant_id.hex}"
+        send_url = f"http://{SERVER_DOMAIN}{session_path}/send/{participant_id.hex}"
 
         async def send_events_raw(raw_event: str) -> str | None:
             rep = await who.raw_client.post(
                 send_url,
-                headers={"Authorization": auth, "Content-Type": "application/json"},
+                headers={"Authorization": authorization, "Content-Type": "application/json"},
                 content=raw_event,
             )
             match rep.status_code:
@@ -80,10 +87,10 @@ class EditicsSessionClient:
         async with httpx_sse.aconnect_sse(
             who.raw_client,
             "GET",
-            join_url,
+            listen_url,
             # `EventSource` cannot set headers; the server accepts the identity
             # as an `authorization` query param on the SSE route (todo §6.2).
-            params={"authorization": auth},
+            params={"authorization": authorization},
             headers={"Accept": "text/event-stream"},
         ) as sse_event_source:
             yield cls(
@@ -131,12 +138,16 @@ class EditicsJSRuntime:
     """
 
     def __init__(self):
-        protocol_js_path = Path(__file__).parent / "../../../client/editics/collaborative_protocol.js"
+        protocol_js_path = (
+            Path(__file__).parent / "../../../client/editics/collaborative_protocol.js"
+        )
 
         src = protocol_js_path.read_text()
         # V8 (PyMiniRacer) does not implement ESM `export`, so patch `collaborative_protocol.js`
         # to use a global assignment is instead.
-        assert "export { EditicsTranslator };" in src, "`collaborative_protocol.js` export marker changed"
+        assert "export { EditicsTranslator };" in src, (
+            "`collaborative_protocol.js` export marker changed"
+        )
         src = src.replace(
             "export { EditicsTranslator };",
             "globalThis.__EditicsTranslator = EditicsTranslator;",

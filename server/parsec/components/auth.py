@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from base64 import urlsafe_b64decode, urlsafe_b64encode
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import auto
 
@@ -13,10 +14,12 @@ from parsec._parsec import (
     EmailAddress,
     InvitationType,
     OrganizationID,
+    RealmRole,
     SecretKey,
     SigningKey,
     UserID,
     VerifyKey,
+    VlobID,
 )
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.events import EventBus
@@ -49,6 +52,19 @@ class AuthAuthenticatedAuthBadOutcome(BadOutcomeEnum):
     USER_FROZEN = auto()
     USER_MUST_ACCEPT_TOS = auto()
     DEVICE_NOT_FOUND = auto()
+    INVALID_TOKEN = auto()
+    TOKEN_OUT_OF_BALLPARK = auto()
+
+
+class AuthEditicsAuthBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_EXPIRED = auto()
+    ORGANIZATION_NOT_FOUND = auto()
+    USER_REVOKED = auto()
+    USER_FROZEN = auto()
+    DEVICE_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
+    USER_NO_REALM_ROLE = auto()
     INVALID_TOKEN = auto()
     TOKEN_OUT_OF_BALLPARK = auto()
 
@@ -90,6 +106,19 @@ class AuthenticatedAuthInfo:
     device_verify_key: VerifyKey
     organization_internal_id: int
     device_internal_id: int
+    # Note the user's profile is not stored here to avoid TOCTOU issues (e.g.
+    # checking the profile needed for an operation outside of the database
+    # transaction doing said operation)
+
+
+@dataclass
+class EditicsAuthInfo:
+    organization_id: OrganizationID
+    user_id: UserID
+    device_id: DeviceID
+    device_verify_key: VerifyKey
+    realm_id: VlobID
+    realm_role: RealmRole
 
 
 @dataclass
@@ -152,6 +181,21 @@ class AuthenticatedToken:
             return True
         except CryptoError:
             return False
+
+
+class EditicsToken(AuthenticatedToken):
+    """
+    Token format: `PARSEC-EDITICS-SIGN-ED25519.<device_id_hex>.<timestamp>.<b64_signature>`
+
+    This token is similar to the `AuthenticatedToken`, except for its header name.
+
+    This is done so that an editics token cannot be used to access the authenticated
+    APIs (since the editics token is used by the editics host iframe that is isolated
+    from the rest of the GUI).
+    """
+
+    from_raw: Callable[[bytes], "EditicsToken"]
+    HEADER: bytes = b"PARSEC-EDITICS-SIGN-ED25519"
 
 
 @dataclass
@@ -222,6 +266,7 @@ class BaseAuthComponent:
     def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._config = config
         self._device_cache: dict[tuple[OrganizationID, DeviceID], AuthenticatedAuthInfo] = {}
+        self._editics_cache: dict[tuple[OrganizationID, VlobID, DeviceID], EditicsAuthInfo] = {}
         event_bus.connect(self._on_event)
 
     def _on_event(self, event: Event) -> None:
@@ -298,9 +343,61 @@ class BaseAuthComponent:
 
         return auth_info
 
+    # Editics auth closely mimic authenticated auth with the following differences:
+    # - Authorization token has a different header so that an editics token cannot
+    #   be used to access the authenticated APIs (since the editics token is used
+    #   by the editics host iframe that is isolated from the rest of the GUI).
+    # - The TOS status is ignored: the client never uses the editics API in a vacuum,
+    #   it must first use the authenticated API (and get TOS status checked!) to get
+    #   the URL of the editics server.
+    # - Realm existence is checked and user's realm role returned: since an editics
+    #   session only lives in a single server instance's memory, we only reach the
+    #   database for authentication (i.e. here!) and gets notified of role change
+    #   by events. This means we accept a small causality discrepancy window
+    #   (between when the role has been changed and when we received the event),
+    #   but it acceptable here since there is no strong causality checks in editics
+    #   (unlike what the is done with the certificates).
+    async def editics_auth(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        token: EditicsToken,
+    ) -> EditicsAuthInfo | AuthEditicsAuthBadOutcome:
+        try:
+            # The cache is only available if the authentication already succeeded,
+            # and if no revocation or freezing occurred since then.
+            auth_info = self._editics_cache[(organization_id, realm_id, token.device_id)]
+
+        except KeyError:
+            outcome = await self._get_editics_info(
+                organization_id,
+                realm_id,
+                token.device_id,
+            )
+            match outcome:
+                case EditicsAuthInfo() as auth_info:
+                    self._editics_cache[(organization_id, realm_id, token.device_id)] = auth_info
+
+                case bad_outcome:
+                    return bad_outcome
+
+        if not token.verify(auth_info.device_verify_key):
+            return AuthEditicsAuthBadOutcome.INVALID_TOKEN
+
+        if timestamps_in_the_ballpark(token.timestamp, now) is not None:
+            return AuthEditicsAuthBadOutcome.TOKEN_OUT_OF_BALLPARK
+
+        return auth_info
+
     async def _get_authenticated_info(
         self, organization_id: OrganizationID, device_id: DeviceID, tos_acceptance_required: bool
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
+        raise NotImplementedError
+
+    async def _get_editics_info(
+        self, organization_id: OrganizationID, realm_id: VlobID, device_id: DeviceID
+    ) -> EditicsAuthInfo | AuthEditicsAuthBadOutcome:
         raise NotImplementedError
 
     async def authenticated_account_auth(

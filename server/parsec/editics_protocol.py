@@ -12,15 +12,28 @@ See [RFC 1030](../../docs/rfcs/1030-collaborative-editics.md).
 from __future__ import annotations
 
 from typing import Annotated, Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field, TypeAdapter
 
 from parsec._parsec import DeviceID
 
-# `indexUser`: 1-based, monotonic per session, assigned by order of join.
-# OnlyOffice client code does arithmetic with this index (RFC §1.4), so it
-# must stay a plain int.
-EditicsProtocolIndexUser = int
+type EditicsProtocolIndexUser = int
+"""
+`indexUser`: 1-based, monotonic per editics session, assigned by order of join
+and never re-used.
+
+OnlyOffice client uses this index to generate IDs that are guaranteed to never
+clash with other clients: everything (e.g. paragraph, table) created collaboratively
+gets an ID like "3_42" (where 3 is the editor's indexUser).
+"""
+
+type EditicsProtocolParticipantID = UUID
+"""
+Random ID controlled by the client and used to identify the connection session
+with the server. By design, this survives transport disconnection and is used
+mostly to identify who has authored a modification or holds a lock.
+"""
 
 
 class EditicsProtocolParticipantEntry(BaseModel):
@@ -36,6 +49,7 @@ class EditicsProtocolParticipantEntry(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
+    id: EditicsProtocolParticipantID
     # OnlyOffice name `indexUser` kept (bad name documented, not renamed).
     indexUser: EditicsProtocolIndexUser
     # Editics addition (replaces OnlyOffice's idOriginal/username/etc.).
@@ -53,6 +67,13 @@ class EditicsProtocolParticipantEntry(BaseModel):
 # --- Client -> server events -------------------------------------------------
 
 
+class EditicsProtocolReconnect(BaseModel):
+    participantID: EditicsProtocolParticipantID
+    # TODO: document if it is in seconds or ms etc.
+    participantTimeConnect: int
+    timeIdle: int
+
+
 class EditicsProtocolClientEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     # -1 on first open; server-assigned index on reconnect
@@ -64,6 +85,8 @@ class EditicsProtocolClientEventAuth(BaseModel):
     # session this becomes the session's initial version.
     # (OnlyOffice has no such field; editics addition.)
     vlobVersion: int
+    # Reconnect info (forward-compat; unused in step 0 but kept).
+    reconnect: EditicsProtocolReconnect | None
 
 
 class EditicsProtocolClientEventAuthChangesAck(BaseModel):
@@ -216,8 +239,7 @@ class EditicsProtocolServerEventAuth(BaseModel):
     participants: list[EditicsProtocolParticipantEntry]  # current participant map
     indexUser: EditicsProtocolIndexUser  # this connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
-    sessionId: str
-    sessionTimeConnect: int  # server timestamp (ms) at connect
+    participantTimeConnect: int  # server timestamp (ms) at connect
 
 
 class EditicsProtocolServerEventConnectState(BaseModel):

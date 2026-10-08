@@ -168,69 +168,6 @@ class EditicsTranslator {
   // --- OnlyOffice connectMockServer queries (pure sync) ---------------------
 
   /**
-   * @returns {{list:OOParticipantEntry[], index:number}}
-   * This callback comes from a modification done by Cryptpad in their OnlyOffice
-   * fork (that we are based on), it is called once when the OnlyOffice client
-   * process the server `auth` event and should return the initial participant
-   * specified in the server `auth` event we have just received.
-   *
-   * see https://github.com/cryptpad/onlyoffice-editor/blob/b5d78add4608a76b28d14467d44c5c001da768db/onlyoffice-editor/src/index.ts#L133
-   */
-  getParticipants() {
-    const initialParticipants = this._initialParticipants;
-    this._initialParticipants = undefined;
-    if (initialParticipants === undefined) {
-      // Unexpected: this callback should only be called once right after we have
-      // handled a server `auth` event (where we have set `this._initialParticipants`).
-      throw new Error('`initialParticipants` undefined');
-    }
-    return initialParticipants;
-    // const list = [];
-    // let index = -1;
-    // this._participants.forEach((p, indexUser) => {
-    //   list.push({
-    //     id: p.userId + String(indexUser),
-    //     idOriginal: p.userId,
-    //     username: p.userName || p.deviceId,
-    //     indexUser: indexUser,
-    //     view: false,
-    //   });
-    //   if (indexUser === this.indexUser) index = list.length - 1;
-    // });
-    // return { list, index };
-  }
-
-  /**
-   * @returns {Array}
-   * This callback comes from a modification done by Cryptpad in their OnlyOffice
-   * fork (that we are based on), it is called once when the OnlyOffice client
-   * process the server `auth` event and should return the initial changes
-   * specified in the server `auth` event we have just received.
-   *
-   * see: https://github.com/cryptpad/onlyoffice-editor/blob/b5d78add4608a76b28d14467d44c5c001da768db/onlyoffice-editor/src/index.ts#L131
-   */
-  getInitialChanges() {
-    const initialChanges = this._initialChanges;
-    this._initialChanges = undefined;
-    if (initialChanges === undefined) {
-      // Unexpected: this callback should only be called once right after we have
-      // handled a server `auth` event (where we have set `this._initialChanges`).
-      throw new Error('`initialChanges` undefined');
-    }
-    return initialChanges;
-  }
-
-  /**
-   * @returns {Promise<string>}
-   */
-  getImageURL() {
-    // Image URL resolution is done client-side (no server involvement); the
-    // host page wires the actual resolution. The translator returns an empty
-    // URL (matches the previous client behavior).
-    return Promise.resolve('');
-  }
-
-  /**
    * Convert a client event from OnlyOffice to Editics protocol.
    *
    * This is used when the OnlyOffice editor wants to communicate with the server,
@@ -267,22 +204,13 @@ class EditicsTranslator {
     //   case 'unSaveLock':
     //     return { type: 'unSaveLock' };
     //
-    //   case 'unLockDocument':
-    //     return {
-    //       type: 'unLockDocument',
-    //       isSave: !!oo.isSave,
-    //       unlock: !!oo.unlock,
-    //       deleteIndex: oo.deleteIndex,
-    //       releaseLocks: !!oo.releaseLocks,
-    //     };
-    //
     //   case 'close':
     //     return { type: 'close' };
     //
     //   case 'saveDone':
     //     return { type: 'saveDone', savedUpToIndex: oo.savedUpToIndex, newVersion: oo.newVersion };
 
-    switch (oo && oo.type) {
+    switch (oo.type) {
       case 'auth':
         return {
           type: 'auth',
@@ -294,6 +222,15 @@ class EditicsTranslator {
       case 'getMessages':
         return {
           type: 'getMessages',
+        };
+
+      case 'unLockDocument':
+        return {
+          type: 'unLockDocument',
+          isSave: oo.isSave,
+          unlock: oo.unlock,
+          deleteIndex: oo.deleteIndex,
+          releaseLocks: oo.releaseLocks,
         };
 
       // Ignored events
@@ -372,9 +309,15 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEvent|null>}
    */
   async cookServerEvent(editics) {
-    switch (editics && editics.type) {
+    switch (editics.type) {
       case 'auth':
         return this._cookServerAuth(editics);
+
+      case 'waitAuth':
+        return this._cookWaitAuth(editics);
+
+      case 'connectState':
+        return this._cookConnectState(editics);
 
       case 'message':
         return this._cookMessage(editics);
@@ -382,12 +325,6 @@ class EditicsTranslator {
       // Still to be translated (disabled until the server side of the
       // collaborative mode is finished; move back into the switch below to
       // enable):
-      //
-      //   case 'waitAuth':
-      //     return this._cookWaitAuth(editics);
-      //
-      //   case 'connectState':
-      //     return this._cookConnectState(editics);
       //
       //   case 'authChanges':
       //     return this._cookAuthChanges(editics);
@@ -451,24 +388,8 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventAuth|null>}
    */
   async _cookServerAuth(editics) {
-    /** @type {OOParticipantEntry[]} */
-    const participants = [];
-    for (const editicsParticipant of editics.participants) {
-      const humanLabel = (await this.config.capabilities.getHumanLabelFromDeviceId(editicsParticipant.deviceId)) || '<unknown>';
-      participants.push({
-        // TODO: what id/idOriginal/username stand for ? is it the connection/device/user ?
-        id: editicsParticipant.deviceId + editicsParticipant.indexUser,
-        idOriginal: editicsParticipant.deviceId,
-        indexUser: editicsParticipant.indexUser,
-        // Dummy value since `connectionId` is never actually used by the client
-        connectionId: '',
-        username: humanLabel,
-        view: editicsParticipant.view,
-        isCloseCoAuthoring: false, // TODO: needed in editics event ?
-        isLiveViewer: false, // TODO: needed in editics event ?
-        encrypted: false,
-      });
-    }
+    await this._setParticipants(editics.participants);
+    const participants = this._onlyofficeParticipants();
 
     return {
       type: 'auth',
@@ -500,52 +421,43 @@ class EditicsTranslator {
     };
   }
 
-  // /**
-  //  * @param {EditicsServerEventWaitAuth} editics
-  //  * @returns {Promise<OOServerEventWaitAuth|null>}
-  //  */
-  // async _cookWaitAuth(editics) {
-  //   // Ensure the holder is in the participant table so `lockDocument` is
-  //   // well-formed (the server may have broadcast a `connectState{waitAuth:true}`
-  //   // carrying the holder before this RPC reply reached the newcomer).
-  //   const holderIndex = editics.authLockedBy;
-  //   if (!this._participants.has(holderIndex)) {
-  //     await this._mergeParticipants([{ indexUser: holderIndex, deviceId: this._deviceId(holderIndex) }]);
-  //   }
-  //   const holder = this._participants.get(holderIndex);
-  //   if (!holder) {
-  //     return null;
-  //   }
-  //   return {
-  //     type: 'waitAuth',
-  //     lockDocument: this._onlyofficeParticipantEntry(holder, holderIndex),
-  //   };
-  // }
+  /**
+   * The server parks us behind the auth lock holder (single-editor to
+   * co-editing transition, RFC §6.2): the editor must wait for the
+   * established editor to release the lock with `unLockDocument{unlock:true}`.
+   * @param {EditicsServerEventWaitAuth} editics
+   * @returns {OOServerEventWaitAuth|null}
+   */
+  _cookWaitAuth(editics) {
+    // The holder is necessarily in the participant table: the `connectState`
+    // broadcast that announced our arrival carried it, and the SSE channel
+    // preserves the ordering.
+    const holder = this._participants.get(editics.authLockedBy);
+    if (!holder) {
+      console.warn(`waitAuth: unknown auth lock holder ${editics.authLockedBy}`);
+      return null;
+    }
+    return {
+      type: 'waitAuth',
+      lockDocument: this._onlyofficeParticipantEntry(holder, editics.authLockedBy),
+    };
+  }
 
-  // /**
-  //  * @param {EditicsServerEventConnectState} editics
-  //  * @returns {Promise<OOServerEventConnectState>}
-  //  */
-  // async _cookConnectState(editics) {
-  //   // The server's participant list is authoritative: drop the provisional
-  //   // self-seed (index 0) and any participant no longer present, the first
-  //   // time an authoritative list arrives. Mirrors `_cookServerAuth` which
-  //   // clears the table before merging the auth reply.
-  //   const incoming = editics.participants || [];
-  //   const incomingIdx = new Set(incoming.map((p) => p.indexUser));
-  //   if (incoming.length > 0) {
-  //     for (const idx of [...this._participants.keys()]) {
-  //       if (!incomingIdx.has(idx)) this._participants.delete(idx);
-  //     }
-  //   }
-  //   await this._mergeParticipants(incoming);
-  //   return {
-  //     type: 'connectState',
-  //     participantsTimestamp: editics.participantsTimestamp,
-  //     participants: this._onlyofficeParticipants(),
-  //     waitAuth: !!editics.waitAuth,
-  //   };
-  // }
+  /**
+   * @param {EditicsServerEventConnectState} editics
+   * @returns {Promise<OOServerEventConnectState>}
+   */
+  async _cookConnectState(editics) {
+    // The server's participant list is authoritative: it replaces the whole
+    // table (dropping the provisional self seed and the departed participants).
+    await this._setParticipants(editics.participants || []);
+    return {
+      type: 'connectState',
+      participantsTimestamp: editics.participantsTimestamp,
+      participants: this._onlyofficeParticipants(),
+      waitAuth: !!editics.waitAuth,
+    };
+  }
 
   // /**
   //  * @param {EditicsServerEventAuthChanges} editics
@@ -670,72 +582,61 @@ class EditicsTranslator {
   //   return oo;
   // }
 
-  // // --- Participant table helpers -------------------------------------------
+  // --- Participant table helpers -------------------------------------------
 
-  // /**
-  //  * Merge the server's participant entries into the local table, resolving
-  //  * names/userIds via the injected capabilities (the server is NOT trusted for
-  //  * names, RFC §3.3).
-  //  * @param {EditicsParticipantEntry[]} participants
-  //  * @returns {Promise<void>}
-  //  */
-  // async _mergeParticipants(participants) {
-  //   for (const p of participants) {
-  //     if (!this._participants.has(p.indexUser)) {
-  //       let userName = p.deviceId;
-  //       let userId = p.deviceId;
-  //       const resolved = await this.capabilities.resolveUser(p.deviceId);
-  //       if (resolved) {
-  //         [userId, userName] = resolved;
-  //       }
-  //       this._participants.set(p.indexUser, { deviceId: p.deviceId, userName, userId });
-  //     } else {
-  //       // Backfill the userId if it wasn't resolved the first time but is now.
-  //       const existing = this._participants.get(p.indexUser);
-  //       if (existing && (!existing.userId || existing.userId === existing.deviceId) && this.capabilities.resolveUserId) {
-  //         try {
-  //           const resolved = await this.capabilities.resolveUserId(p.deviceId);
-  //           if (resolved) existing.userId = resolved;
-  //         } catch (_e) {
-  //           /* ignore */
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
+  /**
+   * Replace the participant table with the server's (authoritative) entries,
+   * resolving the display names through the injected capabilities (the
+   * server is NOT trusted for names, RFC §3.3).
+   * @param {EditicsParticipantEntry[]} entries
+   * @returns {Promise<void>}
+   */
+  async _setParticipants(entries) {
+    const participants = new Map();
+    for (const entry of entries) {
+      const humanLabel = await this.config.capabilities.getHumanLabelFromDeviceId(entry.deviceId);
+      participants.set(entry.indexUser, {
+        deviceId: entry.deviceId,
+        userName: humanLabel || '<unknown>',
+        // The per-person user id the `<userId><indexUser>` composite ids of
+        // the OnlyOffice protocol are built from.
+        userId: entry.deviceId,
+        view: !!entry.view,
+      });
+    }
+    this._participants = participants;
+  }
 
-  // /**
-  //  * @returns {OOParticipantEntry[]}
-  //  */
-  // _onlyofficeParticipants() {
-  //   const list = [];
-  //   this._participants.forEach((p, indexUser) => {
-  //     list.push(this._onlyofficeParticipantEntry(p, indexUser));
-  //   });
-  //   return list;
-  // }
+  /**
+   * @returns {OOParticipantEntry[]}
+   */
+  _onlyofficeParticipants() {
+    const list = [];
+    this._participants.forEach((p, indexUser) => {
+      list.push(this._onlyofficeParticipantEntry(p, indexUser));
+    });
+    return list;
+  }
 
-  // /**
-  //  * @param {{deviceId:string, userName:string, userId:string}} p
-  //  * @param {number} indexUser
-  //  * @returns {OOParticipantEntry}
-  //  */
-  // _onlyofficeParticipantEntry(p, indexUser) {
-  //   return {
-  //     id: p.userId + String(indexUser),
-  //     idOriginal: p.userId,
-  //     username: p.userName,
-  //     indexUser: indexUser,
-  //     // TODO: server should return connection ID
-  //     connectionId: "",
-  //     // TODO: do we need view/isLiveViewer/isCloseCoAuthoring ?
-  //     view: false,
-  //     isLiveViewer: false,
-  //     isCloseCoAuthoring: false,
-  //     // Never used
-  //     encrypted: false,
-  //   };
-  // }
+  /**
+   * @param {{deviceId: string, userName: string, userId: string, view: boolean}} p
+   * @param {number} indexUser
+   * @returns {OOParticipantEntry}
+   */
+  _onlyofficeParticipantEntry(p, indexUser) {
+    return {
+      id: p.userId + String(indexUser),
+      idOriginal: p.userId,
+      username: p.userName,
+      indexUser: indexUser,
+      // Never provided by the editics protocol, and unused by the editor
+      connectionId: '',
+      view: !!p.view,
+      isLiveViewer: false,
+      isCloseCoAuthoring: false,
+      encrypted: false,
+    };
+  }
 
   /**
    * Display name of a participant index (falls back to the index itself when
@@ -758,17 +659,6 @@ class EditicsTranslator {
     const p = this._participants.get(indexUser);
     return p ? p.userId || p.deviceId : String(indexUser);
   }
-
-  // /**
-  //  * Best-effort deviceId for a participant index that may not be in the table
-  //  * yet (used to seed the auth-lock holder before its `connectState` arrives).
-  //  * @param {number} indexUser
-  //  * @returns {string}
-  //  */
-  // _deviceId(indexUser) {
-  //   const p = this._participants.get(indexUser);
-  //   return p ? p.deviceId : String(indexUser);
-  // }
 
   // --- Encryption (sync, capability-injected) -------------------------------
 

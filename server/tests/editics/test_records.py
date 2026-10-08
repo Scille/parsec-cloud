@@ -86,6 +86,17 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 for field in ("sessionId", "sessionTimeConnect", "openedAt"):
                     if field in payload:
                         payload[field] = TypePlaceholder(payload[field])
+                # # `openedAt` is always emitted by our translator, but is missing
+                # # from some of the captured records
+                # payload["openedAt"] = TypePlaceholder(payload.get("openedAt", 0))
+                for p in payload["participants"]:
+                    p["connectionId"] = TypePlaceholder(p["connectionId"])
+            elif type_ == "waitAuth":
+                payload["lockDocument"]["connectionId"] = TypePlaceholder(
+                    payload["lockDocument"]["connectionId"]
+                )
+            elif type_ == "connectState":
+                payload["participantsTimestamp"] = TypePlaceholder(payload["participantsTimestamp"])
                 for p in payload["participants"]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
 
@@ -300,6 +311,9 @@ async def _do_test_record(
 
 # Generate one test per record file (e.g. `records/0_auth.md` -> `test_0_auth`)
 for _record_path in sorted(RECORDS_DIR.glob("*.md")):
+    if _record_path.name == "README.md":
+        continue
+
     _test_name = f"test_{_record_path.stem}"
 
     def _make_test(record_path: Path, test_name: str):
