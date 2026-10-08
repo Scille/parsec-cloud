@@ -336,6 +336,7 @@
       }
 
       .item-label {
+        @include ms.font('label-md-medium');
         margin: 0;
       }
     }

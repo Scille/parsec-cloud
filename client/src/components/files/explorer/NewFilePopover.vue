@@ -10,7 +10,7 @@
         :image="File.Word"
         class="option__icon"
       />
-      <ion-text class="button-medium item-label">
+      <ion-text class="item-label">
         {{ $msTranslate('FoldersPage.createFile.createDocument') }}
       </ion-text>
     </ion-item>
@@ -22,7 +22,7 @@
         :image="File.Excel"
         class="option__icon"
       />
-      <ion-text class="button-medium item-label">
+      <ion-text class="item-label">
         {{ $msTranslate('FoldersPage.createFile.createSpreadsheet') }}
       </ion-text>
     </ion-item>
@@ -34,7 +34,7 @@
         :image="File.Powerpoint"
         class="option__icon"
       />
-      <ion-text class="button-medium item-label">
+      <ion-text class="item-label">
         {{ $msTranslate('FoldersPage.createFile.createPresentation') }}
       </ion-text>
     </ion-item>
@@ -46,7 +46,7 @@
         :image="File.Text"
         class="option__icon"
       />
-      <ion-text class="button-medium item-label">
+      <ion-text class="item-label">
         {{ $msTranslate('FoldersPage.createFile.createText') }}
       </ion-text>
     </ion-item>

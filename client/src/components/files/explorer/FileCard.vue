@@ -49,14 +49,14 @@
           />
           <span
             v-if="entry.syncStatus === EntrySyncStatus.Uploading && entry.syncProgress"
-            class="upload-progress button-small"
+            class="upload-progress"
           >
             {{ entry.syncProgress }}%
           </span>
         </div>
 
         <ion-text
-          class="file-card__title cell"
+          class="file-card__title"
           :class="{ selection: showCheckbox }"
           @click="showCheckbox ? null : !($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
           @dblclick.stop
@@ -65,7 +65,7 @@
           {{ entry.name }}
         </ion-text>
 
-        <ion-text class="file-card-last-update body-sm">
+        <ion-text class="file-card-last-update">
           {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
         </ion-text>
       </div>
@@ -128,8 +128,8 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 <style lang="scss" scoped>
 .file-card-item {
-  --background: var(--parsec-color-light-secondary-background);
-  background: var(--parsec-color-light-secondary-background);
+  --background: #{ms.color('surface-base-default-secondary')};
+  --background-hover: #{ms.color('surface-brand-default-subtle')};
   cursor: default;
   text-align: center;
   user-select: none;
@@ -151,7 +151,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .card-option {
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   top: 0;
   right: 0;
 }
@@ -161,12 +161,12 @@ async function onOptionsClick(event: Event): Promise<void> {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 0.5rem;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-lg');
   width: 100%;
   margin: auto;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem 0.5rem;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-lg');
   }
 
   &-icons {
@@ -185,23 +185,24 @@ async function onOptionsClick(event: Event): Promise<void> {
       font-size: 1.25rem;
       left: 58%;
       bottom: -9px;
-      padding: 4px;
-      background: var(--parsec-color-light-secondary-background);
-      border-radius: var(--parsec-radius-circle);
-      box-shadow: var(--parsec-shadow-light);
+      padding: ms.spacing('padding-sm');
+      background: ms.color('surface-base-default-secondary');
+      border-radius: ms.radius('full');
+      box-shadow: ms.shadow('light');
 
       &-ok {
-        color: var(--parsec-color-light-primary-500);
+        color: ms.color('icon-brand-default');
       }
 
       &-ko {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        color: ms.color('icon-neutral-default');
       }
     }
   }
 
   &__title {
-    color: var(--parsec-color-light-primary-900);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
     text-align: center;
     max-height: 3rem;
     width: inherit;
@@ -218,16 +219,14 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   &-last-update {
-    padding-top: 0.25rem;
+    padding-top: ms.spacing('padding-sm');
+    @include ms.font('body-sm-regular');
+    color: ms.color('text-base-description');
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
   }
-}
-
-.file-card-last-update {
-  color: var(--parsec-color-light-secondary-grey);
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
 }
 </style>

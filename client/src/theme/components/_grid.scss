@@ -17,7 +17,7 @@
 .workspace-card-item {
   position: relative;
   border-radius: ms.radius('2xl');
-  border: ms.border('thin') solid #{ms.color('border-base-default')};
+  border: ms.border('thin') solid transparent;
 
   &::part(native) {
     --inner-padding-end: #{ms.spacing('padding-none')};
@@ -31,8 +31,8 @@
   }
 
   &.selected {
-    --background: #{ms.color('surface-brand-default-subtle-pressed')} !important;
-    --background-hover: #{ms.color('surface-brand-default-subtle-pressed')};
+    --background: #{ms.color('surface-brand-default-subtle-hover')} !important;
+    --background-hover: #{ms.color('surface-brand-default-subtle-hover')};
     border: ms.border('thin') solid ms.color('border-brand-default-subtle-hover');
 
     .file-card-last-update {

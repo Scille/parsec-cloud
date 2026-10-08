@@ -26,7 +26,7 @@
         />
         <div class="file-name-content">
           <ion-text
-            class="list-item-label label-name button-medium"
+            class="list-item-label label-name"
             :title="searchItem.stats.name"
             @click="onClick"
           >
@@ -41,13 +41,13 @@
           </ion-text>
           <div class="path-content">
             <ion-text
-              class="workspace-path body-sm"
+              class="workspace-path"
               :title="searchItem.workspaceName"
             >
               {{ searchItem.workspaceName }}
             </ion-text>
             <ion-text
-              class="label-path can-highlight body-sm"
+              class="label-path can-highlight"
               :title="searchItem.parent"
             >
               <!-- Those strings have been escaped by the search function -->
@@ -64,7 +64,7 @@
             class="file-mobile-text"
             v-if="isSmallDisplay"
           >
-            <ion-text class="file-mobile-text__data body-sm">
+            <ion-text class="file-mobile-text__data">
               <span class="data-date">{{ $msTranslate(formatTimeSince(searchItem.stats.updated, '--', 'short')) }}</span>
               <span v-if="searchItem.stats.isFile()"> &bull; </span>
               <span
@@ -171,12 +171,8 @@ async function onClick(): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.result-list-item {
-  padding: 0.25rem 0;
-}
-
 :deep(.highlight) {
-  color: var(--parsec-color-light-primary-500);
+  color: ms.color('text-brand-default');
   font-weight: bold;
 }
 
@@ -185,30 +181,32 @@ async function onClick(): Promise<void> {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
   }
 
   .path-content {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     overflow: hidden;
   }
 
   .workspace-path {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-sm-regular');
+    color: ms.color('text-base-description');
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 1px 0.25rem;
-    border-radius: var(--parsec-radius-4);
-    background: var(--parsec-color-light-secondary-background);
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
+    padding: 1px ms.spacing('padding-sm');
+    border-radius: ms.radius('sm');
+    background: ms.color('surface-base-default-secondary');
   }
 
   .label-path {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-sm-regular');
+    color: ms.color('text-base-description');
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

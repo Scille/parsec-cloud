@@ -3,9 +3,9 @@
 <template>
   <div class="file-search-results">
     <div class="results-header">
-      <ion-text class="results-header__title title-h2">
+      <ion-text class="results-header__title">
         {{ $msTranslate('FoldersPage.search.title') }}
-        <span class="results-header__count subtitles-normal">
+        <span class="results-header__count">
           ({{
             $msTranslate({
               key: 'FoldersPage.search.resultsCount',
@@ -28,8 +28,9 @@
       <document-filter v-model="documentFilters" />
       <ion-button
         @click="titlesOnly = !titlesOnly"
-        class="only-titles-toggle filter-button button-medium"
+        class="only-titles-toggle filter-button"
         :class="{ active: titlesOnly }"
+        fill="clear"
       >
         <ion-icon
           :icon="text"
@@ -84,10 +85,10 @@
         :image="NoSearchResults"
         class="results-empty__image"
       />
-      <ion-text class="results-empty__title subtitles-lg">
+      <ion-text class="results-empty__title">
         {{ $msTranslate('FoldersPage.search.noResults.title') }}
       </ion-text>
-      <ion-text class="results-empty__subtitle body-lg">
+      <ion-text class="results-empty__subtitle">
         {{ $msTranslate('FoldersPage.search.noResults.subtitle') }}
       </ion-text>
     </div>
@@ -168,21 +169,21 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
 
 <style scoped lang="scss">
 .file-search-results {
-  padding: 1rem 1rem 0 1rem;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
-  box-shadow: var(--parsec-shadow-input);
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-none') ms.spacing('padding-3xl');
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-default');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  box-shadow: ms.shadow('input');
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   overflow: hidden;
   position: relative;
 
   @include ms.responsive-breakpoint('sm') {
     border: none;
-    padding: 0;
+    padding: ms.spacing('padding-none');
   }
 
   &::after {
@@ -192,7 +193,7 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
     right: 0;
     bottom: 0;
     height: 1.75rem;
-    background: linear-gradient(180deg, transparent, var(--parsec-color-light-secondary-white));
+    background: linear-gradient(180deg, transparent, ms.color('surface-base-default'));
     z-index: 10;
     transition: opacity 0.2s;
 
@@ -203,12 +204,12 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
 }
 
 #search-page-file-list {
-  padding: 0;
+  padding: ms.spacing('padding-none');
 }
 
 .results-header {
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   position: relative;
 
   @include ms.responsive-breakpoint('lg') {
@@ -216,22 +217,24 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem 1rem 0;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-none');
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h3');
+    color: ms.color('text-base-body');
   }
 
   &__count {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('label-lg-medium');
+    color: ms.color('text-base-description');
   }
 
   &__info {
     width: fit-content;
     position: absolute;
     right: 0;
-    padding: 0.5rem 0.75rem !important;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl') !important;
 
     @include ms.responsive-breakpoint('lg') {
       position: relative;
@@ -242,52 +245,35 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
 
 .results-filters {
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1rem;
+    padding-inline: ms.spacing('padding-3xl');
   }
 
   .only-titles-toggle {
-    --background-hover: transparent;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-secondary-background);
-    border: 1px solid var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-secondary-soft-text);
-    box-shadow: var(--parsec-shadow-input);
-
-    &::part(native) {
-      padding: 0 !important;
-      background: none;
-    }
+    @include ms.font('label-md-medium');
+    color: ms.color('text-neutral-default');
 
     .button-icon-left {
       font-size: 1rem;
-      margin-right: 0.25rem;
-    }
-
-    &:hover {
-      background-color: var(--parsec-color-light-secondary-medium) !important;
+      margin-right: ms.spacing('gap-sm');
     }
 
     &.active {
-      background-color: var(--parsec-color-light-primary-50);
-      border-color: var(--parsec-color-light-primary-200);
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('text-brand-default');
 
       .active-icon {
-        color: var(--parsec-color-light-primary-500);
+        color: ms.color('icon-brand-default');
         font-size: 1rem;
-        margin-left: 0.25rem;
+        margin-left: ms.spacing('gap-sm');
       }
 
       &:hover {
-        background-color: var(--parsec-color-light-primary-100) !important;
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default-hover');
 
         .active-icon {
-          color: var(--parsec-color-light-primary-600);
+          color: ms.color('icon-brand-default-hover');
         }
       }
     }
@@ -299,7 +285,7 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
   overflow: auto;
 
   .files-list-header {
-    background: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-base-default');
     backdrop-filter: none;
   }
 }
@@ -310,17 +296,19 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
   flex-direction: column;
   align-items: center;
   text-align: center;
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-body');
   height: 100%;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('body-lg-medium');
+    color: ms.color('text-base-body');
     margin-top: 1rem;
   }
 
   &__subtitle {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-base-description');
     max-width: 25rem;
   }
 }
