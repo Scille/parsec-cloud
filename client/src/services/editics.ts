@@ -1,9 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getFileContent } from '@/common/file';
 import { FileContentType } from '@/common/fileTypes';
 import ImageSelectionModal from '@/components/files/explorer/ImageSelectionModal.vue';
-import { FsPath, isElectron, WorkspaceHandle } from '@/parsec';
+import { isElectron, WorkspaceHandle } from '@/parsec';
 import { getWorkspaceHandle } from '@/router';
 import { Env } from '@/services/environment';
 import type {
@@ -342,49 +341,35 @@ export async function openDocument(
 async function handleRequestImage(host: Window, requestId: number): Promise<void> {
   const hostOrigin = await getEditicsOrigin();
 
-  const postReply = (reply: Omit<Extract<EditicsParentToHostMessage, { command: 'oo-image-reply' }>, 'command' | 'requestId'>): void => {
+  const postReply = (reply: Omit<Extract<EditicsParentToHostMessage, { command: 'oo-insert-image-result' }>, 'command' | 'requestId'>): void => {
     host.postMessage({ command: 'oo-insert-image-result', requestId, ...reply } satisfies EditicsParentToHostMessage, hostOrigin);
   };
 
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     postReply({
-      // @ts-expect-error
       error: 'cannot get the workspace handle',
     });
     return;
   }
 
-  const path = await selectImage({ workspaceHandle });
-  if (path === null) {
+  const image = await selectImage({ workspaceHandle });
+  if (image === null) {
     postReply({
-      // @ts-expect-error
       error: 'cancelled',
     });
     return;
   }
 
-  const content = await getFileContent(workspaceHandle, path as FsPath);
-  if (!content) {
-    postReply({
-      // @ts-expect-error
-      error: `failed to read ${path} from the workspace`,
-    });
-    return;
-  }
-
   postReply({
-    // @ts-expect-error
-    fileName: path.split('/').pop() ?? 'image',
-    // @ts-expect-error
-    data: content,
+    fileName: image.name,
+    data: image.content,
   });
 }
 
 // Opens the workspace image picker (see `ImageSelectionModal`) and resolves
-// with the workspace-absolute path of the selected image, or `null` if the
-// user cancelled.
-async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promise<string | null> {
+// with the name and content of the image, or `null` if the user cancelled.
+async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promise<{ name: string; content: Uint8Array } | null> {
   const modal = await modalController.create({
     component: ImageSelectionModal,
     canDismiss: true,
@@ -396,7 +381,7 @@ async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promi
     },
   });
   await modal.present();
-  const result = await modal.onWillDismiss();
+  const { data, role } = await modal.onWillDismiss();
   await modal.dismiss();
-  return result.role === MsModalResult.Confirm ? (result.data as string | null) : null;
+  return role === MsModalResult.Confirm ? (data as { name: string; content: Uint8Array }) : null;
 }

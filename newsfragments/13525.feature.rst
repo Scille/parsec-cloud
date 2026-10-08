@@ -1,0 +1,1 @@
+Import an image into a document from the current workspace or the PC
