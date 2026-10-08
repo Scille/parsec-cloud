@@ -32,7 +32,7 @@ from parsec.components.auth import BaseAuthComponent
 from parsec.components.block import BaseBlockComponent
 from parsec.components.blockstore import BaseBlockStoreComponent
 from parsec.components.cryptpad import BaseCryptpadComponent
-from parsec.components.editics import BaseEditicsComponent
+from parsec.components.editics import EditicsComponent
 from parsec.components.events import BaseEventsComponent, EventBus
 from parsec.components.invite import BaseInviteComponent
 from parsec.components.memory import components_factory as mocked_components_factory
@@ -114,7 +114,7 @@ class Backend:
     block: BaseBlockComponent
     blockstore: BaseBlockStoreComponent
     cryptpad: BaseCryptpadComponent
-    editics: BaseEditicsComponent
+    editics: EditicsComponent
     events: BaseEventsComponent
     invite: BaseInviteComponent
     organization: BaseOrganizationComponent

@@ -9,13 +9,13 @@ from typing import Any
 import httpx
 
 from parsec.components.blockstore import blockstore_factory
+from parsec.components.editics import EditicsComponent
 from parsec.components.memory.account import MemoryAccountComponent
 from parsec.components.memory.async_enrollment import MemoryAsyncEnrollmentComponent
 from parsec.components.memory.auth import MemoryAuthComponent
 from parsec.components.memory.block import MemoryBlockComponent
 from parsec.components.memory.cryptpad import MemoryCryptpadComponent
 from parsec.components.memory.datamodel import MemoryDatamodel
-from parsec.components.memory.editics import MemoryEditicsComponent
 from parsec.components.memory.events import MemoryEventsComponent, event_bus_factory
 from parsec.components.memory.invite import MemoryInviteComponent
 from parsec.components.memory.organization import MemoryOrganizationComponent
@@ -50,7 +50,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             block = MemoryBlockComponent(data, blockstore)
             cryptpad = MemoryCryptpadComponent(data, config)
             events = MemoryEventsComponent(data, config, event_bus)
-            editics = MemoryEditicsComponent(data, config)
+            editics = EditicsComponent(config)
             invite = MemoryInviteComponent(data, event_bus, config)
             organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
             ping = MemoryPingComponent(event_bus)

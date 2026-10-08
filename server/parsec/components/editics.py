@@ -147,7 +147,7 @@ class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
     PARTICIPANT_DEVICE_MISMATCH = auto()
 
 
-class BaseEditicsComponent:
+class EditicsComponent:
     def __init__(self, config: BackendConfig) -> None:
         self._config = config
         # Sessions key is (organization ID, realm ID, document ID)
