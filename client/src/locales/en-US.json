@@ -2870,7 +2870,24 @@
         "insertImage": {
             "title": "Insert an image",
             "emptyFolder": "No image in this folder",
-            "insert": "Insert"
+            "insert": "Insert this image",
+            "tabs": {
+                "label": "Image source",
+                "fromPC": "From my computer",
+                "fromWorkspace": "From the workspace"
+            },
+            "dropZone": {
+                "title": "Drag & drop your image here",
+                "or": "or",
+                "browse": "browse your files"
+            },
+            "changeImage": "Replace",
+            "selectedImage": "Selected image",
+            "errors": {
+                "loadContent": "Unable to read the content of the image.",
+                "notAnImage": "This file is not a supported image.",
+                "tooManyFiles": "Please drop only one image."
+            }
         },
         "saving": {
             "unsaved": "Changes unsaved",

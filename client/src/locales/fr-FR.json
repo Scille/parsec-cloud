@@ -2870,7 +2870,24 @@
         "insertImage": {
             "title": "Insérer une image",
             "emptyFolder": "Aucune image dans ce dossier",
-            "insert": "Insérer"
+            "insert": "Insérer cette image",
+            "tabs": {
+                "label": "Source de l'image",
+                "fromPC": "Depuis mon ordinateur",
+                "fromWorkspace": "Depuis l'espace de travail"
+            },
+            "dropZone": {
+                "title": "Glissez-déposez votre image ici",
+                "or": "ou",
+                "browse": "parcourez vos fichiers"
+            },
+            "changeImage": "Remplacer",
+            "selectedImage": "Image sélectionnée",
+            "errors": {
+                "loadContent": "Impossible de lire le contenu de l'image.",
+                "notAnImage": "Ce fichier n'est pas une image prise en charge.",
+                "tooManyFiles": "Veuillez déposer une seule image."
+            }
         },
         "saving": {
             "unsaved": "Modifications non sauvegardées",
