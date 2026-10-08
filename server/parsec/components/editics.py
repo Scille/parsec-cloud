@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncGenerator, Generator
-from contextlib import asynccontextmanager, contextmanager
+from collections.abc import Generator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import auto
 from uuid import UUID, uuid4
@@ -192,104 +192,6 @@ class EditicsComponent:
         )
 
         return participant
-
-    @asynccontextmanager
-    async def sse_api_session_listen(
-        self,
-        organization_id: OrganizationID,
-        device_id: DeviceID,
-        participant_id: EditicsProtocolParticipantID,
-        realm_id: VlobID,
-        document_id: VlobID,
-    ) -> AsyncGenerator[EditicsSessionJoinEventStream | EditicsJoinSessionBadOutcome]:
-        session = self._get_or_create_session((organization_id, realm_id, document_id))
-        participant = session.get_or_insert_participant(participant_id, device_id)
-
-        channel_sender, channel_receiver = anyio.create_memory_object_stream(
-            max_buffer_size=PER_PARTICIPANT_MAX_BUFFER_EVENTS
-        )
-
-        assert participant_id not in session.participants  # TODO: error handling
-        participant = Participant(
-            index=session.next_participant_index,
-            device_id=device_id,
-            connected_at=int(time.time() * 1000),
-            sse_channel_sender=channel_sender,
-            parked=False,
-        )
-        session.next_participant_index += 1
-        session.participants[participant_id] = participant
-
-        if session.auth_lock_holder is None:
-            # No auth lock held: the newcomer completes its handshake right
-            # away. If it is also the first participant, it becomes the single
-            # editor and takes the auth lock (RFC §6.2).
-            if len(session.participants) == 1:
-                session.auth_lock_holder = participant.index
-            self._send_auth(session, participant)
-        else:
-            # An established editor holds the auth lock: the newcomer is parked
-            # until the holder releases it.
-            participant.parked = True
-
-        if len(session.participants) > 1:
-            # The participant set changed: broadcast it to everyone, the newcomer
-            # included (this is how it discovers the current participants before
-            # receiving its `waitAuth`/`auth` event).
-            self._broadcast_connect_state(session)
-
-        try:
-            yield channel_receiver
-
-        finally:
-            del session.participants[participant_id]
-            # Never leave participants parked forever: if the auth lock holder
-            # leaves without releasing it, release it on its behalf.
-            if session.auth_lock_holder == participant.index:
-                self._release_auth_lock(session)
-            if session.participants:
-                self._broadcast_connect_state(session)
-
-    # --- Session events ------------------------------------------------------
-
-    # def _send(self, participant: Participant, event: EditicsProtocolServerEvent) -> None:
-    #     try:
-    #         participant.sse_channel_sender.send_nowait(event)
-    #     except anyio.BrokenResourceError:
-    #         # The participant's SSE stream is already closed (e.g. it left while
-    #         # we were broadcasting), nothing to do.
-    #         pass
-
-    # def _send_auth(self, session: EditicsSession, participant: Participant) -> None:
-    #     """Send the `auth` (s→c) event completing a participant's handshake."""
-    #     self._send(
-    #         participant,
-    #         EditicsProtocolServerEventAuth(
-    #             participants=_participant_entries(session),
-    #             indexUser=participant.index,
-    #             sessionId=session.session_id.hex,
-    #             sessionTimeConnect=participant.connected_at,
-    #         ),
-    #     )
-
-    # def _broadcast_connect_state(self, session: EditicsSession) -> None:
-    #     """Broadcast the updated participant set (todo step_1 §6.1)."""
-    #     event = EditicsProtocolServerEventConnectState(
-    #         participantsTimestamp=int(time.time() * 1000),
-    #         participants=_participant_entries(session),
-    #         waitAuth=session.auth_lock_holder is not None,
-    #     )
-    #     for participant in session.participants.values():
-    #         self._send(participant, event)
-
-    # def _release_auth_lock(self, session: EditicsSession) -> None:
-    #     """Release the auth lock and let the parked participants complete their
-    #     handshake (todo step_1 §6.2)."""
-    #     session.auth_lock_holder = None
-    #     for participant in session.participants.values():
-    #         if participant.parked:
-    #             participant.parked = False
-    #             self._send_auth(session, participant)
 
     @contextmanager
     def participant_listen(
