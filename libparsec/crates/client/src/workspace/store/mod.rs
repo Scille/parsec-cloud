@@ -222,6 +222,7 @@ mod data {
             // `CertificateOps::add_certificates_batch`) which are going to poll this
             // future directly, so the references' lifetimes *are* long enough.
             // TODO: Remove this once async closure are available
+            // https://github.com/rust-lang/rust/issues/62290
             let static_storage_mut_ref = unsafe { pretend_static(storage_mut_ref) };
 
             #[cfg(debug_assertions)]
