@@ -200,20 +200,19 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     .unread-count {
       position: absolute;
       z-index: 3;
-      right: -7px;
-      top: -9px;
+      right: -5px;
+      top: -8px;
       padding-inline: ms.spacing('padding-xs');
-      min-width: 1.125rem;
       width: fit-content;
-      height: 1.125rem;
+      min-width: 1rem;
+      height: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
       font-weight: 600;
-      color: ms.color('text-error-on-color');
+      color: ms.color('text-on-color-label');
       background: ms.color('surface-error-default');
-      border: ms.border('thick') solid ms.color('surface-brand-default-subtle');
       border-radius: ms.radius('2xl');
 
       @include ms.responsive-breakpoint('sm') {
