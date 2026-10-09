@@ -713,8 +713,8 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsProtocolReconnect
  * @property {EditicsParticipantID} participantId
- * @property {int} participantTimeConnect
- * @property {int} timeIdle
+ * @property {number} participantTimeConnect
+ * @property {number} timeIdle
  *
  * @typedef {Object} EditicsClientEventAuth
  * @property {'auth'} type
@@ -727,7 +727,7 @@ export { EditicsTranslator };
  * @property {'authChangesAck'} type
  *
  * @typedef {Object} EditicsClientEventGetMessages
- * @property {'message'} type
+ * @property {'getMessages'} type
  *
  * @typedef {Object} EditicsClientEventMessage
  * @property {'message'} type
@@ -739,7 +739,7 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsClientEventGetLock
  * @property {'getLock'} type
- * @property {Array} block
+ * @property {Array<*>} block
  *
  * @typedef {Object} EditicsClientEventIsSaveLock
  * @property {'isSaveLock'} type
