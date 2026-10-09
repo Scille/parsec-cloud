@@ -61,7 +61,8 @@
       <div class="invitation-actions-primary">
         <ion-button
           @click="$emit('greetClick', invitation)"
-          class="primary-button button-default"
+          class="primary-button"
+          size="default"
         >
           {{ $msTranslate('InvitationsPage.emailInvitation.greet') }}
         </ion-button>
@@ -73,6 +74,7 @@
           fill="outline"
           ref="copyLinkButton"
           slot="icon-only"
+          size="default"
         >
           <ion-icon
             :icon="link"
@@ -85,6 +87,7 @@
           fill="outline"
           ref="resendEmailButton"
           slot="icon-only"
+          size="default"
         >
           <ion-icon
             :icon="mail"
@@ -97,6 +100,7 @@
           fill="outline"
           ref="deleteButton"
           slot="icon-only"
+          size="default"
         >
           <ion-icon
             :icon="trash"

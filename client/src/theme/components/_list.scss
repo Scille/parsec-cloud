@@ -16,7 +16,7 @@
   backdrop-filter: blur(25px);
   
   &::part(inner) {
-    border: ms.border('none');
+    --border-color: #{ms.border('border-neutral-on-color')};
     padding: 0 ms.spacing('padding-3xl') 0 0;
     width: 100%;
   }
@@ -746,11 +746,15 @@
     display: flex;
     width: 100%;
     padding: ms.spacing('padding-none');
+    --background: transparent;
     --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
-    --background-hover-opacity: 1;
+    --background-focused: #{ms.color('surface-neutral-default-subtle-hover')};
+    --background-hover-opacity: #{ms.opacity('4')};
+    --border-color: #{ms.color('border-neutral-default-subtle')};
 
     &::part(native) {
       padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+      overflow: visible;
       cursor: default;
 
       @include ms.responsive-breakpoint('sm') {
