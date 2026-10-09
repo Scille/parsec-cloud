@@ -6,7 +6,7 @@
       v-model="showExpired"
       v-if="certificates.length > 0"
       label-placement="end"
-      class="subtitles-sm expired-toggle"
+      class="expired-toggle"
     >
       {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.certificate.showExpired') }}
     </ion-toggle>
@@ -26,7 +26,7 @@
       class="no-certificate"
       v-if="certificates.length === 0"
     >
-      <ion-text class="subtitles-normal">
+      <ion-text class="no-certificate__text">
         {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.certificate.noCertificates') }}
       </ion-text>
     </div>
@@ -97,22 +97,23 @@ async function onCertificateClicked(cert: CertificateWithDetailsValid): Promise<
 .certificate-container {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: ms.spacing('gap-sm');
   overflow-y: auto;
   max-height: 25.5rem;
   position: relative;
   width: 100%;
 
   .expired-toggle {
+    @include ms.font('body-md-medium');
     margin-left: auto;
     position: sticky;
     top: 0;
     right: 0.5rem;
-    padding-bottom: 0.5rem;
-    background: var(--parsec-color-light-secondary-white);
+    padding-bottom: ms.spacing('padding-lg');
+    background: ms.color('surface-base-default');
     display: flex;
     width: 100%;
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('text-base-description');
     --handle-width: 18px;
     --handle-height: 18px;
     --handle-spacing: 3px;
@@ -130,7 +131,7 @@ async function onCertificateClicked(cert: CertificateWithDetailsValid): Promise<
   .certificate-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     width: 100%;
   }
 
@@ -138,6 +139,10 @@ async function onCertificateClicked(cert: CertificateWithDetailsValid): Promise<
     display: flex;
     justify-content: center;
     width: 100%;
+
+    &__text {
+      @include ms.font('body-lg-medium');
+    }
   }
 }
 </style>

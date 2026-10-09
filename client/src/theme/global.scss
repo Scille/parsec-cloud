@@ -16,6 +16,12 @@ body.ms-theme-dark {
   #trigger-checklist-button .checklist-security {
     background: ms.color('surface-neutral-default');
   }
+
+  .download-parsec-text {
+    background-image: none;
+    color: ms.color('text-base-label');
+    -webkit-text-fill-color: ms.color('text-base-label');
+  }
 }
 
 // should be move to megashark-lib - Ok for now

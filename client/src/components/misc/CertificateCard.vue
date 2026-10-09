@@ -26,19 +26,19 @@
             :icon="calendar"
             class="card-expire__icon"
           />
-          <ion-text class="subtitles-sm card-expire__text">
+          <ion-text class="card-expire__text">
             {{ $msTranslate(I18n.formatDate(primaryDetails.notBefore, 'short')) }}
           </ion-text>
           <ion-icon
             :icon="arrowForward"
             class="card-expire__arrow"
           />
-          <ion-text class="subtitles-sm card-expire__text">
+          <ion-text class="card-expire__text">
             {{ $msTranslate(I18n.formatDate(primaryDetails.notAfter, 'short')) }}
           </ion-text>
           <ion-text
             v-if="certificate.isExpired()"
-            class="subtitles-sm card-expire__text expired"
+            class="card-expire__text expired"
           >
             {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.certificate.expired') }}
           </ion-text>
@@ -51,19 +51,19 @@
           />
           <ion-text
             v-if="primaryDetails.emails.length === 0"
-            class="subtitles-sm"
+            class="card-email__text"
           >
             {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.certificate.noEmail') }}
           </ion-text>
           <ion-text
             v-if="primaryDetails.emails.length > 0"
-            class="subtitles-sm card-email__text"
+            class="card-email__text"
           >
             {{ primaryDetails.emails[0] }}
           </ion-text>
           <ion-text
             v-if="primaryDetails.emails.length > 1"
-            class="subtitles-sm card-email__text additional-emails"
+            class="card-email__text additional-emails"
             @click.stop="openAdditionalEmailPopover"
           >
             + {{ primaryDetails.emails.length - 1 }}
@@ -71,7 +71,7 @@
         </div>
 
         <div class="card-id">
-          <ion-text class="subtitles-sm card-id__text">
+          <ion-text class="card-id__text">
             {{
               $msTranslate({
                 key: 'HomePage.organizationRequest.asyncEnrollmentModal.certificate.serialNb',
@@ -137,25 +137,25 @@ async function openAdditionalEmailPopover(event: Event): Promise<void> {
 
 <style scoped lang="scss">
 .certificate-card {
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-background);
-  border-radius: var(--parsec-radius-12);
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  background: ms.color('surface-base-default-secondary');
+  border-radius: ms.radius('2xl');
   display: flex;
-  padding: 1rem;
-  gap: 0.5rem;
+  padding: ms.spacing('padding-3xl');
+  gap: ms.spacing('gap-lg');
   cursor: pointer;
   width: 100%;
 
   &-container {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     flex-grow: 1;
   }
 
   &-header {
     display: flex;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     align-items: center;
 
     &__icon {
@@ -165,58 +165,58 @@ async function openAdditionalEmailPopover(event: Event): Promise<void> {
 
     &__name {
       font-weight: bold;
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
     }
   }
 
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
 
     .card-expire,
     .card-email,
     .card-id {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
-      color: var(--parsec-color-light-secondary-soft-text);
+      gap: ms.spacing('gap-sm');
+      color: ms.color('text-neutral-default');
+
+      ion-text {
+        @include ms.font('body-md-medium');
+      }
 
       &__icon {
-        color: var(--parsec-color-light-secondary-light);
+        color: ms.color('icon-disabled-default');
       }
 
       &__arrow {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('icon-disabled-default');
       }
 
       .additional-emails {
-        padding: 0.25rem;
-        background: var(--parsec-color-light-secondary-medium);
-        border-radius: var(--parsec-radius-6);
+        padding: ms.spacing('padding-sm');
+        background: ms.color('surface-neutral-default-subtle-pressed');
+        border-radius: ms.radius('md');
         margin-left: 0.25rem;
         font-size: 0.75rem;
 
         &:hover {
-          background: var(--parsec-color-light-secondary-text);
-          border-color: var(--parsec-color-light-secondary-white);
-          color: var(--parsec-color-light-secondary-white);
+          background: ms.color('surface-neutral-default');
+          border-color: ms.color('border-base-on-color');
+          color: ms.color('text-on-color-heading');
         }
       }
     }
   }
 
   &:hover {
-    background: var(--parsec-color-light-secondary-background);
+    background: ms.color('surface-base-default-secondary');
   }
 }
 
-.isSelected {
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-}
-
 .selected-checkmark {
-  color: var(--parsec-color-light-primary-600);
+  color: ms.color('icon-brand-default');
   font-size: 1.25rem;
 }
 
@@ -224,28 +224,28 @@ async function openAdditionalEmailPopover(event: Event): Promise<void> {
   pointer-events: none;
 
   .certificate-card-container {
-    opacity: 0.5;
+    opacity: ms.opacity('5');
   }
 
   .expired {
-    color: var(--parsec-color-light-danger-700);
-    background: var(--parsec-color-light-danger-100);
-    padding: 0.125rem 0.25rem;
-    border-radius: var(--parsec-radius-4);
+    color: ms.color('text-error-default-hover');
+    background: ms.color('surface-error-default-subtle-pressed');
+    padding: ms.spacing('padding-xs') ms.spacing('padding-sm');
+    border-radius: ms.radius('sm');
   }
 }
 
 .isSelected {
-  background: var(--parsec-color-light-primary-50);
+  background: ms.color('surface-brand-default-subtle-hover');
   box-shadow: var(--parsec-shadow-input);
-  border: 1px solid var(--parsec-color-light-primary-600);
+  border: ms.border('thin') solid ms.color('border-brand-default');
 
   .certificate-card-header__name {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('text-brand-default');
   }
 
   &:hover {
-    background: var(--parsec-color-light-primary-50);
+    background: ms.color('surface-brand-default-subtle-hover');
     cursor: default;
 
     .additional-emails {
