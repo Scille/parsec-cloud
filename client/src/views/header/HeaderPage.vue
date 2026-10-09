@@ -110,6 +110,18 @@
           slot="primary"
           class="topbar-right"
         >
+          <!-- Dark mode button -->
+          <ion-button
+            slot="icon-only"
+            id="trigger-theme-button"
+            :fill="isSmallDisplay ? 'outline' : 'clear'"
+            class="topbar-right-buttons__item"
+            :size="isSmallDisplay ? 'default' : 'large'"
+            @click="toggleDarkMode"
+          >
+            <ion-icon :icon="isDarkMode ? sunny : moon" />
+          </ion-button>
+
           <div
             class="topbar-right-buttons"
             v-if="!currentRouteIsOneOf([Routes.History, Routes.MyProfile, Routes.Invitations])"
@@ -210,6 +222,7 @@ import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
@@ -229,8 +242,8 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { archive, chevronDown, ellipsisHorizontal, home, notifications, trash } from 'ionicons/icons';
-import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
+import { archive, chevronDown, ellipsisHorizontal, home, moon, notifications, sunny, trash } from 'ionicons/icons';
+import { MsImage, MsModalResult, SidebarToggle, Theme, ThemeManager, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -246,6 +259,9 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const securityWarnings = ref<SecurityWarnings | undefined>();
+const themeManager: ThemeManager = inject(ThemeManagerKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+const isDarkMode = ref(isThemeDark(themeManager.theme));
 
 const workspaceIsArchivedOrTrashed = computed(
   () => currentWorkspace.value && (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed),
@@ -518,6 +534,22 @@ async function openNotificationCenter(event: Event): Promise<void> {
   notificationPopoverIsVisible.value = false;
 }
 
+function isThemeDark(theme: Theme): boolean {
+  if (theme === Theme.System) {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  return theme === Theme.Dark;
+}
+
+async function toggleDarkMode(): Promise<void> {
+  const newTheme = isThemeDark(themeManager.theme) ? Theme.Light : Theme.Dark;
+  themeManager.use(newTheme);
+  isDarkMode.value = newTheme === Theme.Dark;
+  const config = await storageManager.retrieveConfig();
+  config.theme = newTheme;
+  await storageManager.storeConfig(config);
+}
+
 async function openSecurityWarningsModal(): Promise<void> {
   if (!securityWarnings.value) {
     return;
@@ -711,7 +743,7 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 
 .topbar-right {
   display: flex;
-  gap: 1.5em;
+  gap: ms.spacing('gap-2xl');
   margin-inline-end: 0;
 
   &-buttons {
@@ -786,18 +818,24 @@ async function openWorkspacesSwitchModal(): Promise<void> {
           border-radius: var(--parsec-radius-12);
         }
       }
+    }
+  }
 
-      @include ms.responsive-breakpoint('sm') {
-        padding: 0.5rem;
-        background: var(--parsec-color-light-secondary-white);
-        border-radius: var(--parsec-radius-circle);
-        box-shadow: var(--parsec-shadow-soft);
+  #trigger-theme-button {
+    --background: none;
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
 
-        ion-icon {
-          color: var(--parsec-color-light-secondary-hard-grey);
-          font-size: 1.375rem;
-        }
-      }
+    ion-icon {
+      color: ms.color('icon-neutral-default');
+    }
+  }
+
+  #trigger-theme-button {
+    --background: none;
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+
+    ion-icon {
+      color: ms.color('icon-neutral-default');
     }
   }
 }
