@@ -16,6 +16,24 @@
 //   OnlyOffice protocol events that are then translated by this file and sent to
 //   the server.
 
+/**
+ * @import {
+ *   OOClientEvent,
+ *   OOClientEventSaveChanges,
+ *   OOParticipantEntry,
+ *   OOServerEvent,
+ *   OOServerEventAuth,
+ *   OOServerEventAuthChanges,
+ *   OOServerEventConnectState,
+ *   OOServerEventCursor,
+ *   OOServerEventGetLock,
+ *   OOServerEventMessage,
+ *   OOServerEventReleaseLock,
+ *   OOServerEventSaveChanges,
+ *   OOServerEventWaitAuth
+ * } from 'onlyoffice-editor'
+ */
+
 // ---------------------------------------------------------------------------
 // Small byte <-> string helpers (the only "encoding" the translator does; it
 // never touches base64 — that is the transport layer's job).
@@ -488,6 +506,7 @@ class EditicsTranslator {
    * @returns {OOServerEventMessage}
    */
   _cookMessage(editics) {
+    /** @type {OOServerEventMessage} */
     const event = { type: 'message' };
     if (editics.messages && editics.messages.length !== 0) {
       // TODO: when the author of the comment has left we won't be able to use `indexUser`
@@ -614,7 +633,7 @@ class EditicsTranslator {
    * @returns {OOParticipantEntry[]}
    */
   _onlyofficeParticipants() {
-    const list = [];
+    const list = /** @type {OOParticipantEntry[]} */ ([]);
     this._participants.forEach((p, indexUser) => {
       list.push(this._onlyofficeParticipantEntry(p, indexUser));
     });
@@ -677,226 +696,6 @@ class EditicsTranslator {
 }
 
 export { EditicsTranslator };
-
-// ---------------------------------------------------------------------------
-// OnlyOffice protocol types
-// ---------------------------------------------------------------------------
-// The union typedefs below must stay on a single line, hence the max-len
-// suppression for this whole types section.
-/* eslint-disable max-len */
-
-/**
- * @typedef {Object} OOParticipantEntry
- * @property {string} id - `<userId><indexUser>` composite id (the editor matches
- *   its own `_userId = editorConfig.user.id + indexUser` against this).
- * @property {string} idOriginal - integrator-provided user id (the userId).
- * @property {string} username - display name.
- * @property {number} indexUser - participant index (order of arrival).
- * @property {boolean} view - viewer (read-only).
- * @property {string} [connectionId] - underlying connection id (= sessionId).
- * @property {boolean} [isCloseCoAuthoring]
- * @property {boolean} [isLiveViewer]
- * @property {boolean} [encrypted]
- *
- * @typedef {Object} OOClientEventAuth
- * @property {'auth'} type
- * @property {string} docid
- * @property {string} token
- * @property {{id:string, username:string, firstname:string|null, lastname:string|null, indexUser:number}} user
- * @property {number} editorType
- * @property {number} lastOtherSaveTime
- * @property {Array} block
- * @property {string|null} sessionId
- * @property {number|null} sessionTimeConnect
- * @property {number} sessionTimeIdle
- * @property {number} documentFormatSave
- * @property {boolean} isCloseCoAuthoring
- * @property {Object|null} openCmd
- * @property {string} lang
- * @property {string} mode
- * @property {{edit:boolean, review:boolean}} permissions
- * @property {boolean} encrypted
- * @property {boolean} IsAnonymousUser
- * @property {number} timezoneOffset
- * @property {string|null} headingsColor
- * @property {string} coEditingMode
- * @property {string} jwtOpen
- * @property {string} [jwtSession]
- * @property {number} time
- * @property {boolean} supportAuthChangesAck
- *
- * @typedef {Object} OOClientEventMessage
- * @property {'message'} type
- * @property {string} message
- *
- * @typedef {Object} OOClientEventCursor
- * @property {'cursor'} type
- * @property {string} cursor - opaque OnlyOffice internal string.
- *
- * @typedef {Object} OOClientEventGetLock
- * @property {'getLock'} type
- * @property {Array} block - opaque block descriptors (shape depends on editor).
- *
- * @typedef {Object} OOClientEventIsSaveLock
- * @property {'isSaveLock'} type
- * @property {number} syncChangesIndex
- *
- * @typedef {Object} OOClientEventSaveChanges
- * @property {'saveChanges'} type
- * @property {string|Array} changes - JSON-encoded string (default mode) of an
- *   array of opaque op fragments, or a real array in binary-changes mode.
- * @property {boolean} startSaveChanges
- * @property {boolean} endSaveChanges
- * @property {boolean} [isCoAuthoring]
- * @property {boolean} [isExcel]
- * @property {number|null} [deleteIndex]
- * @property {string|null} [excelAdditionalInfo]
- * @property {boolean} [unlock]
- * @property {boolean} [releaseLocks]
- * @property {number} [reSave]
- *
- * @typedef {Object} OOClientEventUnSaveLock
- * @property {'unSaveLock'} type
- *
- * @typedef {Object} OOClientEventUnLockDocument
- * @property {'unLockDocument'} type
- * @property {boolean} isSave
- * @property {boolean} unlock
- * @property {number|null} [deleteIndex]
- * @property {boolean} [releaseLocks]
- *
- * @typedef {Object} OOClientEventClose
- * @property {'close'} type
- *
- * @typedef {Object} OOClientEventAuthChangesAck
- * @property {'authChangesAck'} type
- *
- * @typedef {Object} OOClientEventGetMessages
- * @property {'getMessages'} type
- *
- * @typedef {Object} OOClientEventOpenDocument
- * @property {'openDocument'} type
- * @property {Object} message
- *
- * @typedef {Object} OOClientEventClientLog
- * @property {'clientLog'} type
- * @property {string} level
- * @property {string} msg
- *
- * @typedef {Object} OOClientEventExtendSession
- * @property {'extendSession'} type
- * @property {number} idletime
- *
- * @typedef {Object} OOClientEventForceSaveStart
- * @property {'forceSaveStart'} type
- *
- * @typedef {Object} OOClientEventRpc
- * @property {'rpc'} type
- * @property {number} responseKey
- * @property {Object} data
- *
- * @typedef {Object} OOClientEventSaveDone
- *   Editics addition (no OO equivalent): the host page posts it after a vlob
- *   upload so the server bumps the session's allowed vlob version.
- * @property {'saveDone'} type
- * @property {number} savedUpToIndex
- * @property {number} newVersion
- *
- * @typedef {OOClientEventAuth|OOClientEventMessage|OOClientEventCursor|OOClientEventGetLock|OOClientEventIsSaveLock|OOClientEventSaveChanges|OOClientEventUnSaveLock|OOClientEventUnLockDocument|OOClientEventClose|OOClientEventAuthChangesAck|OOClientEventGetMessages|OOClientEventOpenDocument|OOClientEventClientLog|OOClientEventExtendSession|OOClientEventForceSaveStart|OOClientEventRpc|OOClientEventSaveDone} OOClientEvent
- *
- * @typedef {Object} OOMessageEntry
- * @property {string} docid
- * @property {string} message
- * @property {number} time
- * @property {string} user
- * @property {string} useridoriginal
- * @property {string} username
- *
- * @typedef {Object} OOServerEventAuth
- * @property {'auth'} type
- * @property {number} result - 1 = success
- * @property {string} sessionId
- * @property {number} sessionTimeConnect
- * @property {OOParticipantEntry[]} participants
- * @property {Array<OOMessageEntry> | undefined} messages
- * @property {Array} [locks]
- * @property {number} indexUser
- * @property {boolean} [hasForgotten]
- * @property {string} [jwt]
- * @property {string} [g_cAscSpellCheckUrl]
- * @property {string} [buildVersion]
- * @property {number} [buildNumber]
- * @property {number} [licenseType]
- * @property {Object} [settings]
- * @property {number} [openedAt]
- *
- * @typedef {Object} OOServerEventWaitAuth
- * @property {'waitAuth'} type
- * @property {OOParticipantEntry} lockDocument - the established editor holding
- *   the auth lock (the newcomer must wait for it to release).
- *
- * @typedef {Object} OOServerEventConnectState
- * @property {'connectState'} type
- * @property {number} participantsTimestamp
- * @property {OOParticipantEntry[]} participants
- * @property {boolean} waitAuth
- *
- * @typedef {Object} OOServerEventAuthChanges
- * @property {'authChanges'} type
- * @property {Array<{docid:string, change:string, time:number, user:string, useridoriginal:string}>} changes
- *
- * @typedef {Object} OOServerEventMessage
- * @property {'message'} type
- * @property {Array<{docid:string, message:string, time:number, user:string, useridoriginal:string, username:string}>} messages
- *
- * @typedef {Object} OOServerEventCursor
- * @property {'cursor'} type
- * @property {Array<{cursor:string, time:number, user:string, useridoriginal:string}>} messages
- *
- * @typedef {Object} OOServerEventGetLock
- * @property {'getLock'} type
- * @property {Record<string, {time:number, user:string, block:*}>} locks
- *
- * @typedef {Object} OOServerEventReleaseLock
- * @property {'releaseLock'} type
- * @property {Array<{block:*, user:string, time:number, changes:null}>} locks
- *
- * @typedef {Object} OOServerEventSaveChanges
- * @property {'saveChanges'} type
- * @property {Array<{docid:string, change:string, time:number, user:string, useridoriginal:string}>|null} changes
- * @property {number} changesIndex
- * @property {number} syncChangesIndex
- * @property {boolean} endSaveChanges
- * @property {Array<{block:*, user:string, time:number, changes:*}>} [locks]
- * @property {string} [excelAdditionalInfo]
- *
- * @typedef {Object} OOServerEventSavePartChanges
- * @property {'savePartChanges'} type
- * @property {number} changesIndex
- * @property {number} syncChangesIndex
- *
- * @typedef {Object} OOServerEventSaveLock
- * @property {'saveLock'} type
- * @property {boolean} saveLock
- *
- * @typedef {Object} OOServerEventUnSaveLock
- * @property {'unSaveLock'} type
- * @property {number} index
- * @property {number} time
- * @property {number} syncChangesIndex
- *
- * @typedef {Object} OOServerEventDrop
- * @property {'drop'} type
- * @property {number} code
- * @property {string} description
- *
- * @typedef {Object} OOServerEventWarning
- * @property {'warning'} type
- * @property {number} code
- * @property {string} message
- *
- * @typedef {OOServerEventAuth|OOServerEventWaitAuth|OOServerEventConnectState|OOServerEventAuthChanges|OOServerEventMessage|OOServerEventCursor|OOServerEventGetLock|OOServerEventReleaseLock|OOServerEventSaveChanges|OOServerEventSavePartChanges|OOServerEventSaveLock|OOServerEventUnSaveLock|OOServerEventDrop|OOServerEventWarning} OOServerEvent
- */
 
 // ---------------------------------------------------------------------------
 // Editics protocol types
