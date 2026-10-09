@@ -3,7 +3,7 @@
 <template>
   <ion-list class="emails-list">
     <ion-item
-      class="emails-list-item body"
+      class="emails-list-item"
       lines="none"
       v-for="(email, index) in emails"
       :key="index"
@@ -27,23 +27,24 @@ defineProps<{
 .emails-list {
   display: flex;
   flex-direction: column;
-  padding: 0;
+  padding: ms.spacing('padding-none');
 
   &::part(native) {
-    --padding-start: 0;
-    --padding-end: 0;
+    --padding-start: #{ms.spacing('padding-none')};
+    --padding-end: #{ms.spacing('padding-none')};
   }
 
   &-item {
-    padding: 0.5rem 0.75rem;
+    @include ms.font('body-md-regular');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
     --background: none;
     --background-hover: none;
-    --background-hover-opacity: 1;
-    --inner-padding-end: 0;
-    color: var(--parsec-color-light-secondary-text);
+    --background-hover-opacity: #{ms.opacity('10')};
+    --inner-padding-end: #{ms.spacing('padding-none')};
+    color: ms.color('text-base-body');
 
     &::part(native) {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       cursor: default;
     }
 
@@ -52,7 +53,7 @@ defineProps<{
     }
 
     &:not(:last-child) {
-      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+      border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
     }
   }
 }
