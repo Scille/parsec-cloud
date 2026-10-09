@@ -36,8 +36,7 @@
           />
           <workspace-filter
             v-show="!search"
-            :filters="workspaceFilters"
-            @change="onFilterUpdate"
+            v-model:filters="workspaceFilters"
             class="mobile-filters__filter"
           />
           <ms-sorter
@@ -79,8 +78,7 @@
           <div class="mobile-filters-buttons">
             <workspace-filter
               v-show="!search"
-              :filters="workspaceFilters"
-              @change="onFilterUpdate"
+              v-model:filters="workspaceFilters"
               class="mobile-filters-buttons__filter"
             />
             <ms-sorter
@@ -724,10 +722,6 @@ function isWorkspaceFiltered(role: WorkspaceRole): boolean {
     case WorkspaceRole.Reader:
       return workspaceFilters.value.reader === false;
   }
-}
-
-async function onFilterUpdate(): Promise<void> {
-  await refreshWorkspacesList();
 }
 
 async function onMenuUpdate(menu: WorkspaceMenu): Promise<void> {

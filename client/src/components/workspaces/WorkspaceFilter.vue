@@ -27,7 +27,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (event: 'change'): void;
+  (event: 'update:filters', filters: WorkspacesPageFilters): void;
 }>();
 
 const missingFilters = computed(() => {
@@ -40,6 +40,8 @@ async function openPopover(event: Event): Promise<void> {
     cssClass: 'filter-popover',
     componentProps: {
       filters: props.filters,
+      // Popovers are not created from a template, so we can't use `v-model`.
+      'onUpdate:filters': (filters: WorkspacesPageFilters): void => emits('update:filters', filters),
     },
     event: event,
     alignment: 'end',
@@ -48,7 +50,6 @@ async function openPopover(event: Event): Promise<void> {
   await popover.present();
   await popover.onDidDismiss();
   await popover.dismiss();
-  emits('change');
 }
 </script>
 
