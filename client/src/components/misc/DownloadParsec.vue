@@ -14,7 +14,7 @@
         :image="LogoParsecApp"
         class="download-parsec-icon"
       />
-      <ion-text class="body download-parsec-text"> {{ $msTranslate('HomePage.topbar.downloadParsec') }} </ion-text>
+      <ion-text class="download-parsec-text"> {{ $msTranslate('HomePage.topbar.downloadParsec') }} </ion-text>
     </div>
     <ion-icon
       :icon="close"
@@ -41,57 +41,58 @@ defineEmits<{
 .download-parsec {
   cursor: pointer;
   display: flex;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  padding: 0;
-  border-radius: var(--parsec-radius-8);
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  padding: ms.spacing('padding-none');
+  border-radius: ms.radius('lg');
   overflow: hidden;
   flex-shrink: 0;
   position: relative;
 
   &-content {
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
     align-items: center;
-    padding: 0.5rem;
+    padding: ms.spacing('padding-lg');
     display: flex;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
     transition: all 0.2s ease-in-out;
 
     &:hover {
-      background: var(--parsec-color-light-secondary-medium);
+      background: ms.color('surface-neutral-default-subtle-pressed');
     }
   }
 
   &-text {
+    @include ms.font('body-md-regular');
     font-weight: 600;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-image: var(--parsec-color-light-gradient-background);
+    background-image: ms.color('text-brand-default');
   }
 
   &-icon {
     width: 1.5rem;
     height: 1.5rem;
-    --fill-color: var(--parsec-color-light-secondary-white);
+    --fill-color: #{ms.color('surface-base-default')};
   }
 
   &-close {
     font-size: 1.125rem;
-    background: var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-secondary-grey);
-    opacity: 0.8;
+    background: ms.color('surface-base-page-secondary');
+    color: ms.color('icon-base-default');
+    opacity: ms.opacity('8');
     right: 0;
     height: 2rem;
     display: none;
     position: absolute;
-    padding: 0.25rem;
+    padding: ms.spacing('padding-sm');
     flex-shrink: 0;
     margin-inline: auto 0;
-    border-left: 1px solid var(--parsec-color-light-secondary-disabled);
+    border-left: ms.border('thin') solid ms.color('border-base-default');
 
     &:hover {
-      background: var(--parsec-color-light-secondary-medium);
+      background: ms.color('surface-neutral-default-subtle-pressed');
     }
   }
 

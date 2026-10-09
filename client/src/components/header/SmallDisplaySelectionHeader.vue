@@ -2,35 +2,37 @@
 
 <template>
   <div class="small-display-selection-header">
-    <ion-text
+    <ion-button
       v-if="someSelected"
-      class="button-medium title__button title__button-left"
+      fill="outline"
+      class="title__button title__button-left"
       @click="$emit('unselect', $event)"
     >
       {{ $msTranslate('FoldersPage.actions.unselect') }}
-    </ion-text>
-    <ion-text
+    </ion-button>
+    <ion-button
       v-else
-      class="button-medium title__button title__button-left"
+      fill="outline"
+      class="title__button title__button-left"
       @click="$emit('select', $event)"
     >
       {{ $msTranslate('FoldersPage.actions.select') }}
-    </ion-text>
-    <ion-text class="title__text title-h3">
+    </ion-button>
+    <ion-text class="title__text">
       <span class="title__text--content">{{ $msTranslate(props.title) }}</span>
     </ion-text>
     <slot />
-    <ion-text
-      class="button-medium title__button title__button-right"
+    <ion-button
+      class="title__button title__button-right"
       @click="$emit('cancelSelection', $event)"
     >
       {{ $msTranslate('FoldersPage.actions.cancel') }}
-    </ion-text>
+    </ion-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
+import { IonButton, IonText } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
 
 const props = defineProps<{
@@ -52,14 +54,15 @@ defineEmits<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  background: var(--parsec-color-light-secondary-background);
-  padding: 1.5rem 1rem;
+  gap: ms.spacing('gap-lg');
+  background: ms.color('surface-base-default-secondary');
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-2xl');
 }
 
 .title__text {
+  @include ms.font('heading-h4');
   display: flex;
-  color: var(--parsec-color-light-primary-800);
+  color: ms.color('text-neutral-default');
   flex-grow: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -75,38 +78,16 @@ defineEmits<{
 
 .title__icon {
   font-size: 1.5rem;
-  color: var(--parsec-color-light-secondary-grey);
-  padding: 0.5rem;
+  color: ms.color('text-neutral-default');
   flex-shrink: 0;
   cursor: pointer;
 
   &:hover {
-    color: var(--parsec-color-light-primary-500);
+    color: ms.color('text-brand-default');
   }
 
   &:active {
-    color: var(--parsec-color-light-primary-500);
-  }
-}
-
-.title__button {
-  padding: 0.625rem 0.825rem;
-  flex-shrink: 0;
-  background: var(--parsec-color-light-secondary-white);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-12);
-  box-shadow: var(--parsec-shadow-soft);
-
-  &:hover {
-    cursor: pointer;
-  }
-
-  &-left {
-    color: var(--parsec-color-light-primary-500);
-  }
-
-  &-right {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-brand-default');
   }
 }
 </style>

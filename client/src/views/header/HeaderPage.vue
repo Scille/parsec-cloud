@@ -9,7 +9,7 @@
       <!-- Archived / trashed workspace banner in small display -->
       <ion-text
         v-if="isSmallDisplay && workspaceIsArchivedOrTrashed"
-        class="header-archived button-large"
+        class="header-archived"
       >
         <ion-icon
           :icon="currentWorkspace?.isArchived ? archive : trash"
@@ -58,7 +58,7 @@
             class="topbar-left-text"
           >
             <ion-label
-              class="topbar-left-text__title title-h2"
+              class="topbar-left-text__title"
               :class="hasHistory() || isLargeDisplay ? 'align-center' : 'align-left'"
             >
               {{ $msTranslate(routeTitle) }}
@@ -84,7 +84,7 @@
             v-if="isSmallDisplay && currentRouteIsWorkspaceManagementRoute() && userInfo"
             class="topbar-left-workspaces-mobile"
           >
-            <ion-text class="topbar-left-workspaces-mobile__orga body">{{ userInfo.organizationId }}</ion-text>
+            <ion-text class="topbar-left-workspaces-mobile__orga">{{ userInfo.organizationId }}</ion-text>
             <div
               class="topbar-left-workspaces-mobile-dropdown"
               @click="openWorkspacesSwitchModal"
@@ -94,7 +94,7 @@
                 :icon="currentRouteIs(Routes.Archived) ? archive : trash"
                 class="contextual-icon"
               />
-              <ion-text class="topbar-left-workspaces-mobile-dropdown__title title-h2">
+              <ion-text class="topbar-left-workspaces-mobile-dropdown__title">
                 {{ $msTranslate(workspaceSwitchModalTitle) }}
               </ion-text>
               <ion-icon
@@ -110,6 +110,18 @@
           slot="primary"
           class="topbar-right"
         >
+          <!-- Dark mode button -->
+          <ion-button
+            slot="icon-only"
+            id="trigger-theme-button"
+            :fill="isSmallDisplay ? 'outline' : 'clear'"
+            class="topbar-right-buttons__item"
+            :size="isSmallDisplay ? 'default' : 'large'"
+            @click="toggleDarkMode"
+          >
+            <ion-icon :icon="isDarkMode ? sunny : moon" />
+          </ion-button>
+
           <div
             class="topbar-right-buttons"
             v-if="!currentRouteIsOneOf([Routes.History, Routes.MyProfile, Routes.Invitations])"
@@ -121,6 +133,7 @@
             <ion-button
               v-if="isSmallDisplay && !currentRouteIsWorkspaceManagementRoute()"
               slot="icon-only"
+              fill="outline"
               class="topbar-right-buttons__item"
               id="trigger-contextual-menu-button"
               @click="openContextualMenu($event)"
@@ -133,7 +146,9 @@
             <ion-button
               slot="icon-only"
               id="trigger-notifications-button"
+              :fill="isSmallDisplay ? 'outline' : 'clear'"
               class="topbar-right-buttons__item"
+              :size="isSmallDisplay ? 'default' : 'large'"
               :class="{
                 active: notificationPopoverIsVisible,
                 unread: informationManager.notificationManager.hasUnreadNotifications(),
@@ -210,6 +225,7 @@ import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
@@ -229,8 +245,8 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { archive, chevronDown, ellipsisHorizontal, home, notifications, trash } from 'ionicons/icons';
-import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
+import { archive, chevronDown, ellipsisHorizontal, home, moon, notifications, sunny, trash } from 'ionicons/icons';
+import { MsImage, MsModalResult, SidebarToggle, Theme, ThemeManager, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -246,6 +262,9 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const securityWarnings = ref<SecurityWarnings | undefined>();
+const themeManager: ThemeManager = inject(ThemeManagerKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+const isDarkMode = ref(isThemeDark(themeManager.theme));
 
 const workspaceIsArchivedOrTrashed = computed(
   () => currentWorkspace.value && (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed),
@@ -520,6 +539,22 @@ async function openNotificationCenter(event: Event): Promise<void> {
   notificationPopoverIsVisible.value = false;
 }
 
+function isThemeDark(theme: Theme): boolean {
+  if (theme === Theme.System) {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  return theme === Theme.Dark;
+}
+
+async function toggleDarkMode(): Promise<void> {
+  const newTheme = isThemeDark(themeManager.theme) ? Theme.Light : Theme.Dark;
+  themeManager.use(newTheme);
+  isDarkMode.value = newTheme === Theme.Dark;
+  const config = await storageManager.retrieveConfig();
+  config.theme = newTheme;
+  await storageManager.storeConfig(config);
+}
+
 async function openSecurityWarningsModal(): Promise<void> {
   if (!securityWarnings.value) {
     return;
@@ -583,35 +618,36 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 // remove toolbar border added by ionic on iOS
 #connected-header {
   ion-toolbar:last-of-type {
-    --border-width: 0;
+    --border-width: #{ms.border('none')};
   }
 }
 
 .header-archived {
-  background: var(--parsec-color-light-secondary-text);
-  color: var(--parsec-color-light-secondary-premiere);
+  @include ms.font('label-lg-medium');
+  background: ms.color('surface-neutral-default');
+  color: ms.color('text-neutral-on-color');
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: ms.spacing('gap-lg');
+  padding: ms.spacing('padding-lg');
 
   &__icon {
-    color: var(--parsec-color-light-secondary-premiere);
+    color: ms.color('icon-neutral-on-color');
     width: 1rem;
   }
 }
 
 .topbar {
-  --background: var(--parsec-color-light-secondary-white);
+  --background: #{ms.color('surface-base-default')};
   display: flex;
-  padding: 1rem 1.5rem;
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
 
   &::part(container) {
     @include ms.responsive-breakpoint('sm') {
       contain: none;
       overflow: visible;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
     }
   }
 
@@ -620,19 +656,18 @@ async function openWorkspacesSwitchModal(): Promise<void> {
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1.5rem 1rem;
-    --background: var(--parsec-color-light-secondary-background);
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-4xl') ms.spacing('padding-3xl');
   }
 
   #trigger-toggle-menu-button {
-    --fill-color: var(--parsec-color-light-secondary-grey);
-    padding: 0.625rem;
-    border-radius: var(--parsec-radius-12);
+    --fill-color: #{ms.color('icon-neutral-default')};
+    padding: ms.spacing('padding-xl');
+    border-radius: ms.radius('2xl');
     cursor: pointer;
 
     &:hover {
-      background: var(--parsec-color-light-secondary-premiere);
-      --fill-color: var(--parsec-color-light-secondary-hard-grey);
+      background: ms.color('surface-neutral-default-subtle-hover');
+      --fill-color: #{ms.color('icon-neutral-default-hover')};
     }
   }
 }
@@ -645,31 +680,33 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 
   @include ms.responsive-breakpoint('sm') {
     margin-right: 0 !important;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 
   &-workspaces-mobile {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     width: 100%;
     overflow: hidden;
 
     &__orga {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-neutral-default');
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     &__title {
-      color: var(--parsec-color-light-primary-800);
+      @include ms.font('heading-h3');
+      color: ms.color('text-brand-default');
     }
 
     &-dropdown {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
       cursor: pointer;
 
       .contextual-icon {
@@ -678,15 +715,19 @@ async function openWorkspacesSwitchModal(): Promise<void> {
       }
 
       &__icon {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('text-neutral-default');
       }
     }
   }
 
   &-text {
     width: 100%;
-    color: var(--parsec-color-light-primary-800);
+    color: ms.color('text-brand-default');
     text-align: center;
+
+    &__title {
+      @include ms.font('heading-h3');
+    }
 
     .align-left {
       display: flex;
@@ -713,12 +754,12 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 
 .topbar-right {
   display: flex;
-  gap: 1.5em;
+  gap: ms.spacing('gap-2xl');
   margin-inline-end: 0;
 
   &-buttons {
     display: flex;
-    gap: 0.75em;
+    gap: ms.spacing('gap-2xl');
     align-items: center;
 
     &::part(native) {
@@ -732,7 +773,7 @@ async function openWorkspacesSwitchModal(): Promise<void> {
       display: block;
       width: 1px;
       height: 1.5em;
-      background: var(--parsec-color-light-secondary-light);
+      background: ms.color('border-base-default');
 
       @include ms.responsive-breakpoint('sm') {
         display: none;
@@ -741,71 +782,50 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &__item {
-      padding: 0.625rem;
-      border-radius: var(--parsec-radius-12);
-      cursor: pointer;
-
-      &::part(native) {
-        --padding-top: 0;
-        --padding-start: 0;
-        --padding-end: 0;
-        --padding-bottom: 0;
-        min-height: 0;
-      }
-
       ion-icon {
-        color: var(--parsec-color-light-secondary-grey);
         font-size: 1.375rem;
       }
 
-      &:hover {
-        --background-hover: var(--parsec-color-light-secondary-medium);
-        background: var(--parsec-color-light-secondary-medium);
-        color: var(--parsec-color-light-secondary-text);
-      }
-
       &.active {
-        --background-hover: var(--parsec-color-light-primary-50);
-        background: var(--parsec-color-light-primary-50);
-
         ion-icon {
-          color: var(--parsec-color-light-primary-700);
+          color: ms.color('icon-brand-default-hover');
         }
       }
 
       &#trigger-notifications-button.unread {
         position: relative;
 
+        &::part(native) {
+          --background: #{ms.color('surface-base-default')};
+        }
+
         &::after {
           content: '';
           position: absolute;
-          background: var(--parsec-color-light-danger-500);
+          background: ms.color('surface-error-default');
           right: 0.45rem;
           top: 0.35rem;
           width: 0.625rem;
           height: 0.625rem;
-          border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
-          border-radius: var(--parsec-radius-12);
+          border: ms.border('thick') solid ms.color('border-base-on-color');
+          border-radius: ms.radius('2xl');
         }
       }
+    }
+  }
 
-      @include ms.responsive-breakpoint('sm') {
-        padding: 0.5rem;
-        background: var(--parsec-color-light-secondary-white);
-        border-radius: var(--parsec-radius-circle);
-        box-shadow: var(--parsec-shadow-soft);
+  #trigger-theme-button {
+    --background: none;
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
 
-        ion-icon {
-          color: var(--parsec-color-light-secondary-hard-grey);
-          font-size: 1.375rem;
-        }
-      }
+    ion-icon {
+      color: ms.color('icon-neutral-default');
     }
   }
 }
 
 .topbar-history {
-  --background: var(--parsec-color-light-secondary-background);
+  --background: #{ms.color('surface-base-default-secondary')};
 
   @include ms.responsive-breakpoint('sm') {
     .topbar-left {
@@ -825,11 +845,11 @@ async function openWorkspacesSwitchModal(): Promise<void> {
         align-items: center;
 
         &__title {
-          color: var(--parsec-color-light-primary-800);
+          color: ms.color('text-brand-default');
         }
 
         &__workspace {
-          color: var(--parsec-color-light-secondary-grey);
+          color: ms.color('text-neutral-default');
         }
       }
     }

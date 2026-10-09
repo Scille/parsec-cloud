@@ -11,14 +11,14 @@
         :image="(file as File).webkitRelativePath !== undefined || (file as EntryStat).isFile() ? getFileIcon(file.name) : Folder"
         class="file-icon"
       />
-      <ion-text class="multiples-file-item__label body-sm">
+      <ion-text class="multiples-file-item__label">
         {{ file.name }}
       </ion-text>
 
       <!-- Waiting -->
       <ion-text
         v-if="status === FileOperationEvents.Added"
-        class="waiting-text form-input"
+        class="waiting-text"
       >
         {{ $msTranslate('FoldersPage.FileOperations.waiting') }}
       </ion-text>
@@ -45,7 +45,7 @@
         :image="MultiImport"
         class="file-icon"
       />
-      <ion-text class="multiples-file-item__label body-sm">
+      <ion-text class="multiples-file-item__label">
         {{
           $msTranslate({
             key: 'FoldersPage.ConflictsFile.moreFiles',
@@ -88,27 +88,22 @@ const otherFilesCount = computed(() => {
 
 <style lang="scss" scoped>
 .multiples-file-list {
-  background: var(--parsec-color-light-secondary-premiere);
-  max-height: 8rem;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  background: ms.color('surface-base-default-secondary');
+  border-top: ms.border('thin') solid ms.color('border-base-default');
   max-height: 10rem;
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 2;
   position: relative;
 
   .multiples-file-item {
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
     display: flex;
     align-items: center;
-    padding: 0.5rem;
-    gap: 0.5rem;
-
-    &:hover {
-      background: var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-8);
-    }
+    padding: ms.spacing('padding-lg');
+    gap: ms.spacing('gap-lg');
+    cursor: default;
 
     &:last-child {
       border-bottom: none;
@@ -122,11 +117,16 @@ const otherFilesCount = computed(() => {
     }
 
     &__label {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-body');
       flex-grow: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .waiting-text {
+      @include ms.font('label-md-medium');
     }
 
     .icon--error {
@@ -139,7 +139,7 @@ const otherFilesCount = computed(() => {
       font-size: 1.125rem;
       margin-left: auto;
       flex-shrink: 0;
-      color: var(--parsec-color-light-primary-700);
+      color: ms.color('icon-brand-default-hover');
     }
 
     &.more-files {

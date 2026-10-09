@@ -60,28 +60,28 @@
 
 // Document Word
 .docx-page-wrapper {
-  background: var(--parsec-color-light-secondary-premiere) !important;
+  background: ms.color('surface-base-page-secondary') !important;
 }
 
 .docx-page-wrapper > section.docx-page {
-  box-shadow: var(--parsec-shadow-light) !important;
+  box-shadow: ms.shadow('light') !important;
 }
 
 // Flux
 .slider {
-  background: var(--parsec-color-light-secondary-text);
+  background: ms.color('surface-neutral-default');
   height: fit-content !important;
 
   .full {
-    background: var(--parsec-color-light-secondary-text) !important;
-    opacity: 0.2;
+    background: ms.color('surface-neutral-default') !important;
+    opacity: ms.opacity('2');
     height: 5px !important;
   }
 
   &-hover .dot {
-    background: var(--parsec-color-light-secondary-text) !important;
-    outline: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
-    box-shadow: var(--parsec-shadow-toggle) !important;
+    background: ms.color('surface-neutral-default') !important;
+    outline: 2px solid #{ms.color('border-base-on-color')};
+    box-shadow: ms.shadow('toggle') !important;
   }
 }
 
@@ -108,42 +108,5 @@
 .file-controls-volume {
   @include ms.responsive-breakpoint('xs') {
     display: none;
-  }
-}
-
-// Spreadsheet - revo-grid
-revo-grid {
-  border-radius: var(--parsec-radius-8);
-  overflow: hidden !important;
-  box-shadow: var(--parsec-shadow-soft);
-
-  .rowHeaders,
-  revogr-header {
-    background-color: var(--parsec-color-light-secondary-background) !important;
-
-    .rgRow {
-      box-shadow: none !important;
-      font-weight: bold;
-      font-size: 14px;
-    }
-  }
-
-  .rgCol {
-    background-color: var(--parsec-color-light-secondary-inversed-contrast) !important;
-  }
-
-  .rgRow {
-    box-shadow: 0 -1px 0 0 var(--parsec-color-light-secondary-disabled) inset !important;
-  }
-}
-
-// monaco editor
-.monaco-editor {
-  border-radius: var(--parsec-radius-12);
-  box-shadow: var(--parsec-shadow-light);
-
-  .overflow-guard {
-    border-radius: var(--parsec-radius-8);
-    box-shadow: var(--parsec-shadow-light);
   }
 }

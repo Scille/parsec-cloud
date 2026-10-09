@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-text class="label-id body-sm">
+  <ion-text class="label-id">
     {{ $msTranslate('common.technicalId') }}
     <span class="label-id__info">{{ id }}</span>
   </ion-text>
@@ -18,6 +18,7 @@ defineProps<{
 
 <style scoped lang="scss">
 .label-id {
-  color: var(--parsec-color-light-secondary-grey);
+  @include ms.font('body-sm-regular');
+  color: ms.color('text-base-description');
 }
 </style>

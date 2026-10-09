@@ -9,7 +9,7 @@
       class="checklist-security"
       v-if="securityWarnings"
     >
-      <ion-text class="checklist-security__title button-large">
+      <ion-text class="checklist-security__title">
         {{ $msTranslate('SideMenu.checklist.title') }}
       </ion-text>
       <ion-icon
@@ -62,23 +62,21 @@ const securityWarningsCount = computed(() => {
 
 <style lang="scss">
 #trigger-checklist-button {
-  background: var(--parsec-color-light-secondary-background);
+  background: ms.color('surface-base-default-secondary');
   cursor: pointer;
 
   .checklist-security {
-    padding: 0.5rem 0.825rem;
-    border-radius: var(--parsec-radius-8);
-    display: flex;
-    gap: 0.25rem;
-    align-items: center;
-    background: var(--parsec-color-light-gradient-background);
-    box-shadow: var(--parsec-shadow-soft);
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
+    border-radius: ms.radius('lg');
+    background: linear-gradient(113deg, #{ms.color('surface-gradient-from')} -1.49%, #{ms.color('surface-gradient-to')} 100%);
+    box-shadow: ms.shadow('light');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__title {
-      color: var(--parsec-color-light-secondary-white);
+      @include ms.font('label-lg-medium');
+      color: ms.color('text-on-color-heading');
       margin-inline-end: 0.5rem;
       width: 100%;
     }
@@ -88,13 +86,13 @@ const securityWarningsCount = computed(() => {
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 0.15rem;
+      gap: ms.spacing('gap-xs');
       font-size: 1.5rem;
-      color: var(--parsec-color-light-secondary-white);
-      opacity: 0.8;
+      color: ms.color('icon-neutral-on-color');
+      opacity: ms.opacity('8');
 
       &.to-do {
-        color: var(--parsec-color-light-secondary-white);
+        color: ms.color('icon-neutral-on-color');
       }
     }
   }

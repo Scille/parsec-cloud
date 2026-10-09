@@ -3,12 +3,12 @@
 <template>
   <div class="recommendation-checklist-container">
     <div class="checklist-header">
-      <ion-text class="checklist-header__title title-h4">{{ $msTranslate('SideMenu.checklist.title') }}</ion-text>
-      <ion-text class="checklist-header__description body">{{ $msTranslate('SideMenu.checklist.description') }}</ion-text>
+      <ion-text class="checklist-header__title">{{ $msTranslate('SideMenu.checklist.title') }}</ion-text>
+      <ion-text class="checklist-header__description">{{ $msTranslate('SideMenu.checklist.description') }}</ion-text>
     </div>
     <div class="checklist-list">
       <div
-        class="checklist-list-item subtitles-sm"
+        class="checklist-list-item"
         v-show="securityWarnings.needsSecondOwner"
         :class="{ done: securityWarnings.soloOwnerWorkspaces.length === 0, clickable: workspaceWarningClickable }"
         @click="workspaceWarningClickable && onClick(RecommendationAction.AddWorkspaceOwner)"
@@ -36,7 +36,7 @@
         />
       </div>
       <div
-        class="checklist-list-item subtitles-sm"
+        class="checklist-list-item"
         :class="{ done: securityWarnings.hasMultipleDevices, clickable: !securityWarnings.hasMultipleDevices }"
         @click="!securityWarnings.hasMultipleDevices && onClick(RecommendationAction.AddDevice)"
       >
@@ -52,7 +52,7 @@
         />
       </div>
       <div
-        class="checklist-list-item subtitles-sm"
+        class="checklist-list-item"
         :class="{ done: securityWarnings.hasRecoveryDevice, clickable: !securityWarnings.hasRecoveryDevice }"
         @click="!securityWarnings.hasRecoveryDevice && onClick(RecommendationAction.CreateRecoveryFiles)"
       >
@@ -101,19 +101,20 @@ async function onClick(action: RecommendationAction): Promise<void> {
 .recommendation-checklist-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem 1.25rem;
-  background-color: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-12);
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-3xl');
+  background-color: ms.color('surface-base-default-secondary');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  border-radius: ms.radius('2xl');
 }
 
 .checklist-header {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   &__title {
+    @include ms.font('heading-h5');
     background: var(--parsec-color-light-gradient-background);
     background-clip: text;
     -webkit-background-clip: text;
@@ -121,25 +122,27 @@ async function onClick(action: RecommendationAction): Promise<void> {
   }
 
   &__description {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-neutral-default');
   }
 }
 
 .checklist-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   &-item {
+    @include ms.font('body-md-medium');
     order: 1;
     display: flex;
-    gap: 0.5rem;
-    padding: 0.625rem 0.5rem;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
     align-items: center;
     text-wrap: wrap;
     box-shadow: var(--parsec-shadow-soft);
-    background-color: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-8);
+    background-color: ms.color('surface-base-default');
+    border-radius: ms.radius('lg');
     transition: all 0.2s ease-in-out;
 
     &.clickable {
@@ -147,12 +150,12 @@ async function onClick(action: RecommendationAction): Promise<void> {
     }
 
     &__icon {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('icon-neutral-default');
       flex-shrink: 0;
 
       &.icon-left {
         font-size: 1.125rem;
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('icon-disabled-default');
       }
 
       &.icon-right {
@@ -164,13 +167,12 @@ async function onClick(action: RecommendationAction): Promise<void> {
     }
 
     &__text {
-      color: var(--parsec-color-light-secondary-text);
-      font-size: 0.875rem;
+      color: ms.color('text-base-body');
       width: 100%;
     }
 
     &:hover {
-      background-color: var(--parsec-color-light-secondary-white);
+      background-color: ms.color('surface-base-default');
       box-shadow: var(--parsec-shadow-soft);
 
       .icon-right {
@@ -179,14 +181,14 @@ async function onClick(action: RecommendationAction): Promise<void> {
     }
 
     &.done {
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-background);
+      color: ms.color('text-base-body');
+      background-color: ms.color('surface-base-default-secondary');
       box-shadow: none;
       cursor: default;
       order: 0;
 
       .icon-left {
-        color: var(--parsec-color-light-primary-500);
+        color: ms.color('icon-brand-default');
       }
     }
   }

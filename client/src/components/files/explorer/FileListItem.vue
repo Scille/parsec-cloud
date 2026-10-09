@@ -80,7 +80,7 @@
             >
               {{ entry.name }}
             </ion-text>
-            <ion-text class="list-item-label label-data body-sm">
+            <ion-text class="list-item-label label-data">
               <span class="data-date">{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
               <span v-if="entry.isFile()"> &bull; </span>
               <span
@@ -94,7 +94,7 @@
 
           <span
             v-if="entry.syncStatus === EntrySyncStatus.Uploading && entry.syncProgress"
-            class="upload-progress button-small"
+            class="upload-progress"
           >
             {{ entry.syncProgress }}%
           </span>
@@ -139,6 +139,8 @@
         <div class="list-item-end file-options ion-item-child-clickable">
           <ion-button
             fill="clear"
+            size="large"
+            slot="icon-only"
             v-show="isHovered || menuOpened || isSmallDisplay"
             class="options-button"
             @click.stop="onOptionsClick($event)"
@@ -146,7 +148,6 @@
           >
             <ion-icon
               :icon="ellipsisHorizontal"
-              slot="icon-only"
               class="options-button__icon"
             />
           </ion-button>
@@ -217,5 +218,9 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
 <style lang="scss" scoped>
 .drop-zone-item {
   height: fit-content;
+}
+
+.label-data {
+  @include ms.font('body-sm-regular');
 }
 </style>

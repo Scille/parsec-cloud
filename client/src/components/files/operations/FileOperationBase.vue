@@ -30,7 +30,7 @@
             class="element-details-title"
           >
             <ms-rich-text
-              class="element-details-title__name form-input"
+              class="element-details-title__name"
               :text="{ key: info.translation, data: { name: singleEntry.name } }"
             />
           </div>
@@ -41,7 +41,7 @@
             @click="toggleFileList"
           >
             <ms-rich-text
-              class="element-details-title__name form-input"
+              class="element-details-title__name"
               :text="{ key: info.translationMultiple, data: { count: info.entries.length } }"
             />
             <ion-icon
@@ -49,7 +49,7 @@
               :icon="chevronDown"
             />
           </div>
-          <div class="element-details-info button-small">
+          <div class="element-details-info">
             <ion-text v-if="props.status === FileOperationEvents.Cancelled">
               {{ $msTranslate('FoldersPage.FileOperations.cancelled') }}
             </ion-text>
@@ -77,7 +77,7 @@
           class="waiting-info"
           v-if="props.status === FileOperationEvents.Added"
         >
-          <ion-text class="waiting-text body">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.waiting') }}
           </ion-text>
         </div>
@@ -87,7 +87,7 @@
           class="finalizing-info"
           v-if="props.status === FileOperationEvents.Finalizing"
         >
-          <ion-text class="waiting-text body">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.finalizing') }}
           </ion-text>
         </div>
@@ -97,7 +97,7 @@
           class="progress-info"
           v-if="props.status === FileOperationEvents.Progress && props.eventData"
         >
-          <ion-text class="progress-percentage button-small default-state">
+          <ion-text class="progress-percentage default-state">
             {{ (props.eventData as OperationProgressEventData).global.progress }}%
           </ion-text>
           <ms-spinner class="progress-spinner default-state" />
@@ -248,6 +248,22 @@ function toggleFileList() {
 </script>
 
 <style scoped lang="scss">
+.file-operation-item .element-details-title__name {
+  @include ms.font('label-md-medium');
+}
+
+.file-operation-item .element-details-info {
+  @include ms.font('label-sm-medium');
+}
+
+.waiting-text {
+  @include ms.font('body-md-regular');
+}
+
+.progress-percentage {
+  @include ms.font('label-sm-medium');
+}
+
 .element {
   .file-icon {
     min-width: 2rem;
@@ -258,22 +274,22 @@ function toggleFileList() {
 }
 
 .failed {
-  border: 1px solid var(--parsec-color-light-danger-500);
+  border: ms.border('thin') solid ms.color('border-error-default');
 
   .element {
-    --background: var(--parsec-color-light-danger-50);
+    --background: #{ms.color('surface-error-default-subtle-hover')};
   }
 
   &-content {
-    color: var(--parsec-color-light-danger-500);
+    color: ms.color('text-error-default');
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
   }
 
   .failed-icon {
     font-size: 1.25rem;
-    color: var(--parsec-color-light-danger-500);
+    color: ms.color('icon-error-default');
   }
 }
 </style>
