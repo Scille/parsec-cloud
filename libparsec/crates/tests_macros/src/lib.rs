@@ -58,7 +58,9 @@ pub fn parsec_test(
         None => quote!(),
     };
     let tokio_worker_threads = match attributes.tokio_worker_threads {
-        Some(tokio_worker_threads) => quote!(, worker_threads = #tokio_worker_threads),
+        Some(tokio_worker_threads) => {
+            quote!(, worker_threads = #tokio_worker_threads, flavor = "multi_thread")
+        }
         None => quote!(),
     };
     let native_attr = sig
