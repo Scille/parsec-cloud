@@ -1,7 +1,6 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <!-- eslint-disable vue/no-mutating-props -->
   <ion-content class="filter-container">
     <ion-list
       class="filter-list"
@@ -13,12 +12,8 @@
             {{ $msTranslate('UsersPage.filter.status') }}
           </ion-text>
           <ion-button
-            v-if="!users.filters.statusActive || !users.filters.statusRevoked || !users.filters.statusFrozen"
-            @click="
-              users.filters.statusActive = true;
-              users.filters.statusRevoked = true;
-              users.filters.statusFrozen = true;
-            "
+            v-if="!currentFilters.statusActive || !currentFilters.statusRevoked || !currentFilters.statusFrozen"
+            @click="updateFilters({ statusActive: true, statusRevoked: true, statusFrozen: true })"
             class="reset-filters-button"
             fill="clear"
           >
@@ -32,8 +27,8 @@
           <ms-checkbox
             class="filter-checkbox"
             label-position="left"
-            v-model="users.filters.statusActive"
-            @change="users.unselectHiddenUsers()"
+            :model-value="currentFilters.statusActive"
+            @update:model-value="updateFilters({ statusActive: $event })"
           >
             <user-status-tag
               :revoked="false"
@@ -48,8 +43,8 @@
           <ms-checkbox
             class="filter-checkbox"
             label-position="left"
-            v-model="users.filters.statusRevoked"
-            @change="users.unselectHiddenUsers()"
+            :model-value="currentFilters.statusRevoked"
+            @update:model-value="updateFilters({ statusRevoked: $event })"
           >
             <user-status-tag
               :revoked="true"
@@ -64,8 +59,8 @@
           <ms-checkbox
             label-position="left"
             class="filter-checkbox"
-            v-model="users.filters.statusFrozen"
-            @change="users.unselectHiddenUsers()"
+            :model-value="currentFilters.statusFrozen"
+            @update:model-value="updateFilters({ statusFrozen: $event })"
           >
             <user-status-tag
               :revoked="false"
@@ -81,12 +76,8 @@
             {{ $msTranslate('UsersPage.filter.profile') }}
           </ion-text>
           <ion-button
-            v-if="!users.filters.profileAdmin || !users.filters.profileStandard || !users.filters.profileOutsider"
-            @click="
-              users.filters.profileAdmin = true;
-              users.filters.profileStandard = true;
-              users.filters.profileOutsider = true;
-            "
+            v-if="!currentFilters.profileAdmin || !currentFilters.profileStandard || !currentFilters.profileOutsider"
+            @click="updateFilters({ profileAdmin: true, profileStandard: true, profileOutsider: true })"
             class="reset-filters-button"
             fill="clear"
           >
@@ -100,8 +91,8 @@
           <ms-checkbox
             class="filter-checkbox"
             label-position="left"
-            v-model="users.filters.profileAdmin"
-            @change="users.unselectHiddenUsers()"
+            :model-value="currentFilters.profileAdmin"
+            @update:model-value="updateFilters({ profileAdmin: $event })"
           >
             <ion-text class="filter-text">
               {{ $msTranslate('UsersPage.filter.admin') }}
@@ -115,8 +106,8 @@
           <ms-checkbox
             class="filter-checkbox"
             label-position="left"
-            v-model="users.filters.profileStandard"
-            @change="users.unselectHiddenUsers()"
+            :model-value="currentFilters.profileStandard"
+            @update:model-value="updateFilters({ profileStandard: $event })"
           >
             <ion-text class="filter-text">
               {{ $msTranslate('UsersPage.filter.standard') }}
@@ -127,8 +118,8 @@
           <ms-checkbox
             label-position="left"
             class="filter-checkbox"
-            v-model="users.filters.profileOutsider"
-            @change="users.unselectHiddenUsers()"
+            :model-value="currentFilters.profileOutsider"
+            @update:model-value="updateFilters({ profileOutsider: $event })"
           >
             <ion-text class="filter-text">
               {{ $msTranslate('UsersPage.filter.outsider') }}
@@ -138,18 +129,30 @@
       </ion-item-group>
     </ion-list>
   </ion-content>
-  <!-- eslint-disable vue/no-mutating-props -->
 </template>
 
 <script setup lang="ts">
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
-import { UserCollection } from '@/components/users/types';
+import { UserFilterLabels } from '@/components/users/types';
 import { IonButton, IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
 import { MsCheckbox } from 'megashark-lib';
+import { ref } from 'vue';
 
-defineProps<{
-  users: UserCollection;
+const props = defineProps<{
+  filters: UserFilterLabels;
 }>();
+
+const emits = defineEmits<{
+  (event: 'update:filters', filters: UserFilterLabels): void;
+}>();
+
+// Props passed through `popoverController` are not reactive, keep a local copy
+const currentFilters = ref<UserFilterLabels>({ ...props.filters });
+
+function updateFilters(changes: UserFilterLabels): void {
+  currentFilters.value = { ...currentFilters.value, ...changes };
+  emits('update:filters', currentFilters.value);
+}
 </script>
 
 <style lang="scss" scoped>
