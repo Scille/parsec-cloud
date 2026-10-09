@@ -34,31 +34,25 @@ const config = {
   // See: https://knip.dev/reference/issue-types
   exclude: ['enumMembers', 'exports', 'types'],
   // Exclude files reported as unused
-  // TODO: check if still needed
   ignoreFiles: [
-    'src/common/mocks.ts',
-    'src/components/files/FileOpenFallbackChoice.vue',
-    'src/components/organizations/ChooseServer.vue',
+    // To create empty ODS files (currently unused)
     'src/parsec/file_templates/ods_template.ts',
+    // To create empty ODT files (currently unused)
     'src/parsec/file_templates/odt_template.ts',
-    'src/parsec/mock_generator.ts',
+    // Native builds use it
     'src/plugins/libparsec/trampoline-native.ts',
+    // Not used but it's a generic thing, we can keep it
     'src/services/screenshot.ts',
-    'src/services/smallDisplayWarning.ts',
-    'src/views/about/ChangesModal.vue',
-    'src/views/home/SummaryStep.vue',
+    // Only used when we need to measure some things
     'src/services/performanceMonitor.ts',
+    // Worker, fetched dynamically at startup
     'public/file-service-worker.js',
     // loaded by the file service worker with `importScripts()`
     'public/vendor/zip-native.min.js',
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
-    // OnlyOffice editor and x2t converter, installed as npm dependencies but
-    // used as raw vendored assets:
-    // - Dev: served from node_modules by the dev server
-    // - Release: copied verbatim into the dist folder (see staticCopyPlugin in vite.config.ts)
-    'onlyoffice-editor',
+    // Referenced through a vite plugin, not imported directly
     'onlyoffice-x2t',
     // used during signature of electron artifact for macOS
     '@electron/notarize',
@@ -68,8 +62,6 @@ const config = {
     'electron-publish',
     // imported dynamically and only on Windows
     'regedit',
-    // commented most of the time, but can be useful in dev
-    '@vitejs/plugin-basic-ssl',
     // pin version to avoid a bug on snap
     'vue-router',
   ],
