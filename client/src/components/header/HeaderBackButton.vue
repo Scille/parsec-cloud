@@ -48,12 +48,18 @@ async function goBack(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.back-button-container {
+  display: flex;
+  align-items: center;
+}
+
 .back-button {
   margin-inline: 0px;
   margin-top: 0px;
   margin-bottom: 0px;
   min-height: 0;
   flex-shrink: 0;
+  --background: none;
 
   @include ms.responsive-breakpoint('sm') {
     box-shadow: ms.shadow('light');
@@ -70,11 +76,6 @@ async function goBack(): Promise<void> {
   &__label {
     margin-left: 0.625rem;
   }
-}
-
-.back-button-container {
-  display: flex;
-  align-items: center;
 }
 
 .vertical-spacer {

@@ -87,13 +87,13 @@ const emits = defineEmits<{
 <style lang="scss" scoped>
 .menu-secondary {
   display: flex;
-  padding: 0 0 ms.spacing('padding-5xl');
+  padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-5xl');
   justify-content: space-between;
 
   @include ms.responsive-breakpoint('md') {
     flex-direction: column;
     gap: ms.spacing('gap-3xl');
-    padding: 0 0 ms.spacing('padding-3xl');
+    padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-3xl');
   }
 
   &-buttons {
