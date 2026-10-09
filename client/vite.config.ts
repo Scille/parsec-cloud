@@ -90,12 +90,6 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
   console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
 }
 
-// 3) Add dev specific plugins
-if (process.env.NODE_ENV === 'development' && !process.env.CI) {
-  // const { default: basicSsl } = await import('@vitejs/plugin-basic-ssl');
-  // plugins.push(basicSsl());
-}
-
 plugins.push(
   viteStaticCopy({
     targets: [
