@@ -33,7 +33,7 @@ ignore_keys = [
 
 
 def process_translation_file(translation_source: Path) -> list[str]:
-    content: dict[str, Any] = json.loads(translation_source.read_text())
+    content: dict[str, Any] = json.loads(translation_source.read_text(encoding="utf-8"))
 
     def _flatten_dict(d: dict[str, Any], path: str) -> list[str]:
         res: list[str] = []
@@ -143,7 +143,7 @@ if __name__ == "__main__":
             json_data = remove_empty(json_data)
 
             # 4. write
-            with open(locales / lang, mode="w", encoding="utf-8") as f:
+            with open(locales / lang, mode="w", encoding="utf-8", newline="\n") as f:
                 json.dump(json_data, f, indent=4, ensure_ascii=False)
 
             print(f"Removed {count} unused translations keys from {BOLD}{lang}{RESET}")

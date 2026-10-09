@@ -4,7 +4,6 @@
         "developer": "Parsec Cloud",
         "developerLink": "https://parsec.cloud/en",
         "projectSources": "https://github.com/Scille/parsec-cloud",
-        "issueUrl": "https://github.com/Scille/parsec-cloud/issues/{issue}",
         "license": "BUSL-1.1",
         "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE",
         "history": "https://docs.parsec.cloud/en/{version}/history.html",
@@ -57,7 +56,6 @@
         "organizationNotFound": "The organization has not been found on the server. Contact the server's administrator.",
         "expiredOrganization": "This organization has expired. Please contact an administrator.",
         "unexpected": "An unexpected error occurred. Please try again.",
-        "smallDisplayWarning": "We are currently working on small displays for Parsec so it's not yet fully compatible. We strongly recommend that you use a larger display to access it.",
         "incompatibleEnvironment": "Your browser is not compatible with Parsec yet.",
         "incompatibleWithSafari": "Parsec does not yet support Safari. Please use another browser such as Chrome, Firefox or Edge.",
         "clockDesync": {
@@ -422,8 +420,6 @@
         "organizationNamePlaceholder": "MyOrganization",
         "serverAddress": "Parsec server address",
         "serverAddressPlaceholder": "parsec3://",
-        "useParsecServer": "Use the main Parsec server",
-        "useMyOwnServer": "I have my own Parsec server",
         "saas": "Parsec SaaS",
         "customServer": "Custom Server",
         "keyringChoice": "System authentication",
@@ -449,7 +445,6 @@
                 "acceptError": "An error occurred."
             }
         },
-        "parsecServerUrl": "URL of your Parsec server",
         "loading": "Just a moment, we are setting up your organization",
         "organizationCreated": "Congratulations! You have created your new organization.",
         "title": {
@@ -1456,7 +1451,6 @@
                     "updateRecoveryFile": "Update"
                 }
             },
-            "shamir": {},
             "authentication": {
                 "title": "Choose a new authentication method",
                 "subtitle": "Select an available authentication method to recover this device/browser. You can then use this new authentication method to log in to the organization and you can change it at any time."
@@ -1997,12 +1991,6 @@
             }
         }
     },
-    "Changelog": {
-        "features": "Features",
-        "fixes": "Bug fixes",
-        "misc": "Miscellaneous",
-        "title": "Changes"
-    },
     "MyProfilePage": {
         "settings": {
             "title": "Settings",
@@ -2203,9 +2191,6 @@
     "OrganizationSwitch": {
         "loggedInOrgs": "Connected organizations",
         "goToLogin": "Switch organization"
-    },
-    "lib": {
-        "components": {}
     },
     "UserSelect": {
         "defaultLabel": "Lookup user",
@@ -2759,7 +2744,6 @@
             "progress": {
                 "orderNumber": "Order n°{number}"
             },
-            "passed": {},
             "quantityOrdered": {
                 "administrator": "{count} administrator | {count} administrators",
                 "standard": "{count} member | {count} members",
@@ -2896,18 +2880,6 @@
             "notSavedQuestion": "Some changes have not been saved yet. Do you want to discard them?",
             "notSavedDiscard": "Discard changes",
             "notSavedStay": "Stay on page"
-        }
-    },
-    "openFallback": {
-        "title": "Parsec Edition not available",
-        "subtitle": {
-            "download": "If you want to edit this file, you can download it and open it locally on your device."
-        },
-        "actions": {
-            "viewer": "Preview",
-            "download": "Download",
-            "open": "Show in explorer",
-            "cancel": "Cancel"
         }
     },
     "proConnect": {
