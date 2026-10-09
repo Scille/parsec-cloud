@@ -341,48 +341,48 @@ class EditicsTranslator {
       case 'message':
         return this._cookMessage(editics);
 
-      // Still to be translated (disabled until the server side of the
-      // collaborative mode is finished; move back into the switch below to
-      // enable):
-      //
-      //   case 'authChanges':
-      //     return this._cookAuthChanges(editics);
-      //
-      //   case 'cursor':
-      //     return this._cookCursor(editics);
-      //
-      //   case 'getLock':
-      //     return this._cookGetLock(editics);
-      //
-      //   case 'releaseLock':
-      //     return this._cookReleaseLock(editics);
-      //
-      //   case 'saveChanges':
-      //     return this._cookServerSaveChanges(editics);
-      //
-      //   case 'savePartChanges':
-      //     return {
-      //       type: 'savePartChanges',
-      //       changesIndex: editics.changesIndex,
-      //       syncChangesIndex: editics.syncChangesIndex,
-      //     };
-      //
-      //   case 'saveLock':
-      //     return { type: 'saveLock', saveLock: !!editics.saveLock };
-      //
-      //   case 'unSaveLock':
-      //     return {
-      //       type: 'unSaveLock',
-      //       index: editics.index,
-      //       time: editics.time,
-      //       syncChangesIndex: editics.syncChangesIndex,
-      //     };
-      //
-      //   case 'drop':
-      //     return { type: 'drop', code: editics.code, description: editics.description };
-      //
-      //   case 'warning':
-      //     return { type: 'warning', code: editics.code, message: editics.message };
+        // Still to be translated (disabled until the server side of the
+        // collaborative mode is finished; move back into the switch below to
+        // enable):
+        //
+        //   case 'authChanges':
+        //     return this._cookAuthChanges(editics);
+        //
+        //   case 'cursor':
+        //     return this._cookCursor(editics);
+        //
+        //   case 'getLock':
+        //     return this._cookGetLock(editics);
+        //
+        //   case 'releaseLock':
+        //     return this._cookReleaseLock(editics);
+        //
+        //   case 'saveChanges':
+        //     return this._cookServerSaveChanges(editics);
+        //
+        //   case 'savePartChanges':
+        //     return {
+        //       type: 'savePartChanges',
+        //       changesIndex: editics.changesIndex,
+        //       syncChangesIndex: editics.syncChangesIndex,
+        //     };
+        //
+        //   case 'saveLock':
+        //     return { type: 'saveLock', saveLock: !!editics.saveLock };
+        //
+        //   case 'unSaveLock':
+        //     return {
+        //       type: 'unSaveLock',
+        //       index: editics.index,
+        //       time: editics.time,
+        //       syncChangesIndex: editics.syncChangesIndex,
+        //     };
+        //
+        //   case 'drop':
+        //     return { type: 'drop', code: editics.code, description: editics.description };
+        //
+        //   case 'warning':
+        //     return { type: 'warning', code: editics.code, message: editics.message };
 
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
@@ -711,7 +711,7 @@ export { EditicsTranslator };
  * @property {string} deviceId - DeviceID hex
  * @property {boolean} view
  *
- * @typedef {Object} EditicsProtocolReconnect
+ * @typedef {Object} EditicsReconnect
  * @property {EditicsParticipantID} participantId
  * @property {number} participantTimeConnect
  * @property {number} timeIdle
@@ -721,7 +721,7 @@ export { EditicsTranslator };
  * @property {number} indexUser - -1 on first open
  * @property {number} editorType
  * @property {number} vlobVersion
- * @property {EditicsProtocolReconnect|null} reconnect
+ * @property {EditicsReconnect|null} reconnect
  *
  * @typedef {Object} EditicsClientEventAuthChangesAck
  * @property {'authChangesAck'} type

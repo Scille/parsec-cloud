@@ -19,16 +19,14 @@ from pydantic import BaseModel
 from parsec._parsec import VlobID
 from parsec.components.auth import EditicsToken
 from parsec.editics_protocol import (
-    EditicsProtocolClientEvent,
-    EditicsProtocolServerEvent,
-    EditicsProtocolServerEventAdapter,
+    EditicsClientEvent,
+    EditicsServerEvent,
+    EditicsServerEventAdapter,
 )
 from tests.common.backend import SERVER_DOMAIN
 from tests.common.client import AuthenticatedRpcClient, RpcTransportError
 
-type EditicsSessionSendClientEvent = Callable[
-    [EditicsProtocolClientEvent], Awaitable[BaseModel | None]
-]
+type EditicsSessionSendClientEvent = Callable[[EditicsClientEvent], Awaitable[BaseModel | None]]
 
 
 class EditicsSessionClient:
@@ -98,19 +96,19 @@ class EditicsSessionClient:
                 sse_event_source=sse_event_source,
             )
 
-    async def send(self, event: EditicsProtocolClientEvent) -> EditicsProtocolServerEvent | None:
+    async def send(self, event: EditicsClientEvent) -> EditicsServerEvent | None:
         match await self.send_raw(event.model_dump_json()):
             case None:
                 return None
             case raw_server_event:
-                return EditicsProtocolServerEventAdapter.validate_json(raw_server_event)
+                return EditicsServerEventAdapter.validate_json(raw_server_event)
 
     send_raw: Callable[[str], Awaitable[str | None]]  # Set in `__init__`
     "Take and return the events in JSON encoded format"
 
-    async def recv(self) -> EditicsProtocolServerEvent:
+    async def recv(self) -> EditicsServerEvent:
         raw_event = await self.recv_raw()
-        return EditicsProtocolServerEventAdapter.validate_json(raw_event)
+        return EditicsServerEventAdapter.validate_json(raw_event)
 
     async def recv_raw(self) -> str:
         "Returns the event in JSON encoded format"
@@ -341,7 +339,7 @@ class EditicsJSClient:
             case raw_editics_server_event:
                 # Sanity check to detect incorrect server output (since the Javascript
                 # part doesn't actually validate the schema)
-                EditicsProtocolServerEventAdapter.validate_json(raw_editics_server_event)
+                EditicsServerEventAdapter.validate_json(raw_editics_server_event)
                 raw_oo_client_event = await self.js_runtime.async_eval(
                     f"""
                     globalThis.__editics_instances['{self.participant_id.hex}']
@@ -361,7 +359,7 @@ class EditicsJSClient:
         raw_editics_server_event = await self.editics_session_client.recv_raw()
         # Sanity check to detect incorrect server output (since the Javascript
         # part doesn't actually validate the schema)
-        EditicsProtocolServerEventAdapter.validate_json(raw_editics_server_event)
+        EditicsServerEventAdapter.validate_json(raw_editics_server_event)
         oo_server_event = await self.js_runtime.async_eval(
             f"""
             globalThis.__editics_instances['{self.participant_id.hex}'].cookServerEvent({raw_editics_server_event})

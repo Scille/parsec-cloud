@@ -74,9 +74,9 @@ from parsec.components.editics import (
     EditicsParticipantSendBadOutcome,
 )
 from parsec.editics_protocol import (
-    EditicsProtocolClientEventAdapter,
-    EditicsProtocolParticipantID,
-    EditicsProtocolServerEvent,
+    EditicsClientEventAdapter,
+    EditicsParticipantID,
+    EditicsServerEvent,
 )
 
 # TODO: define our own API versioning (and store it in `editics_protocol.py`)
@@ -136,9 +136,9 @@ async def editics_listen(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
-    participant_id: EditicsProtocolParticipantID,
+    participant_id: EditicsParticipantID,
     request: Request,
-) -> AsyncIterable[EditicsProtocolServerEvent]:
+) -> AsyncIterable[EditicsServerEvent]:
     # Note we do not handle SSE's last-event-ID here, this is because OnlyOffice
     # protocol (on which the editics protocol is based) already has its own
     # re-connection logic
@@ -225,7 +225,7 @@ async def editics_send(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
-    participant_id: EditicsProtocolParticipantID,
+    participant_id: EditicsParticipantID,
     request: Request,
 ):
     backend: Backend = request.app.state.backend
@@ -296,7 +296,7 @@ async def editics_send(
             raise HTTPException(status_code=413)
 
     try:
-        event = EditicsProtocolClientEventAdapter.validate_json(await request.body())
+        event = EditicsClientEventAdapter.validate_json(await request.body())
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid client event")
 

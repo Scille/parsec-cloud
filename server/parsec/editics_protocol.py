@@ -4,7 +4,7 @@
 The editics protocol schemas is defined here, basically:
 - Editics protocol is based on the OnlyOffice protocol (typically removing unneeded
   field and adding encryption to sensitive ones).
-- The main exposed classes are `EditicsProtocolEditicsProtocolClientEvent` and `EditicsProtocolEditicsProtocolServerEvent`
+- The main exposed classes are `EditicsClientEvent` and `EditicsServerEvent`
 
 See [RFC 1030](../../docs/rfcs/1030-collaborative-editics.md).
 """
@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field, TypeAdapter
 
 from parsec._parsec import DeviceID
 
-type EditicsProtocolIndexUser = int
+type EditicsIndexUser = int
 """
 `indexUser`: 1-based, monotonic per editics session, assigned by order of join
 and never re-used.
@@ -28,7 +28,7 @@ clash with other clients: everything (e.g. paragraph, table) created collaborati
 gets an ID like "3_42" (where 3 is the editor's indexUser).
 """
 
-type EditicsProtocolParticipantID = UUID
+type EditicsParticipantID = UUID
 """
 Random ID controlled by the client and used to identify the connection session
 with the server. By design, this survives transport disconnection and is used
@@ -36,7 +36,7 @@ mostly to identify who has authored a modification or holds a lock.
 """
 
 
-class EditicsProtocolParticipantEntry(BaseModel):
+class EditicsParticipantEntry(BaseModel):
     """One entry of the `connectState.participants` list.
 
     OnlyOffice `connectState.participants[]` is a rich object
@@ -49,9 +49,9 @@ class EditicsProtocolParticipantEntry(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
-    id: EditicsProtocolParticipantID
+    id: EditicsParticipantID
     # OnlyOffice name `indexUser` kept (bad name documented, not renamed).
-    indexUser: EditicsProtocolIndexUser
+    indexUser: EditicsIndexUser
     # Editics addition (replaces OnlyOffice's idOriginal/username/etc.).
     # Serialized as its hex form; parsed from a `DeviceID` or a hex string.
     deviceId: DeviceID
@@ -67,14 +67,14 @@ class EditicsProtocolParticipantEntry(BaseModel):
 # --- Client -> server events -------------------------------------------------
 
 
-class EditicsProtocolReconnect(BaseModel):
-    participantId: EditicsProtocolParticipantID
+class EditicsReconnect(BaseModel):
+    participantId: EditicsParticipantID
     # TODO: document if it is in seconds or ms etc.
     participantTimeConnect: int
     timeIdle: int
 
 
-class EditicsProtocolClientEventAuth(BaseModel):
+class EditicsClientEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     # -1 on first open; server-assigned index on reconnect
     indexUser: int = -1
@@ -86,10 +86,10 @@ class EditicsProtocolClientEventAuth(BaseModel):
     # (OnlyOffice has no such field; editics addition.)
     vlobVersion: int
     # Reconnect info (forward-compat; unused in step 0 but kept).
-    reconnect: EditicsProtocolReconnect | None
+    reconnect: EditicsReconnect | None
 
 
-class EditicsProtocolClientEventAuthChangesAck(BaseModel):
+class EditicsClientEventAuthChangesAck(BaseModel):
     """OnlyOffice `authChangesAck` (c->s). Name kept.
 
     Acknowledges one `authChanges` chunk (RFC §2.2). In step 1 the backlog is
@@ -100,16 +100,16 @@ class EditicsProtocolClientEventAuthChangesAck(BaseModel):
     type: Literal["authChangesAck"] = "authChangesAck"
 
 
-class EditicsProtocolClientEventGetMessages(BaseModel):
+class EditicsClientEventGetMessages(BaseModel):
     type: Literal["getMessages"] = "getMessages"
 
 
-class EditicsProtocolClientEventMessage(BaseModel):
+class EditicsClientEventMessage(BaseModel):
     type: Literal["message"] = "message"
     encryptedMessage: bytes
 
 
-class EditicsProtocolClientEventCursor(BaseModel):
+class EditicsClientEventCursor(BaseModel):
     """OnlyOffice `cursor` (c->s). Name kept. The cursor is encrypted (§2.4);
     renamed to `encryptedCursor` per RFC §2.2 editics changes."""
 
@@ -118,7 +118,7 @@ class EditicsProtocolClientEventCursor(BaseModel):
     encryptedCursor: bytes
 
 
-class EditicsProtocolClientEventGetLock(BaseModel):
+class EditicsClientEventGetLock(BaseModel):
     """OnlyOffice `getLock` (c->s). Name kept. Kept as-is per RFC §2.2 (the
     `block` array is opaque to the server; keyed by JSON serialization)."""
 
@@ -127,7 +127,7 @@ class EditicsProtocolClientEventGetLock(BaseModel):
     block: list[Any]
 
 
-class EditicsProtocolClientEventIsSaveLock(BaseModel):
+class EditicsClientEventIsSaveLock(BaseModel):
     """OnlyOffice `isSaveLock` (c->s). Name kept. The client's current
     always-advancing sync point (§2.2). Used by the server to detect a
     desynchronized client (keep denying the lock until it catches up)."""
@@ -136,7 +136,7 @@ class EditicsProtocolClientEventIsSaveLock(BaseModel):
     syncChangesIndex: int
 
 
-class EditicsProtocolClientEventSaveChanges(BaseModel):
+class EditicsClientEventSaveChanges(BaseModel):
     """OnlyOffice `saveChanges` (c->s). Name kept. See RFC §2.2 editics changes
     for the field deltas:
 
@@ -177,14 +177,14 @@ class EditicsProtocolClientEventSaveChanges(BaseModel):
     releaseLocks: bool = False
 
 
-class EditicsProtocolClientEventUnSaveLock(BaseModel):
+class EditicsClientEventUnSaveLock(BaseModel):
     """OnlyOffice `unSaveLock` (c->s). Name kept. Cancel an in-progress save and
     release the save lock without saving (RFC §2.2). Kept as-is."""
 
     type: Literal["unSaveLock"] = "unSaveLock"
 
 
-class EditicsProtocolClientEventUnLockDocument(BaseModel):
+class EditicsClientEventUnLockDocument(BaseModel):
     """OnlyOffice `unLockDocument` (c->s). Name kept. Fire-and-forget cleanup
     combining up to three independent actions (RFC §2.2). Kept as-is."""
 
@@ -195,14 +195,14 @@ class EditicsProtocolClientEventUnLockDocument(BaseModel):
     releaseLocks: bool = False
 
 
-class EditicsProtocolClientEventClose(BaseModel):
+class EditicsClientEventClose(BaseModel):
     """OnlyOffice `close` (c->s). Name kept. Voluntary leave + close (unlike
     `unLockDocument` which keeps the connection alive). Kept as-is."""
 
     type: Literal["close"] = "close"
 
 
-class EditicsProtocolClientEventSaveDone(BaseModel):
+class EditicsClientEventSaveDone(BaseModel):
     """Editics addition (no OnlyOffice equivalent). Sent by the client after it
     has uploaded a new vlob version, to bump the session's
     `latest_allowed_version` (RFC §1.2 step 4.3). Must be sent only by the
@@ -213,37 +213,37 @@ class EditicsProtocolClientEventSaveDone(BaseModel):
     newVersion: int  # the new vlob version just uploaded
 
 
-EditicsProtocolClientEvent = Annotated[
-    EditicsProtocolClientEventAuth
-    | EditicsProtocolClientEventAuthChangesAck
-    | EditicsProtocolClientEventMessage
-    | EditicsProtocolClientEventGetMessages
-    | EditicsProtocolClientEventCursor
-    | EditicsProtocolClientEventGetLock
-    | EditicsProtocolClientEventIsSaveLock
-    | EditicsProtocolClientEventSaveChanges
-    | EditicsProtocolClientEventUnSaveLock
-    | EditicsProtocolClientEventUnLockDocument
-    | EditicsProtocolClientEventClose
-    | EditicsProtocolClientEventSaveDone,
+EditicsClientEvent = Annotated[
+    EditicsClientEventAuth
+    | EditicsClientEventAuthChangesAck
+    | EditicsClientEventMessage
+    | EditicsClientEventGetMessages
+    | EditicsClientEventCursor
+    | EditicsClientEventGetLock
+    | EditicsClientEventIsSaveLock
+    | EditicsClientEventSaveChanges
+    | EditicsClientEventUnSaveLock
+    | EditicsClientEventUnLockDocument
+    | EditicsClientEventClose
+    | EditicsClientEventSaveDone,
     Field(discriminator="type"),
 ]
-EditicsProtocolClientEventAdapter = TypeAdapter(EditicsProtocolClientEvent)
+EditicsClientEventAdapter = TypeAdapter(EditicsClientEvent)
 
 
 # --- Server -> client events -------------------------------------------------
 
 
-class EditicsProtocolServerEventAuth(BaseModel):
+class EditicsServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
-    participants: list[EditicsProtocolParticipantEntry]  # current participant map
-    participantId: EditicsProtocolParticipantID
-    indexUser: EditicsProtocolIndexUser  # this connection's assigned index
+    participants: list[EditicsParticipantEntry]  # current participant map
+    participantId: EditicsParticipantID
+    indexUser: EditicsIndexUser  # this connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
     participantTimeConnect: int  # server timestamp (ms) at connect
 
 
-class EditicsProtocolServerEventConnectState(BaseModel):
+class EditicsServerEventConnectState(BaseModel):
     """OnlyOffice `connectState`, trimmed. Name kept.
 
     See RFC §2.2 / todo step_0 §4.5 for the fields dropped from the OnlyOffice
@@ -255,14 +255,14 @@ class EditicsProtocolServerEventConnectState(BaseModel):
     type: Literal["connectState"] = "connectState"
     # Monotonic ms timestamp of this participant-set update (OnlyOffice name).
     participantsTimestamp: int
-    participants: list[EditicsProtocolParticipantEntry]
+    participants: list[EditicsParticipantEntry]
     # True while the document auth lock is held (todo step_1 §6.2): tells the
     # established editor it must send `unLockDocument{unlock:true}` to release
     # the lock and let newcomers proceed.
     waitAuth: bool = False
 
 
-class EditicsProtocolServerEventAuthChanges(BaseModel):
+class EditicsServerEventAuthChanges(BaseModel):
     """OnlyOffice `authChanges` (s->c). Name kept.
 
     Delivered to a joining client (after the auth lock is released, if any)
@@ -276,7 +276,7 @@ class EditicsProtocolServerEventAuthChanges(BaseModel):
     changes: list[tuple[int, bytes]] = Field(default_factory=list)
 
 
-class EditicsProtocolServerEventWaitAuth(BaseModel):
+class EditicsServerEventWaitAuth(BaseModel):
     """OnlyOffice `waitAuth` (s->c). Name kept. Per RFC §2.2 editics changes,
     `lockDocument` is replaced by `authLockedBy` (the indexUser holding the
     auth lock). Sent to a joining non-view participant when the auth lock is
@@ -286,7 +286,7 @@ class EditicsProtocolServerEventWaitAuth(BaseModel):
     translate this event into the OnlyOffice `lockDocument` field)."""
 
     type: Literal["waitAuth"] = "waitAuth"
-    authLockedBy: EditicsProtocolIndexUser
+    authLockedBy: EditicsIndexUser
 
 
 class MessageRecord(BaseModel):
@@ -294,12 +294,12 @@ class MessageRecord(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
     time: int  # server timestamp (ms)
-    authorIndexUser: EditicsProtocolIndexUser
+    authorIndexUser: EditicsIndexUser
     # base64 over JSON (§2.4). Opaque; server never inspects.
     encryptedMessage: bytes
 
 
-class EditicsProtocolServerEventMessage(BaseModel):
+class EditicsServerEventMessage(BaseModel):
     type: Literal["message"] = "message"
     messages: list[MessageRecord]
 
@@ -309,12 +309,12 @@ class CursorRecord(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
     time: int
-    authorIndexUser: EditicsProtocolIndexUser
+    authorIndexUser: EditicsIndexUser
     # base64 over JSON (§2.4). Opaque; server never inspects.
     encryptedCursor: bytes
 
 
-class EditicsProtocolServerEventCursor(BaseModel):
+class EditicsServerEventCursor(BaseModel):
     """OnlyOffice `cursor` (s->c). Name kept. Per RFC §2.2 editics changes:
     `cursor` -> `encryptedCursor` (bytes); `user`/`useridoriginal` ->
     `authorIndexUser`. OnlyOffice wraps the payload in `messages: [...]`; kept
@@ -324,7 +324,7 @@ class EditicsProtocolServerEventCursor(BaseModel):
     messages: list[CursorRecord]
 
 
-class EditicsProtocolServerEventGetLock(BaseModel):
+class EditicsServerEventGetLock(BaseModel):
     """OnlyOffice `getLock` (s->c). Name kept. Kept as-is per RFC §2.2. The full
     lock table as it stands after the server attempted to acquire the requested
     blocks for the requester. Broadcast to *everyone* (including the sender).
@@ -344,14 +344,14 @@ class ReleaseLockRecord(BaseModel):
     block: Any  # opaque block descriptor (re-broadcast as-is)
     # OnlyOffice name `user` kept (bad name documented): the indexUser of the
     # holder who released the lock.
-    user: EditicsProtocolIndexUser
+    user: EditicsIndexUser
     time: int
     # Always null here (OnlyOffice shape; present for consistency with
     # `saveChanges`'s `locks` field).
     changes: None = None
 
 
-class EditicsProtocolServerEventReleaseLock(BaseModel):
+class EditicsServerEventReleaseLock(BaseModel):
     """OnlyOffice `releaseLock` (s->c). Name kept. Broadcast to others when a
     user releases region locks outside of a `saveChanges` (i.e. from
     `unLockDocument{releaseLocks:true}` or disconnect cleanup). Per RFC §2.2 the
@@ -361,7 +361,7 @@ class EditicsProtocolServerEventReleaseLock(BaseModel):
     locks: list[ReleaseLockRecord]
 
 
-class EditicsProtocolServerEventSaveLock(BaseModel):
+class EditicsServerEventSaveLock(BaseModel):
     """OnlyOffice `saveLock` (s->c). Name kept. Reply to `isSaveLock` (c->s).
     `saveLock: true` means denied (someone holds it / client is desynced);
     `false` means granted."""
@@ -375,12 +375,12 @@ class SaveChangeRecord(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
     time: int
-    authorIndexUser: EditicsProtocolIndexUser
+    authorIndexUser: EditicsIndexUser
     # Opaque encrypted blob (base64 over JSON, §2.4); server never inspects.
     change: bytes
 
 
-class EditicsProtocolServerEventSaveChanges(BaseModel):
+class EditicsServerEventSaveChanges(BaseModel):
     """OnlyOffice `saveChanges` (s->c, broadcast to *other* participants). Name
     kept. Per RFC §2.2 editics changes: `changes` -> list of records each
     carrying the opaque encrypted blob (not the OnlyOffice `{docid, change,
@@ -401,7 +401,7 @@ class EditicsProtocolServerEventSaveChanges(BaseModel):
     encryptedCursor: bytes | None = None
 
 
-class EditicsProtocolServerEventSavePartChanges(BaseModel):
+class EditicsServerEventSavePartChanges(BaseModel):
     """OnlyOffice `savePartChanges` (s->c, reply to the saver for intermediate
     chunks). Name kept. `changesIndex` is -1 except for the first chunk of a
     non-truncating save (§2.2). `syncChangesIndex` always advances."""
@@ -411,7 +411,7 @@ class EditicsProtocolServerEventSavePartChanges(BaseModel):
     syncChangesIndex: int  # always-advancing total
 
 
-class EditicsProtocolServerEventUnSaveLock(BaseModel):
+class EditicsServerEventUnSaveLock(BaseModel):
     """OnlyOffice `unSaveLock` (s->c). Name kept. Two uses (RFC §2.2):
     1. Cancellation: reply to `unSaveLock` (c->s) -> index/time/sync = -1.
     2. Success: reply to a final `saveChanges` chunk -> real values."""
@@ -422,7 +422,7 @@ class EditicsProtocolServerEventUnSaveLock(BaseModel):
     syncChangesIndex: int  # new total, or -1 on cancel
 
 
-class EditicsProtocolServerEventDrop(BaseModel):
+class EditicsServerEventDrop(BaseModel):
     """OnlyOffice `drop` (s->c). Name kept. Kept as-is (RFC §2.2). Sent to a
     participant the server is force-removing (e.g. duplicate participant
     detection, or future permission revocation)."""
@@ -432,7 +432,7 @@ class EditicsProtocolServerEventDrop(BaseModel):
     description: str = ""
 
 
-class EditicsProtocolServerEventWarning(BaseModel):
+class EditicsServerEventWarning(BaseModel):
     """OnlyOffice `warning` (s->c). Name kept. Kept as-is (RFC §2.2). Shape only
     in step 1 (not actively triggered)."""
 
@@ -441,21 +441,21 @@ class EditicsProtocolServerEventWarning(BaseModel):
     message: str
 
 
-EditicsProtocolServerEvent = Annotated[
-    EditicsProtocolServerEventAuth
-    | EditicsProtocolServerEventConnectState
-    | EditicsProtocolServerEventAuthChanges
-    | EditicsProtocolServerEventWaitAuth
-    | EditicsProtocolServerEventMessage
-    | EditicsProtocolServerEventCursor
-    | EditicsProtocolServerEventGetLock
-    | EditicsProtocolServerEventReleaseLock
-    | EditicsProtocolServerEventSaveLock
-    | EditicsProtocolServerEventSaveChanges
-    | EditicsProtocolServerEventSavePartChanges
-    | EditicsProtocolServerEventUnSaveLock
-    | EditicsProtocolServerEventDrop
-    | EditicsProtocolServerEventWarning,
+EditicsServerEvent = Annotated[
+    EditicsServerEventAuth
+    | EditicsServerEventConnectState
+    | EditicsServerEventAuthChanges
+    | EditicsServerEventWaitAuth
+    | EditicsServerEventMessage
+    | EditicsServerEventCursor
+    | EditicsServerEventGetLock
+    | EditicsServerEventReleaseLock
+    | EditicsServerEventSaveLock
+    | EditicsServerEventSaveChanges
+    | EditicsServerEventSavePartChanges
+    | EditicsServerEventUnSaveLock
+    | EditicsServerEventDrop
+    | EditicsServerEventWarning,
     Field(discriminator="type"),
 ]
-EditicsProtocolServerEventAdapter = TypeAdapter(EditicsProtocolServerEvent)
+EditicsServerEventAdapter = TypeAdapter(EditicsServerEvent)

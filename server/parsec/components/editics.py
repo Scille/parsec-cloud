@@ -16,18 +16,18 @@ from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.components.auth import EditicsAuthInfo
 from parsec.config import BackendConfig
 from parsec.editics_protocol import (
-    EditicsProtocolClientEvent,
-    EditicsProtocolClientEventAuth,
-    EditicsProtocolClientEventGetMessages,
-    EditicsProtocolClientEventUnLockDocument,
-    EditicsProtocolIndexUser,
-    EditicsProtocolParticipantEntry,
-    EditicsProtocolParticipantID,
-    EditicsProtocolServerEvent,
-    EditicsProtocolServerEventAuth,
-    EditicsProtocolServerEventConnectState,
-    EditicsProtocolServerEventMessage,
-    EditicsProtocolServerEventWaitAuth,
+    EditicsClientEvent,
+    EditicsClientEventAuth,
+    EditicsClientEventGetMessages,
+    EditicsClientEventUnLockDocument,
+    EditicsIndexUser,
+    EditicsParticipantEntry,
+    EditicsParticipantID,
+    EditicsServerEvent,
+    EditicsServerEventAuth,
+    EditicsServerEventConnectState,
+    EditicsServerEventMessage,
+    EditicsServerEventWaitAuth,
     MessageRecord,
 )
 from parsec.logging import get_logger
@@ -36,7 +36,7 @@ from parsec.types import BadOutcomeEnum
 logger = get_logger()
 
 PER_PARTICIPANT_MAX_BUFFER_EVENTS = 100
-type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsProtocolServerEvent | None]
+type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsServerEvent | None]
 
 
 @dataclass(slots=True)
@@ -61,19 +61,19 @@ class Participant:
     """
 
     device_id: DeviceID
-    index: EditicsProtocolIndexUser
+    index: EditicsIndexUser
     # In OnlyOffice participant ID is  `<device ID> + <participant index>`,
     # however here its is an arbitraty UUID controlled by the client.
     # This is because in OnlyOffice this ID is provided in the server `auth` event,
     # while here we must have it when we do the SSE connection (which must occur
     # before the HTTP `auth` request is done!).
-    participant_id: EditicsProtocolParticipantID
+    participant_id: EditicsParticipantID
     # TODO: does this correspond to the very first connection of the participant or to its last (re)connection ?
     connected_at: int  # ms timestamp of the join
     # `None` if no SSE connection is listening for the participant.
     # At most one SSE connection is possible for a given participant (any older
     # one is considered as a zombie and gets closed).
-    sse_channel_sender: MemoryObjectSendStream[EditicsProtocolServerEvent] | None = None
+    sse_channel_sender: MemoryObjectSendStream[EditicsServerEvent] | None = None
     # Joined while the auth lock was held, the participant won't receive its
     # `auth` server event until the lock is released.
     parked: bool = False
@@ -87,14 +87,14 @@ class EditicsSession:
 
     session_id: UUID = field(default_factory=uuid4)
     next_participant_index: int = 1  # monotonic, starts at 1
-    participants: dict[EditicsProtocolParticipantID, Participant] = field(default_factory=dict)
+    participants: dict[EditicsParticipantID, Participant] = field(default_factory=dict)
     chat_messages: list[ChatMessage] = field(default_factory=list)
     # At creation, the session is in single-editor mode: the first participant held
     # the auth lock.
     # Participants joining while this lock is held are parked (i.e. they receive
     # `waitAuth` from the server) until the first participant release it (i.e. send
     # `unLockDocument{unlock:true}`) which switch the session into co-editing mode.
-    auth_lock_holder: EditicsProtocolIndexUser | None = None
+    auth_lock_holder: EditicsIndexUser | None = None
 
     # initial_version: int
     # latest_allowed_version: int
@@ -123,9 +123,9 @@ class EditicsSession:
     # region_locks: dict[str, RegionLock] = field(default_factory=dict)
 
 
-def _participant_entries(session: EditicsSession) -> list[EditicsProtocolParticipantEntry]:
+def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntry]:
     return [
-        EditicsProtocolParticipantEntry(
+        EditicsParticipantEntry(
             id=participant.participant_id,
             indexUser=participant.index,
             deviceId=participant.device_id,
@@ -168,7 +168,7 @@ class EditicsComponent:
     def _get_or_insert_participant(
         self,
         device_id: DeviceID,
-        participant_id: EditicsProtocolParticipantID,
+        participant_id: EditicsParticipantID,
         session: EditicsSession,
     ) -> Participant | None:
         """
@@ -198,7 +198,7 @@ class EditicsComponent:
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-        participant_id: EditicsProtocolParticipantID,
+        participant_id: EditicsParticipantID,
     ) -> Generator[EditicsSessionJoinEventStream | EditicsParticipantListenBadOutcome]:
         session = self._get_or_create_session(
             (auth_info.organization_id, auth_info.realm_id, document_id)
@@ -227,9 +227,9 @@ class EditicsComponent:
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-        participant_id: EditicsProtocolParticipantID,
-        event: EditicsProtocolClientEvent,
-    ) -> EditicsProtocolServerEvent | EditicsParticipantSendBadOutcome | None:
+        participant_id: EditicsParticipantID,
+        event: EditicsClientEvent,
+    ) -> EditicsServerEvent | EditicsParticipantSendBadOutcome | None:
         session = self._get_or_create_session(
             (auth_info.organization_id, auth_info.realm_id, document_id)
         )
@@ -242,7 +242,7 @@ class EditicsComponent:
 
         # Special case for participant creation, achieved by the first `auth`
         if participant is None:
-            if isinstance(event, EditicsProtocolClientEventAuth):
+            if isinstance(event, EditicsClientEventAuth):
                 participant_index = session.next_participant_index
                 session.next_participant_index += 1
                 participant = session.participants[participant_id] = Participant(
@@ -257,7 +257,7 @@ class EditicsComponent:
                 return EditicsParticipantSendBadOutcome.PARTICIPANT_NOT_AUTH
 
         match event:
-            case EditicsProtocolClientEventAuth():
+            case EditicsClientEventAuth():
                 if participant.device_id != auth_info.device_id:
                     return EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH
 
@@ -274,7 +274,7 @@ class EditicsComponent:
                     # until the holder releases it.
                     participant.parked = True
 
-                broadcasted_event = EditicsProtocolServerEventConnectState(
+                broadcasted_event = EditicsServerEventConnectState(
                     # TODO: have a single function that handles timestamp generation,
                     #       and ensure time is monotonic and have the expected time
                     #       granularity (to ms ? to second ?).
@@ -294,18 +294,18 @@ class EditicsComponent:
                 # `unLockDocument{unlock:true}`)
                 if participant.parked:
                     assert session.auth_lock_holder is not None
-                    return EditicsProtocolServerEventWaitAuth(authLockedBy=session.auth_lock_holder)
+                    return EditicsServerEventWaitAuth(authLockedBy=session.auth_lock_holder)
 
                 else:
-                    return EditicsProtocolServerEventAuth(
+                    return EditicsServerEventAuth(
                         participants=_participant_entries(session),
                         indexUser=participant.index,
                         participantId=participant_id,
                         participantTimeConnect=participant.connected_at,
                     )
 
-            case EditicsProtocolClientEventGetMessages():
-                return EditicsProtocolServerEventMessage(
+            case EditicsClientEventGetMessages():
+                return EditicsServerEventMessage(
                     messages=[
                         MessageRecord(
                             time=m.time_ms,
@@ -316,7 +316,7 @@ class EditicsComponent:
                     ],
                 )
 
-            case EditicsProtocolClientEventUnLockDocument():
+            case EditicsClientEventUnLockDocument():
                 # Only the auth lock is handled for now: `isSave`, `deleteIndex`
                 # and `releaseLocks` cover the save & region lock systems.
                 if event.unlock and session.auth_lock_holder == participant.index:
