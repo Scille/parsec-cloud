@@ -5,13 +5,12 @@
 @use 'megashark-lib/theme' as ms;
 
 .file-operation-item {
-  border: ms.border('thin') solid ms.color('border-base-default');
   transition: background 0.2s ease-in-out;
   border-radius: ms.radius('lg');
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  margin: 0.5rem 0.5rem 0;
+  margin: ms.spacing('gap-lg') ms.spacing('gap-lg') 0;
   box-shadow: ms.shadow('input');
 
   strong {
@@ -29,7 +28,7 @@
     z-index: 3;
 
     &::part(native) {
-      padding: 0.825rem ms.spacing('padding-3xl');
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       cursor: default;
     }
 
@@ -81,7 +80,7 @@
 
         .name-icon {
           color: ms.color('icon-neutral-default');
-          margin-left: 0.125rem;
+          margin-left: ms.spacing('gap-xs');
         }
 
         &.open .name-icon {
@@ -257,7 +256,8 @@
   &.cancelled {
     --background: #{ms.color('surface-error-default')};
 
-    .element {
+    .element,
+    .multiples-file-list {
       opacity: 0.8;
       filter: grayscale(100%);
     }
