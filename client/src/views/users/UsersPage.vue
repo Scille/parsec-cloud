@@ -33,10 +33,9 @@
             id="search-input-users"
             ref="searchInputRef"
           />
-          <!-- prettier-ignore -->
           <user-filter
-            :users="(users as UserCollection)"
-            @change="onFilterUpdated"
+            :filters="users.getFilters()"
+            @update:filters="onFilterUpdated"
           />
           <ms-sorter
             :key="`${currentSortProperty}-${currentSortOrder}`"
@@ -82,8 +81,8 @@
           >
             <div class="mobile-filters-buttons">
               <user-filter
-                :users="users as UserCollection"
-                @change="onFilterUpdated"
+                :filters="users.getFilters()"
+                @update:filters="onFilterUpdated"
                 class="mobile-filters-buttons__filter"
               />
               <ms-sorter
@@ -290,7 +289,9 @@ async function onSortChange(property: SortProperty, ascending: boolean): Promise
   await storeComponentData();
 }
 
-async function onFilterUpdated(): Promise<void> {
+async function onFilterUpdated(filters: UserFilterLabels): Promise<void> {
+  users.value.setFilters(filters);
+  users.value.unselectHiddenUsers();
   await storeComponentData();
 }
 
