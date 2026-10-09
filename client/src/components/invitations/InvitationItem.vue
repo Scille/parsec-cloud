@@ -61,7 +61,8 @@
       <div class="invitation-actions-primary">
         <ion-button
           @click="$emit('greetClick', invitation)"
-          class="primary-button button-default"
+          class="primary-button color-secondary"
+          size="default"
         >
           {{ $msTranslate('InvitationsPage.emailInvitation.greet') }}
         </ion-button>
@@ -69,10 +70,11 @@
       <div class="invitation-actions-secondary">
         <ion-button
           @click="$emit('copyLinkClick', invitation)"
-          class="invitation-actions-secondary__button"
+          class="invitation-actions-secondary__button color-secondary"
           fill="outline"
           ref="copyLinkButton"
           slot="icon-only"
+          size="default"
         >
           <ion-icon
             :icon="link"
@@ -81,10 +83,11 @@
         </ion-button>
         <ion-button
           @click="$emit('sendEmailClick', invitation)"
-          class="invitation-actions-secondary__button"
+          class="invitation-actions-secondary__button color-secondary"
           fill="outline"
           ref="resendEmailButton"
           slot="icon-only"
+          size="default"
         >
           <ion-icon
             :icon="mail"
@@ -93,10 +96,11 @@
         </ion-button>
         <ion-button
           @click.stop="$emit('deleteClick', invitation)"
-          class="invitation-actions-secondary__button"
+          class="invitation-actions-secondary__button color-secondary"
           fill="outline"
           ref="deleteButton"
           slot="icon-only"
+          size="default"
         >
           <ion-icon
             :icon="trash"
@@ -221,16 +225,17 @@ const inviterLabel = computed(() => {
     position: relative;
     display: flex;
     align-items: center;
-    margin-left: 1rem;
+    margin-left: 0.75rem;
 
     &::before {
       content: '';
       position: absolute;
-      left: -1rem;
+      left: -0.75rem;
       width: 1px;
       height: calc(100% - 0.825rem);
       background: ms.color('border-base-default');
       margin-right: 0.75rem;
+      opacity: ms.opacity('6');
     }
   }
 }
