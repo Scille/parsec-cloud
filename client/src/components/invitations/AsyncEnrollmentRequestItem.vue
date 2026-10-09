@@ -124,7 +124,7 @@
           <ion-button
             v-show="canAccept"
             @click="$emit('acceptClick', request)"
-            class="primary-button button-default"
+            class="primary-button"
             size="default"
           >
             {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.accept') }}
@@ -151,7 +151,7 @@
         <ion-button
           v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
           @click="$emit('rejectClick', request)"
-          class="primary-button button-default"
+          class="primary-button"
           size="default"
         >
           {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.reject') }}
@@ -164,8 +164,10 @@
           <ion-button
             @click="$emit('rejectClick', request)"
             class="request-actions-secondary__button"
-            fill="clear"
+            fill="outline"
             ref="rejectButton"
+            slot="icon-only"
+            size="default"
           >
             <ion-icon
               :icon="trash"
@@ -322,10 +324,6 @@ onMounted(async () => {
     padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
   }
 
-  .primary-button {
-    @include ms.font('label-md-medium');
-  }
-
   &-secondary__text {
     @include ms.font('label-md-medium');
     display: flex;
@@ -333,7 +331,7 @@ onMounted(async () => {
     gap: ms.spacing('gap-sm');
     color: ms.color('text-error-default');
     align-self: center;
-    padding: ms.spacing('padding-lg') ms.spacing('padding-lg');
+    padding: ms.spacing('padding-lg');
     border-radius: ms.radius('lg');
 
     &:hover {
