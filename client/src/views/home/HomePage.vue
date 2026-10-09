@@ -1137,14 +1137,14 @@ function getBackButtonTitle(): string {
   display: flex;
   overflow: hidden;
   align-items: self-start;
-  background: var(--parsec-color-light-secondary-background);
+  background: ms.color('surface-base-page');
   z-index: -10;
 
   .homepage-content {
     position: relative;
     display: flex;
     flex-direction: column;
-    --background: var(--parsec-color-light-secondary-background);
+    --background: #{ms.color('surface-base-default-secondary')};
 
     &::part(scroll) {
       --keyboard-offset: 0;
@@ -1158,19 +1158,19 @@ function getBackButtonTitle(): string {
 
   // Should be edited later with responsive
   .homepage-header {
-    padding: 1.5rem 4rem 0 4rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-8xl') ms.spacing('padding-none') ms.spacing('padding-8xl');
 
     @include ms.responsive-breakpoint('lg') {
       flex-direction: column-reverse;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
     }
 
     @include ms.responsive-breakpoint('md') {
-      padding: 2rem 3rem 0;
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-7xl') ms.spacing('padding-none');
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 2rem 1.5rem 0;
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl') ms.spacing('padding-none');
       margin-bottom: 1rem;
     }
   }
@@ -1188,7 +1188,7 @@ function getBackButtonTitle(): string {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: top center;
-    opacity: 0.1;
+    opacity: ms.opacity('1');
     filter: blur(600px);
   }
 }

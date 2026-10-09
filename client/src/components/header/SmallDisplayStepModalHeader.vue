@@ -75,7 +75,7 @@ defineEmits<{
   text-wrap: wrap;
   margin-bottom: 1.5rem;
   gap: ms.spacing('gap-3xl');
-  padding: 0 0 ms.spacing('padding-4xl');
+  padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-4xl');
 
   @include ms.responsive-breakpoint('sm') {
     border-bottom: ms.border('thin') solid ms.color('border-base-default');
@@ -105,11 +105,11 @@ defineEmits<{
     display: flex;
     flex-direction: column;
     gap: ms.spacing('gap-md');
-    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl') 0;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl') ms.spacing('padding-none');
 
     .modal-header__step {
       @include ms.font('body-md-regular');
-      color: ms.color('text-neutral-default');
+      color: ms.color('text-base-description');
     }
 
     .modal-header__title {

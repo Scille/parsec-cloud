@@ -12,6 +12,10 @@
 
 body.ms-theme-dark {
   --parsec-color-popover-header-background: #{ms.color('surface-base-default')};
+
+  #trigger-checklist-button .checklist-security {
+    background: ms.color('surface-neutral-default');
+  }
 }
 
 // should be move to megashark-lib - Ok for now
@@ -63,7 +67,7 @@ ion-toolbar ion-button.button-outline::part(native) {
 }
 
 .checklist-security-container {
-  padding: ms.spacing('padding-lg') 0.825rem ms.spacing('padding-3xl') 0.825rem;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-3xl') ms.spacing('padding-2xl');
   transition:
     max-height 0.3s ease-out,
     visibility 0.3s ease-out,

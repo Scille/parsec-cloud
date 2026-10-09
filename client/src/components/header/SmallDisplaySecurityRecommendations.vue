@@ -66,11 +66,8 @@ const securityWarningsCount = computed(() => {
   cursor: pointer;
 
   .checklist-security {
-    padding: ms.spacing('padding-lg') 0.825rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
     border-radius: ms.radius('lg');
-    display: flex;
-    gap: ms.spacing('gap-sm');
-    align-items: center;
     background: linear-gradient(113deg, #{ms.color('surface-gradient-from')} -1.49%, #{ms.color('surface-gradient-to')} 100%);
     box-shadow: ms.shadow('light');
     display: flex;
@@ -89,7 +86,7 @@ const securityWarningsCount = computed(() => {
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 0.15rem;
+      gap: ms.spacing('gap-xs');
       font-size: 1.5rem;
       color: ms.color('icon-neutral-on-color');
       opacity: ms.opacity('8');
