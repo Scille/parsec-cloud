@@ -97,7 +97,7 @@ async function onInviteClick(): Promise<void> {
   overflow: hidden;
 
   &-header {
-    background: var(--parsec-color-light-primary-800);
+    background: var(--parsec-color-popover-header-background);
     color: var(--parsec-color-light-primary-30);
     padding: 0.5rem 1.5rem;
     display: flex;

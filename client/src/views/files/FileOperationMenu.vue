@@ -7,7 +7,7 @@
     :class="menu.isMinimized() ? 'minimize' : ''"
   >
     <div class="upload-menu-header">
-      <ion-text class="title-h4">{{ $msTranslate('FoldersPage.ImportFile.title') }}</ion-text>
+      <ion-text class="upload-menu-header__title">{{ $msTranslate('FoldersPage.ImportFile.title') }}</ion-text>
       <div class="menu-header-icons">
         <ion-icon
           class="menu-header-icons__item"
@@ -24,7 +24,7 @@
     </div>
     <ion-list class="upload-menu-tabs">
       <ion-item
-        class="upload-menu-tabs__item button-medium"
+        class="upload-menu-tabs__item"
         @click="onFilterSelected(OperationFilter.InProgress)"
         :class="filter === OperationFilter.InProgress ? 'active' : ''"
       >
@@ -33,7 +33,7 @@
         </div>
       </ion-item>
       <ion-item
-        class="upload-menu-tabs__item button-medium"
+        class="upload-menu-tabs__item"
         @click="onFilterSelected(OperationFilter.Done)"
         :class="filter === OperationFilter.Done ? 'active' : ''"
       >
@@ -42,7 +42,7 @@
         </div>
       </ion-item>
       <ion-item
-        class="upload-menu-tabs__item button-medium"
+        class="upload-menu-tabs__item"
         @click="onFilterSelected(OperationFilter.Error)"
         :class="filter === OperationFilter.Error ? 'active' : ''"
       >
@@ -52,8 +52,9 @@
       </ion-item>
       <ion-button
         @click="onClearClicked"
-        fill="outline"
-        class="upload-menu-tabs__delete"
+        fill="clear"
+        size="small"
+        class="upload-menu-tabs__clear"
       >
         {{ $msTranslate('FoldersPage.ImportFile.tabs.clear') }}
       </ion-button>
@@ -75,7 +76,7 @@
         v-if="currentItems.length === 0"
       >
         <ms-image :image="NoImportInProgress" />
-        <ion-text class="body-lg">
+        <ion-text class="upload-menu-list__empty-text">
           {{ $msTranslate(items.length === 0 ? 'FoldersPage.ImportFile.noTasks' : 'FoldersPage.ImportFile.noCurrentTasks') }}
         </ion-text>
       </div>
@@ -319,9 +320,10 @@ function scrollToTop(): void {
   min-width: 28rem;
   max-width: 25rem;
   position: absolute;
-  border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
-  box-shadow: var(--parsec-shadow-strong);
-  background: var(--parsec-color-light-secondary-white);
+  border-radius: ms.radius('lg') ms.radius('lg') 0 0;
+  box-shadow: ms.shadow('elevation-2xl');
+  background: ms.color('surface-base-default');
+  border: 1px solid ms.color('border-base-default');
   bottom: 0;
   right: 2rem;
   overflow: hidden;
@@ -341,44 +343,71 @@ function scrollToTop(): void {
     height: fit-content;
     justify-content: space-between;
     width: 100%;
-    padding: 0.25rem 0.25rem 0.25rem 1rem;
-    background: var(--parsec-color-light-primary-800);
+    padding: ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-3xl');
+    background: var(--parsec-color-popover-header-background);
     color: var(--parsec-color-light-secondary-inversed-contrast);
+
+    &__title {
+      @include ms.font('heading-h5');
+    }
+
+    .menu-header-icons {
+      display: flex;
+      gap: ms.spacing('gap-lg');
+
+      &__item {
+        color: var(--parsec-color-light-secondary-inversed-contrast);
+        font-size: 1.25rem;
+        cursor: pointer;
+        border-radius: ms.radius('lg');
+        padding: ms.spacing('padding-lg');
+
+        &:nth-child(1) {
+          transition: transform 250ms ease-in-out;
+        }
+
+        &:hover {
+          background-color: var(--parsec-color-light-primary-30-opacity15);
+        }
+      }
+    }
   }
 
   &-tabs {
     display: flex;
-    padding: 0.625rem 0.5rem;
-    gap: 0.5rem;
+    padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
+    gap: ms.spacing('gap-lg');
     overflow: hidden;
-    background: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-base-default');
     position: relative;
     --current-tab: 0;
     align-items: center;
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.25rem;
+      padding: ms.spacing('padding-sm');
       margin: 1rem 0.5rem 0;
     }
 
     &__item {
-      color: var(--parsec-color-light-secondary-grey);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-12);
+      color: ms.color('text-neutral-default');
+      border: ms.border('thin') solid ms.color('border-base-default');
+      border-radius: ms.radius('2xl');
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      --padding-start: 0;
-      --inner-padding-end: 0px;
+      @include ms.font('label-md-medium');
+      --padding-start: #{ms.spacing('padding-none')};
+      --inner-padding-end: #{ms.spacing('padding-none')};
       transition: all 150ms ease-in-out;
+      opacity: ms.opacity('5');
 
       &::part(native) {
         background: transparent;
-        padding: 0.5rem 0.625rem;
+        padding: ms.spacing('padding-lg') ms.spacing('padding-xl');
 
         @include ms.responsive-breakpoint('sm') {
-          padding: 0.5rem 0.25rem;
+          padding: ms.spacing('padding-lg') ms.spacing('padding-sm');
         }
       }
 
@@ -391,48 +420,28 @@ function scrollToTop(): void {
         justify-content: center;
         align-items: center;
         width: 100%;
-        gap: 0.375rem;
+        gap: ms.spacing('gap-md');
       }
 
       &:hover {
-        color: var(--parsec-color-light-secondary-hard-grey);
-        border: 1px solid var(--parsec-color-light-secondary-light);
+        color: ms.color('text-neutral-default-hover');
+        border: ms.border('thin') solid ms.color('border-base-default-hover');
+        opacity: ms.opacity('10');
       }
 
       &.active {
-        color: var(--parsec-color-light-primary-600);
-        border: 1px solid var(--parsec-color-light-primary-600);
-        background: var(--parsec-color-light-primary-50);
-
-        &:hover {
-          color: var(--parsec-color-light-primary-700);
-          background: var(--parsec-color-light-primary-100);
-          border: 1px solid var(--parsec-color-light-primary-600);
-        }
+        color: ms.color('text-brand-default');
+        border: ms.border('thin') solid ms.color('border-brand-default');
+        background: ms.color('surface-brand-default-subtle-hover');
+        opacity: ms.opacity('10');
       }
     }
 
-    &__delete {
+    &__clear {
       margin-left: auto;
-      background: var(--parsec-color-light-secondary-inversed-contrast);
-      border-radius: var(--parsec-radius-12);
-      transition: all 150ms ease-in-out;
-
-      &::part(native) {
-        background: none;
-        box-shadow: var(--parsec-shadow-input);
-        border: 1px solid var(--parsec-color-light-secondary-medium);
-        color: var(--parsec-color-light-primary-600);
-        padding: 0.5rem 0.75rem;
-      }
 
       @include ms.responsive-breakpoint('sm') {
         margin-left: 0;
-      }
-
-      &:hover {
-        background: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-primary-700);
       }
     }
   }
@@ -440,13 +449,13 @@ function scrollToTop(): void {
   &-list {
     display: flex;
     flex-direction: column;
-    padding: 0;
+    padding: ms.spacing('padding-none');
     overflow-y: auto;
     height: 60vh;
-    padding-bottom: 2rem;
+    padding-bottom: ms.spacing('padding-5xl');
     max-height: 28rem;
     transition: all 250ms ease-in-out;
-    background: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-base-default');
 
     @media screen and (max-height: 1000px) {
       height: 40vh;
@@ -457,30 +466,13 @@ function scrollToTop(): void {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       margin: auto;
       color: var(--parsec-color-light-secondary-grey);
-    }
-  }
-}
 
-.menu-header-icons {
-  display: flex;
-  gap: 0.5rem;
-
-  &__item {
-    color: var(--parsec-color-light-secondary-inversed-contrast);
-    font-size: 1.25rem;
-    cursor: pointer;
-    border-radius: var(--parsec-radius-8);
-    padding: 0.5rem;
-
-    &:nth-child(1) {
-      transition: transform 250ms ease-in-out;
-    }
-
-    &:hover {
-      background-color: var(--parsec-color-light-primary-30-opacity15);
+      &-text {
+        @include ms.font('body-lg-regular');
+      }
     }
   }
 }
@@ -489,7 +481,7 @@ function scrollToTop(): void {
   .upload-menu-list,
   .upload-menu-tabs {
     height: 0;
-    padding: 0;
+    padding: ms.spacing('padding-none');
     margin: 0;
   }
 

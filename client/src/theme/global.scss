@@ -5,6 +5,15 @@
 @use 'global-client' as globalClient;
 
 /**** Global CSS overloads ****/
+// ------ switch specific variables for dark mode ------ //
+:root {
+  --parsec-color-popover-header-background: var(--parsec-color-light-primary-800);
+}
+
+body.ms-theme-dark {
+  --parsec-color-popover-header-background: #{ms.color('surface-base-default')};
+}
+
 // should be move to megashark-lib - Ok for now
 ion-button {
   &.link {
