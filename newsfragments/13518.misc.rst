@@ -1,1 +1,0 @@
-Fixed broken application icons in the MacOS ``.dmg``

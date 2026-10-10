@@ -8,6 +8,21 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.10.1-a.0.dev.20736+4de8014 (2026-10-10)
+-------------------------------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added a field in pending user invitations displaying which administrator
+  created the invitation
+  (`#13390 <https://github.com/Scille/parsec-cloud/issues/13390>`__)
+
+* Fixed broken application icons in the MacOS ``.dmg``
+  (`#13518 <https://github.com/Scille/parsec-cloud/issues/13518>`__)
+
+
+
 Parsec v3.10.0 (2026-09-29)
 ---------------------------
 
