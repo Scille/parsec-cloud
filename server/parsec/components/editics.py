@@ -328,7 +328,19 @@ class EditicsComponent:
                 # Only the auth lock is handled for now: `isSave`, `deleteIndex`
                 # and `releaseLocks` cover the save & region lock systems.
                 if event.unlock and session.auth_lock_holder == participant.participant_id:
-                    self._release_auth_lock(session)
+                    session.auth_lock_holder = None
+                    for participant in session.participants.values():
+                        if participant.parked:
+                            participant.parked = False
+                            if participant.sse_channel_sender:
+                                broadcasted_event = EditicsServerEventAuth(
+                                    participants=_participant_entries(session),
+                                    indexUser=participant.index,
+                                    participantId=participant_id,
+                                    participantTimeConnect=participant.connected_at,
+                                )
+                                # TODO: close the SSE if the channel is full
+                                participant.sse_channel_sender.send_nowait(broadcasted_event)
                 return None
 
             case _:
