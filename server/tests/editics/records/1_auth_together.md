@@ -97,11 +97,11 @@
 {
   "type": "auth",
   "result": 1,
-  "sessionId": "dzwB-JlmLYyWl_JyAI6L",
+  "sessionId": "4a51295bf2d04b47b6269a8e33b120e0",
   "sessionTimeConnect": 1791191423699,
   "participants": [
     {
-      "id": "de10a11cec00100000000000000000001",
+      "id": "4a51295bf2d04b47b6269a8e33b120e0",
       "idOriginal": "de10a11cec0010000000000000000000",
       "username": "Alice",
       "indexUser": 1,
@@ -307,7 +307,7 @@
 {
   "type": "waitAuth",
   "lockDocument": {
-    "id": "de10a11cec00100000000000000000001",
+    "id": "4a51295bf2d04b47b6269a8e33b120e0",
     "idOriginal": "de10a11cec0010000000000000000000",
     "username": "Alice",
     "indexUser": 1,
@@ -328,7 +328,7 @@
   "participantsTimestamp": 1791191430256,
   "participants": [
     {
-      "id": "de10a11cec00100000000000000000001",
+      "id": "4a51295bf2d04b47b6269a8e33b120e0",
       "idOriginal": "de10a11cec0010000000000000000000",
       "username": "Alice",
       "indexUser": 1,
@@ -339,7 +339,7 @@
       "encrypted": false
     },
     {
-      "id": "de10808c0010000000000000000000002",
+      "id": "26dbd085b4c548a48fed5577eecd9709",
       "idOriginal": "de10808c001000000000000000000000",
       "username": "Bob",
       "indexUser": 2,
@@ -399,7 +399,7 @@
     {
       "cursor": "16;CAAAADEAMQAzADcAAAAAAA==",
       "time": 1791191430427,
-      "user": "de10a11cec00100000000000000000001",
+      "user": "4a51295bf2d04b47b6269a8e33b120e0",
       "useridoriginal": "de10a11cec0010000000000000000000"
     }
   ]
@@ -412,11 +412,11 @@
 {
   "type": "auth",
   "result": 1,
-  "sessionId": "Zhw040N0lQ1KeN0aAEPk",
+  "sessionId": "26dbd085b4c548a48fed5577eecd9709",
   "sessionTimeConnect": 1791191430014,
   "participants": [
     {
-      "id": "de10a11cec00100000000000000000001",
+      "id": "4a51295bf2d04b47b6269a8e33b120e0",
       "idOriginal": "de10a11cec0010000000000000000000",
       "username": "Alice",
       "indexUser": 1,
@@ -427,7 +427,7 @@
       "encrypted": false
     },
     {
-      "id": "de10808c0010000000000000000000002",
+      "id": "26dbd085b4c548a48fed5577eecd9709",
       "idOriginal": "de10808c001000000000000000000000",
       "username": "Bob",
       "indexUser": 2,
@@ -534,7 +534,7 @@
     {
       "cursor": "16;CAAAADEAMQAzADcAAAAAAA==",
       "time": 1791191430966,
-      "user": "de10808c0010000000000000000000002",
+      "user": "26dbd085b4c548a48fed5577eecd9709",
       "useridoriginal": "de10808c001000000000000000000000"
     }
   ]

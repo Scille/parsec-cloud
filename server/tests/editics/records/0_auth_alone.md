@@ -99,11 +99,11 @@
 {
   "type": "auth",
   "result": 1,
-  "sessionId": "5-InCfhp8AgLcw47AHyc",
+  "sessionId": "4a51295bf2d04b47b6269a8e33b120e0",
   "sessionTimeConnect": 1788771490389,
   "participants": [
     {
-      "id": "de10a11cec00100000000000000000001",
+      "id": "4a51295bf2d04b47b6269a8e33b120e0",
       "idOriginal": "de10a11cec0010000000000000000000",
       "username": "Alice",
       "indexUser": 1,

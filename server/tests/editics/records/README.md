@@ -19,10 +19,5 @@
 5. The session logs uses the wrong participant names and IDs, this must be manually changed by doing:
 
    ```shell
-   sed -i
-    -e 's/John Smith/Alice/g'
-    -e 's/Kate Cage/Bob/g'
-    -e 's/F89d8069ba2b/de10a11cec0010000000000000000000/g'
-    -e 's/78e1e841/de10808c001000000000000000000000/g'
-    <x_my_new_record.md>
+   python cook_record.py <x_my_new_record.md>
    ```
