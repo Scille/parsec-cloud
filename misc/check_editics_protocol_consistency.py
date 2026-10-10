@@ -18,7 +18,6 @@ import typing
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
-from uuid import UUID
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EDITICS_PROTOCOL_PY = REPO_ROOT / "server/parsec/editics_protocol.py"
@@ -35,14 +34,13 @@ class BaseModel:
     pass
 
 
-Field = MagicMock()
-TypeAdapter = MagicMock()
 DeviceID = MagicMock()
 
 mock_pydantic = types.ModuleType("pydantic")
 mock_pydantic.BaseModel = BaseModel  # type: ignore
-mock_pydantic.Field = Field  # type: ignore
-mock_pydantic.TypeAdapter = TypeAdapter  # type: ignore
+mock_pydantic.Field = MagicMock()  # type: ignore
+mock_pydantic.TypeAdapter = MagicMock()  # type: ignore
+mock_pydantic.AfterValidator = MagicMock()  # type: ignore
 mock_parsec = types.ModuleType("parsec")
 mock_parsec_parsec = types.ModuleType("parsec._parsec")
 mock_parsec_parsec.DeviceID = DeviceID  # type: ignore
@@ -141,6 +139,10 @@ def _js_type(annotation: Any) -> str:
         return _js_type(annotation.__value__)
 
     origin = typing.get_origin(annotation)
+    if origin is typing.Annotated:
+        # `Annotated[T, AfterValidator(...)]`: only the underlying type is rendered
+        (annotation, *_validator) = typing.get_args(annotation)
+        return _js_type(annotation)
     if origin is typing.Literal:
         (value,) = typing.get_args(annotation)
         return f"'{value}'"
@@ -152,8 +154,8 @@ def _js_type(annotation: Any) -> str:
         return "string"
     if annotation is bytes:
         return "Uint8Array"
-    # `EditicsParticipantID` is an UUID, `DeviceID` is serialized as its hex form
-    if annotation is UUID or annotation is DeviceID:
+    # `DeviceID` is serialized as its hex form
+    if annotation is DeviceID:
         return "string"
     if annotation is typing.Any:
         return "*"

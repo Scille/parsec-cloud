@@ -14,13 +14,14 @@ from __future__ import annotations
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import AfterValidator, BaseModel, Field, TypeAdapter
 
 from parsec._parsec import DeviceID
 
+# TODO: rename to `EditicsParticipantIndex` ?
 type EditicsIndexUser = int
 """
-`indexUser`: 1-based, monotonic per editics session, assigned by order of join
+`indexUser`: 1-based, monotonic per client session, assigned by order of join
 and never re-used.
 
 OnlyOffice client uses this index to generate IDs that are guaranteed to never
@@ -28,11 +29,13 @@ clash with other clients: everything (e.g. paragraph, table) created collaborati
 gets an ID like "3_42" (where 3 is the editor's indexUser).
 """
 
-type EditicsParticipantID = UUID
+
+# Don't type this as UUID to avoid serialization mixing between `UUID.__str__` and `UUID.hex`
+type EditicsParticipantID = Annotated[str, AfterValidator(lambda v: UUID(v).hex)]
 """
-Random ID controlled by the client and used to identify the connection session
-with the server. By design, this survives transport disconnection and is used
-mostly to identify who has authored a modification or holds a lock.
+Random UUID controlled by the client and used to identify the client session.
+By design, this survives transport disconnection and is used mostly to identify
+who has authored a modification or holds a lock.
 """
 
 
@@ -69,6 +72,7 @@ class EditicsParticipantEntry(BaseModel):
 
 class EditicsReconnect(BaseModel):
     participantId: EditicsParticipantID
+    indexUser: EditicsIndexUser
     # TODO: document if it is in seconds or ms etc.
     participantTimeConnect: int
     timeIdle: int
@@ -76,8 +80,6 @@ class EditicsReconnect(BaseModel):
 
 class EditicsClientEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
-    # -1 on first open; server-assigned index on reconnect
-    indexUser: int = -1
     # 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
     # Informational; server stores, ignores. (Kept for now; may be dropped later.)
     editorType: int
@@ -286,7 +288,7 @@ class EditicsServerEventWaitAuth(BaseModel):
     translate this event into the OnlyOffice `lockDocument` field)."""
 
     type: Literal["waitAuth"] = "waitAuth"
-    authLockedBy: EditicsIndexUser
+    authLockedBy: EditicsParticipantEntry
 
 
 class MessageRecord(BaseModel):
@@ -324,6 +326,19 @@ class EditicsServerEventCursor(BaseModel):
     messages: list[CursorRecord]
 
 
+class LockRecord(BaseModel):
+    """One record in a `getLock` event's `locks` object (todo §4.4)."""
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    time: int
+    # OnlyOffice name `user` kept (bad name documented at the definition site):
+    # the indexUser of the lock holder.
+    user: EditicsIndexUser
+    # Opaque block descriptor (shape depends on editor type; re-broadcast as-is).
+    block: Any
+
+
 class EditicsServerEventGetLock(BaseModel):
     """OnlyOffice `getLock` (s->c). Name kept. Kept as-is per RFC §2.2. The full
     lock table as it stands after the server attempted to acquire the requested
@@ -333,7 +348,7 @@ class EditicsServerEventGetLock(BaseModel):
     of the holder, despite the bad name -- documented at the definition site)."""
 
     type: Literal["getLock"] = "getLock"
-    locks: dict[str, dict[str, Any]]  # block_key -> { time, user, block }
+    locks: dict[str, LockRecord]  # block_key -> { time, user, block }
 
 
 class ReleaseLockRecord(BaseModel):

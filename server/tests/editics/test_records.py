@@ -16,6 +16,7 @@ import anyio
 from anyio.abc import TaskStatus
 
 from parsec._parsec import VlobID
+from parsec.editics_protocol import EditicsParticipantID
 from tests.common import (
     AuthenticatedRpcClient,
     CoolorgRpcClients,
@@ -83,7 +84,7 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 payload["buildVersion"] = ""
                 payload["buildNumber"] = 0
                 payload["licenseType"] = 0
-                for field in ("sessionId", "sessionTimeConnect", "openedAt"):
+                for field in ("sessionTimeConnect", "openedAt"):
                     if field in payload:
                         payload[field] = TypePlaceholder(payload[field])
                 # # `openedAt` is always emitted by our translator, but is missing
@@ -106,14 +107,8 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
         # the official OnlyOffice website's demo page. So we endup with the
         # wrong participant names and IDs that must be manually changed.
         assert participant in ("Alice", "Bob"), (
-            "Unexpected participant name, tl;dr: run `"
-            "sed -i"
-            " -e 's/John Smith/Alice/g'"
-            " -e 's/Kate Cage/Bob/g'"
-            " -e 's/F89d8069ba2b/de10a11cec0010000000000000000000/g'"
-            " -e 's/78e1e841/de10808c001000000000000000000000/g'"
-            f"{record_path.resolve()}"
-            "`"
+            "Unexpected participant name, tl;dr: run"
+            f"`python {(RECORDS_DIR / 'cook_record.py').resolve()} {record_path.resolve()}`"
         )
 
         events.append(
@@ -148,14 +143,11 @@ class RecordPart:
     events: list[RecordEvent]
 
 
-type ParticipantID = str
-
-
 @dataclass(slots=True)
 class RecordEvent:
     timestamp: str  # Don't parse timestamp as it is only used in `__repr__`
     direction: Literal["client-to-server"] | Literal["server-to-client"]
-    participant: ParticipantID
+    participant: EditicsParticipantID
     # Special events types:
     # - `license`: identifies the fact a new participant connects to the server
     # - `documentOpen`: in our OnlyOffice fork, this event is never sent by the server
@@ -191,21 +183,30 @@ async def _do_test_record(
     events = _parse_record(record_path)
 
     document_id = VlobID.new()
-    per_participant_client = {"Alice": coolorg.alice, "Bob": coolorg.bob}
+    per_participant_id_and_client: dict[
+        str, tuple[EditicsParticipantID, AuthenticatedRpcClient]
+    ] = {
+        "Alice": ("4a51295bf2d04b47b6269a8e33b120e0", coolorg.alice),
+        "Bob": ("26dbd085b4c548a48fed5577eecd9709", coolorg.bob),
+    }
 
     async def _start_editics_js_client(
-        who: AuthenticatedRpcClient, *, task_status: TaskStatus[EditicsJSClient]
+        who: AuthenticatedRpcClient,
+        participant_id: EditicsParticipantID,
+        *,
+        task_status: TaskStatus[EditicsJSClient],
     ):
         async with editics_js_runtime.new_client(
             who=who,
             realm_id=coolorg.wksp1_id,
             document_id=document_id,
+            participant_id=participant_id,
         ) as editics_js_client:
             task_status.started(editics_js_client)
             await anyio.sleep_forever()
 
     async with anyio.create_task_group() as tg:
-        running_js_clients: dict[ParticipantID, EditicsJSClient] = {}
+        running_js_clients: dict[EditicsParticipantID, EditicsJSClient] = {}
         # Handling server events is hard: the order in which they have been received
         # in the record might be arbitrary (e.g. multiple unrelated event sent
         # by concurrent operations).
@@ -214,8 +215,8 @@ async def _do_test_record(
         # Hence we store the received server events here until the record actually
         # mention them (which should be the case very soon, but is not guaranteed
         # to actually be from the next event).
-        per_client_unacknowlegde_server_events: dict[ParticipantID, list[OOEvent]] = defaultdict(
-            list
+        per_client_unacknowlegde_server_events: dict[EditicsParticipantID, list[OOEvent]] = (
+            defaultdict(list)
         )
 
         for event in events:
@@ -225,9 +226,9 @@ async def _do_test_record(
             # Initial event signifies the need to start an editics JavaScript client
             if event.type == "license":
                 assert participant not in running_js_clients
-                who = per_participant_client[participant]
+                participant_id, who = per_participant_id_and_client[participant]
                 running_js_clients[participant] = await tg.start(
-                    _start_editics_js_client, who, name=f"{participant} editics"
+                    _start_editics_js_client, who, participant_id, name=f"{participant} editics"
                 )
                 # In the OnlyOffice fork we use, the client generates its own license
                 # event instead of waiting for the server to send it

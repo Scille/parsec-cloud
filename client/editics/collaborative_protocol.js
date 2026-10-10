@@ -232,9 +232,9 @@ class EditicsTranslator {
       case 'auth':
         return {
           type: 'auth',
-          indexUser: -1,
           editorType: this.config.editorType,
           vlobVersion: this.config.vlobVersion,
+          // TODO: handle reconnection
           reconnect: null,
         };
 
@@ -330,10 +330,10 @@ class EditicsTranslator {
   async cookServerEvent(editics) {
     switch (editics.type) {
       case 'auth':
-        return this._cookServerAuth(editics);
+        return await this._cookServerAuth(editics);
 
       case 'waitAuth':
-        return this._cookWaitAuth(editics);
+        return await this._cookWaitAuth(editics);
 
       case 'connectState':
         return this._cookConnectState(editics);
@@ -407,8 +407,33 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventAuth|null>}
    */
   async _cookServerAuth(editics) {
-    await this._setParticipants(editics.participants);
-    const participants = this._onlyofficeParticipants();
+    // TODO: factorize this with the code in `waitAuth`
+    const getHumanLabelFromDeviceId = this.capabilities.getHumanLabelFromDeviceId;
+    const participants = await Promise.all(
+      editics.participants.map(async (p) => {
+        let humanLabel = await getHumanLabelFromDeviceId(p.deviceId);
+        if (!humanLabel) {
+          // TODO: raise an error here instead ?
+          //       `getHumanLabelFromDeviceId` should poll for new certificates to
+          //       ensure the device ID exists; then, if not found, we should error out.
+          console.warn(`waitAuth: unknown auth lock holder ${editics.authLockedBy}`);
+          humanLabel = '<unknown>';
+        }
+        return {
+          id: p.id,
+          idOriginal: p.deviceId,
+          username: humanLabel,
+          indexUser: p.indexUser,
+          view: p.view,
+          // Never provided by the editics protocol, and unused by the editor
+          connectionId: '',
+          // Unused remaining fields, always false
+          isLiveViewer: false,
+          isCloseCoAuthoring: false,
+          encrypted: false,
+        };
+      }),
+    );
 
     return {
       type: 'auth',
@@ -449,18 +474,35 @@ class EditicsTranslator {
    * @param {EditicsServerEventWaitAuth} editics
    * @returns {OOServerEventWaitAuth|null}
    */
-  _cookWaitAuth(editics) {
+  async _cookWaitAuth(editics) {
+    // `waitAuth` occurs *before*
     // The holder is necessarily in the participant table: the `connectState`
     // broadcast that announced our arrival carried it, and the SSE channel
     // preserves the ordering.
-    const holder = this._participants.get(editics.authLockedBy);
-    if (!holder) {
+
+    let authLockedByhumanLabel = await this.config.capabilities.getHumanLabelFromDeviceId(editics.authLockedBy.deviceId);
+    if (!authLockedByhumanLabel) {
+      // TODO: raise an error here instead ?
+      //       `getHumanLabelFromDeviceId` should poll for new certificates to
+      //       ensure the device ID exists; then, if not found, we should error out.
       console.warn(`waitAuth: unknown auth lock holder ${editics.authLockedBy}`);
-      return null;
+      authLockedByhumanLabel = '<unknown>';
     }
     return {
       type: 'waitAuth',
-      lockDocument: this._onlyofficeParticipantEntry(holder, editics.authLockedBy),
+      lockDocument: {
+        id: editics.authLockedBy.id,
+        idOriginal: editics.authLockedBy.deviceId,
+        username: authLockedByhumanLabel,
+        indexUser: editics.authLockedBy.indexUser,
+        view: editics.authLockedBy.view,
+        // Never provided by the editics protocol, and unused by the editor
+        connectionId: '',
+        // Unused remaining fields, always false
+        isCloseCoAuthoring: false,
+        isLiveViewer: false,
+        encrypted: false,
+      },
     };
   }
 
@@ -469,14 +511,39 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventConnectState>}
    */
   async _cookConnectState(editics) {
-    // The server's participant list is authoritative: it replaces the whole
-    // table (dropping the provisional self seed and the departed participants).
-    await this._setParticipants(editics.participants || []);
+    // TODO: factorize this with the code in `waitAuth`
+    const getHumanLabelFromDeviceId = this.capabilities.getHumanLabelFromDeviceId;
+    const participants = await Promise.all(
+      editics.participants.map(async (p) => {
+        let humanLabel = await getHumanLabelFromDeviceId(p.deviceId);
+        if (!humanLabel) {
+          // TODO: raise an error here instead ?
+          //       `getHumanLabelFromDeviceId` should poll for new certificates to
+          //       ensure the device ID exists; then, if not found, we should error out.
+          console.warn(`waitAuth: unknown auth lock holder ${editics.authLockedBy}`);
+          humanLabel = '<unknown>';
+        }
+        return {
+          id: p.id,
+          idOriginal: p.deviceId,
+          username: humanLabel,
+          indexUser: p.indexUser,
+          view: p.view,
+          // Never provided by the editics protocol, and unused by the editor
+          connectionId: '',
+          // Unused remaining fields, always false
+          isLiveViewer: false,
+          isCloseCoAuthoring: false,
+          encrypted: false,
+        };
+      }),
+    );
+
     return {
       type: 'connectState',
       participantsTimestamp: editics.participantsTimestamp,
-      participants: this._onlyofficeParticipants(),
-      waitAuth: !!editics.waitAuth,
+      participants,
+      waitAuth: editics.waitAuth,
     };
   }
 
@@ -700,28 +767,32 @@ export { EditicsTranslator };
 // ---------------------------------------------------------------------------
 // Editics protocol types
 // ---------------------------------------------------------------------------
+
+// /!\ Auto-generated code (see `misc/check_editics_protocol_consistency.py`), any modification will be lost ! /!\
 /* eslint-disable max-len */
 
 /**
+ * @typedef {number} EditicsIndexUser
+ *
  * @typedef {string} EditicsParticipantID
  *
  * @typedef {Object} EditicsParticipantEntry
- * @property {EditicsParticipantID} id
- * @property {number} indexUser
- * @property {string} deviceId - DeviceID hex
+ * @property {EditicsParticipantID} [id]
+ * @property {EditicsIndexUser} [indexUser]
+ * @property {string} [deviceId]
  * @property {boolean} view
  *
  * @typedef {Object} EditicsReconnect
- * @property {EditicsParticipantID} participantId
- * @property {number} participantTimeConnect
- * @property {number} timeIdle
+ * @property {EditicsParticipantID} [participantId]
+ * @property {EditicsIndexUser} [indexUser]
+ * @property {number} [participantTimeConnect]
+ * @property {number} [timeIdle]
  *
  * @typedef {Object} EditicsClientEventAuth
  * @property {'auth'} type
- * @property {number} indexUser - -1 on first open
- * @property {number} editorType
- * @property {number} vlobVersion
- * @property {EditicsReconnect|null} reconnect
+ * @property {number} [editorType]
+ * @property {number} [vlobVersion]
+ * @property {EditicsReconnect|null} [reconnect]
  *
  * @typedef {Object} EditicsClientEventAuthChangesAck
  * @property {'authChangesAck'} type
@@ -731,29 +802,29 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsClientEventMessage
  * @property {'message'} type
- * @property {Uint8Array} encryptedMessage
+ * @property {Uint8Array} [encryptedMessage]
  *
  * @typedef {Object} EditicsClientEventCursor
  * @property {'cursor'} type
- * @property {Uint8Array} encryptedCursor
+ * @property {Uint8Array} [encryptedCursor]
  *
  * @typedef {Object} EditicsClientEventGetLock
  * @property {'getLock'} type
- * @property {Array<*>} block
+ * @property {Array<*>} [block]
  *
  * @typedef {Object} EditicsClientEventIsSaveLock
  * @property {'isSaveLock'} type
- * @property {number} syncChangesIndex
+ * @property {number} [syncChangesIndex]
  *
  * @typedef {Object} EditicsClientEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Uint8Array[]} encryptedChanges
- * @property {boolean} startSaveChanges
- * @property {boolean} endSaveChanges
- * @property {number|null} [deleteIndex]
- * @property {Object<string,*>|null} [excel_info]
- * @property {Uint8Array|null} [encryptedCursor]
- * @property {boolean} [releaseLocks]
+ * @property {Uint8Array[]} [encryptedChanges]
+ * @property {boolean} [startSaveChanges]
+ * @property {boolean} [endSaveChanges]
+ * @property {number|null} deleteIndex
+ * @property {Object<string,*>|null} excel_info
+ * @property {Uint8Array|null} encryptedCursor
+ * @property {boolean} releaseLocks
  *
  * @typedef {Object} EditicsClientEventUnSaveLock
  * @property {'unSaveLock'} type
@@ -762,80 +833,80 @@ export { EditicsTranslator };
  * @property {'unLockDocument'} type
  * @property {boolean} isSave
  * @property {boolean} unlock
- * @property {number|null} [deleteIndex]
- * @property {boolean} [releaseLocks]
+ * @property {number|null} deleteIndex
+ * @property {boolean} releaseLocks
  *
  * @typedef {Object} EditicsClientEventClose
  * @property {'close'} type
  *
  * @typedef {Object} EditicsClientEventSaveDone
  * @property {'saveDone'} type
- * @property {number} savedUpToIndex
- * @property {number} newVersion
+ * @property {number} [savedUpToIndex]
+ * @property {number} [newVersion]
  *
- * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventGetMessages|EditicsClientEventMessage|EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent
+ * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|EditicsClientEventGetMessages|EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent
  *
  * @typedef {Object} EditicsServerEventAuth
  * @property {'auth'} type
- * @property {EditicsParticipantEntry[]} participants
- * @property {number} indexUser
- * @property {EditicsParticipantID} participantId
- * @property {number} participantTimeConnect
+ * @property {EditicsParticipantEntry[]} [participants]
+ * @property {EditicsParticipantID} [participantId]
+ * @property {EditicsIndexUser} [indexUser]
+ * @property {number} [participantTimeConnect]
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type
- * @property {number} participantsTimestamp
- * @property {EditicsParticipantEntry[]} participants
+ * @property {number} [participantsTimestamp]
+ * @property {EditicsParticipantEntry[]} [participants]
  * @property {boolean} waitAuth
  *
  * @typedef {Object} EditicsServerEventAuthChanges
  * @property {'authChanges'} type
- * @property {Array<[number, Uint8Array]>} changes - (index, encrypted blob)
+ * @property {Array<[number, Uint8Array]>} changes
  *
  * @typedef {Object} EditicsServerEventWaitAuth
  * @property {'waitAuth'} type
- * @property {number} authLockedBy - the indexUser holding the auth lock
+ * @property {EditicsParticipantEntry} [authLockedBy]
  *
  * @typedef {Object} EditicsServerEventMessage
  * @property {'message'} type
- * @property {Array<{time:number, authorIndexUser:number, encryptedMessage:Uint8Array}>} messages
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedMessage:Uint8Array}>} [messages]
  *
  * @typedef {Object} EditicsServerEventCursor
  * @property {'cursor'} type
- * @property {Array<{time:number, authorIndexUser:number, encryptedCursor:Uint8Array}>} messages
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedCursor:Uint8Array}>} [messages]
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type
- * @property {Record<string, {time:number, user:number, block:*}>} locks
+ * @property {Record<string, {time:number, user:EditicsIndexUser, block:*}>} [locks]
  *
  * @typedef {Object} EditicsServerEventReleaseLock
  * @property {'releaseLock'} type
- * @property {Array<{block:*, user:number, time:number, changes:null}>} locks
+ * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} [locks]
  *
  * @typedef {Object} EditicsServerEventSaveLock
  * @property {'saveLock'} type
- * @property {boolean} saveLock
+ * @property {boolean} [saveLock]
  *
  * @typedef {Object} EditicsServerEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Array<{time:number, authorIndexUser:number, change:Uint8Array}>} changes
- * @property {number} changesIndex
- * @property {number} syncChangesIndex
- * @property {boolean} endSaveChanges
- * @property {Array<{block:*, user:number, time:number, changes:null}>} [locks]
- * @property {Object<string,*>|null} [excel_info]
- * @property {Uint8Array|null} [encryptedCursor]
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, change:Uint8Array}>} [changes]
+ * @property {number} [changesIndex]
+ * @property {number} [syncChangesIndex]
+ * @property {boolean} [endSaveChanges]
+ * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} locks
+ * @property {Object<string,*>|null} excel_info
+ * @property {Uint8Array|null} encryptedCursor
  *
  * @typedef {Object} EditicsServerEventSavePartChanges
  * @property {'savePartChanges'} type
- * @property {number} changesIndex
- * @property {number} syncChangesIndex
+ * @property {number} [changesIndex]
+ * @property {number} [syncChangesIndex]
  *
  * @typedef {Object} EditicsServerEventUnSaveLock
  * @property {'unSaveLock'} type
- * @property {number} index
- * @property {number} time
- * @property {number} syncChangesIndex
+ * @property {number} [index]
+ * @property {number} [time]
+ * @property {number} [syncChangesIndex]
  *
  * @typedef {Object} EditicsServerEventDrop
  * @property {'drop'} type
@@ -844,9 +915,11 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventWarning
  * @property {'warning'} type
- * @property {number} code
- * @property {string} message
+ * @property {number} [code]
+ * @property {string} [message]
  *
  * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDrop|EditicsServerEventWarning} EditicsServerEvent
  */
+
 /* eslint-enable max-len */
+// /!\ End of auto-generated code /!\

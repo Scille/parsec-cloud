@@ -8,7 +8,7 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import httpx_sse
 import py_mini_racer
@@ -20,6 +20,7 @@ from parsec._parsec import VlobID
 from parsec.components.auth import EditicsToken
 from parsec.editics_protocol import (
     EditicsClientEvent,
+    EditicsParticipantID,
     EditicsServerEvent,
     EditicsServerEventAdapter,
 )
@@ -50,7 +51,7 @@ class EditicsSessionClient:
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
-        participant_id: UUID,
+        participant_id: EditicsParticipantID,
     ) -> AsyncGenerator[EditicsSessionClient, None]:
         """
         Open the editics SSE + RPC connection for an editics session.
@@ -65,8 +66,8 @@ class EditicsSessionClient:
         authorization = f"Bearer {token.decode()}"
 
         session_path = f"/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
-        listen_url = f"http://{SERVER_DOMAIN}{session_path}/listen/{participant_id.hex}"
-        send_url = f"http://{SERVER_DOMAIN}{session_path}/send/{participant_id.hex}"
+        listen_url = f"http://{SERVER_DOMAIN}{session_path}/listen/{participant_id}"
+        send_url = f"http://{SERVER_DOMAIN}{session_path}/send/{participant_id}"
 
         async def send_events_raw(raw_event: str) -> str | None:
             rep = await who.raw_client.post(
@@ -186,13 +187,13 @@ class EditicsJSRuntime:
         document_id: VlobID,
         vlob_version: int = 1,
         editor_type: int = 0,
+        participant_id: EditicsParticipantID | None = None,
     ) -> AsyncGenerator[EditicsJSClient, None]:
-        participant_id = uuid4()
-        participant_id_hex = participant_id.hex
+        participant_id = participant_id or uuid4().hex
 
         self._js_runtime.eval(
             f"""
-            globalThis.__editics_instances['{participant_id_hex}'] = new globalThis.__EditicsTranslator({{
+            globalThis.__editics_instances['{participant_id}'] = new globalThis.__EditicsTranslator({{
                 workspaceId: '{realm_id.hex}',
                 vlobId: '{document_id.hex}',
                 deviceIdHex: '{who.device_id.hex}',
@@ -259,7 +260,7 @@ class EditicsJSRuntime:
                 yield client
             finally:
                 self._js_runtime.eval(
-                    f"""delete globalThis.__editics_instances['{participant_id.hex}'];"""
+                    f"""delete globalThis.__editics_instances['{participant_id}'];"""
                 )
 
     async def async_eval(self, code: str) -> Any:
@@ -305,7 +306,7 @@ class EditicsJSClient:
         self,
         js_runtime: EditicsJSRuntime,
         who: AuthenticatedRpcClient,
-        participant_id: UUID,
+        participant_id: EditicsParticipantID,
         editics_session_client: EditicsSessionClient,
     ):
         self.js_runtime = js_runtime
@@ -313,14 +314,16 @@ class EditicsJSClient:
         self.participant_id = participant_id
         self.editics_session_client = editics_session_client
 
-    async def inject_oo_client_event(self, oo_client_event: dict) -> dict | None:
+    async def inject_oo_client_event(
+        self, oo_client_event: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """
         Simulate the OnlyOffice editor (running on the client) wants to send a new
         event to the server.
         """
         raw_editics_client_event: str | None = await self.js_runtime.async_eval(
             f"""
-            globalThis.__editics_instances['{self.participant_id.hex}']
+            globalThis.__editics_instances['{self.participant_id}']
                 .cookClientEvent({json.dumps(oo_client_event)})
                 .then(obj => (obj != null ? JSON.stringify(obj) : null))
             """
@@ -342,7 +345,7 @@ class EditicsJSClient:
                 EditicsServerEventAdapter.validate_json(raw_editics_server_event)
                 raw_oo_client_event = await self.js_runtime.async_eval(
                     f"""
-                    globalThis.__editics_instances['{self.participant_id.hex}']
+                    globalThis.__editics_instances['{self.participant_id}']
                         .cookServerEvent({raw_editics_server_event})
                         .then(obj => (obj != null ? JSON.stringify(obj) : null))
                     """
@@ -352,7 +355,7 @@ class EditicsJSClient:
                 )
                 return json.loads(raw_oo_client_event)
 
-    async def listen_oo_server_event(self) -> dict:
+    async def listen_oo_server_event(self) -> dict[str, Any]:
         """
         Wait for a new event arriving to the OnlyOffice editor.
         """
@@ -362,7 +365,7 @@ class EditicsJSClient:
         EditicsServerEventAdapter.validate_json(raw_editics_server_event)
         oo_server_event = await self.js_runtime.async_eval(
             f"""
-            globalThis.__editics_instances['{self.participant_id.hex}'].cookServerEvent({raw_editics_server_event})
+            globalThis.__editics_instances['{self.participant_id}'].cookServerEvent({raw_editics_server_event})
                 .then(obj => (obj != null ? JSON.stringify(obj) : null))
             """
         )

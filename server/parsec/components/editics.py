@@ -94,7 +94,7 @@ class EditicsSession:
     # Participants joining while this lock is held are parked (i.e. they receive
     # `waitAuth` from the server) until the first participant release it (i.e. send
     # `unLockDocument{unlock:true}`) which switch the session into co-editing mode.
-    auth_lock_holder: EditicsIndexUser | None = None
+    auth_lock_holder: EditicsParticipantID | None = None
 
     # initial_version: int
     # latest_allowed_version: int
@@ -129,7 +129,7 @@ def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntr
             id=participant.participant_id,
             indexUser=participant.index,
             deviceId=participant.device_id,
-            view=False,
+            view=False,  # TODO
         )
         for participant in session.participants.values()
     ]
@@ -268,7 +268,7 @@ class EditicsComponent:
                     # away. If it is also the first participant, it becomes the single
                     # editor and takes the auth lock (RFC §6.2).
                     if len(session.participants) == 1:
-                        session.auth_lock_holder = participant.index
+                        session.auth_lock_holder = participant.participant_id
                 else:
                     # An established editor holds the auth lock: the newcomer is parked
                     # until the holder releases it.
@@ -294,7 +294,15 @@ class EditicsComponent:
                 # `unLockDocument{unlock:true}`)
                 if participant.parked:
                     assert session.auth_lock_holder is not None
-                    return EditicsServerEventWaitAuth(authLockedBy=session.auth_lock_holder)
+                    lock_holder = session.participants[session.auth_lock_holder]
+                    return EditicsServerEventWaitAuth(
+                        authLockedBy=EditicsParticipantEntry(
+                            id=lock_holder.participant_id,
+                            deviceId=lock_holder.device_id,
+                            indexUser=lock_holder.index,
+                            view=False,  # TODO
+                        )
+                    )
 
                 else:
                     return EditicsServerEventAuth(
@@ -319,7 +327,7 @@ class EditicsComponent:
             case EditicsClientEventUnLockDocument():
                 # Only the auth lock is handled for now: `isSave`, `deleteIndex`
                 # and `releaseLocks` cover the save & region lock systems.
-                if event.unlock and session.auth_lock_holder == participant.index:
+                if event.unlock and session.auth_lock_holder == participant.participant_id:
                     self._release_auth_lock(session)
                 return None
 
