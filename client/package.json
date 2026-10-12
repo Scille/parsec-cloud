@@ -42,7 +42,7 @@
         "@ionic/storage": "^4.0.0",
         "@ionic/vue": "^9.0.5",
         "@ionic/vue-router": "^9.0.5",
-        "@sentry/vue": "^11.1.0",
+        "@sentry/vue": "^11.2.0",
         "axios": "^1.20.0",
         "dompurify": "^3.4.16",
         "fast-fuzzy": "^1.12.0",
