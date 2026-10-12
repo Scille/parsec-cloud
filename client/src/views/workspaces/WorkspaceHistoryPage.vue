@@ -181,6 +181,7 @@
                   v-for="entry in entries.getEntries()"
                   :key="entry.id"
                   :entry="entry"
+                  v-model:selected="entry.isSelected"
                   :show-checkbox="someSelected"
                   :read-only="workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager"
                   @click="onEntryClicked(entry)"
