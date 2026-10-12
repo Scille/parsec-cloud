@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from itertools import permutations
@@ -53,6 +54,41 @@ def is_present_in_sources(translation_key: str, src: str):
     return res.returncode == 0
 
 
+# Vue attribute whose value is a JS expression (`:attr=`, `v-xxx=`, `@event=`, `#slot=`)
+VUE_BINDING_PATTERN = re.compile(r"(?:^|\s)(?::|v-|@|#)[\w\-.:\[\]]*\s*=\s*$")
+COMMENT_PATTERN = re.compile(r"/\*.*?\*/|<!--.*?-->|^\s*//[^\n]*", re.DOTALL | re.MULTILINE)
+
+
+def find_undeclared_keys(src: Path, declared_keys: set[str]) -> list[tuple[Path, int, str]]:
+    """
+    Look for string literals that look like translation keys (i.e. starting with one
+    of the top-level keys of the translation file) but are not declared.
+    """
+    top_level_keys = {key.split(".", 1)[0] for key in declared_keys}
+    top_level_alternatives = "|".join(map(re.escape, sorted(top_level_keys)))
+    key_literal_pattern = re.compile(rf"""(['"`])((?:{top_level_alternatives})\.[\w\-.]+)\1""")
+
+    res: list[tuple[Path, int, str]] = []
+    for path in sorted(src.rglob("*")):
+        if path.suffix not in (".ts", ".vue"):
+            continue
+        content = COMMENT_PATTERN.sub(
+            # Replacing comment line by an empty line to keep line numbers
+            lambda m: "\n" * m.group().count("\n"),
+            path.read_text(encoding="utf-8"),
+        )
+        for line_number, line in enumerate(content.splitlines(), 1):
+            for match in key_literal_pattern.finditer(line):
+                quote, key = match.groups()
+                if key in declared_keys:
+                    continue
+                # `:attr="x.y.z"` is an expression, not a string (unlike `:attr="'x.y.z'"`)
+                if quote == '"' and VUE_BINDING_PATTERN.search(line[: match.start()]):
+                    continue
+                res.append((path, line_number, key))
+    return res
+
+
 def remove_subkeys(json_data, subkeys_to_remove):
     count = 0
     for subkey in subkeys_to_remove:
@@ -92,6 +128,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--skip-unused", help="Skip check for unused translation keys", action="store_true"
+    )
+    parser.add_argument(
+        "--skip-undeclared",
+        help="Skip check for translation keys used in sources but not declared",
+        action="store_true",
     )
     parser.add_argument(
         "--fix",
@@ -172,5 +213,16 @@ if __name__ == "__main__":
             if missing_keys:
                 print(f"{HIGHLIGHT}Missing translation keys cannot be fixed automatically{RESET}")
 
-        if missing_keys or unused_keys:
+        undeclared_keys = []
+        if not args.skip_undeclared:
+            undeclared_keys = find_undeclared_keys(Path(args.src), translation_keys[ref_lang])
+            for path, line, key in undeclared_keys:
+                print(
+                    f"{HIGHLIGHT}{key}{RESET} is used in {BOLD}{path}:{line}{RESET} but not declared in {BOLD}{ref_lang}{RESET}",
+                    file=sys.stderr,
+                )
+            if undeclared_keys:
+                print("Undeclared translation keys cannot be fixed automatically")
+
+        if missing_keys or unused_keys or undeclared_keys:
             sys.exit(1)
