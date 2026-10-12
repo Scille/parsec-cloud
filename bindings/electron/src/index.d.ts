@@ -194,20 +194,6 @@ export interface ClientConfig {
 }
 
 
-export interface ClientGetOutboundSyncBacklog {
-    totalPendingEntriesForStartedWorkspaces: number
-    totalPendingBytesForStartedWorkspaces: number
-    perWorkspace: Array<ClientGetOutboundSyncBacklogItem>
-}
-
-
-export interface ClientGetOutboundSyncBacklogItem {
-    realmId: string
-    pendingEntries: number
-    pendingBytes: number
-}
-
-
 export interface ClientInfo {
     organizationAddr: string
     organizationId: string
@@ -5941,9 +5927,6 @@ export function clientGetAsyncEnrollmentAddr(
 export function clientGetOrganizationBootstrapDate(
     client_handle: number
 ): Promise<Result<number, ClientGetOrganizationBootstrapDateError>>
-export function clientGetOutboundSyncBacklog(
-    client: number
-): Promise<Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError>>
 export function clientGetSelfShamirRecovery(
     client_handle: number
 ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>

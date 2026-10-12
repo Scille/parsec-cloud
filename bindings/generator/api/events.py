@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from .common import (
+    U64,
     AccessToken,
     ApiVersion,
     DateTime,

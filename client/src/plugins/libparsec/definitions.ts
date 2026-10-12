@@ -268,18 +268,6 @@ export interface ClientConfig {
     logLevel: LogLevel | null
 }
 
-export interface ClientGetOutboundSyncBacklog {
-    totalPendingEntriesForStartedWorkspaces: U64
-    totalPendingBytesForStartedWorkspaces: U64
-    perWorkspace: Array<ClientGetOutboundSyncBacklogItem>
-}
-
-export interface ClientGetOutboundSyncBacklogItem {
-    realmId: VlobID
-    pendingEntries: U64
-    pendingBytes: U64
-}
-
 export interface ClientInfo {
     organizationAddr: ParsecOrganizationAddr
     organizationId: OrganizationID
@@ -7139,9 +7127,6 @@ export interface LibParsecPlugin {
     clientGetOrganizationBootstrapDate(
         client_handle: Handle
     ): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>>
-    clientGetOutboundSyncBacklog(
-        client: Handle
-    ): Promise<Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError>>
     clientGetSelfShamirRecovery(
         client_handle: Handle
     ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>

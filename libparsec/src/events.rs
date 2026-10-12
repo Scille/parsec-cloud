@@ -151,10 +151,10 @@ pub(crate) struct OnEventCallbackPlugged {
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsOutboundSyncAborted>,
     _workspace_ops_outbound_sync_done:
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsOutboundSyncDone>,
-         _workspace_ops_outbound_sync_backlog:
-        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOutboundSyncBacklog>,
     _workspace_ops_inbound_sync_done:
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsInboundSyncDone>,
+    _workspace_outbound_sync_backlog:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOutboundSyncBacklog>,
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
     _async_enrollment_updated:
         EventBusConnectionLifetime<libparsec_client::EventAsyncEnrollmentUpdated>,
@@ -547,7 +547,7 @@ impl OnEventCallbackPlugged {
             _workspace_ops_outbound_sync_progress: workspace_ops_outbound_sync_progress,
             _workspace_ops_outbound_sync_aborted: workspace_ops_outbound_sync_aborted,
             _workspace_ops_outbound_sync_done: workspace_ops_outbound_sync_done,
-            _workspace_ops_outbound_sync_backlog: workspace_outbound_sync_backlog,
+            _workspace_outbound_sync_backlog: workspace_outbound_sync_backlog,
             _workspace_ops_inbound_sync_done: workspace_ops_inbound_sync_done,
             _invitation_changed: invitation_changed,
             _async_enrollment_updated: async_enrollment_updated,
