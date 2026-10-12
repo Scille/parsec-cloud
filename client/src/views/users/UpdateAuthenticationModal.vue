@@ -282,7 +282,7 @@ async function changeAuthentication(): Promise<void> {
   } else {
     switch (result.error.tag) {
       case UpdateDeviceErrorTag.DecryptionFailed: {
-        errorMessage.value = 'MyProfilePage.errors.wrongPassword';
+        errorMessage.value = 'MyProfilePage.errors.wrongAuthentication';
         break;
       }
       case UpdateDeviceErrorTag.KeyringError: {

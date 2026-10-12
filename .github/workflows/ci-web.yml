@@ -193,9 +193,9 @@ jobs:
         working-directory: client
         timeout-minutes: 2
 
-      - name: Check for missing translation keys
+      - name: Check translation keys
         working-directory: client
-        timeout-minutes: 2
+        timeout-minutes: 4
         shell: bash -ex {0}
         run: |
           python scripts/check_translations.py src/ --no-color
