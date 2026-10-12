@@ -133,6 +133,9 @@ const STAY_MS = parseInt(process.env.STAY || '0', 10); // 0 = keep open
       });
       return {
         events: (M.events || []).length,
+        ooVersion: M.ooVersion
+          ? M.ooVersion + (M.ooBuild != null ? ' (build ' + M.ooBuild + ')' : '')
+          : null,
         editorUser: M.editorUser,
         users: Object.keys(M.users || {}),
         mode: M.mode,
@@ -142,6 +145,7 @@ const STAY_MS = parseInt(process.env.STAY || '0', 10); // 0 = keep open
       };
     });
     console.log('  mode=' + s.mode + '  manualFlow=' + s.manualFlow + '  proxy=' + (s.connected ? 'connected' : 'disconnected'));
+    console.log('  OnlyOffice version=' + (s.ooVersion || 'unknown (no license/auth event seen yet)'));
     console.log('  users=' + JSON.stringify(s.editorUser) + '  chips=' + JSON.stringify(s.users));
     console.log('  events=' + s.events);
     console.log('  ' + JSON.stringify(s.byType, null, 0));

@@ -29,6 +29,11 @@
  * from the `auth` event and pushed to the panel. The panel still auto-filters
  * by the active scenario tab: Collaborate → John & Kate; others → Anonymous.
  *
+ * OnlyOffice version: the doc server announces its build on the wire (the
+ * `license` push and the `auth` response carry buildVersion + buildNumber);
+ * the panel shows it in its header, and `copy` exports it in a `## Info`
+ * block (timestamp of the copy + version) before the `## Events` blocks.
+ *
  * Kate's editor is deferred behind a "Start Kate's editor" overlay. A second
  * button "Re-start John's editor in manual-flow" reloads the whole page with
  * `manual_flow=true` in the URL and arms manual-flow at the proxy first — so
@@ -59,7 +64,9 @@
     mode: null,               // 'collab' | 'solo' | null (set by active tab)
     intercept: false,         // aka manual-flow: hold non-noise frames (from proxy)
     connected: false,         // /ctl control channel open?
-    pageResetting: false      // true during the page-reload for manual-flow restart
+    pageResetting: false,     // true during the page-reload for manual-flow restart
+    ooVersion: null,          // OnlyOffice buildVersion in use (e.g. '9.4.1'), from wire events
+    ooBuild: null             // matching buildNumber (e.g. 15)
   };
   var EDITOR_ID =
     (/[?&]frameEditorId=([^&]*)/.exec(location.search || '') || [, null])[1];
@@ -134,6 +141,25 @@
       }
     }
   }
+  // ---- OnlyOffice version (captured from the wire) -----------------------
+  // The document server announces its build in two OO events we already
+  // decode: the `license` push (right after the socket handshake) and the
+  // `auth` response (server→client; the client's own `auth` has no `result`).
+  // Reading it from the wire is authoritative and works for both the proxy
+  // and the XHR-fallback capture paths (no cross-origin iframe probing).
+  function noteVersion(ev) {
+    if (MON.ooVersion) return; // already known (survives `clear`)
+    var p = ev && ev.meta;
+    if (!p || typeof p !== 'object') return;
+    var v = null;
+    if (p.type === 'license' && p.license && p.license.buildVersion != null) v = p.license;
+    else if (p.type === 'auth' && p.result && p.buildVersion != null) v = p;
+    if (v) {
+      MON.ooVersion = String(v.buildVersion);
+      MON.ooBuild = v.buildNumber != null ? v.buildNumber : null;
+      updateVersionUI();
+    }
+  }
   function ensureUser(name) {
     if (!MON.users[name]) {
       MON.users[name] = { checked: true };
@@ -159,6 +185,7 @@
     if (IS_TOP) store(ev); else forward(ev);
   }
   function store(ev) {
+    noteVersion(ev);
     MON.events.push(ev);
     if (MON.events.length > 5000) MON.events.shift();
     if (!MON.paused && visible(ev)) render(ev);
@@ -366,6 +393,7 @@
       }
     }
     function storeProxyEvent(ev) {
+      noteVersion(ev);
       MON.events.push(ev);
       if (MON.events.length > 5000) MON.events.shift();
       if (!MON.paused && visible(ev)) render(ev);
@@ -516,6 +544,7 @@
       '#oo-mon .hdr{user-select:none;cursor:move;padding:6px 8px;background:#3b5b8c;color:#fff;',
       'font-weight:600;display:flex;align-items:center;gap:6px}',
       '#oo-mon .hdr .lbl{flex:1}',
+      '#oo-mon .hdr .ver{font-weight:400;font-size:10px;background:rgba(255,255,255,.15);padding:1px 6px;border-radius:4px;white-space:nowrap}',
       '#oo-mon .hdr button{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:4px;padding:1px 6px;cursor:pointer;font:inherit}',
       '#oo-mon .hdr button:hover{background:rgba(255,255,255,.32)}',
       '#oo-mon .hdr button.on{background:#ffd34d;color:#3a2a00;font-weight:700}',
@@ -568,6 +597,7 @@
     window.__OO_MON.__box = box;
     box.innerHTML =
       '<div class="hdr" id="oo-mon-hdr"><span class="lbl">OO Protocol Monitor</span>' +
+      '<span class="ver" id="oo-mon-ver" title="OnlyOffice document-server version in use (captured from the license/auth wire events)">OO ?</span>' +
       '<button id="oo-mon-copy">copy</button><button id="oo-mon-clear">clear</button>' +
       '<button id="oo-mon-flow" title="toggle manual flow (hold frames until released)">auto-flow</button></div>' +
       '<div class="bar"><div class="chips" id="oo-mon-chips"></div>' +
@@ -629,8 +659,7 @@
       }
     });
     document.getElementById('oo-mon-copy').addEventListener('click', function () {
-      var text = MON.events.filter(visible).map(formatBlock).join('\n\n');
-      copyText(text, document.getElementById('oo-mon-copy'));
+      copyText(exportText(), document.getElementById('oo-mon-copy'));
     });
     listEl = document.getElementById('oo-mon-list');
     statEl = document.getElementById('oo-mon-stat');
@@ -638,6 +667,7 @@
     Object.keys(MON.users).forEach(addUserChip);
     syncChips();
     syncInterceptBtn();
+    updateVersionUI();
   }
 
   var listEl, statEl, chipsEl;
@@ -707,6 +737,23 @@
     return '### ' + formatLine(ev) + '\n\n```json\n' + body + '\n```';
   }
   function pad(s, n) { s = String(s); return s.length >= n ? s : s + new Array(n - s.length + 1).join(' '); }
+
+  function ooVersionString() {
+    if (!MON.ooVersion) return 'unknown';
+    return MON.ooBuild != null ? MON.ooVersion + ' (build ' + MON.ooBuild + ')' : MON.ooVersion;
+  }
+  function updateVersionUI() {
+    var el = document.getElementById('oo-mon-ver');
+    if (el) el.textContent = 'OO ' + ooVersionString();
+  }
+  // Copy export: a `## Info` header (timestamp of the copy + the OnlyOffice
+  // version in use) comes before the `## Events` blocks.
+  function exportText() {
+    var info = '## Info\n\n- Timestamp: ' + new Date().toISOString() +
+      '\n- OnlyOffice version: ' + ooVersionString();
+    var blocks = MON.events.filter(visible).map(formatBlock).join('\n\n');
+    return info + '\n\n## Events\n\n' + blocks;
+  }
 
   function copyText(text, btn) {
     var done = function () { if (btn) { var o = btn.textContent; btn.textContent = 'copied!'; setTimeout(function () { btn.textContent = o; }, 1200); } };
