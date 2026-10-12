@@ -365,6 +365,11 @@ msTest('Recovery page file flow', async ({ myProfilePage }) => {
   await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
   await expect(recoveryFileSection.locator('.badge-active')).toHaveText('Active');
   await expect(recoveryFileSection.locator('.action-validation')).toContainText('Files downloaded');
+
+  // Reload page to check if the recovery is still marked as active
+  await myProfilePage.locator('.menu-list__item').nth(0).click();
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  await expect(recoveryFileSection.locator('.badge-active')).toHaveText('Active');
 });
 
 msTest('Recovery page device flow', async ({ myProfilePage }) => {

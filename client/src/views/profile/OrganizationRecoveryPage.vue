@@ -261,7 +261,7 @@ async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
   if (result.ok) {
     devices.value = result.value.filter((d) => !d.isRecovery && !d.isShamir && !d.isRegistration).sort((d) => (d.isCurrent ? -1 : 1));
-    hasRecoveryDevice.value = devices.value.find((d) => d.isRecovery) !== undefined;
+    hasRecoveryDevice.value = result.value.find((d) => d.isRecovery) !== undefined;
     queryingDevices.value = false;
   } else {
     informationManager.value.present(
