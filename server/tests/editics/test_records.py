@@ -77,13 +77,6 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
         # Patch the non-deterministic fields from the server events
         if direction == "server-to-client":
             if type_ == "auth":
-                # Hardcoded values in `client/editics/collaborative_protocol.js`
-                payload["hasForgotten"] = False
-                payload["jwt"] = ""
-                payload["g_cAscSpellCheckUrl"] = ""
-                payload["buildVersion"] = ""
-                payload["buildNumber"] = 0
-                payload["licenseType"] = 0
                 if "sessionTimeConnect" in payload:
                     payload["sessionTimeConnect"] = TypePlaceholder(payload["sessionTimeConnect"])
                 # `openedAt` is optional in OnlyOffice protocol (`documentOpen` event
@@ -93,6 +86,23 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 payload["openedAt"] = TypePlaceholder(payload.get("openedAt", 0))
                 for p in payload["participants"]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
+
+                # Hardcoded values in `client/editics/collaborative_protocol.js`
+                payload["hasForgotten"] = False
+                payload["jwt"] = ""
+                payload["g_cAscSpellCheckUrl"] = ""
+                payload["buildVersion"] = ""
+                payload["buildNumber"] = 0
+                payload["licenseType"] = 0
+                payload["settings"] = {
+                    "reconnection": {"attempts": 50, "delay": 2000},
+                    "binaryChanges": False,
+                    "websocketMaxPayloadSize": 1572864,
+                    "maxChangesSize": 157286400,
+                    "limits_image_size": 26214400,
+                    "limits_image_types_upload": "jpg;jpeg;jpe;png;gif;bmp;svg;tiff;tif;webp;heic;heif;avif",
+                }
+
             elif type_ == "waitAuth":
                 payload["lockDocument"]["connectionId"] = TypePlaceholder(
                     payload["lockDocument"]["connectionId"]
@@ -287,27 +297,48 @@ async def _do_test_record(
                             blue = "\x1b[34m"
                             no_color = "\x1b[0;0m"
                             exc.add_note(
-                                f"{pink}Participant {participant} was waiting for event {blue}{event.type}{pink}:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix='\t')}"
+                                f"{pink}Participant {blue}{participant}{pink} was waiting for event {blue}{event.type}{pink}:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix='\t')}"
                             )
 
                             display_unacknowledged_events = ""
                             for (
-                                participant,
-                                events,
+                                u_participant,
+                                u_events,
                             ) in per_client_unacknowlegde_server_events.items():
                                 if not events:
                                     continue
-                                display_unacknowledged_events += f"\t{participant}:\n"
-                                for event in events:
+                                display_unacknowledged_events += (
+                                    f"\t{blue}{u_participant}{no_color}:\n"
+                                )
+                                for u_event in u_events:
                                     display_unacknowledged_events += (
-                                        f"\n\t\t{blue}{event['type']}{no_color}:\n"
+                                        f"\n\t\t{blue}{u_event['type']}{no_color}:\n"
                                     )
-                                    display_unacknowledged_events += (
-                                        f"{textwrap.indent(pprint.pformat(event), prefix='\t\t')}\n"
-                                    )
+                                    display_unacknowledged_events += f"{textwrap.indent(pprint.pformat(u_event), prefix='\t\t')}\n"
                             if display_unacknowledged_events:
                                 exc.add_note(
                                     f"\n{pink}Received but unacknowledged yet events:{no_color}\n{display_unacknowledged_events}"
+                                )
+
+                            if unacknowlegde_server_events:
+                                from difflib import unified_diff
+                                from pprint import pformat
+
+                                exc.add_note(
+                                    "\n".join(
+                                        (
+                                            f"{pink}Best candidate diff{no_color}:",
+                                            *unified_diff(
+                                                pformat(event.payload).splitlines(),
+                                                pformat(
+                                                    unacknowlegde_server_events[0]
+                                                ).splitlines(),
+                                                fromfile="expected",
+                                                tofile="candidate",
+                                                # color=True,  # TODO: enable in Python 3.15
+                                            ),
+                                        )
+                                    )
                                 )
 
                             raise

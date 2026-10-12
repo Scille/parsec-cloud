@@ -41,8 +41,8 @@ for line in open(sys.argv[1]).read().splitlines():
         # distinguishable between Alice and Bob in the capture, hence the heading lookup.
         line = re.sub(r'"sessionId": "\w+"', f'"sessionId": "{participant_id}"', line)
     # `userId` is the device id in our case
-    line = line.replace("F89d8069ba2b", "de10a11cec0010000000000000000000")
-    line = line.replace("78e1e841", "de10808c001000000000000000000000")
+    line = line.replace("78e1e841", "de10a11cec0010000000000000000000")
+    line = line.replace("F89d8069ba2b", "de10808c001000000000000000000000")
     lines.append(line)
 
 open(sys.argv[1], "w").write("\n".join(lines) + "\n")

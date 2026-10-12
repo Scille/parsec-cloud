@@ -418,7 +418,6 @@ class EditicsTranslator {
       buildNumber: 0,
       licenseType: 0,
       settings: {
-        spellcheckerUrl: '',
         reconnection: { attempts: 50, delay: 2000 },
         binaryChanges: false,
         websocketMaxPayloadSize: 1572864,
