@@ -43,7 +43,7 @@ describe('File List Item', () => {
       props: {
         entry: FILE,
         showCheckbox: false,
-        modelValue: true,
+        selected: true,
         ownProfile: UserProfile.Admin,
       },
       global: {
@@ -87,7 +87,7 @@ describe('File List Item', () => {
       props: {
         entry: FOLDER,
         showCheckbox: false,
-        modelValue: true,
+        selected: true,
         ownProfile: UserProfile.Admin,
       },
       global: {

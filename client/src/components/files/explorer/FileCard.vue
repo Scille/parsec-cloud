@@ -4,14 +4,14 @@
   <ion-item
     class="file-card-item ion-no-padding"
     :class="{
-      selected: entry.isSelected,
-      'file-card-item--hovered': !entry.isSelected && (menuOpened || isHovered),
+      selected: selected,
+      'file-card-item--hovered': !selected && (menuOpened || isHovered),
     }"
     @dblclick="$emit('openItem', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
-    @click.stop="$emit('update:modelValue', !entry.isSelected)"
+    @click.stop="$emit('update:selected', !selected)"
   >
     <file-drop-zone
       :disabled="entry.isFile()"
@@ -21,9 +21,9 @@
     >
       <div class="card-checkbox">
         <ms-checkbox
-          :checked="entry.isSelected"
-          @change="$emit('update:modelValue', !entry.isSelected)"
-          v-show="entry.isSelected || isHovered || showCheckbox"
+          :checked="selected"
+          @change="$emit('update:selected', !selected)"
+          v-show="selected || isHovered || showCheckbox"
           @click.stop
           @dblclick.stop
         />
@@ -90,7 +90,7 @@ const props = defineProps<{
   entry: EntryModel;
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
-  modelValue: boolean;
+  selected: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -98,7 +98,7 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
-  (e: 'update:modelValue', value: boolean): void;
+  (e: 'update:selected', value: boolean): void;
 }>();
 
 defineExpose({
