@@ -602,14 +602,6 @@ pub async fn client_list_workspaces(
     Ok(workspaces)
 }
 
-pub async fn client_get_outbound_sync_backlog(
-    client: Handle,
-) -> Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError> {
-    let client = borrow_client(client)?;
-
-    client.get_outbound_sync_backlog().await
-}
-
 /*
  * Create workspace
  */

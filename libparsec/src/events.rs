@@ -61,6 +61,10 @@ pub enum ClientEvent {
         realm_id: VlobID,
         entry_id: VlobID,
     },
+    WorkspaceOutboundSyncBacklog {
+        number_of_files_to_sync: u64,
+        size_to_sync: u64,
+    },
 
     InvitationChanged {
         token: AccessToken,
@@ -147,6 +151,8 @@ pub(crate) struct OnEventCallbackPlugged {
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsOutboundSyncDone>,
     _workspace_ops_inbound_sync_done:
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsInboundSyncDone>,
+    _workspace_outbound_sync_backlog:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOutboundSyncBacklog>,
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
     _async_enrollment_updated:
         EventBusConnectionLifetime<libparsec_client::EventAsyncEnrollmentUpdated>,
@@ -300,6 +306,20 @@ impl OnEventCallbackPlugged {
                         ClientEvent::WorkspaceOpsOutboundSyncDone {
                             realm_id: e.realm_id,
                             entry_id: e.entry_id,
+                        },
+                    );
+                },
+            )
+        };
+        let workspace_outbound_sync_backlog = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventWorkspaceOutboundSyncBacklog| {
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::WorkspaceOutboundSyncBacklog {
+                            number_of_files_to_sync: e.number_of_files_to_sync,
+                            size_to_sync: e.size_to_sync,
                         },
                     );
                 },
@@ -524,6 +544,7 @@ impl OnEventCallbackPlugged {
             _workspace_ops_outbound_sync_aborted: workspace_ops_outbound_sync_aborted,
             _workspace_ops_outbound_sync_done: workspace_ops_outbound_sync_done,
             _workspace_ops_inbound_sync_done: workspace_ops_inbound_sync_done,
+            _workspace_outbound_sync_backlog: workspace_outbound_sync_backlog,
             _invitation_changed: invitation_changed,
             _async_enrollment_updated: async_enrollment_updated,
             _greeting_attempt_ready: greeting_attempt_ready,
