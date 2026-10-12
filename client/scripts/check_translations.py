@@ -222,7 +222,9 @@ if __name__ == "__main__":
                     file=sys.stderr,
                 )
             if undeclared_keys:
-                print("Undeclared translation keys cannot be fixed automatically")
+                print(
+                    f"{HIGHLIGHT}Undeclared translation keys cannot be fixed automatically{RESET}"
+                )
 
         if missing_keys or unused_keys or undeclared_keys:
             sys.exit(1)
