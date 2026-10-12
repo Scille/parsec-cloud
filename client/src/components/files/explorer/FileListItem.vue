@@ -14,12 +14,12 @@
       :detail="false"
       class="list-item file-list-item"
       :class="{
-        selected: entry.isSelected,
-        'file-list-item--hovered': !entry.isSelected && (menuOpened || isHovered),
+        selected: selected,
+        'file-list-item--hovered': !selected && (menuOpened || isHovered),
         'file-list-item-mobile': isSmallDisplay,
       }"
       @dblclick="$emit('openItem', $event, entry)"
-      @click="$emit('update:modelValue', !entry.isSelected)"
+      @click="$emit('update:selected', !selected)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"
@@ -27,12 +27,12 @@
       <div class="list-item-container file-list-item-container">
         <div
           class="list-item-column file-selected"
-          v-if="isLargeDisplay || entry.isSelected || showCheckbox"
+          v-if="isLargeDisplay || selected || showCheckbox"
         >
           <ms-checkbox
-            @change="$emit('update:modelValue', !entry.isSelected)"
-            :checked="entry.isSelected"
-            v-show="entry.isSelected || isHovered || showCheckbox"
+            @change="$emit('update:selected', !selected)"
+            :checked="selected"
+            v-show="selected || isHovered || showCheckbox"
             @click.stop
             @dblclick.stop
           />
@@ -177,7 +177,7 @@ const props = defineProps<{
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
   disableDrop?: boolean;
-  modelValue: boolean;
+  selected: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -186,7 +186,7 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
-  (e: 'update:modelValue', value: boolean): void;
+  (e: 'update:selected', value: boolean): void;
 }>();
 
 defineExpose({

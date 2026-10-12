@@ -87,7 +87,7 @@
           <file-list-item
             v-for="folder in folders.getEntries()"
             ref="folderItems"
-            v-model="folder.isSelected"
+            v-model:selected="folder.isSelected"
             :key="folder.id"
             :entry="folder"
             :own-profile="ownProfile"
@@ -101,7 +101,7 @@
           <file-list-item
             v-for="file in files.getEntries()"
             ref="fileItems"
-            v-model="file.isSelected"
+            v-model:selected="file.isSelected"
             :key="file.id"
             :entry="file"
             :own-profile="ownProfile"

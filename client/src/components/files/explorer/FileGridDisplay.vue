@@ -17,7 +17,7 @@
           class="folder-grid-item"
           ref="folderItems"
           v-for="folder in folders.getEntries()"
-          v-model="folder.isSelected"
+          v-model:selected="folder.isSelected"
           :key="folder.id"
           :entry="folder"
           :show-checkbox="hasSelected() || selectionEnabled === true"
@@ -30,7 +30,7 @@
         <file-card
           class="folder-grid-item"
           ref="fileItems"
-          v-model="file.isSelected"
+          v-model:selected="file.isSelected"
           v-for="file in files.getEntries()"
           :key="file.id"
           :entry="file"
