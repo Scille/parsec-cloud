@@ -540,10 +540,12 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
       console.log('PrepareUpdate: Not available');
     },
     log: (level: LogLevel, message: string): void => {
-      if ((window as any).TESTING === true && level === 'debug' && !(window as any).TESTING_ALLOW_LOGS) {
+      // Don't print debug logs when not in dev
+      if (!window.isDev() && level === 'debug' && !(window as any).TESTING_ALLOW_LOGS) {
         return;
       }
       console[level](`[PARSEC-LOG] ${message}`);
+      // No point in saving the logs when testing
       if ((window as any).TESTING === true && !(window as any).TESTING_ALLOW_LOGS) {
         return;
       }
