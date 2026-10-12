@@ -6,27 +6,25 @@
     lines="full"
     :detail="false"
     :class="{
-      selected: entry.isSelected,
-      'file-list-item--hovered': !entry.isSelected && isHovered,
+      selected: selected,
+      'file-list-item--hovered': !selected && isHovered,
       'is-folder': !entry.isFile(),
     }"
     class="list-item file-list-item history-file-list-item"
-    @click.stop="onSelectEntry(entry, !entry.isSelected)"
+    @click.stop="toggleSelected()"
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
     <div class="list-item-container">
       <div class="list-item-column file-selected">
-        <!-- eslint-disable vue/no-mutating-props -->
         <ms-checkbox
-          v-model="entry.isSelected"
-          v-show="(entry.isSelected || isHovered || showCheckbox) && !readOnly"
-          @change="$emit('selectedChange', entry, $event)"
+          :checked="selected"
+          v-show="(selected || isHovered || showCheckbox) && !readOnly"
+          @change="toggleSelected()"
           @click.stop
           @dblclick.stop
         />
-        <!-- eslint-enable vue/no-mutating-props -->
       </div>
 
       <!-- file name -->
@@ -38,7 +36,7 @@
         <ion-label
           class="list-item-label label-name cell"
           :class="{ selection: showCheckbox }"
-          @click.stop="showCheckbox ? onSelectEntry(entry, !entry.isSelected) : $emit('click', $event, entry)"
+          @click.stop="showCheckbox ? toggleSelected() : $emit('click', $event, entry)"
         >
           {{ entry.name }}
         </ion-label>
@@ -69,10 +67,9 @@
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
 import { WorkspaceHistoryEntryModel, WorkspaceHistoryFileModel } from '@/components/files/types';
-import { FsPath, Path } from '@/parsec';
 import { IonItem, IonLabel } from '@ionic/vue';
 import { Folder, MsCheckbox, MsImage, formatTimeSince } from 'megashark-lib';
-import { Ref, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 const isHovered = ref(false);
 
@@ -80,19 +77,12 @@ const props = defineProps<{
   entry: WorkspaceHistoryEntryModel;
   showCheckbox: boolean;
   readOnly: boolean;
+  selected: boolean;
 }>();
 
-async function onSelectEntry(entry: WorkspaceHistoryEntryModel, checked: boolean): Promise<void> {
-  if (props.readOnly) {
-    return;
-  }
-  emit('selectedChange', entry, checked);
-  entry.isSelected = checked;
-}
-
-const emit = defineEmits<{
+const emits = defineEmits<{
   (e: 'click', event: Event, entry: WorkspaceHistoryEntryModel): void;
-  (e: 'selectedChange', entry: WorkspaceHistoryEntryModel, checked: boolean): void;
+  (e: 'update:selected', value: boolean): void;
 }>();
 
 defineExpose({
@@ -100,15 +90,12 @@ defineExpose({
   props,
 });
 
-const currentPath: Ref<FsPath> = ref('/');
-
-onMounted(async () => {
-  if (props.entry.isFile()) {
-    currentPath.value = await Path.parent(props.entry.path);
-  } else {
-    currentPath.value = props.entry.path;
+function toggleSelected(): void {
+  if (props.readOnly) {
+    return;
   }
-});
+  emits('update:selected', !props.selected);
+}
 </script>
 
 <style lang="scss" scoped>
