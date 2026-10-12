@@ -58,7 +58,7 @@ async fn includes_started_workspaces_only(env: &TestbedEnv) {
 
 #[parsec_test(
     testbed = "minimal_client_ready",
-    tokio_worker_threads = 8,
+    // tokio_worker_threads = 8,
     with_server
 )]
 async fn not_including_confined_entries(env: &TestbedEnv) {

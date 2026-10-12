@@ -1582,152 +1582,6 @@ fn struct_client_config_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// ClientGetOutboundSyncBacklog
-
-#[allow(dead_code)]
-fn struct_client_get_outbound_sync_backlog_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientGetOutboundSyncBacklog> {
-    let total_pending_entries_for_started_workspaces = {
-        let js_val: Handle<JsBigInt> = obj.get(cx, "totalPendingEntriesForStartedWorkspaces")?;
-        {
-            let v = js_val
-                .to_u64(cx)
-                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
-            v
-        }
-    };
-    let total_pending_bytes_for_started_workspaces = {
-        let js_val: Handle<JsBigInt> = obj.get(cx, "totalPendingBytesForStartedWorkspaces")?;
-        {
-            let v = js_val
-                .to_u64(cx)
-                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
-            v
-        }
-    };
-    let per_workspace = {
-        let js_val: Handle<JsArray> = obj.get(cx, "perWorkspace")?;
-        {
-            let size = js_val.len(cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
-                v.push(struct_client_get_outbound_sync_backlog_item_js_to_rs(
-                    cx, js_item,
-                )?);
-            }
-            v
-        }
-    };
-    Ok(libparsec::ClientGetOutboundSyncBacklog {
-        total_pending_entries_for_started_workspaces,
-        total_pending_bytes_for_started_workspaces,
-        per_workspace,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_client_get_outbound_sync_backlog_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientGetOutboundSyncBacklog,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_total_pending_entries_for_started_workspaces =
-        JsBigInt::from_u64(cx, rs_obj.total_pending_entries_for_started_workspaces);
-    js_obj.set(
-        cx,
-        "totalPendingEntriesForStartedWorkspaces",
-        js_total_pending_entries_for_started_workspaces,
-    )?;
-    let js_total_pending_bytes_for_started_workspaces =
-        JsBigInt::from_u64(cx, rs_obj.total_pending_bytes_for_started_workspaces);
-    js_obj.set(
-        cx,
-        "totalPendingBytesForStartedWorkspaces",
-        js_total_pending_bytes_for_started_workspaces,
-    )?;
-    let js_per_workspace = {
-        // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.per_workspace.len());
-        for (i, elem) in rs_obj.per_workspace.into_iter().enumerate() {
-            let js_elem = struct_client_get_outbound_sync_backlog_item_rs_to_js(cx, elem)?;
-            js_array.set(cx, i as u32, js_elem)?;
-        }
-        js_array
-    };
-    js_obj.set(cx, "perWorkspace", js_per_workspace)?;
-    Ok(js_obj)
-}
-
-// ClientGetOutboundSyncBacklogItem
-
-#[allow(dead_code)]
-fn struct_client_get_outbound_sync_backlog_item_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientGetOutboundSyncBacklogItem> {
-    let realm_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
-                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let pending_entries = {
-        let js_val: Handle<JsBigInt> = obj.get(cx, "pendingEntries")?;
-        {
-            let v = js_val
-                .to_u64(cx)
-                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
-            v
-        }
-    };
-    let pending_bytes = {
-        let js_val: Handle<JsBigInt> = obj.get(cx, "pendingBytes")?;
-        {
-            let v = js_val
-                .to_u64(cx)
-                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
-            v
-        }
-    };
-    Ok(libparsec::ClientGetOutboundSyncBacklogItem {
-        realm_id,
-        pending_entries,
-        pending_bytes,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_client_get_outbound_sync_backlog_item_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientGetOutboundSyncBacklogItem,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_realm_id = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.realm_id) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "realmId", js_realm_id)?;
-    let js_pending_entries = JsBigInt::from_u64(cx, rs_obj.pending_entries);
-    js_obj.set(cx, "pendingEntries", js_pending_entries)?;
-    let js_pending_bytes = JsBigInt::from_u64(cx, rs_obj.pending_bytes);
-    js_obj.set(cx, "pendingBytes", js_pending_bytes)?;
-    Ok(js_obj)
-}
-
 // ClientInfo
 
 #[allow(dead_code)]
@@ -8997,6 +8851,30 @@ fn variant_client_event_js_to_rs<'a>(
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted { realm_id, entry_id })
         }
+        "ClientEventWorkspaceOutboundSyncBacklog" => {
+            let number_of_files_to_sync = {
+                let js_val: Handle<JsBigInt> = obj.get(cx, "numberOfFilesToSync")?;
+                {
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+                    v
+                }
+            };
+            let size_to_sync = {
+                let js_val: Handle<JsBigInt> = obj.get(cx, "sizeToSync")?;
+                {
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+                    v
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOutboundSyncBacklog {
+                number_of_files_to_sync,
+                size_to_sync,
+            })
+        }
         "ClientEventWorkspaceWatchedEntryChanged" => {
             let realm_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
@@ -9487,6 +9365,19 @@ fn variant_client_event_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "entryId", js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOutboundSyncBacklog {
+            number_of_files_to_sync,
+            size_to_sync,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceOutboundSyncBacklog").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_number_of_files_to_sync = JsBigInt::from_u64(cx, number_of_files_to_sync);
+            js_obj.set(cx, "numberOfFilesToSync", js_number_of_files_to_sync)?;
+            let js_size_to_sync = JsBigInt::from_u64(cx, size_to_sync);
+            js_obj.set(cx, "sizeToSync", js_size_to_sync)?;
         }
         libparsec::ClientEvent::WorkspaceWatchedEntryChanged {
             realm_id, entry_id, ..
@@ -23715,58 +23606,6 @@ fn client_get_organization_bootstrap_date(mut cx: FunctionContext) -> JsResult<J
     Ok(promise)
 }
 
-// client_get_outbound_sync_backlog
-fn client_get_outbound_sync_backlog(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let client = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::client_get_outbound_sync_backlog(client).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value =
-                            struct_client_get_outbound_sync_backlog_rs_to_js(&mut cx, ok)?;
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err =
-                            variant_client_get_outbound_sync_backlog_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
 // client_get_self_shamir_recovery
 fn client_get_self_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -33361,10 +33200,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "clientGetOrganizationBootstrapDate",
         client_get_organization_bootstrap_date,
-    )?;
-    cx.export_function(
-        "clientGetOutboundSyncBacklog",
-        client_get_outbound_sync_backlog,
     )?;
     cx.export_function(
         "clientGetSelfShamirRecovery",
