@@ -176,6 +176,60 @@ class EditicsJSRuntime:
                 globalThis.__console_messages = [];
                 return logs;
             };
+
+            // The V8 runtime provided by PyMiniRacer comes with none of the standard
+            // Web APIs. So `collaborative_protocol.js` only use those APIs in wrapper
+            // functions that we are going to mock here.
+
+            // Original `bytesFromStr` relies on `TextEncoder.encode`
+            globalThis.bytesFromStr = (s) => {
+                // Manual UTF-8 <-> bytes conversion, this is probably overkill
+                // since the string we encode are ASCII-only.
+                const out = [];
+                for (let i = 0; i < s.length; i++) {
+                    let c = s.charCodeAt(i);
+                    if (c < 0x80) {
+                        out.push(c);
+                    } else if (c < 0x800) {
+                        out.push(0xc0 | (c >> 6));
+                        out.push(0x80 | (c & 0x3f));
+                    } else if (c >= 0xd800 && c <= 0xdbff) {
+                        // Surrogate pair (U+10000..U+10FFFF).
+                        const next = s.charCodeAt(++i);
+                        c = 0x10000 + ((c - 0xd800) << 10) + (next - 0xdc00);
+                        out.push(0xf0 | (c >> 18));
+                        out.push(0x80 | ((c >> 12) & 0x3f));
+                        out.push(0x80 | ((c >> 6) & 0x3f));
+                        out.push(0x80 | (c & 0x3f));
+                    } else {
+                        out.push(0xe0 | (c >> 12));
+                        out.push(0x80 | ((c >> 6) & 0x3f));
+                        out.push(0x80 | (c & 0x3f));
+                    }
+                }
+                return new Uint8Array(out);
+            };
+            //  Original `bytesToStr` relies on `TextDecoder.decode`
+            globalThis.bytesToStr = (bytes) => {
+                let s = "";
+                let i = 0;
+                while (i < bytes.length) {
+                    const b = bytes[i++];
+                    if (b < 0x80) {
+                        s += String.fromCharCode(b);
+                    } else if (b < 0xe0) {
+                        s += String.fromCharCode(((b & 0x1f) << 6) | (bytes[i++] & 0x3f));
+                    } else if (b < 0xf0) {
+                        s += String.fromCharCode(((b & 0x0f) << 12) | ((bytes[i++] & 0x3f) << 6) | (bytes[i++] & 0x3f));
+                    } else {
+                        const cp = ((b & 0x07) << 18) | ((bytes[i++] & 0x3f) << 12) | ((bytes[i++] & 0x3f) << 6) | (bytes[i++] & 0x3f);
+                        // Convert to a surrogate pair.
+                        const adj = cp - 0x10000;
+                        s += String.fromCharCode(0xd800 + (adj >> 10), 0xdc00 + (adj & 0x3ff));
+                    }
+                }
+                return s;
+            };
             """
         )
 
@@ -202,7 +256,7 @@ class EditicsJSRuntime:
                 vlobVersion: {vlob_version},
                 editorType: {editor_type},
                 capabilities: {{
-                    getHumanLabelFromDeviceId: (deviceId) => {{
+                    getHumanLabelFromDeviceId: async (deviceId) => {{
                         // Hardcoded common values used for the test
                         switch (deviceId) {{
                             case "de10a11cec0010000000000000000000":
@@ -213,37 +267,23 @@ class EditicsJSRuntime:
                               throw new Error(`Unknown device ID (you may want to patch the test code): ${{ deviceId }}`)
                         }}
                     }},
-                    encrypt: (cleartext) => {{
-                        const keyIndex = 1;
-                        const prefix = new TextEncoder().encode(`encrypted.${{keyIndex}}.`);
-                        const ciphertext = new Uint8Array(prefix.length + cleartext.length);
-                        ciphertext.set(prefix, 0);
-                        ciphertext.set(cleartext, prefix.length);
+                    // Simulate encryption
+                    encrypt: async (cleartext) => {{
+                        const keyIndex = 3;  // Dummy but realistic-looking value
+                        const ciphertext = bytesFromStr(JSON.stringify({{"keyIndex": keyIndex, "cleartext": bytesToStr(cleartext)}}));
                         return [keyIndex, ciphertext];
                     }},
-                    decrypt: (ciphertext) => {{
-                        const textDecoder = new TextDecoder();
-                        const prefix = "encrypted.";
-
-                        // Decode the whole thing as ASCII to find the prefix
-                        const asString = textDecoder.decode(ciphertext);
-                        if (!asString.startsWith(prefix)) {{
-                            throw new Error("Invalid ciphertext: missing encryption prefix");
+                    decrypt: async (keyIndex, ciphertext) => {{
+                        let content;
+                        try {{
+                            content = JSON.parse(bytesToStr(ciphertext));
+                        }} catch(err) {{
+                            throw new Error(`Decryption failed: ${{err}}`);
                         }}
-
-                        // Find the end of the prefix: "encrypted.{{keyIndex}}."
-                        const firstDot = prefix.length; // index of the first dot after "encrypted"
-                        const secondDot = asString.indexOf(".", firstDot + 1);
-                        if (secondDot === -1) {{
-                            throw new Error("Invalid ciphertext: missing key index end delimiter");
+                        if (content.keyIndex != keyIndex) {{
+                            throw new Error("Decryption failed: keyIndex mismatch (expected: ${{keyIndex}}, got: ${{content.keyIndex}}");
                         }}
-
-                        const keyIndex = parseInt(asString.slice(firstDot + 1, secondDot), 10);
-                        if (keyIndex != 1) {{
-                            throw new Error(`Invalid keyIndex: Expected 1, got ${{keyIndex}}`);
-                        }}
-                        const cleartext = ciphertext.subarray(secondDot + 1);
-                        return cleartext;
+                        return bytesFromStr(content.cleartext);
                     }},
                 }},
             }});

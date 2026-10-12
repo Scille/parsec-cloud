@@ -44,9 +44,16 @@ mock_pydantic.AfterValidator = MagicMock()  # type: ignore
 mock_parsec = types.ModuleType("parsec")
 mock_parsec_parsec = types.ModuleType("parsec._parsec")
 mock_parsec_parsec.DeviceID = DeviceID  # type: ignore
+mock_parsec_types = types.ModuleType("parsec.types")
+mock_parsec_types.Base64BytesField = str  # type: ignore
 
 sys.modules.update(
-    {"pydantic": mock_pydantic, "parsec": mock_parsec, "parsec._parsec": mock_parsec_parsec}
+    {
+        "pydantic": mock_pydantic,
+        "parsec": mock_parsec,
+        "parsec._parsec": mock_parsec_parsec,
+        "parsec.types": mock_parsec_types,
+    }
 )
 
 

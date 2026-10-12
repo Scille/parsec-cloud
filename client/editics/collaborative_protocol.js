@@ -35,77 +35,57 @@
  */
 
 // ---------------------------------------------------------------------------
-// Small byte <-> string helpers (the only "encoding" the translator does; it
-// never touches base64 — that is the transport layer's job).
+// Web API wrapper functions
 // ---------------------------------------------------------------------------
 
+// The V8 runtime provided by PyMiniRacer for the tests comes with none of the
+// standard Web APIs. So we only use those APIs in the wrapper functions defined
+// here (and that are going to be mocked during the tests).
+
 /**
- * UTF-8 encode a JS string into a `Uint8Array`. Pure (no `TextEncoder` global
- * dependency, so it works in PyMiniRacer which may not expose it).
+ * UTF-8 encode a JS string into bytes (standard Web API: `TextEncoder`).
  * @param {string} s
  * @returns {Uint8Array}
  */
-// Used by the translation cases currently disabled below (re-enabled as the
-// server side of the collaborative mode lands).
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function strToBytes(s) {
-  // Encode UTF-8 manually. This is small and dependency-free, which keeps the
-  // translator loadable in any JS runtime (V8 isolate / browser).
-  const out = [];
-  for (let i = 0; i < s.length; i++) {
-    let c = s.charCodeAt(i);
-    if (c < 0x80) {
-      out.push(c);
-    } else if (c < 0x800) {
-      out.push(0xc0 | (c >> 6));
-      out.push(0x80 | (c & 0x3f));
-    } else if (c >= 0xd800 && c <= 0xdbff) {
-      // Surrogate pair (U+10000..U+10FFFF).
-      const next = s.charCodeAt(++i);
-      c = 0x10000 + ((c - 0xd800) << 10) + (next - 0xdc00);
-      out.push(0xf0 | (c >> 18));
-      out.push(0x80 | ((c >> 12) & 0x3f));
-      out.push(0x80 | ((c >> 6) & 0x3f));
-      out.push(0x80 | (c & 0x3f));
-    } else {
-      out.push(0xe0 | (c >> 12));
-      out.push(0x80 | ((c >> 6) & 0x3f));
-      out.push(0x80 | (c & 0x3f));
-    }
-  }
-  return new Uint8Array(out);
+function bytesFromStr(s) {
+  return new TextEncoder().encode(s);
 }
 
 /**
- * UTF-8 decode a `Uint8Array` into a JS string. Pure.
+ * UTF-8 decode bytes into a JS string (standard Web API: `TextDecoder`).
  * @param {Uint8Array} bytes
  * @returns {string}
  */
 function bytesToStr(bytes) {
-  let s = '';
-  let i = 0;
-  while (i < bytes.length) {
-    const b = bytes[i++];
-    if (b < 0x80) {
-      s += String.fromCharCode(b);
-    } else if (b < 0xe0) {
-      s += String.fromCharCode(((b & 0x1f) << 6) | (bytes[i++] & 0x3f));
-    } else if (b < 0xf0) {
-      s += String.fromCharCode(((b & 0x0f) << 12) | ((bytes[i++] & 0x3f) << 6) | (bytes[i++] & 0x3f));
-    } else {
-      const cp = ((b & 0x07) << 18) | ((bytes[i++] & 0x3f) << 12) | ((bytes[i++] & 0x3f) << 6) | (bytes[i++] & 0x3f);
-      // Convert to a surrogate pair.
-      const adj = cp - 0x10000;
-      s += String.fromCharCode(0xd800 + (adj >> 10), 0xdc00 + (adj & 0x3ff));
-    }
-  }
-  return s;
+  return new TextDecoder().decode(bytes);
+}
+
+// TODO: remove bytesFromBase64/bytesToBase64 since they don't need to be mocked ?
+
+/**
+ * Decode a standard base64 string into bytes.
+ * @param {string} b64
+ * @returns {Uint8Array}
+ */
+function bytesFromBase64(b64) {
+  return Uint8Array.fromBase64(b64);
+}
+
+/**
+ * Encode bytes into a standard base64 string.
+ * @param {Uint8Array} bytes
+ * @returns {string}
+ */
+function bytesToBase64(bytes) {
+  return bytes.toBase64();
 }
 
 // ---------------------------------------------------------------------------
 // EditicsTranslator
 // ---------------------------------------------------------------------------
 
+// TODO: Rework documentation
+// TODO: Rework error handling for getHumanLabelFromDeviceId/encrypt/decrypt
 /**
  * @typedef {Object} LibparsecCapabilities
  *    Injected capabilities that are expected to be provided by libparsec.
@@ -113,12 +93,13 @@ function bytesToStr(bytes) {
  *    Resolve the display name of a device id (sync or async). Used to build
  *    the OnlyOffice participant entries (the server is NOT trusted for
  *    names).
- * @property {(plain: Uint8Array) => Uint8Array} encrypt
+ * @property {(cleartext: Uint8Array) => Promise<[number, Uint8Array]>} encrypt
  *    Encrypt a cleartext payload into an opaque blob. SYNC, deterministic.
  *    The browser injects real libparsec sealing later; tests inject a
- *    key-prefix fake. Operates on `Uint8Array` (no base64 here — base64 is the
- *    transport encoding handled by the connection layer / pydantic).
- * @property {(cipher: Uint8Array) => Uint8Array} decrypt
+ *    key-prefix fake. Operates on raw `Uint8Array` binary; the base64
+ *    encoding needed by the JSON transport of the editics protocol is
+ *    handled by the translator itself (see `bytesToBase64`).
+ * @property {(keyIndex: number, ciphertext: Uint8Array) => Promise<Uint8Array>} decrypt
  *    Inverse of `encrypt`. SYNC.
  *
  * @typedef {Object} EditicsTranslatorConfig
@@ -205,10 +186,10 @@ class EditicsTranslator {
     //     return { type: 'authChangesAck' };
     //
     //   case 'message':
-    //     return { type: 'message', encryptedMessage: this._encrypt(strToBytes(String(oo.message))) };
-    //
-    //   case 'cursor':
-    //     return { type: 'cursor', encryptedCursor: this._encrypt(strToBytes(String(oo.cursor))) };
+    //     return {
+    //       type: 'message',
+    //       encryptedMessage: bytesToBase64(await this._encrypt(bytesFromStr(String(oo.message)))),
+    //     };
     //
     //   case 'getLock':
     //     return { type: 'getLock', block: oo.block };
@@ -241,6 +222,16 @@ class EditicsTranslator {
       case 'getMessages':
         return {
           type: 'getMessages',
+        };
+
+      case 'cursor':
+        // OnlyOffice provides the cursor as a base64-encoded payload in a
+        // custom format (e.g. `"16;CAAAADEAMQAzADcAAAAAAA=="`).
+        // We consider this format opaque and encrypt it as-is.
+        const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(oo.cursor));
+        return {
+          type: 'cursor',
+          encryptedCursor: [keyIndex, bytesToBase64(cipherText)],
         };
 
       case 'unLockDocument':
@@ -290,7 +281,7 @@ class EditicsTranslator {
   //       fragments = [oo.changes];
   //     }
   //   }
-  //   const encryptedChanges = fragments.map((f) => this._encrypt(strToBytes(String(f))));
+  //   const encryptedChanges = fragments.map((f) => bytesToBase64(await this._encrypt(bytesFromStr(String(f)))));
 
   //   // `excelAdditionalInfo` is split (RFC §2.2) into `encryptedCursor` (the
   //   // `CursorInfo` part, encrypted) and `excel_info` (the cleartext
@@ -299,7 +290,7 @@ class EditicsTranslator {
   //   // is null (real parsing is deferred to a later step).
   //   let encryptedCursor = null;
   //   if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
-  //     encryptedCursor = this._encrypt(strToBytes(String(oo.excelAdditionalInfo)));
+  //     encryptedCursor = bytesToBase64(await this._encrypt(bytesFromStr(String(oo.excelAdditionalInfo))));
   //   }
   //   return {
   //     type: 'saveChanges',
@@ -339,54 +330,54 @@ class EditicsTranslator {
         return this._cookConnectState(editics);
 
       case 'message':
-        return this._cookMessage(editics);
+        return await this._cookMessage(editics);
 
-        // Still to be translated (disabled until the server side of the
-        // collaborative mode is finished; move back into the switch below to
-        // enable):
-        //
-        //   case 'authChanges':
-        //     return this._cookAuthChanges(editics);
-        //
-        //   case 'cursor':
-        //     return this._cookCursor(editics);
-        //
-        //   case 'getLock':
-        //     return this._cookGetLock(editics);
-        //
-        //   case 'releaseLock':
-        //     return this._cookReleaseLock(editics);
-        //
-        //   case 'saveChanges':
-        //     return this._cookServerSaveChanges(editics);
-        //
-        //   case 'savePartChanges':
-        //     return {
-        //       type: 'savePartChanges',
-        //       changesIndex: editics.changesIndex,
-        //       syncChangesIndex: editics.syncChangesIndex,
-        //     };
-        //
-        //   case 'saveLock':
-        //     return { type: 'saveLock', saveLock: !!editics.saveLock };
-        //
-        //   case 'unSaveLock':
-        //     return {
-        //       type: 'unSaveLock',
-        //       index: editics.index,
-        //       time: editics.time,
-        //       syncChangesIndex: editics.syncChangesIndex,
-        //     };
-        //
-        //   case 'drop':
-        //     return { type: 'drop', code: editics.code, description: editics.description };
-        //
-        //   case 'warning':
-        //     return { type: 'warning', code: editics.code, message: editics.message };
+      case 'cursor':
+        return await this._cookCursor(editics);
 
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
         return null;
+
+      // Still to be translated (disabled until the server side of the
+      // collaborative mode is finished; move back into the switch below to
+      // enable):
+      //
+      //   case 'authChanges':
+      //     return this._cookAuthChanges(editics);
+      //
+      //   case 'getLock':
+      //     return this._cookGetLock(editics);
+      //
+      //   case 'releaseLock':
+      //     return this._cookReleaseLock(editics);
+      //
+      //   case 'saveChanges':
+      //     return this._cookServerSaveChanges(editics);
+      //
+      //   case 'savePartChanges':
+      //     return {
+      //       type: 'savePartChanges',
+      //       changesIndex: editics.changesIndex,
+      //       syncChangesIndex: editics.syncChangesIndex,
+      //     };
+      //
+      //   case 'saveLock':
+      //     return { type: 'saveLock', saveLock: !!editics.saveLock };
+      //
+      //   case 'unSaveLock':
+      //     return {
+      //       type: 'unSaveLock',
+      //       index: editics.index,
+      //       time: editics.time,
+      //       syncChangesIndex: editics.syncChangesIndex,
+      //     };
+      //
+      //   case 'drop':
+      //     return { type: 'drop', code: editics.code, description: editics.description };
+      //
+      //   case 'warning':
+      //     return { type: 'warning', code: editics.code, message: editics.message };
     }
   }
 
@@ -407,33 +398,7 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventAuth|null>}
    */
   async _cookServerAuth(editics) {
-    // TODO: factorize this with the code in `waitAuth`
-    const getHumanLabelFromDeviceId = this.capabilities.getHumanLabelFromDeviceId;
-    const participants = await Promise.all(
-      editics.participants.map(async (p) => {
-        let humanLabel = await getHumanLabelFromDeviceId(p.deviceId);
-        if (!humanLabel) {
-          // TODO: raise an error here instead ?
-          //       `getHumanLabelFromDeviceId` should poll for new certificates to
-          //       ensure the device ID exists; then, if not found, we should error out.
-          console.warn(`waitAuth: unknown auth lock holder ${editics.authLockedBy}`);
-          humanLabel = '<unknown>';
-        }
-        return {
-          id: p.id,
-          idOriginal: p.deviceId,
-          username: humanLabel,
-          indexUser: p.indexUser,
-          view: p.view,
-          // Never provided by the editics protocol, and unused by the editor
-          connectionId: '',
-          // Unused remaining fields, always false
-          isLiveViewer: false,
-          isCloseCoAuthoring: false,
-          encrypted: false,
-        };
-      }),
-    );
+    await this._setParticipants(editics.participants);
 
     return {
       type: 'auth',
@@ -442,7 +407,7 @@ class EditicsTranslator {
       sessionId: editics.participantId,
       // TODO: Check the relashionship between sessionTimeConnect and openedAt.
       sessionTimeConnect: editics.participantTimeConnect,
-      participants,
+      participants: this._onlyofficeParticipants(),
       locks: {},
       indexUser: editics.indexUser,
       hasForgotten: false,
@@ -463,7 +428,7 @@ class EditicsTranslator {
         // eslint-disable-next-line camelcase -- OnlyOffice wire field name
         limits_image_types_upload: 'jpg;jpeg;jpe;png;gif;bmp;svg;tiff;tif;webp;heic;heif;avif',
       },
-      openedAt: editics.participantTimeConnect,
+      openedAt: editics.openedAt,
     };
   }
 
@@ -511,38 +476,12 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventConnectState>}
    */
   async _cookConnectState(editics) {
-    // TODO: factorize this with the code in `waitAuth`
-    const getHumanLabelFromDeviceId = this.capabilities.getHumanLabelFromDeviceId;
-    const participants = await Promise.all(
-      editics.participants.map(async (p) => {
-        let humanLabel = await getHumanLabelFromDeviceId(p.deviceId);
-        if (!humanLabel) {
-          // TODO: raise an error here instead ?
-          //       `getHumanLabelFromDeviceId` should poll for new certificates to
-          //       ensure the device ID exists; then, if not found, we should error out.
-          console.warn(`waitAuth: unknown auth lock holder ${editics.authLockedBy}`);
-          humanLabel = '<unknown>';
-        }
-        return {
-          id: p.id,
-          idOriginal: p.deviceId,
-          username: humanLabel,
-          indexUser: p.indexUser,
-          view: p.view,
-          // Never provided by the editics protocol, and unused by the editor
-          connectionId: '',
-          // Unused remaining fields, always false
-          isLiveViewer: false,
-          isCloseCoAuthoring: false,
-          encrypted: false,
-        };
-      }),
-    );
+    await this._setParticipants(editics.participants);
 
     return {
       type: 'connectState',
       participantsTimestamp: editics.participantsTimestamp,
-      participants,
+      participants: this._onlyofficeParticipants(),
       waitAuth: editics.waitAuth,
     };
   }
@@ -559,7 +498,7 @@ class EditicsTranslator {
   //     const userId = this._userId(idx);
   //     return {
   //       docid,
-  //       change: JSON.stringify(bytesToStr(this._decrypt(blob))),
+  //       change: JSON.stringify(bytesToStr(await this._decrypt(bytesFromBase64(blob)))),
   //       time: 0,
   //       user: userId + String(idx),
   //       useridoriginal: userId,
@@ -570,44 +509,53 @@ class EditicsTranslator {
 
   /**
    * @param {EditicsServerEventMessage} editics
-   * @returns {OOServerEventMessage}
+   * @returns {Promise<OOServerEventMessage>}
    */
-  _cookMessage(editics) {
+  async _cookMessage(editics) {
     /** @type {OOServerEventMessage} */
     const event = { type: 'message' };
     if (editics.messages && editics.messages.length !== 0) {
       // TODO: when the author of the comment has left we won't be able to use `indexUser`
       //       so we should only rely on the deviceID (and hence can we remove the other fields ?)
-      event.messages = editics.messages.map((m) => {
-        const userId = this._userId(m.authorIndexUser);
-        return {
-          message: bytesToStr(this._decrypt(m.encryptedMessage)),
-          time: m.time,
-          user: userId + String(m.authorIndexUser),
-          useridoriginal: userId,
-          username: this._userName(m.authorIndexUser),
-        };
-      });
+      event.messages = await Promise.all(
+        editics.messages.map(async (m) => {
+          const userId = this._userId(m.authorIndexUser);
+          return {
+            message: bytesToStr(await this._decrypt(bytesFromBase64(m.encryptedMessage))),
+            time: m.time,
+            user: userId + String(m.authorIndexUser),
+            useridoriginal: userId,
+            username: this._userName(m.authorIndexUser),
+          };
+        }),
+      );
     }
     return event;
   }
 
-  // /**
-  //  * @param {EditicsServerEventCursor} editics
-  //  * @returns {OOServerEventCursor}
-  //  */
-  // _cookCursor(editics) {
-  //   const messages = (editics.messages || []).map((m) => {
-  //     const userId = this._userId(m.authorIndexUser);
-  //     return {
-  //       cursor: bytesToStr(this._decrypt(m.encryptedCursor)),
-  //       time: m.time,
-  //       user: userId + String(m.authorIndexUser),
-  //       useridoriginal: userId,
-  //     };
-  //   });
-  //   return { type: 'cursor', messages };
-  // }
+  /**
+   * The `user`/`useridoriginal` fields of the OnlyOffice protocol correspond
+   * to the author's participant id / device id (i.e. the same values as the
+   * `id`/`idOriginal` fields of the participants in the `auth`/`connectState`
+   * events).
+   * @param {EditicsServerEventCursor} editics
+   * @returns {Promise<OOServerEventCursor>}
+   */
+  async _cookCursor(editics) {
+    const messages = await Promise.all(
+      (editics.messages || []).map(async (m) => {
+        const p = this._participants.get(m.authorIndexUser);
+        const [keyIndex, b64CipherText] = m.encryptedCursor;
+        return {
+          cursor: bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText))),
+          time: m.time,
+          user: p ? p.participantId : String(m.authorIndexUser),
+          useridoriginal: p ? p.deviceId : String(m.authorIndexUser),
+        };
+      }),
+    );
+    return { type: 'cursor', messages };
+  }
 
   // /**
   //  * @param {EditicsServerEventGetLock} editics
@@ -645,7 +593,7 @@ class EditicsTranslator {
   //     const userId = this._userId(c.authorIndexUser);
   //     return {
   //       docid,
-  //       change: JSON.stringify(bytesToStr(this._decrypt(c.change))),
+  //       change: JSON.stringify(bytesToStr(await this._decrypt(bytesFromBase64(c.change)))),
   //       time: c.time,
   //       user: userId + String(c.authorIndexUser),
   //       useridoriginal: userId,
@@ -666,7 +614,7 @@ class EditicsTranslator {
   //     locks,
   //   };
   //   if (editics.encryptedCursor !== null && editics.encryptedCursor !== undefined) {
-  //     oo.excelAdditionalInfo = bytesToStr(this._decrypt(editics.encryptedCursor));
+  //     oo.excelAdditionalInfo = bytesToStr(await this._decrypt(bytesFromBase64(editics.encryptedCursor)));
   //   }
   //   return oo;
   // }
@@ -685,6 +633,7 @@ class EditicsTranslator {
     for (const entry of entries) {
       const humanLabel = await this.config.capabilities.getHumanLabelFromDeviceId(entry.deviceId);
       participants.set(entry.indexUser, {
+        participantId: entry.id,
         deviceId: entry.deviceId,
         userName: humanLabel || '<unknown>',
         // The per-person user id the `<userId><indexUser>` composite ids of
@@ -714,8 +663,8 @@ class EditicsTranslator {
    */
   _onlyofficeParticipantEntry(p, indexUser) {
     return {
-      id: p.userId + String(indexUser),
-      idOriginal: p.userId,
+      id: p.participantId,
+      idOriginal: p.deviceId,
       username: p.userName,
       indexUser: indexUser,
       // Never provided by the editics protocol, and unused by the editor
@@ -751,14 +700,23 @@ class EditicsTranslator {
 
   // --- Encryption (sync, capability-injected) -------------------------------
 
-  /** @param {Uint8Array} plain @returns {Uint8Array} */
-  _encrypt(plain) {
-    return this.capabilities.encrypt(plain);
+  // TODO: remove me
+  /**
+   * @param {Uint8Array} cleartext
+   * @returns {Promise<Uint8Array>}
+   */
+  async _encrypt(cleartext) {
+    return await this.capabilities.encrypt(cleartext);
   }
 
-  /** @param {Uint8Array} cipher @returns {Uint8Array} */
-  _decrypt(cipher) {
-    return this.capabilities.decrypt(cipher);
+  // TODO: remove me
+  /**
+   * @param {number} keyIndex
+   * @param {Uint8Array} ciphertext
+   * @returns {Promise<Uint8Array>}
+   */
+  async _decrypt(keyIndex, ciphertext) {
+    return await this.capabilities.decrypt(keyIndex, ciphertext);
   }
 }
 
@@ -802,11 +760,11 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsClientEventMessage
  * @property {'message'} type
- * @property {Uint8Array} [encryptedMessage]
+ * @property {[number, string]} [encryptedMessage]
  *
  * @typedef {Object} EditicsClientEventCursor
  * @property {'cursor'} type
- * @property {Uint8Array} [encryptedCursor]
+ * @property {[number, string]} [encryptedCursor]
  *
  * @typedef {Object} EditicsClientEventGetLock
  * @property {'getLock'} type
@@ -852,6 +810,7 @@ export { EditicsTranslator };
  * @property {EditicsParticipantID} [participantId]
  * @property {EditicsIndexUser} [indexUser]
  * @property {number} [participantTimeConnect]
+ * @property {number} [openedAt]
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type
@@ -861,7 +820,7 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventAuthChanges
  * @property {'authChanges'} type
- * @property {Array<[number, Uint8Array]>} changes
+ * @property {Array<[number, number, string]>} changes
  *
  * @typedef {Object} EditicsServerEventWaitAuth
  * @property {'waitAuth'} type
@@ -869,11 +828,11 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventMessage
  * @property {'message'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedMessage:Uint8Array}>} [messages]
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedMessage:[number, string]}>} [messages]
  *
  * @typedef {Object} EditicsServerEventCursor
  * @property {'cursor'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedCursor:Uint8Array}>} [messages]
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedCursor:[number, string]}>} [messages]
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type

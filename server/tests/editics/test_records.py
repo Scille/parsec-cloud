@@ -84,12 +84,13 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 payload["buildVersion"] = ""
                 payload["buildNumber"] = 0
                 payload["licenseType"] = 0
-                for field in ("sessionTimeConnect", "openedAt"):
-                    if field in payload:
-                        payload[field] = TypePlaceholder(payload[field])
-                # # `openedAt` is always emitted by our translator, but is missing
-                # # from some of the captured records
-                # payload["openedAt"] = TypePlaceholder(payload.get("openedAt", 0))
+                if "sessionTimeConnect" in payload:
+                    payload["sessionTimeConnect"] = TypePlaceholder(payload["sessionTimeConnect"])
+                # `openedAt` is optional in OnlyOffice protocol (`documentOpen` event
+                # arrives after `auth` and always provide this field).
+                # In editics protocol this field is always provided since the server
+                # never sends a `documentOpen` event.
+                payload["openedAt"] = TypePlaceholder(payload.get("openedAt", 0))
                 for p in payload["participants"]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
             elif type_ == "waitAuth":
@@ -100,6 +101,9 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 payload["participantsTimestamp"] = TypePlaceholder(payload["participantsTimestamp"])
                 for p in payload["participants"]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
+            elif type_ == "cursor":
+                for m in payload["messages"]:
+                    m["time"] = TypePlaceholder(m["time"])
 
         participant = e1.group("participant")
         # We generate tests by recording session

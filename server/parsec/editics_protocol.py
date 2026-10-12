@@ -17,6 +17,7 @@ from uuid import UUID
 from pydantic import AfterValidator, BaseModel, Field, TypeAdapter
 
 from parsec._parsec import DeviceID
+from parsec.types import Base64BytesField
 
 # TODO: rename to `EditicsParticipantIndex` ?
 type EditicsIndexUser = int
@@ -108,7 +109,8 @@ class EditicsClientEventGetMessages(BaseModel):
 
 class EditicsClientEventMessage(BaseModel):
     type: Literal["message"] = "message"
-    encryptedMessage: bytes
+    # Format: (<Key index> + <base64(ciphertext)>)
+    encryptedMessage: tuple[int, Base64BytesField]
 
 
 class EditicsClientEventCursor(BaseModel):
@@ -116,8 +118,8 @@ class EditicsClientEventCursor(BaseModel):
     renamed to `encryptedCursor` per RFC §2.2 editics changes."""
 
     type: Literal["cursor"] = "cursor"
-    # base64 over JSON (§2.4). Opaque; the server never inspects the content.
-    encryptedCursor: bytes
+    # Format: (<Key index> + <base64(ciphertext)>)
+    encryptedCursor: tuple[int, Base64BytesField]
 
 
 class EditicsClientEventGetLock(BaseModel):
@@ -243,6 +245,8 @@ class EditicsServerEventAuth(BaseModel):
     indexUser: EditicsIndexUser  # this connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
     participantTimeConnect: int  # server timestamp (ms) at connect
+    # When the file edition session has been started
+    openedAt: int  # ms
 
 
 class EditicsServerEventConnectState(BaseModel):
@@ -273,9 +277,9 @@ class EditicsServerEventAuthChanges(BaseModel):
     """
 
     type: Literal["authChanges"] = "authChanges"
-    # Each entry: (change index, encrypted change blob). The index is 1-based
-    # and monotonic; the blob is base64 over JSON (§2.4), opaque to the server.
-    changes: list[tuple[int, bytes]] = Field(default_factory=list)
+    # Format: (<change index>, <Key index> + <base64(ciphertext)>)
+    # The change index is 1-based and monotonic.
+    changes: list[tuple[int, int, Base64BytesField]] = Field(default_factory=list)
 
 
 class EditicsServerEventWaitAuth(BaseModel):
@@ -297,8 +301,8 @@ class MessageRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: int  # server timestamp (ms)
     authorIndexUser: EditicsIndexUser
-    # base64 over JSON (§2.4). Opaque; server never inspects.
-    encryptedMessage: bytes
+    # Format: (<Key index> + <base64(ciphertext)>)
+    encryptedMessage: tuple[int, Base64BytesField]
 
 
 class EditicsServerEventMessage(BaseModel):
@@ -312,8 +316,8 @@ class CursorRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: int
     authorIndexUser: EditicsIndexUser
-    # base64 over JSON (§2.4). Opaque; server never inspects.
-    encryptedCursor: bytes
+    # Format: (<Key index> + <base64(ciphertext)>)
+    encryptedCursor: tuple[int, Base64BytesField]
 
 
 class EditicsServerEventCursor(BaseModel):

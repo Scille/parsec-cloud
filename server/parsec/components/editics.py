@@ -16,8 +16,10 @@ from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.components.auth import EditicsAuthInfo
 from parsec.config import BackendConfig
 from parsec.editics_protocol import (
+    CursorRecord,
     EditicsClientEvent,
     EditicsClientEventAuth,
+    EditicsClientEventCursor,
     EditicsClientEventGetMessages,
     EditicsClientEventUnLockDocument,
     EditicsIndexUser,
@@ -26,6 +28,7 @@ from parsec.editics_protocol import (
     EditicsServerEvent,
     EditicsServerEventAuth,
     EditicsServerEventConnectState,
+    EditicsServerEventCursor,
     EditicsServerEventMessage,
     EditicsServerEventWaitAuth,
     MessageRecord,
@@ -37,6 +40,13 @@ logger = get_logger()
 
 PER_PARTICIPANT_MAX_BUFFER_EVENTS = 100
 type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsServerEvent | None]
+
+
+def now() -> int:
+    """
+    Timestamp as milliseconds
+    """
+    return int(time.time() * 1000)
 
 
 @dataclass(slots=True)
@@ -85,6 +95,8 @@ class EditicsSession:
     In-memory state of a document edition session
     """
 
+    # When the file edition session has been started
+    opened_at: int  # ms
     session_id: UUID = field(default_factory=uuid4)
     next_participant_index: int = 1  # monotonic, starts at 1
     participants: dict[EditicsParticipantID, Participant] = field(default_factory=dict)
@@ -162,7 +174,7 @@ class EditicsComponent:
         try:
             return self._sessions[key]
         except KeyError:
-            session = self._sessions[key] = EditicsSession()
+            session = self._sessions[key] = EditicsSession(opened_at=now())
             return session
 
     def _get_or_insert_participant(
@@ -188,7 +200,7 @@ class EditicsComponent:
             device_id=device_id,
             index=participant_index,
             participant_id=participant_id,
-            connected_at=int(time.time() * 1000),
+            connected_at=now(),
         )
 
         return participant
@@ -249,7 +261,7 @@ class EditicsComponent:
                     device_id=auth_info.device_id,
                     index=participant_index,
                     participant_id=participant_id,
-                    connected_at=int(time.time() * 1000),
+                    connected_at=now(),
                 )
 
             else:
@@ -278,7 +290,7 @@ class EditicsComponent:
                     # TODO: have a single function that handles timestamp generation,
                     #       and ensure time is monotonic and have the expected time
                     #       granularity (to ms ? to second ?).
-                    participantsTimestamp=int(time.time() * 1000),
+                    participantsTimestamp=now(),
                     participants=_participant_entries(session),
                     waitAuth=session.auth_lock_holder is not None,
                 )
@@ -310,6 +322,7 @@ class EditicsComponent:
                         indexUser=participant.index,
                         participantId=participant_id,
                         participantTimeConnect=participant.connected_at,
+                        openedAt=session.opened_at,
                     )
 
             case EditicsClientEventGetMessages():
@@ -318,7 +331,7 @@ class EditicsComponent:
                         MessageRecord(
                             time=m.time_ms,
                             authorIndexUser=m.author_index_user,
-                            encryptedMessage=m.encrypted_message,
+                            encryptedMessage=(m.key_index, m.encrypted_message),
                         )
                         for m in session.chat_messages
                     ],
@@ -336,11 +349,33 @@ class EditicsComponent:
                                 broadcasted_event = EditicsServerEventAuth(
                                     participants=_participant_entries(session),
                                     indexUser=participant.index,
-                                    participantId=participant_id,
+                                    participantId=participant.participant_id,
                                     participantTimeConnect=participant.connected_at,
+                                    openedAt=session.opened_at,
                                 )
                                 # TODO: close the SSE if the channel is full
                                 participant.sse_channel_sender.send_nowait(broadcasted_event)
+                return None
+
+            case EditicsClientEventCursor():
+                # Cursor messages are ephemeral (i.e. not part of the session
+                # history like chat messages) and are only broadcasted to the
+                # other participants.
+                broadcasted_event = EditicsServerEventCursor(
+                    messages=[
+                        CursorRecord(
+                            time=now(),
+                            authorIndexUser=participant.index,
+                            encryptedCursor=event.encryptedCursor,
+                        )
+                    ],
+                )
+                for other_participant in session.participants.values():
+                    if other_participant.participant_id == participant.participant_id:
+                        continue
+                    if other_participant.sse_channel_sender:
+                        # TODO: close the SSE if the channel is full
+                        other_participant.sse_channel_sender.send_nowait(broadcasted_event)
                 return None
 
             case _:
