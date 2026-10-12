@@ -180,10 +180,6 @@ onMounted(async () => {
   margin-bottom: 1.5rem;
 }
 
-#server-addr-input {
-  margin-bottom: 1.5rem;
-}
-
 .org-name-criteria {
   color: var(--parsec-color-light-secondary-hard-grey);
 }

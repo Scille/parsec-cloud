@@ -29,7 +29,7 @@
         :icon="shapes"
         class="small-display-stepper__icon"
       />
-      <ion-text class="small-display-stepper__text button-medium">
+      <ion-text class="small-display-stepper__text">
         {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
       </ion-text>
     </div>
@@ -39,12 +39,12 @@
         :icon="icon"
         class="modal-header-title__icon"
       />
-      <ion-text class="modal-header-title__text title-h3">
+      <ion-text class="modal-header-title__text">
         {{ $msTranslate(title) }}
       </ion-text>
     </div>
     <ion-text
-      class="modal-header__text body-lg"
+      class="modal-header__text"
       v-if="subtitle"
     >
       {{ $msTranslate(subtitle) }}
@@ -78,28 +78,29 @@ defineEmits<{
   flex-direction: column;
   text-wrap: wrap;
   margin-bottom: 1rem;
-  gap: 0.625rem;
+  gap: ms.spacing('gap-xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: ms.spacing('padding-4xl');
+    border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   }
 
   &-title {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     &__icon {
-      color: var(--parsec-color-light-primary-600);
-      background: var(--parsec-color-light-secondary-white);
-      border-radius: var(--parsec-radius-6);
+      color: ms.color('icon-brand-default');
+      background: ms.color('surface-base-default');
+      border-radius: ms.radius('md');
       font-size: 1.5rem;
-      padding: 0.25rem;
+      padding: ms.spacing('padding-sm');
     }
 
     &__text {
-      color: var(--parsec-color-light-primary-800);
+      @include ms.font('heading-h4');
+      color: ms.color('text-brand-default');
 
       @include ms.responsive-breakpoint('sm') {
         margin-right: 2rem;
@@ -108,7 +109,8 @@ defineEmits<{
   }
 
   &__text {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-neutral-default');
 
     @include ms.responsive-breakpoint('sm') {
       display: none;
@@ -120,33 +122,34 @@ defineEmits<{
   position: absolute;
   top: 2.75rem;
   right: 1rem;
-  padding: 0.25rem;
+  padding: ms.spacing('padding-sm');
 }
 
 .modal-header--small-display {
-  padding: 0 0 0.5rem;
+  padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-lg');
 
   .small-display-stepper {
-    background: var(--parsec-color-light-primary-50);
+    background: ms.color('surface-brand-default-subtle-hover');
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
-    gap: 0.5rem;
+    padding: ms.spacing('padding-lg');
+    gap: ms.spacing('gap-lg');
 
     &__icon {
-      color: var(--parsec-color-light-primary-600);
-      border-radius: var(--parsec-radius-6);
+      color: ms.color('icon-brand-default');
+      border-radius: ms.radius('md');
       font-size: 1rem;
     }
 
     &__text {
-      color: var(--parsec-color-light-primary-600);
+      @include ms.font('label-md-medium');
+      color: ms.color('text-brand-default');
     }
   }
 
   .modal-header-title {
-    padding: 0.5rem 2rem 1rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   }
 }
 </style>
