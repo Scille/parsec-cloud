@@ -49,11 +49,13 @@
   button.doc-button { border: 1px solid #c8ccd4; border-radius: 6px; padding: 5px 10px; background: #fff; color: #444; font: inherit; cursor: pointer; }
   button.doc-button:hover { background: #eef1f5; }
   button.doc-button.active { background: #3b5b8c; border-color: #3b5b8c; color: #fff; cursor: default; }
-  .actions-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 16px; }
-  /* Alice & Bob side by side; Mallory below them (spanning the full width),
-     since a 3rd client is expected to be needed a lot less. */
+  .actions-container { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 16px; }
+  /* Alice, Bob and Mallory side by side, each the same size: the scenario
+     recorder clicks the same relative spots in every editor, so all three
+     editors must share the same viewport geometry (a wide-but-short 3rd
+     pane would push the document body below its fold). */
   .actions-content { position: relative; height: calc(70vh - 66px); border: 1px solid #d8dce3; border-radius: 8px; overflow: hidden; background: #fff; }
-  .actions-content.wide { grid-column: 1 / -1; height: 30vh; }
+  .actions-content.wide { grid-column: auto; }
   .actions-content > div { height: 100%; }
 </style>
 </head>

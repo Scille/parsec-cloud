@@ -113,7 +113,8 @@ Two separate code bases, one per mode:
     specifics (scenario-tab observation); its deferral is per-editor and
     covers both manual clients (Bob / Mallory).
   - `index.html` — the harness page (Alice / Bob / Mallory editors on one
-    document key); the opened sample document comes from
+    document key, side by side so they share the same viewport geometry);
+    the opened sample document comes from
     `client/tests/e2e/data/imports/`. Its type is selected by the `?doc=`
     URL param (`word`/`cell`/`slide`/`pdf`, default `word` — i.e. the docx
     most common use case), either by clicking a type button in the page
@@ -121,4 +122,17 @@ Two separate code bases, one per mode:
     (useful in headless mode). Each type gets its own document key, so the
     document server opens a fresh session when switching type, and resumes
     the same session when reloading the same one.
-- `package.json` — the `npm run demo` / `npm run with-docker` scripts.
+  - `record.js` — automated scenario recorder (see `npm run record`): the
+    same MITM proxy + harness page, but driven by Playwright instead of by
+    hand. Replays a fixed scenario table (auth / cursor moves / chat
+    messages / document edits — serial / concurrent /
+    while-another-client-is-authenticating, across the docx / xlsx / pptx
+    sample documents) and writes one ready-to-use test record per scenario
+    to `server/tests/editics/records/new/`, in the panel `copy` format.
+    Concurrency is crafted by holding frames at the proxy (manual-flow) and
+    releasing them back to back. Set `OO_EXISTING_DS_PORT=<port>` to reuse
+    an already-running document server (e.g. the one from `npm run
+    with-docker`) instead of starting a new container — needed in
+    environments that cannot boot the container themselves.
+- `package.json` — the `npm run demo` / `npm run with-docker` / `npm run
+  record` scripts.

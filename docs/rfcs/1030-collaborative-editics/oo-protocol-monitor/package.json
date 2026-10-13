@@ -7,7 +7,10 @@
     "demo": "node demo/run.js",
     "demo:headless": "HEADLESS=1 STAY=20000 node demo/run.js",
     "with-docker": "node docker/run.js",
-    "with-docker:headless": "HEADLESS=1 STAY=20000 node docker/run.js"
+    "with-docker:headless": "HEADLESS=1 STAY=20000 node docker/run.js",
+    "record": "node docker/record.js",
+    "record:list": "node docker/record.js list",
+    "record:probe": "OO_PROBE=word node docker/record.js"
   },
   "dependencies": {
     "playwright": "^1.62.1",
