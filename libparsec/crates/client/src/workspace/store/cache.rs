@@ -168,6 +168,7 @@ pub(super) async fn populate_cache_from_local_storage(
     entry_id: VlobID,
 ) -> Result<ArcLocalChildManifest, PopulateCacheFromLocalStorageError> {
     // 1) Local storage lookup
+    println!("with storage po cache 1");
 
     let maybe_found = store
         .data
@@ -353,6 +354,8 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                 encrypted: manifest.dump_and_encrypt(&store.device.local_symkey),
             },
         };
+        println!("with storage pop cache");
+
         let outcome = store
             .data
             .with_storage(|maybe_storage| async move {

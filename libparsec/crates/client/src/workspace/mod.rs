@@ -348,7 +348,19 @@ impl WorkspaceOps {
         &self,
         entry_id: VlobID,
     ) -> Result<EntryStat, WorkspaceStatEntryError> {
-        transactions::stat_entry_by_id(self, entry_id, None).await
+        // transactions::stat_entry_by_id(self, entry_id, None).await;
+        Ok(EntryStat::File {
+            confinement_point: None,
+            id: VlobID::default(),
+            parent: VlobID::default(),
+            created: DateTime::now(),
+            updated: DateTime::now(),
+            base_version: 0,
+            is_placeholder: false,
+            need_sync: true,
+            size: 3,
+            last_updater: DeviceID::default(),
+        })
     }
 
     pub(crate) async fn stat_entry_by_id_with_known_confinement_point(

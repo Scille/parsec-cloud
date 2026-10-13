@@ -26,3 +26,21 @@ pub(crate) async fn client_factory(
     });
     Client::start(config, event_bus, device).await.unwrap()
 }
+
+/// Create a client for the given device WITH monitors (i.e. to test that the monitors are sending the expected stuff)
+pub(crate) async fn client_factory_with_monitors(
+    discriminant_dir: &Path,
+    device: Arc<LocalDevice>,
+) -> Arc<Client> {
+    let event_bus = EventBus::default();
+    let config = Arc::new(ClientConfig {
+        config_dir: discriminant_dir.to_owned(),
+        data_base_dir: discriminant_dir.to_owned(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        with_monitors: true,
+        prevent_sync_pattern: PreventSyncPattern::from_glob("*.tmp").unwrap(),
+    });
+    Client::start(config, event_bus, device).await.unwrap()
+}

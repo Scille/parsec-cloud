@@ -110,6 +110,7 @@ pub(crate) async fn stat_entry_by_id(
     entry_id: VlobID,
     maybe_known_confinement_point: Option<PathConfinementPoint>,
 ) -> Result<EntryStat, WorkspaceStatEntryError> {
+    println!("stat entry");
     let (manifest, confinement_point) = match maybe_known_confinement_point {
         Some(known_confinement_point) => {
             let manifest = ops
@@ -178,6 +179,8 @@ pub(crate) async fn stat_entry_by_id(
         }
     };
 
+    println!("got manifest");
+
     let info = match manifest {
         ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
             confinement_point: confinement_point.into(),
@@ -222,6 +225,7 @@ pub(crate) async fn stat_entry_by_id(
             }
         }
     };
+    println!("process manifest");
 
     Ok(info)
 }

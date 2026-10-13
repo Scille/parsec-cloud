@@ -299,6 +299,7 @@ impl<'a> SyncUpdater<'a> {
                 encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
             },
         };
+        println!("with storage update manifest");
         self.store
             .data
             .with_storage(|maybe_storage| async move {
@@ -350,6 +351,8 @@ impl<'a> SyncUpdater<'a> {
         let new_chunks = new_chunks.map(|(chunk_id, cleartext)| {
             (chunk_id, self.store.device.local_symkey.encrypt(cleartext))
         });
+        println!("with storage update file manifest and chunks");
+
         self.store
             .data
             .with_storage(|maybe_storage| async move {
@@ -617,6 +620,8 @@ impl SyncConflictUpdater<'_> {
                 encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
             },
         };
+        println!("with storage update manifestsss");
+
         self.store
             .data
             .with_storage(|maybe_storage| async move {

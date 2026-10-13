@@ -250,6 +250,8 @@ impl FolderUpdater<'_> {
         };
         match new_child {
             None => {
+                println!("with storage update folder manifest new child");
+
                 self.store
                     .data
                     .with_storage(|maybe_storage| async move {
@@ -287,6 +289,8 @@ impl FolderUpdater<'_> {
                         encrypted: new_child.dump_and_encrypt(&self.store.device.local_symkey),
                     },
                 };
+                println!("with storage update folder manifest");
+
                 self.store
                     .data
                     .with_storage(|maybe_storage| async move {

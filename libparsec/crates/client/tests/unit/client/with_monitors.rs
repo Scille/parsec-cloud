@@ -511,6 +511,7 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
         // Not the right data, wait a bit and retry
         libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
     }
+    panic!()
 }
 
 // Those tests are quite heavy and might be flaky, due to hard-polling for events.

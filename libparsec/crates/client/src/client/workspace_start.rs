@@ -24,6 +24,7 @@ pub async fn start_workspace(
     client: &Client,
     realm_id: VlobID,
 ) -> Result<Arc<WorkspaceOps>, ClientStartWorkspaceError> {
+    println!("start workspace");
     // 1) Take the update lock to guarantee the list of started workspace won't change in our back
 
     let mut workspaces = client.workspaces.lock().await;
@@ -72,10 +73,12 @@ pub async fn start_workspace(
 
     // 4) Finally start the monitors
 
+    println!("start monitors");
     if client.config.with_monitors {
         let inbound_sync_monitor =
             start_workspace_inbound_sync_monitor(workspace_ops.clone(), client.event_bus.clone())
                 .await;
+        println!("role {}", entry.role);
         let outbound_sync_monitor = if entry.role.can_write() {
             let outbound_sync_monitor = start_workspace_outbound_sync_monitor(
                 workspace_ops.clone(),

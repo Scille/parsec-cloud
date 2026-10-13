@@ -947,6 +947,7 @@ async fn db_get_outbound_need_sync(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     limit: u32,
 ) -> anyhow::Result<Vec<VlobID>> {
+    println!("ici");
     let rows = sqlx::query(
         " \
         SELECT \
@@ -959,10 +960,15 @@ async fn db_get_outbound_need_sync(
     .bind(limit)
     .fetch_all(executor)
     .await?;
+    println!("là");
 
-    rows.into_iter()
+    let res = rows
+        .into_iter()
         .map(|row| VlobID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e)))
-        .collect()
+        .collect();
+
+    println!("ok db_get_outbound_need_sync ");
+    res
 }
 
 async fn db_get_outbound_sync_backlog(

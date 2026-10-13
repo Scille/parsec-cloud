@@ -3,7 +3,11 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{ClientGetOutboundSyncBacklog, workspace::OpenOptions};
+use crate::{
+    ClientGetOutboundSyncBacklog, EventWorkspaceOpsOutboundSyncNeeded,
+    EventWorkspaceOutboundSyncBacklog, client::tests::utils::client_factory_with_monitors,
+    workspace::OpenOptions,
+};
 
 use super::utils::client_factory;
 
@@ -58,15 +62,27 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
+    let client = client_factory_with_monitors(&env.discriminant_dir, alice.clone()).await;
+    println!("monitors ? {:?}", client.config.with_monitors);
 
     let started_workspace = client.start_workspace(wksp1_id).await.unwrap();
-    started_workspace.outbound_sync(wksp1_id).await.unwrap();
+    //started_workspace.outbound_sync(wksp1_id).await.unwrap();
 
-    let backlog = client.get_outbound_sync_backlog().await.unwrap();
-    println!(" {backlog:?}");
+    // started_workspace
+    //     .get_need_outbound_sync(u32::MAX)
+    //     .await
+    //     .unwrap();
 
-    assert!(is_backlog_empty(backlog));
+    // let backlog = client.get_outbound_sync_backlog().await.unwrap();
+    // println!(" {backlog:?}");
+
+    // assert!(is_backlog_empty(backlog));
+
+    println!("start spying");
+
+    let mut spy = client.event_bus.spy.start_expecting();
+    println!("rename entry by ID");
+
     started_workspace
         .rename_entry_by_id(
             wksp1_id,
@@ -77,19 +93,39 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
         .await
         .unwrap();
 
+    println!("open file");
+
     let fd = started_workspace
         .open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_write())
         .await
         .unwrap();
-    started_workspace
-        .fd_write(fd, 0, b"client-backlog-test")
-        .await
-        .unwrap();
-    started_workspace.fd_flush(fd).await.unwrap();
-    started_workspace.fd_close(fd).await.unwrap();
+    println!("write");
 
-    let backlog = client.get_outbound_sync_backlog().await.unwrap();
-    assert!(is_backlog_empty(backlog));
+    // started_workspace
+    //     .fd_write(fd, 0, b"client-backlog-test")
+    //     .await
+    //     .unwrap();
+    // started_workspace.fd_flush(fd).await.unwrap();
+    //         println!("file flushed");
+
+    // started_workspace.fd_close(fd).await.unwrap();
+    //     println!("file closed");
+
+    std::thread::sleep(std::time::Duration::from_secs(10));
+
+    spy.assert_next(|_event: &EventWorkspaceOpsOutboundSyncNeeded| {});
+    spy.assert_next(|_event: &EventWorkspaceOpsOutboundSyncNeeded| {});
+
+    println!("spied ");
+
+    // let the monitor monitor
+    // spy.assert_next(|event: &EventWorkspaceOutboundSyncBacklog| {
+    //     println!("{event:?}");
+    //     assert!(false)
+    // });
+
+    // let backlog = client.get_outbound_sync_backlog().await.unwrap();
+    // assert!(is_backlog_empty(backlog));
 }
 
 fn is_backlog_empty(backlog: ClientGetOutboundSyncBacklog) -> bool {

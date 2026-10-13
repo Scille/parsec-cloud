@@ -207,19 +207,25 @@ impl FileUpdater {
         };
         let new_chunks = new_chunks
             .map(|(chunk_id, cleartext)| (chunk_id, store.device.local_symkey.encrypt(cleartext)));
+        println!("with storage update file manifest and continue");
+
         store
             .data
             .with_storage(|maybe_storage| async move {
+                println!("file updater update continue");
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| UpdateFileManifestAndContinueError::Stopped)?;
-
-                storage
+                println!("file updater update continue got storage");
+                let res = storage
                     .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)
                     .await
-                    .map_err(UpdateFileManifestAndContinueError::Internal)
+                    .map_err(UpdateFileManifestAndContinueError::Internal);
+                println!("file updater update continue ok");
+                res
             })
             .await?;
+        println!("file updater update continue after with storage");
 
         // Finally update cache
         store.data.with_current_view_cache(|cache| {
@@ -227,6 +233,7 @@ impl FileUpdater {
                 .manifests
                 .insert(ArcLocalChildManifest::File(manifest));
         });
+        println!("file updater update continue cache updated");
 
         Ok(())
     }

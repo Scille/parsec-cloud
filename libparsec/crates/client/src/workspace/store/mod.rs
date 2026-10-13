@@ -200,7 +200,10 @@ mod data {
         where
             Fut: std::future::Future<Output = T>,
         {
+            println!("attempt to take storage lock");
             let mut guard = self.storage.lock().await;
+            println!("storage lock taken");
+
             let storage_mut_ref = &mut *guard;
 
             unsafe fn pretend_static(
@@ -222,12 +225,13 @@ mod data {
             // `CertificateOps::add_certificates_batch`) which are going to poll this
             // future directly, so the references' lifetimes *are* long enough.
             // TODO: Remove this once async closure are available
+            // https://github.com/rust-lang/rust/issues/62290
             let static_storage_mut_ref = unsafe { pretend_static(storage_mut_ref) };
 
             #[cfg(debug_assertions)]
             let _lock_tracker_guard =
                 DataLockTrackerGuard::register(&self.lock_tracking, DataLock::Storage);
-
+            println!("before fut");
             let fut = cb(static_storage_mut_ref);
             fut.await
         }
@@ -265,6 +269,8 @@ mod data {
             lock_tracking: &'a Mutex<Vec<(RunningFutureID, DataLock)>>,
             lock: DataLock,
         ) -> Self {
+            println!("register {:?}", std::thread::current().id());
+
             // Task ID is only available when within a task (i.e. a spawned future) !
             //
             // Put it another way, `try_task_id()` will return `None` if:
@@ -402,17 +408,23 @@ impl WorkspaceStore {
 
         // 4) All set !
 
+        let data = data::WorkspaceStoreData::new(storage, root_manifest);
+        let res = data
+            .with_storage(|maybe| async move { println!("doing something with storage") })
+            .await;
         Ok(Self {
             realm_id,
             device,
             cmds,
             certificates_ops,
-            data: data::WorkspaceStoreData::new(storage, root_manifest),
+            data,
             prevent_sync_pattern: prevent_sync_pattern.clone(),
         })
     }
 
     pub async fn stop(&self) -> anyhow::Result<()> {
+        println!("with storage stop");
+
         self.data
             .with_storage(|maybe_storage| async move {
                 if let Some(storage) = maybe_storage.take() {
@@ -447,6 +459,8 @@ impl WorkspaceStore {
     pub async fn get_outbound_sync_backlog(
         &self,
     ) -> Result<WorkspaceOutboundSyncBacklog, WorkspaceGetOutboundSyncBacklogError> {
+        println!("with storage get_outbound_sync_backlog");
+
         self.data
             .with_storage(|maybe_storage| async move {
                 let storage = maybe_storage
@@ -654,6 +668,7 @@ impl WorkspaceStore {
         }
 
         // Cache miss ! Try to fetch from the local storage
+        println!("with storage get chiunk or block local only");
 
         let maybe_encrypted = self
             .data
@@ -787,6 +802,8 @@ impl WorkspaceStore {
         // Should both store the data in local storage...
 
         let encrypted = self.device.local_symkey.encrypt(&data);
+        println!("with storage get chiunk or block");
+
         self.data
             .with_storage(|maybe_storage| async move {
                 let storage = maybe_storage
@@ -815,6 +832,8 @@ impl WorkspaceStore {
     ) -> Result<Option<Bytes>, GetNotUploadedChunkError> {
         // Don't use the in-memory cache given it doesn't tell if the data is from and
         // uploaded block or not.
+        println!("with storage get_not_uploaded_chunk");
+
         let maybe_encrypted = self
             .data
             .with_storage(|maybe_storage| async move {
@@ -849,6 +868,8 @@ impl WorkspaceStore {
         &self,
         chunk_id: ChunkID,
     ) -> Result<(), PromoteLocalOnlyChunkToUploadedBlockError> {
+        println!("with storage promote_local_only_chunk_to_uploaded_block");
+
         self.data
             .with_storage(|maybe_storage| async move {
                 let storage = maybe_storage
@@ -867,6 +888,8 @@ impl WorkspaceStore {
         &self,
         limit: u32,
     ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
+        println!("with storage get_inbound_need_sync_entries");
+
         self.data
             .with_storage(|maybe_storage| async move {
                 let storage = maybe_storage
@@ -885,12 +908,14 @@ impl WorkspaceStore {
         &self,
         limit: u32,
     ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
+        println!("get_outbound_need_sync_entries");
         self.data
             .with_storage(|maybe_storage| async move {
+                println!(" get_outbound_need_sync_entries with storage");
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
-
+                println!(" get_outbound_need_sync_entries with storage 2");
                 storage
                     .get_outbound_need_sync(limit)
                     .await
@@ -900,7 +925,10 @@ impl WorkspaceStore {
     }
 
     pub async fn get_realm_checkpoint(&self) -> Result<IndexInt, GetRealmCheckpointError> {
-        self.data
+        println!("with storage get realm checkpoint");
+
+        let res = self
+            .data
             .with_storage(|maybe_storage| async move {
                 let storage = maybe_storage
                     .as_mut()
@@ -911,7 +939,10 @@ impl WorkspaceStore {
                     .await
                     .map_err(GetRealmCheckpointError::Internal)
             })
-            .await
+            .await;
+        println!("with storage get realm checkpoint ok");
+
+        res
     }
 
     pub async fn update_realm_checkpoint(
@@ -919,6 +950,8 @@ impl WorkspaceStore {
         current_checkpoint: IndexInt,
         changes: &[(VlobID, VersionInt)],
     ) -> Result<(), UpdateRealmCheckpointError> {
+        println!("with storage update realm checkpoint");
+
         self.data
             .with_storage(|maybe_storage| async move {
                 let storage = maybe_storage

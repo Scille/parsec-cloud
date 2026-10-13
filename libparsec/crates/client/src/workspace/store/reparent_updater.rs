@@ -132,6 +132,8 @@ impl ReparentingUpdater<'_> {
         match &dst_child_manifest {
             // 3 manifests to update
             None => {
+                println!("with storage update manifestss reaprents");
+
                 store
                     .data
                     .with_storage(|maybe_storage| async move {
@@ -170,6 +172,7 @@ impl ReparentingUpdater<'_> {
                         encrypted: dst_child_manifest.dump_and_encrypt(&store.device.local_symkey),
                     },
                 };
+                println!("with storage update manifestss reparent");
 
                 store
                     .data

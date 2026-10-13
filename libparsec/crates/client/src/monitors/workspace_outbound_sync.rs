@@ -44,6 +44,7 @@ pub(crate) async fn start_workspace_outbound_sync_monitor(
     event_bus: EventBus,
     device: Arc<LocalDevice>,
 ) -> Monitor {
+    println!("workspace outbound sync monitor");
     let realm_id = workspace_ops.realm_id();
     let (task_future, stop_cb) = task_future_factory(workspace_ops, event_bus.clone(), device);
     let task_future = pretend_future_is_send_on_web(task_future);
@@ -173,6 +174,7 @@ fn task_future_factory(
     event_bus: EventBus,
     device: Arc<LocalDevice>,
 ) -> (impl Future<Output = ()>, Box<dyn FnOnce() + Send + 'static>) {
+    println!("task future factory");
     let realm_id = workspace_ops.realm_id();
     let (tx, rx) = channel::unbounded::<IncomingEvent>();
 
@@ -209,6 +211,7 @@ fn task_future_factory(
             }
         })
     },);
+    println!("before future");
 
     let task_future = async move {
         let _outbound_sync_needed_events_connection_lifetime =
@@ -220,6 +223,7 @@ fn task_future_factory(
 
         // Start a sub-task that will do the actual synchronization work
 
+        println!("before syncer");
         // Note the rendezvous channel (i.e. bound with zero capacity) used for
         // communication.
         // This is because we want the entry waiting for sync to stay in the
@@ -227,11 +231,12 @@ fn task_future_factory(
         // modification occurs.
         let (syncer_tx, syncer_rx) = channel::bounded::<VlobID>(0);
         let syncer = spawn({
+            println!("spawned syncer");
             let workspace_ops = workspace_ops.clone();
             let tx = tx.clone();
             let device = device.clone();
             let confined_entries_tracker = confined_entries_tracker.clone();
-            let event_bus = event_bus.clone();
+            // let event_bus = event_bus.clone();
             async move {
                 let mut syncer_stop_requested = pin!(syncer_stop_requested);
                 macro_rules! handle_workspace_sync_error {
@@ -342,6 +347,7 @@ fn task_future_factory(
                             }
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
                             Ok(OutboundSyncOutcome::EntryIsBusy) => {
+                                println!("busyyyy");
                                 // Re-enqueue to retry later
 
                                 // We are playing a dangerous game here: `flume::Receiver::recv_async`
@@ -373,6 +379,8 @@ fn task_future_factory(
                         );
                         match outcome {
                             Ok(InboundSyncOutcome::EntryIsBusy) => {
+                                println!("busyyyyyy");
+
                                 // Re-enqueue to retry later
 
                                 // We are playing a dangerous game here: `flume::Receiver::recv_async`
@@ -407,37 +415,49 @@ fn task_future_factory(
             }
         });
 
+        #[derive(Debug)]
         struct DueTime {
             since: DateTime,
             due_time: DateTime,
         }
 
+        println!("to sync");
+
         let (mut to_sync, mut due_time) = {
+            println!("inside to sync");
+
             let since = device.now();
+            println!("inside to sync 2");
+
             let due_time = since + MIN_SYNC_WAIT;
+            println!("=== Are we dead lock yet ?");
+
             let outcome = workspace_ops.get_need_outbound_sync(u32::MAX).await;
+            println!("=== No !");
+
             log::debug!("Workspace {realm_id}: get need outbound sync, outcome: {outcome:?}");
+            println!("Workspace {realm_id}: get need outbound sync, outcome: {outcome:?}");
             let to_sync = match outcome {
                 Ok(to_sync) => {
                     let mut res = HashMap::new();
                     for entry_id in to_sync {
-                        match workspace_ops.stat_entry_by_id(entry_id).await {
-                            Ok(stats) => {
-                                if !stats.is_confined() {
-                                    res.insert(
-                                        entry_id,
-                                        (DueTime { since, due_time }, stats.size()),
-                                    );
-                                }
-                            }
-                            Err(e) => {
-                                log::info!(
-                                    "Workspace {realm_id}: can not stat {entry_id} due to error: {e:?}"
-                                );
-                                // Or break with error ?
-                                res.insert(entry_id, (DueTime { since, due_time }, 0));
-                            }
-                        };
+                        // match workspace_ops.stat_entry_by_id(entry_id).await {
+                        //     Ok(stats) => {
+                        // if !stats.is_confined() {
+                        res.insert(
+                            entry_id,
+                            (DueTime { since, due_time }, 123), //dummy
+                        );
+                        // }
+                        // }
+                        // Err(e) => {
+                        //     log::info!(
+                        //         "Workspace {realm_id}: can not stat {entry_id} due to error: {e:?}"
+                        //     );
+                        //     // Or break with error ?
+                        //     res.insert(entry_id, (DueTime { since, due_time }, 0));
+                        // }
+                        // };
                     }
 
                     res
@@ -451,10 +471,16 @@ fn task_future_factory(
                             log::error!(
                                 "Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop"
                             );
+                            println!(
+                                "Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop"
+                            );
                             return;
                         }
                         WorkspaceGetNeedOutboundSyncEntriesError::Internal(err) => {
                             log::error!(
+                                "Workspace {realm_id}: stopping due to unexpected error: {err:?}"
+                            );
+                            println!(
                                 "Workspace {realm_id}: stopping due to unexpected error: {err:?}"
                             );
                             return;
@@ -471,6 +497,8 @@ fn task_future_factory(
             (to_sync, due_time)
         };
 
+        println!("to sync : {to_sync:?}");
+
         #[derive(Debug)]
         enum Action {
             Stop,
@@ -480,7 +508,9 @@ fn task_future_factory(
         }
 
         let mut stop_requested = pin!(stop_requested);
+        println!("before loop");
         loop {
+            println!("loooop");
             let to_sleep = match due_time {
                 None => {
                     log::debug!("Workspace {realm_id}: sleeping forever");
@@ -587,32 +617,32 @@ fn task_future_factory(
                             std::collections::hash_map::Entry::Vacant(entry) => {
                                 let due_time = now + MIN_SYNC_WAIT;
 
-                                match workspace_ops.stat_entry_by_id(entry_id).await {
-                                    Ok(stats) => {
-                                        if !stats.is_confined() {
-                                            entry.insert((
-                                                DueTime {
-                                                    since: now,
-                                                    due_time,
-                                                },
-                                                stats.size(),
-                                            ));
-                                        }
-                                    }
-                                    Err(e) => {
-                                        log::info!(
-                                            "Workspace {realm_id}: can not stat {entry_id} due to error: {e:?}"
-                                        );
-                                        // Or break with error ?
-                                        entry.insert((
-                                            DueTime {
-                                                since: now,
-                                                due_time,
-                                            },
-                                            0,
-                                        ));
-                                    }
-                                };
+                                // match workspace_ops.stat_entry_by_id(entry_id).await {
+                                //     Ok(stats) => {
+                                // if !stats.is_confined() {
+                                entry.insert((
+                                    DueTime {
+                                        since: now,
+                                        due_time,
+                                    },
+                                    456, //dummy
+                                ));
+                                // }
+                                //     }
+                                //     Err(e) => {
+                                //         log::info!(
+                                //             "Workspace {realm_id}: can not stat {entry_id} due to error: {e:?}"
+                                //         );
+                                //         // Or break with error ?
+                                //         entry.insert((
+                                //             DueTime {
+                                //                 since: now,
+                                //                 due_time,
+                                //             },
+                                //             0,
+                                //         ));
+                                //     }
+                                // };
 
                                 due_time
                             }
@@ -643,10 +673,12 @@ fn task_future_factory(
                     (count + 1, total_size + size)
                 });
 
-            event_bus.send(&EventWorkspaceOutboundSyncBacklog {
-                number_of_files_to_sync,
-                size_to_sync,
-            });
+            // event_bus.send(&EventWorkspaceOutboundSyncBacklog {
+            //     number_of_files_to_sync,
+            //     size_to_sync,
+            // });
+
+            println!("{number_of_files_to_sync} - {size_to_sync}");
         }
     };
 

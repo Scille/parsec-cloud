@@ -148,6 +148,8 @@ impl WorkspaceStorage {
     }
 
     pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
+        println!("platform storage");
+
         self.platform.get_outbound_need_sync(limit).await
     }
 
