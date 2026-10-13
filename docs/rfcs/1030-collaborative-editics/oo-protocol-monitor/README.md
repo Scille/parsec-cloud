@@ -4,13 +4,19 @@
 
 A small investigation harness that watches the live co-editing client↔server
 messages in a draggable panel — **and can hold/release individual frames** to
-craft concurrent-operation scenarios (e.g. John takes a lock, Kate tries to take
-the same lock *before* receiving John's lock event).
+craft concurrent-operation scenarios (e.g. one client takes a lock, another
+tries to take the same lock *before* receiving the first client's lock event).
 
 The harness can run in two mode:
 
 - `npm run demo`: (aka Quick&dirty mode): use the public [OnlyOffice "see-it-in-action" demo](https://www.onlyoffice.com/see-it-in-action)
 - `npm run with-docker`: (aka Correct but slow mode): use docker to have the version of OnlyOffice used in Parsec
+
+In `with-docker` mode, the harness page opens the clients under their Parsec
+test fixtures names/IDs (Alice / Bob / Mallory — see `docker/index.html`), so a
+capture can be used as a test record (`server/tests/editics/records/`)
+without running `cook_record.py` on it: only `sessionId` still needs a
+fixup, done where the record is parsed (`server/tests/editics/test_records.py`).
 
 ## How it works
 
@@ -36,14 +42,14 @@ directions through a **gate**:
   make engine.io time the connection out.
 
 Because the proxy owns the bytes on the wire, **recv can actually be paused**:
-the message cannot reach Kate's socket.io until the proxy forwards it. This is
-the only approach that can gate recv; observing alone (e.g. Playwright's
-`page.on('websocket')`) can't prevent delivery.
+the message cannot reach a client's socket.io until the proxy forwards it.
+This is the only approach that can gate recv; observing alone (e.g.
+Playwright's `page.on('websocket')`) can't prevent delivery.
 
 The panel lives in the top frame and is fed by the proxy over a control
-WebSocket (`/ctl`). Editor identity (John Smith / Kate Cage / Anonymous) is
-resolved in the proxy from the `auth` event. The panel auto-filters by the
-active scenario tab: Collaborate → John & Kate; others → Anonymous.
+WebSocket (`/ctl`). Editor identity (John Smith / Kate Cage / Anonymous on the
+demo page, Alice / Bob / Mallory with docker) is resolved in the proxy from
+the `auth` event.
 
 ## Run
 
@@ -61,7 +67,7 @@ The browser is launched with `--allow-running-insecure-content` /
 `--disable-web-security` and `bypassCSP: true` so the https OnlyOffice page can
 connect to the local `ws://127.0.0.1` proxy (mixed content + CSP would
 otherwise block it). If the document doesn't load and you only see `poll` /
-`unknown` events, check the run-demo terminal for `[proxy] /oo connection:` and
+`unknown` events, check the run terminal for `[proxy] /oo connection:` and
 `[proxy] upstream connected` lines — if they're absent, the redirect isn't
 reaching the proxy; run with `PROXY_VERBOSE=1 npm run demo` for full proxy logs.
 If the proxy is unreachable, the in-page script logs `[OO Monitor] proxy NOT
@@ -70,30 +76,44 @@ normally, no gating).
 
 ### Crafting a concurrent scenario
 
-1. Switch to **Collaborate**, edit solo in John's editor.
-2. Click **Start Kate's editor** (Kate's editor is deliberately deferred), OR
-   click **Re-start John's editor in manual-flow** (under "Start Kate's
-   editor") to reload the whole page with manual-flow armed so John's whole
-   socket handshake can be stepped through frame by frame from a clean state —
-   useful to test concurrent joins.
-3. In manual-flow, drive the action (e.g. John takes a lock). Frames now pile
-   up as ⏸ held rows; click each row's **`send`** to release it in the order
-   you want to test (e.g. release Kate's lock send *before* releasing John's
-   lock-grant recv to Kate) to force a race.
+1. Switch to **Collaborate** (demo) / edit solo in the first client's editor
+   (John on the demo page, Alice with docker).
+2. Click **Start …'s editor** on a deferred client's overlay (Kate on the
+   demo page, Bob / Mallory with docker), OR click **Re-start …'s editor in
+   manual-flow** (on the first deferred overlay, labeled after the first
+   client) to reload the whole page with manual-flow armed so the first
+   client's whole socket handshake can be stepped through frame by frame from
+   a clean state — useful to test concurrent joins.
+3. In manual-flow, drive the action (e.g. the first client takes a lock).
+   Frames now pile up as ⏸ held rows; click each row's **`send`** to release it
+   in the order you want to test (e.g. release the second client's lock send
+   *before* releasing the first client's lock-grant recv to it) to force a
+   race.
 
 ## Files
 
-- `proxy.js` — local WebSocket MITM (`/oo` traffic, `/ctl` control channel),
-  decode + hold/release logic. Started by run-demo.js.
-- `monitor.js` — in-page script: one-line `WebSocket` URL redirect + the panel
-  (control-channel client, event rendering, `send` release buttons, scenario
-  filter, Kate-deferral overlay + "Re-start John's editor in manual-flow").
-- `run-demo.js` — Playwright launcher: starts the proxy, injects the monitor
-  with `window.__OO_PROXY_PORT` set, opens the demo, switches to Collaborate.
-- `run-docker.js` — same launcher flow against a pinned local document server
-  started with podman/docker (`npm run in-use-onlyoffice`): container
-  lifecycle + healthcheck, harness page server, cleanup on exit.
-- `docker-index.html` — the harness page served by `run-docker.js` (John + Kate
-  editors on one document key, demo-compatible DOM conventions).
-- `docker-document.docx` — the document opened by the harness (copied from the document
-  server's own converter self-test fixture in the `server` submodule).
+Two separate code bases, one per mode:
+
+- `demo/` — monitor against the public onlyoffice.com demo page (whatever
+  OnlyOffice version it happens to run today):
+  - `run.js` — Playwright launcher: starts the proxy, injects the monitor,
+    opens the demo page, switches to Collaborate.
+  - `proxy.js` — local WebSocket MITM (`/oo` traffic, `/ctl` control channel),
+    decode + hold/release logic.
+  - `monitor.js` — in-page script: `WebSocket` URL redirect + the panel
+    (scenario chips, Kate-deferral overlay, "Re-start John's editor in
+    manual-flow").
+- `docker/` — monitor against a **pinned local** OnlyOffice Document Server
+  (9.3.0, the release the project's bundled editor is built from), started on
+  demand via podman/docker and destroyed on exit:
+  - `run.js` — launcher: container lifecycle + healthcheck, harness page
+    server, then the same proxy + monitor flow as the demo mode.
+  - `proxy.js` — same WebSocket MITM as `demo/proxy.js`.
+  - `monitor.js` — same panel as `demo/monitor.js`, minus the demo-page
+    specifics (scenario-tab observation); its deferral is per-editor and
+    covers both manual clients (Bob / Mallory).
+  - `index.html` — the harness page (Alice / Bob / Mallory editors on one
+    document key); the opened document comes from
+    `client/tests/e2e/data/imports/` (`OO_DOC` to pick another file,
+    default `document.docx`).
+- `package.json` — the `npm run demo` / `npm run with-docker` scripts.

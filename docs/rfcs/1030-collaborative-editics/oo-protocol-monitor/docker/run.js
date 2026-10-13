@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * run-docker.js — Same protocol monitor as run-demo.js, but against a
- * *pinned local* OnlyOffice Document Server started on demand with
- * podman/docker, instead of the public onlyoffice.com demo page (which
- * silently moves to whatever OnlyOffice version is current).
+ * run.js — Same protocol monitor as the demo one, but against a *pinned
+ * local* OnlyOffice Document Server started on demand with podman/docker,
+ * instead of the public onlyoffice.com demo page (which silently moves to
+ * whatever OnlyOffice version is current).
  *
  * The image is `onlyoffice/documentserver:9.3.0` (fully qualified
  * `docker.io/onlyoffice/documentserver:9.3.0`): the DocumentServer release
@@ -22,21 +22,22 @@
  *      private/loopback IP filtering off, so the container may fetch the
  *      sample document and call the editor callback on this machine), then
  *      waits for the /healthcheck endpoint;
- *   2. serves docker-index.html + docker-document.docx (+ a stub callbackUrl) on a
- *      local HTTP server — two editors (John Smith / Kate Cage) sharing one
- *      document key, reusing the demo page's DOM conventions so monitor.js
- *      works unchanged;
- *   3. starts the same WebSocket MITM proxy as run-demo.js, injects the
+ *   2. serves index.html (the harness page) + the sample document (from
+ *      client/tests/e2e/data/imports/) + a stub callbackUrl on a local
+ *      HTTP server — three editors (Alice / Bob / Mallory, named and ID'ed
+ *      after the Parsec test fixtures so captures are directly usable as
+ *      test records) sharing one document key;
+ *   3. starts the same WebSocket MITM proxy as the demo mode, injects the
  *      monitor, opens the page, prints the captured status.
  *
  * On exit (Ctrl-C, STAY timeout, error) the container is stopped and — thanks
  * to --rm — destroyed. The image itself stays cached so the next run is fast.
  *
  * Usage:
- *   node run-docker.js                 # headful, keeps open (Ctrl-C to exit)
- *   HEADLESS=1 STAY=60000 node run-docker.js
+ *   node run.js                     # headful, keeps open (Ctrl-C to exit)
+ *   HEADLESS=1 STAY=60000 node run.js
  *
- * Environment (on top of HEADLESS / STAY / PROXY_VERBOSE from run-demo.js):
+ * Environment (on top of HEADLESS / STAY / PROXY_VERBOSE):
  *   OO_ENGINE          container engine: podman (default if present), docker
  *   OO_DS_IMAGE        default docker.io/onlyoffice/documentserver:9.3.0
  *   OO_DS_PORT         host port for the document server (default: 8080 if
@@ -45,6 +46,8 @@
  *                      (default: host.containers.internal with podman,
  *                      host.docker.internal with docker)
  *   OO_DS_BOOT_TIMEOUT ms to wait for /healthcheck (default 300000)
+ *   OO_DOC             sample document to open, looked up in
+ *                      client/tests/e2e/data/imports/ (default: document.docx)
  */
 'use strict';
 
@@ -59,8 +62,11 @@ const { createProxy } = require('./proxy');
 
 const DIR = __dirname;
 const MONITOR = path.join(DIR, 'monitor.js');
-const PAGE_TEMPLATE = path.join(DIR, 'docker-index.html');
-const SAMPLE_DOCX = path.join(DIR, 'docker-document.docx');
+const PAGE_TEMPLATE = path.join(DIR, 'index.html');
+// The harness page opens a Word document; sample documents live with the
+// other e2e test data (5 levels up = the repository root).
+const SAMPLE_DOC_DIR = path.join(DIR, '..', '..', '..', '..', '..', 'client', 'tests', 'e2e', 'data', 'imports');
+const SAMPLE_DOC = path.join(SAMPLE_DOC_DIR, process.env.OO_DOC || 'document.docx');
 
 // Fully qualified on purpose: podman setups without unqualified-search
 // registries reject the short form, and docker accepts docker.io/… too.
@@ -215,13 +221,13 @@ async function waitDsReady(dsPort) {
   }
 }
 
-// ---- harness page server (page + docker-document.docx + stub callback) ---------------
+// ---- harness page server (page + sample document + stub callback) --------
 
-function startPageServer(dsPort, docKey) {
+function startPageServer(dsPort, docKey, sampleDoc) {
   const server = http.createServer();
   return new Promise((resolve, reject) => {
     server.on('error', reject);
-    // 0.0.0.0: the container fetches /docker-document.docx and /callback through the
+    // 0.0.0.0: the container fetches /document.docx and /callback through the
     // host alias — docker's bridge gateway cannot reach a 127.0.0.1-bound
     // server (podman's slirp could; 0.0.0.0 covers both engines).
     server.listen(0, '0.0.0.0', () => {
@@ -232,13 +238,13 @@ function startPageServer(dsPort, docKey) {
         .replace(/\{\{DOC_KEY\}\}/g, docKey)
         .replace(/\{\{HOST_ALIAS\}\}/g, HOST_ALIAS)
         .replace(/\{\{IMAGE\}\}/g, IMAGE);
-      const docx = fs.readFileSync(SAMPLE_DOCX);
+      const docx = fs.readFileSync(sampleDoc);
       server.on('request', (req, res) => {
         const u = (req.url || '').split('?')[0];
         if (req.method === 'GET' && u === '/') {
           res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
           res.end(pageSrc);
-        } else if (req.method === 'GET' && u === '/docker-document.docx') {
+        } else if (req.method === 'GET' && u === '/document.docx') {
           res.writeHead(200, {
             'content-type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'content-length': docx.length,
@@ -266,6 +272,11 @@ function startPageServer(dsPort, docKey) {
 
 (async () => {
   console.log('→ container engine: ' + ENGINE + '    image: ' + IMAGE);
+
+  // Fail early if the sample document is missing (e.g. bad OO_DOC), before
+  // starting the container.
+  if (!fs.existsSync(SAMPLE_DOC)) die('sample document not found: ' + SAMPLE_DOC);
+
   const dsPort = await pickDsPort();
 
   // Remove a stale container left by a previous crashed run, then start.
@@ -292,7 +303,7 @@ function startPageServer(dsPort, docKey) {
 
   // Fresh document key per run → fresh co-editing session on the fresh server.
   const docKey = 'oom' + Date.now().toString(36);
-  const pages = await startPageServer(dsPort, docKey);
+  const pages = await startPageServer(dsPort, docKey, SAMPLE_DOC);
   pageServer = pages.server;
   console.log('→ harness page on http://127.0.0.1:' + pages.port + '/  (doc key ' + docKey + ', server-side URLs via ' + HOST_ALIAS + ')');
 
@@ -333,8 +344,9 @@ function startPageServer(dsPort, docKey) {
   console.log('→ opening ' + pageUrl);
   await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-  // wait for John's editor iframe to load its app (Kate's is deferred behind
-  // the panel's "Start Kate's editor" overlay, like the demo's Collaborate tab)
+  // wait for Alice's editor iframe to load its app (Bob's and Mallory's are
+  // deferred behind the panel's "Start …'s editor" overlays, like the demo
+  // page's Collaborate tab)
   console.log('→ waiting for the editor frames to connect…');
   try {
     await page.waitForFunction(() =>
@@ -365,13 +377,12 @@ function startPageServer(dsPort, docKey) {
           : null,
         editorUser: M.editorUser,
         users: Object.keys(M.users || {}),
-        mode: M.mode,
         manualFlow: M.intercept,
         connected: M.connected,
         byType
       };
     });
-    console.log('  mode=' + s.mode + '  manualFlow=' + s.manualFlow + '  proxy=' + (s.connected ? 'connected' : 'disconnected'));
+    console.log('  manualFlow=' + s.manualFlow + '  proxy=' + (s.connected ? 'connected' : 'disconnected'));
     console.log('  OnlyOffice version=' + (s.ooVersion || 'unknown (no license/auth event seen yet)'));
     console.log('  users=' + JSON.stringify(s.editorUser) + '  chips=' + JSON.stringify(s.users));
     console.log('  events=' + s.events);
@@ -382,11 +393,11 @@ function startPageServer(dsPort, docKey) {
   console.log('  proxy: sessions=' + proxy.state.sessions.size + '  holds=' + proxy.state.holds.size + '  manualFlow=' + proxy.state.intercept);
 
   console.log('\nA draggable "OO Protocol Monitor" panel is visible in the page.');
-  console.log("John's editor starts connected; Kate's is held behind the \"Start Kate's editor\"");
-  console.log('overlay (click it to watch her late-join), like the demo\'s Collaborate tab.');
+  console.log("Alice's editor starts connected; Bob's and Mallory's are held behind their");
+  console.log('"Start …\'s editor" overlays (click them to watch their late-join).');
   console.log('Click "auto-flow" to switch to manual-flow: frames are held and each row shows a');
-  console.log('"send" button to release it. Use "Re-start John\'s editor in manual-flow" to reload the');
-  console.log('page with manual-flow armed and step through John\'s handshake frame by frame.\n');
+  console.log('"send" button to release it. Use "Re-start Alice\'s editor in manual-flow" to reload the');
+  console.log('page with manual-flow armed and step through Alice\'s handshake frame by frame.\n');
   console.log('Document server: ' + IMAGE + ' on http://127.0.0.1:' + dsPort + ' — stopped & removed when this command exits.');
 
   if (STAY_MS > 0) {

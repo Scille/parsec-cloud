@@ -1,22 +1,31 @@
 <!DOCTYPE html>
 <!--
-  docker-index.html — harness page served by run-docker.js.
+  index.html — harness page served by run.js.
 
   The public onlyoffice.com demo page embeds *their* hosted editors, so a
-  local document server needs its own page. This one opens two editors
-  (John Smith / Kate Cage) on the same document key — a live co-editing
+  local document server needs its own page. This one opens three editors
+  (Alice / Bob / Mallory) on the same document key — a live co-editing
   session, like the demo's Collaborate tab.
 
-  It deliberately reuses the demo page's DOM conventions (class names
+  The client names and user IDs match the Parsec server-side test fixtures
+  (see `server/tests/common/editics.py`), so a captured record is usable as-is
+  by `server/tests/editics/test_records.py`: participant names and
+  `userId`/`idOriginal` fields already have their expected values, and the
+  OnlyOffice per-connection composite ids (`<userId><indexUser>`, e.g.
+  `de10a11cec00100000000000000000001` for Alice) are deterministic. Only
+  `sessionId` still needs a fixup where the record is parsed (it is the
+  OnlyOffice session id on the wire, while the editics protocol reuses the
+  participant id there).
+
+  The page deliberately keeps the demo page's DOM conventions (class names
   `actions-tab-button` / `actions-container` / `actions-content`, editor ids
-  `document-editor-1` / `document-editor-2`) so monitor.js works UNCHANGED:
-  the scenario chips, the side-by-side grid CSS, and the "Start Kate's
-  editor" deferral overlay all key off those names.
+  `document-editor-1` / `-2` / `-3`) that monitor.js keys off for the
+  "Start …'s editor" deferral overlays and the panel chips.
 
   Placeholders {{DS_PORT}} {{PAGE_PORT}} {{DOC_KEY}} {{HOST_ALIAS}} {{IMAGE}}
-  are filled by run-docker.js when the page is served. The `{{HOST_ALIAS}}`
-  URLs (document.url / callbackUrl) are fetched by the document server from
-  inside the container, not by this page — hence the container→host alias.
+  are filled by run.js when the page is served. The `{{HOST_ALIAS}}` URLs
+  (document.url / callbackUrl) are fetched by the document server from inside
+  the container, not by this page — hence the container→host alias.
 -->
 <html>
 <head>
@@ -29,25 +38,27 @@
   #api-error { display: none; color: #b00; padding: 0 16px; }
   button.actions-tab-button { border: 0; border-radius: 6px; padding: 6px 14px; background: #3b5b8c; color: #fff; font: inherit; cursor: default; }
   .actions-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 16px; }
-  .actions-content { position: relative; height: calc(100vh - 54px); border: 1px solid #d8dce3; border-radius: 8px; overflow: hidden; background: #fff; }
+  /* Alice & Bob side by side; Mallory below them (spanning the full width),
+     since a 3rd client is expected to be needed a lot less. */
+  .actions-content { position: relative; height: calc(70vh - 66px); border: 1px solid #d8dce3; border-radius: 8px; overflow: hidden; background: #fff; }
+  .actions-content.wide { grid-column: 1 / -1; height: 30vh; }
   .actions-content > div { height: 100%; }
 </style>
 </head>
 <body>
   <div id="hdr">
     <b>OO protocol monitor</b>
-    <!-- class names matter: monitor.js reads this button to detect the
-         "Collaborate" scenario (filters the panel chips by user). -->
     <button class="actions-tab-button active">Collaborate</button>
     <span>document server <code>http://127.0.0.1:{{DS_PORT}}</code> — image <code>{{IMAGE}}</code></span>
     <span>doc key <code>{{DOC_KEY}}</code></span>
   </div>
-  <!-- .actions-container/.actions-content: monitor.js lays the two editors
-       out side by side and positions the "Start Kate's editor" overlay over
-       the SECOND .actions-content. -->
+  <!-- .actions-container/.actions-content: monitor.js positions one
+       "Start …'s editor" overlay over each deferred editor's
+       .actions-content. -->
   <div class="actions-container">
     <div class="actions-content"><div id="document-editor-1"></div></div>
     <div class="actions-content"><div id="document-editor-2"></div></div>
+    <div class="actions-content wide"><div id="document-editor-3"></div></div>
   </div>
   <div id="api-error">Failed to load <code>api.js</code> from the document server — is the container still running?</div>
 
@@ -56,8 +67,16 @@
     (function () {
       // Fetched by the document server itself (from inside the container),
       // hence the host alias instead of 127.0.0.1.
-      var DOC_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/docker-document.docx';
+      var DOC_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/document.docx';
       var CALLBACK_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/callback';
+
+      // Parsec test fixtures' clients (device IDs), so captured records don't
+      // need `cook_record.py` anymore.
+      var CLIENTS = [
+        { id: 'document-editor-1', name: 'Alice',   uid: 'de10a11cec0010000000000000000000' },
+        { id: 'document-editor-2', name: 'Bob',     uid: 'de10808c001000000000000000000000' },
+        { id: 'document-editor-3', name: 'Mallory', uid: 'de103a11031c00100000000000000000' },
+      ];
 
       function openEditor(id, name, uid) {
         new DocsAPI.DocEditor(id, {
@@ -67,7 +86,7 @@
           height: '100%',
           document: {
             fileType: 'docx',
-            key: '{{DOC_KEY}}',        // same key on both editors → co-editing
+            key: '{{DOC_KEY}}',        // same key on all editors → co-editing
             title: 'monitor.docx',
             url: DOC_URL,
             permissions: { edit: true }
@@ -83,16 +102,15 @@
       }
 
       function start() {
-        openEditor('document-editor-1', 'John Smith', 'user-1');
-        // document-editor-2 (Kate) is trapped + deferred by the injected
-        // monitor behind the panel's "Start Kate's editor" button, exactly
-        // like on the demo page.
-        openEditor('document-editor-2', 'Kate Cage', 'user-2');
+        CLIENTS.forEach(function (c) { openEditor(c.id, c.name, c.uid); });
+        // The injected monitor's DocEditor trap defers document-editor-2 (Bob)
+        // and document-editor-3 (Mallory) until their "Start …'s editor"
+        // overlay button is clicked, so Alice's editor connects first.
       }
 
       // Wait for api.js, then give the monitor's init script a beat to wrap
       // DocsAPI.DocEditor (it polls every 50ms) before building the editors,
-      // so the Kate-deferral trap is guaranteed to be installed first.
+      // so the deferral trap is guaranteed to be installed first.
       var tries = 0;
       (function waitApi() {
         if (window.DocsAPI && window.DocsAPI.DocEditor) { setTimeout(start, 300); return; }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * run-demo.js — Launch a browser, open the OnlyOffice "see-it-in-action" demo,
+ * run.js — Launch a browser, open the OnlyOffice "see-it-in-action" demo,
  * click "Collaborate", inject the protocol monitor into every frame, and
  * stay open so you can watch the live event log widget in the editor.
  *
@@ -11,9 +11,9 @@
  * way to gate RECV (the bytes can't reach socket.io until the proxy forwards).
  *
  * Usage:
- *   node run-demo.js                 # headless:false, 2 editor instances
- *   HEADLESS=1 node run-demo.js      # headless (UI widget still rendered, no display)
- *   STAY=60000 node run-demo.js       # auto-close after 60s (default: keeps open)
+ *   node run.js                     # headless:false, 2 editor instances
+ *   HEADLESS=1 node run.js          # headless (UI widget still rendered, no display)
+ *   STAY=60000 node run.js           # auto-close after 60s (default: keeps open)
  *
  * Requires: `npm i playwright ws` and a Chromium (uses the playwright-bundled one).
  */
