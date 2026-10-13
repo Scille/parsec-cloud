@@ -3,10 +3,10 @@
 <template>
   <div class="settings-option">
     <div class="settings-option__content">
-      <ion-text class="button-large title">
+      <ion-text class="title">
         {{ $msTranslate(title) }}
       </ion-text>
-      <ion-text class="body-sm description">
+      <ion-text class="description">
         {{ $msTranslate(description) }}
       </ion-text>
     </div>
@@ -29,21 +29,23 @@ defineProps<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0 0.75rem 0;
-  gap: 1.5rem;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-none');
+  gap: ms.spacing('gap-4xl');
 
   &__content {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
 
     .title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('label-lg-medium');
+      color: ms.color('text-base-label');
     }
 
     .description {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-description');
     }
   }
 }
