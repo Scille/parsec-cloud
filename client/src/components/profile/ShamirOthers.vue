@@ -10,10 +10,10 @@
         :icon="people"
         class="shamir-others-list-empty__icon"
       />
-      <ion-text class="shamir-others-list-empty__title subtitles-normal">
+      <ion-text class="shamir-others-list-empty__title">
         {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.noPeopleTitle') }}
       </ion-text>
-      <ion-text class="shamir-others-list-empty__subtitle body">
+      <ion-text class="shamir-others-list-empty__subtitle">
         {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.noPeopleSubtitle') }}
       </ion-text>
     </div>
@@ -22,7 +22,7 @@
       v-else
       class="shamir-others-list-container"
     >
-      <ms-report-text class="shamir-others-info subtitles-normal">
+      <ms-report-text class="shamir-others-info">
         {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.info') }}
       </ms-report-text>
       <div class="shamir-others-list">
@@ -31,11 +31,11 @@
           :key="info.userId"
           class="shamir-others-list-item"
         >
-          <ion-text class="shamir-others-list-item__text subtitles-sm">
-            <span class="shamir-others-list-item__text-label subtitles-sm">
+          <ion-text class="shamir-others-list-item__text">
+            <span class="shamir-others-list-item__text-label">
               {{ info.owner.humanHandle.label }}
             </span>
-            <span class="shamir-others-list-item__text-description body">
+            <span class="shamir-others-list-item__text-description">
               {{ info.owner.humanHandle.email }}
             </span>
           </ion-text>
@@ -101,13 +101,17 @@ async function refreshShamirStatus(): Promise<void> {
 #shamir-others {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .shamir-others-list-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
+}
+
+.shamir-others-info {
+  @include ms.font('body-lg-medium');
 }
 
 .shamir-others-list-empty {
@@ -115,25 +119,27 @@ async function refreshShamirStatus(): Promise<void> {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   padding: 1.625rem;
-  background-color: var(--parsec-color-light-secondary-background);
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  background-color: ms.color('surface-base-default-secondary');
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   min-height: 13rem;
   max-height: 13rem;
 
   &__icon {
     font-size: 1.5rem;
-    color: var(--parsec-color-light-secondary-grey);
+    color: ms.color('icon-neutral-default');
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('body-lg-medium');
+    color: ms.color('text-base-body');
   }
 
   &__subtitle {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
     text-align: center;
   }
 }
@@ -141,9 +147,9 @@ async function refreshShamirStatus(): Promise<void> {
 .shamir-others-list {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
-  border-radius: var(--parsec-radius-8);
-  background: var(--parsec-color-light-secondary-background);
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default-secondary');
   width: 100%;
   min-height: 15rem;
   max-height: 15rem;
@@ -151,35 +157,38 @@ async function refreshShamirStatus(): Promise<void> {
 }
 
 .shamir-others-list-item {
-  --background: var(--parsec-color-light-secondary-white);
+  --background: #{ms.color('surface-base-default')};
 
   &::part(native) {
-    padding: 0.625rem 1rem;
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
   }
 
   &::part(container) {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     overflow: hidden;
     justify-content: space-between;
   }
 
   &__text {
+    @include ms.font('body-md-medium');
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
     width: 100%;
     overflow: hidden;
 
     &-label {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-base-body');
       flex-shrink: 0;
     }
 
     &-description {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -187,13 +196,13 @@ async function refreshShamirStatus(): Promise<void> {
   }
 
   &:hover {
-    background: var(--parsec-color-light-secondary-inversed-contrast);
+    background: ms.color('surface-base-default');
   }
 }
 
 .shamir-others-list-item-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   flex-shrink: 0;
 }
 </style>
