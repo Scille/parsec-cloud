@@ -19,6 +19,8 @@ from pydantic import AfterValidator, BaseModel, Field, TypeAdapter
 from parsec._parsec import DeviceID
 from parsec.types import Base64BytesField
 
+# TODO: remove option fields (we want to explicitly set a field to `None` instead of omitting it)
+
 # TODO: rename to `EditicsParticipantIndex` ?
 type EditicsIndexUser = int
 """

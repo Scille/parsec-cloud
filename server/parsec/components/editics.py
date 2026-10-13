@@ -21,7 +21,10 @@ from parsec.editics_protocol import (
     EditicsClientEventAuth,
     EditicsClientEventCursor,
     EditicsClientEventGetMessages,
+    EditicsClientEventIsSaveLock,
+    EditicsClientEventSaveChanges,
     EditicsClientEventUnLockDocument,
+    EditicsClientEventUnSaveLock,
     EditicsIndexUser,
     EditicsParticipantEntry,
     EditicsParticipantID,
@@ -30,8 +33,13 @@ from parsec.editics_protocol import (
     EditicsServerEventConnectState,
     EditicsServerEventCursor,
     EditicsServerEventMessage,
+    EditicsServerEventSaveChanges,
+    EditicsServerEventSaveLock,
+    EditicsServerEventSavePartChanges,
+    EditicsServerEventUnSaveLock,
     EditicsServerEventWaitAuth,
     MessageRecord,
+    SaveChangeRecord,
 )
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
@@ -57,6 +65,21 @@ class ChatMessage:
     author_index_user: int
     key_index: int
     encrypted_message: bytes
+
+
+@dataclass(slots=True)
+class StoredChange:
+    """One change fragment kept in the session history (RFC §2.2).
+
+    `encrypted_change` is an opaque encrypted blob, the server never inspects it.
+    The change history is 0-indexed (like the OnlyOffice `changesIndex` save
+    point) and can be truncated from a given index on UNDO.
+    """
+
+    time_ms: int
+    author_index_user: EditicsIndexUser
+    # Format: (<Key index>, <base64(ciphertext)>)
+    encrypted_change: tuple[int, bytes]
 
 
 @dataclass(slots=True)
@@ -107,6 +130,19 @@ class EditicsSession:
     # `waitAuth` from the server) until the first participant release it (i.e. send
     # `unLockDocument{unlock:true}`) which switch the session into co-editing mode.
     auth_lock_holder: EditicsParticipantID | None = None
+    # --- Save changes (RFC §2.2) ---
+    # Monotonic change counter (= OnlyOffice `puckerIndex`): advances on every
+    # stored change fragment, and is only rewound by an UNDO (i.e. a `saveChanges`
+    # carrying a `deleteIndex`).
+    sync_changes_index: int = 0
+    # Ordered change history (OnlyOffice change index = position in the list).
+    changes: list[StoredChange] = field(default_factory=list)
+    # Save lock (RFC §2.1): the participant currently saving, or None.
+    # Minimal handling for now: taken on `isSaveLock`/`saveChanges`, released on
+    # save completion (i.e. `saveChanges{endSaveChanges:true}`) or cancellation
+    # (i.e. `unSaveLock`/`unLockDocument{isSave:true}`); no expiration (OnlyOffice
+    # expires it after 60s) and no desynchronized-client detection.
+    save_lock_holder: EditicsParticipantID | None = None
 
     # initial_version: int
     # latest_allowed_version: int
@@ -117,15 +153,8 @@ class EditicsSession:
     # participants: dict[IndexUser, DeviceID] = field(default_factory=dict)
     # # participant_uuid (client-generated) -> SSE channel
     # connections: dict[UUID, EditicsSseChannel] = field(default_factory=dict)
-    # # --- step 1 additions ---
-    # # Monotonic change counter (= OnlyOffice `puckerIndex`).
-    # sync_changes_index: int = 0
-    # # Ordered change history (1-based OnlyOffice index = position + 1).
-    # changes: list[StoredChange] = field(default_factory=list)
     # # Chat history (delivered to newcomers on join).
     # messages: list[ChatMessage] = field(default_factory=list)
-    # # Save lock: the participant index currently holding it, or None.
-    # save_lock_holder: IndexUser | None = None
     # # The participant that just released the save lock (one-round only, §6.9):
     # # only this participant may send `saveDone` to bump `latest_allowed_version`.
     # last_save_lock_holder: IndexUser | None = None
@@ -338,8 +367,14 @@ class EditicsComponent:
                 )
 
             case EditicsClientEventUnLockDocument():
-                # Only the auth lock is handled for now: `isSave`, `deleteIndex`
-                # and `releaseLocks` cover the save & region lock systems.
+                reply = None
+                # `isSave` asks to cancel an in-progress save: release the save
+                # lock and acknowledge with the cancellation sentinel values.
+                # `deleteIndex` and `releaseLocks` cover the region lock system,
+                # which is not implemented yet (TODO).
+                if event.isSave and session.save_lock_holder == participant.participant_id:
+                    session.save_lock_holder = None
+                    reply = EditicsServerEventUnSaveLock(index=-1, time=-1, syncChangesIndex=-1)
                 if event.unlock and session.auth_lock_holder == participant.participant_id:
                     session.auth_lock_holder = None
                     for participant in session.participants.values():
@@ -355,7 +390,111 @@ class EditicsComponent:
                                 )
                                 # TODO: close the SSE if the channel is full
                                 participant.sse_channel_sender.send_nowait(broadcasted_event)
-                return None
+                return reply
+
+            case EditicsClientEventIsSaveLock():
+                # Try to take the save lock (RFC §2.2): the reply's `saveLock`
+                # field is confusingly named, `false` means the lock is granted
+                # (i.e. the participant may now save its changes), `true` means
+                # another participant already holds it.
+                # Note OnlyOffice also keeps denying the lock while the client is
+                # desynchronized (i.e. its `syncChangesIndex` doesn't match the
+                # server's), this is not implemented here (TODO).
+                if session.save_lock_holder in (None, participant.participant_id):
+                    session.save_lock_holder = participant.participant_id
+                    return EditicsServerEventSaveLock(lockedBySomebodyElse=False)
+                else:
+                    return EditicsServerEventSaveLock(lockedBySomebodyElse=True)
+
+            case EditicsClientEventSaveChanges():
+                # Saving requires the save lock: OnlyOffice (re)acquires it at
+                # the start of `saveChanges`, so do the same as a safety net.
+                if session.save_lock_holder is None:
+                    session.save_lock_holder = participant.participant_id
+                elif session.save_lock_holder != participant.participant_id:
+                    # Another participant holds the save lock: discard the event,
+                    # like OnlyOffice does (should not happen given the client
+                    # is expected to acquire the lock with `isSaveLock` first).
+                    logger.warning(
+                        "Discarding `saveChanges` event: save lock held by another participant"
+                    )
+                    return None
+
+                # UNDO support: truncate the change history from `deleteIndex`
+                # (OnlyOffice semantics: only honored on the first chunk of the
+                # save, `null`/`-1` meaning no truncation).
+                delete_index = -1
+                if event.startSaveChanges and event.deleteIndex is not None:
+                    delete_index = event.deleteIndex
+                    if delete_index != -1 and delete_index < session.sync_changes_index:
+                        del session.changes[delete_index:]
+                        session.sync_changes_index = delete_index
+
+                # Store the new changes (one entry per change fragment, i.e.
+                # OnlyOffice `puckerIndex += len(encryptedChanges)`)
+                start_index = session.sync_changes_index
+                changes_time = now()
+                session.changes.extend(
+                    StoredChange(
+                        time_ms=changes_time,
+                        author_index_user=participant.index,
+                        encrypted_change=encrypted_change,
+                    )
+                    for encrypted_change in event.encryptedChanges
+                )
+                session.sync_changes_index += len(event.encryptedChanges)
+                # Save point for the saver (OnlyOffice semantics: only the first
+                # chunk of a non-truncating save establishes a new save point)
+                changes_index = start_index if delete_index == -1 and event.startSaveChanges else -1
+
+                # Broadcast the changes to the other participants (the saver gets
+                # `unSaveLock`/`savePartChanges` replies instead)
+                broadcasted_event = EditicsServerEventSaveChanges(
+                    changes=[
+                        SaveChangeRecord(
+                            time=changes_time,
+                            authorIndexUser=participant.index,
+                            encryptedChange=encrypted_change,
+                        )
+                        for encrypted_change in event.encryptedChanges
+                    ],
+                    changesIndex=session.sync_changes_index,
+                    syncChangesIndex=session.sync_changes_index,
+                    endSaveChanges=event.endSaveChanges,
+                    excel_info=event.excel_info,
+                    encryptedCursor=event.encryptedCursor,
+                )
+                for other_participant in session.participants.values():
+                    if other_participant.participant_id == participant.participant_id:
+                        continue
+                    if other_participant.sse_channel_sender:
+                        # TODO: close the SSE if the channel is full
+                        other_participant.sse_channel_sender.send_nowait(broadcasted_event)
+
+                if event.endSaveChanges:
+                    # Save complete: release the save lock and reply to the saver
+                    # with its new save point (RFC §2.2).
+                    if session.save_lock_holder == participant.participant_id:
+                        session.save_lock_holder = None
+                    return EditicsServerEventUnSaveLock(
+                        index=changes_index,
+                        time=changes_time,
+                        syncChangesIndex=session.sync_changes_index,
+                    )
+                else:
+                    # Intermediate chunk of a save too big for a single event:
+                    # acknowledge it and wait for the next one.
+                    return EditicsServerEventSavePartChanges(
+                        changesIndex=changes_index,
+                        syncChangesIndex=session.sync_changes_index,
+                    )
+
+            case EditicsClientEventUnSaveLock():
+                # Cancel the in-progress save: release the save lock and reply
+                # with the cancellation sentinel values (RFC §2.2).
+                if session.save_lock_holder == participant.participant_id:
+                    session.save_lock_holder = None
+                return EditicsServerEventUnSaveLock(index=-1, time=-1, syncChangesIndex=-1)
 
             case EditicsClientEventCursor():
                 # Cursor messages are ephemeral (i.e. not part of the session

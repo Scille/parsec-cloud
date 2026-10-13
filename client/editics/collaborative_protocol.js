@@ -194,15 +194,6 @@ class EditicsTranslator {
     //   case 'getLock':
     //     return { type: 'getLock', block: oo.block };
     //
-    //   case 'isSaveLock':
-    //     return { type: 'isSaveLock', syncChangesIndex: oo.syncChangesIndex };
-    //
-    //   case 'saveChanges':
-    //     return this._cookSaveChanges(oo);
-    //
-    //   case 'unSaveLock':
-    //     return { type: 'unSaveLock' };
-    //
     //   case 'close':
     //     return { type: 'close' };
     //
@@ -243,9 +234,20 @@ class EditicsTranslator {
           type: 'unLockDocument',
           isSave: oo.isSave,
           unlock: oo.unlock,
-          deleteIndex: oo.deleteIndex,
-          releaseLocks: oo.releaseLocks,
+          deleteIndex: oo.deleteIndex ?? null,
+          releaseLocks: oo.releaseLocks ?? false,
         };
+
+      case 'isSaveLock':
+        /** @type {EditicsClientEventIsSaveLock} */
+        return { type: 'isSaveLock', syncChangesIndex: oo.syncChangesIndex };
+
+      case 'saveChanges':
+        return await this._cookSaveChanges(oo);
+
+      case 'unSaveLock':
+        /** @type {EditicsClientEventUnSaveLock} */
+        return { type: 'unSaveLock' };
 
       // Ignored events
       case 'clientLog':
@@ -261,54 +263,65 @@ class EditicsTranslator {
     }
   }
 
-  // /**
-  //  * @param {OOClientEventSaveChanges} oo
-  //  * @returns {EditicsClientEventSaveChanges}
-  //  */
-  // _cookSaveChanges(oo) {
-  //   // OnlyOffice sends `changes` as a JSON-encoded *string* in default (JSON)
-  //   // mode, e.g. '["66;...","127;..."]' (an array of opaque op fragments).
-  //   // Parse it into an array of fragment strings, then encrypt each fragment
-  //   // independently as `encryptedChanges` (one entry per fragment, RFC §2.2).
-  //   let fragments = [];
-  //   if (oo.changes !== null && oo.changes !== undefined) {
-  //     if (typeof oo.changes === 'string') {
-  //       try {
-  //         const parsed = JSON.parse(oo.changes);
-  //         if (Array.isArray(parsed)) fragments = parsed;
-  //       } catch (_e) {
-  //         fragments = [oo.changes];
-  //       }
-  //     } else if (Array.isArray(oo.changes)) {
-  //       fragments = oo.changes;
-  //     } else {
-  //       fragments = [oo.changes];
-  //     }
-  //   }
-  //   const encryptedChanges = fragments.map((f) => bytesToBase64(await this._encrypt(bytesFromStr(String(f)))));
+  /**
+   * @param {OOClientEventSaveChanges} oo
+   * @returns {Promise<EditicsClientEventSaveChanges>}
+   */
+  async _cookSaveChanges(oo) {
+    // OnlyOffice sends `changes` as a JSON-encoded *string* in default (JSON)
+    // mode, e.g. '["66;...","127;..."]' (an array of opaque op fragments).
+    // Parse it into an array of fragment strings, then encrypt each fragment
+    // independently as `encryptedChanges` (one entry per fragment, RFC §2.2).
+    let fragments = [];
+    if (oo.changes !== null && oo.changes !== undefined) {
+      if (typeof oo.changes === 'string') {
+        try {
+          const parsed = JSON.parse(oo.changes);
+          if (Array.isArray(parsed)) fragments = parsed;
+        } catch (_e) {
+          fragments = [oo.changes];
+        }
+      } else if (Array.isArray(oo.changes)) {
+        // `binaryChanges` mode: already a real array of fragments
+        fragments = oo.changes;
+      } else {
+        fragments = [oo.changes];
+      }
+    }
+    /** @type {[number, string][]} */
+    const encryptedChanges = [];
+    for (const fragment of fragments) {
+      const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(String(fragment)));
+      // TODO: The editics protocol doesn't carry the encryption key index
+      //       alongside the encrypted changes yet (unlike the `cursor`/
+      //       `message` events, see RFC §1.6), so it is dropped for now.
+      encryptedChanges.push([keyIndex, bytesToBase64(cipherText)]);
+    }
 
-  //   // `excelAdditionalInfo` is split (RFC §2.2) into `encryptedCursor` (the
-  //   // `CursorInfo` part, encrypted) and `excel_info` (the cleartext
-  //   // `indexCols`/`indexRows` part). Step 2 keeps the previous passthrough
-  //   // behavior: the whole opaque blob is encrypted as the cursor; `excel_info`
-  //   // is null (real parsing is deferred to a later step).
-  //   let encryptedCursor = null;
-  //   if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
-  //     encryptedCursor = bytesToBase64(await this._encrypt(bytesFromStr(String(oo.excelAdditionalInfo))));
-  //   }
-  //   return {
-  //     type: 'saveChanges',
-  //     encryptedChanges,
-  //     startSaveChanges: !!oo.startSaveChanges,
-  //     endSaveChanges: !!oo.endSaveChanges,
-  //     deleteIndex: oo.deleteIndex,
-  //     // `excel_info` mirrors the server pydantic field name (snake_case).
-  //     // eslint-disable-next-line camelcase
-  //     excel_info: null,
-  //     encryptedCursor,
-  //     releaseLocks: !!oo.releaseLocks,
-  //   };
-  // }
+    // `excelAdditionalInfo` is split (RFC §2.2) into `encryptedCursor` (the
+    // `CursorInfo` part, encrypted) and `excel_info` (the cleartext
+    // `indexCols`/`indexRows` part). For now the whole opaque blob is
+    // encrypted as the cursor; `excel_info` is null (real parsing is deferred
+    // to a later step).
+    /** @type {[number, string] | null} */
+    let encryptedCursor = null;
+    if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
+      const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(String(oo.excelAdditionalInfo)));
+      encryptedCursor = [keyIndex, bytesToBase64(cipherText)];
+    }
+    return {
+      type: 'saveChanges',
+      encryptedChanges,
+      startSaveChanges: oo.startSaveChanges,
+      endSaveChanges: oo.endSaveChanges,
+      deleteIndex: oo.deleteIndex,
+      // `excel_info` mirrors the server pydantic field name (snake_case).
+      // eslint-disable-next-line camelcase -- Editics protocol field name
+      excel_info: null,
+      encryptedCursor,
+      releaseLocks: oo.releaseLocks,
+    };
+  }
 
   /**
    * Convert a server event from Editics to OnlyOffice protocol.
@@ -339,6 +352,34 @@ class EditicsTranslator {
       case 'cursor':
         return await this._cookCursor(editics);
 
+      case 'saveLock':
+        /** @type {EditicsServerEventSaveLock} */
+        // Reply to our `isSaveLock`: the `saveLock` field is confusingly
+        // named, `false` means the save lock is granted (i.e. we may now send
+        // our `saveChanges`), `true` means it is held by somebody else.
+        return { type: 'saveLock', saveLock: editics.lockedBySomebodyElse };
+
+      case 'savePartChanges':
+        // Acknowledgment of an intermediate `saveChanges` chunk (i.e. a save
+        // too big for a single event).
+        /** @type {EditicsServerEventSavePartChanges} */
+        return {
+          type: 'savePartChanges',
+          changesIndex: editics.changesIndex,
+          syncChangesIndex: editics.syncChangesIndex,
+        };
+
+      case 'unSaveLock':
+        // Either the save has completed (real `index`/`time`/
+        // `syncChangesIndex` values) or has been canceled (all `-1`).
+        /** @type {EditicsServerEventUnSaveLock} */
+        return {
+          type: 'unSaveLock',
+          index: editics.index,
+          time: editics.time,
+          syncChangesIndex: editics.syncChangesIndex,
+        };
+
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
         return null;
@@ -358,24 +399,9 @@ class EditicsTranslator {
       //
       //   case 'saveChanges':
       //     return this._cookServerSaveChanges(editics);
-      //
-      //   case 'savePartChanges':
-      //     return {
-      //       type: 'savePartChanges',
-      //       changesIndex: editics.changesIndex,
-      //       syncChangesIndex: editics.syncChangesIndex,
-      //     };
-      //
-      //   case 'saveLock':
-      //     return { type: 'saveLock', saveLock: !!editics.saveLock };
-      //
-      //   case 'unSaveLock':
-      //     return {
-      //       type: 'unSaveLock',
-      //       index: editics.index,
-      //       time: editics.time,
-      //       syncChangesIndex: editics.syncChangesIndex,
-      //     };
+      //     TODO: unlike the `cursor`/`message` events, the editics protocol
+      //     doesn't carry the encryption key index alongside the changes yet,
+      //     so they cannot be decrypted here (see RFC §1.6).
       //
       //   case 'drop':
       //     return { type: 'drop', code: editics.code, description: editics.description };
@@ -440,7 +466,7 @@ class EditicsTranslator {
    * co-editing transition, RFC §6.2): the editor must wait for the
    * established editor to release the lock with `unLockDocument{unlock:true}`.
    * @param {EditicsServerEventWaitAuth} editics
-   * @returns {OOServerEventWaitAuth|null}
+   * @returns {Promise<OOServerEventWaitAuth|null>}
    */
   async _cookWaitAuth(editics) {
     // `waitAuth` occurs *before*
@@ -738,22 +764,22 @@ export { EditicsTranslator };
  * @typedef {string} EditicsParticipantID
  *
  * @typedef {Object} EditicsParticipantEntry
- * @property {EditicsParticipantID} [id]
- * @property {EditicsIndexUser} [indexUser]
- * @property {string} [deviceId]
+ * @property {EditicsParticipantID} id
+ * @property {EditicsIndexUser} indexUser
+ * @property {string} deviceId
  * @property {boolean} view
  *
  * @typedef {Object} EditicsReconnect
- * @property {EditicsParticipantID} [participantId]
- * @property {EditicsIndexUser} [indexUser]
- * @property {number} [participantTimeConnect]
- * @property {number} [timeIdle]
+ * @property {EditicsParticipantID} participantId
+ * @property {EditicsIndexUser} indexUser
+ * @property {number} participantTimeConnect
+ * @property {number} timeIdle
  *
  * @typedef {Object} EditicsClientEventAuth
  * @property {'auth'} type
- * @property {number} [editorType]
- * @property {number} [vlobVersion]
- * @property {EditicsReconnect|null} [reconnect]
+ * @property {number} editorType
+ * @property {number} vlobVersion
+ * @property {EditicsReconnect|null} reconnect
  *
  * @typedef {Object} EditicsClientEventAuthChangesAck
  * @property {'authChangesAck'} type
@@ -763,122 +789,122 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsClientEventMessage
  * @property {'message'} type
- * @property {[number, string]} [encryptedMessage]
+ * @property {[number, string]} encryptedMessage
  *
  * @typedef {Object} EditicsClientEventCursor
  * @property {'cursor'} type
- * @property {[number, string]} [encryptedCursor]
+ * @property {[number, string]} encryptedCursor
  *
  * @typedef {Object} EditicsClientEventGetLock
  * @property {'getLock'} type
- * @property {Array<*>} [block]
+ * @property {Array<*>} block
  *
  * @typedef {Object} EditicsClientEventIsSaveLock
  * @property {'isSaveLock'} type
- * @property {number} [syncChangesIndex]
+ * @property {number} syncChangesIndex
  *
  * @typedef {Object} EditicsClientEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Uint8Array[]} [encryptedChanges]
- * @property {boolean} [startSaveChanges]
- * @property {boolean} [endSaveChanges]
- * @property {number|null} deleteIndex
- * @property {Object<string,*>|null} excel_info
- * @property {Uint8Array|null} encryptedCursor
- * @property {boolean} releaseLocks
+ * @property {Array<[number, string]>} encryptedChanges
+ * @property {boolean} startSaveChanges
+ * @property {boolean} endSaveChanges
+ * @property {number|null} [deleteIndex]
+ * @property {Object<string,*>|null} [excel_info]
+ * @property {[number, string]|null} [encryptedCursor]
+ * @property {boolean} [releaseLocks]
  *
  * @typedef {Object} EditicsClientEventUnSaveLock
  * @property {'unSaveLock'} type
  *
  * @typedef {Object} EditicsClientEventUnLockDocument
  * @property {'unLockDocument'} type
- * @property {boolean} isSave
- * @property {boolean} unlock
- * @property {number|null} deleteIndex
- * @property {boolean} releaseLocks
+ * @property {boolean} [isSave]
+ * @property {boolean} [unlock]
+ * @property {number|null} [deleteIndex]
+ * @property {boolean} [releaseLocks]
  *
  * @typedef {Object} EditicsClientEventClose
  * @property {'close'} type
  *
  * @typedef {Object} EditicsClientEventSaveDone
  * @property {'saveDone'} type
- * @property {number} [savedUpToIndex]
- * @property {number} [newVersion]
+ * @property {number} savedUpToIndex
+ * @property {number} newVersion
  *
  * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|EditicsClientEventGetMessages|EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent
  *
  * @typedef {Object} EditicsServerEventAuth
  * @property {'auth'} type
- * @property {EditicsParticipantEntry[]} [participants]
- * @property {EditicsParticipantID} [participantId]
- * @property {EditicsIndexUser} [indexUser]
- * @property {number} [participantTimeConnect]
- * @property {number} [openedAt]
+ * @property {EditicsParticipantEntry[]} participants
+ * @property {EditicsParticipantID} participantId
+ * @property {EditicsIndexUser} indexUser
+ * @property {number} participantTimeConnect
+ * @property {number} openedAt
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type
- * @property {number} [participantsTimestamp]
- * @property {EditicsParticipantEntry[]} [participants]
+ * @property {number} participantsTimestamp
+ * @property {EditicsParticipantEntry[]} participants
  * @property {boolean} waitAuth
  *
  * @typedef {Object} EditicsServerEventAuthChanges
  * @property {'authChanges'} type
- * @property {Array<[number, number, string]>} changes
+ * @property {Array<[number, number, string]>} [changes]
  *
  * @typedef {Object} EditicsServerEventWaitAuth
  * @property {'waitAuth'} type
- * @property {EditicsParticipantEntry} [authLockedBy]
+ * @property {EditicsParticipantEntry} authLockedBy
  *
  * @typedef {Object} EditicsServerEventMessage
  * @property {'message'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedMessage:[number, string]}>} [messages]
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedMessage:[number, string]}>} messages
  *
  * @typedef {Object} EditicsServerEventCursor
  * @property {'cursor'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedCursor:[number, string]}>} [messages]
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedCursor:[number, string]}>} messages
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type
- * @property {Record<string, {time:number, user:EditicsIndexUser, block:*}>} [locks]
+ * @property {Record<string, {time:number, user:EditicsIndexUser, block:*}>} locks
  *
  * @typedef {Object} EditicsServerEventReleaseLock
  * @property {'releaseLock'} type
- * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} [locks]
+ * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} locks
  *
  * @typedef {Object} EditicsServerEventSaveLock
  * @property {'saveLock'} type
- * @property {boolean} [saveLock]
+ * @property {boolean} lockedBySomebodyElse
  *
  * @typedef {Object} EditicsServerEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, change:Uint8Array}>} [changes]
- * @property {number} [changesIndex]
- * @property {number} [syncChangesIndex]
- * @property {boolean} [endSaveChanges]
- * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} locks
- * @property {Object<string,*>|null} excel_info
- * @property {Uint8Array|null} encryptedCursor
+ * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedChange:[number, string]}>} changes
+ * @property {number} changesIndex
+ * @property {number} syncChangesIndex
+ * @property {boolean} endSaveChanges
+ * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} [locks]
+ * @property {Object<string,*>|null} [excel_info]
+ * @property {[number, string]|null} [encryptedCursor]
  *
  * @typedef {Object} EditicsServerEventSavePartChanges
  * @property {'savePartChanges'} type
- * @property {number} [changesIndex]
- * @property {number} [syncChangesIndex]
+ * @property {number} changesIndex
+ * @property {number} syncChangesIndex
  *
  * @typedef {Object} EditicsServerEventUnSaveLock
  * @property {'unSaveLock'} type
- * @property {number} [index]
- * @property {number} [time]
- * @property {number} [syncChangesIndex]
+ * @property {number} index
+ * @property {number} time
+ * @property {number} syncChangesIndex
  *
  * @typedef {Object} EditicsServerEventDrop
  * @property {'drop'} type
- * @property {number} code
- * @property {string} description
+ * @property {number} [code]
+ * @property {string} [description]
  *
  * @typedef {Object} EditicsServerEventWarning
  * @property {'warning'} type
- * @property {number} [code]
- * @property {string} [message]
+ * @property {number} code
+ * @property {string} message
  *
  * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDrop|EditicsServerEventWarning} EditicsServerEvent
  */
