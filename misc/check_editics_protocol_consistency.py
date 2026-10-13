@@ -80,7 +80,7 @@ def load_editics_protocol() -> dict[str, Any]:
                 annotation = type(None)
             field_info = MagicMock(annotation=annotation)
             # The field is optional if it has a default value
-            field_info.is_optional.return_value = field_name not in obj.__dict__
+            field_info.is_optional.return_value = field_name in obj.__dict__
             model_fields[field_name] = field_info
         obj.model_fields = model_fields  # type: ignore
 
