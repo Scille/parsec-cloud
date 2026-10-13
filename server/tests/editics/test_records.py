@@ -114,6 +114,10 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
             elif type_ == "cursor":
                 for m in payload["messages"]:
                     m["time"] = TypePlaceholder(m["time"])
+            elif type_ == "unSaveLock":
+                # `time` is either the server timestamp of the last change, or
+                # -1 if the save has been cancelled.
+                payload["time"] = -1 if payload["time"] == -1 else TypePlaceholder(payload["time"])
 
         participant = e1.group("participant")
         # We generate tests by recording session

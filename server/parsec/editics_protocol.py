@@ -65,7 +65,7 @@ class EditicsParticipantEntry(BaseModel):
     # realm-role-based access control is deferred). The field is present in
     # the schema so the client translation layer can be written against the
     # final shape.
-    view: bool = False
+    view: bool
 
 
 # --- Client -> server events -------------------------------------------------
@@ -109,7 +109,7 @@ class EditicsClientEventGetMessages(BaseModel):
 
 class EditicsClientEventMessage(BaseModel):
     type: Literal["message"] = "message"
-    # Format: (<Key index> + <base64(ciphertext)>)
+    # Format: (<Key index>, <base64(ciphertext)>)
     encryptedMessage: tuple[int, Base64BytesField]
 
 
@@ -118,7 +118,7 @@ class EditicsClientEventCursor(BaseModel):
     renamed to `encryptedCursor` per RFC §2.2 editics changes."""
 
     type: Literal["cursor"] = "cursor"
-    # Format: (<Key index> + <base64(ciphertext)>)
+    # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursor: tuple[int, Base64BytesField]
 
 
@@ -163,7 +163,8 @@ class EditicsClientEventSaveChanges(BaseModel):
     # The server advances `syncChangesIndex` by `len(encryptedChanges)` and
     # stores one `StoredChange` per entry (== OnlyOffice `puckerIndex += k`).
     # Each element: base64 over JSON (§2.4). Opaque; server never inspects.
-    encryptedChanges: list[bytes]
+    # Format: [(<Key index>, <base64(ciphertext)>), ...]
+    encryptedChanges: list[tuple[int, Base64BytesField]]
     startSaveChanges: bool
     endSaveChanges: bool
     # UNDO support: null/-1 = no truncate; <int> = absolute index, the server
@@ -176,7 +177,8 @@ class EditicsClientEventSaveChanges(BaseModel):
     # Encrypted cursor carried alongside the save (the `CursorInfo` part of
     # the old `excelAdditionalInfo`), broadcast as-is to others. base64 over
     # JSON (§2.4). Opaque; server never inspects.
-    encryptedCursor: bytes | None = None
+    # Format: (<Key index>, <base64(ciphertext)>)
+    encryptedCursor: tuple[int, Base64BytesField] | None = None
     # Release this user's region locks after the save (OnlyOffice name kept).
     releaseLocks: bool = False
 
@@ -265,7 +267,7 @@ class EditicsServerEventConnectState(BaseModel):
     # True while the document auth lock is held (todo step_1 §6.2): tells the
     # established editor it must send `unLockDocument{unlock:true}` to release
     # the lock and let newcomers proceed.
-    waitAuth: bool = False
+    waitAuth: bool
 
 
 class EditicsServerEventAuthChanges(BaseModel):
@@ -277,7 +279,7 @@ class EditicsServerEventAuthChanges(BaseModel):
     """
 
     type: Literal["authChanges"] = "authChanges"
-    # Format: (<change index>, <Key index> + <base64(ciphertext)>)
+    # Format: (<change index>, <Key index>, <base64(ciphertext)>)
     # The change index is 1-based and monotonic.
     changes: list[tuple[int, int, Base64BytesField]] = Field(default_factory=list)
 
@@ -301,7 +303,7 @@ class MessageRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: int  # server timestamp (ms)
     authorIndexUser: EditicsIndexUser
-    # Format: (<Key index> + <base64(ciphertext)>)
+    # Format: (<Key index>, <base64(ciphertext)>)
     encryptedMessage: tuple[int, Base64BytesField]
 
 
@@ -316,7 +318,7 @@ class CursorRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: int
     authorIndexUser: EditicsIndexUser
-    # Format: (<Key index> + <base64(ciphertext)>)
+    # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursor: tuple[int, Base64BytesField]
 
 
@@ -386,7 +388,10 @@ class EditicsServerEventSaveLock(BaseModel):
     `false` means granted."""
 
     type: Literal["saveLock"] = "saveLock"
-    saveLock: bool
+    # This field is named `saveLock` in OnlyOffice protocol, but this is confusing:
+    # - `false` means the save lock is granted (i.e. we may now send our `saveChanges`)
+    # - `true` means it is held by somebody else.
+    lockedBySomebodyElse: bool
 
 
 class SaveChangeRecord(BaseModel):
@@ -396,7 +401,8 @@ class SaveChangeRecord(BaseModel):
     time: int
     authorIndexUser: EditicsIndexUser
     # Opaque encrypted blob (base64 over JSON, §2.4); server never inspects.
-    change: bytes
+    # Format: (<Key index>, <base64(ciphertext)>)
+    encryptedChange: tuple[int, Base64BytesField]
 
 
 class EditicsServerEventSaveChanges(BaseModel):
@@ -416,8 +422,8 @@ class EditicsServerEventSaveChanges(BaseModel):
     # `releaseLocks` was true). Same shape as `releaseLock` records.
     locks: list[ReleaseLockRecord] = Field(default_factory=list)
     excel_info: dict[str, Any] | None = None
-    # base64 over JSON (§2.4). Opaque; server never inspects.
-    encryptedCursor: bytes | None = None
+    # Format: (<Key index>, <base64(ciphertext)>)
+    encryptedCursor: tuple[int, Base64BytesField] | None = None
 
 
 class EditicsServerEventSavePartChanges(BaseModel):
