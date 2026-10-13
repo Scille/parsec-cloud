@@ -2,12 +2,15 @@
 
 # OnlyOffice co-editing protocol monitor
 
-A small investigation harness that opens the public
-[OnlyOffice "see-it-in-action" demo](https://www.onlyoffice.com/see-it-in-action)
-and watches the live co-editing client↔server messages in a draggable panel —
-**and can hold/release individual frames** to craft concurrent-operation
-scenarios (e.g. John takes a lock, Kate tries to take the same lock *before*
-receiving John's lock event).
+A small investigation harness that watches the live co-editing client↔server
+messages in a draggable panel — **and can hold/release individual frames** to
+craft concurrent-operation scenarios (e.g. John takes a lock, Kate tries to take
+the same lock *before* receiving John's lock event).
+
+The harness can run in two mode:
+
+- `npm run demo`: (aka Quick&dirty mode): use the public [OnlyOffice "see-it-in-action" demo](https://www.onlyoffice.com/see-it-in-action)
+- `npm run with-docker`: (aka Correct but slow mode): use docker to have the version of OnlyOffice used in Parsec
 
 ## How it works
 
@@ -45,8 +48,9 @@ active scenario tab: Collaborate → John & Kate; others → Anonymous.
 ## Run
 
 ```bash
-npm install   # installs playwright + ws
-npm run demo
+npm install               # installs playwright + ws
+npm run demo       # Quick&dirty: use OnlyOffice public demo page (i.e. www.onlyoffice.com/see-it-in-action)
+npm run with-docker       # Correct: use docker to have the version of OnlyOffice used in Parsec
 ```
 
 A draggable "OO Protocol Monitor" panel appears bottom-right. Click
@@ -86,3 +90,10 @@ normally, no gating).
   filter, Kate-deferral overlay + "Re-start John's editor in manual-flow").
 - `run-demo.js` — Playwright launcher: starts the proxy, injects the monitor
   with `window.__OO_PROXY_PORT` set, opens the demo, switches to Collaborate.
+- `run-docker.js` — same launcher flow against a pinned local document server
+  started with podman/docker (`npm run in-use-onlyoffice`): container
+  lifecycle + healthcheck, harness page server, cleanup on exit.
+- `docker-index.html` — the harness page served by `run-docker.js` (John + Kate
+  editors on one document key, demo-compatible DOM conventions).
+- `docker-document.docx` — the document opened by the harness (copied from the document
+  server's own converter self-test fixture in the `server` submodule).

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!--
+  docker-index.html — harness page served by run-docker.js.
+
+  The public onlyoffice.com demo page embeds *their* hosted editors, so a
+  local document server needs its own page. This one opens two editors
+  (John Smith / Kate Cage) on the same document key — a live co-editing
+  session, like the demo's Collaborate tab.
+
+  It deliberately reuses the demo page's DOM conventions (class names
+  `actions-tab-button` / `actions-container` / `actions-content`, editor ids
+  `document-editor-1` / `document-editor-2`) so monitor.js works UNCHANGED:
+  the scenario chips, the side-by-side grid CSS, and the "Start Kate's
+  editor" deferral overlay all key off those names.
+
+  Placeholders {{DS_PORT}} {{PAGE_PORT}} {{DOC_KEY}} {{HOST_ALIAS}} {{IMAGE}}
+  are filled by run-docker.js when the page is served. The `{{HOST_ALIAS}}`
+  URLs (document.url / callbackUrl) are fetched by the document server from
+  inside the container, not by this page — hence the container→host alias.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>OO protocol monitor — local document server ({{IMAGE}})</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 13px/1.5 system-ui, sans-serif; color: #1a1a1a; background: #f7f8fa; }
+  #hdr { display: flex; align-items: center; gap: 14px; padding: 8px 16px; }
+  #hdr code { background: #eef1f5; border-radius: 4px; padding: 1px 5px; }
+  #api-error { display: none; color: #b00; padding: 0 16px; }
+  button.actions-tab-button { border: 0; border-radius: 6px; padding: 6px 14px; background: #3b5b8c; color: #fff; font: inherit; cursor: default; }
+  .actions-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 16px; }
+  .actions-content { position: relative; height: calc(100vh - 54px); border: 1px solid #d8dce3; border-radius: 8px; overflow: hidden; background: #fff; }
+  .actions-content > div { height: 100%; }
+</style>
+</head>
+<body>
+  <div id="hdr">
+    <b>OO protocol monitor</b>
+    <!-- class names matter: monitor.js reads this button to detect the
+         "Collaborate" scenario (filters the panel chips by user). -->
+    <button class="actions-tab-button active">Collaborate</button>
+    <span>document server <code>http://127.0.0.1:{{DS_PORT}}</code> — image <code>{{IMAGE}}</code></span>
+    <span>doc key <code>{{DOC_KEY}}</code></span>
+  </div>
+  <!-- .actions-container/.actions-content: monitor.js lays the two editors
+       out side by side and positions the "Start Kate's editor" overlay over
+       the SECOND .actions-content. -->
+  <div class="actions-container">
+    <div class="actions-content"><div id="document-editor-1"></div></div>
+    <div class="actions-content"><div id="document-editor-2"></div></div>
+  </div>
+  <div id="api-error">Failed to load <code>api.js</code> from the document server — is the container still running?</div>
+
+  <script src="http://127.0.0.1:{{DS_PORT}}/web-apps/apps/api/documents/api.js"></script>
+  <script>
+    (function () {
+      // Fetched by the document server itself (from inside the container),
+      // hence the host alias instead of 127.0.0.1.
+      var DOC_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/docker-document.docx';
+      var CALLBACK_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/callback';
+
+      function openEditor(id, name, uid) {
+        new DocsAPI.DocEditor(id, {
+          documentType: 'word',
+          type: 'desktop',
+          width: '100%',
+          height: '100%',
+          document: {
+            fileType: 'docx',
+            key: '{{DOC_KEY}}',        // same key on both editors → co-editing
+            title: 'monitor.docx',
+            url: DOC_URL,
+            permissions: { edit: true }
+          },
+          editorConfig: {
+            mode: 'edit',
+            lang: 'en',
+            callbackUrl: CALLBACK_URL,
+            user: { id: uid, name: name },
+            customization: { about: false, feedback: false, goback: false }
+          }
+        });
+      }
+
+      function start() {
+        openEditor('document-editor-1', 'John Smith', 'user-1');
+        // document-editor-2 (Kate) is trapped + deferred by the injected
+        // monitor behind the panel's "Start Kate's editor" button, exactly
+        // like on the demo page.
+        openEditor('document-editor-2', 'Kate Cage', 'user-2');
+      }
+
+      // Wait for api.js, then give the monitor's init script a beat to wrap
+      // DocsAPI.DocEditor (it polls every 50ms) before building the editors,
+      // so the Kate-deferral trap is guaranteed to be installed first.
+      var tries = 0;
+      (function waitApi() {
+        if (window.DocsAPI && window.DocsAPI.DocEditor) { setTimeout(start, 300); return; }
+        if (++tries > 600) { document.getElementById('api-error').style.display = 'block'; return; }
+        setTimeout(waitApi, 100);
+      })();
+    })();
+  </script>
+</body>
+</html>
