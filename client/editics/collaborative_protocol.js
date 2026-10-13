@@ -211,6 +211,7 @@ class EditicsTranslator {
 
     switch (oo.type) {
       case 'auth':
+        /** @type {EditicsClientEventAuth} */
         return {
           type: 'auth',
           editorType: this.config.editorType,
@@ -220,6 +221,7 @@ class EditicsTranslator {
         };
 
       case 'getMessages':
+        /** @type {EditicsClientEventGetMessages} */
         return {
           type: 'getMessages',
         };
@@ -229,12 +231,14 @@ class EditicsTranslator {
         // custom format (e.g. `"16;CAAAADEAMQAzADcAAAAAAA=="`).
         // We consider this format opaque and encrypt it as-is.
         const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(oo.cursor));
+        /** @type {EditicsClientEventCursor} */
         return {
           type: 'cursor',
           encryptedCursor: [keyIndex, bytesToBase64(cipherText)],
         };
 
       case 'unLockDocument':
+        /** @type {EditicsClientEventUnLockDocument} */
         return {
           type: 'unLockDocument',
           isSave: oo.isSave,
@@ -702,7 +706,7 @@ class EditicsTranslator {
   // TODO: remove me
   /**
    * @param {Uint8Array} cleartext
-   * @returns {Promise<Uint8Array>}
+   * @returns {Promise<[number, Uint8Array]>}
    */
   async _encrypt(cleartext) {
     return await this.capabilities.encrypt(cleartext);
