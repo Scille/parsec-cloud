@@ -3,6 +3,7 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
+      <app-updated-banner />
       <div id="page">
         <!-- sidebar -->
         <home-page-sidebar class="homepage-sidebar" />
@@ -85,6 +86,7 @@ import {
   claimUserLinkValidator,
   totpResetLinkValidator,
 } from '@/common/validators';
+import AppUpdatedBanner from '@/components/misc/AppUpdatedBanner.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
@@ -1131,9 +1133,15 @@ function getBackButtonTitle(): string {
 </script>
 
 <style lang="scss" scoped>
+ion-content::part(scroll) {
+  display: flex;
+  flex-direction: column;
+}
+
 #page {
   position: relative;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
   display: flex;
   overflow: hidden;
   align-items: self-start;
