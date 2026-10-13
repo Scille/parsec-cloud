@@ -100,8 +100,9 @@
 import { TransferRateCalculator } from '@/common/transferRate';
 import { FileOperationBase, FileOperationImport } from '@/components/files';
 import UploadStatus from '@/components/files/operations/UploadStatus.vue';
-import { getGlobalUploadProgress, Path, UploadProgress } from '@/parsec';
+import { Path, UploadProgress } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
+import { EventData, EventDistributor, EventDistributorKey, Events, UploadProgressData } from '@/services/eventDistributor';
 import {
   FileOperationCopyData,
   FileOperationData,
@@ -163,12 +164,13 @@ const currentItems = computed(() => {
 });
 
 let canceller!: FileEventRegistrationCanceller;
-let uploadProgressTimeoutId: any = null;
 const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
 const uploadProgressStatus = ref<UploadProgress>({ totalBytes: 0, totalFiles: 0 });
 const rateCalculator = ref<TransferRateCalculator>(new TransferRateCalculator());
 const showUploadStatus = ref(false);
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+let eventRegisterKey: string | undefined = undefined;
 
 function toggleMenu(): void {
   if (menu.isMinimized()) {
@@ -198,35 +200,29 @@ function getOperationComponent(item: OperationItem): Component {
   }
 }
 
-async function updateProgress(): Promise<void> {
-  const result = await getGlobalUploadProgress();
-  if (result.ok) {
-    uploadProgressStatus.value = result.value;
-    if (result.value.totalBytes > 0) {
-      rateCalculator.value.update(result.value.totalBytes);
-      showUploadStatus.value = true;
-    }
-  } else {
-    uploadProgressStatus.value = { totalBytes: 0, totalFiles: 0 };
-    rateCalculator.value.clear();
-  }
-  if (uploadProgressStatus.value.totalBytes > 0) {
-    // If we're still uploading, we poll faster for a smooth display
-    uploadProgressTimeoutId = setTimeout(updateProgress, 500);
-  } else {
-    // Otherwise we can stop the timeout, it will get reactivated on a new file operation
-    uploadProgressTimeoutId = null;
-  }
-}
-
 onMounted(async () => {
   canceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
+  eventRegisterKey = await eventDistributor.value.registerCallback([Events.UploadProgress], onEvent);
 });
 
 onUnmounted(async () => {
   canceller.cancel();
-  clearTimeout(uploadProgressTimeoutId);
+  if (eventRegisterKey) {
+    eventDistributor.value.removeCallback(eventRegisterKey);
+  }
 });
+
+async function onEvent(event: Events, data?: EventData): Promise<void> {
+  if (event !== Events.UploadProgress) {
+    return;
+  }
+  data = data as UploadProgressData;
+  uploadProgressStatus.value = { totalFiles: data.filesLeft, totalBytes: data.bytesLeft };
+  if (data.bytesLeft > 0) {
+    rateCalculator.value.update(data.bytesLeft);
+    showUploadStatus.value = true;
+  }
+}
 
 async function onFileOperationEvent(
   event: FileOperationEvents,
@@ -234,9 +230,6 @@ async function onFileOperationEvent(
   eventData?: FileOperationEventData,
 ): Promise<void> {
   isFileOperationManagerActive.value = true;
-  if (!uploadProgressTimeoutId) {
-    uploadProgressTimeoutId = setTimeout(updateProgress, 1000);
-  }
   if (!operationData) {
     if (event !== FileOperationEvents.AllFinished) {
       window.nativeAPI.log('warn', `Got event ${event} without operation data`);

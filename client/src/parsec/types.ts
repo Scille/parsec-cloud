@@ -171,7 +171,6 @@ export type {
   ClientExportRecoveryDeviceError,
   ClientGetAsyncEnrollmentAddrError,
   ClientGetOrganizationBootstrapDateError,
-  ClientGetOutboundSyncBacklog,
   ClientGetOutboundSyncBacklogError,
   ClientGetSelfShamirRecoveryError,
   ClientGetTosError,
