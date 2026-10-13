@@ -22,11 +22,13 @@
  *      private/loopback IP filtering off, so the container may fetch the
  *      sample document and call the editor callback on this machine), then
  *      waits for the /healthcheck endpoint;
- *   2. serves index.html (the harness page) + the sample document (from
- *      client/tests/e2e/data/imports/) + a stub callbackUrl on a local
- *      HTTP server — three editors (Alice / Bob / Mallory, named and ID'ed
- *      after the Parsec test fixtures so captures are directly usable as
- *      test records) sharing one document key;
+ *   2. serves index.html (the harness page) + the sample documents (from
+ *      client/tests/e2e/data/imports/) + a stub callbackUrl on a local HTTP
+ *      server — three editors (Alice / Bob / Mallory, named and ID'ed after
+ *      the Parsec test fixtures so captures are directly usable as test
+ *      records) sharing one document key; the opened document type is
+ *      selected by the `?doc=<type>` URL param (default: word) or the page's
+ *      type buttons (which reload the page with the param changed);
  *   3. starts the same WebSocket MITM proxy as the demo mode, injects the
  *      monitor, opens the page, prints the captured status.
  *
@@ -46,8 +48,8 @@
  *                      (default: host.containers.internal with podman,
  *                      host.docker.internal with docker)
  *   OO_DS_BOOT_TIMEOUT ms to wait for /healthcheck (default 300000)
- *   OO_DOC             sample document to open, looked up in
- *                      client/tests/e2e/data/imports/ (default: document.docx)
+ *   OO_DOC             initial document type: word (default), cell, slide, pdf
+ *                      — the same set the page's type buttons offer
  */
 'use strict';
 
@@ -63,10 +65,26 @@ const { createProxy } = require('./proxy');
 const DIR = __dirname;
 const MONITOR = path.join(DIR, 'monitor.js');
 const PAGE_TEMPLATE = path.join(DIR, 'index.html');
-// The harness page opens a Word document; sample documents live with the
-// other e2e test data (5 levels up = the repository root).
+// The sample documents live with the other e2e test data (5 levels up = the
+// repository root). The harness opens the Word one by default; the other
+// document types OnlyOffice can open from that folder are one URL param
+// (?doc=<type>) or one button click away.
 const SAMPLE_DOC_DIR = path.join(DIR, '..', '..', '..', '..', '..', 'client', 'tests', 'e2e', 'data', 'imports');
-const SAMPLE_DOC = path.join(SAMPLE_DOC_DIR, process.env.OO_DOC || 'document.docx');
+const DOC_TYPES = {
+  word:  { file: 'document.docx',     documentType: 'word',  fileType: 'docx', label: 'Word (.docx)' },
+  cell:  { file: 'spreadsheet.xlsx',  documentType: 'cell',  fileType: 'xlsx', label: 'Spreadsheet (.xlsx)' },
+  slide: { file: 'presentation.pptx', documentType: 'slide', fileType: 'pptx', label: 'Presentation (.pptx)' },
+  pdf:   { file: 'pdfDocument.pdf',   documentType: 'pdf',   fileType: 'pdf',  label: 'PDF (.pdf)' },
+};
+// Initial document type (word is the common case); also the default URL is
+// `/?doc=word`, i.e. the page always carries a `doc` param once switched.
+const DOC_TYPE = process.env.OO_DOC || 'word';
+const MIME = {
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  pdf: 'application/pdf',
+};
 
 // Fully qualified on purpose: podman setups without unqualified-search
 // registries reject the short form, and docker accepts docker.io/… too.
@@ -221,36 +239,62 @@ async function waitDsReady(dsPort) {
   }
 }
 
-// ---- harness page server (page + sample document + stub callback) --------
+// ---- harness page server (page + sample documents + stub callback) --------
 
-function startPageServer(dsPort, docKey, sampleDoc) {
+// `?doc=<type>` selects the opened sample document (default: word). The page
+// re-renders per request: the doc type drives the editor config, and the
+// document key must differ per type (a reload on the same type keeps the
+// same key so the document server resumes the same co-editing session).
+function startPageServer(dsPort, docs, docKeyBase) {
   const server = http.createServer();
   return new Promise((resolve, reject) => {
     server.on('error', reject);
-    // 0.0.0.0: the container fetches /document.docx and /callback through the
+    // 0.0.0.0: the container fetches the document and /callback through the
     // host alias — docker's bridge gateway cannot reach a 127.0.0.1-bound
     // server (podman's slirp could; 0.0.0.0 covers both engines).
     server.listen(0, '0.0.0.0', () => {
       const port = server.address().port;
-      const pageSrc = fs.readFileSync(PAGE_TEMPLATE, 'utf8')
-        .replace(/\{\{DS_PORT\}\}/g, String(dsPort))
-        .replace(/\{\{PAGE_PORT\}\}/g, String(port))
-        .replace(/\{\{DOC_KEY\}\}/g, docKey)
-        .replace(/\{\{HOST_ALIAS\}\}/g, HOST_ALIAS)
-        .replace(/\{\{IMAGE\}\}/g, IMAGE);
-      const docx = fs.readFileSync(sampleDoc);
+      const template = fs.readFileSync(PAGE_TEMPLATE, 'utf8');
+      const contents = {}; // file name -> Buffer
+      for (const type in docs) contents[docs[type].file] = fs.readFileSync(docs[type].path);
+      // The doc-type buttons rendered into the header (the page reloads with
+      // the `doc` URL param on click); the active one reflects the requested
+      // type.
+      function docButtons(type) {
+        return Object.keys(docs)
+          .map(function (t) {
+            return '<button class="doc-button' + (t === type ? ' active' : '') + '"' +
+              ' data-doc="' + t + '" title="Open ' + docs[t].file + '">' + docs[t].label + '</button>';
+          })
+          .join('');
+      }
+      function renderPage(type) {
+        const doc = docs[type];
+        return template
+          .replace(/\{\{DS_PORT\}\}/g, String(dsPort))
+          .replace(/\{\{PAGE_PORT\}\}/g, String(port))
+          .replace(/\{\{DOC_KEY\}\}/g, docKeyBase + '-' + type)
+          .replace(/\{\{HOST_ALIAS\}\}/g, HOST_ALIAS)
+          .replace(/\{\{IMAGE\}\}/g, IMAGE)
+          .replace(/\{\{DOC_BUTTONS\}\}/g, docButtons(type))
+          .replace(/\{\{DOC_TYPE\}\}/g, doc.documentType)
+          .replace(/\{\{FILE_TYPE\}\}/g, doc.fileType)
+          .replace(/\{\{DOC_TITLE\}\}/g, doc.file)
+          .replace(/\{\{DOC_URL_FILE\}\}/g, doc.file);
+      }
       server.on('request', (req, res) => {
-        const u = (req.url || '').split('?')[0];
-        if (req.method === 'GET' && u === '/') {
+        const u = new URL(req.url || '/', 'http://127.0.0.1');
+        const p = u.pathname;
+        if (req.method === 'GET' && p === '/') {
+          const type = docs[u.searchParams.get('doc')] ? u.searchParams.get('doc') : 'word';
           res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-          res.end(pageSrc);
-        } else if (req.method === 'GET' && u === '/document.docx') {
-          res.writeHead(200, {
-            'content-type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'content-length': docx.length,
-          });
-          res.end(docx);
-        } else if (req.method === 'POST' && u === '/callback') {
+          res.end(renderPage(type));
+        } else if (req.method === 'GET' && contents[p.slice(1)]) {
+          const doc = Object.values(docs).find((d) => d.file === p.slice(1));
+          const body = contents[p.slice(1)];
+          res.writeHead(200, { 'content-type': MIME[doc.fileType], 'content-length': body.length });
+          res.end(body);
+        } else if (req.method === 'POST' && p === '/callback') {
           // Stub for editorConfig.callbackUrl: acknowledge every save/discard
           // notification so the document server logs stay clean.
           req.on('data', function () {});
@@ -273,9 +317,19 @@ function startPageServer(dsPort, docKey, sampleDoc) {
 (async () => {
   console.log('→ container engine: ' + ENGINE + '    image: ' + IMAGE);
 
-  // Fail early if the sample document is missing (e.g. bad OO_DOC), before
-  // starting the container.
-  if (!fs.existsSync(SAMPLE_DOC)) die('sample document not found: ' + SAMPLE_DOC);
+  // Fail early on a bad OO_DOC (before starting the container), then check
+  // the sample documents exist (a missing one disables its document type
+  // with a warning).
+  if (!DOC_TYPES[DOC_TYPE])
+    die('unknown OO_DOC="' + DOC_TYPE + '" (expected one of: ' + Object.keys(DOC_TYPES).join(', ') + ')');
+  const docs = {};
+  for (const type of Object.keys(DOC_TYPES)) {
+    const doc = Object.assign({}, DOC_TYPES[type], { path: path.join(SAMPLE_DOC_DIR, DOC_TYPES[type].file) });
+    if (fs.existsSync(doc.path)) docs[type] = doc;
+    else console.log('  (sample document missing, document type disabled: ' + type + ' — ' + doc.path + ')');
+  }
+  if (!docs[DOC_TYPE])
+    die('sample document not found: ' + path.join(SAMPLE_DOC_DIR, DOC_TYPES[DOC_TYPE].file));
 
   const dsPort = await pickDsPort();
 
@@ -297,15 +351,16 @@ function startPageServer(dsPort, docKey, sampleDoc) {
     console.log('  (warning: api.js unreachable: ' + e.message + ')');
   }
 
-  // ---- same MITM proxy + monitor injection as run-demo.js ----------------
+  // ---- same MITM proxy + monitor injection as the demo mode ---------------
   proxy = await createProxy({ port: 0, verbose: !!process.env.PROXY_VERBOSE });
   console.log('→ MITM proxy listening on ws://127.0.0.1:' + proxy.port + '/oo  (ctl: /ctl)');
 
-  // Fresh document key per run → fresh co-editing session on the fresh server.
-  const docKey = 'oom' + Date.now().toString(36);
-  const pages = await startPageServer(dsPort, docKey, SAMPLE_DOC);
+  // Fresh document-key BASE per run (the server appends the document type
+// on each request) → fresh co-editing sessions on the fresh server.
+  const docKeyBase = 'oom' + Date.now().toString(36);
+  const pages = await startPageServer(dsPort, docs, docKeyBase);
   pageServer = pages.server;
-  console.log('→ harness page on http://127.0.0.1:' + pages.port + '/  (doc key ' + docKey + ', server-side URLs via ' + HOST_ALIAS + ')');
+  console.log('→ harness page on http://127.0.0.1:' + pages.port + '/  (doc keys ' + docKeyBase + '-<type>, server-side URLs via ' + HOST_ALIAS + ')');
 
   const monitorSrc = fs.readFileSync(MONITOR, 'utf8');
   // Set the proxy port BEFORE the monitor script runs so its WebSocket patch
@@ -319,7 +374,7 @@ function startPageServer(dsPort, docKey, sampleDoc) {
     args: [
       '--disable-blink-features=AutomationControlled',
       '--no-sandbox',
-      // Keep the same relaxed flags as run-demo.js (the monitor probes the
+      // Keep the same relaxed flags as the demo mode (the monitor probes the
       // proxy cross-origin with a sync XHR; bypassCSP covers CSP only).
       '--allow-running-insecure-content',
       '--disable-web-security',
@@ -340,7 +395,10 @@ function startPageServer(dsPort, docKey, sampleDoc) {
   });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message.slice(0, 160)));
 
-  const pageUrl = 'http://127.0.0.1:' + pages.port + '/';
+  // `word` is the default document type: keep the URL bare in the common
+  // case (the page adds `?doc=<type>` itself when a type button is clicked).
+  const pageUrl = 'http://127.0.0.1:' + pages.port + '/' +
+    (DOC_TYPE === 'word' ? '' : '?doc=' + DOC_TYPE);
   console.log('→ opening ' + pageUrl);
   await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 

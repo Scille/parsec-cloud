@@ -113,7 +113,12 @@ Two separate code bases, one per mode:
     specifics (scenario-tab observation); its deferral is per-editor and
     covers both manual clients (Bob / Mallory).
   - `index.html` — the harness page (Alice / Bob / Mallory editors on one
-    document key); the opened document comes from
-    `client/tests/e2e/data/imports/` (`OO_DOC` to pick another file,
-    default `document.docx`).
+    document key); the opened sample document comes from
+    `client/tests/e2e/data/imports/`. Its type is selected by the `?doc=`
+    URL param (`word`/`cell`/`slide`/`pdf`, default `word` — i.e. the docx
+    most common use case), either by clicking a type button in the page
+    (which reloads it with the param changed) or up front with `OO_DOC=<type>`
+    (useful in headless mode). Each type gets its own document key, so the
+    document server opens a fresh session when switching type, and resumes
+    the same session when reloading the same one.
 - `package.json` — the `npm run demo` / `npm run with-docker` scripts.

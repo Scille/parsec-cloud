@@ -17,15 +17,24 @@
   OnlyOffice session id on the wire, while the editics protocol reuses the
   participant id there).
 
-  The page deliberately keeps the demo page's DOM conventions (class names
-  `actions-tab-button` / `actions-container` / `actions-content`, editor ids
-  `document-editor-1` / `-2` / `-3`) that monitor.js keys off for the
-  "Start …'s editor" deferral overlays and the panel chips.
+  The opened sample document is selected by the `?doc=<type>` URL param
+  (default: word) — the type buttons in the header just reload the page with
+  the param changed. run.js renders the page per request, adapting the
+  editor config to the document type and giving each type its own document
+  key (same type reloaded = same key, so the document server resumes the
+  same co-editing session).
 
-  Placeholders {{DS_PORT}} {{PAGE_PORT}} {{DOC_KEY}} {{HOST_ALIAS}} {{IMAGE}}
-  are filled by run.js when the page is served. The `{{HOST_ALIAS}}` URLs
-  (document.url / callbackUrl) are fetched by the document server from inside
-  the container, not by this page — hence the container→host alias.
+  The page keeps the demo page's DOM conventions (class names
+  `actions-container` / `actions-content`, editor ids `document-editor-1` /
+  `-2` / `-3`) that monitor.js keys off for the "Start …'s editor" deferral
+  overlays.
+
+  Placeholders {{DS_PORT}} {{PAGE_PORT}} {{DOC_KEY}} {{HOST_ALIAS}}
+  {{IMAGE}} {{DOC_BUTTONS}} {{DOC_TYPE}} {{FILE_TYPE}} {{DOC_TITLE}}
+  {{DOC_URL_FILE}} are filled by run.js when the page is served. The
+  `{{HOST_ALIAS}}` URLs (document.url / callbackUrl) are fetched by the
+  document server from inside the container, not by this page — hence the
+  container→host alias.
 -->
 <html>
 <head>
@@ -36,7 +45,10 @@
   #hdr { display: flex; align-items: center; gap: 14px; padding: 8px 16px; }
   #hdr code { background: #eef1f5; border-radius: 4px; padding: 1px 5px; }
   #api-error { display: none; color: #b00; padding: 0 16px; }
-  button.actions-tab-button { border: 0; border-radius: 6px; padding: 6px 14px; background: #3b5b8c; color: #fff; font: inherit; cursor: default; }
+  #doc-types { display: flex; gap: 6px; }
+  button.doc-button { border: 1px solid #c8ccd4; border-radius: 6px; padding: 5px 10px; background: #fff; color: #444; font: inherit; cursor: pointer; }
+  button.doc-button:hover { background: #eef1f5; }
+  button.doc-button.active { background: #3b5b8c; border-color: #3b5b8c; color: #fff; cursor: default; }
   .actions-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 16px; }
   /* Alice & Bob side by side; Mallory below them (spanning the full width),
      since a 3rd client is expected to be needed a lot less. */
@@ -48,7 +60,12 @@
 <body>
   <div id="hdr">
     <b>OO protocol monitor</b>
-    <button class="actions-tab-button active">Collaborate</button>
+    <span id="doc-types">
+      <!-- rendered by run.js: one button per openable sample document; the
+           active one is the current `?doc=` param. Clicking reloads the page
+           with the param changed (other params, e.g. manual_flow, are kept). -->
+      {{DOC_BUTTONS}}
+    </span>
     <span>document server <code>http://127.0.0.1:{{DS_PORT}}</code> — image <code>{{IMAGE}}</code></span>
     <span>doc key <code>{{DOC_KEY}}</code></span>
   </div>
@@ -67,7 +84,7 @@
     (function () {
       // Fetched by the document server itself (from inside the container),
       // hence the host alias instead of 127.0.0.1.
-      var DOC_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/document.docx';
+      var DOC_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/{{DOC_URL_FILE}}';
       var CALLBACK_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/callback';
 
       // Parsec test fixtures' clients (device IDs), so captured records don't
@@ -80,14 +97,14 @@
 
       function openEditor(id, name, uid) {
         new DocsAPI.DocEditor(id, {
-          documentType: 'word',
+          documentType: '{{DOC_TYPE}}',
           type: 'desktop',
           width: '100%',
           height: '100%',
           document: {
-            fileType: 'docx',
+            fileType: '{{FILE_TYPE}}',
             key: '{{DOC_KEY}}',        // same key on all editors → co-editing
-            title: 'monitor.docx',
+            title: '{{DOC_TITLE}}',
             url: DOC_URL,
             permissions: { edit: true }
           },
@@ -107,6 +124,17 @@
         // and document-editor-3 (Mallory) until their "Start …'s editor"
         // overlay button is clicked, so Alice's editor connects first.
       }
+
+      // Doc-type buttons: reload the page with the `doc` URL param changed
+      // (other params, e.g. manual_flow, are preserved).
+      Array.prototype.forEach.call(document.querySelectorAll('button[data-doc]'), function (b) {
+        b.addEventListener('click', function () {
+          if (/\bactive\b/.test(b.className)) return;
+          var params = new URLSearchParams(location.search);
+          params.set('doc', b.getAttribute('data-doc'));
+          location.search = '?' + params.toString();
+        });
+      });
 
       // Wait for api.js, then give the monitor's init script a beat to wrap
       // DocsAPI.DocEditor (it polls every 50ms) before building the editors,
