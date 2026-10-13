@@ -4,7 +4,7 @@
   <div class="settings-list-container">
     <ion-list class="settings-list">
       <div class="settings-list-group">
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.display') }}
         </ion-text>
         <!-- change lang -->
@@ -36,7 +36,7 @@
       </div>
 
       <div class="settings-list-group">
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.config') }}
         </ion-text>
         <!-- minimize in status bar -->
@@ -107,7 +107,7 @@
         v-if="Env.isAccountEnabled()"
         class="settings-list-group"
       >
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.account') }}
         </ion-text>
 
@@ -124,7 +124,7 @@
         v-if="isDesktop()"
         class="settings-list-group"
       >
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.file') }}
         </ion-text>
         <!-- display unsync files -->
@@ -242,34 +242,36 @@ onUnmounted(async (): Promise<void> => {
   display: flex;
   flex-direction: column;
   background: none;
-  padding-top: 0px;
-  padding-bottom: 0px;
-  gap: 2rem;
+  padding-top: ms.spacing('padding-none');
+  padding-bottom: ms.spacing('padding-none');
+  gap: ms.spacing('gap-4xl');
+  contain: layout;
 
   &-container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
   }
 
   &-group {
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-12);
-    padding: 1.5rem 0 0;
+    background: ms.color('surface-base-page');
+    border-radius: ms.radius('2xl');
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-none') ms.spacing('padding-none');
     box-shadow:
       0 1px 1px 0 rgba(0, 0, 0, 0.05),
       0 1px 4px 0 rgba(0, 0, 0, 0.03),
       0 0 1px 0 rgba(0, 0, 0, 0.2);
 
     &__title {
-      color: var(--parsec-color-light-primary-700);
-      padding-inline: 1.5rem;
+      @include ms.font('heading-h4');
+      color: ms.color('text-brand-default');
+      padding-inline: ms.spacing('padding-4xl');
     }
   }
 
   &__item {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 1.25rem ms.spacing('padding-4xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
     &:last-child {
       border-bottom: none;
