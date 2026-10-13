@@ -53,6 +53,7 @@ export interface Config {
   disableDownloadWarning: boolean;
   hideParsecDownload: boolean;
   skipWorkspaceHiddenWarning: boolean;
+  appVersionLastVisit?: string;
 }
 
 export class StorageManager {
@@ -78,6 +79,7 @@ export class StorageManager {
       disableDownloadWarning: false,
       hideParsecDownload: false,
       skipWorkspaceHiddenWarning: false,
+      appVersionLastVisit: undefined,
     };
   }
 
@@ -152,7 +154,7 @@ export class StorageManager {
     try {
       await this.internalStore.set(key, data);
     } catch (error) {
-      console.log(`Failed to serialize ${componentKey}: ${error}`);
+      window.nativeAPI.log('warn', `Failed to serialize ${componentKey}: ${error}`);
     }
   }
 
@@ -169,7 +171,7 @@ export class StorageManager {
       }
       return parsedData;
     } catch (error) {
-      console.log(`Failed to deserialize ${componentKey}: ${error}`);
+      window.nativeAPI.log('warn', `Failed to deserialize ${componentKey}: ${error}`);
       await this.internalStore.set(key, {});
     }
     return defaultValues;
@@ -182,7 +184,7 @@ export class StorageManager {
       minimizeToTray: data.minimizeToTray,
       confirmBeforeQuit: data.confirmBeforeQuit,
       enableTelemetry: data.enableTelemetry,
-      synchroWifiOnly: data.meteredConnection,
+      meteredConnection: data.meteredConnection,
       unsyncFiles: data.unsyncFiles,
       skipViewers: data.skipViewers,
       skipAccount: data.skipAccount,
@@ -191,6 +193,7 @@ export class StorageManager {
       disableDownloadWarning: data.disableDownloadWarning,
       hideParsecDownload: data.hideParsecDownload,
       skipWorkspaceHiddenWarning: data.skipWorkspaceHiddenWarning,
+      appVersionLastVisit: data.appVersionLastVisit,
     });
     window.nativeAPI.sendConfig(data);
   }
@@ -212,7 +215,7 @@ export class StorageManager {
       enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
       minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
       confirmBeforeQuit: data.confirmBeforeQuit !== undefined ? data.confirmBeforeQuit : StorageManager.DEFAULT_CONFIG.confirmBeforeQuit,
-      meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
+      meteredConnection: data.meteredConnection !== undefined ? data.meteredConnection : StorageManager.DEFAULT_CONFIG.meteredConnection,
       unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles,
       skipViewers: data.skipViewers !== undefined ? data.skipViewers : StorageManager.DEFAULT_CONFIG.skipViewers,
       skipAccount: data.skipAccount ?? StorageManager.DEFAULT_CONFIG.skipAccount,
@@ -221,21 +224,14 @@ export class StorageManager {
       disableDownloadWarning: data.disableDownloadWarning ?? StorageManager.DEFAULT_CONFIG.disableDownloadWarning,
       hideParsecDownload: data.hideParsecDownload ?? StorageManager.DEFAULT_CONFIG.hideParsecDownload,
       skipWorkspaceHiddenWarning: data.skipWorkspaceHiddenWarning ?? StorageManager.DEFAULT_CONFIG.skipWorkspaceHiddenWarning,
+      appVersionLastVisit: data.appVersionLastVisit ?? StorageManager.DEFAULT_CONFIG.appVersionLastVisit,
     };
     return config;
   }
 
   async updateConfig(data: Partial<Config>): Promise<void> {
-    const config = await this.retrieveConfig();
+    const config = { ...(await this.retrieveConfig()), ...data };
 
-    for (const key of Object.keys(data) as (keyof Config)[]) {
-      const value = data[key];
-      if (value !== undefined) {
-        // Don't understand why this doesn't work. `key` is of type `keyof Config`,
-        // yet I cannot do `config[key]`.
-        (config as any)[key] = value;
-      }
-    }
     await this.storeConfig(config);
   }
 
@@ -255,7 +251,7 @@ export class StorageManager {
   }
 
   async clearAll(): Promise<void> {
-    window.nativeAPI.log('warn', 'Clearing all cache');
+    window.nativeAPI.log('info', 'Clearing all cache');
     await this.internalStore.clear();
   }
 }

@@ -143,6 +143,10 @@
         "expiredOrganization": "This organization has expired."
     },
     "HomePage": {
+        "appUpdated": {
+            "title": "Parsec has been updated to {version}!",
+            "close": "Close"
+        },
         "sidebar": {
             "tagline": "Keep control over your data confidentiality",
             "poweredBy": "Powered by"

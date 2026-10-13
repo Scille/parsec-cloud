@@ -167,6 +167,8 @@ inkey
 insertmacro
 intlify
 inversed
+ionickv
+ionicstorage
 ipinfo
 iqmp
 JAVACMD

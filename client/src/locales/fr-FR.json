@@ -143,6 +143,10 @@
         "expiredOrganization": "Cette organisation a expiré."
     },
     "HomePage": {
+        "appUpdated": {
+            "title": "Parsec a été mis à jour en {version} !",
+            "close": "Fermer"
+        },
         "sidebar": {
             "tagline": "Gardez le contrôle sur la confidentialité de vos données",
             "poweredBy": "Développé par"

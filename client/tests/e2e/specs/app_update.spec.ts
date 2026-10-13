@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DisplaySize, expect, msTest, sendUpdateEvent } from '@tests/e2e/helpers';
+import { DisplaySize, expect, MsPage, msTest, sendUpdateEvent, setupNewPage } from '@tests/e2e/helpers';
 
 async function checkAppUpdateModal(page: Page): Promise<void> {
   const modal = page.locator('.update-app-modal');
@@ -14,7 +14,8 @@ async function checkAppUpdateModal(page: Page): Promise<void> {
   await modal.locator('.update-version').locator('.update-version__item').click();
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
-  await expect(newTab).toHaveURL(new RegExp('^https://docs\\.parsec\\.cloud/.+'));
+  await expect(newTab).toHaveURL(new RegExp('^https://docs\\.parsec\\.cloud/en/v[a-z0-9\\.\\-_]+/history\\.html$'));
+
   await newTab.close();
 }
 
@@ -127,3 +128,52 @@ msTest('Opens app update modal with profile popover', async ({ connected }) => {
   await expect(profilePopover).toBeHidden();
   await checkAppUpdateModal(connected);
 });
+
+for (const version of ['same', 'different']) {
+  msTest(`Detect app update ${version} version`, async ({ context }) => {
+    const page = (await context.newPage()) as MsPage;
+    // Loads the app on its origin; first visit stores the current APP_VERSION
+    await setupNewPage(page);
+
+    const banner = page.locator('#app-updated-banner');
+    // No version stored but has devices
+    await expect(banner).toBeVisible();
+
+    if (version === 'different') {
+      // Set a different version in the stored config
+      await page.evaluate(async () => {
+        // Helper to make indexedDB API async
+        const p = (req: any): Promise<any> =>
+          new Promise((res, rej) => {
+            req.onsuccess = (): void => res(req.result);
+            req.onerror = (): void => rej(req.error);
+          });
+
+        const db = await p(indexedDB.open('_ionicstorage'));
+        const store = db.transaction('_ionickv', 'readwrite').objectStore('_ionickv');
+        const cfg = (await p(store.get('config'))) ?? {};
+        cfg.appVersionLastVisit = 'v42.0.0';
+        await p(store.put(cfg, 'config'));
+        db.close();
+      });
+    }
+
+    // Can't access storage before the page is initialized so we initialize it first,
+    // and then reload with the new config set.
+    await page.reload();
+    await setupNewPage(page, { skipTestbed: true, skipGoto: true });
+
+    if (version === 'same') {
+      await expect(banner).toBeHidden();
+    } else {
+      await expect(banner.locator('.update-banner-whats-new-text')).toHaveText(/Parsec has been updated to [a-z\.\-_0-9\+]+\!/);
+      await expect(banner).toBeVisible();
+      const newTabPromise = page.waitForEvent('popup');
+      await banner.locator('.update-banner-whats-new').click();
+      const newTab = await newTabPromise;
+      await newTab.waitForLoadState();
+      await expect(newTab).toHaveURL(new RegExp('^https://docs\\.parsec\\.cloud/en/v[a-z0-9\\.\\-_]+/history\\.html$'));
+    }
+    await page.release();
+  });
+}
