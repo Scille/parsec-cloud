@@ -118,6 +118,13 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 # `time` is either the server timestamp of the last change, or
                 # -1 if the save has been cancelled.
                 payload["time"] = -1 if payload["time"] == -1 else TypePlaceholder(payload["time"])
+            elif type_ == "saveChanges":
+                for change in payload["changes"] or []:
+                    # `docid` doesn't exist as such in the editics protocol (the
+                    # editics client rebuilds it from the workspace/document IDs)
+                    change["docid"] = TypePlaceholder(change["docid"])
+                    # `time` is the server timestamp of the change
+                    change["time"] = TypePlaceholder(change["time"])
 
         participant = e1.group("participant")
         # We generate tests by recording session

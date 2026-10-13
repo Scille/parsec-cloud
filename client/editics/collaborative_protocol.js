@@ -292,9 +292,6 @@ class EditicsTranslator {
     const encryptedChanges = [];
     for (const fragment of fragments) {
       const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(String(fragment)));
-      // TODO: The editics protocol doesn't carry the encryption key index
-      //       alongside the encrypted changes yet (unlike the `cursor`/
-      //       `message` events, see RFC §1.6), so it is dropped for now.
       encryptedChanges.push([keyIndex, bytesToBase64(cipherText)]);
     }
 
@@ -380,6 +377,9 @@ class EditicsTranslator {
           syncChangesIndex: editics.syncChangesIndex,
         };
 
+      case 'saveChanges':
+        return await this._cookServerSaveChanges(editics);
+
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
         return null;
@@ -396,12 +396,6 @@ class EditicsTranslator {
       //
       //   case 'releaseLock':
       //     return this._cookReleaseLock(editics);
-      //
-      //   case 'saveChanges':
-      //     return this._cookServerSaveChanges(editics);
-      //     TODO: unlike the `cursor`/`message` events, the editics protocol
-      //     doesn't carry the encryption key index alongside the changes yet,
-      //     so they cannot be decrypted here (see RFC §1.6).
       //
       //   case 'drop':
       //     return { type: 'drop', code: editics.code, description: editics.description };
@@ -612,41 +606,56 @@ class EditicsTranslator {
   //   return { type: 'releaseLock', locks };
   // }
 
-  // /**
-  //  * @param {EditicsServerEventSaveChanges} editics
-  //  * @returns {OOServerEventSaveChanges}
-  //  */
-  // _cookServerSaveChanges(editics) {
-  //   const docid = `${this.config.workspaceId}/${this.config.vlobId}`;
-  //   const changes = (editics.changes || []).map((c) => {
-  //     const userId = this._userId(c.authorIndexUser);
-  //     return {
-  //       docid,
-  //       change: JSON.stringify(bytesToStr(await this._decrypt(bytesFromBase64(c.change)))),
-  //       time: c.time,
-  //       user: userId + String(c.authorIndexUser),
-  //       useridoriginal: userId,
-  //     };
-  //   });
-  //   const locks = (editics.locks || []).map((lock) => {
-  //     const userId = this._userId(lock.user);
-  //     return { block: lock.block, user: userId + String(lock.user), time: lock.time, changes: lock.changes };
-  //   });
-  //   /** @type {OOServerEventSaveChanges} */
-  //   const oo = {
-  //     type: 'saveChanges',
-  //     changes,
-  //     changesIndex: editics.changesIndex,
-  //     syncChangesIndex: editics.syncChangesIndex,
-  //     endSaveChanges: !!editics.endSaveChanges,
-  //     startSaveChanges: true,
-  //     locks,
-  //   };
-  //   if (editics.encryptedCursor !== null && editics.encryptedCursor !== undefined) {
-  //     oo.excelAdditionalInfo = bytesToStr(await this._decrypt(bytesFromBase64(editics.encryptedCursor)));
-  //   }
-  //   return oo;
-  // }
+  /**
+   * The `saveChanges` broadcast (RFC §2.2): another participant has saved
+   * some changes. The saving participant itself doesn't receive this event
+   * (it gets `unSaveLock`/`savePartChanges` replies instead).
+   * @param {EditicsServerEventSaveChanges} editics
+   * @returns {Promise<OOServerEventSaveChanges>}
+   */
+  async _cookServerSaveChanges(editics) {
+    const docid = `${this.config.workspaceId}/${this.config.vlobId}`;
+    const changes = await Promise.all(
+      (editics.changes || []).map(async (c) => {
+        const p = this._participants.get(c.authorIndexUser);
+        const [keyIndex, b64CipherText] = c.encryptedChange;
+        return {
+          docid,
+          // Each change fragment is an opaque string that OnlyOffice expects
+          // JSON-encoded (e.g. `'"66;..."'`).
+          change: JSON.stringify(bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)))),
+          time: c.time,
+          // The `user`/`useridoriginal` fields correspond to the author's
+          // participant id / device id (like the `cursor` server event).
+          user: p ? p.participantId : String(c.authorIndexUser),
+          useridoriginal: p ? p.deviceId : String(c.authorIndexUser),
+        };
+      }),
+    );
+    const locks = (editics.locks || []).map((lock) => {
+      const p = this._participants.get(lock.user);
+      return {
+        block: lock.block,
+        user: p ? p.participantId : String(lock.user),
+        time: lock.time,
+        changes: lock.changes,
+      };
+    });
+    /** @type {OOServerEventSaveChanges} */
+    const oo = {
+      type: 'saveChanges',
+      changes,
+      changesIndex: editics.changesIndex,
+      syncChangesIndex: editics.syncChangesIndex,
+      endSaveChanges: !!editics.endSaveChanges,
+      locks,
+    };
+    if (editics.encryptedCursor !== null && editics.encryptedCursor !== undefined) {
+      const [keyIndex, b64CipherText] = editics.encryptedCursor;
+      oo.excelAdditionalInfo = bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)));
+    }
+    return oo;
+  }
 
   // --- Participant table helpers -------------------------------------------
 
