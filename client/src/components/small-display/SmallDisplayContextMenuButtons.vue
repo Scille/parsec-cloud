@@ -11,7 +11,7 @@
         class="button-icon"
         :icon="leftButton.icon"
       />
-      <ion-text class="button-large">
+      <ion-text class="button__text">
         {{ $msTranslate(leftButton.text) }}
       </ion-text>
     </div>
@@ -23,7 +23,7 @@
         class="button-icon"
         :icon="rightButton.icon"
       />
-      <ion-text class="button-large">
+      <ion-text class="button__text">
         {{ $msTranslate(rightButton.text) }}
       </ion-text>
     </div>
@@ -49,18 +49,24 @@ defineProps<{
 .buttons {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
-  padding: 3rem 1.5rem 1.5rem;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-7xl') ms.spacing('padding-4xl') ms.spacing('padding-4xl');
   justify-content: center;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
   .button {
     width: 100%;
     display: flex;
     flex-direction: column;
-    padding: 0.75rem 1rem;
-    gap: 0.375rem;
-    border-radius: var(--parsec-radius-8);
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+    gap: ms.spacing('gap-md');
+    border-radius: ms.radius('lg');
+    color: ms.color('text-base-description');
+    background-color: ms.color('surface-base-default-secondary');
+
+    &__text {
+      @include ms.font('label-lg-medium');
+    }
 
     &-icon {
       font-size: 1.125rem;
@@ -68,18 +74,8 @@ defineProps<{
 
     &:hover {
       cursor: pointer;
-      color: var(--parsec-color-light-primary-600);
-      background-color: var(--parsec-color-light-primary-100);
-    }
-
-    &-left {
-      color: var(--parsec-color-light-primary-600);
-      background-color: var(--parsec-color-light-primary-50);
-    }
-
-    &-right {
-      color: var(--parsec-color-light-secondary-hard-grey);
-      background-color: var(--parsec-color-light-secondary-background);
+      color: ms.color('text-brand-default-hover');
+      background-color: ms.color('surface-brand-default-subtle-hover');
     }
   }
 }
