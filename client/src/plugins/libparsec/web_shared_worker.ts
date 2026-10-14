@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import type { ClientEvent, LibParsecPlugin } from '@/plugins/libparsec/definitions';
+import { captureConsole, libparsecLogger } from '@/services/webLogger';
 
 /** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
@@ -58,7 +59,7 @@ self.onconnect = async (msg: MessageEvent): Promise<void> => {
 
   // Notify the client that the worker is ready to process messages.
   // This needs to be done after setting up the event listener.
-  console.log('Worker is ready to process events from client');
+  console.info('Worker is ready to process events from client');
   port.start();
 };
 
@@ -68,7 +69,10 @@ async function maybeInit(): Promise<LibParsecPlugin> {
   // Initialization is done once the shared worker is created.
   if (_libparsecPromise === undefined) {
     _libparsecPromise = (async (): Promise<LibParsecPlugin> => {
-      console.log('Initializing libparsec module');
+      // Capture before anything is printed, entries are buffered until the database is opened
+      captureConsole(libparsecLogger);
+      await libparsecLogger.init();
+      console.info('Initializing libparsec module');
       await init_module();
       module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
@@ -92,11 +96,11 @@ async function maybeInit(): Promise<LibParsecPlugin> {
             ) => {
               try {
                 if (skipScwsApiImport) {
-                  console.log('Skipping loading scwsapi.js');
+                  console.info('Skipping loading scwsapi.js');
                 } else {
-                  console.log(`Loading SCWS from ${scwsLocation} in shared worker...`);
+                  console.info(`Loading SCWS from ${scwsLocation} in shared worker...`);
                   const scwsapi = await import(/* @vite-ignore */ scwsLocation);
-                  console.log('Imported SCWS', scwsapi);
+                  console.info('Imported SCWS', scwsapi);
                   (globalThis as any).SCWS = scwsapi.SCWS;
                   (globalThis as any).SCWS_WEBAPP_CERT = certificate;
                 }
@@ -114,7 +118,7 @@ async function maybeInit(): Promise<LibParsecPlugin> {
         },
       });
 
-      console.log('Done initializing libparsec module');
+      console.info('Done initializing libparsec module');
 
       return wrappedLibparsec;
     })();

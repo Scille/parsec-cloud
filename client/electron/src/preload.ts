@@ -61,8 +61,8 @@ process.once('loaded', async () => {
     seeInExplorer: (path: string) => {
       ipcRenderer.send(PageToWindowChannel.SeeInExplorer, path);
     },
-    getLogs: () => {
-      ipcRenderer.send(PageToWindowChannel.GetLogs);
+    getLogs: (source: 'GUI' | 'libparsec') => {
+      ipcRenderer.send(PageToWindowChannel.GetLogs, source);
     },
     openPopup: (url: string) => {
       ipcRenderer.send(PageToWindowChannel.OpenPopup, url);

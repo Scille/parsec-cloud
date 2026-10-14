@@ -87,7 +87,8 @@ const includeLogs = ref(false);
 const listInputRef = useTemplateRef<InstanceType<typeof FileInputList>>('listInput');
 const sendingReport = ref(false);
 const sendError = ref('');
-const logs = ref<string>('');
+const guiLogs = ref<string>('');
+const libparsecLogs = ref<string>('');
 const aggregatingLogs = ref(false);
 
 const canSend = computed(() => {
@@ -106,7 +107,7 @@ onMounted(async () => {
 async function logToggled(): Promise<void> {
   if (includeLogs.value) {
     aggregatingLogs.value = true;
-    logs.value = await getLogs();
+    [guiLogs.value, libparsecLogs.value] = await Promise.all([getLogs('GUI'), getLogs('libparsec')]);
     aggregatingLogs.value = false;
   }
 }
@@ -145,7 +146,8 @@ async function sendBugReport(): Promise<boolean> {
       description: description.value,
     },
     {
-      logs: includeLogs.value ? logs.value : undefined,
+      guiLogs: includeLogs.value ? guiLogs.value : undefined,
+      libparsecLogs: includeLogs.value ? libparsecLogs.value : undefined,
       files: files,
     },
   );

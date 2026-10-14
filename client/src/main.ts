@@ -41,7 +41,7 @@ import { handleParsecLink } from '@/services/linkHandler';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
-import { LogLevel, WebLogger } from '@/services/webLogger';
+import { GUILogger, LogLevel } from '@/services/webLogger';
 import { initFileServiceWorker } from '@/services/worker';
 import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
@@ -190,12 +190,13 @@ window.addEventListener('securitypolicyviolation', (e) => {
 const injectionProvider = new InjectionProvider();
 
 async function setupApp(): Promise<void> {
-  const [configDir, dataBaseDir, mountpointBaseDir, platform] = await Promise.all([
-    libparsec.getDefaultConfigDir(),
+  const configDir = await libparsec.getDefaultConfigDir();
+
+  const [dataBaseDir, mountpointBaseDir, platform] = await Promise.all([
     libparsec.getDefaultDataBaseDir(),
     libparsec.getDefaultMountpointBaseDir(),
     libparsec.getPlatform(),
-    WebLogger.init(),
+    GUILogger.init(),
   ]);
   const isDesktop = !('TESTING' in window) && isPlatform('electron');
   const isLinux = isDesktop && platform === Platform.Linux;
@@ -311,6 +312,12 @@ async function setupApp(): Promise<void> {
     const [, , browser] = await Promise.all([initPki(), ParsecAccount.init(), detectBrowser()]);
 
     await router.isReady();
+
+    let logThreshold: LogLevel | 'all' = window.isDev() ? 'debug' : 'info';
+    if ((window as any).TESTING === true && !(window as any).TESTING_ALLOW_LOGS) {
+      logThreshold = 'all';
+    }
+    GUILogger.setThreshold(logThreshold);
 
     if (browser === 'Safari') {
       const modal = await modalController.create({
@@ -549,7 +556,7 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
       if ((window as any).TESTING === true && !(window as any).TESTING_ALLOW_LOGS) {
         return;
       }
-      WebLogger.log(level, message);
+      GUILogger.log(level, message);
     },
     pageIsInitialized: (): void => {
       window.isDev = (): boolean => Boolean(import.meta.env.PARSEC_APP_TESTBED_SERVER);
@@ -563,7 +570,7 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
     seeInExplorer: (_path: string): void => {
       console.log('SeeInExplorer: Not available');
     },
-    getLogs: (): void => {
+    getLogs: (_source: 'GUI' | 'libparsec'): void => {
       console.warn('Call WebLogger directly in web mode');
     },
     readCustomFile: (_file: string): Promise<ArrayBuffer | undefined> => {
@@ -641,7 +648,7 @@ declare global {
       pageIsInitialized: () => void;
       openConfigDir: () => void;
       seeInExplorer: (path: string) => void;
-      getLogs: () => void;
+      getLogs: (source: 'GUI' | 'libparsec') => void;
       initError: (error?: string) => void;
       readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
       openPopup: (url: string) => boolean;

@@ -623,7 +623,9 @@
         "seeLogs": {
             "label": "Logs",
             "description": "Afficher les logs de l'application",
-            "seeLogs": "Voir les logs"
+            "seeLogs": "Voir les logs",
+            "sourceGUI": "GUI",
+            "sourceLibparsec": "libparsec"
         },
         "minimizeToSystemTray": {
             "label": "Réduire dans la barre d'état",

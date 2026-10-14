@@ -15,10 +15,14 @@ import {
 import fs from 'fs/promises';
 import path from 'path';
 
-const LOG_START = '\\[[\\d\\.:T\\-+]+\\] \\[(?:info|debug)\\]';
-const LOG_REGEX = new RegExp(
+const LOG_START = '\\[[\\d\\.:T\\-+Z]+\\] \\[(?:info|debug)\\]';
+const LOG_GUI_REGEX = new RegExp(
   // eslint-disable-next-line max-len
-  `^${LOG_START} Custom branding is not enabled, not loading resources\n${LOG_START} Init PDF worker\n${LOG_START} Init Monaco worker\n${LOG_START} Init file service worker$`,
+  `^${LOG_START} Custom branding is not enabled, not loading resources\\s+${LOG_START} Init PDF worker\\s+${LOG_START} Init Monaco worker\\s+${LOG_START} Init file service worker$`,
+);
+const LOG_LIBPARSEC_REGEX = new RegExp(
+  // eslint-disable-next-line max-len
+  `^${LOG_START} Initializing libparsec module\\s+${LOG_START} Done initializing libparsec module\\s+${LOG_START} Worker is ready to process events from client$`,
 );
 
 msTest('Submit bug report', async ({ connected }, testInfo: TestInfo) => {
@@ -120,72 +124,96 @@ msTest('Show logs when logged in', async ({ myProfilePage }) => {
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('Logs');
 });
 
-msTest('Show logs on homepage', async ({ context }) => {
-  const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { allowLogs: true });
-  const settingsModal = home.locator('.settings-modal');
-  const logModal = home.locator('.log-modal');
-  await expect(settingsModal).toBeHidden();
-  await expect(logModal).toBeHidden();
-  await home.locator('#trigger-settings-button').click();
-  await expect(settingsModal).toBeVisible();
-  await expect(logModal).toBeHidden();
+for (const source of ['GUI', 'libparsec']) {
+  msTest(`Show ${source} logs on homepage`, async ({ context }) => {
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { allowLogs: true });
+    const settingsModal = home.locator('.settings-modal');
+    const logModal = home.locator('.log-modal');
+    await expect(settingsModal).toBeHidden();
+    await expect(logModal).toBeHidden();
+    await home.locator('#trigger-settings-button').click();
+    await expect(settingsModal).toBeVisible();
+    await expect(logModal).toBeHidden();
 
-  await settingsModal.locator('.see-logs-button').click();
-  await expect(settingsModal).toBeHidden();
-  await expect(logModal).toBeVisible();
+    await settingsModal.locator('.see-logs-button').click();
+    await expect(settingsModal).toBeHidden();
+    await expect(logModal).toBeVisible();
 
-  await expect(logModal.locator('.log-area')).toHaveValue(LOG_REGEX);
-  await logModal.locator('.closeBtn').click();
-  await expect(settingsModal).toBeVisible();
-  await expect(logModal).toBeHidden();
-});
+    await expect(logModal.locator('.toggle-view-button')).toHaveText(['GUI', 'libparsec']);
 
-msTest('Copy logs', async ({ context }) => {
-  await setWriteClipboardPermission(context, true);
-  const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { allowLogs: true });
-  const settingsModal = home.locator('.settings-modal');
-  const logModal = home.locator('.log-modal');
-  await expect(settingsModal).toBeHidden();
-  await expect(logModal).toBeHidden();
-  await home.locator('#trigger-settings-button').click();
-  await expect(settingsModal).toBeVisible();
-  await expect(logModal).toBeHidden();
-  await settingsModal.locator('.see-logs-button').click();
-  await expect(settingsModal).toBeHidden();
-  await expect(logModal).toBeVisible();
-  await expect(logModal.locator('#log-copy-button')).toHaveText('Copy');
-  await logModal.locator('#log-copy-button').click();
-  await expect(logModal.locator('#log-copy-button')).toHaveText('Copied!');
-  expect(await getClipboardText(home)).toMatch(LOG_REGEX);
-  await logModal.locator('.closeBtn').click();
-  await expect(settingsModal).toBeVisible();
-  await expect(logModal).toBeHidden();
-});
+    if (source === 'libparsec') {
+      await logModal.locator('.toggle-view-button').nth(1).click();
+      await expect(logModal.locator('.log-area')).toHaveValue(LOG_LIBPARSEC_REGEX);
+    } else {
+      await expect(logModal.locator('.log-area')).toHaveValue(LOG_GUI_REGEX);
+    }
+    await logModal.locator('.closeBtn').click();
+    await expect(settingsModal).toBeVisible();
+    await expect(logModal).toBeHidden();
+  });
 
-msTest('Download logs', async ({ context }) => {
-  const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { allowLogs: true });
-  const settingsModal = home.locator('.settings-modal');
-  const logModal = home.locator('.log-modal');
-  await expect(settingsModal).toBeHidden();
-  await expect(logModal).toBeHidden();
-  await home.locator('#trigger-settings-button').click();
-  await expect(settingsModal).toBeVisible();
-  await expect(logModal).toBeHidden();
-  await settingsModal.locator('.see-logs-button').click();
-  await expect(settingsModal).toBeHidden();
-  await expect(logModal).toBeVisible();
-  await expect(logModal.locator('#log-download-button')).toHaveText('Download');
-  const downloadPromise = home.waitForEvent('download');
-  await logModal.locator('#log-download-button').click();
-  await expect(logModal.locator('#log-download-button')).toHaveText('Downloaded!');
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/^parsec_[\d\-_]+\.log$/);
-  const content = await fs.readFile(await download.path(), 'utf-8');
-  expect(content).toMatch(LOG_REGEX);
-  await logModal.locator('.closeBtn').click();
-  await expect(settingsModal).toBeVisible();
-  await expect(logModal).toBeHidden();
-});
+  msTest(`Copy ${source} logs`, async ({ context }) => {
+    await setWriteClipboardPermission(context, true);
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { allowLogs: true });
+    const settingsModal = home.locator('.settings-modal');
+    const logModal = home.locator('.log-modal');
+    await expect(settingsModal).toBeHidden();
+    await expect(logModal).toBeHidden();
+    await home.locator('#trigger-settings-button').click();
+    await expect(settingsModal).toBeVisible();
+    await expect(logModal).toBeHidden();
+    await settingsModal.locator('.see-logs-button').click();
+    await expect(settingsModal).toBeHidden();
+    await expect(logModal).toBeVisible();
+
+    await expect(logModal.locator('.toggle-view-button')).toHaveText(['GUI', 'libparsec']);
+
+    if (source === 'libparsec') {
+      await logModal.locator('.toggle-view-button').nth(1).click();
+    }
+
+    await expect(logModal.locator('#log-copy-button')).toHaveText('Copy');
+    await logModal.locator('#log-copy-button').click();
+    await expect(logModal.locator('#log-copy-button')).toHaveText('Copied!');
+    expect(await getClipboardText(home)).toMatch(source === 'GUI' ? LOG_GUI_REGEX : LOG_LIBPARSEC_REGEX);
+    await logModal.locator('.closeBtn').click();
+    await expect(settingsModal).toBeVisible();
+    await expect(logModal).toBeHidden();
+  });
+
+  msTest(`Download ${source} logs`, async ({ context }) => {
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { allowLogs: true });
+    const settingsModal = home.locator('.settings-modal');
+    const logModal = home.locator('.log-modal');
+    await expect(settingsModal).toBeHidden();
+    await expect(logModal).toBeHidden();
+    await home.locator('#trigger-settings-button').click();
+    await expect(settingsModal).toBeVisible();
+    await expect(logModal).toBeHidden();
+    await settingsModal.locator('.see-logs-button').click();
+    await expect(settingsModal).toBeHidden();
+    await expect(logModal).toBeVisible();
+
+    await expect(logModal.locator('.toggle-view-button')).toHaveText(['GUI', 'libparsec']);
+
+    if (source === 'libparsec') {
+      await logModal.locator('.toggle-view-button').nth(1).click();
+    }
+
+    await expect(logModal.locator('#log-download-button')).toHaveText('Download');
+    const downloadPromise = home.waitForEvent('download');
+    await logModal.locator('#log-download-button').click();
+    await expect(logModal.locator('#log-download-button')).toHaveText('Downloaded!');
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(new RegExp(`^parsec_${source}_[\\d\\-_]+\\.log$`));
+    const content = await fs.readFile(await download.path(), 'utf-8');
+    expect(content).toMatch(source === 'GUI' ? LOG_GUI_REGEX : LOG_LIBPARSEC_REGEX);
+
+    await logModal.locator('.closeBtn').click();
+    await expect(settingsModal).toBeVisible();
+    await expect(logModal).toBeHidden();
+  });
+}

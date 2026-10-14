@@ -10,6 +10,7 @@ import type {
   Result,
 } from '@/plugins/libparsec/definitions';
 import { ClientStartErrorTag } from '@/plugins/libparsec/definitions';
+import { captureConsole, libparsecLogger } from '@/services/webLogger';
 
 /** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
@@ -46,14 +47,17 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
     throw new Error('libparsec is not available with Vitest, use playwright instead !');
   }
 
+  // Needed to read the logs written by libparsec (either from the shared worker or this tab)
+  await libparsecLogger.init();
+
   // SharedWorker is not available with Chrome for Android :/
   // So in this case we fallback to have libparsec running in the tab, with some
   // web locks to avoid having multiple tabs using the same device.
   if (window.SharedWorker !== undefined) {
-    console.log('Starting libparsec in shared worker mode');
+    console.info('Starting libparsec in shared worker mode');
     return await withSharedWorker();
   } else {
-    console.log('Starting libparsec in non worker mode');
+    console.info('Starting libparsec in non worker mode');
     return await withoutSharedWorker();
   }
 }
@@ -89,7 +93,6 @@ async function withSharedWorker(): Promise<any> {
   };
 
   worker.port.onmessage = (e: MessageEvent): void => {
-    // console.debug('libparsec_port: onmessage', e.data);
     const data = e.data as { id: number; result: any; isException: boolean };
     for (let i = 0; i < inFlight.length; i += 1) {
       const candidate = inFlight[i];
@@ -100,7 +103,6 @@ async function withSharedWorker(): Promise<any> {
         } else {
           candidate.reject(data.result);
         }
-        // console.debug('libparsec_port: method call resolved', e.data);
         return;
       }
     }
@@ -109,7 +111,7 @@ async function withSharedWorker(): Promise<any> {
 
   // Notify that we are ready to process messages.
   // This needs to be done after setting up the event listener.
-  console.log('Client is ready to process events from worker');
+  console.info('Client is ready to process events from worker');
   worker.port.start();
 
   class WorkerProxy {
@@ -159,6 +161,8 @@ async function withSharedWorker(): Promise<any> {
 }
 
 async function withoutSharedWorker(): Promise<any> {
+  // libparsec runs in this tab, so GUI console output is captured as well
+  captureConsole(libparsecLogger);
   await init_module();
   module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
@@ -316,9 +320,9 @@ async function withoutSharedWorker(): Promise<any> {
             // Skipping `scwsapi.js` import is only done during tests
             // to use instead the mocked version provided by the testbed.
             if (skipScwsApiImport) {
-              console.log('Skipping loading scwsapi.js');
+              console.info('Skipping loading scwsapi.js');
             } else {
-              console.log(`Loading SCWS from ${scwsLocation}`);
+              console.info(`Loading SCWS from ${scwsLocation}`);
               const scwsapi = await import(/* @vite-ignore */ scwsLocation);
               (globalThis as any).SCWS = scwsapi.SCWS;
               (globalThis as any).SCWS_WEBAPP_CERT = certificate;

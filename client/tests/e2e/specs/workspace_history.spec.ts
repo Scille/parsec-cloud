@@ -333,8 +333,10 @@ msTest.describe(() => {
 
       const folderList = container.locator('.folder-list-main');
       await expect(folderList.locator('.file-list-item')).toHaveCount(2);
-      await folderList.locator('.file-list-item').nth(0).dblclick();
+      await folderList.locator('.file-list-item').nth(0).locator('.label-name').click();
+      await documents.waitForTimeout(200);
       await expect(breadcrumbs).toHaveText([' wksp1/', 'Dir_Folder']);
+      await documents.waitForTimeout(200);
       await breadcrumbs.nth(0).click();
       await expect(breadcrumbs).toHaveText([' wksp1']);
 
