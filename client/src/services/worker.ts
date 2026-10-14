@@ -135,9 +135,9 @@ async function _onWorkerMessage(event: MessageEvent): Promise<void> {
 const HEARTBEAT_INTERVAL_MS = 10 * 1000;
 
 export async function initFileServiceWorker(): Promise<void> {
-  window.nativeAPI.log('debug', 'Init file service worker');
+  window.nativeAPI.log('info', 'Init file service worker');
   if (!('serviceWorker' in navigator)) {
-    console.warn('File service worker: service workers not supported, video/audio streaming and download unavailable');
+    window.nativeAPI.log('error', 'File service worker: service workers not supported, video/audio streaming and download unavailable');
     return;
   }
 

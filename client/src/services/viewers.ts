@@ -9,12 +9,12 @@ import * as pdfjs from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
 
 async function _initPdf(): Promise<void> {
-  window.nativeAPI.log('debug', 'Init PDF worker');
+  window.nativeAPI.log('info', 'Init PDF worker');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 }
 
 async function _initMonaco(): Promise<void> {
-  window.nativeAPI.log('debug', 'Init Monaco worker');
+  window.nativeAPI.log('info', 'Init Monaco worker');
   self.MonacoEnvironment = {
     getWorker: function (_workerId: string, label: string) {
       switch (label) {

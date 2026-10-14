@@ -738,7 +738,8 @@ export interface FileData {
 }
 
 interface BugReportOptions {
-  logs?: string;
+  guiLogs?: string;
+  libparsecLogs?: string;
   includeScreenshot?: boolean;
   files?: Array<FileData>;
 }
@@ -759,8 +760,11 @@ async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Pr
     formData.append('title', 'Bug Report');
     formData.append('description', query.description);
     formData.append('version', APP_VERSION);
-    if (opts?.logs) {
-      formData.append('logs', new Blob([opts.logs], { type: 'text/plain' }), 'logs.txt');
+    if (opts?.guiLogs) {
+      formData.append('gui-logs', new Blob([opts.guiLogs], { type: 'text/plain' }), 'gui-logs.txt');
+    }
+    if (opts?.libparsecLogs) {
+      formData.append('libparsec-logs', new Blob([opts.libparsecLogs], { type: 'text/plain' }), 'libparsec-logs.txt');
     }
     // For later
     // if (opts.includeScreenshot) {

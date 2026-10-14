@@ -70,6 +70,8 @@ try {
 
 log.initialize();
 Object.assign(console, log.functions);
+// Use UTC ISO timestamps (e.g. `2026-09-24T14:58:58.722Z`)
+log.transports.file.format = '[{iso}] [{level}]{scope} {text}';
 if (!electronIsDev) {
   log.transports.file.level = 'info';
   log.transports.console.level = 'info';
@@ -286,9 +288,37 @@ ipcMain.on(PageToWindowChannel.CriticalError, async (_event, message: string, er
   await parsecApp.quitApp();
 });
 
-ipcMain.on(PageToWindowChannel.GetLogs, async () => {
-  const content = fs.readFileSync(log.transports.file.getFile().path, { encoding: 'utf-8', flag: 'r' });
-  parsecApp.sendEvent(WindowToPageChannel.LogRecords, content);
+const MAX_LOG_SIZE = 2 * 1024 * 1024;
+
+// Log files can grow large (libparsec's is never rotated), only keep the last `MAX_LOG_SIZE` bytes
+function readLogTail(logFile: string): string {
+  const fd = fs.openSync(logFile, 'r');
+  try {
+    const size = fs.fstatSync(fd).size;
+    const start = Math.max(0, size - MAX_LOG_SIZE);
+    const buffer = Buffer.alloc(size - start);
+    fs.readSync(fd, buffer, 0, buffer.length, start);
+    if (start === 0) {
+      return buffer.toString('utf-8');
+    }
+    // We most likely started in the middle of a line, skip to the next one
+    const firstNewLine = buffer.indexOf('\n');
+    return buffer.subarray(firstNewLine + 1).toString('utf-8');
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+ipcMain.on(PageToWindowChannel.GetLogs, async (_event, source: 'GUI' | 'libparsec') => {
+  const logFile =
+    source === 'GUI' ? log.transports.file.getFile().path : path.join(app.getPath('userData'), '..', 'libparsec', 'libparsec.log');
+  try {
+    const content = readLogTail(logFile);
+    parsecApp.sendEvent(WindowToPageChannel.LogRecords, source, content);
+  } catch (err: any) {
+    log.error(err);
+    parsecApp.sendEvent(WindowToPageChannel.LogRecords, source, '');
+  }
 });
 
 ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {

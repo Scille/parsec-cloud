@@ -623,7 +623,9 @@
         "seeLogs": {
             "label": "Logs",
             "description": "View the application logs",
-            "seeLogs": "View logs"
+            "seeLogs": "View logs",
+            "sourceGUI": "GUI",
+            "sourceLibparsec": "libparsec"
         },
         "minimizeToSystemTray": {
             "label": "Minimize to system tray",
