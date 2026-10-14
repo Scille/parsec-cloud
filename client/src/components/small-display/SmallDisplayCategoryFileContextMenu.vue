@@ -21,7 +21,7 @@
               class="list-group-item__icon"
               :icon="checkmarkCircle"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionSelectAll') }}
             </ion-text>
           </ion-item>

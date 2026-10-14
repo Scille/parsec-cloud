@@ -15,7 +15,7 @@
               class="list-group-item__icon"
               :icon="personRemove"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: multipleSelected ? 2 : 1 }) }}
             </ion-text>
           </ion-item>
@@ -29,7 +29,7 @@
               class="list-group-item__icon"
               :icon="returnUpForward"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
             </ion-text>
           </ion-item>
@@ -43,7 +43,7 @@
               class="list-group-item__icon"
               :icon="repeat"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: multipleSelected ? 2 : 1 }) }}
             </ion-text>
           </ion-item>
@@ -62,7 +62,7 @@
               class="list-group-item__icon"
               :icon="informationCircle"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('UsersPage.userContextMenu.actionDetails') }}
             </ion-text>
           </ion-item>
