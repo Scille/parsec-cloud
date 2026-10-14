@@ -402,6 +402,12 @@
     // handled by a full page reload, not by tearing down DocEditor here — see
     // restartFirstManualFlow.)
     var DEFERRED_EDITOR_IDS = ['document-editor-2', 'document-editor-3'];
+    // `?defer1=1` also defers the first editor (Alice) behind an overlay — used
+    // to record scenarios where another participant must connect first (e.g.
+    // a read-only viewer creating the session).
+    if (new URLSearchParams(location.search).get('defer1') === '1') {
+      DEFERRED_EDITOR_IDS.push('document-editor-1');
+    }
     MON.deferred = {};      // editor id -> { id, cfg } pending construction
     MON.deferStarted = {};  // editor id -> true once started (page-internal
                             // editor rebuilds must not re-defer it)

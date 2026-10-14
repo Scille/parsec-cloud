@@ -97,7 +97,14 @@
         { id: 'document-editor-3', name: 'Mallory', uid: 'de103a11031c00100000000000000000' },
       ];
 
+      // The `?view=<name>` URL param opens the given editor in view (read-only)
+      // mode: its auth then carries `mode: "view"` and `permissions.edit:
+      // false`, and the document server marks the connection as a viewer (used
+      // to record read-only participant scenarios).
+      var viewEditor = new URLSearchParams(location.search).get('view') || '';
+
       function openEditor(id, name, uid) {
+        var isView = name === viewEditor;
         new DocsAPI.DocEditor(id, {
           documentType: '{{DOC_TYPE}}',
           type: 'desktop',
@@ -108,10 +115,10 @@
             key: '{{DOC_KEY}}',        // same key on all editors → co-editing
             title: '{{DOC_TITLE}}',
             url: DOC_URL,
-            permissions: { edit: true }
+            permissions: { edit: !isView }
           },
           editorConfig: {
-            mode: 'edit',
+            mode: isView ? 'view' : 'edit',
             lang: 'en',
             callbackUrl: CALLBACK_URL,
             user: { id: uid, name: name },

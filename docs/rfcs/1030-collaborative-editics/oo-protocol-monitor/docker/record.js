@@ -560,12 +560,13 @@ const EDITORS = {
   Mallory: 'document-editor-3',
 };
 
-async function openRecordPage(browser, monitorSrc, proxyPort, pageServerPort, docType, docKey) {
+async function openRecordPage(browser, monitorSrc, proxyPort, pageServerPort, docType, docKey, viewEditor, deferAlice) {
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, bypassCSP: true });
   await ctx.addInitScript('window.__OO_PROXY_PORT = ' + proxyPort + ';\n' + monitorSrc);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('  [pageerror]', String(e.message).slice(0, 120)));
-  const url = 'http://127.0.0.1:' + pageServerPort + '/?doc=' + docType + '&key=' + docKey;
+  const url = 'http://127.0.0.1:' + pageServerPort + '/?doc=' + docType + '&key=' + docKey +
+    (viewEditor ? '&view=' + viewEditor : '') + (deferAlice ? '&defer1=1' : '');
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   return { ctx, page };
 }
@@ -602,6 +603,15 @@ async function waitEditorRendered(page, who, timeout = EDITOR_LOAD_TIMEOUT) {
 }
 
 async function startEditor(page, who) {
+  // The harness page boots its editors asynchronously (it waits for api.js, then
+  // gives the monitor's trap a beat to wrap DocsAPI.DocEditor), and the monitor
+  // defers them behind their overlay — so wait until this editor has actually
+  // been constructed-and-trapped before starting it.
+  await page.waitForFunction(
+    (id) => !!(window.__OO_MON && window.__OO_MON.deferred[id]),
+    EDITORS[who],
+    { timeout: 60000 }
+  );
   await page.evaluate((id) => {
     const MON = window.__OO_MON;
     if (MON && MON.deferred[id]) MON.startDeferred(id);
@@ -684,6 +694,13 @@ let CURRENT = null; // { rec, page, docType, docKey }
 
 async function connectAlice() {
   const { rec, page } = CURRENT;
+  // With `?defer1=1` (see the `deferAlice` scenario field), Alice is deferred
+  // behind an overlay like the other editors, so that a scenario can have
+  // another participant connect first: start her here in that case.
+  const aliceDeferred = await page.evaluate(
+    () => !!(window.__OO_MON && window.__OO_MON.deferred['document-editor-1'])
+  );
+  if (aliceDeferred) await startEditor(page, 'Alice');
   await handshakeDone(rec, 'Alice');
   await waitEditorRendered(page, 'Alice');
   await rec.waitQuiescence(800);
@@ -803,8 +820,13 @@ async function actWhileAuthenticating(who, action) {
 // ---------------------------------------------------------------------------
 
 const SCENARIOS = {};
-function scenario(name, docType, info, fn) {
-  SCENARIOS[name] = { name, docType, info, fn };
+function scenario(name, docType, info, fn, viewEditor, deferAlice) {
+  // `viewEditor`: the participant opened in view (read-only) mode by the
+  // harness page (see index.html's `?view=` param) — its connection is then
+  // marked as a viewer by the document server.
+  // `deferAlice`: also defer Alice behind an overlay (see monitor.js's
+  // `?defer1=1`), so another participant can connect first.
+  SCENARIOS[name] = { name, docType, info, fn, viewEditor, deferAlice };
 }
 
 // --- auth ------------------------------------------------------------------
@@ -1441,7 +1463,9 @@ async function runProbe(browser, monitorSrc, proxyPort, pageServerPort, docType)
       await rec.drain().catch(() => {});
       rec.reset();
       const docKey = 'rec' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      const { ctx, page } = await openRecordPage(browser, monitorSrc, proxy.port, pages.port, sc.docType, docKey);
+      const { ctx, page } = await openRecordPage(
+        browser, monitorSrc, proxy.port, pages.port, sc.docType, docKey, sc.viewEditor, sc.deferAlice
+      );
       CURRENT = { rec, page, docType: sc.docType, docKey };
       try {
         await sc.fn();
