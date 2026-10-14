@@ -295,14 +295,27 @@ jobs:
           echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
-      - name: Install winfsp
+      - name: Download WinFsp
+        shell: bash -eux {0}
+        if: startsWith(matrix.os, 'windows')
+        run: >-
+          curl -L
+          https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-${{ env.WINFSP_VERSION }}.msi -o '${{ runner.temp }}/winfsp.msi'
+          https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
+        timeout-minutes: 2
+
+      - name: Install WinFsp
+        if: startsWith(matrix.os, 'windows')
+        run: msiexec /i "${{ runner.temp }}\winfsp.msi" /qn /norestart INSTALLLEVEL=1000
+        timeout-minutes: 1
+
+      - name: Install WinFsp tests
         if: startsWith(matrix.os, 'windows')
         shell: bash -eux {0}
         run: |
-          choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
-          curl -L https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
           unzip '${{ runner.temp }}/winfsp-tests.zip' -d '${{ runner.temp }}/'
           mv '${{ runner.temp }}/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
+        timeout-minutes: 1
 
       - name: Install macFUSE
         if: startsWith(matrix.os, 'macos')
