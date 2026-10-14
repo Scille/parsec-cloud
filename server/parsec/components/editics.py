@@ -22,6 +22,7 @@ from parsec.editics_protocol import (
     EditicsClientEventCursor,
     EditicsClientEventGetMessages,
     EditicsClientEventIsSaveLock,
+    EditicsClientEventMessage,
     EditicsClientEventSaveChanges,
     EditicsClientEventUnLockDocument,
     EditicsClientEventUnSaveLock,
@@ -63,8 +64,7 @@ class ChatMessage:
 
     time_ms: int
     author_index_user: int
-    key_index: int
-    encrypted_message: bytes
+    encrypted_message: tuple[int, bytes]
 
 
 @dataclass(slots=True)
@@ -360,11 +360,35 @@ class EditicsComponent:
                         MessageRecord(
                             time=m.time_ms,
                             authorIndexUser=m.author_index_user,
-                            encryptedMessage=(m.key_index, m.encrypted_message),
+                            encryptedMessage=m.encrypted_message,
                         )
                         for m in session.chat_messages
                     ],
                 )
+
+            case EditicsClientEventMessage():
+                message_record = MessageRecord(
+                    time=now(),
+                    authorIndexUser=participant.index,
+                    encryptedMessage=event.encryptedMessage,
+                )
+                session.chat_messages.append(
+                    ChatMessage(
+                        time_ms=message_record.time,
+                        author_index_user=message_record.authorIndexUser,
+                        encrypted_message=event.encryptedMessage,
+                    ),
+                )
+                # Message is broadcasted to everyone (including the author), we
+                # broadcast to the auth in the response since it is faster.
+                broadcasted_event = EditicsServerEventMessage(messages=[message_record])
+                for other_participant in session.participants.values():
+                    if other_participant.participant_id == participant.participant_id:
+                        continue
+                    if other_participant.sse_channel_sender:
+                        # TODO: close the SSE if the channel is full
+                        other_participant.sse_channel_sender.send_nowait(broadcasted_event)
+                return broadcasted_event
 
             case EditicsClientEventUnLockDocument():
                 reply = None

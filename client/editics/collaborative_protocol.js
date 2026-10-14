@@ -123,6 +123,9 @@ class EditicsTranslator {
    * @param {EditicsTranslatorConfig} cfg
    */
   constructor(cfg) {
+    /** @type {string} */
+    this.docId = `${cfg.workspaceId}/${cfg.vlobId}`;
+
     /** @type {EditicsTranslatorConfig} */
     this.config = cfg;
     /** @type {LibparsecCapabilities} */
@@ -185,12 +188,6 @@ class EditicsTranslator {
     //   case 'authChangesAck':
     //     return { type: 'authChangesAck' };
     //
-    //   case 'message':
-    //     return {
-    //       type: 'message',
-    //       encryptedMessage: bytesToBase64(await this._encrypt(bytesFromStr(String(oo.message)))),
-    //     };
-    //
     //   case 'getLock':
     //     return { type: 'getLock', block: oo.block };
     //
@@ -215,6 +212,15 @@ class EditicsTranslator {
         /** @type {EditicsClientEventGetMessages} */
         return {
           type: 'getMessages',
+        };
+
+      case 'message':
+        // The chat message is encrypted as an opaque blob (RFC §2.2)
+        const [msgKeyIndex, msgCipherText] = await this._encrypt(bytesFromStr(String(oo.message)));
+        /** @type {EditicsClientEventMessage} */
+        return {
+          type: 'message',
+          encryptedMessage: [msgKeyIndex, bytesToBase64(msgCipherText)],
         };
 
       case 'cursor':
@@ -542,13 +548,17 @@ class EditicsTranslator {
       //       so we should only rely on the deviceID (and hence can we remove the other fields ?)
       event.messages = await Promise.all(
         editics.messages.map(async (m) => {
-          const userId = this._userId(m.authorIndexUser);
+          const p = this._participants.get(m.authorIndexUser);
+          const [keyIndex, b64CipherText] = m.encryptedMessage;
           return {
-            message: bytesToStr(await this._decrypt(bytesFromBase64(m.encryptedMessage))),
+            docid: this.docId,
+            message: bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText))),
             time: m.time,
-            user: userId + String(m.authorIndexUser),
-            useridoriginal: userId,
-            username: this._userName(m.authorIndexUser),
+            // The `user`/`useridoriginal` fields correspond to the author's
+            // participant id / device id (like the `cursor` server event).
+            user: p ? p.participantId : String(m.authorIndexUser),
+            useridoriginal: p ? p.deviceId : String(m.authorIndexUser),
+            username: p ? p.userName : String(m.authorIndexUser),
           };
         }),
       );
@@ -614,13 +624,12 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventSaveChanges>}
    */
   async _cookServerSaveChanges(editics) {
-    const docid = `${this.config.workspaceId}/${this.config.vlobId}`;
     const changes = await Promise.all(
       (editics.changes || []).map(async (c) => {
         const p = this._participants.get(c.authorIndexUser);
         const [keyIndex, b64CipherText] = c.encryptedChange;
         return {
-          docid,
+          docid: this.docId,
           // Each change fragment is an opaque string that OnlyOffice expects
           // JSON-encoded (e.g. `'"66;..."'`).
           change: JSON.stringify(bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)))),

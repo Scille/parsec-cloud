@@ -46,6 +46,7 @@ DEVICE_ID_TO_PARTICIPANT = {
     "de10808c001000000000000000000000": "Bob",  # bob@dev1
     "de103a11031c00100000000000000000": "Mallory",  # mallory@dev1
 }
+DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
 
 # In OnlyOffice protocol there is three concepts:
 # - `connectionId`: transport-level connection (i.e. websocket connection ID)
@@ -152,6 +153,10 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 for p in payload["participants"]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
 
+                # `lock` field is a dict when opening a docx, but a list when opening a pptx or a xlsx...
+                if payload["locks"] == []:
+                    payload["locks"] = {}
+
                 # Hardcoded values in `client/editics/collaborative_protocol.js`
                 payload["hasForgotten"] = False
                 payload["jwt"] = ""
@@ -179,17 +184,18 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
             elif type_ == "cursor":
                 for m in payload["messages"]:
                     m["time"] = TypePlaceholder(m["time"])
+            elif type_ == "message":
+                for m in payload.get("messages", []):
+                    m["docid"] = f"f0000000000000000000000000000004/{DOCUMENT_ID.hex}"
+                    m["time"] = TypePlaceholder(m["time"])
             elif type_ == "unSaveLock":
                 # `time` is either the server timestamp of the last change, or
                 # -1 if the save has been cancelled.
                 payload["time"] = -1 if payload["time"] == -1 else TypePlaceholder(payload["time"])
             elif type_ == "saveChanges":
-                for change in payload["changes"] or []:
-                    # `docid` doesn't exist as such in the editics protocol (the
-                    # editics client rebuilds it from the workspace/document IDs)
-                    change["docid"] = TypePlaceholder(change["docid"])
-                    # `time` is the server timestamp of the change
-                    change["time"] = TypePlaceholder(change["time"])
+                for c in payload["changes"] or []:
+                    c["docid"] = f"f0000000000000000000000000000004/{DOCUMENT_ID.hex}"
+                    c["time"] = TypePlaceholder(c["time"])
 
         events.append(
             RecordEvent(
@@ -271,7 +277,6 @@ async def _do_test_record(
             coolorg, backend, coolorg.mallory.user_id, RealmRole.CONTRIBUTOR
         )
 
-    document_id = VlobID.new()
     per_participant_id_and_client: dict[
         str, tuple[EditicsParticipantID, AuthenticatedRpcClient]
     ] = {
@@ -289,7 +294,7 @@ async def _do_test_record(
         async with editics_js_runtime.new_client(
             who=who,
             realm_id=coolorg.wksp1_id,
-            document_id=document_id,
+            document_id=DOCUMENT_ID,
             participant_id=participant_id,
         ) as editics_js_client:
             task_status.started(editics_js_client)
