@@ -146,10 +146,6 @@ jobs:
           cp ${CP_ARGS} artifacts/*-electron/Parsec_${{ needs.version.outputs.full }}_* release-files
           cp ${CP_ARGS} artifacts/*-electron/latest-*.yml release-files
 
-          # Copy Windows installer (signed by the CI using Azure Trusted Signing)
-          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
-
           # Copy client CLI
           cp ${CP_ARGS} artifacts/cli-*/parsec-cli-${{ needs.version.outputs.full }}-* release-files
 
