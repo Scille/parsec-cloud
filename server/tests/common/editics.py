@@ -263,6 +263,8 @@ class EditicsJSRuntime:
                               return "Alice";
                             case "de10808c001000000000000000000000":
                               return "Bob";
+                            case "de103a11031c00100000000000000000":
+                              return "Mallory";
                             default:
                               throw new Error(`Unknown device ID (you may want to patch the test code): ${{ deviceId }}`)
                         }}

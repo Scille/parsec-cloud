@@ -15,22 +15,79 @@ from typing import Any, Literal
 import anyio
 from anyio.abc import TaskStatus
 
-from parsec._parsec import VlobID
+from parsec._parsec import RealmRole, VlobID
 from parsec.editics_protocol import EditicsParticipantID
 from tests.common import (
     AuthenticatedRpcClient,
+    Backend,
     CoolorgRpcClients,
     EditicsJSClient,
     EditicsJSRuntime,
+    wksp1_alice_gives_role,
 )
 
 RECORDS_DIR = Path(__file__).resolve().parent / "records"
 
+# Editics participant IDs: arbitrary UUIDs chosen client-side when joining an
+# editics session (the session and participant concepts are merged in the
+# editics protocol, see `editics_protocol.py`). The records' `auth` events
+# carry the OnlyOffice session id on the wire (a transport-level concept),
+# which `_parse_record` patches back to those values.
+ALICE_PARTICIPANT_ID = "4a51295bf2d04b47b6269a8e33b120e0"
+BOB_PARTICIPANT_ID = "26dbd085b4c548a48fed5577eecd9709"
+MALLORY_PARTICIPANT_ID = "fdc46f2f2c584305be070cc626f4dccc"
+PARTICIPANT_IDS = {
+    "Alice": ALICE_PARTICIPANT_ID,
+    "Bob": BOB_PARTICIPANT_ID,
+    "Mallory": MALLORY_PARTICIPANT_ID,
+}
+DEVICE_ID_TO_PARTICIPANT = {
+    "de10a11cec0010000000000000000000": "Alice",  # alice@dev1
+    "de10808c001000000000000000000000": "Bob",  # bob@dev1
+    "de103a11031c00100000000000000000": "Mallory",  # mallory@dev1
+}
+
+# In OnlyOffice protocol there is three concepts:
+# - `connectionId`: transport-level connection (i.e. websocket connection ID)
+# - `sessionId`: logical session surviving websocket reconnects
+#   (initially = first socket id; reused on restore).
+# - `participantId`: server's primary per-participant key, its lifespan
+#   is equal to the logical session. It is a composite ID made of `<idOriginal><indexUser>`
+#   (e.g. `de10a11cec00100000000000000000001` for Alice with `indexUser` 1).
+# In editics protocol however:
+# - Session and participant are merged together (hence `sessionId` == `participantId`).
+# - Participant ID is chosen client-side (needed since it must be known before creating
+#   the SSE connection).
+_COMPOSITE_PARTICIPANT_ID_RE = re.compile(
+    # In OnlyOffice protocol, participant ID is made of `<originalID><counter>`
+    "^(" + "|".join(DEVICE_ID_TO_PARTICIPANT.keys()) + r")\d+$"
+)
+
+
+def _fix_session_and_participant_ids(participant: str, payload: Any) -> Any:
+    def _recursive_fix_participant_ids(value: Any) -> Any:
+        match value:
+            case dict():
+                return {k: _recursive_fix_participant_ids(v) for k, v in value.items()}
+            case list():
+                return [_recursive_fix_participant_ids(v) for v in value]
+            case str() if m := _COMPOSITE_PARTICIPANT_ID_RE.match(value):
+                return PARTICIPANT_IDS[DEVICE_ID_TO_PARTICIPANT[m.group(1)]]
+            case _:
+                return value
+
+    patched_payload = _recursive_fix_participant_ids(payload)
+
+    if "sessionId" in patched_payload:
+        patched_payload["sessionId"] = PARTICIPANT_IDS[participant]
+
+    return patched_payload
+
 
 # Matches a record event heading, e.g.:
-#   ### 08:58:10.563   ->  John Smith      auth
-#   ### 08:58:10.739   <-  John Smith      auth
-#   ### 08:58:09.979       John Smith      [Transport WebSocket] ws-open
+#   ### 08:58:10.563   ->  Alice      auth
+#   ### 08:58:10.739   <-  Alice      auth
+#   ### 08:58:09.979       Alice      [Transport WebSocket] ws-open
 # Note the direction arrows (`->` client-to-server, `<-` sever-to-client), entries
 # without them are client-side transport-level events that we skip.
 _HEADING_RE = re.compile(
@@ -73,6 +130,14 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
 
         direction = "client-to-server" if e1.group("direction") == "->" else "server-to-client"
         type_ = e1.group("type")
+
+        participant = e1.group("participant")
+        assert participant in PARTICIPANT_IDS, (
+            f"Unexpected participant name `{participant}`, tl;dr: capture your records using "
+            "`cd docs/rfcs/1030-collaborative-editics/oo-protocol-monitor/ && npm run with-docker`"
+        )
+
+        payload = _fix_session_and_participant_ids(participant, payload)
 
         # Patch the non-deterministic fields from the server events
         if direction == "server-to-client":
@@ -125,16 +190,6 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                     change["docid"] = TypePlaceholder(change["docid"])
                     # `time` is the server timestamp of the change
                     change["time"] = TypePlaceholder(change["time"])
-
-        participant = e1.group("participant")
-        # We generate tests by recording session
-        # (see docs/rfcs/1030-collaborative-editics/oo-protocol-monitor/) from
-        # the official OnlyOffice website's demo page. So we endup with the
-        # wrong participant names and IDs that must be manually changed.
-        assert participant in ("Alice", "Bob"), (
-            "Unexpected participant name, tl;dr: run"
-            f"`python {(RECORDS_DIR / 'cook_record.py').resolve()} {record_path.resolve()}`"
-        )
 
         events.append(
             RecordEvent(
@@ -196,6 +251,7 @@ def _compare_server_event(event_from_record: OOEvent, actual_event: OOEvent) -> 
 async def _do_test_record(
     record_path: Path,
     coolorg: CoolorgRpcClients,
+    backend: Backend,
     editics_js_runtime: EditicsJSRuntime,
 ) -> None:
     """Run a captured OnlyOffice record against the real server.
@@ -207,12 +263,21 @@ async def _do_test_record(
     """
     events = _parse_record(record_path)
 
+    # Origininally, Bob is READER and Mallory is not part of the workspace
+    if any(event.participant == "Bob" for event in events):
+        await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
+    if any(event.participant == "Mallory" for event in events):
+        await wksp1_alice_gives_role(
+            coolorg, backend, coolorg.mallory.user_id, RealmRole.CONTRIBUTOR
+        )
+
     document_id = VlobID.new()
     per_participant_id_and_client: dict[
         str, tuple[EditicsParticipantID, AuthenticatedRpcClient]
     ] = {
-        "Alice": ("4a51295bf2d04b47b6269a8e33b120e0", coolorg.alice),
-        "Bob": ("26dbd085b4c548a48fed5577eecd9709", coolorg.bob),
+        "Alice": (ALICE_PARTICIPANT_ID, coolorg.alice),
+        "Bob": (BOB_PARTICIPANT_ID, coolorg.bob),
+        "Mallory": (MALLORY_PARTICIPANT_ID, coolorg.mallory),
     }
 
     async def _start_editics_js_client(
@@ -366,11 +431,13 @@ for _record_path in sorted(RECORDS_DIR.glob("*.md")):
     def _make_test(record_path: Path, test_name: str):
         async def _test(
             coolorg: CoolorgRpcClients,
+            backend: Backend,
             editics_js_runtime: EditicsJSRuntime,
         ) -> None:
             await _do_test_record(
                 record_path=record_path,
                 coolorg=coolorg,
+                backend=backend,
                 editics_js_runtime=editics_js_runtime,
             )
 
