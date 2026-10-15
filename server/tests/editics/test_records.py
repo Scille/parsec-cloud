@@ -363,7 +363,7 @@ async def _do_test_record(
                         # should be minimal (just for some already scheduled work to
                         # settle).
                         try:
-                            with anyio.fail_after(delay=1):  # TODO: increase this delay for CI
+                            with anyio.fail_after(delay=0.3):  # TODO: increase this delay for CI
                                 while True:
                                     server_event = await running_js_clients[
                                         participant
