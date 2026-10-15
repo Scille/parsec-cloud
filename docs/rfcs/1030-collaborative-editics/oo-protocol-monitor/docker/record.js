@@ -1131,6 +1131,460 @@ for (const docType of ['word', 'cell', 'slide']) {
   });
 }
 
+// --- view mode (read-only participant) ---------------------------------------
+//
+// Bob is opened in view mode by the harness page (`?view=Bob`, see the
+// scenario `viewEditor` field): with this document server build he is a *live*
+// viewer (license `liveViewerSupport: true` + client `coEditingMode: "fast"`),
+// i.e. he receives the saveChanges/authChanges/cursor/message relays but not
+// the getLock/releaseLock ones, never gets a `waitAuth` (the auth lock counts
+// non-view participants only), never holds it, and only ever sends
+// auth/getMessages/message (chat)/clientLog — the client-side view mode gates
+// everything else, and the server disconnects a viewer sending
+// getLock/isSaveLock/saveChanges.
+//
+// Note: a viewer does not count toward the client-side edit-user count either,
+// so an editor working with only viewers present stays in single-user mode
+// and sends no `cursor` messages (onlyOffice's own single-user behavior).
+
+// Connect a view-mode participant. The viewer's handshake is the same as an
+// editor's (auth response, possibly authChanges first, documentOpen,
+// getMessages/message), but the completion point used here is the `auth`
+// response so that a missing getMessages would not break the scenario.
+async function connectViewer(who) {
+  const { rec, page } = CURRENT;
+  await startEditor(page, who);
+  await recvEvent(rec, who, 'auth', null, 0, EVENT_TIMEOUT);
+  await waitEditorRendered(page, who);
+  await rec.waitQuiescence(800);
+}
+
+scenario('40_view_auth_join', 'word',
+  'Alice (edit) connects and sends a chat message, then Bob joins in view' +
+  ' (read-only) mode: the server authenticates him directly (a viewer never' +
+  ' gets a waitAuth), his auth response carries the chat history and the' +
+  ' participant list with his `view: true` flag, and he can chat back.', async () => {
+  await connectAlice();
+  await sendChatMessage(CURRENT.page, 'Alice', 'Hello from Alice (before Bob joins)');
+  await sentEvent(CURRENT.rec, 'Alice', 'message', (ev) => ev.meta && ev.meta.message, 0, 10000);
+  await CURRENT.rec.waitQuiescence(400);
+  await connectViewer('Bob');
+  await sendChatMessage(CURRENT.page, 'Bob', 'Hello from Bob the viewer');
+  await sentEvent(CURRENT.rec, 'Bob', 'message', (ev) => ev.meta && ev.meta.message, 0, 10000);
+  await CURRENT.rec.waitQuiescence();
+}, 'Bob');
+
+for (const docType of ['word', 'cell', 'slide']) {
+  const t = DOC_EXT[docType];
+
+  scenario('41_view_edit_with_viewer_' + t, docType,
+    'Alice (edit) connects, Bob joins in view mode, then Alice moves her' +
+    ' cursor, edits the document and sends a chat message, and Bob sends one' +
+    ' back. NOTE: the cursor move emits nothing here — a viewer does not count' +
+    ' toward the client-side edit-user count, so Alice stays in single-user' +
+    ' mode and sends no cursor (the omission is part of the record); her save' +
+    ' changes are on the contrary relayed to Bob (live viewer).', async () => {
+    await connectAlice();
+    await connectViewer('Bob');
+    // The cursor move is expected to emit NOTHING (see the info above): just
+    // click and let the record document the omission.
+    await clickTarget(CURRENT.page, 'Alice', CURSOR_TARGETS[docType][0]);
+    await CURRENT.rec.waitQuiescence(1500);
+    await editDocument('Alice', 0);
+    await sendChatMessage(CURRENT.page, 'Alice', 'Hello from Alice to the viewer');
+    await sentEvent(CURRENT.rec, 'Alice', 'message', (ev) => ev.meta && ev.meta.message, 0, 10000);
+    await sendChatMessage(CURRENT.page, 'Bob', 'Hello from Bob the viewer');
+    await sentEvent(CURRENT.rec, 'Bob', 'message', (ev) => ev.meta && ev.meta.message, 0, 10000);
+    await CURRENT.rec.waitQuiescence();
+  }, 'Bob');
+
+  scenario('42_view_viewer_first_' + t, docType,
+    'Bob (view) connects FIRST — the session (and the document conversion) is' +
+    ' created by a read-only participant —, then Alice (edit) joins: no waitAuth' +
+    ' is involved (a viewer never holds the auth lock) and Alice can edit the' +
+    ' document; her save changes are relayed to Bob (live viewer).', async () => {
+    await connectViewer('Bob');
+    await connectAlice();
+    await editDocument('Alice', 0);
+    await CURRENT.rec.waitQuiescence();
+  }, 'Bob', true);
+
+  scenario('43_view_waitauth_with_viewer_' + t, docType,
+    'Alice (edit) connects, Bob joins in view mode, then Mallory (edit)' +
+    ' joins: the auth-lock dance (waitAuth / unLockDocument) happens between' +
+    ' the two editors only — the viewer is counted out and stays silent despite' +
+    ' receiving the connectState broadcasts (waitAuth: true). Then Alice and' +
+    ' Mallory move their cursors (two editors: the client-side collaborative' +
+    ' mode is on), relayed to Bob too.', async () => {
+    await connectAlice();
+    await connectViewer('Bob');
+    await connectClient('Mallory');
+    await moveCursor('Alice', 0);
+    await moveCursor('Mallory', 0);
+    await CURRENT.rec.waitQuiescence();
+  }, 'Bob');
+
+  scenario('44_view_join_mid_edit_' + t, docType,
+    'Alice (edit) connects and edits the document, then Bob (view) joins' +
+    ' mid-edit: he receives the backlog of changes as authChanges' +
+    ' (+ authChangesAck, live viewer) before his auth response, then Alice' +
+    ' edits again and her save changes are relayed to him.', async () => {
+    await connectAlice();
+    await editDocument('Alice', 0);
+    await connectViewer('Bob');
+    await editDocument('Alice', 1);
+    await CURRENT.rec.waitQuiescence();
+  }, 'Bob');
+}
+
+// --- element locks: join with locks, joiner edit, release --------------------
+//
+// These scenarios produce records where the `locks` field of the `auth`
+// server event carries actual lock info (it has only ever been empty in the
+// other records: their participants always connected before any lock-taking
+// edit happened). The document lock store is filled by the `getLock` client
+// message, and the `auth` event snapshots it when a participant completes its
+// join — a dict for the word editor, a list for cell/slide, see sendAuthInfo
+// in DocsCoServer.js. Word/slide take element locks for plain typing in
+// strict co-editing mode only (the editor API call behind the "Co-editing
+// mode: Strict" toolbar button); the spreadsheet locks the edited cell block
+// even in fast mode, and a solo client never releases its locks (its
+// saveChanges carries releaseLocks=false), so they persist until a
+// collaborative save.
+
+// The per-type step of "Alice takes her lock(s) while alone" (the `base`
+// event index is captured before): the spreadsheet edits two cells (the
+// locks accumulate, giving Bob's auth event several lock entries), word and
+// slide edit a single element in strict mode.
+async function aliceTakesLocks(elements, isCell) {
+  const { rec, page } = CURRENT;
+  let base = rec.events.length;
+  if (isCell) {
+    await clickTarget(page, 'Alice', elements[0]);
+    await typeText(page, 'Alice locks B3\n');
+    await sentEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice B3 getLock');
+    await recvEvent(rec, 'Alice', 'unSaveLock', null, base, 20000);
+    await rec.waitQuiescence(800);
+    base = rec.events.length;
+    await clickTarget(page, 'Alice', elements[1]);
+    await typeText(page, 'Alice locks D4');  // no Enter: the cell edit stays open
+    await sentEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice D4 getLock');
+  } else {
+    await clickTarget(page, 'Alice', elements[0]);
+    await typeText(page, 'Locked by Alice. ');
+    await sentEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice getLock');
+  }
+  await rec.waitQuiescence(800);
+}
+
+async function lockJoinEditScenario(docType) {
+  const { rec, page } = CURRENT;
+  const elements = LOCK_ELEMENTS[docType];
+  const isCell = docType === 'cell';
+  const isSlide = docType === 'slide';
+
+  // 1. Alice connects alone; word/slide need strict co-editing for plain
+  //    typing to take an element lock (the spreadsheet locks in fast mode).
+  await connectAlice();
+  if (!isCell) await setStrictCoEditing(page, 'Alice', true);
+
+  // 2. Alice takes her lock(s).
+  await aliceTakesLocks(elements, isCell);
+
+  // 3. Bob joins: his auth event must carry the lock table (a dict for word,
+  //    a list for cell/slide). Word/slide: Bob also switches to strict, so
+  //    his own edits take locks too.
+  let base = rec.events.length;
+  await connectClient('Bob');
+  await recvEvent(
+    rec, 'Bob', 'auth',
+    (ev) => {
+      const locks = ev.meta.locks;
+      return !!locks && (Array.isArray(locks) ? locks.length : Object.keys(locks).length) > 0;
+    },
+    base, EVENT_TIMEOUT, 'Bob auth with non-empty locks'
+  );
+  if (!isCell) await setStrictCoEditing(page, 'Bob', true);
+
+  // 4. Bob tries the element locked by Alice: his editor knows the lock table
+  //    from its auth event, so the attempt is refused client-side — beyond
+  //    the cursor move of the click, nothing happens on the wire.
+  await clickTarget(page, 'Bob', elements[0]);
+  await typeText(page, 'Bob tries the locked element');
+  await rec.waitQuiescence(1500);
+
+  // 5. Bob edits an element of his own (word: the second paragraph, cell: a
+  //    third cell; slide: none, see step 7): with 2+ participants the client
+  //    is in collaborative mode, so his saveChanges carries releaseLocks=true
+  //    and the server releases his lock, the saveChanges relay to Alice
+  //    carrying the released-lock descriptors. Word: strict collaborative
+  //    changes are only flushed by an explicit save (see flushEditorSave).
+  if (!isSlide) {
+    base = rec.events.length;
+    await clickTarget(page, 'Bob', isCell ? elements[2] : elements[1]);
+    await typeText(page, isCell ? 'Bob locks D2\n' : 'Bob locks the subtitle. ');
+    await sentEvent(rec, 'Bob', 'getLock', null, base, 20000, 'Bob own getLock');
+    if (!isCell) await flushEditorSave(page, 'Bob');
+    await sentEvent(rec, 'Bob', 'saveChanges', null, base, 20000);
+    await recvEvent(rec, 'Alice', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+      base, 20000, 'Alice saveChanges relay with Bob released lock');
+    await rec.waitQuiescence(800);
+  }
+
+  // 6. Alice saves again — now collaboratively, so her saveChanges carries
+  //    releaseLocks=true and the server releases her lock(s) (cell: the two
+  //    blocks she holds), the relay to Bob carrying the descriptors.
+  base = rec.events.length;
+  await clickTarget(page, 'Alice', isCell ? elements[1] : elements[0]);
+  await typeText(page, isCell ? ' Alice releases.\n' : ' Alice releases. ');
+  if (!isCell) await flushEditorSave(page, 'Alice');
+  await sentEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.releaseLocks === true,
+    base, 20000, 'Alice collaborative saveChanges');
+  await recvEvent(rec, 'Bob', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Bob saveChanges relay with Alice released locks');
+  await recvEvent(rec, 'Alice', 'unSaveLock', null, base, 20000);
+  await rec.waitQuiescence(800);
+
+  // 7. The element Alice released is now free: Bob first saves to apply the
+  //    foreign changes arrived with Alice's relay (in strict mode they are
+  //    held until then — the "changes" notification *is* the save button,
+  //    see web-apps), then locks and edits the element.
+  if (!isCell) {
+    await flushEditorSave(page, 'Bob');
+    // Applying re-renders the document (which can swallow a click landing
+    // during it): let it settle first.
+    await rec.waitQuiescence(800);
+  }
+  base = rec.events.length;
+  await clickTarget(page, 'Bob', elements[0]);
+  await typeText(page, isCell ? 'Bob takes B3\n' : 'Bob takes the element. ');
+  await sentEvent(rec, 'Bob', 'getLock', null, base, 20000);
+  if (!isCell) await flushEditorSave(page, 'Bob');
+  await sentEvent(rec, 'Bob', 'saveChanges', null, base, 20000);
+  await rec.waitQuiescence(800);
+}
+
+scenario('50_lock_join_edit_xlsx', 'cell',
+  'Alice locks two cell blocks (B3, then D4 — cell locks accumulate while she' +
+  ' is alone) and Bob joins mid-edit: his auth event carries the lock table as' +
+  ' a list (empty in every record so far). Bob try on B3 is refused' +
+  ' client-side (his editor knows the locks from its auth event), he locks' +
+  ' and edits D2 instead (his saveChanges — collaborative — releases his' +
+  ' lock, the relay to Alice carrying its descriptor), then Alice saves' +
+  ' collaboratively: her saveChanges releases both her blocks and Bob' +
+  ' receives their descriptors, leaving B3 free for Bob to lock and edit.', async () => {
+  await lockJoinEditScenario('cell');
+});
+
+scenario('51_lock_join_edit_docx', 'word',
+  'Alice switches to strict co-editing (the API behind the Co-editing Mode:' +
+  ' Strict button) and locks the Title paragraph by typing in it, then Bob' +
+  ' joins: his auth event carries the lock table as a dict (empty in every' +
+  ' record so far). Bob (also strict) try on the Title is refused' +
+  ' client-side, he locks and edits the Subtitle instead (his saveChanges —' +
+  ' collaborative — releases his paragraph lock, the relay to Alice carrying' +
+  ' its descriptor), then Alice saves collaboratively: her saveChanges' +
+  ' releases her paragraph lock and Bob receives its descriptor, leaving the' +
+  ' Title free for Bob to lock and edit.', async () => {
+  await lockJoinEditScenario('word');
+});
+
+scenario('52_lock_join_edit_pptx', 'slide',
+  'Alice switches to strict co-editing and locks the slide text shape by' +
+  ' typing in it, then Bob joins: his auth event carries the lock table as a' +
+  ' list (empty in every record so far). Bob (also strict) cannot edit the' +
+  ' locked shape — the slide has no other reachable text —, then Alice saves' +
+  ' collaboratively: her saveChanges releases her shape lock and Bob receives' +
+  ' its descriptor, leaving the shape free for Bob to lock and edit.', async () => {
+  await lockJoinEditScenario('slide');
+});
+
+// ---------------------------------------------------------------------------
+// Lock probe (OO_LOCK_PROBE=word|cell|slide): investigate how to get actual
+// lock info into the `locks` field of the `auth` server event (until now it
+// has only been empty in the recorded scenarios: the participants always
+// connected before any lock-taking edit happened). Steps: Alice takes an
+// element lock while alone (strict co-editing for word/slide — the editor API
+// call behind the "Co-editing mode: Strict" toolbar button — or a plain cell
+// edit for the spreadsheet, which locks even in fast mode), then Bob joins
+// (his auth event should then carry the lock: a dict for word, a list for
+// cell/slide, see sendAuthInfo in DocsCoServer.js), Bob attempts the locked
+// element, edits his own, and Alice releases (the releaseLocks sequence).
+// Each step's relevant wire events are printed.
+// ---------------------------------------------------------------------------
+
+// Switch `who`'s editor between fast and strict co-editing: in strict mode the
+// client takes element locks for its edits (element locks are also taken in
+// fast mode by some actions, but plain typing is not one of them).
+async function setStrictCoEditing(page, who, strict) {
+  const frame = editorFrame(page, who);
+  if (!frame) throw new Error('no frame for ' + who);
+  await frame.evaluate((isStrict) => {
+    const api = window['Asc'] && window['Asc'].editor;
+    if (!api || typeof api.asc_SetFastCollaborative !== 'function') {
+      throw new Error('asc_SetFastCollaborative not available in this editor');
+    }
+    api.asc_SetFastCollaborative(!isStrict);
+  }, strict);
+}
+
+// Trigger the editor save (the API call behind Ctrl+S / the save button).
+// Needed to flush changes in strict co-editing with 2+ participants: the
+// client then never auto-saves (see the autoSave gate in asc_docs_api — the
+// fast-collaborative and solo modes save on their own, see the records).
+async function flushEditorSave(page, who) {
+  const frame = editorFrame(page, who);
+  if (!frame) throw new Error('no frame for ' + who);
+  await frame.evaluate(() => {
+    const api = window['Asc'] && window['Asc'].editor;
+    if (!api || typeof api.asc_Save !== 'function') {
+      throw new Error('asc_Save not available in this editor');
+    }
+    api.asc_Save();
+  });
+}
+
+// Lockable elements per document type (calibrated like CURSOR_TARGETS,
+// fractions of the #editor_sdk box): word — the paragraph Alice locks then
+// the one Bob edits; cell — the two cells Alice locks (cell locks accumulate
+// while she is alone) then the cell Bob edits; slide — the single reachable
+// text shape (the slide scenarios use the release-then-edit flow).
+const LOCK_ELEMENTS = {
+  word: [
+    { name: 'title', fx: 0.30, fy: 0.10 },
+    { name: 'subtitle', fx: 0.35, fy: 0.39 },
+  ],
+  cell: [
+    { name: 'cell-B3', fx: 0.25, fy: 0.125 },
+    { name: 'cell-D4', fx: 0.55, fy: 0.20 },
+    { name: 'cell-D2', fx: 0.55, fy: 0.106 },
+  ],
+  slide: [
+    { name: 'slide-text-a', fx: 0.55, fy: 0.42, double: true },
+    { name: 'slide-text-b', fx: 0.68, fy: 0.42, double: true },
+  ],
+};
+
+async function runLockProbe(browser, monitorSrc, proxyPort, pageServerPort, docType) {
+  const rec = new Recorder(proxyPort);
+  await rec.connect();
+  const docKey = 'lockprobe' + Date.now().toString(36);
+  const { ctx, page } = await openRecordPage(browser, monitorSrc, proxyPort, pageServerPort, docType, docKey);
+  CURRENT = { rec, page, docType, docKey };
+  await connectAlice();
+
+  const dump = async (label, from) => {
+    const evs = rec.events.slice(from).filter((ev) => isMsg(ev));
+    console.log('probe: --- ' + label);
+    for (const ev of evs) {
+      let extra = '';
+      if (msgType(ev) === 'auth') extra = ' locks=' + JSON.stringify(ev.meta.locks);
+      else if (msgType(ev) === 'getLock') extra = ev.meta.block !== undefined
+        ? ' block=' + JSON.stringify(ev.meta.block) : ' locks=' + JSON.stringify(ev.meta.locks);
+      else if (msgType(ev) === 'saveChanges') extra = ' releaseLocks=' + ev.meta.releaseLocks
+        + ' locks=' + JSON.stringify(ev.meta.locks) + ' n=' + ((ev.meta.changes || []).length)
+        + (ev.dir === 'send' ? ' start=' + ev.meta.startSaveChanges + ' end=' + ev.meta.endSaveChanges : '');
+      else if (msgType(ev) === 'clientLog') extra = ' ' + JSON.stringify(ev.meta.msg || '').slice(0, 90);
+      console.log('probe:    ' + ev.dir + ' ' + evUser(ev) + ' ' + msgType(ev) + extra);
+    }
+    if (!evs.length) console.log('probe:    (no message events)');
+  };
+
+  const elements = LOCK_ELEMENTS[docType];
+
+  // 1. Strict co-editing for word/slide (the spreadsheet locks in fast mode)
+  if (docType !== 'cell') {
+    await setStrictCoEditing(page, 'Alice', true);
+    console.log('probe: Alice switched to strict co-editing');
+    await sleep(500);
+  }
+
+  // 2. Alice takes the lock on the first element (cell edit kept open: the
+  //    spreadsheet takes the block lock on the first keystroke)
+  let base = rec.events.length;
+  await clickTarget(page, 'Alice', elements[0]);
+  await typeText(page, docType === 'cell' ? 'AliceLocked' : 'Locked by Alice. ');
+  await sleep(3000);
+  await dump('Alice edit (lock taking)', base);
+
+  // 3. Bob joins: his auth event should carry Alice's lock
+  base = rec.events.length;
+  await connectClient('Bob');
+  const bobAuth = rec.events.find(
+    (ev) => isMsg(ev) && ev.dir === 'recv' && evUser(ev) === 'Bob' && msgType(ev) === 'auth'
+  );
+  console.log('probe: Bob auth locks = ' + (bobAuth ? JSON.stringify(bobAuth.meta.locks) : 'NO AUTH EVENT'));
+  await dump('Bob join', base);
+  if (docType !== 'cell') {
+    await setStrictCoEditing(page, 'Bob', true);
+    console.log('probe: Bob switched to strict co-editing');
+  }
+
+  // 4. Bob attempts the element locked by Alice
+  base = rec.events.length;
+  await clickTarget(page, 'Bob', elements[0]);
+  await typeText(page, 'BobTry');
+  await sleep(3000);
+  await dump('Bob same-element attempt', base);
+
+  // 5. Bob edits a different element (word/cell) — his own lock + save cycle
+  if (docType !== 'slide') {
+    base = rec.events.length;
+    await clickTarget(page, 'Bob', elements[1]);
+    await typeText(page, docType === 'cell' ? 'BobEdit\n' : 'Bob edit here. ');
+    await sleep(3000);
+    await dump('Bob own-element edit', base);
+    if (docType === 'word') {
+      // Strict + collaborative mode: the client never auto-saves (see the
+      // autoSave gate in asc_docs_api) — flush Bob's batch with the editor
+      // save API (what the Ctrl+S button calls).
+      base = rec.events.length;
+      const savedText = await editorFrame(page, 'Bob').evaluate(() => {
+        const api = window['Asc'] && window['Asc'].editor;
+        const doc = api && api.WordControl && api.WordControl.m_oLogicDocument;
+        // What did Bob's typing actually do to the document?
+        const texts = [];
+        if (doc) {
+          for (const p of doc.Content.slice(0, 8)) {
+            texts.push(p && p.GetAllContentText ? p.GetAllContentText().slice(0, 40) : '?');
+          }
+        }
+        if (api && typeof api.asc_Save === 'function') api.asc_Save();
+        return texts;
+      });
+      console.log('probe: Bob document paragraphs: ' + JSON.stringify(savedText));
+      await sleep(3000);
+      await dump('Bob asc_Save flush?', base);
+    }
+  }
+
+  // 6. Alice saves again — now collaboratively, so her saveChanges carries
+  //    releaseLocks=true and releases her lock(s).
+  base = rec.events.length;
+  await clickTarget(page, 'Alice', docType === 'cell' ? elements[1] : elements[0]);
+  await typeText(page, docType === 'cell' ? ' Alice releases.\n' : ' Alice releases. ');
+  if (docType !== 'cell') await flushEditorSave(page, 'Alice');
+  await sleep(3000);
+  await dump('Alice release sequence', base);
+
+  // 7. Bob applies the now-pending foreign changes (in strict mode they are
+  //    held until the user saves — the "changes" notification *is* the save
+  //    button), then edits the element Alice released.
+  if (docType !== 'cell') {
+    await flushEditorSave(page, 'Bob');
+    await sleep(1500);
+  }
+  base = rec.events.length;
+  await clickTarget(page, 'Bob', elements[0]);
+  await typeText(page, docType === 'cell' ? 'BobAfterRelease\n' : 'Bob after release. ');
+  await sleep(2500);
+  if (docType !== 'cell') await flushEditorSave(page, 'Bob');
+  await sleep(3000);
+  await dump('Bob edit after release', base);
+
+  if (!STAY_ALIVE) await ctx.close();
+}
+
 // ---------------------------------------------------------------------------
 // UI scan (OO_SCAN=word|cell|slide): grid-click Alice's editor with Bob
 // connected (cursor events are only emitted to relay to other participants)
