@@ -410,9 +410,10 @@ async def serve_parsec_asgi_app(
         # ex: parsec/3.0.1+dev1
         server_header = f"parsec/{parsec_version}"
     else:
-        v_major, _ = parsec_version.split(".", 1)
-        # ex: parsec/3
-        server_header = f"parsec/{v_major}"
+        # Exposing a precise version may help potential attackers identify known vulnerabilities.
+        v_major, v_minor, _ = parsec_version.split(".", 2)
+        # ex: parsec/3.10
+        server_header = f"parsec/{v_major}.{v_minor}"
 
     logger.debug("Using the following TLS ciphers suite", ciphers=ssl_ciphers)
 
@@ -422,6 +423,8 @@ async def serve_parsec_asgi_app(
         app=app,
         host=host,
         port=port,
+        # Note this only tells uvicorn to not include its own "server: uvicorn" header,
+        # but it does not affect the Parsec server_header added just below.
         server_header=False,
         headers=[("Server", server_header)],
         log_level="info",
