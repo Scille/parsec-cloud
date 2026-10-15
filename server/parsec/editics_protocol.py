@@ -242,6 +242,20 @@ EditicsClientEventAdapter = TypeAdapter(EditicsClientEvent)
 # --- Server -> client events -------------------------------------------------
 
 
+class LockRecord(BaseModel):
+    """One record in a `getLock` event's `locks` object / an `auth` event's
+    `locks` array (todo §4.4)."""
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    time: int
+    # OnlyOffice name `user` kept (bad name documented at the definition site):
+    # the indexUser of the lock holder.
+    user: EditicsIndexUser
+    # Opaque block descriptor (shape depends on editor type; re-broadcast as-is).
+    block: Any
+
+
 class EditicsServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     participants: list[EditicsParticipantEntry]  # current participant map
@@ -251,6 +265,9 @@ class EditicsServerEventAuth(BaseModel):
     participantTimeConnect: int  # server timestamp (ms) at connect
     # When the file edition session has been started
     openedAt: int  # ms
+    # Region locks currently held, so the newcomer knows which regions are
+    # taken (OnlyOffice carries the lock table in its `auth` event).
+    locks: list[LockRecord] = Field(default_factory=list)
 
 
 class EditicsServerEventConnectState(BaseModel):
@@ -281,9 +298,20 @@ class EditicsServerEventAuthChanges(BaseModel):
     """
 
     type: Literal["authChanges"] = "authChanges"
-    # Format: (<change index>, <Key index>, <base64(ciphertext)>)
-    # The change index is 1-based and monotonic.
-    changes: list[tuple[int, int, Base64BytesField]] = Field(default_factory=list)
+    changes: list[AuthChangeRecord] = Field(default_factory=list)
+
+
+class AuthChangeRecord(BaseModel):
+    """One record in an `authChanges` event's `changes` array (todo §4.4)."""
+
+    # 1-based and monotonic.
+    index: int
+    # OnlyOffice names `user`/`useridoriginal`: the author's indexUser.
+    authorIndexUser: EditicsIndexUser
+    # Server timestamp (ms) of the change.
+    time: int
+    # Format: (<Key index>, <base64(ciphertext)>)
+    encryptedChange: tuple[int, Base64BytesField]
 
 
 class EditicsServerEventWaitAuth(BaseModel):
@@ -332,19 +360,6 @@ class EditicsServerEventCursor(BaseModel):
 
     type: Literal["cursor"] = "cursor"
     messages: list[CursorRecord]
-
-
-class LockRecord(BaseModel):
-    """One record in a `getLock` event's `locks` object (todo §4.4)."""
-
-    model_config = {"arbitrary_types_allowed": True}
-
-    time: int
-    # OnlyOffice name `user` kept (bad name documented at the definition site):
-    # the indexUser of the lock holder.
-    user: EditicsIndexUser
-    # Opaque block descriptor (shape depends on editor type; re-broadcast as-is).
-    block: Any
 
 
 class EditicsServerEventGetLock(BaseModel):

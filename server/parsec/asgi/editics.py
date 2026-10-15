@@ -90,12 +90,16 @@ ACCEPT_TYPE_SSE = "text/event-stream"
 MAX_CONTENT_LENGTH = 1 * 1024**2
 
 
-# Dummy auth system based on a `Authorization: Editics <device_id_hex>.<participant_uuid_hex>` header
-# TODO: replace this by a proper thing
+# The editics token is expected in the `Authorization: Bearer <editics_token>` header.
+# Note the listen route (i.e. SSE) is typically consumed from a web browser through
+# the `EventSource` API, which cannot set custom headers: hence the token is also
+# accepted as an `authorization` query parameter.
+# TODO: replace this auth system by a proper thing
 def _parse_editics_auth_header(headers, request: Request) -> EditicsToken:
-    try:
-        raw_authorization = headers["Authorization"]
-    except KeyError:
+    raw_authorization = headers.get("Authorization")
+    if raw_authorization is None:
+        raw_authorization = request.query_params.get("authorization")
+    if raw_authorization is None:
         # TODO: handle api version
         _handshake_abort(CustomHttpStatus.MissingAuthenticationInfo, api_version="TODO")
 

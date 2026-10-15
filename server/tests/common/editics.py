@@ -83,14 +83,17 @@ class EditicsSessionClient:
                 case _:
                     raise RpcTransportError(rep)
 
+        # `EventSource` (i.e. the browser API used for the SSE listen route) cannot
+        # set custom headers, so a `authorization` query parameter has to be used.
+        sse_headers = {"Accept": "text/event-stream"}
+        sse_params = {"authorization": authorization}
+
         async with httpx_sse.aconnect_sse(
             who.raw_client,
             "GET",
             listen_url,
-            # `EventSource` cannot set headers; the server accepts the identity
-            # as an `authorization` query param on the SSE route (todo §6.2).
-            # params={"authorization": authorization},
-            headers={"Authorization": authorization, "Accept": "text/event-stream"},
+            params=sse_params,
+            headers=sse_headers,
         ) as sse_event_source:
             yield cls(
                 send_events_raw=send_events_raw,
@@ -239,8 +242,8 @@ class EditicsJSRuntime:
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
+        editor_type: int,  # 0=Word, 1=Spreadsheet, 2=Presentation
         vlob_version: int = 1,
-        editor_type: int = 0,
         participant_id: EditicsParticipantID | None = None,
     ) -> AsyncGenerator[EditicsJSClient, None]:
         participant_id = participant_id or uuid4().hex

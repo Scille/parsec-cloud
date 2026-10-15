@@ -153,9 +153,12 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 for p in payload["participants"]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
 
-                # `lock` field is a dict when opening a docx, but a list when opening a pptx or a xlsx...
-                if payload["locks"] == []:
-                    payload["locks"] = {}
+                # `locks` is a dict when opening a docx, but a list when opening
+                # a pptx or a xlsx (and its entries contain server-generated
+                # timestamps).
+                locks = payload["locks"]
+                for lock in locks.values() if isinstance(locks, dict) else locks:
+                    lock["time"] = TypePlaceholder(lock["time"])
 
                 # Hardcoded values in `client/editics/collaborative_protocol.js`
                 payload["hasForgotten"] = False
@@ -196,6 +199,22 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                 for c in payload["changes"] or []:
                     c["docid"] = f"f0000000000000000000000000000004/{DOCUMENT_ID.hex}"
                     c["time"] = TypePlaceholder(c["time"])
+                for lock in payload.get("locks") or []:
+                    lock["time"] = TypePlaceholder(lock["time"])
+                # The client-side translation layer only carries `excelAdditionalInfo`
+                # when present (the OnlyOffice protocol has it optional).
+                if payload.get("excelAdditionalInfo") is None:
+                    payload.pop("excelAdditionalInfo", None)
+            elif type_ == "authChanges":
+                for c in payload["changes"]:
+                    c["docid"] = f"f0000000000000000000000000000004/{DOCUMENT_ID.hex}"
+                    c["time"] = TypePlaceholder(c["time"])
+            elif type_ == "getLock":
+                for lock in payload["locks"].values():
+                    lock["time"] = TypePlaceholder(lock["time"])
+            elif type_ == "releaseLock":
+                for lock in payload["locks"]:
+                    lock["time"] = TypePlaceholder(lock["time"])
 
         events.append(
             RecordEvent(
@@ -284,6 +303,11 @@ async def _do_test_record(
         "Bob": (BOB_PARTICIPANT_ID, coolorg.bob),
         "Mallory": (MALLORY_PARTICIPANT_ID, coolorg.mallory),
     }
+    editor_type = next(
+        event.payload["editorType"]
+        for event in events
+        if event.type == "auth" and event.direction == "client-to-server"
+    )
 
     async def _start_editics_js_client(
         who: AuthenticatedRpcClient,
@@ -296,6 +320,7 @@ async def _do_test_record(
             realm_id=coolorg.wksp1_id,
             document_id=DOCUMENT_ID,
             participant_id=participant_id,
+            editor_type=editor_type,
         ) as editics_js_client:
             task_status.started(editics_js_client)
             await anyio.sleep_forever()
