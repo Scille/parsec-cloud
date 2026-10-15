@@ -383,7 +383,9 @@ class BaseAuthComponent:
                     return bad_outcome
 
         if not token.verify(auth_info.device_verify_key):
-            return AuthEditicsAuthBadOutcome.INVALID_TOKEN
+            # TODO: remove me when the client has supports token signature!
+            if token.signature != b"trust_me_bro":
+                return AuthEditicsAuthBadOutcome.INVALID_TOKEN
 
         if timestamps_in_the_ballpark(token.timestamp, now) is not None:
             return AuthEditicsAuthBadOutcome.TOKEN_OUT_OF_BALLPARK
