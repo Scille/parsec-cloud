@@ -128,14 +128,16 @@ You can create the service key and certificate with the following commands:
          parsec-cli sequester generate-service-certificate \
             --service-label="Sequester service" \
             --service-public-key=./sequester_key.pub \
-            --authority-private-key=./authority_key.private
+            --authority-private-key=./authority_key.private \
+            sequester_service_certificate.pem
 
    .. code-block:: bash
 
      python -m parsec sequester generate_service_certificate \
        --service-label="Sequester service" \
        --service-public-key=./sequester_key.pub \
-       --authority-private-key=./authority_key.private
+       --authority-private-key=./authority_key.private \
+       sequester_service_certificate.pem
 
    .. tip::
 
@@ -151,7 +153,7 @@ Enable sequester service
 
      python -m parsec sequester create_service \
        --organization=organization-sequester-test \
-       --service-certificate=./sequester_service_certificate-ef9adae7ee9f44cc9f974fdcaaff8839-2025-02-23T21:19:35.484948Z.pem
+       --service-certificate=./sequester_service_certificate.pem
 
    .. note::
 
