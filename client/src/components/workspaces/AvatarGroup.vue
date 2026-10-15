@@ -3,7 +3,7 @@
 <template>
   <div class="container">
     <ion-avatar
-      class="avatar person-avatar body-sm"
+      class="avatar person-avatar"
       v-for="person in people.slice(0, maxDisplay)"
       :key="person"
     >
@@ -31,8 +31,8 @@ defineProps<{
 .container {
   display: flex;
   flex-wrap: nowrap;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  border-radius: 32px;
+  background: ms.color('surface-base-default');
+  border-radius: ms.radius('6xl');
 
   .avatar {
     display: flex;
@@ -42,7 +42,8 @@ defineProps<{
     margin-left: -0.6em;
     height: 2rem;
     width: 2rem;
-    border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
+    border: ms.border('thick') solid ms.color('surface-base-default');
+    @include ms.font('body-sm-regular');
 
     &:first-of-type {
       margin-left: 0;
@@ -51,12 +52,12 @@ defineProps<{
 }
 
 .person-avatar {
-  background-color: var(--parsec-color-tags-indigo-50);
-  color: var(--parsec-color-tags-indigo-700);
+  background-color: ms.color('surface-brand-default-subtle');
+  color: ms.color('text-brand-default');
 }
 
 .extra-avatar {
-  background-color: var(--parsec-color-light-secondary-background);
-  color: var(--parsec-color-light-secondary-grey);
+  background-color: ms.color('surface-base-default-secondary');
+  color: ms.color('text-base-description');
 }
 </style>

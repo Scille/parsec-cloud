@@ -28,7 +28,7 @@
       </div>
 
       <ion-text
-        class="workspace-card-content__title subtitles-sm"
+        class="workspace-card-content__title"
         :title="workspace.name"
       >
         {{ workspace.name }}
@@ -36,7 +36,7 @@
 
       <div class="workspace-card-content-info">
         <ion-text
-          class="workspace-card-content__update subtitles-sm"
+          class="workspace-card-content__update"
           v-if="!workspace.isArchived && !workspace.isTrashed"
         >
           <span v-if="false">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
@@ -47,7 +47,7 @@
           />
         </ion-text>
         <ion-text
-          class="workspace-card-content__update subtitles-sm"
+          class="workspace-card-content__update"
           v-else
         >
           <span v-if="workspace.isArchived && workspace.archivedOn">{{
@@ -65,14 +65,14 @@
           </span>
         </ion-text>
         <ion-text
-          class="workspace-card-content__size body-sm"
+          class="workspace-card-content__size"
           v-if="false"
         >
           {{ $msTranslate(formatFileSize(workspace.size)) }}
         </ion-text>
 
         <div
-          class="workspace-hidden subtitles-sm"
+          class="workspace-hidden"
           v-if="isHidden && !workspace.isArchived && !workspace.isTrashed"
         >
           <ion-icon
@@ -106,7 +106,7 @@
       />
       <ion-text
         v-else
-        class="button-small archived-label"
+        class="archived-label"
       >
         {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
       </ion-text>
@@ -177,12 +177,14 @@ async function onOptionsClick(event: Event): Promise<void> {
   cursor: pointer;
   text-align: center;
   user-select: none;
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-disabled);
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  background: ms.color('surface-base-default');
+  box-shadow: ms.shadow('elevation-sm');
   max-width: 16rem;
   width: 100%;
   overflow: hidden;
-  padding: 0.25rem;
+  padding: ms.spacing('padding-sm');
   transition: all 0.15s ease-in-out;
   min-width: 14rem;
 
@@ -194,66 +196,76 @@ async function onOptionsClick(event: Event): Promise<void> {
     max-width: 100%;
   }
 
-  &:hover {
-    border: 1px solid var(--parsec-color-light-secondary-medium) !important;
-    box-shadow: var(--parsec-shadow-light);
+  &:hover,
+  &--hovered {
+    border-color: ms.color('border-neutral-default-subtle-hover');
+    box-shadow: ms.shadow('elevation-xs');
+
+    .workspace-card-content {
+      background: ms.color('surface-elevated-subtle-hover');
+    }
+
+    .workspace-card-bottom__icons {
+      opacity: 1;
+    }
   }
 }
 
 .workspace-favorite-icon {
   display: flex;
   align-items: center;
-  font-size: 1.25rem;
+  font-size: 1rem;
   margin-left: auto;
-  padding: 0.25rem;
-  border-radius: var(--parsec-radius-6);
+  padding: ms.spacing('padding-sm');
+  border-radius: ms.radius('md');
   transition: color 150ms ease-out;
   position: absolute;
-  right: 0.75rem;
-  top: 0.75rem;
+  right: ms.spacing('padding-2xl');
+  top: ms.spacing('padding-2xl');
   z-index: 10;
 
   &__on {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('icon-brand-default');
 
     &:hover {
-      background: var(--parsec-color-light-primary-100);
-      color: var(--parsec-color-light-primary-700);
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('icon-brand-default-hover');
     }
   }
 
   &__off {
-    color: var(--parsec-color-light-secondary-light);
+    color: ms.color('icon-disabled-default');
+    opacity: ms.opacity('disabled');
 
     &:hover {
-      background: var(--parsec-color-light-primary-100);
-      color: var(--parsec-color-light-primary-600);
-      opacity: 0.9;
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('icon-brand-default-hover');
+      opacity: ms.opacity('9');
     }
   }
 }
 
 .workspace-card-content {
   transition: all 0.15s ease-in-out;
-  padding: 1.5rem 1rem;
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl');
   width: 100%;
-  background: var(--parsec-color-light-secondary-premiere);
-  border-radius: var(--parsec-radius-8);
+  background: ms.color('surface-elevated-subtle');
+  border-radius: ms.radius('lg');
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   overflow: hidden;
   position: relative;
 
   &__title {
-    color: var(--parsec-color-light-primary-900);
-    font-size: 18px;
+    @include ms.font('heading-h4');
+    color: ms.color('text-base-heading');
     text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     margin-right: 1.125rem;
 
     ion-text {
@@ -267,22 +279,23 @@ async function onOptionsClick(event: Event): Promise<void> {
   &__update {
     display: flex;
     justify-content: flex-start;
-    color: var(--parsec-color-light-secondary-hard-grey);
-    gap: 0.25rem;
+    @include ms.font('body-md-medium');
+    color: ms.color('text-base-description');
+    gap: ms.spacing('gap-sm');
 
     .cloud-overlay {
       font-size: 1rem;
-      padding: 0.25rem;
-      border-radius: 50%;
-      background: var(--parsec-color-light-secondary-white);
+      padding: ms.spacing('padding-sm');
+      border-radius: ms.radius('full');
+      background: ms.color('surface-base-default');
     }
 
     .cloud-overlay-ok {
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('icon-brand-default');
     }
 
     .cloud-overlay-ko {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
     }
   }
 
@@ -293,37 +306,38 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   &__size {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  &:hover {
-    background: var(--parsec-color-light-primary-50);
+    @include ms.font('body-sm-regular');
+    color: ms.color('text-base-description');
   }
 }
 
 .workspace-card-bottom {
-  background-color: var(--parsec-color-light-secondary-white);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.375rem;
+  padding: ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-md');
   position: relative;
 
   &__icons {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('icon-neutral-default');
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.25rem;
+    gap: ms.spacing('gap-2xl');
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+
+    @include ms.responsive-breakpoint('sm') {
+      opacity: 1;
+    }
 
     .icon-option-container,
     .icon-share-container {
       display: flex;
       align-items: center;
-      padding: 0.25rem;
-      border-radius: var(--parsec-radius-6);
+      padding: ms.spacing('padding-sm');
+      border-radius: ms.radius('md');
       transition: background 0.15s ease-in-out;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
 
       .icon-option,
       .icon-share {
@@ -335,36 +349,28 @@ async function onOptionsClick(event: Event): Promise<void> {
       }
 
       &:hover {
-        background: var(--parsec-color-light-primary-50);
-        color: var(--parsec-color-light-primary-600);
+        background: ms.color('surface-brand-default-subtle');
+        color: ms.color('icon-brand-default');
       }
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0 0.25rem;
+      padding: 0 ms.spacing('padding-sm');
     }
   }
 }
 
 .workspace-card-item--hidden {
-  .workspace-card-content {
-    opacity: 0.9;
-    filter: brightness(0.85);
-
-    &:hover {
-      background: var(--parsec-color-light-secondary-premiere) !important;
-    }
-  }
-
   .workspace-hidden {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-secondary-contrast);
+    @include ms.font('label-md-medium');
+    background: ms.color('surface-base-default-secondary');
+    color: ms.color('text-base-label');
     text-align: left;
     display: flex;
     align-items: center;
-    gap: 0.375rem;
-    padding: 3px 0.5rem;
-    border-radius: var(--parsec-radius-8);
+    gap: ms.spacing('gap-md');
+    padding: 3px ms.spacing('padding-lg');
+    border-radius: ms.radius('lg');
 
     ion-icon {
       font-size: 0.875rem;
@@ -377,36 +383,34 @@ async function onOptionsClick(event: Event): Promise<void> {
   position: relative;
 
   .custom-icon {
-    color: var(--parsec-color-light-secondary-grey);
-    opacity: 0.2;
+    color: ms.color('icon-neutral-default');
+    opacity: ms.opacity('2');
     position: absolute;
-    top: 0.25rem;
+    top: ms.spacing('padding-sm');
     right: -1rem;
     margin: 0 0 auto auto;
     font-size: 4.5rem;
   }
 
   .workspace-card-bottom__icons {
-    padding: 0rem;
+    padding: ms.spacing('padding-none');
+    opacity: 1;
   }
 
   .workspace-card-content {
-    background: linear-gradient(
-      133deg,
-      var(--parsec-color-light-secondary-premiere) 2.5%,
-      var(--parsec-color-light-secondary-disabled) 96.4%
-    );
+    box-shadow: ms.shadow('elevation-xs');
   }
 }
 
 .workspace-card-item--archived {
   .archived-label {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('label-md-medium');
     display: flex;
     align-items: center;
-    background-color: none;
-    padding: 0.1875rem 0.375rem;
-    color: var(--parsec-color-light-primary-600);
+    background: ms.color('surface-neutral-default-subtle');
+    border-radius: ms.radius('lg');
+    padding: 0.1875rem ms.spacing('padding-md');
+    color: ms.color('text-information-default');
   }
 }
 
@@ -417,17 +421,16 @@ async function onOptionsClick(event: Event): Promise<void> {
     z-index: 10;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-sm');
 
     .deletion-date {
+      @include ms.font('label-md-medium');
       width: fit-content;
-      background: var(--parsec-color-light-secondary-white);
-      color: var(--parsec-color-light-danger-500);
-      border-radius: var(--parsec-radius-6);
-      padding: 0.1875rem 0.375rem;
-      box-shadow:
-        0 3px 5px 0 rgba(0, 0, 0, 0.02),
-        0 1px 1px 0 rgba(0, 0, 0, 0.03);
+      background: ms.color('surface-error-default-subtle');
+      color: ms.color('text-error-default');
+      border-radius: ms.radius('md');
+      padding: 0.1875rem ms.spacing('padding-md');
+      box-shadow: ms.shadow('elevation-xs');
     }
   }
 }
