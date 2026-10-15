@@ -9,12 +9,11 @@
     <div class="invitation-list-item">
       <div class="invitation-header">
         <!-- invitation email -->
-        <ion-label class="cell invitation-header__email">
+        <ion-label class="invitation-header__email">
           {{ invitation.claimerEmail }}
         </ion-label>
         <ion-button
-          size="default"
-          class="invitation-header__greet-button button-medium"
+          class="invitation-header__greet-button"
           @click.stop="$emit('greetUser', invitation)"
         >
           {{ $msTranslate('UsersPage.invitation.greetUser') }}
@@ -24,10 +23,11 @@
       <!-- invitation action -->
       <div class="invitation-footer">
         <div class="invitation-footer-manage">
-          <ion-text class="manage-text button-medium">{{ $msTranslate('UsersPage.invitation.manageInvitation') }}</ion-text>
           <ion-button
-            fill="clear"
-            class="manage-button copy-link"
+            slot="icon-only"
+            fill="outline"
+            size="small"
+            class="manage-button color-secondary copy-link"
             :class="copyLinkActive ? 'active' : ''"
             @click.stop="copyLink(invitation)"
             ref="copyLinkButton"
@@ -39,8 +39,10 @@
           </ion-button>
 
           <ion-button
-            fill="clear"
-            class="manage-button send-email"
+            slot="icon-only"
+            fill="outline"
+            size="small"
+            class="manage-button color-secondary send-email"
             :disabled="sendEmailDisabled"
             @click.stop="sendEmail(invitation)"
             :class="sendEmailDisabled ? 'active' : ''"
@@ -53,9 +55,10 @@
           </ion-button>
 
           <ion-button
-            size="default"
+            slot="icon-only"
             fill="clear"
-            class="manage-button cancel-button"
+            size="small"
+            class="manage-button color-danger cancel-button"
             @click.stop="$emit('cancel', invitation)"
           >
             <ion-icon
@@ -64,7 +67,7 @@
             />
           </ion-button>
         </div>
-        <ion-text class="invitation-footer__date body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</ion-text>
+        <ion-text class="invitation-footer__date">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</ion-text>
       </div>
     </div>
   </ion-item>
@@ -190,22 +193,23 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
 
 <style scoped lang="scss">
 .invitation-list-item-container {
-  --inner-padding-end: 0;
+  --inner-padding-end: #{ms.spacing('padding-none')};
   display: flex;
   flex-shrink: 0;
 }
 
 .invitation-list-item {
-  padding: 1rem 1rem 1rem 1.75rem;
+  padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-xl');
+  border-bottom: 1px solid ms.color('border-neutral-default-subtle');
 
   &:hover,
   &:focus {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 }
 
@@ -214,10 +218,11 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
   align-items: center;
   width: 100%;
   justify-content: space-between;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__email {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -233,72 +238,46 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
   &-manage {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     width: 100%;
 
-    .manage-text {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-
     .manage-button {
-      background: none;
-      cursor: pointer;
-
-      &::part(native) {
-        padding: 0;
-      }
-
-      .button-icon {
-        font-size: 1.25rem;
-        padding: 0.5rem;
-        background: var(--parsec-color-light-secondary-premiere);
-        border-radius: var(--parsec-radius-8);
-        color: var(--parsec-color-light-secondary-soft-text);
-        transition: all 0.15s ease-in-out;
-      }
-
-      &:hover {
-        .button-icon {
-          color: var(--parsec-color-light-secondary-text);
-          background: var(--parsec-color-light-secondary-medium);
-        }
-      }
-
-      &:hover {
-        &.cancel-button .button-icon {
-          background: var(--parsec-color-light-danger-100);
-          color: var(--parsec-color-light-danger-700);
-        }
-      }
-
-      &.cancel-button {
+      &.color-danger {
         position: relative;
         display: flex;
         margin-left: 1rem;
+        --background: #{ms.color('surface-error-default-subtle')};
+        --background-hover: #{ms.color('surface-error-default-subtle-hover')};
+        color: ms.color('icon-error-default-hover');
+
+        &::part(native) {
+          border: 1px solid ms.color('border-error-default-subtle');
+        }
 
         &::after {
           content: '';
           position: relative;
           display: block;
-          left: -3.125rem;
+          left: -2.875rem;
           top: 0.5rem;
           width: 1px;
           height: 1.125rem;
-          background: var(--parsec-color-light-secondary-medium);
+          background: ms.color('border-neutral-default-subtle');
         }
       }
 
       &.active {
         .button-icon {
-          color: var(--parsec-color-light-success-700);
-          background: var(--parsec-color-light-success-50);
+          color: ms.color('icon-success-default-hover');
+          background: ms.color('surface-success-default-subtle');
         }
       }
     }
   }
 
   &__date {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('body-sm-regular');
+    color: ms.color('text-base-description');
     flex-shrink: 0;
   }
 }

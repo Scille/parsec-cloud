@@ -3,7 +3,7 @@
 <template>
   <ion-list class="list-container">
     <ion-item
-      class="option body"
+      class="option"
       :class="{ 'item-disabled': user.id === currentUser.id }"
       button
       lines="none"
@@ -14,14 +14,14 @@
     >
       <div class="option-content">
         <ion-text class="option-text">
-          <span class="option-text__label body">
+          <span class="option-text__label">
             {{ user.humanHandle.label }}
           </span>
-          <span class="option-text__description body"> ({{ user.humanHandle.email }}) </span>
+          <span class="option-text__description"> ({{ user.humanHandle.email }}) </span>
         </ion-text>
         <ion-text
           v-if="user.id === currentUser.id"
-          class="subtitles-sm option-warning"
+          class="option-warning"
         >
           <ion-icon :icon="warning" />
           {{ $msTranslate('UsersPage.userContextMenu.cannotAssignRolesToSelf') }}
@@ -55,11 +55,11 @@ function onUserClick(user: UserInfo): void {
 
 <style lang="scss" scoped>
 .list-container {
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  max-height: 11rem;
+  gap: ms.spacing('gap-lg');
+  max-height: 15rem;
   overflow: auto;
 
   @include ms.responsive-breakpoint('sm') {
@@ -70,12 +70,13 @@ function onUserClick(user: UserInfo): void {
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .option {
   --background-hover: none;
-  --color: var(--parsec-color-light-secondary-grey);
-  padding: 0.375rem 0.75rem;
+  @include ms.font('body-md-regular');
+  --color: #{ms.color('text-base-description')};
+  padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
   --background: none;
-  border-radius: var(--parsec-radius-6);
+  border-radius: ms.radius('md');
   --min-height: 0;
-  --inner-padding-end: 0;
+  --inner-padding-end: #{ms.spacing('padding-none')};
   position: relative;
   z-index: 2;
   pointer-events: auto;
@@ -83,8 +84,8 @@ function onUserClick(user: UserInfo): void {
   cursor: pointer;
 
   &:hover:not(.item-disabled) {
-    background: var(--parsec-color-light-primary-50);
-    --background-hover: var(--parsec-color-light-primary-50);
+    background: ms.color('surface-brand-default-subtle-hover');
+    --background-hover: #{ms.color('surface-brand-default-subtle-hover')};
   }
 
   &-content {
@@ -92,30 +93,33 @@ function onUserClick(user: UserInfo): void {
     flex-direction: column;
     justify-content: space-between;
     width: 100%;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
   }
 
   &::part(native) {
-    padding: 0;
+    padding: ms.spacing('padding-none');
   }
 
   &-text {
     margin: 0;
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+    gap: ms.spacing('gap-lg');
 
     &__label {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-body');
     }
 
     &__description {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
     }
   }
 
   &.item-disabled {
     opacity: 1;
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
     cursor: not-allowed;
 
     &::part(native) {
@@ -129,11 +133,12 @@ function onUserClick(user: UserInfo): void {
   }
 
   &-warning {
-    border-radius: var(--parsec-radius-6);
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-md-medium');
+    border-radius: ms.radius('md');
+    color: ms.color('text-base-label');
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
 
     ion-icon {
       font-size: 0.875rem;

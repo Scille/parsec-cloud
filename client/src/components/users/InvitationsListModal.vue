@@ -4,15 +4,16 @@
   <div class="invitations-list-container">
     <div class="invitations-list">
       <div class="invitations-list-header">
-        <ion-text class="invitations-list-header__title title-h4">
+        <ion-text class="invitations-list-header__title">
           {{ $msTranslate('invitationList.title') }}
         </ion-text>
-        <span class="invitations-list-header__counter body-sm">
+        <span class="invitations-list-header__counter">
           {{ invitations.length }}
         </span>
         <ion-button
           @click="onInviteClick"
           class="invitations-list-header__button"
+          slot="icon-only"
         >
           <ion-icon
             slot="start"
@@ -26,7 +27,7 @@
           class="invitations-list-content__empty"
           v-if="invitations.length === 0"
         >
-          <ion-text class="body-lg">
+          <ion-text>
             {{ $msTranslate('invitationList.noInvitations') }}
           </ion-text>
         </div>
@@ -87,9 +88,17 @@ async function onInviteClick(): Promise<void> {
   overflow: hidden;
 
   &-header {
+    &__title {
+      @include ms.font('heading-h5');
+    }
+
+    &__counter {
+      @include ms.font('body-sm-regular');
+    }
+
     &__button {
-      --background: var(--parsec-color-light-primary-30-opacity15) !important;
-      --background-hover: var(--parsec-color-light-primary-30-opacity15) !important;
+      --background: #{ms.color('surface-neutral-on-color')} !important;
+      --background-hover: #{ms.color('surface-neutral-on-color')} !important;
 
       .button-icon {
         font-size: 0.875rem;
@@ -98,7 +107,7 @@ async function onInviteClick(): Promise<void> {
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &__toggle {
-      color: var(--parsec-color-light-secondary-medium);
+      color: ms.color('text-on-color-label');
       margin-left: auto;
       display: flex;
       align-items: center;
@@ -106,17 +115,21 @@ async function onInviteClick(): Promise<void> {
 
       &::part(label) {
         transition: opacity 150ms ease-in-out;
-        opacity: 0.6;
+        opacity: ms.opacity('6');
         margin-right: 0.5rem;
       }
 
       &:hover,
       &.toggle-checked {
         &::part(label) {
-          opacity: 1;
+          opacity: ms.opacity('10');
         }
       }
     }
+  }
+
+  &-content__empty {
+    @include ms.font('body-lg-regular');
   }
 }
 </style>
