@@ -114,9 +114,13 @@ itself: dragging its ⠿ grip detaches it from the pane corner.
   network loss: auto-reconnect (~2s per the `settings.reconnection` carried
   by its `auth` event) and re-send its `auth` carrying the previous
   `sessionId`/`sessionTimeConnect`/`sessionTimeIdle` → the document server
-  *restores* the session. While an editor is marked cut, the proxy silently
-  kills every reconnection attempt, so the participant stays away until
-  **↻ re-join**.
+  *restores* the session (when the document was modified while the client was
+  away — another participant joined and edited — the server instead refuses
+  the restore: `refreshToken` + `error` 4010 "Restore error. Document
+  modified.", which the client answers by closing the co-authoring session;
+  both outcomes are captured by the `6xx_disconnect_*` records). While an
+  editor is marked cut, the proxy silently kills every reconnection attempt,
+  so the participant stays away until **↻ re-join**.
 - **↻ re-join** — bring the participant back: after a **cut** it just clears
   the cut mark and lets the client's own reconnection retry complete the
   session restore; after a **close** it re-creates the editor from its

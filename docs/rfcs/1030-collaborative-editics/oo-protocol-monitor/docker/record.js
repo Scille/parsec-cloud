@@ -877,21 +877,37 @@ async function cutConnection(rec, who, { keepDead = true } = {}) {
 
 // End a keepDead cut: the editor's next reconnection attempt (~2s) flows again
 // and completes the session restore — its re-`auth` carries the previous
-// `sessionId` (with `sessionTimeConnect`/`sessionTimeIdle`), and the document
-// server restores the session instead of re-authenticating from scratch.
+// `sessionId` (with `sessionTimeConnect`/`sessionTimeIdle`). The document
+// server then answers one of two ways (both are the record):
+//   - the restored session's `auth` response (nothing changed while away),
+//   - or a refusal: `refreshToken` + `error` 4010 "Restore error. Document
+//     modified." when another participant changed the document while the
+//     client was away (the client reacts by closing the co-authoring
+//     session).
 async function reviveConnection(rec, page, who) {
   // Everything of `who`'s BEFORE this point belongs to the previous stint
   // (handshake + cut): wait only for what comes after, or the waits would
   // match the original join events.
   const from = rec.events.length;
   rec.send({ cmd: 'revive', editor: EDITORS[who] });
+  // Killed reconnection attempts grow the client's socket.io backoff (the
+  // `settings.reconnection.delay` the document server sends is the STRING
+  // "2s", which defeats the client-side delay cap — observed retry gaps: ~2s,
+  // then ~20s, then longer). The wait resolves as soon as the client retries;
+  // the cap just has to tolerate a slow next attempt. The client gives up
+  // after `attempts` (50), so it is always coming back within this window.
   await rec.waitEvent(
     (ev) => ev.dir === 'open' && ev.editor === EDITORS[who],
-    20000, who + ' reconnection ws-open', from);
+    120000, who + ' reconnection ws-open', from);
   await sentEvent(rec, who, 'auth', (ev) => !!ev.meta.sessionId, from, 30000, who + ' restore auth (sessionId)');
-  await recvEvent(rec, who, 'auth', null, from, EVENT_TIMEOUT, who + ' restore auth response');
-  await waitEditorRendered(page, who);
-  await rec.waitQuiescence(800);
+  const { ev: answer } = await rec.waitEvent(
+    (ev) => isMsg(ev) && ev.dir === 'recv' && evUser(ev) === who &&
+      (msgType(ev) === 'auth' || msgType(ev) === 'error'),
+    EVENT_TIMEOUT, who + ' restore answer (auth, or the 4010 refusal)');
+  if (msgType(answer) === 'auth') await waitEditorRendered(page, who);
+  // On the refusal path the editor shows its modified-document state; let
+  // its reaction (e.g. the `close` send) flow into the record.
+  await rec.waitQuiescence(1000);
 }
 
 // Re-join after a graceful close: the editor is re-created from its remembered
@@ -900,7 +916,10 @@ async function reviveConnection(rec, page, who) {
 async function rejoinEditor(page, rec, who) {
   const from = rec.events.length; // ditto: only the new stint's events matter
   await page.evaluate((id) => window.__OO_MON.rejoinEditor(id), EDITORS[who]);
-  await recvEvent(rec, who, 'auth', (ev) => !ev.meta.sessionId, from, EVENT_TIMEOUT, who + ' fresh re-join auth');
+  // NOTE: the fresh-vs-restore distinction is on the auth SEND (a fresh join
+  // sends `sessionId: null`, a reconnect sends the previous session id) — the
+  // auth RESPONSE always carries the server-assigned session id.
+  await recvEvent(rec, who, 'auth', null, from, EVENT_TIMEOUT, who + ' fresh re-join auth');
   await rec.waitEvent(
     (ev) => isMsg(ev) && ev.dir === 'recv' && evUser(ev) === who && msgType(ev) === 'message',
     EVENT_TIMEOUT, who + ' re-join getMessages response', from);
@@ -910,6 +929,12 @@ async function rejoinEditor(page, rec, who) {
 
 // ---------------------------------------------------------------------------
 // Scenario table
+//
+// `info` is the description baked into the record's `## Info` block: either a
+// prose string (rendered as `- Scenario: <text>`) or an ordered list of steps
+// (an array, rendered as `- Scenario:` followed by one indented numbered line
+// per step — the preferred form: what happens, in order, with no mention of
+// how the harness produced it).
 // ---------------------------------------------------------------------------
 
 const SCENARIOS = {};
@@ -920,6 +945,15 @@ function scenario(name, docType, info, fn, viewEditor, deferAlice) {
   // `deferAlice`: also defer Alice behind an overlay (see monitor.js's
   // `?defer1=1`), so another participant can connect first.
   SCENARIOS[name] = { name, docType, info, fn, viewEditor, deferAlice };
+}
+
+// `## Info` lines for a scenario: the document plus the description (prose or
+// the ordered step list — see the Scenario table header).
+function scenarioInfoLines(sc, docs) {
+  const info = Array.isArray(sc.info)
+    ? 'Scenario:\n' + sc.info.map((s, i) => '  ' + (i + 1) + '. ' + s).join('\n')
+    : 'Scenario: ' + sc.info;
+  return ['Document: ' + docs[sc.docType].file + ' (' + sc.docType + ')', info];
 }
 
 // --- auth ------------------------------------------------------------------
@@ -1516,162 +1550,167 @@ scenario('52_lock_join_edit_pptx', 'slide',
 // record parser skips transport rows — interpreting them, e.g. as "drop this
 // participant's connection now", is left to the test harness for now).
 
-scenario('600_disconnect_close_alone', 'word',
-  'Alice opens the document alone, then closes her editor (the graceful close' +
-  ' the Parsec client performs when the user closes the file: the DocEditor is' +
-  ' destroyed, no `close` client event is sent — the websocket dies with the' +
-  " editor's JS context, so the document server sees an abrupt disconnect." +
-  ' No auto-reconnect happens since the editor is gone.)', async () => {
-    await connectAlice();
-    await closeEditor(CURRENT.page, CURRENT.rec, 'Alice');
-  });
+scenario('600_disconnect_close_alone', 'word', [
+  'Alice opens the document alone.',
+  "Alice closes her editor: the client sends no `close` event, the connection is closed (code 1001) and the editor does not reconnect.",
+], async () => {
+  await connectAlice();
+  await closeEditor(CURRENT.page, CURRENT.rec, 'Alice');
+});
 
-scenario('601_disconnect_close_event_alone', 'word',
-  "Alice opens the document alone, then her editor sends the protocol's own" +
-  ' `close` client event (the OnlyOffice API call used when the editor must' +
-  ' tell the server it is leaving, e.g. on rights revocation) and is then' +
-  ' destroyed: the record shows what the document server does with the' +
-  ' `close` event — whether and how it closes the connection.', async () => {
-    await connectAlice();
-    await closeEditorWithCloseEvent(CURRENT.page, CURRENT.rec, 'Alice');
-  });
+scenario('601_disconnect_close_event_alone', 'word', [
+  'Alice opens the document alone.',
+  'Alice sends the `close` client event (the event the editor sends when it must tell the server it is leaving, e.g. on rights revocation).',
+  'The document server answers with a new session token (refreshToken), then closes the connection after about 10 seconds.',
+  'Alice closes her editor.',
+], async () => {
+  await connectAlice();
+  await closeEditorWithCloseEvent(CURRENT.page, CURRENT.rec, 'Alice');
+});
 
-scenario('602_disconnect_close_rejoin_alone', 'word',
-  'Alice opens the document alone and edits it, closes her editor, then' +
-  ' re-joins with a re-created editor (a fresh handshake: the auth carries a' +
-  ' null sessionId, unlike a connection restore). The document server kept' +
-  " the co-editing session alive, so her re-join lands on the existing session" +
-  ' and receives her own earlier changes as the authChanges backlog.', async () => {
-    const { rec, page } = CURRENT;
-    await connectAlice();
-    await editDocument('Alice', 0);
-    await closeEditor(page, rec, 'Alice');
-    await rejoinEditor(page, rec, 'Alice');
-  });
+scenario('602_disconnect_close_rejoin_alone', 'word', [
+  'Alice opens the document alone.',
+  'Alice edits the document.',
+  'Alice closes her editor: the client sends no `close` event and the connection is closed (code 1001).',
+  'Alice re-joins with a new editor: her auth carries a null sessionId (a fresh handshake, not a connection restore), and the document server replays her own earlier changes as authChanges.',
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await editDocument('Alice', 0);
+  await closeEditor(page, rec, 'Alice');
+  await rejoinEditor(page, rec, 'Alice');
+});
 
-scenario('603_disconnect_lost_reconnect_alone', 'word',
-  'Alice opens the document alone and edits it, then loses her connection (the' +
-  ' websocket is cut without a close frame on either leg — an abnormal' +
-  ' disconnect, like a network loss). Her editor does what a real OnlyOffice' +
-  ' client does: it auto-reconnects (~2s, per the settings.reconnection carried' +
-  ' by its auth event) and re-sends its auth carrying the previous' +
-  ' sessionId/sessionTimeConnect/sessionTimeIdle — the document server' +
-  " restores her edition session instead of re-authenticating her from scratch.", async () => {
-    const { rec, page } = CURRENT;
-    await connectAlice();
-    await editDocument('Alice', 0);
-    const base = rec.events.length;
-    await cutConnection(rec, 'Alice', { keepDead: false }); // let the stock auto-reconnect happen
-    await sentEvent(rec, 'Alice', 'auth', (ev) => !!ev.meta.sessionId, base, 30000, 'Alice restore auth (sessionId)');
-    await recvEvent(rec, 'Alice', 'auth', null, base, 30000, 'Alice restore auth response');
-    await waitEditorRendered(page, 'Alice');
-    await rec.waitQuiescence();
-  });
+scenario('603_disconnect_lost_reconnect_alone', 'word', [
+  'Alice opens the document alone.',
+  'Alice edits the document.',
+  'Alice loses her connection (the websocket is closed without a close frame).',
+  "About 2 seconds later Alice's editor reconnects by itself and sends its auth with the previous sessionId, sessionTimeConnect and sessionTimeIdle.",
+  'The document server restores her edition session: the auth response and the lock table follow.',
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await editDocument('Alice', 0);
+  const base = rec.events.length;
+  await cutConnection(rec, 'Alice', { keepDead: false }); // let the stock auto-reconnect happen
+  await sentEvent(rec, 'Alice', 'auth', (ev) => !!ev.meta.sessionId, base, 30000, 'Alice restore auth (sessionId)');
+  await recvEvent(rec, 'Alice', 'auth', null, base, 30000, 'Alice restore auth response');
+  await waitEditorRendered(page, 'Alice');
+  await rec.waitQuiescence();
+});
 
-scenario('604_disconnect_close_bob_joins_rejoin', 'word',
-  'Alice opens the document alone and edits it, then closes her editor; Bob' +
-  ' joins while she is away (his auth reflects the session without Alice) and' +
-  ' edits the document, then Alice re-joins with a fresh editor and receives' +
-  ' the state Bob changed meanwhile.', async () => {
-    const { rec, page } = CURRENT;
-    await connectAlice();
-    await editDocument('Alice', 0);
-    await closeEditor(page, rec, 'Alice');
-    await connectClient('Bob');
-    await editDocument('Bob', 0);
-    await rejoinEditor(page, rec, 'Alice');
-  });
+scenario('604_disconnect_close_bob_joins_rejoin', 'word', [
+  'Alice opens the document alone.',
+  'Alice edits the document.',
+  'Alice closes her editor: the client sends no `close` event and the connection is closed (code 1001).',
+  'Bob joins while Alice is away and edits the document.',
+  'Alice re-joins with a new editor: her auth carries a null sessionId and she receives the state Bob changed meanwhile.',
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await editDocument('Alice', 0);
+  await closeEditor(page, rec, 'Alice');
+  await connectClient('Bob');
+  await editDocument('Bob', 0);
+  await rejoinEditor(page, rec, 'Alice');
+});
 
-scenario('605_disconnect_lost_bob_joins_reconnect', 'word',
-  'Alice opens the document alone and edits it, then loses her connection (cut,' +
-  ' and every reconnection attempt is killed while she is away); Bob joins and' +
-  " edits while she is offline, then her connection comes back: her editor's" +
-  ' pending retry completes and its restore auth (previous sessionId) returns' +
-  ' her to the session — with the changes Bob made meanwhile.', async () => {
-    const { rec, page } = CURRENT;
-    await connectAlice();
-    await editDocument('Alice', 0);
-    await cutConnection(rec, 'Alice'); // keepDead: she stays away
-    await connectClient('Bob');
-    await editDocument('Bob', 0);
-    await reviveConnection(rec, page, 'Alice');
-  });
+scenario('605_disconnect_lost_bob_joins_reconnect', 'word', [
+  'Alice opens the document alone.',
+  'Alice edits the document.',
+  'Alice loses her connection (the websocket is closed without a close frame).',
+  'Bob joins and edits the document while Alice is away.',
+  "Alice's connection comes back: her editor sends its auth with the previous sessionId.",
+  'The document changed while she was away, so the document server refuses the restore with error 4010 "Restore error. Document modified.", and Alice\'s client answers by closing the co-authoring session.',
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await editDocument('Alice', 0);
+  await cutConnection(rec, 'Alice'); // keepDead: she stays away
+  await connectClient('Bob');
+  await editDocument('Bob', 0);
+  await reviveConnection(rec, page, 'Alice');
+});
 
-scenario('606_disconnect_lost_with_lock_bob_takes_it', 'word',
-  'Alice switches to strict co-editing and takes the Title paragraph element' +
-  ' lock while alone, then loses her connection (cut, reconnection attempts' +
-  ' killed); Bob joins while she is away and takes the element she had locked —' +
-  " the document server releases a disconnecting participant's locks, so" +
-  " Bob's auth carries the released lock state and his getLock is granted —" +
-  " then Alice's connection is restored and she receives the new state. (The" +
-  ' getLock wait is soft: whether the server releases the lock on disconnect' +
-  ' or keeps it for the reconnect grace is exactly what this record documents.)', async () => {
-    const { rec, page } = CURRENT;
-    await connectAlice();
-    await setStrictCoEditing(page, 'Alice', true);
-    await aliceTakesLocks(LOCK_ELEMENTS.word, false);
-    await cutConnection(rec, 'Alice');
-    await connectClient('Bob');
-    // Bob (also strict) tries the element Alice had locked: his editor knows
-    // the lock table from its auth event — a released lock lets his getLock
-    // through, a surviving lock makes his client refuse the edit client-side.
-    const base = rec.events.length;
-    await setStrictCoEditing(page, 'Bob', true);
-    await clickTarget(page, 'Bob', LOCK_ELEMENTS.word[0]);
-    await typeText(page, 'Bob takes the element. ');
-    await flushEditorSave(page, 'Bob');
-    try {
-      await sentEvent(rec, 'Bob', 'getLock', null, base, 8000, "Bob getLock on Alice's element");
-    } catch (e) { /* refused client-side — the record documents it */ }
-    try {
-      await sentEvent(rec, 'Bob', 'saveChanges', null, base, 20000, 'Bob saveChanges');
-    } catch (e) { /* no edit happened */ }
-    await rec.waitQuiescence(1000);
-    await reviveConnection(rec, page, 'Alice');
-  });
+scenario('606_disconnect_lost_with_lock_bob_takes_it', 'word', [
+  'Alice opens the document alone and switches to strict co-editing.',
+  'Alice takes the lock on the Title paragraph and edits it.',
+  'Alice loses her connection (the websocket is closed without a close frame).',
+  'Bob joins while Alice is away.',
+  "Bob takes the element Alice had locked: the document server released Alice's lock when she disconnected, so Bob's getLock is granted and he edits and saves the element.",
+  "Alice's connection comes back: her restore auth is refused with error 4010 \"Restore error. Document modified.\" since the document changed while she was away.",
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await setStrictCoEditing(page, 'Alice', true);
+  await aliceTakesLocks(LOCK_ELEMENTS.word, false);
+  await cutConnection(rec, 'Alice');
+  await connectClient('Bob');
+  // Bob (also strict) tries the element Alice had locked: his editor knows
+  // the lock table from its auth event — a released lock lets his getLock
+  // through, a surviving lock makes his client refuse the edit client-side.
+  const base = rec.events.length;
+  await setStrictCoEditing(page, 'Bob', true);
+  await clickTarget(page, 'Bob', LOCK_ELEMENTS.word[0]);
+  await typeText(page, 'Bob takes the element. ');
+  await flushEditorSave(page, 'Bob');
+  try {
+    await sentEvent(rec, 'Bob', 'getLock', null, base, 8000, "Bob getLock on Alice's element");
+  } catch (e) { /* refused client-side — the record documents it */ }
+  try {
+    await sentEvent(rec, 'Bob', 'saveChanges', null, base, 20000, 'Bob saveChanges');
+  } catch (e) { /* no edit happened */ }
+  await rec.waitQuiescence(1000);
+  await reviveConnection(rec, page, 'Alice');
+});
 
-scenario('607_disconnect_close_bob_present_rejoin', 'word',
-  'Alice and Bob edit together; Alice closes her editor (graceful close, no' +
-  ' `close` event): Bob receives the connectState without Alice (and any' +
-  ' cleanup of her state), then Alice re-joins with a fresh editor.', async () => {
-    const { rec, page } = CURRENT;
-    await connectAlice();
-    await connectClient('Bob');
-    const base = rec.events.length;
-    await closeEditor(page, rec, 'Alice');
-    await recvEvent(rec, 'Bob', 'connectState', (ev) =>
-      !(ev.meta.participants || []).some((p) => p.username === 'Alice'),
-      base, 30000, 'Bob connectState without Alice');
-    await rec.waitQuiescence(800);
-    await rejoinEditor(page, rec, 'Alice');
-  });
+scenario('607_disconnect_close_bob_present_rejoin', 'word', [
+  'Alice opens the document.',
+  'Bob joins: Alice and Bob edit together.',
+  'Alice closes her editor: the client sends no `close` event and the connection is closed (code 1001).',
+  'Bob receives the connectState without Alice.',
+  'Alice re-joins with a new editor.',
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await connectClient('Bob');
+  const base = rec.events.length;
+  await closeEditor(page, rec, 'Alice');
+  await recvEvent(rec, 'Bob', 'connectState', (ev) =>
+    !(ev.meta.participants || []).some((p) => p.username === 'Alice'),
+    base, 30000, 'Bob connectState without Alice');
+  await rec.waitQuiescence(800);
+  await rejoinEditor(page, rec, 'Alice');
+});
 
-scenario('608_disconnect_lost_bob_present_reconnect', 'word',
-  'Alice and Bob edit together; Alice loses her connection (cut, reconnection' +
-  ' attempts killed while she is away) and Bob sees her go (connectState' +
-  ' without Alice), then edits alone; Alice\'s connection is restored — her' +
-  " editor's retry completes the session restore with the changes Bob made" +
-  ' meanwhile (authChanges replay on restore).', async () => {
-    const { rec, page } = CURRENT;
-    await connectAlice();
-    await connectClient('Bob');
-    const base = rec.events.length;
-    await cutConnection(rec, 'Alice');
-    await recvEvent(rec, 'Bob', 'connectState', (ev) =>
-      !(ev.meta.participants || []).some((p) => p.username === 'Alice'),
-      base, 30000, 'Bob connectState without Alice');
-    await editDocument('Bob', 0);
-    await reviveConnection(rec, page, 'Alice');
-  });
+scenario('608_disconnect_lost_bob_present_reconnect', 'word', [
+  'Alice opens the document.',
+  'Bob joins: Alice and Bob edit together.',
+  'Alice loses her connection (the websocket is closed without a close frame).',
+  'Bob sees Alice leave (connectState without Alice) and edits the document alone.',
+  "Alice's connection comes back: her editor sends its auth with the previous sessionId.",
+  'The document changed while she was away, so the document server refuses the restore with error 4010 "Restore error. Document modified.", and Alice\'s client answers by closing the co-authoring session.',
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await connectClient('Bob');
+  const base = rec.events.length;
+  await cutConnection(rec, 'Alice');
+  await recvEvent(rec, 'Bob', 'connectState', (ev) =>
+    !(ev.meta.participants || []).some((p) => p.username === 'Alice'),
+    base, 30000, 'Bob connectState without Alice');
+  await editDocument('Bob', 0);
+  await reviveConnection(rec, page, 'Alice');
+});
 
-scenario('609_disconnect_lost_mid_save_bob_saves', 'word',
-  'Alice and Bob edit together; Alice is in the middle of a save — her saveLock' +
-  ' was granted and her saveChanges is still held at the proxy (the server' +
-  ' considers her the save-lock holder and her changes are not committed) —' +
-  ' when she loses her connection. The document server must cancel her pending' +
-  ' save on the disconnect, so Bob can take the save lock and save his own' +
-  " changes; Alice's connection is then restored (her editor believes its save" +
-  ' is still in flight — the record shows what it does about it).', async () => {
+scenario('609_disconnect_lost_mid_save_bob_saves', 'word', [
+  'Alice opens the document.',
+  'Bob joins: Alice and Bob edit together.',
+  'Alice starts a save: the document server grants her the save lock, but her changes are not committed yet.',
+  'While her save is in flight, Alice loses her connection (the websocket is closed without a close frame).',
+  'The document server cancels Alice\'s save when tearing her connection down, so Bob can take the save lock and his save cycle completes.',
+  "Alice's connection comes back: her restore auth is refused with error 4010 \"Restore error. Document modified.\" since the document changed while she was away.",
+], async () => {
     const { rec, page } = CURRENT;
     await connectAlice();
     await connectClient('Bob');
@@ -1711,17 +1750,18 @@ scenario('609_disconnect_lost_mid_save_bob_saves', 'word',
     await editDocument('Bob', 0);
     await recvEvent(rec, 'Bob', 'unSaveLock', null, base, 20000, 'Bob save completed');
     // 4. Alice's connection is restored (her editor believed its saveChanges
-    //    was sent — the record shows how the restore reconciles that).
+    //    was sent — the record shows how the restore reconciles that; Bob
+    //    modified the document, so the 4010 refusal is the expected answer).
     await reviveConnection(rec, page, 'Alice');
   });
 
-scenario('610_disconnect_waitauth_holder_lost', 'word',
-  'Alice opens the document (she holds the document auth lock), then Bob starts' +
-  ' joining: his auth reached the server and his waitAuth is held at the proxy' +
-  ' (he is stuck waiting for Alice to release the lock) when Alice loses her' +
-  " connection. The document server must release the auth lock on her" +
-  " disconnect and resolve Bob's waitAuth: his (held) auth response is then" +
-  " delivered and he completes his join. Alice's connection is finally restored.", async () => {
+scenario('610_disconnect_waitauth_holder_lost', 'word', [
+  'Alice opens the document, so she holds the document auth lock.',
+  'Bob starts joining: the document server answers his auth with waitAuth, so he waits for Alice to release the lock.',
+  'While Bob is waiting, Alice loses her connection (the websocket is closed without a close frame).',
+  "The document server releases the auth lock on Alice's disconnect and resolves Bob's waitAuth: Bob receives his auth response and completes his join.",
+  "Alice's connection comes back: her editor sends its auth with the previous sessionId, and since the document was not modified while she was away, the document server restores her session (auth response and lock table); the collaboration with Bob resumes.",
+], async () => {
     const { rec, page } = CURRENT;
     await connectAlice();
     // Arm manual-flow and start Bob, holding everything addressed to him while
@@ -1756,8 +1796,12 @@ scenario('610_disconnect_waitauth_holder_lost', 'word',
       if (Date.now() - t0 > 60000) throw new Error("timeout waiting for Bob's auth response after Alice's disconnect");
       await sleep(100);
     }
-    await rec.drain(); // deliver everything (Bob's auth flow), like actWhileAuthenticating
+    // Deliver everything (Bob's auth flow). NOTE: intercept is switched off
+    // BEFORE the drain — frames arriving while the backlog is being released
+    // (e.g. Bob's clientLog/getMessages reactions) must flow directly, or they
+    // would stay held forever once the drain has seen an empty backlog.
     rec.setIntercept(false);
+    await rec.drain();
     await handshakeDone(rec, 'Bob');
     await waitEditorRendered(page, 'Bob');
     await rec.waitQuiescence(800);
@@ -2206,7 +2250,10 @@ async function runProbe(browser, monitorSrc, proxyPort, pageServerPort, docType)
     }
   }
   if (only.includes('list')) {
-    for (const n of Object.keys(SCENARIOS)) console.log(n + '  [' + SCENARIOS[n].docType + ']  ' + SCENARIOS[n].info);
+    for (const n of Object.keys(SCENARIOS)) {
+      const info = Array.isArray(SCENARIOS[n].info) ? SCENARIOS[n].info.join(' ') : SCENARIOS[n].info;
+      console.log(n + '  [' + SCENARIOS[n].docType + ']  ' + info);
+    }
     return;
   }
   const names = Object.keys(SCENARIOS).filter((n) => !only.length || only.includes(n));
@@ -2293,11 +2340,7 @@ async function runProbe(browser, monitorSrc, proxyPort, pageServerPort, docType)
       try {
         await sc.fn();
         await rec.waitQuiescence();
-        const info = [
-          'Document: ' + docs[sc.docType].file + ' (' + sc.docType + ')',
-          'Scenario: ' + sc.info,
-        ];
-        fs.writeFileSync(outFile, rec.toMarkdown(info));
+        fs.writeFileSync(outFile, rec.toMarkdown(scenarioInfoLines(sc, docs)));
         console.log('  ✓ wrote ' + outFile + ' (' + rec.events.length + ' events)');
       } catch (e) {
         const dbg = path.join('/tmp', name + '.md');
