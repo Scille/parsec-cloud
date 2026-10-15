@@ -14,6 +14,7 @@ enum RegisteredHandleItem {
     Closed,
 }
 
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum HandleItem {
     StartingClient {
         device_id: DeviceID,
