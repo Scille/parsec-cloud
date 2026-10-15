@@ -2,7 +2,7 @@
 
 <template>
   <ion-label class="label-role">
-    <ion-text class="button-small label-role-text">
+    <ion-text class="label-role-text">
       {{ $msTranslate(getWorkspaceRoleTranslationKey(role).label) }}
     </ion-text>
   </ion-label>
@@ -20,15 +20,19 @@ defineProps<{
 
 <style scoped lang="scss">
 .label-role {
-  color: var(--parsec-color-light-secondary-text);
   display: flex;
   align-items: center;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-12);
+  gap: ms.spacing('gap-sm');
+  width: fit-content;
+  padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+  background: ms.color('surface-base-default');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  border-radius: ms.radius('2xl');
+  box-shadow: ms.shadow('elevation-xs');
 
   &-text {
-    padding: 0.2rem 0.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('label-sm-emphasis');
+    color: ms.color('text-base-label');
   }
 }
 </style>
