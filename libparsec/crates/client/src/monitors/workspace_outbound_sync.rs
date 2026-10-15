@@ -486,6 +486,8 @@ fn task_future_factory(
         }
 
         let mut stop_requested = pin!(stop_requested);
+        // to not spam (0,0) outbound sync backlog events
+        let mut nothing_to_sync = false;
         loop {
             let to_sleep = match due_time {
                 None => {
@@ -656,10 +658,15 @@ fn task_future_factory(
                 },
             );
 
-            event_bus.send(&EventWorkspaceOutboundSyncBacklog {
-                number_of_files_to_sync,
-                size_to_sync,
-            });
+            if number_of_files_to_sync != 0 || !nothing_to_sync {
+                event_bus.send(&EventWorkspaceOutboundSyncBacklog {
+                    number_of_files_to_sync,
+                    size_to_sync,
+                });
+            }
+
+            // this is after to still send a last (0,0) event
+            nothing_to_sync = (number_of_files_to_sync, size_to_sync) == (0, 0);
         }
     };
 

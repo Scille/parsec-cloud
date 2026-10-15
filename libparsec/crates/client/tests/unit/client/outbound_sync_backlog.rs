@@ -193,7 +193,9 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     }
 
     spy.ack_remaining_events();
-    assert!(file_synced && started_with_nothing_to_sync && ended_with_nothing_to_sync)
+    assert!(file_synced);
+    assert!(started_with_nothing_to_sync);
+    assert!(ended_with_nothing_to_sync);
 }
 
 fn is_backlog_empty(backlog: ClientGetOutboundSyncBacklog) -> bool {
