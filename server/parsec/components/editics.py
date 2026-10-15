@@ -7,6 +7,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import auto
+from typing import Any
 from uuid import UUID, uuid4
 
 import anyio
@@ -16,10 +17,14 @@ from parsec._parsec import DeviceID, OrganizationID, VlobID
 from parsec.components.auth import EditicsAuthInfo
 from parsec.config import BackendConfig
 from parsec.editics_protocol import (
+    AuthChangeRecord,
     CursorRecord,
     EditicsClientEvent,
     EditicsClientEventAuth,
+    EditicsClientEventAuthChangesAck,
+    EditicsClientEventClose,
     EditicsClientEventCursor,
+    EditicsClientEventGetLock,
     EditicsClientEventGetMessages,
     EditicsClientEventIsSaveLock,
     EditicsClientEventMessage,
@@ -31,15 +36,20 @@ from parsec.editics_protocol import (
     EditicsParticipantID,
     EditicsServerEvent,
     EditicsServerEventAuth,
+    EditicsServerEventAuthChanges,
     EditicsServerEventConnectState,
     EditicsServerEventCursor,
+    EditicsServerEventGetLock,
     EditicsServerEventMessage,
+    EditicsServerEventReleaseLock,
     EditicsServerEventSaveChanges,
     EditicsServerEventSaveLock,
     EditicsServerEventSavePartChanges,
     EditicsServerEventUnSaveLock,
     EditicsServerEventWaitAuth,
+    LockRecord,
     MessageRecord,
+    ReleaseLockRecord,
     SaveChangeRecord,
 )
 from parsec.logging import get_logger
@@ -107,8 +117,15 @@ class Participant:
     # At most one SSE connection is possible for a given participant (any older
     # one is considered as a zombie and gets closed).
     sse_channel_sender: MemoryObjectSendStream[EditicsServerEvent] | None = None
-    # Joined while the auth lock was held, the participant won't receive its
-    # `auth` server event until the lock is released.
+    # Completed its `auth` handshake: only then does the participant appear in
+    # the participants lists (before that, only its SSE connection is
+    # registered in the session).
+    authed: bool = False
+    # Joined while the auth lock was held: the participant is queued to receive
+    # its `auth` server event when the lock is released. Note OnlyOffice 9.3.0
+    # resolves the lock optimistically for a second concurrent joiner (see the
+    # `auth` event handling): such a participant gets its `auth` right away
+    # but stays queued, so it also receives the post-unlock `auth`.
     parked: bool = False
 
 
@@ -143,6 +160,12 @@ class EditicsSession:
     # expires it after 60s). Desynchronized clients are denied the lock until
     # they catch up (see the `isSaveLock` client event handler).
     save_lock_holder: EditicsParticipantID | None = None
+    # --- Region locks (RFC §2.2) ---
+    # Block key (the block itself for the document editor, its `guid` for the
+    # other editors) -> lock record (the holder being the `user` field).
+    # The block descriptors are opaque to the server (their shape depends on
+    # the editor type, see `EditicsClientEventGetLock`).
+    region_locks: dict[str, LockRecord] = field(default_factory=dict)
 
     # initial_version: int
     # latest_allowed_version: int
@@ -160,8 +183,6 @@ class EditicsSession:
     # last_save_lock_holder: IndexUser | None = None
     # # In-flight multi-chunk save buffer for the current lock holder, or None.
     # in_flight_save: InFlightSave | None = None
-    # # Region locks, keyed by the JSON-serialized block descriptor.
-    # region_locks: dict[str, RegionLock] = field(default_factory=dict)
 
 
 def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntry]:
@@ -172,8 +193,75 @@ def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntr
             deviceId=participant.device_id,
             view=False,  # TODO
         )
+        # Connections that haven't completed their `auth` handshake are not
+        # participants yet (e.g. in record `02_auth_concurrent`, Bob and
+        # Mallory both connect before either has authed).
         for participant in session.participants.values()
+        if participant.authed
     ]
+
+
+def _block_key(block: Any) -> str:
+    """Key identifying a region lock's block (RFC §2.2).
+
+    OnlyOffice keys the lock table by the block id itself for the document
+    editor (a plain string), and by the block `guid` for the other editors.
+    """
+    return block if isinstance(block, str) else block["guid"]
+
+
+def _release_participant_locks(
+    session: EditicsSession, participant: Participant
+) -> list[ReleaseLockRecord]:
+    """Remove all the region locks held by `participant`, as records ready to
+    be embedded in a `saveChanges` broadcast or a standalone `releaseLock`
+    event (RFC §2.2)."""
+    released: list[ReleaseLockRecord] = []
+    for key, lock in list(session.region_locks.items()):
+        if lock.user == participant.index:
+            released.append(
+                ReleaseLockRecord(
+                    block=lock.block,
+                    user=participant.index,
+                    time=now(),
+                    changes=None,
+                )
+            )
+            del session.region_locks[key]
+    return released
+
+
+def _push_changes_backlog(session: EditicsSession, participant: Participant) -> None:
+    """Push on the participant's SSE channel the backlog of changes that
+    occurred since the session was created (delivered as a single `authChanges`
+    chunk, RFC §2.2), so a newcomer can catch up before its `auth` reply."""
+    if not session.changes or participant.sse_channel_sender is None:
+        return
+    participant.sse_channel_sender.send_nowait(
+        EditicsServerEventAuthChanges(
+            changes=[
+                AuthChangeRecord(
+                    index=index + 1,
+                    authorIndexUser=change.author_index_user,
+                    time=change.time_ms,
+                    encryptedChange=change.encrypted_change,
+                )
+                for index, change in enumerate(session.changes)
+            ],
+        )
+    )
+
+
+def _handshake_auth(session: EditicsSession, participant: Participant) -> EditicsServerEventAuth:
+    """Build the newcomer's `auth` reply (its handshake completion, RFC §2.2)."""
+    return EditicsServerEventAuth(
+        participants=_participant_entries(session),
+        indexUser=participant.index,
+        participantId=participant.participant_id,
+        participantTimeConnect=participant.connected_at,
+        openedAt=session.opened_at,
+        locks=list(session.region_locks.values()),
+    )
 
 
 class EditicsParticipantListenBadOutcome(BadOutcomeEnum):
@@ -271,9 +359,8 @@ class EditicsComponent:
         participant_id: EditicsParticipantID,
         event: EditicsClientEvent,
     ) -> EditicsServerEvent | EditicsParticipantSendBadOutcome | None:
-        session = self._get_or_create_session(
-            (auth_info.organization_id, auth_info.realm_id, document_id)
-        )
+        session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
+        session = self._get_or_create_session(session_key)
         participant = self._get_or_insert_participant(auth_info.device_id, participant_id, session)
         if participant is None:
             return EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH
@@ -304,16 +391,58 @@ class EditicsComponent:
 
                 # TODO: should we update `participant.connected_at` when in reconnection ?
 
+                # The handshake is complete: from now on the participant appears
+                # in the participants lists (i.e. the `auth` replies and
+                # `connectState` broadcasts), before that only its SSE
+                # connection was registered in the session.
+                participant.authed = True
+
+                # Determine the newcomer's reply. The `auth_lock_holder` updates
+                # must be done before the `connectState` broadcast below, which
+                # reflects the resulting session state.
                 if session.auth_lock_holder is None:
                     # No auth lock held: the newcomer completes its handshake right
                     # away. If it is also the first participant, it becomes the single
                     # editor and takes the auth lock (RFC §6.2).
-                    if len(session.participants) == 1:
+                    if not any(
+                        other.authed
+                        for other in session.participants.values()
+                        if other.participant_id != participant.participant_id
+                    ):
                         session.auth_lock_holder = participant.participant_id
+                    reply = _handshake_auth(session, participant)
+                    _push_changes_backlog(session, participant)
+                elif any(
+                    other.parked
+                    for other in session.participants.values()
+                    if other.participant_id != participant.participant_id
+                ):
+                    # An established editor holds the auth lock, but another
+                    # participant is already waiting for it: OnlyOffice 9.3.0
+                    # resolves the lock optimistically for the newcomer (see
+                    # record `02_auth_concurrent`), which completes its
+                    # handshake right away and switches the session out of the
+                    # wait-auth state. Like the first joiner, the newcomer
+                    # stays queued to also receive its `auth` when the lock
+                    # holder eventually sends `unLockDocument{unlock:true}`.
+                    session.auth_lock_holder = None
+                    participant.parked = True
+                    reply = _handshake_auth(session, participant)
+                    _push_changes_backlog(session, participant)
                 else:
                     # An established editor holds the auth lock: the newcomer is parked
                     # until the holder releases it.
                     participant.parked = True
+                    assert session.auth_lock_holder is not None
+                    lock_holder = session.participants[session.auth_lock_holder]
+                    reply = EditicsServerEventWaitAuth(
+                        authLockedBy=EditicsParticipantEntry(
+                            id=lock_holder.participant_id,
+                            deviceId=lock_holder.device_id,
+                            indexUser=lock_holder.index,
+                            view=False,  # TODO
+                        )
+                    )
 
                 broadcasted_event = EditicsServerEventConnectState(
                     # TODO: have a single function that handles timestamp generation,
@@ -330,29 +459,7 @@ class EditicsComponent:
                         # TODO: close the SSE if the channel is full
                         other_participant.sse_channel_sender.send_nowait(broadcasted_event)
 
-                # Send `waitAuth` if another participant holds the auth lock (i.e.
-                # the newcomer must wait until the other participant sends a
-                # `unLockDocument{unlock:true}`)
-                if participant.parked:
-                    assert session.auth_lock_holder is not None
-                    lock_holder = session.participants[session.auth_lock_holder]
-                    return EditicsServerEventWaitAuth(
-                        authLockedBy=EditicsParticipantEntry(
-                            id=lock_holder.participant_id,
-                            deviceId=lock_holder.device_id,
-                            indexUser=lock_holder.index,
-                            view=False,  # TODO
-                        )
-                    )
-
-                else:
-                    return EditicsServerEventAuth(
-                        participants=_participant_entries(session),
-                        indexUser=participant.index,
-                        participantId=participant_id,
-                        participantTimeConnect=participant.connected_at,
-                        openedAt=session.opened_at,
-                    )
+                return reply
 
             case EditicsClientEventGetMessages():
                 return EditicsServerEventMessage(
@@ -394,27 +501,128 @@ class EditicsComponent:
                 reply = None
                 # `isSave` asks to cancel an in-progress save: release the save
                 # lock and acknowledge with the cancellation sentinel values.
-                # `deleteIndex` and `releaseLocks` cover the region lock system,
-                # which is not implemented yet (TODO).
                 if event.isSave and session.save_lock_holder == participant.participant_id:
                     session.save_lock_holder = None
                     reply = EditicsServerEventUnSaveLock(index=-1, time=-1, syncChangesIndex=-1)
-                if event.unlock and session.auth_lock_holder == participant.participant_id:
-                    session.auth_lock_holder = None
-                    for participant in session.participants.values():
-                        if participant.parked:
-                            participant.parked = False
-                            if participant.sse_channel_sender:
-                                broadcasted_event = EditicsServerEventAuth(
-                                    participants=_participant_entries(session),
-                                    indexUser=participant.index,
-                                    participantId=participant.participant_id,
-                                    participantTimeConnect=participant.connected_at,
-                                    openedAt=session.opened_at,
-                                )
+                # `releaseLocks` asks to release the region locks held by the
+                # participant: the other participants are notified with a
+                # `releaseLock` event (RFC §2.2).
+                if event.releaseLocks:
+                    released_locks = _release_participant_locks(session, participant)
+                    if released_locks:
+                        broadcasted_event = EditicsServerEventReleaseLock(locks=released_locks)
+                        for other_participant in session.participants.values():
+                            if other_participant.participant_id == participant.participant_id:
+                                continue
+                            if other_participant.sse_channel_sender:
                                 # TODO: close the SSE if the channel is full
-                                participant.sse_channel_sender.send_nowait(broadcasted_event)
+                                other_participant.sse_channel_sender.send_nowait(broadcasted_event)
+                # Note there is no holder check: with the OnlyOffice 9.3.0
+                # optimistic resolution (see the `auth` event handling) the auth
+                # lock can already be considered released when the holder sends
+                # this event, while participants are still queued waiting for
+                # their `auth`.
+                if event.unlock:
+                    session.auth_lock_holder = None
+                    for other in session.participants.values():
+                        if other.parked:
+                            other.parked = False
+                            if other.sse_channel_sender:
+                                # TODO: close the SSE if the channel is full
+                                other.sse_channel_sender.send_nowait(_handshake_auth(session, other))
+                                _push_changes_backlog(session, other)
                 return reply
+
+            case EditicsClientEventGetLock():
+                # Region locks (RFC §2.2): try to acquire the requested blocks for
+                # the requester (the blocks already held, possibly by the
+                # requester itself, are left as-is), then reply with the resulting
+                # lock table. The other participants are broadcasted the same
+                # table so they learn about the new locks.
+                for block in event.block:
+                    key = _block_key(block)
+                    if key not in session.region_locks:
+                        session.region_locks[key] = LockRecord(
+                            time=now(),
+                            user=participant.index,
+                            block=block,
+                        )
+                reply = EditicsServerEventGetLock(locks=session.region_locks)
+                for other_participant in session.participants.values():
+                    if other_participant.participant_id == participant.participant_id:
+                        continue
+                    if other_participant.sse_channel_sender:
+                        # TODO: close the SSE if the channel is full
+                        other_participant.sse_channel_sender.send_nowait(reply)
+                return reply
+
+            case EditicsClientEventAuthChangesAck():
+                # The newcomer acknowledges the changes backlog (delivered as a
+                # single chunk in step 1, so there is nothing to track here).
+                return None
+
+            case EditicsClientEventClose():
+                # Voluntary leave (unlike `unLockDocument` which keeps the connection
+                # alive): the participant is removed from the session and the locks it
+                # holds are released.
+                #
+                # Note the leaving participant's SSE channel is left as-is: the client
+                # closes it right after the `close` (and it could not receive events
+                # anymore anyway, given broadcasts only target the participants present
+                # in the session).
+
+                del session.participants[participant_id]
+
+                # Release the save lock if the leaving participant held it (no `unSaveLock`
+                # is sent: the only participant it is relevant to is the one leaving!).
+                if session.save_lock_holder == participant_id:
+                    session.save_lock_holder = None
+
+                # Release the region locks if the leaving participant held some: the
+                # other participants are notified with a `releaseLock` event (RFC §2.2).
+                released_locks = _release_participant_locks(session, participant)
+                if released_locks:
+                    broadcasted_event = EditicsServerEventReleaseLock(locks=released_locks)
+                    for other_participant in session.participants.values():
+                        if other_participant.sse_channel_sender:
+                            # TODO: close the SSE if the channel is full
+                            other_participant.sse_channel_sender.send_nowait(broadcasted_event)
+
+                # Release the auth lock if the leaving participant held it: the
+                # participants parked behind the lock can then complete their
+                # handshake (like for a `unLockDocument{unlock:true}`, RFC §2.2).
+                if session.auth_lock_holder == participant_id:
+                    session.auth_lock_holder = None
+                    for other_participant in session.participants.values():
+                        if other_participant.parked:
+                            other_participant.parked = False
+                            if other_participant.sse_channel_sender:
+                                other_participant.sse_channel_sender.send_nowait(
+                                    _handshake_auth(session, other_participant)
+                                )
+                                _push_changes_backlog(session, other_participant)
+
+                # Broadcast the new participant list to the remaining participants
+                # (including the ones just un-parked, like any other participant).
+                broadcasted_event = EditicsServerEventConnectState(
+                    participantsTimestamp=now(),
+                    participants=_participant_entries(session),
+                    waitAuth=session.auth_lock_holder is not None,
+                )
+                for other_participant in session.participants.values():
+                    if other_participant.sse_channel_sender:
+                        # TODO: close the SSE if the channel is full
+                        other_participant.sse_channel_sender.send_nowait(broadcasted_event)
+
+                # The session only lives through its participants: destroy it once the
+                # last one is gone (a future participant would recreate it from scratch
+                # anyway, given a participant always loads the document from the vlob
+                # and never from the session).
+                if not session.participants:
+                    del self._sessions[session_key]
+
+                # Fire-and-forget: nothing left to reply to the leaving client.
+                return None
 
             case EditicsClientEventIsSaveLock():
                 # Try to take the save lock.
@@ -474,6 +682,16 @@ class EditicsComponent:
                 # chunk of a non-truncating save establishes a new save point)
                 changes_index = start_index if delete_index == -1 and event.startSaveChanges else -1
 
+                # `releaseLocks` asks to release the region locks held by the
+                # saver after the save: the released blocks are carried in the
+                # broadcast so the other participants update their lock table
+                # (RFC §2.2).
+                released_locks = (
+                    _release_participant_locks(session, participant)
+                    if event.releaseLocks
+                    else []
+                )
+
                 # Broadcast the changes to the other participants (the saver gets
                 # `unSaveLock`/`savePartChanges` replies instead)
                 broadcasted_event = EditicsServerEventSaveChanges(
@@ -490,6 +708,7 @@ class EditicsComponent:
                     endSaveChanges=event.endSaveChanges,
                     excel_info=event.excel_info,
                     encryptedCursor=event.encryptedCursor,
+                    locks=released_locks,
                 )
                 for other_participant in session.participants.values():
                     if other_participant.participant_id == participant.participant_id:

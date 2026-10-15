@@ -185,12 +185,6 @@ class EditicsTranslator {
     // collaborative mode is finished; move back into the switch below to
     // enable, see the matching server events in the RFC):
     //
-    //   case 'authChangesAck':
-    //     return { type: 'authChangesAck' };
-    //
-    //   case 'getLock':
-    //     return { type: 'getLock', block: oo.block };
-    //
     //   case 'close':
     //     return { type: 'close' };
     //
@@ -213,6 +207,14 @@ class EditicsTranslator {
         return {
           type: 'getMessages',
         };
+
+      case 'authChangesAck':
+        /** @type {EditicsClientEventAuthChangesAck} */
+        return { type: 'authChangesAck' };
+
+      case 'getLock':
+        /** @type {EditicsClientEventGetLock} */
+        return { type: 'getLock', block: oo.block };
 
       case 'message':
         // The chat message is encrypted as an opaque blob (RFC §2.2)
@@ -386,6 +388,15 @@ class EditicsTranslator {
       case 'saveChanges':
         return await this._cookServerSaveChanges(editics);
 
+      case 'authChanges':
+        return await this._cookAuthChanges(editics);
+
+      case 'getLock':
+        return this._cookGetLock(editics);
+
+      case 'releaseLock':
+        return this._cookReleaseLock(editics);
+
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
         return null;
@@ -393,15 +404,6 @@ class EditicsTranslator {
       // Still to be translated (disabled until the server side of the
       // collaborative mode is finished; move back into the switch below to
       // enable):
-      //
-      //   case 'authChanges':
-      //     return this._cookAuthChanges(editics);
-      //
-      //   case 'getLock':
-      //     return this._cookGetLock(editics);
-      //
-      //   case 'releaseLock':
-      //     return this._cookReleaseLock(editics);
       //
       //   case 'drop':
       //     return { type: 'drop', code: editics.code, description: editics.description };
@@ -438,7 +440,7 @@ class EditicsTranslator {
       // TODO: Check the relashionship between sessionTimeConnect and openedAt.
       sessionTimeConnect: editics.participantTimeConnect,
       participants: this._onlyofficeParticipants(),
-      locks: {},
+      locks: this._onlyofficeLockTable(editics.locks),
       indexUser: editics.indexUser,
       hasForgotten: false,
       jwt: '',
@@ -515,26 +517,28 @@ class EditicsTranslator {
     };
   }
 
-  // /**
-  //  * @param {EditicsServerEventAuthChanges} editics
-  //  * @returns {OOServerEventAuthChanges}
-  //  */
-  // _cookAuthChanges(editics) {
-  //   const docid = `${this.config.workspaceId}/${this.config.vlobId}`;
-  //   const changes = (editics.changes || []).map((entry) => {
-  //     const idx = entry[0];
-  //     const blob = entry[1];
-  //     const userId = this._userId(idx);
-  //     return {
-  //       docid,
-  //       change: JSON.stringify(bytesToStr(await this._decrypt(bytesFromBase64(blob)))),
-  //       time: 0,
-  //       user: userId + String(idx),
-  //       useridoriginal: userId,
-  //     };
-  //   });
-  //   return { type: 'authChanges', changes };
-  // }
+  /**
+   * The backlog of changes a newcomer must catch up on before its `auth`
+   * reply completes the handshake (RFC §2.2).
+   * @param {EditicsServerEventAuthChanges} editics
+   * @returns {Promise<OOServerEventAuthChanges>}
+   */
+  async _cookAuthChanges(editics) {
+    const changes = await Promise.all(
+      (editics.changes || []).map(async (c) => {
+        const p = this._participants.get(c.authorIndexUser);
+        const [keyIndex, b64CipherText] = c.encryptedChange;
+        return {
+          docid: this.docId,
+          change: JSON.stringify(bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)))),
+          time: c.time,
+          user: p ? p.participantId : String(c.authorIndexUser),
+          useridoriginal: p ? p.deviceId : String(c.authorIndexUser),
+        };
+      }),
+    );
+    return { type: 'authChanges', changes };
+  }
 
   /**
    * @param {EditicsServerEventMessage} editics
@@ -590,31 +594,67 @@ class EditicsTranslator {
     return { type: 'cursor', messages };
   }
 
-  // /**
-  //  * @param {EditicsServerEventGetLock} editics
-  //  * @returns {OOServerEventGetLock}
-  //  */
-  // _cookGetLock(editics) {
-  //   const ooLocks = {};
-  //   for (const key in editics.locks || {}) {
-  //     const lock = editics.locks[key];
-  //     const userId = this._userId(lock.user);
-  //     ooLocks[key] = { time: lock.time, user: userId + String(lock.user), block: lock.block };
-  //   }
-  //   return { type: 'getLock', locks: ooLocks };
-  // }
+  /**
+   * The lock table resulting from the server trying to acquire the requested
+   * blocks for us (RFC §2.2).
+   * @param {EditicsServerEventGetLock} editics
+   * @returns {OOServerEventGetLock}
+   */
+  _cookGetLock(editics) {
+    const ooLocks = {};
+    for (const key in editics.locks || {}) {
+      const lock = editics.locks[key];
+      const p = this._participants.get(lock.user);
+      ooLocks[key] = {
+        time: lock.time,
+        user: p ? p.participantId : String(lock.user),
+        block: lock.block,
+      };
+    }
+    return { type: 'getLock', locks: ooLocks };
+  }
 
-  // /**
-  //  * @param {EditicsServerEventReleaseLock} editics
-  //  * @returns {OOServerEventReleaseLock}
-  //  */
-  // _cookReleaseLock(editics) {
-  //   const locks = (editics.locks || []).map((lock) => {
-  //     const userId = this._userId(lock.user);
-  //     return { block: lock.block, user: userId + String(lock.user), time: lock.time, changes: null };
-  //   });
-  //   return { type: 'releaseLock', locks };
-  // }
+  /**
+   * Region locks released by a participant outside of a `saveChanges`
+   * (RFC §2.2).
+   * @param {EditicsServerEventReleaseLock} editics
+   * @returns {OOServerEventReleaseLock}
+   */
+  _cookReleaseLock(editics) {
+    const locks = (editics.locks || []).map((lock) => {
+      const p = this._participants.get(lock.user);
+      return {
+        block: lock.block,
+        user: p ? p.participantId : String(lock.user),
+        time: lock.time,
+        changes: lock.changes,
+      };
+    });
+    return { type: 'releaseLock', locks };
+  }
+
+  /**
+   * OnlyOffice carries the lock table as an object keyed by block id in the
+   * document editor, and as a plain array in the other editors.
+   * @param {LockRecord[]} locks
+   * @returns {Object<string, {time:number, user:string, block:*}>|Array<{time:number, user:string, block:*}>}
+   */
+  _onlyofficeLockTable(locks) {
+    const records = (locks || []).map((lock) => {
+      const p = this._participants.get(lock.user);
+      return {
+        time: lock.time,
+        user: p ? p.participantId : String(lock.user),
+        block: lock.block,
+      };
+    });
+    if (this.config.editorType === 0) {
+      const table = {};
+      for (const record of records) table[record.block] = record;
+      return table;
+    }
+    return records;
+  }
 
   /**
    * The `saveChanges` broadcast (RFC §2.2): another participant has saved
@@ -851,6 +891,11 @@ export { EditicsTranslator };
  *
  * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|EditicsClientEventGetMessages|EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent
  *
+ * @typedef {Object} LockRecord
+ * @property {number} time
+ * @property {EditicsIndexUser} user
+ * @property {*} block
+ *
  * @typedef {Object} EditicsServerEventAuth
  * @property {'auth'} type
  * @property {EditicsParticipantEntry[]} participants
@@ -858,6 +903,7 @@ export { EditicsTranslator };
  * @property {EditicsIndexUser} indexUser
  * @property {number} participantTimeConnect
  * @property {number} openedAt
+ * @property {LockRecord[]} locks
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type
@@ -865,9 +911,15 @@ export { EditicsTranslator };
  * @property {EditicsParticipantEntry[]} participants
  * @property {boolean} waitAuth
  *
+ * @typedef {Object} AuthChangeRecord
+ * @property {number} index
+ * @property {EditicsIndexUser} authorIndexUser
+ * @property {number} time
+ * @property {[number, string]} encryptedChange
+ *
  * @typedef {Object} EditicsServerEventAuthChanges
  * @property {'authChanges'} type
- * @property {Array<[number, number, string]>} [changes]
+ * @property {AuthChangeRecord[]} [changes]
  *
  * @typedef {Object} EditicsServerEventWaitAuth
  * @property {'waitAuth'} type
@@ -883,7 +935,7 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type
- * @property {Record<string, {time:number, user:EditicsIndexUser, block:*}>} locks
+ * @property {Record<string, LockRecord>} locks
  *
  * @typedef {Object} EditicsServerEventReleaseLock
  * @property {'releaseLock'} type
