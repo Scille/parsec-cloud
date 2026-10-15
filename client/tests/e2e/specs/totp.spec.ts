@@ -262,7 +262,7 @@ msTest('Change auth with TOTP active', async ({ myProfilePage }) => {
 
   await expect(nextButton).toHaveText('Confirm change');
   await expect(nextButton).toHaveDisabledAttribute();
-  await changePasswordModal.locator('.proconnect-button').click();
+  await changePasswordModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(nextButton).toNotHaveDisabledAttribute();
   await nextButton.click();
   await expect(changePasswordModal).toBeHidden();
@@ -274,7 +274,7 @@ msTest('Change auth with TOTP active', async ({ myProfilePage }) => {
   const home = myProfilePage;
 
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-  await home.locator('.login-card').locator('.proconnect-button').click();
+  await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await fillInputModal(home, await generateTotpCode(totpSecret));
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);

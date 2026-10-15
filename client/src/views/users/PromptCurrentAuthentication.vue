@@ -1,7 +1,9 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
+  <ms-spinner v-show="!initialized" />
   <ms-password-input
+    v-show="initialized"
     v-if="device.ty.tag === AvailableDeviceTypeTag.Password"
     v-model="password"
     @change="onPasswordChange"
@@ -10,37 +12,37 @@
     ref="passwordInput"
   />
   <div
-    class="provider-card"
+    v-show="initialized"
     v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao"
+    class="container"
   >
-    <sso-provider-card
-      :provider="(device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
-      :is-connected="false"
-      @sso-selected="onSSOLoginClicked"
+    <connect-sso
+      v-if="serverConfig"
+      :server-config="serverConfig"
+      @open-bao-connected="onSSOConnected"
     />
-    <ms-spinner
-      v-if="querying"
-      class="provider-card-spinner"
-    />
+    <ms-report-text
+      v-else
+      :theme="MsReportTheme.Error"
+    >
+      {{ $msTranslate('Authentication.method.sso.serverConfigUnavailable') }}
+    </ms-report-text>
   </div>
-  {{ $msTranslate(errorMessage) }}
 </template>
 
 <script setup lang="ts">
-import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
+import ConnectSso from '@/components/devices/ConnectSso.vue';
 import {
   AvailableDevice,
-  AvailableDeviceTypeOpenBao,
   AvailableDeviceTypePKI,
   AvailableDeviceTypeTag,
   DevicePrimaryProtectionStrategy,
-  OpenBaoAuthConfigTag,
   openCertificate,
   PrimaryProtectionStrategy,
   ServerConfig,
 } from '@/parsec';
-import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
-import { MsPasswordInput, MsSpinner } from 'megashark-lib';
+import { OpenBaoClient } from '@/services/openBao';
+import { MsPasswordInput, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
@@ -53,35 +55,36 @@ const emits = defineEmits<{
   (e: 'enterPressed'): void;
 }>();
 
-const querying = ref(false);
 const initialized = ref(false);
-const errorMessage = ref('');
 const password = ref('');
 const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 
 onMounted(async () => {
   initialized.value = false;
-  switch (props.device.ty.tag) {
-    case AvailableDeviceTypeTag.Keyring:
-      emits('authenticationSelected', PrimaryProtectionStrategy.useKeyring());
-      return;
-    case AvailableDeviceTypeTag.PKI: {
-      const certResult = await openCertificate((props.device.ty as AvailableDeviceTypePKI).certificateRef);
-      if (!certResult.ok) {
+  try {
+    switch (props.device.ty.tag) {
+      case AvailableDeviceTypeTag.Keyring:
+        emits('authenticationSelected', PrimaryProtectionStrategy.useKeyring());
+        return;
+      case AvailableDeviceTypeTag.PKI: {
+        const certResult = await openCertificate((props.device.ty as AvailableDeviceTypePKI).certificateRef);
+        if (!certResult.ok) {
+          break;
+        }
+        emits('authenticationSelected', PrimaryProtectionStrategy.useSmartcard(certResult.value));
+        return;
+      }
+      case AvailableDeviceTypeTag.Password:
+        if (passwordInputRef.value) {
+          await passwordInputRef.value.setFocus();
+        }
         break;
-      }
-      emits('authenticationSelected', PrimaryProtectionStrategy.useSmartcard(certResult.value));
-      return;
+      default:
+        break;
     }
-    case AvailableDeviceTypeTag.Password:
-      if (passwordInputRef.value) {
-        await passwordInputRef.value.setFocus();
-      }
-      break;
-    default:
-      break;
+  } finally {
+    initialized.value = true;
   }
-  initialized.value = true;
 });
 
 async function onPasswordChange(): Promise<void> {
@@ -92,49 +95,16 @@ async function onEnterPressed(): Promise<void> {
   emits('enterPressed');
 }
 
-async function onSSOLoginClicked(): Promise<void> {
-  if (querying.value) {
-    window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
-    return;
-  }
-  if (!props.serverConfig || !props.serverConfig.openbao) {
-    window.nativeAPI.log('error', 'Server config or current device not found');
-    return;
-  }
-  if (props.device.ty.tag !== AvailableDeviceTypeTag.OpenBao) {
-    window.nativeAPI.log('error', 'Device is not OpenBao device');
-    return;
-  }
-  const provider = (props.device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId;
-  const auth = props.serverConfig.openbao.auths.find((v) => v.tag === provider);
-  if (!auth) {
-    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
-    return;
-  }
-  try {
-    querying.value = true;
-    const result = await openBaoConnect(
-      props.serverConfig.openbao.serverUrl,
-      auth.tag,
-      auth.mountPath,
-      props.serverConfig.openbao.secret.mountPath,
-      props.serverConfig.openbao.transitMountPath,
-    );
-    if (!result.ok) {
-      if (result.error.type === OpenBaoErrorType.PopupFailed) {
-        errorMessage.value = 'Authentication.popupBlocked';
-      } else {
-        errorMessage.value = 'Authentication.invalidOpenBaoData';
-      }
-      window.nativeAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
-    } else {
-      emits('authenticationSelected', PrimaryProtectionStrategy.useOpenBao(result.value.getConnectionInfo()));
-      emits('enterPressed');
-    }
-  } finally {
-    querying.value = false;
-  }
+async function onSSOConnected(client: OpenBaoClient): Promise<void> {
+  emits('authenticationSelected', PrimaryProtectionStrategy.useOpenBao(client.getConnectionInfo()));
+  emits('enterPressed');
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+</style>

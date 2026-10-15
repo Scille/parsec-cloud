@@ -14,12 +14,6 @@
     </div>
 
     <div class="authentication-card-text">
-      <ion-text
-        class="authentication-card-text__header"
-        v-if="state === AuthenticationCardState.Update"
-      >
-        {{ $msTranslate('Authentication.methodChosen') }}
-      </ion-text>
       <ion-text class="authentication-card-text__title">{{ $msTranslate(config.methodName) }}</ion-text>
       <ion-text
         class="authentication-card-text__description"

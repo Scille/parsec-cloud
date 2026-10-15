@@ -32,6 +32,13 @@ export async function getServerConfig(serverAddr: string): Promise<Result<Server
       window.nativeAPI.log('info', 'Mocking allowed protection methods');
       result.value.advisoryDeviceFileProtection = (window as any).TESTING_MOCK_ALLOWED_PROTECTION_METHODS;
     }
+    if ((window as any).TESTING_MOCK_SSO_PROVIDERS) {
+      if (result.value.openbao) {
+        result.value.openbao.auths = (window as any).TESTING_MOCK_SSO_PROVIDERS;
+      } else {
+        window.nativeAPI.log('warn', 'Cant mock available SSO is openbao config is not set');
+      }
+    }
 
     (result.value as ServerConfig).isAuthMethodAllowed = (strategy: DevicePrimaryProtectionStrategyTag) => {
       return (
