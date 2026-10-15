@@ -125,7 +125,7 @@ argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.2.2", default-features = false }
 async-broadcast = { version = "0.7.2", default-features = false }
 async-lock = { version = "3.4.2", default-features = false }
-blahaj = "0.6.0"
+blahaj = "0.7.0"
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.11.1", default-features = false }
 chrono = { version = "0.4.45", default-features = false }

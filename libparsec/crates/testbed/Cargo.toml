@@ -22,7 +22,7 @@ serde_with = { workspace = true }
 rmp-serde = { workspace = true }
 lazy_static = { workspace = true }
 # Used to deterministically generate shamir recovery shares (see `events.rs`)
-rand8 = { workspace = true, features = ["std", "std_rng"] }
+rand = { workspace = true, features = ["std", "std_rng"] }
 reqwest = { workspace = true, features = ["native-tls", "query"] }
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
 log = { workspace = true }
