@@ -3,7 +3,9 @@
 - Timestamp: 2026-10-13T15:24:41.312Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: presentation.pptx (slide)
-- Scenario: Alice moves her cursor while Bob is authenticating (between his auth and its response, held by manual-flow).
+- Scenario:
+  1. Bob starts authenticating.
+  2. Alice moves her cursor while Bob is between his auth and its response.
 
 ## Events
 

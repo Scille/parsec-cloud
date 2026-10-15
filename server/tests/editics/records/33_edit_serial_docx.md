@@ -3,7 +3,10 @@
 - Timestamp: 2026-10-13T15:25:57.705Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice, Bob and Mallory edit the document one after the other.
+- Scenario:
+  1. Alice edits the document.
+  2. Bob edits the document.
+  3. Mallory edits the document.
 
 ## Events
 

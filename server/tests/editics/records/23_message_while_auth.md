@@ -3,7 +3,9 @@
 - Timestamp: 2026-10-13T15:25:24.800Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice sends a chat message while Bob is authenticating.
+- Scenario:
+  1. Bob starts authenticating.
+  2. Alice sends a chat message while Bob is authenticating.
 
 ## Events
 

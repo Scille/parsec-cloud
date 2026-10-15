@@ -3,7 +3,10 @@
 - Timestamp: 2026-10-13T15:22:41.043Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice opens the document, then Bob joins, then Mallory.
+- Scenario:
+  1. Alice opens the document.
+  2. Bob joins.
+  3. Mallory joins.
 
 ## Events
 

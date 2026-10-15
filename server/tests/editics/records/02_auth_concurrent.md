@@ -3,7 +3,13 @@
 - Timestamp: 2026-10-13T15:22:50.422Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice opens the document, then Bob and Mallory join at the same time: their auth sends are held at the proxy and released back to back, so both auths reach the server before Alice sends her unLockDocument. The server waitAuths the first joiner (Bob) and resolves the document lock optimistically for the second (Mallory authenticates directly) — the real OnlyOffice 9.3.0 behavior.
+- Scenario:
+  1. Alice opens the document.
+  2. Bob and Mallory join at the same time (both auths reach the server before
+     Alice sends her unLockDocument).
+  3. The server waitAuths the first joiner (Bob) and resolves the document lock
+     optimistically for the second (Mallory authenticates directly): the real
+     OnlyOffice 9.3.0 behavior.
 
 ## Events
 

@@ -3,7 +3,8 @@
 - Timestamp: 2026-10-13T15:24:49.774Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice sends a chat message while alone.
+- Scenario:
+  1. Alice sends a chat message while alone.
 
 ## Events
 

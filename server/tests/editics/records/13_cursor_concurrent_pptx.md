@@ -3,7 +3,8 @@
 - Timestamp: 2026-10-13T15:24:29.942Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: presentation.pptx (slide)
-- Scenario: Alice, Bob and Mallory move their cursors at the same time (concurrent).
+- Scenario:
+  1. Alice, Bob and Mallory move their cursors at the same time (concurrent).
 
 ## Events
 

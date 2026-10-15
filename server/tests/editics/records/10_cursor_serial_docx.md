@@ -3,7 +3,10 @@
 - Timestamp: 2026-10-13T15:23:03.170Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice, Bob and Mallory move their cursors one after the other (serial).
+- Scenario:
+  1. Alice moves her cursor.
+  2. Bob moves his cursor.
+  3. Mallory moves her cursor.
 
 ## Events
 

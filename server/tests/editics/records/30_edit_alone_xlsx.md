@@ -3,7 +3,8 @@
 - Timestamp: 2026-10-13T15:26:39.471Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: spreadsheet.xlsx (cell)
-- Scenario: Alice edits the document while alone.
+- Scenario:
+  1. Alice edits the document while alone.
 
 ## Events
 

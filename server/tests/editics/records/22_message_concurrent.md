@@ -3,7 +3,8 @@
 - Timestamp: 2026-10-13T15:25:14.777Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice and Bob send chat messages at the same time (manual-flow holds both sends until both are out).
+- Scenario:
+  1. Alice and Bob send chat messages at the same time.
 
 ## Events
 

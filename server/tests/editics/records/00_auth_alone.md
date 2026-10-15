@@ -3,7 +3,8 @@
 - Timestamp: 2026-10-13T15:22:31.533Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice opens the document alone.
+- Scenario:
+  1. Alice opens the document alone.
 
 ## Events
 

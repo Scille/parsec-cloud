@@ -3,7 +3,9 @@
 - Timestamp: 2026-10-13T15:26:12.891Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice, Bob and Mallory start editing at the same time: their isSaveLocks are held by manual-flow and released back to back, so the server sees the three lock requests before granting any save lock.
+- Scenario:
+  1. Alice, Bob and Mallory start editing at the same time (the server sees the
+     three lock requests before granting any save lock).
 
 ## Events
 

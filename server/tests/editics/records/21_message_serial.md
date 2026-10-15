@@ -3,7 +3,10 @@
 - Timestamp: 2026-10-13T15:25:01.912Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: document.docx (word)
-- Scenario: Alice, Bob and Mallory send chat messages one after the other.
+- Scenario:
+  1. Alice sends a chat message.
+  2. Bob sends a chat message.
+  3. Mallory sends a chat message.
 
 ## Events
 

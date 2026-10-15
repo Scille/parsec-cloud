@@ -3,7 +3,9 @@
 - Timestamp: 2026-10-13T15:27:38.904Z
 - OnlyOffice version: 9.3.0 (build 138)
 - Document: spreadsheet.xlsx (cell)
-- Scenario: Alice edits the document while Bob is authenticating.
+- Scenario:
+  1. Bob starts authenticating.
+  2. Alice edits the document while Bob is authenticating.
 
 ## Events
 
