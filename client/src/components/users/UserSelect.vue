@@ -11,7 +11,7 @@
       :model-value="inputValue"
     />
     <ion-text
-      class="body form-helperText"
+      class="form-helperText"
       v-if="errorMessage"
     >
       {{ $msTranslate(errorMessage) }}
@@ -136,24 +136,25 @@ onMounted(async () => {
 .user-select-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   position: relative;
   margin-bottom: 1rem;
 }
 
 .form-helperText {
+  @include ms.font('body-sm-medium');
   position: absolute;
   bottom: -2rem;
-  color: var(--parsec-color-light-secondary-soft-text);
+  color: ms.color('text-base-label');
 }
 
 .user-select-dropdown-overlay {
   position: absolute;
-  box-shadow: var(--parsec-shadow-strong);
-  border-radius: var(--parsec-radius-8);
+  box-shadow: ms.shadow('strong');
+  border-radius: ms.radius('lg');
   z-index: 100;
   width: 100%;
-  top: 4.5rem;
-  background: var(--parsec-color-light-secondary-white);
+  top: 4.75rem;
+  background: ms.color('surface-base-default-secondary');
 }
 </style>

@@ -168,11 +168,7 @@
 
   .options-button {
     --background: none !important;
-    --background-hover: none !important;
-
-    &::part(native) {
-      padding: ms.spacing('padding-none');
-    }
+    --background-hover: #{ms.color('surface-brand-default-subtle-hover')};
 
     &__icon {
       color: ms.color('icon-neutral-default');
@@ -313,6 +309,7 @@
     .label-last-update:is(.cell) {
       @include ms.font('label-md-medium');
       color: ms.color('text-base-description');
+      opacity: ms.opacity('8');
     }
 
     .header-label-space,
@@ -395,7 +392,13 @@
     .user-options {
       min-width: 4rem;
       flex: 1 0 4rem;
-      padding: ms.spacing('padding-2xl');
+    }
+
+    .label-join-date:is(.cell),
+    .label-email:is(.cell) {
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
+      opacity: ms.opacity('8');
     }
   }
 
@@ -523,6 +526,7 @@
 .revoked {
   --background: #{ms.color('surface-disabled-default')} !important;
   --background-hover: none;
+  opacity: ms.opacity('disabled');
 
   .user-name,
   .user-card-avatar {

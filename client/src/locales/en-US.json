@@ -1715,7 +1715,6 @@
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
             "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
             "copyLink": "Copy link",
-            "manageInvitation": "Manage invitation",
             "cancelInvitation": {
                 "title": "Cancel invitation",
                 "message": "The invitation sent to <b>{email}</b> and the invitation link will no longer be valid.<br/><br/>Are you sure you want to continue?",

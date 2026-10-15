@@ -6,7 +6,7 @@
     @click="showTooltip ? openInformationTooltip($event, getStatusDescription()) : null"
   >
     <ion-chip
-      class="tag-status button-medium"
+      class="tag-status"
       :class="{
         revoked: revoked,
         active: !revoked && !frozen,
@@ -61,12 +61,15 @@ function getStatusDescription(): Translatable {
 }
 
 .tag-status {
+  @include ms.font('label-sm-medium');
   margin: 0;
-  padding: 0.125rem 0;
+  padding: ms.spacing('padding-xs') ms.spacing('padding-md');
+  border-radius: ms.radius('md');
   height: fit-content;
   min-height: 0;
   display: flex;
-  gap: 0.25rem;
+  align-items: center;
+  gap: ms.spacing('gap-sm');
   cursor: default;
   --background: none;
   background: none;
@@ -77,18 +80,19 @@ function getStatusDescription(): Translatable {
 }
 
 * {
-  --revoked-color: var(--parsec-color-light-secondary-hard-grey);
-  --revoked-hover-color: var(--parsec-color-light-secondary-text);
+  --revoked-color: #{ms.color('text-neutral-default')};
+  --revoked-hover-color: #{ms.color('text-neutral-default-hover')};
 
-  --active-color: var(--parsec-color-light-info-500);
-  --active-hover-color: var(--parsec-color-light-info-700);
+  --active-color: #{ms.color('text-information-default')};
+  --active-hover-color: #{ms.color('text-information-default-hover')};
 
-  --frozen-color: var(--parsec-color-light-warning-500);
-  --frozen-hover-color: var(--parsec-color-light-warning-700);
+  --frozen-color: #{ms.color('text-warning-default')};
+  --frozen-hover-color: #{ms.color('text-warning-default-hover')};
 }
 
 .revoked {
   color: var(--revoked-color);
+  opacity: ms.opacity('8');
 
   &-icon {
     color: var(--revoked-color) !important;
@@ -124,7 +128,7 @@ function getStatusDescription(): Translatable {
 }
 
 ion-icon {
-  font-size: 1.15rem;
+  font-size: ms.size('xs');
   flex-shrink: 0;
   margin-right: 0 !important;
 }

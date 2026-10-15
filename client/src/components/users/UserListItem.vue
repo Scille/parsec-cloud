@@ -46,7 +46,7 @@
         />
         <span
           v-if="user.isCurrent"
-          class="body user-name--self"
+          class="user-name--self"
         >
           {{ $msTranslate('UsersPage.currentUser') }}
         </span>
@@ -65,16 +65,16 @@
         }"
       />
       <div class="user-mobile-text">
-        <ion-text class="button-medium">
+        <ion-text class="user-mobile-text__title">
           <span class="user-mobile-text__name">{{ user.humanHandle.label }}</span>
           <span
             v-if="user.isCurrent"
-            class="body-sm user-mobile-text__name--self"
+            class="user-mobile-text__name--self"
           >
             {{ $msTranslate('UsersPage.currentUser') }}
           </span>
         </ion-text>
-        <ion-text class="button-medium user-mobile-text__email">
+        <ion-text class="user-mobile-text__email">
           {{ user.humanHandle.email }}
         </ion-text>
         <div class="user-mobile-text-info">
@@ -138,6 +138,7 @@
     <div class="list-item-end user-options ion-item-child-clickable">
       <ion-button
         v-show="(isHovered || menuOpened || isSmallDisplay) && !user.isCurrent"
+        slot="icon-only"
         fill="clear"
         class="options-button"
         @click.stop="onOptionsClick($event)"
@@ -216,13 +217,15 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 .user-name {
   .label-name {
+    @include ms.font('label-md-medium');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 
   &--self {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
   }
 }
 
@@ -230,12 +233,12 @@ async function onOptionsClick(event: Event): Promise<void> {
   display: flex;
   align-items: center;
   width: 100%;
-  gap: 0.75rem;
-  padding: 0.75rem 0.5rem;
+  gap: ms.spacing('gap-2xl');
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-lg');
 
   &-avatar {
     pointer-events: none;
-    padding: 0.5rem;
+    padding: ms.spacing('padding-lg');
 
     &.hide-avatar {
       opacity: 0;
@@ -243,44 +246,58 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     &.disable-avatar {
       filter: grayscale(100%);
-      opacity: 0.6;
+      opacity: ms.opacity('6');
     }
   }
 
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 
+    &__title {
+      @include ms.font('label-md-medium');
+    }
+
     &__name {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
+    }
+
+    &__name--self {
+      @include ms.font('body-sm-regular');
     }
 
     &__email {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
     }
 
     &-info {
       margin-top: 0.25rem;
       display: flex;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
     }
   }
 }
 
 // manage copy email icon visibility on hover
 .user-list-item {
+  .label-join-date {
+    @include ms.font('label-md-medium');
+  }
+
   .user-email {
     .label-email {
+      @include ms.font('label-md-medium');
       cursor: pointer;
       display: flex;
       align-items: center;
       flex-wrap: nowrap;
       width: 100%;
-      gap: 0.125rem;
+      gap: ms.spacing('gap-xs');
 
       &__text {
         overflow: hidden;
@@ -291,16 +308,15 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     .email-copy-icon {
       display: none;
-      color: var(--parsec-color-light-secondary-soft-grey);
-      padding: 0.375rem;
-      border-radius: var(--parsec-radius-6);
+      padding: ms.spacing('padding-md');
+      border-radius: ms.radius('md');
       font-size: 1rem;
       cursor: pointer;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
       flex-shrink: 0;
 
       &--copied {
-        color: var(--parsec-color-light-success-700) !important;
+        color: ms.color('icon-success-default') !important;
         display: flex !important;
       }
     }
@@ -312,17 +328,17 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
 
     .label-email:hover {
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default-hover');
 
       .email-copy-icon {
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('icon-brand-default-hover');
       }
     }
   }
 }
 
 .current-user {
-  --background: var(--parsec-color-light-secondary-background);
+  --background: #{ms.color('surface-base-default-secondary')};
 
   .user-mobile-avatar {
     visibility: hidden;
@@ -331,7 +347,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   .lock-icon {
     z-index: 2;
     width: 1.25rem;
-    --fill-color: var(--parsec-color-light-secondary-grey);
+    --fill-color: #{ms.color('icon-neutral-default')};
   }
 }
 </style>

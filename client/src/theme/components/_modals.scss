@@ -1030,6 +1030,10 @@ ion-modal {
       max-height: calc(100% - 2rem);
     }
   }
+
+  .modal {
+    overflow: visible;
+  }
 }
 
 .authentication-modal,

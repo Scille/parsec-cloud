@@ -63,16 +63,12 @@
 
   .filter-button,
   .sorter-button {
-    background: ms.color('surface-base-default');
     --background: #{ms.color('surface-base-default')};
     --background-hover: #{ms.color('surface-base-default')};
-    border-radius: ms.radius('lg');
-    box-shadow: ms.shadow('input');
-    display: flex;
     align-self: stretch;
 
-    &:hover {
-      background: ms.color('surface-base-default');
+    &::part(native) {
+      --overflow: visible;
     }
 
     .sorter-button-content__text,
