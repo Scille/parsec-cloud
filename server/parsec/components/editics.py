@@ -130,18 +130,18 @@ class EditicsSession:
     # `waitAuth` from the server) until the first participant release it (i.e. send
     # `unLockDocument{unlock:true}`) which switch the session into co-editing mode.
     auth_lock_holder: EditicsParticipantID | None = None
-    # --- Save changes (RFC §2.2) ---
     # Monotonic change counter (= OnlyOffice `puckerIndex`): advances on every
-    # stored change fragment, and is only rewound by an UNDO (i.e. a `saveChanges`
+    # stored change fragment, and is only rewound by an undo (i.e. a `saveChanges`
     # carrying a `deleteIndex`).
     sync_changes_index: int = 0
     # Ordered change history (OnlyOffice change index = position in the list).
     changes: list[StoredChange] = field(default_factory=list)
-    # Save lock (RFC §2.1): the participant currently saving, or None.
+    # Save lock (i.e. the participant currently saving).
     # Minimal handling for now: taken on `isSaveLock`/`saveChanges`, released on
     # save completion (i.e. `saveChanges{endSaveChanges:true}`) or cancellation
     # (i.e. `unSaveLock`/`unLockDocument{isSave:true}`); no expiration (OnlyOffice
-    # expires it after 60s) and no desynchronized-client detection.
+    # expires it after 60s). Desynchronized clients are denied the lock until
+    # they catch up (see the `isSaveLock` client event handler).
     save_lock_holder: EditicsParticipantID | None = None
 
     # initial_version: int
@@ -417,14 +417,17 @@ class EditicsComponent:
                 return reply
 
             case EditicsClientEventIsSaveLock():
-                # Try to take the save lock (RFC §2.2): the reply's `saveLock`
-                # field is confusingly named, `false` means the lock is granted
-                # (i.e. the participant may now save its changes), `true` means
-                # another participant already holds it.
-                # Note OnlyOffice also keeps denying the lock while the client is
-                # desynchronized (i.e. its `syncChangesIndex` doesn't match the
-                # server's), this is not implemented here (TODO).
-                if session.save_lock_holder in (None, participant.participant_id):
+                # Try to take the save lock.
+                # Lock is denied as long as the client's `syncChangesIndex` is
+                # desynchronized.
+                # Note `syncChangesIndex == 0` means the client has just joined
+                # the session and hasn't loaded any changes, and hence is never
+                # considered desynchronized.
+                desynchronized = event.syncChangesIndex not in (0, session.sync_changes_index)
+                if not desynchronized and session.save_lock_holder in (
+                    None,
+                    participant.participant_id,
+                ):
                     session.save_lock_holder = participant.participant_id
                     return EditicsServerEventSaveLock(lockedBySomebodyElse=False)
                 else:
