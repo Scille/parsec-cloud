@@ -64,7 +64,10 @@
     connected: false,         // /ctl control channel open?
     pageResetting: false,     // true during the page-reload for manual-flow restart
     ooVersion: null,          // OnlyOffice buildVersion in use (e.g. '9.4.1'), from wire events
-    ooBuild: null             // matching buildNumber (e.g. 15)
+    ooBuild: null,            // matching buildNumber (e.g. 15)
+    editorConfigs: {},        // editor id -> config (kept for "re-join" after a close)
+    editorInstances: {},     // editor id -> live DocEditor instance (for "close editor")
+    editorNetState: {}        // editor id -> 'online' | 'offline' | 'cut' | 'closed' | ''
   };
   var EDITOR_ID =
     (/[?&]frameEditorId=([^&]*)/.exec(location.search || '') || [, null])[1];
@@ -246,6 +249,26 @@
   PatchedWS.CLOSING = OrigWS.CLOSING; PatchedWS.CLOSED = OrigWS.CLOSED;
   window.WebSocket = PatchedWS;
 
+  // ---- editor-frame side of the disconnection actions ---------------------
+  // The monitor script runs in every frame (Playwright injects init scripts
+  // in child frames too), so the top frame — which cannot reach into the
+  // cross-origin editor iframe — just posts a message and the editor's own
+  // monitor instance runs the action.
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.__oo_mon_ctl !== 1) return;
+    if (d.cmd === 'oo-close') {
+      // The protocol's own graceful goodbye: the editor API call OnlyOffice
+      // uses when it must tell the server it is leaving (rights revocation,
+      // anonymous mode…). DocsCoApi.disconnect() sends the `close` client
+      // event, and the document server closes the connection.
+      try {
+        var api = window['Asc'] && window['Asc'].editor;
+        if (api && typeof api.asc_coAuthoringDisconnect === 'function') api.asc_coAuthoringDisconnect();
+      } catch (err) {}
+    }
+  });
+
   // Patch XHR (polling fallback) — capture only, in-page.
   var Oo = XMLHttpRequest.prototype.open, Os = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open = function (m, u) { this.__u = u; this.__m = m; return Oo.apply(this, arguments); };
@@ -355,6 +378,14 @@
           syncInterceptBtn();
           break;
         }
+        case 'cut': {
+          if (msg.editor) MON.editorNetState[msg.editor] = 'cut';
+          break;
+        }
+        case 'revive': {
+          if (msg.editor) MON.editorNetState[msg.editor] = MON.editorInstances[msg.editor] ? 'online' : 'closed';
+          break;
+        }
         case 'released': {
           var h = HOLD_STATE[msg.id];
           if (h) { h.released = true; h.ok = !!msg.ok; if (h.row) updateRowReleased(h.row, h.ok); }
@@ -377,6 +408,15 @@
     }
     function storeProxyEvent(ev) {
       noteVersion(ev);
+      if (ev.editor) {
+        // per-editor connection state for the pane control bars (a deferred
+        // editor that was never started keeps its empty state)
+        if (ev.dir === 'open') MON.editorNetState[ev.editor] = 'online';
+        else if (ev.dir === 'engine' && ev.kind === 'ws-close') {
+          var prev = MON.editorNetState[ev.editor];
+          if (prev !== 'closed' && prev !== 'cut') MON.editorNetState[ev.editor] = 'offline';
+        }
+      }
       MON.events.push(ev);
       if (MON.events.length > 5000) MON.events.shift();
       if (!MON.paused && visible(ev)) render(ev);
@@ -398,8 +438,10 @@
     // "Start …'s editor" overlay button is clicked, so you can edit solo in
     // the first client first, then watch the others' late-join. Each overlay
     // is labelled with the editor's own user name, read from its config
-    // (`cfg.editorConfig.user.name`). (Re-starting the first editor is
-    // handled by a full page reload, not by tearing down DocEditor here — see
+    // (`cfg.editorConfig.user.name`). The trap also remembers every editor's
+    // config and live instance: the disconnection actions (close / cut /
+    // re-join) need them. (Re-starting the first editor is handled by a full
+    // page reload, not by tearing down DocEditor here — see
     // restartFirstManualFlow.)
     var DEFERRED_EDITOR_IDS = ['document-editor-2', 'document-editor-3'];
     // `?defer1=1` also defers the first editor (Alice) behind an overlay — used
@@ -421,11 +463,13 @@
           var orig = D.DocEditor;
           MON.deferOrig = orig;
           function W(id, cfg) {
+            MON.editorConfigs[id] = cfg;
             if (DEFERRED_EDITOR_IDS.indexOf(id) >= 0 && !MON.deferStarted[id]) {
               MON.deferred[id] = { id: id, cfg: cfg };
               return { __ooDeferred: true };
             }
-            return new orig(id, cfg);
+            MON.editorInstances[id] = new orig(id, cfg);
+            return MON.editorInstances[id];
           }
           W.__oo_wrapped = true; W.prototype = orig.prototype; W.__oo_orig = orig;
           D.DocEditor = W;
@@ -439,7 +483,7 @@
       delete MON.deferred[id];
       MON.deferStarted[id] = true;
       removeDeferredOverlay(id);
-      new MON.deferOrig(e.id, e.cfg);
+      MON.editorInstances[id] = new MON.deferOrig(e.id, e.cfg);
     };
     // Re-start the first editor in manual-flow: reload the whole page with
     // `manual_flow=true` in the URL. On reload, the init script sees that
@@ -458,6 +502,79 @@
       } catch (e) {
         location.href = location.href + (location.href.indexOf('?') >= 0 ? '&' : '?') + 'manual_flow=true';
       }
+    };
+
+    // ---- disconnection actions (panel buttons + headless recorder) -------
+    // Close the editor the way the Parsec client does when the user closes
+    // the file: destroy the DocEditor instance. Nothing is sent on the wire —
+    // no `close` client event, the websocket dies with the editor's iframe —
+    // and the client cannot auto-reconnect: the editor is gone.
+    MON.closeEditor = function (id) {
+      var inst = MON.editorInstances[id];
+      if (!inst) return false;          // never started (still deferred) or already closed
+      delete MON.editorInstances[id];
+      try { if (typeof inst.destroyEditor === 'function') inst.destroyEditor(); } catch (e) {}
+      MON.editorNetState[id] = 'closed';
+      return true;
+    };
+    // Send the protocol's own `close` client event (the API call OnlyOffice
+    // uses when it must tell the server it is leaving, e.g. on rights
+    // revocation). The editor is cross-origin, so the request goes through a
+    // postMessage handled by the monitor script running inside the editor's
+    // own frame (which calls asc_coAuthoringDisconnect()).
+    MON.sendCloseEvent = function (id) {
+      // The editor api REPLACES the placeholder div with the editor iframe
+      // (its src carries frameEditorId=<id>), so look the frame up by its id
+      // param — not inside the (now gone) placeholder.
+      var frs = document.querySelectorAll('iframe[name="frameEditor"]');
+      var fr = null;
+      for (var i = 0; i < frs.length; i++) {
+        try { if (decodeURIComponent(frs[i].src || '').indexOf('frameEditorId=' + id) >= 0) { fr = frs[i]; break; } }
+        catch (e) { /* ignore */ }
+      }
+      if (!fr || !fr.contentWindow) return false;
+      try { fr.contentWindow.postMessage({ __oo_mon_ctl: 1, cmd: 'oo-close' }, '*'); } catch (e) { return false; }
+      return true;
+    };
+    // `close` event + destroy: record the graceful goodbye on the wire (the
+    // document server closes the connection after it — the ws-close row
+    // shows it), then make sure the editor does not linger or auto-reconnect.
+    MON.closeEditorWithCloseEvent = function (id) {
+      if (!MON.sendCloseEvent(id)) return MON.closeEditor(id);
+      setTimeout(function () { MON.closeEditor(id); }, 2000);
+      return true;
+    };
+    // Lose the connection: the proxy terminates both legs of the socket
+    // without a close frame. The editor stays open and auto-reconnects
+    // (~2s, per the settings.reconnection of its auth event), but while the
+    // editor is marked cut the proxy kills every reconnection attempt, so
+    // the participant stays away until reviveConnection/re-join.
+    MON.cutConnection = function (id) {
+      MON.sendCtl({ cmd: 'cut', editor: id, keep: 'dead' });
+      MON.editorNetState[id] = 'cut';
+    };
+    MON.reviveConnection = function (id) {
+      MON.sendCtl({ cmd: 'revive', editor: id });
+      MON.editorNetState[id] = MON.editorInstances[id] ? 'online' : 'closed';
+    };
+    // Bring a participant back. After a cut: just revive — the client's own
+    // reconnection retry then completes the session restore (its re-`auth`
+    // carries the previous sessionId). After a close: also re-create the
+    // editor from its remembered config (a fresh handshake, sessionId null).
+    MON.rejoinEditor = function (id) {
+      MON.sendCtl({ cmd: 'revive', editor: id });   // clear any cut mark first
+      if (MON.deferred[id]) { MON.startDeferred(id); return true; }
+      if (MON.editorInstances[id]) return false;   // editor still open: its retry does the rest
+      var cfg = MON.editorConfigs[id];
+      var D = window.DocsAPI;
+      if (!cfg || !D || !D.DocEditor) return false;
+      MON.deferStarted[id] = true;                  // never re-defer a re-join
+      // Build through the (still installed) wrapped constructor so the new
+      // instance gets tracked like the first one.
+      var inst = new D.DocEditor(id, cfg);
+      MON.editorInstances[id] = inst;
+      MON.editorNetState[id] = 'online';
+      return true;
     };
     // Display name of a deferred editor (from its config).
     function deferredName(id) {
@@ -529,6 +646,106 @@
         }
         if (target.style.position !== 'relative') target.style.position = 'relative';
         if (overlay.parentElement !== target) target.appendChild(overlay);
+      });
+    }, 500);
+
+    // ---- per-editor control bar (disconnect / reconnection) ---------------
+    // A small horizontal bar docked to each editor pane's top-right corner,
+    // driving the disconnection actions above — the crafting primitives for
+    // the 60x record scenarios. It is compact (icon buttons + tooltips) and,
+    // like the "OO Protocol Monitor" panel itself, movable: dragging its
+    // ⠿ grip detaches it from the pane corner.
+    //   ✕ (close)      graceful user-close (editor destroyed, nothing sent)
+    //   ✉ (close:msg)  the protocol's `close` event, then the editor destroyed
+    //   ⚡ (cut)       connection lost (no close frame); auto-reconnect
+    //                  attempts are killed until re-join
+    //   ↻ (re-join)    bring the participant back (session restore after a
+    //                  cut, fresh editor after a close)
+    var HARNESS_EDITORS = ['document-editor-1', 'document-editor-2', 'document-editor-3'];
+    function ensureEditorBar(id, pane) {
+      var bar = document.getElementById('oo-mon-edctl-' + id);
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'oo-mon-edctl-' + id;
+        // `height:auto` is explicit on purpose: the harness page styles
+        // `.actions-content > div { height: 100% }` (for the editor placeholder
+        // divs) and this bar is also a div directly under the pane — without
+        // the inline override it would stretch to the pane's full height.
+        bar.style.cssText = 'position:absolute;top:6px;right:6px;z-index:6;display:flex;align-items:center;gap:3px;' +
+          'height:auto;width:auto;' +
+          'background:rgba(250,250,252,.92);border:1px solid #c8ccd4;border-radius:6px;padding:1px 3px;' +
+          'font:10px/1.2 ui-monospace,monospace;color:#444;white-space:nowrap';
+        // ⠿ grip + editor name: the drag handle (like the main panel's header)
+        var grip = document.createElement('span');
+        grip.style.cssText = 'cursor:move;user-select:none;padding:1px 3px;color:#666;font-weight:700';
+        grip.textContent = '⠿';
+        var name = document.createElement('span');
+        name.style.cssText = 'color:#666';
+        grip.appendChild(name);
+        bar.appendChild(grip);
+        // connection state: a colored dot (the state text is its tooltip)
+        var st = document.createElement('span');
+        st.style.cssText = 'font-weight:700;color:#999';
+        st.textContent = '●';
+        bar.appendChild(st);
+        bar.__ooStateEl = st;
+        bar.__ooNameEl = name;
+        bar.__ooDragged = false;
+        function mk(label, title, fn) {
+          var b = document.createElement('button');
+          b.textContent = label;
+          b.title = title;
+          b.style.cssText = 'border:1px solid #c8ccd4;border-radius:4px;background:#fff;color:#444;cursor:pointer;padding:0 4px;font:inherit';
+          b.addEventListener('click', function (e) { e.stopPropagation(); fn(); });
+          bar.appendChild(b);
+        }
+        mk('✕', "Graceful close: destroy this editor the way the Parsec client does when the user closes the file (nothing is sent on the wire, no auto-reconnect)", function () { MON.closeEditor(id); });
+        mk('✉', "Send the protocol's `close` client event (the OnlyOffice API call used on rights revocation), then destroy the editor", function () { MON.closeEditorWithCloseEvent(id); });
+        mk('⚡', 'Lose the connection: the socket is killed without a close frame; the editor auto-reconnects but its attempts are killed until re-join', function () { MON.cutConnection(id); });
+        mk('↻', "Bring the participant back: after a cut let the client's own reconnection complete (session restore); after a close re-create the editor (fresh handshake)", function () { MON.rejoinEditor(id); });
+        // drag: like the "OO Protocol Monitor" panel — the first drag detaches
+        // the bar from its pane corner (it switches to fixed positioning at
+        // its current spot), afterwards it follows the mouse freely.
+        var dragging = false, ox = 0, oy = 0;
+        grip.addEventListener('mousedown', function (e) {
+          var r = bar.getBoundingClientRect();
+          bar.style.position = 'fixed';
+          bar.style.left = r.left + 'px';
+          bar.style.top = r.top + 'px';
+          bar.style.right = 'auto';
+          bar.__ooDragged = true;
+          dragging = true;
+          ox = e.clientX - r.left; oy = e.clientY - r.top;
+          e.preventDefault();
+        });
+        document.addEventListener('mousemove', function (e) {
+          if (!dragging) return;
+          bar.style.left = (e.clientX - ox) + 'px';
+          bar.style.top = (e.clientY - oy) + 'px';
+        });
+        document.addEventListener('mouseup', function () { dragging = false; });
+        if (pane.style.position !== 'relative') pane.style.position = 'relative';
+        pane.appendChild(bar);
+      }
+      // refresh the editor name (from its config, once built) and the state
+      // dot's color/tooltip
+      var cfg = MON.editorConfigs[id];
+      var nm = cfg && cfg.editorConfig && cfg.editorConfig.user && cfg.editorConfig.user.name;
+      if (bar.__ooNameEl) bar.__ooNameEl.textContent = nm || id;
+      var stEl = bar.__ooStateEl;
+      if (stEl) {
+        var stt = MON.editorNetState[id] || '';
+        stEl.textContent = '●';
+        stEl.style.color = stt === 'online' ? '#1a7a2a' : stt === 'cut' ? '#b06a00'
+          : stt === 'closed' ? '#b00' : stt === 'offline' ? '#888' : '#999';
+        stEl.title = (nm || id) + ': ' + (stt || 'not connected');
+      }
+    }
+    setInterval(function () {
+      var contents = Array.from(document.querySelectorAll('div[class*="actions-container"] > div[class*="actions-content"]'));
+      HARNESS_EDITORS.forEach(function (id) {
+        var pane = paneForEditorId(id, contents);
+        if (pane) ensureEditorBar(id, pane);
       });
     }, 500);
 

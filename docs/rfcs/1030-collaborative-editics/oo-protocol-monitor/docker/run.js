@@ -451,6 +451,11 @@ function startPageServer(dsPort, docs, docKeyBase) {
   console.log('  proxy: sessions=' + proxy.state.sessions.size + '  holds=' + proxy.state.holds.size + '  manualFlow=' + proxy.state.intercept);
 
   console.log('\nA draggable "OO Protocol Monitor" panel is visible in the page.');
+  console.log('Each editor pane also has a small, movable control bar (top-right; drag its ⠿ grip):');
+  console.log('  ✕ (close)      destroy the editor — the graceful user-close path (nothing is sent, no auto-reconnect)');
+  console.log('  ✉ (close:msg)  send the protocol\'s `close` client event, then destroy the editor');
+  console.log('  ⚡ (cut)        lose the connection (no close frame); reconnection attempts are killed until re-join');
+  console.log('  ↻ (re-join)    bring the participant back (session restore after a cut, fresh editor after a close)');
   console.log("Alice's editor starts connected; Bob's and Mallory's are held behind their");
   console.log('"Start …\'s editor" overlays (click them to watch their late-join).');
   console.log('Click "auto-flow" to switch to manual-flow: frames are held and each row shows a');

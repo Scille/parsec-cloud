@@ -15,7 +15,13 @@
  * A second WS endpoint `/ctl` is the control channel the in-page panel uses to
  *   - receive decoded events + held-frame notifications (push from Node)
  *   - send commands: {cmd:'release', id}, {cmd:'intercept', on:bool} (aka
- *     "manual flow": when on, every non-noise frame is held), {cmd:'getState'}.
+ *     "manual flow": when on, every non-noise frame is held), {cmd:'getState'},
+ *     {cmd:'cut', user|editor, keep:'dead'|'once'} and {cmd:'revive', user|editor}
+ *     (disconnection support, see makeSession).
+ *
+ * Every socket death is emitted as a `[Transport WebSocket] ws-close` event
+ * carrying who ended the connection (client / server / monitor) and the
+ * close code, so a capture shows its disconnect boundaries per participant.
  *
  * Decoding mirrors monitor.js's Engine.IO v4 + Socket.IO v4 decoder, but in
  * Node. Identity (editor username) is derived the same way: from the `auth`
@@ -109,6 +115,8 @@ function createProxy(opts) {
     sidSeq: 0,
     panels: new Set(),     // connected /ctl ws
     events: [],            // ring buffer of recent events (for late panels)
+    deadEditors: new Set(), // editor ids whose sockets are killed on sight
+                            // ("connection lost" stays lost until `revive`)
   };
 
   function broadcast(obj) {
@@ -147,6 +155,16 @@ function createProxy(opts) {
 
   // ---- one OO session ----------------------------------------------------
   function makeSession(browserWs, realUrl, editor) {
+    // A cut editor stays cut: kill its reconnection attempts on sight, and
+    // silently — the client retries every ~2s per the `settings.reconnection`
+    // of its auth event, and those bare attempts carry nothing worth recording
+    // (emitting them would also never let a capture quiesce). The cut itself
+    // is recorded by session.cut(); `revive` clears the mark.
+    if (editor && state.deadEditors.has(editor)) {
+      log('killing reconnection attempt of dead editor=' + editor);
+      try { browserWs.terminate(); } catch (e) {}
+      return;
+    }
     const sid = ++state.sidSeq;
     GENS[editor || '?'] = (GENS[editor || '?'] || 0) + 1;
     const gen = GENS[editor || '?'];
@@ -157,6 +175,8 @@ function createProxy(opts) {
       upstreamWs: null,
       holds: new Map(),
       closed: false,
+      closeInfo: null,     // who ended the connection once known
+                           // ({by:'client'|'server'|'monitor', code, reason})
     };
     state.sessions.set(browserWs, session);
 
@@ -209,16 +229,20 @@ function createProxy(opts) {
       if (session.closed) return;
       emit('engine', 'error', String(err && err.message || err).slice(0, 120));
     });
-    up.on('close', () => {
+    up.on('close', (code, reason) => {
       if (session.closed) return;
-      emit('engine', 'close', realUrl);
-      // any holds for this session are now stale
-      for (const [hid, h] of session.holds) {
-        state.holds.delete(hid);
-        broadcast({ t: 'stale', id: hid });
+      // The document server ended the connection: remember who hung up (the
+      // ws-close row is emitted once the browser leg follows) and forward its
+      // close code/reason so the client sees what the server sent. An abnormal
+      // server-side death cannot be relayed as a close frame (codes like 1006
+      // are reserved) — terminate the browser leg instead, so the client sees
+      // a lost connection too.
+      if (!session.closeInfo) session.closeInfo = { by: 'server', code: code, reason: (reason || '').toString() };
+      if (code == null || code === 1005 || code === 1006 || code === 1015 || code < 1000 || code > 4999) {
+        try { browserWs.terminate(); } catch (e) {}
+      } else {
+        try { browserWs.close(code, reason); } catch (e) { try { browserWs.close(); } catch (e2) {} }
       }
-      session.holds.clear();
-      try { browserWs.close(); } catch (e) {}
     });
 
     // ---- frames from upstream (server -> browser) = RECV ----------------
@@ -310,18 +334,53 @@ function createProxy(opts) {
     session.close = function () {
       if (session.closed) return;
       session.closed = true;
+      const info = session.closeInfo || { by: 'client', code: 1006, reason: '' };
+      emit('engine', 'ws-close', wsCloseText(info));
+      // any holds for this session are now stale
       for (const hid of Array.from(session.holds.keys())) {
         state.holds.delete(hid);
         broadcast({ t: 'stale', id: hid });
       }
       session.holds.clear();
-      try { up.close(); } catch (e) {}
+      // Mirror the loss to the document server: an abnormal client-side death
+      // must not become a clean close frame towards OnlyOffice — the server
+      // has to see the same connection-lost it would see in real life.
+      const abnormal = info.code === 1006 || info.by === 'monitor';
+      if (up) { try { abnormal ? up.terminate() : up.close(); } catch (e) {} }
       try { browserWs.close(); } catch (e) {}
       state.sessions.delete(browserWs);
     };
+    // The "connection lost" path: kill both legs with no close frame.
+    session.cut = function () {
+      if (session.closed) return;
+      session.closeInfo = { by: 'monitor', code: 1006, reason: 'connection cut' };
+      session.close();
+    };
 
-    browserWs.on('close', () => session.close());
-    browserWs.on('error', () => session.close());
+    browserWs.on('close', (code, reason) => {
+      if (!session.closeInfo) session.closeInfo = { by: 'client', code: code, reason: (reason || '').toString() };
+      session.close();
+    });
+    browserWs.on('error', () => {
+      if (!session.closeInfo) session.closeInfo = { by: 'client', code: 1006, reason: 'error' };
+      session.close();
+    });
+  }
+
+  // Human-readable `[Transport WebSocket] ws-close` row meta (the record
+  // parser skips transport rows; this documents who hung up and how).
+  function wsCloseText(info) {
+    const by = { client: 'client', server: 'server', monitor: 'monitor' }[info.by] || String(info.by);
+    const cause = info.by === 'monitor' ? ' (connection cut)' :
+      (info.reason ? ' (' + String(info.reason).slice(0, 40) + ')' : '');
+    return by + ' close, code ' + (info.code == null ? '?' : info.code) + cause;
+  }
+
+  // Sessions matching a user name (Alice…) and/or an editor id
+  // (document-editor-1…).
+  function findSessions(user, editor) {
+    return Array.from(state.sessions.values()).filter((s) =>
+      (!user || s.user === user) && (!editor || s.editor === editor));
   }
 
   // per-editor generation count (mirrors monitor.js GEN)
@@ -388,8 +447,37 @@ function createProxy(opts) {
           broadcast({ t: 'releasedAll' });
           break;
         }
+        case 'cut': {
+          // Abruptly kill the connection(s) matching `user` (Alice…) and/or
+          // `editor` (document-editor-1…): no close frame on either leg (the
+          // "connection lost" path). `keep: 'once'` lets the client's stock
+          // auto-reconnect (~2s, per the settings.reconnection of its auth
+          // event) go through — the session-restore scenario; any other `keep`
+          // (the panel button default) also kills every reconnection attempt
+          // of the same editor until `revive`, so the participant stays away.
+          const targets = findSessions(msg.user, msg.editor);
+          const keepDead = msg.keep !== 'once';
+          for (const s of targets) {
+            if (keepDead && s.editor) state.deadEditors.add(s.editor);
+            s.cut();
+          }
+          if (keepDead && !targets.length && msg.editor) state.deadEditors.add(msg.editor);
+          info('cut ' + (targets.length || 'no') + ' session(s)' +
+            (msg.user ? ' of ' + msg.user : '') + (msg.editor ? ' (' + msg.editor + ')' : '') +
+            (keepDead ? ', reconnection attempts killed until revive' : ' (once)'));
+          broadcast({ t: 'cut', user: msg.user || null, editor: msg.editor || null, count: targets.length });
+          break;
+        }
+        case 'revive': {
+          // Let a cut editor connect again (its client retries by itself).
+          if (msg.editor) state.deadEditors.delete(msg.editor);
+          if (msg.user) for (const s of state.sessions.values())
+            if (s.user === msg.user && s.editor) state.deadEditors.delete(s.editor);
+          broadcast({ t: 'revive', user: msg.user || null, editor: msg.editor || null });
+          break;
+        }
         case 'getState': {
-          ws.send(JSON.stringify({ t: 'state', intercept: state.intercept, users: getUsers(), holds: state.holds.size, sessions: state.sessions.size }));
+          ws.send(JSON.stringify({ t: 'state', intercept: state.intercept, users: getUsers(), holds: state.holds.size, sessions: state.sessions.size, dead: Array.from(state.deadEditors) }));
           break;
         }
       }

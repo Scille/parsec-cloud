@@ -90,6 +90,63 @@ normally, no gating).
    *before* releasing the first client's lock-grant recv to it) to force a
    race.
 
+## Crafting a disconnection / reconnection scenario
+
+Each editor pane carries a small horizontal control bar docked to its
+top-right corner with the **disconnect/reconnection primitives** — one per
+way to leave, mapped to the wire (docker mode). It is compact (icon buttons
+with explanatory tooltips) and movable like the "OO Protocol Monitor" panel
+itself: dragging its ⠿ grip detaches it from the pane corner.
+
+- **✕ close** — destroy the editor, the way the Parsec client does when the
+  user closes the file. Nothing is sent: no `close` client event, no
+  auto-reconnect — the websocket dies with the editor's JS context and the
+  document server sees an *abrupt* disconnect (verified on the pinned 9.3.0:
+  a plain `destroyEditor()` sends nothing; stock OO only sends the `close`
+  event on explicit internal flows like rights revocation).
+- **✉ close:msg** — the protocol's own graceful goodbye: the editor API call
+  (`asc_coAuthoringDisconnect`) that makes the client send the `close` event,
+  then the editor is destroyed (the record shows what the document server
+  does with the `close` event, e.g. whether/how it closes the connection).
+- **⚡ cut** — lose the connection: the proxy terminates both legs of the
+  socket *without a close frame* (abnormal disconnect, 1006 on both sides).
+  The editor stays open and does what a real OnlyOffice client does after a
+  network loss: auto-reconnect (~2s per the `settings.reconnection` carried
+  by its `auth` event) and re-send its `auth` carrying the previous
+  `sessionId`/`sessionTimeConnect`/`sessionTimeIdle` → the document server
+  *restores* the session. While an editor is marked cut, the proxy silently
+  kills every reconnection attempt, so the participant stays away until
+  **↻ re-join**.
+- **↻ re-join** — bring the participant back: after a **cut** it just clears
+  the cut mark and lets the client's own reconnection retry complete the
+  session restore; after a **close** it re-creates the editor from its
+  remembered config (a fresh handshake, `sessionId: null`, like opening the
+  file again).
+
+The bar shows the editor's name and a colored connection-state dot (online /
+cut / offline / closed; hover for the text). The proxy emits a
+`[Transport WebSocket] ws-close` row for every socket death (client close /
+server close / monitor cut + close code), so a capture shows its disconnect
+boundaries per participant. The record parser skips `[Transport …]` rows
+today, so a record's disconnect is currently invisible to the replay —
+interpreting these rows as "drop this participant's connection now" (and
+handling a repeated `license`/`auth` as a reconnect) is follow-up work on the
+test side.
+
+### Headless (npm run record)
+
+The same actions are exposed for scripts on `window.__OO_MON` (top frame):
+`closeEditor(editorId)`, `sendCloseEvent(editorId)`,
+`closeEditorWithCloseEvent(editorId)`, `cutConnection(editorId)`,
+`reviveConnection(editorId)`, `rejoinEditor(editorId)`; and as proxy commands
+over `/ctl`: `{cmd:'cut', user|editor, keep:'dead'|'once'}` (`keep:'once'`
+lets the stock auto-reconnect go through) and `{cmd:'revive', user|editor}`.
+`record.js` builds its disconnect scenarios (`node docker/record.js list`,
+the `6xx_disconnect_*` family) on top of them: the three ways to leave, the
+restore vs fresh re-join distinction, locks/save-lock/auth-lock held by a
+disconnecting participant, and reconnection after the session state changed
+while away. `npm run record 603_disconnect_lost_reconnect_alone` runs one.
+
 ## Files
 
 Two separate code bases, one per mode:
