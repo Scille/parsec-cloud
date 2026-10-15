@@ -45,7 +45,11 @@ impl ShamirRecoverySecret {
         threshold: NonZeroU8,
         shares: NonZeroU8,
     ) -> Vec<ShamirShare> {
-        self.dump_and_encrypt_into_shares_with_rng(threshold, shares, &mut rand8::thread_rng())
+        self.dump_and_encrypt_into_shares_with_rng(
+            threshold,
+            shares,
+            &mut rand::rand_core::UnwrapErr(rand::rngs::SysRng),
+        )
     }
 
     /// Same as [`Self::dump_and_encrypt_into_shares`], but the share generation is
@@ -61,7 +65,7 @@ impl ShamirRecoverySecret {
         &self,
         threshold: NonZeroU8,
         shares: NonZeroU8,
-        rng: &mut impl rand8::Rng,
+        rng: &mut impl rand::CryptoRng,
     ) -> Vec<ShamirShare> {
         let secret = self.dump();
 
