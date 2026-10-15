@@ -423,19 +423,25 @@ fn task_future_factory(
                     for entry_id in to_sync {
                         match workspace_ops.stat_entry_by_id(entry_id).await {
                             Ok(stats) => {
-                                if !stats.is_confined() {
-                                    res.insert(
-                                        entry_id,
-                                        (DueTime { since, due_time }, stats.size()),
-                                    );
-                                }
+                                res.insert(
+                                    entry_id,
+                                    (
+                                        DueTime { since, due_time },
+                                        stats.size(),
+                                        stats.is_confined(),
+                                        stats.is_file(),
+                                    ),
+                                );
                             }
                             Err(e) => {
                                 log::info!(
                                     "Workspace {realm_id}: can not stat {entry_id} due to error: {e:?}"
                                 );
                                 // Or break with error ?
-                                res.insert(entry_id, (DueTime { since, due_time }, 0));
+                                res.insert(
+                                    entry_id,
+                                    (DueTime { since, due_time }, 0, false, false),
+                                );
                             }
                         };
                     }
@@ -532,7 +538,7 @@ fn task_future_factory(
 
                     let due = to_sync
                         .iter()
-                        .filter_map(|(entry_id, (time, _size))| {
+                        .filter_map(|(entry_id, (time, _size, _, _))| {
                             if time.due_time < now {
                                 Some(*entry_id)
                             } else {
@@ -565,7 +571,7 @@ fn task_future_factory(
                     // This is because during the time it took to sync the first entry,
                     // some further change may have modified the others due entries, which
                     // hence should get there due time recomputed.
-                    due_time = to_sync.values().map(|(time, _)| time.due_time).min();
+                    due_time = to_sync.values().map(|(time, _, _, _)| time.due_time).min();
                 }
 
                 Action::NewLocalChange { entry_id } | Action::NewRemoteChange { entry_id } => {
@@ -589,15 +595,15 @@ fn task_future_factory(
 
                                 match workspace_ops.stat_entry_by_id(entry_id).await {
                                     Ok(stats) => {
-                                        if !stats.is_confined() {
-                                            entry.insert((
-                                                DueTime {
-                                                    since: now,
-                                                    due_time,
-                                                },
-                                                stats.size(),
-                                            ));
-                                        }
+                                        entry.insert((
+                                            DueTime {
+                                                since: now,
+                                                due_time,
+                                            },
+                                            stats.size(),
+                                            stats.is_confined(),
+                                            stats.is_file(),
+                                        ));
                                     }
                                     Err(e) => {
                                         log::info!(
@@ -610,6 +616,8 @@ fn task_future_factory(
                                                 due_time,
                                             },
                                             0,
+                                            false,
+                                            false,
                                         ));
                                     }
                                 };
@@ -617,7 +625,7 @@ fn task_future_factory(
                                 due_time
                             }
                             std::collections::hash_map::Entry::Occupied(mut entry) => {
-                                let (e, _) = entry.get_mut();
+                                let (e, _, _, _) = entry.get_mut();
                                 let new_due_time = now + MIN_SYNC_WAIT;
                                 if new_due_time - e.since < MAX_SYNC_WAIT {
                                     e.due_time = new_due_time;
@@ -637,11 +645,16 @@ fn task_future_factory(
             }
 
             // Send event on how much data there is left to sync
-            let (number_of_files_to_sync, size_to_sync) = to_sync
-                .iter()
-                .fold((0, 0), |(count, total_size), (_, (_, size))| {
-                    (count + 1, total_size + size)
-                });
+            let (number_of_files_to_sync, size_to_sync) = to_sync.iter().fold(
+                (0, 0),
+                |(count, total_size), (_, (_, size, is_confined, is_file))| {
+                    if !is_confined && *is_file {
+                        (count + 1, total_size + size)
+                    } else {
+                        (count, total_size)
+                    }
+                },
+            );
 
             event_bus.send(&EventWorkspaceOutboundSyncBacklog {
                 number_of_files_to_sync,

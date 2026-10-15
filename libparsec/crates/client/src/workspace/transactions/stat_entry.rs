@@ -81,6 +81,13 @@ impl EntryStat {
             EntryStat::Folder { .. } => 0,
         }
     }
+
+    pub fn is_file(&self) -> bool {
+        match self {
+            EntryStat::File { .. } => true,
+            EntryStat::Folder { .. } => false,
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
