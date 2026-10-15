@@ -1327,12 +1327,14 @@
             "sso": {
                 "title": "Single Sign-On",
                 "description": "Login with an external account",
+                "continueWith": "Continue with {name}",
+                "serverConfigUnavailable": "Failed to retrieve the server configuration. Please make sure you are online.",
+                "retry": "Retry",
                 "connected": "Connected",
                 "unavailable": "This method is not allowed by this server."
             }
         },
         "forbidden": "This organization does not allow this authentication method.",
-        "methodChosen": "Method chosen:",
         "active": "Active method",
         "update": "Change method",
         "changeAuthenticationButton": "Change method",
@@ -1343,8 +1345,6 @@
         "label": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web",
-        "openBaoOffline": "Could not reach the server. Make sure you are online.",
-        "openBaoUnknown": "An unknown error occurred, preventing us from retrieving your login information.",
         "openBaoUnavailable": "Single Sign-On not available on this server.",
         "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator.",
         "popupBlocked": "Please make sure that your browser allows pop-ups for this website.",
@@ -2917,11 +2917,6 @@
             "notSavedDiscard": "Discard changes",
             "notSavedStay": "Stay on page"
         }
-    },
-    "proConnect": {
-        "title": "Authenticate with ProConnect",
-        "description": "What's ProConnect?",
-        "link": "https://www.proconnect.gouv.fr/"
     },
     "export": {
         "exportWorkspace": "Download export (.json)",

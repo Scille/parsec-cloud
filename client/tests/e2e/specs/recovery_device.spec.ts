@@ -99,8 +99,8 @@ for (const authMode of ['password', 'sso']) {
       await fillIonInput(authPage.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
     } else {
       await authRadio.nth(3).click();
-      await expect(authPage.locator('.proconnect-button')).toBeVisible();
-      await authPage.locator('.proconnect-button').click();
+      await expect(authPage.locator('.sso-provider-card', { hasText: 'ProConnect' })).toBeVisible();
+      await authPage.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
     }
     await expect(nextButtonAuth).toNotHaveDisabledAttribute();
     await nextButtonAuth.click();
@@ -124,8 +124,8 @@ for (const authMode of ['password', 'sso']) {
       await expect(myProfilePage.locator('.login-button')).toBeEnabled();
       await myProfilePage.locator('.login-button').click();
     } else {
-      await expect(myProfilePage.locator('.proconnect-button')).toBeVisible();
-      await myProfilePage.locator('.proconnect-button').click();
+      await expect(myProfilePage.locator('.sso-provider-card', { hasText: 'ProConnect' })).toBeVisible();
+      await myProfilePage.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
     }
 
     await expect(myProfilePage.locator('#connected-header')).toContainText('My workspaces');

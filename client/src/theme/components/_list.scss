@@ -785,3 +785,38 @@
     }
   }
 }
+
+// SSO
+.sso-provider-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-2xl');
+
+  &:has(.spinner)::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    background: ms.color('base-black');
+    opacity: ms.opacity('2');
+  }
+
+  .spinner {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    max-height: fit-content !important;
+
+    left: 50%;
+    z-index: 1002;
+    background: ms.color((surface-base-default));
+    border-radius: ms.radius('full');
+    padding: ms.spacing('padding-lg') !important;
+    border: 1px solid ms.color('border-neutral-default-subtle');
+  }
+
+  .disabled {
+    pointer-events: none;
+    opacity: ms.opacity('2');
+  }
+}

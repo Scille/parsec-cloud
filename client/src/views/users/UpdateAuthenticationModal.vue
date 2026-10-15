@@ -336,16 +336,4 @@ async function cancel(): Promise<boolean> {
     @include ms.font('heading-h5');
   }
 }
-
-.provider-card {
-  position: relative;
-  margin-top: 1.25rem;
-
-  .provider-card-spinner {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    transform: translate(-50%, -50%);
-  }
-}
 </style>
