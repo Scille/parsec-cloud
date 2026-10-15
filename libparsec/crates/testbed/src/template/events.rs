@@ -2175,9 +2175,9 @@ impl TestbedEventNewShamirRecovery {
         // is itself deterministically derived from the template builder counters)
         // guarantees byte-identical share certificates across processes.
         let mut rng = {
-            let mut seed = <rand8::rngs::StdRng as rand8::SeedableRng>::Seed::default();
+            let mut seed = <rand::rngs::StdRng as rand::SeedableRng>::Seed::default();
             seed.copy_from_slice(self.data_key.as_ref());
-            <rand8::rngs::StdRng as rand8::SeedableRng>::from_seed(seed)
+            <rand::rngs::StdRng as rand::SeedableRng>::from_seed(seed)
         };
 
         let mut shark_shares = ShamirRecoverySecret {
