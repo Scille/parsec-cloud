@@ -70,7 +70,6 @@ export {
   ListAvailableDeviceErrorTag,
   ListInvitationsErrorTag,
   MountpointToOsPathErrorTag,
-  OpenBaoAuthConfigTag,
   ParsedParsecAddrTag,
   ParseParsecAddrErrorTag,
   PendingAsyncEnrollmentInfoTag,

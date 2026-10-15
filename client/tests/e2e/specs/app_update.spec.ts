@@ -136,8 +136,7 @@ for (const version of ['same', 'different']) {
     await setupNewPage(page);
 
     const banner = page.locator('#app-updated-banner');
-    // No version stored but has devices
-    await expect(banner).toBeVisible();
+    await expect(banner).toBeHidden();
 
     if (version === 'different') {
       // Set a different version in the stored config
