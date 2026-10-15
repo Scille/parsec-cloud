@@ -12,6 +12,15 @@ import {
 import { GetServerConfigErrorTag, libparsec, ParsecAddr, ParsedParsecAddr } from '@/plugins/libparsec';
 import { ensureHttpsProtocol } from '@/services/environment';
 
+// REMOVE ONCE LIBPARSEC IS DEFINED
+export interface AvailableSSO {
+  id: string;
+  name: string;
+  mountPath: string;
+  helpLink?: string;
+  icon?: string;
+}
+
 export async function getServerConfig(serverAddr: string): Promise<Result<ServerConfig, GetServerConfigError>> {
   const STRATEGY_CONVERSION = new Map<DevicePrimaryProtectionStrategyTag, AdvisoryDeviceFilePrimaryProtection>([
     [DevicePrimaryProtectionStrategyTag.AccountVault, AdvisoryDeviceFilePrimaryProtection.AccountVault],
@@ -31,6 +40,13 @@ export async function getServerConfig(serverAddr: string): Promise<Result<Server
     if ((window as any).TESTING_MOCK_ALLOWED_PROTECTION_METHODS) {
       window.nativeAPI.log('info', 'Mocking allowed protection methods');
       result.value.advisoryDeviceFileProtection = (window as any).TESTING_MOCK_ALLOWED_PROTECTION_METHODS;
+    }
+    if ((window as any).TESTING_MOCK_AVAILABLE_SSOS) {
+      if (result.value.openbao) {
+        (result.value.openbao as any).availableSSOs = (window as any).TESTING_MOCK_AVAILABLE_SSOS;
+      } else {
+        window.nativeAPI.log('warn', 'Cant mock available SSO is openbao config is not set');
+      }
     }
 
     (result.value as ServerConfig).isAuthMethodAllowed = (strategy: DevicePrimaryProtectionStrategyTag) => {

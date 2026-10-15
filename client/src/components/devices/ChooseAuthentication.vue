@@ -131,10 +131,10 @@
         </div>
         <div class="provider-card">
           <sso-provider-card
-            v-for="auth in serverConfig?.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
-            :key="auth.tag"
-            :provider="auth.tag"
-            :is-connected="openBaoClient !== undefined"
+            v-for="sso in (serverConfig.openbao as any).availableSSOs as Array<AvailableSSO>"
+            :key="sso.id"
+            :provider="sso"
+            :is-connected="openBaoClient?.getConnectionInfo()?.provider === sso.id"
             @sso-selected="onSSOLoginClicked"
           />
           <ms-spinner
@@ -161,11 +161,11 @@ import CertificateSelection from '@/components/misc/CertificateSelection.vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
 import {
+  AvailableSSO,
   CertificatePurpose,
   CertificateWithDetailsValid,
   DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  OpenBaoAuthConfigTag,
   ParsecAddr,
   PrimaryProtectionStrategy,
   ServerConfig,
@@ -175,7 +175,7 @@ import {
   isWeb,
   openCertificate,
 } from '@/parsec';
-import { OpenBaoClient, OpenBaoErrorType, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
+import { OpenBaoClient, OpenBaoErrorType, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput, MsSpinner } from 'megashark-lib';
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
@@ -191,7 +191,7 @@ const querying = ref(false);
 const error = ref('');
 
 const openBaoAuthAvailable = computed(() => {
-  return props.serverConfig?.openbao && props.serverConfig?.openbao.auths.some((auth) => isSSOProviderHandled(auth.tag));
+  return props.serverConfig?.openbao && (props.serverConfig?.openbao as any).availableSSOs.length > 0;
 });
 
 const props = defineProps<{
@@ -309,7 +309,7 @@ async function areFieldsCorrect(): Promise<boolean> {
   return false;
 }
 
-async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
+async function onSSOLoginClicked(provider: AvailableSSO): Promise<void> {
   if (querying.value) {
     window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
@@ -319,17 +319,17 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     window.nativeAPI.log('error', 'OpenBao not enabled on this server');
     return;
   }
-  const auth = props.serverConfig.openbao.auths.find((auth) => auth.tag === provider);
+  const auth = ((props.serverConfig.openbao as any).availableSSOs as Array<AvailableSSO>).find((auth) => auth.id === provider.id);
   if (!auth) {
     error.value = 'Authentication.invalidOpenBaoData';
-    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    window.nativeAPI.log('error', `Provider '${provider.name}' selected but is not available in server config`);
     return;
   }
   try {
     querying.value = true;
     const result = await openBaoConnect(
       props.serverConfig.openbao.serverUrl,
-      auth.tag,
+      auth.id,
       auth.mountPath,
       props.serverConfig.openbao.secret.mountPath,
       props.serverConfig.openbao.transitMountPath,

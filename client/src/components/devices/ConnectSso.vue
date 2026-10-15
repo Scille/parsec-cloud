@@ -7,10 +7,10 @@
   >
     <div class="provider-card-content">
       <sso-provider-card
-        v-for="auth in serverConfig.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
-        :key="auth.tag"
-        :provider="auth.tag"
-        :is-connected="openBaoClient !== undefined && openBaoClient.getConnectionInfo().provider === auth.tag"
+        v-for="sso in (serverConfig.openbao as any).availableSSOs as Array<AvailableSSO>"
+        :key="sso.id"
+        :provider="sso"
+        :is-connected="openBaoClient?.getConnectionInfo()?.provider === sso.id"
         @sso-selected="onSSOLoginClicked"
         :class="{ disabled: querying }"
       />
@@ -30,8 +30,8 @@
 
 <script setup lang="ts">
 import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
-import { OpenBaoAuthConfigTag, ServerConfig } from '@/parsec';
-import { isSSOProviderHandled, OpenBaoClient, openBaoConnect, OpenBaoError, OpenBaoErrorType } from '@/services/openBao';
+import { AvailableSSO, ServerConfig } from '@/parsec';
+import { OpenBaoClient, openBaoConnect, OpenBaoError, OpenBaoErrorType } from '@/services/openBao';
 import { MsReportText, MsReportTheme, MsSpinner, Translatable } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -56,7 +56,7 @@ function getOpenBaoClient(): OpenBaoClient | undefined {
   return openBaoClient.value;
 }
 
-async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
+async function onSSOLoginClicked(provider: AvailableSSO): Promise<void> {
   if (querying.value) {
     window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
@@ -65,16 +65,16 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     window.nativeAPI.log('error', 'OpenBao not enabled on this server');
     return;
   }
-  const auth = props.serverConfig.openbao.auths.find((auth) => auth.tag === provider);
+  const auth = ((props.serverConfig.openbao as any).availableSSOs as Array<AvailableSSO>).find((auth) => auth.id === provider.id);
   if (!auth) {
-    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    window.nativeAPI.log('error', `Provider '${provider.name}' selected but is not available in server config`);
     return;
   }
   try {
     querying.value = true;
     const result = await openBaoConnect(
       props.serverConfig.openbao.serverUrl,
-      auth.tag,
+      auth.id,
       auth.mountPath,
       props.serverConfig.openbao.secret.mountPath,
       props.serverConfig.openbao.transitMountPath,

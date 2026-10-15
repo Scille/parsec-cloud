@@ -52,6 +52,47 @@ enum AppState {
   Initializing = 'initializing',
 }
 
+(window as any).TESTING_MOCK_AVAILABLE_SSOS = [
+  {
+    id: 'OpenBaoAuthConfigOIDCProConnect',
+    name: 'ProConnect',
+    mountPath: 'auth/pro_connect',
+    helpLink: 'https://proconnect.crisp.help/fr/',
+    icon: 'https://www.proconnect.gouv.fr/assets/logo_centered-vvIEWbHk.svg',
+  },
+  {
+    id: 'OpenBaoAuthConfigOIDCHexagone',
+    name: 'Hexagone',
+    mountPath: 'auth/hexagone',
+    icon: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimg.freepik.com%2Fvecteurs-premium%2Fillustration-vectorielle-icone-du-logo-abstrait-hexagone-bleu-symbole-hexagonal-geometrique-hexagonal_682859-212.jpg&f=1&nofb=1&ipt=bf7f2f970b4560bb96af2e901b0bcfcbde1aad3c23c66c891f6b82d864d47cf0&ipo=images',
+  },
+  {
+    id: '2',
+    name: 'Google',
+    mountPath: 'auth/google',
+    helpLink: 'https://knowledge.workspace.google.com/admin/apps/setting-up-sso',
+    icon: 'https://developers.google.com/static/identity/images/branding_guideline_sample_lt_rd_sl.svg',
+  },
+  {
+    id: '3',
+    name: 'Microsoft',
+    mountPath: 'auth/microsoft',
+    icon: 'https://media.licdn.com/dms/image/v2/D560BAQH32RJQCl3dDQ/company-logo_200_200/B56ZYQ0mrGGoAM-/0/1744038948046/microsoft_logo?e=2147483647&v=beta&t=ts9MGrTk7Lz3R1bmAfzCL8euuuuPWPCoXfdiLA2_IzM',
+  },
+  {
+    id: '4',
+    name: 'Apple',
+    mountPath: 'auth/apple',
+    helpLink: 'https://developer.apple.com/documentation/devicemanagement/configuring-platform-single-sign-on',
+    icon: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.kj5zgRKdbnagIXpVzCEwcQAAAA%3Fr%3D0%26pid%3DApi&f=1&ipt=ee089781d62e28ece4391965bdb486f0958314b050f7906401d85ace24d97a74&ipo=images',
+  },
+  {
+    id: '5',
+    name: 'Private SSO',
+    mountPath: 'auth/private',
+  },
+];
+
 async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent): Promise<void> {
   const injections = injectionProvider.getInjections(handle);
   // Event might fire a bit to fast, before we get a chance to create the injections for this handle
