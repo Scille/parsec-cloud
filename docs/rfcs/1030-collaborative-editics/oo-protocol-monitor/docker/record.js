@@ -1898,6 +1898,10 @@ async function runProbe(browser, monitorSrc, proxyPort, pageServerPort, docType)
 
   const failed = [];
   try {
+    if (process.env.OO_LOCK_PROBE) {
+      await runLockProbe(browser, monitorSrc, proxy.port, pages.port, process.env.OO_LOCK_PROBE);
+      return;
+    }
     if (process.env.OO_SCAN) {
       await runScan(browser, monitorSrc, proxy.port, pages.port, process.env.OO_SCAN);
       return;
