@@ -4,7 +4,7 @@
   <ion-content id="workspace-context-menu">
     <ion-list class="menu-list">
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleManage') }}
           </ion-text>
@@ -18,7 +18,7 @@
             class="list-group-item__icon"
             :icon="addCircle"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('WorkspacesPage.createWorkspace') }}
           </ion-text>
         </ion-item>

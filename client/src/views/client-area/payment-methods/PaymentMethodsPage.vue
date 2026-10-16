@@ -3,8 +3,8 @@
 <template>
   <div class="client-page-method">
     <div class="method-header">
-      <ion-title class="method-header__title title-h2">{{ $msTranslate('clientArea.paymentMethodsPage.title') }}</ion-title>
-      <ion-text class="method-header__description body-lg">{{ $msTranslate('clientArea.paymentMethodsPage.description') }}</ion-text>
+      <ion-title class="method-header__title">{{ $msTranslate('clientArea.paymentMethodsPage.title') }}</ion-title>
+      <ion-text class="method-header__description">{{ $msTranslate('clientArea.paymentMethodsPage.description') }}</ion-text>
     </div>
 
     <!-- credit cards -->
@@ -19,11 +19,11 @@
           :card="getCardDetails(activeCard)"
           class="method-cards-active__card"
         />
-        <div class="method-cards-active-text button-medium">
-          <ion-text class="method-cards-active-text__description title-h5">
+        <div class="method-cards-active-text">
+          <ion-text class="method-cards-active-text__description">
             {{ $msTranslate('clientArea.paymentMethodsPage.activeDefault') }}
           </ion-text>
-          <span class="method-cards-active-text__badge button-small">
+          <span class="method-cards-active-text__badge">
             {{ $msTranslate('clientArea.paymentMethodsPage.activeMethodLabel') }}
           </span>
         </div>
@@ -40,14 +40,14 @@
       <div class="method-cards-saved">
         <div class="method-cards-saved-header">
           <ion-text
-            class="method-cards-saved-header__title title-h3"
+            class="method-cards-saved-header__title"
             v-if="savedCards"
           >
             {{ $msTranslate('clientArea.paymentMethodsPage.savedCard') }}
           </ion-text>
           <!-- add button -->
           <ion-button
-            class="custom-button method-cards-saved-header__add-button"
+            class="method-cards-saved-header__add-button color-secondary"
             @click="onAddPaymentMethodClicked"
           >
             {{ $msTranslate('clientArea.paymentMethodsPage.addPaymentMethod.addCard') }}
@@ -80,8 +80,8 @@
                 />
                 <div class="card-item-data-text">
                   <!-- name should be update with the credit card holder issue #7964-->
-                  <ion-text class="card-item-data-text__name title-h5">{{ getUserName() }}</ion-text>
-                  <ion-text class="card-item-data-text__info title-h5">
+                  <ion-text class="card-item-data-text__name">{{ getUserName() }}</ion-text>
+                  <ion-text class="card-item-data-text__info">
                     <span>{{ '**** **** **** ' + card.lastDigits }}</span>
                     <span>{{ card.expirationDate.toFormat('MM/yy') }}</span>
                   </ion-text>
@@ -120,28 +120,29 @@
         v-if="isSubscribed"
         class="method-stop"
       >
-        <ion-title class="method-stop-title title-h3">
+        <ion-title class="method-stop-title">
           {{ $msTranslate('clientArea.paymentMethodsPage.stopSubscription.title') }}
         </ion-title>
-        <ion-text class="method-stop-description body">
+        <ion-text class="method-stop-description">
           {{ $msTranslate('clientArea.paymentMethodsPage.stopSubscription.description') }}
         </ion-text>
-        <ion-text
-          class="custom-button-outline button-medium"
+        <ion-button
+          fill="outline"
+          class="method-stop-button color-secondary"
           @click="stopSubscription"
         >
           {{ $msTranslate('clientArea.paymentMethodsPage.stopSubscription.button') }}
-        </ion-text>
+        </ion-button>
       </div>
       <!-- resume subscription -->
       <div
         v-else
         class="method-stop"
       >
-        <ion-title class="method-stop-title title-h3">
+        <ion-title class="method-stop-title">
           {{ $msTranslate('clientArea.paymentMethodsPage.restartSubscription.title') }}
         </ion-title>
-        <ion-text class="method-stop-description body">
+        <ion-text class="method-stop-description">
           {{ $msTranslate('clientArea.paymentMethodsPage.restartSubscription.description') }}
         </ion-text>
         <ion-button
@@ -369,20 +370,22 @@ function getUserName(): string {
 .client-page-method {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
 }
 
 .method-header {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__title {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('heading-h3');
+    color: ms.color('text-brand-default');
   }
 
   &__description {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-neutral-default');
   }
 }
 
@@ -393,11 +396,11 @@ function getUserName(): string {
 
   &-active {
     display: flex;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
     align-items: center;
 
     &__card {
-      box-shadow: var(--parsec-shadow-strong);
+      box-shadow: ms.shadow('strong');
       width: 15.625rem;
       height: 8.625rem;
       margin-bottom: 0;
@@ -405,19 +408,22 @@ function getUserName(): string {
     }
 
     &-text {
+      @include ms.font('label-md-medium');
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
 
       &__description {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('heading-h6');
+        color: ms.color('text-base-body');
       }
 
       &__badge {
-        color: var(--parsec-color-light-primary-700);
-        background-color: var(--parsec-color-light-primary-50);
-        border-radius: var(--parsec-radius-32);
-        padding: 0.2rem 0.5rem;
+        @include ms.font('label-sm-medium');
+        color: ms.color('text-brand-default');
+        background-color: ms.color('surface-brand-default-subtle-hover');
+        border-radius: ms.radius('6xl');
+        padding: 0.2rem ms.spacing('padding-lg');
         text-align: center;
         width: fit-content;
       }
@@ -428,7 +434,7 @@ function getUserName(): string {
     display: flex;
     max-width: 100rem;
     flex-direction: column;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
 
     &::after {
       content: '';
@@ -436,7 +442,7 @@ function getUserName(): string {
       right: 0;
       width: 10rem;
       height: 100%;
-      background: linear-gradient(to right, transparent 0%, var(--parsec-color-light-secondary-white) 100%);
+      background: linear-gradient(to right, transparent 0%, ms.color('surface-base-default') 100%);
 
       @include ms.responsive-breakpoint('md') {
         display: none;
@@ -447,21 +453,18 @@ function getUserName(): string {
       display: flex;
       align-items: center;
       width: fit-content;
-      gap: 1.5rem;
+      gap: ms.spacing('gap-4xl');
 
       &__title {
-        color: var(--parsec-color-light-primary-700);
-      }
-
-      &__add-button {
-        padding: 0;
+        @include ms.font('heading-h4');
+        color: ms.color('text-brand-default');
       }
     }
 
     &-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
 
       @include ms.responsive-breakpoint('md') {
         max-width: 100%;
@@ -473,11 +476,11 @@ function getUserName(): string {
   .card-item {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    background-color: var(--parsec-color-light-secondary-inversed-contrast);
-    border: 1px solid var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-8);
-    padding: 0.75rem;
+    gap: ms.spacing('gap-4xl');
+    background-color: ms.color('surface-base-default');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('lg');
+    padding: ms.spacing('padding-2xl');
     width: 100%;
     max-width: 25rem;
     flex-shrink: 0;
@@ -490,39 +493,41 @@ function getUserName(): string {
     &-data {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
 
       &__image {
         width: 100px;
         height: 55.8px;
-        border-radius: var(--parsec-radius-8);
-        box-shadow: var(--parsec-shadow-soft);
+        border-radius: ms.radius('lg');
+        box-shadow: ms.shadow('light');
       }
 
       &-text {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
 
         &__name {
-          color: var(--parsec-color-light-secondary-text);
+          @include ms.font('heading-h6');
+          color: ms.color('text-base-body');
         }
 
         &__info {
+          @include ms.font('heading-h6');
           display: flex;
-          gap: 0.75rem;
-          color: var(--parsec-color-light-secondary-grey);
+          gap: ms.spacing('gap-2xl');
+          color: ms.color('text-base-description');
         }
       }
     }
 
     &-buttons {
       display: flex;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
 
       &__delete {
-        color: var(--parsec-color-light-danger-500);
-        --background-hover: var(--parsec-color-light-danger-100);
+        color: ms.color('text-error-default');
+        --background-hover: #{ms.color('surface-error-default-subtle-hover')};
       }
     }
   }
@@ -530,7 +535,7 @@ function getUserName(): string {
   .skeleton-loading-card {
     width: 15.625rem;
     height: 8.625rem;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
   }
 }
 
@@ -538,11 +543,11 @@ function getUserName(): string {
   margin-top: 4rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: var(--parsec-radius-12);
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-4xl');
+  border-radius: ms.radius('2xl');
   max-width: 30rem;
-  background-color: var(--parsec-color-light-secondary-background);
+  background-color: ms.color('surface-base-page');
   position: relative;
 
   &::before {
@@ -552,35 +557,22 @@ function getUserName(): string {
     left: 0;
     width: 100%;
     height: 1px;
-    background-color: var(--parsec-color-light-secondary-disabled);
-    border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
+    background-color: ms.color('surface-disabled-default');
+    border-radius: ms.radius('lg') ms.radius('lg') 0 0;
   }
 
   &-title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h4');
+    color: ms.color('text-base-body');
   }
 
   &-description {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-neutral-default');
   }
 
   &-button-restart {
     width: fit-content;
-  }
-}
-
-.custom-button-outline {
-  border: 1px solid var(--parsec-color-light-secondary-text);
-  color: var(--parsec-color-light-secondary-text);
-  border-radius: var(--parsec-radius-8);
-  padding: 0.625rem 0.75rem;
-  cursor: pointer;
-  height: fit-content;
-  width: fit-content;
-
-  &:hover {
-    border: 1px solid var(--parsec-color-light-secondary-contrast);
-    color: var(--parsec-color-light-secondary-contrast);
   }
 }
 </style>

@@ -60,6 +60,6 @@ defineProps<{
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 </style>

@@ -25,7 +25,7 @@
           v-if="!action.icon && action.image"
           :image="action.image"
         />
-        <ion-text class="tab-bar-menu-button__text button-medium">
+        <ion-text class="tab-bar-menu-button__text">
           {{ $msTranslate(action.label) }}
         </ion-text>
       </div>
@@ -39,7 +39,7 @@
           class="tab-bar-menu-button__icon"
           :icon="ellipsisHorizontal"
         />
-        <ion-text class="tab-bar-menu-button__text button-medium">
+        <ion-text class="tab-bar-menu-button__text">
           {{ $msTranslate(isMenuOpen ? 'SideMenu.tabbarOptions.less' : 'SideMenu.tabbarOptions.more') }}
         </ion-text>
       </div>
@@ -119,11 +119,11 @@ async function openMenuModal(): Promise<void> {
 
 <style lang="scss" scoped>
 .tab-bar-menu {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 0.5rem 1rem 1.5rem;
+  background: ms.color('surface-base-default');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
   justify-content: space-between;
   border: none;
-  border-top: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-top: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   position: relative;
   z-index: 19;
   width: 100%;
@@ -136,23 +136,23 @@ async function openMenuModal(): Promise<void> {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
     cursor: pointer;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
 
     &-danger {
-      color: var(--parsec-color-light-danger-500);
+      color: ms.color('text-error-default');
     }
 
     &__icon {
       font-size: 1.5rem;
       width: 1.5rem;
       height: 1.5rem;
-      --fill-color: var(--parsec-color-light-secondary-text);
+      --fill-color: #{ms.color('icon-neutral-default')};
     }
 
     &__text {
-      font-size: 0.75rem;
+      @include ms.font('label-xs-medium');
       text-align: center;
       text-overflow: ellipsis;
       white-space: nowrap;

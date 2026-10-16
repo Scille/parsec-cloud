@@ -364,12 +364,12 @@ async function onOrganizationSelected(organization: BmsOrganization): Promise<vo
     content: '';
     width: 0.125rem;
     height: 100%;
-    padding: 20rem 0;
+    padding: 20rem ms.spacing('padding-none');
   }
 
   &:hover::after,
   &:active::after {
-    background: var(--parsec-color-light-secondary-soft-grey);
+    background: ms.color('surface-neutral-default-subtle-pressed');
   }
 }
 
@@ -377,18 +377,18 @@ async function onOrganizationSelected(organization: BmsOrganization): Promise<vo
   --side-min-width: var(--parsec-sidebar-menu-min-width);
   --side-max-width: var(--parsec-sidebar-menu-max-width);
   --side-width: v-bind(sidebarWidthProperty);
-  --background: var(--parsec-color-light-secondary-background);
-  border-right: 1px solid var(--parsec-color-light-secondary-disabled);
+  --background: #{ms.color('surface-base-page')};
+  border-right: ms.border('thin') solid ms.color('border-base-default');
   user-select: none;
 
   &::part(container) {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
   }
 
   .skeleton {
-    padding: 2rem 1.5rem 0;
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl') ms.spacing('padding-none');
 
     &-header {
       display: flex;
@@ -411,7 +411,7 @@ async function onOrganizationSelected(organization: BmsOrganization): Promise<vo
       display: flex;
       flex-direction: column;
 
-      gap: 0.625rem;
+      gap: ms.spacing('gap-xl');
 
       &-item {
         width: 100%;

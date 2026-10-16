@@ -8,7 +8,7 @@
       class="creation-page__logo"
     />
     <ion-text
-      class="creation-page__title subtitles-normal"
+      class="creation-page__title"
       v-if="isSmallDisplay"
     >
       {{ $msTranslate('CreateOrganization.loading') }}
@@ -16,7 +16,7 @@
     <div class="creation-page__spinner-container">
       <ion-text
         v-if="isLargeDisplay"
-        class="subtitles-normal container-text"
+        class="container-text"
       >
         {{ $msTranslate('CreateOrganization.loading') }}
       </ion-text>
@@ -38,13 +38,17 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   position: relative;
   justify-content: center;
-  background: var(--parsec-color-light-gradient-background);
+  background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
+
+  body.ms-theme-dark & {
+    background: linear-gradient(ms.color('surface-brand-default-subtle-pressed'), ms.color('surface-base-page'));
+  }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 2rem 0 6rem;
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-none') 6rem;
     height: 100vh;
   }
 
@@ -75,7 +79,8 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-white);
+    @include ms.font('body-lg-medium');
+    color: ms.color('text-on-color-heading');
     text-align: center;
     margin-bottom: 2rem;
     line-height: 1.7rem;
@@ -85,17 +90,18 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
   &__spinner-container {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-white);
+    gap: ms.spacing('gap-lg');
+    @include ms.font('body-lg-medium');
+    color: ms.color('text-on-color-heading');
     height: fit-content;
   }
 
   &__spinner {
     height: fit-content;
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-circle);
+    background: ms.color('surface-base-default');
+    border-radius: ms.radius('full');
     margin-inline: auto;
-    padding: 0.125rem;
+    padding: ms.spacing('padding-xs');
   }
 }
 </style>

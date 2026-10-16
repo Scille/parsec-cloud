@@ -3,7 +3,7 @@
 <template>
   <div class="client-billing-page">
     <div class="billing-header">
-      <ion-title class="billing-header__title title-h2">{{ $msTranslate('clientArea.billingDetailsPage.title') }}</ion-title>
+      <ion-title class="billing-header__title">{{ $msTranslate('clientArea.billingDetailsPage.title') }}</ion-title>
     </div>
     <div class="form-container">
       <div class="form">
@@ -65,14 +65,14 @@
         <ion-button
           v-show="!isEditing"
           @click="isEditing = true"
-          class="update-button button-default"
+          class="update-button"
         >
           {{ $msTranslate('clientArea.billingDetailsPage.update') }}
         </ion-button>
         <ion-button
           v-show="isEditing"
           @click="onCancelEdit"
-          class="cancel-button button-default"
+          class="cancel-button"
           fill="outline"
         >
           {{ $msTranslate('clientArea.billingDetailsPage.cancel') }}
@@ -80,7 +80,7 @@
         <ion-button
           v-show="isEditing"
           @click="submit"
-          class="submit-button button-default"
+          class="submit-button"
           :disabled="!isFormValid"
         >
           {{ $msTranslate('clientArea.billingDetailsPage.submit') }}
@@ -179,7 +179,7 @@ async function onCancelEdit(): Promise<void> {
 .client-billing-page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   max-width: 32rem;
 }
 
@@ -187,17 +187,18 @@ async function onCancelEdit(): Promise<void> {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   &__title {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('heading-h3');
+    color: ms.color('text-brand-default');
   }
 }
 
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   width: 100%;
   margin-bottom: 2rem;
 }
@@ -205,17 +206,17 @@ async function onCancelEdit(): Promise<void> {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   &-row {
     display: flex;
-    gap: 1em;
+    gap: ms.spacing('gap-3xl');
   }
 
   #address {
     display: flex;
     flex-direction: column;
-    gap: 1em;
+    gap: ms.spacing('gap-3xl');
   }
 
   #postalCode {
@@ -231,7 +232,7 @@ async function onCancelEdit(): Promise<void> {
 
     .update-button {
       margin-left: auto;
-      --background: var(--parsec-color-light-secondary-text);
+      --background: #{ms.color('surface-neutral-default')};
 
       @include ms.responsive-breakpoint('sm') {
         width: 100%;

@@ -17,10 +17,10 @@
           class="async-authentication-modal-header__icon"
         />
         <div class="async-authentication-modal-header-text">
-          <ion-text class="async-authentication-modal-header-text__title title-h4">
+          <ion-text class="async-authentication-modal-header-text__title">
             {{ $msTranslate(texts.title) }}
           </ion-text>
-          <ion-text class="async-authentication-modal-header-text__description body">
+          <ion-text class="async-authentication-modal-header-text__description">
             {{ $msTranslate(texts.message) }}
           </ion-text>
         </div>
@@ -77,9 +77,9 @@ async function onOkClicked(): Promise<boolean> {
 
 <style scoped lang="scss">
 .join-async-modal-sso {
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-background);
+  border: ms.border('thin') solid ms.color('border-base-default');
+  background: ms.color('surface-base-page');
   display: flex;
-  padding: 1.25rem 1rem;
+  padding: 1.25rem ms.spacing('padding-3xl');
 }
 </style>

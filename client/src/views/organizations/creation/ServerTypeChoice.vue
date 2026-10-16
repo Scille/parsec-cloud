@@ -17,16 +17,16 @@
         :class="{ selected: serverChoice === ServerType.Saas }"
       >
         <div class="server-choice-item__image">
-          <img
-            src="@/assets/images/background/background-shapes-small.svg"
+          <div
+            class="background-shape"
             id="top-left"
           />
-          <img
-            src="@/assets/images/background/background-shapes-small.svg"
+          <div
+            class="background-shape"
             id="top-right"
           />
-          <img
-            src="@/assets/images/background/background-shapes-small.svg"
+          <div
+            class="background-shape"
             id="center"
           />
           <!-- prettier-ignore -->
@@ -36,7 +36,7 @@
             :class="ResourcesManager.instance().get(Resources.LogoIcon, AppIconParsec) === Resources.LogoIcon ? 'image-logo--custom' : ''"
           />
         </div>
-        <ion-text class="server-choice-item__label subtitles-normal">
+        <ion-text class="server-choice-item__label">
           {{ $msTranslate('CreateOrganization.server.saas') }}
         </ion-text>
         <ion-icon
@@ -53,14 +53,25 @@
         :class="{ selected: serverChoice === ServerType.Trial }"
       >
         <div class="server-choice-item__image">
+          <div
+            v-if="I18n.getLocale() === 'fr-FR'"
+            class="trial-visual"
+          >
+            <img
+              :src="isDarkTheme ? TrialFRDark : TrialFR"
+              alt="trial"
+            />
+            <ion-text class="trial-visual__badge">{{ $msTranslate('CreateOrganization.server.trial.badge') }}</ion-text>
+          </div>
           <img
-            :src="getImagePath()"
+            v-else
+            :src="isDarkTheme ? TrialUSDark : TrialUS"
             alt="trial"
           />
         </div>
-        <ion-text class="server-choice-item__label subtitles-normal">
+        <ion-text class="server-choice-item__label">
           {{ $msTranslate('CreateOrganization.server.trial.title') }}
-          <span class="body">{{ $msTranslate('CreateOrganization.server.trial.description') }}</span>
+          <span>{{ $msTranslate('CreateOrganization.server.trial.description') }}</span>
         </ion-text>
         <ion-icon
           v-if="serverChoice === ServerType.Trial && isSmallDisplay"
@@ -92,7 +103,9 @@
 
 <script setup lang="ts">
 import AppIconParsec from '@/assets/images/app-icon-parsec.svg?raw';
+import TrialFRDark from '@/assets/images/trial-FR-dark.svg';
 import TrialFR from '@/assets/images/trial-FR.svg';
+import TrialUSDark from '@/assets/images/trial-US-dark.svg';
 import TrialUS from '@/assets/images/trial-US.svg';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Env } from '@/services/environment';
@@ -100,10 +113,11 @@ import { ServerType } from '@/services/parsecServers';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { I18n, MsImage, useWindowSize } from 'megashark-lib';
+import { I18n, MsImage, useTheme, useWindowSize } from 'megashark-lib';
 import { ref } from 'vue';
 
 const { isSmallDisplay } = useWindowSize();
+const { isDarkTheme } = useTheme();
 
 const emits = defineEmits<{
   (e: 'serverChosen', serverType: ServerType): void;
@@ -118,26 +132,16 @@ async function onChoiceMade(): Promise<void> {
   }
   emits('serverChosen', serverChoice.value);
 }
-
-function getImagePath(): string {
-  const locale = I18n.getLocale();
-  switch (locale) {
-    case 'fr-FR':
-      return TrialFR;
-    default:
-      return TrialUS;
-  }
-}
 </script>
 
 <style scoped lang="scss">
 .server-page {
-  padding: 1.5rem;
+  padding: ms.spacing('padding-4xl');
   display: flex;
   width: 100%;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0;
+    padding: ms.spacing('padding-none');
   }
 
   &-footer {
@@ -148,12 +152,12 @@ function getImagePath(): string {
     @include ms.responsive-breakpoint('sm') {
       position: sticky;
       bottom: 0;
-      padding-bottom: 2rem;
+      padding-bottom: ms.spacing('padding-5xl');
       right: -2rem;
-      background: var(--parsec-color-light-secondary-white);
+      background: ms.color('surface-base-default');
       flex-direction: column-reverse;
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-      box-shadow: var(--parsec-shadow-strong);
+      border-radius: ms.radius('2xl') ms.radius('2xl') ms.radius('none') ms.radius('none');
+      box-shadow: ms.shadow('strong');
     }
 
     @media only screen and (max-height: 600px) {
@@ -164,31 +168,31 @@ function getImagePath(): string {
 
 .server-choice {
   display: flex;
-  padding: 0.5rem 2rem;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-5xl');
   justify-content: space-evenly;
   height: fit-content;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.5rem 1.5rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-4xl');
     flex-direction: column;
     margin: auto;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
     max-width: 35rem;
   }
 
   &-item {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     cursor: pointer;
     flex: 1;
     position: relative;
     align-items: center;
 
     @include ms.responsive-breakpoint('sm') {
-      outline: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-12);
-      gap: 0;
+      outline: ms.border('thin') solid ms.color('border-base-default');
+      border-radius: ms.radius('2xl');
+      gap: ms.spacing('gap-none');
     }
 
     &__checkmark {
@@ -196,7 +200,7 @@ function getImagePath(): string {
         position: absolute;
         top: 0.5rem;
         right: 2rem;
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default');
         font-size: 1.5rem;
         z-index: 3;
         top: 1rem;
@@ -205,26 +209,44 @@ function getImagePath(): string {
     }
 
     &__image {
-      width: 12em;
-      height: 12em;
-      background-color: var(--parsec-color-light-secondary-premiere);
-      border-radius: var(--parsec-radius-12);
+      width: 13.1875rem;
+      height: 9.875rem;
+      background-color: ms.color('surface-brand-default-subtle');
+      border-radius: ms.radius('2xl');
       display: flex;
       justify-content: center;
       align-items: center;
       position: relative;
       overflow: hidden;
-      transition: all 0.1s ease-out;
 
       @include ms.responsive-breakpoint('sm') {
         width: 100%;
         height: 8rem;
       }
 
-      #top-left {
+      .background-shape {
         position: absolute;
+        width: 9.1875rem;
+        height: 6.9375rem;
+        border-radius: ms.radius('full');
+        box-shadow:
+          0 0 5px 0 #{ms.color('shadow-neutral-lighter')},
+          inset 0 4px 20px 0 #{ms.color('shadow-brand-moderate')};
+        opacity: 0.7;
+        mix-blend-mode: darken;
+
+        body.ms-theme-dark & {
+          box-shadow:
+            0 0 5px 0 #{ms.color('shadow-neutral-lighter')},
+            inset 0 4px 20px 0 #{ms.color('shadow-brand-lighter')};
+          opacity: 1;
+          mix-blend-mode: normal;
+        }
+      }
+
+      #top-left {
         top: -4rem;
-        left: -7rem;
+        left: -6.75rem;
         rotate: 30deg;
         z-index: 2;
         transition:
@@ -233,9 +255,8 @@ function getImagePath(): string {
       }
 
       #top-right {
-        position: absolute;
-        top: -5rem;
-        right: -6rem;
+        top: -4.5rem;
+        right: -5.75rem;
         rotate: -30deg;
         z-index: 2;
         transition:
@@ -249,9 +270,8 @@ function getImagePath(): string {
       }
 
       #center {
-        position: absolute;
-        bottom: -6.5rem;
-        left: 2rem;
+        bottom: -6rem;
+        left: 1.125rem;
         rotate: 30deg;
         z-index: 2;
         transition:
@@ -268,36 +288,48 @@ function getImagePath(): string {
           height: auto;
         }
       }
+
+      .trial-visual {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: ms.spacing('gap-2xl');
+
+        &__badge {
+          @include ms.font('label-lg-medium');
+          color: ms.color('text-brand-default-hover');
+          border: ms.border('thin') solid ms.color('border-brand-default-hover');
+          border-radius: ms.radius('2xl');
+          padding: ms.spacing('padding-xs') ms.spacing('padding-lg');
+        }
+      }
     }
 
     &__label {
+      @include ms.font('body-lg-medium');
       text-align: center;
       display: flex;
       flex-direction: column;
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
       max-width: 15rem;
       line-height: 150%; /* 150% */
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
 
       span {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
 
       @include ms.responsive-breakpoint('sm') {
         max-width: 100%;
-        padding: 1rem 1.5rem;
+        padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
         text-align: center;
       }
     }
 
     &:hover {
-      @include ms.responsive-breakpoint('sm') {
-        border: 1px solid var(--parsec-color-light-primary-200);
-      }
-
       .server-choice-item__image {
-        border: 1px solid var(--parsec-color-light-primary-200);
-        background-color: var(--parsec-color-light-primary-30);
+        background-color: ms.color('surface-brand-default-subtle');
 
         @include ms.responsive-breakpoint('sm') {
           outline: none;
@@ -305,29 +337,29 @@ function getImagePath(): string {
 
         #top-left {
           top: -3rem;
-          left: -5.5rem;
+          left: -5.25rem;
         }
 
         #top-right {
-          top: -3rem;
-          right: -5rem;
+          top: -2.5rem;
+          right: -4.75rem;
         }
 
         #center {
-          bottom: -4.5rem;
-          left: 1rem;
+          bottom: -4rem;
+          left: 0.125rem;
         }
       }
     }
 
     &.selected {
       @include ms.responsive-breakpoint('sm') {
-        outline: 2px solid var(--parsec-color-light-primary-600);
+        outline: ms.border('thick') solid ms.color('border-brand-default');
       }
 
       .server-choice-item__image {
-        outline: 2px solid var(--parsec-color-light-primary-600);
-        background-color: var(--parsec-color-light-primary-30);
+        outline: ms.border('thick') solid ms.color('border-brand-default');
+        background-color: ms.color('surface-brand-default-subtle');
 
         @include ms.responsive-breakpoint('sm') {
           outline: none;
@@ -335,17 +367,17 @@ function getImagePath(): string {
 
         #top-left {
           top: -3rem;
-          left: -5.5rem;
+          left: -5.25rem;
         }
 
         #top-right {
-          top: -3rem;
-          right: -5rem;
+          top: -2.5rem;
+          right: -4.75rem;
         }
 
         #center {
-          bottom: -4.5rem;
-          left: 1rem;
+          bottom: -4rem;
+          left: 0.125rem;
 
           @include ms.responsive-breakpoint('sm') {
             bottom: -5.5rem;
@@ -354,10 +386,10 @@ function getImagePath(): string {
         }
       }
       .server-choice-item__label {
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default');
 
         span {
-          color: var(--parsec-color-light-danger-700);
+          color: ms.color('text-error-default');
         }
       }
     }

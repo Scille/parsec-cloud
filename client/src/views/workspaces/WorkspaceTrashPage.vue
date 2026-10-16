@@ -7,7 +7,7 @@
         class="workspace-trash-info"
         v-if="filteredWorkspaces.length > 0 && !querying"
       >
-        <ion-text class="workspace-trash-info__title subtitles-normal">
+        <ion-text class="workspace-trash-info__title">
           {{
             $msTranslate({
               key: 'WorkspacesPage.trashWorkspace.info',
@@ -15,7 +15,7 @@
             })
           }}
         </ion-text>
-        <ion-text class="workspace-trash-info__count body">
+        <ion-text class="workspace-trash-info__count">
           {{
             $msTranslate({
               key: 'WorkspacesPage.trashWorkspace.count',
@@ -38,10 +38,10 @@
           v-if="!querying && filteredWorkspaces.length === 0"
         >
           <ms-image
-            :image="NoTrashedWorkspaces"
+            :image="isDarkTheme ? NoTrashedWorkspaceDark : NoTrashedWorkspace"
             class="no-trashed-workspaces__image"
           />
-          <ion-text class="body-lg">
+          <ion-text class="no-trashed-workspaces__text">
             {{
               $msTranslate({
                 key: 'WorkspacesPage.categoriesMenu.noTrashedWorkspaces',
@@ -50,14 +50,13 @@
             }}
           </ion-text>
           <ion-button
-            class="no-trashed-workspaces__button button-medium button-default"
-            size="default"
-            fill="solid"
+            class="no-trashed-workspaces__button color-secondary"
+            fill="outline"
             @click="backToAllWorkspaces"
           >
             <ion-icon
               :icon="arrowBack"
-              class="button-icon"
+              class="button-icon-left"
             />
             {{ $msTranslate('WorkspacesPage.trashWorkspace.backToWorkspace') }}
           </ion-button>
@@ -84,7 +83,6 @@
 </template>
 
 <script setup lang="ts">
-import NoTrashedWorkspaces from '@/assets/images/no-trashed-workspaces.svg?raw';
 import { formatWorkspaceDeletionDelay } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { getClientInfo, listTrashedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
@@ -94,10 +92,11 @@ import { EventDistributor, EventDistributorKey, Events } from '@/services/eventD
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { arrowBack } from 'ionicons/icons';
-import { MsImage, MsSpinner } from 'megashark-lib';
+import { MsImage, MsSpinner, NoTrashedWorkspace, NoTrashedWorkspaceDark, useTheme } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, Ref, ref } from 'vue';
 
 const contextMenu = useWorkspaceContextMenu(false);
+const { isDarkTheme } = useTheme();
 const querying = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
@@ -165,22 +164,22 @@ async function backToAllWorkspaces(): Promise<void> {
 
 <style lang="scss" scoped>
 .workspace-trash-page {
-  padding: 1.5rem;
-  background: var(--parsec-color-light-secondary-background);
+  padding: ms.spacing('padding-4xl');
+  background: ms.color('surface-base-page');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem 0 0 0;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-none');
   }
 
   .content-scroll {
     display: flex;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
     overflow: hidden;
-    box-shadow: var(--parsec-shadow-soft);
+    box-shadow: ms.shadow('light');
 
     @include ms.responsive-breakpoint('sm') {
-      box-shadow: var(--parsec-shadow-strong);
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      box-shadow: ms.shadow('strong');
+      border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
     }
   }
 }
@@ -189,30 +188,34 @@ async function backToAllWorkspaces(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.5rem;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-4xl');
   min-height: 3rem;
-  background: var(--parsec-color-light-secondary-white);
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-  gap: 1rem;
+  background: ms.color('surface-base-default');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
+  gap: ms.spacing('gap-3xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-4xl') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
     flex-direction: column;
     align-items: flex-start;
     min-height: fit-content;
   }
 
-  &__title,
-  &__count {
-    color: var(--parsec-color-light-secondary-soft-text);
+  &__title {
+    @include ms.font('body-lg-medium');
+
+    color: ms.color('text-neutral-default');
   }
 
   &__count {
+    @include ms.font('body-md-regular');
+
+    color: ms.color('text-neutral-default');
     flex-shrink: 0;
   }
 
   .workspace-trash-count {
-    color: var(--parsec-color-light-secondary-grey);
+    color: ms.color('text-base-description');
   }
 }
 
@@ -223,25 +226,25 @@ async function backToAllWorkspaces(): Promise<void> {
   @include ms.responsive-breakpoint('sm') {
     position: sticky;
     z-index: 10;
-    padding: 1rem;
+    padding: ms.spacing('padding-3xl');
   }
 
   &-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 
 .workspaces-loading {
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   display: flex;
   height: 100%;
   text-align: center;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   @include ms.responsive-breakpoint('xs') {
     height: auto;
@@ -255,12 +258,12 @@ async function backToAllWorkspaces(): Promise<void> {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   max-width: 30rem;
   height: 100%;
-  color: var(--parsec-color-light-secondary-soft-text);
+  color: ms.color('text-neutral-default');
   margin: auto;
-  padding: 3rem 1rem;
+  padding: ms.spacing('padding-7xl') ms.spacing('padding-3xl');
 
   &__image {
     width: 8rem;
@@ -272,20 +275,8 @@ async function backToAllWorkspaces(): Promise<void> {
     }
   }
 
-  &__button {
-    &::part(native) {
-      background: var(--parsec-color-light-secondary-premiere);
-      --background-hover: var(--parsec-color-light-secondary-medium);
-      color: var(--parsec-color-light-secondary-text);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-8);
-      --box-shadow: var(--parsec-shadow-input);
-    }
-
-    .button-icon {
-      font-size: 1rem;
-      margin-right: 0.5rem;
-    }
+  &__text {
+    @include ms.font('body-lg-regular');
   }
 }
 </style>

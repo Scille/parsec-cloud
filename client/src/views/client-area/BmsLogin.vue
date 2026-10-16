@@ -22,7 +22,7 @@
       />
       <ion-text
         v-show="hideHeader"
-        class="saas-login__title title-h2"
+        class="saas-login__title"
       >
         {{ $msTranslate('clientArea.app.titleLogin') }}
       </ion-text>
@@ -90,12 +90,12 @@
             class="saas-login-link__checkbox"
             label-placement="end"
           >
-            <ion-text class="body">{{ $msTranslate('clientArea.app.saveLogin') }}</ion-text>
+            <ion-text class="saas-login-link__label">{{ $msTranslate('clientArea.app.saveLogin') }}</ion-text>
           </ms-checkbox>
           <ion-skeleton-text v-show="loading" />
           <ion-text
             v-show="!loading"
-            class="saas-login-link__forgotten-password button-small"
+            class="saas-login-link__forgotten-password"
             target="_blank"
             @click="$emit('forgottenPasswordClicked')"
           >
@@ -103,45 +103,58 @@
           </ion-text>
           <ion-skeleton-text
             v-show="loading"
-            class="button-small"
+            class="skeleton-forgotten-password"
           />
         </div>
 
         <!-- back and login buttons -->
         <div class="saas-login-button">
-          <ion-text
-            v-show="showBackButton"
-            :disabled="querying"
-            class="button-medium custom-button saas-login-button__item"
-            button
-            @click="$emit('goBackRequested')"
-          >
-            <ion-icon
-              :icon="chevronBack"
-              class="custom-button__icon"
-            />
-            <span>{{ $msTranslate('clientArea.app.backButton') }}</span>
-          </ion-text>
+          <div class="saas-login-button__row">
+            <ion-button
+              v-show="showBackButton"
+              :disabled="querying"
+              fill="clear"
+              slot="icon-only"
+              class="saas-login-button__item color-secondary"
+              @click="$emit('goBackRequested')"
+            >
+              <ion-icon :icon="chevronBack" />
+            </ion-button>
+            <ion-button
+              v-show="!loading"
+              @click="onLoginClicked"
+              :disabled="!validEmail || !password.length || querying"
+              class="saas-login-button__item saas-login-button__login"
+            >
+              <span>{{ $msTranslate('clientArea.app.login') }}</span>
+              <ms-spinner
+                v-show="querying"
+                :size="14"
+                :speed="2"
+              />
+            </ion-button>
+          </div>
+          <div class="saas-login-button__divider" />
           <ion-button
-            v-show="!loading"
-            :disabled="!validEmail || !password.length || querying"
-            @click="onLoginClicked"
-            class="saas-login-button__item button-large"
-            size="large"
+            class="saas-login-button__item"
+            fill="clear"
+            @click="
+              $event.stopPropagation();
+              Env.Links.openUrl(Env.getSignUrl());
+            "
           >
-            {{ $msTranslate('clientArea.app.login') }}
+            {{ $msTranslate('clientArea.app.createAccount') }}
           </ion-button>
           <ion-skeleton-text
             v-show="loading"
             class="skeleton-login-button"
             :animated="true"
           />
-          <ms-spinner v-show="querying" />
         </div>
 
         <!-- error -->
         <ion-text
-          class="form-error body login-button-error"
+          class="form-error login-button-error"
           v-show="loginError"
         >
           <ion-icon
@@ -150,38 +163,6 @@
           />{{ $msTranslate(loginError) }}
         </ion-text>
       </div>
-
-      <ion-footer class="saas-login-footer">
-        <div
-          class="create-account"
-          v-show="!loading"
-        >
-          <ion-text class="create-account__text body">{{ $msTranslate('clientArea.app.noAccount') }}</ion-text>
-          <a
-            class="create-account__link button-medium"
-            @click="
-              $event.stopPropagation();
-              Env.Links.openUrl(Env.getSignUrl());
-            "
-          >
-            {{ $msTranslate('clientArea.app.createAccount') }}
-            <ion-icon :icon="arrowForward" />
-          </a>
-        </div>
-        <div
-          v-show="loading"
-          class="create-account-skeleton"
-        >
-          <ion-skeleton-text
-            class="create-account-skeleton__text"
-            :animated="true"
-          />
-          <ion-skeleton-text
-            class="create-account-skeleton__link"
-            :animated="true"
-          />
-        </div>
-      </ion-footer>
     </div>
     <div class="saas-login-mockup">
       <img
@@ -197,8 +178,8 @@ import { emailValidator } from '@/common/validators';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import { Env } from '@/services/environment';
-import { IonButton, IonFooter, IonIcon, IonSkeletonText, IonText } from '@ionic/vue';
-import { arrowForward, chevronBack, close, warning } from 'ionicons/icons';
+import { IonButton, IonIcon, IonSkeletonText, IonText } from '@ionic/vue';
+import { chevronBack, close, warning } from 'ionicons/icons';
 import { MsCheckbox, MsInput, MsPasswordInput, MsSpinner, Translatable, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
@@ -274,36 +255,32 @@ async function onLoginClicked(): Promise<void> {
   display: flex;
   flex-direction: row;
   width: 100%;
-  background: var(--parsec-color-light-primary-50);
+  background: ms.color('surface-base-default');
   position: relative;
-  padding: 2rem;
+  padding: ms.spacing('padding-5xl');
+  border: 1px solid ms.color('border-neutral-default-subtle');
 
   @include ms.responsive-breakpoint('md') {
-    padding: 1.5rem;
-  }
-
-  &::before {
-    content: url('@/assets/images/background/background-shapes.svg');
-    position: absolute;
-    left: 20rem;
-    top: -20rem;
-    background: var(--parsec-color-light-primary-50);
-    z-index: -1;
+    padding: ms.spacing('padding-4xl');
   }
 
   &__title {
-    color: var(--parsec-color-light-primary-800);
+    @include ms.font('heading-h2');
+    color: ms.color('text-brand-default');
     margin-bottom: 2rem;
 
     @include ms.responsive-breakpoint('md') {
-      padding: 1rem;
+      @include ms.font('heading-h3');
+      margin-bottom: 1rem;
+      text-align: center;
+      padding: ms.spacing('padding-none');
     }
   }
 
   &-container {
     display: flex;
     flex-direction: column;
-    max-width: 22rem;
+    max-width: 24rem;
     width: 100%;
     position: relative;
     z-index: 2;
@@ -317,16 +294,16 @@ async function onLoginClicked(): Promise<void> {
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.5rem 0;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-none');
     }
 
     .input-skeleton {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__label {
         margin: 0;
@@ -353,183 +330,54 @@ async function onLoginClicked(): Promise<void> {
       justify-content: space-between;
 
       &__forgotten-password {
-        color: var(--parsec-color-light-primary-600);
+        @include ms.font('label-md-medium');
+        color: ms.color('text-brand-default');
         cursor: pointer;
-        border-bottom: 1px solid transparent;
+        border-bottom: ms.border('thin') solid transparent;
         transition: border-bottom 150ms linear;
-        padding: 0.125rem 0;
+        padding: ms.spacing('padding-xs') ms.spacing('padding-none');
 
         &:hover {
-          border-bottom: 1px solid var(--parsec-color-light-primary-600);
+          border-bottom: ms.border('thin') solid ms.color('border-brand-default-hover');
         }
-      }
-
-      &__checkbox {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-secondary-text);
-        cursor: pointer;
-        user-select: none;
       }
     }
 
     .saas-login-button {
       display: flex;
-      gap: 1rem;
-      align-items: center;
-      justify-content: end;
+      gap: ms.spacing('gap-3xl');
       margin-top: 0.5rem;
-      width: 100%;
+      flex-direction: column;
 
-      &__item {
-        border-radius: var(--parsec-radius-6);
-        border: 1px solid transparent;
-
-        &:nth-child(1) ion-icon {
-          @include ms.responsive-breakpoint('sm') {
-            font-size: 1.5rem;
-          }
-        }
-
-        &:nth-child(2) {
-          @include ms.responsive-breakpoint('sm') {
-            flex-grow: 1;
-          }
-        }
+      &__row {
+        display: flex;
+        gap: ms.spacing('gap-3xl');
+        align-items: center;
       }
 
-      .custom-button {
-        flex-shrink: 0;
-        width: fit-content;
-        color: var(--parsec-color-light-secondary-soft-text);
+      &__login {
+        flex-grow: 1;
+      }
 
-        &__icon {
-          font-size: 1rem;
-          width: 1rem;
-        }
+      &__divider {
+        width: 100%;
+        border-top: ms.border('thin') solid ms.color('border-neutral-default-subtle');
       }
 
       .skeleton-login-button {
         width: 100%;
         height: 2.75rem;
       }
-
-      @include ms.responsive-breakpoint('sm') {
-        justify-content: space-between;
-      }
     }
 
     .login-button-error {
       display: flex;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       .form-error-icon {
         margin-top: 0.25rem;
         font-size: 1rem;
         align-self: baseline;
-      }
-    }
-  }
-
-  // include buttons
-  &-footer {
-    margin-top: 2rem;
-
-    .create-account {
-      display: flex;
-      gap: 1rem;
-      flex-direction: column;
-
-      @include ms.responsive-breakpoint('sm') {
-        justify-content: space-between;
-        text-align: center;
-        gap: 0.5rem;
-      }
-
-      &::before {
-        content: '';
-        width: 100%;
-        height: 1px;
-        background: var(--parsec-color-light-secondary-disabled);
-        margin-bottom: 0.5rem;
-
-        @include ms.responsive-breakpoint('sm') {
-          display: none;
-        }
-      }
-
-      &__text {
-        color: var(--parsec-color-light-secondary-hard-grey);
-      }
-
-      &__link {
-        display: flex;
-        align-items: center;
-        width: fit-content;
-        cursor: pointer;
-        color: var(--parsec-color-light-primary-800);
-        padding-bottom: 0.25rem;
-        border-bottom: 1px solid transparent;
-        transition: border-bottom 150ms linear;
-        position: relative;
-
-        @include ms.responsive-breakpoint('sm') {
-          padding: 0.75rem 0;
-          text-wrap: nowrap;
-          justify-content: center;
-          width: 100%;
-          gap: 0.75rem;
-          border: none;
-          border-radius: var(--parsec-radius-8);
-        }
-
-        ion-icon {
-          position: absolute;
-          right: -2rem;
-          transition: right 150ms linear;
-          color: transparent;
-
-          @include ms.responsive-breakpoint('sm') {
-            position: initial;
-            color: var(--parsec-color-light-primary-800);
-          }
-        }
-
-        &:hover {
-          border-bottom: 1px solid var(--parsec-color-light-primary-800);
-
-          @include ms.responsive-breakpoint('sm') {
-            border: none;
-            background: var(--parsec-color-light-secondary-white);
-            box-shadow: var(--parsec-shadow-light);
-          }
-
-          ion-icon {
-            right: -1.25rem;
-            color: var(--parsec-color-light-primary-800);
-          }
-        }
-      }
-
-      &-skeleton {
-        display: flex;
-        gap: 2.5rem;
-        align-items: center;
-
-        &__text {
-          margin: 0;
-          width: 50%;
-          height: 1rem;
-          border-radius: var(--parsec-radius-6);
-        }
-
-        &__link {
-          margin: 0;
-          width: 30%;
-          height: 0.75rem;
-          border-radius: var(--parsec-radius-6);
-        }
       }
     }
   }
@@ -554,5 +402,9 @@ async function onLoginClicked(): Promise<void> {
       display: none;
     }
   }
+}
+
+.skeleton-forgotten-password {
+  @include ms.font('label-md-medium');
 }
 </style>

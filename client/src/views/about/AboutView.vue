@@ -6,11 +6,11 @@
     <div
       v-show="!upToDate"
       id="notuptodate"
-      class="update-container body"
+      class="update-container"
     >
-      <ion-text class="update-container__text title-h5">
+      <ion-text class="update-container__text">
         {{ $msTranslate('app.name') }} v.{{ APP_VERSION }}
-        <span class="body-sm">
+        <span>
           {{ $msTranslate('AboutPage.update.notUpToDate') }}
         </span>
       </ion-text>
@@ -25,14 +25,15 @@
 
     <ion-list class="info-list">
       <!-- version -->
-      <ion-item class="body info-list__item">
+      <ion-item class="info-list__item">
         <ion-label class="app-info-key">
           {{ $msTranslate('AboutPage.appInfo.version') }}
         </ion-label>
         <div class="text-btn">
           <ion-text class="app-info-value"> v{{ APP_VERSION }} </ion-text>
           <ion-button
-            class="changelog-btn button-outline"
+            fill="outline"
+            class="changelog-btn color-secondary"
             @click="Env.Links.openChangelogLink()"
           >
             {{ $msTranslate('AboutPage.update.showChangelog') }}
@@ -41,7 +42,7 @@
       </ion-item>
 
       <!-- developer -->
-      <ion-item class="body info-list__item">
+      <ion-item class="info-list__item">
         <ion-label class="app-info-key">
           {{ $msTranslate('AboutPage.appInfo.developer') }}
         </ion-label>
@@ -56,7 +57,7 @@
       </ion-item>
 
       <!-- license -->
-      <ion-item class="body info-list__item">
+      <ion-item class="info-list__item">
         <ion-label class="app-info-key">
           {{ $msTranslate('AboutPage.appInfo.license') }}
         </ion-label>
@@ -71,7 +72,7 @@
       </ion-item>
 
       <!-- github -->
-      <ion-item class="body info-list__item">
+      <ion-item class="info-list__item">
         <ion-label class="app-info-key">
           {{ $msTranslate('AboutPage.appInfo.project') }}
         </ion-label>
@@ -141,10 +142,10 @@ async function update(): Promise<void> {
 .about {
   display: flex;
   flex-direction: column;
-  gap: 1.5em;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
-  padding: 1.5rem;
+  gap: ms.spacing('gap-4xl');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-page');
+  padding: ms.spacing('padding-2xl');
   box-shadow:
     0 1px 1px 0 rgba(0, 0, 0, 0.05),
     0 1px 4px 0 rgba(0, 0, 0, 0.03),
@@ -152,33 +153,39 @@ async function update(): Promise<void> {
 }
 
 .update-container {
-  background: var(--parsec-color-light-gradient);
-  color: var(--parsec-color-light-secondary-grey);
+  @include ms.font('body-md-regular');
+  background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
+  color: ms.color('text-neutral-default');
   display: flex;
   align-items: center;
-  padding: 1.5rem;
-  border-radius: var(--parsec-radius-6);
+  padding: ms.spacing('padding-4xl');
+  border-radius: ms.radius('md');
   justify-content: space-between;
 
   &__text {
+    @include ms.font('heading-h6');
     display: flex;
-    color: var(--parsec-color-light-secondary-inversed-contrast);
+    color: ms.color('text-on-color-heading');
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
+
+    span {
+      @include ms.font('body-sm-regular');
+    }
   }
 
   &__btn {
-    --background: var(--parsec-color-light-primary-30-opacity15) !important;
+    --background: #{ms.color('opacity-inverse-500')} !important;
     outline: none;
-    border-radius: var(--parsec-radius-6);
+    border-radius: ms.radius('md');
 
     &:hover {
       --background-hover: none !important;
-      outline: 1px solid var(--parsec-color-light-primary-200);
+      outline: ms.border('thin') solid ms.color('border-brand-default-subtle-hover');
     }
 
     &:active {
-      --background: var(--parsec-color-light-primary-200) !important;
+      --background: #{ms.color('surface-brand-default-subtle-pressed')} !important;
     }
   }
 }
@@ -186,24 +193,26 @@ async function update(): Promise<void> {
 .info-list {
   display: flex;
   flex-direction: column;
-  gap: 1em;
-  padding: 0;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-none');
 
   &__item {
-    --padding-start: 0;
+    --background: transparent;
+    @include ms.font('body-md-regular');
+    --padding-start: #{ms.spacing('padding-none')};
   }
 
   .text-btn {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 
   .changelog-btn {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     cursor: pointer;
 
     &::part(native) {
@@ -213,32 +222,37 @@ async function update(): Promise<void> {
 }
 
 .app-info-key {
-  max-width: 10rem;
+  max-width: 7rem;
   margin: 0;
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('text-base-body');
 }
 
 .app-info-value {
-  color: var(--parsec-color-light-primary-800);
-  padding: 0.2rem 0.3rem;
-  border-radius: var(--parsec-radius-6);
+  @include ms.font('body-md-bold');
+  color: ms.color('text-base-body');
+  padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+  border-radius: ms.radius('md');
   transition: background-color 0.1s ease-in-out;
 
+  &:has(.link) {
+    background-color: ms.color('surface-neutral-default-subtle');
+  }
+
   &:hover:has(.link) {
-    background-color: var(--parsec-color-light-primary-30);
+    background-color: ms.color('surface-neutral-default-subtle-hover');
   }
 
   .link {
-    color: var(--parsec-color-light-primary-800);
+    color: ms.color('text-base-body');
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     cursor: pointer;
 
     ion-icon {
-      color: var(--parsec-color-light-primary-800);
-      font-size: 1.25rem;
+      color: ms.color('icon-neutral-default');
+      font-size: 1.5rem;
     }
   }
 }

@@ -11,10 +11,10 @@
     }"
   >
     <div class="long-paths-modal">
-      <ion-text class="long-paths-modal__info body">
+      <ion-text class="long-paths-modal__info">
         {{ $msTranslate('LongPathsSupportModal.labelInfo') }}
       </ion-text>
-      <ion-text class="long-paths-modal__recommendation body-lg">
+      <ion-text class="long-paths-modal__recommendation">
         <i18n-t
           keypath="LongPathsSupportModal.labelFix"
           scope="global"
@@ -56,25 +56,27 @@ async function dismiss(): Promise<boolean> {
 .long-paths-modal {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__info {
-    padding: 0.5rem 1rem;
-    background-color: var(--parsec-color-light-info-50);
-    color: var(--parsec-color-light-info-700);
-    border-radius: var(--parsec-radius-8);
+    @include ms.font('body-md-regular');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
+    background-color: ms.color('surface-information-default-subtle');
+    color: ms.color('text-information-default');
+    border-radius: ms.radius('lg');
   }
 
   &__recommendation {
-    color: var(--parsec-color-light-secondary-text);
-    border-radius: var(--parsec-radius-8);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-base-body');
+    border-radius: ms.radius('lg');
 
     .link {
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('text-brand-default');
 
       &:hover {
         text-decoration: underline;
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default-hover');
       }
     }
   }
@@ -83,14 +85,14 @@ async function dismiss(): Promise<boolean> {
     position: absolute;
     z-index: 10;
     bottom: 2.25rem;
-    color: var(--parsec-color-light-secondary-soft-text);
-    padding: 0.25rem 0.25rem;
-    border-radius: var(--parsec-radius-8);
+    color: ms.color('text-base-description');
+    padding: ms.spacing('padding-sm');
+    border-radius: ms.radius('lg');
     transition: background-color 0.2s ease-in-out;
 
     &:hover {
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-premiere);
+      color: ms.color('text-base-body');
+      background-color: ms.color('surface-neutral-default-subtle-hover');
     }
   }
 }

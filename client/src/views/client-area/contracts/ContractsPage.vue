@@ -33,7 +33,7 @@
       >
         <div class="contract-header">
           <div class="contract-header-title">
-            <ion-text class="contract-header-title__text title-h3">
+            <ion-text class="contract-header-title__text">
               {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.number }}
             </ion-text>
           </div>
@@ -43,18 +43,17 @@
               alt="pdf"
               :image="File.Pdf"
             />
-            <ion-text class="contract-header-invoice__text title-h4">
-              <span class="body">{{ $msTranslate('clientArea.invoicesCustomOrder.number') }}</span>
+            <ion-text class="contract-header-invoice__text">
+              <span class="contract-header-invoice__label">{{ $msTranslate('clientArea.invoicesCustomOrder.number') }}</span>
               {{ contractDetails.number }}
             </ion-text>
             <div class="contract-header-invoice__button">
-              <a
+              <ion-button
                 @click="Env.Links.openUrl(contractDetails.link)"
-                class="custom-button custom-button-fill button-medium"
-                download
+                class="contract-header-invoice__download color-secondary"
               >
                 {{ $msTranslate('clientArea.invoicesCustomOrder.download') }}
-              </a>
+              </ion-button>
             </div>
           </div>
         </div>
@@ -67,40 +66,40 @@
                 class="item-header__icon"
                 :icon="informationCircle"
               />
-              <ion-title class="item-header__title title-h4">
+              <ion-title class="item-header__title">
                 {{ $msTranslate('clientArea.invoicesCustomOrder.information') }}
               </ion-title>
             </div>
             <div class="item-content">
               <div class="item-content-column">
                 <div class="item-content-date">
-                  <ion-text class="item-content-date__label body">
+                  <ion-text class="item-content-date__label">
                     {{ $msTranslate('clientArea.invoicesCustomOrder.startingDate') }}
                   </ion-text>
                   <ion-text
-                    class="item-content-date__date title-h4"
+                    class="item-content-date__date"
                     v-if="contractDetails.licenseStart"
                   >
                     {{ $msTranslate(I18n.formatDate(contractDetails.licenseStart, 'short')) }}
                   </ion-text>
                   <ion-text
                     v-else
-                    class="subtitles-normal"
+                    class="item-content-date__unavailable"
                   >
                     {{ $msTranslate('clientArea.contracts.errors.unavailable') }}
                   </ion-text>
                 </div>
                 <div class="item-content-date">
-                  <ion-text class="item-content-date__label body">{{ $msTranslate('clientArea.invoicesCustomOrder.endingDate') }}</ion-text>
+                  <ion-text class="item-content-date__label">{{ $msTranslate('clientArea.invoicesCustomOrder.endingDate') }}</ion-text>
                   <ion-text
-                    class="item-content-date__date title-h4"
+                    class="item-content-date__date"
                     v-if="contractDetails.licenseEnd"
                   >
                     {{ $msTranslate(I18n.formatDate(contractDetails.licenseEnd, 'short')) }}
                   </ion-text>
                   <ion-text
                     v-else
-                    class="subtitles-normal"
+                    class="item-content-date__unavailable"
                   >
                     {{ $msTranslate('clientArea.contracts.errors.unavailable') }}
                   </ion-text>
@@ -116,7 +115,7 @@
                 class="item-header__icon"
                 :icon="person"
               />
-              <ion-title class="item-header__title title-h4">
+              <ion-title class="item-header__title">
                 {{
                   $msTranslate({
                     key: 'clientArea.invoicesCustomOrder.users.title',
@@ -128,7 +127,7 @@
             <div class="item-content">
               <div class="item-content-row">
                 <div class="data-text">
-                  <ion-text class="data-text__title subtitles-normal">
+                  <ion-text class="data-text__title">
                     {{
                       $msTranslate({
                         key: 'clientArea.invoicesCustomOrder.users.admin',
@@ -136,15 +135,15 @@
                       })
                     }}
                   </ion-text>
-                  <ion-text class="data-text__description body">
+                  <ion-text class="data-text__description">
                     {{ $msTranslate('clientArea.invoicesCustomOrder.users.adminDescription') }}
                   </ion-text>
                 </div>
-                <ion-text class="data-number title-h2">{{ contractDetails.administrators.quantityOrdered }}</ion-text>
+                <ion-text class="data-number">{{ contractDetails.administrators.quantityOrdered }}</ion-text>
               </div>
               <div class="item-content-row">
                 <div class="data-text">
-                  <ion-text class="data-text__title subtitles-normal">
+                  <ion-text class="data-text__title">
                     {{
                       $msTranslate({
                         key: 'clientArea.invoicesCustomOrder.users.standard',
@@ -153,18 +152,18 @@
                     }}
                   </ion-text>
                 </div>
-                <ion-text class="data-number title-h2">{{ contractDetails.standards.quantityOrdered }}</ion-text>
+                <ion-text class="data-number">{{ contractDetails.standards.quantityOrdered }}</ion-text>
               </div>
               <div class="item-content-row">
                 <div class="data-text">
-                  <ion-text class="data-text__title subtitles-normal">
+                  <ion-text class="data-text__title">
                     {{ $msTranslate('clientArea.invoicesCustomOrder.users.external') }}
                   </ion-text>
-                  <ion-text class="data-text__description body">
+                  <ion-text class="data-text__description">
                     {{ $msTranslate('clientArea.invoicesCustomOrder.users.externalDescription') }}
                   </ion-text>
                 </div>
-                <ion-text class="data-number title-h2">{{ contractDetails.outsiders.quantityOrdered }}</ion-text>
+                <ion-text class="data-number">{{ contractDetails.outsiders.quantityOrdered }}</ion-text>
               </div>
             </div>
           </div>
@@ -176,23 +175,23 @@
                 class="item-header__icon"
                 :icon="pieChart"
               />
-              <ion-title class="item-header__title title-h4">
+              <ion-title class="item-header__title">
                 {{ $msTranslate('clientArea.invoicesCustomOrder.storage.title') }}
               </ion-title>
             </div>
             <div class="item-content">
               <div class="item-content-row">
                 <div class="data-text">
-                  <ion-text class="data-text__title subtitles-normal">
+                  <ion-text class="data-text__title">
                     {{ $msTranslate('clientArea.invoicesCustomOrder.storage.storage') }}
                   </ion-text>
-                  <ion-text class="data-text__description body">
+                  <ion-text class="data-text__description">
                     {{ $msTranslate('clientArea.invoicesCustomOrder.storage.stack') }}
                   </ion-text>
                 </div>
-                <ion-text class="data-number title-h2">
+                <ion-text class="data-number">
                   {{ contractDetails.storage.quantityOrdered }}
-                  <span class="subtitles-normal">
+                  <span class="data-number__unit">
                     {{ $msTranslate('clientArea.invoicesCustomOrder.storage.or') }}
                     {{ $msTranslate(formatFileSize(getStorageSize(contractDetails.storage.quantityOrdered))) }}
                   </span>
@@ -207,7 +206,7 @@
         class="organization-content"
         v-if="organizationStats && contractDetails"
       >
-        <ion-title class="organization-content__title title-h3">{{ $msTranslate('clientArea.contracts.previewOrganization') }}</ion-title>
+        <ion-title class="organization-content__title">{{ $msTranslate('clientArea.contracts.previewOrganization') }}</ion-title>
         <div
           class="organization-users"
           v-if="organizationStats.adminUsersDetail || organizationStats.standardUsersDetail || organizationStats.outsiderUsersDetail"
@@ -217,7 +216,7 @@
             class="organization-users-item admins"
             v-if="organizationStats.adminUsersDetail"
           >
-            <ion-text class="item-title title-h4">
+            <ion-text class="item-title">
               {{
                 $msTranslate({
                   key: 'clientArea.contracts.user.admin',
@@ -229,9 +228,9 @@
               class="item-active"
               :class="getUserClass(organizationStats.adminUsersDetail.active, contractDetails.administrators.quantityOrdered)"
             >
-              <ion-text class="item-active__number title-h1-xl">
+              <ion-text class="item-active__number">
                 {{ organizationStats.adminUsersDetail.active }}
-                <span class="item-active__label subtitles-normal">
+                <span class="item-active__label">
                   {{
                     $msTranslate({
                       key: 'clientArea.contracts.user.onTotal',
@@ -245,7 +244,7 @@
                   <div class="progress-bar-used" />
                   <div class="progress-bar-unused" />
                 </div>
-                <ion-text class="progress-text subtitles-sm">
+                <ion-text class="progress-text">
                   {{ Math.max(contractDetails.administrators.quantityOrdered - organizationStats.adminUsersDetail.active, 0) }}
                   {{ $msTranslate('clientArea.contracts.user.remaining') }}
                 </ion-text>
@@ -257,7 +256,7 @@
             class="organization-users-item members"
             v-if="organizationStats.standardUsersDetail"
           >
-            <ion-text class="item-title title-h4">
+            <ion-text class="item-title">
               {{
                 $msTranslate({
                   key: 'clientArea.contracts.user.standard',
@@ -269,9 +268,9 @@
               class="item-active"
               :class="getUserClass(organizationStats.standardUsersDetail.active, contractDetails.standards.quantityOrdered)"
             >
-              <ion-text class="item-active__number title-h1-xl">
+              <ion-text class="item-active__number">
                 {{ organizationStats.standardUsersDetail.active }}
-                <span class="item-active__label subtitles-normal">
+                <span class="item-active__label">
                   {{
                     $msTranslate({ key: 'clientArea.contracts.user.onTotal', data: { count: contractDetails.standards.quantityOrdered } })
                   }}
@@ -282,7 +281,7 @@
                   <div class="progress-bar-used" />
                   <div class="progress-bar-unused" />
                 </div>
-                <ion-text class="progress-text subtitles-sm">
+                <ion-text class="progress-text">
                   {{ Math.max(contractDetails.standards.quantityOrdered - organizationStats.standardUsersDetail.active, 0) }}
                   {{ $msTranslate('clientArea.contracts.user.remaining') }}
                 </ion-text>
@@ -294,7 +293,7 @@
             class="organization-users-item externals"
             v-if="organizationStats.outsiderUsersDetail"
           >
-            <ion-text class="item-title title-h4">
+            <ion-text class="item-title">
               {{
                 $msTranslate({
                   key: 'clientArea.contracts.user.external',
@@ -306,9 +305,9 @@
               class="item-active"
               :class="getUserClass(organizationStats.outsiderUsersDetail.active, contractDetails.outsiders.quantityOrdered)"
             >
-              <ion-text class="item-active__number title-h1-xl">
+              <ion-text class="item-active__number">
                 {{ organizationStats.outsiderUsersDetail.active }}
-                <span class="item-active__label subtitles-normal">
+                <span class="item-active__label">
                   {{
                     $msTranslate({ key: 'clientArea.contracts.user.onTotal', data: { count: contractDetails.outsiders.quantityOrdered } })
                   }}
@@ -319,7 +318,7 @@
                   <div class="progress-bar-used" />
                   <div class="progress-bar-unused" />
                 </div>
-                <ion-text class="progress-text subtitles-sm">
+                <ion-text class="progress-text">
                   {{ Math.max(contractDetails.outsiders.quantityOrdered - organizationStats.outsiderUsersDetail.active, 0) }}
                   {{ $msTranslate('clientArea.contracts.user.remaining') }}
                 </ion-text>
@@ -331,14 +330,14 @@
         <div class="organization-storage">
           <!-- storage-->
           <div class="organization-storage-item">
-            <ion-text class="item-title title-h4">{{ $msTranslate('clientArea.contracts.storage.title') }}</ion-text>
+            <ion-text class="item-title">{{ $msTranslate('clientArea.contracts.storage.title') }}</ion-text>
             <div
               class="item-active"
               :class="getStorageClass()"
             >
-              <ion-text class="item-active__number title-h1-xl">
+              <ion-text class="item-active__number">
                 {{ $msTranslate(formatFileSize(organizationStats.metadataSize + organizationStats.dataSize)) }}
-                <span class="item-active__label subtitles-normal">
+                <span class="item-active__label">
                   {{
                     $msTranslate({
                       key: 'clientArea.contracts.storage.onTotal',
@@ -352,7 +351,7 @@
                   <div class="progress-bar-used" />
                   <div class="progress-bar-unused" />
                 </div>
-                <ion-text class="progress-text subtitles-sm">
+                <ion-text class="progress-text">
                   {{ $msTranslate({ key: 'clientArea.contracts.storage.used', data: { percentage: getStoragePercentage() } }) }}
                 </ion-text>
               </div>
@@ -364,17 +363,17 @@
     <template v-if="querying">
       <div class="loading-container">
         <ms-spinner />
-        <ion-text class="body-lg loading-text">{{ $msTranslate('clientArea.contracts.loading') }}</ion-text>
+        <ion-text class="loading-text">{{ $msTranslate('clientArea.contracts.loading') }}</ion-text>
       </div>
     </template>
     <template v-if="isDefaultOrganization(currentOrganization)">
-      <ion-text class="organization-choice-title body-lg">
+      <ion-text class="organization-choice-title">
         {{ $msTranslate('clientArea.contracts.multipleOrganizations') }}
       </ion-text>
 
       <div class="organization-list">
         <div
-          class="organization-list-item subtitles-normal"
+          class="organization-list-item"
           v-for="org in organizations"
           :key="org.bmsId"
           @click="onOrganizationSelected(org)"
@@ -403,7 +402,7 @@ import {
 } from '@/services/bms';
 import { Env } from '@/services/environment';
 import { isDefaultOrganization } from '@/views/client-area/types';
-import { IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { arrowForward, informationCircle, person, pieChart } from 'ionicons/icons';
 import { File, I18n, MsImage, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 import { computed, onMounted, ref } from 'vue';
@@ -552,7 +551,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .client-contract-page {
   display: flex;
   flex-direction: column;
-  padding-bottom: 3rem;
+  padding-bottom: ms.spacing('padding-7xl');
 
   &:has(.loading-container) {
     height: 100%;
@@ -562,7 +561,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .error-message {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   margin-bottom: 1.5rem;
   max-width: 70rem;
 }
@@ -571,13 +570,14 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   width: 100%;
   height: 100%;
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   flex-direction: column;
   justify-content: center;
   align-items: center;
 
   .loading-text {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-neutral-default');
   }
 }
 
@@ -585,8 +585,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   width: 100%;
   max-width: 70rem;
   height: fit-content;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-12);
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('2xl');
   overflow: hidden;
 }
 
@@ -594,29 +594,30 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  background: var(--parsec-color-light-secondary-background);
-  padding: 0.75rem 1rem;
+  background: ms.color('surface-base-page');
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
 
   &-title {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     align-items: center;
 
     &__text {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h4');
+      color: ms.color('text-base-body');
     }
 
     &__badge {
-      color: var(--parsec-color-light-primary-600);
-      background: var(--parsec-color-light-primary-100);
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--parsec-radius-32);
+      color: ms.color('text-brand-default');
+      background: ms.color('surface-brand-default-subtle-pressed');
+      padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+      border-radius: ms.radius('6xl');
     }
   }
 
   &-invoice {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     max-width: 20rem;
     width: 100%;
     align-items: center;
@@ -627,27 +628,18 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     }
 
     &__text {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h5');
+      color: ms.color('text-base-body');
       display: flex;
       flex-direction: column;
 
       span {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('text-base-description');
       }
     }
 
     &__button {
       margin-left: auto;
-
-      .custom-button {
-        background: var(--parsec-color-light-secondary-text);
-        border: none;
-        color: var(--parsec-color-light-secondary-white);
-
-        &:hover {
-          background: var(--parsec-color-light-secondary-contrast);
-        }
-      }
     }
   }
 }
@@ -655,18 +647,18 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .contract-main {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
-  padding: 1.5rem 2rem 2rem;
+  gap: ms.spacing('gap-5xl');
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl') ms.spacing('padding-5xl');
 
   &-divider {
     width: 1px;
-    background: var(--parsec-color-light-secondary-medium);
+    background: ms.color('surface-neutral-default-subtle-pressed');
   }
 
   &-item {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     width: 100%;
     min-width: 10rem;
     max-width: 20rem;
@@ -679,19 +671,20 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
   .item-header {
     display: flex;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     align-items: center;
 
     &__icon {
-      color: var(--parsec-color-light-primary-600);
-      background: var(--parsec-color-light-primary-30);
+      color: ms.color('text-brand-default');
+      background: ms.color('surface-brand-default-subtle');
       font-size: 1.5rem;
-      padding: 0.25rem;
-      border-radius: var(--parsec-radius-4);
+      padding: ms.spacing('padding-sm');
+      border-radius: ms.radius('sm');
     }
 
     &__title {
-      color: var(--parsec-color-light-primary-900);
+      @include ms.font('heading-h5');
+      color: ms.color('text-brand-default');
     }
   }
 
@@ -701,53 +694,58 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
     &-row {
       display: flex;
-      gap: 2rem;
+      gap: ms.spacing('gap-5xl');
       justify-content: space-between;
       min-height: 2.5rem;
-      padding-left: 2.5rem;
+      padding-left: ms.spacing('padding-6xl');
     }
 
     &-column {
       display: flex;
       flex-direction: column;
-      padding-left: 2.5rem;
-      gap: 1rem;
+      padding-left: ms.spacing('padding-6xl');
+      gap: ms.spacing('gap-3xl');
     }
 
     &-date {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
 
       &__label {
-        color: var(--parsec-color-light-secondary-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
 
       &__date {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('heading-h5');
+        color: ms.color('text-base-body');
       }
     }
 
     .data-text {
       display: flex;
       flex-direction: column;
-      padding: 0.5rem 0;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-none');
 
       &__title {
-        color: var(--parsec-color-light-secondary-soft-text);
+        @include ms.font('body-lg-medium');
+        color: ms.color('text-neutral-default');
       }
 
       &__description {
-        color: var(--parsec-color-light-secondary-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
 
     .data-number {
-      padding: 0.25rem 0;
-      color: var(--parsec-color-light-primary-600);
+      @include ms.font('heading-h3');
+      padding: ms.spacing('padding-sm') ms.spacing('padding-none');
+      color: ms.color('text-brand-default');
 
       span {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('text-base-description');
       }
     }
   }
@@ -757,64 +755,67 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   margin-top: 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   &__title {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('heading-h4');
+    color: ms.color('text-brand-default');
   }
 }
 
 .organization-users,
 .organization-storage {
   display: flex;
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  background: ms.color('surface-base-page');
+  border: ms.border('thin') solid ms.color('border-base-default');
   gap: 3rem;
-  padding: 1.5rem;
-  border-radius: var(--parsec-radius-12);
+  padding: ms.spacing('padding-4xl');
+  border-radius: ms.radius('2xl');
   width: fit-content;
 
   &-item {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     width: 18rem;
   }
 
   .item-active {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    border-radius: var(--parsec-radius-8);
+    gap: ms.spacing('gap-3xl');
+    border-radius: ms.radius('lg');
     flex: 1;
 
     &__number {
+      @include ms.font('heading-h1');
       display: flex;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
       align-items: first baseline;
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default');
     }
 
     &__label {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-base-description');
       line-height: 0;
     }
 
     .progress {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       --progressWidthStorage: v-bind(progressWidthStorage);
 
       &-bar {
         display: flex;
-        background: var(--parsec-color-light-secondary-disabled);
-        border-radius: var(--parsec-radius-8);
+        background: ms.color('surface-disabled-default');
+        border-radius: ms.radius('lg');
 
         &-used {
           width: var(--progressWidthStorage);
-          background: var(--parsec-color-light-primary-500);
-          border-radius: var(--parsec-radius-8);
+          background: ms.color('surface-brand-default');
+          border-radius: ms.radius('lg');
         }
 
         &-unused {
@@ -823,28 +824,29 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
       }
 
       &-text {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-md-medium');
+        color: ms.color('text-base-description');
         align-self: flex-end;
       }
     }
 
     &--warning {
       .item-active__number {
-        color: var(--parsec-color-light-warning-500);
+        color: ms.color('text-warning-default');
       }
 
       .progress-bar-used {
-        background: var(--parsec-color-light-warning-500);
+        background: ms.color('surface-warning-default');
       }
     }
 
     &--exceeded {
       .item-active__number {
-        color: var(--parsec-color-light-danger-500);
+        color: ms.color('text-error-default');
       }
 
       .progress-bar-used {
-        background: var(--parsec-color-light-danger-500);
+        background: ms.color('surface-error-default');
       }
     }
   }
@@ -903,7 +905,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 }
 
 .organization-choice-title {
-  color: var(--parsec-color-light-secondary-soft-text);
+  @include ms.font('body-lg-regular');
+  color: ms.color('text-neutral-default');
 }
 
 .organization-list {
@@ -913,29 +916,46 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   display: flex;
   flex-direction: column;
   justify-content: left;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page');
+  border: ms.border('thin') solid ms.color('border-base-default');
   overflow: hidden;
 
   &-item {
+    @include ms.font('body-lg-medium');
     display: flex;
     justify-content: space-between;
-    color: var(--parsec-color-light-primary-700);
+    color: ms.color('text-brand-default');
     flex: 1;
-    padding: 1em 1rem 1rem 1.5rem;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
     cursor: pointer;
     min-width: 20rem;
     width: 100%;
     transition: background 0.2s;
 
     &__icon {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
     }
 
     &:hover {
-      background: var(--parsec-color-light-secondary-medium);
+      background: ms.color('surface-neutral-default-subtle-pressed');
     }
   }
+}
+
+.item-title {
+  @include ms.font('heading-h5');
+}
+
+.contract-header-invoice__label {
+  @include ms.font('body-md-regular');
+}
+
+.item-content-date__unavailable {
+  @include ms.font('body-lg-medium');
+}
+
+.data-number__unit {
+  @include ms.font('body-lg-medium');
 }
 </style>

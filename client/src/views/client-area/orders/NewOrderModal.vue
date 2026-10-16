@@ -18,7 +18,7 @@
             <div class="form-item-content">
               <ion-text
                 id="label"
-                class="form-label"
+                class="form-item-label"
               >
                 {{ $msTranslate('clientArea.orders.request.userNeeds.label') }}
               </ion-text>
@@ -32,7 +32,7 @@
             <div class="form-item-content">
               <ion-text
                 id="label"
-                class="form-label"
+                class="form-item-label"
               >
                 {{ $msTranslate('clientArea.orders.request.storageNeeds.label') }}
               </ion-text>
@@ -46,12 +46,12 @@
             <div class="form-item-content">
               <ion-text
                 id="label"
-                class="form-label"
+                class="form-item-label"
               >
                 {{ $msTranslate('clientArea.orders.request.description.label') }}
               </ion-text>
               <ms-textarea
-                class="form-input form-field"
+                class="form-field"
                 v-model="description"
                 mode="ios"
                 placeholder="clientArea.orders.request.description.placeholder"
@@ -158,12 +158,16 @@ async function submit(): Promise<boolean> {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 
 .form-item-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
+}
+
+.form-item-label {
+  @include ms.font('label-md-medium');
 }
 </style>

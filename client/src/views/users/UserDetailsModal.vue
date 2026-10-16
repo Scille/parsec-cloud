@@ -5,99 +5,87 @@
     <ms-modal
       :title="'UsersPage.UserDetailsModal.title'"
       :close-button="{ visible: true }"
-      :confirm-button="{
-        label: 'UsersPage.UserDetailsModal.actions.close',
-        disabled: false,
-      }"
     >
-      <div class="details">
-        <div class="details-item">
-          <div class="details-item-name">
-            <ion-text class="details-item-name__title subtitles-sm">
-              {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.name') }}
-            </ion-text>
-            <ion-text class="details-item-name__text subtitles-normal">
+      <div class="user-details">
+        <div class="user-header">
+          <div class="user-header__icon">
+            <ion-icon :icon="person" />
+          </div>
+          <div class="user-header-text">
+            <ion-text class="user-header-text__name">
               {{ user.humanHandle.label }}
             </ion-text>
-          </div>
-          <user-status-tag
-            :active="user.isActive()"
-            :revoked="user.isRevoked()"
-            :frozen="user.isFrozen()"
-            :show-tooltip="true"
-          />
-        </div>
-
-        <div class="time-list">
-          <!-- join on -->
-          <div class="time-list-item">
-            <ion-text class="time-list-item__title">
-              <ion-icon
-                class="time-list-item__icon body-lg"
-                :icon="personAdd"
-              />
-              <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}</span>
-            </ion-text>
-            <ion-text class="time-list-item__text body-lg">
-              {{ $msTranslate(I18n.formatDate(user.createdOn, 'full')) }}
-            </ion-text>
-          </div>
-
-          <!-- revoked since -->
-          <div
-            class="time-list-item"
-            v-if="user.isRevoked() && user.revokedOn"
-          >
-            <ion-text class="time-list-item__title">
-              <ion-icon
-                class="time-list-item__icon body-lg"
-                :icon="personRemove"
-              />
-              <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}</span>
-            </ion-text>
-            <ion-text class="time-list-item__text body-lg">
-              {{ $msTranslate(I18n.formatDate(user.revokedOn, 'full')) }}
-            </ion-text>
+            <user-status-tag
+              class="user-header-text__status"
+              :active="user.isActive()"
+              :revoked="user.isRevoked()"
+              :frozen="user.isFrozen()"
+              :show-tooltip="true"
+            />
           </div>
         </div>
-        <technical-id :id="user.id" />
-      </div>
-      <ion-list class="workspace">
-        <ion-text class="subtitles-sm workspace-title">
-          {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.commonWorkspaces') }}
-        </ion-text>
-        <div
-          class="workspace-list"
-          v-show="sharedWorkspaces.length > 0"
-        >
-          <ion-card
-            v-for="sharedWorkspace in sharedWorkspaces"
-            :key="sharedWorkspace.workspace.id"
-            :disabled="user.isRevoked()"
-            class="workspace-list-item"
+
+        <div class="user-section">
+          <ion-text class="user-section__title">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.generalInfo') }}</ion-text>
+          <div class="user-info">
+            <!-- Joined on -->
+            <div class="user-info-item">
+              <ion-label class="user-info-item__title">
+                {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}
+              </ion-label>
+              <ion-text class="user-info-item__value">
+                {{ $msTranslate(I18n.formatDate(user.createdOn, 'full')) }}
+              </ion-text>
+            </div>
+            <!-- Revoked since -->
+            <div
+              class="user-info-item"
+              v-if="user.isRevoked() && user.revokedOn"
+            >
+              <ion-label class="user-info-item__title">
+                {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}
+              </ion-label>
+              <ion-text class="user-info-item__value">
+                {{ $msTranslate(I18n.formatDate(user.revokedOn, 'full')) }}
+              </ion-text>
+            </div>
+          </div>
+          <technical-id :id="user.id" />
+        </div>
+
+        <div class="user-section">
+          <ion-text class="user-section__title">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.commonWorkspaces') }}</ion-text>
+          <ul
+            class="workspace-list"
+            v-show="sharedWorkspaces.length > 0"
           >
-            <ion-card-content class="item-container">
+            <li
+              v-for="sharedWorkspace in sharedWorkspaces"
+              :key="sharedWorkspace.workspace.id"
+              class="workspace-list-item"
+              :class="{ 'workspace-list-item--disabled': user.isRevoked() }"
+            >
               <ion-icon
-                class="item-container__icon"
+                class="workspace-list-item__icon"
                 :icon="business"
               />
-              <ion-text class="item-container__name cell">
+              <ion-text class="workspace-list-item__name">
                 {{ sharedWorkspace.workspace.name }}
               </ion-text>
               <workspace-role-tag
-                class="item-container__tag"
+                class="workspace-list-item__role"
                 :role="sharedWorkspace.userRole"
               />
-            </ion-card-content>
-          </ion-card>
+            </li>
+          </ul>
+          <ion-text
+            class="workspace-empty"
+            v-show="sharedWorkspaces.length === 0"
+          >
+            {{ $msTranslate('UsersPage.UserDetailsModal.noSharedWorkspaces') }}
+          </ion-text>
         </div>
-        <div
-          class="workspace-empty body"
-          v-show="sharedWorkspaces.length === 0"
-        >
-          {{ $msTranslate('UsersPage.UserDetailsModal.noSharedWorkspaces') }}
-        </div>
-      </ion-list>
+      </div>
     </ms-modal>
   </ion-page>
 </template>
@@ -108,8 +96,8 @@ import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { IonCard, IonCardContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
-import { business, personAdd, personRemove } from 'ionicons/icons';
+import { IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
+import { business, person } from 'ionicons/icons';
 import { I18n, MsModal } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
@@ -138,135 +126,153 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.details {
+.user-details {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1rem;
-  gap: 1rem;
+  gap: ms.spacing('gap-4xl');
 
-  .details-item {
-    display: flex;
-    width: 100%;
-    flex-direction: row;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    align-items: end;
-
-    &-name {
-      margin: auto 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      overflow: hidden;
-
-      &__title {
-        color: var(--parsec-color-light-secondary-text);
-      }
-
-      &__text {
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        color: var(--parsec-color-light-primary-800);
-      }
-    }
-  }
-
-  .time-list {
-    display: flex;
-    gap: 1rem;
-
-    &-item {
-      background: var(--parsec-color-light-secondary-background);
-      padding: 0.75rem;
-      border: 1px solid var(--parsec-color-light-secondary-premiere);
-      border-radius: var(--parsec-radius-6);
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-
-      &__title {
-        color: var(--parsec-color-light-secondary-hard-grey);
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      &__icon {
-        color: var(--parsec-color-light-secondary-hard-grey);
-      }
-
-      &__text {
-        color: var(--parsec-color-light-primary-800);
-      }
-    }
+  @include ms.responsive-breakpoint('sm') {
+    margin-bottom: 2rem;
   }
 }
 
-.workspace {
+.user-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  overflow-y: auto;
-
-  &-title {
-    color: var(--parsec-color-light-secondary-text);
-  }
-
-  &-empty {
-    display: flex;
-    flex-direction: column;
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  &-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    overflow: auto;
-    height: 100%;
-    min-height: min-content;
-
-    .workspace-list-item {
-      background: var(--parsec-color-light-secondary-background);
-      border: 1px solid var(--parsec-color-light-secondary-premiere);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      padding: 1rem 1.5rem 1rem 1rem;
-      margin: 0;
-      border-radius: var(--parsec-radius-6);
-      box-shadow: none;
-
-      &::after {
-        display: none;
-      }
-    }
-  }
-}
-
-.item-container {
-  height: fit-content;
-  display: flex;
-  justify-content: left;
   align-items: center;
-  color: var(--parsec-color-light-primary-800);
-  width: 100%;
-  padding: 0;
+  gap: ms.spacing('gap-2xl');
 
   &__icon {
-    min-width: 1.5rem;
-    height: 1.5rem;
+    display: flex;
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('lg');
+    background: ms.color('surface-brand-default-subtle');
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 1.5rem;
+      color: ms.color('icon-brand-default');
+    }
   }
 
-  &__name {
-    margin-left: 0.75rem;
-    width: 100%;
-  }
+  &-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ms.spacing('gap-xs');
+    min-width: 0;
 
-  &__tag {
-    margin-left: auto;
+    &__name {
+      @include ms.font('heading-h5');
+
+      max-width: 100%;
+      color: ms.color('text-base-heading');
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
+}
+
+.user-section {
+  display: flex;
+  flex-direction: column;
+
+  &__title {
+    @include ms.font('body-md-medium');
+
+    color: ms.color('text-base-body');
+    margin-bottom: 0.5rem;
+  }
+}
+
+.user-info {
+  display: flex;
+  overflow: hidden;
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('lg');
+  margin-bottom: 0.75rem;
+
+  &-item {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 0;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-default-secondary');
+
+    &:not(:last-child) {
+      border-right: ms.border('thin') solid ms.color('border-base-default');
+    }
+
+    &__title {
+      @include ms.font('body-md-medium');
+
+      color: ms.color('text-base-description');
+    }
+
+    &__value {
+      @include ms.font('body-md-regular');
+
+      color: ms.color('text-base-body');
+    }
+  }
+}
+
+.workspace-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: ms.spacing('padding-none');
+  list-style: none;
+  overflow: hidden;
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('lg');
+
+  &-item {
+    display: flex;
+    align-items: center;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-default-secondary');
+
+    &:not(:last-child) {
+      border-bottom: ms.border('thin') solid ms.color('border-base-default');
+    }
+
+    &--disabled {
+      opacity: ms.opacity('disabled');
+    }
+
+    &__icon {
+      flex-shrink: 0;
+      font-size: 1.25rem;
+      color: ms.color('icon-brand-default');
+    }
+
+    &__name {
+      @include ms.font('body-md-medium');
+
+      flex: 1;
+      min-width: 0;
+      color: ms.color('text-base-body');
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__role {
+      flex-shrink: 0;
+      background: ms.color('surface-base-page');
+    }
+  }
+}
+
+.workspace-empty {
+  @include ms.font('body-md-regular');
+
+  padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default-secondary');
+  color: ms.color('text-base-description');
 }
 </style>

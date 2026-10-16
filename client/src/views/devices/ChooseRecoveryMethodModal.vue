@@ -16,26 +16,28 @@
       >
         <ion-radio
           :value="RecoveryMethod.ConnectedDevice"
-          class="recovery-method-item recovery-method--recommended"
+          class="recovery-method-item"
           :class="{ 'recovery-method-item--selected': selectedMethod === RecoveryMethod.ConnectedDevice }"
         >
           <div class="recovery-method-item__container">
             <ms-image
-              :image="RecoveryDeviceIcon"
+              :image="isDarkTheme ? RecoveryDeviceIconDark : RecoveryDeviceIcon"
               class="recovery-method-item__image"
             />
             <div class="recovery-method-item__content">
-              <ion-text class="recovery-method-item__title title-h4">
-                {{ $msTranslate('ImportRecoveryDevicePage.modal.options.otherConnectedDevice.title') }}
-              </ion-text>
-              <ion-text class="recovery-method-item__subtitle body-lg">
+              <div class="recovery-method-item__header">
+                <ion-text class="recovery-method-item__title">
+                  {{ $msTranslate('ImportRecoveryDevicePage.modal.options.otherConnectedDevice.title') }}
+                </ion-text>
+                <span class="recovery-method-item__recommended-badge">
+                  {{ $msTranslate('ImportRecoveryDevicePage.modal.options.otherConnectedDevice.badge') }}
+                </span>
+              </div>
+              <ion-text class="recovery-method-item__subtitle">
                 {{ $msTranslate('ImportRecoveryDevicePage.modal.options.otherConnectedDevice.subtitle') }}
               </ion-text>
             </div>
           </div>
-          <span class="recovery-method-item__recommended-badge subtitles-sm">
-            {{ $msTranslate('ImportRecoveryDevicePage.modal.options.otherConnectedDevice.badge') }}
-          </span>
         </ion-radio>
 
         <ion-radio
@@ -44,14 +46,14 @@
           :class="{ 'recovery-method-item--selected': selectedMethod === RecoveryMethod.RecoveryFile }"
         >
           <ms-image
-            :image="RecoveryFileIcon"
+            :image="isDarkTheme ? RecoveryFileIconDark : RecoveryFileIcon"
             class="recovery-method-item__image"
           />
           <div class="recovery-method-item__content">
-            <ion-text class="recovery-method-item__title title-h4">
+            <ion-text class="recovery-method-item__title">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.options.recoveryFile.title') }}
             </ion-text>
-            <ion-text class="recovery-method-item__subtitle body-lg">
+            <ion-text class="recovery-method-item__subtitle">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.options.recoveryFile.subtitle') }}
             </ion-text>
           </div>
@@ -64,14 +66,14 @@
           :class="{ 'recovery-method-item--selected': selectedMethod === RecoveryMethod.Shamir }"
         >
           <ms-image
-            :image="RecoveryTrustIcon"
+            :image="isDarkTheme ? RecoveryTrustIconDark : RecoveryTrustIcon"
             class="recovery-method-item__image"
           />
           <div class="recovery-method-item__content">
-            <ion-text class="recovery-method-item__title title-h4">
+            <ion-text class="recovery-method-item__title">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.options.shamir.title') }}
             </ion-text>
-            <ion-text class="recovery-method-item__subtitle body-lg">
+            <ion-text class="recovery-method-item__subtitle">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.options.shamir.subtitle') }}
             </ion-text>
           </div>
@@ -87,7 +89,7 @@
               slot="start"
               :icon="logIn"
             />
-            <ion-text class="method-step-list__item-description subtitles-normal">
+            <ion-text class="method-step-list__item-description">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.connectedDevice.steps.step1') }}
             </ion-text>
           </div>
@@ -97,7 +99,7 @@
               slot="start"
               :icon="phonePortraitOutline"
             />
-            <ion-text class="method-step-list__item-description subtitles-normal">
+            <ion-text class="method-step-list__item-description">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.connectedDevice.steps.step2') }}
             </ion-text>
           </div>
@@ -107,7 +109,7 @@
               slot="start"
               :icon="add"
             />
-            <ion-text class="method-step-list__item-description subtitles-normal">
+            <ion-text class="method-step-list__item-description">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.connectedDevice.steps.step3') }}
             </ion-text>
           </div>
@@ -117,7 +119,7 @@
               slot="start"
               :icon="link"
             />
-            <ion-text class="method-step-list__item-description subtitles-normal">
+            <ion-text class="method-step-list__item-description">
               {{ $msTranslate('ImportRecoveryDevicePage.modal.connectedDevice.steps.step4') }}
             </ion-text>
           </div>
@@ -137,7 +139,7 @@ import RecoveryTrustIcon from '@/assets/images/recovery-trusted-user-icon.svg?ra
 import { RecoveryMethod } from '@/views/devices/types';
 import { IonIcon, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
 import { add, link, logIn, phonePortraitOutline } from 'ionicons/icons';
-import { MsImage, MsModal, MsModalResult } from 'megashark-lib';
+import { MsImage, MsModal, MsModalResult, useTheme } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 enum RecoveryMethodStep {
@@ -145,6 +147,7 @@ enum RecoveryMethodStep {
   ConnectedDevice = 'connected-device',
 }
 
+const { isDarkTheme } = useTheme();
 const currentStep = ref<RecoveryMethodStep>(RecoveryMethodStep.MethodChoice);
 const selectedMethod = ref<RecoveryMethod | undefined>(undefined);
 
@@ -199,19 +202,20 @@ async function nextStep(): Promise<boolean> {
 .choose-recovery-device-modal__content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .recovery-method-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 }
 
 .recovery-method-item {
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
-  padding: 1.5rem;
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page');
+  border: ms.border('thin') solid transparent;
+  padding: ms.spacing('padding-3xl');
   position: relative;
   box-shadow:
     0 1px 1px 0 rgba(0, 0, 0, 0.05),
@@ -224,7 +228,7 @@ async function nextStep(): Promise<boolean> {
 
   &::part(label) {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     margin: 0;
     width: 100%;
   }
@@ -235,20 +239,16 @@ async function nextStep(): Promise<boolean> {
   }
 
   &:not(.recovery-method-item--selected):hover {
-    outline: 1.5px solid var(--parsec-color-light-secondary-medium);
+    border-color: ms.color('border-neutral-default-subtle-hover');
   }
 
   &--selected {
-    outline: 1.5px solid var(--parsec-color-light-primary-400);
+    border-color: ms.color('border-brand-default');
   }
 
   &__container {
     display: flex;
-    gap: 1rem;
-  }
-
-  &--recommended {
-    border-color: var(--parsec-color-light-primary-300);
+    gap: ms.spacing('gap-3xl');
   }
 
   &__image {
@@ -259,7 +259,7 @@ async function nextStep(): Promise<boolean> {
       0 1px 1px 0 rgba(0, 0, 0, 0.05),
       0 1px 4px 0 rgba(0, 0, 0, 0.03),
       0 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('md');
   }
 
   &__content {
@@ -267,59 +267,63 @@ async function nextStep(): Promise<boolean> {
     width: 100%;
     text-wrap: wrap;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     flex: 1;
   }
 
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: ms.spacing('gap-lg');
+  }
+
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h5');
+    color: ms.color('text-base-heading');
   }
 
   &__subtitle {
-    color: var(--parsec-color-light-secondary-hard-grey);
-    font-size: 0.9375rem;
-    line-height: 1.5;
+    @include ms.font('body-md-medium');
+    color: ms.color('text-base-description');
   }
 
   &__recommended-badge {
-    padding: 0.2rem 0.6rem;
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-primary-50);
-    color: var(--parsec-color-light-primary-500);
-    line-height: 1;
+    @include ms.font('label-sm-emphasis');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+    border-radius: ms.radius('2xl');
+    background: ms.color('surface-information-default-subtle');
+    color: ms.color('text-information-default');
+    box-shadow: ms.shadow('elevation-xs');
     white-space: nowrap;
-    position: absolute;
-    top: -0.5rem;
-    right: -0.5rem;
-    z-index: 100;
   }
 }
 
 .method-step-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 
   &__item {
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
     display: flex;
     align-items: center;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--parsec-radius-12);
-    gap: 1rem;
+    padding: ms.spacing('padding-3xl');
+    border-radius: ms.radius('lg');
+    gap: ms.spacing('gap-2xl');
 
     &-icon {
       width: 1.125rem;
       height: 1.125rem;
       flex-shrink: 0;
-      padding: 0.375rem;
-      color: var(--parsec-color-light-secondary-white);
-      background: var(--parsec-color-light-secondary-text);
-      border-radius: var(--parsec-radius-circle);
+      padding: ms.spacing('padding-sm');
+      color: ms.color('text-on-color-heading');
+      background: ms.color('surface-neutral-default');
+      border-radius: ms.radius('full');
     }
 
     &-description {
-      color: var(--parsec-color-light-secondary-soft-text);
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-neutral-default');
     }
   }
 }

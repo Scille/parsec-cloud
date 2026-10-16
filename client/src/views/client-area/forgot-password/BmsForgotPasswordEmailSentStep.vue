@@ -2,25 +2,27 @@
 
 <template>
   <div class="saas-forgot-password-content">
-    <ion-text class="subtitles-normal saas-forgot-password-content__email">
+    <ion-text class="saas-forgot-password-content__email">
       {{ email }}
     </ion-text>
 
     <!-- button -->
     <div class="saas-forgot-password-button">
-      <ion-text
-        class="button-medium custom-button custom-button-ghost saas-forgot-password-button__item"
-        button
+      <ion-button
+        class="saas-forgot-password-button__item color-secondary"
         @click="$emit('loginRequested')"
       >
         {{ $msTranslate('clientArea.forgotPassword.emailSentStep.nextButton') }}
-        <ion-icon :icon="arrowForward" />
-      </ion-text>
+        <ion-icon
+          :icon="chevronForward"
+          class="button-icon-right"
+        />
+      </ion-button>
     </div>
 
     <!-- error -->
     <ion-text
-      class="form-error body forgot-password-button-error"
+      class="form-error forgot-password-button-error"
       v-show="error"
     >
       <ion-icon
@@ -32,8 +34,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonIcon, IonText } from '@ionic/vue';
-import { arrowForward, warning } from 'ionicons/icons';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { chevronForward, warning } from 'ionicons/icons';
 import { ref } from 'vue';
 
 defineProps<{
@@ -52,31 +54,23 @@ const error = ref<string>('');
 .saas-forgot-password-content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 
   &__email {
-    font-weight: 500;
-    color: var(--parsec-color-light-secondary-100);
+    @include ms.font('body-lg-medium');
+    color: ms.color('text-base-body');
   }
 
   .saas-forgot-password-button {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     justify-content: end;
     align-items: center;
     margin-top: 0.5rem;
     width: 100%;
 
     &__item {
-      height: 2.5rem;
-      border-radius: var(--parsec-radius-6);
-      font-size: 1rem;
-      color: var(--parsec-color-light-secondary-contrast);
-      border: 1px solid transparent;
-
-      &:hover {
-        border: 1px solid var(--parsec-color-light-secondary-contrast);
-      }
+      width: 100%;
     }
   }
 }

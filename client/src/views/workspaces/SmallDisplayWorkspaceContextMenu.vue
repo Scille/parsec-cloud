@@ -17,7 +17,7 @@
               class="list-group-item__icon"
               :icon="cloudy"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOffline') }}
             </ion-text>
           </ion-item>
@@ -34,7 +34,7 @@
               class="list-group-item__icon"
               :icon="repeat"
             />
-            <ion-text class="button-large list-group-item__label">
+            <ion-text class="list-group-item__label">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionTakeOwnership') }}
             </ion-text>
           </ion-item>
@@ -48,7 +48,7 @@
               class="list-group-item__icon"
               :image="RenameIcon"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRename') }}
             </ion-text>
           </ion-item>
@@ -63,7 +63,7 @@
               class="list-group-item__icon"
               :icon="open"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOpenInExplorer') }}
             </ion-text>
           </ion-item>
@@ -78,7 +78,7 @@
               class="list-group-item__icon"
               :icon="time"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHistory') }}
             </ion-text>
           </ion-item>
@@ -93,7 +93,7 @@
               class="list-group-item__icon"
               :icon="eyeOff"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHide') }}
             </ion-text>
           </ion-item>
@@ -108,7 +108,7 @@
               class="list-group-item__icon"
               :icon="eye"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShow') }}
             </ion-text>
           </ion-item>
@@ -123,7 +123,7 @@
               class="list-group-item__icon"
               :icon="archive"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionArchive') }}
             </ion-text>
           </ion-item>
@@ -138,7 +138,7 @@
               class="list-group-item__icon"
               :icon="reload"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRestore') }}
             </ion-text>
           </ion-item>
@@ -152,7 +152,7 @@
               class="list-group-item__icon"
               :icon="informationCircle"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDetails') }}
             </ion-text>
           </ion-item>
@@ -167,7 +167,7 @@
               class="list-group-item__icon"
               :icon="trash"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDelete') }}
             </ion-text>
           </ion-item>
@@ -185,7 +185,7 @@
               class="list-group-item__icon"
               :icon="link"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionCopyLink') }}
             </ion-text>
           </ion-item>
@@ -200,7 +200,7 @@
               class="list-group-item__icon"
               :icon="shareSocial"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShare') }}
             </ion-text>
           </ion-item>
@@ -218,7 +218,7 @@
               class="list-group-item__icon"
               :icon="star"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{
                 $msTranslate(
                   isFavorite

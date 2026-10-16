@@ -24,7 +24,7 @@
           v-if="!action.icon && action.image"
           :image="action.image"
         />
-        <ion-text class="tab-bar-menu-button__text button-medium">
+        <ion-text class="tab-bar-menu-button__text">
           {{ $msTranslate(action.label) }}
         </ion-text>
       </div>
@@ -48,12 +48,12 @@ async function onActionClicked(action: MenuAction): Promise<void> {
 
 <style lang="scss" scoped>
 .tab-bar-menu {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 3rem 1rem 2rem;
-  gap: 2.5rem 0;
+  background: ms.color('surface-base-default');
+  padding: ms.spacing('padding-7xl') ms.spacing('padding-3xl') ms.spacing('padding-5xl');
+  gap: ms.spacing('gap-6xl') ms.spacing('gap-none');
   justify-content: space-between;
   border: none;
-  border-top: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-top: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   position: relative;
   z-index: 19;
   width: 100%;
@@ -66,23 +66,23 @@ async function onActionClicked(action: MenuAction): Promise<void> {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
     cursor: pointer;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
 
     &-danger {
-      color: var(--parsec-color-light-danger-500);
+      color: ms.color('text-error-default');
     }
 
     &__icon {
       font-size: 1.5rem;
       width: 1.5rem;
       height: 1.5rem;
-      --fill-color: var(--parsec-color-light-secondary-text);
+      --fill-color: #{ms.color('icon-neutral-default')};
     }
 
     &__text {
-      font-size: 0.75rem;
+      @include ms.font('label-xs-medium');
       text-align: center;
       text-overflow: ellipsis;
       white-space: nowrap;

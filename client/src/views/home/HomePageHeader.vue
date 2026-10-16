@@ -7,16 +7,16 @@
       class="update-container"
       @click="update()"
     >
-      <ion-text class="update-text form-label">{{ $msTranslate('notificationCenter.newVersionAvailable') }}</ion-text>
+      <ion-text class="update-text">{{ $msTranslate('notificationCenter.newVersionAvailable') }}</ion-text>
       <ion-button
-        class="update-button form-label"
+        class="update-button"
         id="trigger-update-button"
         fill="clear"
       >
         {{ $msTranslate('notificationCenter.update') }}
         <ion-icon
           :icon="arrowForward"
-          class="update-button-icon"
+          class="update-button-icon button-icon-right"
         />
       </ion-button>
     </div>
@@ -48,10 +48,10 @@
           class="topbar-left-text"
           v-if="!showBackButton"
         >
-          <ion-text class="topbar-left-text__title title-h1">
+          <ion-text class="topbar-left-text__title">
             {{ $msTranslate('HomePage.topbar.welcome') }}
           </ion-text>
-          <ion-text class="topbar-left-text__subtitle subtitles-normal">
+          <ion-text class="topbar-left-text__subtitle">
             {{ $msTranslate('HomePage.organizationList.title') }}
           </ion-text>
         </div>
@@ -64,6 +64,7 @@
           <ion-icon
             slot="start"
             :icon="arrowBack"
+            class="button-icon-left"
           />
           {{ $msTranslate(backButtonTitle ?? 'HomePage.topbar.backToList') }}
         </ion-button>
@@ -82,21 +83,23 @@
       <div class="topbar-right">
         <ion-button
           @click="$emit('recoverClick')"
-          size="default"
-          class="button-default topbar-right-button button-medium"
+          class="topbar-right-button color-secondary"
           id="recover-button-header"
+          fill="outline"
         >
           <span class="topbar-right-button__text">{{ $msTranslate('HomePage.lostDevice') }}</span>
         </ion-button>
         <ion-button
           @click="emits('createOrJoinOrganizationClick', $event)"
-          size="default"
           id="create-organization-button"
-          class="button-default topbar-right-button button-medium"
+          class="topbar-right-button color-secondary"
           v-if="displayCreateJoin && !showBackButton"
         >
           <span class="topbar-right-button__text">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
-          <ion-icon :icon="caretDown" />
+          <ion-icon
+            :icon="caretDown"
+            class="button-icon-right"
+          />
         </ion-button>
 
         <profile-header-homepage
@@ -116,9 +119,9 @@
         >
           <ion-icon
             :icon="personCircle"
-            class="login-button-icon"
+            class="login-button-icon button-icon-left"
           />
-          <ion-text class="login-button-text subtitles-sm">{{ $msTranslate('loginPage.logIn') }}</ion-text>
+          <ion-text class="login-button-text">{{ $msTranslate('loginPage.logIn') }}</ion-text>
         </ion-button>
 
         <ion-menu-button
@@ -296,12 +299,12 @@ const emits = defineEmits<{
   margin-right: auto;
   min-height: 1rem;
   width: 100%;
-  margin: 0 0.25rem 2rem;
-  background: linear-gradient(90deg, var(--parsec-color-light-primary-700) 0%, var(--parsec-color-light-primary-600) 100%);
-  color: var(--parsec-color-light-secondary-background);
+  margin: 0 ms.spacing('padding-sm') ms.spacing('padding-5xl');
+  background: linear-gradient(90deg, ms.color('surface-gradient-to') 0%, ms.color('surface-gradient-from-hover') 100%);
+  color: ms.color('text-on-color-heading');
   min-height: 2rem;
-  padding: 0 0.325rem;
-  border-radius: var(--parsec-radius-8);
+  padding: ms.spacing('padding-none') ms.spacing('padding-md');
+  border-radius: ms.radius('lg');
   transition: all 150ms linear;
   display: flex;
   align-items: center;
@@ -324,27 +327,28 @@ const emits = defineEmits<{
   }
 
   .update-text {
-    color: var(--parsec-color-light-secondary-background);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-on-color-heading');
     transition: bottom 150ms linear;
     position: relative;
     bottom: 0;
   }
 
   .update-button {
+    --background: none;
     --background-hover: none;
-    color: var(--parsec-color-light-secondary-white);
-    font-weight: 700;
+    color: ms.color('text-on-color-heading');
     transition: top 150ms linear;
     position: absolute;
     top: 2rem;
 
     &:hover {
-      color: var(--parsec-color-light-secondary-background);
+      color: ms.color('text-on-color-heading');
     }
 
     &-icon {
       font-size: 1rem;
-      margin-left: 0.25rem;
+      margin-left: ms.spacing('padding-sm');
     }
   }
 
@@ -354,7 +358,7 @@ const emits = defineEmits<{
     }
 
     .update-button {
-      top: -0.125rem;
+      top: -0.25rem;
 
       @include ms.responsive-breakpoint('md') {
         top: 0;
@@ -368,10 +372,10 @@ const emits = defineEmits<{
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 0 0 2rem;
-  gap: 1rem;
+  padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-5xl');
+  gap: ms.spacing('gap-3xl');
   position: relative;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
   @include ms.responsive-breakpoint('sm') {
     border: none;
@@ -386,7 +390,7 @@ const emits = defineEmits<{
   .topbar-left {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     min-height: 4rem;
     user-select: none;
 
@@ -398,7 +402,7 @@ const emits = defineEmits<{
     &-text {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       @include ms.responsive-breakpoint('xs') {
         width: 100%;
@@ -406,15 +410,17 @@ const emits = defineEmits<{
       }
 
       &__title {
-        background: var(--parsec-color-light-gradient-background);
+        @include ms.font('heading-h2');
+        background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin: 0.25rem 0;
+        margin: ms.spacing('padding-sm') 0;
       }
 
       &__subtitle {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-lg-medium');
+        color: ms.color('text-base-description');
         margin: 0;
 
         @include ms.responsive-breakpoint('sm') {
@@ -424,11 +430,11 @@ const emits = defineEmits<{
     }
 
     &__back-button {
-      color: var(--parsec-color-light-secondary-soft-text);
+      color: ms.color('text-neutral-default');
       position: relative;
       --overflow: visible;
       margin: 1px 0;
-      padding-left: 1rem;
+      padding-left: ms.spacing('padding-3xl');
 
       @include ms.responsive-breakpoint('xs') {
         margin: 1px auto 1px 0;
@@ -437,13 +443,11 @@ const emits = defineEmits<{
       &::part(native) {
         background: none;
         --background-hover: none;
-        border-radius: var(--parsec-radius-32);
-        padding: 0.5rem 0.75rem;
+        border-radius: ms.radius('6xl');
+        padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
       }
 
       ion-icon {
-        font-size: 1rem;
-        margin-right: 0.5rem;
         position: absolute;
         left: -1.5rem;
         transition: left 150ms linear;
@@ -468,35 +472,10 @@ const emits = defineEmits<{
     margin-left: auto;
 
     &-button {
-      background: var(--parsec-color-light-secondary-white);
-      color: var(--parsec-color-light-secondary-soft-text);
-      border-radius: var(--parsec-radius-12);
       transition: all 150ms linear;
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      box-shadow: var(--parsec-shadow-input);
-      min-height: 2.25rem !important;
 
       & * {
         pointer-events: none;
-      }
-
-      &::part(native) {
-        border-radius: var(--parsec-radius-12);
-        padding: 0.625rem 0.75rem;
-        --background: none;
-        --background-hover: none;
-        --background-focused: transparent;
-        --background-activated: transparent;
-      }
-
-      ion-icon {
-        font-size: 1rem;
-        margin-left: 0.5rem;
-      }
-
-      &:hover {
-        color: var(--parsec-color-light-secondary-text);
-        border: 1px solid var(--parsec-color-light-secondary-light);
       }
     }
   }
@@ -504,7 +483,7 @@ const emits = defineEmits<{
   .menu-button {
     height: 2.5rem;
     width: 2.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
     cursor: pointer;
     overflow-y: visible;
     -webkit-app-region: no-drag;
@@ -516,14 +495,14 @@ const emits = defineEmits<{
 }
 
 .login-button {
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid transparent;
-  --background: var(--parsec-color-light-gradient-background);
-  --background-hover: var(--parsec-color-light-primary-600);
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid transparent;
+  --background: linear-gradient(#{ms.color('surface-gradient-from')}, #{ms.color('surface-gradient-to')});
+  --background-hover: #{ms.color('surface-brand-default-hover')};
 
   &::part(native) {
-    padding: 0.625rem 0.75rem;
-    border-radius: var(--parsec-radius-12);
+    padding: ms.spacing('padding-xl') ms.spacing('padding-2xl');
+    border-radius: ms.radius('2xl');
 
     @include ms.responsive-breakpoint('xs') {
       font-size: 1.125rem;
@@ -532,8 +511,8 @@ const emits = defineEmits<{
 
   &-icon {
     font-size: 1rem;
-    color: var(--parsec-color-light-secondary-white);
-    margin-right: 0.5rem;
+    color: ms.color('icon-on-color-heading');
+    margin-right: ms.spacing('gap-lg');
 
     @include ms.responsive-breakpoint('xs') {
       font-size: 1.125rem;
@@ -541,7 +520,8 @@ const emits = defineEmits<{
   }
 
   &-text {
-    color: var(--parsec-color-light-secondary-white);
+    @include ms.font('body-md-medium');
+    color: ms.color('text-on-color-heading');
     display: flex;
   }
 }

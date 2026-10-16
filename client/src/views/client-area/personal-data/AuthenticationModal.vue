@@ -53,7 +53,7 @@
               button
               @click="resendCode"
               :disabled="resendDisabled"
-              class="send-code subtitles-sm"
+              class="send-code"
             >
               {{ $msTranslate('clientArea.personalDataPage.modals.authentication.resend') }}
             </ion-text>
@@ -265,19 +265,20 @@ async function onCodeComplete(code: Array<string>): Promise<void> {
   gap: 1.25rem;
 
   .send-code {
+    @include ms.font('body-md-medium');
     margin-left: auto;
-    color: var(--parsec-color-light-secondary-text);
-    border-radius: var(--parsec-radius-6);
-    padding: 0.125rem 0.5rem;
+    color: ms.color('text-base-body');
+    border-radius: ms.radius('md');
+    padding: ms.spacing('padding-xs') ms.spacing('padding-lg');
 
     &:hover {
       cursor: pointer;
-      background: var(--parsec-color-light-secondary-premiere);
+      background: ms.color('surface-neutral-default-subtle-hover');
     }
 
     &[disabled='true'] {
       pointer-events: none;
-      color: var(--parsec-color-light-secondary-light);
+      color: ms.color('text-base-description');
     }
   }
 }

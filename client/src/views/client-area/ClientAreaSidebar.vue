@@ -15,7 +15,7 @@
             <ion-avatar class="card-header-avatar">
               <span>{{ currentOrganization.parsecId.substring(0, 2) }}</span>
             </ion-avatar>
-            <ion-card-title class="card-header-title title-h3">
+            <ion-card-title class="card-header-title">
               {{ currentOrganization.parsecId }}
             </ion-card-title>
           </div>
@@ -23,7 +23,7 @@
             class="card-header"
             v-else
           >
-            <ion-card-title class="card-header-title title-h3">
+            <ion-card-title class="card-header-title">
               {{ $msTranslate('clientArea.sidebar.allOrganization') }}
             </ion-card-title>
           </div>
@@ -39,7 +39,7 @@
           @click="openOrganizationChoice($event)"
         >
           <div class="no-organization-title">
-            <ion-text class="no-organization-title__text subtitles-normal">
+            <ion-text class="no-organization-title__text">
               {{ $msTranslate('clientArea.sidebar.noOrganization') }}
             </ion-text>
             <ms-information-tooltip
@@ -48,15 +48,17 @@
               class="no-organization-title__icon"
             />
           </div>
-          <ion-text
-            button
-            class="organization-card-button custom-button custom-button-fill button-medium"
+          <ion-button
+            class="organization-card-button color-secondary"
             v-show="showMenu"
             @click="createOrganization"
           >
-            <ion-icon :icon="add" />
+            <ion-icon
+              :icon="add"
+              class="button-icon-left"
+            />
             {{ $msTranslate('clientArea.sidebar.createFirstOrganization') }}
-          </ion-text>
+          </ion-button>
         </ion-card-header>
       </template>
       <template v-else-if="querying">
@@ -70,29 +72,29 @@
 
       <!-- show it only when there is one organization selected -->
       <template v-if="!isDefaultOrganization(currentOrganization) && orgStatus">
-        <ion-text class="organization-card-state body">
+        <ion-text class="organization-card-state">
           {{ $msTranslate('clientArea.sidebar.state.title') }}
-          <span>{{ $msTranslate(orgStatus.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}</span>
+          <span
+            class="organization-card-state__badge"
+            :class="orgStatus.isFrozen ? 'organization-card-state__badge--frozen' : 'organization-card-state__badge--active'"
+          >
+            {{ $msTranslate(orgStatus.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}
+          </span>
         </ion-text>
       </template>
 
       <!-- button: go to organization -->
-      <div
-        class="organization-card-button custom-button custom-button-fill"
+      <ion-button
+        class="organization-card-button color-secondary"
         v-show="!isDefaultOrganization(currentOrganization) && orgStatus?.isBootstrapped"
         @click="goToOrganization"
       >
         <ion-icon
-          class="navigate-icon"
           :icon="arrowForward"
+          class="button-icon-left"
         />
-        <ion-text
-          class="button-medium"
-          button
-        >
-          {{ $msTranslate('clientArea.sidebar.goToOrganization') }}
-        </ion-text>
-      </div>
+        {{ $msTranslate('clientArea.sidebar.goToOrganization') }}
+      </ion-button>
     </ion-card>
   </ion-header>
 
@@ -110,8 +112,8 @@
             button
             lines="none"
             v-if="billingSystem === BillingSystem.Stripe"
-            class="menu-default menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Dashboard }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.Dashboard }"
             @click="goToPageClicked(ClientAreaPages.Dashboard)"
           >
             <template v-if="isLargeDisplay">
@@ -137,8 +139,8 @@
             button
             lines="none"
             v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Orders }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.Orders }"
             @click="goToPageClicked(ClientAreaPages.Orders)"
           >
             <template v-if="isLargeDisplay">
@@ -163,8 +165,8 @@
           <ion-item
             button
             lines="none"
-            class="menu-default menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PersonalData }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.PersonalData }"
             @click="goToPageClicked(ClientAreaPages.PersonalData)"
           >
             <template v-if="isLargeDisplay">
@@ -199,8 +201,8 @@
             button
             lines="none"
             :disabled="clientAreaPagesDisabled[ClientAreaPages.Statistics]"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Statistics }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.Statistics }"
             @click="goToPageClicked(ClientAreaPages.Statistics)"
           >
             <template v-if="isLargeDisplay">
@@ -225,8 +227,8 @@
           <ion-item
             button
             lines="none"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Invoices }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.Invoices }"
             @click="goToPageClicked(ClientAreaPages.Invoices)"
           >
             <template v-if="isLargeDisplay">
@@ -251,8 +253,8 @@
           <ion-item
             button
             lines="none"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PaymentMethods }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.PaymentMethods }"
             @click="goToPageClicked(ClientAreaPages.PaymentMethods)"
           >
             <template v-if="isLargeDisplay">
@@ -277,8 +279,8 @@
           <ion-item
             button
             lines="none"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.BillingDetails }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.BillingDetails }"
             @click="goToPageClicked(ClientAreaPages.BillingDetails)"
           >
             <template v-if="isLargeDisplay">
@@ -310,8 +312,8 @@
             button
             lines="none"
             :disabled="clientAreaPagesDisabled[ClientAreaPages.Contracts]"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Contracts }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.Contracts }"
             @click="goToPageClicked(ClientAreaPages.Contracts)"
           >
             <template v-if="isLargeDisplay">
@@ -337,8 +339,8 @@
             button
             lines="none"
             :disabled="clientAreaPagesDisabled[ClientAreaPages.CustomOrderStatistics]"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderStatistics }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.CustomOrderStatistics }"
             @click="goToPageClicked(ClientAreaPages.CustomOrderStatistics)"
           >
             <template v-if="isLargeDisplay">
@@ -364,8 +366,8 @@
             button
             lines="none"
             :disabled="clientAreaPagesDisabled[ClientAreaPages.CustomOrderInvoices]"
-            class="button-medium menu-client-list-item"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
+            class="menu-client-list-item"
+            :class="{ 'current-page': currentPage === ClientAreaPages.CustomOrderInvoices }"
             @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
           >
             <template v-if="isLargeDisplay">
@@ -393,9 +395,9 @@
             button
             lines="none"
             :disabled="!showMenu"
-            class="button-medium menu-client-list-item"
+            class="menu-client-list-item"
             v-show="false"
-            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
+            :class="{ 'current-page': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
             @click="goToPageClicked(ClientAreaPages.CustomOrderBillingDetails)"
           >
             <template v-if="isLargeDisplay">
@@ -425,52 +427,47 @@
       class="contact"
       v-show="false"
     >
-      <ion-text class="contact-title subtitles-sm">
+      <ion-text class="contact-title">
         {{ $msTranslate('clientArea.sidebar.help.title') }}
       </ion-text>
-      <ion-text class="contact-button custom-button custom-button-fill button-medium">
+      <ion-button
+        fill="outline"
+        class="contact-button color-secondary"
+      >
         <ion-icon
-          class="custom-button custom-button-icon"
           :icon="chatbubbleEllipses"
+          class="button-icon-left"
         />
         {{ $msTranslate('clientArea.sidebar.help.button') }}
-      </ion-text>
+      </ion-button>
     </div>
 
     <!-- button: go to home -->
     <div class="bottom-section">
-      <div
-        class="bottom-section-buttons bottom-section-buttons-home custom-button custom-button-fill"
+      <ion-button
+        fill="clear"
+        class="bottom-section-buttons bottom-section-buttons-home color-secondary"
         @click="goToHome"
       >
         <ion-icon
-          class="bottom-section-icon"
           :icon="home"
+          class="button-icon-left"
         />
-        <ion-text
-          class="button-medium"
-          button
-        >
-          {{ $msTranslate('clientArea.sidebar.goToHome') }}
-        </ion-text>
-      </div>
+        {{ $msTranslate('clientArea.sidebar.goToHome') }}
+      </ion-button>
 
       <!-- button: logout -->
-      <div
-        class="bottom-section-buttons bottom-section-buttons-logout custom-button custom-button-fill"
+      <ion-button
+        fill="clear"
+        class="bottom-section-buttons bottom-section-buttons-logout color-secondary"
         @click="logout"
       >
         <ion-icon
-          class="bottom-section-icon"
           :icon="logOut"
+          class="button-icon-left"
         />
-        <ion-text
-          class="button-medium"
-          button
-        >
-          {{ $msTranslate('clientArea.sidebar.logout') }}
-        </ion-text>
-      </div>
+        {{ $msTranslate('clientArea.sidebar.logout') }}
+      </ion-button>
     </div>
   </ion-content>
 </template>
@@ -490,6 +487,7 @@ import { ServerType } from '@/services/parsecServers';
 import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import {
   IonAvatar,
+  IonButton,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -645,7 +643,7 @@ async function createOrganization(): Promise<void> {
 
 <style scoped lang="scss">
 .sidebar-header {
-  padding: 2rem 1.5rem 0;
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl') ms.spacing('padding-none');
 }
 
 .skeleton-header-organization {
@@ -655,10 +653,10 @@ async function createOrganization(): Promise<void> {
 }
 
 .sidebar-content {
-  --padding-start: 1.5rem;
-  --padding-end: 1.5rem;
-  --padding-top: 0;
-  --padding-bottom: 2rem;
+  --padding-start: #{ms.spacing('padding-4xl')};
+  --padding-end: #{ms.spacing('padding-4xl')};
+  --padding-top: #{ms.spacing('padding-none')};
+  --padding-bottom: #{ms.spacing('padding-5xl')};
   --offset-bottom: 0;
   --background: transparent;
 
@@ -675,10 +673,10 @@ async function createOrganization(): Promise<void> {
 }
 
 .organization-card {
-  --background: var(--parsec-color-light-primary-30-opacity15);
+  --background: transparent;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   margin: 0;
   box-shadow: none;
 
@@ -686,13 +684,14 @@ async function createOrganization(): Promise<void> {
     display: flex;
     justify-content: space-between;
     flex-direction: row;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
     transition: background 150ms ease-in-out;
-    padding: 0.5rem 0 0.5rem 0.5rem;
+    background: ms.color('surface-neutral-default-subtle');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-none') ms.spacing('padding-lg') ms.spacing('padding-lg');
 
     &:hover {
       cursor: pointer;
-      background: var(--parsec-color-light-secondary-premiere);
+      background: ms.color('surface-neutral-default-subtle-hover');
     }
 
     .card-header {
@@ -700,18 +699,18 @@ async function createOrganization(): Promise<void> {
       display: flex;
       align-items: center;
       justify-content: left;
-      gap: 0.75em;
+      gap: ms.spacing('gap-2xl');
       position: relative;
       z-index: 2;
       min-width: 0;
       overflow: hidden;
 
       &-avatar {
-        background-color: var(--parsec-color-light-primary-700);
-        color: var(--parsec-color-light-secondary-white);
+        background-color: ms.color('surface-brand-default');
+        color: ms.color('text-neutral-on-color');
         width: 2rem;
         height: 2rem;
-        border-radius: var(--parsec-radius-8);
+        border-radius: ms.radius('lg');
         display: flex;
         align-items: center;
         justify-content: center;
@@ -721,9 +720,10 @@ async function createOrganization(): Promise<void> {
       }
 
       &-title {
-        padding: 0.1875em 0;
+        @include ms.font('heading-h4');
+        padding: 0.1875em ms.spacing('padding-none');
         margin: 0;
-        --color: var(--parsec-color-light-secondary-text);
+        --color: #{ms.color('text-base-body')};
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -733,7 +733,7 @@ async function createOrganization(): Promise<void> {
         white-space: nowrap;
         display: flex;
         align-items: center;
-        --fill-color: var(--parsec-color-light-secondary-soft-grey);
+        --fill-color: #{ms.color('icon-neutral-default')};
       }
     }
   }
@@ -741,11 +741,11 @@ async function createOrganization(): Promise<void> {
   .no-organization {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    border-radius: var(--parsec-radius-12);
-    background: var(--parsec-color-light-secondary-premiere);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 1.5rem 1rem;
+    gap: ms.spacing('gap-3xl');
+    border-radius: ms.radius('2xl');
+    background: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl');
     margin-bottom: 1rem;
     cursor: default;
 
@@ -754,31 +754,21 @@ async function createOrganization(): Promise<void> {
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__text {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('body-lg-medium');
+        color: ms.color('text-base-body');
       }
 
       &__icon {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('text-base-description');
         font-size: 1.125rem;
         cursor: pointer;
 
         &:hover {
-          color: var(--parsec-color-light-secondary-text);
+          color: ms.color('text-neutral-default-hover');
         }
-      }
-    }
-
-    .organization-card-button {
-      background: var(--parsec-color-light-secondary-text);
-      color: var(--parsec-color-light-secondary-white);
-      align-items: center;
-
-      &:hover {
-        cursor: pointer;
-        background: var(--parsec-color-light-secondary-contrast);
       }
     }
   }
@@ -800,7 +790,7 @@ async function createOrganization(): Promise<void> {
       left: -2rem;
       width: calc(100% + 4rem);
       height: 1px;
-      background: var(--parsec-color-light-secondary-disabled);
+      background: ms.color('surface-disabled-default');
       z-index: 2;
     }
   }
@@ -808,26 +798,26 @@ async function createOrganization(): Promise<void> {
   &-list {
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
-    padding: 0;
+    gap: ms.spacing('gap-xl');
+    padding: ms.spacing('padding-none');
     background: transparent;
 
     &-item {
-      --background: var(--parsec-color-light-secondary-background);
-      --background-hover: var(--parsec-color-light-secondary-premiere);
-      --color: var(--parsec-color-light-secondary-hard-grey);
-      --background-hover-opacity: 1;
-      --inner-padding-end: 0rem;
-      --padding-start: 1rem;
-      --padding-end: 1rem;
-      --padding-top: 0.625rem;
-      --padding-bottom: 0.625rem;
-      border-radius: var(--parsec-radius-12);
-      font-weight: 500;
-      font-size: 1rem;
+      @include ms.font('label-md-medium');
+      --background: #{ms.color('surface-base-page')};
+      --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+      --color: #{ms.color('text-base-description')};
+      --background-hover-opacity: #{ms.opacity('10')};
+      --inner-padding-end: #{ms.spacing('padding-none')};
+      --padding-start: #{ms.spacing('padding-3xl')};
+      --padding-end: #{ms.spacing('padding-3xl')};
+      --padding-top: #{ms.spacing('padding-xl')};
+      --padding-bottom: #{ms.spacing('padding-xl')};
+      border-radius: ms.radius('2xl');
+      @include ms.font('label-lg-medium');
 
       &__icon {
-        color: var(--parsec-color-light-secondary-soft-grey);
+        color: ms.color('icon-neutral-default');
         font-size: 1.2rem;
         margin-inline-end: 0.5rem;
         flex-shrink: 0;
@@ -835,17 +825,17 @@ async function createOrganization(): Promise<void> {
 
       &:hover {
         cursor: pointer;
-        box-shadow: var(--parsec-shadow-input);
+        box-shadow: ms.shadow('input');
       }
 
       &.current-page {
-        --background: var(--parsec-color-light-secondary-medium);
-        --background-hover: var(--parsec-color-light-secondary-medium);
-        --color: var(--parsec-color-light-primary-700);
-        box-shadow: var(--parsec-shadow-input);
+        --background: #{ms.color('surface-neutral-default-subtle-pressed')};
+        --background-hover: #{ms.color('surface-neutral-default-subtle-pressed')};
+        --color: #{ms.color('text-brand-default')};
+        box-shadow: ms.shadow('input');
 
         .menu-client-list-item__icon {
-          color: var(--parsec-color-light-primary-700);
+          color: ms.color('text-brand-default');
         }
       }
 
@@ -858,7 +848,7 @@ async function createOrganization(): Promise<void> {
         &::part(native) {
           display: flex;
           font-size: inherit;
-          padding: 0;
+          padding: ms.spacing('padding-none');
           width: 100%;
         }
       }
@@ -867,7 +857,7 @@ async function createOrganization(): Promise<void> {
 
   &-list-mobile {
     .menu-client-list-item::part(native) {
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
 
     .menu-button-wrapper {
@@ -875,7 +865,7 @@ async function createOrganization(): Promise<void> {
       font-size: initial;
       width: 100%;
       height: fit-content;
-      padding: 0.625rem 1rem;
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
 
       &::part(native) {
         border-radius: 0;
@@ -894,48 +884,76 @@ async function createOrganization(): Promise<void> {
   display: flex;
   flex-direction: column;
   justify-content: end;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   width: 100%;
-  background: var(--parsec-color-light-secondary-background);
+  background: ms.color('surface-base-page');
   position: relative;
   z-index: 3;
 
   &-title {
-    color: var(--parsec-color-light-secondary-hard-grey);
-  }
-
-  &-button {
-    background: transparent;
-
-    &:hover {
-      border: 1px solid var(--parsec-color-light-secondary-light);
-    }
+    @include ms.font('body-md-medium');
+    color: ms.color('text-base-description');
   }
 }
 
 .bottom-section {
-  padding-top: 3rem;
+  padding-top: ms.spacing('padding-7xl');
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-md');
 
-  &-buttons {
-    margin: 1rem 0 0.5rem 0;
+  .bottom-section-buttons {
+    width: 100%;
+    margin: 0;
 
-    &:hover {
-      background-color: var(--parsec-color-light-secondary-premiere);
-    }
-
-    &-home {
-      background: none;
-    }
-
-    &-logout {
-      background: none;
-      color: var(--parsec-color-light-danger-500);
-      border-color: var(--parsec-color-light-danger-100);
+    &::part(native) {
+      justify-content: flex-start;
     }
   }
 
-  &-icon {
-    margin-bottom: 0.05rem;
+  .bottom-section-buttons-logout {
+    --color: #{ms.color('text-error-default')};
+    --color-hover: #{ms.color('text-error-default-hover')};
+    --background-hover: #{ms.color('surface-error-default-subtle-hover')};
+    --background-activated: #{ms.color('surface-error-default-subtle-pressed')};
+  }
+}
+
+.organization-card-state {
+  @include ms.font('body-md-regular');
+  display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-md');
+  color: ms.color('text-base-description');
+
+  &__badge {
+    @include ms.font('label-sm-medium');
+    display: inline-flex;
+    align-items: center;
+    gap: ms.spacing('gap-sm');
+    padding: ms.spacing('padding-xs') ms.spacing('padding-md');
+    border-radius: ms.radius('full');
+    border: ms.border('thin') solid;
+
+    &::before {
+      content: '';
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: ms.radius('full');
+      background: currentColor;
+    }
+
+    &--active {
+      color: ms.color('text-success-default');
+      background: ms.color('surface-success-default-subtle');
+      border-color: ms.color('border-success-default-subtle');
+    }
+
+    &--frozen {
+      color: ms.color('text-error-default');
+      background: ms.color('surface-error-default-subtle');
+      border-color: ms.color('border-error-default-subtle');
+    }
   }
 }
 </style>

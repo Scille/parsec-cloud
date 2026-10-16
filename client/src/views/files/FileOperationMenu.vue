@@ -323,7 +323,7 @@ function scrollToTop(): void {
   border-radius: ms.radius('lg') ms.radius('lg') 0 0;
   box-shadow: ms.shadow('elevation-2xl');
   background: ms.color('surface-base-default');
-  border: 1px solid ms.color('border-base-default');
+  border: ms.border('thin') solid ms.color('border-base-default');
   bottom: 0;
   right: 2rem;
   overflow: hidden;
@@ -344,8 +344,8 @@ function scrollToTop(): void {
     justify-content: space-between;
     width: 100%;
     padding: ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-3xl');
-    background: var(--parsec-color-popover-header-background);
-    color: var(--parsec-color-light-secondary-inversed-contrast);
+    background: ms.color('popover-header-background');
+    color: ms.color('text-on-color-heading');
 
     &__title {
       @include ms.font('heading-h5');
@@ -356,7 +356,7 @@ function scrollToTop(): void {
       gap: ms.spacing('gap-lg');
 
       &__item {
-        color: var(--parsec-color-light-secondary-inversed-contrast);
+        color: ms.color('icon-on-color-heading');
         font-size: 1.25rem;
         cursor: pointer;
         border-radius: ms.radius('lg');
@@ -468,7 +468,7 @@ function scrollToTop(): void {
       align-items: center;
       gap: ms.spacing('gap-lg');
       margin: auto;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
 
       &-text {
         @include ms.font('body-lg-regular');

@@ -39,11 +39,11 @@
               class="file-icon"
             />
             <div class="file-handler-topbar__title">
-              <ion-text class="subtitles-normal">
+              <ion-text class="file-title">
                 {{ contentInfo.fileName }}
               </ion-text>
               <ion-text
-                class="subtitles-sm"
+                class="file-date"
                 v-if="contentInfo.timestamp"
               >
                 {{ $msTranslate(I18n.formatDate(contentInfo.timestamp)) }}
@@ -51,7 +51,7 @@
             </div>
             <div
               v-if="isComponentEditor() && readOnly"
-              class="save-info read-only subtitles-sm"
+              class="save-info read-only"
             >
               <ion-icon
                 :icon="eye"
@@ -95,7 +95,7 @@
               />
               <ion-text
                 v-show="showSaveStateText && isLargeDisplay"
-                class="save-info-text button-small"
+                class="save-info-text"
                 :class="{
                   'save-info-text-fade-out': saveState === SaveState.Saved || saveState === SaveState.Error,
                   'save-info-text-fade-in': saveState !== SaveState.Saved && saveState !== SaveState.Error,
@@ -112,73 +112,81 @@
               v-if="isLargeDisplay"
             >
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-details"
                 @click="showDetails"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ion-icon
                   :icon="informationCircle"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.details') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-copy-link"
                 @click="copyLink(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ion-icon
                   :icon="link"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.copyLink') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
                 v-if="!contentInfo.timestamp && readOnly && isEditicsEnabledForDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.openInEditor') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 @click="downloadFile"
                 v-if="isWeb()"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ms-image
                   :image="DownloadIcon"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.download') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-open-with-system"
                 @click="openWithSystem(contentInfo.path)"
                 v-show="isDesktop() && !contentInfo.timestamp"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ion-icon
                   :icon="open"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item toggle-menu"
+                class="file-handler-topbar-buttons__item toggle-menu color-secondary"
                 @click="toggleMainHeader"
                 :class="{ 'header-visible': isHeaderVisible() }"
               >
-                <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
+                <ion-icon
+                  :icon="isHeaderVisible() ? chevronUp : chevronDown"
+                  class="button-icon-left"
+                />
                 <span v-if="windowWidth > WindowSizeBreakpoints.MD">
                   {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
                 </span>
@@ -186,6 +194,7 @@
             </div>
             <ion-button
               class="file-handler-topbar-buttons__item action-menu"
+              slot="icon-only"
               @click="openSmallDisplayActionMenu"
               v-else
             >
@@ -744,7 +753,6 @@ async function openSmallDisplayActionMenu(): Promise<void> {
 <style scoped lang="scss">
 .container {
   height: 100%;
-  background-color: var(--parsec-color-light-secondary-premiere);
 
   .file-handler {
     display: flex;
@@ -759,25 +767,26 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     &-topbar {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
-      background: var(--parsec-color-light-secondary-white);
+      gap: ms.spacing('gap-3xl');
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+      border-bottom: ms.border('thin') solid ms.color('border-base-default');
+      background: ms.color('surface-base-page');
 
       #trigger-toggle-menu-button {
         flex-shrink: 0;
-        --fill-color: var(--parsec-color-light-secondary-grey);
-        padding: 0.625rem;
-        border-radius: var(--parsec-radius-12);
+        --fill-color: #{ms.color('icon-neutral-default')};
+        padding: ms.spacing('padding-xl');
+        border-radius: ms.radius('2xl');
         cursor: pointer;
+
         &:hover {
-          background: var(--parsec-color-light-secondary-premiere);
-          --fill-color: var(--parsec-color-light-secondary-hard-grey);
+          background: ms.color('surface-base-page');
+          --fill-color: #{ms.color('icon-neutral-default-hover')};
         }
       }
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 0.75rem 1rem;
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       }
 
       .file-icon {
@@ -785,7 +794,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         height: 2rem;
         min-width: 2rem;
         min-height: 2rem;
-        margin-left: 0.5rem;
+        margin-left: ms.spacing('padding-lg');
 
         @include ms.responsive-breakpoint('sm') {
           width: 1.75rem;
@@ -798,64 +807,39 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       &__title {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: ms.spacing('gap-sm');
         overflow: hidden;
 
         ion-text {
-          color: var(--parsec-color-light-secondary-text);
+          color: ms.color('text-base-heading');
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        .subtitles-sm {
-          color: var(--parsec-color-light-secondary-grey);
+        .file-title {
+          @include ms.font('body-lg-medium');
+        }
+
+        .file-date {
+          @include ms.font('body-md-medium');
+          color: ms.color('text-base-description');
         }
       }
 
       &-buttons {
         margin-left: auto;
         display: flex;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
         flex-shrink: 0;
 
         &:hover {
-          border-color: var(--parsec-color-light-primary-100);
+          border-color: ms.color('border-brand-default-subtle');
         }
 
-        &__item:not(.toggle-menu) {
-          color: var(--parsec-color-light-secondary-text);
-          border-radius: var(--parsec-radius-8);
-          transition: all 150ms linear;
-
-          &::part(native) {
-            --background: none;
-            --background-hover: none;
-            padding: 0.625rem 1rem;
-
-            @include ms.responsive-breakpoint('sm') {
-              padding: 0.5rem;
-            }
-          }
-
-          &:hover {
-            background: var(--parsec-color-light-secondary-medium);
-            color: var(--parsec-color-light-secondary-text);
-          }
-
-          .item-icon {
-            width: 1rem;
-            font-size: 1rem;
-            margin-right: 0.5rem;
-            --fill-color: var(--parsec-color-light-secondary-text);
-
-            @include ms.responsive-breakpoint('sm') {
-              min-width: 1.125rem;
-              width: 1.125rem;
-              font-size: 1.125rem;
-              margin-right: 0;
-            }
-          }
+        .item-icon {
+          --fill-color: #{ms.color('icon-neutral-default')};
+          max-width: 1rem;
         }
 
         .action-menu {
@@ -868,11 +852,12 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
 
         .toggle-menu {
-          margin-right: 0.5rem;
+          margin-right: ms.spacing('padding-lg');
           position: relative;
-          margin-left: 0.5rem;
+          margin-left: ms.spacing('padding-lg');
           --background: none;
-          color: var(--parsec-color-light-secondary-hard-grey);
+          color: ms.color('text-base-label');
+          opacity: ms.opacity('7');
 
           &::part(native) {
             --background: none;
@@ -881,8 +866,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
 
           ion-icon {
             font-size: 1rem;
-            margin-right: 0.5rem;
-            color: var(--parsec-color-light-secondary-hard-grey);
+            margin-right: ms.spacing('padding-lg');
 
             @include ms.responsive-breakpoint('md') {
               margin-right: 0;
@@ -895,22 +879,18 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           }
 
           &:hover {
-            color: var(--parsec-color-light-secondary-soft-text);
-
-            ion-icon {
-              color: var(--parsec-color-light-secondary-soft-text);
-            }
+            opacity: ms.opacity('10');
           }
 
           &::before {
             content: '';
             position: absolute;
             top: 50%;
-            left: -0.5rem;
+            left: calc(-1 * ms.spacing('padding-lg'));
             transform: translateY(-50%);
             width: 1px;
             height: 1.5rem;
-            background: var(--parsec-color-light-secondary-disabled);
+            background: ms.color('border-base-default');
           }
         }
       }
@@ -919,7 +899,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         display: flex;
         flex-shrink: 0;
         align-items: center;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
 
         @include ms.responsive-breakpoint('sm') {
           min-width: 1.125rem;
@@ -929,13 +909,14 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
 
         &.read-only {
-          background: var(--parsec-color-light-secondary-medium);
-          color: var(--parsec-color-light-secondary-text);
-          padding: 0.25rem 0.75rem;
-          border-radius: var(--parsec-radius-12);
+          @include ms.font('body-md-medium');
+          background: ms.color('surface-neutral-default-subtle');
+          color: ms.color('text-base-heading');
+          padding: ms.spacing('padding-sm') ms.spacing('padding-2xl');
+          border-radius: ms.radius('2xl');
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: ms.spacing('gap-lg');
 
           &-icon {
             font-size: 1rem;
@@ -943,6 +924,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
 
         &-text {
+          @include ms.font('label-sm-medium');
           text-overflow: ellipsis;
 
           &-fade-in {
@@ -960,11 +942,11 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           }
 
           &-ok {
-            color: var(--parsec-color-light-secondary-hard-grey);
+            color: ms.color('text-base-description');
           }
 
           &-ko {
-            color: var(--parsec-color-light-danger-500);
+            color: ms.color('text-error-default');
           }
         }
 
@@ -979,11 +961,11 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           width: 1.125rem;
 
           &-ok {
-            color: var(--parsec-color-light-primary-600);
+            color: ms.color('icon-brand-default');
           }
           &-ko {
-            color: var(--parsec-color-light-secondary-grey);
-            --fill-color: var(--parsec-color-light-secondary-grey);
+            color: ms.color('icon-neutral-default');
+            --fill-color: #{ms.color('icon-neutral-default')};
           }
         }
       }

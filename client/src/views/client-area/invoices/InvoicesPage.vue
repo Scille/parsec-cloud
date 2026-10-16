@@ -53,6 +53,6 @@ onMounted(async () => {
 .client-page-invoices {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 </style>

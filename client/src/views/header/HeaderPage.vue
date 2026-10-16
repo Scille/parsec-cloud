@@ -110,42 +110,40 @@
           slot="primary"
           class="topbar-right"
         >
-          <div
-            class="topbar-right-buttons"
-            v-if="!currentRouteIsOneOf([Routes.History, Routes.MyProfile, Routes.Invitations])"
-          >
-            <!-- Invitations button -->
-            <invitations-button v-if="showInvitationsButton" />
+          <div class="topbar-right-buttons">
+            <template v-if="!currentRouteIsOneOf([Routes.History, Routes.MyProfile, Routes.Invitations])">
+              <!-- Invitations button -->
+              <invitations-button v-if="showInvitationsButton" />
 
-            <!-- Small display options button -->
-            <ion-button
-              v-if="isSmallDisplay && !currentRouteIsWorkspaceManagementRoute()"
-              slot="icon-only"
-              fill="outline"
-              class="topbar-right-buttons__item"
-              id="trigger-contextual-menu-button"
-              @click="openContextualMenu($event)"
-              ref="contextualMenuButton"
-            >
-              <ion-icon :icon="ellipsisHorizontal" />
-            </ion-button>
+              <!-- Small display options button -->
+              <ion-button
+                v-if="isSmallDisplay && !currentRouteIsWorkspaceManagementRoute()"
+                slot="icon-only"
+                fill="outline"
+                class="topbar-right-buttons__item color-secondary"
+                id="trigger-contextual-menu-button"
+                @click="openContextualMenu($event)"
+                ref="contextualMenuButton"
+              >
+                <ion-icon :icon="ellipsisHorizontal" />
+              </ion-button>
 
-            <!-- Notifications button -->
-            <ion-button
-              slot="icon-only"
-              id="trigger-notifications-button"
-              :fill="isSmallDisplay ? 'outline' : 'clear'"
-              class="topbar-right-buttons__item"
-              :size="isSmallDisplay ? 'default' : 'large'"
-              :class="{
-                active: notificationPopoverIsVisible,
-                unread: informationManager.notificationManager.hasUnreadNotifications(),
-              }"
-              @click="openNotificationCenter($event)"
-              ref="notificationCenterButton"
-            >
-              <ion-icon :icon="notifications" />
-            </ion-button>
+              <!-- Notifications button -->
+              <ion-button
+                slot="icon-only"
+                id="trigger-notifications-button"
+                fill="outline"
+                class="topbar-right-buttons__item color-secondary"
+                :class="{
+                  active: notificationPopoverIsVisible,
+                  unread: informationManager.notificationManager.hasUnreadNotifications(),
+                }"
+                @click="openNotificationCenter($event)"
+                ref="notificationCenterButton"
+              >
+                <ion-icon :icon="notifications" />
+              </ion-button>
+            </template>
           </div>
 
           <!-- Profile button -->
@@ -605,11 +603,13 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 }
 
 .topbar {
-  --background: #{ms.color('surface-base-default')};
+  --background: #{ms.color('surface-base-page')};
   display: flex;
-  padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl') ms.spacing('padding-3xl');
 
   &::part(container) {
+    gap: ms.spacing('gap-3xl');
+
     @include ms.responsive-breakpoint('sm') {
       contain: none;
       overflow: visible;
@@ -627,7 +627,7 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 
   #trigger-toggle-menu-button {
     --fill-color: #{ms.color('icon-neutral-default')};
-    padding: ms.spacing('padding-xl');
+    padding: ms.spacing('padding-lg');
     border-radius: ms.radius('2xl');
     cursor: pointer;
 
@@ -641,6 +641,7 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 .topbar-left {
   display: flex;
   align-items: center;
+  gap: ms.spacing('gap-3xl');
   margin-right: 0.5rem;
   overflow: hidden;
 
@@ -725,7 +726,7 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 
   &-buttons {
     display: flex;
-    gap: ms.spacing('gap-2xl');
+    gap: ms.spacing('gap-3xl');
     align-items: center;
 
     &::part(native) {
@@ -738,7 +739,8 @@ async function openWorkspacesSwitchModal(): Promise<void> {
       content: '';
       display: block;
       width: 1px;
-      height: 1.5em;
+      height: 1.5rem;
+      margin-left: calc(ms.spacing('gap-4xl') - ms.spacing('gap-3xl'));
       background: ms.color('border-base-default');
 
       @include ms.responsive-breakpoint('sm') {
@@ -750,6 +752,16 @@ async function openWorkspacesSwitchModal(): Promise<void> {
     &__item {
       ion-icon {
         font-size: 1.375rem;
+      }
+
+      &.button-clear {
+        --padding-top: #{ms.spacing('padding-lg')};
+        --padding-bottom: #{ms.spacing('padding-lg')};
+        --padding-start: #{ms.spacing('padding-lg')};
+        --padding-end: #{ms.spacing('padding-lg')};
+        --border-radius: #{ms.radius('2xl')};
+        height: auto;
+        margin: 0;
       }
 
       &.active {

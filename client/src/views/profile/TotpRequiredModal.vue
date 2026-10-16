@@ -10,12 +10,12 @@
     class="totp-required"
   >
     <div class="totp-required-content">
-      <ion-text class="totp-required__title title-h2">
+      <ion-text class="totp-required__title">
         {{ $msTranslate('Authentication.mfa.modalRequired.title') }}
       </ion-text>
       <div class="totp-required-main">
         <div class="totp-required-message">
-          <ion-text class="totp-required-message__subtitle body-lg">
+          <ion-text class="totp-required-message__subtitle">
             {{ $msTranslate('Authentication.mfa.modalRequired.subtitle') }}
           </ion-text>
         </div>
@@ -23,13 +23,14 @@
       <div class="totp-required-footer">
         <ion-button
           @click="dismiss(MsModalResult.Confirm)"
-          class="totp-required-footer__button button-default button-large"
+          class="totp-required-footer__button color-secondary"
+          fill="outline"
         >
           {{ $msTranslate('Authentication.mfa.modalRequired.configureButton') }}
         </ion-button>
         <ion-button
           @click="dismiss(MsModalResult.Cancel)"
-          class="totp-required-footer__button button-default button-large"
+          class="totp-required-footer__button"
         >
           {{ $msTranslate('Authentication.mfa.modalRequired.cancelButton') }}
         </ion-button>
@@ -50,34 +51,36 @@ async function dismiss(role: MsModalResult): Promise<void> {
 
 <style lang="scss" scoped>
 .login-mfa-required {
-  background: var(--parsec-color-light-primary-30);
+  background: ms.color('surface-brand-default-subtle');
   margin: -0.25rem;
 }
 
 .totp-required-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   .totp-required__title {
+    @include ms.font('heading-h3');
     text-align: center;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-image: var(--parsec-color-light-gradient-background);
+    background-image: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
   }
 
   .totp-required-main {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
 
     .totp-required-message {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
       display: flex;
       flex-direction: column;
 
       &__subtitle {
+        @include ms.font('body-lg-regular');
         text-align: center;
       }
     }
@@ -87,27 +90,28 @@ async function dismiss(role: MsModalResult): Promise<void> {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     margin-top: 0.5rem;
 
     &__button {
+      @include ms.font('label-lg-medium');
       margin: auto;
       width: 100%;
 
       &:nth-child(1) {
-        --background: var(--parsec-color-light-gradient-background);
-        --padding-end: 2rem;
-        --padding-start: 2rem;
-        --padding-bottom: 0.75rem;
-        --padding-top: 0.75rem;
+        --background: linear-gradient(#{ms.color('surface-gradient-from')}, #{ms.color('surface-gradient-to')});
+        --padding-end: #{ms.spacing('padding-5xl')};
+        --padding-start: #{ms.spacing('padding-5xl')};
+        --padding-bottom: #{ms.spacing('padding-2xl')};
+        --padding-top: #{ms.spacing('padding-2xl')};
       }
 
       &:nth-child(2) {
         --background: transparent;
-        --background-hover: var(--parsec-color-light-secondary-premiere);
-        --color: var(--parsec-color-light-secondary-text);
-        --padding-end: 0.5rem;
-        --padding-start: 0.5rem;
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+        --color: #{ms.color('text-base-body')};
+        --padding-end: #{ms.spacing('padding-lg')};
+        --padding-start: #{ms.spacing('padding-lg')};
       }
     }
   }

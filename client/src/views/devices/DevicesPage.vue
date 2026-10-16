@@ -4,7 +4,7 @@
   <div class="devices-container">
     <ion-button
       id="add-device-button"
-      class="button-normal button-default"
+      class="button-normal"
       fill="clear"
       @click="onAddDeviceClick()"
     >
@@ -94,9 +94,9 @@ async function onAddDeviceClick(): Promise<void> {
   flex-direction: column;
   justify-content: end;
   position: relative;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
-  padding: 1.5rem;
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page');
+  padding: ms.spacing('padding-4xl');
   box-shadow:
     0 1px 1px 0 rgba(0, 0, 0, 0.05),
     0 1px 4px 0 rgba(0, 0, 0, 0.03),
@@ -105,9 +105,9 @@ async function onAddDeviceClick(): Promise<void> {
 
 #add-device-button {
   margin-left: auto;
-  --background: var(--parsec-color-light-secondary-text);
-  --background-hover: var(--parsec-color-light-secondary-contrast);
-  color: var(--parsec-color-light-secondary-white);
+  --background: #{ms.color('surface-neutral-default')};
+  --background-hover: #{ms.color('surface-neutral-default-hover')};
+  color: ms.color('text-on-color-heading');
 
   @include ms.responsive-breakpoint('xs') {
     position: fixed;
@@ -130,7 +130,7 @@ async function onAddDeviceClick(): Promise<void> {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 </style>

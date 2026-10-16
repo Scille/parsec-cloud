@@ -3,17 +3,17 @@
 <template>
   <div class="client-page-processing">
     <div class="processing-text">
-      <ion-text class="processing-text__title title-h1">
+      <ion-text class="processing-text__title">
         {{ $msTranslate('clientArea.dashboard.processing.title') }}
       </ion-text>
-      <ion-text class="processing-text__subtitle body-lg">
+      <ion-text class="processing-text__subtitle">
         {{ $msTranslate('clientArea.dashboard.processing.subtitle') }}
       </ion-text>
     </div>
 
     <div class="processing-step">
-      <ion-text class="processing-step__title title-h4">{{ $msTranslate('clientArea.dashboard.processing.stepTitle') }}</ion-text>
-      <ion-text class="processing-step__description body">{{ $msTranslate('clientArea.dashboard.processing.stepDescription') }}</ion-text>
+      <ion-text class="processing-step__title">{{ $msTranslate('clientArea.dashboard.processing.stepTitle') }}</ion-text>
+      <ion-text class="processing-step__description">{{ $msTranslate('clientArea.dashboard.processing.stepDescription') }}</ion-text>
       <ms-image
         class="processing-step__image"
         :image="LogoRowGradient"
@@ -31,24 +31,26 @@ import { LogoRowGradient, MsImage } from 'megashark-lib';
 .client-page-processing {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
   margin-left: 1rem;
 }
 
 .processing-text {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   .processing-text__title {
-    background: var(--parsec-color-light-gradient-background);
+    @include ms.font('heading-h2');
+    background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   &__subtitle {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-base-description');
     max-width: 28rem;
   }
 }
@@ -57,18 +59,20 @@ import { LogoRowGradient, MsImage } from 'megashark-lib';
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   max-width: 25rem;
-  border-radius: var(--parsec-radius-12);
-  box-shadow: var(--parsec-shadow-light);
-  padding: 1.5rem;
+  border-radius: ms.radius('2xl');
+  box-shadow: ms.shadow('light');
+  padding: ms.spacing('padding-4xl');
 
   &__title {
-    color: var(--parsec-color-light-primary-600);
+    @include ms.font('heading-h5');
+    color: ms.color('text-brand-default');
   }
 
   &__description {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-neutral-default');
   }
 
   &__image {

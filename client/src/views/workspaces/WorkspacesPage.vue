@@ -16,7 +16,7 @@
             class="counter"
             v-show="!search"
           >
-            <ion-text class="body">
+            <ion-text>
               {{
                 $msTranslate({
                   key: 'WorkspacesPage.itemCount',
@@ -115,14 +115,14 @@
 
         <div
           v-if="!querying && filteredWorkspaces.length === 0"
-          class="no-workspaces body-lg"
+          class="no-workspaces"
         >
           <div
             class="no-all-workspaces"
             v-if="workspaceMenuState === WorkspaceMenu.All && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="NoWorkspace"
+              :image="isDarkTheme ? NoWorkspaceDark : NoWorkspace"
               class="no-workspaces__image"
             />
             <ion-text v-if="workspaceList.length > 0">
@@ -142,7 +142,6 @@
               v-if="showHiddenWorkspacesButton"
               @click="workspaceMenuState = WorkspaceMenu.Hidden"
               id="show-hidden-workspaces"
-              class="button-default button-medium"
             >
               {{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspaces') }}
             </ion-button>
@@ -150,11 +149,14 @@
               v-if="workspaceList.length === 0"
               v-show="clientProfile !== UserProfile.Outsider"
               id="new-workspace"
-              class="button-default button-large"
+              class="button-large"
               fill="outline"
               @click="actions.openCreateWorkspaceModal()"
             >
-              <ion-icon :icon="addCircle" />
+              <ion-icon
+                class="button-icon-left"
+                :icon="addCircle"
+              />
               {{ $msTranslate('WorkspacesPage.createWorkspace') }}
             </ion-button>
           </div>
@@ -163,7 +165,7 @@
             v-if="workspaceMenuState === WorkspaceMenu.Recent && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="NoRecentWorkspaces"
+              :image="isDarkTheme ? NoRecentWorkspaceDark : NoRecentWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
@@ -175,7 +177,7 @@
             v-if="workspaceMenuState === WorkspaceMenu.Favorites && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="NoFavoriteWorkspaces"
+              :image="isDarkTheme ? NoFavoriteWorkspaceDark : NoFavoriteWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
@@ -187,7 +189,7 @@
             v-if="workspaceMenuState === WorkspaceMenu.Hidden && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="NoHiddenWorkspaces"
+              :image="isDarkTheme ? NoHiddenWorkspaceDark : NoHiddenWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
@@ -252,9 +254,6 @@
 </template>
 
 <script setup lang="ts">
-import NoFavoriteWorkspaces from '@/assets/images/no-favorite-workspaces.svg?raw';
-import NoHiddenWorkspaces from '@/assets/images/no-hidden-workspaces.svg?raw';
-import NoRecentWorkspaces from '@/assets/images/no-recent-workspaces.svg?raw';
 import { FileSearchResults } from '@/components/files';
 import { FileSearch } from '@/components/files/handler/viewer/types';
 import {
@@ -312,7 +311,15 @@ import {
   MsSorter,
   MsSorterChangeEvent,
   MsSpinner,
+  NoFavoriteWorkspace,
+  NoFavoriteWorkspaceDark,
+  NoHiddenWorkspace,
+  NoHiddenWorkspaceDark,
+  NoRecentWorkspace,
+  NoRecentWorkspaceDark,
   NoWorkspace,
+  NoWorkspaceDark,
+  useTheme,
   useWindowSize,
 } from 'megashark-lib';
 import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref } from 'vue';
@@ -329,6 +336,7 @@ const contextMenu = useWorkspaceContextMenu(false);
 const workspaceAttributes = useWorkspaceAttributes();
 const actions = useWorkspaceActions();
 
+const { isDarkTheme } = useTheme();
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const sortBy = ref(SortWorkspaceBy.Name);
@@ -807,23 +815,29 @@ async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFi
 </script>
 
 <style lang="scss" scoped>
+.counter {
+  @include ms.font('body-md-regular');
+}
+
 .content-scroll {
   &::part(background) {
     @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-page');
     }
   }
 
   &::part(scroll) {
     @include ms.responsive-breakpoint('sm') {
-      padding-top: 1rem;
+      padding-top: ms.spacing('padding-3xl');
     }
   }
 }
 
 .no-workspaces {
+  @include ms.font('body-lg-regular');
+
   max-width: 30rem;
-  color: var(--parsec-color-light-secondary-soft-text);
+  color: ms.color('text-neutral-default');
   display: flex;
   justify-content: center;
   margin: auto;
@@ -840,24 +854,25 @@ async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFi
   .no-recent-workspaces,
   .no-favorite-workspaces,
   .no-hidden-workspaces {
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('lg');
     display: flex;
     height: fit-content;
     text-align: center;
     flex-direction: column;
     justify-content: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     align-items: center;
-    padding: 3rem 1rem;
+    padding: ms.spacing('padding-7xl') ms.spacing('padding-3xl');
+
+    #show-hidden-workspaces {
+      @include ms.font('label-md-medium');
+    }
 
     #new-workspace {
+      @include ms.font('label-lg-medium');
+
       display: flex;
       align-items: center;
-
-      ion-icon {
-        margin-inline: 0em;
-        margin-right: 0.375rem;
-      }
     }
   }
 
@@ -881,21 +896,21 @@ async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFi
   @include ms.responsive-breakpoint('sm') {
     position: sticky;
     z-index: 10;
-    background: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-strong);
-    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    background: ms.color('surface-base-default');
+    box-shadow: ms.shadow('strong');
+    border-radius: ms.radius('4xl') ms.radius('4xl') 0 0;
   }
 }
 
 .workspaces-container-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5em;
+  gap: ms.spacing('gap-4xl');
   overflow: visible;
-  padding: 0.75rem 0 1.5rem 0;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-none');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl');
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
@@ -906,28 +921,28 @@ async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFi
 }
 
 .workspaces-container-list {
-  padding: 1rem 0;
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-none');
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   position: relative;
   z-index: 4;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl');
   }
 }
 
 .workspace-filters-menu {
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   align-items: center;
-  padding: 1.5rem 2rem 0;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl') ms.spacing('padding-none');
 
   @include ms.responsive-breakpoint('lg') {
     width: 100%;
     flex-direction: column;
-    padding: 1.5rem 1.25rem 0;
+    padding: ms.spacing('padding-4xl') 1.25rem ms.spacing('padding-none');
   }
 }
 
@@ -935,16 +950,16 @@ async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFi
   position: relative;
   z-index: 3;
   align-self: stretch;
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-white);
-  padding: 0.5rem 0.875rem;
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  background: ms.color('surface-base-default');
+  padding: ms.spacing('padding-lg') 0.875rem;
   display: flex;
   align-items: center;
-  color: var(--parsec-color-light-secondary-grey);
-  --checkbox-background-checked: var(--parsec-color-light-secondary-text);
-  --checkbox-border-checked: var(--parsec-color-light-secondary-text);
-  --border-color-checked: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-description');
+  --checkbox-background-checked: #{ms.color('surface-neutral-default')};
+  --checkbox-border-checked: #{ms.color('border-neutral-default')};
+  --border-color-checked: #{ms.color('border-neutral-default')};
   transition: all 0.2s ease-in-out;
 
   &::part(label) {
@@ -952,17 +967,17 @@ async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFi
   }
 
   &.checkbox-checked::part(container) {
-    border-color: var(--parsec-color-light-secondary-text);
+    border-color: ms.color('border-neutral-default');
   }
 
   &:hover {
-    box-shadow: var(--parsec-shadow-soft);
+    box-shadow: ms.shadow('light');
   }
 
   &:is(.checkbox-checked) {
-    box-shadow: var(--parsec-shadow-soft);
-    border-color: var(--parsec-color-light-secondary-light);
-    color: var(--parsec-color-light-secondary-text);
+    box-shadow: ms.shadow('light');
+    border-color: ms.color('border-base-default-hover');
+    color: ms.color('text-base-body');
   }
 
   @include ms.responsive-breakpoint('lg') {
@@ -972,14 +987,14 @@ async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFi
 
 .workspace-filters-menu {
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   align-items: center;
-  padding: 1.5rem 2rem 0.5rem;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl') ms.spacing('padding-lg');
 
   @include ms.responsive-breakpoint('lg') {
     width: 100%;
     flex-direction: column;
-    padding: 1.5rem 1.25rem 0;
+    padding: ms.spacing('padding-4xl') 1.25rem ms.spacing('padding-none');
   }
 }
 </style>

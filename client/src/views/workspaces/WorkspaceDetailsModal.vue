@@ -12,12 +12,12 @@
             <ion-icon :icon="business" />
           </div>
           <div class="workspace-header-text">
-            <ion-text class="workspace-header-text__name title-h4">
+            <ion-text class="workspace-header-text__name">
               {{ workspace.name }}
             </ion-text>
             <ion-text
               v-if="false"
-              class="workspace-header-text__status body"
+              class="workspace-header-text__status"
             >
               {{ $msTranslate(workspace.availableOffline ? 'WorkspaceDetails.availableOffline' : 'WorkspaceDetails.notAvailableOffline') }}
             </ion-text>
@@ -25,11 +25,11 @@
         </div>
 
         <div class="workspace-section">
-          <ion-text class="workspace-section__title subtitles-sm">{{ $msTranslate('WorkspaceDetails.generalInfo') }}</ion-text>
+          <ion-text class="workspace-section__title">{{ $msTranslate('WorkspaceDetails.generalInfo') }}</ion-text>
           <div class="workspace-info">
             <!-- Role -->
             <div class="workspace-info-item">
-              <ion-label class="workspace-info-item__title subtitles-sm">
+              <ion-label class="workspace-info-item__title">
                 {{ $msTranslate('WorkspaceDetails.role') }}
               </ion-label>
               <workspace-role-tag
@@ -42,10 +42,10 @@
               class="workspace-info-item"
               v-if="workspace.created"
             >
-              <ion-label class="workspace-info-item__title subtitles-sm">
+              <ion-label class="workspace-info-item__title">
                 {{ $msTranslate('WorkspaceDetails.created') }}
               </ion-label>
-              <ion-text class="workspace-info-item__value body">
+              <ion-text class="workspace-info-item__value">
                 {{ $msTranslate(I18n.formatDate(workspace.created, 'full')) }}
               </ion-text>
             </div>
@@ -60,7 +60,7 @@
                 class="workspace-rights-item__icon"
                 :icon="checkmark"
               />
-              <ion-text class="workspace-rights-item__text body-sm">
+              <ion-text class="workspace-rights-item__text">
                 {{ $msTranslate(right) }}
               </ion-text>
             </li>
@@ -68,13 +68,13 @@
           <technical-id :id="workspace.id" />
         </div>
         <div class="workspace-section">
-          <ion-text class="workspace-section__title subtitles-sm">{{ $msTranslate('export.exportWorkspaceTitle') }}</ion-text>
+          <ion-text class="workspace-section__title">{{ $msTranslate('export.exportWorkspaceTitle') }}</ion-text>
           <div class="workspace-export">
-            <ion-text class="workspace-export__description body">
+            <ion-text class="workspace-export__description">
               {{ $msTranslate('export.exportWorkspaceDescription') }}
             </ion-text>
             <ion-button
-              class="workspace-export__button button-medium"
+              class="workspace-export__button"
               @click="downloadWorkspaceExport"
               v-show="workspace.selfRole === RealmRole.Owner"
               fill="clear"
@@ -144,7 +144,7 @@ async function downloadWorkspaceExport(): Promise<void> {
 .workspace-details {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   @include ms.responsive-breakpoint('sm') {
     margin-bottom: 2rem;
@@ -154,36 +154,40 @@ async function downloadWorkspaceExport(): Promise<void> {
 .workspace-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 
   &__icon {
     display: flex;
-    padding: 0.5rem;
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-primary-50);
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('lg');
+    background: ms.color('surface-brand-default-subtle');
     flex-shrink: 0;
 
     ion-icon {
       font-size: 1.5rem;
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('icon-brand-default');
     }
   }
 
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: ms.spacing('gap-xs');
     min-width: 0;
 
     &__name {
-      color: var(--parsec-color-light-secondary-black);
+      @include ms.font('heading-h5');
+
+      color: ms.color('text-base-heading');
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     &__status {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+
+      color: ms.color('text-base-description');
     }
   }
 }
@@ -193,7 +197,9 @@ async function downloadWorkspaceExport(): Promise<void> {
   flex-direction: column;
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('body-md-medium');
+
+    color: ms.color('text-base-body');
     margin-bottom: 0.5rem;
   }
 }
@@ -201,29 +207,31 @@ async function downloadWorkspaceExport(): Promise<void> {
 .workspace-rights {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   margin: 0;
-  padding: 0.625rem;
+  padding: ms.spacing('padding-xl');
   list-style: none;
-  border-right: 1px solid var(--parsec-color-light-secondary-medium);
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-  border-left: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: 0 0 var(--parsec-radius-8) var(--parsec-radius-8);
+  border-right: ms.border('thin') solid ms.color('border-base-default');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
+  border-left: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: 0 0 ms.radius('lg') ms.radius('lg');
   margin-bottom: 0.75rem;
 
   &-item {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
 
     &__icon {
       flex-shrink: 0;
       font-size: 0.875rem;
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('icon-brand-default');
     }
 
     &__text {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-sm-regular');
+
+      color: ms.color('text-base-body');
     }
   }
 }
@@ -231,32 +239,36 @@ async function downloadWorkspaceExport(): Promise<void> {
 .workspace-info {
   display: flex;
   overflow: hidden;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('lg') ms.radius('lg') 0 0;
 
   &-item {
     display: flex;
     flex-direction: column;
     flex: 1 0 0;
-    gap: 0.5rem;
-    padding: 0.625rem 1rem;
-    background: var(--parsec-color-light-secondary-premiere);
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-default-secondary');
 
     &:not(:last-child) {
-      border-right: 1px solid var(--parsec-color-light-secondary-disabled);
+      border-right: ms.border('thin') solid ms.color('border-base-default');
     }
 
     &__title {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-medium');
+
+      color: ms.color('text-base-description');
     }
 
     &__role {
       align-self: flex-start;
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-page');
     }
 
     &__value {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-md-regular');
+
+      color: ms.color('text-base-body');
     }
   }
 }
@@ -265,29 +277,33 @@ async function downloadWorkspaceExport(): Promise<void> {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--parsec-radius-8);
-  background: var(--parsec-color-surface-base-default-secondary, var(--parsec-color-light-secondary-premiere));
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default-secondary');
 
   &__description {
-    color: var(--parsec-color-text-base-body, var(--parsec-color-light-secondary-text));
+    @include ms.font('body-md-regular');
+
+    color: ms.color('text-base-body');
   }
 
   &__button {
-    --background: var(--parsec-color-surface-base-default, var(--parsec-color-light-secondary-white));
-    --background-hover: var(--parsec-color-surface-base-default-secondary, var(--parsec-color-light-secondary-premiere));
-    --color: var(--parsec-color-text-neutral-default, var(--parsec-color-light-secondary-hard-grey));
-    --border-radius: var(--parsec-radius-8);
-    --padding-top: 0.625rem;
-    --padding-bottom: 0.625rem;
-    --padding-start: 0.75rem;
-    --padding-end: 0.75rem;
+    @include ms.font('label-md-medium');
+
+    --background: #{ms.color('surface-base-default')};
+    --background-hover: #{ms.color('surface-base-default-secondary')};
+    --color: #{ms.color('text-neutral-default')};
+    --border-radius: #{ms.radius('lg')};
+    --padding-top: #{ms.spacing('padding-xl')};
+    --padding-bottom: #{ms.spacing('padding-xl')};
+    --padding-start: #{ms.spacing('padding-2xl')};
+    --padding-end: #{ms.spacing('padding-2xl')};
     min-width: 5rem;
     min-height: 0;
     margin: 0;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-8);
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('lg');
   }
 }
 </style>
