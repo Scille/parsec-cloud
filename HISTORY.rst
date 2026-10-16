@@ -8,6 +8,28 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.10.1-a.0.dev.20742+46450b5 (2026-10-16)
+-------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Import an image into a document from the current workspace or the PC
+  (`#13525 <https://github.com/Scille/parsec-cloud/issues/13525>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added a field in pending user invitations displaying which administrator
+  created the invitation
+  (`#13390 <https://github.com/Scille/parsec-cloud/issues/13390>`__)
+
+* Fixed broken application icons in the MacOS ``.dmg``
+  (`#13518 <https://github.com/Scille/parsec-cloud/issues/13518>`__)
+
+
+
 Parsec v3.10.0 (2026-09-29)
 ---------------------------
 
