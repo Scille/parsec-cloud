@@ -106,7 +106,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Join requests (PKI/SSO)',
+      'Join requests',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
     await page.locator('.toggle-view-container').locator('.pki-button').click();
@@ -224,7 +224,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Join requests (PKI/SSO)',
+      'Join requests',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('0');
     await page.locator('.toggle-view-container').locator('.pki-button').click();
@@ -256,7 +256,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Join requests (PKI/SSO)',
+      'Join requests',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
     await page.locator('.toggle-view-container').locator('.pki-button').click();

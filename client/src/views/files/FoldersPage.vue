@@ -17,7 +17,7 @@
       >
         <div class="right-side">
           <ion-text
-            class="button-medium read-only-info"
+            class="read-only-info"
             v-if="workspaceInfo?.isArchived || workspaceInfo?.isTrashed"
           >
             <ion-icon
@@ -45,7 +45,7 @@
             v-show="!search"
           >
             <ion-text
-              class="body"
+              class="counter-text"
               v-if="selectedFilesCount === 0"
             >
               {{
@@ -57,7 +57,7 @@
               }}
             </ion-text>
             <ion-text
-              class="body item-selected"
+              class="counter-text item-selected"
               v-if="selectedFilesCount > 0"
             >
               {{ $msTranslate({ key: 'FoldersPage.itemSelectedCount', data: { count: selectedFilesCount }, count: selectedFilesCount }) }}
@@ -143,7 +143,7 @@
 
         <div
           v-if="!querying && itemsToShow === 0"
-          class="no-files body-lg"
+          class="no-files"
         >
           <file-drop-zone
             :show-drop-message="true"
@@ -171,7 +171,7 @@
               class="no-files-content"
               v-else
             >
-              <ms-image :image="EmptyFolder" />
+              <ms-image :image="isDarkTheme ? NoFileImportedDark : NoFileImported" />
               <ion-text>
                 {{ $msTranslate('FoldersPage.emptyFolder') }}
               </ion-text>
@@ -240,7 +240,6 @@ import * as parsec from '@/parsec';
 import {
   DisplayState,
   DocumentImport,
-  EmptyFolder,
   EyeOpenIcon,
   I18n,
   MsActionBar,
@@ -255,11 +254,14 @@ import {
   MsSorter,
   MsSorterChangeEvent,
   MsSpinner,
+  NoFileImported,
+  NoFileImportedDark,
   RenameIcon,
   Translatable,
   asyncComputed,
   getTextFromUser,
   openSpinnerModal,
+  useTheme,
   useWindowSize,
 } from 'megashark-lib';
 
@@ -341,6 +343,7 @@ const customTabBar = useCustomTabBar();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const { hideHeader, showHeader } = useHeaderControl();
+const { isDarkTheme } = useTheme();
 
 const msSorterOptions: MsOptions = new MsOptions([
   { label: 'FoldersPage.sort.byName', key: SortProperty.Name },
@@ -1658,13 +1661,13 @@ async function startSearch(pattern: string): Promise<void> {
 
   &::part(background) {
     @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-default-secondary');
     }
   }
 
   &::part(scroll) {
     @include ms.responsive-breakpoint('sm') {
-      padding-top: 1rem;
+      padding-top: ms.spacing('padding-3xl');
     }
   }
 }
@@ -1676,14 +1679,18 @@ async function startSearch(pattern: string): Promise<void> {
   @include ms.responsive-breakpoint('sm') {
     position: sticky;
     z-index: 10;
-    background: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-strong);
-    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    background: ms.color('surface-base-default');
+    box-shadow: ms.shadow('strong');
+    border-radius: ms.radius('4xl') ms.radius('4xl') 0 0;
   }
 }
 
 .folder-container div:not(.no-files-content div) {
   height: 100%;
+}
+
+.counter-text {
+  @include ms.font('body-md-regular');
 }
 
 .loading-files-content {
@@ -1699,41 +1706,35 @@ async function startSearch(pattern: string): Promise<void> {
 
   &-buttons {
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.5rem 0.75rem;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
       width: 100%;
       justify-content: flex-end;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+      border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
     }
   }
 }
 
 .search-mobile-container {
   height: auto !important;
-  padding: 1.5rem 1rem 0.5rem 1rem !important;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl') ms.spacing('padding-lg') ms.spacing('padding-3xl') !important;
 
   .search-input-mobile {
     height: auto !important;
-    background: var(--parsec-color-light-secondary-background);
+    background: ms.color('surface-base-default-secondary');
 
     &.input-content:focus-within:not(.form-input-disabled) {
-      background: var(--parsec-color-light-secondary-white);
+      background: ms.color('surface-base-default');
     }
   }
-}
-
-.workspace-role-tag {
-  background: var(--parsec-color-light-secondary-white);
-  padding: 0.25rem;
-  border-radius: var(--parsec-radius-32);
-  border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
 .read-only-info {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 0.5rem;
-  color: var(--parsec-color-light-primary-600);
+  gap: ms.spacing('gap-lg');
+  @include ms.font('label-md-medium');
+  color: ms.color('text-brand-default');
 
   &__icon {
     width: 1rem;
@@ -1742,20 +1743,21 @@ async function startSearch(pattern: string): Promise<void> {
 }
 
 .no-files {
+  @include ms.font('body-lg-regular');
   width: 100%;
 
   &-content {
     width: 100%;
     height: 100%;
     margin: auto;
-    color: var(--parsec-color-light-secondary-grey);
-    border-radius: var(--parsec-radius-8);
+    color: ms.color('text-base-description');
+    border-radius: ms.radius('lg');
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 2rem 1rem;
+    gap: ms.spacing('gap-3xl');
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   }
 }
 
@@ -1764,8 +1766,8 @@ async function startSearch(pattern: string): Promise<void> {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 2rem 1rem;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   max-width: 30rem;
   margin: auto;
 

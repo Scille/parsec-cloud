@@ -19,7 +19,7 @@
       class="creditCard-checkbox"
       justify="start"
     >
-      <span class="subtitles-normal">{{ $msTranslate('clientArea.paymentMethodsPage.useAsDefault') }}</span>
+      <span class="creditCard-checkbox__label">{{ $msTranslate('clientArea.paymentMethodsPage.useAsDefault') }}</span>
     </ion-toggle>
     <span
       v-show="error"
@@ -96,8 +96,12 @@ async function confirm(): Promise<boolean> {
 .creditCard-checkbox {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  color: var(--parsec-color-light-secondary-hard-grey);
+  gap: ms.spacing('gap-3xl');
+  color: ms.color('text-base-description');
   margin-top: 1.5rem;
+}
+
+.creditCard-checkbox__label {
+  @include ms.font('body-lg-medium');
 }
 </style>

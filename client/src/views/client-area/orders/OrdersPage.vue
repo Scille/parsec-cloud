@@ -5,7 +5,7 @@
     <!-- header -->
     <div class="orders-new">
       <div class="orders-new-title">
-        <ion-text class="orders-new-title__text subtitles-normal">
+        <ion-text class="orders-new-title__text">
           {{ $msTranslate('clientArea.orders.new.title') }}
         </ion-text>
         <ion-button
@@ -26,13 +26,13 @@
     <template v-if="querying">
       <div class="loading-container">
         <ms-spinner />
-        <ion-text class="body-lg loading-text">{{ $msTranslate('clientArea.orders.loading') }}</ion-text>
+        <ion-text class="loading-text">{{ $msTranslate('clientArea.orders.loading') }}</ion-text>
       </div>
     </template>
 
     <!-- error -->
     <template v-if="!querying && error">
-      <ion-text class="body-lg no-orders">
+      <ion-text class="no-orders">
         {{ $msTranslate(error) }}
       </ion-text>
     </template>
@@ -104,8 +104,9 @@ async function openNewOrderModal(): Promise<void> {
 
 .client-page-orders {
   display: flex;
+  height: auto;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   position: relative;
 
   &::after {
@@ -123,13 +124,14 @@ async function openNewOrderModal(): Promise<void> {
   width: 100%;
   height: 100%;
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   flex-direction: column;
   justify-content: center;
   align-items: center;
 
   .loading-text {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-neutral-default');
   }
 }
 
@@ -137,27 +139,31 @@ async function openNewOrderModal(): Promise<void> {
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-title {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-end;
+    gap: ms.spacing('gap-3xl');
     width: 100%;
-    padding: 1rem 1.5rem;
-    background: var(--parsec-color-light-secondary-background);
-    border-radius: var(--parsec-radius-8);
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
+    border-radius: ms.radius('lg');
 
     &__button::part(native) {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
-      color: var(--parsec-color-light-secondary-white);
+      --background: #{ms.color('surface-neutral-default')};
+      --background-hover: #{ms.color('surface-neutral-default-hover')};
+      color: ms.color('text-neutral-on-color');
     }
 
     &__text {
-      color: var(--parsec-color-light-secondary-soft-text);
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-neutral-default');
     }
   }
+}
+
+.no-orders {
+  @include ms.font('body-lg-regular');
 }
 </style>

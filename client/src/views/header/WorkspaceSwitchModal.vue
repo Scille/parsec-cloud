@@ -16,7 +16,7 @@
           :icon="business"
           class="switch-item__icon"
         />
-        <ion-text class="subtitles-normal">{{ $msTranslate('HeaderPage.titles.workspaces') }}</ion-text>
+        <ion-text class="switch-item__label">{{ $msTranslate('HeaderPage.titles.workspaces') }}</ion-text>
 
         <ion-icon
           v-if="selectedRoute === Routes.Workspaces"
@@ -35,7 +35,7 @@
           :icon="archive"
           class="switch-item__icon"
         />
-        <ion-text class="subtitles-normal">{{ $msTranslate('HeaderPage.titles.archived') }}</ion-text>
+        <ion-text class="switch-item__label">{{ $msTranslate('HeaderPage.titles.archived') }}</ion-text>
 
         <ion-icon
           v-if="selectedRoute === Routes.Archived"
@@ -54,7 +54,7 @@
           :icon="trash"
           class="switch-item__icon"
         />
-        <ion-text class="subtitles-normal">{{ $msTranslate('HeaderPage.titles.trashed') }}</ion-text>
+        <ion-text class="switch-item__label">{{ $msTranslate('HeaderPage.titles.trashed') }}</ion-text>
 
         <ion-icon
           v-if="selectedRoute === Routes.Trash"
@@ -65,7 +65,7 @@
     </ion-radio-group>
 
     <ion-button
-      class="workspace-switch-button button-medium button-default"
+      class="workspace-switch-button"
       size="default"
       fill="solid"
       @click="validate"
@@ -97,32 +97,31 @@ async function validate(): Promise<void> {
 .workspace-switch-modal-container {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
 }
 
 .workspace-switch-content {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   .switch-item {
-    gap: 0.5rem;
-    font-size: var(--parsec-font-size-md);
-    color: var(--parsec-color-light-secondary-soft-text);
-    padding: 1rem;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-12);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-neutral-default');
+    padding: ms.spacing('padding-3xl');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl');
     width: 100%;
 
     &::part(label) {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       margin: 0;
       width: 100%;
     }
@@ -131,30 +130,35 @@ async function validate(): Promise<void> {
       display: none;
     }
 
+    &__label {
+      @include ms.font('body-lg-medium');
+    }
+
     &__icon {
       font-size: 1.25rem;
-      color: var(--parsec-color-light-secondary-soft-text);
+      color: ms.color('icon-neutral-default');
     }
 
     &__check-icon {
       font-size: 1.25rem;
       margin-left: auto;
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('icon-brand-default');
     }
 
     &.radio-checked {
-      border-color: var(--parsec-color-light-primary-600);
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-600);
+      border-color: ms.color('border-brand-default');
+      background: ms.color('surface-brand-default-subtle');
+      color: ms.color('text-brand-default');
 
       .switch-item__icon {
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('icon-brand-default');
       }
     }
   }
 }
 
 .workspace-switch-button {
+  @include ms.font('label-md-medium');
   width: 100%;
 }
 </style>

@@ -1186,7 +1186,7 @@ function getBackButtonTitle(): string {
 
     @include ms.responsive-breakpoint('sm') {
       padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl') ms.spacing('padding-none');
-      margin-bottom: 1rem;
+      margin-bottom: ms.spacing('padding-3xl');
     }
   }
 

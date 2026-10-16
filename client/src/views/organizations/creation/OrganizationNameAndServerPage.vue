@@ -19,7 +19,7 @@
           ref="organizationNameInput"
           :validator="organizationValidator"
         />
-        <ion-text class="subtitles-sm org-name-criteria">
+        <ion-text class="org-name-criteria">
           {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
         </ion-text>
       </div>
@@ -41,7 +41,7 @@
 
       <!-- error -->
       <ion-text
-        class="form-error body login-button-error"
+        class="form-error login-button-error"
         v-show="error"
       >
         <ion-icon
@@ -53,7 +53,7 @@
     <ion-footer class="organization-name-and-server-page-footer">
       <ion-text
         button
-        class="advanced-settings button-medium"
+        class="advanced-settings"
         @click="advancedSettings = !advancedSettings"
       >
         <ion-icon :icon="advancedSettings ? remove : add" />
@@ -63,22 +63,19 @@
         <ion-button
           fill="clear"
           size="default"
-          class="button-medium"
           id="previous-button"
           @click="$emit('goBackRequested')"
           v-show="!hidePrevious"
         >
-          {{ $msTranslate('CreateOrganization.button.previous') }}
           <ion-icon
-            slot="start"
+            class="button-icon-left"
             :icon="chevronBack"
-            size="small"
           />
+          {{ $msTranslate('CreateOrganization.button.previous') }}
         </ion-button>
         <ion-button
           fill="solid"
           size="default"
-          class="button-medium"
           @click="$emit('organizationNameAndServerChosen', organizationName, serverAddr, sequesterKeyInputRef?.getKey())"
           :disabled="!valid || querying"
         >
@@ -86,9 +83,8 @@
             {{ $msTranslate('CreateOrganization.button.next') }}
           </span>
           <ion-icon
-            slot="start"
+            class="button-icon-right"
             :icon="chevronForward"
-            size="small"
           />
           <ms-spinner
             class="confirm-button-spinner"
@@ -164,24 +160,29 @@ onMounted(async () => {
   height: 100%;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.5rem 2rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('xs') {
-    padding: 0.5rem 1.5rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-4xl');
   }
 }
 
 .organization-name {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   width: 100%;
   margin-bottom: 1.5rem;
 }
 
+.login-button-error {
+  @include ms.font('body-md-regular');
+}
+
 .org-name-criteria {
-  color: var(--parsec-color-light-secondary-hard-grey);
+  @include ms.font('body-md-medium');
+  color: ms.color('text-base-description');
 }
 
 .confirm-button-spinner {
@@ -189,10 +190,11 @@ onMounted(async () => {
 }
 
 .advanced-settings {
+  @include ms.font('label-md-medium');
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   margin-right: auto;
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-description');
   cursor: pointer;
 
   @include ms.responsive-breakpoint('sm') {

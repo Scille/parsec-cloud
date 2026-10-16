@@ -154,14 +154,14 @@ async function toggleFullScreen(): Promise<void> {
   align-items: center;
   height: 100%;
   width: 100%;
-  // overflow: auto;
-  background: var(--parsec-color-light-secondary-premiere);
+  background-color: ms.color('surface-base-page');
 }
+
 .image-viewer {
   display: flex;
   width: fit-content;
   height: fit-content;
-  padding: 2rem;
+  padding: ms.spacing('padding-5xl');
 }
 
 img {
@@ -169,7 +169,7 @@ img {
   transition: all ease-in-out;
   max-width: 100%;
   max-height: 100%;
-  box-shadow: var(--parsec-shadow-light);
+  box-shadow: ms.shadow('light');
   transform: scale(v-bind(zoomLevel));
   user-select: none;
 }

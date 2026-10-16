@@ -7,7 +7,7 @@
         <!-- active users -->
         <div class="users active">
           <div class="users-text">
-            <ion-title class="users-active-text__title title-h4">
+            <ion-title class="users-active-text__title">
               {{ $msTranslate('clientArea.statistics.titles.users') }}
               {{ $msTranslate('clientArea.statistics.titles.active') }}
             </ion-title>
@@ -15,32 +15,32 @@
           <div class="users-cards-list">
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
-                <ion-text class="users-cards-list-item-text__title body-sm">
+                <ion-text class="users-cards-list-item-text__title">
                   {{ $msTranslate({ key: 'clientArea.statistics.admin', count: stats.adminUsersDetail.active }) }}
                 </ion-text>
-                <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.active }}</ion-text>
+                <ion-text class="users-cards-list-item-text__number">{{ stats.adminUsersDetail.active }}</ion-text>
               </div>
             </ion-card>
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
-                <ion-text class="users-cards-list-item-text__title body-sm">
+                <ion-text class="users-cards-list-item-text__title">
                   {{ $msTranslate({ key: 'clientArea.statistics.standard', count: stats.standardUsersDetail.active }) }}
                 </ion-text>
-                <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.active }}</ion-text>
+                <ion-text class="users-cards-list-item-text__number">{{ stats.standardUsersDetail.active }}</ion-text>
               </div>
             </ion-card>
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
-                <ion-text class="users-cards-list-item-text__title body-sm">
+                <ion-text class="users-cards-list-item-text__title">
                   {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: stats.outsiderUsersDetail.active }) }}
                 </ion-text>
-                <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.active }}</ion-text>
+                <ion-text class="users-cards-list-item-text__number">{{ stats.outsiderUsersDetail.active }}</ion-text>
               </div>
             </ion-card>
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
-                <ion-text class="users-cards-list-item-text__title body-sm">{{ $msTranslate('clientArea.statistics.total') }}</ion-text>
-                <ion-text class="users-cards-list-item-text__number title-h1">
+                <ion-text class="users-cards-list-item-text__title">{{ $msTranslate('clientArea.statistics.total') }}</ion-text>
+                <ion-text class="users-cards-list-item-text__number">
                   {{ stats.outsiderUsersDetail.active + stats.adminUsersDetail.active + stats.standardUsersDetail.active }}
                 </ion-text>
               </div>
@@ -50,7 +50,7 @@
         <!-- revoked users -->
         <div class="users revoked">
           <div class="users-text">
-            <ion-title class="users-active-text__title title-h4">
+            <ion-title class="users-active-text__title">
               {{ $msTranslate('clientArea.statistics.titles.users') }}
               {{ $msTranslate('clientArea.statistics.titles.revoked') }}
             </ion-title>
@@ -58,26 +58,26 @@
           <div class="users-cards-list">
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
-                <ion-text class="users-cards-list-item-text__title body-sm">
+                <ion-text class="users-cards-list-item-text__title">
                   {{ $msTranslate({ key: 'clientArea.statistics.admin', count: stats.adminUsersDetail.revoked }) }}
                 </ion-text>
-                <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.revoked }}</ion-text>
+                <ion-text class="users-cards-list-item-text__number">{{ stats.adminUsersDetail.revoked }}</ion-text>
               </div>
             </ion-card>
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
-                <ion-text class="users-cards-list-item-text__title body-sm">
+                <ion-text class="users-cards-list-item-text__title">
                   {{ $msTranslate({ key: 'clientArea.statistics.standard', count: stats.standardUsersDetail.revoked }) }}
                 </ion-text>
-                <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.revoked }}</ion-text>
+                <ion-text class="users-cards-list-item-text__number">{{ stats.standardUsersDetail.revoked }}</ion-text>
               </div>
             </ion-card>
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
-                <ion-text class="users-cards-list-item-text__title body-sm">
+                <ion-text class="users-cards-list-item-text__title">
                   {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: stats.outsiderUsersDetail.revoked }) }}
                 </ion-text>
-                <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.revoked }}</ion-text>
+                <ion-text class="users-cards-list-item-text__number">{{ stats.outsiderUsersDetail.revoked }}</ion-text>
               </div>
             </ion-card>
           </div>
@@ -88,45 +88,45 @@
         class="storage"
         v-if="includedData"
       >
-        <ion-text class="storage__title title-h4">{{ $msTranslate('clientArea.statistics.titles.storage') }}</ion-text>
+        <ion-text class="storage__title">{{ $msTranslate('clientArea.statistics.titles.storage') }}</ion-text>
 
         <div class="storage-detail">
-          <ion-text class="storage-detail__title title-h5">
+          <ion-text class="storage-detail__title">
             <span>{{ $msTranslate('clientArea.statistics.detail') }}</span>
           </ion-text>
           <div class="storage-detail-data">
-            <ion-text class="storage-detail-data__total title-h1">{{ $msTranslate(formatFileSize(totalData)) }}</ion-text>
+            <ion-text class="storage-detail-data__total">{{ $msTranslate(formatFileSize(totalData)) }}</ion-text>
             <div class="storage-detail-data-info">
               <ion-text class="storage-detail-data-info__text">
-                <span class="body">{{ $msTranslate('clientArea.statistics.data') }}</span>
-                <span class="title-h4">{{ $msTranslate(formatFileSize(stats.dataSize)) }}</span>
+                <span class="storage-detail-data-info__label">{{ $msTranslate('clientArea.statistics.data') }}</span>
+                <span class="storage-detail-data-info__value">{{ $msTranslate(formatFileSize(stats.dataSize)) }}</span>
               </ion-text>
               <ion-text class="storage-detail-data-info__text">
-                <span class="body">{{ $msTranslate('clientArea.statistics.metadata') }}</span>
-                <span class="title-h4">{{ $msTranslate(formatFileSize(stats.metadataSize)) }}</span>
+                <span class="storage-detail-data-info__label">{{ $msTranslate('clientArea.statistics.metadata') }}</span>
+                <span class="storage-detail-data-info__value">{{ $msTranslate(formatFileSize(stats.metadataSize)) }}</span>
               </ion-text>
             </div>
           </div>
         </div>
 
         <div class="storage-usage">
-          <ion-text class="storage-usage__title title-h5">
+          <ion-text class="storage-usage__title">
             <span>{{ $msTranslate('clientArea.statistics.usage') }}</span>
           </ion-text>
           <div class="usage">
             <div class="usage-data">
-              <ion-text class="usage-data__title title-h5">{{ $msTranslate('clientArea.statistics.included') }}</ion-text>
+              <ion-text class="usage-data__title">{{ $msTranslate('clientArea.statistics.included') }}</ion-text>
 
               <div class="usage-data-content">
                 <div class="usage-data-caption">
-                  <ion-text class="usage-data-caption__title title-h2">
+                  <ion-text class="usage-data-caption__title">
                     {{
                       totalData > INCLUDED_STORAGE
                         ? $msTranslate(formatFileSize(INCLUDED_STORAGE))
                         : $msTranslate(formatFileSize(totalData))
                     }}
                   </ion-text>
-                  <ion-text class="usage-data-caption__description body">
+                  <ion-text class="usage-data-caption__description">
                     {{ $msTranslate(formatFileSize(INCLUDED_STORAGE)) }}
                     <span>{{ $msTranslate('clientArea.statistics.included') }}</span>
                   </ion-text>
@@ -139,13 +139,13 @@
             </div>
 
             <div class="usage-data extra">
-              <ion-text class="usage-data__title title-h5">{{ $msTranslate('clientArea.statistics.extra') }}</ion-text>
+              <ion-text class="usage-data__title">{{ $msTranslate('clientArea.statistics.extra') }}</ion-text>
               <div class="usage-data-content">
                 <div class="usage-data-caption">
-                  <ion-text class="usage-data-caption__title title-h2">
+                  <ion-text class="usage-data-caption__title">
                     {{ $msTranslate(formatFileSize(payingData ? payingData.amount : 0)) }}
                   </ion-text>
-                  <ion-text class="usage-data-caption__description body">
+                  <ion-text class="usage-data-caption__description">
                     {{ $msTranslate('clientArea.statistics.additionalCost') }}
                   </ion-text>
                 </div>
@@ -281,7 +281,7 @@
       </div>
     </template>
     <template v-else-if="!querying && !stats && !error && organizations.length">
-      <ion-text class="organization-choice-title body-lg">
+      <ion-text class="organization-choice-title">
         {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
       </ion-text>
 
@@ -293,7 +293,7 @@
           v-if="organizations.length > 4"
         />
         <div
-          class="organization-list-item subtitles-normal"
+          class="organization-list-item"
           v-for="org in filteredOrganizations"
           :key="org.bmsId"
           @click="onOrganizationSelected(org)"
@@ -311,7 +311,7 @@
       {{ $msTranslate('clientArea.statistics.noStats') }}
     </template>
     <ion-text
-      class="statistics-error body"
+      class="statistics-error"
       v-show="error"
     >
       {{ $msTranslate(error) }}
@@ -419,7 +419,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 <style scoped lang="scss">
 .client-page-statistics {
   display: flex;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
   flex-direction: column;
   width: fit-content;
 }
@@ -427,10 +427,10 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .users-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: var(--parsec-color-light-secondary-background);
-  border-radius: var(--parsec-radius-12);
+  gap: ms.spacing('gap-4xl');
+  padding: ms.spacing('padding-4xl');
+  background: ms.color('surface-base-page');
+  border-radius: ms.radius('2xl');
   width: fit-content;
 }
 
@@ -441,23 +441,23 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
   &-text {
     display: flex;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 
   &-cards-list {
     display: flex;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     flex-wrap: wrap;
 
     &-item {
       display: flex;
-      border-radius: var(--parsec-radius-8);
+      border-radius: ms.radius('lg');
       padding: 0.875rem;
       box-shadow: none;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
       margin: 0;
       min-width: 9.125rem;
-      box-shadow: var(--parsec-shadow-soft);
+      box-shadow: ms.shadow('light');
 
       @include ms.responsive-breakpoint('sm') {
         flex: 1 1 calc(50% - 0.75rem);
@@ -467,25 +467,27 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
       &-text {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: ms.spacing('gap-sm');
 
         &__number {
-          color: var(--parsec-color-light-secondary-contrast);
+          @include ms.font('heading-h2');
+          color: ms.color('text-base-heading');
         }
 
         &__title {
-          color: var(--parsec-color-light-secondary-hard-grey);
+          @include ms.font('body-sm-regular');
+          color: ms.color('text-base-description');
           font-size: 11px;
           text-transform: uppercase;
         }
       }
 
       &:nth-child(4) {
-        background: var(--parsec-color-light-secondary-text);
+        background: ms.color('surface-neutral-default');
 
         .users-cards-list-item-text__title,
         .users-cards-list-item-text__number {
-          color: var(--parsec-color-light-secondary-white);
+          color: ms.color('text-neutral-on-color');
         }
       }
     }
@@ -495,11 +497,11 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .storage {
   display: flex;
   flex-wrap: wrap;
-  background: var(--parsec-color-light-secondary-background);
-  padding: 1.5rem;
+  background: ms.color('surface-base-page');
+  padding: ms.spacing('padding-4xl');
   margin-bottom: 2.5rem;
-  border-radius: var(--parsec-radius-12);
-  gap: 2rem;
+  border-radius: ms.radius('2xl');
+  gap: ms.spacing('gap-5xl');
   width: 100%;
 
   @include ms.responsive-breakpoint('lg') {
@@ -507,25 +509,27 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h5');
+    color: ms.color('text-base-body');
     width: 100%;
   }
 
   &-detail,
   &-usage {
     display: flex;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     flex-direction: column;
 
     &__title {
+      @include ms.font('heading-h6');
       position: relative;
       display: flex;
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
 
       span {
         position: relative;
-        background: var(--parsec-color-light-secondary-background);
-        padding-right: 0.5rem;
+        background: ms.color('surface-base-page');
+        padding-right: ms.spacing('padding-lg');
         z-index: 2;
       }
 
@@ -538,7 +542,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
         right: 0;
         width: 100%;
         height: 1px;
-        background: var(--parsec-color-light-secondary-disabled);
+        background: ms.color('surface-disabled-default');
       }
     }
   }
@@ -559,7 +563,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .storage-detail-data {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   width: 100%;
   max-width: 9.5rem;
 
@@ -570,19 +574,20 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 
   &__total {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h2');
+    color: ms.color('text-base-body');
   }
 
   &-info {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     max-width: 9.5rem;
 
     &__text {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
       display: flex;
-      gap: 0.375rem;
+      gap: ms.spacing('gap-md');
       align-items: center;
       justify-content: space-between;
     }
@@ -592,7 +597,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .usage {
   display: flex;
   width: 100%;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   @include ms.responsive-breakpoint('lg') {
     flex-direction: column;
@@ -601,36 +606,39 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   &-data {
     display: flex;
     flex-direction: column;
-    background: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-base-default');
     width: 100%;
-    box-shadow: var(--parsec-shadow-soft);
-    padding: 1.5rem;
-    border-radius: var(--parsec-radius-12);
+    box-shadow: ms.shadow('light');
+    padding: ms.spacing('padding-4xl');
+    border-radius: ms.radius('2xl');
     min-width: 18rem;
 
     &__title {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('heading-h6');
+      color: ms.color('text-base-description');
     }
 
     &-content {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      gap: ms.spacing('gap-4xl');
       height: 100%;
     }
 
     &-caption {
       display: flex;
       flex-direction: column;
-      gap: 0.375rem;
+      gap: ms.spacing('gap-md');
       width: 100%;
 
       &__title {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('heading-h3');
+        color: ms.color('text-base-body');
       }
 
       &__description {
-        color: var(--parsec-color-light-secondary-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
   }
@@ -639,7 +647,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   &-title {
     width: 8rem;
@@ -649,7 +657,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   .storage-data-global {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     width: 100%;
     max-width: 9.5rem;
 
@@ -666,7 +674,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     &-info {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
       max-width: 9.5rem;
     }
   }
@@ -678,33 +686,33 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
   .storage-data {
     display: flex;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
   }
 
   .storage-data-usage {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     width: 100%;
   }
 
   .storage-data-usage-info {
     display: flex;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     width: 100%;
 
     .usage-info-container {
       display: flex;
-      background: var(--parsec-color-light-secondary-white);
-      border-radius: var(--parsec-radius-12);
-      gap: 1rem;
-      padding: 1.5rem;
+      background: ms.color('surface-base-default');
+      border-radius: ms.radius('2xl');
+      gap: ms.spacing('gap-3xl');
+      padding: ms.spacing('padding-4xl');
       width: 100%;
 
       .usage-info-data {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
+        gap: ms.spacing('gap-md');
         width: 100%;
       }
 
@@ -723,14 +731,15 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
         height: 5rem;
         flex-shrink: 0;
         align-self: flex-end;
-        border-radius: var(--parsec-radius-circle);
+        border-radius: ms.radius('full');
       }
     }
   }
 }
 
 .organization-choice-title {
-  color: var(--parsec-color-light-secondary-soft-text);
+  @include ms.font('body-lg-regular');
+  color: ms.color('text-neutral-default');
 }
 
 .organization-list {
@@ -739,20 +748,20 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   display: flex;
   flex-direction: column;
   justify-content: left;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page');
+  border: ms.border('thin') solid ms.color('border-base-default');
   overflow: auto;
 
   #search-input-organization {
-    border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
     flex-shrink: 0;
-    padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-lg') ms.spacing('padding-lg') 1.25rem;
     border: none;
     border-radius: 0;
     position: sticky;
     top: 0rem;
-    background: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-base-default');
     z-index: 10;
 
     &:focus-within {
@@ -761,23 +770,44 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 
   &-item {
+    @include ms.font('body-lg-medium');
     display: flex;
     justify-content: space-between;
-    color: var(--parsec-color-light-primary-700);
+    color: ms.color('text-brand-default');
     flex: 1;
-    padding: 1em 1rem 1rem 1.5rem;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
     cursor: pointer;
     min-width: 20rem;
     width: 100%;
     transition: background 0.2s;
 
     &__icon {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
     }
 
     &:hover {
-      background: var(--parsec-color-light-secondary-medium);
+      background: ms.color('surface-neutral-default-subtle-pressed');
     }
   }
+}
+
+.users-active-text__title {
+  @include ms.font('heading-h5');
+}
+
+.storage-detail__title {
+  @include ms.font('heading-h6');
+}
+
+.statistics-error {
+  @include ms.font('body-md-regular');
+}
+
+.storage-detail-data-info__label {
+  @include ms.font('body-md-regular');
+}
+
+.storage-detail-data-info__value {
+  @include ms.font('heading-h5');
 }
 </style>

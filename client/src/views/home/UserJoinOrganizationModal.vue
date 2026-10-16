@@ -37,12 +37,12 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
           v-if="steps[pageStep]?.subtitle"
-          class="modal-header__text body"
+          class="modal-header__text"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
@@ -613,16 +613,21 @@ onMounted(async () => {
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
   }
 }
 
 .modal-header__title {
+  @include ms.font('heading-h4');
   text-wrap: break-word;
 }
 
+.modal-header__text {
+  @include ms.font('body-md-regular');
+}
+
 .modal-footer-buttons {
-  padding-top: 2rem;
+  padding-top: ms.spacing('padding-5xl');
 
   ion-button {
     margin-top: 0 !important;

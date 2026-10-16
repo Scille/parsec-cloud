@@ -244,7 +244,7 @@ function updateMediaData(event: Event): void {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1rem;
+  padding: ms.spacing('padding-3xl');
 }
 
 .video-spinner {
@@ -256,10 +256,10 @@ function updateMediaData(event: Event): void {
 }
 
 .video {
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   overflow: hidden;
   height: fit-content;
   max-height: 100%;
-  box-shadow: var(--parsec-shadow-light);
+  box-shadow: ms.shadow('light');
 }
 </style>

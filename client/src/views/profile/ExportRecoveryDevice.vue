@@ -11,7 +11,7 @@
 
     <ion-text
       v-if="clipboardNotAvailable"
-      class="step-link-copy-error body-sm"
+      class="step-link-copy-error"
     >
       {{ $msTranslate('DevicesPage.greet.linkNotCopiedToClipboard') }}
     </ion-text>
@@ -29,21 +29,24 @@
 
       <!-- Recovery key -->
       <div class="step-item recovery-key">
-        <ion-text class="step-item__title title-h4">
-          <span class="step-number button-large">1</span>
+        <ion-text class="step-item__title">
+          <span class="step-number">1</span>
           {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryKey') }}
         </ion-text>
 
         <div class="input-action">
-          <ion-text class="input-action-text form-input">{{ code }}</ion-text>
+          <div class="input-action-text-container">
+            <ion-text class="input-action-text">{{ code }}</ion-text>
+          </div>
           <div class="input-action-buttons">
             <ion-button
               @click="copyCode"
               :disabled="codeCopied !== undefined"
-              class="input-action-button"
+              class="input-action-button color-secondary"
+              fill="clear"
             >
               <ion-icon
-                class="button-icon"
+                class="button-icon button-icon-left"
                 :icon="codeCopied ? checkmarkCircle : copy"
               />
               <span v-show="codeCopied === undefined">
@@ -58,10 +61,11 @@
             </ion-button>
             <ion-button
               @click="downloadRecoveryKey()"
-              class="input-action-button"
+              class="input-action-button color-secondary"
+              fill="outline"
             >
               <ms-image
-                class="button-icon"
+                class="button-icon button-icon-left"
                 :image="DownloadIcon"
               />
               {{
@@ -73,7 +77,7 @@
           </div>
           <ion-text
             v-if="codeCopied === false"
-            class="input-action-error body-sm"
+            class="input-action-error"
           >
             {{ $msTranslate('Authentication.mfa.step2.copyError') }}
           </ion-text>
@@ -82,8 +86,8 @@
 
       <!-- Recovery file -->
       <div class="step-item recovery-file">
-        <ion-text class="step-item__title title-h4">
-          <span class="step-number button-large">2</span>
+        <ion-text class="step-item__title">
+          <span class="step-number">2</span>
           {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryFile') }}
         </ion-text>
 
@@ -96,15 +100,15 @@
             class="input-action-icon"
             :icon="documentText"
           />
-          <ion-text class="input-action-text button-medium">{{ recoveryFileName }}</ion-text>
+          <ion-text class="input-action-text">{{ recoveryFileName }}</ion-text>
           <ion-button
-            class="input-action-button button-default button-medium"
+            class="input-action-button color-secondary"
             @click="downloadRecoveryFile()"
             :disabled="fileDownloading || !content.length"
-            fill="solid"
+            fill="outline"
           >
             <ms-image
-              class="button-icon"
+              class="button-icon button-icon-left"
               :image="DownloadIcon"
             />
             {{
@@ -202,7 +206,7 @@ async function copyCode(): Promise<void> {
     }, 2000);
     props.informationManager.present(
       new Information({
-        message: 'DevicesPage.greet.linkCopiedToClipboard',
+        message: 'ExportRecoveryDevicePage.toasts.keyCopiedToClipboard',
         level: InformationLevel.Info,
       }),
       PresentationMode.Toast,
@@ -260,33 +264,38 @@ async function downloadFile(
 .export-recovery-modal-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   .recovery-info {
     margin-bottom: 0.5rem;
   }
 }
 
+.step-link-copy-error,
+.input-action-error {
+  @include ms.font('body-sm-regular');
+}
+
 .step-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .step-item {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  gap: ms.spacing('gap-2xl');
+  padding: ms.spacing('padding-3xl');
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-default-secondary');
 
   &__title {
+    @include ms.font('heading-h5');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-base-heading');
   }
 
   .step-number {
@@ -295,42 +304,66 @@ async function downloadFile(
     justify-content: center;
     width: 1.5rem;
     height: 1.5rem;
-    color: var(--parsec-color-light-secondary-text);
-    border-radius: var(--parsec-radius-circle);
-    background: var(--parsec-color-light-secondary-white);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
+    @include ms.font('label-lg-medium');
+    color: ms.color('text-base-body');
+    border-radius: ms.radius('full');
+    background: ms.color('surface-base-default');
     box-shadow: var(--parsec-shadow-input);
   }
 
   &:is(.recovery-key) {
+    .input-action-text-container {
+      background-color: ms.color('surface-base-default');
+      padding: ms.spacing('padding-xl');
+      color: ms.color('text-base-description');
+      border-radius: ms.radius('lg');
+      border: ms.border('thin') solid ms.color('border-base-default');
+    }
+
     .input-action-text {
-      padding: 0.375rem;
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-label');
+    }
+
+    .input-action-buttons {
+      display: flex;
+      gap: ms.spacing('gap-2xl');
+      justify-content: flex-end;
+      margin-top: 1rem;
     }
   }
 
   &:is(.recovery-file) {
     .input-action {
+      display: flex;
+      gap: ms.spacing('gap-lg');
+      align-items: center;
+
       &-text {
+        @include ms.font('label-lg-medium');
+        color: ms.color('text-base-label');
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        flex: 1;
       }
 
       &-icon {
-        background: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-secondary-text);
+        background: ms.color('surface-base-default');
+        color: ms.color('text-base-label');
         display: flex;
         align-items: center;
-        padding: 0.5rem;
-        border-radius: var(--parsec-radius-8);
+        padding: ms.spacing('padding-lg');
+        border-radius: ms.radius('lg');
         font-size: 1.25rem;
         flex-shrink: 0;
       }
-
-      &-button {
-        padding: 0.625rem 1rem;
-      }
     }
+  }
+
+  .button-icon {
+    width: 1rem;
+    --fill-color: #{ms.color('icon-neutral-default')};
   }
 }
 </style>

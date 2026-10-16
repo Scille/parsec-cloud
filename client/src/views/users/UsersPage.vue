@@ -11,14 +11,11 @@
       >
         <div class="right-side">
           <div class="counter">
-            <ion-text
-              class="body"
-              v-show="users.selectedCount() === 0"
-            >
+            <ion-text v-show="users.selectedCount() === 0">
               {{ $msTranslate({ key: 'UsersPage.itemCount', data: { count: getUsersCount() }, count: getUsersCount() }) }}
             </ion-text>
             <ion-text
-              class="body item-selected"
+              class="item-selected"
               v-show="users.selectedCount() > 0"
             >
               {{
@@ -65,10 +62,10 @@
       <div class="main-container users-container scroll">
         <div
           v-show="users.totalUsersCount() === 0"
-          class="no-active body-lg"
+          class="no-active"
         >
           <div class="no-active-content">
-            <ms-image :image="NoActiveUser" />
+            <ms-image :image="isDarkTheme ? NoActiveUserDark : NoActiveUser" />
             <ion-text>
               {{ $msTranslate('UsersPage.emptyList') }}
             </ion-text>
@@ -169,6 +166,8 @@ import {
   MsSearchInput,
   MsSorter,
   NoActiveUser,
+  NoActiveUserDark,
+  useTheme,
   useWindowSize,
 } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
@@ -195,6 +194,7 @@ let eventCbId: string | null = null;
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const { hideHeader, showHeader } = useHeaderControl();
+const { isDarkTheme } = useTheme();
 
 const customTabBar = useCustomTabBar();
 
@@ -563,34 +563,40 @@ const headerWatchCancel = watch([isSmallDisplay, selectionEnabled], () => {
 <style scoped lang="scss">
 .users-page {
   @include ms.responsive-breakpoint('sm') {
-    --background: var(--parsec-color-light-secondary-background);
+    --background: #{ms.color('surface-base-page')};
   }
 
   .content-scroll::part(background) {
     @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-page');
     }
   }
 }
 
+.counter ion-text {
+  @include ms.font('body-md-regular');
+}
+
 .no-active {
+  @include ms.font('body-lg-regular');
+
   width: 100%;
   height: 100%;
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('text-base-description');
   display: flex;
   margin: auto;
   align-items: center;
 
   &-content {
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('lg');
     display: flex;
     height: fit-content;
     width: 100%;
     text-align: center;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     align-items: center;
-    padding: 2rem 1rem;
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   }
 }
 
@@ -598,9 +604,9 @@ const headerWatchCancel = watch([isSmallDisplay, selectionEnabled], () => {
   @include ms.responsive-breakpoint('sm') {
     position: sticky;
     z-index: 10;
-    background: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-strong);
-    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    background: ms.color('surface-base-default');
+    box-shadow: ms.shadow('strong');
+    border-radius: ms.radius('4xl') ms.radius('4xl') ms.radius('none') ms.radius('none');
   }
 }
 

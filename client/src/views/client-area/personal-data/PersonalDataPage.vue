@@ -243,22 +243,22 @@ async function onDataUpdated(message: Translatable): Promise<void> {
 <style scoped lang="scss">
 .personal-data-page {
   display: flex;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   flex-wrap: wrap;
 }
 
 .personal-data-content {
   display: flex;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   flex: 1;
   flex-direction: column;
   max-width: 30em;
 
   &__item {
-    padding: 1.5rem;
-    background: var(--parsec-color-light-secondary-background);
-    border-radius: var(--parsec-radius-12);
-    box-shadow: var(--parsec-shadow-input);
+    padding: ms.spacing('padding-4xl');
+    background: ms.color('surface-base-page');
+    border-radius: ms.radius('2xl');
+    box-shadow: ms.shadow('input');
   }
 
   @include ms.responsive-breakpoint('sm') {

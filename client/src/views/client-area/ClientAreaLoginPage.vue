@@ -64,26 +64,26 @@ function getCurrentSectionClass(): string {
 .saas-login-page-container,
 .saas-forgot-password-page-container {
   display: flex;
+  width: 100%;
   max-width: 48rem;
   margin: 0 auto;
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
   }
 }
 
 .saas-login-page-container {
-  width: 100%;
   overflow-y: auto;
 }
 
 .saas-login,
 .saas-forgot-password {
   overflow: hidden;
-  border-radius: var(--parsec-radius-12);
+  border-radius: ms.radius('4xl');
   height: fit-content;
-  box-shadow: var(--parsec-shadow-light);
+  box-shadow: ms.shadow('elevation-lg');
 
   &::before {
     z-index: 0;

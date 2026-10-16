@@ -16,18 +16,17 @@
       :class="currentStep"
     >
       <div class="modal-content">
-        <a
-          class="userguide-link"
-          @click="Env.Links.openDocumentationUserGuideLink('mfa')"
-        >
-          {{ $msTranslate('Authentication.mfa.delete.moreInformation') }}
-        </a>
-
         <ms-report-text
           v-if="currentStep === Steps.PromptAuthentication"
           :theme="MsReportTheme.Warning"
         >
           {{ $msTranslate('Authentication.mfa.delete.warning') }}
+          <a
+            class="userguide-link"
+            @click="Env.Links.openDocumentationUserGuideLink('mfa')"
+          >
+            {{ $msTranslate('Authentication.mfa.delete.moreInformation') }}
+          </a>
         </ms-report-text>
 
         <div
@@ -46,7 +45,7 @@
           v-if="currentStep === Steps.EnterCode"
           class="totp-section"
         >
-          <ion-text class="section-title title-h4">
+          <ion-text class="section-title">
             {{ $msTranslate('Authentication.mfa.delete.totpCodeTitle') }}
           </ion-text>
           <ms-input
@@ -203,21 +202,28 @@ async function onPreviousClicked(): Promise<boolean> {
 .modal-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 
 .authentication-section,
 .totp-section {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 }
 
 .section-title {
-  color: var(--parsec-color-light-secondary-text);
+  @include ms.font('heading-h4');
+  color: ms.color('text-base-heading');
 }
 
 .userguide-link {
   cursor: pointer;
+  color: ms.color('text-brand-default');
+  text-decoration: underline;
+
+  &:hover {
+    color: ms.color('text-brand-default-hover');
+  }
 }
 </style>

@@ -25,7 +25,7 @@
             ref="passwordInput"
           />
           <div
-            class="form-error form-helperText body"
+            class="form-error"
             v-if="errors.password"
           >
             {{ $msTranslate(errors.password) }}

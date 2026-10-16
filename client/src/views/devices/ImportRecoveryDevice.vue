@@ -18,8 +18,8 @@
         </ms-report-text>
         <div class="recovery-list">
           <div class="recovery-item">
-            <ion-text class="recovery-item__title title-h4">
-              <span class="recovery-number button-large">1</span>
+            <ion-text class="recovery-item__title">
+              <span class="recovery-number">1</span>
               {{ $msTranslate('ImportRecoveryDevicePage.modal.recoveryFile.itemRecoveryFile') }}
               <ion-icon
                 class="input-validity-icon"
@@ -43,7 +43,10 @@
                   @click="importButtonClick()"
                   fill="outline"
                 >
-                  <ion-icon :icon="documentOutline" />
+                  <ion-icon
+                    class="button-icon-left"
+                    :icon="documentOutline"
+                  />
                   {{ $msTranslate('ImportRecoveryDevicePage.modal.recoveryFile.actions.addRecoveryFile') }}
                 </ion-button>
               </div>
@@ -53,8 +56,9 @@
                 class="file-added"
               >
                 <ion-icon :icon="documentText" />
-                <ion-text class="file-added__name button-medium">{{ recoveryFile.name }}</ion-text>
+                <ion-text class="file-added__name">{{ recoveryFile.name }}</ion-text>
                 <ion-button
+                  fill="clear"
                   class="file-added__update"
                   @click="importButtonClick()"
                 >
@@ -65,8 +69,8 @@
           </div>
 
           <div class="recovery-item">
-            <ion-text class="recovery-item__title title-h4">
-              <span class="recovery-number button-large">2</span>
+            <ion-text class="recovery-item__title">
+              <span class="recovery-number">2</span>
               {{ $msTranslate('ImportRecoveryDevicePage.modal.recoveryFile.itemRecoveryKey') }}
               <ion-icon
                 class="input-validity-icon"
@@ -99,7 +103,7 @@
             :image="ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string"
             class="final-step__logo"
           />
-          <ion-text class="final-step__title title-h3">
+          <ion-text class="final-step__title">
             {{ $msTranslate('ImportRecoveryDevicePage.modal.done.title') }}
           </ion-text>
           <ion-button
@@ -350,7 +354,7 @@ async function finishRecovery(): Promise<void> {
 .recovery-device-files-page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 
 .final-step {
@@ -358,10 +362,11 @@ async function finishRecovery(): Promise<void> {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__title {
-    color: var(--parsec-color-light-secondary-white);
+    @include ms.font('heading-h4');
+    color: ms.color('text-on-color-heading');
     text-align: center;
   }
 }
@@ -369,39 +374,41 @@ async function finishRecovery(): Promise<void> {
 .recovery-list {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
 
   .recovery-item {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 1rem;
-    border-radius: var(--parsec-radius-12);
-    background: var(--parsec-color-light-secondary-background);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
+    gap: ms.spacing('gap-2xl');
+    padding: ms.spacing('padding-3xl');
+    border-radius: ms.radius('2xl');
+    background: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
 
     &__title {
+      @include ms.font('heading-h5');
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-text);
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-base-body');
 
       .input-validity-icon {
         font-size: 1.125rem;
-        color: var(--parsec-color-light-success-700);
+        color: ms.color('icon-success-default');
       }
     }
 
     .recovery-number {
+      @include ms.font('label-lg-medium');
       display: flex;
       align-items: center;
       justify-content: center;
       width: 1.5rem;
       height: 1.5rem;
-      color: var(--parsec-color-light-secondary-text);
-      border-radius: var(--parsec-radius-circle);
-      background: var(--parsec-color-light-secondary-white);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
+      color: ms.color('text-base-body');
+      border-radius: ms.radius('full');
+      background: ms.color('surface-base-default');
+      border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
       box-shadow: var(--parsec-shadow-input);
     }
 
@@ -412,20 +419,20 @@ async function finishRecovery(): Promise<void> {
       &__button {
         display: flex;
         align-items: center;
-        gap: 1rem;
-        color: var(--parsec-color-light-secondary-text);
-        --background: var(--parsec-color-light-secondary-white);
-        --background-hover: var(--parsec-color-light-secondary-premiere);
+        gap: ms.spacing('gap-3xl');
+        color: ms.color('text-base-body');
+        --background: #{ms.color('surface-base-default')};
+        --background-hover: #{ms.color('surface-base-page-secondary')};
         width: 100%;
 
         &::part(native) {
-          padding: 0.625rem 1rem;
-          border: 1px dashed var(--parsec-color-light-secondary-light);
+          padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+          border: ms.border('thin') dashed ms.color('border-neutral-default');
         }
 
         &:hover {
           &::part(native) {
-            border-color: var(--parsec-color-light-secondary-grey);
+            border-color: ms.color('border-neutral-default-hover');
           }
         }
 
@@ -439,46 +446,33 @@ async function finishRecovery(): Promise<void> {
     .file-added {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-white);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-12);
-      padding: 0.625rem;
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-base-body');
+      background-color: ms.color('surface-base-default');
+      border-radius: ms.radius('2xl');
+      padding: ms.spacing('padding-xl');
       min-height: 2.5rem;
       overflow: hidden;
 
-      &__update {
-        --background: var(--parsec-color-light-secondary-medium);
-        --background-hover: var(--parsec-color-light-secondary-disabled);
-        color: var(--parsec-color-light-secondary-text);
-        margin-left: auto;
-        box-shadow: var(--parsec-shadow-input);
-
-        &::part(native) {
-          padding: 0.75rem 1rem;
-        }
-
-        &:hover {
-          color: var(--parsec-color-light-secondary-text);
-        }
+      &__name {
+        @include ms.font('label-md-medium');
+        width: 100%;
       }
 
       ion-icon {
-        background: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-secondary-text);
+        flex-shrink: 0;
+        color: ms.color('text-base-body');
         display: flex;
         align-items: center;
-        padding: 0.5rem;
-        border-radius: var(--parsec-radius-8);
+        border-radius: ms.radius('lg');
         font-size: 1.25rem;
       }
     }
 
     &__input {
       width: 100%;
-      border-radius: var(--parsec-radius-12);
-      background: var(--parsec-color-light-secondary-white);
+      border-radius: ms.radius('2xl');
+      background: ms.color('surface-base-default');
     }
   }
 }

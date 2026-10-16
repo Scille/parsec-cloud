@@ -36,13 +36,17 @@
             class="step-container"
           >
             <div class="step-info">
-              <ion-text class="step-info__title title-h4">{{ $msTranslate('Authentication.mfa.step1.title') }}</ion-text>
-              <ion-text class="step-info__title body-lg">{{ $msTranslate('Authentication.mfa.step1.description') }}</ion-text>
+              <ion-text class="step-info__title step-info__title--heading">{{ $msTranslate('Authentication.mfa.step1.title') }}</ion-text>
+              <ion-text class="step-info__title step-info__title--description">
+                {{ $msTranslate('Authentication.mfa.step1.description') }}
+              </ion-text>
             </div>
 
             <div class="step-info">
-              <ion-text class="step-info__title title-h4">{{ $msTranslate('Authentication.mfa.step2.title') }}</ion-text>
-              <ion-text class="step-info__title body-lg">{{ $msTranslate('Authentication.mfa.step2.description') }}</ion-text>
+              <ion-text class="step-info__title step-info__title--heading">{{ $msTranslate('Authentication.mfa.step2.title') }}</ion-text>
+              <ion-text class="step-info__title step-info__title--description">
+                {{ $msTranslate('Authentication.mfa.step2.description') }}
+              </ion-text>
             </div>
 
             <div class="step-code">
@@ -56,43 +60,48 @@
                     type: 'dots',
                     color: '#0058CC',
                   }"
-                  :background-options="{ color: '#ffffff' }"
+                  :background-options="{ color: qrCodeBackgroundColor }"
                   :corners-square-options="{ type: 'extra-rounded', color: '#0058CC' }"
                   :corners-dot-options="{ type: 'dot', color: '#0058CC' }"
                 />
               </figure>
               <div class="divider">
-                <ion-text class="title-h4">
+                <ion-text class="divider__text">
                   {{ $msTranslate('Authentication.mfa.or') }}
                 </ion-text>
               </div>
               <div class="input-action">
-                <ion-text class="input-action-text form-input">{{ code }}</ion-text>
-                <ion-button
-                  @click="copyCode"
-                  :disabled="codeCopied !== undefined"
-                  class="input-action-button"
-                >
-                  <ion-icon
-                    class="button-icon"
-                    :icon="codeCopied ? checkmarkCircle : copy"
-                  />
-                  <span
-                    v-show="codeCopied === undefined"
-                    v-if="isLargeDisplay"
+                <div class="input-action-text-container">
+                  <ion-text class="input-action-text">{{ code }}</ion-text>
+                </div>
+                <div class="input-action-buttons">
+                  <ion-button
+                    @click="copyCode"
+                    :disabled="codeCopied !== undefined"
+                    class="input-action-button color-secondary"
+                    fill="clear"
                   >
-                    {{ $msTranslate('Authentication.mfa.step2.buttonCopy') }}
-                  </span>
-                  <span
-                    v-show="codeCopied === true"
-                    v-if="isLargeDisplay"
-                  >
-                    {{ $msTranslate('Authentication.mfa.step2.buttonCopied') }}
-                  </span>
-                </ion-button>
+                    <ion-icon
+                      class="button-icon button-icon-left"
+                      :icon="codeCopied ? checkmarkCircle : copy"
+                    />
+                    <span
+                      v-show="codeCopied === undefined"
+                      v-if="isLargeDisplay"
+                    >
+                      {{ $msTranslate('Authentication.mfa.step2.buttonCopy') }}
+                    </span>
+                    <span
+                      v-show="codeCopied === true"
+                      v-if="isLargeDisplay"
+                    >
+                      {{ $msTranslate('Authentication.mfa.step2.buttonCopied') }}
+                    </span>
+                  </ion-button>
+                </div>
                 <ion-text
                   v-if="codeCopied === false"
-                  class="input-action-error body-sm"
+                  class="input-action-error"
                 >
                   {{ $msTranslate('Authentication.mfa.step2.copyError') }}
                 </ion-text>
@@ -105,7 +114,7 @@
           class="modal-content-enter-code"
         >
           <div class="authentication-code">
-            <ion-text class="authentication-code__title title-h4">
+            <ion-text class="authentication-code__title">
               {{ $msTranslate('Authentication.mfa.digitCode.label') }}
             </ion-text>
           </div>
@@ -122,7 +131,7 @@
           <ms-report-text :theme="MsReportTheme.Success">
             {{ $msTranslate('Authentication.mfa.mfaSuccess.info') }}
           </ms-report-text>
-          <ion-text class="finalization-title body">{{ $msTranslate('Authentication.mfa.mfaSuccess.description') }}</ion-text>
+          <ion-text class="finalization-title">{{ $msTranslate('Authentication.mfa.mfaSuccess.description') }}</ion-text>
         </div>
         <ms-report-text
           v-if="error"
@@ -182,6 +191,8 @@ const props = defineProps<{
 }>();
 
 const { isLargeDisplay } = useWindowSize();
+// QR code is drawn on a canvas, so the theme token has to be resolved to a concrete color
+const qrCodeBackgroundColor = getComputedStyle(document.body).getPropertyValue('--parsec-color-surface-base-default').trim();
 const url = ref('');
 const code = ref('');
 const verifyCode = ref('');
@@ -435,32 +446,76 @@ async function onPreviousClicked(): Promise<boolean> {
 .modal-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .step-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   .step-info {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-base-body');
+
+    &__title--heading {
+      @include ms.font('heading-h5');
+    }
+
+    &__title--description {
+      @include ms.font('body-lg-regular');
+    }
   }
 
   .step-code {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    background: var(--parsec-color-light-secondary-background);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 1rem;
-    border-radius: var(--parsec-radius-12);
-    //should be replaced by a shadow token --parsec-shadow-filter when it will be available
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    gap: ms.spacing('gap-3xl');
+    background: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    padding: ms.spacing('padding-3xl');
+    border-radius: ms.radius('2xl');
+    box-shadow: ms.shadow('elevation-xs');
+
+    .input-action {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+
+      &-text-container {
+        background-color: ms.color('surface-neutral-default-subtle');
+        padding: ms.spacing('padding-xl');
+        border-radius: ms.radius('lg');
+        border: ms.border('thin') solid ms.color('border-base-default');
+      }
+
+      &-text {
+        @include ms.font('label-md-medium');
+        color: ms.color('text-base-label');
+        word-break: break-all;
+      }
+
+      &-buttons {
+        display: flex;
+        gap: ms.spacing('gap-2xl');
+        justify-content: flex-end;
+        margin-top: 1rem;
+      }
+
+      &-error {
+        @include ms.font('body-sm-regular');
+        color: ms.color('text-error-default');
+        margin-top: 0.5rem;
+      }
+
+      .button-icon {
+        width: 1rem;
+        --fill-color: #{ms.color('icon-neutral-default')};
+      }
+    }
 
     &-qrcode {
       margin: 0;
@@ -472,14 +527,15 @@ async function onPreviousClicked(): Promise<boolean> {
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       ion-text {
+        @include ms.font('heading-h5');
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-secondary-light);
+        gap: ms.spacing('gap-lg');
+        color: ms.color('text-base-placeholder');
         text-transform: uppercase;
 
         &::before,
@@ -487,7 +543,7 @@ async function onPreviousClicked(): Promise<boolean> {
           content: '';
           margin: auto;
           display: flex;
-          background: var(--parsec-color-light-secondary-light);
+          background: ms.color('border-base-default-hover');
         }
 
         &::before {
@@ -507,28 +563,33 @@ async function onPreviousClicked(): Promise<boolean> {
 .modal-content-enter-code {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .authentication-code {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  color: var(--parsec-color-light-secondary-text);
+  gap: ms.spacing('gap-lg');
+  color: ms.color('text-base-body');
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h5');
+    color: ms.color('text-base-body');
   }
 
   &__description {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 }
 
 .modal-content-finalization {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  color: var(--parsec-color-light-secondary-text);
+  gap: ms.spacing('gap-lg');
+  color: ms.color('text-base-body');
+
+  .finalization-title {
+    @include ms.font('body-md-regular');
+  }
 }
 </style>

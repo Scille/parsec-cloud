@@ -26,12 +26,12 @@
   >
     <div class="error-content">
       <div class="error-content-text">
-        <ion-text class="error-content-text__title title-h3">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
-        <ion-text class="error-content-text__message body-lg">{{ $msTranslate(error) }}</ion-text>
+        <ion-text class="error-content-text__title">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
+        <ion-text class="error-content-text__message">{{ $msTranslate(error) }}</ion-text>
       </div>
       <div class="error-content-buttons">
         <ion-button
-          class="error-content-buttons__item button-default"
+          class="error-content-buttons__item color-secondary"
           @click="routerGoBack()"
         >
           {{ $msTranslate(EditorButtonAction.BackToFiles) }}
@@ -43,16 +43,16 @@
       class="error-advices"
       v-show="showErrorTips"
     >
-      <ion-text class="error-advices__title title-h4">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
+      <ion-text class="error-advices__title">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
       <ion-list class="error-advices-list ion-no-padding">
-        <ion-item class="error-advices-list__item ion-no-padding body">
+        <ion-item class="error-advices-list__item ion-no-padding">
           <ion-icon
             class="item-icon"
             :icon="checkmarkCircle"
           />
           {{ $msTranslate('fileEditors.advices.advice1') }}
         </ion-item>
-        <ion-item class="error-advices-list__item ion-no-padding body">
+        <ion-item class="error-advices-list__item ion-no-padding">
           <ion-icon
             class="item-icon"
             :icon="checkmarkCircle"
@@ -367,14 +367,14 @@ async function save(): Promise<boolean> {
 <style scoped lang="scss">
 .file-editor {
   height: 100%;
-  background: var(--parsec-color-light-secondary-premiere);
+  background: ms.color('surface-base-default');
   border: none;
 }
 
 .file-editor-error {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
   max-width: 32rem;
   margin: auto;
   justify-content: center;
@@ -386,57 +386,47 @@ async function save(): Promise<boolean> {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 1.5rem;
-  background: var(--parsec-color-light-secondary-white);
-  padding: 1.5rem;
-  border-radius: var(--parsec-radius-12);
-  box-shadow: var(--parsec-shadow-light);
+  gap: ms.spacing('gap-4xl');
+  background: ms.color('surface-base-default');
+  padding: ms.spacing('padding-4xl');
+  border-radius: ms.radius('2xl');
+  box-shadow: ms.shadow('light');
 
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h4');
+      color: ms.color('text-base-heading');
     }
 
     &__message {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-lg-regular');
+      color: ms.color('text-base-description');
     }
   }
 
-  &-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-
-    &__item {
-      width: 100%;
-      &:first-child {
-        --background: var(--parsec-color-light-secondary-text);
-        --color: var(--parsec-color-light-secondary-white);
-        --border-color: var(--parsec-color-light-secondary-text);
-        --color-hover: var(--parsec-color-light-secondary-text);
-        --background-hover: var(--parsec-color-light-secondary-contrast);
-      }
-    }
+  &-buttons__item {
+    width: 100%;
   }
 }
 
 .error-advices {
-  border-top: 1px solid var(--parsec-color-light-secondary-disabled);
-  padding: 2rem 1rem 1rem;
+  border-top: ms.border('thin') solid ms.color('border-base-default');
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl') ms.spacing('padding-3xl');
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h4');
+    color: ms.color('text-base-heading');
   }
 
   &-list {
-    padding-left: 0.5rem;
+    padding-left: ms.spacing('padding-lg');
     list-style-type: circle;
     background: none;
 
@@ -444,13 +434,13 @@ async function save(): Promise<boolean> {
       margin-bottom: 0.5rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-soft-text);
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-base-body');
       --background: none;
-      font-size: 0.9375rem;
+      @include ms.font('body-md-regular');
 
       .item-icon {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('icon-neutral-default');
         flex-shrink: 0;
         margin-right: 0.5rem;
         font-size: 1rem;
@@ -484,7 +474,7 @@ async function save(): Promise<boolean> {
   align-items: center;
   flex-direction: column;
   width: fit-content;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   .logo-img {
     animation: LogoFadeIn 0.8s ease-in-out;

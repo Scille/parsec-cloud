@@ -14,7 +14,7 @@
             class="list-group-item__icon"
             :icon="folderOpen"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.createFolder') }}
           </ion-text>
         </ion-item>
@@ -28,7 +28,7 @@
             class="list-group-item__icon"
             :icon="cloudUpload"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.ImportFile.importFilesAction') }}
           </ion-text>
         </ion-item>
@@ -43,7 +43,7 @@
             class="list-group-item__icon"
             :icon="cloudUpload"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.ImportFile.importFolderAction') }}
           </ion-text>
         </ion-item>
@@ -58,7 +58,7 @@
             class="list-group-item__icon"
             :image="File.Word"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.createFile.createDocument') }}
           </ion-text>
         </ion-item>
@@ -72,7 +72,7 @@
             class="list-group-item__icon"
             :image="File.Excel"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.createFile.createSpreadsheet') }}
           </ion-text>
         </ion-item>
@@ -86,7 +86,7 @@
             class="list-group-item__icon"
             :image="File.Powerpoint"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.createFile.createPresentation') }}
           </ion-text>
         </ion-item>
@@ -100,7 +100,7 @@
             class="list-group-item__icon"
             :image="File.Text"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.createFile.createText') }}
           </ion-text>
         </ion-item>
@@ -115,7 +115,7 @@
             class="list-group-item__icon"
             :icon="open"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
           </ion-text>
         </ion-item>

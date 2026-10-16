@@ -27,19 +27,22 @@
           </ion-button>
         </ion-menu-toggle>
         <div class="topbar-left-text">
-          <ion-text class="topbar-left-text__title title-h2">{{ $msTranslate(title) }}</ion-text>
+          <ion-text class="topbar-left-text__title">{{ $msTranslate(title) }}</ion-text>
         </div>
       </div>
       <div class="topbar-right">
         <!-- settings -->
-        <ion-text
-          class="button-medium custom-button custom-button-fill"
-          button
+        <ion-button
+          fill="outline"
+          class="topbar-settings color-secondary"
           @click="openSettingsModal"
         >
-          <ion-icon :icon="cog" />
+          <ion-icon
+            :icon="cog"
+            class="button-icon-left"
+          />
           {{ $msTranslate('clientArea.header.settings') }}
-        </ion-text>
+        </ion-button>
 
         <!-- profile -->
         <div
@@ -53,7 +56,7 @@
             />
           </div>
           <div class="text-content">
-            <ion-text class="text-content__name subtitles-normal">{{ getUserName() }}</ion-text>
+            <ion-text class="text-content__name">{{ getUserName() }}</ion-text>
           </div>
         </div>
       </div>
@@ -62,9 +65,9 @@
       class="current-organization"
       v-if="currentOrganization.name && isSmallDisplay"
     >
-      <ion-text class="current-organization__title title-h5">{{ $msTranslate('clientArea.header.organization') }}</ion-text>
+      <ion-text class="current-organization__title">{{ $msTranslate('clientArea.header.organization') }}</ion-text>
       <ion-text
-        class="current-organization__name title-h5"
+        class="current-organization__name"
         @click="openOrganizationChoice($event)"
       >
         {{ currentOrganization.name }}
@@ -146,13 +149,13 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
 <style scoped lang="scss">
 .topbar {
-  --background: var(--parsec-color-light-secondary-white);
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+  --background: #{ms.color('surface-base-default')};
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
   justify-content: space-around;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.875rem 1.5rem 0.875rem;
+    padding: 0.875rem ms.spacing('padding-4xl') 0.875rem;
   }
 
   &::part(content) {
@@ -162,7 +165,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   &-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     overflow: hidden;
     width: 100%;
 
@@ -170,17 +173,18 @@ async function openOrganizationChoice(event: Event): Promise<void> {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__title {
-        background: var(--parsec-color-light-gradient-background);
+        @include ms.font('heading-h3');
+        background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
 
       &__organization {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('text-base-description');
         font-size: 0.875rem;
         margin-top: -0.25rem;
         overflow: hidden;
@@ -190,53 +194,54 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     }
 
     #trigger-toggle-menu-button {
-      --fill-color: var(--parsec-color-light-secondary-grey);
-      padding: 0.625rem;
-      border-radius: var(--parsec-radius-12);
+      --fill-color: #{ms.color('icon-neutral-default')};
+      padding: ms.spacing('padding-xl');
+      border-radius: ms.radius('2xl');
       cursor: pointer;
 
       &:hover {
-        background: var(--parsec-color-light-secondary-premiere);
-        --fill-color: var(--parsec-color-light-secondary-hard-grey);
+        background: ms.color('surface-neutral-default-subtle-hover');
+        --fill-color: #{ms.color('icon-neutral-default-hover')};
       }
     }
 
     .toggle-menu-button::part(native) {
-      padding: 0;
-      border-radius: var(--parsec-radius-12);
+      padding: ms.spacing('padding-none');
+      border-radius: ms.radius('2xl');
     }
   }
 
   &-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 
 .current-organization {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 2.25rem;
-  background: var(--parsec-color-light-secondary-background);
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
-  box-shadow: var(--parsec-shadow-soft);
+  gap: ms.spacing('gap-lg');
+  padding: ms.spacing('padding-lg') 2.25rem;
+  background: ms.color('surface-base-page');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
+  box-shadow: ms.shadow('light');
 
   &__title {
-    color: var(--parsec-color-light-secondary-grey);
-    font-size: 0.875rem;
+    @include ms.font('heading-h6');
+    color: ms.color('text-base-description');
   }
 
   &__name {
+    @include ms.font('heading-h6');
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    color: var(--parsec-color-light-secondary-text);
+    gap: ms.spacing('gap-sm');
+    color: ms.color('text-base-body');
     cursor: pointer;
 
     &:hover {
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default-hover');
     }
   }
 }
@@ -244,9 +249,9 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 .profile-header {
   --background: none;
   --background-hover: none;
-  border-radius: var(--parsec-radius-12);
-  padding: 0.375rem 0.5rem 0.375rem 0.25rem;
-  border: 1px solid transparent;
+  border-radius: ms.radius('2xl');
+  padding: ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-sm');
+  border: ms.border('thin') solid transparent;
   transition: all ease-in-out 200ms;
   flex-shrink: 0;
   max-width: 15rem;
@@ -260,18 +265,18 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
   &:hover {
     --background-hover: none;
-    border-color: var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-background);
+    border-color: ms.color('border-base-default-hover');
+    background: ms.color('surface-neutral-default-subtle-hover');
   }
 
   &-clicked {
-    border-color: var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-background);
+    border-color: ms.color('border-base-default');
+    background: ms.color('surface-base-page');
   }
 
   .avatar {
     position: relative;
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('text-brand-default');
     display: flex;
     margin-right: 0.375rem;
 
@@ -290,7 +295,8 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     overflow: hidden;
 
     &__name {
-      color: var(--parsec-color-light-secondary-soft-text);
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-neutral-default');
       font-size: 0.9375rem;
       width: 100%;
       overflow: hidden;

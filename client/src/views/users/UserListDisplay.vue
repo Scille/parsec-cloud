@@ -20,7 +20,7 @@
         />
       </ion-label>
       <ion-label
-        class="list-header-label cell-title header-label-name"
+        class="list-header-label header-label-name"
         @click="headerSortChange(SortProperty.Name)"
         :class="{ 'list-header-label--sorted': sortBy === SortProperty.Name }"
       >
@@ -32,7 +32,7 @@
         />
       </ion-label>
       <ion-label
-        class="list-header-label cell-title header-label-profile"
+        class="list-header-label header-label-profile"
         @click="headerSortChange(SortProperty.Profile)"
         :class="{ 'list-header-label--sorted': sortBy === SortProperty.Profile }"
       >
@@ -44,7 +44,7 @@
         />
       </ion-label>
       <ion-label
-        class="list-header-label cell-title header-label-email"
+        class="list-header-label header-label-email"
         @click="headerSortChange(SortProperty.Email)"
         :class="{ 'list-header-label--sorted': sortBy === SortProperty.Email }"
       >
@@ -56,7 +56,7 @@
         />
       </ion-label>
       <ion-label
-        class="list-header-label cell-title header-label-join-date"
+        class="list-header-label header-label-join-date"
         @click="headerSortChange(SortProperty.JoinedDate)"
         :class="{ 'list-header-label--sorted': sortBy === SortProperty.JoinedDate }"
       >
@@ -67,13 +67,13 @@
           class="sort-icon"
         />
       </ion-label>
-      <ion-label class="list-header-label cell-title header-label-status">
+      <ion-label class="list-header-label header-label-status">
         {{ $msTranslate('UsersPage.listDisplayTitles.status') }}
       </ion-label>
-      <ion-label class="list-header-label list-item-end cell-title header-label-space" />
+      <ion-label class="list-header-label list-item-end header-label-space" />
     </ion-list-header>
     <ion-text
-      class="no-match-result body"
+      class="no-match-result"
       v-show="users.getUsers().length === 0"
     >
       {{ $msTranslate('UsersPage.noMatch') }}
@@ -145,7 +145,11 @@ function onUserSelected(user: UserModel, selected: boolean): void {
 
 <style scoped lang="scss">
 .user-list-mobile {
-  padding-top: 1rem;
-  padding: 1rem 1rem 0;
+  padding-top: ms.spacing('padding-3xl');
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-none');
+}
+
+.no-match-result {
+  @include ms.font('body-md-regular');
 }
 </style>

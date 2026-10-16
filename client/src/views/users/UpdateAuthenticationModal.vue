@@ -24,7 +24,7 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(texts.title) }}
         </ion-title>
       </ion-header>
@@ -51,7 +51,7 @@
           v-show="pageStep === ChangeAuthenticationStep.TOTP"
           class="step authentication-code"
         >
-          <ion-text class="authentication-code__title title-h4">
+          <ion-text class="authentication-code__title">
             {{ $msTranslate('Authentication.mfa.digitCode.label') }}
           </ion-text>
           <ms-input
@@ -84,8 +84,8 @@
       <ion-footer class="modal-footer">
         <div class="modal-footer-buttons">
           <ion-button
-            fill="clear"
-            size="default"
+            class="color-secondary"
+            fill="outline"
             @click="cancel"
           >
             {{ $msTranslate('MyProfilePage.cancelButton') }}
@@ -311,6 +311,8 @@ async function cancel(): Promise<boolean> {
 
 <style scoped lang="scss">
 .modal-header__title {
+  @include ms.font('heading-h4');
+
   margin-right: 1.5rem;
 }
 
@@ -327,8 +329,12 @@ async function cancel(): Promise<boolean> {
 .authentication-code {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem !important;
-  color: var(--parsec-color-light-secondary-text);
+  gap: ms.spacing('gap-lg') !important;
+  color: ms.color('text-base-body');
+
+  &__title {
+    @include ms.font('heading-h5');
+  }
 }
 
 .provider-card {

@@ -9,7 +9,7 @@
         class="dashboard-section month-summary-container"
         v-if="stats"
       >
-        <ion-title class="dashboard-section-title title-h2">
+        <ion-title class="dashboard-section-title">
           {{ I18n.translate(I18n.formatDate(currentDate, 'narrow')) }}
         </ion-title>
         <div class="month-summary">
@@ -18,10 +18,10 @@
             class="month-summary-item"
             v-if="estimations"
           >
-            <ion-title class="month-summary-item__title title-h4">
+            <ion-title class="month-summary-item__title">
               {{ $msTranslate('clientArea.dashboard.summary.estimatedAmount') }}
             </ion-title>
-            <div class="month-summary-item__data title-h1-xl">
+            <div class="month-summary-item__data">
               <div class="data-content">
                 <ion-text class="data-content-text">
                   {{
@@ -38,7 +38,7 @@
                   class="data-content-icon"
                 />
               </div>
-              <span class="data-info title-h4 button-medium">
+              <span class="data-info">
                 {{
                   $msTranslate({
                     key: 'clientArea.dashboard.summary.withdrawal',
@@ -51,20 +51,20 @@
 
           <!-- users -->
           <div class="month-summary-item">
-            <ion-title class="month-summary-item__title title-h4">
+            <ion-title class="month-summary-item__title">
               {{ $msTranslate('clientArea.dashboard.summary.users') }}
             </ion-title>
-            <div class="month-summary-item__data title-h1-xl">
+            <div class="month-summary-item__data">
               {{ stats.activeUsers }}
             </div>
           </div>
 
           <!-- storage -->
           <div class="month-summary-item">
-            <ion-title class="month-summary-item__title title-h4">
+            <ion-title class="month-summary-item__title">
               {{ $msTranslate('clientArea.dashboard.summary.storage') }}
             </ion-title>
-            <div class="month-summary-item__data title-h1-xl">
+            <div class="month-summary-item__data">
               {{ $msTranslate(formatFileSize(stats.dataSize)) }}
             </div>
           </div>
@@ -73,7 +73,7 @@
 
       <!-- recent invoices -->
       <div class="dashboard-section invoices-container">
-        <ion-title class="dashboard-section-title title-h2">
+        <ion-title class="dashboard-section-title">
           {{ $msTranslate('clientArea.dashboard.invoices.title') }}
         </ion-title>
         <div
@@ -83,16 +83,18 @@
           <div class="invoices-header">
             <ion-list class="invoices-header-list ion-no-padding">
               <ion-item class="invoices-header-list-item invoices-date">
-                <ion-text class="menu-active">{{ $msTranslate('clientArea.dashboard.invoices.date') }}</ion-text>
+                <ion-text class="invoices-header-list-item__text">{{ $msTranslate('clientArea.dashboard.invoices.date') }}</ion-text>
               </ion-item>
               <ion-item class="invoices-header-list-item invoices-organization">
-                <ion-text class="menu-active">{{ $msTranslate('clientArea.dashboard.invoices.organization') }}</ion-text>
+                <ion-text class="invoices-header-list-item__text">
+                  {{ $msTranslate('clientArea.dashboard.invoices.organization') }}
+                </ion-text>
               </ion-item>
               <ion-item class="invoices-header-list-item invoices-amount">
-                <ion-text class="menu-active">{{ $msTranslate('clientArea.dashboard.invoices.price.title') }}</ion-text>
+                <ion-text class="invoices-header-list-item__text">{{ $msTranslate('clientArea.dashboard.invoices.price.title') }}</ion-text>
               </ion-item>
               <ion-item class="invoices-header-list-item invoices-status">
-                <ion-text class="menu-active">{{ $msTranslate('clientArea.dashboard.invoices.status') }}</ion-text>
+                <ion-text class="invoices-header-list-item__text">{{ $msTranslate('clientArea.dashboard.invoices.status') }}</ion-text>
               </ion-item>
             </ion-list>
           </div>
@@ -107,14 +109,18 @@
                 v-for="invoice in invoices"
                 :key="invoice.getId()"
               >
-                <ion-text class="invoices-list-item__data invoices-date subtitles-sm">
+                <ion-text class="invoices-list-item__data invoices-list-item__date invoices-date">
                   {{ $msTranslate(formatTimeSince(invoice.getDate(), '--', 'short')) }}
                 </ion-text>
-                <ion-text class="invoices-list-item__data invoices-organization body">{{ invoice.getOrganizationId() }}</ion-text>
-                <ion-text class="invoices-list-item__data invoices-amount body">{{ $msFormatCurrency(invoice.getAmount()) }}</ion-text>
+                <ion-text class="invoices-list-item__data invoices-organization invoices-list-item__text">
+                  {{ invoice.getOrganizationId() }}
+                </ion-text>
+                <ion-text class="invoices-list-item__data invoices-amount invoices-list-item__text">
+                  {{ $msFormatCurrency(invoice.getAmount()) }}
+                </ion-text>
                 <ion-text class="invoices-list-item__data invoices-status">
                   <span
-                    class="badge-status body-sm"
+                    class="badge-status"
                     :class="{
                       paid: invoice.getStatus() === 'paid',
                       toBePaid: invoice.getStatus() === 'open',
@@ -122,17 +128,17 @@
                   >
                     {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.getStatus())) }}
                   </span>
-                  <a
-                    class="custom-button custom-button-ghost button-medium"
+                  <ion-button
+                    fill="clear"
+                    class="invoices-list-item__download color-secondary"
                     @click="Env.Links.openUrl(invoice.getLink())"
-                    download
                   >
                     <ms-image
                       :image="DownloadIcon"
-                      class="custom-button__icon"
+                      class="invoices-list-item__download-icon button-icon-left"
                     />
-                    <span class="custom-button__label">{{ $msTranslate('clientArea.dashboard.invoices.download') }}</span>
-                  </a>
+                    <span class="invoices-list-item__download-label">{{ $msTranslate('clientArea.dashboard.invoices.download') }}</span>
+                  </ion-button>
                 </ion-text>
               </ion-item>
             </ion-list>
@@ -167,7 +173,7 @@
           </div>
         </div>
         <ion-text
-          class="body-lg no-invoices"
+          class="no-invoices"
           v-else-if="(!invoices || !invoices.length) && !querying"
         >
           {{ $msTranslate('clientArea.dashboard.invoices.noInvoices') }}
@@ -178,8 +184,8 @@
     <!-- payment section -->
     <div class="dashboard-section payment-container">
       <div class="dashboard-section-title">
-        <ion-title class="title-h2">{{ $msTranslate('clientArea.dashboard.payment.title') }}</ion-title>
-        <ion-text class="payment-text body">
+        <ion-title class="payment-container__title">{{ $msTranslate('clientArea.dashboard.payment.title') }}</ion-title>
+        <ion-text class="payment-text">
           {{ $msTranslate('clientArea.dashboard.payment.description') }}
         </ion-text>
       </div>
@@ -198,12 +204,13 @@
             class="skeleton-loading-card"
           />
         </div>
-        <ion-text
-          class="custom-button custom-button-fill button-medium"
+        <ion-button
+          fill="outline"
+          class="payment-update-button color-secondary"
           @click="$emit('switchPageRequest', ClientAreaPages.PaymentMethods)"
         >
           {{ $msTranslate('clientArea.dashboard.payment.update') }}
-        </ion-text>
+        </ion-button>
       </div>
     </div>
   </div>
@@ -223,7 +230,7 @@ import {
 import { Env } from '@/services/environment';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
-import { IonItem, IonList, IonSkeletonText, IonText, IonTitle } from '@ionic/vue';
+import { IonButton, IonItem, IonList, IonSkeletonText, IonText, IonTitle } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
   DownloadIcon,
@@ -293,7 +300,7 @@ onMounted(async () => {
 <style scoped lang="scss">
 .client-page-dashboard {
   display: flex;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   flex-wrap: wrap;
 
   @include ms.responsive-breakpoint('lg') {
@@ -306,7 +313,7 @@ onMounted(async () => {
 .dashboard-section-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   max-width: 60rem;
   width: 100%;
 }
@@ -323,21 +330,22 @@ onMounted(async () => {
 
 //every sections
 .dashboard-section {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
+  background: ms.color('surface-base-default');
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  padding: 1.5rem 2rem;
-  border-radius: var(--parsec-radius-18);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
-  box-shadow: var(--parsec-shadow-input);
+  gap: ms.spacing('gap-5xl');
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl');
+  border-radius: ms.radius('4xl');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  box-shadow: ms.shadow('input');
 
   @include ms.responsive-breakpoint('lg') {
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
   }
 
   &-title {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('heading-h3');
+    color: ms.color('text-brand-default');
   }
 }
 
@@ -350,31 +358,34 @@ onMounted(async () => {
     justify-content: center;
     width: 100%;
     height: min-content;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
 
     &__title {
+      @include ms.font('heading-h5');
       height: fit-content;
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
     }
 
     &__data {
+      @include ms.font('heading-h1');
       display: flex;
       flex-direction: column;
-      gap: 0.625rem;
-      color: var(--parsec-color-light-secondary-contrast);
+      gap: ms.spacing('gap-xl');
+      color: ms.color('text-base-heading');
 
       .data-content {
         display: flex;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
         align-items: center;
 
         &-text {
-          color: var(--parsec-color-light-secondary-contrast);
+          color: ms.color('text-base-heading');
         }
       }
 
       .data-info {
-        color: var(--parsec-color-light-secondary-grey);
+        @include ms.font('label-md-medium');
+        color: ms.color('text-base-description');
       }
     }
   }
@@ -384,7 +395,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   overflow: auto;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   --max-width-date: 10rem;
   --max-width-organization: 12rem;
   --max-width-amount: 5.625rem;
@@ -412,28 +423,28 @@ onMounted(async () => {
     flex-grow: 1;
     flex-basis: var(--max-width-date);
     min-width: 8rem;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 
   &-header {
     display: flex;
     justify-content: space-between;
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-8);
+    background: ms.color('surface-base-default-secondary');
+    border-radius: ms.radius('lg');
     min-width: 35rem;
 
     .invoices-header-list {
       display: flex;
-      padding: 0.75rem 0.5rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-lg');
       width: 100%;
 
       &-item {
-        --padding-start: 0;
-        --padding-end: 0;
-        --padding-top: 0;
-        --padding-bottom: 0;
+        --padding-start: #{ms.spacing('padding-none')};
+        --padding-end: #{ms.spacing('padding-none')};
+        --padding-top: #{ms.spacing('padding-none')};
+        --padding-bottom: #{ms.spacing('padding-none')};
         --background: none;
-        color: var(--parsec-color-light-secondary-soft-text);
+        color: ms.color('text-neutral-default');
       }
     }
   }
@@ -452,13 +463,13 @@ onMounted(async () => {
         display: flex;
         justify-content: space-between;
         --background: none;
-        padding: 0.75rem 0.5rem;
-        border-radius: var(--parsec-radius-8);
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-lg');
+        border-radius: ms.radius('lg');
         position: relative;
 
         &:hover {
           .invoices-list-item__data {
-            color: var(--parsec-color-light-secondary-contrast);
+            color: ms.color('text-neutral-default-hover');
           }
         }
 
@@ -469,60 +480,44 @@ onMounted(async () => {
             bottom: 0;
             left: 0;
             right: 0;
-            border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+            border-bottom: ms.border('thin') solid ms.color('border-base-default');
           }
         }
 
         &__data {
-          color: var(--parsec-color-light-secondary-hard-grey);
-
-          .custom-button-ghost {
-            color: var(--parsec-color-light-primary-500);
-
-            &:hover {
-              color: var(--parsec-color-light-primary-600);
-            }
-          }
+          color: ms.color('text-base-description');
         }
 
         // eslint-disable-next-line vue-scoped-css/no-unused-selector
         .badge-status {
-          border-radius: var(--parsec-radius-32);
-          padding-inline: 0.5rem;
-          background: var(--parsec-color-light-secondary-disabled);
-          color: var(--parsec-color-light-secondary-text);
+          @include ms.font('body-sm-regular');
+          border-radius: ms.radius('6xl');
+          padding-inline: ms.spacing('padding-lg');
+          background: ms.color('surface-disabled-default');
+          color: ms.color('text-base-body');
           flex-shrink: 0;
 
           &.paid {
-            background: var(--parsec-color-light-success-100);
-            color: var(--parsec-color-light-success-700);
+            background: ms.color('surface-success-default-subtle');
+            color: ms.color('text-success-default');
           }
 
           &.open {
-            background: var(--parsec-color-light-info-100);
-            color: var(--parsec-color-light-info-700);
+            background: ms.color('surface-information-default-subtle');
+            color: ms.color('text-information-default');
           }
         }
 
-        .custom-button {
-          &__icon {
+        .invoices-list-item__download {
+          &-icon {
             width: 1rem;
-            --fill-color: var(--parsec-color-light-primary-500);
+            --fill-color: #{ms.color('icon-neutral-default')};
             flex-shrink: 0;
           }
 
-          &__label {
+          &-label {
             @include ms.responsive-breakpoint('lg') {
               display: none;
-            }
-          }
-
-          &:hover {
-            color: var(--parsec-color-light-primary-600);
-            background: var(--parsec-color-light-primary-50);
-
-            .custom-button__icon {
-              --fill-color: var(--parsec-color-light-primary-600);
             }
           }
         }
@@ -531,7 +526,7 @@ onMounted(async () => {
       .skeleton-loading {
         display: flex;
         width: 100%;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
 
         [class^='invoices-'] {
           height: 1rem;
@@ -556,16 +551,17 @@ onMounted(async () => {
 .payment-container .dashboard-section-title {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .payment {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-text {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
   }
 
   &-card {
@@ -575,7 +571,27 @@ onMounted(async () => {
   .skeleton-loading-card {
     width: 15.625rem;
     height: 8.625rem;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
   }
+}
+
+.no-invoices {
+  @include ms.font('body-lg-regular');
+}
+
+.invoices-header-list-item__text {
+  @include ms.font('label-md-emphasis');
+}
+
+.invoices-list-item__date {
+  @include ms.font('body-md-medium');
+}
+
+.invoices-list-item__text {
+  @include ms.font('body-md-regular');
+}
+
+.payment-container__title {
+  @include ms.font('heading-h3');
 }
 </style>

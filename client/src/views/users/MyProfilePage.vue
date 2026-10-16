@@ -23,170 +23,174 @@
             @click="goBack"
             class="header-selected-item__back"
           />
-          <ion-text class="header-selected-item__title title-h2">
+          <ion-text class="header-selected-item__title">
             {{ $msTranslate(profileMenuTitle.tab) }}
           </ion-text>
-          <ion-text class="header-selected-item__subtitle body">
+          <ion-text class="header-selected-item__subtitle">
             {{ $msTranslate(profileMenuTitle.subtitle) }}
           </ion-text>
         </div>
       </ion-header>
       <div class="main-container profile-page-container">
-        <ion-radio-group
+        <div
           v-if="isLargeDisplay || (isSmallDisplay && myProfileTab === undefined)"
-          v-model="myProfileTab"
-          class="profile-menu"
-          @ion-change="switchPage"
+          class="profile-menu-wrapper"
         >
-          <div class="menu-content">
-            <ion-text class="menu-content__title subtitles-sm">
-              {{ $msTranslate('MyProfilePage.tabs.account.title') }}
-            </ion-text>
-            <div class="menu-list">
-              <!-- Settings -->
-              <ion-radio
-                slot="start"
-                :value="ProfilePages.Settings"
-                class="menu-list__item"
-              >
-                <div class="item-container">
-                  <ion-icon :icon="cog" />
-                  <ion-text class="item-container__text body">
-                    {{ $msTranslate('MyProfilePage.tabs.account.settings') }}
-                  </ion-text>
-                  <ion-icon
-                    v-if="isSmallDisplay"
-                    :icon="chevronForward"
-                  />
-                </div>
-              </ion-radio>
-              <!-- Devices -->
-              <ion-radio
-                slot="start"
-                :value="ProfilePages.Devices"
-                class="menu-list__item"
-              >
-                <div class="item-container">
-                  <ion-icon :icon="phonePortrait" />
-                  <ion-text class="item-container__text body">
-                    {{ $msTranslate('MyProfilePage.tabs.account.devices') }}
-                  </ion-text>
-                  <ion-icon
-                    v-if="isSmallDisplay"
-                    :icon="chevronForward"
-                  />
-                </div>
-              </ion-radio>
-              <!-- Authentication -->
-              <ion-radio
-                slot="start"
-                :value="ProfilePages.Authentication"
-                class="menu-list__item"
-              >
-                <div class="item-container">
-                  <ion-icon :icon="fingerPrint" />
-                  <ion-text class="item-container__text body">
-                    {{ $msTranslate('MyProfilePage.tabs.account.authentication') }}
-                  </ion-text>
-                  <ion-icon
-                    v-if="isSmallDisplay"
-                    :icon="chevronForward"
-                  />
-                </div>
-              </ion-radio>
-              <!-- Recovery file -->
-              <ion-radio
-                slot="start"
-                :value="ProfilePages.Recovery"
-                class="menu-list__item"
-              >
-                <div class="item-container">
-                  <ion-icon :icon="idCard" />
-                  <ion-text class="item-container__text body">
-                    {{ $msTranslate('MyProfilePage.tabs.account.recovery') }}
-                  </ion-text>
-                  <ion-icon
-                    v-if="isSmallDisplay"
-                    :icon="chevronForward"
-                  />
-                </div>
-              </ion-radio>
+          <ion-radio-group
+            v-model="myProfileTab"
+            class="profile-menu"
+            @ion-change="switchPage"
+          >
+            <div class="menu-content">
+              <ion-text class="menu-content__title">
+                {{ $msTranslate('MyProfilePage.tabs.account.title') }}
+              </ion-text>
+              <div class="menu-list">
+                <!-- Settings -->
+                <ion-radio
+                  slot="start"
+                  :value="ProfilePages.Settings"
+                  class="menu-list__item"
+                >
+                  <div class="item-container">
+                    <ion-icon :icon="cog" />
+                    <ion-text class="item-container__text">
+                      {{ $msTranslate('MyProfilePage.tabs.account.settings') }}
+                    </ion-text>
+                    <ion-icon
+                      v-if="isSmallDisplay"
+                      :icon="chevronForward"
+                    />
+                  </div>
+                </ion-radio>
+                <!-- Devices -->
+                <ion-radio
+                  slot="start"
+                  :value="ProfilePages.Devices"
+                  class="menu-list__item"
+                >
+                  <div class="item-container">
+                    <ion-icon :icon="phonePortrait" />
+                    <ion-text class="item-container__text">
+                      {{ $msTranslate('MyProfilePage.tabs.account.devices') }}
+                    </ion-text>
+                    <ion-icon
+                      v-if="isSmallDisplay"
+                      :icon="chevronForward"
+                    />
+                  </div>
+                </ion-radio>
+                <!-- Authentication -->
+                <ion-radio
+                  slot="start"
+                  :value="ProfilePages.Authentication"
+                  class="menu-list__item"
+                >
+                  <div class="item-container">
+                    <ion-icon :icon="fingerPrint" />
+                    <ion-text class="item-container__text">
+                      {{ $msTranslate('MyProfilePage.tabs.account.authentication') }}
+                    </ion-text>
+                    <ion-icon
+                      v-if="isSmallDisplay"
+                      :icon="chevronForward"
+                    />
+                  </div>
+                </ion-radio>
+                <!-- Recovery file -->
+                <ion-radio
+                  slot="start"
+                  :value="ProfilePages.Recovery"
+                  class="menu-list__item"
+                >
+                  <div class="item-container">
+                    <ion-icon :icon="idCard" />
+                    <ion-text class="item-container__text">
+                      {{ $msTranslate('MyProfilePage.tabs.account.recovery') }}
+                    </ion-text>
+                    <ion-icon
+                      v-if="isSmallDisplay"
+                      :icon="chevronForward"
+                    />
+                  </div>
+                </ion-radio>
+              </div>
             </div>
-          </div>
 
-          <div class="menu-content">
-            <ion-text class="menu-content__title subtitles-sm">
-              {{ $msTranslate('MyProfilePage.tabs.support.title') }}
-            </ion-text>
-            <div class="menu-list">
-              <!-- Documentation -->
-              <ion-text
-                @click="openDocumentationPopover"
-                class="menu-list__item"
-              >
-                <div class="item-container">
-                  <ion-icon :icon="documentText" />
-                  <ion-text class="item-container__text body">
-                    {{ $msTranslate('MyProfilePage.tabs.support.documentation') }}
-                  </ion-text>
-                  <ms-image
-                    class="item-container__open-icon"
-                    :image="OpenIcon"
-                  />
-                </div>
+            <div class="menu-content">
+              <ion-text class="menu-content__title">
+                {{ $msTranslate('MyProfilePage.tabs.support.title') }}
               </ion-text>
-              <!-- Help & comments -->
-              <ion-text
-                @click="openFeedbackPopover"
-                class="menu-list__item"
-              >
-                <div class="item-container">
-                  <ion-icon :icon="chatbubbles" />
-                  <ion-text class="item-container__text body">
-                    {{ $msTranslate('MyProfilePage.tabs.support.help') }}
-                  </ion-text>
-                  <ms-image
-                    class="item-container__open-icon"
-                    :image="OpenIcon"
-                  />
-                </div>
-              </ion-text>
-              <!-- About -->
-              <ion-radio
-                slot="start"
-                :value="ProfilePages.About"
-                class="menu-list__item"
-              >
-                <div class="item-container">
-                  <ion-icon :icon="information" />
-                  <ion-text class="item-container__text body">
-                    {{ $msTranslate('MyProfilePage.tabs.support.about') }}
-                  </ion-text>
-                  <ion-icon
-                    v-if="isSmallDisplay"
-                    :icon="chevronForward"
-                  />
-                </div>
-              </ion-radio>
+              <div class="menu-list">
+                <!-- Documentation -->
+                <ion-text
+                  @click="openDocumentationPopover"
+                  class="menu-list__item"
+                >
+                  <div class="item-container">
+                    <ion-icon :icon="documentText" />
+                    <ion-text class="item-container__text">
+                      {{ $msTranslate('MyProfilePage.tabs.support.documentation') }}
+                    </ion-text>
+                    <ms-image
+                      class="item-container__open-icon"
+                      :image="OpenIcon"
+                    />
+                  </div>
+                </ion-text>
+                <!-- Help & comments -->
+                <ion-text
+                  @click="openFeedbackPopover"
+                  class="menu-list__item"
+                >
+                  <div class="item-container">
+                    <ion-icon :icon="help" />
+                    <ion-text class="item-container__text">
+                      {{ $msTranslate('MyProfilePage.tabs.support.help') }}
+                    </ion-text>
+                    <ms-image
+                      class="item-container__open-icon"
+                      :image="OpenIcon"
+                    />
+                  </div>
+                </ion-text>
+                <!-- About -->
+                <ion-radio
+                  slot="start"
+                  :value="ProfilePages.About"
+                  class="menu-list__item"
+                >
+                  <div class="item-container">
+                    <ion-icon :icon="information" />
+                    <ion-text class="item-container__text">
+                      {{ $msTranslate('MyProfilePage.tabs.support.about') }}
+                    </ion-text>
+                    <ion-icon
+                      v-if="isSmallDisplay"
+                      :icon="chevronForward"
+                    />
+                  </div>
+                </ion-radio>
+              </div>
             </div>
-          </div>
 
-          <!-- log out -->
-          <div class="logout-container">
-            <div
-              class="logout"
-              @click="logout"
-            >
-              <ion-icon
-                :icon="logOut"
-                slot="start"
-              />
-              <ion-text class="body logout-text">
-                {{ $msTranslate('HomePage.topbar.logout') }}
-              </ion-text>
+            <!-- log out -->
+            <div class="logout-container">
+              <div
+                class="logout"
+                @click="logout"
+              >
+                <ion-icon
+                  :icon="logIn"
+                  slot="start"
+                />
+                <ion-text class="logout-text">
+                  {{ $msTranslate('HomePage.topbar.logout') }}
+                </ion-text>
+              </div>
             </div>
-          </div>
-        </ion-radio-group>
+          </ion-radio-group>
+        </div>
         <div
           class="profile-content"
           v-if="myProfileTab !== undefined || isLargeDisplay"
@@ -203,8 +207,8 @@
               v-if="clientInfo && isLargeDisplay"
             >
               <div class="item-header">
-                <ion-text class="item-header__title title-h2">{{ $msTranslate('MyProfilePage.settings.title') }}</ion-text>
-                <ion-text class="item-header__description body-lg">{{ $msTranslate('MyProfilePage.settings.description') }}</ion-text>
+                <ion-text class="item-header__title">{{ $msTranslate('MyProfilePage.settings.title') }}</ion-text>
+                <ion-text class="item-header__description">{{ $msTranslate('MyProfilePage.settings.description') }}</ion-text>
               </div>
               <profile-info-card
                 class="profile-infos-container"
@@ -221,8 +225,8 @@
             class="profile-content-item"
           >
             <div class="item-header">
-              <ion-text class="item-header__title title-h2">{{ $msTranslate('DevicesPage.title') }}</ion-text>
-              <ion-text class="item-header__description body-lg">{{ $msTranslate('DevicesPage.description') }}</ion-text>
+              <ion-text class="item-header__title">{{ $msTranslate('DevicesPage.title') }}</ion-text>
+              <ion-text class="item-header__description">{{ $msTranslate('DevicesPage.description') }}</ion-text>
             </div>
             <devices-page class="devices" />
           </div>
@@ -232,8 +236,8 @@
             class="profile-content-item"
           >
             <div class="item-header">
-              <ion-text class="item-header__title title-h2">{{ $msTranslate('Authentication.title') }}</ion-text>
-              <ion-text class="item-header__description body-lg">{{ $msTranslate('Authentication.description') }}</ion-text>
+              <ion-text class="item-header__title">{{ $msTranslate('Authentication.title') }}</ion-text>
+              <ion-text class="item-header__description">{{ $msTranslate('Authentication.description') }}</ion-text>
             </div>
             <authentication-page />
           </div>
@@ -244,8 +248,8 @@
             id="recovery-profile-content"
           >
             <div class="item-header">
-              <ion-text class="item-header__title title-h2">{{ $msTranslate('OrganizationRecovery.title') }}</ion-text>
-              <ion-text class="item-header__description body-lg">{{ $msTranslate('OrganizationRecovery.description') }}</ion-text>
+              <ion-text class="item-header__title">{{ $msTranslate('OrganizationRecovery.title') }}</ion-text>
+              <ion-text class="item-header__description">{{ $msTranslate('OrganizationRecovery.description') }}</ion-text>
             </div>
             <organization-recovery-page />
           </div>
@@ -255,8 +259,8 @@
             class="profile-content-item"
           >
             <div class="item-header">
-              <ion-text class="item-header__title title-h3">{{ $msTranslate('AboutPage.title') }}</ion-text>
-              <ion-text class="item-header__description body-lg">{{ $msTranslate('AboutPage.description') }}</ion-text>
+              <ion-text class="item-header__title item-header__title--sm">{{ $msTranslate('AboutPage.title') }}</ion-text>
+              <ion-text class="item-header__description">{{ $msTranslate('AboutPage.description') }}</ion-text>
             </div>
             <about-view />
           </div>
@@ -280,15 +284,15 @@ import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
 import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
 import { IonContent, IonHeader, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import {
-  chatbubbles,
   chevronBack,
   chevronForward,
   cog,
   documentText,
   fingerPrint,
+  help,
   idCard,
   information,
-  logOut,
+  logIn,
   phonePortrait,
 } from 'ionicons/icons';
 import { Answer, askQuestion, MsImage, OpenIcon, Translatable, useWindowSize } from 'megashark-lib';
@@ -410,15 +414,15 @@ onUnmounted(async () => {
 }
 
 .profile-page-content {
+  border-top: 1px solid ms.color('border-base-default');
+
   &::part(scroll) {
     display: flex;
     flex-direction: column;
   }
 
   &::part(background) {
-    @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-background);
-    }
+    --background: #{ms.color('surface-base-default')};
   }
 }
 
@@ -426,8 +430,8 @@ onUnmounted(async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem 1rem 1.5rem;
-  background: var(--parsec-color-light-secondary-background);
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
+  background: ms.color('surface-base-page');
   z-index: 1;
 
   @include ms.responsive-breakpoint('sm') {
@@ -439,7 +443,7 @@ onUnmounted(async () => {
   .header-selected-item {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     align-items: center;
     justify-content: center;
     width: 100%;
@@ -448,21 +452,25 @@ onUnmounted(async () => {
     &__back {
       position: absolute;
       left: 1rem;
-      color: var(--parsec-color-light-secondary-hard-grey);
-      background: var(--parsec-color-light-secondary-premiere);
-      border-radius: var(--parsec-radius-8);
+      color: ms.color('icon-neutral-default');
+      background: ms.color('surface-neutral-default-subtle');
+      border-radius: ms.radius('lg');
       font-size: 1.5rem;
-      padding: 0.375rem;
+      padding: ms.spacing('padding-md');
       cursor: pointer;
     }
 
     &__title {
-      color: var(--parsec-color-light-primary-800);
+      @include ms.font('heading-h3');
+
+      color: ms.color('text-brand-default');
       text-align: center;
     }
 
     &__subtitle {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-regular');
+
+      color: ms.color('text-base-description');
       text-align: center;
     }
   }
@@ -474,55 +482,64 @@ onUnmounted(async () => {
   z-index: 10;
 
   @include ms.responsive-breakpoint('sm') {
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    background: ms.color('surface-base-default');
+    border-radius: ms.radius('4xl') ms.radius('4xl') ms.radius('none') ms.radius('none');
     height: stretch;
     z-index: 1;
+  }
+
+  .profile-menu-wrapper {
+    display: flex;
+    flex-shrink: 0;
+    height: 100%;
+    border-right: 1px solid ms.color('border-base-default');
+
+    @include ms.responsive-breakpoint('sm') {
+      width: 100%;
+      height: auto;
+      padding: ms.spacing('padding-none');
+    }
   }
 
   .profile-menu {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 21.375rem;
+    width: 18.25rem;
     height: 100%;
-    padding: 1.5rem;
-    border-top: 1px solid var(--parsec-color-light-secondary-medium);
-    border-right: 1px solid var(--parsec-color-light-secondary-medium);
-    gap: 1rem;
-    overflow: auto;
+    gap: ms.spacing('gap-3xl');
+    // background: ms.color('surface-base-page');
+    overflow-x: hidden;
+    overflow-y: auto;
 
     @include ms.responsive-breakpoint('md') {
-      max-width: 15rem;
-      padding: 1rem;
+      width: 15rem;
     }
 
     @include ms.responsive-breakpoint('sm') {
-      border: none;
+      width: 100%;
       overflow: visible;
-      gap: 0rem;
-      max-width: 100%;
-      padding: 0;
+      gap: ms.spacing('gap-none');
+      background: none;
+      border-radius: ms.radius('none');
     }
   }
 
   .profile-content {
     width: 100%;
     height: -webkit-fill-available;
-    background: var(--parsec-color-light-secondary-background);
     display: flex;
     flex-direction: column;
     align-self: flex-start;
-    gap: 2rem;
-    padding: 2rem 2.5rem;
+    gap: ms.spacing('gap-5xl');
+    padding: ms.spacing('padding-6xl');
     overflow: auto;
 
     @include ms.responsive-breakpoint('lg') {
-      padding: 2rem 1.5rem;
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl');
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       overflow: visible;
     }
 
@@ -531,31 +548,39 @@ onUnmounted(async () => {
       flex-direction: column;
       max-width: 37.5rem;
       height: fit-content;
-      gap: 1.5rem;
-      border-radius: var(--parsec-radius-12);
+      gap: ms.spacing('gap-4xl');
+      border-radius: ms.radius('2xl');
       position: relative;
 
       @include ms.responsive-breakpoint('sm') {
         max-width: 100%;
         height: -webkit-fill-available;
-        padding: 1.5rem;
+        padding: ms.spacing('padding-4xl');
       }
 
       .item-header {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: ms.spacing('gap-2xl');
 
         @include ms.responsive-breakpoint('sm') {
           display: none;
         }
 
         &__title {
-          color: var(--parsec-color-light-primary-700);
+          @include ms.font('heading-h3');
+
+          color: ms.color('text-brand-default');
+
+          &--sm {
+            @include ms.font('heading-h4');
+          }
         }
 
         &__description {
-          color: var(--parsec-color-light-secondary-hard-grey);
+          @include ms.font('body-lg-regular');
+
+          color: ms.color('text-base-description');
           display: flex;
           flex-direction: column;
         }
@@ -566,60 +591,65 @@ onUnmounted(async () => {
 
 .profile-infos-container {
   margin-top: 1.5rem;
-  border-radius: var(--parsec-radius-12);
-  padding: 1.5rem;
-  background: var(--parsec-color-light-secondary-white);
-  box-shadow:
-    0 1px 1px 0 rgba(0, 0, 0, 0.05),
-    0 1px 4px 0 rgba(0, 0, 0, 0.03),
-    0 0 1px 0 rgba(0, 0, 0, 0.2);
+  border-radius: ms.radius('2xl');
+  padding: ms.spacing('padding-sm') ms.spacing('padding-none');
 }
 
 .menu-content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 0.5rem;
-
-  @include ms.responsive-breakpoint('lg') {
-    padding: 0.5rem 0;
-  }
+  gap: ms.spacing('gap-2xl');
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 2rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('xs') {
-    padding: 1.5rem;
+    padding: ms.spacing('padding-4xl');
+  }
+
+  & + .menu-content {
+    padding: ms.spacing('padding-3xl');
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl');
+    }
+
+    @include ms.responsive-breakpoint('xs') {
+      padding: ms.spacing('padding-4xl');
+    }
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-hard-grey);
-    margin: 0 0.5rem 0 1rem;
+    @include ms.font('body-sm-medium');
+
+    color: ms.color('text-base-label');
+    opacity: ms.opacity('description');
+    padding-inline: ms.spacing('padding-lg');
 
     @include ms.responsive-breakpoint('sm') {
-      margin: 0;
+      padding-inline: ms.spacing('padding-none');
     }
   }
 
   .menu-list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     width: 100%;
-    padding-inline: 0.5rem;
 
     @include ms.responsive-breakpoint('sm') {
-      gap: 1rem;
-      padding: 0.5rem 0;
-      background: var(--parsec-color-light-secondary-background);
-      border-radius: var(--parsec-radius-12);
+      gap: ms.spacing('gap-3xl');
+      padding: ms.spacing('padding-lg') ms.spacing('padding-none');
+      background: ms.color('surface-base-page');
+      border-radius: ms.radius('2xl');
     }
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &__item {
-      color: var(--parsec-color-light-secondary-text);
-      border-radius: var(--parsec-radius-8);
+      color: ms.color('text-neutral-default');
+      border-radius: ms.radius('lg');
       cursor: pointer;
       position: relative;
 
@@ -631,12 +661,14 @@ onUnmounted(async () => {
       .item-container {
         display: flex;
         align-items: center;
-        padding: 0.5rem 0.75em;
-        gap: 0.375rem;
+        padding: ms.spacing('padding-xl') ms.spacing('padding-2xl');
+        gap: ms.spacing('gap-lg');
         width: 100%;
         overflow: hidden;
 
         &__text {
+          @include ms.font('label-md-medium');
+
           flex: 1;
           width: 100%;
           overflow: hidden;
@@ -645,11 +677,10 @@ onUnmounted(async () => {
         }
 
         &__open-icon {
-          width: 1.25rem;
-          height: 1.25rem;
+          width: 1.125rem;
+          height: 1.125rem;
           margin-left: auto;
-          --fill-color: var(--parsec-color-light-secondary-hard-grey);
-          opacity: 0.8;
+          --fill-color: #{ms.color('icon-neutral-default')};
           flex-shrink: 0;
           position: relative;
           top: 0;
@@ -663,13 +694,13 @@ onUnmounted(async () => {
       }
 
       &.radio-checked {
-        color: var(--parsec-color-light-secondary-text);
-        background: var(--parsec-color-light-secondary-medium);
+        color: ms.color('text-base-label');
+        background: ms.color('surface-neutral-default-subtle-pressed');
       }
 
       &:hover:not(.radio-checked) {
-        background: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-secondary-text);
+        background: ms.color('surface-neutral-default-subtle-hover');
+        color: ms.color('text-neutral-default');
 
         .item-container__open-icon {
           top: -0.125rem;
@@ -679,9 +710,9 @@ onUnmounted(async () => {
 
       ion-icon {
         &:first-child {
-          color: var(--parsec-color-light-secondary-text);
-          font-size: 1.125rem;
-          opacity: 0.8;
+          color: ms.color('icon-neutral-default');
+          font-size: 1.25rem;
+          opacity: ms.opacity('8');
           flex-shrink: 0;
         }
       }
@@ -694,7 +725,7 @@ onUnmounted(async () => {
           margin-top: 0.5rem;
           width: calc(100% - 2.25rem);
           height: 1px;
-          background: var(--parsec-color-light-secondary-medium);
+          background: ms.color('border-base-default');
         }
       }
     }
@@ -703,45 +734,49 @@ onUnmounted(async () => {
 
 .logout-container {
   display: flex;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
-  padding: 1rem 0rem;
+  padding: ms.spacing('padding-lg');
 
   @include ms.responsive-breakpoint('sm') {
-    border-top: none;
-    padding: 0;
-    margin-top: 0;
-    padding: 1rem 2rem 2rem;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-5xl') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('xs') {
-    padding: 1rem 1.5rem 2rem;
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl') ms.spacing('padding-5xl');
+  }
+
+  .logout-text {
+    @include ms.font('label-md-medium');
   }
 
   .logout {
     display: flex;
     align-items: center;
     width: 100%;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    margin-inline: 0.5rem;
-    border-radius: var(--parsec-radius-8);
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-2xl');
+    border-radius: ms.radius('lg');
     cursor: pointer;
-    color: var(--parsec-color-light-danger-500);
+    color: ms.color('text-error-default');
+
+    ion-icon {
+      color: ms.color('icon-error-default');
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
 
     @include ms.responsive-breakpoint('sm') {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      box-shadow: var(--parsec-shadow-input);
-      padding: 0.75rem 1rem;
+      border: ms.border('thin') solid ms.color('border-base-default');
+      box-shadow: ms.shadow('input');
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       justify-content: center;
-      margin-inline: 0;
     }
 
     &:hover {
-      background: var(--parsec-color-light-danger-50);
-      color: var(--parsec-color-light-danger-700);
+      background: ms.color('surface-error-default-subtle-hover');
+      color: ms.color('text-error-default-hover');
 
       ion-icon {
-        color: var(--parsec-color-light-danger-700);
+        color: ms.color('icon-error-default-hover');
       }
     }
   }

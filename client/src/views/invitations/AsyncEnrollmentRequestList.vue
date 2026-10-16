@@ -72,14 +72,14 @@ const emits = defineEmits<{
 
 <style scoped lang="scss">
 .invalid-request {
-  background: var(--parsec-color-light-danger-50);
-  border: 1px solid var(--parsec-color-light-danger-100);
-  border-radius: var(--parsec-radius-12);
+  background: ms.color('surface-error-default-subtle');
+  border: ms.border('thin') solid ms.color('border-error-default-subtle-hover');
+  border-radius: ms.radius('2xl');
   margin: 1rem;
-  padding: 1rem;
+  padding: ms.spacing('padding-3xl');
   display: flex;
   max-width: 60rem;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   align-items: center;
   position: relative;
 
@@ -95,28 +95,28 @@ const emits = defineEmits<{
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     @include ms.responsive-breakpoint('md') {
-      padding-right: 2rem;
+      padding-right: ms.spacing('padding-5xl');
     }
 
     @include ms.responsive-breakpoint('md') {
-      padding-right: 3rem;
+      padding-right: ms.spacing('padding-7xl');
     }
 
     &__description {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
     }
 
     &__time {
-      color: var(--parsec-color-light-secondary-text);
-      opacity: 0.7;
+      color: ms.color('text-base-body');
+      opacity: ms.opacity('7');
     }
   }
 
   &-title {
-    color: var(--parsec-color-light-danger-700);
+    color: ms.color('text-error-default');
     font-weight: 600;
   }
 
@@ -132,14 +132,14 @@ const emits = defineEmits<{
     }
 
     &::part(native) {
-      --background-hover: var(--parsec-color-light-danger-100);
+      --background-hover: #{ms.color('surface-error-default-subtle-hover')};
       --background: none;
-      padding: 0.5rem;
+      padding: ms.spacing('padding-lg');
     }
 
     .button-icon {
       font-size: 1.25rem;
-      color: var(--parsec-color-light-danger-500);
+      color: ms.color('icon-error-default');
     }
   }
 }

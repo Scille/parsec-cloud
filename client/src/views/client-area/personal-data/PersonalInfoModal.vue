@@ -38,7 +38,7 @@
             @on-enter-keyup="submit"
           />
           <div
-            class="form-error form-helperText body"
+            class="form-error"
             v-if="fieldHasError(Fields.Phone)"
           >
             {{ $msTranslate('clientArea.personalDataPage.modals.personalInfo.errors.phone') }}

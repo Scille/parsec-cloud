@@ -14,7 +14,7 @@
     />
     <!-- error -->
     <ion-text
-      class="form-error body forgot-password-button-error"
+      class="form-error forgot-password-button-error"
       v-show="error"
     >
       <ion-icon
@@ -24,20 +24,19 @@
     </ion-text>
     <!-- button -->
     <div class="saas-forgot-password-button">
-      <ion-text
+      <ion-button
         :disabled="querying"
-        class="button-medium custom-button custom-button-ghost saas-forgot-password-button__item"
-        button
+        fill="clear"
+        slot="icon-only"
+        class="saas-forgot-password-button__item color-secondary"
         @click="$emit('cancel')"
       >
         <ion-icon :icon="arrowBack" />
-        {{ $msTranslate('clientArea.forgotPassword.getEmailStep.previousButton') }}
-      </ion-text>
+      </ion-button>
       <ion-button
         :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || querying"
         @click="submit"
         class="saas-forgot-password-button__item"
-        size="large"
       >
         {{ $msTranslate('clientArea.forgotPassword.getEmailStep.nextButton') }}
       </ion-button>
@@ -100,36 +99,21 @@ async function submit(): Promise<boolean> {
 
   .saas-forgot-password-button {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     justify-content: end;
     align-items: center;
     margin-top: 2.5rem;
     width: 100%;
 
-    &__item {
-      height: 2.5rem;
-      border-radius: var(--parsec-radius-6);
-      font-size: 1rem;
-      border: 1px solid transparent;
-
-      &.custom-button {
-        color: var(--parsec-color-light-secondary-contrast);
-      }
-
-      &[fill='clear'] {
-        --color: var(--parsec-color-light-secondary-text);
-      }
-
-      &:hover {
-        border: 1px solid var(--parsec-color-light-secondary-contrast);
-      }
+    &__item:nth-child(2) {
+      flex-grow: 1;
     }
   }
 
   .forgot-password-button-error {
     margin-top: 0.5rem;
     display: flex;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     align-items: baseline;
   }
 }

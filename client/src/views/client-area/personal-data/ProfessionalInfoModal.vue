@@ -13,7 +13,7 @@
     >
       <div class="modal-container">
         <div class="input-container represent-company">
-          <p class="form-label">
+          <p class="represent-company__label">
             {{ $msTranslate('clientArea.personalDataPage.modals.professionalInfo.representCompany') }}
           </p>
           <ms-boolean-toggle
@@ -110,5 +110,9 @@ function isFormValid(): boolean {
       margin: 0;
     }
   }
+}
+
+.represent-company__label {
+  @include ms.font('label-md-medium');
 }
 </style>

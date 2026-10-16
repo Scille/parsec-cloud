@@ -18,16 +18,16 @@
         v-if="status === EditorIssueStatus.LoadingTimeout"
         class="editor-error-advices"
       >
-        <ion-text class="editor-error-advices__title title-h5">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
+        <ion-text class="editor-error-advices__title">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
         <ion-list class="editor-error-advices-list ion-no-padding">
-          <ion-item class="editor-error-advices-list__item ion-no-padding body">
+          <ion-item class="editor-error-advices-list__item ion-no-padding">
             <ion-icon
               class="item-icon"
               :icon="checkmarkCircle"
             />
             {{ $msTranslate('fileEditors.advices.advice1') }}
           </ion-item>
-          <ion-item class="editor-error-advices-list__item ion-no-padding body">
+          <ion-item class="editor-error-advices-list__item ion-no-padding">
             <ion-icon
               class="item-icon"
               :icon="checkmarkCircle"
@@ -134,21 +134,22 @@ const modalConfig = computed<ModalConfig>(() => {
   margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   &-advices {
-    border-top: 1px solid var(--parsec-color-light-secondary-disabled);
-    padding-top: 1.5rem;
+    border-top: ms.border('thin') solid ms.color('border-base-default');
+    padding-top: ms.spacing('padding-4xl');
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h5');
+      color: ms.color('text-base-heading');
     }
 
     &-list {
-      padding-left: 0.5rem;
+      padding-left: ms.spacing('padding-lg');
       list-style-type: circle;
       background: none;
 
@@ -156,13 +157,13 @@ const modalConfig = computed<ModalConfig>(() => {
         margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-secondary-soft-text);
+        gap: ms.spacing('gap-lg');
+        color: ms.color('text-base-body');
         --background: none;
-        font-size: 0.9375rem;
+        @include ms.font('body-md-regular');
 
         .item-icon {
-          color: var(--parsec-color-light-secondary-grey);
+          color: ms.color('icon-neutral-default');
           flex-shrink: 0;
           margin-right: 0.5rem;
           font-size: 1rem;

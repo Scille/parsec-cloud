@@ -19,7 +19,7 @@
     </div>
     <div class="text-content">
       <div class="text-content-name">
-        <ion-text class="text-content-name__text subtitles-normal">
+        <ion-text class="text-content-name__text">
           {{ name }}
         </ion-text>
         <ion-icon
@@ -102,9 +102,9 @@ const emit = defineEmits<{
 .profile-header {
   --background: none;
   --background-hover: none;
-  border-radius: var(--parsec-radius-12);
-  padding: 0.375rem 0.5rem 0.375rem 0.25rem;
-  border: 1px solid transparent;
+  border-radius: ms.radius('2xl');
+  padding: ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-sm');
+  border: ms.border('thin') solid transparent;
   transition: all ease-in-out 200ms;
   flex-shrink: 0;
   max-width: 15rem;
@@ -115,21 +115,21 @@ const emit = defineEmits<{
 
   &:hover {
     --background-hover: none;
-    border-color: var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-background);
+    border-color: ms.color('border-base-default');
+    background: ms.color('surface-neutral-default-subtle-hover');
   }
 
   &-clicked {
-    border-color: var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-background);
+    border-color: ms.color('border-base-default');
+    background: ms.color('surface-neutral-default-subtle-hover');
   }
 }
 
 .avatar {
   position: relative;
-  color: var(--parsec-color-light-primary-600);
+  color: ms.color('icon-brand-default');
   display: flex;
-  margin-right: 0.5rem;
+  margin-right: ms.spacing('padding-lg');
 
   @include ms.responsive-breakpoint('md') {
     margin: 0;
@@ -146,17 +146,17 @@ const emit = defineEmits<{
     right: 0px;
     height: 0.5rem;
     width: 0.5rem;
-    border-radius: 50%;
-    border: var(--parsec-color-light-secondary-white) solid 2px;
+    border-radius: ms.radius('full');
+    border: ms.color('border-base-on-color') solid ms.border('thick');
     z-index: 2;
   }
 
   &.online::after {
-    background-color: var(--parsec-color-light-success-500);
+    background-color: ms.color('surface-success-default');
   }
 
   &.offline::after {
-    background-color: var(--parsec-color-light-secondary-light);
+    background-color: ms.color('surface-disabled-default');
   }
 }
 
@@ -168,11 +168,11 @@ const emit = defineEmits<{
   &-name {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-soft-text);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-neutral-default');
 
     &__text {
-      font-size: 0.9375rem;
+      @include ms.font('body-lg-medium');
       width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;

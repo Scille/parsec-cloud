@@ -486,7 +486,8 @@
             "saas": "Créer mon organisation sur Parsec",
             "trial": {
                 "title": "Essayer Parsec pendant 15 jours",
-                "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)"
+                "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)",
+                "badge": "essai"
             },
             "ownServer": "Utiliser un autre serveur Parsec"
         },
@@ -1501,6 +1502,7 @@
             "backToDevices": "Retour à mes appareils"
         },
         "toasts": {
+            "keyCopiedToClipboard": "La clé secrète a bien été copié dans le presse-papier",
             "keyDownloadOk": "La clé secrète a bien été téléchargée"
         },
         "filenames": {
@@ -1763,14 +1765,11 @@
         "UserDetailsModal": {
             "title": "Détails de l'utilisateur",
             "subtitles": {
-                "name": "Nom",
+                "generalInfo": "Informations générales",
                 "joined": "Rejoint le",
                 "commonWorkspaces": "Espaces de travail communs",
                 "revoked": "Révoqué",
                 "revokedSince": "Révoqué depuis le"
-            },
-            "actions": {
-                "close": "Fermer"
             },
             "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec cet utilisateur.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."
@@ -1831,6 +1830,7 @@
     },
     "InvitationsPage": {
         "emailInvitation": {
+            "tabLabel": "Invitations envoyées",
             "tab": "Invitations par adresse email",
             "tabShort": "Email",
             "emptyState": "Aucune invitation par email en attente.",
@@ -1848,6 +1848,7 @@
             }
         },
         "asyncEnrollmentRequest": {
+            "tabLabel": "Demandes d'adhésion",
             "tab": "Demandes par lien (PKI/SSO)",
             "emptyState": "Aucune demande par lien en attente. Les demandes d'utilisateurs pour rejoindre l'organisation avec une carte à puce (PKI) ou un compte ProConnect (SSO) seront répertoriées ici.",
             "copyLink": "Copier le lien (PKI/SSO)",
@@ -2316,11 +2317,9 @@
             "password": "Mot de passe",
             "forgottenPassword": "Mot de passe oublié ?",
             "login": "Se connecter",
-            "backButton": "Retour",
             "saveLogin": "Se souvenir de moi",
             "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
             "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
-            "noAccount": "Vous n'avez pas encore d'espace client ?",
             "createAccount": "Créer un compte"
         },
         "forgotPassword": {
@@ -2328,7 +2327,6 @@
                 "title": "Mot de passe oublié",
                 "description": "Pas d'inquiétude, nous allons vous aider à réinitialiser votre mot de passe.",
                 "nextButton": "Soumettre",
-                "previousButton": "Retour à la connexion",
                 "error": "Impossible de réinitialiser votre mot de passe. Veuillez vérifier votre email."
             },
             "emailSentStep": {
@@ -2793,8 +2791,7 @@
         "loading": "Chargement...",
         "workspace": "Espace de travail :",
         "archived": "(Archivé)",
-        "deleted": "(Supprimé)",
-        "date": "Date de prévisualisation :"
+        "deleted": "(Supprimé)"
     },
     "fileViewers": {
         "openWithDefault": "Ouvrir avec l'app par défaut",

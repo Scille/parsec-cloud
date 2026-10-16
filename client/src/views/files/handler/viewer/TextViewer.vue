@@ -439,62 +439,62 @@ function detectLanguage(): string | undefined {
 }
 
 .text-container {
-  background-color: var(--parsec-color-light-secondary-premiere);
+  background-color: ms.color('surface-base-page');
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
 }
 
 .preview {
-  background-color: var(--parsec-color-light-secondary-premiere);
+  background-color: ms.color('surface-base-page');
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
   overflow-y: auto;
-  padding: 1rem 1.5rem;
-  border-left: 1px solid var(--parsec-color-light-secondary-medium);
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
+  border-left: ms.border('thin') solid ms.color('border-base-default');
   box-sizing: border-box;
 
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-body');
   line-height: 1.5;
 
   // Scoped styles don't reach v-html content, hence :deep
   :deep(h1),
   :deep(h2) {
-    padding-bottom: 0.25rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding-bottom: ms.spacing('padding-sm');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
   }
 
   :deep(a) {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('text-brand-default');
   }
 
   :deep(code) {
     font-family: monospace;
     font-size: 0.9em;
-    padding: 0.125rem 0.25rem;
-    border-radius: var(--parsec-radius-4);
-    background-color: var(--parsec-color-light-secondary-medium);
+    padding: ms.spacing('padding-xs') ms.spacing('padding-sm');
+    border-radius: ms.radius('sm');
+    background-color: ms.color('surface-neutral-default-subtle-hover');
   }
 
   :deep(pre) {
     overflow-x: auto;
-    padding: 0.75rem 1rem;
-    border-radius: var(--parsec-radius-8);
-    background-color: var(--parsec-color-light-secondary-medium);
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+    border-radius: ms.radius('lg');
+    background-color: ms.color('surface-neutral-default-subtle-hover');
 
     // Already styled by the `pre`
     code {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       background-color: transparent;
     }
   }
 
   :deep(blockquote) {
     margin: 1rem 0;
-    padding: 0 1rem;
-    border-left: 4px solid var(--parsec-color-light-secondary-light);
-    color: var(--parsec-color-light-secondary-grey);
+    padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
+    border-left: ms.border('thicker') solid ms.color('border-base-default');
+    color: ms.color('text-base-description');
   }
 
   :deep(table) {
@@ -504,17 +504,17 @@ function detectLanguage(): string | undefined {
 
   :deep(th),
   :deep(td) {
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: ms.spacing('padding-md') ms.spacing('padding-2xl');
+    border: ms.border('thin') solid ms.color('border-base-default');
   }
 
   :deep(th) {
-    background-color: var(--parsec-color-light-secondary-background);
+    background-color: ms.color('surface-base-default-secondary');
   }
 
   :deep(hr) {
     border: none;
-    border-top: 1px solid var(--parsec-color-light-secondary-medium);
+    border-top: ms.border('thin') solid ms.color('border-base-default');
   }
 
   :deep(.image-placeholder) {
