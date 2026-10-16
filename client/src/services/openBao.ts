@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getServerConfig, isElectron, OpenBaoAuthConfigTag, Result } from '@/parsec';
+import { getServerConfig, isElectron, Result } from '@/parsec';
 import { getRouter } from '@/router';
 import axios, { AxiosInstance } from 'axios';
 
@@ -24,7 +24,7 @@ export interface OpenBaoConnectionInfo {
   userId: string;
   token: string;
   server: string;
-  provider: OpenBaoAuthConfigTag;
+  provider: string;
   secretMountpoint: string;
   transitMountpoint: string;
 }
@@ -36,7 +36,7 @@ export class OpenBaoClient {
   _userId: string;
   _token: string;
   _server: string;
-  _provider: OpenBaoAuthConfigTag;
+  _provider: string;
   _mountpoint: string;
   _secretMountpoint: string;
   _transitMountpoint: string;
@@ -45,7 +45,7 @@ export class OpenBaoClient {
     token: string,
     id: string,
     server: string,
-    provider: OpenBaoAuthConfigTag,
+    provider: string,
     mountpoint: string,
     secretMountpoint: string,
     transitMountpoint: string,
@@ -140,7 +140,7 @@ async function isOpenBaoAvailable(parsecServer: string): Promise<boolean> {
 
 async function openBaoConnect(
   openBaoServer: string,
-  provider: OpenBaoAuthConfigTag,
+  idSSO: string,
   mountpoint: string,
   secretMountpoint: string,
   transitMountpoint: string,
@@ -212,7 +212,7 @@ async function openBaoConnect(
       result.value.token,
       result.value.id,
       openBaoServer,
-      provider,
+      idSSO,
       mountpoint,
       secretMountpoint,
       transitMountpoint,
@@ -224,10 +224,4 @@ async function openBaoConnect(
   }
 }
 
-const HandledSSOProviders = [OpenBaoAuthConfigTag.OIDCProConnect];
-
-function isSSOProviderHandled(provider: OpenBaoAuthConfigTag): boolean {
-  return HandledSSOProviders.includes(provider);
-}
-
-export { isOpenBaoAvailable, isSSOProviderHandled, openBaoConnect, OpenBaoError, OpenBaoErrorType, OpenBaoResult };
+export { isOpenBaoAvailable, openBaoConnect, OpenBaoError, OpenBaoErrorType, OpenBaoResult };
