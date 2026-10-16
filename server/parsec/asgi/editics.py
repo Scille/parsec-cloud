@@ -58,9 +58,10 @@ document modifications (it seems OnlyOffice uses a second granularity for this..
 from __future__ import annotations
 
 from collections.abc import AsyncIterable
+from typing import Annotated
 
 from anyio.streams.memory import MemoryObjectReceiveStream
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse
 from pydantic import BaseModel
@@ -132,21 +133,12 @@ def _parse_vlob_id(raw: str) -> VlobID:
 # --- Routes ------------------------------------------------------------------
 
 
-@editics_router.get(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/listen/{participant_id}",
-    response_class=EventSourceResponse,
-)
-async def editics_listen(
+async def _editics_listen_auth(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
-    participant_id: EditicsParticipantID,
     request: Request,
-) -> AsyncIterable[EditicsServerEvent]:
-    # Note we do not handle SSE's last-event-ID here, this is because OnlyOffice
-    # protocol (on which the editics protocol is based) already has its own
-    # re-connection logic
-
+) -> tuple[EditicsAuthInfo, VlobID]:
     backend: Backend = request.app.state.backend
 
     # TODO: add test to check request missing the `Accept: text/event-stream` header
@@ -165,7 +157,7 @@ async def editics_listen(
     )
     match outcome:
         case EditicsAuthInfo() as auth_info:
-            pass
+            return (auth_info, document_id)
         case AuthEditicsAuthBadOutcome.ORGANIZATION_EXPIRED:
             _handshake_abort(CustomHttpStatus.OrganizationExpired, api_version="TODO")
         case AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -208,6 +200,25 @@ async def editics_listen(
                 CustomHttpStatus.UserMustAcceptTos,
                 api_version="TODO",
             )
+
+
+@editics_router.get(
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/listen/{participant_id}",
+    response_class=EventSourceResponse,
+)
+async def editics_listen(
+    participant_id: EditicsParticipantID,
+    request: Request,
+    # Auth logic may raise an `HTTPException` which is not allowed from within the
+    # event source generator. So it must be executed first in this separated context.
+    info: Annotated[tuple[EditicsAuthInfo, VlobID], Depends(_editics_listen_auth)],
+) -> AsyncIterable[EditicsServerEvent]:
+    # Note we do not handle SSE's last-event-ID here, this is because OnlyOffice
+    # protocol (on which the editics protocol is based) already has its own
+    # re-connection logic
+
+    backend: Backend = request.app.state.backend
+    auth_info, document_id = info
 
     with backend.editics.participant_listen(
         auth_info,
