@@ -16,8 +16,11 @@ RESET_DIM = "\x1b[22m"
 
 
 def extract_shebang_and_header_lines(fd: TextIO):
+    # A shebang starts with "#!" but should not be followed by "[" which indicates a Rust directive
+    # See https://doc.rust-lang.org/reference/shebang.html#r-shebang.syntax-description
+    p = re.compile("^#!(?!\\[).*")
     first_line = fd.readline()
-    if first_line.startswith("#!"):
+    if p.match(first_line):
         shebang_line = first_line
         header_line = fd.readline()
     else:
@@ -112,6 +115,10 @@ class BuslLicenserMixin(Licenser):
     SPDX_ID = "BUSL-1.1"
 
 
+class AgplLicenserMixin(Licenser):
+    SPDX_ID = "AGPL-3.0-only"
+
+
 class PythonLicenserMixin(Licenser):
     @classmethod
     def generate_license_line(cls) -> str:
@@ -164,7 +171,15 @@ class PythonBuslLicenser(BuslLicenserMixin, PythonLicenserMixin):
     pass
 
 
+class SqlAgplLicenser(AgplLicenserMixin, SqlLicenserMixin):
+    pass
+
+
 class SqlBuslLicenser(BuslLicenserMixin, SqlLicenserMixin):
+    pass
+
+
+class RustAgplLicenser(AgplLicenserMixin, RustLicenserMixin):
     pass
 
 
@@ -172,7 +187,15 @@ class RustBuslLicenser(BuslLicenserMixin, RustLicenserMixin):
     pass
 
 
+class JavascriptAgplLicenser(AgplLicenserMixin, JavascriptLicenserMixin):
+    pass
+
+
 class JavascriptBuslLicenser(BuslLicenserMixin, JavascriptLicenserMixin):
+    pass
+
+
+class VueAgplLicenser(AgplLicenserMixin, HtmlLicenserMixin):
     pass
 
 
@@ -180,7 +203,15 @@ class VueBuslLicenser(BuslLicenserMixin, HtmlLicenserMixin):
     pass
 
 
+class RstAgplLicenser(AgplLicenserMixin, RstLicenserMixin):
+    pass
+
+
 class RstBuslLicenser(BuslLicenserMixin, RstLicenserMixin):
+    pass
+
+
+class HtmlAgplLicenser(AgplLicenserMixin, HtmlLicenserMixin):
     pass
 
 
@@ -188,7 +219,15 @@ class HtmlBuslLicenser(BuslLicenserMixin, HtmlLicenserMixin):
     pass
 
 
+class CppAgplLicenser(AgplLicenserMixin, CppLicenserMixin):
+    pass
+
+
 class CppBuslLicenser(BuslLicenserMixin, CppLicenserMixin):
+    pass
+
+
+class CssAgplLicenser(AgplLicenserMixin, CssLicenserMixin):
     pass
 
 
@@ -215,30 +254,37 @@ LICENSERS_MAP = {
     re.compile(r"^misc/bench.py$"): SkipLicenser,
     # Special case for ourself given we contain the license headers in the source code !
     re.compile(r"^misc/license_headers.py$"): SkipLicenser,
-    re.compile(r"^(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
+    re.compile(r"^(.*/)?(target|node_modules|build|dist|\.venv)/"): SkipLicenser,
     re.compile(r"^client/electron/app/"): SkipLicenser,
     # Third-party code, it comes with its own license
     re.compile(r"^client/public/vendor/"): SkipLicenser,
     re.compile(r"^client/electron/app-editics/"): SkipLicenser,
-    re.compile(r"^(libparsec|bindings)/.*\.(py|pyi)$"): PythonBuslLicenser,
-    re.compile(r"^(libparsec|bindings)/.*\.rs$"): RustBuslLicenser,
-    re.compile(r"^(libparsec|bindings)/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^server/parsec/.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^server/parsec/.*\.(py|pyi)"): PythonBuslLicenser,
-    re.compile(r"^server/src/.*\.rs"): RustBuslLicenser,
+    # Splitting AGPL3 and BUSL on wether the code is packaged in-app or not
+    # Js project is a minefield full of node_modules/build/dist/assets etc.
+    # so we just cut simple and add copyright only to the important stuff
+    re.compile(r"^client/src/.*\.(css|scss)$"): CssAgplLicenser,
+    re.compile(r"^client/src/.*\.vue$"): VueAgplLicenser,
+    re.compile(r"^client/tests/.*\.(spec\.ts|ts)$"): JavascriptBuslLicenser,
+    re.compile(r"^(client|bindings)/.*\.(ts|js)$"): JavascriptAgplLicenser,
+    re.compile(r"^windows-icon-handler/.*\.(cpp|h|idl)$"): CppAgplLicenser,
+    re.compile(r"^cli/src/.*\.rs$"): RustAgplLicenser,
+    re.compile(r"^cli/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^libparsec/crates/test.*/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^libparsec/crates/.*/tests/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^libparsec/crates/.*/tests/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^libparsec/crates/.*/examples/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^libparsec/.*\.sql$"): SqlAgplLicenser,
+    re.compile(r"^bindings/web/tests/.*\.rs\.j2$"): RustBuslLicenser,
+    re.compile(r"^bindings/.*\.(ts|js)\.j2$"): JavascriptAgplLicenser,
+    re.compile(r"^(libparsec|bindings)/.*\.rs(\.j2|)$"): RustAgplLicenser,
+    re.compile(r"^server/.*\.py$"): PythonBuslLicenser,
+    re.compile(r"^server/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^server/.*\.rs"): RustBuslLicenser,
     re.compile(r"^docs/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     re.compile(r"^docs/.*\.md$"): HtmlBuslLicenser,
-    # Js project is a minefield full of node_modules/build/dist/assets etc.
-    # so we just cut simple and add copyright only to the important stuff
-    re.compile(r"^(client|bindings)/.*\.(ts|js)$"): JavascriptBuslLicenser,
-    re.compile(r"^client/src/.*\.(css|scss)$"): CssBuslLicenser,
-    re.compile(r"^bindings/.*\.(ts|js)\.j2$"): JavascriptBuslLicenser,
-    re.compile(r"^bindings/.*\.rs\.j2$"): RustBuslLicenser,
-    re.compile(r"^client/src/.*\.vue$"): VueBuslLicenser,
     re.compile(r"^.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^.*\.sql$"): SqlBuslLicenser,
-    re.compile(r"^windows-icon-handler/.*\.(cpp|h|idl)$"): CppBuslLicenser,
 }
 
 
