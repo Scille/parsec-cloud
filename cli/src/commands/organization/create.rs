@@ -105,7 +105,7 @@ impl CLIDisplay for OrganizationBootstrapUrlDisplay {
         fmt: &crate::ui::ColorFormatter,
         mut w: W,
     ) -> std::io::Result<()> {
-        write!(
+        writeln!(
             w,
             "Organization bootstrap URL: {}",
             fmt.wrap_in_color(Color::Yellow, &self.0)
