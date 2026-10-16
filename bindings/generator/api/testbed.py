@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from .addr import ParsecAddr, ParsecOrganizationBootstrapAddr
 from .common import (
     DateTime,

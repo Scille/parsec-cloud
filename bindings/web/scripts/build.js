@@ -1,6 +1,5 @@
 #! /usr/bin/env node
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 const { argv, exit, platform } = require('node:process');
 const { spawnSync } = require('node:child_process');

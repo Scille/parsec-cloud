@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 """
 Helper that help changing the version of a tool across the repository.
 """
@@ -433,7 +434,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.License: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
     },
     ROOT_DIR / "libparsec/version": {Tool.Parsec: [ReplaceRegex(r"^.*$", "{version}")]},
-    ROOT_DIR / "LICENSE": {
+    ROOT_DIR / "LICENSE-BUSL": {
         Tool.Parsec: [
             ReplaceRegex(r"^Licensed Work:  Parsec v.*$", "Licensed Work:  Parsec v{version}")
         ]

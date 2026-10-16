@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 use std::{
     io::{BufRead, BufReader, Write as _},
     path::{Path, PathBuf},

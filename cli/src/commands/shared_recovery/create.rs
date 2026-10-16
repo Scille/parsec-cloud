@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 use std::{collections::HashMap, fmt::Write as _, io::Write as _, num::NonZeroU8};
 
 use dialoguer::{Confirm, Input};

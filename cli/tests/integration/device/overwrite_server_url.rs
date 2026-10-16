@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #[cfg(target_family = "unix")]
 use libparsec::{ParsecAddr, TmpPath, tmp_path};
 #[cfg(target_family = "unix")]

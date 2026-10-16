@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import type { ClientEvent, LibParsecPlugin } from '@/plugins/libparsec/definitions';
 import { captureConsole, libparsecLogger } from '@/services/webLogger';

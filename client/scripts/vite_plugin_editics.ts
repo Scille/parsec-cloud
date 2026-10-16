@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Serve/bundles the editics host page (i.e. `editics/*.html`). This must be done
 // outside of the main app since since editics host page is loaded in an iframe

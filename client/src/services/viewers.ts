@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import MonacoEditorWorker from 'monaco-editor/editor/editor.worker?worker';
 import MonacoCssWorker from 'monaco-editor/language/css/css.worker?worker';

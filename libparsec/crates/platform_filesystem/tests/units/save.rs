@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![allow(unused)] // TODO remove when a test for wasm32 is written
 use crate::tests::CONTENT;
 use crate::{SaveContentError, save_content};

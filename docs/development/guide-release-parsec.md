@@ -110,7 +110,7 @@ The script will:
 - Create the release branch `releases/X.Y` (and switch to it).
 - Update the license Date & version.
 - Update the parsec version across different files in our repository.
-  Check that the version was correctly updated in the expected file(non-exhaustive list: server/pyproject.toml, LICENSE, server/parsec/_version.py, npm package.json files, Cargo.toml files).
+  Check that the version was correctly updated in the expected file(non-exhaustive list: server/pyproject.toml, LICENSE-BUSL, server/parsec/_version.py, npm package.json files, Cargo.toml files).
 - Update `HISTORY.rst` with a new block generated using the news fragments found in `newsfragments/`.
 
 > [!IMPORTANT]
