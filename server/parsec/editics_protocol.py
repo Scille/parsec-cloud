@@ -43,30 +43,11 @@ who has authored a modification or holds a lock.
 
 
 class EditicsParticipantEntry(BaseModel):
-    """One entry of the `connectState.participants` list.
-
-    OnlyOffice `connectState.participants[]` is a rich object
-    ({ id, idOriginal, username, view, connectionId, isCloseCoAuthoring,
-       isLiveViewer, encrypted }).
-    In the editics protocol the server is NOT trusted for user names (RFC §3.3),
-    so each entry only carries the participant index and the device id. The
-    client resolves deviceId -> user_name through libparsec.
-    """
-
     model_config = {"arbitrary_types_allowed": True}
 
     id: EditicsParticipantID
-    # OnlyOffice name `indexUser` kept (bad name documented, not renamed).
     indexUser: EditicsIndexUser
-    # Editics addition (replaces OnlyOffice's idOriginal/username/etc.).
-    # Serialized as its hex form; parsed from a `DeviceID` or a hex string.
     deviceId: DeviceID
-    # OnlyOffice name `view` kept. Step 1 addition (forward-compat, todo
-    # step_1 §4.1 / §2.5): whether the participant is a viewer (read-only).
-    # Always False in step 1 (all participants are treated as editors; real
-    # realm-role-based access control is deferred). The field is present in
-    # the schema so the client translation layer can be written against the
-    # final shape.
     view: bool
 
 
@@ -83,15 +64,13 @@ class EditicsReconnect(BaseModel):
 
 class EditicsClientEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
-    # 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
-    # Informational; server stores, ignores. (Kept for now; may be dropped later.)
-    editorType: int
     # The vlob version the client has loaded locally (RFC §1.2). For a fresh
     # session this becomes the session's initial version.
     # (OnlyOffice has no such field; editics addition.)
     vlobVersion: int
     # Reconnect info (forward-compat; unused in step 0 but kept).
     reconnect: EditicsReconnect | None
+    mode: Literal["view", "edit"]
 
 
 class EditicsClientEventAuthChangesAck(BaseModel):
@@ -256,6 +235,17 @@ class LockRecord(BaseModel):
     block: Any
 
 
+class MessageRecord(BaseModel):
+    """One record in a server `message` event's / the `auth` reply's `messages`
+    array (todo §4.4)."""
+
+    model_config = {"arbitrary_types_allowed": True}
+    time: int  # server timestamp (ms)
+    authorIndexUser: EditicsIndexUser
+    # Format: (<Key index>, <base64(ciphertext)>)
+    encryptedMessage: tuple[int, Base64BytesField]
+
+
 class EditicsServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     participants: list[EditicsParticipantEntry]  # current participant map
@@ -268,6 +258,10 @@ class EditicsServerEventAuth(BaseModel):
     # Region locks currently held, so the newcomer knows which regions are
     # taken (OnlyOffice carries the lock table in its `auth` event).
     locks: list[LockRecord] = Field(default_factory=list)
+    # Chat history, so the newcomer gets the past conversation (the OnlyOffice
+    # server carries it in its `auth` event; the client only renders the field
+    # when non-empty, like for the `message` event).
+    messages: list[MessageRecord] = Field(default_factory=list)
 
 
 class EditicsServerEventConnectState(BaseModel):
@@ -325,16 +319,6 @@ class EditicsServerEventWaitAuth(BaseModel):
 
     type: Literal["waitAuth"] = "waitAuth"
     authLockedBy: EditicsParticipantEntry
-
-
-class MessageRecord(BaseModel):
-    """One record in a server `message` event's `messages` array (todo §4.4)."""
-
-    model_config = {"arbitrary_types_allowed": True}
-    time: int  # server timestamp (ms)
-    authorIndexUser: EditicsIndexUser
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedMessage: tuple[int, Base64BytesField]
 
 
 class EditicsServerEventMessage(BaseModel):

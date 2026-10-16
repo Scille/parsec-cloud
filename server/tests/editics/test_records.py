@@ -115,7 +115,11 @@ class TypePlaceholder:
         return f"<{self._type.__name__}>"
 
 
-def _parse_record(record_path: Path) -> list[RecordEvent]:
+def _parse_record(record_path: Path) -> tuple[int, list[RecordEvent]]:
+    """
+    Parse the record's events, returning the editor type (0=Word, 1=Spreadsheet,
+    2=Presentation) along with the events.
+    """
     record = record_path.read_text()
     events = []
     e1s, e2s = itertools.tee(_HEADING_RE.finditer(record), 2)
@@ -154,11 +158,15 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
                     p["connectionId"] = TypePlaceholder(p["connectionId"])
 
                 # `locks` is a dict when opening a docx, but a list when opening
-                # a pptx or a xlsx (and its entries contain server-generated
-                # timestamps).
+                # a pptx or a xlsx...
                 locks = payload["locks"]
                 for lock in locks.values() if isinstance(locks, dict) else locks:
                     lock["time"] = TypePlaceholder(lock["time"])
+
+                # `messages` field is only present if some messages has been send
+                for m in payload.get("messages", []):
+                    m["docid"] = f"f0000000000000000000000000000004/{DOCUMENT_ID.hex}"
+                    m["time"] = TypePlaceholder(m["time"])
 
                 # Hardcoded values in `client/editics/collaborative_protocol.js`
                 payload["hasForgotten"] = False
@@ -226,26 +234,17 @@ def _parse_record(record_path: Path) -> list[RecordEvent]:
             )
         )
 
-    return events
+    editor_type = next(
+        event.payload["editorType"]
+        for event in events
+        if event.type == "auth" and event.direction == "client-to-server"
+    )
+
+    return editor_type, events
 
 
 type OOEvent = dict[str, Any]
 "JSON-based OnlyOffice protocol event"
-
-
-# TODO: Needed more complex test scenarios
-@dataclass(slots=True)
-class RecordPart:
-    """
-    A group of OnlyOffice events that has to be entirely processed before going
-    to for the next one.
-
-    This is used to indicate the events within this case can be somewhat re-ordered
-    (typically it's okay if Kate waiting for a event).
-    """
-
-    name: str
-    events: list[RecordEvent]
 
 
 @dataclass(slots=True)
@@ -286,9 +285,14 @@ async def _do_test_record(
     events (`<-`) are expected to reach the client as OnlyOffice events
     produced by the translator from the server's SSE broadcasts.
     """
-    events = _parse_record(record_path)
+    editor_type, events = _parse_record(record_path)
 
-    # Origininally, Bob is READER and Mallory is not part of the workspace
+    # Originally, Bob is READER and Mallory is not part of the workspace:
+    # both are granted a write role whenever they take part in a record.
+    # This doesn't affect the records where they join in view mode
+    # (`mode: "view"`): the client-requested mode is what makes them viewers
+    # there (the realm role is only a floor, see `EditicsClientEventAuth.view`
+    # and `records_wip/new_view/README.md`).
     if any(event.participant == "Bob" for event in events):
         await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
     if any(event.participant == "Mallory" for event in events):
@@ -303,12 +307,6 @@ async def _do_test_record(
         "Bob": (BOB_PARTICIPANT_ID, coolorg.bob),
         "Mallory": (MALLORY_PARTICIPANT_ID, coolorg.mallory),
     }
-    editor_type = next(
-        event.payload["editorType"]
-        for event in events
-        if event.type == "auth" and event.direction == "client-to-server"
-    )
-
     async def _start_editics_js_client(
         who: AuthenticatedRpcClient,
         participant_id: EditicsParticipantID,
@@ -350,15 +348,14 @@ async def _do_test_record(
                 running_js_clients[participant] = await tg.start(
                     _start_editics_js_client, who, participant_id, name=f"{participant} editics"
                 )
-                # In the OnlyOffice fork we use, the client generates its own license
-                # event instead of waiting for the server to send it
-                # see https://github.com/cryptpad/onlyoffice-editor/blame/b5d78add4608a76b28d14467d44c5c001da768db/sdkjs/common/docscoapi.js#L1783
+                # In our end-to-end encrypted use of OnlyOffice, the client generates
+                # its own license event instead of waiting for the server to send it.
                 continue
 
             elif event.type == "documentOpen":
-                # In the OnlyOffice fork we use, the client sends its own `documentOpen`
-                # event when it receives the server `auth` event.
-                # See https://github.com/cryptpad/onlyoffice-editor/blob/b5d78add4608a76b28d14467d44c5c001da768db/onlyoffice-editor/src/index.ts#L155-L160
+                # In our end-to-end encrypted use of OnlyOffice, the client reads the
+                # content of the document by itself (using libparsec) instead of
+                # waiting for the server to send a ``documentOpen` event.
                 continue
 
             match event.direction:

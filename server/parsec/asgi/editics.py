@@ -319,3 +319,5 @@ async def editics_send(
             raise NotImplementedError  # TODO
         case EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH:
             raise NotImplementedError  # TODO
+        case EditicsParticipantSendBadOutcome.READER_MUST_BE_VIEWER:
+            raise NotImplementedError  # TODO
