@@ -902,7 +902,8 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 
 .sidebar {
   border: none;
-  border-radius: 0 var(--parsec-radius-12) var(--parsec-radius-12) 0;
+  border-right: ms.border('thin') solid ms.color('border-neutral-default-subtle');;
+  border-radius: ms.radius('none') ms.radius('2xl') ms.radius('2xl') ms.radius('none');
   position: relative;
   width: v-bind(sidebarWidthProperty);
   user-select: none;
@@ -1091,59 +1092,16 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   }
 }
 
-.sidebar-content-workspaces {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-
-  &-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  &__title {
-    opacity: 0.6;
-    padding: 0.25rem 0.25rem;
-    color: var(--parsec-color-light-secondary-inversed-contrast);
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    position: relative;
-
-    ion-icon {
-      transition: transform 0.15s ease-in-out;
-    }
-
-    &.open {
-      ion-icon {
-        transform: rotate(90deg);
-      }
-    }
-
-    &:hover {
-      cursor: pointer;
-      opacity: 0.8;
-    }
-  }
-}
-
 .sidebar-content-files {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-inline: 0.25rem;
-}
+  gap: ms.spacing('gap-lg');
 
-.sidebar-content-files,
-.sidebar-content-workspaces {
   &--no-recent {
-    color: var(--parsec-color-light-secondary-premiere);
-    opacity: 0.8;
-    padding: 0.375rem 0.5rem;
+    @include ms.font('body-md-medium');
+    color: #{ms.color('text-on-color-description')};
+    opacity: ms.opacity('description');
+    padding: ms.spacing('padding-md') ms.spacing('padding-lg');
   }
 }
 
