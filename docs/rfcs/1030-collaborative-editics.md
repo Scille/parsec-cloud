@@ -495,8 +495,12 @@ TODO
   `coEditingMode`, `IsAnonymousUser`, `sessionTimeIdle`: those are OnlyOffice-
   integrator specific and don't apply to Parsec.
 - Remove `openCmd`: the document is loaded entirely client-side (see `documentOpen`).
-- Remove `mode`/`permissions`: access control is enforced by the Parsec server
-  (realm roles) before the SSE connection is even established.
+- Remove `permissions`: access control is enforced by the Parsec server (realm
+  roles) before the SSE connection is even established.
+- Rename `mode` as `view` (boolean): the participation mode requested by the
+  client (e.g. a live preview for a write-capable participant). The server floors
+  it with the realm role: a read-only participant (READER) joins as a viewer
+  whatever it requested.
 - Remove `messages` the client seems to ignore this field and always send a `getMessages`
   event instead.
 - Remove `g_cAscSpellCheckUrl`, `buildVersion`/`buildNumber`,
@@ -504,7 +508,10 @@ TODO
   server has no business providing.
 - Remove `lastOtherSaveTime`: the save flow in the editics protocol relies on the
   change index, not on a save timestamp.
-- Keep `docid` (the session id), `user.id` (the device id), `editorType`, `indexUser`,
+- Remove `editorType`: the server never interprets it (the region lock blocks
+  are keyed by their own shape, not by the client-claimed editor type), so the
+  editor type is kept client-side only.
+- Keep `docid` (the session id), `user.id` (the device id), `indexUser`,
   `supportAuthChangesAck`, and `time` (telemetry).
 - Remove `sessionId` and replace by `participantId`: as session and participant concepts
   can be merged together, see TODO.
@@ -557,19 +564,17 @@ Format:
 ```
 
 *Editics protocol changes*:
-TODO
 
-- Folded into the `bootstrap` SSE event (§3.1): the change backlog is delivered
-  as `encryptedChanges: List<(Index, Bytes)>` in the same message that
-  acknowledges the join. No separate chunking / ack flow is needed since SSE
-  is one-directional and the server controls the send rate (and the changes are
-  end-to-end encrypted, so the server can't size-optimize them by inspecting
-  content).
-- The opaque `change` fragments are replaced by `(Index, Bytes)` tuples
-  (change index + encrypted change blob).
-- Drop the `docid`/`user`/`useridoriginal` fields: the author is conveyed by
-  the `participant` field of the `change` SSE event, and the session is
-  single-document.
+- The backlog is delivered as a single chunk (no chunking / ack flow is needed
+  since SSE is one-directional and the server controls the send rate), each
+  entry carrying `(index, author, time, encryptedChange)`.
+- The opaque `change` fragments are encrypted (hence renamed
+  `encryptedChange`).
+- Drop the `docid` field (the session is single-document).
+- Replace the `user`/`useridoriginal` fields by the `author` field (a
+  `(participant id, device id)` tuple): the backlog can contain changes from
+  participants that left the session before the receiving client joined, so
+  the author cannot be resolved through the current participants list.
 
 #### `connectState` (server → client)
 
@@ -654,8 +659,12 @@ Format:
 *Editics protocol changes*:
 
 - Remove field `docid` (as the session is only related to a single document).
-- Replace fields `user`/`useridoriginal`/`username` by `device_id` (the client
-  has already a single source of truth on those info).
+- Replace fields `user`/`useridoriginal`/`username` by the `author` field (a
+  `(participant id, device id)` tuple): a message can be replayed to a client
+  that never saw its author (e.g. the chat history delivered on join, with
+  the author already gone), so the author cannot be resolved through the
+  current participants list. The display name is resolved client-side from
+  the author's device id.
 - Encrypt `message` field (hence rename the field to `encryptedMessage`).
 
 #### `getMessages` (client → server)
@@ -717,8 +726,8 @@ Format:
 *Editics protocol changes*:
 
 - Encrypt `cursor` field (hence rename the field to `encryptedCursor`)
-- Replace fields `user`/`useridoriginal` by `device_id` (the client has already a
-  single source of truth on those info).
+- Replace fields `user`/`useridoriginal` by the `author` field (a
+  `(participant id, device id)` tuple), like for the `message` server event.
 
 #### `getLock` (client → server) & `getLock` (server → client)
 
@@ -744,7 +753,11 @@ Client format:
 }
 ```
 
-*Editics protocol changes*: Keep as-is.
+*Editics protocol changes*: The lock records carry the holder's identity in a
+`holder` field (a `(participant id, device id)` tuple) instead of the `user`
+id: a lock can be broadcast after its holder left the session (e.g. released
+on disconnect cleanup), so its identity cannot be resolved through the current
+participants list.
 
 Then the server *to every clients* (including the one that send the `getLock` event) a `getLock` event.
 
@@ -811,8 +824,10 @@ Format:
 }
 ```
 
-*Editics protocol changes*:
-TODO: what is the `user` field correspond to ? should be replace this by something else ?
+*Editics protocol changes*: The records carry the holder's identity in a
+`holder` field (a `(participant id, device id)` tuple) instead of the `user`
+id, like the `getLock` lock records: the holder may have left the session by
+the time the release is broadcast (e.g. on disconnect cleanup).
 
 #### `saveChanges` (client → server) & `saveChanges`/`savePartChanges` (server → client)
 
@@ -1004,7 +1019,7 @@ Format:
   //
   // Null when the change set was too large to publish inline; in that case
   // the client refetches the missing changes (via the auth/changes flow).
-  "changes": <array | null>,
+  "changes": <array | null>,  // Editics: records carry the author's identity instead of `user`/`useridoriginal`
   // New total number of changes stored for the document after this save
   "changesIndex": <integer>,
 
@@ -1040,7 +1055,18 @@ Format:
  ```
 
 *Editics protocol changes*:
-TODO
+
+- Encrypt `changes` entries (hence renamed `encryptedChange`, see the client →
+  server part above).
+- Replace the `user`/`useridoriginal` fields of each change entry by the
+  `author` field (a `(participant id, device id)` tuple), like for the
+  `authChanges` entries.
+- The `locks` records carry the holder's identity in a `holder` field (a
+  `(participant id, device id)` tuple) instead of the `user` id, like the
+  `getLock`/`releaseLock` lock records.
+- Replace `excelAdditionalInfo` by `encryptedCursor` (the encrypted
+  `CursorInfo` part) and `excel_info` (the cleartext
+  `indexCols`/`indexRows` part).
 
 The saving client itself does not receive the server `saveChanges` event, it
 receives `unSaveLock` (and `savePartChanges` for intermediate chunks) instead.
