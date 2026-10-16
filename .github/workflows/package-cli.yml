@@ -203,7 +203,7 @@ jobs:
 
       - name: Install WinFsp
         run: |
-          $p = Start-Process msiexec.exec -Wait -PassThru -ArgumentList @(
+          $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList @(
             '/i', '${{ runner.temp }}\winfsp.msi',
             '/qn', '/norestart',
             'INSTALLLEVEL=1000'
