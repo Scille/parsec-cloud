@@ -197,12 +197,25 @@ jobs:
       - name: Download WinFsp
         shell: bash -eux {0}
         run: >-
-          curl -L
+          curl -L --fail
           https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-${{ env.WINFSP_VERSION }}.msi -o '${{ runner.temp }}/winfsp.msi'
         timeout-minutes: 2
 
       - name: Install WinFsp
-        run: msiexec /i "${{ runner.temp }}\winfsp.msi" /qn /norestart INSTALLLEVEL=1000
+        run: |
+          $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList @(
+            '/i', '${{ runner.temp }}\winfsp.msi',
+            '/qn', '/norestart',
+            'INSTALLLEVEL=1000'
+          )
+
+          # Ensure install is successful
+          if (@(0, 3010, 1641) -notcontains $p.ExitCode) {
+            throw "WinFsp install failed with exit code $($p.ExitCode)"
+          }
+
+          # Sanity check
+          Get-ChildItem "${env:ProgramFiles(x86)}\WinFsp\bin" | Select-Object -First 20
         timeout-minutes: 1
 
       - name: Build CLI
