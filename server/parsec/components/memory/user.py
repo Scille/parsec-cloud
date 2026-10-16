@@ -693,9 +693,7 @@ class MemoryUserComponent(BaseUserComponent):
         return device.cooked.verify_key
 
     @override
-    async def test_dump_current_users(
-        self, organization_id: OrganizationID
-    ) -> dict[UserID, UserDump]:
+    async def dump_current_users(self, organization_id: OrganizationID) -> dict[UserID, UserDump]:
         org = self._data.organizations[organization_id]
         items = {}
         for user in org.users.values():

@@ -22,6 +22,7 @@ from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.user_accept_tos import user_accept_tos
 from parsec.components.postgresql.user_create_device import user_create_device
 from parsec.components.postgresql.user_create_user import user_create_user
+from parsec.components.postgresql.user_dump_current_users import user_dump_current_users
 from parsec.components.postgresql.user_freeze_user import user_freeze_user
 from parsec.components.postgresql.user_get_certificates import user_get_certificates
 from parsec.components.postgresql.user_get_user_info import (
@@ -30,7 +31,6 @@ from parsec.components.postgresql.user_get_user_info import (
 from parsec.components.postgresql.user_list_active_users import user_list_active_users
 from parsec.components.postgresql.user_list_frozen_users import user_list_frozen_users
 from parsec.components.postgresql.user_revoke_user import user_revoke_user
-from parsec.components.postgresql.user_test_dump_current_users import user_test_dump_current_users
 from parsec.components.postgresql.user_update_user import user_update_user
 from parsec.components.postgresql.utils import (
     Q,
@@ -333,10 +333,10 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @no_transaction
-    async def test_dump_current_users(
+    async def dump_current_users(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[UserID, UserDump]:
-        return await user_test_dump_current_users(conn, organization_id)
+        return await user_dump_current_users(conn, organization_id)
 
     @override
     @transaction

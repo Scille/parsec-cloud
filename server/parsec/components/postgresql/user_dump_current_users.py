@@ -64,7 +64,7 @@ ORDER BY profile.certified_on
 )
 
 
-async def user_test_dump_current_users(
+async def user_dump_current_users(
     conn: AsyncpgConnection, organization_id: OrganizationID
 ) -> dict[UserID, UserDump]:
     rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))

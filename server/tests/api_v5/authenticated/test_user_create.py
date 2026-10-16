@@ -95,7 +95,7 @@ async def test_authenticated_user_create_ok(
         minimalorg.alice, t1
     )
 
-    expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
+    expected_dump = await testbed.backend.user.dump_current_users(minimalorg.organization_id)
     expected_dump[NEW_MIKE_USER_ID] = UserDump(
         user_id=NEW_MIKE_USER_ID,
         devices=[NEW_MIKE_DEVICE_ID],
@@ -124,7 +124,7 @@ async def test_authenticated_user_create_ok(
             )
         )
 
-    dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
+    dump = await testbed.backend.user.dump_current_users(minimalorg.organization_id)
     assert dump == expected_dump
     topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
     assert topics == expected_topics

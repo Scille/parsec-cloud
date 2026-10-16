@@ -459,9 +459,7 @@ class BaseUserComponent:
     ) -> VerifyKey | UserGetActiveDeviceVerifyKeyBadOutcome:
         raise NotImplementedError
 
-    async def test_dump_current_users(
-        self, organization_id: OrganizationID
-    ) -> dict[UserID, UserDump]:
+    async def dump_current_users(self, organization_id: OrganizationID) -> dict[UserID, UserDump]:
         raise NotImplementedError
 
     async def list_active_users(
