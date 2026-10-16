@@ -78,7 +78,6 @@ export function currentRouteIsLoggedRoute(): boolean {
     Routes.Users,
     Routes.Storage,
     Routes.Organization,
-    Routes.About,
     Routes.MyProfile,
     Routes.History,
     Routes.FileHandler,
