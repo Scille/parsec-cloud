@@ -659,8 +659,10 @@ function requestParentImage(): Promise<{ fileName?: string; data: Uint8Array }> 
   });
 }
 
-function bytesToDataUrl(bytes: Uint8Array, fileName?: string): string {
-  const mimeType = fileName ? imageMimeType(fileName) : 'application/octet-stream';
+function bytesToDataUrl(bytes: Uint8Array, fileName?: string, mimeType?: string): string {
+  if (!mimeType) {
+    mimeType = fileName ? imageMimeType(fileName) : 'application/octet-stream';
+  }
   return `data:${mimeType};base64,${bytes.toBase64()}`;
 }
 
@@ -807,6 +809,21 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
           callback({ url });
         },
         () => errorCallback(),
+      );
+    },
+
+    UploadImageFiles: (
+      files: File[],
+      _documentId: string,
+      _documentUserId: string,
+      _jwt: string,
+      callback: (err: number | null, urls: string[]) => void,
+    ) => {
+      Promise.all(
+        Array.from(files).map(async (file) => bytesToDataUrl(new Uint8Array(await file.arrayBuffer()), file.name, file.type)),
+      ).then(
+        (urls) => callback(null, urls),
+        () => callback(0, []),
       );
     },
   };
