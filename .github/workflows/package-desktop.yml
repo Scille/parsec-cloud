@@ -292,7 +292,7 @@ jobs:
             'INSTALLLEVEL=1000'
           )
 
-          # Ensure install is sucessfull
+          # Ensure install is sucessful
           if (@(0, 3010, 1641) -notcontains $p.ExitCode) {
             throw "WinFsp install failed with exit code $($p.ExitCode)"
           }
