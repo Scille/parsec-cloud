@@ -31,7 +31,6 @@ export enum Routes {
   Users = 'users',
   Storage = 'storage',
   Organization = 'organization',
-  About = 'about',
   MyProfile = 'myProfile',
   Loading = 'loading',
   ClientArea = 'clientArea',
@@ -205,11 +204,6 @@ const routes: Array<RouteRecordRaw> = [
                     path: `/:handle(\\d+)/${Routes.Organization}`,
                     name: Routes.Organization,
                     component: () => import('@/views/organizations/OrganizationInformationPage.vue'),
-                  },
-                  {
-                    path: `/:handle(\\d+)/${Routes.About}`,
-                    name: Routes.About,
-                    component: () => import('@/views/about/AboutPage.vue'),
                   },
                   {
                     path: `/:handle(\\d+)/${Routes.MyProfile}`,

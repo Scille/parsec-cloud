@@ -302,8 +302,6 @@ const routeTitle = computed((): Translatable => {
       return 'HeaderPage.titles.organization.storage';
     case Routes.Organization:
       return 'HeaderPage.titles.organization.information';
-    case Routes.About:
-      return 'HeaderPage.titles.about';
     case Routes.MyProfile:
       return 'HeaderPage.titles.myProfile';
     case Routes.History:
