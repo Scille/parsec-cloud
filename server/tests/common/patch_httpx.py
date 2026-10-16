@@ -18,13 +18,30 @@ from httpx._types import AsyncByteStream
 
 
 class ASGIResponseByteStream(AsyncByteStream):
-    def __init__(self, stream: typing.AsyncGenerator[bytes, None]) -> None:
+    def __init__(
+        self,
+        stream: typing.AsyncGenerator[bytes, None],
+        client_gone: asyncio.Event,
+        app_task: asyncio.Future[None],
+    ) -> None:
         self._stream = stream
+        self._client_gone = client_gone
+        self._app_task = app_task
 
     def __aiter__(self) -> typing.AsyncIterator[bytes]:
         return self._stream.__aiter__()
 
     async def aclose(self) -> None:
+        """
+        Notify the app the client is gone, then wait for the app to fully
+        finish its teardown of the connection (so tests have no race between
+        "participant X disconnects" and what the server does next).
+        """
+        self._client_gone.set()
+        try:
+            await self._app_task
+        except asyncio.CancelledError:
+            pass
         await self._stream.aclose()
 
 
@@ -61,6 +78,7 @@ async def patch_handle_async_request(
     body_queue = asyncio.Queue()
     response_started = asyncio.Event()
     response_complete = asyncio.Event()
+    client_gone = asyncio.Event()
 
     # ASGI callables.
 
@@ -68,7 +86,16 @@ async def patch_handle_async_request(
         nonlocal request_complete
 
         if request_complete:
-            await response_complete.wait()
+            # The client can either consume the whole response (`response_complete`)
+            # or close the connection early (`client_gone`): both are disconnects.
+            response_complete_waiter = asyncio.ensure_future(response_complete.wait())
+            client_gone_waiter = asyncio.ensure_future(client_gone.wait())
+            _done, pending = await asyncio.wait(
+                (response_complete_waiter, client_gone_waiter),
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for waiter in pending:
+                waiter.cancel()
             return {"type": "http.disconnect"}
 
         try:
@@ -124,7 +151,7 @@ async def patch_handle_async_request(
     assert status_code is not None
     assert response_headers is not None
 
-    stream = ASGIResponseByteStream(body_stream())
+    stream = ASGIResponseByteStream(body_stream(), client_gone, future)
     return Response(status_code, headers=response_headers, stream=stream)
 
 

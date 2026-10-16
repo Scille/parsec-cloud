@@ -469,6 +469,23 @@ class EditicsServerEventWarning(BaseModel):
     message: str
 
 
+class EditicsServerEventError(BaseModel):
+    """OnlyOffice `error` (s->c). Name kept. Kept as-is (RFC §2.2).
+
+    Reply to a refused session restoration (i.e. an `auth` client event
+    carrying `reconnect` info, while the document has been modified since the
+    participant lost its connection): the client reacts by closing the
+    co-authoring session (see the `disconnection` records).
+
+    OnlyOffice uses the code 4010 ("Restore error. Document modified.") for
+    this; other codes exist in the OnlyOffice protocol but are not used by
+    the editics server."""
+
+    type: Literal["error"] = "error"
+    code: int
+    description: str
+
+
 EditicsServerEvent = Annotated[
     EditicsServerEventAuth
     | EditicsServerEventConnectState
@@ -483,7 +500,8 @@ EditicsServerEvent = Annotated[
     | EditicsServerEventSavePartChanges
     | EditicsServerEventUnSaveLock
     | EditicsServerEventDrop
-    | EditicsServerEventWarning,
+    | EditicsServerEventWarning
+    | EditicsServerEventError,
     Field(discriminator="type"),
 ]
 EditicsServerEventAdapter = TypeAdapter(EditicsServerEvent)

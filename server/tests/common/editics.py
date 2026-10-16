@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncGenerator, Awaitable, Callable
-from contextlib import asynccontextmanager
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -294,19 +294,19 @@ class EditicsJSRuntime:
             }});
             """,
         )
-        async with EditicsSessionClient.join(
+        client = EditicsJSClient(
+            js_runtime=self,
             who=who,
             realm_id=realm_id,
             document_id=document_id,
             participant_id=participant_id,
-        ) as editics_session_client:
-            client = EditicsJSClient(self, who, participant_id, editics_session_client)
-            try:
-                yield client
-            finally:
-                self._js_runtime.eval(
-                    f"""delete globalThis.__editics_instances['{participant_id}'];"""
-                )
+        )
+        try:
+            yield client
+        finally:
+            if client.connected:
+                await client.server_disconnect()
+            self._js_runtime.eval(f"""delete globalThis.__editics_instances['{participant_id}'];""")
 
     async def async_eval(self, code: str) -> Any:
         """
@@ -339,11 +339,16 @@ class EditicsJSRuntime:
 
 class EditicsJSClient:
     """
-    Combine an connection to the server (using `EditicsSessionClient`) with an
-    instance of the collaborative editics client running in the JavaScript runtime.
+    Combine an (optional) connection to the server (using `EditicsSessionClient`)
+    with an instance of the collaborative editics client running in the JavaScript
+    runtime.
 
-    The should be used to test the OnlyOffice protocol going in and out of the
-    OnlyOffice editor (as this validate both our server-reimplementation and
+    The client starts disconnected: `server_connect()` opens the transport-level
+    connection (i.e. the SSE + send routes, which in OnlyOffice corresponds to
+    the websocket connection) and `server_disconnect()` closes it.
+
+    This should be used to test the OnlyOffice protocol going in and out of the
+    OnlyOffice editor (as this validates both our server-reimplementation and
     the client-side OnlyOffice-to-editics-protocol translation layer).
     """
 
@@ -351,13 +356,42 @@ class EditicsJSClient:
         self,
         js_runtime: EditicsJSRuntime,
         who: AuthenticatedRpcClient,
+        realm_id: VlobID,
+        document_id: VlobID,
         participant_id: EditicsParticipantID,
-        editics_session_client: EditicsSessionClient,
     ):
         self.js_runtime = js_runtime
         self.who = who
+        self.realm_id = realm_id
+        self.document_id = document_id
         self.participant_id = participant_id
+        self.editics_session_client: EditicsSessionClient | None = None
+        self._join_cm: AbstractAsyncContextManager[EditicsSessionClient] | None = None
+
+    @property
+    def connected(self) -> bool:
+        return self.editics_session_client is not None
+
+    async def server_connect(self) -> None:
+        assert not self.connected
+
+        join_cm = EditicsSessionClient.join(
+            who=self.who,
+            realm_id=self.realm_id,
+            document_id=self.document_id,
+            participant_id=self.participant_id,
+        )
+        editics_session_client = await join_cm.__aenter__()
+        self._join_cm = join_cm
         self.editics_session_client = editics_session_client
+
+    async def server_disconnect(self) -> None:
+        assert self.connected
+        assert self._join_cm is not None
+
+        await self._join_cm.__aexit__(None, None, None)
+        self._join_cm = None
+        self.editics_session_client = None
 
     async def inject_oo_client_event(
         self, oo_client_event: dict[str, Any]
@@ -366,6 +400,9 @@ class EditicsJSClient:
         Simulate the OnlyOffice editor (running on the client) wants to send a new
         event to the server.
         """
+        assert self.connected
+        assert self.editics_session_client is not None
+
         raw_editics_client_event: str | None = await self.js_runtime.async_eval(
             f"""
             globalThis.__editics_instances['{self.participant_id}']
@@ -404,6 +441,9 @@ class EditicsJSClient:
         """
         Wait for a new event arriving to the OnlyOffice editor.
         """
+        assert self.connected
+        assert self.editics_session_client is not None
+
         raw_editics_server_event = await self.editics_session_client.recv_raw()
         # Sanity check to detect incorrect server output (since the Javascript
         # part doesn't actually validate the schema)
