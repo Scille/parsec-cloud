@@ -151,8 +151,8 @@ def _js_type(annotation: Any) -> str:
         (annotation, *_validator) = typing.get_args(annotation)
         return _js_type(annotation)
     if origin is typing.Literal:
-        (value,) = typing.get_args(annotation)
-        return f"'{value}'"
+        values = typing.get_args(annotation)
+        return "|".join(f"'{v}'" for v in values)
     if annotation is int:
         return "number"
     if annotation is bool:
