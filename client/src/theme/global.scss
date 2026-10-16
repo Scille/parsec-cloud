@@ -5,7 +5,29 @@
 @use 'global-client' as globalClient;
 
 /**** Global CSS overloads ****/
-// scroll behavior: user(revoked, active, invitation)/folder/workspace
+// ------ switch specific variables for dark mode ------ //
+:root {
+  --parsec-color-popover-header-background: var(--parsec-color-light-primary-800);
+}
+
+body.ms-theme-dark {
+  --parsec-color-popover-header-background: #{ms.color('surface-base-default')};
+
+  #trigger-checklist-button .checklist-security {
+    background: ms.color('surface-neutral-default');
+  }
+
+  .download-parsec-text {
+    background-image: none;
+    color: ms.color('text-base-label');
+    -webkit-text-fill-color: ms.color('text-base-label');
+  }
+
+  // MsActionBar toolbar
+  .toolbar {
+    border-bottom: ms.border('none');
+  }
+}
 
 .connected-layout {
   background: var(--parsec-color-light-secondary-inversed-contrast);
