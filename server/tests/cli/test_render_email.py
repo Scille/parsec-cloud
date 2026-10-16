@@ -29,6 +29,7 @@ from parsec.cli import cli
 )
 def test_render_email(args: list[str]) -> None:
     runner = CliRunner()
-    result = runner.invoke(cli, args)
-    # Minimal test, just check the command does not fail
-    assert result.exit_code == 0, result.output
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, args)
+        # Minimal test, just check the command does not fail
+        assert result.exit_code == 0, result.output
