@@ -154,22 +154,33 @@ class EditicsTranslator {
     // collaborative mode is finished; move back into the switch below to
     // enable, see the matching server events in the RFC):
     //
-    //   case 'close':
-    //     return { type: 'close' };
-    //
     //   case 'saveDone':
     //     return { type: 'saveDone', savedUpToIndex: oo.savedUpToIndex, newVersion: oo.newVersion };
 
     switch (oo.type) {
-      case 'auth':
+      case 'auth': {
         /** @type {EditicsClientEventAuth} */
-        return {
+        const event = {
           type: 'auth',
           vlobVersion: this.config.vlobVersion,
           mode: oo.mode === 'edit' ? 'edit' : 'view',
-          // TODO: handle reconnection
+          // `null` for a fresh join: this is what tells the server this is not
+          // the restoration of a previous logical session.
           reconnect: null,
         };
+        // Reconnection (i.e. transport-level restore): the editor echoes the
+        // session ID the server assigned in its `auth` reply (which the editics
+        // protocol uses as the participant ID) along with the connect time and
+        // the time spent idle since the connection was lost.
+        if (oo.sessionId !== null && oo.sessionId !== undefined) {
+          event.reconnect = oo.sessionId;
+        }
+        return event;
+      }
+
+      case 'close':
+        /** @type {EditicsClientEventClose} */
+        return { type: 'close' };
 
       case 'getMessages':
         /** @type {EditicsClientEventGetMessages} */
@@ -273,9 +284,9 @@ class EditicsTranslator {
     }
 
     // `excelAdditionalInfo` is split (RFC §2.2) into `encryptedCursor` (the
-    // `CursorInfo` part, encrypted) and `excel_info` (the cleartext
+    // `CursorInfo` part, encrypted) and `excelAdditionalInfo` (the cleartext
     // `indexCols`/`indexRows` part). For now the whole opaque blob is
-    // encrypted as the cursor; `excel_info` is null (real parsing is deferred
+    // encrypted as the cursor; `excelAdditionalInfo` is null (real parsing is deferred
     // to a later step).
     /** @type {[number, string] | null} */
     let encryptedCursor = null;
@@ -289,10 +300,10 @@ class EditicsTranslator {
       startSaveChanges: oo.startSaveChanges,
       endSaveChanges: oo.endSaveChanges,
       deleteIndex: oo.deleteIndex,
-      // `excel_info` mirrors the server pydantic field name (snake_case).
-      // eslint-disable-next-line camelcase -- Editics protocol field name
-      excel_info: null,
-      encryptedCursor,
+      // `excelAdditionalInfo` mirrors the server pydantic field name (snake_case).
+
+      excelAdditionalInfo: null,
+      encryptedCursorAdditionalInfo: encryptedCursor,
       releaseLocks: oo.releaseLocks,
     };
   }
@@ -365,6 +376,18 @@ class EditicsTranslator {
 
       case 'releaseLock':
         return this._cookReleaseLock(editics);
+
+      case 'error':
+        // Reply to a refused session restoration (e.g. the document has been
+        // modified while the participant was away, code 4010 "Restore error.
+        // Document modified."): the editor reacts by closing the co-authoring
+        // session.
+        /** @type {EditicsServerEventError} */
+        return {
+          type: 'error',
+          code: editics.code,
+          description: editics.description,
+        };
 
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
@@ -696,8 +719,8 @@ class EditicsTranslator {
       endSaveChanges: !!editics.endSaveChanges,
       locks,
     };
-    if (editics.encryptedCursor !== null && editics.encryptedCursor !== undefined) {
-      const [keyIndex, b64CipherText] = editics.encryptedCursor;
+    if (editics.encryptedCursorAdditionalInfo !== null && editics.encryptedCursorAdditionalInfo !== undefined) {
+      const [keyIndex, b64CipherText] = editics.encryptedCursorAdditionalInfo;
       oo.excelAdditionalInfo = bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)));
     }
     return oo;
@@ -781,16 +804,10 @@ export { EditicsTranslator };
  * @property {string} deviceId
  * @property {boolean} view
  *
- * @typedef {Object} EditicsReconnect
- * @property {EditicsParticipantID} participantId
- * @property {EditicsIndexUser} indexUser
- * @property {number} participantTimeConnect
- * @property {number} timeIdle
- *
  * @typedef {Object} EditicsClientEventAuth
  * @property {'auth'} type
  * @property {number} vlobVersion
- * @property {EditicsReconnect|null} reconnect
+ * @property {EditicsParticipantID|null} reconnect
  * @property {'view'|'edit'} mode
  *
  * @typedef {Object} EditicsClientEventAuthChangesAck
@@ -821,8 +838,8 @@ export { EditicsTranslator };
  * @property {boolean} startSaveChanges
  * @property {boolean} endSaveChanges
  * @property {number|null} [deleteIndex]
- * @property {Object<string,*>|null} [excel_info]
- * @property {[number, string]|null} [encryptedCursor]
+ * @property {Object<string,*>|null} [excelAdditionalInfo]
+ * @property {[number, string]|null} [encryptedCursorAdditionalInfo]
  * @property {boolean} [releaseLocks]
  *
  * @typedef {Object} EditicsClientEventUnSaveLock
@@ -896,8 +913,8 @@ export { EditicsTranslator };
  * @property {number} syncChangesIndex
  * @property {boolean} endSaveChanges
  * @property {Array<{block:*, holder:[EditicsParticipantID, string], time:number, changes:null}>} [locks]
- * @property {Object<string,*>|null} [excel_info]
- * @property {[number, string]|null} [encryptedCursor]
+ * @property {Object<string,*>|null} [excelAdditionalInfo]
+ * @property {[number, string]|null} [encryptedCursorAdditionalInfo]
  *
  * @typedef {Object} EditicsServerEventSavePartChanges
  * @property {'savePartChanges'} type
@@ -920,7 +937,12 @@ export { EditicsTranslator };
  * @property {number} code
  * @property {string} message
  *
- * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDrop|EditicsServerEventWarning} EditicsServerEvent
+ * @typedef {Object} EditicsServerEventError
+ * @property {'error'} type
+ * @property {number} code
+ * @property {string} description
+ *
+ * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDrop|EditicsServerEventWarning|EditicsServerEventError} EditicsServerEvent
  */
 
 /* eslint-enable max-len */
