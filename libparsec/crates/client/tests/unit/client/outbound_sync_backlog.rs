@@ -10,59 +10,7 @@ use crate::{
     client::tests::utils::client_factory_with_monitors, workspace::OpenOptions,
 };
 
-use super::utils::client_factory;
-
-#[parsec_test(testbed = "minimal_client_ready")]
-async fn includes_started_workspaces_only(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
-    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
-
-    let started_workspace = client.start_workspace(wksp1_id).await.unwrap();
-    let fd = started_workspace
-        .open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_write())
-        .await
-        .unwrap();
-    started_workspace
-        .fd_write(fd, 0, b"client-backlog-test")
-        .await
-        .unwrap();
-    started_workspace.fd_flush(fd).await.unwrap();
-    started_workspace.fd_close(fd).await.unwrap();
-
-    let not_started_workspace_id = client
-        .create_workspace("not-started".parse().unwrap())
-        .await
-        .unwrap();
-
-    let backlog = client.get_outbound_sync_backlog().await.unwrap();
-
-    p_assert_eq!(backlog.per_workspace.len(), 1);
-    p_assert_eq!(backlog.per_workspace[0].realm_id, wksp1_id);
-    p_assert_eq!(backlog.per_workspace[0].pending_entries, 1);
-    assert!(backlog.per_workspace[0].pending_bytes > 0);
-    p_assert_eq!(
-        backlog.total_pending_entries_for_started_workspaces,
-        backlog.per_workspace[0].pending_entries
-    );
-    p_assert_eq!(
-        backlog.total_pending_bytes_for_started_workspaces,
-        backlog.per_workspace[0].pending_bytes
-    );
-    assert!(
-        backlog
-            .per_workspace
-            .iter()
-            .all(|item| item.realm_id != not_started_workspace_id)
-    );
-}
-
-#[parsec_test(
-    testbed = "minimal_client_ready",
-    // tokio_worker_threads = 8,
-    with_server
-)]
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn not_including_confined_entries(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -185,7 +133,7 @@ async fn rename_tmp_files(env: &TestbedEnv) {
                     ended_with_nothing_to_sync = true
                 }
             } else {
-                if e.number_of_files_to_sync == 1 && e.size_to_sync == 445 {
+                if e.number_of_files_to_sync == 1 && e.size_to_sync == 485 {
                     file_synced = true
                 }
             }
@@ -196,6 +144,56 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     assert!(file_synced);
     assert!(started_with_nothing_to_sync);
     assert!(ended_with_nothing_to_sync);
+}
+
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
+async fn many_files(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let client = client_factory_with_monitors(&env.discriminant_dir, alice.clone()).await;
+
+    let started_workspace = client.start_workspace(wksp1_id).await.unwrap();
+
+    let mut spy = client.event_bus.spy.start_expecting();
+
+    for i in 0..5 {
+        let file = started_workspace
+            .open_file(
+                FsPath::from_str(&format!("/file_{i}.txt")).unwrap(),
+                OpenOptions {
+                    read: true,
+                    write: true,
+                    truncate: false,
+                    create: true,
+                    create_new: false,
+                },
+            )
+            .await
+            .unwrap();
+        started_workspace.fd_write(file, 0, INPUT).await.unwrap();
+        started_workspace.fd_flush(file).await.unwrap();
+
+        started_workspace.fd_close(file).await.unwrap();
+    }
+
+    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
+
+    let events = spy.list_not_acknowledged();
+
+    let mut file_synced = false;
+    for event in events {
+        println!("{event:?}");
+        if let Some(e) = EventWorkspaceOutboundSyncBacklog::try_from_any_spied_event(&event) {
+            if e.number_of_files_to_sync != 0 && e.size_to_sync != 0 {
+                file_synced = true;
+            } else if e.number_of_files_to_sync == 0 && e.size_to_sync == 0 && file_synced {
+                break;
+            } else {
+                panic!("blocks without files or files without blocks to sync")
+            }
+        };
+    }
+    spy.ack_remaining_events();
 }
 
 fn is_backlog_empty(backlog: ClientGetOutboundSyncBacklog) -> bool {

@@ -31,6 +31,9 @@ const MIN_SYNC_WAIT: Duration = Duration::milliseconds(100);
 const MAX_SYNC_WAIT: Duration = Duration::seconds(6);
 #[cfg(test)]
 const SERVER_STORE_UNAVAILABLE_WAIT: Duration = Duration::seconds(6);
+// 100 times faster than production, files are syncing too quickly
+#[cfg(test)]
+const BACKLOG_TRACKER_WAIT: Duration = Duration::milliseconds(10);
 
 #[cfg(not(test))]
 const MIN_SYNC_WAIT: Duration = Duration::seconds(1);
@@ -38,6 +41,8 @@ const MIN_SYNC_WAIT: Duration = Duration::seconds(1);
 const MAX_SYNC_WAIT: Duration = Duration::minutes(1);
 #[cfg(not(test))]
 const SERVER_STORE_UNAVAILABLE_WAIT: Duration = Duration::minutes(1);
+#[cfg(not(test))]
+const BACKLOG_TRACKER_WAIT: Duration = Duration::seconds(1);
 
 pub(crate) async fn start_workspace_outbound_sync_monitor(
     workspace_ops: Arc<WorkspaceOps>,
@@ -195,8 +200,6 @@ fn task_future_factory(
             }
         })
     },);
-
-    // let mut sync_backlog = HashMap::new();
 
     let inbound_sync_needed_events_connection_lifetime = ({
         let tx = tx.clone();
@@ -407,6 +410,56 @@ fn task_future_factory(
             }
         });
 
+        let backlog_tracker = spawn({
+            let workspace_ops = workspace_ops.clone();
+            let device = device.clone();
+            let confined_entries_tracker = confined_entries_tracker.clone();
+            let event_bus = event_bus.clone();
+
+            async move {
+                loop {
+                    // get backlog
+                    let backlog = workspace_ops
+                        .get_outbound_sync_backlog()
+                        .await
+                        .expect("todo");
+
+                    // how much is confined
+                    let mut confined_bytes = 0;
+                    let mut confined_files = 0;
+
+                    // in a block to keep the future send
+                    let entries: Vec<_> = {
+                        let guard = confined_entries_tracker.lock().expect("Mutex is poisoned");
+                        let entries = guard.confinement_member_to_confined_entries.keys();
+                        entries.into_iter().cloned().collect()
+                    };
+
+                    for entry_id in entries {
+                        match workspace_ops.stat_entry_by_id(entry_id).await {
+                            Ok(stat) if stat.is_confined() && stat.is_file() => {
+                                confined_bytes += stat.size();
+                                confined_files += 1
+                            }
+                            // ignore error and not actually confined entry
+                            _ => {}
+                        }
+                    }
+
+                    // send_event
+                    // TODO don't send if there is nothing to sync
+                    // or if it's the same as the last one
+                    event_bus.send(&EventWorkspaceOutboundSyncBacklog {
+                        number_of_files_to_sync: backlog.pending_entries - confined_files,
+                        size_to_sync: backlog.pending_bytes - confined_bytes,
+                    });
+
+                    // sleep for a bit, we don't need to spam
+                    device.time_provider.sleep(BACKLOG_TRACKER_WAIT).await;
+                }
+            }
+        });
+
         struct DueTime {
             since: DateTime,
             due_time: DateTime,
@@ -486,8 +539,7 @@ fn task_future_factory(
         }
 
         let mut stop_requested = pin!(stop_requested);
-        // to not spam (0,0) outbound sync backlog events
-        let mut nothing_to_sync = false;
+
         loop {
             let to_sleep = match due_time {
                 None => {
@@ -531,6 +583,7 @@ fn task_future_factory(
                     // Shutdown the sub-task before leaving
                     drop(syncer_tx);
                     let _ = syncer.await;
+                    backlog_tracker.abort();
                     // This return is why `stop_requested` doesn't need to be fused
                     return;
                 }
@@ -645,28 +698,6 @@ fn task_future_factory(
                     }
                 }
             }
-
-            // Send event on how much data there is left to sync
-            let (number_of_files_to_sync, size_to_sync) = to_sync.iter().fold(
-                (0, 0),
-                |(count, total_size), (_, (_, size, is_confined, is_file))| {
-                    if !is_confined && *is_file {
-                        (count + 1, total_size + size)
-                    } else {
-                        (count, total_size)
-                    }
-                },
-            );
-
-            if number_of_files_to_sync != 0 || !nothing_to_sync {
-                event_bus.send(&EventWorkspaceOutboundSyncBacklog {
-                    number_of_files_to_sync,
-                    size_to_sync,
-                });
-            }
-
-            // this is after to still send a last (0,0) event
-            nothing_to_sync = (number_of_files_to_sync, size_to_sync) == (0, 0);
         }
     };
 
