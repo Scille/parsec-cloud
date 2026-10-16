@@ -2,7 +2,7 @@
 
 use std::str::FromStr;
 
-use rand::{Rng, seq::SliceRandom};
+use rand::{RngExt, seq::SliceRandom};
 
 use libparsec_crypto::SecretKey;
 
@@ -108,15 +108,16 @@ impl SASCode {
         let mut sas_codes = Vec::<SASCode>::with_capacity(size);
 
         sas_codes.push(SASCode(self.to_string()));
+        let mut rng = rand::rng();
         while sas_codes.len() < size {
-            let num = rand::thread_rng().gen_range(0..=SAS_CODE_MASK);
+            let num = rng.random_range(0..=SAS_CODE_MASK);
             let candidate = SASCode::try_from(num as u32)
                 .expect("SASCode number should not exceed `SAS_CODE_BITS` bit long");
             if &candidate != self {
                 sas_codes.push(candidate);
             }
         }
-        sas_codes.shuffle(&mut rand::thread_rng());
+        sas_codes.shuffle(&mut rng);
         sas_codes
     }
 

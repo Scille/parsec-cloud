@@ -25,7 +25,7 @@ pub async fn encrypt_message(
 
             let enc_key = rsa::oaep::EncryptingKey::<rsa::sha2::Sha256>::new(rsa_public_key);
             enc_key
-                .encrypt_with_rng(&mut rsa::rand_core::OsRng, message)
+                .encrypt_with_rng(&mut rsa::rand_core::UnwrapErr(rand::rngs::SysRng), message)
                 .map_err(Into::into)
                 .map(|v| (PKIEncryptionAlgorithm::RsaesOaepSha256, Bytes::from(v)))
         }

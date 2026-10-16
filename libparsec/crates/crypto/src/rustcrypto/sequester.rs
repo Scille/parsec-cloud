@@ -1,16 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use rand::rngs::OsRng;
+use rand::rngs::SysRng;
 use rsa::{
-    PublicKey, PublicKeyParts, RsaPublicKey,
+    RsaPublicKey,
     oaep::Oaep,
     pkcs8::{DecodePublicKey, EncodePrivateKey, EncodePublicKey, der::zeroize::Zeroizing},
     pss::{Signature, SigningKey, VerifyingKey},
-    signature::{RandomizedSigner, Verifier},
+    rand_core::UnwrapErr,
+    sha2::{Digest, Sha256},
+    signature::{RandomizedSigner, SignatureEncoding, Verifier},
+    traits::PublicKeyParts,
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sha2::Sha256;
 
 use crate::{
     CryptoError, CryptoResult, RsaPrivateKey, SecretKey, SequesterKeySize, deserialize_with_armor,
@@ -38,9 +40,9 @@ impl SequesterPrivateKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
-        let (pkey, pubkey) = RsaPrivateKey::gen_keypair(size_in_bits as usize);
+        let (priv_key, pub_key) = RsaPrivateKey::gen_keypair(size_in_bits as usize);
 
-        (Self(pkey), SequesterPublicKeyDer(pubkey.0))
+        (Self(priv_key), SequesterPublicKeyDer(pub_key.0))
     }
 
     pub fn size_in_bytes(&self) -> usize {
@@ -62,7 +64,7 @@ impl SequesterPrivateKeyDer {
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         let (cipherkey, ciphertext) =
             deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
-        let padding = Oaep::new::<Sha256>();
+        let padding = Oaep::<rsa::sha2::Sha256>::new();
 
         let clearkey = SecretKey::try_from(
             &self
@@ -117,7 +119,7 @@ impl SequesterPublicKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.n().bits() / 8
+        self.0.n().bits() as usize / 8
     }
 
     pub fn dump(&self) -> Vec<u8> {
@@ -139,11 +141,11 @@ impl SequesterPublicKeyDer {
     // Encryption format:
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
-        let padding = Oaep::new::<Sha256>();
+        let padding = Oaep::<rsa::sha2::Sha256>::new();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
             .0
-            .encrypt(&mut OsRng, padding, secret_key.as_ref())
+            .encrypt(&mut UnwrapErr(SysRng), padding, secret_key.as_ref())
             .expect("Unreachable");
 
         // RSAES-OAEP uses 42 bytes for padding, hence even with an insecure
@@ -162,16 +164,10 @@ impl SequesterPublicKeyDer {
  * SigningKey
  */
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct SequesterSigningKeyDer(SigningKey<Sha256>);
 
 crate::impl_key_debug!(SequesterSigningKeyDer);
-
-impl PartialEq for SequesterSigningKeyDer {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.as_ref() == other.0.as_ref()
-    }
-}
 
 impl Eq for SequesterSigningKeyDer {}
 
@@ -192,13 +188,20 @@ impl SequesterSigningKeyDer {
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterVerifyKeyDer) {
         let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
         let signing_key = SigningKey::from(rsa::RsaPrivateKey::from(priv_key.0));
-        let verify_key = VerifyingKey::from(pub_key.0);
 
-        (Self(signing_key), SequesterVerifyKeyDer(verify_key))
+        (Self(signing_key), SequesterVerifyKeyDer::from(pub_key.0))
     }
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.as_ref().n().bits() / 8
+        self.0.as_ref().n().bits() as usize / 8
+    }
+
+    pub fn salt_len(&self) -> usize {
+        self.0.salt_len()
+    }
+
+    pub fn hash_len() -> usize {
+        Sha256::output_size()
     }
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
@@ -221,10 +224,13 @@ impl SequesterSigningKeyDer {
     // Signature format:
     //   <algorithm name>:<signature><data>
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let signature = self.0.sign_with_rng(&mut OsRng, data);
+        let signature = self
+            .0
+            .try_sign_with_rng(&mut SysRng, data)
+            .expect("Failed to generate signature");
 
         serialize_with_armor(
-            signature.as_ref(),
+            signature.to_bytes().as_ref(),
             data,
             self.size_in_bytes(),
             Self::ALGORITHM,
@@ -236,27 +242,26 @@ impl SequesterSigningKeyDer {
  * VerifyKey
  */
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, PartialEq)]
 #[serde(try_from = "&Bytes")]
 pub struct SequesterVerifyKeyDer(VerifyingKey<Sha256>);
 
 crate::impl_key_debug!(SequesterVerifyKeyDer);
 
-impl PartialEq for SequesterVerifyKeyDer {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.as_ref() == other.0.as_ref()
+impl Eq for SequesterVerifyKeyDer {}
+
+impl From<rsa::RsaPublicKey> for SequesterVerifyKeyDer {
+    fn from(value: rsa::RsaPublicKey) -> Self {
+        Self(VerifyingKey::new_with_auto_salt_len(value))
     }
 }
-
-impl Eq for SequesterVerifyKeyDer {}
 
 impl TryFrom<&[u8]> for SequesterVerifyKeyDer {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         RsaPublicKey::from_public_key_der(bytes)
-            .map(VerifyingKey::from)
-            .map(Self)
+            .map(Self::from)
             .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
     }
 }
@@ -282,7 +287,7 @@ impl SequesterVerifyKeyDer {
     const ALGORITHM: &'static str = "RSASSA-PSS-SHA256";
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.as_ref().n().bits() / 8
+        self.0.as_ref().n().bits() as usize / 8
     }
 
     pub fn dump(&self) -> Vec<u8> {
@@ -297,7 +302,7 @@ impl SequesterVerifyKeyDer {
 
     pub fn load_pem(s: &str) -> CryptoResult<Self> {
         RsaPublicKey::from_public_key_pem(s)
-            .map(|x| Self(VerifyingKey::from(x)))
+            .map(Self::from)
             .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
     }
 

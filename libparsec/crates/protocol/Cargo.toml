@@ -16,7 +16,7 @@ libparsec_types = { workspace = true }
 libparsec_serialization_format = { workspace = true }
 
 paste = { workspace = true }
-rand = { workspace = true, features = ["std", "std_rng"] }
+rand = { workspace = true, features = ["std"] }
 rmp-serde = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_with = { workspace = true, features = ["std", "macros"] }

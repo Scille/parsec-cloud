@@ -21,6 +21,7 @@ error_set = { workspace = true }
 rustls-webpki = { workspace = true, features = ["std", "ring"] }
 rustls-pki-types = { workspace = true }
 rsa = { workspace = true, features = ["sha2"] }
+rand = { workspace = true }
 sha2 = { workspace = true }
 libparsec_types = { workspace = true }
 # Use to decode subject & issuer fields of used x509 certificate.

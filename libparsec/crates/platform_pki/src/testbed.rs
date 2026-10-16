@@ -335,7 +335,8 @@ impl TestbedPkiPrivateKey {
             self.entry.private_key.clone(),
             32,
         );
-        let signature = signing_key.sign_with_rng(&mut rsa::rand_core::OsRng, message);
+        let signature =
+            signing_key.sign_with_rng(&mut rsa::rand_core::UnwrapErr(rand::rngs::SysRng), message);
         Ok((
             PkiSignatureAlgorithm::RsassaPssSha256,
             Bytes::from(signature.to_vec()),
@@ -355,7 +356,10 @@ impl TestbedPkiPrivateKey {
                     self.entry.private_key.clone(),
                 );
                 let plaintext = dec_key
-                    .decrypt_with_rng(&mut rsa::rand_core::OsRng, ciphertext)
+                    .decrypt_with_rng(
+                        &mut rsa::rand_core::UnwrapErr(rand::rngs::SysRng),
+                        ciphertext,
+                    )
                     .map_err(|e| PkiPrivateKeyDecryptError::Decrypt(e.into()))?;
                 Ok(Bytes::from(plaintext))
             }
