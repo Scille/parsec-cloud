@@ -9,14 +9,14 @@
     >
       <div class="shamir-information-header">
         <ms-image
-          :image="ShamirIconCircle"
+          :image="isDarkTheme ? ShamirIconCircleDark : ShamirIconCircleLight"
           class="shamir-information-header__image"
           alt="Shamir Icon"
         />
-        <ion-text class="shamir-information-header__title title-h4">
+        <ion-text class="shamir-information-header__title">
           {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupInfo.title') }}
         </ion-text>
-        <ion-text class="shamir-information-header__subtitle body-lg">
+        <ion-text class="shamir-information-header__subtitle">
           {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupInfo.subtitle') }}
         </ion-text>
       </div>
@@ -28,7 +28,7 @@
             class="shamir-information-content-card-icon"
           />
           <div class="shamir-information-content-card-text">
-            <ion-text class="shamir-information-content-card-text__title title-h5">
+            <ion-text class="shamir-information-content-card-text__title">
               {{
                 $msTranslate({
                   key: 'OrganizationRecovery.shamir.modalSelf.setupInfo.info1Title',
@@ -36,7 +36,7 @@
                 })
               }}
             </ion-text>
-            <ion-text class="shamir-information-content-card-text__subtitle subtitles-sm">
+            <ion-text class="shamir-information-content-card-text__subtitle">
               {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupInfo.info1Subtitle') }}
             </ion-text>
           </div>
@@ -47,10 +47,10 @@
             class="shamir-information-content-card-icon"
           />
           <div class="shamir-information-content-card-text">
-            <ion-text class="shamir-information-content-card-text__title title-h5">
+            <ion-text class="shamir-information-content-card-text__title">
               {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupInfo.info2Title') }}
             </ion-text>
-            <ion-text class="shamir-information-content-card-text__subtitle subtitles-sm">
+            <ion-text class="shamir-information-content-card-text__subtitle">
               {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupInfo.info2Subtitle') }}
             </ion-text>
           </div>
@@ -72,8 +72,7 @@
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupInfo.startSetup') }}
         <ion-icon
           :icon="arrowForward"
-          slot="end"
-          class="shamir-information-button__icon"
+          class="shamir-information-button__icon button-icon-right"
         />
       </ion-button>
     </div>
@@ -85,11 +84,11 @@
     >
       <div class="shamir-setup-threshold">
         <div class="shamir-setup-threshold-header">
-          <ion-text class="shamir-setup-threshold-header__title title-h4">
+          <ion-text class="shamir-setup-threshold-header__title">
             {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.threshold.title') }}
           </ion-text>
           <!-- eslint-disable vue/html-indent -->
-          <ion-text class="shamir-setup-threshold-header__number title-h5">
+          <ion-text class="shamir-setup-threshold-header__number">
             {{
               selectedUsers.length < shamirThreshold
                 ? $msTranslate({
@@ -101,7 +100,7 @@
           </ion-text>
         </div>
 
-        <ion-text class="shamir-setup-threshold__subtitle body">
+        <ion-text class="shamir-setup-threshold__subtitle">
           {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.threshold.subtitle') }}
         </ion-text>
 
@@ -143,10 +142,10 @@
               :icon="search"
               class="shamir-setup-list-empty__icon"
             />
-            <ion-text class="shamir-setup-list-empty__title subtitles-normal">
+            <ion-text class="shamir-setup-list-empty__title">
               {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.trustedPeople.noPeopleAddedTitle') }}
             </ion-text>
-            <ion-text class="shamir-setup-list-empty__subtitle body">
+            <ion-text class="shamir-setup-list-empty__subtitle">
               {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.trustedPeople.noPeopleAddedSubtitle') }}
             </ion-text>
           </div>
@@ -164,11 +163,11 @@
                 :icon="shieldCheckmark"
                 class="shamir-setup-list-item__icon"
               />
-              <ion-text class="shamir-setup-list-item__text subtitles-sm">
-                <span class="shamir-setup-list-item__text-label subtitles-sm">
+              <ion-text class="shamir-setup-list-item__text">
+                <span class="shamir-setup-list-item__text-label">
                   {{ user.humanHandle.label }}
                 </span>
-                <span class="shamir-setup-list-item__text-description body">
+                <span class="shamir-setup-list-item__text-description">
                   {{ user.humanHandle.email }}
                 </span>
               </ion-text>
@@ -209,7 +208,8 @@
 </template>
 
 <script setup lang="ts">
-import ShamirIconCircle from '@/assets/images/shamir-icon-circle.svg?raw';
+import ShamirIconCircleDark from '@/assets/images/shamir-icon-circle-dark.svg?raw';
+import ShamirIconCircleLight from '@/assets/images/shamir-icon-circle-light.svg?raw';
 import ShamirSetupSearchDropdown from '@/components/profile/ShamirSetupSearchDropdown.vue';
 import { getClientInfo, listUsers, UserInfo, UserProfile } from '@/parsec';
 import { getRequiredShamirThreshold, setupShamirRecovery } from '@/parsec/shamir';
@@ -225,6 +225,7 @@ import {
   MsReportTheme,
   MsSearchInput,
   Translatable,
+  useTheme,
 } from 'megashark-lib';
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 
@@ -232,6 +233,8 @@ enum ShamirSetupStep {
   Initial = 'shamir-setup-step-initial',
   AddPeople = 'shamir-setup-step-add-people',
 }
+
+const { isDarkTheme } = useTheme();
 
 const step = ref<ShamirSetupStep>(ShamirSetupStep.Initial);
 const allUsers = ref<Array<UserInfo>>([]);
@@ -380,13 +383,13 @@ async function startSetup(): Promise<void> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   &-header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__image {
       width: 4.75rem;
@@ -394,13 +397,14 @@ async function startSetup(): Promise<void> {
     }
 
     &__title {
-      font-size: 1.25rem;
+      @include ms.font('heading-h3');
       margin-top: 0.5rem;
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
     }
 
     &__subtitle {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-lg-regular');
+      color: ms.color('text-base-description');
       text-align: center;
     }
   }
@@ -408,36 +412,38 @@ async function startSetup(): Promise<void> {
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     width: 100%;
 
     &-card {
       display: flex;
-      gap: 1rem;
-      padding: 1rem;
-      border-radius: var(--parsec-radius-12);
-      background: var(--parsec-color-light-secondary-premiere);
+      gap: ms.spacing('gap-3xl');
+      padding: ms.spacing('padding-3xl');
+      border-radius: ms.radius('2xl');
+      background: ms.color('surface-base-page-secondary');
 
       &-icon {
         flex-shrink: 0;
         font-size: 1rem;
-        background: var(--parsec-color-light-primary-500);
-        color: var(--parsec-color-light-secondary-white);
-        padding: 0.375rem;
-        border-radius: var(--parsec-radius-circle);
+        background: ms.color('surface-brand-default');
+        color: ms.color('surface-base-default');
+        padding: ms.spacing('padding-md');
+        border-radius: ms.radius('full');
       }
 
       &-text {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: ms.spacing('gap-sm');
 
         &__title {
-          color: var(--parsec-color-light-secondary-text);
+          @include ms.font('heading-h6');
+          color: ms.color('text-base-body');
         }
 
         &__subtitle {
-          color: var(--parsec-color-light-secondary-hard-grey);
+          @include ms.font('body-md-medium');
+          color: ms.color('text-base-description');
         }
       }
     }
@@ -446,14 +452,8 @@ async function startSetup(): Promise<void> {
   &-button {
     width: 100%;
 
-    &::part(native) {
-      justify-content: center;
-    }
-
     &__icon {
       font-size: 1rem;
-      margin-left: 0.5rem;
-      color: var(--parsec-color-light-secondary-white);
     }
   }
 }
@@ -461,7 +461,7 @@ async function startSetup(): Promise<void> {
 .shamir-setup {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   &-search {
     position: relative;
@@ -483,10 +483,10 @@ async function startSetup(): Promise<void> {
   &-threshold {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    background: var(--parsec-color-light-secondary-inversed-contrast);
-    padding: 1rem;
-    border-radius: var(--parsec-radius-12);
+    gap: ms.spacing('gap-lg');
+    background: ms.color('surface-base-default');
+    padding: ms.spacing('padding-3xl');
+    border-radius: ms.radius('2xl');
     box-shadow: var(--parsec-shadow-card);
 
     &-header {
@@ -495,16 +495,19 @@ async function startSetup(): Promise<void> {
       align-items: center;
 
       &__title {
-        color: var(--parsec-color-light-primary-600);
+        @include ms.font('heading-h5');
+        color: ms.color('text-brand-default-hover');
       }
 
       &__number {
-        color: var(--parsec-color-light-secondary-hard-text);
+        @include ms.font('heading-h6');
+        color: ms.color('text-base-heading');
       }
     }
 
     &__subtitle {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
     }
 
     .ms-progress {
@@ -515,55 +518,58 @@ async function startSetup(): Promise<void> {
   &-people {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
   }
 
   &-list-container {
     display: flex;
     width: 100%;
-    border: 1px solid var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-8);
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    border-radius: ms.radius('lg');
     overflow: hidden;
-    background: var(--parsec-color-light-secondary-background);
+    background: ms.color('surface-base-default-secondary');
   }
 
   &-list {
-    padding: 0;
+    padding: ms.spacing('padding-none');
     width: 100%;
     min-height: 13rem;
     max-height: 13rem;
     overflow-y: auto;
 
     &-item {
-      border-bottom: 1px solid var(--parsec-color-light-secondary-premiere);
+      border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
       box-shadow: var(--parsec-shadow-card);
 
       &::part(native) {
-        padding: 0.625rem 1rem;
+        padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
       }
 
       &::part(container) {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
         overflow: hidden;
         justify-content: space-between;
       }
 
       &__text {
+        @include ms.font('body-md-medium');
         margin: 0;
         display: flex;
         align-items: center;
-        gap: 0.375rem;
+        gap: ms.spacing('gap-md');
         width: 100%;
         overflow: hidden;
 
         &-label {
-          color: var(--parsec-color-light-secondary-text);
+          @include ms.font('body-md-medium');
+          color: ms.color('text-base-body');
         }
 
         &-description {
-          color: var(--parsec-color-light-secondary-grey);
+          @include ms.font('body-md-regular');
+          color: ms.color('text-base-description');
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -573,27 +579,27 @@ async function startSetup(): Promise<void> {
       &__icon {
         flex-shrink: 0;
         font-size: 1rem;
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('icon-neutral-default');
 
         &:first-child {
-          color: var(--parsec-color-light-primary-500);
+          color: ms.color('icon-brand-default');
         }
 
         &:last-child {
-          padding: 0.125rem;
-          border-radius: var(--parsec-radius-18);
-          color: var(--parsec-color-light-secondary-grey);
+          padding: ms.spacing('padding-xs');
+          border-radius: ms.radius('4xl');
+          color: ms.color('icon-neutral-default');
           cursor: pointer;
 
           &:hover {
-            background: var(--parsec-color-light-danger-100);
-            color: var(--parsec-color-light-danger-600);
+            background: ms.color('surface-error-default-subtle-pressed');
+            color: ms.color('icon-error-default');
           }
         }
       }
 
       &:hover {
-        --background: var(--parsec-color-light-secondary-premiere);
+        --background: #{ms.color('surface-base-page-secondary')};
       }
     }
 
@@ -602,23 +608,25 @@ async function startSetup(): Promise<void> {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      padding: 1rem;
+      gap: ms.spacing('gap-lg');
+      padding: ms.spacing('padding-3xl');
       width: 100%;
       height: 100%;
       min-height: 13rem;
 
       &__icon {
         font-size: 1.5rem;
-        color: var(--parsec-color-light-secondary-hard-grey);
+        color: ms.color('icon-neutral-default');
       }
 
       &__title {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('body-lg-medium');
+        color: ms.color('text-base-body');
       }
 
       &__subtitle {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
   }

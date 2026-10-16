@@ -11,20 +11,20 @@
       class="shamir-done"
     >
       <ms-image
-        :image="ShamirIconCircle"
+        :image="isDarkTheme ? ShamirIconCircleDark : ShamirIconCircleLight"
         class="shamir-done-image"
         alt="Shamir Icon"
       />
 
       <div class="shamir-done-text">
-        <ion-text class="shamir-done-text__title title-h3">
+        <ion-text class="shamir-done-text__title">
           {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupDone') }}
           <ion-icon
             :icon="checkmarkCircle"
             class="title-icon"
           />
         </ion-text>
-        <ion-text class="shamir-done-text__description body">
+        <ion-text class="shamir-done-text__description">
           {{
             $msTranslate({
               key: 'OrganizationRecovery.shamir.modalSelf.numberPeople',
@@ -52,32 +52,32 @@
             class="shamir-done-list-item__icon"
           />
           <ion-text
-            class="shamir-done-list-item__text subtitles-sm"
+            class="shamir-done-list-item__text"
             v-if="recipient.isAnonymous()"
           >
             {{ $msTranslate('UsersPage.anonymous') }}
           </ion-text>
           <ion-text
-            class="shamir-done-list-item__text subtitles-sm"
+            class="shamir-done-list-item__text"
             v-else
           >
-            <span class="shamir-done-list-item__text-label subtitles-sm">
+            <span class="shamir-done-list-item__text-label">
               {{ recipient.humanHandle.label }}
             </span>
-            <span class="shamir-done-list-item__text-description body">
+            <span class="shamir-done-list-item__text-description">
               {{ recipient.humanHandle.email }}
             </span>
           </ion-text>
           <ion-text
             v-if="recipient.isRevoked()"
-            class="shamir-done-list-item__revoked subtitles-sm"
+            class="shamir-done-list-item__revoked"
           >
             {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.revoked') }}
           </ion-text>
         </ion-item>
       </ion-list>
 
-      <ion-text class="shamir-done-info button-medium">
+      <ion-text class="shamir-done-info">
         <ion-icon
           :icon="informationCircle"
           class="shamir-done-info__icon"
@@ -102,7 +102,7 @@
       <ion-button
         fill="clear"
         @click="deleteShamir"
-        class="shamir-done-footer__button shamir-done-footer__button--delete"
+        class="shamir-done-footer__button color-danger"
         :class="shamirInfo.tag === SelfShamirRecoveryInfoTag.SetupButUnusable ? 'required-action' : ''"
       >
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.delete') }}
@@ -113,7 +113,7 @@
           shamirInfo.tag === SelfShamirRecoveryInfoTag.SetupWithRevokedRecipients
         "
         @click="emits('closeModal')"
-        class="shamir-done-footer__button shamir-done-footer__button--close"
+        class="shamir-done-footer__button color-secondary"
       >
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.close') }}
       </ion-button>
@@ -122,13 +122,14 @@
 </template>
 
 <script setup lang="ts">
-import ShamirIconCircle from '@/assets/images/shamir-icon-circle.svg?raw';
+import ShamirIconCircleDark from '@/assets/images/shamir-icon-circle-dark.svg?raw';
+import ShamirIconCircleLight from '@/assets/images/shamir-icon-circle-light.svg?raw';
 import { SelfShamirRecoveryInfo } from '@/parsec';
 import { deleteSelfShamirRecovery } from '@/parsec/shamir';
 import { SelfShamirRecoveryInfoTag } from '@/plugins/libparsec';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { checkmarkCircle, informationCircle, shieldCheckmark } from 'ionicons/icons';
-import { Answer, askQuestion, MsImage, MsReportText, MsReportTheme } from 'megashark-lib';
+import { Answer, askQuestion, MsImage, MsReportText, MsReportTheme, useTheme } from 'megashark-lib';
 
 defineProps<{
   shamirInfo: SelfShamirRecoveryInfo;
@@ -138,6 +139,8 @@ const emits = defineEmits<{
   (e: 'shamirDeleted'): void;
   (e: 'closeModal'): void;
 }>();
+
+const { isDarkTheme } = useTheme();
 
 async function deleteShamir(): Promise<void> {
   const answer = await askQuestion(
@@ -164,96 +167,80 @@ async function deleteShamir(): Promise<void> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
-  gap: 1rem;
-  color: var(--parsec-color-light-secondary-text);
-  background: var(--parsec-color-light-secondary-background);
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  padding: ms.spacing('padding-5xl');
+  gap: ms.spacing('gap-3xl');
+  color: ms.color('text-base-body');
+  background: ms.color('surface-base-default-secondary');
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem;
+    padding: ms.spacing('padding-3xl');
   }
 
   &-image {
     width: 4.5rem;
     height: 4.5rem;
     box-shadow: var(--parsec-shadow-card);
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-circle);
+    background: ms.color('surface-base-default');
+    border-radius: ms.radius('full');
   }
 
   &-text {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     text-align: center;
 
     &__title {
+      @include ms.font('heading-h4');
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       .title-icon {
         font-size: 1.25rem;
-        color: var(--parsec-color-light-primary-500);
-        padding: 0.125rem;
-        border-radius: var(--parsec-radius-18);
-        background: var(--parsec-color-light-secondary-white);
+        color: ms.color('icon-brand-default');
+        padding: ms.spacing('padding-xs');
+        border-radius: ms.radius('4xl');
+        background: ms.color('surface-base-default');
       }
     }
 
     &__description {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
     }
   }
 
   &-info {
+    @include ms.font('label-md-medium');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     margin-top: 1rem;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
 
     &__icon {
       font-size: 1rem;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
     }
   }
 
   &-footer {
     display: flex;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     margin-top: 1.5rem;
     justify-content: space-between;
 
     &__button {
-      &--delete {
-        color: var(--parsec-color-light-danger-500);
-
-        &:hover {
-          --background-hover: var(--parsec-color-light-danger-50);
-          color: var(--parsec-color-light-danger-700);
-        }
+      .button-delete {
+        color: ms.color('text-error-default');
 
         &.required-action {
-          --background: var(--parsec-color-light-danger-500) !important;
-          color: var(--parsec-color-light-secondary-white) !important;
+          color: ms.color('text-error-on-color') !important;
           width: 100% !important;
-
-          &:hover {
-            --background-hover: var(--parsec-color-light-danger-600) !important;
-          }
-        }
-      }
-      &--close {
-        min-width: 5rem;
-        --background: var(--parsec-color-light-secondary-text) !important;
-        color: var(--parsec-color-light-secondary-white);
-
-        &:hover {
-          --background-hover: var(--parsec-color-light-secondary-contrast) !important;
         }
       }
     }
@@ -267,42 +254,45 @@ async function deleteShamir(): Promise<void> {
   max-height: 13rem;
   display: flex;
   flex-direction: column;
-  border-radius: var(--parsec-radius-8);
-  background: var(--parsec-color-light-secondary-white);
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default');
   overflow-y: auto;
   box-shadow: var(--parsec-shadow-card);
 
   &-item {
-    border-bottom: 1px solid var(--parsec-color-light-secondary-premiere);
+    border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
     box-shadow: var(--parsec-shadow-card);
     flex-shrink: 0;
 
     &::part(native) {
-      padding: 0.625rem 1rem;
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
     }
 
     &::part(container) {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       overflow: hidden;
       justify-content: space-between;
     }
 
     &__text {
+      @include ms.font('body-md-medium');
       margin: 0;
       display: flex;
       align-items: center;
-      gap: 0.375rem;
+      gap: ms.spacing('gap-md');
       width: 100%;
       overflow: hidden;
 
       &-label {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('body-md-medium');
+        color: ms.color('text-base-body');
       }
 
       &-description {
-        color: var(--parsec-color-light-secondary-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -312,27 +302,28 @@ async function deleteShamir(): Promise<void> {
     &__icon {
       flex-shrink: 0;
       font-size: 1rem;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
 
       &:first-child {
-        color: var(--parsec-color-light-primary-500);
+        color: ms.color('icon-brand-default');
       }
 
       &:last-child {
-        padding: 0.125rem;
-        border-radius: var(--parsec-radius-18);
-        color: var(--parsec-color-light-secondary-grey);
+        padding: ms.spacing('padding-xs');
+        border-radius: ms.radius('4xl');
+        color: ms.color('icon-neutral-default');
         cursor: pointer;
 
         &:hover {
-          background: var(--parsec-color-light-danger-100);
-          color: var(--parsec-color-light-danger-600);
+          background: ms.color('surface-error-default-subtle-pressed');
+          color: ms.color('icon-error-default');
         }
       }
     }
 
     &__revoked {
-      color: var(--parsec-color-light-danger-500);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-error-default');
       font-style: italic;
     }
 
@@ -343,7 +334,7 @@ async function deleteShamir(): Promise<void> {
     }
 
     &:hover {
-      --background: var(--parsec-color-light-secondary-premiere);
+      --background: #{ms.color('surface-base-page-secondary')};
     }
   }
 }

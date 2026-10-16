@@ -33,14 +33,14 @@
       class="email-list-container"
       v-if="emails.length > 1"
     >
-      <ion-text class="email-list__title subtitles-sm">
+      <ion-text class="email-list__title">
         {{ $msTranslate('UsersPage.CreateUserInvitationModal.emailsList') }} ({{ emails.length }})
       </ion-text>
       <div class="email-list">
         <ion-text
           v-for="email in emails"
           :key="email"
-          class="email-list__item button-small"
+          class="email-list__item"
         >
           {{ email }}
         </ion-text>
@@ -97,31 +97,33 @@ async function onConfirmClicked(): Promise<boolean> {
 .email-input-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .email-list-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   margin-top: 1rem;
 
   .email-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     max-height: 10rem;
     overflow-y: auto;
 
     &__title {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
     }
 
     &__item {
-      background-color: var(--parsec-color-light-secondary-premiere);
-      color: var(--parsec-color-light-secondary-text);
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--parsec-radius-6);
+      @include ms.font('label-sm-medium');
+      background-color: ms.color('surface-base-page-secondary');
+      color: ms.color('text-base-body');
+      padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+      border-radius: ms.radius('md');
     }
   }
 }

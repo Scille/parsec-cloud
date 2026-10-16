@@ -4,10 +4,10 @@
   <div class="invitations-list-container">
     <div class="invitations-list">
       <div class="invitations-list-header">
-        <ion-text class="invitations-list-header__title title-h4">
+        <ion-text class="invitations-list-header__title">
           {{ $msTranslate('invitationList.title') }}
         </ion-text>
-        <span class="invitations-list-header__counter body-sm">
+        <span class="invitations-list-header__counter">
           {{ invitations.length }}
         </span>
         <ion-button
@@ -18,7 +18,7 @@
           <ion-icon
             slot="start"
             :icon="personAdd"
-            class="button-icon"
+            class="button-icon button-icon-left"
           />
           {{ $msTranslate('invitationList.invite') }}
         </ion-button>
@@ -28,7 +28,7 @@
           class="invitations-list-content__empty"
           v-if="invitations.length === 0"
         >
-          <ion-text class="body-lg">
+          <ion-text>
             {{ $msTranslate('invitationList.noInvitations') }}
           </ion-text>
         </div>
@@ -87,34 +87,36 @@ async function onInviteClick(): Promise<void> {
   display: flex;
   align-items: center;
   flex-direction: column;
-  --fill-color: var(--parsec-color-light-primary-900);
+  --fill-color: #{ms.color('text-base-heading')};
   overflow: visible;
 }
 
 .invitations-list {
   width: 100%;
-  border-radius: var(--parsec-radius-12);
+  border-radius: ms.radius('2xl');
   overflow: hidden;
 
   &-header {
-    background: var(--parsec-color-light-primary-800);
-    color: var(--parsec-color-light-primary-30);
-    padding: 0.5rem 1.5rem;
+    background: var(--parsec-color-popover-header-background);
+    color: ms.color('text-on-color-heading');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__title {
-      padding: 0;
+      @include ms.font('heading-h5');
+      padding: ms.spacing('padding-none');
       display: flex;
       align-items: center;
     }
 
     &__counter {
+      @include ms.font('body-sm-regular');
       margin-right: auto;
-      padding: 0 0.25rem;
-      background: var(--parsec-color-light-primary-30-opacity15);
-      border-radius: var(--parsec-radius-12);
+      padding: 0 ms.spacing('padding-sm');
+      background: ms.color('surface-neutral-on-color');
+      border-radius: ms.radius('2xl');
       display: flex;
       height: fit-content;
       align-items: center;
@@ -122,7 +124,7 @@ async function onInviteClick(): Promise<void> {
 
     &__button {
       --background: none !important;
-      --background-hover: var(--parsec-color-light-primary-30-opacity15) !important;
+      --background-hover: #{ms.color('surface-neutral-on-color')} !important;
 
       .button-icon {
         font-size: 0.875rem;
@@ -132,7 +134,7 @@ async function onInviteClick(): Promise<void> {
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &__toggle {
-      color: var(--parsec-color-light-secondary-medium);
+      color: ms.color('text-on-color-label');
       margin-left: auto;
       display: flex;
       align-items: center;
@@ -140,39 +142,40 @@ async function onInviteClick(): Promise<void> {
 
       &::part(label) {
         transition: opacity 150ms ease-in-out;
-        opacity: 0.6;
+        opacity: ms.opacity('6');
         margin-right: 0.5rem;
       }
 
       &:hover,
       &.toggle-checked {
         &::part(label) {
-          opacity: 1;
+          opacity: ms.opacity('10');
         }
       }
     }
   }
 
   &-content {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-primary-900);
-    border-radius: 0 0 var(--parsec-radius-6) var(--parsec-radius-6);
+    background: ms.color('surface-base-default');
+    color: ms.color('text-base-heading');
+    border-radius: 0 0 ms.radius('md') ms.radius('md');
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    padding: 0;
+    padding: ms.spacing('padding-none');
     height: 40vh;
     max-height: 25rem;
     transition: all 250ms ease-in-out;
 
     &__empty {
+      @include ms.font('body-lg-regular');
       overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       margin: auto;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
     }
   }
 }

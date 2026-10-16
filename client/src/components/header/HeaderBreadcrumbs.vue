@@ -13,7 +13,7 @@
       <ion-breadcrumb
         v-for="path in pathNodes"
         :path="path"
-        class="breadcrumb-element breadcrumb-normal"
+        class="breadcrumb-element"
         :key="path.id"
         ref="breadcrumb"
       >
@@ -41,7 +41,7 @@
       :class="{ is_browsing: props.pathNodes.length > (fromHeaderPage ? 2 : 1) }"
       @click="props.pathNodes.length > (fromHeaderPage ? 2 : 1) ? openPopover($event) : null"
     >
-      <ion-text class="breadcrumb-file-mobile__title title-h3">{{ currentFolderName }}</ion-text>
+      <ion-text class="breadcrumb-file-mobile__title">{{ currentFolderName }}</ion-text>
       <ion-icon
         v-if="props.pathNodes.length > (fromHeaderPage ? 2 : 1)"
         class="breadcrumb-file-mobile__icon"
@@ -203,8 +203,8 @@ async function openPopover(event: Event): Promise<void> {
 }
 
 .breadcrumb {
-  padding: 0;
-  color: var(--parsec-color-light-secondary-grey);
+  padding: ms.spacing('padding-none');
+  opacity: ms.opacity('7');
   display: flex;
   flex-wrap: nowrap;
   user-select: none;
@@ -212,9 +212,9 @@ async function openPopover(event: Event): Promise<void> {
   &-item-content {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
-    padding: 0.25rem 0.5rem;
+    padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
     position: relative;
     cursor: pointer;
 
@@ -223,53 +223,56 @@ async function openPopover(event: Event): Promise<void> {
       position: absolute;
       width: 100%;
       height: 100%;
-      opacity: 0.6;
+      opacity: ms.opacity('6');
       z-index: -10;
       left: 0;
-      border-radius: var(--parsec-radius-8);
+      border-radius: ms.radius('lg');
     }
 
     &:hover:not(.breadcrumb-collapsed) {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-neutral-default-hover');
       position: relative;
 
       .main-icon {
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('text-neutral-default-hover');
       }
 
       &::after {
-        background: var(--parsec-color-light-secondary-medium);
+        background: ms.color('surface-neutral-default-subtle-hover');
       }
     }
   }
 
   &-element {
+    --color: #{ms.color('text-base-label')};
+    @include ms.font('label-md-medium');
+
     .main-icon {
       font-size: 1.125rem;
     }
 
     &::part(native) {
       cursor: default;
-      padding: 0;
+      padding: ms.spacing('padding-none');
       max-width: calc(v-bind(breadcrumbWidthProperty));
     }
 
     &:nth-child(1) {
       &::part(native) {
         display: flex;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
       }
     }
 
     &::part(separator) {
       margin-inline: 0;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-neutral-default');
     }
 
     &::part(collapsed-indicator) {
-      border-radius: var(--parsec-radius-8);
-      background: var(--parsec-color-light-secondary-medium);
-      color: var(--parsec-color-light-secondary-grey);
+      border-radius: ms.radius('lg');
+      background: ms.color('surface-neutral-default-subtle');
+      color: ms.color('text-neutral-default');
       margin-inline: 0.5rem;
     }
   }
@@ -277,15 +280,11 @@ async function openPopover(event: Event): Promise<void> {
   // Defined by ionic
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
   &-active {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('label-md-emphasis');
     pointer-events: none;
 
     &::part(native) {
       cursor: default;
-    }
-
-    .main-icon {
-      color: var(--parsec-color-light-primary-700);
     }
   }
 
@@ -299,9 +298,9 @@ async function openPopover(event: Event): Promise<void> {
 .breadcrumb-file-mobile {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--parsec-radius-8);
+  gap: ms.spacing('gap-md');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
+  border-radius: ms.radius('lg');
   overflow: hidden;
   width: fit-content;
   white-space: nowrap;
@@ -312,19 +311,20 @@ async function openPopover(event: Event): Promise<void> {
   }
 
   &__title {
-    color: var(--parsec-color-light-primary-800);
+    @include ms.font('heading-h4');
+    color: ms.color('text-brand-default');
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
   }
 
   &__icon {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
     font-size: 0.75rem;
-    padding: 0.125rem;
+    padding: ms.spacing('padding-xs');
     flex-shrink: 0;
-    border-radius: var(--parsec-radius-circle);
-    background: var(--parsec-color-light-secondary-medium);
+    border-radius: ms.radius('full');
+    background: ms.color('surface-neutral-default-subtle');
   }
 
   &.is_browsing {
@@ -332,11 +332,11 @@ async function openPopover(event: Event): Promise<void> {
     transition: all 0.15s ease-in-out;
 
     &:hover {
-      background: var(--parsec-color-light-secondary-medium);
+      background: ms.color('surface-neutral-default-subtle-hover');
 
       .breadcrumb-file-mobile__icon {
-        background: var(--parsec-color-light-secondary-soft-grey);
-        color: var(--parsec-color-light-secondary-white);
+        background: ms.color('surface-neutral-default-subtle-pressed');
+        color: ms.color('icon-neutral-on-color');
       }
     }
   }

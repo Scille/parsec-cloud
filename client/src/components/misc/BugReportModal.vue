@@ -45,9 +45,9 @@
         class="report-logs__toggle"
       />
       <div class="report-logs-text">
-        <ion-text class="report-logs-text__title subtitles-normal">{{ $msTranslate('ReportBugModal.log.title') }}</ion-text>
+        <ion-text class="report-logs-text__title">{{ $msTranslate('ReportBugModal.log.title') }}</ion-text>
         <div class="report-logs-text-subtitles">
-          <ion-text class="report-logs-text-subtitles__description body">{{ $msTranslate('ReportBugModal.log.description') }}</ion-text>
+          <ion-text class="report-logs-text-subtitles__description">{{ $msTranslate('ReportBugModal.log.description') }}</ion-text>
           <ion-button
             fill="clear"
             @click.stop="openLogDisplayModal()"
@@ -163,24 +163,24 @@ async function sendBugReport(): Promise<boolean> {
 .report-bug-modal-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   position: relative;
   z-index: 3;
 
   .add-file-container {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 }
 
 .report-logs {
   display: flex;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   margin-top: 1rem;
-  padding: 1rem;
-  border-radius: var(--parsec-radius-8);
-  background: var(--parsec-color-light-secondary-background);
+  padding: ms.spacing('padding-3xl');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default-secondary');
   transition: background 0.15s ease-in-out;
   position: relative;
   z-index: 3;
@@ -203,30 +203,32 @@ async function sendBugReport(): Promise<boolean> {
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     cursor: pointer;
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-base-body');
     }
 
     &-subtitles {
       display: flex;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__description {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
   }
 
   &:hover:not(#see-logs-button) {
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
   }
 }
 
 #see-logs-button {
-  --color: var(--parsec-color-light-secondary-text);
+  --color: #{ms.color('text-base-body')};
   --background: transparent;
   --background-hover: transparent;
 
@@ -235,7 +237,7 @@ async function sendBugReport(): Promise<boolean> {
   }
 
   &:hover {
-    color: var(--parsec-color-light-secondary-contrast);
+    color: ms.color('text-base-heading');
   }
 }
 </style>

@@ -9,7 +9,7 @@
       <ion-item-group class="list-group">
         <div class="list-group-header">
           <ion-text
-            class="body-sm list-group-title"
+            class="list-group-title"
             id="filter-title-role"
           >
             {{ $msTranslate('WorkspacesPage.filter.roles') }}
@@ -106,6 +106,10 @@ function updateFilters(changes: Partial<WorkspacesPageFilters>): void {
 </script>
 
 <style lang="scss" scoped>
+.list-group-title {
+  @include ms.font('body-sm-regular');
+}
+
 .status-tag > * {
   cursor: pointer;
 }
@@ -113,6 +117,6 @@ function updateFilters(changes: Partial<WorkspacesPageFilters>): void {
 .filter-text {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 </style>

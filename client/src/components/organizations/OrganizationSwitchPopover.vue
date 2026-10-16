@@ -13,34 +13,30 @@
             class="organization-avatar-logo"
           />
         </ion-avatar>
-        <ion-text class="organization-name title-h4">
+        <ion-text class="organization-name">
           {{ currentOrg?.id }}
         </ion-text>
       </div>
-      <div
-        class="section-buttons custom-button custom-button-fill"
+      <ion-button
+        class="section-buttons"
+        fill="outline"
         @click="goToLogin"
       >
         <ion-icon
-          class="section-buttons-icon"
+          class="section-buttons-icon button-icon-left"
           :icon="repeat"
         />
-        <ion-text
-          class="button-medium"
-          button
-        >
-          {{ $msTranslate('OrganizationSwitch.goToLogin') }}
-        </ion-text>
-      </div>
+        {{ $msTranslate('OrganizationSwitch.goToLogin') }}
+      </ion-button>
     </div>
     <div
       class="connected-organization"
       v-if="filteredOrgs.length > 0"
     >
-      <ion-title class="connected-organization-title body">{{ $msTranslate('OrganizationSwitch.loggedInOrgs') }}</ion-title>
+      <ion-title class="connected-organization-title">{{ $msTranslate('OrganizationSwitch.loggedInOrgs') }}</ion-title>
       <ion-list class="organization-list">
         <ion-item
-          class="organization-list__item body"
+          class="organization-list__item"
           button
           lines="none"
           v-for="org in filteredOrgs"
@@ -62,11 +58,11 @@
             </ion-avatar>
             <div class="organization-text-content">
               <ion-label class="organization-text-content__name">
-                <span class="body">
+                <span>
                   {{ org.id }}
                 </span>
               </ion-label>
-              <ion-label class="organization-text-content__email body-sm">
+              <ion-label class="organization-text-content__email">
                 <span v-if="org.trial && org.device">
                   {{ $msTranslate(formatExpirationTime(getDurationBeforeExpiration(org.device.createdOn))) }}
                 </span>
@@ -87,7 +83,7 @@ import { formatExpirationTime, getDurationBeforeExpiration, isTrialOrganizationD
 import { AvailableDevice, ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle } from '@/router';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
-import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
+import { IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
 import { repeat } from 'ionicons/icons';
 import { LogoIconGradient, MsImage, MsModalResult } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
@@ -152,43 +148,44 @@ async function goToLogin(): Promise<void> {
 .connected-organization {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-premiere);
-  gap: 0.75rem;
+  padding: ms.spacing('padding-3xl');
+  border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  gap: ms.spacing('gap-2xl');
 
   .organization-avatar {
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('text-brand-default');
     text-align: center;
     flex-shrink: 0;
 
     &-logo {
       width: 2.5rem;
-      padding: 0.375rem;
+      padding: ms.spacing('padding-md');
     }
   }
 }
 
 .current-organization {
-  background: var(--parsec-color-light-secondary-background);
+  background: ms.color('surface-base-default-secondary');
 
   &-content {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
   }
 
   .organization-avatar {
-    background-color: var(--parsec-color-light-secondary-medium);
+    background-color: ms.color('surface-neutral-default-subtle');
   }
 
   .organization-name {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h5');
+    color: ms.color('text-base-body');
   }
 }
 
@@ -196,51 +193,53 @@ async function goToLogin(): Promise<void> {
   max-height: 20%;
   max-height: 30vh;
   overflow-y: auto;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   &-title {
-    color: var(--parsec-color-light-secondary-grey);
-    padding: 0;
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
+    padding: ms.spacing('padding-none');
   }
 
   .organization-list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 0;
+    gap: ms.spacing('gap-sm');
+    padding: ms.spacing('padding-none');
 
     &__item {
+      @include ms.font('body-md-regular');
       --background: none;
-      --background-hover: var(--parsec-color-light-primary-50);
-      --background-hover-opacity: 1;
-      border-radius: var(--parsec-radius-6);
-      --inner-padding-end: 0;
-      --padding-start: 0;
+      --background-hover: #{ms.color('surface-brand-default-subtle-hover')};
+      --background-hover-opacity: #{ms.opacity('10')};
+      border-radius: ms.radius('md');
+      --inner-padding-end: #{ms.spacing('padding-none')};
+      --padding-start: #{ms.spacing('padding-none')};
       position: relative;
       z-index: 2;
       pointer-events: auto;
 
       &::part(native) {
-        padding: 0;
+        padding: ms.spacing('padding-none');
       }
 
       &:hover {
         .organization-avatar {
-          background-color: var(--parsec-color-light-secondary-white);
+          background-color: ms.color('surface-base-default');
         }
       }
     }
   }
 
   .organization {
-    padding: 0.5rem;
+    padding: ms.spacing('padding-lg');
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     width: 100%;
 
     &-avatar {
-      background-color: var(--parsec-color-light-secondary-premiere);
+      background-color: ms.color('surface-base-page-secondary');
       position: relative;
       z-index: 1;
 
@@ -251,16 +250,16 @@ async function goToLogin(): Promise<void> {
         right: -5px;
         height: 0.625rem;
         width: 0.625rem;
-        border-radius: var(--parsec-radius-circle);
-        border: 3px solid var(--parsec-color-light-secondary-white);
+        border-radius: ms.radius('full');
+        border: 3px solid ms.color('surface-base-default');
       }
 
       &.online:not(.ellipsis)::after {
-        background-color: var(--parsec-color-light-success-500);
+        background-color: ms.color('surface-success-default');
       }
 
       &.offline:not(.ellipsis)::after {
-        background-color: var(--parsec-color-light-secondary-light);
+        background-color: ms.color('surface-disabled-default');
       }
     }
 
@@ -271,14 +270,14 @@ async function goToLogin(): Promise<void> {
       overflow: hidden;
 
       &::part(native) {
-        padding: 0;
+        padding: ms.spacing('padding-none');
       }
 
       &__name {
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('text-base-body');
 
-        .body {
-          font-size: 0.875rem;
+        span {
+          @include ms.font('body-md-regular');
           display: block;
           text-wrap: nowrap;
           overflow: hidden;
@@ -287,10 +286,11 @@ async function goToLogin(): Promise<void> {
       }
 
       &__email {
+        @include ms.font('body-sm-regular');
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('text-base-description');
       }
     }
   }
@@ -298,10 +298,6 @@ async function goToLogin(): Promise<void> {
 
 .section-buttons {
   margin: 1rem 0 0.5rem 0;
-
-  &:hover {
-    background-color: var(--parsec-color-light-secondary-premiere);
-  }
 
   &-icon {
     margin-bottom: 0.05rem;

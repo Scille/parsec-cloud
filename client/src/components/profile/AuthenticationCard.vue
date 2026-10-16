@@ -14,20 +14,20 @@
 
     <div class="authentication-card-text">
       <ion-text
-        class="authentication-card-text__header subtitles-sm"
+        class="authentication-card-text__header"
         v-if="state === AuthenticationCardState.Update"
       >
         {{ $msTranslate('Authentication.methodChosen') }}
       </ion-text>
-      <ion-text class="authentication-card-text__title title-h4">{{ $msTranslate(config.methodName) }}</ion-text>
+      <ion-text class="authentication-card-text__title">{{ $msTranslate(config.methodName) }}</ion-text>
       <ion-text
-        class="authentication-card-text__description body"
+        class="authentication-card-text__description"
         v-if="config.description && showDescription && state !== AuthenticationCardState.Update"
       >
         {{ $msTranslate(config.description) }}
       </ion-text>
       <ion-text
-        class="authentication-card-text__description body"
+        class="authentication-card-text__description"
         v-if="
           (config.unavailableExplanation && state === AuthenticationCardState.Unavailable) || state === AuthenticationCardState.Forbidden
         "
@@ -46,7 +46,7 @@
     />
     <ion-text
       v-if="state === AuthenticationCardState.Disabled"
-      class="authentication-card__info-active body"
+      class="authentication-card__info-active"
     >
       {{ $msTranslate('Authentication.active') }}
     </ion-text>
@@ -152,10 +152,12 @@ function keyringUnavailableMessage(): Translatable {
 
 <style scoped lang="scss">
 .authentication-card {
+  background: ms.color('surface-base-page');
+  border: 1px solid ms.color('border-neutral-default-subtle');
   display: flex;
   align-items: center;
-  padding-right: 1rem;
-  border-radius: var(--parsec-radius-18);
+  padding-right: ms.spacing('padding-2xl');
+  border-radius: ms.radius('4xl');
   --overflow: visible;
   width: 100%;
   position: relative;
@@ -163,17 +165,17 @@ function keyringUnavailableMessage(): Translatable {
   transition: all 0.1s ease-in;
 
   .image-container {
-    background: var(--parsec-color-light-secondary-premiere);
-    margin: 1rem;
-    padding: 0.5rem;
-    align-self: stretch;
-    border-radius: var(--parsec-radius-12);
+    background: ms.color('surface-base-default-secondary');
+    box-shadow: ms.shadow('input');
+    margin: 0.75rem;
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('2xl');
     display: flex;
     align-items: center;
   }
 
   &__image {
-    min-width: 1.5rem;
+    min-width: 1.25rem;
     object-fit: contain;
   }
 
@@ -181,21 +183,23 @@ function keyringUnavailableMessage(): Translatable {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: 0.625rem 0;
-    gap: 0.25rem;
+    padding: ms.spacing('padding-xl') ms.spacing('padding-none');
+    gap: ms.spacing('gap-xs');
     overflow: hidden;
 
     &__header {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-base-description');
     }
 
     &__title {
-      color: var(--parsec-color-light-primary-700);
-      font-weight: 500;
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-label-default');
     }
 
     &__description {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
       margin-top: -0.25rem;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -206,12 +210,13 @@ function keyringUnavailableMessage(): Translatable {
   &__icon {
     font-size: 1.25rem;
     flex-shrink: 0;
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('icon-brand-default-hover');
     display: none;
   }
 
   &__info-active {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
     margin-left: auto;
   }
 
@@ -223,17 +228,13 @@ function keyringUnavailableMessage(): Translatable {
       0 0 1px 0 rgba(0, 0, 0, 0.2);
 
     &:hover {
-      background: var(--parsec-color-light-primary-30);
-
-      .image-container {
-        background-color: var(--parsec-color-light-primary-100);
-      }
+      background: ms.color('surface-neutral-default-subtle-hover');
     }
   }
 
   &--current {
     .authentication-card__icon {
-      color: var(--parsec-color-light-primary-400);
+      color: ms.color('icon-brand-default');
       display: block;
     }
   }
@@ -245,15 +246,15 @@ function keyringUnavailableMessage(): Translatable {
       0 0 1px 0 rgba(0, 0, 0, 0.2);
 
     &:hover {
-      background: var(--parsec-color-light-primary-30);
+      background: ms.color('surface-brand-default-subtle');
 
       .image-container {
-        background-color: var(--parsec-color-light-primary-100);
+        background-color: ms.color('surface-brand-default-subtle-pressed');
       }
     }
 
     .authentication-card__icon {
-      color: var(--parsec-color-light-primary-400);
+      color: ms.color('icon-brand-default');
       display: block;
     }
   }
@@ -263,30 +264,36 @@ function keyringUnavailableMessage(): Translatable {
       0 1px 1px 0 rgba(0, 0, 0, 0.05),
       0 1px 4px 0 rgba(0, 0, 0, 0.03),
       0 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-color: var(--parsec-color-light-primary-400);
+    border-color: ms.color('border-brand-default');
   }
 
   &--update {
+    background: ms.color('surface-base-default-secondary');
     box-shadow:
       0 1px 1px 0 rgba(0, 0, 0, 0.05),
       0 1px 4px 0 rgba(0, 0, 0, 0.03),
       0 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-color: var(--parsec-color-light-secondary-medium);
+    border-color: ms.color('border-neutral-default-subtle');
+
+    .image-container {
+      background: ms.color('surface-base-default');
+    }
 
     .authentication-card__update-button {
       margin-left: auto;
-      color: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-premiere);
+      color: ms.color('text-base-body');
+      --background-hover: #{ms.color('surface-base-page-secondary')};
 
       &::part(native) {
-        border-color: var(--parsec-color-light-secondary-light);
-        padding: 0.75rem 1.125rem;
+        border-color: ms.color('border-base-default');
+        padding: ms.spacing('padding-2xl') 1.125rem;
       }
     }
   }
 
   &--disabled {
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
+    opacity: ms.opacity('disabled');
 
     .authentication-card__image {
       filter: grayscale(1);
@@ -294,28 +301,28 @@ function keyringUnavailableMessage(): Translatable {
 
     .authentication-card-text__title,
     .authentication-card-text__description {
-      color: var(--parsec-color-light-secondary-text);
-      opacity: 0.7;
+      color: ms.color('text-base-body');
+      opacity: ms.opacity('7');
     }
   }
 
   &--unavailable {
-    background: var(--parsec-color-light-secondary-premiere);
-    border-color: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
+    border-color: ms.color('border-neutral-default-subtle');
     cursor: not-allowed;
 
     .authentication-card__image {
       filter: grayscale(1);
-      opacity: 0.5;
+      opacity: ms.opacity('5');
     }
 
     .authentication-card-text__title {
-      color: var(--parsec-color-light-secondary-text);
-      opacity: 0.7;
+      color: ms.color('text-base-body');
+      opacity: ms.opacity('7');
     }
 
     .authentication-card-text__description {
-      color: var(--parsec-color-light-danger-700);
+      color: ms.color('text-error-default-hover');
     }
   }
 }

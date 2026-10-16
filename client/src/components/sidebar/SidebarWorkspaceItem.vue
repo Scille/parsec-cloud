@@ -6,7 +6,7 @@
     button
     @click="$emit('workspaceClicked', workspace)"
     :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
-    class="sidebar-item button-medium ion-no-padding"
+    class="sidebar-item ion-no-padding"
     @contextmenu="onContextMenu"
   >
     <div class="sidebar-item-workspace">
@@ -65,31 +65,31 @@ async function onContextMenu(event: Event): Promise<void> {
 
 <style scoped lang="scss">
 .sidebar-item {
+  @include ms.font('label-md-medium');
   --background: none;
-  border-radius: var(--parsec-radius-8);
-  border: solid 1px transparent;
-  font-size: 0.9375rem;
+  border-radius: ms.radius('lg');
+  border: ms.border('thin') solid transparent;
   --min-height: 0;
-  --padding-start: 0.75rem;
-  --padding-end: 0.75rem;
-  --padding-bottom: 0.5rem;
-  --padding-top: 0.5rem;
+  --padding-start: #{ms.spacing('padding-2xl')};
+  --padding-end: #{ms.spacing('padding-2xl')};
+  --padding-bottom: #{ms.spacing('padding-lg')};
+  --padding-top: #{ms.spacing('padding-lg')};
 
   &:active,
   &.item-selected {
-    --background: var(--parsec-color-light-primary-30-opacity15);
+    --background: #{ms.color('surface-neutral-on-color')};
   }
 
   .sidebar-item-workspace {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: #{ms.spacing('gap-lg')};
     width: 100%;
 
     &__icon {
-      margin-right: 0.5rem;
       font-size: 1rem;
-      color: var(--parsec-color-light-primary-30);
+      color: ms.color('icon-on-color-label');
       flex-shrink: 0;
     }
 
@@ -97,25 +97,29 @@ async function onContextMenu(event: Event): Promise<void> {
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
-      color: var(--parsec-color-light-secondary-premiere);
+      color: ms.color('text-on-color-label');
       width: 100%;
     }
 
     &__option {
-      color: var(--parsec-color-light-secondary-light);
+      color: ms.color('icon-on-color-label');
       display: none;
       margin-left: auto;
       font-size: 1rem;
 
       &:hover {
-        color: var(--parsec-color-light-primary-30);
+        color: ms.color('icon-on-color-heading');
       }
     }
   }
 
   &:hover {
-    border-color: var(--parsec-color-light-primary-30-opacity15);
+    border-color: ms.color('border-neutral-on-color');
     cursor: pointer;
+
+    .sidebar-item-workspace__label {
+      color: ms.color('text-on-color-heading');
+    }
 
     .sidebar-item-workspace__option {
       display: flex;

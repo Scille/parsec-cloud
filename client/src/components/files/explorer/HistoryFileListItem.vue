@@ -127,7 +127,8 @@ function toggleSelected(): void {
   }
 
   .label-name {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
 
     &:not(.selection):hover {
       cursor: pointer;

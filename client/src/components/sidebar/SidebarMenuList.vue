@@ -4,11 +4,11 @@
   <ion-list class="list-sidebar">
     <ion-header
       lines="none"
-      class="list-sidebar-header title-h5"
+      class="list-sidebar-header"
       :class="isContentVisible ? 'open' : 'close'"
       @click="emits('update:isContentVisible', !isContentVisible)"
     >
-      <ion-text class="list-sidebar-header-text">
+      <ion-text class="list-sidebar-header__text">
         {{ $msTranslate(title) }}
       </ion-text>
       <ion-icon
@@ -52,35 +52,30 @@ const emits = defineEmits<{
   }
 
   &-header {
+    @include ms.font('heading-h6');
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: ms.spacing('gap-lg');
     transition: border 0.2s ease-in-out;
     width: 100%;
-    padding: 0 1rem 0.75rem 1.25rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-2xl') ms.spacing('padding-3xl');
     overflow: hidden;
-    border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
+    border-bottom: ms.border('thin') solid ms.color('opacity-inverse-500');
     cursor: pointer;
 
     &.open {
       margin-bottom: 1rem;
     }
 
-    &-text {
-      color: var(--parsec-color-light-secondary-inversed-contrast);
+    &__text {
+      color: ms.color('text-on-color-heading');
       display: flex;
       align-items: center;
       user-select: none;
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
-
-      &__open-icon {
-        --fill-color: var(--parsec-color-light-secondary-inversed-contrast);
-        margin-left: 0.5rem;
-        width: 1rem;
-        height: 1rem;
-      }
 
       &.clickable {
         cursor: pointer;
@@ -93,22 +88,18 @@ const emits = defineEmits<{
 
     &__toggle {
       user-select: none;
-      padding: 0.125rem;
+      padding: ms.spacing('padding-xs');
       font-size: 1rem;
-      border-radius: var(--parsec-radius-6);
-      color: var(--parsec-color-light-secondary-inversed-contrast);
+      border-radius: ms.radius('md');
+      color: ms.color('text-on-color-heading');
       flex-shrink: 0;
       cursor: pointer;
-      opacity: 0.4;
-
-      &:hover {
-        background: var(--parsec-color-light-primary-30-opacity15);
-      }
+      opacity: ms.opacity('5');
     }
 
     &:hover {
       .list-sidebar-header__toggle {
-        opacity: 1;
+        opacity: ms.opacity('10');
       }
     }
   }
@@ -116,8 +107,8 @@ const emits = defineEmits<{
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding-inline: 1rem;
+    gap: ms.spacing('gap-lg');
+    padding-inline: ms.spacing('padding-3xl');
   }
 }
 </style>

@@ -176,7 +176,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .organization-page {
-  background: var(--parsec-color-light-secondary-premiere);
+  background: ms.color('surface-base-page');
   display: flex;
   flex-wrap: wrap;
   justify-content: start;

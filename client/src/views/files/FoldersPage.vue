@@ -1721,13 +1721,6 @@ async function startSearch(pattern: string): Promise<void> {
   }
 }
 
-.workspace-role-tag {
-  background: var(--parsec-color-light-secondary-white);
-  padding: 0.25rem;
-  border-radius: var(--parsec-radius-32);
-  border: 1px solid var(--parsec-color-light-secondary-disabled);
-}
-
 .read-only-info {
   display: flex;
   align-items: center;

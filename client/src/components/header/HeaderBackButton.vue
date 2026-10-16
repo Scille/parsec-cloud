@@ -3,9 +3,10 @@
 <template>
   <div class="back-button-container">
     <ion-button
-      fill="clear"
+      :fill="isSmallDisplay ? 'outline' : 'clear'"
       @click="goBack()"
       class="back-button"
+      :slot="short || isSmallDisplay ? 'icon-only' : ''"
     >
       <ion-icon
         :icon="chevronBack"
@@ -33,7 +34,7 @@ import { IonButton, IonIcon, IonLabel } from '@ionic/vue';
 import { chevronBack } from 'ionicons/icons';
 import { useWindowSize } from 'megashark-lib';
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const fileOpener = useFileOpener();
 
 defineProps<{
@@ -47,52 +48,39 @@ async function goBack(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.back-button-container {
+  display: flex;
+  align-items: center;
+}
+
 .back-button {
   margin-inline: 0px;
   margin-top: 0px;
   margin-bottom: 0px;
   min-height: 0;
   flex-shrink: 0;
+  --background: none;
 
   @include ms.responsive-breakpoint('sm') {
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-circle);
-    --border-radius: var(--parsec-radius-circle);
-    box-shadow: var(--parsec-shadow-soft);
+    box-shadow: ms.shadow('light');
   }
 
   &::part(native) {
-    padding: 0.5rem;
+    padding: ms.spacing('padding-lg');
   }
 
   &__icon {
     font-size: 1.375rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      color: var(--parsec-color-light-secondary-hard-grey);
-    }
   }
 
   &__label {
     margin-left: 0.625rem;
   }
-
-  &:hover {
-    @include ms.responsive-breakpoint('sm') {
-      --background-hover: var(--parsec-color-light-secondary-medium);
-      background: var(--parsec-color-light-secondary-medium);
-    }
-  }
-}
-
-.back-button-container {
-  display: flex;
-  align-items: center;
 }
 
 .vertical-spacer {
   display: block;
-  border-right: 1px solid var(--parsec-color-light-secondary-light);
+  border-right: ms.border('thin') solid ms.color('border-base-default');
   height: 1.5rem;
   margin: 0 1rem;
 }

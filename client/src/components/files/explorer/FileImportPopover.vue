@@ -14,7 +14,7 @@
         class="arrow-up"
         :icon="arrowUp"
       />
-      <ion-text class="button-medium item-label">
+      <ion-text class="item-label">
         {{ $msTranslate('FoldersPage.ImportFile.importFilesAction') }}
       </ion-text>
     </ion-item>
@@ -30,7 +30,7 @@
         class="arrow-up"
         :icon="arrowUp"
       />
-      <ion-text class="button-medium item-label">
+      <ion-text class="item-label">
         {{ $msTranslate('FoldersPage.ImportFile.importFolderAction') }}
       </ion-text>
     </ion-item>
@@ -58,12 +58,12 @@ async function onOptionClick(type: ImportType): Promise<void> {
 .arrow-up {
   width: 0.625rem;
   height: 0.625rem;
-  border-radius: var(--parsec-radius-6);
+  border-radius: ms.radius('md');
   bottom: 0;
   left: 1rem;
   padding: 1px;
   position: absolute;
-  color: var(--parsec-color-light-primary-600);
-  background: var(--parsec-color-light-secondary-white);
+  color: ms.color('icon-brand-default-hover');
+  background: ms.color('surface-base-default');
 }
 </style>

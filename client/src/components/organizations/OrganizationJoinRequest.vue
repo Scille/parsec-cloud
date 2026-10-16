@@ -12,12 +12,12 @@
   >
     <ion-card-content class="organization-request-content">
       <div class="organization-request-info">
-        <ion-text class="organization-request-organization title-h4">{{ request.organizationId }}</ion-text>
-        <ion-text class="organization-request-username body">{{ request.enrollment.requestedHumanHandle.label }}</ion-text>
+        <ion-text class="organization-request-organization">{{ request.organizationId }}</ion-text>
+        <ion-text class="organization-request-username">{{ request.enrollment.requestedHumanHandle.label }}</ion-text>
       </div>
       <div class="organization-request-status-container">
         <ion-text
-          class="organization-request-status button-small"
+          class="organization-request-status"
           :class="{
             'status-pending': request.info.tag === PendingAsyncEnrollmentInfoTag.Submitted,
             'status-rejected': request.info.tag === PendingAsyncEnrollmentInfoTag.Rejected,
@@ -110,12 +110,12 @@ const statusText = computed(() => {
 
 <style lang="scss" scoped>
 .organization-request {
-  border-radius: var(--parsec-radius-12);
+  border-radius: ms.radius('2xl');
   box-shadow: none;
   margin: 0;
-  padding: 0;
-  background: var(--parsec-color-light-secondary-white);
-  border: 1px dashed var(--parsec-color-light-secondary-medium);
+  padding: ms.spacing('padding-none');
+  background: ms.color('surface-neutral-default-subtle');
+  border: ms.border('thin') dashed ms.color('border-neutral-default-subtle');
   display: flex;
   overflow: hidden;
   min-height: 4.5rem;
@@ -124,7 +124,7 @@ const statusText = computed(() => {
     align-items: center;
     display: flex;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
     flex-shrink: 0;
     width: 100%;
   }
@@ -132,19 +132,21 @@ const statusText = computed(() => {
   &-info {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
     width: 100%;
     overflow: hidden;
 
     .organization-request-organization {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h5');
+      color: ms.color('text-base-body');
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
     }
 
     .organization-request-username {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
@@ -155,59 +157,60 @@ const statusText = computed(() => {
   &-status-container {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     flex-shrink: 0;
 
     .organization-request-status {
+      @include ms.font('label-sm-medium');
       align-items: center;
-      border-radius: var(--parsec-radius-8);
+      border-radius: ms.radius('lg');
       display: flex;
       justify-content: center;
-      padding: 0.125rem 0.5rem;
+      padding: ms.spacing('padding-xs') ms.spacing('padding-lg');
       flex-shrink: 0;
 
       &.status-cancelled {
-        background-color: var(--parsec-color-light-secondary-grey);
-        color: var(--parsec-color-light-secondary-white);
+        background-color: ms.color('surface-neutral-default-subtle');
+        color: ms.color('text-on-color-heading');
       }
 
       &.status-rejected {
-        background-color: var(--parsec-color-light-danger-500);
-        color: var(--parsec-color-light-secondary-white);
+        background-color: ms.color('surface-error-default-subtle');
+        color: ms.color('text-error-on-color');
       }
 
       &.status-pending {
-        background-color: var(--parsec-color-light-warning-100);
-        color: var(--parsec-color-light-warning-700);
+        background-color: ms.color('surface-warning-default-subtle');
+        color: ms.color('text-warning-default');
       }
     }
 
     .organization-request-icon {
       margin-left: auto;
-      padding: 0.25rem;
-      border-radius: var(--parsec-radius-8);
+      padding: ms.spacing('padding-sm');
+      border-radius: ms.radius('lg');
       font-size: 1.25rem;
       flex-shrink: 0;
-      color: var(--parsec-color-light-secondary-soft-text);
+      color: ms.color('icon-neutral-default');
       cursor: pointer;
 
       &:hover {
-        background: var(--parsec-color-light-secondary-premiere);
-        color: var(--parsec-color-light-secondary-text);
+        background: ms.color('surface-base-page-secondary');
+        color: ms.color('icon-neutral-default-hover');
       }
     }
   }
 
   &-button {
-    background: var(--parsec-color-light-secondary-text);
-    border-radius: var(--parsec-radius-8);
-    --color: var(--parsec-color-light-secondary-white);
+    background: ms.color('surface-neutral-default');
+    border-radius: ms.radius('lg');
+    --color: #{ms.color('text-on-color-heading')};
     box-shadow: none;
     transition: box-shadow 0.2s ease-in-out;
 
     &::part(native) {
-      padding: 0.625rem 1rem;
-      --background-hover: var(--parsec-color-light-secondary-text);
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+      --background-hover: #{ms.color('surface-neutral-default')};
     }
 
     .button-icon {
@@ -216,37 +219,35 @@ const statusText = computed(() => {
     }
 
     &:hover {
-      color: var(--parsec-color-light-secondary-white);
-      background: var(--parsec-color-light-secondary-contrast);
+      color: ms.color('text-on-color-heading');
+      background: ms.color('surface-neutral-default-hover');
       box-shadow: var(--parsec-shadow-soft);
     }
   }
 
   &.pending {
-    border-color: var(--parsec-color-light-secondary-light);
+    border-color: ms.color('border-base-default');
 
     .organization-request-icon {
-      color: var(--parsec-color-light-secondary-grey);
-
       &:hover {
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('icon-neutral-default-hover');
       }
     }
   }
 
   &.rejected {
-    border: 1px solid var(--parsec-color-light-danger-500);
-    background: var(--parsec-color-light-secondary-premiere);
+    border: ms.border('thin') solid ms.color('border-error-default');
+    background: ms.color('surface-base-page-secondary');
   }
 
   &.accepted {
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-white);
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    background: ms.color('surface-base-default');
     transition: all 0.15s ease-in-out;
 
     &:hover {
       box-shadow: var(--parsec-shadow-soft);
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-default-secondary');
     }
   }
 }
