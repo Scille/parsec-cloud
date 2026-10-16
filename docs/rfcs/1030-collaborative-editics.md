@@ -230,10 +230,12 @@ Each OnlyOffice session has multiple locks:
 
 - Save lock: Single mutex held by whichever client is currently in the middle of
   saving changes (it's taken when the client sends `saveChanges` event).
-- Auth lock: Single mutex taken during auth handling: when the second non-view
-  participant connects, the server takes this lock on the first participant's behalf
-  and sends the newcomer a `waitAuth` event, making them wait for the established
-  editor to finish its local save/switch to co-editing mode.
+- Auth lock: Single mutex taken during auth handling: when a non-view
+  participant connects as exactly the second non-view participant of the session
+  (restored participants are never considered), the server takes this lock on the
+  first participant's behalf and sends the newcomer a `waitAuth` event, making
+  them wait for the established editor to finish its local save/switch to
+  co-editing mode.
   The established editor is then expected to send an `unLockDocument` event with
   `unlock: true` once it's ready to let others in.
 - Region lock: Multiple mutexes used by participants to lock on a document
@@ -257,8 +259,9 @@ individual events below requires seeing where they fit:
    │                                this when the client actually join a session
    ▼
  ┌─────────────── waitAuth (s→c) ────────────────┐
- │  If the document auth-lock is held by another │
- │  editor (single-editor → co-editing switch):  │
+ │  If a fresh (non-restored) non-viewer joins   │
+ │  as the 2nd non-viewer of the session         │
+ │  (single-editor → co-editing switch):         │
  │  server sends waitAuth, then connectState     │
  │  (waitAuth:true) to everyone, and waits.      │
  │  The old editor must send unLockDocument      │
@@ -286,6 +289,50 @@ individual events below requires seeing where they fit:
 The `auth` (c→s) is the gate: nothing else is allowed until it succeeds. The
 server's reply ordering (`waitAuth`? → `authChanges` → `auth` (s→c) →
 `documentOpen`) is enforced by `DocsCoServer.auth()`.
+
+### 2.3 - Transport-level disconnection & session restoration
+
+OnlyOffice relies on the websocket close code to distinguish a clean editor close
+(code 1001) from a lost connection (code 1006). The editics transport (SSE + HTTP
+POST) carries no such information: the server only ever sees "the SSE connection
+is gone", and the distinction is made by the *client* on its next `auth` event
+(see below). The reference behavior is captured in the `disconnection` records
+(`6xx_*.md` in `server/tests/editics/records/`, also available in
+`records_wip/disconnection/`).
+
+**On SSE disconnect**, the server:
+
+- hides the participant from the participants lists and broadcasts a `connectState`
+  (without it, `waitAuth: false`, like for any broadcast not announcing a parked
+  newcomer) to the remaining ones,
+- releases the save lock it held (no `unSaveLock`: the only participant it is
+  relevant to is the one leaving) and its region locks (silently, no `releaseLock`
+  broadcast),
+- releases the auth lock it held, letting the participants parked behind it
+  complete their handshake (they receive their `auth` + changes backlog),
+- goes back to single-editor mode when exactly one established editor remains
+  (it re-takes the auth lock, so a rejoining participant is parked behind it).
+
+The participant is **not** destroyed: it stays in the session (hidden) so its
+connection can be restored. Note a `close` client event, unlike a disconnect,
+removes the participant entirely.
+
+**On the next `auth` event**, the client tells the server what this connection is:
+
+- `reconnect: null` → a fresh join (a rejoin with a new editor): a whole new
+  participant is created (new `indexUser`), with the regular handshake
+  (`waitAuth`? → `authChanges` → `auth`),
+- `reconnect: { participantId, indexUser, participantTimeConnect, timeIdle }` → a
+  session restoration (the transport-level connection of a participant that
+  never logically left): the participant keeps its `indexUser`, the server pushes
+  the lock table to everyone as a `getLock` event, broadcasts the new participant
+  list and replies `auth` — with **no** changes backlog, since the participant
+  already has the changes,
+- `reconnect` info while the document has been modified since the disconnect →
+  the restoration is refused with an `error` event (code 4010, see there), and
+  the client answers with a `close`.
+
+TODO: a timeout should eventually destroy the participants that don't come back.
 
 ### 2.2 - Events
 
@@ -363,7 +410,8 @@ New editor (Kate)                       Server                         Existing 
    │   (docid, user, token, supportAuthChangesAck:true)                          │
    │                                      │── connectState {waitAuth:true} ─────►│
    │◄── waitAuth {lockDocument: John} ────│                                      │
-   │   (Kate is parked; John is nudged)   │                                      │
+   │   (Kate is parked; John switches to   │                                      │
+   │    co-editing mode)                  │                                      │
    │                                      │◄── unLockDocument {unlock:true} ─────│
    │                                      │   (John releases the auth lock)      │
    │◄── authChanges [chunk 1] ────────────│                                      │
@@ -437,9 +485,11 @@ Format of the client → server `auth` event:
   field containing `{"participantId": str, "participantTimeConnect": int, "timeIdle": int}`:
   as session and participant concepts can be merged together, see TODO.
 
-If the session is currently in single-editor mode, the server sends a `waitAuth`
-to signify the new client it has to wait for the initial client to apply the full
-change history and switch to co-editing mode.
+If the session is currently in single-editor mode and the newcomer is a
+non-viewer joining *fresh* (restored participants never get a `waitAuth`, see
+§2.1), the server sends a `waitAuth` to signify the new client it has to wait
+for the initial client to apply the full change history and switch to
+co-editing mode.
 
 Format:
 
@@ -580,7 +630,7 @@ Format:
 
 Broadcast to **all** participants whenever the participant set changes (a
 client joins, leaves, or is dropped). It also contains the `waitAuth` flag that
-tells the established editor it should release the auth lock.
+tells whether this broadcast announces a newcomer parked behind the auth lock.
 
 Format:
 
@@ -600,9 +650,13 @@ Format:
   //  - `connectionId`: the websocket connection ID of this participant.
   //  - `isLiveViewer`/`isCloseCoAuthoring`/`encrypted`: feature flags.
   "participants": <array>,
-  // true while the document auth lock is held (see `waitAuth`).
-  // When true it tells the established editor it must send `unLockDocument { unlock: true }`
-  // once its document is loaded, to release the lock and let newcomers proceed.
+  // True only in the broadcast announcing a non-viewer newcomer parked behind
+  // the auth lock (see `waitAuth`); every other broadcast carries `false`
+  // (e.g. a restored participant joining while the lock is held).
+  // Note the client doesn't use this flag as a trigger: the established editor
+  // releases the auth lock (`unLockDocument { unlock: true }`) because this
+  // `connectState` switches it from single-editor to co-editing mode, and only
+  // ever uses the flag for error logging.
   "waitAuth": <boolean>
 }
 ```
@@ -1681,7 +1735,12 @@ Format:
 }
 ```
 
-*Editics protocol changes*: Ignore this event as it is a legacy one.
+*Editics protocol changes*: Kept, but only for one purpose: the reply to a refused
+session restoration (i.e. an `auth` client event carrying `reconnect` info, while the
+document has been modified since the participant lost its connection). The server
+answers with the code 4010 (`"Restore error. Document modified."`), and the client
+reacts by closing the co-authoring session (i.e. sending a `close` client event,
+see §2.3 and the `disconnection` records in `server/tests/editics/records/`).
 
 #### `updateVersion` (server → client)
 

@@ -83,7 +83,11 @@ normally, no gating).
    manual-flow** (on the first deferred overlay, labeled after the first
    client) to reload the whole page with manual-flow armed so the first
    client's whole socket handshake can be stepped through frame by frame from
-   a clean state — useful to test concurrent joins.
+   a clean state — useful to test concurrent joins. Each deferred overlay
+   (docker mode) also carries a **Start …'s editor as viewer** button: the
+   editor then opens with a read-only viewer config (`mode: view` +
+   `permissions.edit: false`, the same connection the page's `?view=` param
+   produces) — e.g. to watch a viewer's late-join.
 3. In manual-flow, drive the action (e.g. the first client takes a lock).
    Frames now pile up as ⏸ held rows; click each row's **`send`** to release it
    in the order you want to test (e.g. release the second client's lock send
@@ -142,7 +146,10 @@ test side.
 The same actions are exposed for scripts on `window.__OO_MON` (top frame):
 `closeEditor(editorId)`, `sendCloseEvent(editorId)`,
 `closeEditorWithCloseEvent(editorId)`, `cutConnection(editorId)`,
-`reviveConnection(editorId)`, `rejoinEditor(editorId)`; and as proxy commands
+`reviveConnection(editorId)`, `rejoinEditor(editorId[, view])` (the `view`
+flag brings a closed participant back as a read-only viewer — what the
+overlay's viewer button does at start time, via `startDeferred(editorId,
+view)`); and as proxy commands
 over `/ctl`: `{cmd:'cut', user|editor, keep:'dead'|'once'}` (`keep:'once'`
 lets the stock auto-reconnect go through) and `{cmd:'revive', user|editor}`.
 `record.js` builds its disconnect scenarios (`node docker/record.js list`,
@@ -172,7 +179,9 @@ Two separate code bases, one per mode:
   - `proxy.js` — same WebSocket MITM as `demo/proxy.js`.
   - `monitor.js` — same panel as `demo/monitor.js`, minus the demo-page
     specifics (scenario-tab observation); its deferral is per-editor and
-    covers both manual clients (Bob / Mallory).
+    covers both manual clients (Bob / Mallory), and each overlay also has a
+    **Start …'s editor as viewer** button (read-only viewer config, the same
+    fields the page's `?view=` param sets).
   - `index.html` — the harness page (Alice / Bob / Mallory editors on one
     document key, side by side so they share the same viewport geometry);
     the opened sample document comes from
@@ -186,7 +195,7 @@ Two separate code bases, one per mode:
   - `record.js` — automated scenario recorder (see `npm run record`): the
     same MITM proxy + harness page, but driven by Playwright instead of by
     hand. Replays a fixed scenario table (auth / cursor moves / chat
-    messages / document edits — serial / concurrent /
+    messages / document edits / view-mode participants — serial / concurrent /
     while-another-client-is-authenticating, across the docx / xlsx / pptx
     sample documents) and writes one ready-to-use test record per scenario
     to `server/tests/editics/records/new/`, in the panel `copy` format.

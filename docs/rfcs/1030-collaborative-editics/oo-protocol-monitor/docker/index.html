@@ -99,8 +99,9 @@
 
       // The `?view=<name>` URL param opens the given editor in view (read-only)
       // mode: its auth then carries `mode: "view"` and `permissions.edit:
-      // false`, and the document server marks the connection as a viewer (used
-      // to record read-only participant scenarios).
+      // false`, and the document server marks the connection as a viewer (the
+      // monitor's "Start …'s editor as viewer" button does the same at start
+      // time, without reloading the page — see monitor.js's setViewerConfig).
       var viewEditor = new URLSearchParams(location.search).get('view') || '';
 
       function openEditor(id, name, uid) {

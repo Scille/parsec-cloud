@@ -32,7 +32,9 @@
  * OnlyOffice version: the doc server announces its build on the wire (the
  * `license` push and the `auth` response carry buildVersion + buildNumber);
  * the panel shows it in its header, and `copy` exports it in a `## Info`
- * block (timestamp of the copy + version) before the `## Events` blocks.
+ * block (timestamp of the copy + version + opened document + a `Scenario:`
+ * skeleton whose `1. TODO` step is for the copier to fill in) before the
+ * `## Events` blocks — same shape the automated recorder bakes into records.
  *
  * The manually-started editors (Bob / Mallory) are deferred behind
  * per-editor "Start …'s editor" overlays. The first one also has a
@@ -40,6 +42,9 @@
  * with `manual_flow=true` in the URL and arms manual-flow at the proxy first —
  * so the first client's whole socket handshake can be stepped through frame
  * by frame from a guaranteed clean state (useful to test concurrent joins).
+ * Each overlay also has a "Start …'s editor as viewer" button: the editor is
+ * then started with a read-only viewer config (the same `mode: "view"` +
+ * `permissions.edit: false` the page's `?view=` param sets — see index.html).
  *
  * The XHR polling fallback is still captured in-page (capture-only; it can't
  * be held this way, but OO uses WebSockets in practice).
@@ -315,9 +320,9 @@
         // socket opens. We do NOT reset the proxy here: on reload the previous
         // page's sockets already closed (clearing those sessions + holds at the
         // proxy), and closing active sessions now would race with the first
-        // client's reconnecting socket and kill it. Only stale event history
-        // lingers, which we just ignore by starting the panel empty (see
-        // INITIAL_MANUAL_FLOW below).
+        // client's reconnecting socket and kill it. The stale event history
+        // is cleared when the first hello arrives (see the `hello` handler
+        // below).
         if (INITIAL_MANUAL_FLOW && !MON._initialFlowApplied) {
           MON._initialFlowApplied = true;
           sendCtl({ cmd: 'intercept', on: true });
@@ -341,12 +346,16 @@
         case 'hello': {
           MON.intercept = !!msg.intercept;
           syncInterceptBtn();
-          // In manual-flow-restart mode, start the panel empty (ignore stale
-          // history from the previous page; only show frames from this run).
+          // The first hello is this page's own load: start with an empty
+          // panel — the replayed history is the *previous* page's session,
+          // and a reload, a doc-type switch or a manual-flow restart must
+          // not resurrect it — and wipe the proxy's copy too, like an
+          // automatic `clear` press.
           var evs = Array.isArray(msg.events) ? msg.events : [];
-          if (INITIAL_MANUAL_FLOW && !MON._helloSeen) {
+          if (!MON._helloSeen) {
             MON.events.length = 0; HOLD_STATE = {};
             evs = [];
+            sendCtl({ cmd: 'clear' });
           }
           MON._helloSeen = true;
           evs.forEach(function (ev) {
@@ -477,12 +486,29 @@
       }
       setInterval(wrap, 50);
     })();
-    MON.startDeferred = function (id) {
+    // Turn a captured DocEditor config into a read-only viewer config — the
+    // same two fields the harness page's `?view=` param sets (see
+    // index.html): `mode: "view"` (the client-side switch) +
+    // `permissions.edit: false`. Mutates the config in place, so the
+    // remembered config (used by re-join) keeps the viewer identity: the
+    // participant comes back as a viewer, like a `?view=` page reload.
+    function setViewerConfig(cfg) {
+      if (!cfg) return;
+      cfg.editorConfig = cfg.editorConfig || {};
+      cfg.editorConfig.mode = 'view';
+      cfg.document = cfg.document || {};
+      cfg.document.permissions = cfg.document.permissions || {};
+      cfg.document.permissions.edit = false;
+    }
+    // `view`: start the editor as a read-only viewer (see setViewerConfig) —
+    // e.g. to watch a viewer's late-join from the overlay button.
+    MON.startDeferred = function (id, view) {
       var e = MON.deferred[id];
       if (!e || !MON.deferOrig) return;
       delete MON.deferred[id];
       MON.deferStarted[id] = true;
       removeDeferredOverlay(id);
+      if (view) setViewerConfig(e.cfg);
       MON.editorInstances[id] = new MON.deferOrig(e.id, e.cfg);
     };
     // Re-start the first editor in manual-flow: reload the whole page with
@@ -561,13 +587,17 @@
     // reconnection retry then completes the session restore (its re-`auth`
     // carries the previous sessionId). After a close: also re-create the
     // editor from its remembered config (a fresh handshake, sessionId null).
-    MON.rejoinEditor = function (id) {
+    // `view`: the re-created editor comes back as a read-only viewer — the
+    // client-side mode is fixed at editor boot, so switching to view mode
+    // requires a fresh construction (exactly what the close path does).
+    MON.rejoinEditor = function (id, view) {
       MON.sendCtl({ cmd: 'revive', editor: id });   // clear any cut mark first
-      if (MON.deferred[id]) { MON.startDeferred(id); return true; }
+      if (MON.deferred[id]) { MON.startDeferred(id, view); return true; }
       if (MON.editorInstances[id]) return false;   // editor still open: its retry does the rest
       var cfg = MON.editorConfigs[id];
       var D = window.DocsAPI;
       if (!cfg || !D || !D.DocEditor) return false;
+      if (view) setViewerConfig(cfg);
       MON.deferStarted[id] = true;                  // never re-defer a re-join
       // Build through the (still installed) wrapped constructor so the new
       // instance gets tracked like the first one.
@@ -621,6 +651,15 @@
           b.style.cssText = 'background:#3b5b8c;color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font:inherit';
           b.addEventListener('click', function () { MON.startDeferred(id); });
           overlay.appendChild(b);
+          // Second button: start this editor as a read-only viewer (the same
+          // viewer config the page's `?view=` param produces — see
+          // setViewerConfig), e.g. to watch a viewer's late-join.
+          var vb = document.createElement('button');
+          vb.textContent = 'Start ' + deferredName(id) + "'s editor as viewer";
+          vb.title = "Start this editor as a read-only viewer: mode 'view' + permissions.edit false (the same connection the page's ?view= param produces)";
+          vb.style.cssText = 'background:#2a7a4a;color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font:inherit';
+          vb.addEventListener('click', function () { MON.startDeferred(id, true); });
+          overlay.appendChild(vb);
           // Only on the first deferred overlay: the manual-flow restart button
           // + hint (any overlay can trigger it, one is enough).
           if (id === DEFERRED_EDITOR_IDS[0]) {
@@ -857,6 +896,10 @@
 
     document.getElementById('oo-mon-clear').addEventListener('click', function () {
       MON.events.length = 0; HOLD_STATE = {}; rebuild(); updateStat();
+      // Also wipe the proxy's copy of the history: it replays it to the panel
+      // on every /ctl (re)connect, which would bring the cleared logs back on
+      // the next page load (reload, doc-type switch, manual-flow restart…).
+      (window.__OO_MON || MON).sendCtl({ cmd: 'clear' });
     });
     var flb = document.getElementById('oo-mon-flow');
     flb.addEventListener('click', function () {
@@ -960,11 +1003,27 @@
     var el = document.getElementById('oo-mon-ver');
     if (el) el.textContent = 'OO ' + ooVersionString();
   }
-  // Copy export: a `## Info` header (timestamp of the copy + the OnlyOffice
-  // version in use) comes before the `## Events` blocks.
+  // The opened document ("<file> (<type>)"), from any editor config captured
+  // by the DocEditor trap — the harness page renders the file name into
+  // document.title and the type into documentType.
+  function docInfoLine() {
+    for (var id in MON.editorConfigs) {
+      var cfg = MON.editorConfigs[id];
+      if (cfg && cfg.document && cfg.document.title)
+        return cfg.document.title + ' (' + (cfg.documentType || '?') + ')';
+    }
+    return '';
+  }
+  // Copy export: a `## Info` header (timestamp of the copy, the OnlyOffice
+  // version in use, the opened document and a `Scenario:` skeleton whose
+  // `1. TODO` step is for the copier to fill in) comes before the `## Events`
+  // blocks.
   function exportText() {
     var info = '## Info\n\n- Timestamp: ' + new Date().toISOString() +
       '\n- OnlyOffice version: ' + ooVersionString();
+    var doc = docInfoLine();
+    if (doc) info += '\n- Document: ' + doc;
+    info += '\n- Scenario:\n  1. TODO';
     var blocks = MON.events.filter(visible).map(formatBlock).join('\n\n');
     return info + '\n\n## Events\n\n' + blocks;
   }

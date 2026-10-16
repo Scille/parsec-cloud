@@ -562,13 +562,13 @@ const EDITORS = {
   Mallory: 'document-editor-3',
 };
 
-async function openRecordPage(browser, monitorSrc, proxyPort, pageServerPort, docType, docKey, viewEditor, deferAlice) {
+async function openRecordPage(browser, monitorSrc, proxyPort, pageServerPort, docType, docKey, deferAlice) {
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, bypassCSP: true });
   await ctx.addInitScript('window.__OO_PROXY_PORT = ' + proxyPort + ';\n' + monitorSrc);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('  [pageerror]', String(e.message).slice(0, 120)));
   const url = 'http://127.0.0.1:' + pageServerPort + '/?doc=' + docType + '&key=' + docKey +
-    (viewEditor ? '&view=' + viewEditor : '') + (deferAlice ? '&defer1=1' : '');
+    (deferAlice ? '&defer1=1' : '');
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   return { ctx, page };
 }
@@ -604,21 +604,26 @@ async function waitEditorRendered(page, who, timeout = EDITOR_LOAD_TIMEOUT) {
   }
 }
 
-async function startEditor(page, who) {
+async function startEditor(page, who, view = false) {
   // The harness page boots its editors asynchronously (it waits for api.js, then
   // gives the monitor's trap a beat to wrap DocsAPI.DocEditor), and the monitor
   // defers them behind their overlay — so wait until this editor has actually
   // been constructed-and-trapped before starting it.
+  // `view`: start the editor as a read-only viewer (the monitor flips the
+  // captured config to mode 'view' + permissions.edit false — the same
+  // connection the page's `?view=` param produced, but applied at start time,
+  // so a participant can also be started, closed and re-joined as a viewer
+  // within one record — see connectViewer / rejoinViewer).
   await page.waitForFunction(
     (id) => !!(window.__OO_MON && window.__OO_MON.deferred[id]),
     EDITORS[who],
     { timeout: 60000 }
   );
-  await page.evaluate((id) => {
+  await page.evaluate(({ id, view }) => {
     const MON = window.__OO_MON;
-    if (MON && MON.deferred[id]) MON.startDeferred(id);
+    if (MON && MON.deferred[id]) MON.startDeferred(id, view);
     else throw new Error('editor ' + id + ' is not deferred (already started?)');
-  }, EDITORS[who]);
+  }, { id: EDITORS[who], view });
 }
 
 // The editor's main view element (the scrollable canvas area), in MAIN-PAGE
@@ -927,6 +932,19 @@ async function rejoinEditor(page, rec, who) {
   await rec.waitQuiescence(800);
 }
 
+// Re-join after a graceful close, as a read-only viewer: the remembered
+// config gets the viewer fields (mode 'view' + permissions.edit false — the
+// client-side mode is fixed at editor boot, so switching to view mode
+// requires a fresh construction, exactly what rejoinEditor's close path
+// does). The completion point is the auth response, like connectViewer.
+async function rejoinViewer(page, rec, who) {
+  const from = rec.events.length; // ditto: only the new stint's events matter
+  await page.evaluate((id) => window.__OO_MON.rejoinEditor(id, true), EDITORS[who]);
+  await recvEvent(rec, who, 'auth', null, from, EVENT_TIMEOUT, who + ' viewer re-join auth');
+  await waitEditorRendered(page, who);
+  await rec.waitQuiescence(800);
+}
+
 // ---------------------------------------------------------------------------
 // Scenario table
 //
@@ -938,13 +956,10 @@ async function rejoinEditor(page, rec, who) {
 // ---------------------------------------------------------------------------
 
 const SCENARIOS = {};
-function scenario(name, docType, info, fn, viewEditor, deferAlice) {
-  // `viewEditor`: the participant opened in view (read-only) mode by the
-  // harness page (see index.html's `?view=` param) — its connection is then
-  // marked as a viewer by the document server.
+function scenario(name, docType, info, fn, deferAlice) {
   // `deferAlice`: also defer Alice behind an overlay (see monitor.js's
   // `?defer1=1`), so another participant can connect first.
-  SCENARIOS[name] = { name, docType, info, fn, viewEditor, deferAlice };
+  SCENARIOS[name] = { name, docType, info, fn, deferAlice };
 }
 
 // `## Info` lines for a scenario: the document plus the description (prose or
@@ -1260,14 +1275,17 @@ for (const docType of ['word', 'cell', 'slide']) {
 
 // --- view mode (read-only participant) ---------------------------------------
 //
-// Bob is opened in view mode by the harness page (`?view=Bob`, see the
-// scenario `viewEditor` field): with this document server build he is a *live*
-// viewer (license `liveViewerSupport: true` + client `coEditingMode: "fast"`),
-// i.e. he receives the saveChanges/authChanges/cursor/message relays but not
-// the getLock/releaseLock ones, never gets a `waitAuth` (the auth lock counts
-// non-view participants only), never holds it, and only ever sends
-// auth/getMessages/message (chat)/clientLog — the client-side view mode gates
-// everything else, and the server disconnects a viewer sending
+// A view-mode participant is started with a viewer config applied by the
+// monitor at start time (`startEditor` with `view`: mode 'view' +
+// permissions.edit false — the same fields the harness page's `?view=` param
+// sets, see index.html; applying them at start time is what lets scenario 45
+// re-join a closed participant as a viewer). With this document server build
+// a viewer is a *live* one (license `liveViewerSupport: true` + client
+// `coEditingMode: "fast"`): he receives the saveChanges/authChanges/cursor/
+// message relays but not the getLock/releaseLock ones, never gets a `waitAuth`
+// (the auth lock counts non-view participants only), never holds it, and only
+// ever sends auth/getMessages/message (chat)/clientLog — the client-side view
+// mode gates everything else, and the server disconnects a viewer sending
 // getLock/isSaveLock/saveChanges.
 //
 // Note: a viewer does not count toward the client-side edit-user count either,
@@ -1280,7 +1298,7 @@ for (const docType of ['word', 'cell', 'slide']) {
 // response so that a missing getMessages would not break the scenario.
 async function connectViewer(who) {
   const { rec, page } = CURRENT;
-  await startEditor(page, who);
+  await startEditor(page, who, true);
   await recvEvent(rec, who, 'auth', null, 0, EVENT_TIMEOUT);
   await waitEditorRendered(page, who);
   await rec.waitQuiescence(800);
@@ -1299,7 +1317,7 @@ scenario('40_view_auth_join', 'word',
   await sendChatMessage(CURRENT.page, 'Bob', 'Hello from Bob the viewer');
   await sentEvent(CURRENT.rec, 'Bob', 'message', (ev) => ev.meta && ev.meta.message, 0, 10000);
   await CURRENT.rec.waitQuiescence();
-}, 'Bob');
+});
 
 for (const docType of ['word', 'cell', 'slide']) {
   const t = DOC_EXT[docType];
@@ -1323,7 +1341,7 @@ for (const docType of ['word', 'cell', 'slide']) {
     await sendChatMessage(CURRENT.page, 'Bob', 'Hello from Bob the viewer');
     await sentEvent(CURRENT.rec, 'Bob', 'message', (ev) => ev.meta && ev.meta.message, 0, 10000);
     await CURRENT.rec.waitQuiescence();
-  }, 'Bob');
+  });
 
   scenario('42_view_viewer_first_' + t, docType,
     'Bob (view) connects FIRST — the session (and the document conversion) is' +
@@ -1334,7 +1352,7 @@ for (const docType of ['word', 'cell', 'slide']) {
     await connectAlice();
     await editDocument('Alice', 0);
     await CURRENT.rec.waitQuiescence();
-  }, 'Bob', true);
+  }, true);
 
   scenario('43_view_waitauth_with_viewer_' + t, docType,
     'Alice (edit) connects, Bob joins in view mode, then Mallory (edit)' +
@@ -1349,7 +1367,7 @@ for (const docType of ['word', 'cell', 'slide']) {
     await moveCursor('Alice', 0);
     await moveCursor('Mallory', 0);
     await CURRENT.rec.waitQuiescence();
-  }, 'Bob');
+  });
 
   scenario('44_view_join_mid_edit_' + t, docType,
     'Alice (edit) connects and edits the document, then Bob (view) joins' +
@@ -1361,8 +1379,27 @@ for (const docType of ['word', 'cell', 'slide']) {
     await connectViewer('Bob');
     await editDocument('Alice', 1);
     await CURRENT.rec.waitQuiescence();
-  }, 'Bob');
+  });
 }
+
+// Alice switches from editor to read-only viewer mid-record: she edits,
+// closes her editor, then re-opens the document as a viewer — the mode change
+// requires a fresh editor (see rejoinViewer), which is also the manual flow:
+// ✕ close, then a viewer re-join.
+scenario('45_view_rejoin_as_viewer', 'word', [
+  'Alice (edit) opens the document alone and edits it.',
+  'Alice closes her editor (graceful close: nothing is sent, the websocket dies with it), then re-opens the document as a read-only viewer: her fresh handshake carries `mode: "view"` + `permissions.edit: false` — she is authenticated directly (a viewer never gets a waitAuth) and receives the document state, including her own earlier changes, as authChanges.',
+  'Mallory (edit) then joins and edits: her save changes are relayed to Alice (live viewer).',
+], async () => {
+  const { rec, page } = CURRENT;
+  await connectAlice();
+  await editDocument('Alice', 0);
+  await closeEditor(page, rec, 'Alice');
+  await rejoinViewer(page, rec, 'Alice');
+  await connectClient('Mallory');
+  await editDocument('Mallory', 0);
+  await rec.waitQuiescence();
+});
 
 // --- element locks: join with locks, joiner edit, release --------------------
 //
@@ -2334,7 +2371,7 @@ async function runProbe(browser, monitorSrc, proxyPort, pageServerPort, docType)
       rec.reset();
       const docKey = 'rec' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       const { ctx, page } = await openRecordPage(
-        browser, monitorSrc, proxy.port, pages.port, sc.docType, docKey, sc.viewEditor, sc.deferAlice
+        browser, monitorSrc, proxy.port, pages.port, sc.docType, docKey, sc.deferAlice
       );
       CURRENT = { rec, page, docType: sc.docType, docKey };
       try {

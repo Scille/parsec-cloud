@@ -310,8 +310,8 @@
         // opens. We do NOT reset the proxy here: on reload the previous page's
         // sockets already closed (clearing those sessions + holds at the proxy),
         // and closing active sessions now would race with John's reconnecting
-        // socket and kill it. Only stale event history lingers, which we just
-        // ignore by starting the panel empty (see INITIAL_MANUAL_FLOW below).
+        // socket and kill it. The stale event history is cleared when the
+        // first hello arrives (see the `hello` handler below).
         if (INITIAL_MANUAL_FLOW && !MON._initialFlowApplied) {
           MON._initialFlowApplied = true;
           sendCtl({ cmd: 'intercept', on: true });
@@ -335,12 +335,15 @@
         case 'hello': {
           MON.intercept = !!msg.intercept;
           syncInterceptBtn();
-          // In manual-flow-restart mode, start the panel empty (ignore stale
-          // history from the previous page; only show frames from this run).
+          // The first hello is this page's own load: start with an empty
+          // panel — the replayed history is the *previous* page's session,
+          // and a reload or a manual-flow restart must not resurrect it —
+          // and wipe the proxy's copy too, like an automatic `clear` press.
           var evs = Array.isArray(msg.events) ? msg.events : [];
-          if (INITIAL_MANUAL_FLOW && !MON._helloSeen) {
+          if (!MON._helloSeen) {
             MON.events.length = 0; HOLD_STATE = {};
             evs = [];
+            sendCtl({ cmd: 'clear' });
           }
           MON._helloSeen = true;
           evs.forEach(function (ev) {
@@ -643,6 +646,10 @@
 
     document.getElementById('oo-mon-clear').addEventListener('click', function () {
       MON.events.length = 0; HOLD_STATE = {}; rebuild(); updateStat();
+      // Also wipe the proxy's copy of the history: it replays it to the panel
+      // on every /ctl (re)connect, which would bring the cleared logs back on
+      // the next page load (reload, doc-type switch, manual-flow restart…).
+      (window.__OO_MON || MON).sendCtl({ cmd: 'clear' });
     });
     var flb = document.getElementById('oo-mon-flow');
     flb.addEventListener('click', function () {

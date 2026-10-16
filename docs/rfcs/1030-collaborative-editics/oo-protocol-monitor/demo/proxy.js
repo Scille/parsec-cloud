@@ -15,9 +15,10 @@
  * A second WS endpoint `/ctl` is the control channel the in-page panel uses to
  *   - receive decoded events + held-frame notifications (push from Node)
  *   - send commands: {cmd:'release', id}, {cmd:'intercept', on:bool} (aka
- *     "manual flow": when on, every non-noise frame is held), {cmd:'getState'},
- *     {cmd:'cut', user|editor, keep:'dead'|'once'} and {cmd:'revive', user|editor}
- *     (disconnection support, see makeSession).
+ *     "manual flow": when on, every non-noise frame is held), {cmd:'clear'}
+ *     (drop the event history replayed to reconnecting panels),
+ *     {cmd:'getState'}, {cmd:'cut', user|editor, keep:'dead'|'once'} and
+ *     {cmd:'revive', user|editor} (disconnection support, see makeSession).
  *
  * Every socket death is emitted as a `[Transport WebSocket] ws-close` event
  * carrying who ended the connection (client / server / monitor) and the
@@ -445,6 +446,15 @@ function createProxy(opts) {
           // back to auto-flow so paused frames are flushed, not lost).
           for (const sess of state.sessions.values()) sess.releaseAll();
           broadcast({ t: 'releasedAll' });
+          break;
+        }
+        case 'clear': {
+          // The panel's `clear` button: its own rows are dropped in-page, but
+          // the history must also die here — `hello` replays it to every
+          // (re)connecting panel, which would resurrect the cleared logs on
+          // the next page load (reload, doc-type switch, …).
+          state.events.length = 0;
+          log('event history cleared');
           break;
         }
         case 'cut': {
