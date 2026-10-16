@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use criterion::{Criterion, criterion_group, criterion_main};
 use libparsec::{
     ClientConfig, FsPath, OpenOptions, OrganizationID, PARSEC_BASE_CONFIG_DIR,

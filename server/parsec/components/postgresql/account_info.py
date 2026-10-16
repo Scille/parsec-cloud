@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from parsec._parsec import AccountAuthMethodID, EmailAddress, HumanHandle
 from parsec.components.account import AccountInfo, AccountInfoBadOutcome
 from parsec.components.postgresql import AsyncpgConnection

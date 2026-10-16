@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 /// This macro builds a main function that takes the `Args` struct defined in the same module.
 ///
 /// Once called, it will initialize a client using the provided arguments and then call the sub-task and cleanup the client resource before returning.

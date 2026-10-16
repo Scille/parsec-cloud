@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // This worker serves decrypted file content:
 // - `GET parsec-stream` streams a file to <video>, <audio> and <img> elements (Range requests are supported),

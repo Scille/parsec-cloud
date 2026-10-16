@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 # cspell: words: astext, refdoc, anonlabels, refexplicit, refdomain, reftarget
 from __future__ import annotations
 

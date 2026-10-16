@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
 use parsec_cli::utils::get_minimal_short_id_size;

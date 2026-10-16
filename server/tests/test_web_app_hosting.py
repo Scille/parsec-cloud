@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from functools import partial

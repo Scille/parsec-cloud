@@ -4,8 +4,8 @@
         "developer": "Parsec Cloud",
         "developerLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
-        "license": "BUSL-1.1",
-        "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE",
+        "license": "AGPLv3",
+        "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE-AGPL3",
         "history": "https://docs.parsec.cloud/fr/{version}/history.html",
         "pricingLink": "https://parsec.cloud/tarifs/"
     },

@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![cfg_attr(target_family = "windows", allow(unused_imports))]
 
 use std::sync::{Arc, Mutex};

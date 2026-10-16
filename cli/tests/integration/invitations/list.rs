@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use libparsec::{
     AccessToken, AuthenticatedCmds, ProxyConfig, TmpPath,
     authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,

@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use libparsec::{FsPath, OpenOptions, TmpPath, tmp_path};
 use std::str::FromStr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

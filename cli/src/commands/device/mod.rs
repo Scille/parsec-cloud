@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 pub mod change_authentication;
 pub mod export_recovery_device;
 pub mod forget_local;

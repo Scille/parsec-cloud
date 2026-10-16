@@ -14,7 +14,7 @@ end_of_line = lf
 indent_style = tab
 end_of_line = crlf
 
-[LICENSE]
+[LICENSE-*]
 insert_final_newline = false
 
 [Makefile]

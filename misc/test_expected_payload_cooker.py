@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 r"""
 This script helps to fix old/legacy payloads in libparsec serialization tests.
 

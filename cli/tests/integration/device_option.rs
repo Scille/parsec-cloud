@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use std::sync::Arc;
 
 use libparsec::{HumanHandle, LocalDevice, ParsecAddr, TmpPath, tmp_path};
