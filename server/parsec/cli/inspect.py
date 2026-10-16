@@ -110,7 +110,7 @@ async def _human_accesses(
         debug=debug,
         populate_with_template=with_testbed,
     ) as backend:
-        dump = await backend.user.test_dump_current_users(organization_id=organization_id)
+        dump = await backend.user.dump_current_users(organization_id=organization_id)
         users = list(dump.values())
         if user_filter:
             # Now is a good time to filter out
