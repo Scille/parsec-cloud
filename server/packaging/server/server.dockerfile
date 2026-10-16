@@ -35,6 +35,9 @@ FROM python:3.14-slim
 LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
 LABEL org.opencontainers.image.description="Run the Parsec server."
 
+# Provide curl to be used as healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/libs/apt/lists/*
+
 RUN groupadd --gid=1234 parsec && useradd --home-dir=/home/parsec --create-home --uid=1234 --gid=1234 parsec
 
 # Create parsec user and group

@@ -124,6 +124,13 @@ services:
       pre-parsec:
         condition: service_completed_successfully
     image: ghcr.io/scille/parsec-cloud/parsec-server:3.10.1-a.0+dev
+    healthcheck:
+      test: >-
+        curl -f
+        --cacert $${AWS_CA_BUNDLE}
+        https://localhost:$${PARSEC_PORT}
+      start_period: 3s
+      start_interval: 10s
     restart: on-failure
     container_name: parsec-server
     env_file:
