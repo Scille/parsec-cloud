@@ -38,6 +38,7 @@ msTest.describe(() => {
 
   msTest('Open viewer with header option', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+    await documents.waitForTimeout(300);
 
     const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
     await expect(entry.locator('.label-name')).toHaveText('image.png');
