@@ -70,8 +70,17 @@ def now() -> int:
 
 @dataclass(slots=True)
 class ChatMessage:
+    """One chat message kept in the session history.
+
+    The author's identity is stored alongside (participant id + device id): the
+    message can be replayed to a client that never saw its author (the author
+    left the session before it joined), so the identity cannot be resolved
+    through the current participants list.
+    """
+
     time_ms: int
-    author_index_user: int
+    author_participant_id: EditicsParticipantID
+    author_device_id: DeviceID
     encrypted_message: tuple[int, bytes]
 
 
@@ -82,10 +91,15 @@ class StoredChange:
     `encrypted_change` is an opaque encrypted blob, the server never inspects it.
     The change history is 0-indexed (like the OnlyOffice `changesIndex` save
     point) and can be truncated from a given index on UNDO.
+
+    The author's identity is stored alongside (participant id + device id), like
+    for a `ChatMessage`: the change can be replayed to a client that never saw
+    its author.
     """
 
     time_ms: int
-    author_index_user: EditicsIndexUser
+    author_participant_id: EditicsParticipantID
+    author_device_id: DeviceID
     # Format: (<Key index>, <base64(ciphertext)>)
     encrypted_change: tuple[int, bytes]
 
@@ -226,11 +240,11 @@ def _release_participant_locks(
     event (RFC §2.2)."""
     released: list[ReleaseLockRecord] = []
     for key, lock in list(session.region_locks.items()):
-        if lock.user == participant.index:
+        if lock.holder[0] == participant.participant_id:
             released.append(
                 ReleaseLockRecord(
                     block=lock.block,
-                    user=participant.index,
+                    holder=(participant.participant_id, participant.device_id),
                     time=now(),
                     changes=None,
                 )
@@ -250,7 +264,7 @@ def _push_changes_backlog(session: EditicsSession, participant: Participant) -> 
             changes=[
                 AuthChangeRecord(
                     index=index + 1,
-                    authorIndexUser=change.author_index_user,
+                    author=(change.author_participant_id, change.author_device_id),
                     time=change.time_ms,
                     encryptedChange=change.encrypted_change,
                 )
@@ -272,7 +286,7 @@ def _handshake_auth(session: EditicsSession, participant: Participant) -> Editic
         messages=[
             MessageRecord(
                 time=m.time_ms,
-                authorIndexUser=m.author_index_user,
+                author=(m.author_participant_id, m.author_device_id),
                 encryptedMessage=m.encrypted_message,
             )
             for m in session.chat_messages
@@ -364,15 +378,19 @@ class EditicsComponent:
         if participant.sse_channel_sender is not None:
             participant.sse_channel_sender.close()
 
-        participant.sse_channel_sender, channel_receiver = anyio.create_memory_object_stream(
+        sse_channel_sender, channel_receiver = anyio.create_memory_object_stream(
             max_buffer_size=PER_PARTICIPANT_MAX_BUFFER_EVENTS
         )
+        participant.sse_channel_sender = sse_channel_sender
 
         try:
             yield channel_receiver
         finally:
-            participant.sse_channel_sender.close()
-            participant.sse_channel_sender = None
+            sse_channel_sender.close()
+            # New listen request replaces the previous one, so make sure we are
+            # not overwritting the channel of a newer listen!
+            if participant.sse_channel_sender is sse_channel_sender:
+                participant.sse_channel_sender = None
 
     async def participant_send(
         self,
@@ -523,7 +541,7 @@ class EditicsComponent:
                     messages=[
                         MessageRecord(
                             time=m.time_ms,
-                            authorIndexUser=m.author_index_user,
+                            author=(m.author_participant_id, m.author_device_id),
                             encryptedMessage=m.encrypted_message,
                         )
                         for m in session.chat_messages
@@ -533,13 +551,14 @@ class EditicsComponent:
             case EditicsClientEventMessage():
                 message_record = MessageRecord(
                     time=now(),
-                    authorIndexUser=participant.index,
+                    author=(participant.participant_id, participant.device_id),
                     encryptedMessage=event.encryptedMessage,
                 )
                 session.chat_messages.append(
                     ChatMessage(
                         time_ms=message_record.time,
-                        author_index_user=message_record.authorIndexUser,
+                        author_participant_id=participant.participant_id,
+                        author_device_id=participant.device_id,
                         encrypted_message=event.encryptedMessage,
                     ),
                 )
@@ -611,7 +630,7 @@ class EditicsComponent:
                     if key not in session.region_locks:
                         session.region_locks[key] = LockRecord(
                             time=now(),
-                            user=participant.index,
+                            holder=(participant.participant_id, participant.device_id),
                             block=block,
                         )
                 reply = EditicsServerEventGetLock(locks=session.region_locks)
@@ -746,7 +765,8 @@ class EditicsComponent:
                 session.changes.extend(
                     StoredChange(
                         time_ms=changes_time,
-                        author_index_user=participant.index,
+                        author_participant_id=participant.participant_id,
+                        author_device_id=participant.device_id,
                         encrypted_change=encrypted_change,
                     )
                     for encrypted_change in event.encryptedChanges
@@ -770,7 +790,7 @@ class EditicsComponent:
                     changes=[
                         SaveChangeRecord(
                             time=changes_time,
-                            authorIndexUser=participant.index,
+                            author=(participant.participant_id, participant.device_id),
                             encryptedChange=encrypted_change,
                         )
                         for encrypted_change in event.encryptedChanges
@@ -822,7 +842,7 @@ class EditicsComponent:
                     messages=[
                         CursorRecord(
                             time=now(),
-                            authorIndexUser=participant.index,
+                            author=(participant.participant_id, participant.device_id),
                             encryptedCursor=event.encryptedCursor,
                         )
                     ],

@@ -223,14 +223,18 @@ EditicsClientEventAdapter = TypeAdapter(EditicsClientEvent)
 
 class LockRecord(BaseModel):
     """One record in a `getLock` event's `locks` object / an `auth` event's
-    `locks` array (todo §4.4)."""
+    `locks` array (todo §4.4).
+
+    The holder's identity is carried in the record (the OnlyOffice protocol
+    instead uses a `user` composite id, resolved through the participants list):
+    a lock can be broadcast after its holder left the session (e.g. released
+    on disconnect), so its identity cannot be resolved through the current
+    participants list."""
 
     model_config = {"arbitrary_types_allowed": True}
 
     time: int
-    # OnlyOffice name `user` kept (bad name documented at the definition site):
-    # the indexUser of the lock holder.
-    user: EditicsIndexUser
+    holder: tuple[EditicsParticipantID, DeviceID]
     # Opaque block descriptor (shape depends on editor type; re-broadcast as-is).
     block: Any
 
@@ -241,7 +245,7 @@ class MessageRecord(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
     time: int  # server timestamp (ms)
-    authorIndexUser: EditicsIndexUser
+    author: tuple[EditicsParticipantID, DeviceID]
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedMessage: tuple[int, Base64BytesField]
 
@@ -298,10 +302,11 @@ class EditicsServerEventAuthChanges(BaseModel):
 class AuthChangeRecord(BaseModel):
     """One record in an `authChanges` event's `changes` array (todo §4.4)."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     # 1-based and monotonic.
     index: int
-    # OnlyOffice names `user`/`useridoriginal`: the author's indexUser.
-    authorIndexUser: EditicsIndexUser
+    author: tuple[EditicsParticipantID, DeviceID]
     # Server timestamp (ms) of the change.
     time: int
     # Format: (<Key index>, <base64(ciphertext)>)
@@ -331,7 +336,7 @@ class CursorRecord(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
     time: int
-    authorIndexUser: EditicsIndexUser
+    author: tuple[EditicsParticipantID, DeviceID]
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursor: tuple[int, Base64BytesField]
 
@@ -339,8 +344,8 @@ class CursorRecord(BaseModel):
 class EditicsServerEventCursor(BaseModel):
     """OnlyOffice `cursor` (s->c). Name kept. Per RFC §2.2 editics changes:
     `cursor` -> `encryptedCursor` (bytes); `user`/`useridoriginal` ->
-    `authorIndexUser`. OnlyOffice wraps the payload in `messages: [...]`; kept
-    for symmetry. Broadcast to other participants (§6.4)."""
+    the author identity carried in the record. OnlyOffice wraps the payload in
+    `messages: [...]`; kept for symmetry. Broadcast to other participants (§6.4)."""
 
     type: Literal["cursor"] = "cursor"
     messages: list[CursorRecord]
@@ -350,12 +355,11 @@ class EditicsServerEventGetLock(BaseModel):
     """OnlyOffice `getLock` (s->c). Name kept. Kept as-is per RFC §2.2. The full
     lock table as it stands after the server attempted to acquire the requested
     blocks for the requester. Broadcast to *everyone* (including the sender).
-    `locks` is an object keyed by the block key; each record is
-    { time, user, block } (OnlyOffice names kept: `user` here is the indexUser
-    of the holder, despite the bad name -- documented at the definition site)."""
+    `locks` is an object keyed by the block key; each record carries the
+    holder's identity (see `LockRecord`)."""
 
     type: Literal["getLock"] = "getLock"
-    locks: dict[str, LockRecord]  # block_key -> { time, user, block }
+    locks: dict[str, LockRecord]
 
 
 class ReleaseLockRecord(BaseModel):
@@ -364,9 +368,7 @@ class ReleaseLockRecord(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
     block: Any  # opaque block descriptor (re-broadcast as-is)
-    # OnlyOffice name `user` kept (bad name documented): the indexUser of the
-    # holder who released the lock.
-    user: EditicsIndexUser
+    holder: tuple[EditicsParticipantID, DeviceID]
     time: int
     # Always null here (OnlyOffice shape; present for consistency with
     # `saveChanges`'s `locks` field).
@@ -376,8 +378,8 @@ class ReleaseLockRecord(BaseModel):
 class EditicsServerEventReleaseLock(BaseModel):
     """OnlyOffice `releaseLock` (s->c). Name kept. Broadcast to others when a
     user releases region locks outside of a `saveChanges` (i.e. from
-    `unLockDocument{releaseLocks:true}` or disconnect cleanup). Per RFC §2.2 the
-    `user` field is the holder's indexUser (bad name documented)."""
+    `unLockDocument{releaseLocks:true}` or disconnect cleanup). Each record
+    carries the holder's identity (see `ReleaseLockRecord`)."""
 
     type: Literal["releaseLock"] = "releaseLock"
     locks: list[ReleaseLockRecord]
@@ -400,7 +402,7 @@ class SaveChangeRecord(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
     time: int
-    authorIndexUser: EditicsIndexUser
+    author: tuple[EditicsParticipantID, DeviceID]
     # Opaque encrypted blob (base64 over JSON, §2.4); server never inspects.
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedChange: tuple[int, Base64BytesField]

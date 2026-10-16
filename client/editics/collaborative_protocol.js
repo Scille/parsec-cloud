@@ -106,10 +106,10 @@ function bytesToBase64(bytes) {
  * @property {string} workspaceId - WorkspaceID (VlobID) hex.
  * @property {string} vlobId - VlobID hex of the document.
  * @property {string} deviceIdHex - DeviceID hex of the client's device.
- * @property {string} [userId] - per-person userId to seed the participant table
- *   before the server-assigned `indexUser` arrives (editor calls
- *   `getParticipants` during init). Defaults to the deviceId hex.
- * @property {string} [userName] - display name for the provisional self seed.
+ * @property {string} [userId] - unused (the translator resolves the display
+ *   names from the device ids through the `getHumanLabelFromDeviceId`
+ *   capability). Kept for config compat, to be removed.
+ * @property {string} [userName] - unused, see `userId`.
  * @property {number} vlobVersion - loaded vlob version (RFC §1.2).
  * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
  * @property {LibparsecCapabilities} capabilities
@@ -130,41 +130,10 @@ class EditicsTranslator {
     this.config = cfg;
     /** @type {LibparsecCapabilities} */
     this.capabilities = cfg.capabilities;
-
-    /**
-     * Set when receiving the server `auth` event, and directly consumed
-     * (through the `getParticipants` callback) when the OnlyOffice client
-     * handles this server `auth` event.
-     * This weird behavior is due to a modification done by Cryptpad in their
-     * OnlyOffice fork (that we are based on).
-     * @type {undefined | { list: OOParticipantEntry[], index: number }}
-     */
-    this._initialParticipants = undefined;
-    /**
-     * Set when receiving the server `auth` event, and directly consumed
-     * (through the `getInitialChanges` callback) when the OnlyOffice client
-     * handles this server `auth` event.
-     * This weird behavior is due to a modification done by Cryptpad in their
-     * OnlyOffice fork (that we are based on).
-     * @type {undefined | { list: OOParticipantEntry[], index: number }}
-     */
-    // TODO: type
-    this._initialChanges = undefined;
-
-    // // Provisional `indexUser`; overridden by the server-assigned index on the
-    // // `auth` reply. 0 is the local seed used by `getParticipants` before the
-    // // server replies.
-    // this.indexUser = 0;
-
-    // `indexUser -> { deviceId, userName, userId }` participant table. Seeded
-    // with a provisional self entry so the editor's initial `getParticipants`
-    // call has someone to show before the server-assigned `indexUser` arrives.
-    this._participants = new Map();
-    this._participants.set(0, {
-      deviceId: cfg.deviceIdHex,
-      userName: cfg.userName || cfg.userId || cfg.deviceIdHex,
-      userId: cfg.userId || cfg.deviceIdHex,
-    });
+    // The translator is stateless: participant/author identities are carried
+    // by the server events themselves, and the display names are resolved from
+    // the device ids through the `getHumanLabelFromDeviceId` capability on
+    // demand (the server is NOT trusted for names, RFC §3.3).
   }
 
   // --- OnlyOffice connectMockServer queries (pure sync) ---------------------
@@ -196,8 +165,8 @@ class EditicsTranslator {
         /** @type {EditicsClientEventAuth} */
         return {
           type: 'auth',
-          editorType: this.config.editorType,
           vlobVersion: this.config.vlobVersion,
+          mode: oo.mode === 'edit' ? 'edit' : 'view',
           // TODO: handle reconnection
           reconnect: null,
         };
@@ -430,16 +399,15 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventAuth|null>}
    */
   async _cookServerAuth(editics) {
-    await this._setParticipants(editics.participants);
-
-    return {
+    /** @type {OOServerEventAuth} */
+    const event = {
       type: 'auth',
       result: 1,
       // Editics protocol merge together the session and participant concepts
       sessionId: editics.participantId,
       // TODO: Check the relashionship between sessionTimeConnect and openedAt.
       sessionTimeConnect: editics.participantTimeConnect,
-      participants: this._onlyofficeParticipants(),
+      participants: await this._onlyofficeParticipants(editics.participants),
       locks: this._onlyofficeLockTable(editics.locks),
       indexUser: editics.indexUser,
       hasForgotten: false,
@@ -461,6 +429,13 @@ class EditicsTranslator {
       },
       openedAt: editics.openedAt,
     };
+    // The OnlyOffice `auth` event carries the chat history, which the editics
+    // protocol keeps in the server event (the editor only renders the field
+    // when non-empty, like for the `message` event).
+    if (editics.messages && editics.messages.length !== 0) {
+      event.messages = await this._cookMessageEntries(editics.messages);
+    }
+    return event;
   }
 
   /**
@@ -507,12 +482,10 @@ class EditicsTranslator {
    * @returns {Promise<OOServerEventConnectState>}
    */
   async _cookConnectState(editics) {
-    await this._setParticipants(editics.participants);
-
     return {
       type: 'connectState',
       participantsTimestamp: editics.participantsTimestamp,
-      participants: this._onlyofficeParticipants(),
+      participants: await this._onlyofficeParticipants(editics.participants),
       waitAuth: editics.waitAuth,
     };
   }
@@ -526,18 +499,49 @@ class EditicsTranslator {
   async _cookAuthChanges(editics) {
     const changes = await Promise.all(
       (editics.changes || []).map(async (c) => {
-        const p = this._participants.get(c.authorIndexUser);
+        // The author's identity is carried by the record (`(participant id,
+        // device id)` tuple): the backlog can contain changes from participants
+        // that left the session before we joined (so they cannot be resolved
+        // through the participants list).
+        const [authorParticipantId, authorDeviceId] = c.author;
         const [keyIndex, b64CipherText] = c.encryptedChange;
         return {
           docid: this.docId,
           change: JSON.stringify(bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)))),
           time: c.time,
-          user: p ? p.participantId : String(c.authorIndexUser),
-          useridoriginal: p ? p.deviceId : String(c.authorIndexUser),
+          user: authorParticipantId,
+          useridoriginal: authorDeviceId,
         };
       }),
     );
     return { type: 'authChanges', changes };
+  }
+
+  /**
+   * @param {EditicsServerEventMessage['messages']} messages
+   * @returns {Promise<Array<{docid:string, message:string, time:number, user:string, useridoriginal:string, username:string}>>}
+   */
+  async _cookMessageEntries(messages) {
+    return await Promise.all(
+      messages.map(async (m) => {
+        // The author's identity is carried by the record (`(participant id,
+        // device id)` tuple): a message can be replayed to a client that never
+        // saw its author (the author left the session before it joined).
+        const [authorParticipantId, authorDeviceId] = m.author;
+        const [keyIndex, b64CipherText] = m.encryptedMessage;
+        const username = (await this.config.capabilities.getHumanLabelFromDeviceId(authorDeviceId)) || '<unknown>';
+        return {
+          docid: this.docId,
+          message: bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText))),
+          time: m.time,
+          // The `user`/`useridoriginal` fields correspond to the author's
+          // participant id / device id (like the `cursor` server event).
+          user: authorParticipantId,
+          useridoriginal: authorDeviceId,
+          username,
+        };
+      }),
+    );
   }
 
   /**
@@ -548,24 +552,7 @@ class EditicsTranslator {
     /** @type {OOServerEventMessage} */
     const event = { type: 'message' };
     if (editics.messages && editics.messages.length !== 0) {
-      // TODO: when the author of the comment has left we won't be able to use `indexUser`
-      //       so we should only rely on the deviceID (and hence can we remove the other fields ?)
-      event.messages = await Promise.all(
-        editics.messages.map(async (m) => {
-          const p = this._participants.get(m.authorIndexUser);
-          const [keyIndex, b64CipherText] = m.encryptedMessage;
-          return {
-            docid: this.docId,
-            message: bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText))),
-            time: m.time,
-            // The `user`/`useridoriginal` fields correspond to the author's
-            // participant id / device id (like the `cursor` server event).
-            user: p ? p.participantId : String(m.authorIndexUser),
-            useridoriginal: p ? p.deviceId : String(m.authorIndexUser),
-            username: p ? p.userName : String(m.authorIndexUser),
-          };
-        }),
-      );
+      event.messages = await this._cookMessageEntries(editics.messages);
     }
     return event;
   }
@@ -581,13 +568,14 @@ class EditicsTranslator {
   async _cookCursor(editics) {
     const messages = await Promise.all(
       (editics.messages || []).map(async (m) => {
-        const p = this._participants.get(m.authorIndexUser);
+        // The author's identity is carried by the record, like for a `message`.
+        const [authorParticipantId, authorDeviceId] = m.author;
         const [keyIndex, b64CipherText] = m.encryptedCursor;
         return {
           cursor: bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText))),
           time: m.time,
-          user: p ? p.participantId : String(m.authorIndexUser),
-          useridoriginal: p ? p.deviceId : String(m.authorIndexUser),
+          user: authorParticipantId,
+          useridoriginal: authorDeviceId,
         };
       }),
     );
@@ -604,10 +592,13 @@ class EditicsTranslator {
     const ooLocks = {};
     for (const key in editics.locks || {}) {
       const lock = editics.locks[key];
-      const p = this._participants.get(lock.user);
+      // The holder's identity is carried by the record (`(participant id,
+      // device id)` tuple): the holder may have left the session, e.g. its
+      // lock was released on disconnect.
+      const [holderParticipantId] = lock.holder;
       ooLocks[key] = {
         time: lock.time,
-        user: p ? p.participantId : String(lock.user),
+        user: holderParticipantId,
         block: lock.block,
       };
     }
@@ -622,10 +613,11 @@ class EditicsTranslator {
    */
   _cookReleaseLock(editics) {
     const locks = (editics.locks || []).map((lock) => {
-      const p = this._participants.get(lock.user);
+      // The holder's identity is carried by the record, like in `getLock`.
+      const [holderParticipantId] = lock.holder;
       return {
         block: lock.block,
-        user: p ? p.participantId : String(lock.user),
+        user: holderParticipantId,
         time: lock.time,
         changes: lock.changes,
       };
@@ -636,15 +628,16 @@ class EditicsTranslator {
   /**
    * OnlyOffice carries the lock table as an object keyed by block id in the
    * document editor, and as a plain array in the other editors.
-   * @param {LockRecord[]} locks
+   * @param {EditicsServerEventAuth['locks']} locks
    * @returns {Object<string, {time:number, user:string, block:*}>|Array<{time:number, user:string, block:*}>}
    */
   _onlyofficeLockTable(locks) {
     const records = (locks || []).map((lock) => {
-      const p = this._participants.get(lock.user);
+      // The holder's identity is carried by the record, like in `getLock`.
+      const [holderParticipantId] = lock.holder;
       return {
         time: lock.time,
-        user: p ? p.participantId : String(lock.user),
+        user: holderParticipantId,
         block: lock.block,
       };
     });
@@ -666,7 +659,10 @@ class EditicsTranslator {
   async _cookServerSaveChanges(editics) {
     const changes = await Promise.all(
       (editics.changes || []).map(async (c) => {
-        const p = this._participants.get(c.authorIndexUser);
+        // The author's identity is carried by the record (`(participant id,
+        // device id)` tuple), like for the `authChanges` entries: the author
+        // may have left the session before we joined.
+        const [authorParticipantId, authorDeviceId] = c.author;
         const [keyIndex, b64CipherText] = c.encryptedChange;
         return {
           docid: this.docId,
@@ -676,16 +672,17 @@ class EditicsTranslator {
           time: c.time,
           // The `user`/`useridoriginal` fields correspond to the author's
           // participant id / device id (like the `cursor` server event).
-          user: p ? p.participantId : String(c.authorIndexUser),
-          useridoriginal: p ? p.deviceId : String(c.authorIndexUser),
+          user: authorParticipantId,
+          useridoriginal: authorDeviceId,
         };
       }),
     );
     const locks = (editics.locks || []).map((lock) => {
-      const p = this._participants.get(lock.user);
+      // The holder's identity is carried by the record, like in `getLock`.
+      const [holderParticipantId] = lock.holder;
       return {
         block: lock.block,
-        user: p ? p.participantId : String(lock.user),
+        user: holderParticipantId,
         time: lock.time,
         changes: lock.changes,
       };
@@ -706,83 +703,40 @@ class EditicsTranslator {
     return oo;
   }
 
-  // --- Participant table helpers -------------------------------------------
+  // --- Participant entries helpers -------------------------------------------
 
   /**
-   * Replace the participant table with the server's (authoritative) entries,
-   * resolving the display names through the injected capabilities (the
+   * Convert the server's participant entries into the OnlyOffice participants
+   * list, resolving the display names through the injected capabilities (the
    * server is NOT trusted for names, RFC §3.3).
    * @param {EditicsParticipantEntry[]} entries
-   * @returns {Promise<void>}
+   * @returns {Promise<OOParticipantEntry[]>}
    */
-  async _setParticipants(entries) {
-    const participants = new Map();
-    for (const entry of entries) {
-      const humanLabel = await this.config.capabilities.getHumanLabelFromDeviceId(entry.deviceId);
-      participants.set(entry.indexUser, {
-        participantId: entry.id,
-        deviceId: entry.deviceId,
-        userName: humanLabel || '<unknown>',
-        // The per-person user id the `<userId><indexUser>` composite ids of
-        // the OnlyOffice protocol are built from.
-        userId: entry.deviceId,
-        view: !!entry.view,
-      });
-    }
-    this._participants = participants;
+  async _onlyofficeParticipants(entries) {
+    return await Promise.all(entries.map((entry) => this._onlyofficeParticipantEntry(entry)));
   }
 
   /**
-   * @returns {OOParticipantEntry[]}
+   * @param {EditicsParticipantEntry} entry
+   * @returns {Promise<OOParticipantEntry>}
    */
-  _onlyofficeParticipants() {
-    const list = /** @type {OOParticipantEntry[]} */ ([]);
-    this._participants.forEach((p, indexUser) => {
-      list.push(this._onlyofficeParticipantEntry(p, indexUser));
-    });
-    return list;
-  }
-
-  /**
-   * @param {{deviceId: string, userName: string, userId: string, view: boolean}} p
-   * @param {number} indexUser
-   * @returns {OOParticipantEntry}
-   */
-  _onlyofficeParticipantEntry(p, indexUser) {
+  async _onlyofficeParticipantEntry(entry) {
+    const humanLabel = (await this.config.capabilities.getHumanLabelFromDeviceId(entry.deviceId)) || '<unknown>';
     return {
-      id: p.participantId,
-      idOriginal: p.deviceId,
-      username: p.userName,
-      indexUser: indexUser,
+      id: entry.id,
+      idOriginal: entry.deviceId,
+      username: humanLabel,
+      indexUser: entry.indexUser,
       // Never provided by the editics protocol, and unused by the editor
       connectionId: '',
-      view: !!p.view,
-      isLiveViewer: false,
+      view: !!entry.view,
+      // The editics protocol has no separate flag: a viewer of a live session
+      // is a "live viewer" (the OnlyOffice editor uses this to know it must
+      // relay the changes to the participant).
+      isLiveViewer: !!entry.view,
       isCloseCoAuthoring: false,
       encrypted: false,
     };
-  }
-
-  /**
-   * Display name of a participant index (falls back to the index itself when
-   * the participant is not in the table yet).
-   * @param {number} indexUser
-   * @returns {string}
-   */
-  _userName(indexUser) {
-    const p = this._participants.get(indexUser);
-    return p ? p.userName : String(indexUser);
-  }
-
-  /**
-   * The per-person userId for `user`/`useridoriginal` fields (matches the
-   * editor's `_userId = userId + indexUser`).
-   * @param {number} indexUser
-   * @returns {string}
-   */
-  _userId(indexUser) {
-    const p = this._participants.get(indexUser);
-    return p ? p.userId || p.deviceId : String(indexUser);
   }
 
   // --- Encryption (sync, capability-injected) -------------------------------
@@ -835,9 +789,9 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsClientEventAuth
  * @property {'auth'} type
- * @property {number} editorType
  * @property {number} vlobVersion
  * @property {EditicsReconnect|null} reconnect
+ * @property {'view'|'edit'} mode
  *
  * @typedef {Object} EditicsClientEventAuthChangesAck
  * @property {'authChangesAck'} type
@@ -891,11 +845,6 @@ export { EditicsTranslator };
  *
  * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|EditicsClientEventGetMessages|EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent
  *
- * @typedef {Object} LockRecord
- * @property {number} time
- * @property {EditicsIndexUser} user
- * @property {*} block
- *
  * @typedef {Object} EditicsServerEventAuth
  * @property {'auth'} type
  * @property {EditicsParticipantEntry[]} participants
@@ -903,7 +852,8 @@ export { EditicsTranslator };
  * @property {EditicsIndexUser} indexUser
  * @property {number} participantTimeConnect
  * @property {number} openedAt
- * @property {LockRecord[]} locks
+ * @property {Array<{time:number, holder:[EditicsParticipantID, string], block:*}>} [locks]
+ * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedMessage:[number, string]}>} [messages]
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type
@@ -911,15 +861,9 @@ export { EditicsTranslator };
  * @property {EditicsParticipantEntry[]} participants
  * @property {boolean} waitAuth
  *
- * @typedef {Object} AuthChangeRecord
- * @property {number} index
- * @property {EditicsIndexUser} authorIndexUser
- * @property {number} time
- * @property {[number, string]} encryptedChange
- *
  * @typedef {Object} EditicsServerEventAuthChanges
  * @property {'authChanges'} type
- * @property {AuthChangeRecord[]} [changes]
+ * @property {Array<{index:number, author:[EditicsParticipantID, string], time:number, encryptedChange:[number, string]}>} [changes]
  *
  * @typedef {Object} EditicsServerEventWaitAuth
  * @property {'waitAuth'} type
@@ -927,19 +871,19 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventMessage
  * @property {'message'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedMessage:[number, string]}>} messages
+ * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedMessage:[number, string]}>} messages
  *
  * @typedef {Object} EditicsServerEventCursor
  * @property {'cursor'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedCursor:[number, string]}>} messages
+ * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedCursor:[number, string]}>} messages
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type
- * @property {Record<string, LockRecord>} locks
+ * @property {Record<string, {time:number, holder:[EditicsParticipantID, string], block:*}>} locks
  *
  * @typedef {Object} EditicsServerEventReleaseLock
  * @property {'releaseLock'} type
- * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} locks
+ * @property {Array<{block:*, holder:[EditicsParticipantID, string], time:number, changes:null}>} locks
  *
  * @typedef {Object} EditicsServerEventSaveLock
  * @property {'saveLock'} type
@@ -947,11 +891,11 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Array<{time:number, authorIndexUser:EditicsIndexUser, encryptedChange:[number, string]}>} changes
+ * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedChange:[number, string]}>} changes
  * @property {number} changesIndex
  * @property {number} syncChangesIndex
  * @property {boolean} endSaveChanges
- * @property {Array<{block:*, user:EditicsIndexUser, time:number, changes:null}>} [locks]
+ * @property {Array<{block:*, holder:[EditicsParticipantID, string], time:number, changes:null}>} [locks]
  * @property {Object<string,*>|null} [excel_info]
  * @property {[number, string]|null} [encryptedCursor]
  *
