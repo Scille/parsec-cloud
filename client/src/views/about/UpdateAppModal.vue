@@ -2,7 +2,7 @@
 
 <template>
   <ms-image
-    :image="UpdateRocket"
+    :image="isDarkTheme ? UpdateRocketDark : UpdateRocket"
     class="update-rocket"
   />
   <ms-modal
@@ -10,13 +10,13 @@
     class="update-app"
   >
     <div class="update-content">
-      <ion-text class="update__title title-h2">
+      <ion-text class="update__title">
         {{ $msTranslate('HomePage.topbar.updateAvailable') }}
       </ion-text>
       <div class="update-main">
         <div class="update-version">
           <ion-text
-            class="title-h3 update-version__item"
+            class="update-version__item"
             @click="openChangelog"
             :title="$msTranslate('HomePage.topbar.changelog')"
           >
@@ -24,11 +24,11 @@
           </ion-text>
         </div>
         <div class="update-message">
-          <span class="update-message__badge button-medium">{{ $msTranslate('HomePage.topbar.recommended') }}</span>
-          <ion-text class="update-message__curent-version body-lg">
-            {{ $msTranslate('HomePage.topbar.currentVersion') }}<span class="subtitles-normal">{{ currentVersion ?? APP_VERSION }}</span>
+          <span class="update-message__badge">{{ $msTranslate('HomePage.topbar.recommended') }}</span>
+          <ion-text class="update-message__curent-version">
+            {{ $msTranslate('HomePage.topbar.currentVersion') }}<span>{{ currentVersion ?? APP_VERSION }}</span>
           </ion-text>
-          <ion-text class="body-lg">
+          <ion-text class="update-message__question">
             {{ $msTranslate('HomePage.topbar.updateConfirmQuestion') }}
           </ion-text>
         </div>
@@ -36,13 +36,13 @@
       <div class="update-footer">
         <ion-button
           @click="dismiss(MsModalResult.Confirm)"
-          class="update-footer__button button-default button-large"
+          class="update-footer__button button-large"
         >
           {{ $msTranslate('HomePage.topbar.updateYes') }}
         </ion-button>
         <ion-button
           @click="dismiss(MsModalResult.Cancel)"
-          class="update-footer__button button-default button-large"
+          class="update-footer__button button-large"
         >
           {{ $msTranslate('HomePage.topbar.updateNo') }}
         </ion-button>
@@ -54,12 +54,14 @@
 <script setup lang="ts">
 import { APP_VERSION, Env } from '@/services/environment';
 import { IonButton, IonText, modalController } from '@ionic/vue';
-import { MsImage, MsModal, MsModalResult, UpdateRocket } from 'megashark-lib';
+import { MsImage, MsModal, MsModalResult, UpdateRocket, UpdateRocketDark, useTheme } from 'megashark-lib';
 
 const props = defineProps<{
   currentVersion?: string;
   targetVersion: string;
 }>();
+
+const { isDarkTheme } = useTheme();
 
 async function openChangelog(): Promise<void> {
   await Env.Links.openChangelogLink(props.targetVersion);
@@ -72,70 +74,81 @@ async function dismiss(role: MsModalResult): Promise<void> {
 
 <style lang="scss" scoped>
 .update-rocket {
-  background: var(--parsec-color-light-primary-30);
+  background: ms.color('surface-brand-default-subtle');
   margin: -0.25rem;
 }
 
 .update-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   .update__title {
+    @include ms.font('heading-h3');
     text-align: center;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-image: var(--parsec-color-light-gradient-background);
+    background-image: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
   }
 
   .update-main {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
 
     .update-version {
       display: flex;
       justify-content: center;
       align-items: center;
-      display: flex;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       width: fit-content;
       margin: auto;
 
       &__item {
-        background: var(--parsec-color-light-secondary-background);
-        border-radius: var(--parsec-radius-8);
-        color: var(--parsec-color-light-secondary-text);
-        padding: 0.5rem 1.25rem;
+        @include ms.font('heading-h4');
+        background: ms.color('surface-base-page');
+        border-radius: ms.radius('lg');
+        color: ms.color('text-base-body');
+        padding: ms.spacing('padding-lg') 1.25rem;
         transition: outline 100ms ease-in-out;
-        border: 1px solid var(--parsec-color-light-secondary-medium);
+        border: ms.border('thin') solid ms.color('border-base-default');
 
         &:hover {
           cursor: pointer;
-          outline: 1px solid var(--parsec-color-light-primary-500);
+          outline: ms.border('thin') solid ms.color('border-brand-default-hover');
           outline-offset: 2px;
-          color: var(--parsec-color-light-primary-500);
+          color: ms.color('text-brand-default-hover');
         }
       }
     }
 
     .update-message {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-body');
       display: flex;
       flex-direction: column;
 
+      &__question {
+        @include ms.font('body-lg-regular');
+      }
+
       &__badge {
-        background: var(--parsec-color-light-primary-50);
+        @include ms.font('label-md-medium');
+        background: ms.color('surface-brand-default-subtle-hover');
         width: fit-content;
-        color: var(--parsec-color-light-primary-700);
-        padding: 0.25rem 0.75rem;
-        border-radius: var(--parsec-radius-8);
+        color: ms.color('text-brand-default');
+        padding: ms.spacing('padding-sm') ms.spacing('padding-2xl');
+        border-radius: ms.radius('lg');
         margin-bottom: 0.5rem;
       }
 
+      &__curent-version {
+        @include ms.font('body-lg-regular');
+      }
+
       &__curent-version span {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('body-lg-medium');
+        color: ms.color('text-base-body');
       }
     }
   }
@@ -144,26 +157,27 @@ async function dismiss(role: MsModalResult): Promise<void> {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__button {
+      @include ms.font('label-lg-medium');
       margin: auto;
       width: 100%;
 
       &:nth-child(1) {
-        --background: var(--parsec-color-light-gradient-background);
-        --padding-end: 2rem;
-        --padding-start: 2rem;
-        --padding-bottom: 0.75rem;
-        --padding-top: 0.75rem;
+        --background: linear-gradient(#{ms.color('surface-gradient-from')}, #{ms.color('surface-gradient-to')});
+        --padding-end: #{ms.spacing('padding-5xl')};
+        --padding-start: #{ms.spacing('padding-5xl')};
+        --padding-bottom: #{ms.spacing('padding-2xl')};
+        --padding-top: #{ms.spacing('padding-2xl')};
       }
 
       &:nth-child(2) {
         --background: transparent;
-        --background-hover: var(--parsec-color-light-secondary-premiere);
-        --color: var(--parsec-color-light-secondary-text);
-        --padding-end: 0.5rem;
-        --padding-start: 0.5rem;
+        --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+        --color: #{ms.color('text-base-body')};
+        --padding-end: #{ms.spacing('padding-lg')};
+        --padding-start: #{ms.spacing('padding-lg')};
       }
     }
   }
