@@ -40,6 +40,7 @@ from parsec.editics_protocol import (
     EditicsServerEventAuthChanges,
     EditicsServerEventConnectState,
     EditicsServerEventCursor,
+    EditicsServerEventDisconnectReason,
     EditicsServerEventError,
     EditicsServerEventGetLock,
     EditicsServerEventMessage,
@@ -260,6 +261,81 @@ def _block_key(block: Any) -> str:
     editor (a plain string), and by the block `guid` for the other editors.
     """
     return block if isinstance(block, str) else block["guid"]
+
+
+# OnlyOffice lock element types (`c_oAscLockTypeElem`): only the range locks
+# are subject to the lock recalculation, and the structural column/row locks
+# (`c_oAscLockTypeElemSubType`: InsertColumns=2 / InsertRows=4) are the
+# geometry-change markers themselves, so they are left as-is.
+_LOCK_RECALC_RANGE_TYPE = 1
+_LOCK_RECALC_SKIP_SUB_TYPES = (2, 4)  # InsertColumns, InsertRows
+
+
+def _recalculate_locks(
+    session: EditicsSession,
+    saver_participant_id: EditicsParticipantID,
+    excel_additional_info: dict[str, Any],
+) -> None:
+    """Recalculate the stored locked ranges of the other participants after a
+    spreadsheet structural change, per the OnlyOffice server's
+    `_recalcLockArray` (see the `saveChanges` handling).
+
+    The `excelAdditionalInfo` carries the inserted/deleted columns and rows
+    as per-sheet recalc records (`_arrElements`): an `Add` record at position
+    `P` with count `N` shifts the coordinates at or after `P` by `+N`, a
+    `Remove` record by `-N` (a coordinate inside the removed range stops at
+    the position just before it). The records with `m_bIsSaveIndex` set are
+    skipped: they are the save-index markers a client re-emits to acknowledge
+    the structural changes it just applied, not new geometry changes (record
+    53: Alice's follow-up save re-sends Bob's insertion as a marker).
+
+    Only the range locks are shifted (the structural column/row locks are the
+    change markers themselves, and the other editors' blocks are not
+    coordinates), and only those held by the other participants (the saver's
+    own locks are about to be released, or kept by its client which knows the
+    new geometry).
+    """
+    for part_name, axes in (("indexCols", ("c1", "c2")), ("indexRows", ("r1", "r2"))):
+        part = excel_additional_info.get(part_name)
+        if not isinstance(part, dict):
+            continue
+        for sheet_id, sheet_info in part.items():
+            if not isinstance(sheet_info, dict):
+                continue
+            elements = [
+                element
+                for element in sheet_info.get("_arrElements", [])
+                if not element.get("m_bIsSaveIndex")
+            ]
+            if not elements:
+                continue
+            for lock in session.region_locks.values():
+                block = lock.block
+                if (
+                    not isinstance(block, dict)
+                    or block.get("type") != _LOCK_RECALC_RANGE_TYPE
+                    or block.get("subType") in _LOCK_RECALC_SKIP_SUB_TYPES
+                    or str(block.get("sheetId")) != str(sheet_id)
+                    or lock.holder[0] == saver_participant_id
+                ):
+                    continue
+                # Note the shift is applied element by element (in list order):
+                # each record describes a single geometry change, applied on
+                # top of the previous ones.
+                range_or_object_id = block["rangeOrObjectId"]
+                for element in elements:
+                    position = element["_position"]
+                    count = element["_count"]
+                    if element["_recalcType"] == 1:  # Add (insert)
+                        for axis in axes:
+                            if range_or_object_id[axis] >= position:
+                                range_or_object_id[axis] += count
+                    else:  # Remove (delete)
+                        for axis in axes:
+                            if range_or_object_id[axis] >= position:
+                                range_or_object_id[axis] = max(
+                                    position - 1, range_or_object_id[axis] - count
+                                )
 
 
 def _release_participant_locks(
@@ -548,6 +624,20 @@ class EditicsComponent:
         # Special case for participant creation, achieved by the first `auth`
         if not participant.authed and not isinstance(event, EditicsClientEventAuth):
             return EditicsParticipantSendBadOutcome.PARTICIPANT_NOT_AUTH
+
+        # Viewers are not allowed to send editor-only events...
+        if (
+            (participant_authed := participant.authed) is not None
+            and participant_authed.view
+            and isinstance(
+                event,
+                EditicsClientEventGetLock | EditicsClientEventSaveChanges | EditicsClientEventIsSaveLock,
+            )
+        ):
+            # ...and get their SSE connection kicked out for this!
+            if participant.sse_channel_sender is not None:
+                participant.sse_channel_sender.close()
+            return EditicsServerEventDisconnectReason.access_denied()
 
         match event:
             case EditicsClientEventAuth():
@@ -1062,6 +1152,15 @@ class EditicsComponent:
                 released_locks = (
                     _release_participant_locks(session, participant) if event.releaseLocks else []
                 )
+
+                # A spreadsheet structural change (columns/rows inserted or
+                # deleted) shifts the geometry: like the OnlyOffice server, the
+                # stored locked ranges of the OTHER participants are
+                # recalculated so they follow the shifted cells (record 56:
+                # Alice's B3 block is stored as C3 after Bob inserted a column
+                # at A).
+                if event.endSaveChanges and event.excelAdditionalInfo is not None:
+                    _recalculate_locks(session, participant.participant_id, event.excelAdditionalInfo)
 
                 # Broadcast the changes to the other participants (the saver gets
                 # `unSaveLock`/`savePartChanges` replies instead)

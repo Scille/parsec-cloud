@@ -344,10 +344,43 @@ class EditicsServerEventUnSaveLock(BaseModel):
     syncChangesIndex: int  # new total, or -1 on cancel
 
 
+class EditicsServerEventDisconnectReason(BaseModel):
+    """
+    The server kicks the participant out and closes its connection.
+    """
+    type: Literal["disconnectReason"] = "disconnectReason"
+    # OnlyOffice ACCESS_DENIED_CODE constant.
+    # 4001 shutdown, 4002 idle, 4003 absolute, 4004 access denied, 4006 jwt error.
+
+    # OnlyOffice protocol codes:
+    # - 4004: ACCESS_DENIED_CODE, reason='access deny'
+    # - 4001: SHUTDOWN_CODE, reason='server shutdown'
+    # - 4002: SESSION_IDLE_CODE, reason='idle session expires'
+    # - 4003: SESSION_ABSOLUTE_CODE, reason='absolute session expires'
+    # - 4005: JWT_EXPIRED_CODE, reason='token: <reason>'
+    # - 4006: JWT_ERROR_CODE, reason='token: <reason>'
+    #
+    # We currently only use 4004 to reject viewer try to send an editor event.
+    code: Literal[4004]
+    description: str
+
+    @classmethod
+    def access_denied(cls) -> EditicsServerEventDisconnectReason:
+        return cls(
+            code=4004,
+            description="access deny",
+        )
+
+
 class EditicsServerEventDrop(BaseModel):
     """
     Inform the client its editing session has been terminated by an external action
     (typically the user's realm role has been revoked).
+
+    Note `drop` and `disconnectReason` look similar but are not interchangeable:
+    - `drop` is a command ("you're out, close your side"). The server rely on the client
+      to acknowledge this and close the connection itself by sending a `close` event.
+    - `disconnectReason` is a notification ("the transport is about to die server-side, here's why").
     """
 
     type: Literal["drop"] = "drop"
@@ -385,6 +418,7 @@ EditicsServerEvent = Annotated[
     | EditicsServerEventSaveChanges
     | EditicsServerEventSavePartChanges
     | EditicsServerEventUnSaveLock
+    | EditicsServerEventDisconnectReason
     | EditicsServerEventDrop
     | EditicsServerEventWarning
     | EditicsServerEventError,
