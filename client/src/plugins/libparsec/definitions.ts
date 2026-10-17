@@ -267,18 +267,6 @@ export interface ClientConfig {
     logLevel: LogLevel | null
 }
 
-export interface ClientGetOutboundSyncBacklog {
-    totalPendingEntriesForStartedWorkspaces: U64
-    totalPendingBytesForStartedWorkspaces: U64
-    perWorkspace: Array<ClientGetOutboundSyncBacklogItem>
-}
-
-export interface ClientGetOutboundSyncBacklogItem {
-    realmId: VlobID
-    pendingEntries: U64
-    pendingBytes: U64
-}
-
 export interface ClientInfo {
     organizationAddr: ParsecOrganizationAddr
     organizationId: OrganizationID
@@ -2086,6 +2074,7 @@ export enum ClientEventTag {
     WorkspaceOpsOutboundSyncDone = 'ClientEventWorkspaceOpsOutboundSyncDone',
     WorkspaceOpsOutboundSyncProgress = 'ClientEventWorkspaceOpsOutboundSyncProgress',
     WorkspaceOpsOutboundSyncStarted = 'ClientEventWorkspaceOpsOutboundSyncStarted',
+    WorkspaceOutboundSyncBacklog = 'ClientEventWorkspaceOutboundSyncBacklog',
     WorkspaceWatchedEntryChanged = 'ClientEventWorkspaceWatchedEntryChanged',
     WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
@@ -2214,6 +2203,11 @@ export interface ClientEventWorkspaceOpsOutboundSyncStarted {
     realmId: VlobID
     entryId: VlobID
 }
+export interface ClientEventWorkspaceOutboundSyncBacklog {
+    tag: ClientEventTag.WorkspaceOutboundSyncBacklog
+    numberOfFilesToSync: U64
+    sizeToSync: U64
+}
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: ClientEventTag.WorkspaceWatchedEntryChanged
     realmId: VlobID
@@ -2253,6 +2247,7 @@ export type ClientEvent =
   | ClientEventWorkspaceOpsOutboundSyncDone
   | ClientEventWorkspaceOpsOutboundSyncProgress
   | ClientEventWorkspaceOpsOutboundSyncStarted
+  | ClientEventWorkspaceOutboundSyncBacklog
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
 
@@ -7129,9 +7124,6 @@ export interface LibParsecPlugin {
     clientGetOrganizationBootstrapDate(
         client_handle: Handle
     ): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>>
-    clientGetOutboundSyncBacklog(
-        client: Handle
-    ): Promise<Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError>>
     clientGetSelfShamirRecovery(
         client_handle: Handle
     ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
