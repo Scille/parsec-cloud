@@ -275,16 +275,31 @@ class EditicsTranslator {
       encryptedChanges.push([keyIndex, cipherText.toBase64()]);
     }
 
-    // `excelAdditionalInfo` is split (RFC §2.2) into `encryptedCursor` (the
-    // `CursorInfo` part, encrypted) and `excelAdditionalInfo` (the cleartext
-    // `indexCols`/`indexRows` part). For now the whole opaque blob is
-    // encrypted as the cursor; `excelAdditionalInfo` is null (real parsing is deferred
-    // to a later step).
+    // OnlyOffice protocol's `excelAdditionalInfo` is split in editics protocol into:
+    // - `excelAdditionalInfo`: cleartext spreadsheet lock-shift part (`{ indexCols, indexRows }`)
+    //   needed server-side to recalculate the stored locked ranges.
+    // - `encryptedCursorAdditionalInfo`: remaining cursor part, encrypted for
+    //   the other participants.
+    /** @type {{indexCols: Object|null, indexRows: Object|null} | null} */
+    let excelAdditionalInfo = null;
     /** @type {[number, string] | null} */
     let encryptedCursor = null;
     if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
-      const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(String(oo.excelAdditionalInfo)));
-      encryptedCursor = [keyIndex, cipherText.toBase64()];
+      const parsed = JSON.parse(String(oo.excelAdditionalInfo));
+      if ('indexCols' in parsed || 'indexRows' in parsed) {
+        excelAdditionalInfo = {
+          indexCols: parsed.indexCols !== undefined ? parsed.indexCols : null,
+          indexRows: parsed.indexRows !== undefined ? parsed.indexRows : null,
+        };
+      }
+      const cursorPart = {};
+      for (const key of Object.keys(parsed)) {
+        if (key !== 'indexCols' && key !== 'indexRows') cursorPart[key] = parsed[key];
+      }
+      if (Object.keys(cursorPart).length > 0) {
+        const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(JSON.stringify(cursorPart)));
+        encryptedCursor = [keyIndex, cipherText.toBase64()];
+      }
     }
     return {
       type: 'saveChanges',
@@ -292,9 +307,7 @@ class EditicsTranslator {
       startSaveChanges: oo.startSaveChanges,
       endSaveChanges: oo.endSaveChanges,
       deleteIndex: oo.deleteIndex ?? null,
-      // `excelAdditionalInfo` mirrors the server pydantic field name (snake_case).
-
-      excelAdditionalInfo: null,
+      excelAdditionalInfo,
       encryptedCursorAdditionalInfo: encryptedCursor,
       releaseLocks: oo.releaseLocks,
     };
@@ -384,6 +397,16 @@ class EditicsTranslator {
         // `code` is always the DROP_CODE constant (4007) for a `drop` event,
         // OnlyOffice includes it only for symmetry with `disconnectReason`.
         return { type: 'drop', code: 4007, description: editics.description };
+
+      case 'disconnectReason':
+        // The server kicks us out (a view-mode participant sending an
+        // editor-only event, record 61): the connection is closed after this
+        // event, like the OnlyOffice server's access-denied path.
+        return {
+          type: 'disconnectReason',
+          code: editics.code,
+          description: editics.description,
+        };
 
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
@@ -710,9 +733,25 @@ class EditicsTranslator {
       endSaveChanges: !!editics.endSaveChanges,
       locks,
     };
+    // Reassemble the OnlyOffice blob from its editics parts (the mirror of the
+    // client -> server split): the spreadsheet lock-shift keys first (when the
+    // save carries them), then the decrypted cursor keys.
+    let hasExcelAdditionalInfo = false;
+    let excelObj = {};
+    if (editics.excelAdditionalInfo !== null && editics.excelAdditionalInfo !== undefined) {
+      excelObj = Object.assign(excelObj, editics.excelAdditionalInfo);
+      hasExcelAdditionalInfo = true;
+    }
     if (editics.encryptedCursorAdditionalInfo !== null && editics.encryptedCursorAdditionalInfo !== undefined) {
       const [keyIndex, b64CipherText] = editics.encryptedCursorAdditionalInfo;
-      oo.excelAdditionalInfo = bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText)));
+      excelObj = Object.assign(
+        excelObj,
+        JSON.parse(bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText)))),
+      );
+      hasExcelAdditionalInfo = true;
+    }
+    if (hasExcelAdditionalInfo) {
+      oo.excelAdditionalInfo = JSON.stringify(excelObj);
     }
     return oo;
   }
@@ -897,6 +936,11 @@ export { EditicsTranslator };
  * @property {number} time
  * @property {number} syncChangesIndex
  *
+ * @typedef {Object} EditicsServerEventDisconnectReason
+ * @property {'disconnectReason'} type
+ * @property {4004} code
+ * @property {string} description
+ *
  * @typedef {Object} EditicsServerEventDrop
  * @property {'drop'} type
  * @property {string} description
@@ -911,7 +955,7 @@ export { EditicsTranslator };
  * @property {number} code
  * @property {string} description
  *
- * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDrop|EditicsServerEventWarning|EditicsServerEventError} EditicsServerEvent
+ * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDisconnectReason|EditicsServerEventDrop|EditicsServerEventWarning|EditicsServerEventError} EditicsServerEvent
  */
 
 /* eslint-enable max-len */
