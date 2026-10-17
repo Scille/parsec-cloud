@@ -315,7 +315,9 @@ is gone", and the distinction is made by the *client* on its next `auth` event
 
 The participant is **not** destroyed: it stays in the session (hidden) so its
 connection can be restored. Note a `close` client event, unlike a disconnect,
-removes the participant entirely.
+removes the participant entirely — but otherwise applies the same lock
+handling (locks released, un-parking, back to single-editor mode when exactly
+one established editor remains).
 
 **On the next `auth` event**, the client tells the server what this connection is:
 
@@ -324,10 +326,13 @@ removes the participant entirely.
   (`waitAuth`? → `authChanges` → `auth`),
 - `reconnect: { participantId, indexUser, participantTimeConnect, timeIdle }` → a
   session restoration (the transport-level connection of a participant that
-  never logically left): the participant keeps its `indexUser`, the server pushes
-  the lock table to everyone as a `getLock` event, broadcasts the new participant
-  list and replies `auth` — with **no** changes backlog, since the participant
-  already has the changes,
+  never logically left): the participant keeps its `indexUser`, and a non-viewer
+  restorer goes back to single-editor mode (it takes the auth lock when no
+  other established editor remains, so a later fresh non-viewer join gets
+  parked behind it). For a non-viewer restorer, the server pushes the lock
+  table as a `getLock` event to the restorer and the non-viewer participants,
+  then broadcasts the new participant list and replies `auth` — with **no**
+  changes backlog, since the participant already has the changes,
 - `reconnect` info while the document has been modified since the disconnect →
   the restoration is refused with an `error` event (code 4010, see there), and
   the client answers with a `close`.
@@ -379,7 +384,7 @@ list of all OnlyOffice events:
 | `rpc`                | client |            ❌            |
 | `rpc`                | server |            ❌            |
 | `meta`               | server |            ❌            |
-| `disconnectReason`   | server |            ❌            |
+| `disconnectReason`   | server |            ✅            |
 | `error`              | server |            ❌            |
 | `updateVersion`      | server |            ❌            |
 
@@ -813,7 +818,10 @@ id: a lock can be broadcast after its holder left the session (e.g. released
 on disconnect cleanup), so its identity cannot be resolved through the current
 participants list.
 
-Then the server *to every clients* (including the one that send the `getLock` event) a `getLock` event.
+Then the server sends a `getLock` event to the requester (as the reply to its
+ event) and broadcasts it to the other **non-viewer** participants (the OnlyOffice
+ server's broadcast excludes the viewers, record 44: a viewer present in the
+ session doesn't receive it).
 
 Server format:
 
@@ -855,7 +863,10 @@ server→client `saveChanges` event:
 - `saveChanges` with `releaseLocks: true`: the released locks are delivered to
   others inside the `saveChanges` message's `locks` field.
 - `unLockDocument` with `releaseLocks: true` (or a plain disconnect cleanup): the
-  released locks are delivered to others as this standalone `releaseLock` event.
+  released locks are delivered to others as this standalone `releaseLock`
+  event — and, for the `unLockDocument` case, the releasing participant
+  receives it too (its own copy of the released descriptors, acknowledging
+  what was released; record 53).
 
 Format:
 
@@ -988,7 +999,14 @@ Quick reference, who sends what during a save:
 >   is not useful as long as JSON is used to encode the event.
 >
 > - *Spreadsheet Editor lock calculation*: `excelAdditionalInfo` field contains
->   aditional info that are used by the server to compute locks on cells.
+>   aditional info that are used by the server to compute locks on cells: the
+>   `indexCols`/`indexRows` recalc records of a structural change are used to
+>   recalculate the stored locked ranges of the other participants so they
+>   follow the shifted geometry (records 56/57/58).
+>   Note the 9.3.0 document server skips the `m_bIsSaveIndex` records (the
+>   save-index markers a client re-emits to acknowledge the structural changes
+>   it just applied) and leaves the saver's own locks and the structural
+>   column/row locks as-is.
 
 Format:
 
@@ -1046,10 +1064,21 @@ Format:
 *Editics protocol changes*:
 
 - Encrypt `changes` fields (hence rename it to `encryptedChanges`).
-- Split `excelAdditionalInfo` into `cursor` (encrypted field) and `excel_info` (containing `index_cells` and `index_rows`)
+- Split `excelAdditionalInfo` into two fields:
+  - `excelAdditionalInfo` (cleartext, same name): the spreadsheet lock-shift
+    part (`{ "indexCols": …, "indexRows": … }`, OnlyOffice shape kept), which
+    the server uses to recalculate the stored locked ranges of the other
+    participants after a structural change (see the `getLock` section and
+    records 53/56-58);
+  - `encryptedCursorAdditionalInfo` (encrypted): the remaining cursor part
+    (`UserId`/`UserShortId`/`CursorInfo`, used by all the editor types).
+  The split is lossless: the OnlyOffice producers emit the
+  `indexCols`/`indexRows` keys iff at least one of them is non-null, and the
+  client translator reassembles the original object with the same rule and
+  key order.
 - Remove `unlock` field: we rely on the fact `unLockDocument` is always send after and contains this field.
 - Remove `reSave`
-- Remove `isExcel`: instead set `excel_info` to null if not excel.
+- Remove `isExcel`: only the spreadsheet editor sets the lock-shift part.
 - Consider removing `isCoAuthoring`: the server should be aware of the state.
 
 This leads to the server to send its own event to inform other users:
@@ -1118,9 +1147,10 @@ Format:
 - The `locks` records carry the holder's identity in a `holder` field (a
   `(participant id, device id)` tuple) instead of the `user` id, like the
   `getLock`/`releaseLock` lock records.
-- Replace `excelAdditionalInfo` by `encryptedCursor` (the encrypted
-  `CursorInfo` part) and `excel_info` (the cleartext
-  `indexCols`/`indexRows` part).
+- Rework `excelAdditionalInfo` into the same two fields as the client →
+  server event (`excelAdditionalInfo` cleartext lock-shift part +
+  `encryptedCursorAdditionalInfo` encrypted cursor part, see there), passed
+  through unchanged from the originator's save.
 
 The saving client itself does not receive the server `saveChanges` event, it
 receives `unSaveLock` (and `savePartChanges` for intermediate chunks) instead.
@@ -1331,7 +1361,9 @@ Format:
 }
 ```
 
-*Editics protocol changes*: Keep as-is.
+*Editics protocol changes*:
+
+- Remove `code` since it is a constant.
 
 #### `warning` (server → client)
 
@@ -1688,8 +1720,14 @@ Format:
 }
  ```
 
-*Editics protocol changes*: Ignored since Parsec has its own logic (based on
-HTTP status code) for handling this.
+*Editics protocol changes*: Kept (no field change): it is the reply to a
+view-mode participant sending an editor-only event (`getLock` /
+`saveChanges` / `isSaveLock`) - like the OnlyOffice server, the participant
+is kicked out with the access-denied reason (code 4004, "access deny") and
+its connection closed, which runs the regular disconnection handling
+(record 61). A stock client never triggers it (the client-side view mode
+gates those events), so a capture needs a crafted injection on the
+participant's socket (see the protocol monitor).
 
 #### `documentOpen` (server → client)
 
@@ -1730,8 +1768,10 @@ Format:
 ```json5
 {
   "type": "error",
-  "description": <string>,
-  "code": <integer>
+  // 4008 = update version, 4009 = no cache, 4010 = restore). Defaults to 4007 = drop if ommited.
+  "code": <integer>,
+  // Human-readable reason (e.g. "Update Version error", "User id too long")
+  "description": <string>
 }
 ```
 
