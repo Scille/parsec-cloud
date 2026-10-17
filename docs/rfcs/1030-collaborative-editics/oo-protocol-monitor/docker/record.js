@@ -1563,6 +1563,465 @@ scenario('52_lock_join_edit_pptx', 'slide',
   await lockJoinEditScenario('slide');
 });
 
+// --- spreadsheet column insertion (`excelAdditionalInfo`) --------------------
+//
+// A `saveChanges` carries a non-null `excelAdditionalInfo` when there is
+// something to attach: the spreadsheet editor attaches the lock-shift info
+// (`indexCols`/`indexRows`, on column/row insertions — only in collaborative
+// mode, i.e. 2+ participants) and/or the cursor part
+// (`UserId`/`UserShortId`/`CursorInfo` — the word/ppt editors attach it to
+// every save, see records 30/33/51; the spreadsheet editor only when editing
+// inside a shape). The *receiving* side recalculates the held locks from
+// `indexCols` (the document server does it too, DocsCoServer
+// `_recalcLockArray`), but the parsec server does not implement that yet, so
+// this scenario releases every held lock BEFORE the insertion and takes no
+// lock-table event after it (a later `getLock` reply or released-lock relay
+// would pin the shifted coordinates and break the replay).
+
+// Insert a column at the current selection (the API behind the toolbar's
+// "Insert column" action — a real client-side action producing the very same
+// wire events).
+async function insertColumnAtSelection(page, who) {
+  const frame = editorFrame(page, who);
+  if (!frame) throw new Error('no frame for ' + who);
+  await frame.evaluate(() => {
+    const api = window['Asc'] && window['Asc'].editor;
+    if (!api || typeof api.asc_insertCells !== 'function' ||
+        !window['Asc'] || !window['Asc'].c_oAscInsertOptions) {
+      throw new Error('asc_insertCells not available in this editor');
+    }
+    api.asc_insertCells(window['Asc'].c_oAscInsertOptions.InsertColumns);
+  });
+}
+
+scenario('53_insert_column_xlsx', 'cell',
+  'Alice locks cell B3 (typing in it) and Bob joins mid-edit: his auth event' +
+  ' carries the lock table as a list, and Alice\'s switch to co-editing mode' +
+  ' releases her block (unLockDocument{releaseLocks:true} -> a releaseLock to' +
+  ' everyone, herself included). She re-takes B3 and her collaborative save' +
+  ' releases it again. Bob then selects A3 and inserts a column there: he' +
+  ' first takes the structural lock on the whole column (subType: 2, the full' +
+  ' column height), and — collaborative — his saveChanges carries a non-null' +
+  ' `excelAdditionalInfo` with the column lock-shift info (`indexCols`, no' +
+  ' cursor part: the spreadsheet editor only attaches the cursor keys when' +
+  ' editing inside a shape), the relay to Alice carrying it as-is and' +
+  ' releasing his column lock. Alice\'s follow-up save carries the same blob' +
+  ' with the save-index marker (a structural change was applied: it re-syncs' +
+  ' the change index space, with an empty changes list). Finally Bob locks' +
+  ' and edits a cell in the shifted geometry: his saveChanges carries no' +
+  ' `excelAdditionalInfo` (nothing structural in this save) and —' +
+  ' collaborative — releases his block.', async () => {
+  const { rec, page } = CURRENT;
+  const cellB3 = LOCK_ELEMENTS.cell[0];
+  const cellA3 = { name: 'cell-A3', fx: 0.10, fy: 0.125 };
+  const cellD2 = LOCK_ELEMENTS.cell[2];
+
+  // 1. Alice connects alone and takes the B3 lock (typing commits it).
+  await connectAlice();
+  let base = rec.events.length;
+  await clickTarget(page, 'Alice', cellB3);
+  await typeText(page, 'Alice locks B3\n');
+  await sentEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice B3 getLock');
+  await recvEvent(rec, 'Alice', 'unSaveLock', null, base, 20000);
+  await rec.waitQuiescence(800);
+
+  // 2. Bob joins: his auth event must carry the lock table.
+  base = rec.events.length;
+  await connectClient('Bob');
+  await recvEvent(rec, 'Bob', 'auth',
+    (ev) => {
+      const locks = ev.meta.locks;
+      return !!locks && (Array.isArray(locks) ? locks.length : Object.keys(locks).length) > 0;
+    },
+    base, EVENT_TIMEOUT, 'Bob auth with non-empty locks');
+  await rec.waitQuiescence(800);
+
+  // 3. Alice saves collaboratively: clicking B3 re-takes her own block (a new
+  //    block descriptor: the reply table shows only the new one), then her
+  //    saveChanges carries releaseLocks=true and the server releases it (the
+  //    relay to Bob carrying the descriptor). Note her *original* B3 block was
+  //    already released when Bob's join switched her editor to co-editing mode
+  //    (its save cycle had nothing to send, so it sent
+  //    unLockDocument{releaseLocks:true} -> a releaseLock to everyone, herself
+  //    included). No lock is held from here on: the column insertion shifts
+  //    nothing, so the record stays replayable.
+  base = rec.events.length;
+  await clickTarget(page, 'Alice', cellB3);
+  await typeText(page, 'Alice releases.\n');
+  await sentEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.releaseLocks === true,
+    base, 20000, 'Alice collaborative saveChanges');
+  await recvEvent(rec, 'Bob', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Bob saveChanges relay with Alice released lock');
+  await recvEvent(rec, 'Alice', 'unSaveLock', null, base, 20000);
+  await rec.waitQuiescence(800);
+
+  // 4. Bob selects A3 and inserts a column there: the structural change
+  //    commits and saves right away in fast mode (no explicit flush needed -
+  //    `asc_Save` is a no-op in the spreadsheet editor of this build, its
+  //    `canSave` flag is never initialized), his saveChanges carrying the
+  //    non-null `excelAdditionalInfo` with the `indexCols` lock-shift info.
+  base = rec.events.length;
+  await clickTarget(page, 'Bob', cellA3);
+  await rec.waitQuiescence(300);
+  await insertColumnAtSelection(page, 'Bob');
+  await sentEvent(rec, 'Bob', 'saveChanges',
+    (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Bob saveChanges with excelAdditionalInfo');
+  await recvEvent(rec, 'Alice', 'saveChanges',
+    (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Alice saveChanges relay with excelAdditionalInfo');
+  await recvEvent(rec, 'Bob', 'unSaveLock', null, base, 20000);
+  await rec.waitQuiescence(800);
+
+  // 5. Bob locks and edits a cell in the shifted geometry (the D2 click
+  //    target now lands one column to the right): his saveChanges carries no
+  //    `excelAdditionalInfo` (nothing structural in this save) and releases
+  //    his block, the relay to Alice carrying its descriptor.
+  base = rec.events.length;
+  await clickTarget(page, 'Bob', cellD2);
+  await typeText(page, 'Bob locks the shifted cell.\n');
+  await sentEvent(rec, 'Bob', 'getLock', null, base, 20000, 'Bob post-insert getLock');
+  await sentEvent(rec, 'Bob', 'saveChanges', (ev) => ev.meta.excelAdditionalInfo == null,
+    base, 20000, 'Bob post-insert saveChanges');
+  await recvEvent(rec, 'Alice', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Alice saveChanges relay with Bob released lock');
+  await rec.waitQuiescence(800);
+});
+
+// --- complex locking scenarios ------------------------------------------------
+//
+// The scenarios below push the *server-side* locking machinery beyond what a
+// stock client produces on its own:
+// - the lock races (54: word, same stable element id -> server-side conflict
+//   resolution; 55: cell, overlapping ranges with fresh guids -> the server's
+//   permissive addLocksNX) are crafted by holding both `getLock` sends at the
+//   proxy and releasing them back to back, so the server sees both requests
+//   before either client learns of the other's lock;
+// - 56 holds a lock across another participant's column insertion, exposing
+//   whether the 9.3.0 document server actually recalculates the stored lock
+//   table from `indexCols` (the `_recalcLockArray` path);
+// - 57/58 pin the other `excelAdditionalInfo` shapes (row insertion, column
+//   deletion - the Remove recalc type);
+// - 59/60 pin the lock broadcasts with three participants and around a
+//   mid-authentication join;
+// - 61 crafts a `getLock` on a view-mode participant's socket (its client
+//   would never send one: the client-side view mode gates it) to pin the
+//   document server's viewer-misuse handling (disconnectReason + close).
+
+// Apply a structural change at the current selection (the API behind the
+// corresponding toolbar action — a real client-side action producing the very
+// same wire events).
+async function structuralChangeAtSelection(page, who, kind) {
+  const frame = editorFrame(page, who);
+  if (!frame) throw new Error('no frame for ' + who);
+  await frame.evaluate((op) => {
+    const api = window['Asc'] && window['Asc'].editor;
+    const AscNS = window['Asc'];
+    if (!api || !AscNS || !AscNS.c_oAscInsertOptions || !AscNS.c_oAscDeleteOptions) {
+      throw new Error('structural change API not available in this editor');
+    }
+    if (op === 'insertColumns') api.asc_insertCells(AscNS.c_oAscInsertOptions.InsertColumns);
+    else if (op === 'insertRows') api.asc_insertCells(AscNS.c_oAscInsertOptions.InsertRows);
+    else if (op === 'deleteColumns') api.asc_deleteCells(AscNS.c_oAscDeleteOptions.DeleteColumns);
+    else if (op === 'deleteRows') api.asc_deleteCells(AscNS.c_oAscDeleteOptions.DeleteRows);
+    else throw new Error('unknown structural change: ' + op);
+  }, kind);
+}
+
+// Inject a raw client application message on `who`'s socket (the proxy crafts
+// the socket.io frame: the record then shows it like any other client event).
+async function injectClientEvent(rec, who, payload) {
+  rec.send({ cmd: 'inject', editor: EDITORS[who], payload });
+}
+
+scenario('54_lock_race_paragraph_docx', 'word',
+  'Alice and Bob (both in strict co-editing mode) race to lock the same Title' +
+  ' paragraph: both click it and type before either `getLock` has been' +
+  ' processed (their sends are held at the proxy and released back to back).' +
+  ' Unlike the spreadsheet (record 55), the word editor locks by the stable' +
+  ' element id, so the second request collides with the first in the lock' +
+  ' table: the OnlyOffice server resolves the conflict and the reply to the' +
+  ' loser carries the table WITHOUT its block (its optimistic edit is rolled' +
+  ' back client-side). Alice then saves her own edit, which releases her' +
+  ' paragraph lock (the relay to Bob carrying its descriptor).', async () => {
+  const { rec, page } = CURRENT;
+  const title = LOCK_ELEMENTS.word[0];
+
+  await connectAlice();
+  await setStrictCoEditing(page, 'Alice', true);
+  await connectClient('Bob');
+  await setStrictCoEditing(page, 'Bob', true);
+  await rec.waitQuiescence(500);
+
+  // Blind race: hold both getLock sends, then release them back to back so
+  // the server processes both before either client sees the other's lock.
+  rec.setIntercept(true);
+  await clickTarget(page, 'Alice', title);
+  await typeText(page, 'Alice claims the title. ');
+  await rec.waitHold((ev) => ev.holdDir === 'send' && msgType(ev) === 'getLock' && evUser(ev) === 'Alice',
+    20000, 'Alice getLock held');
+  await clickTarget(page, 'Bob', title);
+  await typeText(page, 'Bob claims the title. ');
+  await rec.waitHold((ev) => ev.holdDir === 'send' && msgType(ev) === 'getLock' && evUser(ev) === 'Bob',
+    20000, 'Bob getLock held');
+  await rec.drain((ev) => ev.holdDir === 'send' && msgType(ev) === 'getLock');
+  rec.setIntercept(false);
+  await rec.drain();
+  await rec.waitQuiescence(1500);
+
+  // Alice won the lock: her strict collaborative save releases it.
+  let base = rec.events.length;
+  await flushEditorSave(page, 'Alice');
+  await sentEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.releaseLocks === true,
+    base, 20000, 'Alice saveChanges');
+  await recvEvent(rec, 'Bob', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Bob relay with released lock');
+  await rec.waitQuiescence(800);
+});
+
+scenario('55_lock_race_cells_xlsx', 'cell',
+  'Alice and Bob race to lock the same cell B3: both click it and type before' +
+  ' either `getLock` has been processed (their sends are held at the proxy' +
+  ' and released back to back, so the server sees both requests before either' +
+  ' client learns of the other lock). The OnlyOffice server keys spreadsheet' +
+  ' locks by the client-generated block guid - no range-conflict check - so' +
+  ' both overlapping blocks land in the lock table. Both clients then commit' +
+  ' their edit: the save lock serializes the two saves (the loser waits for' +
+  ' the winner unSaveLock), and both saveChanges are broadcast.', async () => {
+  const { rec, page } = CURRENT;
+  const cellB3 = LOCK_ELEMENTS.cell[0];
+
+  await connectAlice();
+  await connectClient('Bob');
+  await rec.waitQuiescence(500);
+
+  rec.setIntercept(true);
+  await clickTarget(page, 'Alice', cellB3);
+  await typeText(page, 'Alice wins B3\n');
+  await rec.waitHold((ev) => ev.holdDir === 'send' && msgType(ev) === 'getLock' && evUser(ev) === 'Alice',
+    20000, 'Alice getLock held');
+  await clickTarget(page, 'Bob', cellB3);
+  await typeText(page, 'Bob wins B3\n');
+  await rec.waitHold((ev) => ev.holdDir === 'send' && msgType(ev) === 'getLock' && evUser(ev) === 'Bob',
+    20000, 'Bob getLock held');
+  await rec.drain((ev) => ev.holdDir === 'send' && msgType(ev) === 'getLock');
+  rec.setIntercept(false);
+  await rec.drain();
+
+  // The two save cycles settle (serialized by the save lock).
+  await sentEvent(rec, 'Alice', 'saveChanges', null, 0, 30000, 'Alice saveChanges');
+  await sentEvent(rec, 'Bob', 'saveChanges', null, 0, 30000, 'Bob saveChanges');
+  await recvEvent(rec, 'Bob', 'saveChanges', null, 0, 30000, 'Alice relay to Bob');
+  await recvEvent(rec, 'Alice', 'saveChanges', null, 0, 30000, 'Bob relay to Alice');
+  await rec.waitQuiescence(800);
+});
+
+scenario('56_lock_recalc_insert_column_xlsx', 'cell',
+  'Alice locks the cell B3 and keeps her cell edit open (a committed edit would' +
+  ' save and release the lock, see record 50): her block stays held while Bob' +
+  ' inserts a column at A - a structural change shifting the whole geometry,' +
+  ' Alice locked column included. The `excelAdditionalInfo` (`indexCols`) of' +
+  ' his save is what the document server is supposed to use to recalculate the' +
+  ' stored locked ranges of other users (DocsCoServer `_recalcLockArray`); the' +
+  ' record pins what the 9.3.0 server actually stores, exposed twice: by the' +
+  ' lock table in Bob next `getLock` (his own post-insert cell lock), and by' +
+  ' the released-lock descriptor of Alice final save (she commits her open' +
+  ' edit).', async () => {
+  const { rec, page } = CURRENT;
+  const cellB3 = LOCK_ELEMENTS.cell[0];
+  const cellA3 = { name: 'cell-A3', fx: 0.10, fy: 0.125 };
+  const cellD2 = LOCK_ELEMENTS.cell[2];
+
+  await connectAlice();
+  await connectClient('Bob');
+  await rec.waitQuiescence(500);
+
+  // 1. Alice types in B3 WITHOUT Enter: the first keystroke takes the cell
+  //    lock, and the open edit means no save cycle - the block stays held.
+  let base = rec.events.length;
+  await clickTarget(page, 'Alice', cellB3);
+  await typeText(page, 'Alice locks B3');
+  await sentEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice B3 getLock');
+  await recvEvent(rec, 'Bob', 'getLock', null, base, 20000, 'Bob getLock broadcast');
+  await rec.waitQuiescence(800);
+
+  // 2. Bob selects A3 and inserts a column there: the structural change
+  //    commits and saves right away in fast mode, his saveChanges carrying
+  //    the non-null `excelAdditionalInfo` (the indexCols lock-shift info).
+  base = rec.events.length;
+  await clickTarget(page, 'Bob', cellA3);
+  await rec.waitQuiescence(300);
+  await structuralChangeAtSelection(page, 'Bob', 'insertColumns');
+  await sentEvent(rec, 'Bob', 'saveChanges', (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Bob saveChanges with excelAdditionalInfo');
+  await recvEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Alice relay with excelAdditionalInfo');
+  await rec.waitQuiescence(800);
+
+  // 3. Bob locks a cell of his own: the getLock reply/broadcast carries the
+  //    full lock table - including Alice block as the server stored it.
+  base = rec.events.length;
+  await clickTarget(page, 'Bob', cellD2);
+  await typeText(page, 'Bob locks a shifted cell.\n');
+  await sentEvent(rec, 'Bob', 'getLock', null, base, 20000, 'Bob post-insert getLock');
+  await recvEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice getLock broadcast with the table');
+  await sentEvent(rec, 'Bob', 'saveChanges', null, base, 20000, 'Bob post-insert saveChanges');
+  await recvEvent(rec, 'Alice', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Alice relay with Bob released lock');
+  await rec.waitQuiescence(800);
+
+  // 4. Alice commits her open edit (the API behind the Enter key: the keyboard
+  //    focus stayed with Bob's editor): her save releases her block, the
+  //    released descriptor showing her range as the server stored it.
+  base = rec.events.length;
+  {
+    const frame = editorFrame(page, 'Alice');
+    await frame.evaluate(() => {
+      const api = window['Asc'] && window['Asc'].editor;
+      if (!api || typeof api.asc_closeCellEditor !== 'function') {
+        throw new Error('asc_closeCellEditor not available in this editor');
+      }
+      api.asc_closeCellEditor(false);
+    });
+  }
+  await sentEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.releaseLocks === true,
+    base, 20000, 'Alice saveChanges');
+  await recvEvent(rec, 'Bob', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Bob relay with Alice released lock');
+  await rec.waitQuiescence(800);
+});
+
+
+scenario('57_insert_row_xlsx', 'cell',
+  'Alice and Bob co-edit: Bob selects A3 and inserts a row there (the API' +
+  ' behind the toolbar action). With 2+ participants the client is' +
+  ' collaborative, so his saveChanges carries a non-null' +
+  ' `excelAdditionalInfo` with the row lock-shift info (`indexRows` non-null,' +
+  ' `indexCols` null - the mirror of record 53 column insertion), relayed' +
+  ' as-is to Alice.', async () => {
+  const { rec, page } = CURRENT;
+  const cellA3 = { name: 'cell-A3', fx: 0.10, fy: 0.125 };
+
+  await connectAlice();
+  await connectClient('Bob');
+  await rec.waitQuiescence(500);
+
+  let base = rec.events.length;
+  await clickTarget(page, 'Bob', cellA3);
+  await rec.waitQuiescence(300);
+  await structuralChangeAtSelection(page, 'Bob', 'insertRows');
+  await sentEvent(rec, 'Bob', 'saveChanges', (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Bob saveChanges with excelAdditionalInfo');
+  await recvEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Alice relay with excelAdditionalInfo');
+  await recvEvent(rec, 'Bob', 'unSaveLock', null, base, 20000);
+  await rec.waitQuiescence(800);
+});
+
+scenario('58_delete_column_xlsx', 'cell',
+  'Alice and Bob co-edit: Bob selects A3 and deletes the column A (the API' +
+  ' behind the toolbar action). With 2+ participants the client is' +
+  ' collaborative, so his saveChanges carries a non-null' +
+  ' `excelAdditionalInfo` with the column lock-shift info in its Remove' +
+  ' variant (`_recalcType: 2` and `m_bIsSaveIndex: false`, unlike record 53' +
+  ' Add insert), relayed as-is to Alice.', async () => {
+  const { rec, page } = CURRENT;
+  const cellA3 = { name: 'cell-A3', fx: 0.10, fy: 0.125 };
+
+  await connectAlice();
+  await connectClient('Bob');
+  await rec.waitQuiescence(500);
+
+  let base = rec.events.length;
+  await clickTarget(page, 'Bob', cellA3);
+  await rec.waitQuiescence(300);
+  await structuralChangeAtSelection(page, 'Bob', 'deleteColumns');
+  await sentEvent(rec, 'Bob', 'saveChanges', (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Bob saveChanges with excelAdditionalInfo');
+  await recvEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.excelAdditionalInfo != null,
+    base, 20000, 'Alice relay with excelAdditionalInfo');
+  await recvEvent(rec, 'Bob', 'unSaveLock', null, base, 20000);
+  await rec.waitQuiescence(800);
+});
+
+scenario('59_lock_relay_three_party_xlsx', 'cell',
+  'Alice, Bob and Mallory co-edit: Alice types in B3, taking the cell block' +
+  ' lock (the `getLock` reply and its broadcast reach all three), then her' +
+  ' collaborative save releases it: the `saveChanges` relay carries the' +
+  ' released-lock descriptor to both Bob and Mallory.', async () => {
+  const { rec, page } = CURRENT;
+  const cellB3 = LOCK_ELEMENTS.cell[0];
+
+  await connectAlice();
+  await connectClient('Bob');
+  await connectClient('Mallory');
+  await rec.waitQuiescence(500);
+
+  let base = rec.events.length;
+  await clickTarget(page, 'Alice', cellB3);
+  await typeText(page, 'Alice locks and releases B3\n');
+  await sentEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice B3 getLock');
+  await recvEvent(rec, 'Bob', 'getLock', null, base, 20000, 'Bob getLock broadcast');
+  await recvEvent(rec, 'Mallory', 'getLock', null, base, 20000, 'Mallory getLock broadcast');
+  await sentEvent(rec, 'Alice', 'saveChanges', (ev) => ev.meta.releaseLocks === true,
+    base, 20000, 'Alice collaborative saveChanges');
+  await recvEvent(rec, 'Bob', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Bob relay with released lock');
+  await recvEvent(rec, 'Mallory', 'saveChanges', (ev) => (ev.meta.locks || []).length > 0,
+    base, 20000, 'Mallory relay with released lock');
+  await recvEvent(rec, 'Alice', 'unSaveLock', null, base, 20000);
+  await rec.waitQuiescence(800);
+});
+
+scenario('60_lock_while_auth_xlsx', 'cell',
+  'Alice takes the B3 cell lock while Bob is mid-authentication: the server' +
+  ' has already built his `auth` reply (held at the proxy, so Bob has not' +
+  ' processed it yet), which therefore predates her lock and carries an empty' +
+  ' lock table; Alice `getLock` broadcast and her save events flow while the' +
+  ' auth window is open, and reach Bob only after his auth completes.', async () => {
+  const { rec, page } = CURRENT;
+  const cellB3 = LOCK_ELEMENTS.cell[0];
+
+  await connectAlice();
+  await actWhileAuthenticating('Bob', async () => {
+    let base = rec.events.length;
+    await clickTarget(page, 'Alice', cellB3);
+    await typeText(page, 'Alice locks B3\n');
+    await sentEvent(rec, 'Alice', 'getLock', null, base, 20000, 'Alice B3 getLock');
+    await recvEvent(rec, 'Alice', 'unSaveLock', null, base, 20000);
+    await rec.waitQuiescence(500);
+  });
+  await rec.waitQuiescence(800);
+});
+
+scenario('61_viewer_get_lock_xlsx', 'cell',
+  'Alice (edit) and Bob (view mode) are connected; a stock viewer never sends' +
+  ' `getLock` (the client-side view mode gates it), so a hand-crafted one is' +
+  ' injected on his socket from the protocol monitor MITM position: the' +
+  ' document server denies a viewer taking locks - it answers' +
+  ' `disconnectReason` (code 4004, "access deny") and closes the connection' +
+  ' (the `ws-close` row), while Alice session is unaffected.', async () => {
+  const { rec, page } = CURRENT;
+
+  await connectAlice();
+  await connectViewer('Bob');
+  await rec.waitQuiescence(500);
+
+  let base = rec.events.length;
+  await injectClientEvent(rec, 'Bob', {
+    type: 'getLock',
+    block: [{
+      sheetId: '6', type: 1, subType: null,
+      guid: '00000000-0000-0000-0000-000000000000',
+      rangeOrObjectId: { c1: 1, r1: 2, c2: 1, r2: 2 },
+    }],
+  });
+  await recvEvent(rec, 'Bob', 'disconnectReason', null, base, 20000, 'Bob disconnectReason');
+  await waitWsClose(rec, 'Bob');
+  await rec.waitQuiescence(800);
+});
+
+
 // --- disconnection / reconnection -------------------------------------------
 //
 // Three ways to leave (see the helpers above):

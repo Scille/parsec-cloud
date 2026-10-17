@@ -332,6 +332,24 @@ function createProxy(opts) {
         this.release(hid);
       }
     };
+    // ---- inject a crafted client application message (called from /ctl) --
+    // Write a socket.io `message` event on the upstream leg as if the
+    // browser's client had sent it, and record it exactly like a real client
+    // frame (same emit path as the browser leg's handler). Used to capture
+    // what the document server does with messages a stock client never sends
+    // (e.g. a `getLock` from a view-mode participant: the client-side view
+    // mode gates it, so the server's misuse handling can only be pinned by
+    // crafting the message).
+    session.inject = function (payload) {
+      if (session.closed || !up || up.readyState !== WebSocket.OPEN) return false;
+      const raw = '42' + JSON.stringify(['message', payload]);
+      const dec = decodeEIO(raw);
+      const c = classify(dec);
+      if (c) emit('send', 'msg', c);
+      else emit('send', 'eio', dec);
+      forwardToUpstream(raw, false);
+      return true;
+    };
     session.close = function () {
       if (session.closed) return;
       session.closed = true;
@@ -484,6 +502,15 @@ function createProxy(opts) {
           if (msg.user) for (const s of state.sessions.values())
             if (s.user === msg.user && s.editor) state.deadEditors.delete(s.editor);
           broadcast({ t: 'revive', user: msg.user || null, editor: msg.editor || null });
+          break;
+        }
+        case 'inject': {
+          // Craft a client application message on the matching session(s).
+          const targets = findSessions(msg.user, msg.editor);
+          let count = 0;
+          for (const s of targets) if (s.inject && s.inject(msg.payload)) count++;
+          info('inject' + (count ? ' x' + count : ' (no session)') + ': ' +
+            JSON.stringify(msg.payload).slice(0, 60));
           break;
         }
         case 'getState': {
