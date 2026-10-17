@@ -25,7 +25,6 @@
  *   OOServerEvent,
  *   OOServerEventAuth,
  *   OOServerEventAuthChanges,
- *   OOServerEventError,
  *   OOServerEventConnectState,
  *   OOServerEventCursor,
  *   OOServerEventGetLock,
@@ -70,7 +69,7 @@ function bytesToStr(bytes) {
 // TODO: Rework error handling for getHumanLabelFromDeviceId/encrypt/decrypt
 /**
  * @typedef {Object} EditicsLibparsecDeps
- * @property {(deviceIdHex: string) => string | Promise<string | undefined>} getHumanLabelFromDeviceId
+ * @property {(deviceIdHex: string) => Promise<string | undefined>} getHumanLabelFromDeviceId
  * @property {(cleartext: Uint8Array) => Promise<[number, Uint8Array]>} encrypt
  * @property {(keyIndex: number, ciphertext: Uint8Array) => Promise<Uint8Array>} decrypt
  *
@@ -103,6 +102,30 @@ class EditicsTranslator {
     this.config = config;
     /** @type {EditicsLibparsecDeps} */
     this.libparsec = libparsec;
+
+    // The translator is stateless, except for this cache. But this is transparent
+    // since the human label never changes for a given device ID.
+    /** @type {Map<string, string>} */
+    this._humanLabelFromDeviceIdCache = new Map();
+  }
+
+  /**
+   * @param {string} deviceIdHex
+   * @returns {Promise<string | undefined>}
+   */
+  async getHumanLabelFromDeviceId(deviceIdHex) {
+    const found = this._humanLabelFromDeviceIdCache.get(deviceIdHex);
+    if (found) {
+      return found;
+    } else {
+      // Cache miss
+      const result = await this.libparsec.getHumanLabelFromDeviceId(deviceIdHex);
+      if (result) {
+        // Overwrite any concurrent insertion since the result should be always the same.
+        this._humanLabelFromDeviceIdCache.set(deviceIdHex, result);
+      }
+      return result;
+    }
   }
 
   // --- OnlyOffice connectMockServer queries (pure sync) ---------------------
@@ -437,7 +460,7 @@ class EditicsTranslator {
     // broadcast that announced our arrival carried it, and the SSE channel
     // preserves the ordering.
 
-    let authLockedByhumanLabel = await this.libparsec.getHumanLabelFromDeviceId(editics.authLockedBy.deviceId);
+    let authLockedByhumanLabel = await this.getHumanLabelFromDeviceId(editics.authLockedBy.deviceId);
     if (!authLockedByhumanLabel) {
       // TODO: raise an error here instead ?
       //       `getHumanLabelFromDeviceId` should poll for new certificates to
@@ -515,7 +538,7 @@ class EditicsTranslator {
         // saw its author (the author left the session before it joined).
         const [authorParticipantId, authorDeviceId] = m.author;
         const [keyIndex, b64CipherText] = m.encryptedMessage;
-        const username = (await this.libparsec.getHumanLabelFromDeviceId(authorDeviceId)) || '<unknown>';
+        const username = (await this.getHumanLabelFromDeviceId(authorDeviceId)) || '<unknown>';
         return {
           docid: this.docId,
           message: bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText))),
@@ -712,7 +735,7 @@ class EditicsTranslator {
    * @returns {Promise<OOParticipantEntry>}
    */
   async _onlyofficeParticipantEntry(entry) {
-    const humanLabel = (await this.libparsec.getHumanLabelFromDeviceId(entry.deviceId)) || '<unknown>';
+    const humanLabel = (await this.getHumanLabelFromDeviceId(entry.deviceId)) || '<unknown>';
     return {
       id: entry.id,
       idOriginal: entry.deviceId,
