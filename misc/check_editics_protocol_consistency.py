@@ -152,7 +152,7 @@ def _js_type(annotation: Any) -> str:
         return _js_type(annotation)
     if origin is typing.Literal:
         values = typing.get_args(annotation)
-        return "|".join(f"'{v}'" for v in values)
+        return "|".join(f"{v!r}" for v in values)
     if annotation is int:
         return "number"
     if annotation is bool:
