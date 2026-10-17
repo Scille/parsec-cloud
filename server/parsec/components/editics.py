@@ -32,9 +32,9 @@ from parsec.editics_protocol import (
     EditicsClientEventSaveChanges,
     EditicsClientEventUnLockDocument,
     EditicsClientEventUnSaveLock,
-    EditicsIndexUser,
     EditicsParticipantEntry,
     EditicsParticipantID,
+    EditicsParticipantIndex,
     EditicsServerEvent,
     EditicsServerEventAuth,
     EditicsServerEventAuthChanges,
@@ -117,7 +117,7 @@ class Participant:
     """
 
     device_id: DeviceID
-    index: EditicsIndexUser
+    index: EditicsParticipantIndex
     # In OnlyOffice participant ID is  `<device ID> + <participant index>`,
     # however here its is an arbitraty UUID controlled by the client.
     # This is because in OnlyOffice this ID is provided in the server `auth` event,

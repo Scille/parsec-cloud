@@ -250,26 +250,28 @@ class EditicsJSRuntime:
 
         self._js_runtime.eval(
             f"""
-            globalThis.__editics_instances['{participant_id}'] = new globalThis.__EditicsTranslator({{
-                workspaceId: '{realm_id.hex}',
-                vlobId: '{document_id.hex}',
-                deviceIdHex: '{who.device_id.hex}',
-                userId: '<dummy userId>',
-                userName: '<dummy userName>',
-                vlobVersion: {vlob_version},
-                editorType: {editor_type},
-                capabilities: {{
+            globalThis.__editics_instances['{participant_id}'] = new globalThis.__EditicsTranslator(
+                {{
+                    workspaceId: '{realm_id.hex}',
+                    vlobId: '{document_id.hex}',
+                    deviceIdHex: '{who.device_id.hex}',
+                    userId: '<dummy userId>',
+                    userName: '<dummy userName>',
+                    vlobVersion: {vlob_version},
+                    editorType: {editor_type},
+                }},
+                {{
                     getHumanLabelFromDeviceId: async (deviceId) => {{
                         // Hardcoded common values used for the test
                         switch (deviceId) {{
                             case "de10a11cec0010000000000000000000":
-                              return "Alice";
+                                return "Alice";
                             case "de10808c001000000000000000000000":
-                              return "Bob";
+                                return "Bob";
                             case "de103a11031c00100000000000000000":
-                              return "Mallory";
+                                return "Mallory";
                             default:
-                              throw new Error(`Unknown device ID (you may want to patch the test code): ${{ deviceId }}`)
+                                throw new Error(`Unknown device ID (you may want to patch the test code): ${{ deviceId }}`)
                         }}
                     }},
                     // Simulate encryption
@@ -291,7 +293,7 @@ class EditicsJSRuntime:
                         return bytesFromStr(content.cleartext);
                     }},
                 }},
-            }});
+            );
             """,
         )
         client = EditicsJSClient(

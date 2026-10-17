@@ -20,17 +20,19 @@
  * @import {
  *   OOClientEvent,
  *   OOClientEventSaveChanges,
+ *   OOLockEntry,
  *   OOParticipantEntry,
  *   OOServerEvent,
  *   OOServerEventAuth,
  *   OOServerEventAuthChanges,
+ *   OOServerEventError,
  *   OOServerEventConnectState,
  *   OOServerEventCursor,
  *   OOServerEventGetLock,
  *   OOServerEventMessage,
  *   OOServerEventReleaseLock,
  *   OOServerEventSaveChanges,
- *   OOServerEventWaitAuth
+ *   OOServerEventWaitAuth,
  * } from 'onlyoffice-editor'
  */
 
@@ -60,26 +62,6 @@ function bytesToStr(bytes) {
   return new TextDecoder().decode(bytes);
 }
 
-// TODO: remove bytesFromBase64/bytesToBase64 since they don't need to be mocked ?
-
-/**
- * Decode a standard base64 string into bytes.
- * @param {string} b64
- * @returns {Uint8Array}
- */
-function bytesFromBase64(b64) {
-  return Uint8Array.fromBase64(b64);
-}
-
-/**
- * Encode bytes into a standard base64 string.
- * @param {Uint8Array} bytes
- * @returns {string}
- */
-function bytesToBase64(bytes) {
-  return bytes.toBase64();
-}
-
 // ---------------------------------------------------------------------------
 // EditicsTranslator
 // ---------------------------------------------------------------------------
@@ -87,20 +69,10 @@ function bytesToBase64(bytes) {
 // TODO: Rework documentation
 // TODO: Rework error handling for getHumanLabelFromDeviceId/encrypt/decrypt
 /**
- * @typedef {Object} LibparsecCapabilities
- *    Injected capabilities that are expected to be provided by libparsec.
+ * @typedef {Object} EditicsLibparsecDeps
  * @property {(deviceIdHex: string) => string | Promise<string | undefined>} getHumanLabelFromDeviceId
- *    Resolve the display name of a device id (sync or async). Used to build
- *    the OnlyOffice participant entries (the server is NOT trusted for
- *    names).
  * @property {(cleartext: Uint8Array) => Promise<[number, Uint8Array]>} encrypt
- *    Encrypt a cleartext payload into an opaque blob. SYNC, deterministic.
- *    The browser injects real libparsec sealing later; tests inject a
- *    key-prefix fake. Operates on raw `Uint8Array` binary; the base64
- *    encoding needed by the JSON transport of the editics protocol is
- *    handled by the translator itself (see `bytesToBase64`).
  * @property {(keyIndex: number, ciphertext: Uint8Array) => Promise<Uint8Array>} decrypt
- *    Inverse of `encrypt`. SYNC.
  *
  * @typedef {Object} EditicsTranslatorConfig
  * @property {string} workspaceId - WorkspaceID (VlobID) hex.
@@ -112,7 +84,7 @@ function bytesToBase64(bytes) {
  * @property {string} [userName] - unused, see `userId`.
  * @property {number} vlobVersion - loaded vlob version (RFC §1.2).
  * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
- * @property {LibparsecCapabilities} capabilities
+ * @property {EditicsLibparsecDeps} capabilities
  */
 
 /**
@@ -120,20 +92,17 @@ function bytesToBase64(bytes) {
  */
 class EditicsTranslator {
   /**
-   * @param {EditicsTranslatorConfig} cfg
+   * @param {EditicsTranslatorConfig} config
+   * @param {EditicsLibparsecDeps} libparsec
    */
-  constructor(cfg) {
+  constructor(config, libparsec) {
     /** @type {string} */
-    this.docId = `${cfg.workspaceId}/${cfg.vlobId}`;
+    this.docId = `${config.workspaceId}/${config.vlobId}`;
 
     /** @type {EditicsTranslatorConfig} */
-    this.config = cfg;
-    /** @type {LibparsecCapabilities} */
-    this.capabilities = cfg.capabilities;
-    // The translator is stateless: participant/author identities are carried
-    // by the server events themselves, and the display names are resolved from
-    // the device ids through the `getHumanLabelFromDeviceId` capability on
-    // demand (the server is NOT trusted for names, RFC §3.3).
+    this.config = config;
+    /** @type {EditicsLibparsecDeps} */
+    this.libparsec = libparsec;
   }
 
   // --- OnlyOffice connectMockServer queries (pure sync) ---------------------
@@ -198,22 +167,22 @@ class EditicsTranslator {
 
       case 'message':
         // The chat message is encrypted as an opaque blob (RFC §2.2)
-        const [msgKeyIndex, msgCipherText] = await this._encrypt(bytesFromStr(String(oo.message)));
+        const [msgKeyIndex, msgCipherText] = await this.libparsec.encrypt(bytesFromStr(String(oo.message)));
         /** @type {EditicsClientEventMessage} */
         return {
           type: 'message',
-          encryptedMessage: [msgKeyIndex, bytesToBase64(msgCipherText)],
+          encryptedMessage: [msgKeyIndex, msgCipherText.toBase64()],
         };
 
       case 'cursor':
         // OnlyOffice provides the cursor as a base64-encoded payload in a
         // custom format (e.g. `"16;CAAAADEAMQAzADcAAAAAAA=="`).
         // We consider this format opaque and encrypt it as-is.
-        const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(oo.cursor));
+        const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(oo.cursor));
         /** @type {EditicsClientEventCursor} */
         return {
           type: 'cursor',
-          encryptedCursor: [keyIndex, bytesToBase64(cipherText)],
+          encryptedCursor: [keyIndex, cipherText.toBase64()],
         };
 
       case 'unLockDocument':
@@ -279,8 +248,8 @@ class EditicsTranslator {
     /** @type {[number, string][]} */
     const encryptedChanges = [];
     for (const fragment of fragments) {
-      const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(String(fragment)));
-      encryptedChanges.push([keyIndex, bytesToBase64(cipherText)]);
+      const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(String(fragment)));
+      encryptedChanges.push([keyIndex, cipherText.toBase64()]);
     }
 
     // `excelAdditionalInfo` is split (RFC §2.2) into `encryptedCursor` (the
@@ -291,15 +260,15 @@ class EditicsTranslator {
     /** @type {[number, string] | null} */
     let encryptedCursor = null;
     if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
-      const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(String(oo.excelAdditionalInfo)));
-      encryptedCursor = [keyIndex, bytesToBase64(cipherText)];
+      const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(String(oo.excelAdditionalInfo)));
+      encryptedCursor = [keyIndex, cipherText.toBase64()];
     }
     return {
       type: 'saveChanges',
       encryptedChanges,
       startSaveChanges: oo.startSaveChanges,
       endSaveChanges: oo.endSaveChanges,
-      deleteIndex: oo.deleteIndex,
+      deleteIndex: oo.deleteIndex ?? null,
       // `excelAdditionalInfo` mirrors the server pydantic field name (snake_case).
 
       excelAdditionalInfo: null,
@@ -338,7 +307,6 @@ class EditicsTranslator {
         return await this._cookCursor(editics);
 
       case 'saveLock':
-        /** @type {EditicsServerEventSaveLock} */
         // Reply to our `isSaveLock`: the `saveLock` field is confusingly
         // named, `false` means the save lock is granted (i.e. we may now send
         // our `saveChanges`), `true` means it is held by somebody else.
@@ -347,7 +315,6 @@ class EditicsTranslator {
       case 'savePartChanges':
         // Acknowledgment of an intermediate `saveChanges` chunk (i.e. a save
         // too big for a single event).
-        /** @type {EditicsServerEventSavePartChanges} */
         return {
           type: 'savePartChanges',
           changesIndex: editics.changesIndex,
@@ -357,7 +324,6 @@ class EditicsTranslator {
       case 'unSaveLock':
         // Either the save has completed (real `index`/`time`/
         // `syncChangesIndex` values) or has been canceled (all `-1`).
-        /** @type {EditicsServerEventUnSaveLock} */
         return {
           type: 'unSaveLock',
           index: editics.index,
@@ -382,26 +348,23 @@ class EditicsTranslator {
         // modified while the participant was away, code 4010 "Restore error.
         // Document modified."): the editor reacts by closing the co-authoring
         // session.
-        /** @type {EditicsServerEventError} */
         return {
           type: 'error',
           code: editics.code,
           description: editics.description,
         };
 
+      case 'warning':
+        return { type: 'warning', code: editics.code, message: editics.message };
+
+      case 'drop':
+        // `code` is always the DROP_CODE constant (4007) for a `drop` event,
+        // OnlyOffice includes it only for symmetry with `disconnectReason`.
+        return { type: 'drop', code: 4007, description: editics.description };
+
       default:
         console.warn(`Unknown Editics protocol event ${JSON.stringify(editics)}`);
         return null;
-
-      // Still to be translated (disabled until the server side of the
-      // collaborative mode is finished; move back into the switch below to
-      // enable):
-      //
-      //   case 'drop':
-      //     return { type: 'drop', code: editics.code, description: editics.description };
-      //
-      //   case 'warning':
-      //     return { type: 'warning', code: editics.code, message: editics.message };
     }
   }
 
@@ -474,7 +437,7 @@ class EditicsTranslator {
     // broadcast that announced our arrival carried it, and the SSE channel
     // preserves the ordering.
 
-    let authLockedByhumanLabel = await this.config.capabilities.getHumanLabelFromDeviceId(editics.authLockedBy.deviceId);
+    let authLockedByhumanLabel = await this.libparsec.getHumanLabelFromDeviceId(editics.authLockedBy.deviceId);
     if (!authLockedByhumanLabel) {
       // TODO: raise an error here instead ?
       //       `getHumanLabelFromDeviceId` should poll for new certificates to
@@ -530,7 +493,7 @@ class EditicsTranslator {
         const [keyIndex, b64CipherText] = c.encryptedChange;
         return {
           docid: this.docId,
-          change: JSON.stringify(bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)))),
+          change: JSON.stringify(bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText)))),
           time: c.time,
           user: authorParticipantId,
           useridoriginal: authorDeviceId,
@@ -552,10 +515,10 @@ class EditicsTranslator {
         // saw its author (the author left the session before it joined).
         const [authorParticipantId, authorDeviceId] = m.author;
         const [keyIndex, b64CipherText] = m.encryptedMessage;
-        const username = (await this.config.capabilities.getHumanLabelFromDeviceId(authorDeviceId)) || '<unknown>';
+        const username = (await this.libparsec.getHumanLabelFromDeviceId(authorDeviceId)) || '<unknown>';
         return {
           docid: this.docId,
-          message: bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText))),
+          message: bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText))),
           time: m.time,
           // The `user`/`useridoriginal` fields correspond to the author's
           // participant id / device id (like the `cursor` server event).
@@ -595,7 +558,7 @@ class EditicsTranslator {
         const [authorParticipantId, authorDeviceId] = m.author;
         const [keyIndex, b64CipherText] = m.encryptedCursor;
         return {
-          cursor: bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText))),
+          cursor: bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText))),
           time: m.time,
           user: authorParticipantId,
           useridoriginal: authorDeviceId,
@@ -612,6 +575,7 @@ class EditicsTranslator {
    * @returns {OOServerEventGetLock}
    */
   _cookGetLock(editics) {
+    /** @type {Record<string, OOLockEntry>} */
     const ooLocks = {};
     for (const key in editics.locks || {}) {
       const lock = editics.locks[key];
@@ -652,7 +616,7 @@ class EditicsTranslator {
    * OnlyOffice carries the lock table as an object keyed by block id in the
    * document editor, and as a plain array in the other editors.
    * @param {EditicsServerEventAuth['locks']} locks
-   * @returns {Object<string, {time:number, user:string, block:*}>|Array<{time:number, user:string, block:*}>}
+   * @returns {Object<string, OOLockEntry>|Array<OOLockEntry>}
    */
   _onlyofficeLockTable(locks) {
     const records = (locks || []).map((lock) => {
@@ -665,11 +629,15 @@ class EditicsTranslator {
       };
     });
     if (this.config.editorType === 0) {
+      /** @type {Record<string, OOLockEntry>} */
       const table = {};
-      for (const record of records) table[record.block] = record;
+      for (const record of records) {
+        table[record.block] = record;
+      }
       return table;
+    } else {
+      return records;
     }
-    return records;
   }
 
   /**
@@ -691,7 +659,7 @@ class EditicsTranslator {
           docid: this.docId,
           // Each change fragment is an opaque string that OnlyOffice expects
           // JSON-encoded (e.g. `'"66;..."'`).
-          change: JSON.stringify(bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)))),
+          change: JSON.stringify(bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText)))),
           time: c.time,
           // The `user`/`useridoriginal` fields correspond to the author's
           // participant id / device id (like the `cursor` server event).
@@ -721,7 +689,7 @@ class EditicsTranslator {
     };
     if (editics.encryptedCursorAdditionalInfo !== null && editics.encryptedCursorAdditionalInfo !== undefined) {
       const [keyIndex, b64CipherText] = editics.encryptedCursorAdditionalInfo;
-      oo.excelAdditionalInfo = bytesToStr(await this._decrypt(keyIndex, bytesFromBase64(b64CipherText)));
+      oo.excelAdditionalInfo = bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText)));
     }
     return oo;
   }
@@ -744,7 +712,7 @@ class EditicsTranslator {
    * @returns {Promise<OOParticipantEntry>}
    */
   async _onlyofficeParticipantEntry(entry) {
-    const humanLabel = (await this.config.capabilities.getHumanLabelFromDeviceId(entry.deviceId)) || '<unknown>';
+    const humanLabel = (await this.libparsec.getHumanLabelFromDeviceId(entry.deviceId)) || '<unknown>';
     return {
       id: entry.id,
       idOriginal: entry.deviceId,
@@ -761,27 +729,6 @@ class EditicsTranslator {
       encrypted: false,
     };
   }
-
-  // --- Encryption (sync, capability-injected) -------------------------------
-
-  // TODO: remove me
-  /**
-   * @param {Uint8Array} cleartext
-   * @returns {Promise<[number, Uint8Array]>}
-   */
-  async _encrypt(cleartext) {
-    return await this.capabilities.encrypt(cleartext);
-  }
-
-  // TODO: remove me
-  /**
-   * @param {number} keyIndex
-   * @param {Uint8Array} ciphertext
-   * @returns {Promise<Uint8Array>}
-   */
-  async _decrypt(keyIndex, ciphertext) {
-    return await this.capabilities.decrypt(keyIndex, ciphertext);
-  }
 }
 
 export { EditicsTranslator };
@@ -794,13 +741,13 @@ export { EditicsTranslator };
 /* eslint-disable max-len */
 
 /**
- * @typedef {number} EditicsIndexUser
+ * @typedef {number} EditicsParticipantIndex
  *
  * @typedef {string} EditicsParticipantID
  *
  * @typedef {Object} EditicsParticipantEntry
  * @property {EditicsParticipantID} id
- * @property {EditicsIndexUser} indexUser
+ * @property {EditicsParticipantIndex} indexUser
  * @property {string} deviceId
  * @property {boolean} view
  *
@@ -837,9 +784,9 @@ export { EditicsTranslator };
  * @property {Array<[number, string]>} encryptedChanges
  * @property {boolean} startSaveChanges
  * @property {boolean} endSaveChanges
- * @property {number|null} [deleteIndex]
- * @property {Object<string,*>|null} [excelAdditionalInfo]
- * @property {[number, string]|null} [encryptedCursorAdditionalInfo]
+ * @property {number|null} deleteIndex
+ * @property {Object<string,*>|null} excelAdditionalInfo
+ * @property {[number, string]|null} encryptedCursorAdditionalInfo
  * @property {boolean} [releaseLocks]
  *
  * @typedef {Object} EditicsClientEventUnSaveLock
@@ -849,7 +796,7 @@ export { EditicsTranslator };
  * @property {'unLockDocument'} type
  * @property {boolean} [isSave]
  * @property {boolean} [unlock]
- * @property {number|null} [deleteIndex]
+ * @property {number|null} deleteIndex
  * @property {boolean} [releaseLocks]
  *
  * @typedef {Object} EditicsClientEventClose
@@ -866,7 +813,7 @@ export { EditicsTranslator };
  * @property {'auth'} type
  * @property {EditicsParticipantEntry[]} participants
  * @property {EditicsParticipantID} participantId
- * @property {EditicsIndexUser} indexUser
+ * @property {EditicsParticipantIndex} indexUser
  * @property {number} participantTimeConnect
  * @property {number} openedAt
  * @property {Array<{time:number, holder:[EditicsParticipantID, string], block:*}>} [locks]
@@ -913,8 +860,8 @@ export { EditicsTranslator };
  * @property {number} syncChangesIndex
  * @property {boolean} endSaveChanges
  * @property {Array<{block:*, holder:[EditicsParticipantID, string], time:number, changes:null}>} [locks]
- * @property {Object<string,*>|null} [excelAdditionalInfo]
- * @property {[number, string]|null} [encryptedCursorAdditionalInfo]
+ * @property {Object<string,*>|null} excelAdditionalInfo
+ * @property {[number, string]|null} encryptedCursorAdditionalInfo
  *
  * @typedef {Object} EditicsServerEventSavePartChanges
  * @property {'savePartChanges'} type
@@ -929,8 +876,7 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventDrop
  * @property {'drop'} type
- * @property {number} [code]
- * @property {string} [description]
+ * @property {string} description
  *
  * @typedef {Object} EditicsServerEventWarning
  * @property {'warning'} type

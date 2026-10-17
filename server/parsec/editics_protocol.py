@@ -21,15 +21,14 @@ from parsec.types import Base64BytesField
 
 # TODO: remove option fields (we want to explicitly set a field to `None` instead of omitting it)
 
-# TODO: rename to `EditicsParticipantIndex` ?
-type EditicsIndexUser = int
+type EditicsParticipantIndex = int
 """
-`indexUser`: 1-based, monotonic per client session, assigned by order of join
-and never re-used.
+Equivalent to the `indexUser` in OnlyOffice protocol: 1-based, monotonic per
+edition session, assigned by order of join and never re-used.
 
 OnlyOffice client uses this index to generate IDs that are guaranteed to never
 clash with other clients: everything (e.g. paragraph, table) created collaboratively
-gets an ID like "3_42" (where 3 is the editor's indexUser).
+gets an ID like "3_42" (where 3 is the editor's `indexUser`).
 """
 
 
@@ -46,7 +45,7 @@ class EditicsParticipantEntry(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     id: EditicsParticipantID
-    indexUser: EditicsIndexUser
+    indexUser: EditicsParticipantIndex
     deviceId: DeviceID
     view: bool
 
@@ -111,7 +110,7 @@ class EditicsClientEventSaveChanges(BaseModel):
     # Undo support (Only honored when `startSaveChanges=true`):
     # - `None` or `-1` = no truncate
     # - <int> = absolute index, the server deletes all stored changes with index >= deleteIndex.
-    deleteIndex: int | None = None
+    deleteIndex: int | None
     # In OnlyOffice protocol, the `excelAdditionalInfo` (despite its name) is
     # carried by all the editor types.
     # - The spreadsheet editor only sends it when there is something to carry:
@@ -127,9 +126,9 @@ class EditicsClientEventSaveChanges(BaseModel):
     # - `excelAdditionalInfo` that contains the actual spreadsheet-specific infos (
     #   Shape: `{ indexCols: ..., indexRows: ... }`).
     # - `encryptedCursorAdditionalInfo` that contains the cursor info use by all editors.
-    excelAdditionalInfo: dict[str, Any] | None = None
+    excelAdditionalInfo: dict[str, Any] | None
     # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None = None
+    encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None
     # Release this user's region locks after the save (OnlyOffice name kept).
     releaseLocks: bool = False
 
@@ -142,7 +141,7 @@ class EditicsClientEventUnLockDocument(BaseModel):
     type: Literal["unLockDocument"] = "unLockDocument"
     isSave: bool = False
     unlock: bool = False
-    deleteIndex: int | None = None
+    deleteIndex: int | None
     releaseLocks: bool = False
 
 
@@ -198,7 +197,7 @@ class EditicsServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     participants: list[EditicsParticipantEntry]  # current participant map
     participantId: EditicsParticipantID
-    indexUser: EditicsIndexUser  # this connection's assigned index
+    indexUser: EditicsParticipantIndex  # this connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
     participantTimeConnect: int  # server timestamp (ms) at connect
     # When the file edition session has been started
@@ -277,7 +276,7 @@ class ReleaseLockRecord(BaseModel):
     time: int
     # Always null here (OnlyOffice shape; present for consistency with
     # `saveChanges`'s `locks` field).
-    changes: None = None
+    changes: None
 
 
 class EditicsServerEventReleaseLock(BaseModel):
@@ -327,9 +326,9 @@ class EditicsServerEventSaveChanges(BaseModel):
     # - `excelAdditionalInfo` that contains the actual spreadsheet-specific infos (
     #   Shape: `{ indexCols: ..., indexRows: ... }`).
     # - `encryptedCursorAdditionalInfo` that contains the cursor info use by all editors.
-    excelAdditionalInfo: dict[str, Any] | None = None
+    excelAdditionalInfo: dict[str, Any] | None
     # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None = None
+    encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None
 
 
 class EditicsServerEventSavePartChanges(BaseModel):
@@ -346,19 +345,29 @@ class EditicsServerEventUnSaveLock(BaseModel):
 
 
 class EditicsServerEventDrop(BaseModel):
+    """
+    Inform the client its editing session has been terminated by an external action
+    (typically the user's realm role has been revoked).
+    """
+
     type: Literal["drop"] = "drop"
-    code: int = 4007  # OnlyOffice DROP_CODE constant
-    description: str = ""
+    description: str
 
 
 class EditicsServerEventWarning(BaseModel):
+    """
+    Send a warning message to the client to be displayed to the end user.
+    """
+
     type: Literal["warning"] = "warning"
+    # e.g. `-200`: FORCED_VIEW_MODE, `-201`: FILE_NOT_ASSEMBLED
     code: int
     message: str
 
 
 class EditicsServerEventError(BaseModel):
     type: Literal["error"] = "error"
+    # e.g. code=4010, description="Restore error. Document modified."
     code: int
     description: str
 

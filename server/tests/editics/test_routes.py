@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from parsec._parsec import RealmRole, VlobID
+from parsec.components.auth import EditicsToken
 from parsec.editics_protocol import (
     EditicsClientEventAuth,
     EditicsClientEventClose,
@@ -15,7 +16,6 @@ from parsec.editics_protocol import (
     EditicsServerEventWaitAuth,
     EditicsServerEventWarning,
 )
-from parsec.components.auth import EditicsToken
 from tests.common import (
     Backend,
     CoolorgRpcClients,
