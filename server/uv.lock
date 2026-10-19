@@ -684,7 +684,7 @@ wheels = [
 
 [[package]]
 name = "parsec-cloud"
-version = "3.10.1a0+dev"
+version = "3.11.1-a.0+dev"
 source = { virtual = "." }
 dependencies = [
     { name = "anyio" },

@@ -1,1 +1,0 @@
-Added a *What's new* notification banner after updating Parsec to a newer version
