@@ -8,6 +8,7 @@ publish.workspace = true
 repository.workspace = true
 version.workspace = true
 autotests = false
+exclude = ["tests/", "examples/", "benches/"]
 
 [[bench]]
 name = "minimal_short_id"

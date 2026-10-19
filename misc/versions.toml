@@ -1,7 +1,9 @@
 cargo-deny = "0.19.0"
 cargo-udeps = "0.1.56"
 cross = "v0.2.5"
-license = "BUSL-1.1"
+license = "AGPL-3.0-only"
+# Server license also include everything that is not release in a client (tests, examples, server, ...)
+server_license = "BUSL-1.1"
 nextest = "0.9.114"
 node = "24.18.0"
 parsec = "3.10.1-a.0+dev"
