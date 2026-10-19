@@ -14,8 +14,9 @@ import anyio
 from anyio import BrokenResourceError, ClosedResourceError, WouldBlock
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
-from parsec._parsec import DeviceID, OrganizationID, RealmRole, VlobID
+from parsec._parsec import DeviceID, OrganizationID, RealmRole, UserID, VlobID
 from parsec.components.auth import EditicsAuthInfo
+from parsec.components.events import EventBus
 from parsec.config import BackendConfig
 from parsec.editics_protocol import (
     AuthChangeRecord,
@@ -55,6 +56,12 @@ from parsec.editics_protocol import (
     MessageRecord,
     ReleaseLockRecord,
     SaveChangeRecord,
+)
+from parsec.events import (
+    Event,
+    EventOrganizationExpired,
+    EventRealmCertificate,
+    EventUserRevokedOrFrozen,
 )
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
@@ -118,7 +125,9 @@ class Participant:
       client timeouts or sends a `close` event.
     """
 
+    user_id: UserID
     device_id: DeviceID
+    realm_role: RealmRole
     index: EditicsParticipantIndex
     # In OnlyOffice participant ID is  `<device ID> + <participant index>`,
     # however here its is an arbitraty UUID controlled by the client.
@@ -176,6 +185,19 @@ class Participant:
             # The channel is already closed (e.g. it was full and closed by a
             # previous event, or the SSE connection teardown is in progress).
             pass
+
+    def access_denied_close_sse(self):
+        self.send_event(EditicsServerEventDisconnectReason.access_denied())
+        if self.sse_channel_sender is not None:
+            # Closing the channel will trigger teardown in `participant_listen()`.
+            # Note `participant_listen()` will first pump all the events in the
+            # channel (i.e. that have been send before the close) and send them
+            # on the SSE. This is an expected behavior so that the `disconnectReason`
+            # is correctly provided to the client before closing the SSE.
+            self.sse_channel_sender.close()
+        # Don't set `self.sse_channel_sender` to `None` here: this done in
+        # `participant_listen()`'s teardown with a guard to avoid overwritting a
+        # newer connection.
 
 
 @dataclass(slots=True)
@@ -408,12 +430,59 @@ class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
 
 
 class EditicsComponent:
-    def __init__(self, config: BackendConfig) -> None:
+    def __init__(self, config: BackendConfig, event_bus: EventBus) -> None:
         self._config = config
+        self._event_bus = event_bus
         # Sessions key is (organization ID, realm ID, document ID)
         self._sessions: dict[tuple[OrganizationID, VlobID, VlobID], EditicsSession] = {}
         # # (workspace_id, vlob_id, participant_uuid) -> channel
         # self._pending: dict[tuple[VlobID, VlobID, UUID], EditicsSseChannel] = {}
+
+        self._event_bus.connect(self._on_event)
+        # Note we don't have a `__del__` to disconnect from the event bus: the lifetime
+        # of this component is basically equivalent of the one of the event bus anyway
+
+    def _on_event(self, event: Event) -> None:
+        match event:
+            case EventOrganizationExpired():
+                for (organization_id, _, _), session in self._sessions.items():
+                    if organization_id != event.organization_id:
+                        continue
+                    for participant in session.participants.values():
+                        participant.access_denied_close_sse()
+            case EventUserRevokedOrFrozen():
+                for (organization_id, _, _), session in self._sessions.items():
+                    if organization_id != event.organization_id:
+                        continue
+                    for participant in session.participants.values():
+                        if participant.user_id != event.user_id:
+                            continue
+                        participant.access_denied_close_sse()
+            case EventRealmCertificate():
+                for (organization_id, _, _), session in self._sessions.items():
+                    if organization_id != event.organization_id:
+                        continue
+                    for participant in session.participants.values():
+                        if participant.user_id != event.user_id:
+                            continue
+                        if participant.authed is None:
+                            continue
+                        match event.kind:
+                            case "UNSHARE":
+                                pass
+                            case ("SHARE", new_realm_role):
+                                if participant.authed.view:
+                                    if new_realm_role.can_read:
+                                        continue
+                                else:  # Editor mode
+                                    if new_realm_role.can_read and new_realm_role.can_write:
+                                        continue
+                            case "OTHER":
+                                continue
+                        # Participant's new role is not longer enough
+                        participant.access_denied_close_sse()
+            case _:
+                pass
 
     def _get_or_create_session(
         self,
@@ -427,7 +496,9 @@ class EditicsComponent:
 
     def _get_or_insert_participant(
         self,
+        user_id: UserID,
         device_id: DeviceID,
+        realm_role: RealmRole,
         participant_id: EditicsParticipantID,
         session: EditicsSession,
     ) -> Participant | None:
@@ -445,7 +516,9 @@ class EditicsComponent:
         participant_index = session.next_participant_index
         session.next_participant_index += 1
         participant = session.participants[participant_id] = Participant(
+            user_id=user_id,
             device_id=device_id,
+            realm_role=realm_role,
             index=participant_index,
             participant_id=participant_id,
             connected_at=now(),
@@ -463,7 +536,9 @@ class EditicsComponent:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
         participant = self._get_or_insert_participant(
+            auth_info.user_id,
             auth_info.device_id,
+            auth_info.realm_role,
             participant_id,
             session,
         )
@@ -607,7 +682,9 @@ class EditicsComponent:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
         participant = self._get_or_insert_participant(
+            auth_info.user_id,
             auth_info.device_id,
+            auth_info.realm_role,
             participant_id,
             session,
         )
@@ -630,6 +707,8 @@ class EditicsComponent:
             )
         ):
             # ...and get their SSE connection kicked out for this!
+            # (don't use `access_denied_close_sse` here since we want to send the
+            # `disconnectReason` event as the current query's response)
             if participant.sse_channel_sender is not None:
                 participant.sse_channel_sender.close()
             return EditicsServerEventDisconnectReason.access_denied()

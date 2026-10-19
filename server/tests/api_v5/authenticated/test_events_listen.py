@@ -14,6 +14,7 @@ from parsec._parsec import (
     InvitationStatus,
     OrganizationID,
     PKIEnrollmentID,
+    RealmRole,
     UserID,
     VlobID,
     authenticated_cmds,
@@ -106,7 +107,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
                 timestamp=TIMESTAMP,
                 realm_id=VLOB_ID,
                 user_id=ALICE_USER_ID,
-                role_removed=False,
+                kind=("SHARE", RealmRole.READER),
             ),
             authenticated_cmds.latest.events_listen.APIEventRealmCertificate(
                 timestamp=TIMESTAMP, realm_id=VLOB_ID
@@ -390,7 +391,7 @@ async def test_self_certificate_events_provided(
                 timestamp=TIMESTAMP,
                 realm_id=VLOB_ID,
                 user_id=ALICE_USER_ID,
-                role_removed=False,
+                kind=("SHARE", RealmRole.READER),
             )
         )
 
@@ -461,7 +462,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=dummy_user_id,
-                    role_removed=False,
+                    kind=("SHARE", RealmRole.READER),
                 )
             )
             await send_vlob_event(org, 1)
@@ -474,7 +475,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=minimalorg.alice.user_id,
-                    role_removed=False,
+                    kind=("SHARE", RealmRole.READER),
                 )
             )
             await send_vlob_event(org, 2)
@@ -487,7 +488,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=dummy_user_id,
-                    role_removed=True,
+                    kind="UNSHARE",
                 )
             )
             await send_vlob_event(org, 3)
@@ -500,7 +501,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=minimalorg.alice.user_id,
-                    role_removed=True,
+                    kind="UNSHARE",
                 )
             )
             await send_vlob_event(org, 4)

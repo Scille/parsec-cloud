@@ -115,7 +115,7 @@ async def test_authenticated_realm_rotate_key_ok(
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
                 user_id=coolorg.alice.user_id,
-                role_removed=False,
+                kind="OTHER",
             )
         )
 
@@ -170,7 +170,7 @@ async def test_authenticated_realm_rotate_key_ok_sequestered(
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
                 user_id=sequestered_org.alice.user_id,
-                role_removed=False,
+                kind="OTHER",
             )
         )
 

@@ -50,7 +50,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             block = MemoryBlockComponent(data, blockstore)
             cryptpad = MemoryCryptpadComponent(data, config)
             events = MemoryEventsComponent(data, config, event_bus)
-            editics = EditicsComponent(config)
+            editics = EditicsComponent(config, event_bus)
             invite = MemoryInviteComponent(data, event_bus, config)
             organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
             ping = MemoryPingComponent(event_bus)

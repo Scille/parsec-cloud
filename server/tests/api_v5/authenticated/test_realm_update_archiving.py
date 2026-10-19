@@ -75,7 +75,7 @@ async def test_authenticated_realm_update_archiving_ok(
                     timestamp=certif.timestamp,
                     realm_id=certif.realm_id,
                     user_id=coolorg.alice.user_id,
-                    role_removed=False,
+                    kind="OTHER",
                 )
             )
 

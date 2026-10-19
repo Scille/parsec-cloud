@@ -86,7 +86,9 @@ def realm_create_validate(
     expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
-) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmCreateValidateBadOutcome:
+) -> (
+    tuple[RealmRole, RealmRoleCertificate] | TimestampOutOfBallpark | RealmCreateValidateBadOutcome
+):
     try:
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
@@ -106,10 +108,11 @@ def realm_create_validate(
     if expected_author_user_id != data.user_id:
         return RealmCreateValidateBadOutcome.USER_ID_MISMATCH
 
-    if data.role != RealmRole.OWNER:
-        return RealmCreateValidateBadOutcome.INVALID_ROLE
-
-    return data
+    match data.role:
+        case RealmRole.OWNER:
+            return (data.role, data)
+        case _:
+            return RealmCreateValidateBadOutcome.INVALID_ROLE
 
 
 class RealmShareValidateBadOutcome(BadOutcomeEnum):
@@ -124,7 +127,7 @@ def realm_share_validate(
     expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
-) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmShareValidateBadOutcome:
+) -> tuple[RealmRole, RealmRoleCertificate] | TimestampOutOfBallpark | RealmShareValidateBadOutcome:
     try:
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
@@ -146,8 +149,8 @@ def realm_share_validate(
 
     if data.role is None:
         return RealmShareValidateBadOutcome.INVALID_ROLE
-
-    return data
+    else:
+        return (data.role, data)
 
 
 class RealmUnshareValidateBadOutcome(BadOutcomeEnum):
@@ -200,7 +203,11 @@ def realm_self_promote_to_owner_validate(
     expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
-) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmSelfPromoteToOwnerValidateBadOutcome:
+) -> (
+    tuple[RealmRole, RealmRoleCertificate]
+    | TimestampOutOfBallpark
+    | RealmSelfPromoteToOwnerValidateBadOutcome
+):
     try:
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
@@ -220,10 +227,11 @@ def realm_self_promote_to_owner_validate(
     if expected_author_user_id != data.user_id:
         return RealmSelfPromoteToOwnerValidateBadOutcome.MUST_SELF_PROMOTE
 
-    if data.role != RealmRole.OWNER:
-        return RealmSelfPromoteToOwnerValidateBadOutcome.INVALID_ROLE
-
-    return data
+    match data.role:
+        case RealmRole.OWNER:
+            return (data.role, data)
+        case _:
+            return RealmSelfPromoteToOwnerValidateBadOutcome.INVALID_ROLE
 
 
 class RealmRenameValidateBadOutcome(BadOutcomeEnum):

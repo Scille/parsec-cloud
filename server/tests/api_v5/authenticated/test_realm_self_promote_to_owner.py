@@ -92,7 +92,7 @@ async def test_authenticated_realm_self_promote_to_owner_ok(
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
                 user_id=certif.user_id,
-                role_removed=False,
+                kind=("SHARE", RealmRole.OWNER),
             )
         )
 
