@@ -33,7 +33,7 @@ const MAX_SYNC_WAIT: Duration = Duration::seconds(6);
 const SERVER_STORE_UNAVAILABLE_WAIT: Duration = Duration::seconds(6);
 // 100 times faster than production, files are syncing too quickly
 #[cfg(test)]
-const BACKLOG_TRACKER_WAIT: Duration = Duration::milliseconds(100);
+const BACKLOG_TRACKER_WAIT: Duration = Duration::milliseconds(10);
 
 #[cfg(not(test))]
 const MIN_SYNC_WAIT: Duration = Duration::seconds(1);
@@ -458,15 +458,14 @@ fn task_future_factory(
                     let mut number_of_files_to_sync = 0;
                     let mut size_to_sync = 0;
                     for entry_id in ids {
-                        println!("{entry_id}");
                         match workspace_ops.stat_entry_by_id(entry_id).await {
                             Ok(stat) if !stat.is_confined() && stat.is_file() => {
                                 size_to_sync += stat.size();
                                 number_of_files_to_sync += 1
                             }
-                            Ok(e) => {}
+                            Ok(_) => {}
                             // ignore error and not actually confined entry
-                            Err(e) => {}
+                            Err(_) => {}
                         }
                     }
                     // send_event
@@ -477,11 +476,13 @@ fn task_future_factory(
                         number_of_files_to_sync,
                         size_to_sync,
                     };
-                    // if !(new_event.number_of_files_to_sync == previous_event.number_of_files_to_sync
-                    //     && new_event.size_to_sync == previous_event.size_to_sync)
-                    // {
-                    event_bus.send(&new_event);
-                    previous_event = new_event;
+                    if !(new_event.number_of_files_to_sync
+                        == previous_event.number_of_files_to_sync
+                        && new_event.size_to_sync == previous_event.size_to_sync)
+                    {
+                        event_bus.send(&new_event);
+                        previous_event = new_event;
+                    }
 
                     // sleep for a bit, we don't need to spam
                     device.time_provider.sleep(BACKLOG_TRACKER_WAIT).await;

@@ -36,6 +36,8 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
         .await
         .unwrap();
 
+    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
+
     started_workspace
         .fd_write(fd, 0, b"client-backlog-test")
         .await
@@ -44,21 +46,17 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
 
     started_workspace.fd_close(fd).await.unwrap();
 
-    libparsec_platform_async::sleep(std::time::Duration::from_secs(5)).await;
+    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
 
     let events = spy.list_not_acknowledged();
 
     for event in events {
         println!("{event:?}");
-        if let Some(e) = EventWorkspaceOutboundSyncBacklog::try_from_any_spied_event(&event)
-            && e.number_of_files_to_sync == 0
-            && e.size_to_sync == 0
-        {
-            spy.ack_remaining_events();
-            return;
+        if EventWorkspaceOutboundSyncBacklog::try_from_any_spied_event(&event).is_some() {
+            panic!("the file, is confined, no backlog expected")
         };
     }
-    panic!("there is still something to sync")
+    spy.ack_remaining_events();
 }
 
 const INPUT: &[u8] = b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, \
@@ -79,6 +77,8 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     let started_workspace = client.start_workspace(wksp1_id).await.unwrap();
 
     let mut spy = client.event_bus.spy.start_expecting();
+    // let it start with nothing to sync
+    // libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
 
     // write confined file
 
@@ -101,6 +101,18 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     started_workspace.fd_close(file).await.unwrap();
 
     libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
+
+    // let it sync
+
+    // check no backlog event is sent
+    let events = spy.list_not_acknowledged();
+    for event in events {
+        if EventWorkspaceOutboundSyncBacklog::try_from_any_spied_event(&event).is_some() {
+            panic!("there should be no backlog")
+        };
+    }
+    spy.ack_remaining_events();
+
     // move confined to not confined
 
     started_workspace
@@ -113,37 +125,42 @@ async fn rename_tmp_files(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    // let it sync
+    // write more stuff so there is a better chance to catch a backlog event
+    let file = started_workspace
+        .open_file(
+            FsPath::from_str("/file.txt").unwrap(),
+            OpenOptions {
+                read: true,
+                write: true,
+                truncate: false,
+                create: false,
+                create_new: false,
+            },
+        )
+        .await
+        .unwrap();
+    started_workspace.fd_write(file, 0, INPUT).await.unwrap();
+    started_workspace.fd_flush(file).await.unwrap();
     libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
 
     let events = spy.list_not_acknowledged();
 
     let mut file_synced = false;
-    let mut started_with_nothing_to_sync = false;
-    let mut ended_with_nothing_to_sync = false;
 
     // need to check that first there is nothing to sync then a file with size 445, then nothing again
     // ignoring all other events
     for event in events {
         if let Some(e) = EventWorkspaceOutboundSyncBacklog::try_from_any_spied_event(&event) {
-            if e.number_of_files_to_sync == 0 && e.size_to_sync == 0 {
-                if !file_synced {
-                    started_with_nothing_to_sync = true
-                } else {
-                    ended_with_nothing_to_sync = true
-                }
-            } else {
-                if e.number_of_files_to_sync == 1 && e.size_to_sync == 445 {
-                    file_synced = true
-                }
+            if e.number_of_files_to_sync == 1 && e.size_to_sync == 445 {
+                file_synced = true
+            } else if e.number_of_files_to_sync == 0 && e.size_to_sync == 0 && file_synced {
+                break;
             }
         };
     }
 
     spy.ack_remaining_events();
     assert!(file_synced);
-    assert!(started_with_nothing_to_sync);
-    assert!(ended_with_nothing_to_sync);
 }
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
