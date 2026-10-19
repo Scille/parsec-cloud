@@ -1,0 +1,1 @@
+Increased the displayed time precision for the following fields: file (creation, last update), user (join date, revocation date), workspace (archived date, deletion date)

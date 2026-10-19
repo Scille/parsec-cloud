@@ -1,0 +1,1 @@
+Fixed a bug in small display where a folder containing many files would not be scrollable all the way
