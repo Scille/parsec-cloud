@@ -111,6 +111,37 @@ quick-xml needs to be updated to >=0.41.0 but can't because email-address-parser
 email-address-parser v3.0.0 is not yet released http://crates.io/crates/email-address-parser
 """
 
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0367"
+reason = """
+Zip is only used by the build script to libsodium-sys-stable.
+Where it fetch pre-built release from `download.libsodium.org`.
+
+A PR to bump that dependency is available:
+https://github.com/jedisct1/libsodium-sys-stable/pull/26
+"""
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0368"
+reason = """
+Zip is only used by the build script to libsodium-sys-stable.
+Where it fetch pre-built release from `download.libsodium.org`.
+
+A PR to bump that dependency is available:
+https://github.com/jedisct1/libsodium-sys-stable/pull/26
+"""
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0369"
+reason = """
+Zip is only used by the build script to libsodium-sys-stable.
+Where it fetch pre-built release from `download.libsodium.org`.
+
+A PR to bump that dependency is available:
+https://github.com/jedisct1/libsodium-sys-stable/pull/26
+"""
+
+
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
 # Setting this to true can be helpful if you have special authentication requirements that cargo-deny does not support.
