@@ -173,6 +173,17 @@ export default defineConfig([
     },
   },
   {
+    // typescript-eslint rules rely on its own parser; plain JS files use espree.
+    files: ['**/*.{js,cjs,mjs}'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
     files: ['src/**'],
     rules: {
       'no-relative-import-paths/no-relative-import-paths': [
