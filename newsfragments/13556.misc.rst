@@ -1,0 +1,1 @@
+Changed client license from BUSL-1.1 to AGPL-3.0
