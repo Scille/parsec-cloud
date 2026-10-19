@@ -8,6 +8,70 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.11.0-rc.0 (2026-10-19)
+--------------------------------
+
+Features
+~~~~~~~~
+
+* Added a *What's new* notification banner after updating Parsec to a newer
+  version
+  (`#13554 <https://github.com/Scille/parsec-cloud/issues/13554>`__)
+
+* Reworked the built-in file editor integration to further improve performance
+  and stability
+  (`#13437 <https://github.com/Scille/parsec-cloud/issues/13437>`__)
+
+* Images can now be imported into a document from the current workspace or the PC
+  (`#13525 <https://github.com/Scille/parsec-cloud/issues/13525>`__)
+
+* Changed the text and code editor with a new one that is faster and easier to
+  use
+  (`#13384 <https://github.com/Scille/parsec-cloud/issues/13384>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug in small display where a folder containing many files would not be
+  scrollable all the way
+  (`#13517 <https://github.com/Scille/parsec-cloud/issues/13517>`__)
+
+* Fixed a bug where the recovery device section would be flagged as **Inactive**
+  even when set up
+  (`#13553 <https://github.com/Scille/parsec-cloud/issues/13553>`__)
+
+* Fixed some icons not displaying properly during the MacOS ``.dmg``
+  installation process
+  (`#13518 <https://github.com/Scille/parsec-cloud/issues/13518>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added a field in pending user invitations displaying which administrator
+  created the invitation
+  (`#13390 <https://github.com/Scille/parsec-cloud/issues/13390>`__)
+
+* Improved loading display and stability in video player
+  (`#13431 <https://github.com/Scille/parsec-cloud/issues/13431>`__)
+
+* Improved web app initial load time
+  (`#13420 <https://github.com/Scille/parsec-cloud/issues/13420>`__)
+
+* Increased the displayed time precision for the following fields: file
+  (creation, last update), user (join date, revocation date), workspace
+  (archived date, deletion date)
+  (`#13408 <https://github.com/Scille/parsec-cloud/issues/13408>`__)
+
+* Fixed broken application icons in the MacOS ``.dmg``
+  (`#13518 <https://github.com/Scille/parsec-cloud/issues/13518>`__)
+
+* Changed client license from BUSL-1.1 to AGPL-3.0
+  (`#13556 <https://github.com/Scille/parsec-cloud/issues/13556>`__)
+
+
+
 Parsec v3.10.0 (2026-09-29)
 ---------------------------
 

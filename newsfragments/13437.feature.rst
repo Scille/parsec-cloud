@@ -1,1 +1,0 @@
-Reworked the built-in file editor integration to further improve performance and stability

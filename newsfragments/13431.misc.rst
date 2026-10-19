@@ -1,1 +1,0 @@
-Improved loading display and stability in video player
