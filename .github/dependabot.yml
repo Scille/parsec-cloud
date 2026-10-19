@@ -235,6 +235,10 @@ updates:
     labels:
       - I-Dependency
       - I-Javascript
+    ignore:
+      # vue-tsc 3.3.12+ reports false TS2339 `.value` errors on imports used inside template closures.
+      - dependency-name: vue-tsc
+        versions: [3.3.12, 3.3.13]
     cooldown:
       default-days: 10
     schedule:
