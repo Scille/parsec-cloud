@@ -83,7 +83,7 @@
         "globals": "^17.13.0",
         "happy-dom": "^20.14.6",
         "jiti": "^2.7.0",
-        "knip": "^6.40.0",
+        "knip": "^6.41.0",
         "monocart-coverage-reports": "^2.13.2",
         "otplib": "^13.5.0",
         "prettier": "3.9.9",
