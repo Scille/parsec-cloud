@@ -87,6 +87,19 @@ function bytesToStr(bytes) {
  */
 
 /**
+ * One OnlyOffice spreadsheet recalc record, as carried in the `indexCols`/`indexRows`
+ * keys of the OnlyOffice `excelAdditionalInfo` blob (OnlyOffice `CRecalcIndexElement`
+ * wire shape: the translator moves those records around, but never inspects them).
+ * @typedef {{_recalcType: 1|2, _position: number, _count: number, m_bIsSaveIndex: boolean}} OORecalcIndexElement
+ */
+
+/**
+ * The OnlyOffice `indexCols`/`indexRows` shape (only sent by the spreadsheet editor):
+ * sheet id -> its recalc records.
+ * @typedef {Record<string, {_arrElements: Array<OORecalcIndexElement>}>} OORecalcIndex
+ */
+
+/**
  * Side-effect-free translation layer between OnlyOffice and Editics protocols.
  */
 class EditicsTranslator {
@@ -275,23 +288,31 @@ class EditicsTranslator {
       encryptedChanges.push([keyIndex, cipherText.toBase64()]);
     }
 
-    // OnlyOffice protocol's `excelAdditionalInfo` is split in editics protocol into:
-    // - `excelAdditionalInfo`: cleartext spreadsheet lock-shift part (`{ indexCols, indexRows }`)
-    //   needed server-side to recalculate the stored locked ranges.
-    // - `encryptedCursorAdditionalInfo`: remaining cursor part, encrypted for
-    //   the other participants.
-    /** @type {{indexCols: Object|null, indexRows: Object|null} | null} */
-    let excelAdditionalInfo = null;
+    // In OnlyOffice protocol, the `excelAdditionalInfo` (despite its name) is
+    // carried by all the editor types.
+    // - The spreadsheet editor only sends it when there is something to carry:
+    //   the `indexCols`/`indexRows` lock-shift info when columns/rows were
+    //   inserted (the receivers use it to recalculate their locked ranges),
+    //   and the `CursorInfo` cursor keys only when it has a document position.
+    //   So a save can carry lock-shift info without any cursor part, and vice versa.
+    // - The word/presentation editors always carry the cursor keys (and never the
+    //   lock-shift info), with `CursorInfo` null when the editor is not in
+    //   fast co-editing mode or has no document position.
+    //
+    // So editics protocol splits this into three fields:
+    // - `excelAdditionalInfoIndex[Cols|Rows]` that contains the spreadsheet-specific infos.
+    // - `encryptedCursorAdditionalInfo` that contains the cursor info use by all editors.
+    /** @type {OORecalcIndex|null} */
+    let excelAdditionalInfoIndexCols = null;
+    /** @type {OORecalcIndex|null} */
+    let excelAdditionalInfoIndexRows = null;
     /** @type {[number, string] | null} */
     let encryptedCursor = null;
     if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
       const parsed = JSON.parse(String(oo.excelAdditionalInfo));
-      if ('indexCols' in parsed || 'indexRows' in parsed) {
-        excelAdditionalInfo = {
-          indexCols: parsed.indexCols !== undefined ? parsed.indexCols : null,
-          indexRows: parsed.indexRows !== undefined ? parsed.indexRows : null,
-        };
-      }
+      excelAdditionalInfoIndexCols = parsed.indexCols ?? null;
+      excelAdditionalInfoIndexRows = parsed.indexRows ?? null;
+      /** @type {Record<string, any>} */
       const cursorPart = {};
       for (const key of Object.keys(parsed)) {
         if (key !== 'indexCols' && key !== 'indexRows') cursorPart[key] = parsed[key];
@@ -307,7 +328,8 @@ class EditicsTranslator {
       startSaveChanges: oo.startSaveChanges,
       endSaveChanges: oo.endSaveChanges,
       deleteIndex: oo.deleteIndex ?? null,
-      excelAdditionalInfo,
+      excelAdditionalInfoIndexCols,
+      excelAdditionalInfoIndexRows,
       encryptedCursorAdditionalInfo: encryptedCursor,
       releaseLocks: oo.releaseLocks,
     };
@@ -738,8 +760,13 @@ class EditicsTranslator {
     // save carries them), then the decrypted cursor keys.
     let hasExcelAdditionalInfo = false;
     let excelObj = {};
-    if (editics.excelAdditionalInfo !== null && editics.excelAdditionalInfo !== undefined) {
-      excelObj = Object.assign(excelObj, editics.excelAdditionalInfo);
+    const hasIndexCols = editics.excelAdditionalInfoIndexCols !== null && editics.excelAdditionalInfoIndexCols !== undefined;
+    const hasIndexRows = editics.excelAdditionalInfoIndexRows !== null && editics.excelAdditionalInfoIndexRows !== undefined;
+    if (hasIndexCols || hasIndexRows) {
+      // On a structural-change save the OnlyOffice blob always carries both
+      // keys (the unchanged axis as `null`), re-emit it as-is.
+      excelObj.indexCols = editics.excelAdditionalInfoIndexCols ?? null;
+      excelObj.indexRows = editics.excelAdditionalInfoIndexRows ?? null;
       hasExcelAdditionalInfo = true;
     }
     if (editics.encryptedCursorAdditionalInfo !== null && editics.encryptedCursorAdditionalInfo !== undefined) {
@@ -813,6 +840,17 @@ export { EditicsTranslator };
  * @property {string} deviceId
  * @property {boolean} view
  *
+ * @typedef {Object} EditicsExcelRecalcIndexElement
+ * @property {1|2} _recalcType
+ * @property {number} _position
+ * @property {number} _count
+ * @property {boolean} m_bIsSaveIndex
+ *
+ * @typedef {Object} EditicsExcelSheetRecalcIndex
+ * @property {EditicsExcelRecalcIndexElement[]} _arrElements
+ *
+ * @typedef {Record<string, EditicsExcelSheetRecalcIndex>} EditicsExcelRecalcIndex
+ *
  * @typedef {Object} EditicsClientEventAuth
  * @property {'auth'} type
  * @property {number} vlobVersion
@@ -847,7 +885,8 @@ export { EditicsTranslator };
  * @property {boolean} startSaveChanges
  * @property {boolean} endSaveChanges
  * @property {number|null} deleteIndex
- * @property {Object<string,*>|null} excelAdditionalInfo
+ * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexCols
+ * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexRows
  * @property {[number, string]|null} encryptedCursorAdditionalInfo
  * @property {boolean} [releaseLocks]
  *
@@ -922,7 +961,8 @@ export { EditicsTranslator };
  * @property {number} syncChangesIndex
  * @property {boolean} endSaveChanges
  * @property {Array<{block:*, holder:[EditicsParticipantID, string], time:number, changes:null}>} [locks]
- * @property {Object<string,*>|null} excelAdditionalInfo
+ * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexCols
+ * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexRows
  * @property {[number, string]|null} encryptedCursorAdditionalInfo
  *
  * @typedef {Object} EditicsServerEventSavePartChanges
