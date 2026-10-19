@@ -16,6 +16,7 @@ from parsec._parsec import (
     GreetingAttemptID,
     InvitationStatus,
     OrganizationID,
+    RealmRole,
     UserID,
     UserProfile,
     VlobID,
@@ -431,7 +432,11 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
     timestamp: DateTime
     realm_id: VlobID
     user_id: UserID
-    role_removed: bool
+    kind: tuple[Literal["SHARE"], RealmRole] | Literal["UNSHARE"] | Literal["OTHER"]
+
+    @property
+    def role_removed(self) -> bool:
+        return self.kind == "UNSHARE"
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
