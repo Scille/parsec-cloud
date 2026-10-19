@@ -155,7 +155,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: x86_64-pc-windows-msvc
+          - os: windows
+            arch: x86_64
+            target: x86_64-pc-windows-msvc
             suffix: windows-x86_64-msvc
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
@@ -218,6 +220,11 @@ jobs:
           Get-ChildItem "${env:ProgramFiles(x86)}\WinFsp\bin" | Select-Object -First 20
         timeout-minutes: 1
 
+      - name: Windows > Install yq
+        if: matrix.os == 'windows'
+        run: choco install yq
+        timeout-minutes: 3
+
       - name: Build CLI
         shell: bash -o pipefail -eux {0}
         run: >-
@@ -233,10 +240,12 @@ jobs:
 
       - name: Rename CLI artifact
         id: rename
+        shell: bash -eux -o pipefail {0}
         run: |
-          $FINAL_ARTIFACT_NAME = "parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}.exe"
-          Copy-Item -Path "target\${{ matrix.target }}\release\parsec-cli.exe" -Destination "${{ runner.temp }}\$FINAL_ARTIFACT_NAME"
-          "artifact_name=$FINAL_ARTIFACT_NAME" | Tee-Object -FilePath $env:GITHUB_OUTPUT -Append
+          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}.exe"
+          cp -v "target/${{ matrix.target }}/release/parsec-cli.exe" "${{ runner.temp }}/$FINAL_ARTIFACT_NAME"
+          echo "artifact_name=$FINAL_ARTIFACT_NAME" | tee -a $GITHUB_OUTPUT
+          yq --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee "${{ runner.temp }}/artifacts.yml"
         timeout-minutes: 1
 
       - name: Generate fake package.json for sign script
@@ -250,5 +259,6 @@ jobs:
           path: |
             ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
             ${{ runner.temp }}/package.json
+            ${{ runner.temp }}/artifacts.yml
           if-no-files-found: error
         timeout-minutes: 5
