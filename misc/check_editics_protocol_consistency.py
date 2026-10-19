@@ -33,7 +33,10 @@ CLOSING_MARK = "End of auto-generated code"
 class BaseModel:
     pass
 
+
 DEFAULT_UNSET = object()
+
+
 class MockFieldInfo:
     """
     Stand-in for pydantic's `FieldInfo` (only what the JSDoc generation needs).
