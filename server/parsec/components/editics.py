@@ -50,6 +50,7 @@ from parsec.editics_protocol import (
     EditicsServerEventSavePartChanges,
     EditicsServerEventUnSaveLock,
     EditicsServerEventWaitAuth,
+    EditicsExcelRecalcIndex,
     LockRecord,
     MessageRecord,
     ReleaseLockRecord,
@@ -274,20 +275,21 @@ _LOCK_RECALC_SKIP_SUB_TYPES = (2, 4)  # InsertColumns, InsertRows
 def _recalculate_locks(
     session: EditicsSession,
     saver_participant_id: EditicsParticipantID,
-    excel_additional_info: dict[str, Any],
+    index_cols: EditicsExcelRecalcIndex | None,
+    index_rows: EditicsExcelRecalcIndex | None,
 ) -> None:
     """Recalculate the stored locked ranges of the other participants after a
     spreadsheet structural change, per the OnlyOffice server's
     `_recalcLockArray` (see the `saveChanges` handling).
 
-    The `excelAdditionalInfo` carries the inserted/deleted columns and rows
-    as per-sheet recalc records (`_arrElements`): an `Add` record at position
+    The recalc records (see `EditicsExcelRecalcIndexElement`) carry the
+    inserted/deleted columns and rows per sheet: an insert record at position
     `P` with count `N` shifts the coordinates at or after `P` by `+N`, a
-    `Remove` record by `-N` (a coordinate inside the removed range stops at
-    the position just before it). The records with `m_bIsSaveIndex` set are
-    skipped: they are the save-index markers a client re-emits to acknowledge
-    the structural changes it just applied, not new geometry changes (record
-    53: Alice's follow-up save re-sends Bob's insertion as a marker).
+    remove record by `-N` (a coordinate inside the removed range stops at the
+    position just before it). The records flagged as save-index markers are
+    skipped: they are the markers a client re-emits to acknowledge the
+    structural changes it just applied, not new geometry changes (record 53:
+    Alice's follow-up save re-sends Bob's insertion as a marker).
 
     Only the range locks are shifted (the structural column/row locks are the
     change markers themselves, and the other editors' blocks are not
@@ -295,19 +297,12 @@ def _recalculate_locks(
     own locks are about to be released, or kept by its client which knows the
     new geometry).
     """
-    for part_name, axes in (("indexCols", ("c1", "c2")), ("indexRows", ("r1", "r2"))):
-        part = excel_additional_info.get(part_name)
-        if not isinstance(part, dict):
+    for axes, changes in ((("c1", "c2"), index_cols), (("r1", "r2"), index_rows)):
+        if changes is None:
             continue
-        for sheet_id, sheet_info in part.items():
-            if not isinstance(sheet_info, dict):
-                continue
-            elements = [
-                element
-                for element in sheet_info.get("_arrElements", [])
-                if not element.get("m_bIsSaveIndex")
-            ]
-            if not elements:
+        for sheet_id, sheet_changes in changes.items():
+            real_changes = [change for change in sheet_changes.elements if not change.is_save_index]
+            if not real_changes:
                 continue
             for lock in session.region_locks.values():
                 block = lock.block
@@ -315,26 +310,24 @@ def _recalculate_locks(
                     not isinstance(block, dict)
                     or block.get("type") != _LOCK_RECALC_RANGE_TYPE
                     or block.get("subType") in _LOCK_RECALC_SKIP_SUB_TYPES
-                    or str(block.get("sheetId")) != str(sheet_id)
+                    or str(block.get("sheetId")) != sheet_id
                     or lock.holder[0] == saver_participant_id
                 ):
                     continue
-                # Note the shift is applied element by element (in list order):
+                # Note the shift is applied record by record (in list order):
                 # each record describes a single geometry change, applied on
                 # top of the previous ones.
                 range_or_object_id = block["rangeOrObjectId"]
-                for element in elements:
-                    position = element["_position"]
-                    count = element["_count"]
-                    if element["_recalcType"] == 1:  # Add (insert)
+                for change in real_changes:
+                    if change.recalc_type == 1:  # Insert (`RecalcIndexAdd`)
                         for axis in axes:
-                            if range_or_object_id[axis] >= position:
-                                range_or_object_id[axis] += count
-                    else:  # Remove (delete)
+                            if range_or_object_id[axis] >= change.position:
+                                range_or_object_id[axis] += change.count
+                    else:  # Delete (`RecalcIndexRemove`)
                         for axis in axes:
-                            if range_or_object_id[axis] >= position:
+                            if range_or_object_id[axis] >= change.position:
                                 range_or_object_id[axis] = max(
-                                    position - 1, range_or_object_id[axis] - count
+                                    change.position - 1, range_or_object_id[axis] - change.count
                                 )
 
 
@@ -1158,9 +1151,15 @@ class EditicsComponent:
                 # stored locked ranges of the OTHER participants are
                 # recalculated so they follow the shifted cells (record 56:
                 # Alice's B3 block is stored as C3 after Bob inserted a column
-                # at A).
-                if event.endSaveChanges and event.excelAdditionalInfo is not None:
-                    _recalculate_locks(session, participant.participant_id, event.excelAdditionalInfo)
+                # at A). This is a no-op for the saves without structural
+                # change info (`_recalculate_locks` skips the `None` axes).
+                if event.endSaveChanges:
+                    _recalculate_locks(
+                        session,
+                        participant.participant_id,
+                        index_cols=event.excelAdditionalInfoIndexCols,
+                        index_rows=event.excelAdditionalInfoIndexRows,
+                    )
 
                 # Broadcast the changes to the other participants (the saver gets
                 # `unSaveLock`/`savePartChanges` replies instead)
@@ -1176,7 +1175,8 @@ class EditicsComponent:
                     changesIndex=session.sync_changes_index,
                     syncChangesIndex=session.sync_changes_index,
                     endSaveChanges=event.endSaveChanges,
-                    excelAdditionalInfo=event.excelAdditionalInfo,
+                    excelAdditionalInfoIndexCols=event.excelAdditionalInfoIndexCols,
+                    excelAdditionalInfoIndexRows=event.excelAdditionalInfoIndexRows,
                     encryptedCursorAdditionalInfo=event.encryptedCursorAdditionalInfo,
                     locks=released_locks,
                 )

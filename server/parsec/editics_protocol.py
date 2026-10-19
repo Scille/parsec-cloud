@@ -50,6 +50,37 @@ class EditicsParticipantEntry(BaseModel):
     view: bool
 
 
+# --- Spreadsheet structural changes -----------------------------------------
+
+
+class EditicsExcelRecalcIndexElement(BaseModel):
+    # TODO: `serialize_by_alias=True` no longer needed once upgranded to Pydantic v3
+    model_config = {"serialize_by_alias": True}
+
+    # 1=insert, 2=remove
+    recalc_type: Literal[1, 2] = Field(alias="_recalcType")
+    # 0-based index of the first inserted/deleted column (or row).
+    position: int = Field(alias="_position", ge=0)
+    # Consecutive positions changed (always 1 in practice, since the OnlyOffice
+    # editor expands bigger changes into N adjacent elements).
+    count: int = Field(alias="_count", ge=1)
+    # True for the save-index markers a client re-emits to acknowledge the
+    # structural changes it just applied (i.e. coming from other users' changes
+    # it hasn't applied yet): not new geometry changes, the server skips them.
+    is_save_index: bool = Field(alias="m_bIsSaveIndex")
+
+
+class EditicsExcelSheetRecalcIndex(BaseModel):
+    # TODO: `serialize_by_alias=True` no longer needed once upgranded to Pydantic v3
+    model_config = {"serialize_by_alias": True}
+
+    elements: list[EditicsExcelRecalcIndexElement] = Field(alias="_arrElements")
+
+
+# Sheet id (OnlyOffice carries it as a JSON object key, e.g. `"6"`) -> its recalc records.
+type EditicsExcelRecalcIndex = dict[str, EditicsExcelSheetRecalcIndex]
+
+
 # --- Client -> server events -------------------------------------------------
 
 
@@ -122,11 +153,11 @@ class EditicsClientEventSaveChanges(BaseModel):
     #   lock-shift info), with `CursorInfo` null when the editor is not in
     #   fast co-editing mode or has no document position.
     #
-    # So here we split this into two fields:
-    # - `excelAdditionalInfo` that contains the actual spreadsheet-specific infos (
-    #   Shape: `{ indexCols: ..., indexRows: ... }`).
+    # So here we split this into three fields:
+    # - `excelAdditionalInfoIndex[Cols|Rows]` that contains the spreadsheet-specific infos.
     # - `encryptedCursorAdditionalInfo` that contains the cursor info use by all editors.
-    excelAdditionalInfo: dict[str, Any] | None
+    excelAdditionalInfoIndexCols: EditicsExcelRecalcIndex | None
+    excelAdditionalInfoIndexRows: EditicsExcelRecalcIndex | None
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None
     # Release this user's region locks after the save (OnlyOffice name kept).
@@ -322,11 +353,11 @@ class EditicsServerEventSaveChanges(BaseModel):
     #   lock-shift info), with `CursorInfo` null when the editor is not in
     #   fast co-editing mode or has no document position.
     #
-    # So here we split this into two fields:
-    # - `excelAdditionalInfo` that contains the actual spreadsheet-specific infos (
-    #   Shape: `{ indexCols: ..., indexRows: ... }`).
+    # So here we split this into three fields:
+    # - `excelAdditionalInfoIndex[Cols|Rows]` that contains the spreadsheet-specific infos.
     # - `encryptedCursorAdditionalInfo` that contains the cursor info use by all editors.
-    excelAdditionalInfo: dict[str, Any] | None
+    excelAdditionalInfoIndexCols: EditicsExcelRecalcIndex | None
+    excelAdditionalInfoIndexRows: EditicsExcelRecalcIndex | None
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None
 
