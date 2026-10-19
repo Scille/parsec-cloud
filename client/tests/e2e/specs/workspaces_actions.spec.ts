@@ -71,7 +71,7 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
 const MENU = [
   {
     title: 'Workspace management',
-    actions: ['Rename', 'History', 'Hide this workspace', 'Archive this workspace', 'Delete this workspace'],
+    actions: ['Rename', 'History', 'Hide this workspace', 'Archive this workspace', 'Details', 'Delete this workspace'],
   },
   {
     title: 'Collaboration',
@@ -86,7 +86,7 @@ const MENU = [
 const READER_MENU = [
   {
     title: 'Workspace management',
-    actions: ['History', 'Hide this workspace'],
+    actions: ['History', 'Hide this workspace', 'Details'],
   },
   {
     title: 'Collaboration',
@@ -196,7 +196,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
 
   msTest(`Toggle workspace favorite ${mode}`, async ({ workspaces }) => {
     const popover = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    await popover.getByRole('listitem').nth(10).click();
+    await popover.getByRole('listitem').nth(11).click();
     await expect(popover).toBeHidden();
     if (mode === 'sidebar') {
       await workspaces.locator('.sidebar').locator('#sidebar-all-workspaces').click();
@@ -220,7 +220,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
   msTest(`Open workspace sharing ${mode}`, async ({ workspaces }) => {
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeHidden();
     const popover = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    await popover.getByRole('listitem').nth(8).click();
+    await popover.getByRole('listitem').nth(9).click();
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeVisible();
     await expect(workspaces.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
     await expect(workspaces.locator('.sharing-modal__workspace__title')).toHaveText('wksp1');
@@ -308,6 +308,7 @@ for (const method of ['button', 'context']) {
         'Claim ownership',
         'History',
         'Hide this workspace',
+        'Details',
         'Copy link',
         'Sharing and roles',
         'Add to Favorites',
@@ -333,6 +334,7 @@ for (const method of ['button', 'context']) {
       'History',
       'Hide this workspace',
       'Archive this workspace',
+      'Details',
       'Delete this workspace',
       'Copy link',
       'Sharing and roles',
@@ -360,6 +362,7 @@ msTest('Test workspace unmount/mount', async ({ connected }) => {
     'History',
     'Hide this workspace',
     'Archive this workspace',
+    'Details',
     'Delete this workspace',
     'Copy link',
     'Sharing and roles',
@@ -388,6 +391,7 @@ msTest('Test workspace unmount/mount', async ({ connected }) => {
     'History',
     'Show this workspace',
     'Archive this workspace',
+    'Details',
     'Delete this workspace',
     'Copy link',
     'Sharing and roles',

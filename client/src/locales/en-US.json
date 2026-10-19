@@ -581,6 +581,20 @@
             "trashed": "Bin"
         }
     },
+    "WorkspaceDetails": {
+        "title": "Workspace details",
+        "generalInfo": "General information",
+        "role": "Access rights",
+        "created": "Created on",
+        "availableOffline": "Available offline",
+        "notAvailableOffline": "Not available offline",
+        "rights": {
+            "manageWorkspace": "Manage the workspace (rename, archive, delete)",
+            "share": "Manage access (share the workspace)",
+            "editDocuments": "Edit documents (add, edit, rename, delete)",
+            "viewDocuments": "View documents (open, preview)"
+        }
+    },
     "WorkspaceSharing": {
         "title": "Share the workspace",
         "searchPlaceholder": "John Smith",

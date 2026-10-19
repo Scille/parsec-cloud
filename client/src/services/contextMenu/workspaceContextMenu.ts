@@ -104,6 +104,9 @@ export function useWorkspaceContextMenu(fromSidebar = false) {
       case WorkspaceAction.TakeOwnership:
         await actions.takeOwnershipOfWorkspace(workspace);
         break;
+      case WorkspaceAction.ShowDetails:
+        await actions.showDetails(workspace);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
         break;
