@@ -26,7 +26,7 @@
         "sentry:sourcemaps": "sentry-cli sourcemaps inject --org scille --project parsec3-frontend ./build && sentry-cli sourcemaps upload --org scille --project parsec3-frontend ./build"
     },
     "dependencies": {
-        "@sentry/electron": "^7.11.0",
+        "@sentry/electron": "^8.1.0",
         "builder-util-runtime": "9.7.0",
         "chokidar": "~5.0.0",
         "electron-log": "^5.4.3",
