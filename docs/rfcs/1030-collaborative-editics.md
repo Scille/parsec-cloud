@@ -1064,12 +1064,17 @@ Format:
 *Editics protocol changes*:
 
 - Encrypt `changes` fields (hence rename it to `encryptedChanges`).
-- Split `excelAdditionalInfo` into two fields:
-  - `excelAdditionalInfo` (cleartext, same name): the spreadsheet lock-shift
-    part (`{ "indexCols": …, "indexRows": … }`, OnlyOffice shape kept), which
-    the server uses to recalculate the stored locked ranges of the other
-    participants after a structural change (see the `getLock` section and
-    records 53/56-58);
+- Split `excelAdditionalInfo` into three fields:
+  - `excelAdditionalInfoIndexCols` / `excelAdditionalInfoIndexRows` (cleartext):
+    the spreadsheet lock-shift part (the OnlyOffice `indexCols`/`indexRows`
+    keys, OnlyOffice inner shape kept), which the server uses to recalculate
+    the stored locked ranges of the other participants after a structural
+    change (see the `getLock` section and records 53/56-58). Unlike the
+    rest of the OnlyOffice payload (kept opaque), this part is typed since
+    the server must interpret it: a per-sheet map of recalc records
+    `{ "_recalcType": 1|2, "_position": int, "_count": int,
+    "m_bIsSaveIndex": bool }` (OnlyOffice `CRecalcIndexElement`, wire names
+    kept so the editics payload stays identical to the OnlyOffice blob);
   - `encryptedCursorAdditionalInfo` (encrypted): the remaining cursor part
     (`UserId`/`UserShortId`/`CursorInfo`, used by all the editor types).
   The split is lossless: the OnlyOffice producers emit the
@@ -1129,11 +1134,13 @@ Format:
   // - `time`: server timestamp (ms) of the change.
   "locks": <array>,
 
-  // The originator's `excelAdditionalInfo`, passed through unchanged.
-  // Spreadsheet clients use it to recalculate their own lock ranges
-  // (`onRecalcLocks`) and for cursor display; other editors ignore it
-  // (or use only the cursor portion).
-  "excelAdditionalInfo": <string | undefined>
+  // The originator's save spreadsheet lock-shift info, passed through
+  // unchanged (same fields as the client -> server `saveChanges` event, see
+  // there). Spreadsheet clients use it to recalculate their own lock ranges
+  // (`onRecalcLocks`); other editors ignore it (or use only the cursor
+  // portion, carried by `encryptedCursorAdditionalInfo`).
+  "excelAdditionalInfoIndexCols": <object | null>,
+  "excelAdditionalInfoIndexRows": <object | null>
 }
  ```
 
@@ -1147,10 +1154,10 @@ Format:
 - The `locks` records carry the holder's identity in a `holder` field (a
   `(participant id, device id)` tuple) instead of the `user` id, like the
   `getLock`/`releaseLock` lock records.
-- Rework `excelAdditionalInfo` into the same two fields as the client →
-  server event (`excelAdditionalInfo` cleartext lock-shift part +
-  `encryptedCursorAdditionalInfo` encrypted cursor part, see there), passed
-  through unchanged from the originator's save.
+- Rework `excelAdditionalInfo` into the same fields as the client →
+  server event (`excelAdditionalInfoIndexCols`/`excelAdditionalInfoIndexRows`
+  cleartext lock-shift part + `encryptedCursorAdditionalInfo` encrypted cursor
+  part, see there), passed through unchanged from the originator's save.
 
 The saving client itself does not receive the server `saveChanges` event, it
 receives `unSaveLock` (and `savePartChanges` for intermediate chunks) instead.
