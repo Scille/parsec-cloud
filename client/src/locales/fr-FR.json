@@ -581,6 +581,20 @@
             "trashed": "Corbeille"
         }
     },
+    "WorkspaceDetails": {
+        "title": "Détails de l'espace de travail",
+        "generalInfo": "Informations générales",
+        "role": "Droits d'accès",
+        "created": "Créé le",
+        "availableOffline": "Disponible hors-ligne",
+        "notAvailableOffline": "Non disponible hors-ligne",
+        "rights": {
+            "manageWorkspace": "Gérer l'espace de travail (renommer, archiver, supprimer)",
+            "share": "Gérer les accès (partager l'espace de travail)",
+            "editDocuments": "Modifier les documents (ajouter, modifier, renommer, supprimer)",
+            "viewDocuments": "Consulter les documents (ouvrir, prévisualiser)"
+        }
+    },
     "WorkspaceSharing": {
         "title": "Partager l'espace de travail",
         "searchPlaceholder": "Jean Martin",

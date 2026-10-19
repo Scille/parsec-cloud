@@ -312,7 +312,7 @@ msTest.describe(() => {
       } else if (page === 'trashed') {
         // Move workspace to bin
         await wk.click({ button: 'right' });
-        await contextMenu.getByRole('listitem').nth(5).click();
+        await contextMenu.getByRole('listitem').nth(6).click();
         await answerQuestion(documents, true);
         await fillInputModal(documents, 'wksp1');
         await expect(documents).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');

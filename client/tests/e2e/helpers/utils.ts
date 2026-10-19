@@ -768,6 +768,7 @@ export async function checkWorkspaceContextMenu(
       'History',
       options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
       'Archive this workspace',
+      'Details',
       'Delete this workspace',
       'Copy link',
       'Sharing and roles',
@@ -777,12 +778,12 @@ export async function checkWorkspaceContextMenu(
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Workspace management']);
     }
-    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Delete this workspace']);
+    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Details', 'Delete this workspace']);
   } else if (mode === 'deleted') {
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Workspace management']);
     }
-    await expect(actions).toHaveText(['History', 'Restore this workspace']);
+    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Details']);
   } else if (mode === 'normal') {
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Workspace management', 'Collaboration', 'Miscellaneous']);
@@ -790,6 +791,7 @@ export async function checkWorkspaceContextMenu(
     await expect(actions).toHaveText([
       'History',
       options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
+      'Details',
       'Copy link',
       'Sharing and roles',
       options?.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
@@ -797,7 +799,7 @@ export async function checkWorkspaceContextMenu(
   }
 
   if (action === 'dismiss') {
-    await menu.locator('ion-backdrop').click();
+    await menu.locator('ion-backdrop').click({ position: { x: 5, y: 5 } });
     await expect(menu).toBeHidden();
   } else if (action) {
     await actions.filter({ hasText: action }).click();

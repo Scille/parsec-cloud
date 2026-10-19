@@ -27,6 +27,7 @@ import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import { WorkspaceMenu } from '@/views/workspaces';
+import WorkspaceDetailsModal from '@/views/workspaces/WorkspaceDetailsModal.vue';
 import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController } from '@ionic/vue';
@@ -557,6 +558,18 @@ export function useWorkspaceActions() {
     }
   }
 
+  async function showDetails(workspace: WorkspaceInfo): Promise<void> {
+    const modal = await modalController.create({
+      component: WorkspaceDetailsModal,
+      cssClass: 'workspace-details-modal',
+      componentProps: {
+        workspace: workspace,
+      },
+    });
+    await modal.present();
+    await modal.onWillDismiss();
+  }
+
   return {
     takeOwnershipOfWorkspace,
     restoreWorkspace,
@@ -572,5 +585,6 @@ export function useWorkspaceActions() {
     unmountWorkspaceWithConfirmation,
     createWorkspace,
     openCreateWorkspaceModal,
+    showDetails,
   };
 }

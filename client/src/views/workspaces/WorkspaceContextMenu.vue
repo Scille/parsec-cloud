@@ -105,21 +105,6 @@
 
         <ion-item
           button
-          v-if="clientProfile !== UserProfile.Outsider && false"
-          @click="onClick(WorkspaceAction.ShowDetails)"
-          class="ion-no-padding list-group-item"
-        >
-          <ion-icon
-            class="list-group-item__icon"
-            :icon="informationCircle"
-          />
-          <ion-text class="button-medium list-group-item__label">
-            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDetails') }}
-          </ion-text>
-        </ion-item>
-
-        <ion-item
-          button
           v-if="!isHidden && !(workspace.isArchived || workspace.isTrashed)"
           @click="onClick(WorkspaceAction.UnMount)"
           class="ion-no-padding list-group-item"
@@ -132,6 +117,7 @@
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHide') }}
           </ion-text>
         </ion-item>
+
         <ion-item
           button
           v-if="isHidden && !(workspace.isArchived || workspace.isTrashed)"
@@ -146,6 +132,7 @@
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShow') }}
           </ion-text>
         </ion-item>
+
         <ion-item
           button
           v-if="workspace.selfRole === WorkspaceRole.Owner && !(workspace.isArchived || workspace.isTrashed)"
@@ -160,6 +147,7 @@
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionArchive') }}
           </ion-text>
         </ion-item>
+
         <ion-item
           button
           v-if="(workspace.isArchived || workspace.isTrashed) && workspace.selfRole === WorkspaceRole.Owner"
@@ -174,6 +162,21 @@
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRestore') }}
           </ion-text>
         </ion-item>
+
+        <ion-item
+          button
+          @click="onClick(WorkspaceAction.ShowDetails)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="informationCircle"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDetails') }}
+          </ion-text>
+        </ion-item>
+
         <ion-item
           v-if="!workspace.isTrashed && workspace.selfRole === WorkspaceRole.Owner"
           button

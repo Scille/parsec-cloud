@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { DataCache } from '@/common/cache';
+import { entryStat } from '@/parsec/file';
 import { getClientInfo } from '@/parsec/login';
 import {
   CertificateBasedInfoOrigin,
@@ -96,6 +97,7 @@ export async function listWorkspaces(
         if (getInfo.ok) {
           mountpoints = getInfo.value.mountpoints;
         }
+        const rootStat = await entryStat(startResult.value, '/');
         const info: WorkspaceInfo = {
           id: wkInfo.id,
           isStarted: true,
@@ -110,6 +112,7 @@ export async function listWorkspaces(
           sharing: [],
           size: 0,
           lastUpdated: DateTime.now(),
+          created: rootStat.ok ? rootStat.value.created : undefined,
           availableOffline: true,
           mountpoints: mountpoints,
           handle: startResult.value,
