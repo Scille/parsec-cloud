@@ -379,6 +379,7 @@ class EditicsServerEventDisconnectReason(BaseModel):
     """
     The server kicks the participant out and closes its connection.
     """
+
     type: Literal["disconnectReason"] = "disconnectReason"
     # OnlyOffice ACCESS_DENIED_CODE constant.
     # 4001 shutdown, 4002 idle, 4003 absolute, 4004 access denied, 4006 jwt error.

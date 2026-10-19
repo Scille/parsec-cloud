@@ -624,7 +624,9 @@ class EditicsComponent:
             and participant_authed.view
             and isinstance(
                 event,
-                EditicsClientEventGetLock | EditicsClientEventSaveChanges | EditicsClientEventIsSaveLock,
+                EditicsClientEventGetLock
+                | EditicsClientEventSaveChanges
+                | EditicsClientEventIsSaveLock,
             )
         ):
             # ...and get their SSE connection kicked out for this!
