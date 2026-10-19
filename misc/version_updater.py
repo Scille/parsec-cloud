@@ -6,13 +6,13 @@ Helper that help changing the version of a tool across the repository.
 
 from __future__ import annotations
 
+import dataclasses as dt
 import enum
 import glob
 import re
 import tomllib
 from argparse import ArgumentParser
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Generator
 from fileinput import FileInput
 from pathlib import Path
 from re import Pattern
@@ -26,7 +26,7 @@ VERSIONS_FILE = (Path(__file__).parent / "versions.toml").resolve()
 TOOLS_VERSION: dict[Tool, str] | None = None
 
 
-@dataclass
+@dt.dataclass
 class ReplaceRegex:
     regex: str
     replaced: ReplacementPattern
@@ -88,6 +88,7 @@ PARSEC_REPO_SRC_BASE_URL = ReplaceRegex(
     r"github.com/Scille/parsec-cloud/tree/v.*?/",
     "github.com/Scille/parsec-cloud/tree/v{version}/",
 )
+CARGO_BUSL_LICENSE = ReplaceRegex(r"license.* = .*", 'license = "BUSL-1.1"')
 
 
 @enum.unique
@@ -97,6 +98,7 @@ class Tool(enum.Enum):
     Cross = "cross"
     UV = "uv"
     License = "license"
+    ServerLicense = "server_license"
     Nextest = "nextest"
     Node = "node"
     Parsec = "parsec"
@@ -247,14 +249,54 @@ def set_tool_version(tool: Tool, version: str) -> None:
     tools_version[tool] = version
 
 
-FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
-    ROOT_DIR / ".github/actions/use-pre-commit/action.yml": {
+@dt.dataclass(frozen=True)
+class Matcher:
+    includes: tuple[Path, ...] = dt.field(default_factory=tuple)
+    excludes: tuple[Path, ...] = dt.field(default_factory=tuple)
+
+    @classmethod
+    def simple(cls, path: Path) -> Matcher:
+        return cls(includes=(path,))
+
+    def excludes_regex(self) -> Generator[re.Pattern[str]]:
+        return (
+            re.compile(glob.translate(str(exclude), recursive=True)) for exclude in self.excludes
+        )
+
+    def glob(self) -> list[Path]:
+        matched = []
+        excludes_regex = tuple(self.excludes_regex())
+
+        for include in self.includes:
+            include_matched = glob.glob(str(include), recursive=True)
+
+            matched += [
+                Path(match)
+                for match in include_matched
+                if not any(regex.match(match) for regex in excludes_regex)
+            ]
+
+        return matched
+
+
+RUST_CRATE_BUSL_LICENSED = (
+    ROOT_DIR / "server/Cargo.toml",
+    *(
+        ROOT_DIR / f"libparsec/crates/{crate}/Cargo.toml"
+        for crate in ("testbed", "tests_lite", "tests_macros", "tests_fixtures")
+    ),
+)
+
+FILES_WITH_VERSION_INFO: dict[Matcher, dict[Tool, RawRegexes]] = {
+    Matcher.simple(ROOT_DIR / ".github/actions/use-pre-commit/action.yml"): {
         Tool.PreCommit: [
             ReplaceRegex(r"default: .* # __VERSION__", "default: {version} # __VERSION__")
         ]
     },
-    ROOT_DIR / ".github/workflows/_releaser_nightly_build.yml": {Tool.Python: [PYTHON_GA_VERSION]},
-    ROOT_DIR / ".github/workflows/ci-python.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/_releaser_nightly_build.yml"): {
+        Tool.Python: [PYTHON_GA_VERSION]
+    },
+    Matcher.simple(ROOT_DIR / ".github/workflows/ci-python.yml"): {
         Tool.UV: [UV_VERSION_MARKER],
         Tool.PostgreSQL: [
             ReplaceRegex(
@@ -263,7 +305,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR / ".github/workflows/ci-rust.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/ci-rust.yml"): {
         Tool.CargoDeny: [ReplaceRegex(r"cargo-deny@[0-9.]+", "cargo-deny@{version}")],
         Tool.CargoUdeps: [ReplaceRegex(r"cargo-udeps@[0-9.]+", "cargo-udeps@{version}")],
         Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
@@ -271,59 +313,59 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
         Tool.WinFSP: [CI_WINFSP_VERSION, WINFSP_RELEASE_DOWNLOAD],
     },
-    ROOT_DIR / ".github/workflows/ci-web.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/ci-web.yml"): {
         Tool.Node: [NODE_GA_VERSION],
         Tool.Testbed: [TESTBED_VERSION],
     },
-    ROOT_DIR / ".github/workflows/ci.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/ci.yml"): {
         Tool.Python: [PYTHON_GA_VERSION],
     },
-    ROOT_DIR / ".github/workflows/ci-docs.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/ci-docs.yml"): {
         Tool.UV: [UV_VERSION_MARKER],
     },
-    ROOT_DIR / ".github/workflows/_parse_version.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/_parse_version.yml"): {
         Tool.Python: [PYTHON_GA_VERSION],
     },
-    ROOT_DIR / ".github/workflows/codeql.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/codeql.yml"): {
         Tool.UV: [UV_VERSION_MARKER],
         Tool.Node: [NODE_GA_VERSION],
     },
-    ROOT_DIR / ".github/workflows/docker-server.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/docker-server.yml"): {
         Tool.Python: [PYTHON_GA_VERSION],
     },
-    ROOT_DIR / ".github/workflows/docker-testbed.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/docker-testbed.yml"): {
         Tool.Python: [PYTHON_GA_VERSION],
     },
-    ROOT_DIR / ".github/workflows/package-server.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/package-server.yml"): {
         Tool.UV: [UV_VERSION_MARKER],
     },
-    ROOT_DIR / ".github/workflows/package-cli.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/package-cli.yml"): {
         Tool.Cross: [ReplaceRegex(r"cross-version: .*", "cross-version: {version}")],
         Tool.WinFSP: [CI_WINFSP_VERSION, WINFSP_RELEASE_DOWNLOAD],
     },
-    ROOT_DIR / ".github/workflows/package-desktop.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/package-desktop.yml"): {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WinFSP: [CI_WINFSP_VERSION, WINFSP_RELEASE_DOWNLOAD],
     },
-    ROOT_DIR / ".github/workflows/package-webapp.yml": {
+    Matcher.simple(ROOT_DIR / ".github/workflows/package-webapp.yml"): {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
     },
-    ROOT_DIR / "bindings/electron/package.json": {
+    Matcher.simple(ROOT_DIR / "bindings/electron/package.json"): {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
-    ROOT_DIR / "bindings/web/package.json": {
+    Matcher.simple(ROOT_DIR / "bindings/web/package.json"): {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
-    ROOT_DIR / "cli/tests/integration/version.rs": {
+    Matcher.simple(ROOT_DIR / "cli/tests/integration/version.rs"): {
         Tool.Parsec: [ReplaceRegex(r'"parsec-cli .*", ', '"parsec-cli {version}", ')]
     },
-    ROOT_DIR / "client/electron/assets/installer.nsh": {
+    Matcher.simple(ROOT_DIR / "client/electron/assets/installer.nsh"): {
         Tool.WinFSP: [ReplaceRegex(r'WINFSP_VERSION ".*"', 'WINFSP_VERSION "{version}"')],
     },
-    ROOT_DIR / "client/electron/scripts/before-pack.cjs": {
+    Matcher.simple(ROOT_DIR / "client/electron/scripts/before-pack.cjs"): {
         Tool.WinFSP: [
             ReplaceRegex(r"WINFSP_VERSION = '.*'", "WINFSP_VERSION = '{version}'"),
             ReplaceRegex(
@@ -332,21 +374,21 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ]
     },
-    ROOT_DIR / "client/electron/snap/snapcraft.yaml": {
+    Matcher.simple(ROOT_DIR / "client/electron/snap/snapcraft.yaml"): {
         Tool.Parsec: [ReplaceRegex(r"version: .*", "version: {version}")],
         Tool.Rust: [RUSTUP_INSTALL],
     },
-    ROOT_DIR / "client/electron/assets/electron-publisher-custom.js": {
+    Matcher.simple(ROOT_DIR / "client/electron/assets/electron-publisher-custom.js"): {
         Tool.Parsec: [ReplaceRegex(r"VERSION = '.*';", "VERSION = '{version}';")]
     },
-    ROOT_DIR / "client/electron/package.cjs": {
+    Matcher.simple(ROOT_DIR / "client/electron/package.cjs"): {
         Tool.Parsec: [ReplaceRegex(r"buildVersion: '.*',", "buildVersion: '{version}',")],
     },
-    ROOT_DIR / "client/electron/package.json": {
+    Matcher.simple(ROOT_DIR / "client/electron/package.json"): {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
-    ROOT_DIR / "client/electron/scripts/sign-windows-package.ps1": {
+    Matcher.simple(ROOT_DIR / "client/electron/scripts/sign-windows-package.ps1"): {
         Tool.Node: [
             ReplaceRegex(
                 r'expected_node_version = "v.*"',
@@ -354,14 +396,14 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR / "client/package.json": {
+    Matcher.simple(ROOT_DIR / "client/package.json"): {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
-    ROOT_DIR / "docs/development/guide-release-parsec.md": {
+    Matcher.simple(ROOT_DIR / "docs/development/guide-release-parsec.md"): {
         Tool.Python: [ReplaceRegex(r"Python .*\+", hide_patch_version("Python {version}+"))]
     },
-    ROOT_DIR / "docs/development/README.md": {
+    Matcher.simple(ROOT_DIR / "docs/development/README.md"): {
         Tool.Rust: [
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
             RUSTUP_INSTALL,
@@ -375,7 +417,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
-    ROOT_DIR / "docs/hosting/deployment/server-deploy.rst": {
+    Matcher.simple(ROOT_DIR / "docs/hosting/deployment/server-deploy.rst"): {
         Tool.PostgreSQL: [
             ReplaceRegex(r"PostgreSQL v\d+", only_major_version("PostgreSQL v{version}"))
         ],
@@ -389,14 +431,14 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ],
     },
-    ROOT_DIR / "docs/hosting/deployment/webapp/index.rst": {
+    Matcher.simple(ROOT_DIR / "docs/hosting/deployment/webapp/index.rst"): {
         Tool.Parsec: [
             ReplaceRegex(
                 r"download/v.+/parsec-web-.+\.zip", "download/v{version}/parsec-web-{version}.zip"
             )
         ],
     },
-    ROOT_DIR / "docs/hosting/deployment/parsec-server.docker.yaml": {
+    Matcher.simple(ROOT_DIR / "docs/hosting/deployment/parsec-server.docker.yaml"): {
         Tool.Parsec: [
             ReplaceRegex(
                 r"ghcr.io/scille/parsec-cloud/parsec-server:.+$",
@@ -410,8 +452,10 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR / "docs/hosting/custom-branding.rst": {Tool.Parsec: [PARSEC_REPO_SRC_BASE_URL]},
-    ROOT_DIR / "docs/cli/install-cli.rst": {
+    Matcher.simple(ROOT_DIR / "docs/hosting/custom-branding.rst"): {
+        Tool.Parsec: [PARSEC_REPO_SRC_BASE_URL]
+    },
+    Matcher.simple(ROOT_DIR / "docs/cli/install-cli.rst"): {
         Tool.Parsec: [
             ReplaceRegex(
                 r".. _Parsec CLI: https://github.com/Scille/parsec-cloud/releases/download/v.*/parsec-cli_.*_linux-x86_64-musl",
@@ -424,48 +468,52 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"replace:: ``parsec-cli .*``", "replace:: ``parsec-cli {version}``"),
         ]
     },
-    ROOT_DIR / "docs/conf.py": {
+    Matcher.simple(ROOT_DIR / "docs/conf.py"): {
         Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]
     },
-    ROOT_DIR / "docs/pyproject.toml": {
+    Matcher.simple(ROOT_DIR / "docs/pyproject.toml"): {
         Tool.Python: [
             ReplaceRegex(r'^requires-python = "~=.*"', 'requires-python = "~={version}"')
         ],
         Tool.License: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
     },
-    ROOT_DIR / "libparsec/version": {Tool.Parsec: [ReplaceRegex(r"^.*$", "{version}")]},
-    ROOT_DIR / "LICENSE-BUSL": {
+    Matcher.simple(ROOT_DIR / "libparsec/version"): {
+        Tool.Parsec: [ReplaceRegex(r"^.*$", "{version}")]
+    },
+    Matcher.simple(ROOT_DIR / "LICENSE-BUSL"): {
         Tool.Parsec: [
             ReplaceRegex(r"^Licensed Work:  Parsec v.*$", "Licensed Work:  Parsec v{version}")
         ]
     },
-    ROOT_DIR / "misc/versions.toml": {
+    Matcher.simple(ROOT_DIR / "misc/versions.toml"): {
         tool: [ReplaceRegex(rf'^{tool.value} = ".*"', f'{tool.value} = "{{version}}"')]
         for tool in Tool
     },
-    ROOT_DIR / "misc/setup-rust.sh": {
+    Matcher.simple(ROOT_DIR / "misc/setup-rust.sh"): {
         Tool.Rust: [RUSTUP_INSTALL],
     },
-    ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
+    Matcher.simple(ROOT_DIR / "server/packaging/server/in-docker-build.sh"): {
         Tool.Rust: [RUSTUP_INSTALL],
         Tool.UV: [UV_INSTALL_SCRIPT],
     },
-    ROOT_DIR / "server/packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
-    ROOT_DIR / "server/packaging/testbed-server/in-docker-build.sh": {
+    Matcher.simple(ROOT_DIR / "server/packaging/server/server.dockerfile"): {
+        Tool.Python: [PYTHON_DOCKER_VERSION]
+    },
+    Matcher.simple(ROOT_DIR / "server/packaging/testbed-server/in-docker-build.sh"): {
         Tool.Rust: [RUSTUP_INSTALL],
         Tool.Python: [PYTHON_SMALL_VERSION],
         Tool.UV: [UV_INSTALL_SCRIPT],
     },
-    ROOT_DIR / "server/packaging/testbed-server/README.md": {
+    Matcher.simple(ROOT_DIR / "server/packaging/testbed-server/README.md"): {
         Tool.Testbed: [TESTBED_VERSION],
     },
-    ROOT_DIR / "server/packaging/testbed-server/testbed-server.dockerfile": {
+    Matcher.simple(ROOT_DIR / "server/packaging/testbed-server/testbed-server.dockerfile"): {
         Tool.Python: [PYTHON_DOCKER_VERSION]
     },
-    ROOT_DIR / "server/parsec/_version.py": {
+    Matcher.simple(ROOT_DIR / "server/parsec/_version.py"): {
         Tool.Parsec: [ReplaceRegex(r'^__version__ = ".*"$', '__version__ = "{version}"')]
     },
-    ROOT_DIR / "server/pyproject.toml": {
+    Matcher.simple(ROOT_DIR / "server/pyproject.toml"): {
         Tool.Python: [
             ReplaceRegex(
                 r'"Programming Language :: Python :: .*"',
@@ -478,26 +526,30 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
-        Tool.License: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
+        Tool.ServerLicense: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
     },
-    ROOT_DIR / ".nvmrc": {
+    Matcher.simple(ROOT_DIR / ".nvmrc"): {
         Tool.Node: [NODE_NVMRC_VERSION],
     },
-    ROOT_DIR / ".pre-commit-config.yaml": {
+    Matcher.simple(ROOT_DIR / ".pre-commit-config.yaml"): {
         Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
         Tool.Node: [ReplaceRegex(r"node: [0-9.]+", "node: {version}")],
     },
-    ROOT_DIR / ".readthedocs.yml": {
+    Matcher.simple(ROOT_DIR / ".readthedocs.yml"): {
         Tool.Python: [ReplaceRegex(r'python: "[0-9.]+"', hide_patch_version('python: "{version}"'))]
     },
-    ROOT_DIR / "rust-toolchain.toml": {
+    Matcher.simple(ROOT_DIR / "rust-toolchain.toml"): {
         Tool.Rust: [ReplaceRegex(r'channel = ".*"', 'channel = "{version}"')]
     },
     # Cargo workspace members should use the license value defined in the root cargo manifest
-    ROOT_DIR / "*/**/Cargo.toml": {
+    # But special case for "tests" crate that are licensed using BUSL-1.1
+    Matcher(includes=RUST_CRATE_BUSL_LICENSED): {
+        Tool.License: [ReplaceRegex(r"license.* = .*", 'license = "BUSL-1.1"')]
+    },
+    Matcher(includes=(ROOT_DIR / "*/**/Cargo.toml",), excludes=RUST_CRATE_BUSL_LICENSED): {
         Tool.License: [ReplaceRegex(r"license.workspace = true", "license.workspace = true")]
     },
-    ROOT_DIR / "Cargo.toml": {
+    Matcher.simple(ROOT_DIR / "Cargo.toml"): {
         Tool.License: [ReplaceRegex(r'license = ".*"', 'license = "{version}"')],
         Tool.Parsec: [
             ReplaceRegex(
@@ -509,7 +561,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
 }
 
 
-@dataclass
+@dt.dataclass
 class VersionUpdateResult:
     errors: list[str]
     updated: set[Path]
@@ -591,7 +643,7 @@ def check_tool(tool: Tool, update: bool) -> VersionUpdateResult:
         if regexes is None:
             continue
 
-        matched_files = glob.glob(str(glob_path), recursive=True)
+        matched_files = glob_path.glob()
         if not matched_files:
             update_res.errors.append(f"No match with regex `{glob_path}`")
             continue

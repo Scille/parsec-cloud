@@ -10,7 +10,7 @@
         "test": "cargo test"
     },
     "author": "",
-    "license": "BUSL-1.1",
+    "license": "AGPL-3.0-only",
     "dependencies": {
         "cargo-cp-artifact": "^0.1.9"
     }

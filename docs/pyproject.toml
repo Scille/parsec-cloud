@@ -3,7 +3,7 @@ name = "parsec-docs"
 version = "0.0.0"
 description = "Parsec documentation"
 authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
-license = "BUSL-1.1"
+license = "AGPL-3.0-only"
 requires-python = "~=3.14.0"
 dependencies = [
     "Sphinx>=9.0.0, <10",
