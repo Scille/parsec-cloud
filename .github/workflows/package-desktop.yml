@@ -480,6 +480,7 @@ jobs:
 
             # Update artifact file
             yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext} = \"${app_file}\"" $artifact_file
+            yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
 
             # Add to files_to_upload
             echo client/electron/dist/$app_file | tee -a $GITHUB_OUTPUT
