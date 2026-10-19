@@ -1,5 +1,7 @@
 name: Package desktop
 
+# cspell: words pfctl
+
 on:
   pull_request:
     paths:
@@ -392,6 +394,19 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.MACOS_CI_KEYCHAIN_PASSWD }}" build.keychain
         env:
           MACOS_CERT: ${{ secrets.MACOS_CERT }}
+        timeout-minutes: 2
+
+      # Since October 2026, notarization is unstable (often fail to reach Apple servers)
+      # Other users are also impacted by this:
+      # https://github.com/actions/runner-images/issues/14924
+      # And this comment:
+      # https://github.com/actions/runner-images/issues/14924#issuecomment-6188826956
+      # Recommand to block port UDP/443 so notarization instead of using QUICK protocol, fallback to HTTPS
+      - name: Stabilize notarization
+        if: matrix.platform == 'macos'
+        run: |
+          echo "block return out quick proto udp from any to any port 443" | sudo pfctl -f -
+          sudo pfctl -E
         timeout-minutes: 2
 
       - name: Build Electron apps
