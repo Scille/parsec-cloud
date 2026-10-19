@@ -1,1 +1,0 @@
-Fixed a bug where the recovery device section would be flagged as **Inactive** even when set up
