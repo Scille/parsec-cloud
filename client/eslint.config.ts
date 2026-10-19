@@ -177,10 +177,7 @@ export default defineConfig([
     files: ['**/*.{js,cjs,mjs}'],
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',
-      'no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
-      ],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
     },
   },
   {
