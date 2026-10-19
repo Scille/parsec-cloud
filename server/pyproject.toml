@@ -117,7 +117,7 @@ extend_exclude = ["server/tests/", "server/parsec/cli/testbed.py"]
 # Per-module customization
 
 [tool.pyright]
-pythonVersion = "3.12"
+pythonVersion = "3.14"
 include = ["parsec", "tests", "../docs", "../misc", "../bindings/generator"]
 exclude = ["**/__pycache__", "../**/.venv/"]
 ignore = [

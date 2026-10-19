@@ -524,6 +524,9 @@ FILES_WITH_VERSION_INFO: dict[Matcher, dict[Tool, RawRegexes]] = {
                 r'build = "cp\d+-{manylinux,macos,win}\*"',
                 hide_patch_version('build = "cp{version}-{{manylinux,macos,win}}*"', separator=""),
             ),
+            ReplaceRegex(
+                'pythonVersion = ".*"', hide_patch_version(r'pythonVersion = "{version}"')
+            ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
         Tool.ServerLicense: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
