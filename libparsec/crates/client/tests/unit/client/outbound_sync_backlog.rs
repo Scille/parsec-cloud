@@ -100,7 +100,7 @@ async fn rename_tmp_files(env: &TestbedEnv) {
 
     started_workspace.fd_close(file).await.unwrap();
 
-    libparsec_platform_async::sleep(std::time::Duration::from_secs(3)).await;
+    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
     // move confined to not confined
 
     started_workspace
@@ -133,7 +133,7 @@ async fn rename_tmp_files(env: &TestbedEnv) {
                     ended_with_nothing_to_sync = true
                 }
             } else {
-                if e.number_of_files_to_sync == 1 && e.size_to_sync == 485 {
+                if e.number_of_files_to_sync == 1 && e.size_to_sync == 445 {
                     file_synced = true
                 }
             }

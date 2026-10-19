@@ -33,7 +33,7 @@ const MAX_SYNC_WAIT: Duration = Duration::seconds(6);
 const SERVER_STORE_UNAVAILABLE_WAIT: Duration = Duration::seconds(6);
 // 100 times faster than production, files are syncing too quickly
 #[cfg(test)]
-const BACKLOG_TRACKER_WAIT: Duration = Duration::milliseconds(10);
+const BACKLOG_TRACKER_WAIT: Duration = Duration::milliseconds(100);
 
 #[cfg(not(test))]
 const MIN_SYNC_WAIT: Duration = Duration::seconds(1);
@@ -413,46 +413,75 @@ fn task_future_factory(
         let backlog_tracker = spawn({
             let workspace_ops = workspace_ops.clone();
             let device = device.clone();
-            let confined_entries_tracker = confined_entries_tracker.clone();
             let event_bus = event_bus.clone();
+            let mut previous_event = EventWorkspaceOutboundSyncBacklog {
+                number_of_files_to_sync: 0,
+                size_to_sync: 0,
+            };
 
             async move {
                 loop {
-                    // get backlog
-                    let backlog = workspace_ops
-                        .get_outbound_sync_backlog()
-                        .await
-                        .expect("todo");
-
-                    // how much is confined
-                    let mut confined_bytes = 0;
-                    let mut confined_files = 0;
-
-                    // in a block to keep the future send
-                    let entries: Vec<_> = {
-                        let guard = confined_entries_tracker.lock().expect("Mutex is poisoned");
-                        let entries = guard.confinement_member_to_confined_entries.keys();
-                        entries.into_iter().cloned().collect()
+                    let outcome = workspace_ops.get_need_outbound_sync(u32::MAX).await;
+                    let ids = match outcome {
+                        Ok(v) => v,
+                        // ignoring errors, sleep and retry later
+                        // if there is a real issue, something else will fail
+                        Err(e) => {
+                            log::error!("error during outbound sync backlog processing: {e}");
+                            device.time_provider.sleep(BACKLOG_TRACKER_WAIT).await;
+                            continue;
+                        }
                     };
 
-                    for entry_id in entries {
+                    // Here we are looking at all the files to sync but why ?
+                    // because if you look at the size of the chunks in db
+                    // minus the size in the manifest of confined files
+                    // there are 40 extra bytes with no file to sync
+
+                    // get backlog
+                    // let backlog = workspace_ops
+                    //     .get_outbound_sync_backlog()
+                    //     .await
+                    //     .expect("todo");
+
+                    // // how much is confined
+                    // let mut confined_bytes = 0;
+                    // let mut confined_files = 0;
+
+                    // // in a block to keep the future send
+                    // let entries: Vec<_> = {
+                    //     let guard = confined_entries_tracker.lock().expect("Mutex is poisoned");
+                    //     let entries = guard.confined_entry_to_confinement_members.keys();
+                    //     entries.into_iter().cloned().collect()
+                    // };
+
+                    let mut number_of_files_to_sync = 0;
+                    let mut size_to_sync = 0;
+                    for entry_id in ids {
+                        println!("{entry_id}");
                         match workspace_ops.stat_entry_by_id(entry_id).await {
-                            Ok(stat) if stat.is_confined() && stat.is_file() => {
-                                confined_bytes += stat.size();
-                                confined_files += 1
+                            Ok(stat) if !stat.is_confined() && stat.is_file() => {
+                                size_to_sync += stat.size();
+                                number_of_files_to_sync += 1
                             }
+                            Ok(e) => {}
                             // ignore error and not actually confined entry
-                            _ => {}
+                            Err(e) => {}
                         }
                     }
-
                     // send_event
-                    // TODO don't send if there is nothing to sync
+                    // don't send if there is nothing to sync
                     // or if it's the same as the last one
-                    event_bus.send(&EventWorkspaceOutboundSyncBacklog {
-                        number_of_files_to_sync: backlog.pending_entries - confined_files,
-                        size_to_sync: backlog.pending_bytes - confined_bytes,
-                    });
+
+                    let new_event = EventWorkspaceOutboundSyncBacklog {
+                        number_of_files_to_sync,
+                        size_to_sync,
+                    };
+                    // if !(new_event.number_of_files_to_sync == previous_event.number_of_files_to_sync
+                    //     && new_event.size_to_sync == previous_event.size_to_sync)
+                    // {
+                    event_bus.send(&new_event);
+                    previous_event = new_event;
 
                     // sleep for a bit, we don't need to spam
                     device.time_provider.sleep(BACKLOG_TRACKER_WAIT).await;
