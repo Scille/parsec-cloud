@@ -33,12 +33,30 @@ CLOSING_MARK = "End of auto-generated code"
 class BaseModel:
     pass
 
+DEFAULT_UNSET = object()
+class MockFieldInfo:
+    """
+    Stand-in for pydantic's `FieldInfo` (only what the JSDoc generation needs).
+    """
+
+    def __init__(
+        self,
+        default: Any = DEFAULT_UNSET,  # `None` is a valid default!
+        default_factory: Any = None,
+        alias: str | None = None,
+        **kwargs: Any,
+    ):
+        self.has_default = default is not DEFAULT_UNSET or default_factory is not None
+        # OnlyOffice wire name of the field (e.g. `_recalcType` for `recalc_type`),
+        # `None` when the field has no alias.
+        self.alias = alias
+
 
 DeviceID = MagicMock()
 
 mock_pydantic = types.ModuleType("pydantic")
 mock_pydantic.BaseModel = BaseModel  # type: ignore
-mock_pydantic.Field = MagicMock()  # type: ignore
+mock_pydantic.Field = MockFieldInfo  # type: ignore
 mock_pydantic.TypeAdapter = MagicMock()  # type: ignore
 mock_pydantic.AfterValidator = MagicMock()  # type: ignore
 mock_parsec = types.ModuleType("parsec")
@@ -78,10 +96,22 @@ def load_editics_protocol() -> dict[str, Any]:
             if annotation is None:
                 # `x: None = ...` is normalized to `NoneType` by pydantic
                 annotation = type(None)
-            field_info = MagicMock(annotation=annotation)
-            # The field is optional if it has a default value
-            field_info.is_optional.return_value = field_name in obj.__dict__
-            model_fields[field_name] = field_info
+
+            match obj.__dict__.get(field_name, DEFAULT_UNSET):
+                case MockFieldInfo() as info:
+                    is_optional = info.has_default
+                    alias = info.alias
+                case x if x == DEFAULT_UNSET:
+                    is_optional = False
+                    alias = None
+                case _default:
+                    is_optional = True
+                    alias = None
+            field_value = model_fields[field_name] = MagicMock(
+                annotation=annotation,
+                alias=alias,
+            )
+            field_value.is_optional.return_value = is_optional
         obj.model_fields = model_fields  # type: ignore
 
     return namespace
@@ -121,9 +151,10 @@ def _typedef_lines(name: str, obj: Any) -> list[str]:
     if isinstance(obj, type) and issubclass(obj, BaseModel):
         lines = [f" * @typedef {{Object}} {name}"]
         for field_name, field in obj.model_fields.items():  # type: ignore
+            wire_name = field.alias or field_name
             if field.is_optional() and typing.get_origin(field.annotation) is not typing.Literal:
-                field_name = f"[{field_name}]"
-            lines.append(f" * @property {{{_js_type(field.annotation)}}} {field_name}")
+                wire_name = f"[{wire_name}]"
+            lines.append(f" * @property {{{_js_type(field.annotation)}}} {wire_name}")
         return lines
 
     # Union of events, i.e. `X = Annotated[A | B | ..., Field(discriminator="type")]`
@@ -195,7 +226,7 @@ def _js_type(annotation: Any) -> str:
         return (
             "{"
             + ", ".join(
-                f"{field_name}:{_js_type(field.annotation)}"
+                f"{field.alias or field_name}:{_js_type(field.annotation)}"
                 for field_name, field in annotation.model_fields.items()  # type: ignore
             )
             + "}"
