@@ -83,7 +83,6 @@ function bytesToStr(bytes) {
  * @property {string} [userName] - unused, see `userId`.
  * @property {number} vlobVersion - loaded vlob version (RFC §1.2).
  * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
- * @property {EditicsLibparsecDeps} capabilities
  */
 
 /**

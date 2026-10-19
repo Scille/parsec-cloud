@@ -22,7 +22,7 @@ The whole system is a stack of three nested windows:
 |    the workspace)                                                       |
 │                                                                         │
 │  ┌───────────────────────────────────────────────────────────────────┐  │
-│  │  Host iframe (i.e. `editics/offline.html`)                        │  │
+│  │  Host iframe (offline or collaborative, see below)                │  │
 │  │                                                                   │  │
 │  │  - Loads OnlyOffice x2t to handle conversions from/into           |  |
 |  |    OnlyOffice's .bin internal format                              |  |
@@ -59,19 +59,38 @@ origin depends on how the app is deployed (see `getEditicsOrigin` in
 
 Electron uses a custom scheme for editics (`parsec-editics:`) as it ensures a high level of isolation automatically.
 
+## Edition modes
+
+Editics works in two modes, with one host page per mode (the parent picks the
+one to serve in the iframe, see `src/services/editics.ts`):
+
+- **Offline** (`editics/offline.html`, logic in `offline.ts`): the edition is
+  done purely locally, and the OnlyOffice editor's co-authoring protocol is
+  answered by the `OfflineMockServer` (single user, no server involved).
+- **Collaborative** (`editics/collaborative.html`, logic in `collaborative.ts`):
+  the co-authoring protocol events are translated between the OnlyOffice
+  protocol and the editics protocol by `EditicsTranslator` (see
+  `collaborative_protocol.js`), and exchanged with the Parsec server hosting
+  the session (SSE stream for server→client, HTTP POST for client→server,
+  see RFC 1030).
+
+Both modes share their host page machinery (x2t conversions, document media,
+save flow, communication with the parent window, ...) through `common.ts`.
+
 ## Packaging (see `vite.config.ts`)
 
-The host page must stay standalone since it is loaded in a iframe.
-Hence it lives outside the app's import graph (no shared chunks with the app
+The host pages must stay standalone since they are loaded in an iframe.
+Hence they live outside the app's import graph (no shared chunks with the app
 bundle, no `@/` imports).
 
-- **Dev**: the Vite dev server serves `editics/offline.html` and transpiles
-  `offline.ts` on the fly.
-- **Release**: `scripts/vite_plugin_editics.ts` bundles the typescript entry
-  with esbuild and inlines it in the host page, which is emitted with a
+- **Dev**: the Vite dev server serves `editics/offline.html` &
+  `editics/collaborative.html` and transpiles their entries on the fly.
+- **Release**: `scripts/vite_plugin_editics.ts` bundles each typescript entry
+  with esbuild and inlines it in its host page, which is emitted with a
   content hash (e.g. `dist/editics/offline-8bdb1067.html`) for cache busting.
-  The actual name of the host page is advertised to the main app through a meta
-  tag injected in the main app's `index.html`.
+  The actual name of each host page is advertised to the main app through a
+  meta tag injected in the main app's `index.html` (i.e. `editics-offline-page`
+  & `editics-collaborative-page`).
 
 On top of that, the OnlyOffice editor and x2t assets trees are exposed/copied
 (using `viteStaticCopy` plugin) verbatim, but into versioned folders inside the

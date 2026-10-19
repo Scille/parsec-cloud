@@ -19,6 +19,9 @@ interface EditicsHostPagesOptions {
   htmlPath: string;
   // e.g. `offline.ts`
   scriptEntry: string;
+  // Name of the `index.html` meta tag advertising the (content-hashed) host
+  // page name to the app (see `getEditicsHostPage` in `src/services/editics.ts`).
+  metaTagName: string;
   // Build-time injected constants (see the `editics-build-time-paths` plugin).
   define: Record<string, string>;
 }
@@ -95,10 +98,10 @@ function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
           (file): file is Extract<typeof file, { type: 'asset' }> => file.type === 'asset' && file.fileName === 'index.html',
         );
         if (!indexHtml) {
-          throw new Error('Cannot find the emitted `index.html` to inject `editics-offline-page` tag');
+          throw new Error(`Cannot find the emitted \`index.html\` to inject \`${options.metaTagName}\` tag`);
         }
         const indexHtmlSource = indexHtml.source;
-        const metaTag = `<meta name="editics-offline-page" content="${htmlFileName}">`;
+        const metaTag = `<meta name="${options.metaTagName}" content="${htmlFileName}">`;
         if (!/<head>/i.test(indexHtmlSource)) {
           throw new Error('Cannot find `<head>` in `index.html` to inject the editics host page name');
         }
@@ -182,15 +185,28 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
     // TypeScript entries on the fly.
     // plugins.push(editicsHostPages({ buildTarget, rootDir: path.join(import.meta.dirname, '..') }));
     const rootDir = path.join(import.meta.dirname, '..');
-    plugins.push(
-      buildEditicsHostPage({
-        rootDir,
+    const hostPages = [
+      {
         htmlPath: 'editics/offline.html',
         scriptEntry: 'offline.ts',
-        buildTarget,
-        define,
-      }),
-    );
+        metaTagName: 'editics-offline-page',
+      },
+      {
+        htmlPath: 'editics/collaborative.html',
+        scriptEntry: 'collaborative.ts',
+        metaTagName: 'editics-collaborative-page',
+      },
+    ];
+    for (const hostPage of hostPages) {
+      plugins.push(
+        buildEditicsHostPage({
+          rootDir,
+          ...hostPage,
+          buildTarget,
+          define,
+        }),
+      );
+    }
   } else {
     // OnlyOffice  builds font URLs by concatenating the fonts directory (i.e.
     // `/editics/onlyoffice/<version>/fonts/`) with `/fonts/<name>.ttf` (see
