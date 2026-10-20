@@ -36,6 +36,7 @@ from parsec.editics_protocol import (
     EditicsExcelRecalcIndex,
     EditicsParticipantEntry,
     EditicsParticipantID,
+    EditicsParticipantIdentity,
     EditicsParticipantIndex,
     EditicsServerEvent,
     EditicsServerEventAuth,
@@ -82,16 +83,16 @@ def now() -> int:
 @dataclass(slots=True)
 class ChatMessage:
     time_ms: int
-    author_participant_id: EditicsParticipantID
     author_device_id: DeviceID
+    author_index: EditicsParticipantIndex
     encrypted_message: tuple[int, bytes]
 
 
 @dataclass(slots=True)
 class StoredChange:
     time_ms: int
-    author_participant_id: EditicsParticipantID
     author_device_id: DeviceID
+    author_index: EditicsParticipantIndex
     # Format: (<Key index>, <base64(ciphertext)>)
     encrypted_change: tuple[int, bytes]
 
@@ -125,16 +126,11 @@ class Participant:
       client timeouts or sends a `close` event.
     """
 
+    participant_id: EditicsParticipantID
+    index: EditicsParticipantIndex
     user_id: UserID
     device_id: DeviceID
     realm_role: RealmRole
-    index: EditicsParticipantIndex
-    # In OnlyOffice participant ID is  `<device ID> + <participant index>`,
-    # however here its is an arbitraty UUID controlled by the client.
-    # This is because in OnlyOffice this ID is provided in the server `auth` event,
-    # while here we must have it when we do the SSE connection (which must occur
-    # before the HTTP `auth` request is done!).
-    participant_id: EditicsParticipantID
     # TODO: does this correspond to the very first connection of the participant or to its last (re)connection ?
     connected_at: int  # ms timestamp of the join
     # `None` if no SSE connection is listening for the participant.
@@ -263,7 +259,6 @@ class EditicsSession:
 def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntry]:
     return [
         EditicsParticipantEntry(
-            id=participant.participant_id,
             indexUser=participant.index,
             deviceId=participant.device_id,
             view=participant.authed.view,
@@ -296,7 +291,7 @@ _LOCK_RECALC_SKIP_SUB_TYPES = (2, 4)  # InsertColumns, InsertRows
 
 def _recalculate_locks(
     session: EditicsSession,
-    saver_participant_id: EditicsParticipantID,
+    saver_identity: EditicsParticipantIdentity,
     index_cols: EditicsExcelRecalcIndex | None,
     index_rows: EditicsExcelRecalcIndex | None,
 ) -> None:
@@ -333,7 +328,7 @@ def _recalculate_locks(
                     or block.get("type") != _LOCK_RECALC_RANGE_TYPE
                     or block.get("subType") in _LOCK_RECALC_SKIP_SUB_TYPES
                     or str(block.get("sheetId")) != sheet_id
-                    or lock.holder[0] == saver_participant_id
+                    or lock.holder == saver_identity
                 ):
                     continue
                 # Note the shift is applied record by record (in list order):
@@ -361,11 +356,11 @@ def _release_participant_locks(
     event (RFC §2.2)."""
     released: list[ReleaseLockRecord] = []
     for key, lock in list(session.region_locks.items()):
-        if lock.holder[0] == participant.participant_id:
+        if lock.holder == (participant.device_id, participant.index):
             released.append(
                 ReleaseLockRecord(
                     block=lock.block,
-                    holder=(participant.participant_id, participant.device_id),
+                    holder=(participant.device_id, participant.index),
                     time=now(),
                     changes=None,
                 )
@@ -385,7 +380,7 @@ def _push_changes_backlog(session: EditicsSession, participant: Participant) -> 
             changes=[
                 AuthChangeRecord(
                     index=index + 1,
-                    author=(change.author_participant_id, change.author_device_id),
+                    author=(change.author_device_id, change.author_index),
                     time=change.time_ms,
                     encryptedChange=change.encrypted_change,
                 )
@@ -407,7 +402,7 @@ def _handshake_auth(session: EditicsSession, participant: Participant) -> Editic
         messages=[
             MessageRecord(
                 time=m.time_ms,
-                author=(m.author_participant_id, m.author_device_id),
+                author=(m.author_device_id, m.author_index),
                 encryptedMessage=m.encrypted_message,
             )
             for m in session.chat_messages
@@ -450,6 +445,9 @@ class EditicsComponent:
                         continue
                     for participant in session.participants.values():
                         participant.access_denied_close_sse()
+
+                    break
+
             case EventUserRevokedOrFrozen():
                 for (organization_id, _, _), session in self._sessions.items():
                     if organization_id != event.organization_id:
@@ -458,6 +456,9 @@ class EditicsComponent:
                         if participant.user_id != event.user_id:
                             continue
                         participant.access_denied_close_sse()
+
+                    break
+
             case EventRealmCertificate():
                 for (organization_id, _, _), session in self._sessions.items():
                     if organization_id != event.organization_id:
@@ -465,22 +466,35 @@ class EditicsComponent:
                     for participant in session.participants.values():
                         if participant.user_id != event.user_id:
                             continue
-                        if participant.authed is None:
-                            continue
-                        match event.kind:
-                            case "UNSHARE":
-                                pass
-                            case ("SHARE", new_realm_role):
-                                if participant.authed.view:
-                                    if new_realm_role.can_read:
-                                        continue
-                                else:  # Editor mode
-                                    if new_realm_role.can_read and new_realm_role.can_write:
-                                        continue
-                            case "OTHER":
-                                continue
+                        # The participant realm role is checked during `auth` to
+                        # ensure it is compatible with the requested mode (i.e.
+                        # view or edit).
+                        # So we have two possibility here:
+                        # - The auth already occured: we have to check that the new
+                        #   realm role is compatible with the view/edit mode being used.
+                        # - The auth hasn't occured yet: this is an unlikely cornercase
+                        #   since auth is supposed to occur right after SSE is established.
+                        #   So we just close the connection as it is the simplest way
+                        #   to avoid weird concurrent bug due to a auth coroutine probably
+                        #   racing with us right now.
+                        if participant.authed is not None:
+                            match event.kind:
+                                case "UNSHARE":
+                                    pass
+                                case ("SHARE", new_realm_role):
+                                    if participant.authed.view:
+                                        if new_realm_role.can_read:
+                                            continue
+                                    else:  # Editor mode
+                                        if new_realm_role.can_read and new_realm_role.can_write:
+                                            continue
+                                case "OTHER":
+                                    continue
                         # Participant's new role is not longer enough
                         participant.access_denied_close_sse()
+
+                    break
+
             case _:
                 pass
 
@@ -894,7 +908,6 @@ class EditicsComponent:
                         )  # Lock gets dropped whenever the participant leaves
                         reply = EditicsServerEventWaitAuth(
                             authLockedBy=EditicsParticipantEntry(
-                                id=lock_holder.participant_id,
                                 deviceId=lock_holder.device_id,
                                 indexUser=lock_holder.index,
                                 view=lock_holder.authed.view,  # Expected to be always be `False`
@@ -951,7 +964,7 @@ class EditicsComponent:
                     messages=[
                         MessageRecord(
                             time=m.time_ms,
-                            author=(m.author_participant_id, m.author_device_id),
+                            author=(m.author_device_id, m.author_index),
                             encryptedMessage=m.encrypted_message,
                         )
                         for m in session.chat_messages
@@ -961,14 +974,14 @@ class EditicsComponent:
             case EditicsClientEventMessage():
                 message_record = MessageRecord(
                     time=now(),
-                    author=(participant.participant_id, participant.device_id),
+                    author=(participant.device_id, participant.index),
                     encryptedMessage=event.encryptedMessage,
                 )
                 session.chat_messages.append(
                     ChatMessage(
                         time_ms=message_record.time,
-                        author_participant_id=participant.participant_id,
                         author_device_id=participant.device_id,
+                        author_index=participant.index,
                         encrypted_message=event.encryptedMessage,
                     ),
                 )
@@ -1037,7 +1050,7 @@ class EditicsComponent:
                     if key not in session.region_locks:
                         session.region_locks[key] = LockRecord(
                             time=now(),
-                            holder=(participant.participant_id, participant.device_id),
+                            holder=(participant.device_id, participant.index),
                             block=block,
                         )
                 reply = EditicsServerEventGetLock(locks=session.region_locks)
@@ -1208,8 +1221,8 @@ class EditicsComponent:
                 session.changes.extend(
                     StoredChange(
                         time_ms=changes_time,
-                        author_participant_id=participant.participant_id,
                         author_device_id=participant.device_id,
+                        author_index=participant.index,
                         encrypted_change=encrypted_change,
                     )
                     for encrypted_change in event.encryptedChanges
@@ -1237,7 +1250,7 @@ class EditicsComponent:
                 if event.endSaveChanges:
                     _recalculate_locks(
                         session,
-                        participant.participant_id,
+                        (participant.device_id, participant.index),
                         index_cols=event.excelAdditionalInfoIndexCols,
                         index_rows=event.excelAdditionalInfoIndexRows,
                     )
@@ -1248,7 +1261,7 @@ class EditicsComponent:
                     changes=[
                         SaveChangeRecord(
                             time=changes_time,
-                            author=(participant.participant_id, participant.device_id),
+                            author=(participant.device_id, participant.index),
                             encryptedChange=encrypted_change,
                         )
                         for encrypted_change in event.encryptedChanges
@@ -1299,7 +1312,7 @@ class EditicsComponent:
                     messages=[
                         CursorRecord(
                             time=now(),
-                            author=(participant.participant_id, participant.device_id),
+                            author=(participant.device_id, participant.index),
                             encryptedCursor=event.encryptedCursor,
                         )
                     ],

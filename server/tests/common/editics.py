@@ -255,8 +255,6 @@ class EditicsJSRuntime:
                     workspaceId: '{realm_id.hex}',
                     vlobId: '{document_id.hex}',
                     deviceIdHex: '{who.device_id.hex}',
-                    userId: '<dummy userId>',
-                    userName: '<dummy userName>',
                     vlobVersion: {vlob_version},
                     editorType: {editor_type},
                 }},

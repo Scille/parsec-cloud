@@ -9,6 +9,7 @@ import re
 import textwrap
 from collections import defaultdict
 from contextlib import AsyncExitStack
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -60,14 +61,6 @@ DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
 def _participant_id_from_session_id(session_id: str) -> EditicsParticipantID:
     return uuid5(NAMESPACE_URL, session_id).hex
 
-
-# In OnlyOffice protocol, participant IDs are composites `<deviceId><indexUser>`
-# (e.g. `de10a11cec00100000000000000000001` for Alice with `indexUser` 1): the
-# record parser patches them back to the editics participant ID of the editor
-# stint that was assigned this `indexUser` (learnt from the record's `auth` replies).
-_COMPOSITE_PARTICIPANT_ID_RE = re.compile(
-    "^(" + "|".join(DEVICE_ID_TO_PARTICIPANT.keys()) + r")(\d+)$"
-)
 
 # Matches a record event heading, e.g.:
 #   ### 08:58:10.563   ->  Alice      auth
@@ -138,35 +131,6 @@ class RecordEvent:
             "transport": "tr-",
         }[self.direction]
         return f"{self.timestamp}\t{direction}\t{self.participant}\t{self.type}"
-
-
-def _patch_composite_participant_ids(
-    value: Any, index_to_participant_id: dict[tuple[str, int], EditicsParticipantID]
-) -> Any:
-    """Replace the OnlyOffice composite participant IDs (`<deviceId><indexUser>`)
-    with the editics participant ID of the editor stint the record assigned this
-    `indexUser` to (see `_parse_record`)."""
-
-    def _recursive_patch(value: Any) -> Any:
-        match value:
-            case dict():
-                return {k: _recursive_patch(v) for k, v in value.items()}
-            case list():
-                return [_recursive_patch(v) for v in value]
-            case str() if m := _COMPOSITE_PARTICIPANT_ID_RE.match(value):
-                participant_name = DEVICE_ID_TO_PARTICIPANT[m.group(1)]
-                index_user = int(m.group(2))
-                participant_id = index_to_participant_id.get((participant_name, index_user))
-                assert participant_id is not None, (
-                    f"Composite participant ID `{value}` references {participant_name} with"
-                    f" `indexUser` {index_user}, but no `auth` reply in the record assigned"
-                    " this index (unexpected record ?)"
-                )
-                return participant_id
-            case _:
-                return value
-
-    return _recursive_patch(value)
 
 
 def _parse_record(
@@ -253,18 +217,6 @@ def _parse_record(
             f"No `auth` event with a session ID found for {participant} stint {stint}"
         )
 
-    # Resolve the composites: `<deviceId><indexUser>` -> the participant ID of the
-    # stint that got this index assigned in its `auth` reply. The map is built
-    # before any patching since a composite can be referenced *before* the
-    # corresponding `auth` reply appears in the record (e.g. a `connectState`
-    # broadcast mentioning a newcomer).
-    index_to_participant_id: dict[tuple[str, int], EditicsParticipantID] = {}
-    for raw_event, stint in zip(raw_events, stint_of_event, strict=True):
-        if raw_event.type == "auth" and raw_event.direction == "server-to-client":
-            index_to_participant_id[(raw_event.participant, raw_event.payload["indexUser"])] = (
-                stint_participant_ids[(raw_event.participant, stint)]
-            )
-
     # Reverse label map (participant ID -> human readable label), used to make the
     # test failure messages readable (the derived participant IDs are opaque).
     participant_id_labels: dict[EditicsParticipantID, str] = {}
@@ -293,7 +245,7 @@ def _parse_record(
             )
             continue
 
-        payload = _patch_composite_participant_ids(raw_event.payload, index_to_participant_id)
+        payload = deepcopy(raw_event.payload)
         # The OnlyOffice `sessionId` is the editics participant ID of the recipient's
         # stint (a restore's auth echoes the restored session's ID, which the editics
         # client turns into the `reconnect` info); a `null` `sessionId` (a fresh join)

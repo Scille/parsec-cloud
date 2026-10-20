@@ -35,16 +35,33 @@ gets an ID like "3_42" (where 3 is the editor's `indexUser`).
 # Don't type this as UUID to avoid serialization mixing between `UUID.__str__` and `UUID.hex`
 type EditicsParticipantID = Annotated[str, AfterValidator(lambda v: UUID(v).hex)]
 """
-Random UUID controlled by the client and used to identify the client session.
-By design, this survives transport disconnection and is used mostly to identify
-who has authored a modification or holds a lock.
+Random UUID controlled by the client and used to identify its connection
+to the session (it must be known before the SSE connection is created, and
+survives transport disconnections so the connection can be restored).
+
+This is a purely transport-level concept (the equivalent of the socket.io
+session ID used by the real OnlyOffice server): it only appears in the session
+URLs and as the `auth` reply's `participantId` (which the OnlyOffice client
+ echoes back on reconnection). The identity of the participants in the event
+payloads is carried by the `(deviceId, indexUser)` pair instead.
+"""
+
+
+type EditicsParticipantIdentity = tuple[DeviceID, EditicsParticipantIndex]
+"""
+OnlyOffice client builds its own identity as composite ID `<user id><indexUser>`
+and compares it against the `user` fields of the locks/changes/cursors/messages
+it receives.
+
+So we have to follow a similar pattern here (instead of just using
+`EditicsParticipantID` for everything :/ ) by providing device ID + index that
+the client combine to rebuild the composite ID.
 """
 
 
 class EditicsParticipantEntry(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
-    id: EditicsParticipantID
     indexUser: EditicsParticipantIndex
     deviceId: DeviceID
     view: bool
@@ -211,7 +228,7 @@ class LockRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     time: int
-    holder: tuple[EditicsParticipantID, DeviceID]
+    holder: EditicsParticipantIdentity
     # Opaque block descriptor (shape depends on editor type; re-broadcast as-is).
     block: Any
 
@@ -219,7 +236,7 @@ class LockRecord(BaseModel):
 class MessageRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: int  # server timestamp (ms)
-    author: tuple[EditicsParticipantID, DeviceID]
+    author: EditicsParticipantIdentity
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedMessage: tuple[int, Base64BytesField]
 
@@ -265,7 +282,7 @@ class AuthChangeRecord(BaseModel):
 
     # 1-based and monotonic.
     index: int
-    author: tuple[EditicsParticipantID, DeviceID]
+    author: EditicsParticipantIdentity
     # Server timestamp (ms) of the change.
     time: int
     # Format: (<Key index>, <base64(ciphertext)>)
@@ -285,7 +302,7 @@ class EditicsServerEventMessage(BaseModel):
 class CursorRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: int
-    author: tuple[EditicsParticipantID, DeviceID]
+    author: EditicsParticipantIdentity
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursor: tuple[int, Base64BytesField]
 
@@ -303,7 +320,7 @@ class EditicsServerEventGetLock(BaseModel):
 class ReleaseLockRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     block: Any  # opaque block descriptor (re-broadcast as-is)
-    holder: tuple[EditicsParticipantID, DeviceID]
+    holder: EditicsParticipantIdentity
     time: int
     # Always null here (OnlyOffice shape; present for consistency with
     # `saveChanges`'s `locks` field).
@@ -326,7 +343,7 @@ class EditicsServerEventSaveLock(BaseModel):
 class SaveChangeRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: int
-    author: tuple[EditicsParticipantID, DeviceID]
+    author: EditicsParticipantIdentity
     # Opaque encrypted blob (base64 over JSON, §2.4); server never inspects.
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedChange: tuple[int, Base64BytesField]

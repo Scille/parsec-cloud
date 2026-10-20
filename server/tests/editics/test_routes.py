@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Literal
 from uuid import uuid4
 
 import pytest
@@ -13,13 +14,17 @@ from parsec.editics_protocol import (
     EditicsClientEventClose,
     EditicsParticipantID,
     EditicsServerEventAuth,
+    EditicsServerEventDisconnectReason,
     EditicsServerEventWaitAuth,
     EditicsServerEventWarning,
 )
+from parsec.events import EventRealmCertificate
 from tests.common import (
+    AuthenticatedRpcClient,
     Backend,
     CoolorgRpcClients,
     EditicsSessionClient,
+    RpcTransportError,
     wksp1_alice_gives_role,
 )
 
@@ -134,62 +139,6 @@ async def test_bad_auth(coolorg: CoolorgRpcClients) -> None:
         params={"authorization": raw_bad_token},
     )
     assert rep.status_code == 401
-
-
-@pytest.mark.skip(reason="TODO: not implemented yet !")
-async def test_sse_deco_on_role_change(backend: Backend, coolorg: CoolorgRpcClients) -> None:
-    def push_event_to_participant(participant_id: str) -> None:
-        assert len(backend.editics._sessions) == 1
-        participant = next(iter(backend.editics._sessions.values())).participants[participant_id]
-        assert participant.sse_channel_sender is not None
-        participant.sse_channel_sender.send_nowait(EditicsServerEventWarning(code=0, message=""))
-
-    # Deco viewer losing read access
-    participant_id = _new_participant_id()
-    async with EditicsSessionClient.join(
-        who=coolorg.bob,
-        realm_id=coolorg.wksp1_id,
-        document_id=DOCUMENT_ID,
-        participant_id=participant_id,
-    ) as bob:
-        push_event_to_participant(participant_id)
-        assert isinstance(await bob.recv(), EditicsServerEventWarning)
-
-        await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, None)
-        push_event_to_participant(participant_id)
-        with pytest.raises(StopAsyncIteration):
-            await bob.recv_raw()
-
-    # Deco editor losing write access
-    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
-    async with EditicsSessionClient.join(
-        who=coolorg.bob,
-        realm_id=coolorg.wksp1_id,
-        document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
-    ) as bob:
-        push_event_to_participant(participant_id)
-        assert isinstance(await bob.recv(), EditicsServerEventWarning)
-
-        await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, None)
-        push_event_to_participant(participant_id)
-        with pytest.raises(StopAsyncIteration):
-            await bob.recv_raw()
-
-    # Do not deco reader losing write access
-    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
-    async with EditicsSessionClient.join(
-        who=coolorg.bob,
-        realm_id=coolorg.wksp1_id,
-        document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
-    ) as bob:
-        push_event_to_participant(participant_id)
-        assert isinstance(await bob.recv(), EditicsServerEventWarning)
-
-        await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.READER)
-        push_event_to_participant(participant_id)
-        assert isinstance(await bob.recv(), EditicsServerEventWarning)
 
 
 async def test_read_only_realm_role_must_join_in_view_mode(
@@ -333,3 +282,91 @@ async def test_close_by_last_participant_destroys_session(
 
         # The session only lives through its participants
         assert backend.editics._sessions == {}
+
+
+async def test_sse_deco_on_role_change(backend: Backend, coolorg: CoolorgRpcClients) -> None:
+
+    def send_event_warning(participant_id: str, message: str) -> EditicsServerEventWarning:
+        assert len(backend.editics._sessions) == 1
+        participant = next(iter(backend.editics._sessions.values())).participants[participant_id]
+        assert participant.sse_channel_sender is not None
+        event = EditicsServerEventWarning(code=0, message=message)
+        participant.sse_channel_sender.send_nowait(event)
+        return event
+
+    async def assert_deco_on_role_change(
+        who: AuthenticatedRpcClient,
+        new_role: RealmRole | None,
+        auth: Literal["view", "edit"] | None = None,
+        expected: Literal["deco", "no_deco"] = "deco",
+    ):
+        participant_id = _new_participant_id()
+        async with EditicsSessionClient.join(
+            who=who,
+            realm_id=coolorg.wksp1_id,
+            document_id=DOCUMENT_ID,
+            participant_id=participant_id,
+        ) as bob:
+            if auth:
+                await bob.send(EditicsClientEventAuth(vlobVersion=1, reconnect=None, mode=auth))
+
+            expected_before_event = send_event_warning(participant_id, "before")
+            with backend.event_bus.spy() as spy:
+                await wksp1_alice_gives_role(coolorg, backend, who.user_id, new_role)
+                # Wait for the event that told the editics system about the revocation
+                await spy.wait(EventRealmCertificate)
+
+            # Bob still receive the events sent before the revocation...
+            event = await bob.recv()
+            assert event == expected_before_event
+
+            if expected == "deco":
+                # ...then a notification that he was kicked out...
+                event = await bob.recv()
+                assert event == EditicsServerEventDisconnectReason(
+                    code=4004, description="access deny"
+                )
+
+                # ...and then the connection is closed
+                with pytest.raises(StopAsyncIteration):
+                    event = await bob.recv()
+
+                # Also cannot send request with this participant
+                with pytest.raises(RpcTransportError) as exc:
+                    await bob.send(EditicsClientEventClose())
+                assert exc.value.rep.status_code in (
+                    492,
+                    493,
+                )  # TODO: dummy HTTP error code for now
+
+            else:
+                # Bob is not kicked out: the connection stays functional
+                expected_after_event = send_event_warning(participant_id, "after")
+                event = await bob.recv()
+                assert event == expected_after_event
+
+    # Any role change triggers the deco if the participant hasn't send the `auth`  event yet
+    await assert_deco_on_role_change(coolorg.bob, new_role=None)
+    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
+    await assert_deco_on_role_change(coolorg.bob, new_role=RealmRole.OWNER)
+
+    # Deco viewer losing read access
+    await assert_deco_on_role_change(coolorg.bob, new_role=None, auth="view")
+    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
+
+    # Deco editor losing write access
+    await assert_deco_on_role_change(coolorg.bob, new_role=RealmRole.READER, auth="edit")
+    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.OWNER)
+    await assert_deco_on_role_change(coolorg.bob, new_role=None, auth="edit")
+
+    # No deco for viewer losing write access
+    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
+    await assert_deco_on_role_change(
+        coolorg.bob, new_role=RealmRole.READER, auth="view", expected="no_deco"
+    )
+
+    # No deco for editor changing role but keeping write access
+    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.MANAGER)
+    await assert_deco_on_role_change(
+        coolorg.bob, new_role=RealmRole.CONTRIBUTOR, auth="edit", expected="no_deco"
+    )

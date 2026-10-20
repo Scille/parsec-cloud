@@ -27,6 +27,7 @@ from parsec.config import BackendConfig
 from parsec.events import (
     Event,
     EventOrganizationTosUpdated,
+    EventRealmCertificate,
     EventUserRevokedOrFrozen,
     EventUserUnfrozen,
 )
@@ -278,6 +279,20 @@ class BaseAuthComponent:
                     (org_id, device_id): v
                     for ((org_id, device_id), v) in self._device_cache.items()
                     if org_id != event.organization_id or v.user_id != event.user_id
+                }
+                # Revocation and freezing also affect editics authentication
+                self._editics_cache = {
+                    (org_id, realm_id, device_id): v
+                    for ((org_id, realm_id, device_id), v) in self._editics_cache.items()
+                    if org_id != event.organization_id or v.user_id != event.user_id
+                }
+            # Editics auth info embeds the user's realm role, so it must be
+            # re-computed (i.e. the cache cleared) whenever a role changes.
+            case EventRealmCertificate():
+                self._editics_cache = {
+                    (org_id, realm_id, device_id): v
+                    for ((org_id, realm_id, device_id), v) in self._editics_cache.items()
+                    if org_id != event.organization_id or realm_id != event.realm_id
                 }
             # If TOS has changed they must be re-accepted by the users, so we clear the
             # cache given that the TOS acceptance is checked on cache miss.

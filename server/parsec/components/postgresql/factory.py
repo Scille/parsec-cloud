@@ -58,7 +58,7 @@ async def components_factory(
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 block = PGBlockComponent(pool=pool, blockstore=blockstore)
                 cryptpad = PGCryptpadComponent(pool=pool, config=config)
-                editics = EditicsComponent(config=config)
+                editics = EditicsComponent(config=config, event_bus=event_bus)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 invite = PGInviteComponent(pool=pool, config=config)
                 organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)

@@ -260,46 +260,48 @@ async def editics_send(
         case EditicsAuthInfo() as auth_info:
             pass
         case AuthEditicsAuthBadOutcome.ORGANIZATION_EXPIRED:
-            _handshake_abort(CustomHttpStatus.OrganizationExpired, api_version="TODO")
+            _handshake_abort(
+                CustomHttpStatus.OrganizationExpired, api_version="TODO: ORGANIZATION_EXPIRED"
+            )
         case AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
                 CustomHttpStatus.OrganizationNotFound,
-                api_version="TODO",
+                api_version="TODO: ORGANIZATION_NOT_FOUND",
             )
         case AuthEditicsAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
             _handshake_abort(
                 CustomHttpStatus.TokenExpired,
-                api_version="TODO",
+                api_version="TODO: TOKEN_OUT_OF_BALLPARK",
             )
         case AuthEditicsAuthBadOutcome.DEVICE_NOT_FOUND | AuthEditicsAuthBadOutcome.INVALID_TOKEN:
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo,
-                api_version="TODO",
+                api_version="TODO: DEVICE_NOT_FOUND/INVALID_TOKEN",
             )
         case AuthEditicsAuthBadOutcome.USER_REVOKED:
             _handshake_abort(
                 CustomHttpStatus.UserRevoked,
-                api_version="TODO",
+                api_version="TODO: USER_REVOKED",
             )
         case AuthEditicsAuthBadOutcome.USER_FROZEN:
             _handshake_abort(
                 CustomHttpStatus.UserFrozen,
-                api_version="TODO",
+                api_version="TODO: USER_FROZEN",
             )
         case AuthEditicsAuthBadOutcome.REALM_NOT_FOUND:
-            _handshake_abort(
-                CustomHttpStatus.UserMustAcceptTos,
-                api_version="TODO",
+            raise HTTPException(
+                status_code=490,
+                detail="TODO: REALM_NOT_FOUND",
             )
         case AuthEditicsAuthBadOutcome.REALM_DELETED:
-            _handshake_abort(
-                CustomHttpStatus.UserMustAcceptTos,
-                api_version="TODO",
+            raise HTTPException(
+                status_code=491,
+                detail="TODO: REALM_DELETED",
             )
         case AuthEditicsAuthBadOutcome.USER_NO_REALM_ROLE:
-            _handshake_abort(
-                CustomHttpStatus.UserMustAcceptTos,
-                api_version="TODO",
+            raise HTTPException(
+                status_code=492,
+                detail="TODO: USER_NO_REALM_ROLE",
             )
 
     try:
@@ -327,8 +329,8 @@ async def editics_send(
         case None:
             return Response(status_code=204)
         case EditicsParticipantSendBadOutcome.PARTICIPANT_NOT_AUTH:
-            raise NotImplementedError  # TODO
+            raise HTTPException(status_code=493, detail="TODO: PARTICIPANT_NOT_AUTH")  # TODO
         case EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH:
-            raise NotImplementedError  # TODO
+            raise HTTPException(status_code=494, detail="TODO: PARTICIPANT_DEVICE_MISMATCH")  # TODO
         case EditicsParticipantSendBadOutcome.READER_MUST_BE_VIEWER:
-            raise NotImplementedError  # TODO
+            raise HTTPException(status_code=495, detail="TODO: READER_MUST_BE_VIEWER")  # TODO
