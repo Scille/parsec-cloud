@@ -3,7 +3,7 @@
 <template>
   <ion-list class="profile-header-popover-container">
     <div class="header-list">
-      <ion-text class="body-sm header-list-email">
+      <ion-text class="header-list-email">
         {{ email }}
       </ion-text>
     </div>
@@ -21,7 +21,7 @@
           slot="start"
           class="item-icon"
         />
-        <ion-text class="body item-label">
+        <ion-text class="item-label">
           {{ $msTranslate('HomePage.topbar.settings') }}
         </ion-text>
       </ion-item>
@@ -34,7 +34,7 @@
           slot="start"
           class="item-icon"
         />
-        <ion-text class="body item-label">
+        <ion-text class="item-label">
           {{ $msTranslate('HomePage.topbar.account') }}
         </ion-text>
       </ion-item>
@@ -47,7 +47,7 @@
           slot="start"
           class="item-icon"
         />
-        <ion-text class="body item-label">
+        <ion-text class="item-label">
           {{ $msTranslate('HomePage.topbar.authentication') }}
         </ion-text>
       </ion-item>
@@ -60,7 +60,7 @@
           slot="start"
           class="item-icon"
         />
-        <ion-text class="body item-label">
+        <ion-text class="item-label">
           {{ $msTranslate('HomePage.topbar.logout') }}
         </ion-text>
       </ion-item>
@@ -70,26 +70,26 @@
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverHomepageOption.Documentation)"
       >
-        <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.documentation') }} </ion-text>
+        <ion-text class="footer-list__text"> {{ $msTranslate('HomePage.topbar.documentation') }} </ion-text>
       </ion-item>
       <ion-item
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverHomepageOption.Feedback)"
       >
-        <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.feedback') }} </ion-text>
+        <ion-text class="footer-list__text"> {{ $msTranslate('HomePage.topbar.feedback') }} </ion-text>
       </ion-item>
       <ion-item
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverHomepageOption.About)"
       >
-        <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
+        <ion-text class="footer-list__text"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
       <ion-item
         class="footer-list__item"
         @click="Env.Links.openDownloadParsecLink"
         v-if="hideParsecDownloadContent"
       >
-        <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.downloadParsec') }} </ion-text>
+        <ion-text class="footer-list__text"> {{ $msTranslate('MenuPage.downloadParsec') }} </ion-text>
       </ion-item>
     </div>
   </ion-list>
@@ -161,17 +161,18 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .profile-header-popover-container {
-  padding: 0;
+  padding: ms.spacing('padding-none');
 }
 
 .header-list {
-  padding: 1rem;
-  color: var(--parsec-color-light-secondary-grey);
+  padding: ms.spacing('padding-3xl');
+  color: ms.color('text-base-description');
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   &-email {
+    @include ms.font('body-sm-regular');
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -179,82 +180,83 @@ onMounted(async () => {
 }
 
 .main-list {
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  gap: ms.spacing('gap-sm');
+  border-top: ms.border('thin') solid ms.color('border-base-default');
 
   &__item {
     --background: none;
     user-select: none;
     cursor: pointer;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
     margin-inline-end: 2px;
-    padding: 0.375rem 0.5rem;
+    padding: ms.spacing('padding-lg');
     --min-height: 1rem;
     width: 100%;
-    border-radius: var(--parsec-radius-6);
+    border-radius: ms.radius('md');
 
     .item-label {
+      @include ms.font('label-md-medium');
       margin: 0;
     }
 
     .item-icon {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('icon-neutral-default');
       margin: 0;
-      margin-inline-end: 0.5rem;
+      margin-inline-end: ms.spacing('padding-lg');
       font-size: 1.125rem;
     }
 
     &::part(native) {
-      padding: 0;
+      padding: ms.spacing('padding-none');
     }
 
     &.logout {
-      color: var(--parsec-color-light-danger-500);
+      color: ms.color('text-error-default');
 
       .item-icon {
-        color: var(--parsec-color-light-danger-500);
+        color: ms.color('icon-error-default');
       }
 
       &:hover {
-        background: var(--parsec-color-light-danger-50);
-        color: var(--parsec-color-light-danger-700);
+        background: ms.color('surface-error-default-subtle-hover');
+        color: ms.color('text-error-default-hover');
 
         ion-icon {
-          color: var(--parsec-color-light-danger-700);
+          color: ms.color('icon-error-default-hover');
         }
       }
     }
 
     &:hover {
-      background: var(--parsec-color-light-primary-30);
-      color: var(--parsec-color-light-primary-700);
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('text-brand-default-hover');
 
       ion-icon {
-        color: var(--parsec-color-light-primary-700);
+        color: ms.color('icon-brand-default-hover');
       }
     }
   }
 }
 
 .footer-list {
-  background: var(--parsec-color-light-secondary-background);
-  padding: 0.5rem 0.5rem;
+  background: ms.color('surface-base-default-secondary');
+  padding: ms.spacing('padding-lg');
 
   &__item {
-    --padding-start: 0.5rem;
-    --padding-end: 0.5rem;
-    --padding-top: 0.5rem;
-    --padding-bottom: 0.5rem;
+    --padding-start: #{ms.spacing('padding-lg')};
+    --padding-end: #{ms.spacing('padding-lg')};
+    --padding-top: #{ms.spacing('padding-lg')};
+    --padding-bottom: #{ms.spacing('padding-lg')};
     --min-height: 0;
     --background: none;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
     cursor: pointer;
     width: fit-content;
     display: flex;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &:hover {
       text-decoration: underline;
@@ -263,8 +265,12 @@ onMounted(async () => {
     ion-icon {
       font-size: 1.125rem;
       margin: 0;
-      margin-right: 0.5rem;
+      margin-right: ms.spacing('padding-lg');
     }
+  }
+
+  &__text {
+    @include ms.font('body-sm-regular');
   }
 }
 </style>
