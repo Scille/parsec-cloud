@@ -78,10 +78,10 @@ onMounted(async () => {
 
 @keyframes LogoFadeIn {
   0% {
-    opacity: 0;
+    opacity: ms.opacity('0');
   }
   100% {
-    opacity: 1;
+    opacity: ms.opacity('10');
   }
 }
 
@@ -91,7 +91,7 @@ onMounted(async () => {
   align-items: center;
   flex-direction: column;
   width: fit-content;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   .logo-img {
     animation: LogoFadeIn 0.8s ease-in-out;
