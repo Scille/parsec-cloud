@@ -495,11 +495,13 @@ jobs:
 
             # Update artifact file
             yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext} = \"${app_file}\"" $artifact_file
-            yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
+            # AppImage does not have a blockmap file generated
+            if [ "$ext" != "AppImage" ]; then
+              yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
+            fi
 
             # Add to files_to_upload
-            echo client/electron/dist/$app_file | tee -a $GITHUB_OUTPUT
-            echo client/electron/dist/$app_file.blockmap | tee -a $GITHUB_OUTPUT
+            yq . $artifact_file -o json | jq -r '"client/electron/dist/" + (.. | scalars)' | tee -a $GITHUB_OUTPUT
           done
 
           # Print artifact file
