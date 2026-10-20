@@ -111,6 +111,13 @@ jobs:
           tool: cross@${{ env.cross-version }}
         timeout-minutes: 5
 
+      - name: Install yq
+        # TODO: Merge me in the above taiki-e/install-action action once https://github.com/taiki-e/install-action/pull/2036 is merged
+        uses: FirelightFlagboy/install-action@tool-yq-go
+        with:
+          tool: yq-go
+        timeout-minutes: 1
+
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
       # paths so we have to switch to Strawberry.
@@ -146,11 +153,6 @@ jobs:
           Get-ChildItem "${env:ProgramFiles(x86)}\WinFsp\bin" | Select-Object -First 20
         timeout-minutes: 1
 
-      - name: Windows > Install yq
-        if: runner.os == 'Windows'
-        run: choco install yq
-        timeout-minutes: 3
-
       - name: Build CLI
         shell: bash -o pipefail -eux {0}
         run: >-
@@ -174,7 +176,7 @@ jobs:
           FINAL_ARTIFACT_NAME="parsec-cli-${{ steps.version.outputs.full }}-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}${{ matrix.extension }}"
           cp -v target/${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}/release/parsec-cli "${{ runner.temp }}/$FINAL_ARTIFACT_NAME"
           echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
-          yq --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee "${{ runner.temp }}/artifacts.yml"
+          yq-go --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee "${{ runner.temp }}/artifacts.yml"
         timeout-minutes: 1
 
       - name: Generate fake package.json for sign script
