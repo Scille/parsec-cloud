@@ -182,6 +182,19 @@ jobs:
             echo 'EOF_files_to_upload'
           ) | tee -a $GITHUB_OUTPUT
 
+      - name: Verify listed artifacts files
+        run: |
+          while read -r filepath; do
+            if [ -f "$filepath" ]; then
+              echo "[OK] $filepath"
+            else
+              echo "[NOK] $filepath" >&2
+              exit 1
+            fi
+          done << EOF
+          ${{ steps.artifacts.outputs.files_to_upload }}
+          EOF
+
       - name: Generate version file
         run: (
           echo "full=${{ needs.version.outputs.full }}";
