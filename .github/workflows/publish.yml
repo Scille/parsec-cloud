@@ -72,8 +72,9 @@ jobs:
             schedule | pull_request)
               tag='nightly'
               ;;
-            # For workflow_call or dispatch, we use the provided release_tag.
-            workflow_call | workflow_dispatch)
+            # For everything else, we consider that the workflow was reused or manually called.
+            # So we retrieve the value from `inputs` context
+            *)
               tag='${{ inputs.release_tag }}'
               ;;
           esac
