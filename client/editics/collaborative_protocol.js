@@ -77,10 +77,6 @@ function bytesToStr(bytes) {
  * @property {string} workspaceId - WorkspaceID (VlobID) hex.
  * @property {string} vlobId - VlobID hex of the document.
  * @property {string} deviceIdHex - DeviceID hex of the client's device.
- * @property {string} [userId] - unused (the translator resolves the display
- *   names from the device ids through the `getHumanLabelFromDeviceId`
- *   capability). Kept for config compat, to be removed.
- * @property {string} [userName] - unused, see `userId`.
  * @property {number} vlobVersion - loaded vlob version (RFC §1.2).
  * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
  */
@@ -138,6 +134,22 @@ class EditicsTranslator {
       }
       return result;
     }
+  }
+
+  /**
+   * The OnlyOffice identity of a participant, i.e. the composite
+   * `<idOriginal><indexUser>`: the editor builds its own identity this way on
+   * auth (see `DocsCoApi`'s auth handler: `this._userId =
+   * this._user.asc_getId() + this._indexUser`, with `asc_getId()` the
+   * integrator-provided user id, here the device id) and compares it against
+   * the `user` fields of the locks/changes/cursors/messages to know which are
+   * its own.
+   * @param {EditicsParticipantIdentity} identity `(device id, index)` tuple
+   * @returns {string}
+   */
+  _onlyofficeUserId(identity) {
+    const [deviceId, indexUser] = identity;
+    return `${deviceId}${indexUser}`;
   }
 
   // --- OnlyOffice connectMockServer queries (pure sync) ---------------------
@@ -515,7 +527,7 @@ class EditicsTranslator {
     return {
       type: 'waitAuth',
       lockDocument: {
-        id: editics.authLockedBy.id,
+        id: `${editics.authLockedBy.deviceId}${editics.authLockedBy.indexUser}`,
         idOriginal: editics.authLockedBy.deviceId,
         username: authLockedByhumanLabel,
         indexUser: editics.authLockedBy.indexUser,
@@ -552,17 +564,17 @@ class EditicsTranslator {
   async _cookAuthChanges(editics) {
     const changes = await Promise.all(
       (editics.changes || []).map(async (c) => {
-        // The author's identity is carried by the record (`(participant id,
-        // device id)` tuple): the backlog can contain changes from participants
-        // that left the session before we joined (so they cannot be resolved
-        // through the participants list).
-        const [authorParticipantId, authorDeviceId] = c.author;
+        // The author's identity is carried by the record (`(device id,
+        // index)` tuple): the backlog can contain changes from participants
+        // that left the session before we joined, hence the index is carried
+        // by the record itself.
+        const [authorDeviceId, _authorIndexUser] = c.author;
         const [keyIndex, b64CipherText] = c.encryptedChange;
         return {
           docid: this.docId,
           change: JSON.stringify(bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText)))),
           time: c.time,
-          user: authorParticipantId,
+          user: this._onlyofficeUserId(c.author),
           useridoriginal: authorDeviceId,
         };
       }),
@@ -577,19 +589,17 @@ class EditicsTranslator {
   async _cookMessageEntries(messages) {
     return await Promise.all(
       messages.map(async (m) => {
-        // The author's identity is carried by the record (`(participant id,
-        // device id)` tuple): a message can be replayed to a client that never
-        // saw its author (the author left the session before it joined).
-        const [authorParticipantId, authorDeviceId] = m.author;
+        // The author's identity is carried by the record (`(device id,
+        // index)` tuple): a message can be replayed to a client that never saw
+        // its author (the author left the session before it joined).
+        const [authorDeviceId, _authorIndexUser] = m.author;
         const [keyIndex, b64CipherText] = m.encryptedMessage;
         const username = (await this.getHumanLabelFromDeviceId(authorDeviceId)) || '<unknown>';
         return {
           docid: this.docId,
           message: bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText))),
           time: m.time,
-          // The `user`/`useridoriginal` fields correspond to the author's
-          // participant id / device id (like the `cursor` server event).
-          user: authorParticipantId,
+          user: this._onlyofficeUserId(m.author),
           useridoriginal: authorDeviceId,
           username,
         };
@@ -622,12 +632,12 @@ class EditicsTranslator {
     const messages = await Promise.all(
       (editics.messages || []).map(async (m) => {
         // The author's identity is carried by the record, like for a `message`.
-        const [authorParticipantId, authorDeviceId] = m.author;
+        const [authorDeviceId, _authorIndexUser] = m.author;
         const [keyIndex, b64CipherText] = m.encryptedCursor;
         return {
           cursor: bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText))),
           time: m.time,
-          user: authorParticipantId,
+          user: this._onlyofficeUserId(m.author),
           useridoriginal: authorDeviceId,
         };
       }),
@@ -646,13 +656,12 @@ class EditicsTranslator {
     const ooLocks = {};
     for (const key in editics.locks || {}) {
       const lock = editics.locks[key];
-      // The holder's identity is carried by the record (`(participant id,
-      // device id)` tuple): the holder may have left the session, e.g. its
-      // lock was released on disconnect.
-      const [holderParticipantId] = lock.holder;
+      // The holder's identity is carried by the record (`(device id,
+      // index)` tuple): the holder may have left the session, e.g. its lock
+      // was released on disconnect.
       ooLocks[key] = {
         time: lock.time,
-        user: holderParticipantId,
+        user: this._onlyofficeUserId(lock.holder),
         block: lock.block,
       };
     }
@@ -668,10 +677,9 @@ class EditicsTranslator {
   _cookReleaseLock(editics) {
     const locks = (editics.locks || []).map((lock) => {
       // The holder's identity is carried by the record, like in `getLock`.
-      const [holderParticipantId] = lock.holder;
       return {
         block: lock.block,
-        user: holderParticipantId,
+        user: this._onlyofficeUserId(lock.holder),
         time: lock.time,
         changes: lock.changes,
       };
@@ -688,10 +696,9 @@ class EditicsTranslator {
   _onlyofficeLockTable(locks) {
     const records = (locks || []).map((lock) => {
       // The holder's identity is carried by the record, like in `getLock`.
-      const [holderParticipantId] = lock.holder;
       return {
         time: lock.time,
-        user: holderParticipantId,
+        user: this._onlyofficeUserId(lock.holder),
         block: lock.block,
       };
     });
@@ -717,10 +724,10 @@ class EditicsTranslator {
   async _cookServerSaveChanges(editics) {
     const changes = await Promise.all(
       (editics.changes || []).map(async (c) => {
-        // The author's identity is carried by the record (`(participant id,
-        // device id)` tuple), like for the `authChanges` entries: the author
-        // may have left the session before we joined.
-        const [authorParticipantId, authorDeviceId] = c.author;
+        // The author's identity is carried by the record (`(device id,
+        // index)` tuple), like for the `authChanges` entries: the author may
+        // have left the session before we joined.
+        const [authorDeviceId, _authorIndexUser] = c.author;
         const [keyIndex, b64CipherText] = c.encryptedChange;
         return {
           docid: this.docId,
@@ -729,18 +736,17 @@ class EditicsTranslator {
           change: JSON.stringify(bytesToStr(await this.libparsec.decrypt(keyIndex, Uint8Array.fromBase64(b64CipherText)))),
           time: c.time,
           // The `user`/`useridoriginal` fields correspond to the author's
-          // participant id / device id (like the `cursor` server event).
-          user: authorParticipantId,
+          // OnlyOffice identity / device id (like the `cursor` server event).
+          user: this._onlyofficeUserId(c.author),
           useridoriginal: authorDeviceId,
         };
       }),
     );
     const locks = (editics.locks || []).map((lock) => {
       // The holder's identity is carried by the record, like in `getLock`.
-      const [holderParticipantId] = lock.holder;
       return {
         block: lock.block,
-        user: holderParticipantId,
+        user: this._onlyofficeUserId(lock.holder),
         time: lock.time,
         changes: lock.changes,
       };
@@ -802,7 +808,9 @@ class EditicsTranslator {
   async _onlyofficeParticipantEntry(entry) {
     const humanLabel = (await this.getHumanLabelFromDeviceId(entry.deviceId)) || '<unknown>';
     return {
-      id: entry.id,
+      // OnlyOffice composite participant id (`<idOriginal><indexUser>`),
+      // see `_onlyofficeUserId`.
+      id: `${entry.deviceId}${entry.indexUser}`,
       idOriginal: entry.deviceId,
       username: humanLabel,
       indexUser: entry.indexUser,
@@ -833,8 +841,9 @@ export { EditicsTranslator };
  *
  * @typedef {string} EditicsParticipantID
  *
+ * @typedef {[string, EditicsParticipantIndex]} EditicsParticipantIdentity
+ *
  * @typedef {Object} EditicsParticipantEntry
- * @property {EditicsParticipantID} id
  * @property {EditicsParticipantIndex} indexUser
  * @property {string} deviceId
  * @property {boolean} view
@@ -916,8 +925,8 @@ export { EditicsTranslator };
  * @property {EditicsParticipantIndex} indexUser
  * @property {number} participantTimeConnect
  * @property {number} openedAt
- * @property {Array<{time:number, holder:[EditicsParticipantID, string], block:*}>} [locks]
- * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedMessage:[number, string]}>} [messages]
+ * @property {Array<{time:number, holder:EditicsParticipantIdentity, block:*}>} [locks]
+ * @property {Array<{time:number, author:EditicsParticipantIdentity, encryptedMessage:[number, string]}>} [messages]
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type
@@ -927,7 +936,7 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventAuthChanges
  * @property {'authChanges'} type
- * @property {Array<{index:number, author:[EditicsParticipantID, string], time:number, encryptedChange:[number, string]}>} [changes]
+ * @property {Array<{index:number, author:EditicsParticipantIdentity, time:number, encryptedChange:[number, string]}>} [changes]
  *
  * @typedef {Object} EditicsServerEventWaitAuth
  * @property {'waitAuth'} type
@@ -935,19 +944,19 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventMessage
  * @property {'message'} type
- * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedMessage:[number, string]}>} messages
+ * @property {Array<{time:number, author:EditicsParticipantIdentity, encryptedMessage:[number, string]}>} messages
  *
  * @typedef {Object} EditicsServerEventCursor
  * @property {'cursor'} type
- * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedCursor:[number, string]}>} messages
+ * @property {Array<{time:number, author:EditicsParticipantIdentity, encryptedCursor:[number, string]}>} messages
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type
- * @property {Record<string, {time:number, holder:[EditicsParticipantID, string], block:*}>} locks
+ * @property {Record<string, {time:number, holder:EditicsParticipantIdentity, block:*}>} locks
  *
  * @typedef {Object} EditicsServerEventReleaseLock
  * @property {'releaseLock'} type
- * @property {Array<{block:*, holder:[EditicsParticipantID, string], time:number, changes:null}>} locks
+ * @property {Array<{block:*, holder:EditicsParticipantIdentity, time:number, changes:null}>} locks
  *
  * @typedef {Object} EditicsServerEventSaveLock
  * @property {'saveLock'} type
@@ -955,11 +964,11 @@ export { EditicsTranslator };
  *
  * @typedef {Object} EditicsServerEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Array<{time:number, author:[EditicsParticipantID, string], encryptedChange:[number, string]}>} changes
+ * @property {Array<{time:number, author:EditicsParticipantIdentity, encryptedChange:[number, string]}>} changes
  * @property {number} changesIndex
  * @property {number} syncChangesIndex
  * @property {boolean} endSaveChanges
- * @property {Array<{block:*, holder:[EditicsParticipantID, string], time:number, changes:null}>} [locks]
+ * @property {Array<{block:*, holder:EditicsParticipantIdentity, time:number, changes:null}>} [locks]
  * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexCols
  * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexRows
  * @property {[number, string]|null} encryptedCursorAdditionalInfo
