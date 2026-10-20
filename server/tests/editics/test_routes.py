@@ -165,8 +165,9 @@ async def test_read_only_realm_role_must_join_in_view_mode(
     ) as bob:
         # TODO: the route should answer with a proper HTTP error status instead
         # of letting the `NotImplementedError` placeholder propagate
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(RpcTransportError) as exc:
             await bob.send(_auth_event(view=False))
+        assert exc.value.rep.status_code == 495  # TODO: dummy HTTP error code for now
 
 
 async def test_write_role_participant_requesting_view_mode(
