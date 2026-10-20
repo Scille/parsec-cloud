@@ -1,37 +1,39 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="container">
+  <ion-list class="list-homepage-buttons">
     <ion-item
-      class="container__item"
+      class="list-homepage-buttons__item"
       @click="clicked(HomePageAction.CreateOrganization)"
     >
       <ion-icon
         :icon="addCircle"
         slot="start"
+        class="item-icon"
       />
       <div class="text-content">
-        <ion-text class="body">
+        <ion-text class="item-title">
           {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationTitle') }}
         </ion-text>
-        <ion-text class="body-sm sub-text">
+        <ion-text class="item-description">
           {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationSubtitle') }}
         </ion-text>
       </div>
     </ion-item>
     <ion-item
-      class="container__item"
+      class="list-homepage-buttons__item"
       @click="clicked(HomePageAction.JoinOrganization)"
     >
       <ion-icon
         :icon="mail"
         slot="start"
+        class="item-icon"
       />
       <div class="text-content">
-        <ion-text class="body">
+        <ion-text class="item-title">
           {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationTitle') }}
         </ion-text>
-        <ion-text class="body-sm sub-text">
+        <ion-text class="item-description">
           {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationSubtitle') }}
         </ion-text>
       </div>
@@ -57,35 +59,48 @@ async function clicked(action: HomePageAction): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.container {
-  padding: 0.5rem;
+.list-homepage-buttons {
+  padding: ms.spacing('padding-lg');
+  display: flex;
+  flex-direction: column;
 }
 
-.container__item {
+.list-homepage-buttons__item {
   --background: none;
   width: 100%;
   --min-height: 1rem;
   user-select: none;
   cursor: pointer;
-  margin-inline-end: 2px;
-  color: var(--parsec-color-light-primary-600);
-  border-radius: 0.25rem;
-  ion-icon {
-    color: var(--parsec-color-light-primary-600);
-    margin-inline-end: 0.75rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+  color: ms.color('text-brand-default');
+
+  &::part(native) {
+    padding: 0.325rem 0.5rem;
   }
+
+  .item-icon {
+    color: ms.color('icon-brand-default');
+    margin-inline-end: ms.spacing('gap-2xl');
+    font-size: 1.25rem;
+  }
+
   &:hover {
-    --background: var(--parsec-color-light-primary-30);
-    color: var(--parsec-color-light-primary-600);
+    --background: #{ms.color('surface-brand-default-subtle-hover')};
+    color: ms.color('text-brand-default-hover');
+    border-radius: ms.radius('sm');
   }
+
   .text-content {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    .sub-text {
-      color: var(--parsec-color-light-secondary-grey);
+
+    .item-title {
+      @include ms.font('label-md-medium');
+    }
+
+    .item-description {
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-description');
     }
   }
 }
