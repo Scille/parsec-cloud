@@ -49,25 +49,33 @@ jobs:
       version: ${{ inputs.version }}
       commit_sha: ${{ inputs.commit_sha }}
 
-  package-cli-linux:
+  package-cli:
     needs: version
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
-    name: 📦 Packaging CLI for linux 🐧
-    runs-on: ubuntu-24.04
+    name: 📦 Packaging CLI for ${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     env:
-      cross-version: v0.2.5
+      cross-version: 0.2.5
+      WINFSP_VERSION: 2.1.25156
     strategy:
       fail-fast: false
       # Parsec CLI has three potential dynamic dependencies: `libc`, `fuse3` and `openssl`, hence we have two build strategy here:
       matrix:
         arch: [x86_64]
         vendor: [unknown]
+        runner: [ubuntu-24.04]
         os:
           # The MUSL target provide a statically linked CLI
           - linux-musl
           # The GNU target provide a dynamically linked CLI
           - linux-gnu
+        include:
+          - os: windows-msvc
+            vendor: pc
+            arch: x86_64
+            runner: windows-2025
+            extension: .exe
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
@@ -90,113 +98,30 @@ jobs:
 
       - name: Load version config
         id: version
-        run: tee "$GITHUB_OUTPUT" < ${{ runner.temp }}/version.patch/version.ini
+        shell: bash
+        run: tee "$GITHUB_OUTPUT" < "${{ runner.temp }}/version.patch/version.ini"
         timeout-minutes: 1
 
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
         timeout-minutes: 1
 
-      - name: Use Cross
-        shell: bash
-        run: |
-          dir="$RUNNER_TEMP/cross-download"
-          mkdir "$dir"
-          echo "$dir" >> $GITHUB_PATH
-          cd "$dir"
-          curl -LO "https://github.com/cross-rs/cross/releases/download/${{ env.cross-version }}/cross-x86_64-unknown-linux-musl.tar.gz"
-          tar xf cross-x86_64-unknown-linux-musl.tar.gz
-        timeout-minutes: 5
-
-      - name: Build CLI
-        shell: bash -o pipefail -eux {0}
-        run: >-
-          cross build -p parsec-cli
-          --target=${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
-          $(python make.py cli-release-cargo-flags --quiet)
-        env:
-          LIBPARSEC_FORCE_VENDORED_LIBS: ${{ matrix.os == 'linux-musl' && 'true' || 'false' }}
-        timeout-minutes: 15
-
-      - name: Debug target folder
-        if: runner.debug || false
-        shell: bash
-        run: tree target
-        timeout-minutes: 1
-
-      - name: Rename CLI artifact
-        id: rename
-        shell: bash -eux -o pipefail {0}
-        run: |
-          FINAL_ARTIFACT_NAME="parsec-cli-${{ steps.version.outputs.full }}-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}"
-          cp -v target/${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}/release/parsec-cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
-          echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
-          yq --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee ${{ runner.temp }}/artifacts.yml
-        timeout-minutes: 1
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # pin v7.0.1
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # pin v2.87.22
         with:
-          name: cli-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
-          path: |
-            ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
-            ${{ runner.temp }}/artifacts.yml
-          if-no-files-found: error
+          tool: cross@${{ env.cross-version }}
         timeout-minutes: 5
-
-  package-cli-windows:
-    needs: version
-    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
-    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
-    name: 📦 Packaging CLI for Windows 🪟
-    runs-on: windows-2025
-    env:
-      WINFSP_VERSION: 2.1.25156
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows
-            arch: x86_64
-            target: x86_64-pc-windows-msvc
-            suffix: windows-x86_64-msvc
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
-        with:
-          ref: ${{ inputs.commit_sha }}
-        timeout-minutes: 5
-
-      - name: Retrieve runner specs
-        id: runner-specs
-        uses: ./.github/actions/system-info
-        timeout-minutes: 1
-
-      - name: Download version.patch artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # pin v8.0.1
-        with:
-          name: version.patch
-          digest-mismatch: error
-          path: ${{ runner.temp }}/version.patch
-          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
-        timeout-minutes: 2
-
-      - name: Load version config
-        id: version
-        run: Get-Content "${{ runner.temp }}\version.patch\version.ini" | Tee-Object -FilePath "$env:GITHUB_OUTPUT"
-        timeout-minutes: 1
-
-      - name: Apply version.patch
-        run: git apply --allow-empty "${{ runner.temp }}\version.patch\version.patch"
-        timeout-minutes: 1
 
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
       # paths so we have to switch to Strawberry.
       - name: Use strawberry perl
+        if: runner.os == 'Windows'
         shell: bash
         run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
       - name: Download WinFsp
+        if: runner.os == 'Windows'
         shell: bash -eux {0}
         run: >-
           curl -L --fail
@@ -204,6 +129,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Install WinFsp
+        if: runner.os == 'Windows'
         run: |
           $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList @(
             '/i', '${{ runner.temp }}\winfsp.msi',
@@ -221,44 +147,49 @@ jobs:
         timeout-minutes: 1
 
       - name: Windows > Install yq
-        if: matrix.os == 'windows'
+        if: runner.os == 'Windows'
         run: choco install yq
         timeout-minutes: 3
 
       - name: Build CLI
         shell: bash -o pipefail -eux {0}
         run: >-
-          cargo build -p parsec-cli
-          --target=${{ matrix.target }}
+          cross build -p parsec-cli
+          --target=${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
           $(python make.py cli-release-cargo-flags --quiet)
+        env:
+          LIBPARSEC_FORCE_VENDORED_LIBS: ${{ matrix.os == 'linux-musl' && 'true' || 'false' }}
         timeout-minutes: 15
 
       - name: Debug target folder
         if: runner.debug
-        run: Get-ChildItem -Recurse target
+        shell: bash
+        run: tree target
         timeout-minutes: 1
 
       - name: Rename CLI artifact
         id: rename
         shell: bash -eux -o pipefail {0}
         run: |
-          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}.exe"
-          cp -v "target/${{ matrix.target }}/release/parsec-cli.exe" "${{ runner.temp }}/$FINAL_ARTIFACT_NAME"
-          echo "artifact_name=$FINAL_ARTIFACT_NAME" | tee -a $GITHUB_OUTPUT
+          FINAL_ARTIFACT_NAME="parsec-cli-${{ steps.version.outputs.full }}-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}${{ matrix.extension }}"
+          cp -v target/${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}/release/parsec-cli "${{ runner.temp }}/$FINAL_ARTIFACT_NAME"
+          echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
           yq --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee "${{ runner.temp }}/artifacts.yml"
         timeout-minutes: 1
 
       - name: Generate fake package.json for sign script
+        if: runner.os == 'Windows'
         run: |
           $jsonContent = '{ "version": "${{ steps.version.outputs.full }}" }'
           $jsonContent | Tee-Object -FilePath "${{ runner.temp }}\package.json"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # pin v7.0.1
         with:
-          name: ${{ runner.os }}-${{ matrix.target }}-cli-pre-build
+          name: cli-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
+          # NOTE: package.json is only present on Windows builds
           path: |
             ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
-            ${{ runner.temp }}/package.json
             ${{ runner.temp }}/artifacts.yml
+            ${{ runner.temp }}/package.json
           if-no-files-found: error
         timeout-minutes: 5
