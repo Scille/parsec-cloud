@@ -2928,5 +2928,14 @@
         "title": "S'identifier avec ProConnect",
         "description": "Qu'est-ce que ProConnect ?",
         "link": "https://www.proconnect.gouv.fr/"
+    },
+    "export": {
+        "exportWorkspace": "Télécharger l'export (.json)",
+        "exportUsers": "Exporter les données (.json)",
+        "exporting": "En cours d'export...",
+        "exportWorkspaceFailed": "Impossible d'exporter les données de cet espace de travail.",
+        "exportUsersFailed": "Impossible d'exporter les données utilisateur.",
+        "exportWorkspaceDescription": "Téléchargez les informations et les membres de cet espace de travail, avec leurs rôles, dans un fichier JSON. Les fichiers et dossiers ne sont pas inclus.",
+        "exportWorkspaceTitle": "Exporter les données"
     }
 }

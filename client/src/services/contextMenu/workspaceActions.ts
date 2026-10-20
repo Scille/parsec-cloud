@@ -564,6 +564,7 @@ export function useWorkspaceActions() {
       cssClass: 'workspace-details-modal',
       componentProps: {
         workspace: workspace,
+        informationManager: informationManager.value,
       },
     });
     await modal.present();
