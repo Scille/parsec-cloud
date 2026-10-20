@@ -46,6 +46,7 @@ from parsec.components.totp import BaseTOTPComponent
 from parsec.components.user import BaseUserComponent, UserInfo
 from parsec.components.vlob import BaseVlobComponent
 from parsec.config import BackendConfig
+from parsec.events import EventPinged
 from parsec.logging import get_logger
 from parsec.webhooks import WebhooksComponent
 
@@ -162,6 +163,9 @@ class Backend:
         await self.apply_events(
             org_id=id,
             events=template.events + customization,
+            # Must wait for the events to settle since we are customizing the
+            # organization that is actually used in the test.
+            wait_for_in_flight_events=True,
             skip_events_offset=len(template.events),
         )
 
@@ -192,12 +196,23 @@ class Backend:
             case error:
                 assert False, error
 
-        await self.apply_events(org_id=org_id, events=template.events)
+        await self.apply_events(
+            org_id=org_id,
+            events=template.events,
+            # Don't need to wait for the events to settle: they are related to
+            # a template organization that we always duplicate (hence ending up
+            # with a different organization ID) before using it in the tests.
+            wait_for_in_flight_events=False,
+        )
 
         return org_id
 
     async def apply_events(
-        self, org_id: OrganizationID, events: list[TestbedEvent], skip_events_offset: int = 0
+        self,
+        org_id: OrganizationID,
+        events: list[TestbedEvent],
+        wait_for_in_flight_events: bool,
+        skip_events_offset: int = 0,
     ) -> None:
         from parsec._parsec import testbed
 
@@ -470,3 +485,13 @@ class Backend:
                     tos=event.tos,
                 )
                 assert outcome is None, outcome
+
+        # At this point we may still have in-flight events from the populate operations
+        # (e.g. `EventVlob` emitted from a `vlob.update()`).
+        if wait_for_in_flight_events:
+            sentinel_event = EventPinged(organization_id=org_id, ping="__sentinel__")
+            with self.event_bus.create_waiter(
+                lambda candidate: candidate == sentinel_event
+            ) as waiter:
+                await self.event_bus.send(sentinel_event)
+                await waiter.wait()
