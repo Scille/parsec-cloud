@@ -1833,6 +1833,7 @@
     },
     "InvitationsPage": {
         "emailInvitation": {
+            "tabLabel": "Invitations envoyées",
             "tab": "Invitations par adresse email",
             "tabShort": "Email",
             "emptyState": "Aucune invitation par email en attente.",
@@ -1850,6 +1851,7 @@
             }
         },
         "asyncEnrollmentRequest": {
+            "tabLabel": "Demandes d'adhésion",
             "tab": "Demandes par lien (PKI/SSO)",
             "emptyState": "Aucune demande par lien en attente. Les demandes d'utilisateurs pour rejoindre l'organisation avec une carte à puce (PKI) ou un compte ProConnect (SSO) seront répertoriées ici.",
             "copyLink": "Copier le lien (PKI/SSO)",

@@ -1833,6 +1833,7 @@
     },
     "InvitationsPage": {
         "emailInvitation": {
+            "tabLabel": "Sent invitations",
             "tab": "Email invitation",
             "tabShort": "Email",
             "emptyState": "No pending email invitations.",
@@ -1850,6 +1851,7 @@
             }
         },
         "asyncEnrollmentRequest": {
+            "tabLabel": "Join requests",
             "tab": "Join requests (PKI/SSO)",
             "emptyState": "No pending join requests. Users requesting to join the organization with a SmartCard (PKI) or a ProConnect account (SSO) will be listed here.",
             "copyLink": "Copy join request link (PKI/SSO)",

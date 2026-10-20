@@ -83,7 +83,7 @@ async function dismissModal(): Promise<boolean> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 
 .dropdown,
