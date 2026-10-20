@@ -144,7 +144,7 @@ jobs:
 
       - name: Check that snapcraft credential is not empty
         shell: bash
-        run: test $(printenv SNAPCRAFT_STORE_CREDENTIALS | wc -c | tee /dev/stderr) -gt 10
+        run: test "$(printenv SNAPCRAFT_STORE_CREDENTIALS | wc -c | tee /dev/stderr)" -gt 10
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
         timeout-minutes: 1
@@ -155,12 +155,6 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
         timeout-minutes: 2
 
-      - name: Upload Snap
-        run: snapcraft upload --release="${{ steps.snapcraft-channels.outputs.channels }}" snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
-        timeout-minutes: 3
-
       - name: Publish wheel on PyPI
         if: steps.version.outputs.local == ''
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # pin v1.14.2
@@ -168,3 +162,24 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
         timeout-minutes: 2
+
+      - name: Upload Snap
+        shell: bash -eux -o pipefail {0}
+        run: |
+          set +e
+          UPLOAD_OUTPUT=$(snapcraft upload --release="${{ steps.snapcraft-channels.outputs.channels }}" snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap 2>&1 | tee /dev/stderr)
+          EXIT_CODE="$?"
+          set -e
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            if echo "$UPLOAD_OUTPUT" | grep -q "Error checking upload uniqueness"; then
+              echo "Snap already uploaded in the store. Skipping ..."
+              exit 0
+            else
+              echo "Failed to upload snapcraft"
+              exit $EXIT_CODE
+            fi
+          fi
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
+        timeout-minutes: 3
