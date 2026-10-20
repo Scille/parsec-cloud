@@ -314,10 +314,12 @@ jobs:
           echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
-      - name: Windows > Install yq
-        if: matrix.platform == 'windows'
-        run: choco install yq
-        timeout-minutes: 3
+      - name: Install yq
+        # TODO: Change me to taiki-e/install-action action once https://github.com/taiki-e/install-action/pull/2036 is merged
+        uses: FirelightFlagboy/install-action@tool-yq-go
+        with:
+          tool: yq-go
+        timeout-minutes: 1
 
       - name: MacOS > Install macFUSE
         if: matrix.platform == 'macos'
@@ -494,14 +496,14 @@ jobs:
             grep -q -e "${app_file}" "${latest_file}"
 
             # Update artifact file
-            yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext} = \"${app_file}\"" $artifact_file
+            yq-go -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext} = \"${app_file}\"" $artifact_file
             # AppImage does not have a blockmap file generated
             if [ "$ext" != "AppImage" ]; then
-              yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
+              yq-go -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
             fi
 
             # Add to files_to_upload
-            yq . $artifact_file -o json | jq -r '"client/electron/dist/" + (.. | scalars)' | tee -a $GITHUB_OUTPUT
+            yq-go . $artifact_file -o json | jq -r '"client/electron/dist/" + (.. | scalars)' | tee -a $GITHUB_OUTPUT
           done
 
           # Print artifact file
