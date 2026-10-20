@@ -67,6 +67,22 @@
           </ul>
           <technical-id :id="workspace.id" />
         </div>
+        <div class="workspace-section">
+          <ion-text class="workspace-section__title subtitles-sm">{{ $msTranslate('export.exportWorkspaceTitle') }}</ion-text>
+          <div class="workspace-export">
+            <ion-text class="workspace-export__description body">
+              {{ $msTranslate('export.exportWorkspaceDescription') }}
+            </ion-text>
+            <ion-button
+              class="workspace-export__button button-medium"
+              @click="downloadWorkspaceExport"
+              v-show="workspace.selfRole === RealmRole.Owner"
+              fill="clear"
+            >
+              {{ $msTranslate('export.exportWorkspace') }}
+            </ion-button>
+          </div>
+        </div>
       </div>
     </ms-modal>
   </ion-page>
@@ -76,13 +92,17 @@
 import { TechnicalId } from '@/components/misc';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { WorkspaceInfo, WorkspaceRole } from '@/parsec';
-import { IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
+import { RealmRole } from '@/plugins/libparsec';
+import { exportWorkspace } from '@/services/export';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { business, checkmark } from 'ionicons/icons';
-import { I18n, MsModal, Translatable } from 'megashark-lib';
+import { I18n, MsModal, openSpinnerModal, Translatable } from 'megashark-lib';
 import { computed, Ref } from 'vue';
 
 const props = defineProps<{
   workspace: WorkspaceInfo;
+  informationManager: InformationManager;
 }>();
 
 const rights: Ref<Array<Translatable>> = computed(() => {
@@ -103,6 +123,21 @@ const rights: Ref<Array<Translatable>> = computed(() => {
       return ['WorkspaceDetails.rights.viewDocuments'];
   }
 });
+
+async function downloadWorkspaceExport(): Promise<void> {
+  const modal = await openSpinnerModal('export.exporting');
+  const result = await exportWorkspace(props.workspace.handle);
+  if (!result) {
+    props.informationManager.present(
+      new Information({
+        message: 'export.exportWorkspaceFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+  modal.dismiss();
+}
 </script>
 
 <style scoped lang="scss">
@@ -223,6 +258,36 @@ const rights: Ref<Array<Translatable>> = computed(() => {
     &__value {
       color: var(--parsec-color-light-secondary-text);
     }
+  }
+}
+
+.workspace-export {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--parsec-radius-8);
+  background: var(--parsec-color-surface-base-default-secondary, var(--parsec-color-light-secondary-premiere));
+
+  &__description {
+    color: var(--parsec-color-text-base-body, var(--parsec-color-light-secondary-text));
+  }
+
+  &__button {
+    --background: var(--parsec-color-surface-base-default, var(--parsec-color-light-secondary-white));
+    --background-hover: var(--parsec-color-surface-base-default-secondary, var(--parsec-color-light-secondary-premiere));
+    --color: var(--parsec-color-text-neutral-default, var(--parsec-color-light-secondary-hard-grey));
+    --border-radius: var(--parsec-radius-8);
+    --padding-top: 0.625rem;
+    --padding-bottom: 0.625rem;
+    --padding-start: 0.75rem;
+    --padding-end: 0.75rem;
+    min-width: 5rem;
+    min-height: 0;
+    margin: 0;
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-8);
   }
 }
 </style>

@@ -50,13 +50,14 @@ for (const { role, rights } of ROLES) {
     await expect(modal).toBeVisible();
     await expect(modal.locator('.ms-modal-header__title')).toHaveText('Workspace details');
     await expect(modal.locator('.workspace-header-text__name')).toHaveText('wksp1');
-    await expect(modal.locator('.workspace-section__title')).toHaveText('General information');
+    await expect(modal.locator('.workspace-section__title').nth(0)).toHaveText('General information');
     await expect(modal.locator('.workspace-info-item').nth(1).locator('.workspace-info-item__title')).toHaveText('Created on');
     await expect(modal.locator('.workspace-info-item').nth(1).locator('.workspace-info-item__value')).toHaveText(/^[0-9A-Z,:\/ ]+$/);
     await expect(modal.locator('.workspace-info-item').nth(0).locator('.workspace-info-item__title')).toHaveText('Access rights');
     await expect(modal.locator('.workspace-info-item__role')).toHaveText(role);
     await expect(modal.locator('.workspace-rights-item__text')).toHaveText([...rights]);
     await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9-]+$/);
+    await expect(modal.locator('.workspace-section__title').nth(1)).toHaveText('Export data');
 
     await modal.locator('.closeBtn').click();
     await expect(modal).toBeHidden();

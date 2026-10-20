@@ -2928,5 +2928,14 @@
         "title": "Authenticate with ProConnect",
         "description": "What's ProConnect?",
         "link": "https://www.proconnect.gouv.fr/"
+    },
+    "export": {
+        "exportWorkspace": "Download export (.json)",
+        "exportUsers": "Export data (.json)",
+        "exporting": "Exporting...",
+        "exportWorkspaceFailed": "Failed to export the data of this workspace.",
+        "exportUsersFailed": "Failed to export users data.",
+        "exportWorkspaceDescription": "Download this workspace's details and members, with their roles, as a JSON file. Files and folders are not included.",
+        "exportWorkspaceTitle": "Export data"
     }
 }

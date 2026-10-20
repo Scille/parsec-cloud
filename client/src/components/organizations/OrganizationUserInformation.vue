@@ -18,6 +18,19 @@
           class="user-invite-button__icon"
         />
       </ion-button>
+
+      <ion-button
+        class="card-header__button user-download-button"
+        @click="exportUsers"
+        v-show="orgInfo.clientInfo.currentProfile === UserProfile.Admin"
+        fill="clear"
+      >
+        <ion-icon
+          :icon="download"
+          class="user-download-button__icon"
+        />
+        {{ $msTranslate('export.exportUsers') }}
+      </ion-button>
     </div>
 
     <div class="card-content">
@@ -137,9 +150,12 @@ import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import { listAsyncEnrollments, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { exportAllUsers } from '@/services/export';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InvitationView } from '@/views/invitations/types';
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
-import { link, mailUnread, personAdd } from 'ionicons/icons';
+import { download, link, mailUnread, personAdd } from 'ionicons/icons';
+import { openSpinnerModal } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 defineProps<{
@@ -150,6 +166,7 @@ const invitationCount = ref(0);
 const asyncEnrollmentsCount = ref(0);
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let cbId: string | undefined = undefined;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 
 onMounted(async () => {
   cbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated], async (event: Events, _data?: EventData) => {
@@ -166,6 +183,21 @@ onUnmounted(async () => {
     cbId = undefined;
   }
 });
+
+async function exportUsers(): Promise<void> {
+  const modal = await openSpinnerModal('export.exporting');
+  const result = await exportAllUsers();
+  if (!result) {
+    informationManager.value.present(
+      new Information({
+        message: 'export.exportUsersFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+  modal.dismiss();
+}
 
 async function refresh(): Promise<void> {
   const invResult = await listUserInvitations();
