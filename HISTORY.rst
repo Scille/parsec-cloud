@@ -8,7 +8,7 @@ Parsec v3.x
 .. towncrier release notes start
 
 
-Parsec v3.11.0-rc.0 (2026-10-19)
+Parsec v3.11.0-rc.1 (2026-10-20)
 --------------------------------
 
 Features
@@ -63,9 +63,6 @@ Miscellaneous internal changes
   (creation, last update), user (join date, revocation date), workspace
   (archived date, deletion date)
   (`#13408 <https://github.com/Scille/parsec-cloud/issues/13408>`__)
-
-* Fixed broken application icons in the MacOS ``.dmg``
-  (`#13518 <https://github.com/Scille/parsec-cloud/issues/13518>`__)
 
 * Changed client license from BUSL-1.1 to AGPL-3.0
   (`#13556 <https://github.com/Scille/parsec-cloud/issues/13556>`__)
