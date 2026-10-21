@@ -3,7 +3,6 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <app-updated-banner />
       <div id="page">
         <!-- sidebar -->
         <home-page-sidebar class="homepage-sidebar" />
@@ -13,6 +12,7 @@
             class="homepage-content"
             :class="{ 'login-fullscreen': state === HomePageState.Login }"
           >
+            <app-updated-banner class="homepage-banner" />
             <!-- topbar -->
             <home-page-header
               class="homepage-header"
@@ -1133,15 +1133,9 @@ function getBackButtonTitle(): string {
 </script>
 
 <style lang="scss" scoped>
-ion-content::part(scroll) {
-  display: flex;
-  flex-direction: column;
-}
-
 #page {
   position: relative;
-  flex: 1;
-  min-height: 0;
+  height: 100vh;
   display: flex;
   overflow: hidden;
   align-items: self-start;
@@ -1161,6 +1155,19 @@ ion-content::part(scroll) {
       @include ms.responsive-breakpoint('xs') {
         // --keyboard-offset: 290px;
       }
+    }
+  }
+
+  .homepage-banner {
+    margin: 2.6rem 4rem 0;
+
+    @include ms.responsive-breakpoint('md') {
+      margin: 1.5rem 3rem 0;
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      align-self: center;
+      margin: 1rem 1.5rem 0;
     }
   }
 
