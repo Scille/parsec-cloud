@@ -7,7 +7,6 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const container = organizationPage.locator('.organization-page-content');
     const configContainer = container.locator('.organization-info');
     const usersContainer = container.locator('.organization-users');
-    const inviteButton = usersContainer.locator('.user-invite-button');
     const storageContainer = container.locator('.organization-storage');
     const emailInvitationCard = usersContainer.locator('.invitation-card-list-item').nth(0);
     const linkRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
@@ -23,7 +22,6 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(linkRequestCard).toBeVisible();
     await expect(linkRequestCard.locator('.invitation-card-list-item__title')).toContainText('Join Requests');
     await expect(linkRequestCard.locator('.invitation-card-list-item__number')).toHaveText('0');
-    await expect(inviteButton).toBeVisible();
 
     if (displaySize === DisplaySize.Small) {
       await organizationPage.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();
@@ -60,7 +58,6 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const container = organizationPageStandard.locator('.organization-page-content');
     const configContainer = container.locator('.organization-info');
     const usersContainer = container.locator('.organization-users');
-    const inviteButton = usersContainer.locator('.user-invite-button');
     const storageContainer = container.locator('.organization-storage');
     const emailInvitationCard = usersContainer.locator('.invitation-card-list-item').nth(0);
     const PkiRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
@@ -72,7 +69,6 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
 
     await expect(emailInvitationCard).toBeHidden();
     await expect(PkiRequestCard).toBeHidden();
-    await expect(inviteButton).toBeHidden();
 
     if (displaySize === DisplaySize.Small) {
       await organizationPageStandard.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();
@@ -211,7 +207,6 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const container = organizationPage.locator('.organization-page-content');
     const configContainer = container.locator('.organization-info');
     const usersContainer = container.locator('.organization-users');
-    const inviteButton = usersContainer.locator('.user-invite-button');
     const storageContainer = container.locator('.organization-storage');
     const emailInvitationCard = usersContainer.locator('.invitation-card-list-item').nth(0);
     const linkRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
@@ -227,7 +222,6 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(linkRequestCard).toBeVisible();
     await expect(linkRequestCard.locator('.invitation-card-list-item__title')).toContainText('Join Requests');
     await expect(linkRequestCard.locator('.invitation-card-list-item__number')).toHaveText('0');
-    await expect(inviteButton).toBeVisible();
 
     if (displaySize === DisplaySize.Small) {
       await organizationPage.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();

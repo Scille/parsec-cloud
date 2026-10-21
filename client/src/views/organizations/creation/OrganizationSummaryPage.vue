@@ -22,10 +22,10 @@
       <!-- organization name -->
       <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-text class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label">
             {{ $msTranslate('CreateOrganization.overview.organization') }}
           </ion-text>
-          <ion-text class="summary-item__text body-lg">
+          <ion-text class="summary-item__text">
             {{ organizationName }}
           </ion-text>
           <ion-button
@@ -47,10 +47,10 @@
         v-if="useSequesterKey"
       >
         <div class="summary-item">
-          <ion-text class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label">
             {{ $msTranslate('CreateOrganization.overview.sequester') }}
           </ion-text>
-          <ion-text class="summary-item__text body-lg">
+          <ion-text class="summary-item__text">
             {{ $msTranslate('CreateOrganization.sequester.authorityKey') }}
           </ion-text>
           <ion-button
@@ -71,10 +71,10 @@
       <!-- full name -->
       <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-text class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label">
             {{ $msTranslate('CreateOrganization.overview.fullname') }}
           </ion-text>
-          <ion-text class="summary-item__text body-lg">
+          <ion-text class="summary-item__text">
             {{ name }}
           </ion-text>
           <ion-button
@@ -93,10 +93,10 @@
       <!-- Email -->
       <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-text class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label">
             {{ $msTranslate('CreateOrganization.overview.email') }}
           </ion-text>
-          <ion-text class="summary-item__text body-lg">
+          <ion-text class="summary-item__text">
             {{ email }}
           </ion-text>
           <ion-button
@@ -115,10 +115,10 @@
       <!-- serverMode -->
       <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item server">
-          <ion-text class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label">
             {{ $msTranslate('CreateOrganization.overview.server') }}
           </ion-text>
-          <ion-text class="summary-item__text body-lg">
+          <ion-text class="summary-item__text">
             {{ serverType === ServerType.Saas ? $msTranslate('CreateOrganization.saas') : $msTranslate('CreateOrganization.customServer') }}
           </ion-text>
           <ion-button
@@ -137,35 +137,35 @@
       <!-- authentication mode -->
       <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item authentication">
-          <ion-text class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label">
             {{ $msTranslate('CreateOrganization.overview.authentication') }}
           </ion-text>
           <ion-text
-            class="summary-item__text body-lg"
+            class="summary-item__text"
             v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.Keyring"
           >
             {{ $msTranslate('CreateOrganization.keyringChoice') }}
           </ion-text>
           <ion-text
-            class="summary-item__text body-lg"
+            class="summary-item__text"
             v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.Password"
           >
             {{ $msTranslate('CreateOrganization.passwordChoice') }}
           </ion-text>
           <ion-text
-            class="summary-item__text body-lg"
+            class="summary-item__text"
             v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.AccountVault"
           >
             {{ $msTranslate('CreateOrganization.accountChoice') }}
           </ion-text>
           <ion-text
-            class="summary-item__text body-lg"
+            class="summary-item__text"
             v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.PKI"
           >
             {{ $msTranslate('CreateOrganization.smartcardChoice') }}
           </ion-text>
           <ion-text
-            class="summary-item__text body-lg"
+            class="summary-item__text"
             v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.OpenBao"
           >
             {{ $msTranslate('CreateOrganization.openBaoChoice') }}
@@ -186,7 +186,7 @@
       class="tos"
       v-show="showTos"
     >
-      <ion-text class="body-sm item-radio__text ion-text-wrap">
+      <ion-text class="item-radio__text ion-text-wrap">
         {{ $msTranslate('CreateOrganization.acceptTOS.label') }}
         <a
           class="link"
@@ -281,17 +281,17 @@ defineEmits<{
 
 <style scoped lang="scss">
 .summary-list {
-  padding: 0;
+  padding: ms.spacing('padding-none');
   display: flex;
   flex-direction: column;
-  border-radius: var(--parsec-radius-8);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border-radius: ms.radius('lg');
+  border: ms.border('thin') solid ms.color('border-base-default');
 
   @include ms.responsive-breakpoint('sm') {
     margin: 0 2rem;
     border: none;
-    border-radius: 0;
-    gap: 0.75rem;
+    border-radius: ms.radius('none');
+    gap: ms.spacing('gap-2xl');
   }
 
   @include ms.responsive-breakpoint('xs') {
@@ -300,7 +300,8 @@ defineEmits<{
 }
 
 .summary-item-container {
-  --inner-padding-end: 0px;
+  --inner-padding-end: #{ms.spacing('padding-none')};
+  --background: #{ms.color('surface-brand-default')};
   flex-shrink: 0;
 }
 
@@ -309,23 +310,23 @@ defineEmits<{
   align-items: stretch;
   width: 100%;
   position: relative;
-  gap: 1rem;
-  padding-right: 1rem;
+  gap: ms.spacing('gap-3xl');
+  padding-right: ms.spacing('padding-3xl');
 
   @include ms.responsive-breakpoint('sm') {
     flex-direction: column;
     align-items: stretch;
-    gap: 0;
-    padding-right: 0;
-    border-radius: var(--parsec-radius-8);
+    gap: ms.spacing('gap-none');
+    padding-right: ms.spacing('padding-none');
+    border-radius: ms.radius('lg');
     overflow: hidden;
-    border: 1px solid var(--parsec-color-light-secondary-premiere);
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   }
 
   &-divider {
     width: 100%;
     height: 1px;
-    background: var(--parsec-color-light-secondary-medium);
+    background: ms.color('border-base-default');
     z-index: 2;
     margin: 0;
 
@@ -335,31 +336,33 @@ defineEmits<{
   }
 
   &__label {
+    @include ms.font('body-md-medium');
     max-width: 9rem;
     width: 100%;
-    background: var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-secondary-hard-grey);
+    background: ms.color('surface-neutral-default-subtle');
+    color: ms.color('text-base-description');
     align-items: center;
-    padding: 0 0.5rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-lg');
     display: flex;
 
     @include ms.responsive-breakpoint('sm') {
       max-width: 100%;
-      padding: 0.125rem 0.75rem;
+      padding: ms.spacing('padding-xs') ms.spacing('padding-2xl');
     }
   }
 
   &__text {
+    @include ms.font('body-lg-regular');
     width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--parsec-color-light-secondary-text);
-    background: var(--parsec-color-light-secondary-white);
-    padding: 1rem 0;
+    color: ms.color('text-base-body');
+    background: ms.color('surface-base-default');
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-none');
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.75rem;
+      padding: ms.spacing('padding-2xl');
       background: transparent;
     }
   }
@@ -367,7 +370,7 @@ defineEmits<{
   &__button {
     // multiple lines for cross-browser compatibility
     height: 100%;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
     align-self: center;
     margin-left: auto;
 
@@ -377,26 +380,30 @@ defineEmits<{
       top: 2rem;
       height: fit-content;
       font-size: 0.875rem;
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('text-brand-default');
     }
   }
 
   &.authentication,
   &.server {
     .summary-item__text {
-      background: var(--parsec-color-light-secondary-white);
-      color: var(--parsec-color-light-secondary-grey);
+      background: ms.color('surface-base-default');
+      color: ms.color('text-base-placeholder');
       font-style: italic;
     }
   }
 }
 
 .tos {
-  padding: 1.5rem 0 0 0.75rem;
-  color: var(--parsec-color-light-secondary-soft-text);
+  .item-radio__text {
+    @include ms.font('body-sm-regular');
+  }
+
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-2xl');
+  color: ms.color('text-base-label');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.5rem 2rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl');
     height: fit-content;
   }
 }

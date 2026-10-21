@@ -27,7 +27,7 @@
         v-model="tosAccepted"
         label-placement="end"
       >
-        <ion-text class="body-sm item-radio__text ion-text-wrap">
+        <ion-text class="item-radio__text ion-text-wrap">
           {{ $msTranslate('CreateOrganization.acceptTOS.label') }}
           <a
             class="link"
@@ -153,20 +153,24 @@ async function onFieldUpdated(): Promise<void> {
 .user-information-content,
 .tos-checkbox {
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 2rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 1.5rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-4xl');
   }
 }
 
 .tos-checkbox {
-  padding-top: 1em;
-  color: var(--parsec-color-light-secondary-soft-text);
+  padding-top: ms.spacing('padding-3xl');
+
+  .item-radio__text {
+    @include ms.font('body-sm-regular');
+  }
+  color: ms.color('text-base-label');
 
   a {
-    color: var(--parsec-color-light-primary-500);
+    color: ms.color('text-brand-default');
 
     &:hover {
       text-decoration: underline;

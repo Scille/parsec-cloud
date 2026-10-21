@@ -7,13 +7,13 @@
       :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string)"
       class="created-page__logo"
     />
-    <ion-text class="created-page__title subtitles-lg">
+    <ion-text class="created-page__title">
       {{ $msTranslate('CreateOrganization.organizationCreated') }}
     </ion-text>
 
     <ion-text
       v-if="isSmallDisplay"
-      class="created-page__organization title-h1"
+      class="created-page__organization"
     >
       {{ organizationName }}
     </ion-text>
@@ -54,13 +54,13 @@ defineEmits<{
 .created-page {
   flex-direction: column;
   position: relative;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   align-items: center;
   text-align: center;
   justify-content: center;
-  padding: 4rem 0 4rem;
+  padding: ms.spacing('padding-8xl') ms.spacing('padding-none') ms.spacing('padding-8xl');
   height: 100vh;
-  background: var(--parsec-color-light-gradient-background);
+  background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
 
   &::after {
     content: '';
@@ -93,15 +93,16 @@ defineEmits<{
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-white);
+    @include ms.font('body-xl-medium');
+    color: ms.color('text-on-color-heading');
     text-align: center;
     line-height: 1.7rem;
     max-width: 18rem;
   }
 
   &__organization {
-    color: var(--parsec-color-light-primary-700);
-    color: var(--parsec-color-light-secondary-white);
+    @include ms.font('heading-h2');
+    color: ms.color('text-on-color-heading');
   }
 
   &-footer {
@@ -113,11 +114,11 @@ defineEmits<{
       }
 
       &::part(native) {
-        border-radius: var(--parsec-radius-8);
-        --background-hover: var(--parsec-color-light-secondary-premiere);
-        font-size: 1rem;
-        color: var(--parsec-color-light-primary-600);
-        background: var(--parsec-color-light-secondary-white);
+        border-radius: ms.radius('lg');
+        --background-hover: ms.color('surface-neutral-default-subtle-hover');
+        @include ms.font('label-lg-medium');
+        color: ms.color('text-brand-default');
+        background: ms.color('surface-base-default');
       }
     }
   }

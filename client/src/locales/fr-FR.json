@@ -485,7 +485,8 @@
             "saas": "Créer mon organisation sur Parsec",
             "trial": {
                 "title": "Essayer Parsec pendant 15 jours",
-                "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)"
+                "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)",
+                "badge": "essai"
             },
             "ownServer": "Utiliser un autre serveur Parsec"
         },
