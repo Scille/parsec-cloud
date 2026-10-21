@@ -18,6 +18,23 @@ on:
         type: string
         description: The commit SHA to use when checkout'ing the repository
         default: ${{ github.sha }}
+    secrets:
+      # Azure Trusted Signing credentials, used to sign the Windows artifacts.
+      # Note the workflow is also triggered directly by pull_request/workflow_dispatch
+      # (i.e. not through workflow_call)
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_CLIENT_SECRET:
+        required: true
+      AZURE_TRUSTED_SIGNING_ENDPOINT:
+        required: true
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME:
+        required: true
+      AZURE_TRUSTED_SIGNING_PROFILE_NAME:
+        required: true
+
   # PS: If you trigger manually the packaging, take into account that it will use the workflow as defined in the main branch not in the target branch.
   workflow_dispatch:
     inputs:
@@ -161,11 +178,52 @@ jobs:
           LIBPARSEC_FORCE_VENDORED_LIBS: ${{ matrix.os == 'linux-musl' && 'true' || 'false' }}
         timeout-minutes: 15
 
-      - name: Debug target folder
-        if: runner.debug
+      - name: Linux > Debug target folder
+        if: runner.os == 'Linux' && runner.debug
         shell: bash
         run: tree target
+        continue-on-error: true
         timeout-minutes: 1
+
+      - name: Windows > Debug target folder
+        if: runner.os == 'Windows' && runner.debug
+        shell: pwsh
+        run: Get-ChildItem -Recurse target
+        continue-on-error: true
+        timeout-minutes: 1
+
+      - name: Sign files with Artifact Signing
+        if: runner.os == 'Windows'
+        uses: azure/artifact-signing-action@v2
+        with:
+          # Configure authentication to Azure Trusted Signing
+          # CF: https://github.com/Azure/artifact-signing-action/blob/main/docs/AUTHN.md
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          exclude-environment-credential: false
+          exclude-workload-identity-credential: true
+          exclude-managed-identity-credential: true
+          exclude-shared-token-cache-credential: true
+          exclude-visual-studio-credential: true
+          exclude-visual-studio-code-credential: true
+          exclude-azure-cli-credential: true
+          exclude-azure-powershell-credential: true
+          exclude-azure-developer-cli-credential: true
+          exclude-interactive-browser-credential: true
+
+          # Configure the profile that sign the artifact
+          endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+          certificate-profile-name: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE_NAME }}
+
+          # Configure the signature
+          # The action only accept absolute paths so we add `${{ github.workspace }}`
+          files: ${{ github.workspace }}\target\${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}\release\parsec-cli.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          description: Parsec CLI ${{ steps.version.outputs.full }}
 
       - name: Rename CLI artifact
         id: rename

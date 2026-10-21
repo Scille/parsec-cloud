@@ -99,6 +99,13 @@ jobs:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
       commit_sha: ${{ needs.version.outputs.commit_sha }}
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+      AZURE_TRUSTED_SIGNING_PROFILE_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE_NAME }}
 
   releaser:
     needs:
