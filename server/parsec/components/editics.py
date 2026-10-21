@@ -182,18 +182,32 @@ class Participant:
             # previous event, or the SSE connection teardown is in progress).
             pass
 
-    def access_denied_close_sse(self):
-        self.send_event(EditicsServerEventDisconnectReason.access_denied())
+    def access_denied_close_sse(
+        self, send_disconnect_reason_event: bool = True
+    ) -> EditicsServerEventDisconnectReason:
+        event = EditicsServerEventDisconnectReason.access_denied()
+        if send_disconnect_reason_event:
+            self.send_event(event)
+
         if self.sse_channel_sender is not None:
             # Closing the channel will trigger teardown in `participant_listen()`.
             # Note `participant_listen()` will first pump all the events in the
             # channel (i.e. that have been send before the close) and send them
             # on the SSE. This is an expected behavior so that the `disconnectReason`
-            # is correctly provided to the client before closing the SSE.
+            # event is correctly provided to the client before closing the SSE.
             self.sse_channel_sender.close()
+
         # Don't set `self.sse_channel_sender` to `None` here: this done in
         # `participant_listen()`'s teardown with a guard to avoid overwritting a
         # newer connection.
+
+        # Some access control are done when handling the `auth` client event,
+        # so we have to invalidate the authentication.
+        # Otherwise a CONTRIBUTOR that sent a `auth` event as editor, and then became
+        # READER (hence getting kicked out), could re-connect to get editor access!
+        self.authed = None
+
+        return event
 
 
 @dataclass(slots=True)
@@ -721,11 +735,10 @@ class EditicsComponent:
             )
         ):
             # ...and get their SSE connection kicked out for this!
-            # (don't use `access_denied_close_sse` here since we want to send the
-            # `disconnectReason` event as the current query's response)
-            if participant.sse_channel_sender is not None:
-                participant.sse_channel_sender.close()
-            return EditicsServerEventDisconnectReason.access_denied()
+            disconnect_reason_event = participant.access_denied_close_sse(
+                send_disconnect_reason_event=False
+            )
+            return disconnect_reason_event
 
         match event:
             case EditicsClientEventAuth():
