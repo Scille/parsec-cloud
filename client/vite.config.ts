@@ -208,6 +208,7 @@ const config: UserConfigFnObject = (env: ConfigEnv) => ({
     sourcemap: true,
     target: BUILD_TARGET,
     minify: 'esbuild',
+    cssMinify: 'esbuild',
     cssCodeSplit: false,
     rolldownOptions: {
       output: {
