@@ -117,7 +117,7 @@ jobs:
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           working-directory: server
-          version: 0.11.29 # marker:uv-version
+          version: 0.13.4 # marker:uv-version
         timeout-minutes: 5
 
       # Key cache contains a hash of all the files that are used to produce _parsec.so

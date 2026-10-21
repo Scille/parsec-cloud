@@ -61,10 +61,10 @@ To start hacking, follow the basic steps detailed below:
 
        > Replace `C:/Strawberry/perl/bin/perl` with the correct installation path.
 
-    4. Install [`uv >=0.11.29`](https://docs.astral.sh/uv/getting-started/installation/)
+    4. Install [`uv >=0.13.4`](https://docs.astral.sh/uv/getting-started/installation/)
 
        ```shell
-       curl -LsSf https://astral.sh/uv/0.11.29/install.sh | sh
+       curl -LsSf https://astral.sh/uv/0.13.4/install.sh | sh
        ```
 
        To verify the installation of `uv` run:

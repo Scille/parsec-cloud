@@ -8,7 +8,7 @@ export PATH="/root/.cargo/bin:$PATH"
 cargo --version
 
 # Install uv
-curl -LsSf https://astral.sh/uv/0.11.29/install.sh | sh
+curl -LsSf https://astral.sh/uv/0.13.4/install.sh | sh
 export PATH="/root/.local/bin:$PATH"
 uv --version
 
