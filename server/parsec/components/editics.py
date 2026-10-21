@@ -434,6 +434,8 @@ class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
     # Subsequent `auth` are reconnection, and a device cannot do impersonation
     # by reconnecting with a participant ID related to another device!
     PARTICIPANT_DEVICE_MISMATCH = auto()
+    # A reconnecting participant cannot change the mode it originally joined with
+    PARTICIPANT_MODE_MISMATCH = auto()
     # Participant has READER role and tries to edit
     READER_MUST_BE_VIEWER = auto()
 
@@ -717,6 +719,7 @@ class EditicsComponent:
             session,
         )
         if participant is None:
+            # Participant exists but is related to another device (i.e. impersonation attempt ?)
             return EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH
 
         # Special case for participant creation, achieved by the first `auth`
@@ -742,9 +745,6 @@ class EditicsComponent:
 
         match event:
             case EditicsClientEventAuth():
-                if participant.device_id != auth_info.device_id:
-                    return EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH
-
                 # TODO: should we update `participant.connected_at` when in reconnection ?
 
                 participant_view: bool
@@ -774,6 +774,9 @@ class EditicsComponent:
                 # restores a participant's session when the client explicitly says so, and
                 # echoing the ID lets it validate the client's bookkeeping.
                 if participant.authed is not None and event.reconnect == participant_id:
+                    if participant.authed.view != participant_view:
+                        return EditicsParticipantSendBadOutcome.PARTICIPANT_MODE_MISMATCH
+
                     # Reconnection is only possible if no modification occured in the meantime
                     if (
                         participant.disconnected_changes_index is not None
@@ -788,7 +791,6 @@ class EditicsComponent:
 
                     # Reconnect
 
-                    participant.authed.view = participant_view
                     participant.disconnected_changes_index = None
                     # The OnlyOffice server re-adds a restored participant at the
                     # end of the participants lists (its entry was dropped when

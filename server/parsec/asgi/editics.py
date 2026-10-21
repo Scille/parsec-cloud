@@ -57,7 +57,7 @@ document modifications (it seems OnlyOffice uses a second granularity for this..
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterable
+from collections.abc import AsyncGenerator, AsyncIterable
 from typing import Annotated
 
 from anyio.streams.memory import MemoryObjectReceiveStream
@@ -137,8 +137,9 @@ async def _editics_listen_auth(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
+    participant_id: EditicsParticipantID,
     request: Request,
-) -> tuple[EditicsAuthInfo, VlobID]:
+) -> AsyncGenerator[MemoryObjectReceiveStream]:
     backend: Backend = request.app.state.backend
 
     # TODO: add test to check request missing the `Accept: text/event-stream` header
@@ -157,48 +158,64 @@ async def _editics_listen_auth(
     )
     match outcome:
         case EditicsAuthInfo() as auth_info:
-            return (auth_info, document_id)
+            with backend.editics.participant_listen(
+                auth_info,
+                document_id,
+                participant_id,
+            ) as outcome:
+                match outcome:
+                    case MemoryObjectReceiveStream() as channel_receive:
+                        yield channel_receive
+
+                    case EditicsParticipantListenBadOutcome.PARTICIPANT_DEVICE_MISMATCH:
+                        raise HTTPException(
+                            status_code=494, detail="TODO: PARTICIPANT_DEVICE_MISMATCH"
+                        )  # TODO
+
         case AuthEditicsAuthBadOutcome.ORGANIZATION_EXPIRED:
-            _handshake_abort(CustomHttpStatus.OrganizationExpired, api_version="TODO")
+            _handshake_abort(
+                CustomHttpStatus.OrganizationExpired,
+                api_version="TODO: ORGANIZATION_EXPIRED",
+            )
         case AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
                 CustomHttpStatus.OrganizationNotFound,
-                api_version="TODO",
+                api_version="TODO: ORGANIZATION_NOT_FOUND",
             )
         case AuthEditicsAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
             _handshake_abort(
                 CustomHttpStatus.TokenExpired,
-                api_version="TODO",
+                api_version="TODO: TOKEN_OUT_OF_BALLPARK",
             )
         case AuthEditicsAuthBadOutcome.DEVICE_NOT_FOUND | AuthEditicsAuthBadOutcome.INVALID_TOKEN:
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo,
-                api_version="TODO",
+                api_version="TODO: DEVICE_NOT_FOUND/INVALID_TOKEN",
             )
         case AuthEditicsAuthBadOutcome.USER_REVOKED:
             _handshake_abort(
                 CustomHttpStatus.UserRevoked,
-                api_version="TODO",
+                api_version="TODO: USER_REVOKED",
             )
         case AuthEditicsAuthBadOutcome.USER_FROZEN:
             _handshake_abort(
                 CustomHttpStatus.UserFrozen,
-                api_version="TODO",
+                api_version="TODO: USER_FROZEN",
             )
         case AuthEditicsAuthBadOutcome.REALM_NOT_FOUND:
-            _handshake_abort(
-                CustomHttpStatus.UserMustAcceptTos,
-                api_version="TODO",
+            raise HTTPException(
+                status_code=490,
+                detail="TODO: REALM_NOT_FOUND",
             )
         case AuthEditicsAuthBadOutcome.REALM_DELETED:
-            _handshake_abort(
-                CustomHttpStatus.UserMustAcceptTos,
-                api_version="TODO",
+            raise HTTPException(
+                status_code=491,
+                detail="TODO: REALM_DELETED",
             )
         case AuthEditicsAuthBadOutcome.USER_NO_REALM_ROLE:
-            _handshake_abort(
-                CustomHttpStatus.UserMustAcceptTos,
-                api_version="TODO",
+            raise HTTPException(
+                status_code=492,
+                detail="TODO: USER_NO_REALM_ROLE",
             )
 
 
@@ -207,30 +224,15 @@ async def _editics_listen_auth(
     response_class=EventSourceResponse,
 )
 async def editics_listen(
-    participant_id: EditicsParticipantID,
-    request: Request,
     # Auth logic may raise an `HTTPException` which is not allowed from within the
     # event source generator. So it must be executed first in this separated context.
-    info: Annotated[tuple[EditicsAuthInfo, VlobID], Depends(_editics_listen_auth)],
+    channel_receive: Annotated[MemoryObjectReceiveStream, Depends(_editics_listen_auth)],
 ) -> AsyncIterable[EditicsServerEvent]:
     # Note we do not handle SSE's last-event-ID here, this is because OnlyOffice
     # protocol (on which the editics protocol is based) already has its own
     # re-connection logic
-
-    backend: Backend = request.app.state.backend
-    auth_info, document_id = info
-
-    with backend.editics.participant_listen(
-        auth_info,
-        document_id,
-        participant_id,
-    ) as outcome:
-        match outcome:
-            case MemoryObjectReceiveStream() as channel_receive:
-                async for event in channel_receive:
-                    yield event
-            case EditicsParticipantListenBadOutcome.PARTICIPANT_DEVICE_MISMATCH:
-                raise NotImplementedError  # TODO
+    async for event in channel_receive:
+        yield event
 
 
 @editics_router.post(
@@ -334,3 +336,5 @@ async def editics_send(
             raise HTTPException(status_code=494, detail="TODO: PARTICIPANT_DEVICE_MISMATCH")  # TODO
         case EditicsParticipantSendBadOutcome.READER_MUST_BE_VIEWER:
             raise HTTPException(status_code=495, detail="TODO: READER_MUST_BE_VIEWER")  # TODO
+        case EditicsParticipantSendBadOutcome.PARTICIPANT_MODE_MISMATCH:
+            raise HTTPException(status_code=496, detail="TODO: PARTICIPANT_MODE_MISMATCH")  # TODO

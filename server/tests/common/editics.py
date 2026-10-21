@@ -44,6 +44,26 @@ class EditicsSessionClient:
         self._sse_event_source_iter = self._sse_event_source.aiter_sse()
         self.send_raw = send_events_raw
 
+    @staticmethod
+    def build_urls_and_authorization(
+        who: AuthenticatedRpcClient,
+        realm_id: VlobID,
+        document_id: VlobID,
+        participant_id: EditicsParticipantID,
+    ) -> tuple[str, str, str]:
+        token = EditicsToken.generate_raw(
+            device_id=who.device_id,
+            timestamp=who.now_factory(),
+            key=who.signing_key,
+        )
+        authorization = f"Bearer {token.decode()}"
+
+        session_path = f"/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
+        listen_url = f"http://{SERVER_DOMAIN}{session_path}/listen/{participant_id}"
+        send_url = f"http://{SERVER_DOMAIN}{session_path}/send/{participant_id}"
+
+        return (listen_url, send_url, authorization)
+
     @classmethod
     @asynccontextmanager
     async def join(
@@ -58,16 +78,9 @@ class EditicsSessionClient:
 
         Yields `(send_client_event, sse_listen_server_events)`
         """
-        token = EditicsToken.generate_raw(
-            device_id=who.device_id,
-            timestamp=who.now_factory(),
-            key=who.signing_key,
+        listen_url, send_url, authorization = cls.build_urls_and_authorization(
+            who, realm_id, document_id, participant_id
         )
-        authorization = f"Bearer {token.decode()}"
-
-        session_path = f"/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
-        listen_url = f"http://{SERVER_DOMAIN}{session_path}/listen/{participant_id}"
-        send_url = f"http://{SERVER_DOMAIN}{session_path}/send/{participant_id}"
 
         async def send_events_raw(raw_event: str) -> str | None:
             rep = await who.raw_client.post(

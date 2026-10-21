@@ -92,6 +92,146 @@ async def test_deco_reco(coolorg: CoolorgRpcClients) -> None:
         assert rep.indexUser == 2
 
 
+async def test_participant_id_of_another_device_is_refused(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    # The participant ID is related to the device that created it: Bob cannot
+    # connect with the participant ID of Alice (i.e. impersonation attempt ?)
+    alice_participant_id = _new_participant_id()
+    auth_event = _auth_event(view=True)
+
+    listen_url, send_url, authorization = EditicsSessionClient.build_urls_and_authorization(
+        who=coolorg.bob,
+        realm_id=coolorg.wksp1_id,
+        document_id=DOCUMENT_ID,
+        participant_id=alice_participant_id,
+    )
+
+    async def assert_bob_refused():
+        # Send
+
+        rep = await coolorg.bob.raw_client.post(
+            send_url,
+            headers={"Authorization": authorization, "Content-Type": "application/json"},
+            content=auth_event.model_dump_json(),
+        )
+        assert rep.status_code == 494  # TODO: dummy HTTP error code for now
+
+        # Listen
+
+        rep = await coolorg.bob.raw_client.get(
+            listen_url,
+            headers={"Accept": "text/event-stream"},
+            params={"authorization": authorization},
+        )
+        assert rep.status_code == 494  # TODO: dummy HTTP error code for now
+
+    async with EditicsSessionClient.join(
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=DOCUMENT_ID,
+        participant_id=alice_participant_id,
+    ) as alice:
+        # Participant created on the server but not `auth` yet
+
+        await assert_bob_refused()
+
+        rep = await alice.send(auth_event)
+        assert isinstance(rep, EditicsServerEventAuth)
+
+        # `auth` done
+
+        await assert_bob_refused()
+
+    # SSE connection is down
+
+    await assert_bob_refused()
+
+    # Alice's session is left unaffected by Bob's attempt
+    rep = await alice.send(EditicsClientEventClose())
+    assert rep is None
+
+    # Note that after this `close` event, the server has forgotten the participant ID
+    # and hence Bob could re-use it (since it is no longer linked to Alice in any way).
+
+
+async def test_reconnection_cannot_change_participant_mode(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    # A participant's mode is fixed when it joins the session: a reconnecting
+    # client cannot switch mode (changing mode is only possible by creating a
+    # brand new participant), and a refused reconnection leaves the
+    # participant untouched so it can still reconnect with its original mode.
+
+    # An editor cannot reconnect as a viewer
+    participant_id = _new_participant_id()
+    async with EditicsSessionClient.join(
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=DOCUMENT_ID,
+        participant_id=participant_id,
+    ) as alice:
+        rep = await alice.send(_auth_event())
+        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep.indexUser == 1
+
+    # Connection is lost...
+
+    # ...reconnecting while asking to switch to the view mode is refused
+    async with EditicsSessionClient.join(
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=DOCUMENT_ID,
+        participant_id=participant_id,
+    ) as alice:
+        with pytest.raises(RpcTransportError) as exc:
+            await alice.send(
+                EditicsClientEventAuth(vlobVersion=1, reconnect=participant_id, mode="view")
+            )
+        assert exc.value.rep.status_code == 496  # TODO: dummy HTTP error code for now
+
+        # The refused reconnection had no effect: Alice can reconnect, provided
+        # she asks for her original mode
+        rep = await alice.send(
+            EditicsClientEventAuth(vlobVersion=1, reconnect=participant_id, mode="edit")
+        )
+        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep.indexUser == 1
+
+    # A viewer cannot reconnect as an editor
+    participant_id = _new_participant_id()
+    async with EditicsSessionClient.join(
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=DOCUMENT_ID,
+        participant_id=participant_id,
+    ) as alice:
+        rep = await alice.send(_auth_event(view=True))
+        assert isinstance(rep, EditicsServerEventAuth)
+
+    # Connection is lost...
+
+    # ...reconnecting while asking to switch to the edit mode is refused
+    async with EditicsSessionClient.join(
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=DOCUMENT_ID,
+        participant_id=participant_id,
+    ) as alice:
+        with pytest.raises(RpcTransportError) as exc:
+            await alice.send(
+                EditicsClientEventAuth(vlobVersion=1, reconnect=participant_id, mode="edit")
+            )
+        assert exc.value.rep.status_code == 496  # TODO: dummy HTTP error code for now
+
+        # The refused reconnection had no effect: Alice can reconnect with her
+        # original mode
+        rep = await alice.send(
+            EditicsClientEventAuth(vlobVersion=1, reconnect=participant_id, mode="view")
+        )
+        assert isinstance(rep, EditicsServerEventAuth)
+
+
 async def test_bad_auth(coolorg: CoolorgRpcClients) -> None:
     participant_id = _new_participant_id()
 
