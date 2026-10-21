@@ -86,9 +86,13 @@ from parsec.editics_protocol import (
 editics_router = APIRouter(include_in_schema=False)
 
 ACCEPT_TYPE_SSE = "text/event-stream"
+# Max size for the RPC body. This must be big enough for the
+# `parsecUploadOriginalContent` client event, which carries the base64-encoded
+# encrypted original content archive (a converted document and its media can
+# be tens of MB, and base64 adds ~33%; the fetch reply is an HTTP response, so
+# it is not concerned, and the SSE stream is unaffected).
 # TODO justify size (configurable with the client side ?)
-# Max size for the RPC body
-MAX_CONTENT_LENGTH = 1 * 1024**2
+MAX_CONTENT_LENGTH = 100 * 1024**2
 
 
 # The editics token is expected in the `Authorization: Bearer <editics_token>` header.
