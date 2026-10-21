@@ -73,9 +73,9 @@ async function openChanges(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: fit-content;
   flex-shrink: 0;
-  overflow: hidden;
+  border-radius: var(--parsec-radius-8);
   z-index: 10;
   background: linear-gradient(
     93deg,
@@ -96,8 +96,9 @@ async function openChanges(): Promise<void> {
     color: var(--parsec-color-text-on-color-label, #f6f6f9);
     --background: transparent;
     --background-hover: color-mix(in srgb, var(--parsec-color-light-secondary-white) 20%, transparent);
-    --border-radius: 0;
+    --border-radius: var(--parsec-radius-8);
     height: 100%;
+    margin: 0;
 
     &::part(native) {
       padding: 0.75rem;
@@ -132,27 +133,25 @@ async function openChanges(): Promise<void> {
   }
 
   &-close {
-    --color: var(--parsec-color-surface-base-default, var(--parsec-color-light-secondary-white));
-    --color-hover: var(--parsec-color-surface-base-default, var(--parsec-color-light-secondary-white));
-    --background-hover: color-mix(in srgb, var(--parsec-color-light-secondary-white) 20%, transparent);
-    --border-radius: var(--parsec-radius-6);
+    --color: var(--parsec-color-light-secondary-text);
+    --color-hover: var(--parsec-color-light-secondary-text);
+    --background: var(--parsec-color-light-secondary-white);
+    --background-hover: var(--parsec-color-light-secondary-white);
+    --border-radius: var(--parsec-radius-circle);
+    --box-shadow: var(--parsec-shadow-light);
     position: absolute;
-    right: 0.75rem;
+    top: -0.5rem;
+    right: -0.5rem;
     min-height: 0;
     height: auto;
     margin: 0;
-    opacity: 0.6;
 
     &::part(native) {
       padding: 0.125rem;
     }
 
-    &:hover {
-      opacity: 1;
-    }
-
     &__icon {
-      font-size: 1.5rem;
+      font-size: 1rem;
     }
   }
 }
