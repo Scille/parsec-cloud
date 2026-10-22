@@ -63,7 +63,7 @@ async function closeUpdateBanner(): Promise<void> {
 }
 
 async function openChanges(): Promise<void> {
-  Env.Links.openChangelogLink();
+  Env.Links.openWhatsNewLink();
 }
 </script>
 
