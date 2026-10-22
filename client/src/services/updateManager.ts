@@ -1,19 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { listAvailableDevices } from '@/parsec';
-import { APP_VERSION } from '@/services/environment';
+import { APP_MAJOR_MINOR_VERSION, APP_VERSION, getMajorMinorVersion } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { inject, ref, Ref } from 'vue';
 
 const updatePromptSuppressed: Ref<boolean> = ref(false);
-
-// Returns the `X.Y` part of a version (`v3.5.1-a.0+dev` -> `3.5`), or `undefined` if it can't be parsed
-export function getMajorMinorVersion(version: string): string | undefined {
-  const match = version.trim().match(/^v?(\d+)\.(\d+)/);
-  return match ? `${match[1]}.${match[2]}` : undefined;
-}
-
-const APP_MAJOR_MINOR_VERSION = getMajorMinorVersion(APP_VERSION);
 
 export function useUpdateManager() {
   const storageManager: StorageManager = inject(StorageManagerKey)!;

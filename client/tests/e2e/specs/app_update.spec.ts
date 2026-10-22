@@ -172,7 +172,7 @@ for (const version of ['same', 'different']) {
       await banner.locator('.update-banner-whats-new').click();
       const newTab = await newTabPromise;
       await newTab.waitForLoadState();
-      await expect(newTab).toHaveURL(new RegExp('^https://docs\\.parsec\\.cloud/en/v[a-z0-9\\.\\-_]+/history\\.html$'));
+      await expect(newTab).toHaveURL(new RegExp('^https://parsec\\.cloud/blog/releases/\\d{1,2}\\.\\d{1,2}/$'));
     }
     await page.release();
   });
