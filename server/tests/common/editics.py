@@ -23,6 +23,7 @@ from parsec.editics_protocol import (
     EditicsParticipantID,
     EditicsServerEvent,
     EditicsServerEventAdapter,
+    EditicsServerEventParsecOriginalContentUploaded,
 )
 from tests.common.backend import SERVER_DOMAIN
 from tests.common.client import AuthenticatedRpcClient, RpcTransportError
@@ -460,7 +461,14 @@ class EditicsJSClient:
         raw_editics_server_event = await self.editics_session_client.recv_raw()
         # Sanity check to detect incorrect server output (since the Javascript
         # part doesn't actually validate the schema)
-        EditicsServerEventAdapter.validate_json(raw_editics_server_event)
+        event = EditicsServerEventAdapter.validate_json(raw_editics_server_event)
+
+        # `parsecOriginalContentUploaded` event is not supposed to get translated:
+        # instead it should trigger a full reload of the OnlyOffice editor!
+        # So just ignore it and look for the next received event.
+        if isinstance(event, EditicsServerEventParsecOriginalContentUploaded):
+            return await self.listen_oo_server_event()
+
         oo_server_event = await self.js_runtime.async_eval(
             f"""
             globalThis.__editics_instances['{self.participant_id}'].cookServerEvent({raw_editics_server_event})

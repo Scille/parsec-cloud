@@ -19,6 +19,7 @@ import anyio
 
 from parsec._parsec import RealmRole, VlobID
 from parsec.editics_protocol import EditicsParticipantID
+from parsec.events import EventRealmCertificate
 from tests.common import (
     AuthenticatedRpcClient,
     Backend,
@@ -37,6 +38,7 @@ DEVICE_ID_TO_PARTICIPANT = {
 }
 PARTICIPANT_NAMES = set(DEVICE_ID_TO_PARTICIPANT.values())
 DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
+
 
 # In OnlyOffice protocol there is three concepts:
 # - `connectionId`: transport-level connection (i.e. websocket connection ID)
@@ -385,13 +387,21 @@ async def _do_test_record(
     for event in events:
         if event.type == "auth" and event.direction == "client-to-server":
             if event.participant == "Bob" and event.payload["mode"] == "edit":
-                await wksp1_alice_gives_role(
-                    coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR
-                )
+                with backend.event_bus.spy() as spy:
+                    await wksp1_alice_gives_role(
+                        coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR
+                    )
+                    # Ensure no events are still in-flight: such event arriving
+                    # after a participant `auth` might kick him out!
+                    await spy.wait(EventRealmCertificate)
             if event.participant == "Mallory":
-                await wksp1_alice_gives_role(
-                    coolorg, backend, coolorg.mallory.user_id, RealmRole.CONTRIBUTOR
-                )
+                with backend.event_bus.spy() as spy:
+                    await wksp1_alice_gives_role(
+                        coolorg, backend, coolorg.mallory.user_id, RealmRole.CONTRIBUTOR
+                    )
+                    # Ensure no events are still in-flight: such event arriving
+                    # after a participant `auth` might kick him out!
+                    await spy.wait(EventRealmCertificate)
 
     per_participant_rpc_client: dict[str, AuthenticatedRpcClient] = {
         "Alice": coolorg.alice,
@@ -478,11 +488,47 @@ async def _do_test_record(
 
             match event.direction:
                 case "client-to-server":
+                    # `auth`'s `lastOtherSaveTime` is compared against the last
+                    # modification timestamp on the server (which change with each run).
+                    # So we must patch it here if it is expected to be correct (note
+                    # the patch is ad-hoc per-test since it depends of what is
+                    # expected in the scenario)
+                    if event.type == "auth" and event.payload["lastOtherSaveTime"] != -1:
+                        session = backend.editics._sessions[
+                            (coolorg.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
+                        ]
+                        if record_path.name == "613_disconnect_reconnect_applied_changes.md":
+                            # This test expect a successful reconnection
+                            event.payload["lastOtherSaveTime"] = session.changes[-1].timestamp
+                        else:
+                            assert (
+                                record_path.name
+                                == "614_disconnect_reconnect_applied_changes_modified.md"
+                            )
+                            # This test expect a failed reconnection, provide the
+                            # newest change that is not the last one
+                            last_change = session.changes[-1].timestamp
+                            event.payload["lastOtherSaveTime"] = next(
+                                c.timestamp
+                                for c in reversed(session.changes)
+                                if c.timestamp != last_change
+                            )
+
                     maybe_server_event = await js_client.inject_oo_client_event(event.payload)
                     if maybe_server_event:
                         per_client_unacknowlegde_server_events[participant].append(
                             maybe_server_event
                         )
+
+                    # The harness plays the OnlyOffice editor, not the host page.
+                    # However the host page is supposed to upload the document
+                    # original content right after the `auth`, so we simulate this here.
+                    if event.type == "auth" and event.payload["mode"] == "edit":
+                        session = backend.editics._sessions[
+                            (coolorg.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
+                        ]
+                        if session.encrypted_original_content is None:
+                            session.encrypted_original_content = (1, b"<original_content>")
 
                 case "server-to-client":
                     # Look for the event in the unacknowledgedd ones...

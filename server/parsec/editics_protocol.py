@@ -4,7 +4,9 @@
 The editics protocol schemas is defined here, basically:
 - Editics protocol is based on the OnlyOffice protocol (typically removing unneeded
   field and adding encryption to sensitive ones).
-- The main exposed classes are `EditicsClientEvent` and `EditicsServerEvent`
+- The main exposed classes are `EditicsClientEvent` and `EditicsServerEvent`.
+- Commands with the `parsec` prefix are new ones specific for our needs (e.g.
+  `parsecFetchOriginalContent`).
 
 See [RFC 1030](../../docs/rfcs/1030-collaborative-editics.md).
 """
@@ -59,6 +61,12 @@ the client combine to rebuild the composite ID.
 """
 
 
+type EditicsTimestampMs = int
+"""
+In editics, timestamps use the number of milliseconds since epoch.
+"""
+
+
 class EditicsParticipantEntry(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
@@ -101,20 +109,28 @@ type EditicsExcelRecalcIndex = dict[str, EditicsExcelSheetRecalcIndex]
 # --- Client -> server events -------------------------------------------------
 
 
+class EditicsClientEventAuthReconnect(BaseModel):
+    participantId: EditicsParticipantID
+    # Last save (i.e. document modification or undo) timestamp the client knows
+    # about. The server rejects reconnection if this is not up to date.
+    # Set to `None` if the client has not received any save yet.
+    lastOtherSaveTime: EditicsTimestampMs | None
+
+
 class EditicsClientEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     # The vlob version the client has loaded locally (RFC §1.2). For a fresh
     # session this becomes the session's initial version.
     # (OnlyOffice has no such field; editics addition.)
     vlobVersion: int
-    # The participant ID of the logical session this auth restores, or `null`
-    # for a fresh join.
+    # The client already has a participant ID and want to restore its session, or
+    # `null` for a fresh join.
     # This is the same value the transport already carries (the participant ID
     # in the listen/send routes URL), but the transport *identifies* the connection
     # while this field is the client's *statement of intent*: the server only
     # restores a participant's session when the client explicitly says so, and
     # echoing the ID lets it validate the client's bookkeeping.
-    reconnect: EditicsParticipantID | None
+    reconnect: EditicsClientEventAuthReconnect | None
     mode: Literal["view", "edit"]
 
 
@@ -203,6 +219,30 @@ class EditicsClientEventSaveDone(BaseModel):
     newVersion: int  # the new vlob version just uploaded
 
 
+class EditicsClientEventParsecUploadOriginalContent(BaseModel):
+    """
+    The original content is an archive containing the document converted in the
+    OnlyOffice format (msgpack of {bin, medias}). It is the starting base over
+    which all the patches created during the edition session are to be applied.
+
+    The original content is uploaded once (using this command) by the first
+    editor connecting.
+
+    Any viewer that connects prior to that is expected to obtain the document
+    its own way (i.e. get the original document from the workspace, then convert
+    it with x2t), and will do a reload once once the original content get uploaded
+    (see `parsecOriginalContentUploaded` server event).
+    """
+
+    type: Literal["parsecUploadOriginalContent"] = "parsecUploadOriginalContent"
+    # Format: (<Key index>, <base64(ciphertext)>).
+    encryptedOriginalContent: tuple[int, Base64BytesField]
+
+
+class EditicsClientEventParsecFetchOriginalContent(BaseModel):
+    type: Literal["parsecFetchOriginalContent"] = "parsecFetchOriginalContent"
+
+
 EditicsClientEvent = Annotated[
     EditicsClientEventAuth
     | EditicsClientEventAuthChangesAck
@@ -215,7 +255,9 @@ EditicsClientEvent = Annotated[
     | EditicsClientEventUnSaveLock
     | EditicsClientEventUnLockDocument
     | EditicsClientEventClose
-    | EditicsClientEventSaveDone,
+    | EditicsClientEventSaveDone
+    | EditicsClientEventParsecUploadOriginalContent
+    | EditicsClientEventParsecFetchOriginalContent,
     Field(discriminator="type"),
 ]
 EditicsClientEventAdapter = TypeAdapter(EditicsClientEvent)
@@ -235,7 +277,7 @@ class LockRecord(BaseModel):
 
 class MessageRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
-    time: int  # server timestamp (ms)
+    time: EditicsTimestampMs  # Server timestamp
     author: EditicsParticipantIdentity
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedMessage: tuple[int, Base64BytesField]
@@ -243,13 +285,13 @@ class MessageRecord(BaseModel):
 
 class EditicsServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
-    participants: list[EditicsParticipantEntry]  # current participant map
+    participants: list[EditicsParticipantEntry]  # Current participant map
     participantId: EditicsParticipantID
-    indexUser: EditicsParticipantIndex  # this connection's assigned index
+    indexUser: EditicsParticipantIndex  # This connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
-    participantTimeConnect: int  # server timestamp (ms) at connect
+    participantTimeConnect: EditicsTimestampMs  # Server timestamp at connect
     # When the file edition session has been started
-    openedAt: int  # ms
+    openedAt: EditicsTimestampMs
     # Region locks currently held, so the newcomer knows which regions are
     # taken (OnlyOffice carries the lock table in its `auth` event).
     locks: list[LockRecord] = Field(default_factory=list)
@@ -257,12 +299,16 @@ class EditicsServerEventAuth(BaseModel):
     # server carries it in its `auth` event; the client only renders the field
     # when non-empty, like for the `message` event).
     messages: list[MessageRecord] = Field(default_factory=list)
+    # Whether this connection already has an original content uploaded by an
+    # editor: `false` means the participant must run x2t locally, (and upload
+    # the result if it is an editor).
+    originalContentUploaded: bool
 
 
 class EditicsServerEventConnectState(BaseModel):
     type: Literal["connectState"] = "connectState"
     # Monotonic ms timestamp of this participant-set update (OnlyOffice name).
-    participantsTimestamp: int
+    participantsTimestamp: EditicsTimestampMs
     participants: list[EditicsParticipantEntry]
     # True only in the broadcast announcing a non-viewer newcomer parked behind
     # the auth lock (i.e. that received a `waitAuth` event from the server).
@@ -283,8 +329,8 @@ class AuthChangeRecord(BaseModel):
     # 1-based and monotonic.
     index: int
     author: EditicsParticipantIdentity
-    # Server timestamp (ms) of the change.
-    time: int
+    # Server timestamp of the change.
+    time: EditicsTimestampMs
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedChange: tuple[int, Base64BytesField]
 
@@ -301,7 +347,7 @@ class EditicsServerEventMessage(BaseModel):
 
 class CursorRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
-    time: int
+    time: EditicsTimestampMs
     author: EditicsParticipantIdentity
     # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursor: tuple[int, Base64BytesField]
@@ -321,7 +367,7 @@ class ReleaseLockRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     block: Any  # opaque block descriptor (re-broadcast as-is)
     holder: EditicsParticipantIdentity
-    time: int
+    time: EditicsTimestampMs
     # Always null here (OnlyOffice shape; present for consistency with
     # `saveChanges`'s `locks` field).
     changes: None
@@ -342,7 +388,7 @@ class EditicsServerEventSaveLock(BaseModel):
 
 class SaveChangeRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
-    time: int
+    time: EditicsTimestampMs
     author: EditicsParticipantIdentity
     # Opaque encrypted blob (base64 over JSON, §2.4); server never inspects.
     # Format: (<Key index>, <base64(ciphertext)>)
@@ -388,7 +434,7 @@ class EditicsServerEventSavePartChanges(BaseModel):
 class EditicsServerEventUnSaveLock(BaseModel):
     type: Literal["unSaveLock"] = "unSaveLock"
     index: int  # save point, or -1 on cancel
-    time: int  # last change time, or -1 on cancel
+    time: EditicsTimestampMs  # last change time, or -1 on cancel
     syncChangesIndex: int  # new total, or -1 on cancel
 
 
@@ -414,10 +460,10 @@ class EditicsServerEventDisconnectReason(BaseModel):
     description: str
 
     @classmethod
-    def access_denied(cls) -> EditicsServerEventDisconnectReason:
+    def access_denied(cls, description: str | None = None) -> EditicsServerEventDisconnectReason:
         return cls(
             code=4004,
-            description="access deny",
+            description=description or "access deny",
         )
 
 
@@ -454,6 +500,37 @@ class EditicsServerEventError(BaseModel):
     description: str
 
 
+class EditicsServerEventParsecUploadOriginalContent(BaseModel):
+    type: Literal["parsecUploadOriginalContent"] = "parsecUploadOriginalContent"
+    # `true` = the upload was refused because the session already has an
+    # original content (i.e. a concurrent upload won): the client must
+    # abandon its local conversion and use the existing content instead.
+    alreadyUploaded: bool
+
+
+class EditicsServerEventParsecFetchOriginalContent(BaseModel):
+    type: Literal["parsecFetchOriginalContent"] = "parsecFetchOriginalContent"
+    # `None` when no editor has uploaded an original content yet.
+    encryptedOriginalContent: tuple[int, Base64BytesField] | None
+
+
+class EditicsServerEventParsecOriginalContentUploaded(BaseModel):
+    """
+    The session's original content just became available: participants
+    that opened the document from their own local x2t conversion must
+    reload the document with the session's content.
+
+    Only ever broadcast to the connected viewers (an editor is either the
+    uploader, or will get `alreadyUploaded: true` from its own upload
+    attempt).
+
+    This editics event has no OnlyOffice counterpart: upon receive, the host-page
+    is expected to reload a fresh OnlyOffice editor page.
+    """
+
+    type: Literal["parsecOriginalContentUploaded"] = "parsecOriginalContentUploaded"
+
+
 EditicsServerEvent = Annotated[
     EditicsServerEventAuth
     | EditicsServerEventConnectState
@@ -470,7 +547,10 @@ EditicsServerEvent = Annotated[
     | EditicsServerEventDisconnectReason
     | EditicsServerEventDrop
     | EditicsServerEventWarning
-    | EditicsServerEventError,
+    | EditicsServerEventError
+    | EditicsServerEventParsecUploadOriginalContent
+    | EditicsServerEventParsecFetchOriginalContent
+    | EditicsServerEventParsecOriginalContentUploaded,
     Field(discriminator="type"),
 ]
 EditicsServerEventAdapter = TypeAdapter(EditicsServerEvent)

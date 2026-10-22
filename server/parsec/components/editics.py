@@ -30,6 +30,8 @@ from parsec.editics_protocol import (
     EditicsClientEventGetMessages,
     EditicsClientEventIsSaveLock,
     EditicsClientEventMessage,
+    EditicsClientEventParsecFetchOriginalContent,
+    EditicsClientEventParsecUploadOriginalContent,
     EditicsClientEventSaveChanges,
     EditicsClientEventUnLockDocument,
     EditicsClientEventUnSaveLock,
@@ -47,12 +49,16 @@ from parsec.editics_protocol import (
     EditicsServerEventError,
     EditicsServerEventGetLock,
     EditicsServerEventMessage,
+    EditicsServerEventParsecFetchOriginalContent,
+    EditicsServerEventParsecOriginalContentUploaded,
+    EditicsServerEventParsecUploadOriginalContent,
     EditicsServerEventReleaseLock,
     EditicsServerEventSaveChanges,
     EditicsServerEventSaveLock,
     EditicsServerEventSavePartChanges,
     EditicsServerEventUnSaveLock,
     EditicsServerEventWaitAuth,
+    EditicsTimestampMs,
     LockRecord,
     MessageRecord,
     ReleaseLockRecord,
@@ -73,16 +79,9 @@ PER_PARTICIPANT_MAX_BUFFER_EVENTS = 100
 type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsServerEvent | None]
 
 
-def now() -> int:
-    """
-    Timestamp as milliseconds
-    """
-    return int(time.time() * 1000)
-
-
 @dataclass(slots=True)
 class ChatMessage:
-    time_ms: int
+    timestamp: EditicsTimestampMs
     author_device_id: DeviceID
     author_index: EditicsParticipantIndex
     encrypted_message: tuple[int, bytes]
@@ -90,7 +89,7 @@ class ChatMessage:
 
 @dataclass(slots=True)
 class StoredChange:
-    time_ms: int
+    timestamp: EditicsTimestampMs
     author_device_id: DeviceID
     author_index: EditicsParticipantIndex
     # Format: (<Key index>, <base64(ciphertext)>)
@@ -132,7 +131,7 @@ class Participant:
     device_id: DeviceID
     realm_role: RealmRole
     # TODO: does this correspond to the very first connection of the participant or to its last (re)connection ?
-    connected_at: int  # ms timestamp of the join
+    connected_at: EditicsTimestampMs  # Timestamp of the join
     # `None` if no SSE connection is listening for the participant.
     # At most one SSE connection is possible for a given participant (any older
     # one is considered as a zombie and gets closed).
@@ -141,21 +140,11 @@ class Participant:
     # the participants lists (before that, only its SSE connection is
     # registered in the session).
     authed: ParticipantAuthed | None = None
-    # The session's `sync_changes_index` when the participant lost its connection:
-    # used to refuse a restoration when the document was modified while the
-    # participant was away.
-    disconnected_changes_index: int | None = None
 
     # Whether the participant currently has a live SSE connection: a participant
     # whose connection dropped is hidden from the participants lists and loses
     # the locks it holds, but stays in the session so the connection can be
-    # restored (an `auth` client event carrying reconnection info, see the
-    # `disconnection` records).
-    # Derived from `sse_channel_sender` (at most one SSE connection is possible
-    # for a given participant, any older one is a zombie that gets replaced):
-    # the participant is connected from the moment its SSE listen is registered
-    # (i.e. even before its `auth` with reconnection info is processed) until
-    # the connection drops.
+    # restored.
     @property
     def connected(self) -> bool:
         return self.sse_channel_sender is not None
@@ -183,9 +172,9 @@ class Participant:
             pass
 
     def access_denied_close_sse(
-        self, send_disconnect_reason_event: bool = True
+        self, send_disconnect_reason_event: bool = True, description: str | None = None
     ) -> EditicsServerEventDisconnectReason:
-        event = EditicsServerEventDisconnectReason.access_denied()
+        event = EditicsServerEventDisconnectReason.access_denied(description=description)
         if send_disconnect_reason_event:
             self.send_event(event)
 
@@ -202,9 +191,9 @@ class Participant:
         # newer connection.
 
         # Some access control are done when handling the `auth` client event,
-        # so we have to invalidate the authentication.
-        # Otherwise a CONTRIBUTOR that sent a `auth` event as editor, and then became
-        # READER (hence getting kicked out), could re-connect to get editor access!
+        # so we have to invalidate the authentication: otherwise a CONTRIBUTOR
+        # that sent a `auth` event as editor, and then became READER (hence
+        # getting kicked out), could re-connect to get editor access!
         self.authed = None
 
         return event
@@ -217,27 +206,31 @@ class EditicsSession:
     """
 
     # When the file edition session has been started
-    opened_at: int  # ms
+    opened_at: EditicsTimestampMs = field(init=False)  # Initialized in `__post_init__`
     session_id: UUID = field(default_factory=uuid4)
-    next_participant_index: int = 1  # monotonic, starts at 1
+    next_participant_index: int = 1  # Monotonic
     participants: dict[EditicsParticipantID, Participant] = field(default_factory=dict)
     chat_messages: list[ChatMessage] = field(default_factory=list)
-    # The session is in single-editor mode as long as this is set: the OnlyOffice
-    # server has no such persistent state, but modeling it this way reproduces its
-    # parking rule (a fresh non-viewer joining as the 2nd non-viewer of the session
-    # gets parked behind the lock, see the `auth` handling).
-    # Participants joining in single-editor mode are parked (i.e. they receive a
-    # `waitAuth` from the server) until the single editor releases the lock (i.e.
-    # sends `unLockDocument{unlock:true}`, which its client does when a
-    # `connectState` switches it to co-editing mode), which switches the session
-    # into co-editing mode.
+    # When set, the session is in single-editor mode (i.e. the first editor to
+    # connect take this lock).
+    # The second editor to connect get parked (i.e. receive a `waitAuth` event)
+    # until the first editor release the lock  (i.e. sends `unLockDocument{unlock:true}`,
+    # which is done after being notified of the other editor presence by a
+    # `connectState` event).
+    # Note a weird behavior (mimicking OnlyOffice server): subsequent editors
+    # connecting don't get parked (i.e. they receive a `auth` event even if lock
+    # is still held). This is okay since the auth release is already supposed to
+    # be under way.
     auth_lock_holder: EditicsParticipantID | None = None
-    # Monotonic change counter (= OnlyOffice `puckerIndex`): advances on every
-    # stored change fragment, and is only rewound by an undo (i.e. a `saveChanges`
-    # carrying a `deleteIndex`).
-    sync_changes_index: int = 0
-    # Ordered change history, can be truncated from a given index on undo.
+    # Ordered change history, can be truncated from a given index on undo (i.e.
+    # `saveChanges` event carrying a `deleteIndex`).
     changes: list[StoredChange] = field(default_factory=list)
+    # The original content uploaded by the first editor of the session:
+    # the msgpack archive of the converted document (.bin + media files),
+    # encrypted with the workspace key. Opaque to the server.
+    # Format: (<Key index>, <ciphertext>).
+    encrypted_original_content: tuple[int, bytes] | None = None
+    # TODO: rework comment
     # Save lock (i.e. the participant currently saving).
     # Minimal handling for now: taken on `isSaveLock`/`saveChanges`, released on
     # save completion (i.e. `saveChanges{endSaveChanges:true}`) or cancellation
@@ -245,29 +238,36 @@ class EditicsSession:
     # expires it after 60s). Desynchronized clients are denied the lock until
     # they catch up (see the `isSaveLock` client event handler).
     save_lock_holder: EditicsParticipantID | None = None
-    # --- Region locks (RFC §2.2) ---
+    # TODO: rework comment
     # Block key (the block itself for the document editor, its `guid` for the
     # other editors) -> lock record (the holder being the `user` field).
     # The block descriptors are opaque to the server (their shape depends on
     # the editor type, see `EditicsClientEventGetLock`).
     region_locks: dict[str, LockRecord] = field(default_factory=dict)
 
-    # initial_version: int
-    # latest_allowed_version: int
-    # # Monotonic non-decreasing timestamp (ms) of the last `connectState`
-    # # broadcast (todo step_1 §6.1 V-A3). Bumped on every participant-set change.
-    # participants_timestamp: int = 0
-    # # indexUser -> deviceId
-    # participants: dict[IndexUser, DeviceID] = field(default_factory=dict)
-    # # participant_uuid (client-generated) -> SSE channel
-    # connections: dict[UUID, EditicsSseChannel] = field(default_factory=dict)
-    # # Chat history (delivered to newcomers on join).
-    # messages: list[ChatMessage] = field(default_factory=list)
-    # # The participant that just released the save lock (one-round only, §6.9):
-    # # only this participant may send `saveDone` to bump `latest_allowed_version`.
-    # last_save_lock_holder: IndexUser | None = None
-    # # In-flight multi-chunk save buffer for the current lock holder, or None.
-    # in_flight_save: InFlightSave | None = None
+    last_now: EditicsTimestampMs = 0
+
+    def monotonic_now(self) -> EditicsTimestampMs:
+        """
+        Monotonic timestamp as milliseconds since epoch.
+
+        Monotonic is notably needed to detect if a reconnecting participant has
+        missed a change.
+
+        Note we cannot just use `self.changes[-1].time` for this since undo may
+        remove a change (in which case we could end up with a different change
+        having the same timestamp...).
+        """
+        # In OnlyOffice, change timestamp is in milliseconds but has a granularity up to
+        # the second (to "avoid issues with MySQL datetime rounding" according to the code).
+        # We don't have this issue here and stay with a millisecond precision (since it
+        # makes concurrent changes with the same timestamp much less likely).
+        now_ms = time.time_ns() // 1000000
+        self.last_now = max(now_ms, self.last_now + 1)
+        return self.last_now
+
+    def __post_init__(self):
+        self.opened_at = self.monotonic_now()
 
 
 def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntry]:
@@ -277,11 +277,10 @@ def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntr
             deviceId=participant.device_id,
             view=participant.authed.view,
         )
-        # Connections that haven't completed their `auth` handshake are not
-        # participants yet (e.g. in record `02_auth_concurrent`, Bob and
-        # Mallory both connect before either has authed), and participants
-        # whose connection dropped are hidden until they restore it.
         for participant in session.participants.values()
+        # Connections that haven't completed their `auth` handshake are not
+        # real participants yet and participants whose connection dropped
+        # are hidden until they restore it.
         if participant.authed and participant.connected
     ]
 
@@ -375,7 +374,7 @@ def _release_participant_locks(
                 ReleaseLockRecord(
                     block=lock.block,
                     holder=(participant.device_id, participant.index),
-                    time=now(),
+                    time=session.monotonic_now(),
                     changes=None,
                 )
             )
@@ -395,7 +394,7 @@ def _push_changes_backlog(session: EditicsSession, participant: Participant) -> 
                 AuthChangeRecord(
                     index=index + 1,
                     author=(change.author_device_id, change.author_index),
-                    time=change.time_ms,
+                    time=change.timestamp,
                     encryptedChange=change.encrypted_change,
                 )
                 for index, change in enumerate(session.changes)
@@ -415,12 +414,13 @@ def _handshake_auth(session: EditicsSession, participant: Participant) -> Editic
         locks=list(session.region_locks.values()),
         messages=[
             MessageRecord(
-                time=m.time_ms,
+                time=m.timestamp,
                 author=(m.author_device_id, m.author_index),
                 encryptedMessage=m.encrypted_message,
             )
             for m in session.chat_messages
         ],
+        originalContentUploaded=session.encrypted_original_content is not None,
     )
 
 
@@ -431,11 +431,18 @@ class EditicsParticipantListenBadOutcome(BadOutcomeEnum):
 class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
     # First event must be `auth`
     PARTICIPANT_NOT_AUTH = auto()
+    # Once `auth` server event received, the first editor knows he must upload the
+    # original content before anything else.
+    ORIGINAL_CONTENT_MISSING = auto()
     # Subsequent `auth` are reconnection, and a device cannot do impersonation
     # by reconnecting with a participant ID related to another device!
     PARTICIPANT_DEVICE_MISMATCH = auto()
     # A reconnecting participant cannot change the mode it originally joined with
     PARTICIPANT_MODE_MISMATCH = auto()
+    # A reconnecting participant ID mismatch the transport participant ID (i.e.
+    # the one in the listen/send routes URL). This is not supposed to happen and
+    # indicates a buggy client.
+    PARTICIPANT_ID_MISMATCH = auto()
     # Participant has READER role and tries to edit
     READER_MUST_BE_VIEWER = auto()
 
@@ -521,7 +528,7 @@ class EditicsComponent:
         try:
             return self._sessions[key]
         except KeyError:
-            session = self._sessions[key] = EditicsSession(opened_at=now())
+            session = self._sessions[key] = EditicsSession()
             return session
 
     def _get_or_insert_participant(
@@ -551,7 +558,7 @@ class EditicsComponent:
             realm_role=realm_role,
             index=participant_index,
             participant_id=participant_id,
-            connected_at=now(),
+            connected_at=session.monotonic_now(),
         )
 
         return participant
@@ -646,8 +653,6 @@ class EditicsComponent:
             )
         )
 
-        participant.disconnected_changes_index = session.sync_changes_index
-
         # Release the save lock if the participant held it (no `unSaveLock` is
         # sent: the only participant it is relevant to is the one leaving, see
         # record 609 where the save is cancelled so another participant can
@@ -668,10 +673,8 @@ class EditicsComponent:
             for other in session.participants.values():
                 if (other_authed := other.authed) and other_authed.parked:
                     other_authed.parked = False
-                    # The `auth` reply is pushed before the changes backlog,
-                    # like for a `unLockDocument{unlock:true}` (see there).
-                    other.send_event(_handshake_auth(session, other))
                     _push_changes_backlog(session, other)
+                    other.send_event(_handshake_auth(session, other))
 
         # Back to single-editor mode: when the departure leaves exactly one
         # established editor, it takes the auth lock again. The OnlyOffice server
@@ -693,7 +696,7 @@ class EditicsComponent:
         # here (record 607: the broadcast carries `false` although the remaining
         # editor just re-took the lock).
         broadcasted_event = EditicsServerEventConnectState(
-            participantsTimestamp=now(),
+            participantsTimestamp=session.monotonic_now(),
             participants=_participant_entries(session),
             waitAuth=False,
         )
@@ -726,6 +729,24 @@ class EditicsComponent:
         if not participant.authed and not isinstance(event, EditicsClientEventAuth):
             return EditicsParticipantSendBadOutcome.PARTICIPANT_NOT_AUTH
 
+        # The first connecting editor must upload the original content as soon as
+        # its `auth` is done.
+        if (
+            session.encrypted_original_content is None
+            and (participant_authed := participant.authed) is not None
+            and not participant_authed.view
+            # `auth` while participant is already authenticated is for reconnection
+            and not isinstance(
+                event,
+                (
+                    EditicsClientEventAuth,
+                    EditicsClientEventClose,
+                    EditicsClientEventParsecUploadOriginalContent,
+                ),
+            )
+        ):
+            return EditicsParticipantSendBadOutcome.ORIGINAL_CONTENT_MISSING
+
         # Viewers are not allowed to send editor-only events...
         if (
             (participant_authed := participant.authed) is not None
@@ -734,7 +755,8 @@ class EditicsComponent:
                 event,
                 EditicsClientEventGetLock
                 | EditicsClientEventSaveChanges
-                | EditicsClientEventIsSaveLock,
+                | EditicsClientEventIsSaveLock
+                | EditicsClientEventParsecUploadOriginalContent,
             )
         ):
             # ...and get their SSE connection kicked out for this!
@@ -773,25 +795,31 @@ class EditicsComponent:
                 # while this field is the client's *statement of intent*: the server only
                 # restores a participant's session when the client explicitly says so, and
                 # echoing the ID lets it validate the client's bookkeeping.
-                if participant.authed is not None and event.reconnect == participant_id:
+                if participant.authed is not None and event.reconnect is not None:
+                    if event.reconnect.participantId != participant_id:
+                        return EditicsParticipantSendBadOutcome.PARTICIPANT_ID_MISMATCH
                     if participant.authed.view != participant_view:
                         return EditicsParticipantSendBadOutcome.PARTICIPANT_MODE_MISMATCH
 
-                    # Reconnection is only possible if no modification occured in the meantime
-                    if (
-                        participant.disconnected_changes_index is not None
-                        and session.sync_changes_index != participant.disconnected_changes_index
-                    ):
-                        # The client should reacts to this event by closing the co-authoring
-                        # session (i.e. sending a `close` client event).
-                        return EditicsServerEventError(
-                            code=4010,
-                            description="Restore error. Document modified.",
-                        )
+                    # Reconnection is only possible if no modification occured in the meantime.
+                    # Note in OnlyOffice viewers are not checked, but this is most likely a bug
+                    # (since a viewer needs to stay up-to-date with the changes).
+                    if session.changes:
+                        last_change = session.changes[-1]
+                        if (
+                            # Consider the participant always know about its own changes...
+                            last_change.author_index != participant.index
+                            # ...otherwise the participant must know about the last change
+                            and event.reconnect.lastOtherSaveTime != last_change.timestamp
+                        ):
+                            # The client should reacts to this event by closing the co-authoring
+                            # session (i.e. sending a `close` client event).
+                            return EditicsServerEventError(
+                                code=4010, description="Restore error. Document modified."
+                            )
 
                     # Reconnect
 
-                    participant.disconnected_changes_index = None
                     # The OnlyOffice server re-adds a restored participant at the
                     # end of the participants lists (its entry was dropped when
                     # the connection was lost, see the `disconnection` records).
@@ -846,7 +874,7 @@ class EditicsComponent:
                     # "a newcomer got parked behind the auth lock", not "the lock
                     # is held" (see the `auth` handling).
                     broadcasted_event = EditicsServerEventConnectState(
-                        participantsTimestamp=now(),
+                        participantsTimestamp=session.monotonic_now(),
                         participants=_participant_entries(session),
                         waitAuth=False,
                     )
@@ -953,10 +981,7 @@ class EditicsComponent:
                         _push_changes_backlog(session, participant)
 
                 broadcasted_event = EditicsServerEventConnectState(
-                    # TODO: have a single function that handles timestamp generation,
-                    #       and ensure time is monotonic and have the expected time
-                    #       granularity (to ms ? to second ?).
-                    participantsTimestamp=now(),
+                    participantsTimestamp=session.monotonic_now(),
                     participants=_participant_entries(session),
                     # The OnlyOffice server sets this flag only in this broadcast,
                     # and only when the newcomer got parked behind the auth lock
@@ -978,7 +1003,7 @@ class EditicsComponent:
                 return EditicsServerEventMessage(
                     messages=[
                         MessageRecord(
-                            time=m.time_ms,
+                            time=m.timestamp,
                             author=(m.author_device_id, m.author_index),
                             encryptedMessage=m.encrypted_message,
                         )
@@ -988,13 +1013,13 @@ class EditicsComponent:
 
             case EditicsClientEventMessage():
                 message_record = MessageRecord(
-                    time=now(),
+                    time=session.monotonic_now(),
                     author=(participant.device_id, participant.index),
                     encryptedMessage=event.encryptedMessage,
                 )
                 session.chat_messages.append(
                     ChatMessage(
-                        time_ms=message_record.time,
+                        timestamp=message_record.time,
                         author_device_id=participant.device_id,
                         author_index=participant.index,
                         encrypted_message=event.encryptedMessage,
@@ -1011,6 +1036,25 @@ class EditicsComponent:
 
             case EditicsClientEventUnLockDocument():
                 reply = None
+                # UNDO support (RFC §2.2 `unLockDocument`): a `deleteIndex` asks
+                # the server to destroy all the stored changes above the client's
+                # save point (the client drops the matching points from its own
+                # history at the same time, so both sides stay index-aligned).
+                # Like the real OnlyOffice server (its `checkEndAuthLock`, which
+                # handles this *before* anything else), an index above the
+                # current change count is logged and ignored.
+                if event.deleteIndex is not None and event.deleteIndex != -1:
+                    if event.deleteIndex < len(session.changes):
+                        del session.changes[event.deleteIndex :]
+                    elif event.deleteIndex > len(session.changes):
+                        # Like the real OnlyOffice server's `checkEndAuthLock`:
+                        # a `deleteIndex` equal to the current change count is a
+                        # silent no-op (nothing to destroy), only an index ABOVE
+                        # it is a client bookkeeping error.
+                        logger.error(
+                            "Bad `deleteIndex` in `unLockDocument` event: "
+                            f"deleteIndex={event.deleteIndex} > changes count={len(session.changes)}"
+                        )
                 # `isSave` asks to cancel an in-progress save: release the save
                 # lock and acknowledge with the cancellation sentinel values.
                 if event.isSave and session.save_lock_holder == participant.participant_id:
@@ -1043,15 +1087,8 @@ class EditicsComponent:
                     for other in session.participants.values():
                         if (other_authed := other.authed) and other_authed.parked:
                             other_authed.parked = False
-                            # The `auth` reply is pushed before the changes
-                            # backlog, unlike the RFC §2.2 wire ordering:
-                            # the client holds the SSE events back until
-                            # the `auth` handshake is delivered (see
-                            # `client/editics/collaborative.ts`), and it
-                            # needs the participant map it carries to
-                            # translate the backlog's `user` fields.
-                            other.send_event(_handshake_auth(session, other))
                             _push_changes_backlog(session, other)
+                            other.send_event(_handshake_auth(session, other))
                 return reply
 
             case EditicsClientEventGetLock():
@@ -1064,7 +1101,7 @@ class EditicsComponent:
                     key = _block_key(block)
                     if key not in session.region_locks:
                         session.region_locks[key] = LockRecord(
-                            time=now(),
+                            time=session.monotonic_now(),
                             holder=(participant.device_id, participant.index),
                             block=block,
                         )
@@ -1144,15 +1181,8 @@ class EditicsComponent:
                     for other in session.participants.values():
                         if (other_authed := other.authed) and other_authed.parked:
                             other_authed.parked = False
-                            # The `auth` reply is pushed before the changes
-                            # backlog, unlike the RFC §2.2 wire ordering: the
-                            # client holds the SSE events back until the
-                            # `auth` handshake is delivered (see
-                            # `client/editics/collaborative.ts`), and it
-                            # needs the participant map it carries to
-                            # translate the backlog's `user` fields.
-                            other.send_event(_handshake_auth(session, other))
                             _push_changes_backlog(session, other)
+                            other.send_event(_handshake_auth(session, other))
 
                 # Back to single-editor mode: when the departure leaves exactly
                 # one established editor, it takes the auth lock again (like for
@@ -1171,7 +1201,7 @@ class EditicsComponent:
                 # the auth lock" and is only ever set by the broadcast announcing
                 # such a newcomer (see the `auth` handling).
                 broadcasted_event = EditicsServerEventConnectState(
-                    participantsTimestamp=now(),
+                    participantsTimestamp=session.monotonic_now(),
                     participants=_participant_entries(session),
                     waitAuth=False,
                 )
@@ -1188,6 +1218,32 @@ class EditicsComponent:
                 # Fire-and-forget: nothing left to reply to the leaving client.
                 return None
 
+            case EditicsClientEventParsecUploadOriginalContent():
+                if session.encrypted_original_content is not None:
+                    return EditicsServerEventParsecUploadOriginalContent(alreadyUploaded=True)
+
+                session.encrypted_original_content = event.encryptedOriginalContent
+                # Notify only the viewers since the connected editor are either the
+                # one that have done the upload, or ones that are trying to do a
+                # concurrent upload (and will get the info from `alreadyUploaded: true`
+                # in the server response).
+                broadcasted_event = EditicsServerEventParsecOriginalContentUploaded()
+                for other in session.participants.values():
+                    if (
+                        other.participant_id == participant.participant_id
+                        or other.authed is None
+                        or not other.authed.view
+                        or not other.connected
+                    ):
+                        continue
+                    other.send_event(broadcasted_event)
+                return EditicsServerEventParsecUploadOriginalContent(alreadyUploaded=False)
+
+            case EditicsClientEventParsecFetchOriginalContent():
+                return EditicsServerEventParsecFetchOriginalContent(
+                    encryptedOriginalContent=session.encrypted_original_content
+                )
+
             case EditicsClientEventIsSaveLock():
                 # Try to take the save lock.
                 # Lock is denied as long as the client's `syncChangesIndex` is
@@ -1195,7 +1251,7 @@ class EditicsComponent:
                 # Note `syncChangesIndex == 0` means the client has just joined
                 # the session and hasn't loaded any changes, and hence is never
                 # considered desynchronized.
-                desynchronized = event.syncChangesIndex not in (0, session.sync_changes_index)
+                desynchronized = event.syncChangesIndex not in (0, len(session.changes))
                 if not desynchronized and session.save_lock_holder in (
                     None,
                     participant.participant_id,
@@ -1206,43 +1262,60 @@ class EditicsComponent:
                     return EditicsServerEventSaveLock(lockedBySomebodyElse=True)
 
             case EditicsClientEventSaveChanges():
+                # No modification is allowed before an editor has uploaded the
+                # original content.
+                # This should occurs though since an editor client is expected
+                # to do the upload before actually starting the OnlyOffice editor.
+                if session.encrypted_original_content is None:
+                    logger.warning(
+                        "Discarding `saveChanges` event: no original content in the session"
+                    )
+                    # Kick the client out since it is most likely buggy
+                    return participant.access_denied_close_sse(
+                        send_disconnect_reason_event=False,
+                        description="`saveChange` send before original content upload",
+                    )
+
                 # Saving requires the save lock: OnlyOffice (re)acquires it at
                 # the start of `saveChanges`, so do the same as a safety net.
                 if session.save_lock_holder is None:
                     session.save_lock_holder = participant.participant_id
                 elif session.save_lock_holder != participant.participant_id:
-                    # Another participant holds the save lock: discard the event,
-                    # like OnlyOffice does (should not happen given the client
-                    # is expected to acquire the lock with `isSaveLock` first).
+                    # Another participant holds the save lock, this should not
+                    # happen given the client is expected to acquire the lock
+                    # with `isSaveLock` first...
                     logger.warning(
                         "Discarding `saveChanges` event: save lock held by another participant"
                     )
-                    return None
+                    # OnlyOffice server just discard the event, but it is safer to
+                    # kick the client out.
+                    return participant.access_denied_close_sse(
+                        send_disconnect_reason_event=False,
+                        description="`saveChange` send but save lock held by another participant",
+                    )
 
-                # UNDO support: truncate the change history from `deleteIndex`
+                # Undo support: truncate the change history from `deleteIndex`
                 # (OnlyOffice semantics: only honored on the first chunk of the
                 # save, `null`/`-1` meaning no truncation).
                 delete_index = -1
                 if event.startSaveChanges and event.deleteIndex is not None:
                     delete_index = event.deleteIndex
-                    if delete_index != -1 and delete_index < session.sync_changes_index:
+                    if delete_index != -1 and delete_index < len(session.changes):
                         del session.changes[delete_index:]
-                        session.sync_changes_index = delete_index
 
                 # Store the new changes (one entry per change fragment, i.e.
                 # OnlyOffice `puckerIndex += len(encryptedChanges)`)
-                start_index = session.sync_changes_index
-                changes_time = now()
+                start_index = len(session.changes)
+                changes_time = session.monotonic_now()
                 session.changes.extend(
                     StoredChange(
-                        time_ms=changes_time,
+                        timestamp=changes_time,
                         author_device_id=participant.device_id,
                         author_index=participant.index,
                         encrypted_change=encrypted_change,
                     )
                     for encrypted_change in event.encryptedChanges
                 )
-                session.sync_changes_index += len(event.encryptedChanges)
                 # Save point for the saver (OnlyOffice semantics: only the first
                 # chunk of a non-truncating save establishes a new save point)
                 changes_index = start_index if delete_index == -1 and event.startSaveChanges else -1
@@ -1281,8 +1354,8 @@ class EditicsComponent:
                         )
                         for encrypted_change in event.encryptedChanges
                     ],
-                    changesIndex=session.sync_changes_index,
-                    syncChangesIndex=session.sync_changes_index,
+                    changesIndex=len(session.changes),
+                    syncChangesIndex=len(session.changes),
                     endSaveChanges=event.endSaveChanges,
                     excelAdditionalInfoIndexCols=event.excelAdditionalInfoIndexCols,
                     excelAdditionalInfoIndexRows=event.excelAdditionalInfoIndexRows,
@@ -1302,14 +1375,14 @@ class EditicsComponent:
                     return EditicsServerEventUnSaveLock(
                         index=changes_index,
                         time=changes_time,
-                        syncChangesIndex=session.sync_changes_index,
+                        syncChangesIndex=len(session.changes),
                     )
                 else:
                     # Intermediate chunk of a save too big for a single event:
                     # acknowledge it and wait for the next one.
                     return EditicsServerEventSavePartChanges(
                         changesIndex=changes_index,
-                        syncChangesIndex=session.sync_changes_index,
+                        syncChangesIndex=len(session.changes),
                     )
 
             case EditicsClientEventUnSaveLock():
@@ -1326,7 +1399,7 @@ class EditicsComponent:
                 broadcasted_event = EditicsServerEventCursor(
                     messages=[
                         CursorRecord(
-                            time=now(),
+                            time=session.monotonic_now(),
                             author=(participant.device_id, participant.index),
                             encryptedCursor=event.encryptedCursor,
                         )

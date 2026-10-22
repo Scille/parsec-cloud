@@ -248,7 +248,7 @@ async def editics_send(
     raw_document_id: str,
     participant_id: EditicsParticipantID,
     request: Request,
-):
+) -> Response:
     backend: Backend = request.app.state.backend
 
     organization_id = _parse_organization_id(raw_organization_id)
@@ -336,9 +336,13 @@ async def editics_send(
             return Response(status_code=204)
         case EditicsParticipantSendBadOutcome.PARTICIPANT_NOT_AUTH:
             raise HTTPException(status_code=493, detail="TODO: PARTICIPANT_NOT_AUTH")  # TODO
+        case EditicsParticipantSendBadOutcome.ORIGINAL_CONTENT_MISSING:  # TODO: not tested yet !
+            raise HTTPException(status_code=497, detail="TODO: ORIGINAL_CONTENT_MISSING")  # TODO
         case EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH:
             raise HTTPException(status_code=494, detail="TODO: PARTICIPANT_DEVICE_MISMATCH")  # TODO
-        case EditicsParticipantSendBadOutcome.READER_MUST_BE_VIEWER:
-            raise HTTPException(status_code=495, detail="TODO: READER_MUST_BE_VIEWER")  # TODO
         case EditicsParticipantSendBadOutcome.PARTICIPANT_MODE_MISMATCH:
             raise HTTPException(status_code=496, detail="TODO: PARTICIPANT_MODE_MISMATCH")  # TODO
+        case EditicsParticipantSendBadOutcome.PARTICIPANT_ID_MISMATCH:  # TODO: not tested yet !
+            raise HTTPException(status_code=498, detail="TODO: PARTICIPANT_ID_MISMATCH")  # TODO
+        case EditicsParticipantSendBadOutcome.READER_MUST_BE_VIEWER:
+            raise HTTPException(status_code=495, detail="TODO: READER_MUST_BE_VIEWER")  # TODO
