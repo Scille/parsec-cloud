@@ -861,7 +861,17 @@ window.addEventListener('message', function (event: MessageEvent) {
   switch (data.command) {
     case 'oo-open':
       openDocument(data.options, data.documentContent).catch(function (err: Error) {
-        postToParent({ command: 'oo-error', details: JSON.stringify(err) });
+        let details = JSON.stringify(err);
+        if (details === '{}') {
+          console.warn('Error cannot be rendered in JSON, manually building it ...', err);
+          details = JSON.stringify({
+            name: err.name,
+            message: err.message,
+            str: String(err),
+          });
+        }
+        console.error('Error while opening the document', details);
+        postToParent({ command: 'oo-error', details });
       });
       break;
 
