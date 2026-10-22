@@ -36,7 +36,7 @@ where
     // The whole trick here is ZSTD supports multiple compression strategy, one of
     // them being `Raw_Block` which is just the raw data provided as-is.
     // So here we just write the bare minimum of ZSTD headers, then put the raw
-    // data as a single block.
+    // data as one or multiple blocks of 128KB max.
     // This way we have a valid ZSTD frame that can be decompressed by any ZSTD decoder !
 
     // ZSTD compressed data is composed of frames:
@@ -46,7 +46,7 @@ where
     //
     // Now to simplify as much as possible our generated data:
     // - We use a single frame...
-    // - ...containing a single data block.
+    // - ...containing one or multiple data blocks of 128KB max.
     // - Content checksum is optional (so we don't use it).
     // - Data block contains a 3 bytes header that we set to indicate the content is raw.
 
@@ -92,25 +92,36 @@ where
     // Frame_Content_Size is encoded over 8 bytes
     destination.write_all(&(source_buf.len() as u64).to_le_bytes())?;
 
-    // 3) Data block
+    // 3) Data blocks
 
-    // Block header:
-    // Last_Block    Block_Type    Block_Size
-    // bit 0          bits 1-2      bits 3-23
+    // The size of Block_Content is limited by Block_Maximum_Size, which is the smallest of:
+    //   Window_Size
+    //   128 KiB (131.072 bytes)
+    // See https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#blocks
+    const MAX_BLOCK_SIZE: usize = 128 * 1024;
 
-    let is_last_block: u32 = 0x1; // Our block is the last one (we only have one !)
-    let block_type: u32 = 0x0; // 0x0 stands for "Raw_Block"
-    assert!(source_buf.len() <= (0xFFFFFF >> 3)); // Sanity check given size is encoded over 21 bits
-    let block_size: u32 = source_buf.len() as u32;
-    let block_header: u32 = is_last_block | (block_type << 1) | (block_size << 3);
-    // Note `block_header` is a u32 (so 4 bytes), but we should only take the 3 first bytes !
-    let block_header_as_bytes = block_header.to_le_bytes();
-    assert_eq!(block_header_as_bytes[3], 0); // Sanity check given last byte is dropped
-    destination.write_all(&block_header_as_bytes[..3])?;
+    let mut blocks = source_buf.chunks(MAX_BLOCK_SIZE).peekable();
 
-    // Block content
+    if blocks.peek().is_none() {
+        destination.write_all(&[0x1, 0x0, 0x0])?;
+    }
 
-    destination.write_all(&source_buf)?;
+    while let Some(block) = blocks.next() {
+        // Block header:
+        // Last_Block    Block_Type    Block_Size
+        // bit 0          bits 1-2      bits 3-23
+
+        let is_last_block: u32 = if blocks.peek().is_none() { 0x1 } else { 0x0 };
+        let block_type: u32 = 0x0; // 0x0 stands for "Raw_Block"
+        let block_size: u32 = block.len() as u32;
+        let block_header: u32 = is_last_block | (block_type << 1) | (block_size << 3);
+        // Note `block_header` is a u32 (so 4 bytes), but we should only take the 3 first bytes !
+        let block_header_as_bytes = block_header.to_le_bytes();
+        assert_eq!(block_header_as_bytes[3], 0); // Sanity check given last byte is dropped
+        destination.write_all(&block_header_as_bytes[..3])?;
+        // Block content
+        destination.write_all(block)?;
+    }
 
     // All done \o/
 
@@ -154,5 +165,17 @@ mod tests {
         let decompressed = zstd::stream::decode_all(&compressed[..]).unwrap();
 
         assert_eq!(INPUT, &decompressed[..]);
+    }
+
+    #[rstest::rstest]
+    #[case::empty(0)]
+    #[case::one_full_block(128 * 1024)]
+    #[case::more_than_one_block(128 * 1024 + 378)]
+    fn dirty_compression_real_decompression_sizes(#[case] size: usize) {
+        let input: Vec<u8> = (0..size).map(|i| (i % 256) as u8).collect();
+        let mut compressed = Vec::new();
+        copy_encode(&input[..], &mut compressed, 0).unwrap();
+        let decompressed = zstd::stream::decode_all(&compressed[..]).unwrap();
+        assert_eq!(input, decompressed);
     }
 }
