@@ -2900,6 +2900,7 @@ dependencies = [
 name = "libparsec_zstd"
 version = "3.11.1-a.0+dev"
 dependencies = [
+ "rstest",
  "ruzstd",
  "zstd",
 ]

@@ -26,3 +26,4 @@ ruzstd = { workspace = true }
 # We test the dirty implementation against the original `zstd` impl thus require `ruzstd` and `zstd` as dev-dependencies.
 ruzstd = { workspace = true }
 zstd = { workspace = true }
+rstest = { workspace = true }
