@@ -85,22 +85,22 @@ In addition to the [shared requirements](#shared-requirements), for working with
 
 ### Base requirement
 
-1. Install [`Node 24.18.0`](https://nodejs.org/en/download/releases).
+1. Install [`Node 24.22.1`](https://nodejs.org/en/download/releases).
 
    We recommend using [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
 
    > [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
 
    ```shell
-   nvm install 24.18.0
+   nvm install 24.22.1
    ```
 
    If you have installed multiple versions, make sure you are using the right one.
    You can choose one of the following options:
 
-   - Enable it each time for the current session: `nvm use 24.18.0` (or `nvm use` from the `client` directory)
+   - Enable it each time for the current session: `nvm use 24.22.1` (or `nvm use` from the `client` directory)
    - Enable it automatically via [deeper shell integration](https://github.com/nvm-sh/nvm#deeper-shell-integration)
-   - Set it as default globally: `nvm alias default 24.18.0`
+   - Set it as default globally: `nvm alias default 24.22.1`
 
 2. Install `wasm-pack`
 
