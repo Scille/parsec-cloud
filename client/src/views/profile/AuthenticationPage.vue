@@ -9,18 +9,18 @@
       <div class="authentication-content">
         <div class="authentication-item">
           <div class="authentication-item-header">
-            <ion-text class="authentication-item-header__label title-h4">
+            <ion-text class="authentication-item-header__label">
               {{ $msTranslate('Authentication.label') }}
             </ion-text>
           </div>
           <div class="authentication-item-content">
-            <ion-text class="authentication-item-content__description method body-lg">
+            <ion-text class="authentication-item-content__description method">
               {{ $msTranslate(authMethodLabel) }}
             </ion-text>
             <ion-button
               id="change-authentication-button"
-              class="authentication-item-button button-default button-large secondary-button"
-              fill="clear"
+              class="authentication-item-button color-secondary"
+              fill="outline"
               @click="openChangeAuthentication()"
             >
               <ion-text class="authentication-item-button__label">
@@ -39,7 +39,7 @@
             class="authentication-item-header"
             v-if="totpStatus"
           >
-            <ion-text class="authentication-item-header__label title-h4">
+            <ion-text class="authentication-item-header__label">
               {{ $msTranslate('Authentication.mfa.title') }}
               <span
                 v-if="currentDevice.totpOpaqueKeyId"
@@ -49,7 +49,7 @@
               </span>
               <span
                 v-if="!currentDevice.totpOpaqueKeyId"
-                class="tag button-medium"
+                class="tag"
               >
                 {{ $msTranslate('Authentication.mfa.inactive') }}
               </span>
@@ -66,7 +66,7 @@
             class="authentication-item-header mfa-error"
             v-else
           >
-            <ion-text class="authentication-item-header__label title-h4">{{ $msTranslate('Authentication.mfa.title') }}</ion-text>
+            <ion-text class="authentication-item-header__label">{{ $msTranslate('Authentication.mfa.title') }}</ion-text>
             <ms-report-text :theme="MsReportTheme.Error">{{ $msTranslate('Authentication.mfa.error.emptyStatus') }}</ms-report-text>
           </div>
           <ms-report-text
@@ -77,14 +77,13 @@
             {{ $msTranslate('Authentication.mfa.info') }}
           </ms-report-text>
           <div class="authentication-item-content">
-            <ion-text class="authentication-item-content__description body-lg">
+            <ion-text class="authentication-item-content__description">
               {{ $msTranslate('Authentication.mfa.description') }}
             </ion-text>
             <ion-button
               v-if="totpStatus && totpStatus.tag === TOTPSetupStatusTag.Unconfirmed"
               id="totp-setup-button"
-              class="authentication-item-button button-default button-large primary-button"
-              fill="clear"
+              class="authentication-item-button color-secondary"
               @click="setupTotp"
             >
               <ion-text class="authentication-item-button__label">
@@ -104,7 +103,7 @@
     <template v-if="error">
       <div class="device-not-found">
         <ion-icon :icon="warning" />
-        <ion-text class="item-container__text body">
+        <ion-text class="item-container__text">
           {{ $msTranslate(error) }}
         </ion-text>
       </div>
@@ -363,10 +362,10 @@ async function deleteTotp(): Promise<void> {
 .authentication-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
-  padding: 1.5rem;
+  gap: ms.spacing('gap-4xl');
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page');
+  padding: ms.spacing('padding-4xl');
   box-shadow:
     0 1px 1px 0 rgba(0, 0, 0, 0.05),
     0 1px 4px 0 rgba(0, 0, 0, 0.03),
@@ -381,11 +380,11 @@ async function deleteTotp(): Promise<void> {
 .authentication-item {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 
   &:not(:last-child) {
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding-bottom: ms.spacing('padding-4xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
     margin-bottom: 1.5rem;
   }
 
@@ -407,18 +406,19 @@ async function deleteTotp(): Promise<void> {
   &-header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     flex-grow: 1;
 
     &__label {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h5');
+      color: ms.color('text-base-heading');
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
     }
 
     &__report {
-      padding: 0.5rem 1rem 0.5rem 0.625rem !important;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-3xl') ms.spacing('padding-lg') ms.spacing('padding-xl') !important;
     }
   }
 
@@ -426,49 +426,22 @@ async function deleteTotp(): Promise<void> {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     @include ms.responsive-breakpoint('md') {
       flex-direction: column;
       align-items: start;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
     }
 
     &__description {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-lg-regular');
+      color: ms.color('text-base-description');
 
       &.method {
         font-style: italic;
+        color: ms.color('text-base-body');
       }
-    }
-  }
-
-  &-button {
-    width: fit-content;
-    height: fit-content;
-    box-shadow: var(--parsec-shadow-input);
-
-    &.primary-button {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
-      color: var(--parsec-color-light-secondary-white);
-    }
-
-    &.secondary-button {
-      --background: var(--parsec-color-light-secondary-white);
-      --background-hover: var(--parsec-color-light-secondary-medium);
-      border: 1px solid var(--parsec-color-light-secondary-disabled);
-      color: var(--parsec-color-light-secondary-text);
-      border-radius: var(--parsec-radius-8);
-    }
-
-    &::part(native) {
-      font-size: 0.9375rem;
-      padding: 0.75rem 0.825rem;
-    }
-
-    @include ms.responsive-breakpoint('md') {
-      width: 100%;
     }
   }
 
@@ -476,26 +449,27 @@ async function deleteTotp(): Promise<void> {
     .authentication-item-text__label {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
     }
 
     &-active .tag,
     &-inactive .tag {
+      @include ms.font('label-md-medium');
       flex-shrink: 0;
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--parsec-radius-12);
+      padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+      border-radius: ms.radius('2xl');
       white-space: nowrap;
       margin-left: auto;
     }
 
     &-active .tag {
-      color: var(--parsec-color-light-success-700);
-      background: var(--parsec-color-light-success-100);
+      color: ms.color('text-success-default');
+      background: ms.color('surface-success-default-subtle-hover');
     }
 
     &-inactive .tag {
-      color: var(--parsec-color-light-danger-700);
-      background: var(--parsec-color-light-danger-50);
+      color: ms.color('text-error-default');
+      background: ms.color('surface-error-default-subtle-hover');
     }
 
     .authentication-item-button {
@@ -510,14 +484,15 @@ async function deleteTotp(): Promise<void> {
 .device-not-found {
   display: flex;
   align-items: center;
-  background: var(--parsec-color-light-danger-50);
-  color: var(--parsec-color-light-danger-700);
-  padding: 0.5rem 1rem;
-  border-radius: var(--parsec-radius-8);
-  gap: 0.5rem;
+  background: ms.color('surface-error-default-subtle-hover');
+  color: ms.color('text-error-default');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
+  border-radius: ms.radius('lg');
+  gap: ms.spacing('gap-lg');
 
   ion-text {
-    padding: 0.25rem 0;
+    @include ms.font('body-md-regular');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-none');
   }
 
   ion-icon {
@@ -528,6 +503,6 @@ async function deleteTotp(): Promise<void> {
 .mfa-error {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
 }
 </style>

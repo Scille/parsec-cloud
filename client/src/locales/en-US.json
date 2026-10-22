@@ -1504,6 +1504,7 @@
             "backToDevices": "Back to my devices"
         },
         "toasts": {
+            "keyCopiedToClipboard": "The secret key has been copied to clipboard.",
             "keyDownloadOk": "The secret key was successfully downloaded"
         },
         "filenames": {

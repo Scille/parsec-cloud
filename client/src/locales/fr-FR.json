@@ -1504,6 +1504,7 @@
             "backToDevices": "Retour à mes appareils"
         },
         "toasts": {
+            "keyCopiedToClipboard": "La clé secrète a bien été copié dans le presse-papier",
             "keyDownloadOk": "La clé secrète a bien été téléchargée"
         },
         "filenames": {
