@@ -3,7 +3,14 @@
 import { isWeb } from '@/parsec';
 import { EnvironmentType, I18n } from 'megashark-lib';
 
+// Returns the `X.Y` part of a version (`v3.5.1-a.0+dev` -> `3.5`), or `undefined` if it can't be parsed
+export function getMajorMinorVersion(version: string): string | undefined {
+  const match = version.trim().match(/^v?(\d+)\.(\d+)/);
+  return match ? `${match[1]}.${match[2]}` : undefined;
+}
+
 export const APP_VERSION = __APP_VERSION__;
+export const APP_MAJOR_MINOR_VERSION = getMajorMinorVersion(APP_VERSION);
 
 /*
  STRIPE
@@ -254,6 +261,11 @@ async function openChangelogLink(version?: string): Promise<void> {
   await openUrl(I18n.translate({ key: 'app.history', data: { version: version ? normalizeAppVersion(version) : CLEAN_APP_VERSION } }));
 }
 
+async function openWhatsNewLink(version?: string): Promise<void> {
+  const majorMinor = version ? getMajorMinorVersion(version) : APP_MAJOR_MINOR_VERSION;
+  await openUrl(I18n.translate({ key: 'app.whatsNew', data: { version: majorMinor } }));
+}
+
 async function openSourcesLink(): Promise<void> {
   await openUrl(I18n.translate('app.projectSources'));
 }
@@ -310,5 +322,6 @@ export const Env = {
     openTOS,
     openUrl,
     openSequesterDocumentationLink,
+    openWhatsNewLink,
   },
 };
