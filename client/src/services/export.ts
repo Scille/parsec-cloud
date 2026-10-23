@@ -1,13 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import {
+  DeviceID,
   getOrganizationInfo,
   getUserInfoFromDeviceID,
   getWorkspaceInfo,
-  getWorkspaceSharing,
+  getWorkspaceUserRoleChanges,
   listUserDevices,
   listUsers,
   RealmArchivingConfigurationTag,
+  UserInfo,
   WorkspaceHandle,
 } from '@/parsec';
 import { DateTime } from 'luxon';
@@ -41,11 +43,24 @@ export interface UserExport {
   devices: Array<DeviceExport>;
 }
 
+export interface WorkspaceUserRoleChangeExport {
+  grantedBy?: {
+    name: string;
+    email: string;
+    id: string;
+    deviceId: string;
+  };
+  grantedOn: string;
+  role: string | null;
+}
+
 export interface WorkspaceUserExport {
   name: string;
   email: string;
   id: string;
-  role: string;
+  roleChanges: Array<WorkspaceUserRoleChangeExport>;
+  isRevoked: boolean;
+  currentRole: string | null;
   profile: string;
 }
 
@@ -197,19 +212,58 @@ export async function exportWorkspace(handle: WorkspaceHandle, serializer: ISeri
       const deletionDate = DateTime.fromSeconds(workspaceResult.value.archivingConfiguration.deletionDate as any as number);
       workspace.deletionOn = deletionDate.toUTC().toISO() ?? undefined;
     }
-    const sharingResult = await getWorkspaceSharing(workspaceResult.value.id, false, true);
-    if (!sharingResult.ok) {
+
+    const usersResult = await listUsers(false);
+    if (!usersResult.ok) {
       return false;
     }
-    workspace.users = sharingResult.value.map(([user, role]) => {
-      return {
-        name: user.humanHandle.label,
-        email: user.humanHandle.email,
-        id: user.id,
-        role: role || '',
-        profile: user.profile,
-      };
-    });
+
+    const deviceIdCache = new Map<DeviceID, UserInfo>();
+
+    const users: Array<WorkspaceUserExport> = [];
+    for (const user of usersResult.value) {
+      const roleChangesResult = await getWorkspaceUserRoleChanges(workspaceResult.value.id, user.id);
+      if (!roleChangesResult.ok) {
+        return false;
+      }
+      const changes: Array<WorkspaceUserRoleChangeExport> = [];
+      for (const change of roleChangesResult.value) {
+        let granter = deviceIdCache.get(change.grantedBy);
+        if (!granter) {
+          const granterResult = await getUserInfoFromDeviceID(change.grantedBy);
+          if (granterResult.ok) {
+            granter = granterResult.value;
+            deviceIdCache.set(change.grantedBy, granter);
+          }
+        }
+
+        changes.push({
+          grantedBy: granter
+            ? {
+                name: granter.humanHandle.label,
+                email: granter.humanHandle.email,
+                id: granter.id,
+                deviceId: change.grantedBy,
+              }
+            : undefined,
+          grantedOn: change.grantedOn.toUTC().toISO() || '',
+          role: change.role,
+        });
+      }
+      if (changes.length) {
+        users.push({
+          name: user.humanHandle.label,
+          email: user.humanHandle.email,
+          id: user.id,
+          profile: user.currentProfile,
+          isRevoked: user.isRevoked(),
+          // Changes are ordered from oldest to newest
+          currentRole: changes.at(-1)?.role ?? null,
+          roleChanges: changes,
+        });
+      }
+    }
+    workspace.users = users;
     await downloadExport(
       serializer({ export: header, workspace: workspace }),
       `Export_${header.organization}_Workspace_${workspace.name}_${header.timestamp}.json`,

@@ -181,6 +181,7 @@ export type {
   ClientListUserDevicesError,
   ClientListUsersError,
   ClientListWorkspacesError,
+  ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
   ClientNewDeviceInvitationError,
   ClientNewShamirRecoveryInvitationError,
@@ -312,6 +313,7 @@ export type {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
+  WorkspaceUserRoleChange,
   X509CertificateReference,
 } from '@/plugins/libparsec';
 
