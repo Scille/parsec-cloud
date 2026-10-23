@@ -17,13 +17,13 @@
     >
       <div class="workspace-hidden">
         <ms-rich-text
-          class="workspace-hidden__description body-lg"
+          class="workspace-hidden__description"
           :text="{ key: 'WorkspacesPage.workspaceHiddenModal.affectedWorkspaces', data: { workspace: workspaceName } }"
         />
       </div>
       <ms-checkbox
         label-placement="end"
-        class="workspace-hidden__checkbox body"
+        class="workspace-hidden__checkbox"
         v-model="skipWorkspaceHiddenWarning"
       >
         <ion-text>
@@ -60,24 +60,28 @@ async function confirmHidden(): Promise<boolean> {
 .workspace-hidden {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__description {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-lg-regular');
+
+    color: ms.color('text-base-description');
   }
 
   &__checkbox {
+    @include ms.font('body-md-regular');
+
     position: absolute;
     z-index: 30;
     bottom: 1.625rem;
-    color: var(--parsec-color-light-secondary-soft-text);
-    padding: 0.25rem 0.25rem;
-    border-radius: var(--parsec-radius-8);
+    color: ms.color('text-neutral-default');
+    padding: ms.spacing('padding-sm');
+    border-radius: ms.radius('lg');
     transition: background-color 0.2s ease-in-out;
 
     &:hover {
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-premiere);
+      color: ms.color('text-neutral-default-hover');
+      background-color: ms.color('surface-neutral-default-subtle-hover');
     }
   }
 }

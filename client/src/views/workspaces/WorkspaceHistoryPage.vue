@@ -10,9 +10,9 @@
         <div class="head-content">
           <ion-text
             v-if="workspaceInfo && isLargeDisplay"
-            class="title-h3 head-content__title"
+            class="head-content__title"
           >
-            <span class="body-lg">{{ $msTranslate('workspaceHistory.workspace') }}</span>
+            <span>{{ $msTranslate('workspaceHistory.workspace') }}</span>
             {{ workspaceInfo.name }}
             <div v-if="workspaceInfo.isArchived">{{ $msTranslate('workspaceHistory.archived') }}</div>
             <div v-if="workspaceInfo.isTrashed">{{ $msTranslate('workspaceHistory.deleted') }}</div>
@@ -22,7 +22,7 @@
           </ion-text>
           <div class="date-selector">
             <ion-text
-              class="date-selector__label body-sm"
+              class="date-selector__label"
               v-if="isLargeDisplay"
             >
               {{ $msTranslate('workspaceHistory.date') }}
@@ -56,6 +56,7 @@
                   @click="back()"
                   class="navigation-buttons__item"
                   id="navigation-back-button"
+                  slot="icon-only"
                   :disabled="backStack.length === 0"
                   :class="{ disabled: backStack.length === 0 }"
                 >
@@ -68,6 +69,7 @@
                   :class="{ disabled: forwardStack.length === 0 }"
                   class="navigation-buttons__item"
                   id="navigation-forward-button"
+                  slot="icon-only"
                 >
                   <ion-icon :icon="chevronForward" />
                 </ion-button>
@@ -89,7 +91,7 @@
               ref="topbarRight"
             >
               <ion-text
-                class="button-medium read-only-info"
+                class="read-only-info"
                 v-if="workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager"
               >
                 <ion-icon
@@ -99,7 +101,7 @@
                 {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
               </ion-text>
               <ion-button
-                class="select-button button-medium button-default"
+                class="select-button"
                 @click="entries.selectAll(!allSelected)"
                 v-if="
                   isLargeDisplay && entries.entriesCount() > 0 && !(workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager)
@@ -119,14 +121,13 @@
                 v-show="!(workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager)"
                 :disabled="!someSelected || querying"
                 @click="onRestoreClicked"
-                class="button-default button-medium"
               >
                 {{ $msTranslate('workspaceHistory.actions.restore') }}
               </ion-button>
             </div>
           </div>
           <div
-            class="current-folder button-large"
+            class="current-folder"
             v-if="isSmallDisplay"
           >
             <ms-image
@@ -144,7 +145,7 @@
               :show-parent-node="false"
             />
             <ion-button
-              class="select-button button-medium button-default"
+              class="select-button"
               @click="entries.selectAll(!allSelected)"
               v-if="entries.entriesCount() > 0 && !(workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager)"
             >
@@ -157,16 +158,16 @@
               v-show="querying"
               class="folder-content__loading"
             >
-              <ion-text class="subtitles-sm">{{ $msTranslate('workspaceHistory.loading') }}</ion-text>
+              <ion-text class="folder-content__loading-text">{{ $msTranslate('workspaceHistory.loading') }}</ion-text>
             </div>
             <div
               v-show="!querying && entries.entriesCount() === 0 && !error"
-              class="body-lg folder-content__empty"
+              class="folder-content__empty"
             >
               {{ $msTranslate('workspaceHistory.empty') }}
             </div>
             <div
-              class="body-lg folder-content__empty"
+              class="folder-content__empty"
               v-show="!querying && error"
             >
               <ion-icon :icon="warning" />
@@ -485,7 +486,7 @@ async function onRestoreClicked(): Promise<void> {
 
 <style scoped lang="scss">
 .global-content {
-  --background: var(--parsec-color-light-secondary-background);
+  --background: #{ms.color('surface-base-page')};
 }
 
 .history-container {
@@ -494,7 +495,7 @@ async function onRestoreClicked(): Promise<void> {
   height: 100%;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-top: 0.25rem;
+    padding-top: ms.spacing('padding-sm');
   }
 }
 
@@ -510,28 +511,34 @@ async function onRestoreClicked(): Promise<void> {
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h4');
+
+    color: ms.color('text-base-body');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding-bottom: 0.25rem;
+    gap: ms.spacing('gap-lg');
+    padding-bottom: ms.spacing('padding-sm');
 
     span {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-lg-regular');
+
+      color: ms.color('text-base-description');
     }
   }
 
   .date-selector {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
 
     @include ms.responsive-breakpoint('sm') {
       width: 100%;
     }
 
     &__label {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-sm-regular');
+
+      color: ms.color('text-base-description');
     }
   }
 }
@@ -542,15 +549,23 @@ async function onRestoreClicked(): Promise<void> {
   flex-direction: column;
   flex-grow: 1;
 
+  &__loading-text {
+    @include ms.font('body-md-medium');
+  }
+
+  &__empty {
+    @include ms.font('body-lg-regular');
+  }
+
   &__loading,
   &__empty {
     margin: 1rem;
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('text-base-description');
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 }
 
@@ -559,9 +574,9 @@ async function onRestoreClicked(): Promise<void> {
   height: 100%;
   height: -webkit-fill-available;
   margin: 1.5rem 2.5rem;
-  background: var(--parsec-color-light-secondary-white);
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  background: ms.color('surface-base-default');
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-base-default');
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -574,8 +589,8 @@ async function onRestoreClicked(): Promise<void> {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1.5rem 0.75rem 1rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-4xl') ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
     &__navigation {
       display: flex;
@@ -586,41 +601,45 @@ async function onRestoreClicked(): Promise<void> {
     .navigation-buttons {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__item {
         min-height: 1rem;
 
         &::part(native) {
-          padding: 0.5rem;
+          padding: ms.spacing('padding-lg');
         }
       }
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.75rem;
+      padding: ms.spacing('padding-2xl');
       border-bottom: none;
-      border-top: 1px solid var(--parsec-color-light-secondary-medium);
+      border-top: ms.border('thin') solid ms.color('border-base-default');
       order: 3;
     }
 
     &__actions {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
     }
 
     #restore-button {
+      @include ms.font('label-md-medium');
+
       min-width: 6rem;
     }
 
     .read-only-info {
+      @include ms.font('label-md-medium');
+
       display: flex;
       align-items: center;
       margin-left: auto;
       flex-shrink: 0;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-primary-600);
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-brand-default');
 
       &__icon {
         width: 1rem;
@@ -636,17 +655,19 @@ async function onRestoreClicked(): Promise<void> {
   }
 
   .current-folder {
-    color: var(--parsec-color-light-secondary-hard-grey);
-    background: var(--parsec-color-light-secondary-white);
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 0.5rem 1.75rem;
+    @include ms.font('label-lg-medium');
+
+    color: ms.color('text-base-description');
+    background: ms.color('surface-base-default');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
+    padding: ms.spacing('padding-lg') 1.75rem;
     display: flex;
     align-items: center;
     overflow: hidden;
 
     @include ms.responsive-breakpoint('sm') {
       order: 1;
-      padding: 0.75rem 1rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       flex-shrink: 0;
     }
 
@@ -655,16 +676,16 @@ async function onRestoreClicked(): Promise<void> {
       max-width: 10rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       .chevron-icon {
         font-size: 1rem;
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('text-base-body');
         font-size: 0.75rem;
-        padding: 0.125rem;
+        padding: ms.spacing('padding-xs');
         flex-shrink: 0;
-        border-radius: var(--parsec-radius-circle);
-        background: var(--parsec-color-light-secondary-medium);
+        border-radius: ms.radius('full');
+        background: ms.color('surface-neutral-default-subtle-pressed');
       }
     }
 
@@ -676,34 +697,36 @@ async function onRestoreClicked(): Promise<void> {
   }
 
   .select-button {
-    padding: 0.75rem 1rem;
+    @include ms.font('label-md-medium');
+
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
     margin-left: 0.75rem;
     flex-shrink: 0;
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-primary-500);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-8);
-    box-shadow: var(--parsec-shadow-input);
+    background: ms.color('surface-base-default');
+    color: ms.color('text-brand-default');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('lg');
+    box-shadow: ms.shadow('input');
     cursor: pointer;
 
     &::part(native) {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       background: transparent;
       --background-hover: transparent;
       --border-radius: none;
     }
 
     &:hover {
-      background: var(--parsec-color-light-secondary-medium);
+      background: ms.color('surface-neutral-default-subtle-hover');
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.625rem 0.825rem;
-      border-radius: var(--parsec-radius-8);
-      box-shadow: var(--parsec-shadow-soft);
+      padding: ms.spacing('padding-xl') 0.825rem;
+      border-radius: ms.radius('lg');
+      box-shadow: ms.shadow('light');
 
       &::part(native) {
-        padding: 0;
+        padding: ms.spacing('padding-none');
       }
     }
   }
