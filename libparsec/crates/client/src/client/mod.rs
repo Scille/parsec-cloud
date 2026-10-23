@@ -83,11 +83,13 @@ pub use crate::certif::{
     CertifGetUserInfoError as ClientGetUserInfoError,
     CertifListUserDevicesError as ClientListUserDevicesError,
     CertifListUsersError as ClientListUsersError,
+    CertifListWorkspaceUserRoleChangesError as ClientListWorkspaceUserRoleChangesError,
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
     CertifRevokeUserError as ClientRevokeUserError,
     CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError,
     CertifUpdateUserProfileError as ClientUserUpdateProfileError, DeviceInfo,
     RequestedRealmArchivingConfiguration, UserInfo, WorkspaceUserAccessInfo,
+    WorkspaceUserRoleChange,
 };
 pub use crate::invite::{
     AcceptAsyncEnrollmentError as ClientAcceptAsyncEnrollmentError,
@@ -408,6 +410,17 @@ impl Client {
         realm_id: VlobID,
     ) -> Result<Vec<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError> {
         self.certificates_ops.list_workspace_users(realm_id).await
+    }
+
+    /// List all role changes for a user on a given realm.
+    pub async fn list_workspace_user_role_changes(
+        &self,
+        realm_id: VlobID,
+        user_id: UserID,
+    ) -> Result<Vec<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError> {
+        self.certificates_ops
+            .list_workspace_user_role_changes(realm_id, user_id)
+            .await
     }
 
     /// List workspaces available to the current user.

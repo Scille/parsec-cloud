@@ -8,6 +8,7 @@ import {
   ClientArchiveWorkspaceError,
   ClientCreateWorkspaceError,
   ClientListWorkspacesError,
+  ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
   ClientRenameWorkspaceError,
   ClientSelfPromoteToWorkspaceOwnerError,
@@ -39,6 +40,7 @@ import {
   WorkspaceName,
   WorkspaceRole,
   WorkspaceStopError,
+  WorkspaceUserRoleChange,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { CertificateBasedInfoOriginTag, libparsec, RealmArchivingConfiguration } from '@/plugins/libparsec';
@@ -442,4 +444,21 @@ export async function selfPromoteToWorkspaceOwner(workspaceId: WorkspaceID): Pro
     return generateNoHandleError<ClientSelfPromoteToWorkspaceOwnerError>();
   }
   return await libparsec.clientSelfPromoteToWorkspaceOwner(handle, workspaceId);
+}
+
+export async function getWorkspaceUserRoleChanges(
+  workspaceId: WorkspaceID,
+  userId: UserID,
+): Promise<Result<Array<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError>> {
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientListWorkspaceUserRoleChangesError>();
+  }
+  const result = await libparsec.clientListWorkspaceUserRoleChanges(handle, workspaceId, userId);
+  if (result.ok) {
+    for (const change of result.value) {
+      change.grantedOn = DateTime.fromSeconds(change.grantedOn as any as number);
+    }
+  }
+  return result;
 }

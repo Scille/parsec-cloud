@@ -335,6 +335,28 @@ async def client_list_workspace_users(
     raise NotImplementedError
 
 
+class WorkspaceUserRoleChange(Structure):
+    granted_by: DeviceID
+    granted_on: DateTime
+    role: RealmRole | None
+
+
+class ClientListWorkspaceUserRoleChangesError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_list_workspace_user_role_changes(
+    client: Handle,
+    realm_id: VlobID,
+    user_id: UserID,
+) -> Result[list[WorkspaceUserRoleChange], ClientListWorkspaceUserRoleChangesError]:
+    raise NotImplementedError
+
+
 class ClientListWorkspacesError(ErrorVariant):
     class Internal:
         pass

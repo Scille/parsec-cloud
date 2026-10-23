@@ -931,7 +931,6 @@ macro_rules! impl_read_methods {
             Ok(state)
         }
 
-        #[allow(unused)]
         /// Return all certificates involving the realm.
         ///
         /// ⚠️ This method returns *all* certificates, including the ones that have been

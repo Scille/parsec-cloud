@@ -14,6 +14,7 @@ pub type CertifGetRealmArchivingConfigurationError = super::store::CertifStoreEr
 pub type CertifListUsersError = super::store::CertifStoreError;
 pub type CertifListUserDevicesError = super::store::CertifStoreError;
 pub type CertifListWorkspaceUsersError = super::store::CertifStoreError;
+pub type CertifListWorkspaceUserRoleChangesError = super::store::CertifStoreError;
 
 pub(super) async fn get_current_self_profile(
     ops: &CertificateOps,
@@ -434,6 +435,40 @@ pub(super) async fn list_workspace_users(
             }
 
             Ok(infos)
+        })
+        .await?
+        .map_err(|err| err.into())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct WorkspaceUserRoleChange {
+    pub granted_by: DeviceID,
+    pub granted_on: DateTime,
+    /// None means unshared
+    pub role: Option<RealmRole>,
+}
+
+/// Give a list of role changes for a user on a workspace
+/// Roles are returned ordered by timestamp in increasing order (i.e. oldest first)
+pub(super) async fn list_workspace_user_role_changes(
+    ops: &CertificateOps,
+    realm_id: VlobID,
+    user_id: UserID,
+) -> Result<Vec<WorkspaceUserRoleChange>, CertifListWorkspaceUserRoleChangesError> {
+    ops.store
+        .for_read(async |store| {
+            let realm_certifs = store.get_realm_roles(UpTo::Current, realm_id).await?;
+            Ok::<_, anyhow::Error>(
+                realm_certifs
+                    .into_iter()
+                    .filter(|cert| cert.user_id == user_id)
+                    .map(|cert| WorkspaceUserRoleChange {
+                        granted_by: cert.author,
+                        granted_on: cert.timestamp,
+                        role: cert.role,
+                    })
+                    .collect(),
+            )
         })
         .await?
         .map_err(|err| err.into())
