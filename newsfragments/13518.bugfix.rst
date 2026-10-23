@@ -1,1 +1,0 @@
-Fixed some icons not displaying properly during the MacOS ``.dmg`` installation process

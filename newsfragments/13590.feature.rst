@@ -1,1 +1,0 @@
-Added a workspace details modal, available from the workspace context menu
