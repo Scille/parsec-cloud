@@ -5693,6 +5693,96 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceUserRoleChange
+
+#[allow(dead_code)]
+fn struct_workspace_user_role_change_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceUserRoleChange> {
+    let granted_by = {
+        let js_val: Handle<JsString> = obj.get(cx, "grantedBy")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let granted_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "grantedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let role = {
+        let js_val: Handle<JsValue> = obj.get(cx, "role")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    let js_string = js_val.value(cx);
+                    enum_realm_role_js_to_rs(cx, js_string.as_str())?
+                })
+            }
+        }
+    };
+    Ok(libparsec::WorkspaceUserRoleChange {
+        granted_by,
+        granted_on,
+        role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_user_role_change_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceUserRoleChange,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_granted_by = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.granted_by) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "grantedBy", js_granted_by)?;
+    let js_granted_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.granted_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "grantedOn", js_granted_on)?;
+    let js_role = match rs_obj.role {
+        Some(elem) => JsString::try_new(cx, enum_realm_role_rs_to_js(elem))
+            .or_throw(cx)?
+            .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "role", js_role)?;
+    Ok(js_obj)
+}
+
 // X509CertificateReference
 
 #[allow(dead_code)]
@@ -9974,6 +10064,31 @@ fn variant_client_list_users_error_rs_to_js<'a>(
         }
         libparsec::ClientListUsersError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "ClientListUsersErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListWorkspaceUserRoleChangesError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_user_role_changes_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListWorkspaceUserRoleChangesError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListWorkspaceUserRoleChangesError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientListWorkspaceUserRoleChangesErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientListWorkspaceUserRoleChangesError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientListWorkspaceUserRoleChangesErrorStopped")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -24430,6 +24545,93 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_list_workspace_user_role_changes
+fn client_list_workspace_user_role_changes(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let user_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::client_list_workspace_user_role_changes(client, realm_id, user_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    struct_workspace_user_role_change_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_list_workspace_user_role_changes_error_rs_to_js(
+                                &mut cx, err,
+                            )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_list_workspace_users
 fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -33383,6 +33585,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientListUserDevices", client_list_user_devices)?;
     cx.export_function("clientListUsers", client_list_users)?;
+    cx.export_function(
+        "clientListWorkspaceUserRoleChanges",
+        client_list_workspace_user_role_changes,
+    )?;
     cx.export_function("clientListWorkspaceUsers", client_list_workspace_users)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
     cx.export_function("clientNewDeviceInvitation", client_new_device_invitation)?;

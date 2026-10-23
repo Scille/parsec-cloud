@@ -6380,6 +6380,101 @@ fn struct_workspace_user_access_info_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceUserRoleChange
+
+#[allow(dead_code)]
+fn struct_workspace_user_role_change_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceUserRoleChange, JsValue> {
+    let granted_by = {
+        let js_val = Reflect::get(&obj, &"grantedBy".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                    libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
+            })?
+    };
+    let granted_on = {
+        let js_val = Reflect::get(&obj, &"grantedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    let role = {
+        let js_val = Reflect::get(&obj, &"role".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some({
+                let raw_string = js_val.as_string().ok_or_else(|| {
+                    let type_error = TypeError::new("value is not a string");
+                    type_error.set_cause(&js_val);
+                    JsValue::from(type_error)
+                })?;
+                enum_realm_role_js_to_rs(raw_string.as_str())
+            }?)
+        }
+    };
+    Ok(libparsec::WorkspaceUserRoleChange {
+        granted_by,
+        granted_on,
+        role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_user_role_change_rs_to_js(
+    rs_obj: libparsec::WorkspaceUserRoleChange,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_granted_by = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.granted_by) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
+        }
+        .as_ref(),
+    );
+    Reflect::set(&js_obj, &"grantedBy".into(), &js_granted_by)?;
+    let js_granted_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.granted_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"grantedOn".into(), &js_granted_on)?;
+    let js_role = match rs_obj.role {
+        Some(val) => JsValue::from_str(enum_realm_role_rs_to_js(val)),
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"role".into(), &js_role)?;
+    Ok(js_obj)
+}
+
 // X509CertificateReference
 
 #[allow(dead_code)]
@@ -11634,6 +11729,36 @@ fn variant_client_list_users_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientListUsersErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListWorkspaceUserRoleChangesError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_user_role_changes_error_rs_to_js(
+    rs_obj: libparsec::ClientListWorkspaceUserRoleChangesError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientListWorkspaceUserRoleChangesError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspaceUserRoleChangesErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientListWorkspaceUserRoleChangesError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspaceUserRoleChangesErrorStopped".into(),
             )?;
         }
     }
@@ -26782,6 +26907,62 @@ pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_list_users_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_list_workspace_user_role_changes
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListWorkspaceUserRoleChanges(
+    client: u32,
+    realm_id: String,
+    user_id: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+        let user_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(user_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+        let ret =
+            libparsec::client_list_workspace_user_role_changes(client, realm_id, user_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_workspace_user_role_change_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_list_workspace_user_role_changes_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

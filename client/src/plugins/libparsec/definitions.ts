@@ -604,6 +604,12 @@ export interface WorkspaceUserAccessInfo {
     currentRole: RealmRole
 }
 
+export interface WorkspaceUserRoleChange {
+    grantedBy: DeviceID
+    grantedOn: DateTime
+    role: RealmRole | null
+}
+
 export interface X509CertificateReference {
     uri: X509Pkcs11URI | null
     hash: X509CertificateHash
@@ -2589,6 +2595,24 @@ export interface ClientListUsersErrorStopped {
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
   | ClientListUsersErrorStopped
+
+// ClientListWorkspaceUserRoleChangesError
+export enum ClientListWorkspaceUserRoleChangesErrorTag {
+    Internal = 'ClientListWorkspaceUserRoleChangesErrorInternal',
+    Stopped = 'ClientListWorkspaceUserRoleChangesErrorStopped',
+}
+
+export interface ClientListWorkspaceUserRoleChangesErrorInternal {
+    tag: ClientListWorkspaceUserRoleChangesErrorTag.Internal
+    error: string
+}
+export interface ClientListWorkspaceUserRoleChangesErrorStopped {
+    tag: ClientListWorkspaceUserRoleChangesErrorTag.Stopped
+    error: string
+}
+export type ClientListWorkspaceUserRoleChangesError =
+  | ClientListWorkspaceUserRoleChangesErrorInternal
+  | ClientListWorkspaceUserRoleChangesErrorStopped
 
 // ClientListWorkspaceUsersError
 export enum ClientListWorkspaceUsersErrorTag {
@@ -7169,6 +7193,11 @@ export interface LibParsecPlugin {
         client: Handle,
         skip_revoked: boolean
     ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+    clientListWorkspaceUserRoleChanges(
+        client: Handle,
+        realm_id: VlobID,
+        user_id: UserID
+    ): Promise<Result<Array<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError>>
     clientListWorkspaceUsers(
         client: Handle,
         realm_id: VlobID

@@ -10,11 +10,13 @@ pub use libparsec_client::{
     ClientGetOutboundSyncBacklogItem, ClientGetSelfShamirRecoveryError, ClientGetTosError,
     ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
     ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
-    ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
-    ClientRevokeUserError, ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
+    ClientListWorkspaceUserRoleChangesError, ClientListWorkspaceUsersError,
+    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
+    ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
     ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo,
     OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration, SelfShamirRecoveryInfo,
     ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    WorkspaceUserRoleChange,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -580,6 +582,21 @@ pub async fn client_list_workspace_users(
     let client = borrow_client(client)?;
 
     client.list_workspace_users(realm_id).await
+}
+
+/*
+ * List a user's role changes on a workspace
+ */
+pub async fn client_list_workspace_user_role_changes(
+    client: Handle,
+    realm_id: VlobID,
+    user_id: UserID,
+) -> Result<Vec<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError> {
+    let client = borrow_client(client)?;
+
+    client
+        .list_workspace_user_role_changes(realm_id, user_id)
+        .await
 }
 
 /*
