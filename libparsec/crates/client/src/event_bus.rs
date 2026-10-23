@@ -537,6 +537,8 @@ impl_events!(
     /// uploads a subset of the file (e.g. a small modification in the file leads to
     /// a single block being modified), given in this case only the block index to
     /// upload will fire a corresponding the progress event.
+    /// block is the total block number for file
+    /// block_index is the block being uploaded
     WorkspaceOpsOutboundSyncProgress {
         realm_id: VlobID,
         entry_id: VlobID,
@@ -576,9 +578,13 @@ impl_events!(
         entry_id: VlobID,
     },
     /// This is fired by the workspace monitor to keep track of how much is left to sync
+    /// entry_currently_being_synced is known because currently we are only syncing a file
+    /// at a time
     WorkspaceOutboundSyncBacklog {
         number_of_files_to_sync: u64,
         size_to_sync: u64,
+        realm_id: VlobID,
+        entry_currently_being_synced: Option<VlobID>
     },
 
     // ***********************************************************************

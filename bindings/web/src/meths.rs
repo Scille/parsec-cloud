@@ -10249,9 +10249,53 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     v
                 }
             };
+            let realm_id = {
+                let js_val = Reflect::get(&obj, &"realmId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            let entry_currently_being_synced = {
+                let js_val = Reflect::get(&obj, &"entryCurrentlyBeingSynced".into())?;
+                if js_val.is_null() {
+                    None
+                } else {
+                    Some(
+                        js_val
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::VlobID, _> {
+                                        libparsec::VlobID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
+                            })?,
+                    )
+                }
+            };
             Ok(libparsec::ClientEvent::WorkspaceOutboundSyncBacklog {
                 number_of_files_to_sync,
                 size_to_sync,
+                realm_id,
+                entry_currently_being_synced,
             })
         }
         "ClientEventWorkspaceWatchedEntryChanged" => {
@@ -10920,6 +10964,8 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
         libparsec::ClientEvent::WorkspaceOutboundSyncBacklog {
             number_of_files_to_sync,
             size_to_sync,
+            realm_id,
+            entry_currently_being_synced,
             ..
         } => {
             Reflect::set(
@@ -10935,6 +10981,41 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             )?;
             let js_size_to_sync = JsValue::from(size_to_sync);
             Reflect::set(&js_obj, &"sizeToSync".into(), &js_size_to_sync)?;
+            let js_realm_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(realm_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+            let js_entry_currently_being_synced = match entry_currently_being_synced {
+                Some(val) => JsValue::from_str(
+                    {
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(val) {
+                            Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())));
+                            }
+                        }
+                    }
+                    .as_ref(),
+                ),
+                None => JsValue::NULL,
+            };
+            Reflect::set(
+                &js_obj,
+                &"entryCurrentlyBeingSynced".into(),
+                &js_entry_currently_being_synced,
+            )?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceWatchedEntryChanged {

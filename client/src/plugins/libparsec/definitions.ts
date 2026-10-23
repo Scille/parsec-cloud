@@ -2207,6 +2207,8 @@ export interface ClientEventWorkspaceOutboundSyncBacklog {
     tag: ClientEventTag.WorkspaceOutboundSyncBacklog
     numberOfFilesToSync: U64
     sizeToSync: U64
+    realmId: VlobID
+    entryCurrentlyBeingSynced: VlobID | null
 }
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: ClientEventTag.WorkspaceWatchedEntryChanged

@@ -1875,6 +1875,8 @@ export interface ClientEventWorkspaceOutboundSyncBacklog {
     tag: "ClientEventWorkspaceOutboundSyncBacklog"
     number_of_files_to_sync: number
     size_to_sync: number
+    realm_id: string
+    entry_currently_being_synced: string | null
 }
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: "ClientEventWorkspaceWatchedEntryChanged"

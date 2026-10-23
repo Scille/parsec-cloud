@@ -64,6 +64,8 @@ pub enum ClientEvent {
     WorkspaceOutboundSyncBacklog {
         number_of_files_to_sync: u64,
         size_to_sync: u64,
+        entry_currently_being_synced: Option<VlobID>,
+        realm_id: VlobID,
     },
 
     InvitationChanged {
@@ -320,6 +322,8 @@ impl OnEventCallbackPlugged {
                         ClientEvent::WorkspaceOutboundSyncBacklog {
                             number_of_files_to_sync: e.number_of_files_to_sync,
                             size_to_sync: e.size_to_sync,
+                            entry_currently_being_synced: e.entry_currently_being_synced,
+                            realm_id: e.realm_id,
                         },
                     );
                 },
