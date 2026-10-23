@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 24.18.0
+  node-version: 24.22.1
 
 permissions:
   contents: read

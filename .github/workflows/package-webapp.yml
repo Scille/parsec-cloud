@@ -45,7 +45,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 24.18.0
+  node-version: 24.22.1
   wasm-pack-version: 0.13.1
 
 permissions:
