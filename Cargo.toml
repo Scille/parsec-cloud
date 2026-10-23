@@ -134,13 +134,13 @@ clap_complete = { version = "4.6.8", default-features = false }
 clap_mangen = { version = "0.3.0", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
-crc32fast = { version = "1.5.0", default-features = false }                        # Fast hasher used only by the testbed
+crc32fast = { version = "1.5.0", default-features = false }                                                                                                       # Fast hasher used only by the testbed
 crypto_box = { version = "0.9.1", default-features = false }
 crypto_secretbox = { version = "0.1.1", default-features = false }
-cryptoki = { version = "0.12.0", default-features = false }                        # Allow to interact with pkcs11 interfaces
+cryptoki = { version = "0.12.0", default-features = false }                                                                                                       # Allow to interact with pkcs11 interfaces
 ctrlc = { version = "3.5.2", default-features = false }
 curve25519-dalek = { version = "5.0.0", default-features = false }
-data-encoding = { version = "2.11.0", default-features = false }                   # You need base64&co ? This is the crate you need !
+data-encoding = { version = "2.11.0", default-features = false }                                                                                                  # You need base64&co ? This is the crate you need !
 dialoguer = { version = "0.12.0", default-features = false }
 digest = { version = "0.10.7", default-features = false }
 dirs = { version = "7.0.0", default-features = false }
@@ -152,7 +152,7 @@ event-listener = { version = "5.4.1", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
 flume = { version = "0.12.0", default-features = false }
 fnmatch-regex = { version = "0.3.0", default-features = false }
-fuser = { version = "0.18.0", default-features = false }
+fuser = { git = "https://github.com/FirelightFlagboy/fuser.git", rev = "0df39be9337f44417cbad7c84f7ae2fa0170441c", version = "0.18.0", default-features = false }
 futures = { version = "0.3.32", default-features = false }
 generic-array = { version = "0.14.7", default-features = false }
 getrandom = { package = "getrandom", version = "0.3.4", default-features = false }
@@ -175,7 +175,7 @@ openssl = { version = "0.10.80", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 percent-encoding = { version = "2.3.2", default-features = false }
 pin-project = { version = "1.1.12", default-features = false }
-pkg-config = { version = "0.3.33", default-features = false }                      # Utility crate to find system artifacts
+pkg-config = { version = "0.3.33", default-features = false }                                                                                                     # Utility crate to find system artifacts
 predicates = { version = "3.1.4", default-features = false }
 pretty_assertions = { version = "1.4.1", default-features = false }
 proc-macro2 = { version = "1.0.106", default-features = false }
