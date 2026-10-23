@@ -1459,9 +1459,8 @@ dependencies = [
 
 [[package]]
 name = "fuser"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b82b6597d216503555ead6b358f341ef748869bf5c6fbae6a0cb9dd231baecfd"
+version = "0.18.1"
+source = "git+https://github.com/FirelightFlagboy/fuser.git?rev=0df39be9337f44417cbad7c84f7ae2fa0170441c#0df39be9337f44417cbad7c84f7ae2fa0170441c"
 dependencies = [
  "bitflags 2.10.0",
  "libc",
