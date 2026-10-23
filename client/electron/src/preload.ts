@@ -93,7 +93,10 @@ process.once('loaded', async () => {
   } catch (error: any) {
     console.error(error);
     ipcRenderer.send(PageToWindowChannel.Log, 'error', JSON.stringify(error));
-    if (process.platform === 'darwin' && error.toString().includes("Reason: tried: '/usr/local/lib/libfuse.2.dylib' (no such file)")) {
+    if (
+      process.platform === 'darwin' &&
+      error.toString().match(/.*Reason: tried: '\/usr\/local\/lib\/libfuse\d*(?:\.\d+)*\.dylib' \(no such file\).*/)
+    ) {
       ipcRenderer.send(PageToWindowChannel.MacfuseNotInstalled);
     } else {
       ipcRenderer.send(PageToWindowChannel.CriticalError, 'Failed to initialize Parsec', error);
