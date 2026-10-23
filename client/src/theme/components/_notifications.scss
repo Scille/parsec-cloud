@@ -6,14 +6,14 @@
 
 .notification-container {
   cursor: pointer;
-  background: var(--parsec-color-light-secondary-white);
+  background: ms.color('surface-base-default');
   transition: background 0.2s ease-in-out;
   position: relative;
   flex-shrink: 0;
-  --inner-padding-end: 0;
+  --inner-padding-end: #{ms.spacing('padding-none')};
 
   &:not(:last-child) {
-    border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
   }
 
   .hover-state {
@@ -21,16 +21,16 @@
   }
 
   &:hover {
-    --background: var(--parsec-color-light-secondary-disabled);
+    --background: #{ms.color('surface-neutral-default-subtle-hover')};
   }
 
   .arrow-icon {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('icon-brand-default-hover');
     margin-left: auto;
   }
 
   &.unread {
-    background: var(--parsec-color-light-secondary-medium);
+    background: ms.color('surface-neutral-default-subtle-pressed');
 
     &::before {
       content: '';
@@ -41,7 +41,7 @@
       width: 0.5rem;
       height: 0.5rem;
       display: flex;
-      background: var(--parsec-color-light-gradient);
+      background: linear-gradient(113deg, #{ms.color('surface-gradient-from')} -1.49%, #{ms.color('surface-gradient-to')} 100%);
       border-radius: var(--parsec-radius-circle);
       z-index: 100;
     }
@@ -50,22 +50,22 @@
 
 .notification {
   --background: none;
-  --inner-padding-end: 0;
+  --inner-padding-end: #{ms.spacing('padding-none')};
   --border-width: 0;
-  padding: 1rem 1rem 1rem 1.75rem;
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl') ms.spacing('padding-3xl') 1.75rem;
   display: flex;
   align-items: center;
   width: 100%;
 
   // This will allow to change background and color of the icon
-  --background-icon-info: var(--parsec-color-light-primary-50);
-  --background-icon-success: var(--parsec-color-light-success-100);
-  --background-icon-danger: var(--parsec-color-light-danger-100);
-  --background-icon-warning: var(--parsec-color-light-warning-100);
-  --color-icon-info: var(--parsec-color-light-primary-700);
-  --color-icon-success: var(--parsec-color-light-success-500);
-  --color-icon-danger: var(--parsec-color-light-danger-500);
-  --color-icon-warning: var(--parsec-color-light-warning-500);
+  --background-icon-info: #{ms.color('surface-brand-default-subtle-hover')};
+  --background-icon-success: #{ms.color('surface-success-default-subtle-pressed')};
+  --background-icon-danger: #{ms.color('surface-error-default-subtle-pressed')};
+  --background-icon-warning: #{ms.color('surface-warning-default-subtle-pressed')};
+  --color-icon-info: #{ms.color('icon-brand-default-hover')};
+  --color-icon-success: #{ms.color('icon-success-default')};
+  --color-icon-danger: #{ms.color('icon-error-default')};
+  --color-icon-warning: #{ms.color('icon-warning-default')};
 
   &-icon-container {
     display: flex;
@@ -73,8 +73,8 @@
     justify-content: center;
     width: 2.5rem;
     height: 2.5rem;
-    padding: 0.5rem;
-    border-radius: var(--parsec-radius-12);
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('2xl');
 
     .notification-icon {
       width: 1.5rem;
@@ -94,21 +94,21 @@
     margin-left: 0.875rem;
 
     &__message {
-      color: var(--parsec-color-light-secondary-text) !important;
+      color: ms.color('text-base-body') !important;
     }
 
     &__time {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
       display: flex;
       align-items: center;
       width: fit-content;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
     }
   }
 
   &:hover {
     .notification-details__time .hover-state {
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default-hover');
     }
     .hover-state {
       display: flex;

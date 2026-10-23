@@ -485,7 +485,8 @@
             "saas": "Create my organization on Parsec",
             "trial": {
                 "title": "Try Parsec for 15 days",
-                "description": "(Your organization and associated data will be deleted at the end of the trial period)"
+                "description": "(Your organization and associated data will be deleted at the end of the trial period)",
+                "badge": "trial"
             },
             "ownServer": "Use a different Parsec server"
         },
@@ -1503,6 +1504,7 @@
             "backToDevices": "Back to my devices"
         },
         "toasts": {
+            "keyCopiedToClipboard": "The secret key has been copied to clipboard.",
             "keyDownloadOk": "The secret key was successfully downloaded"
         },
         "filenames": {
@@ -1651,7 +1653,7 @@
             "titleRemove": "Deletion",
             "titleDetails": "User details",
             "actionRevoke": "Revoke this user | Revoke these users",
-            "actionDetails": "View details",
+            "actionDetails": "Details",
             "titleAssignRoles": "Copy roles",
             "actionAssignRoles": "Copy workspace roles",
             "cannotAssignRolesToSelf": "You cannot copy roles to yourself.",
@@ -1735,7 +1737,6 @@
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
             "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
             "copyLink": "Copy link",
-            "manageInvitation": "Manage invitation",
             "cancelInvitation": {
                 "title": "Cancel invitation",
                 "message": "The invitation sent to <b>{email}</b> and the invitation link will no longer be valid.<br/><br/>Are you sure you want to continue?",
@@ -1766,14 +1767,11 @@
         "UserDetailsModal": {
             "title": "User details",
             "subtitles": {
-                "name": "Name",
+                "generalInfo": "General information",
                 "joined": "Joined on",
                 "commonWorkspaces": "Shared workspaces",
                 "revoked": "Revoked",
                 "revokedSince": "Revoked since"
-            },
-            "actions": {
-                "close": "Close"
             },
             "noSharedWorkspaces": "You have no workspaces in common with this user.",
             "failedToListWorkspaces": "Failed to list workspaces."
@@ -1834,6 +1832,7 @@
     },
     "InvitationsPage": {
         "emailInvitation": {
+            "tabLabel": "Sent invitations",
             "tab": "Email invitation",
             "tabShort": "Email",
             "emptyState": "No pending email invitations.",
@@ -1851,6 +1850,7 @@
             }
         },
         "asyncEnrollmentRequest": {
+            "tabLabel": "Join requests",
             "tab": "Join requests (PKI/SSO)",
             "emptyState": "No pending join requests. Users requesting to join the organization with a SmartCard (PKI) or a ProConnect account (SSO) will be listed here.",
             "copyLink": "Copy join request link (PKI/SSO)",

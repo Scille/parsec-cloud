@@ -10,7 +10,8 @@
         <div class="modal-toolbar__actions">
           <div class="profile-filter">
             <ion-button
-              class="profile-filter__item button-medium"
+              size="small"
+              class="profile-filter__item"
               @click="toggleAllProfiles"
               :class="{
                 selected: profileFilters.All,
@@ -21,7 +22,8 @@
             </ion-button>
             <div class="profile-filter__divider" />
             <ion-button
-              class="profile-filter__item button-medium"
+              size="small"
+              class="profile-filter__item"
               @click="toggleProfile(UserProfile.Admin)"
               :class="{
                 selected: profileFilters[UserProfile.Admin],
@@ -32,12 +34,13 @@
               <ion-icon
                 v-show="profileFilters[UserProfile.Admin]"
                 :icon="checkmark"
-                class="checkbox-icon"
+                class="checkbox-icon button-icon-right"
                 slot="end"
               />
             </ion-button>
             <ion-button
-              class="profile-filter__item button-medium"
+              size="small"
+              class="profile-filter__item"
               @click="toggleProfile(UserProfile.Standard)"
               :class="{
                 selected: profileFilters[UserProfile.Standard],
@@ -48,12 +51,13 @@
               <ion-icon
                 v-show="profileFilters[UserProfile.Standard]"
                 :icon="checkmark"
-                class="checkbox-icon"
+                class="checkbox-icon button-icon-right"
                 slot="end"
               />
             </ion-button>
             <ion-button
-              class="profile-filter__item button-medium"
+              size="small"
+              class="profile-filter__item"
               @click="toggleProfile(UserProfile.Outsider)"
               :class="{
                 selected: profileFilters[UserProfile.Outsider],
@@ -64,7 +68,7 @@
               <ion-icon
                 v-show="profileFilters[UserProfile.Outsider]"
                 :icon="checkmark"
-                class="checkbox-icon"
+                class="checkbox-icon button-icon-right"
                 slot="end"
               />
             </ion-button>
@@ -75,7 +79,7 @@
               class="sharing-modal__workspace__icon"
               :icon="business"
             />
-            <ion-text class="sharing-modal__workspace__title button-large">{{ workspaceName }}</ion-text>
+            <ion-text class="sharing-modal__workspace__title">{{ workspaceName }}</ion-text>
           </div>
         </div>
 
@@ -98,7 +102,7 @@
           <template #link>
             <ion-text
               button
-              class="see-more-button button-medium"
+              class="see-more-button"
               fill="clear"
               @click="openDocumentation"
             >
@@ -113,7 +117,7 @@
         <ion-list class="user-list">
           <!-- prettier-ignore -->
           <ion-text
-            class="no-match-result body"
+            class="no-match-result"
             v-show="
               userRoles.length > 0 &&
                 filteredUserRoles.length === 0 &&
@@ -128,7 +132,7 @@
             class="user-list-members"
             v-show="currentUserMatchSearch() || filteredSharedUserRoles.length > 0"
           >
-            <div class="user-list-title title-h5">
+            <div class="user-list-title">
               <ms-checkbox
                 class="checkbox"
                 id="all-members-checkbox"
@@ -205,7 +209,7 @@
             class="user-list-suggestions"
             v-if="(ownRole === WorkspaceRole.Manager || ownRole === WorkspaceRole.Owner) && filteredNotSharedUserRoles.length > 0"
           >
-            <ion-text class="user-list-title title-h5">
+            <ion-text class="user-list-title">
               {{ $msTranslate('workspaceRoles.suggestion') }}
             </ion-text>
             <div
@@ -241,18 +245,18 @@
       </div>
 
       <div class="modal-footer">
-        <ion-text
+        <ion-button
           id="batch-activate-button"
+          class="color-secondary"
           @click="onBatchSharingActivate()"
           v-show="batchSharingEnabled"
-          :fill="showCheckboxes ? 'fill' : 'clear'"
-          class="button-medium"
+          :fill="showCheckboxes ? 'clear' : 'outline'"
           :class="{ 'done-button': showCheckboxes }"
         >
           {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonCancel' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
-        </ion-text>
+        </ion-button>
         <ion-text
-          class="modal-footer__counter button-medium"
+          class="modal-footer__counter"
           v-show="showCheckboxes && selectedUsers.length > 0"
         >
           {{ $msTranslate({ key: 'WorkspaceSharing.batchSharing.counter', data: { count: selectedUsers.length } }) }}
@@ -702,14 +706,15 @@ async function openDocumentation(): Promise<void> {
   }
 
   .see-more-button {
-    font-size: 0.875rem;
+    @include ms.font('label-md-medium');
+
     text-decoration: underline;
-    color: var(--parsec-color-light-primary-500);
+    color: ms.color('text-brand-default');
     cursor: pointer;
     transition: background 0.2s;
 
     &:hover {
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default-hover');
     }
   }
 }
@@ -723,18 +728,18 @@ async function openDocumentation(): Promise<void> {
   margin-top: 1rem;
   overflow: hidden !important;
   flex-shrink: 0;
-  padding: 0 2rem 1.5rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  padding: ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-4xl');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
+    padding-inline: ms.spacing('padding-4xl');
     margin-top: 0.5rem;
   }
 
   &__search {
     max-height: 2.5rem;
     margin: 0;
-    background: var(--parsec-color-light-secondary-background);
+    background: ms.color('surface-base-page');
 
     @include ms.responsive-breakpoint('sm') {
       max-width: 100%;
@@ -746,63 +751,69 @@ async function openDocumentation(): Promise<void> {
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 
   .profile-filter {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
     flex-wrap: wrap;
     position: relative;
 
     @include ms.responsive-breakpoint('sm') {
-      padding-inline: 0;
+      padding-inline: ms.spacing('padding-none');
     }
 
     &__divider {
       width: 1px;
       height: 1rem;
-      background: var(--parsec-color-light-secondary-light);
+      background: ms.color('surface-disabled-default');
       margin-inline: 0.25rem;
     }
 
     &__item {
-      --padding-top: 0.5rem;
-      --padding-bottom: 0.5rem;
+
+      --padding-top: #{ms.spacing('padding-lg')};
+      --padding-bottom: #{ms.spacing('padding-lg')};
       --padding-start: 0.8rem;
       --padding-end: 0.8rem;
       position: relative;
+      --background: #{ms.color('surface-base-default')};
+      --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+      --background-activated: #{ms.color('surface-neutral-default-subtle-pressed')};
+      --background-focused: #{ms.color('surface-neutral-default-subtle-pressed')};
+      --background-focused-opacity: #{ms.opacity('10')};
+      --background-activated-opacity: #{ms.opacity('10')};
 
       &::part(native) {
-        border-radius: var(--parsec-radius-24);
-        border: 1px solid var(--parsec-color-light-secondary-medium);
-        color: var(--parsec-color-light-secondary-grey);
-        background: var(--parsec-color-light-secondary-white);
+        border-radius: ms.radius('5xl');
+        border: ms.border('thin') solid ms.color('border-base-default');
+        color: ms.color('text-base-description');
       }
 
       &:hover::part(native) {
-        border: 1px solid var(--parsec-color-light-secondary-medium);
-        color: var(--parsec-color-light-secondary-text);
-        background: var(--parsec-color-light-secondary-background);
+        border: ms.border('thin') solid ms.color('border-base-default');
+        color: ms.color('text-neutral-default-hover');
       }
 
       &.selected::part(native) {
-        border: 1px solid var(--parsec-color-light-secondary-light);
-        color: var(--parsec-color-light-secondary-text);
-        background: var(--parsec-color-light-secondary-medium);
+        border: ms.border('thin') solid ms.color('border-base-default-hover');
+        color: ms.color('text-base-body');
       }
 
       &.selected:first-child::part(native) {
-        background: var(--parsec-color-light-secondary-text);
-        color: var(--parsec-color-light-secondary-white);
-        border: 1px solid var(--parsec-color-light-secondary-text);
+        --background: #{ms.color('surface-neutral-default')};
+        --background-hover: #{ms.color('surface-neutral-default')};
+        --background-activated: #{ms.color('surface-neutral-default')};
+        --background-focused: #{ms.color('surface-neutral-default')};
+        color: ms.color('text-on-color-heading');
+        border: ms.border('thin') solid ms.color('border-neutral-default');
       }
 
       .checkbox-icon {
-        color: var(--parsec-color-light-secondary-text);
+        color: ms.color('text-base-body');
         font-size: 0.875rem;
-        margin-left: 0.25rem;
       }
     }
   }
@@ -812,25 +823,26 @@ async function openDocumentation(): Promise<void> {
     width: fit-content;
     max-width: 35%;
     align-items: center;
-    gap: 0.25rem;
-    color: var(--parsec-color-light-primary-500);
-    background: var(--parsec-color-light-primary-50);
-    padding: 0.5rem;
-    border-radius: var(--parsec-radius-8);
+    gap: ms.spacing('gap-sm');
+    color: ms.color('text-brand-default');
+    background: ms.color('surface-brand-default-subtle');
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('lg');
 
     @include ms.responsive-breakpoint('sm') {
       margin-top: 0.5rem;
     }
 
     &__title {
-      font-weight: 600;
+      @include ms.font('label-lg-medium');
+
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
     }
 
     &__icon {
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('icon-brand-default');
       font-size: 1rem;
       min-width: 1rem;
     }
@@ -842,11 +854,11 @@ async function openDocumentation(): Promise<void> {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-inline: 1.5rem;
+  padding-inline: ms.spacing('padding-4xl');
   position: relative;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1rem;
+    padding-inline: ms.spacing('padding-3xl');
 
     &::after {
       content: '';
@@ -857,26 +869,30 @@ async function openDocumentation(): Promise<void> {
   }
 
   .user-list {
-    padding: 0;
+    .no-match-result {
+      @include ms.font('body-md-regular');
+    }
+
+    padding: ms.spacing('padding-none');
     margin-top: 1rem;
     overflow-y: auto;
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     &-title {
       height: 1.875rem;
-      color: var(--parsec-color-light-secondary-grey);
-      background: var(--parsec-color-light-secondary-white);
+      color: ms.color('text-base-description');
+      background: ms.color('surface-base-default');
+      @include ms.font('heading-h6');
+
       text-transform: uppercase;
-      font-weight: 700;
-      font-size: 0.825rem;
-      padding: 0.625rem 0.5rem;
+      padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
       display: flex;
       position: sticky;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       top: 0;
       z-index: 3;
 
@@ -887,7 +903,7 @@ async function openDocumentation(): Promise<void> {
       .count-filter {
         display: flex;
         align-items: center;
-        gap: 0.125rem;
+        gap: ms.spacing('gap-xs');
       }
     }
 
@@ -898,10 +914,10 @@ async function openDocumentation(): Promise<void> {
 
       .member-checkbox,
       .suggested-checkbox {
-        padding-left: 0.75rem;
+        padding-left: ms.spacing('padding-2xl');
 
         @include ms.responsive-breakpoint('sm') {
-          padding-left: 0.625rem;
+          padding-left: ms.spacing('padding-xl');
           justify-content: center;
         }
       }
@@ -909,7 +925,7 @@ async function openDocumentation(): Promise<void> {
       &-item {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
 
         &:last-child .workspace-user-role::after {
           border-bottom: none;
@@ -920,16 +936,16 @@ async function openDocumentation(): Promise<void> {
         cursor: pointer;
 
         &:hover {
-          background: var(--parsec-color-light-secondary-background);
+          background: ms.color('surface-base-page');
         }
       }
 
       &-item--selected {
         cursor: pointer;
-        background: var(--parsec-color-light-primary-30);
+        background: ms.color('surface-brand-default-subtle');
 
         &:hover {
-          background: var(--parsec-color-light-primary-50);
+          background: ms.color('surface-brand-default-subtle-hover');
         }
       }
 
@@ -939,7 +955,7 @@ async function openDocumentation(): Promise<void> {
     }
 
     .checkbox-space {
-      padding-left: 3rem;
+      padding-left: ms.spacing('padding-7xl');
 
       &.current-user {
         @include ms.responsive-breakpoint('sm') {
@@ -948,7 +964,7 @@ async function openDocumentation(): Promise<void> {
       }
 
       @include ms.responsive-breakpoint('sm') {
-        padding-left: 0.5rem;
+        padding-left: ms.spacing('padding-lg');
       }
     }
   }
@@ -958,41 +974,20 @@ async function openDocumentation(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem 1rem;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
-  box-shadow: var(--parsec-shadow-strong);
-  background: var(--parsec-color-light-secondary-premiere);
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-4xl') ms.spacing('padding-3xl');
+  border-top: ms.border('thin') solid ms.color('border-base-default');
+  box-shadow: ms.shadow('strong');
+  background: ms.color('surface-base-default-secondary');
 
   #batch-activate-button {
-    font-size: 0.875rem;
-    padding: 0.625rem 0.75rem;
-    color: var(--parsec-color-light-secondary-text);
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-secondary-white);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    cursor: pointer;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    gap: 0.375rem;
-    font-weight: 600;
-    box-shadow: var(--parsec-shadow-card);
-    min-width: 5rem;
-
     @include ms.responsive-breakpoint('sm') {
       order: 3;
     }
 
     .checkbox-icon {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
       font-size: 1rem;
-    }
-
-    &:hover {
-      background: var(--parsec-color-light-secondary-medium);
     }
 
     &:active {
@@ -1000,20 +995,14 @@ async function openDocumentation(): Promise<void> {
     }
 
     &.done-button {
-      border: 1px solid var(--parsec-color-light-secondary-text);
-      background: var(--parsec-color-light-secondary-text);
-      color: var(--parsec-color-light-secondary-white);
-      border: none;
       margin-left: 0;
-
-      &:hover {
-        background: var(--parsec-color-light-secondary-contrast);
-      }
     }
   }
 
   &__counter {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('label-md-medium');
+
+    color: ms.color('text-base-description');
     margin-left: auto;
     text-align: center;
     align-self: center;
@@ -1025,12 +1014,12 @@ async function openDocumentation(): Promise<void> {
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
+    padding-inline: ms.spacing('padding-4xl');
     position: sticky;
     bottom: 0;
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: 0 0 var(--parsec-radius-8) var(--parsec-radius-8);
-    box-shadow: var(--parsec-shadow-strong);
+    background: ms.color('surface-base-default');
+    border-radius: 0 0 ms.radius('lg') ms.radius('lg');
+    box-shadow: ms.shadow('strong');
     z-index: 2;
   }
 }

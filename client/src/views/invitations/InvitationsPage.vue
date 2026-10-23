@@ -9,34 +9,46 @@
       <ion-button
         v-if="view === InvitationView.EmailInvitation"
         class="switch-view-button email-button"
+        size="large"
         @click="openInvitationSwitchModal"
       >
         <ion-icon
           :icon="invitations.length > 0 ? mailUnread : mail"
-          class="switch-view-button__icon"
+          class="switch-view-button__icon button-icon-left"
         />
         {{ $msTranslate('InvitationsPage.emailInvitation.tab') }}
-        <span class="switch-view-button__count">{{ invitations.length }}</span>
+        <span
+          class="switch-view-button__count"
+          :class="{ empty: invitations.length === 0 }"
+        >
+          {{ invitations.length }}
+        </span>
         <ion-icon
           :icon="caretDown"
-          class="switch-view-button__toggle"
+          class="switch-view-button__toggle button-icon-right"
         />
       </ion-button>
 
       <ion-button
         v-else
         class="switch-view-button pki-button"
+        size="large"
         @click="openInvitationSwitchModal"
       >
         <ion-icon
           :icon="link"
-          class="switch-view-button__icon"
+          class="switch-view-button__icon button-icon-left"
         />
         {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tab') }}
-        <span class="switch-view-button__count button-small">{{ asyncEnrollmentRequests.length }}</span>
+        <span
+          class="switch-view-button__count"
+          :class="{ empty: asyncEnrollmentRequests.length === 0 }"
+        >
+          {{ asyncEnrollmentRequests.length }}
+        </span>
         <ion-icon
           :icon="caretDown"
-          class="switch-view-button__toggle"
+          class="switch-view-button__toggle button-icon-right"
         />
       </ion-button>
     </div>
@@ -47,132 +59,161 @@
           class="toggle-view"
           role="tablist"
           aria-label="Invitation view toggle"
+          aria-orientation="horizontal"
           v-if="isLargeDisplay"
+          @keydown="onTabKeydown"
         >
           <ion-button
+            role="tab"
+            id="invitation-tab-email"
             class="toggle-view-button email-button"
             :class="{ active: view === InvitationView.EmailInvitation }"
+            :aria-selected="view === InvitationView.EmailInvitation"
+            aria-controls="invitation-panel"
+            :tabindex="view === InvitationView.EmailInvitation ? 0 : -1"
             @click="switchView(InvitationView.EmailInvitation)"
-            :disabled="view === InvitationView.EmailInvitation"
           >
             <ion-icon
               :icon="invitations.length > 0 ? mailUnread : mail"
-              class="toggle-view-button__icon"
+              class="toggle-view-button__icon button-icon-left"
+              aria-hidden="true"
             />
             <ion-text class="toggle-view-button__label">
-              <span v-if="windowWidth > WindowSizeBreakpoints.MD">{{ $msTranslate('InvitationsPage.emailInvitation.tab') }}</span>
+              <span v-if="windowWidth > WindowSizeBreakpoints.MD">{{ $msTranslate('InvitationsPage.emailInvitation.tabLabel') }}</span>
               <span v-else>{{ $msTranslate('InvitationsPage.emailInvitation.tabShort') }}</span>
             </ion-text>
-            <span class="toggle-view-button__count">{{ invitations.length }}</span>
+            <span
+              class="toggle-view-button__count"
+              :class="{ empty: invitations.length === 0 }"
+            >
+              {{ invitations.length }}
+            </span>
           </ion-button>
           <ion-button
+            role="tab"
+            id="invitation-tab-pki"
             class="toggle-view-button pki-button"
-            :class="{
-              active: view === InvitationView.AsyncEnrollmentRequest,
-            }"
+            :class="{ active: view === InvitationView.AsyncEnrollmentRequest }"
+            :aria-selected="view === InvitationView.AsyncEnrollmentRequest"
+            aria-controls="invitation-panel"
+            :tabindex="view === InvitationView.AsyncEnrollmentRequest ? 0 : -1"
             @click="switchView(InvitationView.AsyncEnrollmentRequest)"
-            ref="switchToAsyncEnrollmentButton"
-            :disabled="view === InvitationView.AsyncEnrollmentRequest"
           >
             <ion-icon
               :icon="link"
-              class="toggle-view-button__icon"
+              class="toggle-view-button__icon button-icon-left"
+              aria-hidden="true"
             />
             <ion-text class="toggle-view-button__label">
-              <span>{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tab') }}</span>
+              <span>{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tabLabel') }}</span>
             </ion-text>
-            <span class="toggle-view-button__count">
+            <span
+              class="toggle-view-button__count"
+              :class="{ empty: asyncEnrollmentRequests.length === 0 }"
+            >
               {{ asyncEnrollmentRequests.length }}
             </span>
           </ion-button>
         </div>
 
-        <ion-button
-          v-if="view === InvitationView.AsyncEnrollmentRequest"
-          @click="onCopyJoinLinkClicked"
-          id="copy-link-pki-request-button"
-          class="button-medium button-default"
-          ref="copyJoinRequestLink"
-        >
-          <ion-icon
-            :icon="copy"
-            class="button-icon"
-          />
-          <span>{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.copyLink') }}</span>
-        </ion-button>
-
-        <ion-button
-          v-if="view === InvitationView.EmailInvitation"
-          @click="inviteUser"
-          id="invite-user-button"
-          class="button-medium button-default"
-        >
-          <ion-icon
-            :icon="personAdd"
-            class="button-icon"
-          />
-          <span>{{ $msTranslate('InvitationsPage.emailInvitation.inviteUser') }}</span>
-        </ion-button>
-      </div>
-
-      <div
-        class="invitations-container scroll"
-        v-if="view === InvitationView.EmailInvitation"
-      >
-        <div
-          v-show="invitations.length === 0"
-          class="no-active body-lg"
-        >
-          <div class="no-active-content">
-            <ms-image
-              :image="NoInvitation"
-              class="no-active__image"
+        <div class="toggle-view-header">
+          <div class="toggle-view-header-text">
+            <ion-text class="toggle-view-header__title">
+              {{
+                view === InvitationView.EmailInvitation
+                  ? $msTranslate('InvitationsPage.emailInvitation.tabLabel')
+                  : $msTranslate('InvitationsPage.asyncEnrollmentRequest.tabLabel')
+              }}
+            </ion-text>
+          </div>
+          <ion-button
+            v-if="view === InvitationView.AsyncEnrollmentRequest"
+            @click="onCopyJoinLinkClicked"
+            id="copy-link-pki-request-button"
+            ref="copyJoinRequestLink"
+          >
+            <ion-icon
+              :icon="copy"
+              class="button-icon button-icon-left"
             />
-            <ion-text>
-              {{ $msTranslate('InvitationsPage.emailInvitation.emptyState') }}
-            </ion-text>
-          </div>
+            <span>{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.copyLink') }}</span>
+          </ion-button>
+
+          <ion-button
+            v-if="view === InvitationView.EmailInvitation"
+            @click="inviteUser"
+            id="invite-user-button"
+          >
+            <ion-icon
+              :icon="personAdd"
+              class="button-icon button-icon-left"
+            />
+            <span>{{ $msTranslate('InvitationsPage.emailInvitation.inviteUser') }}</span>
+          </ion-button>
         </div>
-        <div v-show="invitations.length > 0">
-          <invitation-list
-            :invitations="invitations"
-            @greet-click="onInvitationGreetClicked"
-            @send-email-click="onSendInvitationEmailClicked"
-            @copy-link-click="onCopyInvitationLinkClicked"
-            @delete-click="onDeleteInvitationClicked"
-          />
-        </div>
-      </div>
-      <div
-        class="invitations-container scroll"
-        v-if="view === InvitationView.AsyncEnrollmentRequest"
-      >
+
         <div
-          v-show="asyncEnrollmentRequests.length === 0 && !asyncListError"
-          class="no-active body-lg"
+          class="invitations-container scroll"
+          v-if="view === InvitationView.EmailInvitation"
+          id="invitation-panel"
+          role="tabpanel"
+          aria-labelledby="invitation-tab-email"
         >
-          <div class="no-active-content">
-            <ms-image :image="NoInvitation" />
-            <ion-text>
-              {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.emptyState') }}
-            </ion-text>
+          <div
+            v-show="invitations.length === 0"
+            class="no-active"
+          >
+            <div class="no-active-content">
+              <ms-image :image="isDarkTheme ? NoInvitationDark : NoInvitation" />
+              <ion-text>
+                {{ $msTranslate('InvitationsPage.emailInvitation.emptyState') }}
+              </ion-text>
+            </div>
+          </div>
+          <div v-show="invitations.length > 0">
+            <invitation-list
+              :invitations="invitations"
+              @greet-click="onInvitationGreetClicked"
+              @send-email-click="onSendInvitationEmailClicked"
+              @copy-link-click="onCopyInvitationLinkClicked"
+              @delete-click="onDeleteInvitationClicked"
+            />
           </div>
         </div>
-        <ms-report-text
-          class="invitations-error-message"
-          v-show="asyncEnrollmentRequests.length === 0 && asyncListError"
-          :theme="MsReportTheme.Error"
+        <div
+          class="invitations-container scroll"
+          v-if="view === InvitationView.AsyncEnrollmentRequest"
+          id="invitation-panel"
+          role="tabpanel"
+          aria-labelledby="invitation-tab-pki"
         >
-          {{ $msTranslate(asyncListError) }}
-        </ms-report-text>
-        <div v-show="asyncEnrollmentRequests.length > 0">
-          <async-enrollment-request-list
-            :requests="asyncEnrollmentRequests"
-            :pki-available="pkiAvailable"
-            :server-config="serverConfig"
-            @accept-click="onAcceptAsyncEnrollmentRequestClicked"
-            @reject-click="onRejectAsyncEnrollmentRequestClicked"
-          />
+          <div
+            v-show="asyncEnrollmentRequests.length === 0 && !asyncListError"
+            class="no-active"
+          >
+            <div class="no-active-content">
+              <ms-image :image="isDarkTheme ? NoInvitationDark : NoInvitation" />
+              <ion-text>
+                {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.emptyState') }}
+              </ion-text>
+            </div>
+          </div>
+          <ms-report-text
+            class="invitations-error-message"
+            v-show="asyncEnrollmentRequests.length === 0 && asyncListError"
+            :theme="MsReportTheme.Error"
+          >
+            {{ $msTranslate(asyncListError) }}
+          </ms-report-text>
+          <div v-show="asyncEnrollmentRequests.length > 0">
+            <async-enrollment-request-list
+              :requests="asyncEnrollmentRequests"
+              :pki-available="pkiAvailable"
+              :server-config="serverConfig"
+              @accept-click="onAcceptAsyncEnrollmentRequestClicked"
+              @reject-click="onRejectAsyncEnrollmentRequestClicked"
+            />
+          </div>
         </div>
       </div>
     </ion-content>
@@ -234,13 +275,16 @@ import {
   MsReportText,
   MsReportTheme,
   NoInvitation,
+  NoInvitationDark,
   Translatable,
+  useTheme,
   useWindowSize,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
+const { isDarkTheme } = useTheme();
 const view = ref(InvitationView.EmailInvitation);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
@@ -324,6 +368,34 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
+
+async function onTabKeydown(event: KeyboardEvent): Promise<void> {
+  const tabs = [
+    { id: 'invitation-tab-email', view: InvitationView.EmailInvitation },
+    { id: 'invitation-tab-pki', view: InvitationView.AsyncEnrollmentRequest },
+  ];
+  const current = tabs.findIndex((tab) => tab.view === view.value);
+  let next: number;
+  switch (event.key) {
+    case 'ArrowRight':
+      next = (current + 1) % tabs.length;
+      break;
+    case 'ArrowLeft':
+      next = (current - 1 + tabs.length) % tabs.length;
+      break;
+    case 'Home':
+      next = 0;
+      break;
+    case 'End':
+      next = tabs.length - 1;
+      break;
+    default:
+      return;
+  }
+  event.preventDefault();
+  await switchView(tabs[next].view);
+  document.getElementById(tabs[next].id)?.focus();
+}
 
 async function switchView(newView: InvitationView): Promise<void> {
   if (newView === view.value) {
@@ -766,175 +838,157 @@ async function refreshAll(): Promise<void> {
 
 <style scoped lang="scss">
 .invitations-page {
-  padding: 1.5rem;
-  background: var(--parsec-color-light-secondary-background);
+  padding: ms.spacing('padding-4xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0;
+    padding: ms.spacing('padding-none');
   }
 
   .content-scroll {
+    --background: transparent;
     display: flex;
-    border-radius: var(--parsec-radius-12);
-    overflow: hidden;
-    box-shadow: var(--parsec-shadow-soft);
-
-    @include ms.responsive-breakpoint('sm') {
-      box-shadow: var(--parsec-shadow-strong);
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-    }
   }
 }
 
 .toggle-view-container {
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-  padding: 0.75rem;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  @include ms.responsive-breakpoint('lg') {
-    flex-wrap: wrap;
-  }
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: ms.color('surface-base-default');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('2xl');
+  overflow: hidden;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
+    box-shadow: ms.shadow('strong');
   }
 
   .toggle-view {
     display: flex;
-    width: fit-content;
-    background: var(--parsec-color-light-secondary-premiere);
-    padding: 3px;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-8);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-    position: relative;
+    flex-shrink: 0;
+    gap: ms.spacing('gap-2xl');
+    padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
+    box-shadow: inset 0 calc(-1 * #{ms.border('thin')}) 0 0 ms.color('border-base-default');
+    overflow-x: auto;
+    overflow-y: hidden;
 
-    @include ms.responsive-breakpoint('lg') {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      box-shadow: var(--parsec-shadow-input);
-      cursor: pointer;
+    @include ms.responsive-breakpoint('sm') {
+      padding: ms.spacing('padding-md') ms.spacing('padding-2xl') ms.spacing('padding-none');
     }
 
     &-button {
-      --color: var(--parsec-color-light-secondary-hard-grey);
-      --background: none;
-      --background-hover: var(--parsec-color-light-secondary-disabled);
-      display: contents;
-
-      &:hover {
-        --color: var(--parsec-color-light-secondary-soft-text);
-      }
+      --background: transparent;
+      --background-hover: transparent;
+      --color: #{ms.color('text-base-description')};
+      --color-hover: #{ms.color('text-base-body')};
+      position: relative;
+      transition: opacity 150ms ease;
 
       &::part(native) {
-        display: flex;
-        width: fit-content;
-        padding: 0.5rem 0.75rem;
+        padding: ms.spacing('padding-3xl') ms.spacing('padding-sm');
+        gap: ms.spacing('gap-md');
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+        height: ms.border('thick');
+        border-radius: ms.radius('full') ms.radius('full') 0 0;
       }
 
       &__icon {
+        flex-shrink: 0;
         font-size: 1.125rem;
-        margin-right: 0.5rem;
       }
 
       &__label {
-        overflow: hidden;
-        text-overflow: ellipsis;
         white-space: nowrap;
       }
 
       &__count {
-        background: var(--parsec-color-light-primary-50);
-        color: var(--parsec-color-light-primary-500);
-        border-radius: var(--parsec-radius-8);
-        padding: 0.1rem 0.35rem;
+        @include ms.font('label-xs-medium');
+        flex-shrink: 0;
+        min-width: 1rem;
+        min-height: 1rem;
+        width: fit-content;
         margin-left: 0.5rem;
+        padding: ms.spacing('padding-none') ms.spacing('padding-sm');
+        border: ms.border('thin') solid transparent;
+        background: ms.color('surface-error-default');
+        border-radius: ms.radius('full');
+        color: ms.color('text-on-color-label');
+        text-align: center;
+
+        &.empty {
+          background: ms.color('surface-neutral-default-subtle');
+          color: ms.color('text-base-description');
+        }
       }
 
       &.active {
-        --background: var(--parsec-color-light-secondary-white);
-        --border-radius: var(--parsec-radius-6);
-        --color: var(--parsec-color-light-primary-700);
+        --color: #{ms.color('text-brand-default')};
+        --color-hover: #{ms.color('text-brand-default')};
+        opacity: ms.opacity('10');
         cursor: default;
-        opacity: 1;
-        display: flex;
-      }
 
-      &:not(.active) {
-        .toggle-view-button__count {
-          background: var(--parsec-color-light-secondary-background);
-          color: var(--parsec-color-light-secondary-grey);
-        }
-      }
-
-      &:hover {
-        @include ms.responsive-breakpoint('lg') {
-          --background-hover: var(--parsec-color-light-secondary-medium);
-        }
-      }
-
-      &.disabled {
-        .toggle-view-button__icon,
-        .toggle-view-button__label {
-          opacity: 0.8;
+        &::after {
+          background: ms.color('border-brand-default');
         }
 
         .toggle-view-button__count {
-          background: var(--parsec-color-light-secondary-soft-text);
-          color: var(--parsec-color-light-secondary-white);
-          padding: 3px 0.4rem;
+          border-color: transparent;
         }
       }
-    }
-
-    &-unavailable {
-      top: -0.65rem;
-      right: -2rem;
-      color: var(--parsec-color-light-secondary-white);
-      align-self: center;
-      padding: 0.125rem 0.5rem;
-      margin-right: 0.25rem;
-      background: var(--parsec-color-light-secondary-text);
-      border-radius: var(--parsec-radius-8);
     }
   }
 
-  #copy-link-pki-request-button,
-  #invite-user-button {
-    --background: var(--parsec-color-light-secondary-text);
-    --background-hover: var(--parsec-color-light-secondary-contrast);
-    border-radius: var(--parsec-radius-6);
-    color: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-input);
-    margin-left: auto;
-    transition: all 0.1s ease-in-out;
+  .toggle-view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: ms.spacing('gap-lg');
+    flex-shrink: 0;
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-page');
 
-    &:active {
-      scale: 0.98;
-      box-shadow: none;
+    @include ms.responsive-breakpoint('sm') {
+      padding: ms.spacing('padding-xl') ms.spacing('padding-2xl') ms.spacing('padding-md');
     }
 
-    &::part(native) {
-      padding: 0.625rem 1rem;
-
-      @include ms.responsive-breakpoint('sm') {
-        padding: 0.5rem;
-      }
+    &__title {
+      @include ms.font('heading-h4');
+      color: ms.color('text-base-heading');
     }
 
-    .button-icon {
-      font-size: 1rem;
-      margin-right: 0.5rem;
+    #copy-link-pki-request-button,
+    #invite-user-button {
+      margin: 0 0 0 auto;
+      flex-shrink: 0;
     }
+  }
+
+  .invitations-container {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+    padding: ms.spacing('padding-none');
   }
 }
 
 .no-active {
+  @include ms.font('body-lg-regular');
   width: 100%;
   height: 100%;
   max-width: 50rem;
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('text-base-description');
   display: flex;
   margin: auto;
   align-items: center;
@@ -946,117 +1000,33 @@ async function refreshAll(): Promise<void> {
   }
 
   &-content {
-    border-radius: var(--parsec-radius-8);
     display: flex;
     height: fit-content;
     width: 100%;
     text-align: center;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     align-items: center;
-    padding: 2rem 1rem;
-  }
-}
-
-.invitations-container {
-  padding: 0;
-  position: relative;
-}
-
-.root-certificate {
-  position: absolute;
-  z-index: 100;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: #00000058;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  @include ms.responsive-breakpoint('sm') {
-    padding: 0;
-    background: var(--parsec-color-light-secondary-white);
-    align-items: flex-start;
-    height: -webkit-fill-available;
-  }
-
-  &-content {
-    background: var(--parsec-color-light-secondary-white);
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    max-width: 30rem;
-    border-radius: var(--parsec-radius-12);
-    box-shadow: var(--parsec-shadow-soft);
-
-    @include ms.responsive-breakpoint('sm') {
-      border-radius: 0;
-      padding: 2rem 1.5rem;
-      box-shadow: none;
-    }
-
-    .root-certificate__icon {
-      width: 2.5rem;
-      margin: 0 auto;
-
-      @include ms.responsive-breakpoint('sm') {
-        margin: 0;
-        width: 1.5rem;
-        position: absolute;
-        top: 1.875rem;
-      }
-    }
-
-    .root-certificate-text {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      text-align: center;
-
-      @include ms.responsive-breakpoint('sm') {
-        text-align: left;
-      }
-
-      &__title {
-        color: var(--parsec-color-light-secondary-text);
-
-        @include ms.responsive-breakpoint('sm') {
-          margin-left: 2rem;
-        }
-      }
-
-      &__description {
-        color: var(--parsec-color-light-secondary-hard-grey);
-      }
-    }
-
-    .button-icon {
-      --fill-color: var(--parsec-color-light-secondary-white);
-      width: 1.125rem;
-      margin-right: 0.5rem;
-    }
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   }
 }
 
 .switch-view {
   display: flex;
   justify-content: center;
-  padding: 0.5rem 1rem 1.5rem;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
 
   .switch-view-button {
     width: 100%;
-    --background: var(--parsec-color-light-secondary-white);
-    --background-hover: var(--parsec-color-light-secondary-medium);
-    --color: var(--parsec-color-light-primary-700);
-    box-shadow: var(--parsec-shadow-input);
-    border-radius: var(--parsec-radius-8);
+    --background: #{ms.color('surface-base-default')};
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+    --color: #{ms.color('text-brand-default')};
+    box-shadow: ms.shadow('input');
+    border-radius: ms.radius('lg');
 
     &::part(native) {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      padding: 0.625rem 1rem;
+      border: ms.border('thin') solid ms.color('border-base-default');
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
     }
 
     &__icon {
@@ -1065,17 +1035,23 @@ async function refreshAll(): Promise<void> {
     }
 
     &__count {
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-500);
-      border-radius: var(--parsec-radius-8);
+      @include ms.font('label-sm-medium');
+      background: ms.color('surface-error-default');
+      color: ms.color('text-on-color-label');
+      border-radius: ms.radius('lg');
       padding: 0.1rem 0.35rem;
       margin-left: 0.5rem;
+
+      &.empty {
+        background: ms.color('surface-neutral-default-subtle');
+        color: ms.color('text-base-description');
+      }
     }
 
     &__toggle {
       font-size: 1rem;
       margin-left: auto;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
     }
   }
 }

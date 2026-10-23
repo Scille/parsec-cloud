@@ -97,6 +97,6 @@ async function areFieldsCorrect(): Promise<boolean> {
 .user-information {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 </style>

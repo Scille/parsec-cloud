@@ -11,7 +11,7 @@
     <div class="modal">
       <div class="modal-content inner-content">
         <div class="files-concerned">
-          <ion-text class="files-concerned__title button-small">
+          <ion-text class="files-concerned__title">
             {{ $msTranslate({ key: 'FoldersPage.ConflictsFile.fileConcerned', data: { count: files.length }, count: files.length }) }}
           </ion-text>
           <div class="files-concerned-content">
@@ -25,7 +25,7 @@
                   :image="getFileIcon(file.name || '')"
                   class="file-icon"
                 />
-                <ion-text class="conflict-item__label button-medium">{{ file.name }}</ion-text>
+                <ion-text class="conflict-item__label">{{ file.name }}</ion-text>
               </div>
             </div>
             <div
@@ -37,7 +37,7 @@
                   :image="MultiImport"
                   class="file-icon"
                 />
-                <ion-text class="conflict-item__label button-medium">
+                <ion-text class="conflict-item__label">
                   {{
                     $msTranslate({
                       key: 'FoldersPage.ConflictsFile.moreFiles',
@@ -56,20 +56,20 @@
         <div class="modal-footer-buttons">
           <ion-button
             @click="resolve(DuplicatePolicy.Ignore)"
-            class="modal-footer-buttons__item button-default outline-button"
+            class="modal-footer-buttons__item color-secondary"
             fill="clear"
           >
             {{ $msTranslate('FoldersPage.ConflictsFile.buttons.ignore') }}
           </ion-button>
           <ion-button
             @click="resolve(DuplicatePolicy.Replace)"
-            class="modal-footer-buttons__item button-default fill-button"
+            class="modal-footer-buttons__item color-secondary"
           >
             {{ $msTranslate('FoldersPage.ConflictsFile.buttons.replace') }}
           </ion-button>
           <ion-button
             @click="resolve(DuplicatePolicy.AddCounter)"
-            class="modal-footer-buttons__item button-default fill-button"
+            class="modal-footer-buttons__item color-secondary"
           >
             {{ $msTranslate('FoldersPage.ConflictsFile.buttons.keepAll') }}
           </ion-button>
@@ -105,10 +105,8 @@ async function resolve(action: DuplicatePolicy): Promise<void> {
 
 <style scoped lang="scss">
 .conflict-modal-page {
-  padding: 0.5rem;
-
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 0 2rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-5xl');
   }
 }
 
@@ -120,7 +118,7 @@ async function resolve(action: DuplicatePolicy): Promise<void> {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     overflow-y: auto;
 
     @include ms.responsive-breakpoint('sm') {
@@ -131,7 +129,7 @@ async function resolve(action: DuplicatePolicy): Promise<void> {
 
 .files-concerned {
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   flex-direction: column;
   max-height: 13rem;
 
@@ -140,26 +138,28 @@ async function resolve(action: DuplicatePolicy): Promise<void> {
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('label-sm-medium');
+    color: ms.color('text-base-description');
   }
 
   &-content {
     overflow-y: auto;
     overflow-x: hidden;
-    background: var(--parsec-color-light-secondary-background);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-8);
+    background: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    border-radius: ms.radius('lg');
 
     .conflict-item {
-      padding: 0.5rem;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+      padding: ms.spacing('padding-lg');
+      border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
 
       &:last-child {
         border-bottom: none;
       }
 
       &__label {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('label-md-medium');
+        color: ms.color('text-base-body');
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -168,7 +168,7 @@ async function resolve(action: DuplicatePolicy): Promise<void> {
       .element-type {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
         overflow: hidden;
 
         .file-icon {
@@ -180,7 +180,7 @@ async function resolve(action: DuplicatePolicy): Promise<void> {
 
       &.more-files {
         .conflict-item__label {
-          color: var(--parsec-color-light-secondary-soft-text);
+          color: ms.color('text-base-description');
           font-style: italic;
         }
       }
@@ -190,23 +190,9 @@ async function resolve(action: DuplicatePolicy): Promise<void> {
 
 .modal-footer-buttons {
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   justify-content: flex-end;
   width: 100%;
   margin-top: 1.5rem;
-
-  &__item {
-    width: fit-content;
-
-    &.outline-button::part(native) {
-      color: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-medium);
-    }
-
-    &.fill-button::part(native) {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
-    }
-  }
 }
 </style>

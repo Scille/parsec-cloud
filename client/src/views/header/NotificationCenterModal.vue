@@ -4,15 +4,15 @@
   <div class="notification-center-container">
     <div class="notification-center">
       <div class="notification-center-header">
-        <ion-text class="notification-center-header__title title-h4">
+        <ion-text class="notification-center-header__title">
           {{ $msTranslate('notificationCenter.title') }}
         </ion-text>
-        <span class="notification-center-header__counter body-sm">
+        <span class="notification-center-header__counter">
           {{ unreadCount > 99 ? '+99' : unreadCount }}
         </span>
         <div class="notification-center-header-actions">
           <ion-toggle
-            class="notification-center-header-actions__toggle dark small body-sm"
+            class="notification-center-header-actions__toggle dark small"
             @ion-change="onlyReadToggle = !onlyReadToggle"
           >
             {{ $msTranslate('notificationCenter.readOnly') }}
@@ -30,9 +30,7 @@
           v-if="notifications.length === 0"
         >
           <ms-image :image="NoNotification" />
-          <ion-text class="body-lg">
-            {{ $msTranslate('notificationCenter.noNotification') }}
-          </ion-text>
+          {{ $msTranslate('notificationCenter.noNotification') }}
         </div>
         <component
           v-for="notification in notifications"
@@ -110,31 +108,39 @@ function onNotificationMouseOver(notification: Notification): void {
 <style lang="scss" scoped>
 .notification-center {
   width: 100%;
-  height: 100%;
-  border-radius: var(--parsec-radius-12);
+  border-radius: ms.radius('none');
   overflow: hidden;
 
   &-header {
+    &__title {
+      @include ms.font('heading-h5');
+    }
+
+    &__counter {
+      @include ms.font('body-sm-regular');
+    }
+
     &-actions {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
 
       &__close {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        color: ms.color('icon-neutral-default');
         font-size: 1.25rem;
         cursor: pointer;
-        border-radius: var(--parsec-radius-8);
-        padding: 0.5rem;
+        border-radius: ms.radius('lg');
+        padding: ms.spacing('padding-lg');
 
         &:hover {
-          color: var(--parsec-color-light-primary-30-opacity80);
+          color: ms.color('icon-neutral-default-hover');
         }
       }
 
       // eslint-disable-next-line vue-scoped-css/no-unused-selector
       &__toggle {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('body-sm-regular');
+        color: ms.color('text-neutral-default');
         margin-left: auto;
         display: flex;
         align-items: center;
@@ -142,34 +148,39 @@ function onNotificationMouseOver(notification: Notification): void {
 
         &::part(label) {
           transition: opacity 150ms ease-in-out;
-          margin-right: 0.5rem;
+          opacity: ms.opacity('6');
+          margin-right: ms.spacing('padding-lg');
         }
 
         &::part(track) {
-          background: var(--parsec-color-light-secondary-disabled);
-          opacity: 0.8;
+          background: ms.color('surface-disabled-default');
+          opacity: ms.opacity('8');
         }
 
         &::part(handle) {
-          background: var(--parsec-color-light-secondary-text);
+          background: ms.color('surface-neutral-default');
         }
 
         &:hover,
         &.toggle-checked {
           &::part(label) {
-            opacity: 1;
+            opacity: ms.opacity('10');
           }
 
           &::part(track) {
-            background: var(--parsec-color-light-secondary-disabled);
+            background: ms.color('surface-disabled-default');
           }
 
           &::part(handle) {
-            background: var(--parsec-color-light-secondary-text);
+            background: ms.color('surface-neutral-default');
           }
         }
       }
     }
+  }
+
+  &-content__empty {
+    @include ms.font('body-lg-regular');
   }
 }
 </style>

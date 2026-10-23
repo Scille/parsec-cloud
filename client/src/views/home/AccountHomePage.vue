@@ -49,7 +49,7 @@
               />
 
               <div class="account-create">
-                <ion-text class="account-create__description subtitles-normal">
+                <ion-text class="account-create__description">
                   {{ $msTranslate('loginPage.createAccount.description') }}
                 </ion-text>
                 <ion-button
@@ -64,7 +64,7 @@
 
             <!-- Client Area -->
             <div class="homepage-client-area">
-              <ion-text class="homepage-client-area__title title-h4">
+              <ion-text class="homepage-client-area__title">
                 {{ $msTranslate('loginPage.clientArea.title') }}
               </ion-text>
               <ion-button
@@ -91,7 +91,7 @@
                 {{ $msTranslate('loginPage.skip') }}
                 <ion-icon
                   :icon="chevronForward"
-                  class="homepage-skip__icon"
+                  class="homepage-skip__icon button-icon-right"
                 />
               </ion-button>
             </div>
@@ -171,19 +171,15 @@ async function goToCustomerArea(): Promise<void> {
   height: 100vh;
   display: flex;
   overflow: hidden;
-  background: linear-gradient(
-    117deg,
-    var(--parsec-color-light-secondary-inversed-contrast, #fcfcfc) 0%,
-    var(--parsec-color-light-secondary-background, #f9f9fb) 100%
-  );
+  background: linear-gradient(117deg, ms.color('surface-base-default') 0%, ms.color('surface-base-default-secondary') 100%);
 
   .homepage-scroll {
     @media screen and (max-height: 600px) {
-      padding: 3rem 0 1rem;
+      padding: ms.spacing('padding-7xl') 0 ms.spacing('padding-3xl');
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 3rem 0 1rem;
+      padding: ms.spacing('padding-7xl') 0 ms.spacing('padding-3xl');
     }
   }
 
@@ -219,8 +215,8 @@ async function goToCustomerArea(): Promise<void> {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 2rem;
-    padding: 2rem 0;
+    gap: ms.spacing('gap-5xl');
+    padding: ms.spacing('padding-5xl') 0;
     max-width: 28rem;
     align-items: center;
     margin: auto;
@@ -230,7 +226,7 @@ async function goToCustomerArea(): Promise<void> {
     }
 
     @include ms.responsive-breakpoint('lg') {
-      padding: 2rem 0;
+      padding: ms.spacing('padding-5xl') 0;
     }
 
     @include ms.responsive-breakpoint('sm') {
@@ -239,40 +235,38 @@ async function goToCustomerArea(): Promise<void> {
     }
 
     @include ms.responsive-breakpoint('xs') {
-      padding: 1.5rem 1.5rem 0;
+      padding: ms.spacing('padding-4xl') ms.spacing('padding-4xl') 0;
       max-width: 100%;
     }
   }
 
   .homepage-skip {
-    border-top: 1px solid var(--parsec-color-light-secondary-medium);
+    border-top: ms.border('thin') solid ms.color('border-base-default');
     width: 100%;
     display: flex;
-    padding-top: 1rem;
+    padding-top: ms.spacing('padding-3xl');
     justify-content: center;
 
     &__icon {
       font-size: 1rem;
-      margin-left: 0.375rem;
-      color: var(--parsec-color-light-secondary-grey);
+      margin-left: ms.spacing('padding-md');
+      color: ms.color('icon-neutral-default');
     }
 
     &__button {
       width: fit-content;
-      color: var(--parsec-color-light-secondary-grey);
-      font-size: 0.875rem;
+      color: ms.color('text-base-description');
 
       &::part(native) {
         --background: transparent;
         --background-hover: transparent;
-        padding: 0.125rem;
       }
 
       &:hover {
-        color: var(--parsec-color-light-secondary-contrast);
+        color: ms.color('text-neutral-default-hover');
 
         .homepage-skip__icon {
-          color: var(--parsec-color-light-secondary-contrast);
+          color: ms.color('icon-neutral-default-hover');
         }
       }
     }
@@ -283,21 +277,20 @@ async function goToCustomerArea(): Promise<void> {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
 
     .account-create {
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       display: flex;
       align-items: center;
 
       &__button {
-        color: var(--parsec-color-light-primary-500);
         position: relative;
 
         &::part(native) {
           --background-hover: transparent;
           --background: transparent;
-          padding: 0.125rem;
+          padding: ms.spacing('padding-xs');
         }
 
         &::before {
@@ -305,24 +298,25 @@ async function goToCustomerArea(): Promise<void> {
           position: absolute;
           bottom: -0.25rem;
           left: 0.125rem;
-          height: 1px;
+          height: ms.border('thin');
           width: 0px;
           background: transparent;
           transition: all 150ms linear;
         }
 
         &:hover {
-          color: var(--parsec-color-light-primary-600);
+          color: ms.color('text-brand-default-hover');
 
           &::before {
             width: calc(100% - 0.25rem);
-            background: var(--parsec-color-light-primary-600);
+            background: ms.color('text-brand-default-hover');
           }
         }
       }
 
       &__description {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-lg-medium');
+        color: ms.color('text-base-description');
       }
     }
   }
@@ -332,25 +326,25 @@ async function goToCustomerArea(): Promise<void> {
     width: 100%;
     height: fit-content;
     justify-content: space-between;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
     box-shadow: var(--parsec-shadow-soft);
-    background: var(--parsec-color-light-primary-30);
+    background: ms.color('surface-brand-default-subtle');
     align-items: center;
-    padding: 0.75rem 1rem 0.75rem 1.5rem;
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl') ms.spacing('padding-2xl') ms.spacing('padding-4xl');
     overflow: hidden;
     position: relative;
     flex-shrink: 0;
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.75rem 1rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
     }
 
     &__title {
-      color: var(--parsec-color-light-primary-700);
+      @include ms.font('heading-h5');
+      color: ms.color('text-brand-default');
     }
 
     &__button {
-      color: var(--parsec-color-light-primary-700);
       --background-hover: transparent;
       z-index: 2;
 
@@ -398,7 +392,7 @@ async function goToCustomerArea(): Promise<void> {
     position: absolute;
     top: 1.5rem;
     right: 1.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
     cursor: pointer;
 
     &__icon {

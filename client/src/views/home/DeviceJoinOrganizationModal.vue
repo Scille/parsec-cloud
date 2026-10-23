@@ -37,12 +37,12 @@
         v-if="isLargeDisplay"
         v-show="pageStep !== DeviceJoinOrganizationStep.Finish"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
           v-if="steps[pageStep]?.subtitle"
-          class="modal-header__text body-lg"
+          class="modal-header__text"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
@@ -122,7 +122,7 @@
             :image="ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string"
             class="final-step__logo"
           />
-          <ion-text class="final-step__title title-h3">
+          <ion-text class="final-step__title">
             {{ $msTranslate('ClaimDeviceModal.titles.done') }}
           </ion-text>
           <ion-button
@@ -509,6 +509,18 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.modal-header__title {
+  @include ms.font('heading-h4');
+}
+
+.modal-header__text {
+  @include ms.font('body-lg-regular');
+}
+
+.final-step__title {
+  @include ms.font('heading-h4');
+}
+
 .organization-name {
   display: flex;
   flex-direction: column;

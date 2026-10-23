@@ -25,7 +25,7 @@ async function toggleSidebar(page: MsPage): Promise<void> {
 msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
 
-  const mainButtons = sidebar.locator('.list-sidebar-header-text');
+  const mainButtons = sidebar.locator('.list-sidebar-header__text');
   await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const items = sidebar.locator('#sidebar-organization').locator('.sidebar-content-organization-button__text');
@@ -37,7 +37,7 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
 
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
 
-  const mainButtons = sidebar.locator('.list-sidebar-header-text');
+  const mainButtons = sidebar.locator('.list-sidebar-header__text');
   await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const currentWorkspace = sidebar.locator('#sidebar-workspaces').locator('.current-workspace').locator('.sidebar-item');
@@ -50,7 +50,7 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
 msTest('Sidebar in connected page', async ({ workspaces }) => {
   const sidebar = workspaces.locator('.sidebar');
 
-  const mainButtons = sidebar.locator('.list-sidebar-header-text');
+  const mainButtons = sidebar.locator('.list-sidebar-header__text');
   await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const organizationContent = sidebar.locator('#sidebar-organization');
@@ -58,7 +58,7 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   const filesContent = sidebar.locator('#sidebar-files');
 
   async function checkSidebarToggleVisibility(content: Locator, title: string): Promise<void> {
-    await expect(content.locator('.list-sidebar-header-text')).toHaveText(title);
+    await expect(content.locator('.list-sidebar-header__text')).toHaveText(title);
     await expect(content.locator('.list-sidebar-content')).toBeVisible();
     await content.locator('.list-sidebar-header__toggle').click();
     await expect(content.locator('.list-sidebar-content')).toBeHidden();

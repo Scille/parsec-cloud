@@ -15,7 +15,7 @@
               class="list-group-item__icon"
               :icon="eye"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionPreview') }}
             </ion-text>
           </ion-item>
@@ -29,7 +29,7 @@
               class="list-group-item__icon"
               :icon="create"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionEdit') }}
             </ion-text>
           </ion-item>
@@ -43,7 +43,7 @@
               class="list-group-item__icon"
               :image="RenameIcon"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionRename') }}
             </ion-text>
           </ion-item>
@@ -57,7 +57,7 @@
               class="list-group-item__icon"
               :icon="arrowRedo"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionMoveTo') }}
             </ion-text>
           </ion-item>
@@ -72,7 +72,7 @@
               class="list-group-item__icon"
               :icon="copy"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionMakeACopy') }}
             </ion-text>
           </ion-item>
@@ -87,7 +87,7 @@
               class="list-group-item__icon"
               :image="EyeOpenIcon"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionOpen') }}
             </ion-text>
           </ion-item>
@@ -102,7 +102,7 @@
               :image="FolderParentIcon"
               class="list-group-item__icon"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionShowEnclosingFolder') }}
             </ion-text>
           </ion-item>
@@ -117,7 +117,7 @@
               class="list-group-item__icon"
               :icon="open"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
             </ion-text>
           </ion-item>
@@ -132,7 +132,7 @@
               class="list-group-item__icon"
               :icon="time"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionHistory') }}
             </ion-text>
           </ion-item>
@@ -147,7 +147,7 @@
               class="list-group-item__icon"
               :icon="download"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionDownload') }}
             </ion-text>
           </ion-item>
@@ -162,7 +162,7 @@
               class="list-group-item__icon"
               :icon="informationCircle"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionDetails') }}
             </ion-text>
           </ion-item>
@@ -177,7 +177,7 @@
               class="list-group-item__icon"
               :icon="trash"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
             </ion-text>
           </ion-item>
@@ -196,7 +196,7 @@
               class="list-group-item__icon"
               :icon="link"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionCopyLink') }}
             </ion-text>
           </ion-item>

@@ -7,7 +7,7 @@
       class="missing-ownership-label__icon"
     />
     <ion-text
-      class="missing-ownership-label__text button-medium"
+      class="missing-ownership-label__text"
       v-if="showText"
     >
       {{ $msTranslate('WorkspacesPage.missingOwnership.label') }}
@@ -28,34 +28,38 @@ defineProps<{
 .missing-ownership-label {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem;
-  border-radius: var(--parsec-radius-12);
+  gap: ms.spacing('gap-md');
+  padding: ms.spacing('padding-md');
+  border-radius: ms.radius('2xl');
   overflow: hidden;
-  background: var(--parsec-color-light-danger-50);
-  border: 1px solid var(--parsec-color-light-danger-100);
+  background: ms.color('surface-error-default-subtle');
+  border: ms.border('thin') solid ms.color('border-error-default-subtle');
   transition: all 0.1s ease-in-out;
   flex-shrink: 0;
 
   &__icon {
     font-size: 1rem;
-    color: var(--parsec-color-light-danger-500);
+    color: ms.color('icon-error-default');
     flex-shrink: 0;
   }
 
   &__text {
     text-wrap: nowrap;
     text-align: left;
-    color: var(--parsec-color-light-danger-500);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-error-default');
     text-shadow: var(--parsec-shadow-light);
   }
 
   &:hover {
-    background: var(--parsec-color-light-danger-100);
+    background: ms.color('surface-error-default-subtle-hover');
 
-    .missing-ownership-label__icon,
+    .missing-ownership-label__icon {
+      color: ms.color('icon-error-default-hover');
+    }
+
     .missing-ownership-label__text {
-      color: var(--parsec-color-light-danger-700);
+      color: ms.color('text-error-default-hover');
     }
   }
 }

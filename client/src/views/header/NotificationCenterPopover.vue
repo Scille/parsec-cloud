@@ -4,14 +4,14 @@
   <div class="notification-center-container">
     <div class="notification-center">
       <div class="notification-center-header">
-        <ion-text class="notification-center-header__title title-h4">
+        <ion-text class="notification-center-header__title">
           {{ $msTranslate('notificationCenter.title') }}
         </ion-text>
-        <span class="notification-center-header__counter body-sm">
+        <span class="notification-center-header__counter">
           {{ unreadCount > 99 ? '+99' : unreadCount }}
         </span>
         <ion-toggle
-          class="notification-center-header__toggle dark small body-sm"
+          class="notification-center-header__toggle dark small"
           @ion-change="onlyReadToggle = !onlyReadToggle"
         >
           {{ $msTranslate('notificationCenter.readOnly') }}
@@ -23,7 +23,7 @@
           v-if="notifications.length === 0"
         >
           <ms-image :image="NoNotification" />
-          <ion-text class="body-lg">
+          <ion-text class="notification-center-content__empty-text">
             {{ $msTranslate('notificationCenter.noNotification') }}
           </ion-text>
         </div>
@@ -104,40 +104,43 @@ function onNotificationMouseOver(notification: Notification): void {
   display: flex;
   align-items: center;
   flex-direction: column;
-  --fill-color: var(--parsec-color-light-primary-900);
+  --fill-color: #{ms.color('icon-brand-default')};
   overflow: visible;
 }
 
 .notification-center {
   width: 100%;
-  border-radius: var(--parsec-radius-12);
+  border-radius: ms.radius('2xl');
   overflow: hidden;
 
   &-header {
-    background: var(--parsec-color-light-primary-800);
-    color: var(--parsec-color-light-primary-30);
-    padding: 1rem 1.5rem;
+    background: ms.color('surface-base-default-secondary');
+    color: ms.color('text-base-body');
+    padding: ms.spacing('padding-3xl') ms.spacing('padding-4xl');
     display: flex;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__title {
-      padding: 0;
+      @include ms.font('heading-h5');
+      padding: ms.spacing('padding-none');
       display: flex;
       align-items: center;
     }
 
     &__counter {
+      @include ms.font('body-sm-regular');
       margin-right: auto;
-      padding: 0 0.25rem;
-      background: var(--parsec-color-light-primary-30-opacity15);
-      border-radius: var(--parsec-radius-12);
+      padding: ms.spacing('padding-none') ms.spacing('padding-sm');
+      background: ms.color('surface-neutral-default-subtle-pressed');
+      border-radius: ms.radius('2xl');
       display: flex;
       align-items: center;
     }
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &__toggle {
-      color: var(--parsec-color-light-secondary-medium);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-neutral-default');
       margin-left: auto;
       display: flex;
       align-items: center;
@@ -145,27 +148,27 @@ function onNotificationMouseOver(notification: Notification): void {
 
       &::part(label) {
         transition: opacity 150ms ease-in-out;
-        opacity: 0.6;
-        margin-right: 0.5rem;
+        opacity: ms.opacity('6');
+        margin-right: ms.spacing('padding-lg');
       }
 
       &:hover,
       &.toggle-checked {
         &::part(label) {
-          opacity: 1;
+          opacity: ms.opacity('10');
         }
       }
     }
   }
 
   &-content {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-primary-900);
-    border-radius: 0 0 var(--parsec-radius-6) var(--parsec-radius-6);
+    background: ms.color('surface-base-default');
+    color: ms.color('text-brand-default');
+    border-radius: ms.radius('none') ms.radius('none') ms.radius('md') ms.radius('md');
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    padding: 0;
+    padding: ms.spacing('padding-none');
     height: 40vh;
     max-height: 25rem;
     transition: all 250ms ease-in-out;
@@ -175,9 +178,13 @@ function onNotificationMouseOver(notification: Notification): void {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       margin: auto;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
+    }
+
+    &__empty-text {
+      @include ms.font('body-lg-regular');
     }
   }
 }

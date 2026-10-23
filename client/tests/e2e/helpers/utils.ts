@@ -831,7 +831,7 @@ export async function checkUserContextMenu(
       : []),
     ...(userRole !== 'multi-users' ? ['Copy workspace roles'] : []),
     ...(userRole !== 'External' && !options?.isRevoked ? (userRole === 'multi-users' ? ['Change profiles'] : ['Change profile']) : []),
-    ...(userRole !== 'multi-users' ? ['View details'] : []),
+    ...(userRole !== 'multi-users' ? ['Details'] : []),
   ];
 
   await expect(menu).toBeVisible();

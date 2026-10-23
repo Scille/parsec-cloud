@@ -19,7 +19,7 @@
         :icon="business"
         class="tab-bar-menu-button__icon"
       />
-      <ion-text class="tab-bar-menu-button__text button-medium">
+      <ion-text class="tab-bar-menu-button__text">
         {{ $msTranslate('SideMenu.tabbar.workspaces') }}
       </ion-text>
     </div>
@@ -37,7 +37,7 @@
         :icon="folder"
         class="tab-bar-menu-button__icon"
       />
-      <ion-text class="tab-bar-menu-button__text button-medium">
+      <ion-text class="tab-bar-menu-button__text">
         {{ $msTranslate('SideMenu.tabbar.files') }}
       </ion-text>
     </div>
@@ -76,7 +76,7 @@
         :icon="prism"
         class="tab-bar-menu-button__icon"
       />
-      <ion-text class="tab-bar-menu-button__text button-medium">
+      <ion-text class="tab-bar-menu-button__text">
         {{ $msTranslate('SideMenu.tabbar.organization') }}
       </ion-text>
     </div>
@@ -89,7 +89,7 @@
         :icon="personCircle"
         class="tab-bar-menu-button__icon"
       />
-      <ion-text class="tab-bar-menu-button__text button-medium">
+      <ion-text class="tab-bar-menu-button__text">
         {{ userInfo ? userInfo.humanHandle.label : '' }}
       </ion-text>
     </div>
@@ -198,11 +198,11 @@ async function openMenuModal(): Promise<void> {
 
 <style lang="scss" scoped>
 .tab-bar-menu {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 0.5rem 1rem 1.5rem;
+  background: ms.color('surface-base-default');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
   justify-content: space-between;
   border: none;
-  border-top: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-top: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   position: relative;
   z-index: 20;
   width: 100%;
@@ -223,12 +223,12 @@ async function openMenuModal(): Promise<void> {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
     cursor: pointer;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
 
     &.active {
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default');
       position: relative;
 
       &::after {
@@ -239,13 +239,13 @@ async function openMenuModal(): Promise<void> {
         transform: translateX(-50%);
         width: 0.25rem;
         height: 0.25rem;
-        border-radius: var(--parsec-radius-circle);
-        background: var(--parsec-color-light-primary-600);
+        border-radius: ms.radius('full');
+        background: ms.color('text-brand-default');
       }
     }
 
     &.disabled {
-      opacity: 0.4;
+      opacity: ms.opacity('4');
       cursor: not-allowed;
     }
 
@@ -254,7 +254,7 @@ async function openMenuModal(): Promise<void> {
     }
 
     &__text {
-      font-size: 0.75rem;
+      @include ms.font('label-xs-medium');
       text-align: center;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -269,7 +269,7 @@ async function openMenuModal(): Promise<void> {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: ms.spacing('padding-none');
     margin: auto;
     border: none;
 
@@ -280,27 +280,27 @@ async function openMenuModal(): Promise<void> {
     .fab-button {
       width: 2.5rem;
       height: 2.5rem;
-      --background: var(--parsec-color-light-gradient-background);
-      --background-focused: var(--parsec-color-light-primary-700);
-      --background-activated: var(--parsec-color-light-secondary-white);
-      --border-radius: var(--parsec-radius-12);
+      --background: linear-gradient(113deg, #{ms.color('surface-gradient-from')} -1.49%, #{ms.color('surface-gradient-to')} 100%);
+      --background-focused: #{ms.color('surface-brand-default-pressed')};
+      --background-activated: #{ms.color('surface-base-default')};
+      --border-radius: #{ms.radius('2xl')};
       --box-shadow: var(--parsec-shadow-soft);
-      --color: var(--parsec-color-light-secondary-inversed-contrast);
+      --color: #{ms.color('text-on-color-heading')};
       --transition: all 0.2s ease-in-out;
 
       .fab-icon {
         transition: all 0.2s ease-in-out;
         transform: rotate(0deg);
-        --fill-color: var(--parsec-color-light-secondary-inversed-contrast);
+        --fill-color: #{ms.color('icon-on-color-heading')};
       }
 
       &.active {
-        --background: var(--parsec-color-light-primary-50);
-        --background-activated: var(--parsec-color-light-primary-600);
-        --color: var(--parsec-color-light-primary-600);
+        --background: #{ms.color('surface-brand-default-subtle-hover')};
+        --background-activated: #{ms.color('surface-brand-default-pressed')};
+        --color: #{ms.color('text-brand-default')};
 
         .fab-icon {
-          --fill-color: var(--parsec-color-light-primary-600);
+          --fill-color: #{ms.color('icon-brand-default')};
           transform: rotate(45deg);
         }
       }
@@ -311,11 +311,11 @@ async function openMenuModal(): Promise<void> {
       pointer-events: none;
 
       .fab-button {
-        --background: var(--parsec-color-light-secondary-text);
-        opacity: 0.4;
+        --background: #{ms.color('surface-neutral-default')};
+        opacity: ms.opacity('4');
 
         .fab-icon {
-          --fill-color: var(--parsec-color-light-secondary-white);
+          --fill-color: #{ms.color('icon-on-color-heading')};
         }
       }
     }

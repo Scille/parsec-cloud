@@ -21,7 +21,7 @@
         :validator="organizationValidator"
       />
 
-      <ion-text class="body org-name-criteria">
+      <ion-text class="org-name-criteria">
         {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
       </ion-text>
 
@@ -32,7 +32,7 @@
 
       <!-- error -->
       <ion-text
-        class="form-error body login-button-error"
+        class="form-error login-button-error"
         v-show="error"
       >
         <ion-icon
@@ -45,7 +45,7 @@
     <ion-footer class="organization-name-page-footer">
       <ion-text
         button
-        class="advanced-settings button-medium"
+        class="advanced-settings"
         @click="advancedSettings = !advancedSettings"
       >
         <ion-icon :icon="advancedSettings ? remove : add" />
@@ -62,6 +62,7 @@
           {{ $msTranslate('CreateOrganization.button.previous') }}
           <ion-icon
             slot="start"
+            class="button-icon-left"
             :icon="chevronBack"
             size="small"
           />
@@ -78,6 +79,7 @@
           </span>
           <ion-icon
             slot="start"
+            class="button-icon-left"
             :icon="chevronForward"
             size="small"
           />
@@ -150,27 +152,33 @@ onUnmounted(() => {
 .organization-name-page-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   width: 100%;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.5rem 2rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.5rem 1.5rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-4xl');
   }
 }
 
+.login-button-error {
+  @include ms.font('body-md-regular');
+}
+
 .org-name-criteria {
-  color: var(--parsec-color-light-secondary-hard-grey);
+  @include ms.font('body-md-regular');
+  color: ms.color('text-base-description');
 }
 
 .advanced-settings {
+  @include ms.font('label-md-medium');
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   margin-right: auto;
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-description');
   cursor: pointer;
 
   @include ms.responsive-breakpoint('sm') {

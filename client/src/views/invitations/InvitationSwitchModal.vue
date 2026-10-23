@@ -16,8 +16,13 @@
           :icon="invitationsCount > 0 ? mailUnread : mail"
           class="switch-item__icon"
         />
-        <ion-text class="subtitles-normal">{{ $msTranslate('InvitationsPage.emailInvitation.tab') }}</ion-text>
-        <span class="switch-item__count button-small">{{ invitationsCount }}</span>
+        <ion-text class="switch-item__label">{{ $msTranslate('InvitationsPage.emailInvitation.tab') }}</ion-text>
+        <span
+          class="switch-item__count"
+          :class="{ empty: invitationsCount === 0 }"
+        >
+          {{ invitationsCount }}
+        </span>
 
         <ion-icon
           v-if="invitationView === InvitationView.EmailInvitation"
@@ -36,8 +41,13 @@
           :icon="idCard"
           class="switch-item__icon"
         />
-        <ion-text class="subtitles-normal">{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tab') }}</ion-text>
-        <span class="switch-item__count button-small">{{ asyncEnrollmentRequestsCount }}</span>
+        <ion-text class="switch-item__label">{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tab') }}</ion-text>
+        <span
+          class="switch-item__count"
+          :class="{ empty: asyncEnrollmentRequestsCount === 0 }"
+        >
+          {{ asyncEnrollmentRequestsCount }}
+        </span>
 
         <ion-icon
           v-if="invitationView === InvitationView.AsyncEnrollmentRequest"
@@ -48,7 +58,7 @@
     </ion-radio-group>
 
     <ion-button
-      class="invitation-switch-button button-medium button-default"
+      class="invitation-switch-button"
       size="default"
       fill="solid"
       @click="validate"
@@ -82,33 +92,32 @@ async function validate(): Promise<void> {
 .invitation-switch-modal {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
 }
 
 .invitation-switch-content {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   .switch-item {
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     font-size: var(--parsec-font-size-md);
-    color: var(--parsec-color-light-secondary-soft-text);
-    padding: 1rem;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-12);
+    color: ms.color('text-neutral-default');
+    padding: ms.spacing('padding-3xl');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl');
     width: 100%;
-    margin-bottom: 1rem;
 
     &::part(label) {
-      padding: 0;
+      padding: ms.spacing('padding-none');
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
       margin: 0;
       width: 100%;
     }
@@ -117,44 +126,50 @@ async function validate(): Promise<void> {
       display: none;
     }
 
+    &__label {
+      @include ms.font('body-lg-medium');
+    }
+
     &__icon {
       font-size: 1.25rem;
-      color: var(--parsec-color-light-secondary-soft-text);
+      color: ms.color('text-neutral-default');
     }
 
     &__count {
-      background: var(--parsec-color-light-secondary-medium);
-      color: var(--parsec-color-light-secondary-text);
-      border-radius: 1rem;
-      padding: 0.125rem 0.25rem;
+      @include ms.font('label-sm-medium');
+      background: ms.color('surface-error-default');
+      color: ms.color('text-on-color-label');
+      border-radius: ms.radius('3xl');
+      padding: ms.spacing('padding-xs') ms.spacing('padding-sm');
       min-width: 1.25rem;
       text-align: center;
+
+      &.empty {
+        background: ms.color('surface-neutral-default-subtle');
+        color: ms.color('text-base-description');
+      }
     }
 
     &__check-icon {
       font-size: 1.25rem;
       margin-left: auto;
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default');
     }
 
     &.radio-checked {
-      border-color: var(--parsec-color-light-primary-600);
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-600);
+      border-color: ms.color('border-brand-default');
+      background: ms.color('surface-brand-default-subtle');
+      color: ms.color('text-brand-default');
 
       .switch-item__icon {
-        color: var(--parsec-color-light-primary-600);
-      }
-
-      .switch-item__count {
-        background: var(--parsec-color-light-primary-100);
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('text-brand-default');
       }
     }
   }
 }
 
 .invitation-switch-button {
+  @include ms.font('label-md-medium');
   width: 100%;
 }
 </style>

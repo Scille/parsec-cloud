@@ -14,10 +14,7 @@
       class="logo-img"
     />
     <div class="sidebar-bottom">
-      <ion-text
-        class="sidebar-tagline "
-        :class="customLogo ? 'subtitles-normal' : 'subtitles-lg'"
-      >
+      <ion-text class="sidebar-tagline">
         {{ $msTranslate(customLogo ? 'HomePage.sidebar.poweredBy' : 'HomePage.sidebar.tagline') }}
       </ion-text>
       <ms-image
@@ -51,7 +48,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .sidebar-container {
-  background: var(--parsec-color-light-gradient);
+  background: linear-gradient(113.02deg, ms.color('surface-gradient-from') -1.49%, ms.color('surface-gradient-to') 100%);
   width: 100%;
   max-width: 40rem;
   height: 100%;
@@ -60,8 +57,13 @@ onMounted(() => {
   align-items: center;
   justify-content: end;
   position: relative;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   transition: all 0.3s ease;
+
+  body.ms-theme-dark & {
+    background: linear-gradient(113deg, #{ms.color('surface-brand-default-subtle-pressed')} -1.49%, #{ms.color('surface-base-page')} 100%);
+    border-right: 1px solid ms.color('border-neutral-on-color');
+  }
 
   @include ms.responsive-breakpoint('xxl') {
     max-width: 35rem;
@@ -105,7 +107,7 @@ onMounted(() => {
   .sidebar-bottom {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     position: relative;
     z-index: 3;
   }
@@ -117,10 +119,11 @@ onMounted(() => {
   }
 
   .sidebar-tagline {
-    color: var(--parsec-color-light-secondary-white);
+    @include ms.font('body-xl-medium');
+    color: ms.color('text-on-color-heading');
     text-align: center;
     margin-bottom: 30%;
-    margin-inline: 2rem;
+    margin-inline: ms.spacing('padding-5xl');
   }
 }
 
@@ -173,10 +176,11 @@ onMounted(() => {
   .sidebar-bottom {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 
   .sidebar-tagline {
+    @include ms.font('body-lg-medium');
     position: relative;
     z-index: 1;
     margin-bottom: 0;

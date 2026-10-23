@@ -22,7 +22,7 @@
           v-if="state === JoinRequestState.ChooseMethod"
           class="choose-method"
         >
-          <ion-text class="choose-method-text subtitles-normal">
+          <ion-text class="choose-method-text">
             {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.chooseMethod') }}
           </ion-text>
           <div class="choose-method-options">
@@ -32,7 +32,9 @@
               class="choose-method-options-item"
               :class="{ selected: method === SubmitAsyncEnrollmentIdentityStrategyTag.PKI }"
             >
-              <span class="title-h4">{{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.label') }}</span>
+              <span class="choose-method-options-item__label">{{
+                $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.label')
+              }}</span>
               <ion-icon
                 class="choose-method-options-item__icon"
                 v-if="method === SubmitAsyncEnrollmentIdentityStrategyTag.PKI"
@@ -45,7 +47,9 @@
               class="choose-method-options-item"
               :class="{ selected: method === SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao }"
             >
-              <span class="title-h4">{{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.label') }}</span>
+              <span class="choose-method-options-item__label">{{
+                $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.label')
+              }}</span>
               <ion-icon
                 v-if="method === SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao"
                 :icon="checkmarkCircle"
@@ -64,10 +68,10 @@
               class="async-authentication-modal-header__icon"
             />
             <div class="async-authentication-modal-header-text">
-              <ion-text class="async-authentication-modal-header-text__title title-h4">
+              <ion-text class="async-authentication-modal-header-text__title">
                 {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.title') }}
               </ion-text>
-              <ion-text class="async-authentication-modal-header-text__description body">
+              <ion-text class="async-authentication-modal-header-text__description">
                 {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.description') }}
               </ion-text>
             </div>
@@ -89,7 +93,7 @@
                 class="async-authentication-modal-header__icon"
               />
               <div class="async-authentication-modal-header-text">
-                <ion-text class="async-authentication-modal-header-text__title title-h4">
+                <ion-text class="async-authentication-modal-header-text__title">
                   {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.title') }}
                 </ion-text>
               </div>
@@ -105,10 +109,10 @@
             v-if="openBaoClient && openBaoEmails?.at(0)"
           >
             <div class="user-information-header">
-              <ion-text class="user-information-header__title title-h4">
+              <ion-text class="user-information-header__title">
                 {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.join') }}
               </ion-text>
-              <div class="user-information-header-connected title-h4">
+              <div class="user-information-header-connected">
                 <ion-icon
                   :icon="checkmarkCircle"
                   class="user-information-header-connected__icon"
@@ -373,31 +377,33 @@ async function onPreviousClicked(): Promise<boolean> {
 .modal-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 
 .choose-method {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-text {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-lg-medium');
+
+    color: ms.color('text-base-description');
   }
 
   &-options {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     &-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem;
-      color: var(--parsec-color-light-secondary-hard-grey);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-12);
+      padding: ms.spacing('padding-3xl');
+      color: ms.color('text-base-description');
+      border: ms.border('thin') solid ms.color('border-base-default');
+      border-radius: ms.radius('2xl');
       cursor: pointer;
       user-select: none;
       transition:
@@ -405,19 +411,23 @@ async function onPreviousClicked(): Promise<boolean> {
         border-color 0.2s;
 
       &:hover {
-        background-color: var(--parsec-color-light-secondary-premiere);
-        border-color: var(--parsec-color-light-secondary-light);
+        background-color: ms.color('surface-neutral-default-subtle-hover');
+        border-color: ms.color('border-base-default-hover');
+      }
+
+      &__label {
+        @include ms.font('heading-h5');
       }
 
       &__icon {
         font-size: 1.125rem;
-        color: var(--parsec-color-light-primary-600);
+        color: ms.color('icon-brand-default');
       }
 
       &.selected {
-        background-color: var(--parsec-color-light-primary-50);
-        border-color: var(--parsec-color-light-primary-600);
-        color: var(--parsec-color-light-primary-600);
+        background-color: ms.color('surface-brand-default-subtle');
+        border-color: ms.color('border-brand-default');
+        color: ms.color('text-brand-default');
       }
     }
   }
@@ -428,7 +438,7 @@ async function onPreviousClicked(): Promise<boolean> {
   flex-direction: column;
   align-items: center;
   overflow: hidden;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-sso {
     .async-authentication-modal-header {
@@ -441,39 +451,44 @@ async function onPreviousClicked(): Promise<boolean> {
 .user-information {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   width: 100%;
 
   &-header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
-    padding: 1rem;
-    color: var(--parsec-color-light-secondary-hard-grey);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-12);
-    background: var(--parsec-color-light-secondary-background);
-    box-shadow: var(--parsec-shadow-input);
+    padding: ms.spacing('padding-3xl');
+    color: ms.color('text-base-description');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl');
+    background: ms.color('surface-base-page');
+    box-shadow: ms.shadow('input');
     margin-bottom: 1rem;
 
     &__title {
-      color: var(--parsec-color-light-primary-700);
+      @include ms.font('heading-h5');
+
+      color: ms.color('text-brand-default');
     }
 
     &-connected {
+      @include ms.font('heading-h5');
+
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__icon {
         font-size: 1.125rem;
-        color: var(--parsec-color-light-success-700);
+        color: ms.color('icon-success-default');
       }
 
       &__label {
-        font-weight: 500;
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('body-lg-medium');
+
+        color: ms.color('text-base-body');
       }
     }
   }

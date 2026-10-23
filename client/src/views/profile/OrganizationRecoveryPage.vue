@@ -9,15 +9,15 @@
       >
         <div class="recovery-method-content">
           <ms-image
-            :image="RecoveryFileIcon"
+            :image="isDarkTheme ? RecoveryFileIconDark : RecoveryFileIcon"
             class="recovery-method-content-image"
           />
 
           <div class="recovery-method-content-text">
-            <ion-text class="recovery-method-content-text__title title-h4">
+            <ion-text class="recovery-method-content-text__title">
               {{ $msTranslate('OrganizationRecovery.file.title') }}
             </ion-text>
-            <ion-text class="recovery-method-content-text__description body-lg">
+            <ion-text class="recovery-method-content-text__description">
               {{ $msTranslate('OrganizationRecovery.file.description') }}
             </ion-text>
           </div>
@@ -25,16 +25,15 @@
 
         <div class="recovery-method-actions">
           <ion-button
-            class="button-normal button-default action-button"
+            class="action-button color-secondary"
             :class="{ actionDone: hasRecoveryDevice }"
             @click="exportRecoveryDevice"
-            fill="clear"
           >
             {{ $msTranslate('OrganizationRecovery.file.action') }}
           </ion-button>
           <ion-text
             v-if="hasRecoveryDevice"
-            class="button-medium action-validation"
+            class="action-validation"
           >
             <ion-icon
               :icon="checkmarkCircle"
@@ -46,14 +45,14 @@
 
         <div class="recovery-method-state">
           <ion-text
-            class="badge-active button-medium"
+            class="badge-active"
             v-if="hasRecoveryDevice"
           >
             {{ $msTranslate('OrganizationRecovery.state.active') }}
           </ion-text>
           <ion-text
             v-else
-            class="badge-inactive button-medium"
+            class="badge-inactive"
           >
             {{ $msTranslate('OrganizationRecovery.state.inactive') }}
           </ion-text>
@@ -68,15 +67,15 @@
       >
         <div class="recovery-method-content">
           <ms-image
-            :image="RecoveryDeviceIcon"
+            :image="isDarkTheme ? RecoveryDeviceIconDark : RecoveryDeviceIcon"
             class="recovery-method-content-image"
           />
 
           <div class="recovery-method-content-text">
-            <ion-text class="recovery-method-content-text__title title-h4">
+            <ion-text class="recovery-method-content-text__title">
               {{ $msTranslate('OrganizationRecovery.device.title') }}
             </ion-text>
-            <ion-text class="recovery-method-content-text__description body-lg">
+            <ion-text class="recovery-method-content-text__description">
               {{ $msTranslate('OrganizationRecovery.device.description') }}
             </ion-text>
           </div>
@@ -84,16 +83,15 @@
 
         <div class="recovery-method-actions">
           <ion-button
-            class="button-normal button-default action-button"
+            class="action-button color-secondary"
             :class="{ actionDone: hasSecondaryDevice }"
             @click="onAddDeviceClick()"
-            fill="clear"
           >
             {{ $msTranslate('OrganizationRecovery.device.action') }}
           </ion-button>
           <ion-text
             v-if="hasSecondaryDevice && !queryingDevices"
-            class="button-medium action-validation"
+            class="action-validation"
             @click="navigateToDevicesPage()"
           >
             <ion-icon
@@ -115,14 +113,14 @@
         <div class="recovery-method-state">
           <ms-spinner v-if="queryingDevices" />
           <ion-text
-            class="badge-active button-medium"
+            class="badge-active"
             v-else-if="hasSecondaryDevice && !queryingDevices"
           >
             {{ $msTranslate('OrganizationRecovery.state.active') }}
           </ion-text>
           <ion-text
             v-else
-            class="badge-inactive button-medium"
+            class="badge-inactive"
           >
             {{ $msTranslate('OrganizationRecovery.state.inactive') }}
           </ion-text>
@@ -137,15 +135,15 @@
       <div class="recovery-method">
         <div class="recovery-method-content">
           <ms-image
-            :image="RecoveryTrustIcon"
+            :image="isDarkTheme ? RecoveryTrustIconDark : RecoveryTrustIcon"
             class="recovery-method-content-image"
           />
 
           <div class="recovery-method-content-text">
-            <ion-text class="recovery-method-content-text__title title-h4">
+            <ion-text class="recovery-method-content-text__title">
               {{ $msTranslate('OrganizationRecovery.shamir.title') }}
             </ion-text>
-            <ion-text class="recovery-method-content-text__description body-lg">
+            <ion-text class="recovery-method-content-text__description">
               {{
                 $msTranslate({
                   key: 'OrganizationRecovery.shamir.description',
@@ -158,16 +156,15 @@
 
         <div class="recovery-method-actions">
           <ion-button
-            class="button-normal button-default action-button"
-            fill="clear"
+            class="action-button color-secondary"
             @click="openShamirRecoveryModal(ShamirTab.Self)"
           >
             {{ $msTranslate('OrganizationRecovery.shamir.action') }}
           </ion-button>
           <ion-button
             v-show="!isExternal"
-            class="button-normal button-default action-button actionDone"
-            fill="clear"
+            class="action-button color-secondary"
+            fill="outline"
             @click="openShamirRecoveryModal(ShamirTab.Others)"
           >
             {{ $msTranslate('OrganizationRecovery.shamir.actionSecondary') }}
@@ -176,14 +173,14 @@
 
         <div class="recovery-method-state">
           <ion-text
-            class="badge-active button-medium"
+            class="badge-active"
             v-if="shamirInfo?.isUsable()"
           >
             {{ $msTranslate('OrganizationRecovery.state.active') }}
           </ion-text>
           <ion-text
             v-if="shamirInfo && !shamirInfo.isUsable()"
-            class="badge-inactive button-medium"
+            class="badge-inactive"
           >
             {{ $msTranslate('OrganizationRecovery.state.inactive') }}
           </ion-text>
@@ -195,8 +192,11 @@
 
 <script setup lang="ts">
 import RecoveryDeviceIcon from '@/assets/images/recovery-device-icon.svg?raw';
+import RecoveryDeviceIconDark from '@/assets/images/recovery-device-icon-dark.svg?raw';
 import RecoveryFileIcon from '@/assets/images/recovery-file-icon.svg?raw';
+import RecoveryFileIconDark from '@/assets/images/recovery-file-icon-dark.svg?raw';
 import RecoveryTrustIcon from '@/assets/images/recovery-trusted-user-icon.svg?raw';
+import RecoveryTrustIconDark from '@/assets/images/recovery-trusted-user-icon-dark.svg?raw';
 import { ShamirTab } from '@/components/profile/types';
 import {
   getClientInfo,
@@ -216,11 +216,12 @@ import ExportRecoveryDevice from '@/views/profile/ExportRecoveryDeviceModal.vue'
 import ShamirRecoveryModal from '@/views/profile/ShamirRecoveryModal.vue';
 import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { Answer, askQuestion, MsImage, MsModalResult, MsSpinner, useWindowSize } from 'megashark-lib';
+import { Answer, askQuestion, MsImage, MsModalResult, MsSpinner, useTheme, useWindowSize } from 'megashark-lib';
 import { computed, inject, onMounted, Ref, ref } from 'vue';
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+const { isDarkTheme } = useTheme();
 const { isLargeDisplay } = useWindowSize();
 
 const shamirThreshold = ref(3);
@@ -360,12 +361,12 @@ async function onAddDeviceClick(): Promise<void> {
 .organization-recovery-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 
 .recovery-section {
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page');
   padding: 1.75rem;
   box-shadow:
     0 1px 1px 0 rgba(0, 0, 0, 0.05),
@@ -377,11 +378,11 @@ async function onAddDeviceClick(): Promise<void> {
   display: flex;
   position: relative;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-content {
     display: flex;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     &-image {
       width: fit-content;
@@ -397,17 +398,18 @@ async function onAddDeviceClick(): Promise<void> {
     &-text {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
 
       &__title {
-        color: var(--parsec-color-light-secondary-text);
-        padding-right: 3rem;
+        @include ms.font('heading-h5');
+        color: ms.color('text-base-heading');
+        padding-right: ms.spacing('padding-7xl');
       }
 
       &__description {
-        color: var(--parsec-color-light-secondary-hard-grey);
-        font-size: 0.9375rem;
-        padding-right: 2rem;
+        @include ms.font('body-lg-regular');
+        color: ms.color('text-base-description');
+        padding-right: ms.spacing('padding-5xl');
 
         @include ms.responsive-breakpoint('md') {
           padding-right: 0;
@@ -421,7 +423,7 @@ async function onAddDeviceClick(): Promise<void> {
     align-items: center;
     flex-wrap: wrap;
     margin-left: 3.75rem;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     @include ms.responsive-breakpoint('md') {
       margin-left: 0;
@@ -433,35 +435,21 @@ async function onAddDeviceClick(): Promise<void> {
     }
 
     .action-button {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
-      color: var(--parsec-color-light-secondary-white);
-
-      &.actionDone {
-        --background: var(--parsec-color-light-secondary-background);
-        --background-hover: var(--parsec-color-light-secondary-medium);
-        box-shadow:
-          0 1px 1px 0 rgba(0, 0, 0, 0.05),
-          0 1px 4px 0 rgba(0, 0, 0, 0.03),
-          0 0 1px 0 rgba(0, 0, 0, 0.2);
-        color: var(--parsec-color-light-secondary-text);
-        border-radius: var(--parsec-radius-8);
-      }
-
       @include ms.responsive-breakpoint('md') {
         width: 100%;
       }
     }
 
     .action-validation {
+      @include ms.font('label-md-medium');
       display: flex;
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-success-default');
       align-items: center;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
 
       &-icon {
         font-size: 1rem;
-        color: var(--parsec-color-light-success-700);
+        color: ms.color('icon-success-default');
       }
     }
   }
@@ -473,20 +461,21 @@ async function onAddDeviceClick(): Promise<void> {
     position: absolute;
 
     [class*='badge-'] {
+      @include ms.font('label-md-medium');
       flex-shrink: 0;
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--parsec-radius-12);
+      padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+      border-radius: ms.radius('2xl');
       white-space: nowrap;
     }
 
     .badge-active {
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-500);
+      background: ms.color('surface-brand-default-subtle');
+      color: ms.color('text-brand-default');
     }
 
     .badge-inactive {
-      color: var(--parsec-color-light-danger-500);
-      background: var(--parsec-color-light-danger-50);
+      color: ms.color('text-error-default');
+      background: ms.color('surface-error-default-subtle');
     }
   }
 }
@@ -501,37 +490,37 @@ async function onAddDeviceClick(): Promise<void> {
 .restore-password {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__description {
     margin-top: -0.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-hard-grey);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-base-description');
   }
 
   &__advice {
     display: flex;
     width: 100%;
     align-items: center;
-    background: var(--parsec-color-light-info-50);
-    padding: 0.625rem 0.75rem;
-    gap: 0.5rem;
-    border-radius: var(--parsec-radius-8);
-    color: var(--parsec-color-light-info-500);
+    background: ms.color('surface-information-default-subtle-hover');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-2xl');
+    gap: ms.spacing('gap-lg');
+    border-radius: ms.radius('lg');
+    color: ms.color('text-information-default');
 
     .advice-icon {
       font-size: 1rem;
-      color: var(--parsec-color-light-info-500);
+      color: ms.color('icon-information-default');
       flex-shrink: 0;
     }
   }
 
   &-button {
-    --background: var(--parsec-color-light-secondary-text);
-    --background-hover: var(--parsec-color-light-secondary-contrast);
-    color: var(--parsec-color-light-secondary-white);
+    --background: #{ms.color('surface-neutral-default')};
+    --background-hover: #{ms.color('surface-neutral-default-hover')};
+    color: ms.color('text-neutral-on-color');
     width: fit-content;
 
     @include ms.responsive-breakpoint('xs') {

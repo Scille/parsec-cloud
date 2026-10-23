@@ -14,7 +14,7 @@
               class="list-group-item__icon"
               :icon="addCircle"
             />
-            <ion-text class="button-large list-group-item__label">
+            <ion-text class="list-group-item__label">
               {{ $msTranslate('WorkspacesPage.createWorkspace') }}
             </ion-text>
           </ion-item>

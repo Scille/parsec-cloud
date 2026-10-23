@@ -26,11 +26,11 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
-          class="modal-header__text body"
+          class="modal-header__text"
           v-if="steps[pageStep]?.subtitle"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
@@ -63,8 +63,8 @@
           </ms-report-text>
 
           <div class="step-info">
-            <ion-text class="step-info__title title-h4">{{ $msTranslate('DevicesPage.greet.step1.title') }}</ion-text>
-            <ion-text class="step-info__subtitle body-lg">{{ $msTranslate('DevicesPage.greet.step1.description') }}</ion-text>
+            <ion-text class="step-info__title">{{ $msTranslate('DevicesPage.greet.step1.title') }}</ion-text>
+            <ion-text class="step-info__subtitle">{{ $msTranslate('DevicesPage.greet.step1.description') }}</ion-text>
           </div>
 
           <div class="first-step-content">
@@ -88,22 +88,25 @@
                 />
               </figure>
               <div class="divider">
-                <ion-text class="title-h4">
+                <ion-text>
                   {{ $msTranslate('FoldersPage.importModal.or') }}
                 </ion-text>
               </div>
               <!-- right element: invite link, copy button, email button -->
               <div class="input-action">
-                <ion-text class="input-action-text form-input">{{ greeter.invitationLink }}</ion-text>
+                <div class="input-action-text-container">
+                  <ion-text class="input-action-text">{{ greeter.invitationLink }}</ion-text>
+                </div>
                 <div class="input-action-buttons">
                   <ion-button
+                    class="input-action-button color-secondary"
+                    fill="clear"
                     id="copy-link-btn"
                     @click="copyLink"
                     :disabled="linkCopiedToClipboard !== undefined"
-                    class="input-action-button"
                   >
                     <ion-icon
-                      class="button-icon"
+                      class="button-icon button-icon-left"
                       :icon="linkCopiedToClipboard ? checkmarkCircle : copy"
                     />
                     <span v-show="linkCopiedToClipboard === undefined">
@@ -114,13 +117,14 @@
                     </span>
                   </ion-button>
                   <ion-button
-                    class="input-action-button"
+                    class="input-action-button color-secondary"
+                    fill="outline"
                     :class="isEmailSent && elapsedCount === 0 ? 'button-clicked' : ''"
                     @click="sendEmail"
                     :disabled="isEmailSent && elapsedCount > 0"
                   >
                     <ion-icon
-                      class="button-icon"
+                      class="button-icon button-icon-left"
                       v-if="!(isEmailSent && elapsedCount > 0)"
                       :icon="mail"
                     />
@@ -139,7 +143,7 @@
 
               <ion-text
                 v-if="clipboardNotAvailable"
-                class="step-link-copy-error body-sm"
+                class="step-link-copy-error"
               >
                 {{ $msTranslate('DevicesPage.greet.linkNotCopiedToClipboard') }}
               </ion-text>
@@ -201,7 +205,6 @@
         <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
-            size="default"
             id="next-button"
             v-show="nextButtonIsVisible"
             @click="nextStep()"
@@ -581,32 +584,48 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.modal-header__title {
+  @include ms.font('heading-h4');
+}
+
+.modal-header__text {
+  @include ms.font('body-md-regular');
+}
+
 .first-step {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   width: 100%;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1rem;
+    padding-inline: ms.spacing('padding-3xl');
   }
 
   .step-info {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-base-body');
+
+    &__title {
+      @include ms.font('heading-h5');
+    }
+
+    &__subtitle {
+      @include ms.font('body-lg-regular');
+    }
   }
 
   .step-link {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    background: var(--parsec-color-light-secondary-background);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 1rem;
-    border-radius: var(--parsec-radius-12);
+    gap: ms.spacing('gap-3xl');
+    background: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    padding: ms.spacing('padding-3xl');
+    border-radius: ms.radius('2xl');
     //should be replaced by a shadow token --parsec-shadow-filter when it will be available
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
 
@@ -616,18 +635,54 @@ onMounted(async () => {
       height: 11rem;
     }
 
+    .input-action {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+
+      &-text-container {
+        background-color: ms.color('surface-neutral-default-subtle');
+        padding: ms.spacing('padding-xl');
+        border-radius: ms.radius('lg');
+        border: ms.border('thin') solid ms.color('border-base-default');
+      }
+
+      &-text {
+        @include ms.font('label-md-medium');
+        color: ms.color('text-base-label');
+        word-break: break-all;
+      }
+
+      &-buttons {
+        display: flex;
+        gap: ms.spacing('gap-2xl');
+        justify-content: flex-end;
+        margin-top: 1rem;
+      }
+
+      .button-icon {
+        width: 1rem;
+        --fill-color: #{ms.color('icon-neutral-default')};
+      }
+    }
+
+    .step-link-copy-error {
+      @include ms.font('body-sm-regular');
+    }
+
     .divider {
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       ion-text {
+        @include ms.font('heading-h5');
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-secondary-light);
+        gap: ms.spacing('gap-lg');
+        color: ms.color('text-disabled-default');
         text-transform: uppercase;
 
         &::before,
@@ -635,7 +690,7 @@ onMounted(async () => {
           content: '';
           margin: auto;
           display: flex;
-          background: var(--parsec-color-light-secondary-light);
+          background: ms.color('border-disabled-default');
         }
 
         &::before {
@@ -649,69 +704,6 @@ onMounted(async () => {
         }
       }
     }
-
-    &-copy {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 1rem;
-      width: 100%;
-      color: var(--parsec-color-light-secondary-soft-text);
-      background-color: var(--parsec-color-light-secondary-white);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-12);
-      padding: 0.75rem 0.5rem 0.75rem 0.75rem;
-      align-items: center;
-      overflow: hidden;
-      min-height: 2.5rem;
-
-      &-text {
-        text-wrap: wrap;
-        width: 100%;
-      }
-
-      &-buttons {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        width: 100%;
-      }
-
-      .button-item {
-        border-radius: var(--parsec-radius-8);
-        background: var(--parsec-color-light-primary-50);
-        color: var(--parsec-color-light-primary-600);
-        cursor: pointer;
-        flex-grow: 1;
-
-        &.button-clicked {
-          background: transparent;
-          border: 1px solid var(--parsec-color-light-primary-100);
-        }
-
-        &::part(native) {
-          padding: 0.75rem 1rem;
-          --background: none;
-          --background-hover: none;
-          --border-radius: none;
-        }
-
-        &:hover {
-          background: var(--parsec-color-light-primary-100);
-        }
-
-        .button-icon {
-          color: var(--parsec-color-light-primary-600);
-          font-size: 1rem;
-          margin-right: 0.5rem;
-          flex-shrink: 0;
-        }
-      }
-
-      &-error {
-        color: var(--parsec-color-light-danger-500);
-      }
-    }
   }
 }
 
@@ -719,9 +711,9 @@ onMounted(async () => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  border-radius: var(--parsec-radius-6);
+  border-radius: ms.radius('md');
   justify-content: space-between;
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-body');
   width: 20rem;
 
   @include ms.responsive-breakpoint('sm') {
@@ -730,6 +722,6 @@ onMounted(async () => {
 }
 
 .spinner {
-  padding-bottom: 0.5rem;
+  padding-bottom: ms.spacing('padding-lg');
 }
 </style>

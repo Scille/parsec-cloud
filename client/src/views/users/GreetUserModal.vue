@@ -26,11 +26,11 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
-          class="modal-header__text body"
+          class="modal-header__text"
           v-if="steps[pageStep]?.subtitle"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
@@ -130,14 +130,14 @@
           v-if="guestInfoPageRef"
           class="final-step"
         >
-          <ion-text class="user-name title-h4">{{ guestInfoPageRef.fullName }}</ion-text>
+          <ion-text class="user-name">{{ guestInfoPageRef.fullName }}</ion-text>
           <div class="user-info">
             <div class="user-info__email">
-              <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
-              <ion-text class="info-cell cell">{{ guestInfoPageRef.email }}</ion-text>
+              <ion-text class="info-label">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
+              <ion-text class="info-cell">{{ guestInfoPageRef.email }}</ion-text>
             </div>
             <div class="user-info__role">
-              <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
+              <ion-text class="info-label">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
               <user-profile-tag :profile="profile ? profile : UserProfile.Outsider" />
             </div>
           </div>
@@ -523,15 +523,23 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.modal-header__title {
+  @include ms.font('heading-h4');
+}
+
+.modal-header__text {
+  @include ms.font('body-md-regular');
+}
+
 .final-step {
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  color: var(--parsec-color-light-secondary-text);
-  background-color: var(--parsec-color-light-secondary-inversed-contrast);
-  box-shadow: var(--parsec-shadow-card);
-  border-radius: var(--parsec-radius-8);
+  color: ms.color('text-base-body');
+  background-color: ms.color('surface-base-default');
+  box-shadow: ms.shadow('card');
+  border-radius: ms.radius('lg');
   overflow: hidden;
 
   // @include ms.responsive-breakpoint('sm') {
@@ -539,33 +547,39 @@ onMounted(async () => {
   // }
 
   .user-name {
-    padding: 1rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-    background-color: var(--parsec-color-light-secondary-premiere);
+    @include ms.font('heading-h5');
+
+    padding: ms.spacing('padding-3xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
+    background-color: ms.color('surface-neutral-default-subtle');
   }
 
   .user-info {
     display: flex;
     flex-direction: column;
-    border-radius: var(--parsec-radius-6);
+    border-radius: ms.radius('md');
 
     & > [class^='user-info'] {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem;
+      gap: ms.spacing('gap-2xl');
+      padding: ms.spacing('padding-2xl');
 
       &:not(:last-child) {
-        border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+        border-bottom: ms.border('thin') solid ms.color('border-base-default');
       }
     }
 
     .info-label {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-regular');
+
+      color: ms.color('text-base-description');
       flex-shrink: 0;
     }
 
     .info-cell {
+      @include ms.font('body-md-medium');
+
       font-weight: 600;
       overflow: hidden;
       text-overflow: ellipsis;

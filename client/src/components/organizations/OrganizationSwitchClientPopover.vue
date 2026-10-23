@@ -2,10 +2,10 @@
 
 <template>
   <div class="popover-switch">
-    <ion-title class="popover-switch-title body">{{ $msTranslate('clientArea.sidebar.switchOrganization.title') }}</ion-title>
+    <ion-title class="popover-switch-title">{{ $msTranslate('clientArea.sidebar.switchOrganization.title') }}</ion-title>
     <ion-list class="organization-list">
       <ion-item
-        class="organization-list__item body"
+        class="organization-list__item"
         button
         lines="none"
         v-for="org in organizations"
@@ -21,14 +21,11 @@
             <span>{{ org.name.substring(0, 2) }}</span>
           </ion-avatar>
           <ion-label class="organization-name">
-            <span
-              class="subtitles-normal"
-              v-if="!isDefaultOrganization(org)"
-            >
+            <span v-if="!isDefaultOrganization(org)">
               {{ org.name }}
             </span>
             <span
-              class="subtitles-normal all-organization"
+              class="all-organization"
               v-else
             >
               {{ $msTranslate('clientArea.sidebar.allOrganization') }}
@@ -55,7 +52,7 @@
       v-show="false"
     >
       <ion-item
-        class="organization-list__item body"
+        class="organization-list__item"
         button
         lines="none"
         @click="openCreateOrganizationModal"
@@ -68,7 +65,7 @@
             />
           </div>
           <ion-label class="organization-name">
-            <span class="subtitles-normal">
+            <span>
               {{ $msTranslate('clientArea.sidebar.switchOrganization.create') }}
             </span>
           </ion-label>
@@ -112,17 +109,18 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
 <style lang="scss" scoped>
 .popover-switch {
-  padding: 1rem;
+  padding: ms.spacing('padding-3xl');
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   overflow-y: auto;
-  background-color: var(--parsec-color-light-secondary-inversed-contrast);
+  background-color: ms.color('surface-base-default');
   max-height: 19rem;
 
   &-title {
-    color: var(--parsec-color-light-secondary-grey);
-    padding: 0;
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
+    padding: ms.spacing('padding-none');
   }
 }
 
@@ -130,22 +128,23 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   display: flex;
   flex-direction: column;
   background: transparent;
-  gap: 0.25rem;
-  padding: 0;
+  gap: ms.spacing('gap-sm');
+  padding: ms.spacing('padding-none');
 
   &__item {
+    @include ms.font('body-md-regular');
     --background: transparent;
-    --background-hover: var(--parsec-color-light-secondary-premiere);
-    --background-hover-opacity: 1;
-    border-radius: var(--parsec-radius-8);
+    --background-hover: #{ms.color('surface-base-page-secondary')};
+    --background-hover-opacity: #{ms.opacity('10')};
+    border-radius: ms.radius('lg');
     position: relative;
     z-index: 2;
     pointer-events: auto;
     overflow: hidden;
 
     &::part(native) {
-      padding: 0;
-      --inner-padding-end: 0;
+      padding: ms.spacing('padding-none');
+      --inner-padding-end: #{ms.spacing('padding-none')};
     }
 
     &:hover {
@@ -157,10 +156,10 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 }
 
 .organization {
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   width: 100%;
   position: relative;
 
@@ -170,12 +169,12 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
   &-avatar,
   .organization-icon-container {
-    background-color: var(--parsec-color-light-primary-100);
-    color: var(--parsec-color-light-primary-700);
+    background-color: ms.color('surface-brand-default-subtle');
+    color: ms.color('text-brand-default');
     width: 2rem;
     height: 2rem;
     margin: 0;
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('lg');
     text-align: center;
     display: flex;
     align-items: center;
@@ -186,15 +185,16 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 
   &-name {
+    @include ms.font('body-lg-medium');
     flex: 1;
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('text-base-description');
     text-wrap: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   &-icon {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('icon-neutral-default');
     font-size: 1.25rem;
     position: absolute;
     right: -1.2rem;
@@ -202,21 +202,21 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 
   &-icon-current {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('icon-neutral-default');
     font-size: 1rem;
   }
 
   &-divider {
     height: 1px;
-    background-color: var(--parsec-color-light-secondary-disabled);
+    background-color: ms.color('border-base-default');
   }
 
   .organization-icon-container {
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
   }
 
   &-icon-add {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('icon-neutral-default');
     font-size: 1.125rem;
   }
 }
@@ -225,12 +225,12 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   pointer-events: none;
 
   .organization-avatar {
-    background-color: var(--parsec-color-light-primary-700);
-    color: var(--parsec-color-light-secondary-white);
+    background-color: ms.color('surface-brand-default-subtle');
+    color: ms.color('text-on-color-heading');
   }
 
   .organization-name {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 }
 </style>

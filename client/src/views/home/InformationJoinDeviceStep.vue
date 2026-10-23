@@ -10,10 +10,10 @@
         :image="Device"
         class="content__device"
       />
-      <ion-text class="body content__text">
+      <ion-text class="content__text">
         {{ $msTranslate('ClaimDeviceModal.currentDevice') }}
       </ion-text>
-      <ion-text class="subtitles-sm content__subtext">
+      <ion-text class="content__subtext">
         {{ $msTranslate('ClaimDeviceModal.connected') }}
       </ion-text>
     </div>
@@ -25,10 +25,10 @@
         :image="Device"
         class="content__device"
       />
-      <ion-text class="body content__text">
+      <ion-text class="content__text">
         {{ $msTranslate('ClaimDeviceModal.newDevice') }}
       </ion-text>
-      <ion-text class="subtitles-sm content__subtext">
+      <ion-text class="content__subtext">
         {{ $msTranslate('ClaimDeviceModal.connected') }}
       </ion-text>
     </div>
@@ -45,8 +45,8 @@ import { Device, MsImage, MsInformativeText, SwapArrows } from 'megashark-lib';
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 2rem;
-  margin-top: 1rem;
+  gap: ms.spacing('gap-5xl');
+  margin-top: ms.spacing('padding-3xl');
 }
 
 .content {
@@ -61,11 +61,13 @@ import { Device, MsImage, MsInformativeText, SwapArrows } from 'megashark-lib';
   }
 
   &__text {
-    color: var(--parsec-color-light-primary-600);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-brand-default');
   }
 
   &__subtext {
-    color: var(--parsec-color-light-success-500);
+    @include ms.font('body-md-medium');
+    color: ms.color('text-success-default');
     position: relative;
   }
 }

@@ -7,7 +7,7 @@
         class="list-group"
         v-if="canRevoke"
       >
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleRemove') }}
           </ion-text>
@@ -22,7 +22,7 @@
             class="list-group-item__icon"
             :icon="personRemove"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: multipleSelected ? 2 : 1 }) }}
           </ion-text>
         </ion-item>
@@ -32,7 +32,7 @@
         class="list-group"
         v-if="!multipleSelected"
       >
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
           </ion-text>
@@ -46,7 +46,7 @@
             class="list-group-item__icon"
             :icon="returnUpForward"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
           </ion-text>
         </ion-item>
@@ -56,7 +56,7 @@
         class="list-group"
         v-if="canUpdateProfile"
       >
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleUpdateProfile') }}
           </ion-text>
@@ -70,7 +70,7 @@
             class="list-group-item__icon"
             :icon="repeat"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: multipleSelected ? 2 : 1 }) }}
           </ion-text>
         </ion-item>
@@ -80,7 +80,7 @@
         class="list-group"
         v-if="!multipleSelected"
       >
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleDetails') }}
           </ion-text>
@@ -94,7 +94,7 @@
             class="list-group-item__icon"
             :icon="informationCircle"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionDetails') }}
           </ion-text>
         </ion-item>

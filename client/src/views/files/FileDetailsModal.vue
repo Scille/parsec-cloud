@@ -6,52 +6,55 @@
       :title="entry.isFile() ? 'FileDetails.fileTitle' : 'FileDetails.folderTitle'"
       :close-button="{ visible: true }"
     >
-      <div class="file-info-container">
-        <!-- Entry type -->
-        <div class="file-info">
+      <div class="file-details">
+        <div class="file-header">
           <ms-image
             :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
-            class="file-info__image"
+            class="file-header__icon"
           />
-          <ion-icon
-            class="cloud-overlay"
-            :class="entry.needSync ? 'cloud-overlay-ko' : 'cloud-overlay-ok'"
-            :icon="entry.needSync ? cloudOffline : cloudDone"
-            @click="openTooltip($event, getSyncString())"
-          />
-          <ion-text class="file-info__name title-h4">
-            {{ entry.name }}
-          </ion-text>
+          <div class="file-header-text">
+            <ion-text class="file-header-text__name">
+              {{ entry.name }}
+            </ion-text>
+            <ion-icon
+              class="cloud-overlay"
+              :class="entry.needSync ? 'cloud-overlay-ko' : 'cloud-overlay-ok'"
+              :icon="entry.needSync ? cloudOffline : cloudDone"
+              @click="openTooltip($event, getSyncString())"
+            />
+          </div>
         </div>
 
-        <div class="file-info-details-content">
-          <ion-text class="file-info-details-content__title subtitles-sm">{{ $msTranslate('FileDetails.stats.generalInfo') }}</ion-text>
-          <div class="file-info-details">
+        <div class="file-section">
+          <ion-text class="file-section__title">{{ $msTranslate('FileDetails.stats.generalInfo') }}</ion-text>
+          <div class="file-info">
             <!-- Created -->
-            <div class="file-info-details-item">
-              <ion-label class="file-info-details-item__title subtitles-sm">
+            <div class="file-info-item">
+              <ion-label class="file-info-item__title">
                 {{ $msTranslate('FileDetails.stats.created') }}
               </ion-label>
-              <ion-text class="file-info-details-item__value body">
+              <ion-text class="file-info-item__value">
                 {{ $msTranslate(I18n.formatDate(entry.created, 'full')) }}
               </ion-text>
             </div>
             <!-- Size (only for files) -->
             <div
-              class="file-info-details-item"
+              class="file-info-item"
               v-if="entry.isFile()"
             >
-              <ion-label class="file-info-details-item__title subtitles-sm">
+              <ion-label class="file-info-item__title">
                 {{ $msTranslate('FileDetails.stats.size') }}
               </ion-label>
-              <span class="file-info-details-item__value body">{{ $msTranslate(formatFileSize((entry as EntryStatFile).size)) }}</span>
+              <ion-text class="file-info-item__value">
+                {{ $msTranslate(formatFileSize((entry as EntryStatFile).size)) }}
+              </ion-text>
             </div>
             <!-- Version -->
-            <div class="file-info-details-item">
-              <ion-label class="file-info-details-item__title subtitles-sm">
+            <div class="file-info-item">
+              <ion-label class="file-info-item__title">
                 {{ $msTranslate('FileDetails.stats.version') }}
               </ion-label>
-              <ion-text class="file-info-details-item__value body">
+              <ion-text class="file-info-item__value">
                 {{ entry.baseVersion }}
               </ion-text>
             </div>
@@ -59,27 +62,27 @@
           <technical-id :id="entry.id" />
         </div>
 
-        <div class="file-info-details-content">
-          <ion-text class="file-info-details-content__title subtitles-sm">{{ $msTranslate('FileDetails.stats.lastUpdate') }}</ion-text>
-          <div class="file-info-details">
+        <div class="file-section">
+          <ion-text class="file-section__title">{{ $msTranslate('FileDetails.stats.lastUpdate') }}</ion-text>
+          <div class="file-info">
             <!-- Updated -->
-            <div class="file-info-details-item">
-              <ion-label class="file-info-details-item__title subtitles-sm">
+            <div class="file-info-item">
+              <ion-label class="file-info-item__title">
                 {{ $msTranslate('FileDetails.stats.updated') }}
               </ion-label>
-              <ion-text class="file-info-details-item__value body">
+              <ion-text class="file-info-item__value">
                 {{ $msTranslate(I18n.formatDate(entry.updated, 'full')) }}
               </ion-text>
             </div>
             <!-- Editor -->
             <div
-              class="file-info-details-item"
+              class="file-info-item"
               v-if="entry.lastUpdater && ownProfile !== UserProfile.Outsider"
             >
-              <ion-label class="file-info-details-item__title subtitles-sm">
+              <ion-label class="file-info-item__title">
                 {{ $msTranslate('FileDetails.stats.editor') }}
               </ion-label>
-              <ion-text class="file-info-details-item__value body">
+              <ion-text class="file-info-item__value">
                 {{ entry.lastUpdater.humanHandle.label }}
               </ion-text>
             </div>
@@ -87,13 +90,13 @@
         </div>
 
         <!-- Path -->
-        <div class="file-info-path">
-          <ion-label class="file-info-path__title subtitles-sm">
+        <div class="file-section">
+          <ion-text class="file-section__title">
             {{ $msTranslate('FileDetails.stats.path') }}
             {{ entry.isFile() ? $msTranslate('FileDetails.stats.file') : $msTranslate('FileDetails.stats.folder') }}
-          </ion-label>
-          <div class="file-info-path-value">
-            <ion-text class="file-info-path-value__text body">
+          </ion-text>
+          <div class="file-path">
+            <ion-text class="file-path__text">
               <span>
                 {{ showFullPath ? entry.path : shortenFileName(entry.path, { maxLength: 60, prefixLength: 20, suffixLength: 30 }) }}
               </span>
@@ -102,6 +105,7 @@
               <ion-button
                 fill="clear"
                 size="small"
+                slot="icon-only"
                 id="copy-link-btn"
                 @click="copyPath"
                 v-show="copyStatus === CopyStatus.NotCopied"
@@ -113,24 +117,24 @@
               </ion-button>
               <ion-text
                 v-show="copyStatus === CopyStatus.Copied"
-                class="file-info-path-value__copied body copied"
+                class="file-path__copied copied"
               >
                 {{ $msTranslate('FileDetails.stats.linkCopied') }}
               </ion-text>
               <ion-text
                 v-show="copyStatus === CopyStatus.FailedToCopy"
-                class="file-info-path-value__not-copied body"
+                class="file-path__not-copied"
               >
                 {{ $msTranslate('FileDetails.stats.failedToCopy') }}
               </ion-text>
             </template>
           </div>
           <ion-text
-            class="file-info-path__full button-small"
+            class="file-path-toggle"
             @click="showFullPath = !showFullPath"
             v-if="entry.path.length > 60"
           >
-            <span>{{ $msTranslate(showFullPath ? 'FileDetails.stats.hideFullPath' : 'FileDetails.stats.showFullPath') }}</span>
+            {{ $msTranslate(showFullPath ? 'FileDetails.stats.hideFullPath' : 'FileDetails.stats.showFullPath') }}
           </ion-text>
         </div>
       </div>
@@ -193,156 +197,167 @@ async function copyPath(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.file-info-container {
+.file-details {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  --background-color: var(--parsec-color-light-secondary-premiere);
-  --color: var(--parsec-color-light-primary-600);
-  margin-top: 0.5rem;
+  gap: ms.spacing('gap-4xl');
 
   @include ms.responsive-breakpoint('sm') {
     margin-bottom: 2rem;
   }
 }
 
-.file-info {
+.file-header {
   display: flex;
-  gap: 1rem;
-  position: relative;
   align-items: center;
+  gap: ms.spacing('gap-2xl');
 
-  .cloud-overlay {
-    cursor: pointer;
-    position: absolute;
-    font-size: 1rem;
-    background: var(--parsec-color-light-secondary-background);
-    padding: 0.25rem;
-    border-radius: var(--parsec-radius-12);
-    bottom: -0.5rem;
-    left: 1.9rem;
-    box-shadow: var(--parsec-shadow-strong);
-
-    &-ok {
-      color: var(--parsec-color-light-primary-500);
-    }
-
-    &-ko {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-  }
-
-  &__image {
+  &__icon {
     display: flex;
     width: 3rem;
     height: 3rem;
     flex-shrink: 0;
   }
 
-  &__name {
-    color: var(--parsec-color-light-secondary-text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-height: 1.5rem;
-  }
-
-  &-details {
+  &-text {
     display: flex;
-    border-radius: var(--parsec-radius-6);
-    background: var(--parsec-color-light-secondary-background);
+    align-items: center;
+    gap: ms.spacing('gap-lg');
+    min-width: 0;
 
-    &-content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+    &__name {
+      @include ms.font('heading-h5');
 
-      &__title {
-        color: var(--parsec-color-light-secondary-text);
-      }
-    }
-
-    &-item {
-      display: flex;
-      flex-direction: column;
-      padding: 0.625rem 1rem;
-      gap: 0.25rem;
-      width: 100%;
-
-      &:not(:last-child) {
-        border-right: 1px solid var(--parsec-color-light-secondary-disabled);
-      }
-
-      &__title {
-        color: var(--parsec-color-light-secondary-grey);
-      }
-
-      &__value {
-        color: var(--parsec-color-light-secondary-text);
-      }
+      color: ms.color('text-base-heading');
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
-  &-path {
+  .cloud-overlay {
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 1rem;
+    padding: ms.spacing('padding-sm');
+    border-radius: ms.radius('2xl');
+    background: ms.color('surface-base-default-secondary');
+
+    &-ok {
+      color: ms.color('icon-brand-default');
+    }
+
+    &-ko {
+      color: ms.color('text-base-description');
+    }
+  }
+}
+
+.file-section {
+  display: flex;
+  flex-direction: column;
+
+  &__title {
+    @include ms.font('body-md-medium');
+
+    color: ms.color('text-base-body');
+    margin-bottom: 0.5rem;
+  }
+}
+
+.file-info {
+  display: flex;
+  overflow: hidden;
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('lg');
+
+  &:not(:last-child) {
+    margin-bottom: 0.75rem;
+  }
+
+  &-item {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    flex: 1 0 0;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-default-secondary');
+
+    &:not(:last-child) {
+      border-right: ms.border('thin') solid ms.color('border-base-default');
+    }
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-md-medium');
+
+      color: ms.color('text-base-description');
     }
 
-    &__full {
-      cursor: pointer;
-      width: fit-content;
-      color: var(--parsec-color-light-secondary-grey);
+    &__value {
+      @include ms.font('body-md-regular');
 
-      &:hover {
-        color: var(--parsec-color-light-secondary-hard-grey);
-        text-decoration: underline;
-      }
+      color: ms.color('text-base-body');
     }
+  }
+}
 
-    &-value {
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-background);
-      border-radius: var(--parsec-radius-6);
-      padding: 0.5rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      overflow: hidden;
-      width: 100%;
+.file-path {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ms.spacing('gap-lg');
+  overflow: hidden;
+  padding: ms.spacing('padding-sm') ms.spacing('padding-3xl');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default-secondary');
+  color: ms.color('text-base-body');
 
-      &__text {
-        padding: 0.25rem 0;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
+  &__text {
+    @include ms.font('body-md-regular');
 
-      &__copied {
-        color: var(--parsec-color-light-success-700);
-      }
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-      &__not-copied {
-        color: var(--parsec-color-light-danger-500);
-      }
+  &__copied {
+    @include ms.font('body-md-regular');
+
+    color: ms.color('text-success-default');
+  }
+
+  &__not-copied {
+    @include ms.font('body-md-regular');
+
+    color: ms.color('text-error-default');
+  }
+
+  &-toggle {
+    @include ms.font('label-sm-medium');
+
+    width: fit-content;
+    margin-top: 0.5rem;
+    cursor: pointer;
+    color: ms.color('text-base-description');
+
+    &:hover {
+      color: ms.color('text-base-label');
+      text-decoration: underline;
     }
   }
 }
 
 #copy-link-btn {
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-label');
   margin: 0;
 
   &::part(native) {
-    padding: 0.5rem;
-    border-radius: var(--parsec-radius-6);
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('md');
   }
 
   &:hover {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('text-brand-default-hover');
   }
 }
 </style>

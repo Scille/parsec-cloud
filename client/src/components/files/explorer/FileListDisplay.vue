@@ -259,6 +259,6 @@ async function scrollToSelected(): Promise<void> {
 }
 
 .file-list-mobile {
-  padding-top: 1rem;
+  padding-top: ms.spacing('padding-3xl');
 }
 </style>

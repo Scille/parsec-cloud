@@ -94,7 +94,7 @@ async function authenticationChosen(): Promise<void> {
 <style scoped lang="scss">
 .authentication-content {
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 1rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
   }
 }
 </style>

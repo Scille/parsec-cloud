@@ -14,10 +14,10 @@
             class="async-authentication-modal-header__icon"
           />
           <div class="async-authentication-modal-header-text">
-            <ion-text class="async-authentication-modal-header-text__title title-h4">
+            <ion-text class="async-authentication-modal-header-text__title">
               {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.pkiRequests.modal.info') }}
             </ion-text>
-            <ion-text class="async-authentication-modal-header-text__description body">
+            <ion-text class="async-authentication-modal-header-text__description">
               {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.pkiRequests.modal.description') }}
             </ion-text>
           </div>
@@ -65,6 +65,6 @@ async function onOkClicked(): Promise<boolean> {
   flex-direction: column;
   align-items: center;
   overflow: hidden;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 </style>

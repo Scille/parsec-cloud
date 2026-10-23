@@ -103,6 +103,6 @@ async function close(): Promise<void> {
 .shamir-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 </style>

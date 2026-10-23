@@ -15,7 +15,7 @@
                 :image="Folder"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.folders') }}
               </ion-text>
             </div>
@@ -32,7 +32,7 @@
                 :image="File.Word"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.documents') }}
               </ion-text>
             </div>
@@ -49,7 +49,7 @@
                 :image="File.Excel"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.spreadsheets') }}
               </ion-text>
             </div>
@@ -66,7 +66,7 @@
                 :image="File.Powerpoint"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.presentations') }}
               </ion-text>
             </div>
@@ -83,7 +83,7 @@
                 :image="File.Pdf"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.pdfDocuments') }}
               </ion-text>
             </div>
@@ -100,7 +100,7 @@
                 :image="File.Music"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.audios') }}
               </ion-text>
             </div>
@@ -117,7 +117,7 @@
                 :image="File.Video"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.videos') }}
               </ion-text>
             </div>
@@ -134,7 +134,7 @@
                 :image="File.Image"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.images') }}
               </ion-text>
             </div>
@@ -151,7 +151,7 @@
                 :image="File.Text"
                 class="filter-checkbox__icon"
               />
-              <ion-text class="filter-checkbox__label button-medium">
+              <ion-text class="filter-checkbox__label">
                 {{ $msTranslate('FoldersPage.search.filters.texts') }}
               </ion-text>
             </div>
@@ -161,7 +161,7 @@
       <div class="filter-buttons">
         <ion-button
           @click="applyFilters"
-          class="filter-apply-button button-medium"
+          class="filter-apply-button"
         >
           {{ $msTranslate('FoldersPage.search.applyFilters') }}
         </ion-button>
@@ -189,18 +189,18 @@ async function applyFilters(): Promise<void> {
 
 <style lang="scss" scoped>
 .filter-list {
-  gap: 0.5rem !important;
+  gap: ms.spacing('gap-lg') !important;
 }
 
 .filter-checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   &-content {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 
   &__icon {
@@ -209,21 +209,23 @@ async function applyFilters(): Promise<void> {
   }
 
   &__label {
+    @include ms.font('label-md-medium');
     width: 100%;
-    color: var(--parsec-colors-light-secondary-soft-text);
+    color: ms.color('text-neutral-default');
   }
 }
 
 .filter-buttons {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
-  padding: 0.5rem 0.5rem 0;
+  border-top: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-lg') ms.spacing('padding-none');
 
   .filter-apply-button {
+    @include ms.font('label-md-medium');
     align-self: flex-end;
-    border-radius: var(--parsec-radius-8);
-    color: var(--parsec-color-light-secondary-white);
+    border-radius: ms.radius('lg');
+    color: ms.color('text-on-color-label');
   }
 }
 </style>

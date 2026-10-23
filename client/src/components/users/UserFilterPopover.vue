@@ -8,14 +8,14 @@
     >
       <ion-item-group class="list-group filter-list-group">
         <div class="list-group-header">
-          <ion-text class="body-sm list-group-title">
+          <ion-text class="list-group-title">
             {{ $msTranslate('UsersPage.filter.status') }}
           </ion-text>
           <ion-button
             v-if="!currentFilters.statusActive || !currentFilters.statusRevoked || !currentFilters.statusFrozen"
             @click="updateFilters({ statusActive: true, statusRevoked: true, statusFrozen: true })"
-            class="reset-filters-button"
-            fill="clear"
+            class="reset-filters-button link"
+            size="small"
           >
             {{ $msTranslate('UsersPage.filter.reset') }}
           </ion-button>
@@ -72,14 +72,13 @@
       </ion-item-group>
       <ion-item-group class="list-group">
         <div class="list-group-header">
-          <ion-text class="body-sm list-group-title">
+          <ion-text class="list-group-title">
             {{ $msTranslate('UsersPage.filter.profile') }}
           </ion-text>
           <ion-button
             v-if="!currentFilters.profileAdmin || !currentFilters.profileStandard || !currentFilters.profileOutsider"
             @click="updateFilters({ profileAdmin: true, profileStandard: true, profileOutsider: true })"
             class="reset-filters-button"
-            fill="clear"
           >
             {{ $msTranslate('UsersPage.filter.reset') }}
           </ion-button>

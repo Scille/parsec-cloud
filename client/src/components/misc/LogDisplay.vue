@@ -52,7 +52,8 @@
         </div>
         <ms-feedback-button
           fill="clear"
-          class="logs-buttons__item button-medium"
+          size="small"
+          class="logs-buttons__item"
           id="log-copy-button"
           :callback="copyLogs"
           :normal-state="{ text: 'LogDisplayModal.copy', icon: copy }"
@@ -61,7 +62,8 @@
         />
         <ms-feedback-button
           fill="clear"
-          class="logs-buttons__item button-secondary"
+          size="small"
+          class="logs-buttons__item"
           id="log-download-button"
           :callback="downloadLogs"
           :normal-state="{ text: 'LogDisplayModal.download', icon: download }"
@@ -158,7 +160,7 @@ async function close(): Promise<void> {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
 }
 
 .log-container {
@@ -166,22 +168,22 @@ async function close(): Promise<void> {
   width: 100%;
   height: 100%;
   flex-direction: column;
-  background-color: var(--parsec-color-light-secondary-premiere);
+  background-color: ms.color('surface-base-page-secondary');
   position: relative;
 }
 
 .log-area {
-  padding: 1rem;
+  padding: ms.spacing('padding-3xl');
   scrollbar-width: thin;
   scrollbar-gutter: both-edges;
   display: flex;
   width: 100%;
   height: 100%;
   resize: none;
-  background-color: var(--parsec-color-light-secondary-premiere);
-  color: var(--parsec-color-light-primary-text);
+  background-color: ms.color('surface-base-page-secondary');
+  color: ms.color('text-base-body');
   border: none;
-  padding-top: 4rem;
+  padding-top: ms.spacing('padding-8xl');
 }
 
 .logs-buttons {
@@ -189,30 +191,12 @@ async function close(): Promise<void> {
   position: absolute;
   top: 0;
   left: 0;
-  padding: 0.75rem;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-2xl') ms.spacing('padding-2xl') ms.spacing('padding-none');
   display: flex;
   justify-content: flex-end;
-  background-color: var(--parsec-color-light-secondary-premiere);
-  gap: 1rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
-
-  &__item {
-    color: var(--parsec-color-light-secondary-text);
-
-    &::part(native) {
-      box-shadow: var(--parsec-shadow-card);
-      padding: 0.5rem 1rem;
-      background-color: var(--parsec-color-light-secondary-white);
-      --background-hover: var(--parsec-color-light-secondary-disabled);
-      border-radius: var(--parsec-radius-8);
-      transition: background-color 0.15s ease-in-out;
-    }
-
-    &-icon {
-      font-size: 1rem;
-      margin-right: 0.5rem;
-    }
-  }
+  background-color: ms.color('surface-base-page-secondary');
+  gap: ms.spacing('gap-3xl');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
 }
 
 #log-close-button {

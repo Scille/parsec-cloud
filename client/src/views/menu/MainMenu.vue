@@ -26,7 +26,7 @@
             >
               <!-- Restricted to large display to prevent duplicate v-html id in small display -->
               <ion-avatar
-                class="organization-avatar body-lg"
+                class="organization-avatar"
                 v-if="isLargeDisplay"
               >
                 <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
@@ -37,14 +37,12 @@
                   class="organization-avatar-logo"
                 />
               </ion-avatar>
-              <div class="organization-text">
-                <ion-card-title
-                  class="title-h3"
-                  :title="userInfo?.organizationId"
-                >
-                  {{ userInfo?.organizationId }}
-                </ion-card-title>
-              </div>
+              <ion-card-title
+                class="organization-name"
+                :title="userInfo?.organizationId"
+              >
+                {{ userInfo?.organizationId }}
+              </ion-card-title>
               <ms-image
                 :image="ChevronExpand"
                 class="header-icon"
@@ -59,29 +57,26 @@
           class="freeze-card"
           v-if="isExpired"
         >
-          <ion-icon
-            class="freeze-card__icon"
-            :icon="snow"
-          />
           <div class="freeze-card-header">
             <ion-icon
               class="freeze-card-header__icon"
               :icon="warning"
             />
-            <ion-text class="freeze-card-header__title title-h4">
+            <ion-text class="freeze-card-header__title">
               {{ $msTranslate('SideMenu.frozen.title') }}
             </ion-text>
           </div>
           <div class="freeze-card-main">
-            <ion-text class="body">
+            <ion-text class="freeze-card-main__text">
               {{ $msTranslate('SideMenu.frozen.description') }}
             </ion-text>
           </div>
+          <div class="freeze-card__divider" />
           <div class="freeze-card-footer">
-            <ion-text class="freeze-card-footer__title title-h5">
+            <ion-text class="freeze-card-footer__title">
               {{ $msTranslate('SideMenu.frozen.contact') }}
             </ion-text>
-            <ion-text class="freeze-card-footer__email subtitles-sm">
+            <ion-text class="freeze-card-footer__email">
               {{ $msTranslate('SideMenu.frozen.email') }}
             </ion-text>
           </div>
@@ -95,18 +90,23 @@
           v-if="expirationDuration"
           class="trial-card"
         >
-          <ion-text class="trial-card__tag button-medium">{{ $msTranslate('SideMenu.trial.tag') }}</ion-text>
+          <ion-text class="trial-card__tag">{{ $msTranslate('SideMenu.trial.tag') }}</ion-text>
           <div class="trial-card-text">
-            <ion-text class="trial-card-text__time title-h3">
+            <ion-text class="trial-card-text__time">
               {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
             </ion-text>
-            <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
+            <ion-text class="trial-card-text__info">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
           </div>
           <ion-button
-            class="trial-card__button button-medium"
+            class="trial-card__button"
             @click="openPricingLink"
           >
             {{ $msTranslate('SideMenu.trial.subscribe') }}
+            <ion-icon
+              slot="end"
+              :icon="chevronForward"
+              class="trial-card__button-icon"
+            />
           </ion-button>
         </div>
 
@@ -122,7 +122,7 @@
             <!-- manage users -->
             <ion-text
               @click="navigateTo(Routes.Users)"
-              class="sidebar-content-organization-button button-medium"
+              class="sidebar-content-organization-button"
               :class="currentRouteIs(Routes.Users) ? 'active' : ''"
               id="sidebar-users"
               button
@@ -140,7 +140,7 @@
             <ion-text
               v-if="userInfo?.currentProfile === UserProfile.Admin"
               @click="navigateTo(Routes.Invitations)"
-              class="sidebar-content-organization-button button-medium"
+              class="sidebar-content-organization-button"
               :class="currentRouteIs(Routes.Invitations) ? 'active' : ''"
               id="sidebar-invitations"
               button
@@ -161,7 +161,7 @@
             <!-- organization information -->
             <ion-text
               @click="navigateTo(Routes.Organization)"
-              class="sidebar-content-organization-button button-medium"
+              class="sidebar-content-organization-button"
               :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
               id="sidebar-organization-information"
               button
@@ -201,14 +201,14 @@
             <ion-text
               @click="onCategoryMenuChange(WorkspaceMenu.All)"
               @contextmenu="openWorkspaceGlobalContextMenu"
-              class="sidebar-content-organization-button button-medium"
+              class="sidebar-content-organization-button"
               :class="{ active: currentRouteIs(Routes.Workspaces) }"
               id="sidebar-all-workspaces"
               button
             >
               <ion-icon
                 class="sidebar-content-organization-button__icon"
-                :icon="home"
+                :icon="rocket"
               />
               <span class="sidebar-content-organization-button__text">
                 {{ $msTranslate('SideMenu.myWorkspaces') }}
@@ -219,7 +219,7 @@
             <ion-text
               @click="navigateTo(Routes.Archived)"
               :class="{ active: currentRouteIs(Routes.Archived) }"
-              class="sidebar-content-organization-button button-medium"
+              class="sidebar-content-organization-button"
               id="sidebar-archived-workspaces"
               button
             >
@@ -237,7 +237,7 @@
               v-show="workspaceDeletionDelay > 0 || hasTrashedWorkspaces"
               @click="navigateTo(Routes.Trash)"
               :class="{ active: currentRouteIs(Routes.Trash) }"
-              class="sidebar-content-organization-button button-medium"
+              class="sidebar-content-organization-button"
               id="sidebar-trashed-workspaces"
               button
             >
@@ -265,7 +265,7 @@
             v-if="menusVisible.recentFiles"
           >
             <ion-text
-              class="sidebar-content-files--no-recent subtitles-sm"
+              class="sidebar-content-files--no-recent"
               v-if="recentDocumentManager.getFiles().length === 0"
             >
               {{ $msTranslate('SideMenu.noRecentDocuments') }}
@@ -293,8 +293,8 @@
             @click="openSecurityWarningsPopover"
           >
             <div class="checklist-text">
-              <ion-text class="checklist-text__title title-h5">{{ $msTranslate('SideMenu.checklist.title') }}</ion-text>
-              <ion-text class="checklist-text__description button-small">
+              <ion-text class="checklist-text__title">{{ $msTranslate('SideMenu.checklist.title') }}</ion-text>
+              <ion-text class="checklist-text__description">
                 {{
                   $msTranslate({
                     key: 'SideMenu.checklist.remaining',
@@ -305,7 +305,7 @@
               </ion-text>
             </div>
             <div class="checklist-button">
-              <ion-text class="checklist-button__text button-small">
+              <ion-text class="checklist-button__text">
                 {{ $msTranslate({ key: 'SideMenu.checklist.open' }) }}
               </ion-text>
               <ion-icon
@@ -411,14 +411,13 @@ import {
   cloudUpload,
   document as documentIcon,
   folderOpen,
-  home,
   informationCircle,
   link,
   mail,
   mailUnread,
   people,
   personAdd,
-  snow,
+  rocket,
   trash,
   warning,
 } from 'ionicons/icons';
@@ -894,22 +893,23 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 
 .sidebar,
 .sidebar ion-content {
-  --background: var(--parsec-color-light-primary-800);
-  --padding-end: 0;
-  --padding-start: 0;
-  --padding-top: 0;
+  --background: #{ms.color('sidebar')};
+  --padding-end: #{ms.spacing('padding-none')};
+  --padding-start: #{ms.spacing('padding-none')};
+  --padding-top: #{ms.spacing('padding-none')};
 }
 
 .sidebar {
   border: none;
-  border-radius: 0 var(--parsec-radius-12) var(--parsec-radius-12) 0;
+  border-right: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  border-radius: ms.radius('none') ms.radius('2xl') ms.radius('2xl') ms.radius('none');
   position: relative;
   width: v-bind(sidebarWidthProperty);
   user-select: none;
 
   &::part(container) {
     display: flex;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-5xl');
   }
 
   @include ms.responsive-breakpoint('sm') {
@@ -950,7 +950,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 
     &:hover::after,
     &:active::after {
-      background: var(--parsec-color-light-primary-200);
+      background: ms.color('surface-neutral-default');
     }
   }
 
@@ -973,32 +973,35 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   flex-direction: column;
   margin: 0;
   border-radius: 0;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-header {
     display: flex;
     flex-direction: row;
-    border-radius: var(--parsec-radius-12);
+    border-radius: ms.radius('2xl');
     box-shadow: none;
     align-items: center;
     margin: 1.5rem 0.5rem 0;
-    padding: 0.75rem 1rem;
-    gap: 0.5em;
+    padding: ms.spacing('padding-2xl');
+    gap: ms.spacing('gap-2xl');
     position: relative;
     z-index: 2;
-    border: 1px solid transparent;
+    border: ms.border('thin') solid transparent;
 
     &-desktop:hover {
       cursor: pointer;
-      border-color: var(--parsec-color-light-primary-30-opacity15);
+      border-color: ms.color('border-neutral-on-color');
     }
 
     &-desktop .organization-avatar {
-      background-color: var(--parsec-color-light-secondary-premiere);
-      color: var(--parsec-color-light-primary-600);
-      width: 2rem;
-      height: 2rem;
-      border-radius: var(--parsec-radius-8);
+      @include ms.font('heading-h6');
+      background-color: ms.color('surface-base-page');
+      color: ms.color('text-brand-default');
+      border: ms.border('thin') solid ms.color('border-base-default');
+      padding: ms.spacing('padding-sm');
+      width: 2.125rem;
+      height: 2.125rem;
+      border-radius: ms.radius('lg');
       text-align: center;
       display: flex;
       align-items: center;
@@ -1012,27 +1015,26 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
       }
     }
 
-    .organization-text {
+    .organization-name {
       display: flex;
       flex-direction: column;
       white-space: nowrap;
       overflow: hidden;
-
-      ion-card-title {
-        padding: 0.1875em 0;
-        margin: 0;
-        --color: var(--parsec-color-light-primary-50);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+      @include ms.font('heading-h4');
+      padding: 0.1875em 0;
+      margin: 0;
+      --color: #{ms.color('text-on-color-label')};
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .header-icon {
       white-space: nowrap;
       display: flex;
       align-items: center;
-      --fill-color: var(--parsec-color-light-secondary-inversed-contrast);
+      --fill-color: #{ms.color('icon-on-color-heading')};
+      width: 1.875rem;
       margin-left: auto;
       flex-shrink: 0;
     }
@@ -1043,30 +1045,31 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   display: flex;
   flex-direction: column;
   user-select: none;
-  gap: 0.5rem;
-  padding-inline: 0.25rem;
+  gap: ms.spacing('gap-lg');
 
   &-button {
+    @include ms.font('label-md-medium');
     display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-2xl');
     cursor: pointer;
     align-items: center;
-    color: var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-8);
-    border: 1px solid transparent;
+    color: ms.color('text-on-color-label');
+    border-radius: ms.radius('lg');
+    border: ms.border('thin') solid transparent;
 
     &.active {
-      background: var(--parsec-color-light-primary-30-opacity15);
+      background: ms.color('surface-neutral-on-color');
       cursor: default;
     }
 
     &:hover:not(.active) {
-      border: 1px solid var(--parsec-color-light-primary-30-opacity15);
+      border: ms.border('thin') solid ms.color('border-neutral-on-color');
     }
 
     &__icon {
-      color: var(--parsec-color-light-secondary-inversed-contrast);
+      color: ms.color('icon-on-color-label');
+      font-size: 1rem;
       flex-shrink: 0;
     }
 
@@ -1081,69 +1084,26 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--parsec-color-light-secondary-white);
-    border: 1px solid var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-light);
-    border-radius: var(--parsec-radius-12);
+    background: ms.color('surface-base-default');
+    border: ms.border('thin') solid ms.color('surface-base-default');
+    box-shadow: ms.shadow('light');
+    border-radius: ms.radius('2xl');
     min-width: 0.5rem;
     height: 0.5rem;
     margin-left: auto;
   }
 }
 
-.sidebar-content-workspaces {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-
-  &-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  &__title {
-    opacity: 0.6;
-    padding: 0.25rem 0.25rem;
-    color: var(--parsec-color-light-secondary-inversed-contrast);
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    position: relative;
-
-    ion-icon {
-      transition: transform 0.15s ease-in-out;
-    }
-
-    &.open {
-      ion-icon {
-        transform: rotate(90deg);
-      }
-    }
-
-    &:hover {
-      cursor: pointer;
-      opacity: 0.8;
-    }
-  }
-}
-
 .sidebar-content-files {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-inline: 0.25rem;
-}
+  gap: ms.spacing('gap-lg');
 
-.sidebar-content-files,
-.sidebar-content-workspaces {
   &--no-recent {
-    color: var(--parsec-color-light-secondary-premiere);
-    opacity: 0.8;
-    padding: 0.375rem 0.5rem;
+    @include ms.font('body-md-medium');
+    color: #{ms.color('text-on-color-description')};
+    opacity: ms.opacity('description');
+    padding: ms.spacing('padding-md') ms.spacing('padding-lg');
   }
 }
 
@@ -1154,104 +1114,126 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 .freeze-card {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.5rem 1rem;
-  margin-bottom: 1.5rem;
-  border-radius: var(--parsec-radius-8);
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  position: relative;
+  gap: ms.spacing('gap-lg');
+  padding: ms.spacing('padding-3xl');
+  margin: 2rem 1rem 0;
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default-secondary');
+  overflow: hidden;
 
   &-header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__icon {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-error-default');
       font-size: 1.5rem;
     }
 
     &__title {
-      color: var(--parsec-color-light-primary-600);
+      @include ms.font('heading-h5');
+      color: ms.color('text-error-default');
     }
   }
 
   &-main {
-    color: var(--parsec-color-light-secondary-soft-text);
-    margin-bottom: 1rem;
-    position: relative;
+    color: ms.color('text-base-description');
+
+    &__text {
+      @include ms.font('body-md-regular');
+    }
+  }
+
+  &__divider {
+    border-top: ms.border('thin') solid ms.color('border-base-default');
   }
 
   &-footer {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-base-label');
+
+    &__title {
+      @include ms.font('heading-h6');
+    }
 
     &__email {
-      color: var(--parsec-color-light-secondary-soft-text);
-      background: var(--parsec-color-light-secondary-premiere);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-base-label');
+      background: ms.color('surface-neutral-default-subtle');
       width: fit-content;
-      border-radius: var(--parsec-radius-6);
-      padding: 0.25rem 0.5rem;
+      border-radius: ms.radius('md');
+      padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
     }
-  }
-
-  &__icon {
-    color: var(--parsec-color-light-secondary-soft-grey);
-    font-size: 11.5rem;
-    position: absolute;
-    bottom: 0;
-    right: -5rem;
-    z-index: 0;
-    opacity: 0.1;
   }
 }
 
 .trial-card {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0 1rem 1.5rem 1rem;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-none') ms.spacing('padding-3xl') ms.spacing('padding-4xl') ms.spacing('padding-3xl');
+  margin-bottom: 2rem;
+  border-bottom: ms.border('thin') solid ms.color('border-neutral-on-color');
 
   &__tag {
-    color: var(--parsec-color-light-secondary-white);
-    background: var(--parsec-color-light-gradient-background);
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--parsec-radius-6);
+    @include ms.font('label-sm-emphasis');
+    color: ms.color('text-brand-default');
+    background: ms.color('surface-brand-default-subtle');
+    box-shadow: ms.shadow('elevation-xs');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+    border-radius: ms.radius('2xl');
     width: fit-content;
   }
 
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__time {
-      color: var(--parsec-color-light-secondary-white);
+      @include ms.font('heading-h6');
+      color: ms.color('text-on-color-heading');
     }
 
     &__info {
-      color: var(--parsec-color-light-primary-30);
-      opacity: 0.8;
+      @include ms.font('body-md-regular');
+      color: ms.color('text-on-color-label');
+      opacity: ms.opacity('8');
     }
   }
 
   // !important is used when waiting for a custom button
   &__button {
-    --background: var(--parsec-color-light-secondary-white) !important;
-    --color: var(--parsec-color-light-primary-600) !important;
-    --background-hover: var(--parsec-color-light-secondary-premiere) !important;
-    --color-hover: var(--parsec-color-light-primary-700) !important;
-    --border-radius: var(--parsec-radius-8);
-    --padding-start: 0;
-    --padding-end: 0;
-    --padding-top: 0;
-    --padding-bottom: 0;
-    color: var(--parsec-color-light-primary-600);
+    @include ms.font('label-md-medium');
+    --background: #{ms.color('surface-base-default')} !important;
+    --color: #{ms.color('text-neutral-default')} !important;
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')} !important;
+    --color-hover: #{ms.color('text-neutral-default-hover')} !important;
+    --border-radius: #{ms.radius('lg')};
+    --border-width: #{ms.border('thin')};
+    --border-style: solid;
+    --border-color: #{ms.color('border-neutral-default-subtle')};
+    --padding-start: #{ms.spacing('padding-none')};
+    --padding-end: #{ms.spacing('padding-none')};
+    --padding-top: #{ms.spacing('padding-none')};
+    --padding-bottom: #{ms.spacing('padding-none')};
+    color: ms.color('text-neutral-default');
+    width: 100%;
+    min-height: 2rem;
+    margin: 0;
 
     &::part(native) {
-      padding: 0.625rem 1rem;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
+      gap: ms.spacing('gap-lg');
+    }
+
+    &-icon {
+      font-size: 0.875rem;
+      margin: 0;
     }
   }
 }
@@ -1259,7 +1241,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 .organization-checklist {
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 0.5rem;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-lg');
   margin-top: auto;
   --background: none;
 
@@ -1267,9 +1249,9 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     margin-top: auto;
     display: flex;
     width: 100%;
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('lg');
     --min-height: 0;
-    border: 1px solid var(--parsec-color-light-primary-30-opacity15);
+    border: ms.border('thin') solid ms.color('surface-neutral-on-color');
     --background: none;
     box-shadow: none;
     position: relative;
@@ -1277,12 +1259,12 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     transition: all 0.15s ease-in-out;
 
     &::part(native) {
-      padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-2xl');
     }
 
     &:hover {
-      --background: var(--parsec-color-light-primary-30-opacity15);
-      box-shadow: var(--parsec-shadow-light);
+      --background: #{ms.color('surface-neutral-on-color')};
+      box-shadow: ms.shadow('light');
       top: -0.25rem;
     }
 
@@ -1293,31 +1275,34 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     &-text {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
       flex-grow: 1;
 
       &__title {
-        color: var(--parsec-color-light-secondary-inversed-contrast);
+        @include ms.font('heading-h6');
+        color: ms.color('text-on-color-heading');
       }
 
       &__description {
-        color: var(--parsec-color-light-secondary-premiere);
-        opacity: 0.8;
+        @include ms.font('label-sm-medium');
+        color: ms.color('text-on-color-label');
+        opacity: ms.opacity('8');
       }
     }
 
     &-button {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-inversed-contrast);
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-on-color-heading');
 
       &__text {
-        color: var(--parsec-color-light-secondary-inversed-contrast);
+        @include ms.font('label-sm-medium');
+        color: ms.color('text-on-color-label');
       }
 
       &__icon {
-        color: var(--parsec-color-light-primary-30);
+        color: ms.color('icon-on-color-label');
         font-size: 0.875rem;
       }
     }

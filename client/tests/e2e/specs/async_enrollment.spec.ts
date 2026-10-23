@@ -67,7 +67,9 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
     await expect(requestModal.locator('.modal-info')).toBeHidden();
     await expect(requestModal.locator('.user-information')).toBeVisible();
     await fillIonInput(requestModal.locator('.user-information').locator('ion-input'), expectedPersonName);
-    await expect(requestModal.locator('.user-information').locator('.dropdown-button-content')).toHaveText(/^[a-f0-9-]+@example\.invalid$/);
+    await expect(requestModal.locator('.user-information').locator('.dropdown-button').locator('.input-text')).toHaveText(
+      /^[a-f0-9-]+@example\.invalid$/,
+    );
   }
   await expect(nextButton).toBeTrulyEnabled();
   await nextButton.click();
@@ -106,7 +108,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Join requests (PKI/SSO)',
+      'Join requests',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
     await page.locator('.toggle-view-container').locator('.pki-button').click();
@@ -224,7 +226,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Join requests (PKI/SSO)',
+      'Join requests',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('0');
     await page.locator('.toggle-view-container').locator('.pki-button').click();
@@ -256,7 +258,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Join requests (PKI/SSO)',
+      'Join requests',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
     await page.locator('.toggle-view-container').locator('.pki-button').click();

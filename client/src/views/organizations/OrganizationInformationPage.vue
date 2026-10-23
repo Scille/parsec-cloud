@@ -12,7 +12,7 @@
         v-if="isSmallDisplay"
       >
         <template v-if="orgInfo">
-          <ion-avatar class="organization-header-avatar body-lg">
+          <ion-avatar class="organization-header-avatar">
             <span v-if="!isTrialOrg">{{ orgInfo.clientInfo.organizationId.substring(0, 2) }}</span>
             <!-- prettier-ignore -->
             <ms-image
@@ -21,7 +21,7 @@
               class="avatar-logo"
             />
           </ion-avatar>
-          <ion-text class="organization-header-text title-h2">{{ orgInfo.clientInfo.organizationId }}</ion-text>
+          <ion-text class="organization-header-text">{{ orgInfo.clientInfo.organizationId }}</ion-text>
           <ms-image
             :image="ChevronExpand"
             class="header-icon"
@@ -176,31 +176,26 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .organization-page {
-  background: var(--parsec-color-light-secondary-premiere);
   display: flex;
   flex-wrap: wrap;
   justify-content: start;
-  gap: 2rem;
-
-  &:has(.organization-page-error) {
-    background: var(--parsec-color-light-secondary-background);
-  }
+  gap: ms.spacing('gap-5xl');
 
   &-content {
     --background: none;
 
     &::part(scroll) {
       display: flex;
-      gap: 2rem;
-      padding: 2em;
+      gap: ms.spacing('gap-5xl');
+      padding: ms.spacing('padding-5xl');
 
       @include ms.responsive-breakpoint('xl') {
         flex-wrap: wrap;
       }
 
       @include ms.responsive-breakpoint('sm') {
-        gap: 1.5rem;
-        padding: 1.5rem;
+        gap: ms.spacing('gap-4xl');
+        padding: ms.spacing('padding-4xl');
         justify-content: center;
         align-items: baseline;
       }
@@ -209,7 +204,7 @@ onUnmounted(() => {
 
   .organization-sections {
     display: flex;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
     height: fit-content;
 
     @include ms.responsive-breakpoint('xl') {
@@ -218,7 +213,7 @@ onUnmounted(() => {
 
     @include ms.responsive-breakpoint('sm') {
       width: 100%;
-      gap: 1.5rem;
+      gap: ms.spacing('gap-4xl');
       justify-content: center;
     }
   }
@@ -231,21 +226,22 @@ onUnmounted(() => {
   height: fit-content;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
-  gap: 0.75rem;
+  padding: ms.spacing('padding-2xl');
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-default');
+  gap: ms.spacing('gap-2xl');
 
   &-avatar {
+    @include ms.font('body-lg-regular');
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 2.5rem;
     width: 2.5rem;
     height: 2.5rem;
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-12);
-    padding: 0.25rem;
+    background: ms.color('surface-neutral-default-subtle');
+    border-radius: ms.radius('2xl');
+    padding: ms.spacing('padding-sm');
 
     .avatar-logo {
       width: 1.5rem;
@@ -254,13 +250,14 @@ onUnmounted(() => {
     span {
       font-size: 1.25rem;
       font-weight: bold;
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default');
     }
   }
 
   &-text {
+    @include ms.font('heading-h3');
     width: 100%;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 }
 
@@ -271,7 +268,7 @@ onUnmounted(() => {
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   width: 100%;
   max-width: 30rem;
 
@@ -284,12 +281,12 @@ onUnmounted(() => {
   .skeleton-content {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
     max-width: 30rem;
-    padding: 1.5rem;
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-secondary-white);
+    padding: ms.spacing('padding-4xl');
+    border-radius: ms.radius('lg');
+    background: ms.color('surface-base-default');
 
     &__text {
       width: 100%;
