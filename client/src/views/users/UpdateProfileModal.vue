@@ -21,20 +21,20 @@
         v-show="affectedUsers.length > 0"
       >
         <div class="update-profile">
-          <ion-text class="update-profile-title body">
+          <ion-text class="update-profile-title">
             {{ $msTranslate({ key: 'UsersPage.updateProfile.affectedUsers', count: affectedUsers.length }) }}
           </ion-text>
           <div class="update-profile-user">
             <span
               v-for="user in affectedUsers.slice(0, 3)"
               :key="user.id"
-              class="update-profile-user__item subtitles-sm"
+              class="update-profile-user__item"
             >
               {{ user.humanHandle.label }}
             </span>
             <span
               v-show="affectedUsers.length > 3"
-              class="update-profile-user__more body"
+              class="update-profile-user__more"
             >
               {{
                 $msTranslate({
@@ -124,31 +124,37 @@ async function dismissModal(): Promise<boolean> {
 .update-profile-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 
 .update-profile {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   &-title {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-md-regular');
+
+    color: ms.color('text-base-description');
   }
 
   &-user {
     display: flex;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
 
     &__item {
-      background: var(--parsec-color-light-secondary-premiere);
-      border-radius: var(--parsec-radius-8);
-      padding: 0.125rem 0.5rem;
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-md-medium');
+
+      background: ms.color('surface-neutral-default-subtle');
+      border-radius: ms.radius('lg');
+      padding: ms.spacing('padding-xs') ms.spacing('padding-lg');
+      color: ms.color('text-base-body');
     }
 
     &__more {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-md-regular');
+
+      color: ms.color('text-base-body');
     }
   }
 }
@@ -156,6 +162,6 @@ async function dismissModal(): Promise<boolean> {
 .warn-outsiders {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 </style>

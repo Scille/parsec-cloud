@@ -1767,14 +1767,11 @@
         "UserDetailsModal": {
             "title": "Détails de l'utilisateur",
             "subtitles": {
-                "name": "Nom",
+                "generalInfo": "Informations générales",
                 "joined": "Rejoint le",
                 "commonWorkspaces": "Espaces de travail communs",
                 "revoked": "Révoqué",
                 "revokedSince": "Révoqué depuis le"
-            },
-            "actions": {
-                "close": "Fermer"
             },
             "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec cet utilisateur.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."

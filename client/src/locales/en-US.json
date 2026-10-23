@@ -1653,7 +1653,7 @@
             "titleRemove": "Deletion",
             "titleDetails": "User details",
             "actionRevoke": "Revoke this user | Revoke these users",
-            "actionDetails": "View details",
+            "actionDetails": "Details",
             "titleAssignRoles": "Copy roles",
             "actionAssignRoles": "Copy workspace roles",
             "cannotAssignRolesToSelf": "You cannot copy roles to yourself.",
@@ -1767,14 +1767,11 @@
         "UserDetailsModal": {
             "title": "User details",
             "subtitles": {
-                "name": "Name",
+                "generalInfo": "General information",
                 "joined": "Joined on",
                 "commonWorkspaces": "Shared workspaces",
                 "revoked": "Revoked",
                 "revokedSince": "Revoked since"
-            },
-            "actions": {
-                "close": "Close"
             },
             "noSharedWorkspaces": "You have no workspaces in common with this user.",
             "failedToListWorkspaces": "Failed to list workspaces."
