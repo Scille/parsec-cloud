@@ -326,6 +326,11 @@ jobs:
         run: Install-Module -Name TrustedSigning -Force -Scope CurrentUser
         timeout-minutes: 3
 
+      - name: Windows > Install TrustedSigning
+        if: matrix.platform == 'windows'
+        run: Install-Module -Name TrustedSigning -Force -Scope CurrentUser
+        timeout-minutes: 3
+
       - name: MacOS > Install macFUSE
         if: matrix.platform == 'macos'
         run: brew install --cask macfuse
