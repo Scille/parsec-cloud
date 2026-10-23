@@ -45,8 +45,8 @@ pub use list::{
     CertifGetCurrentSelfProfileError, CertifGetCurrentSelfRealmRoleError,
     CertifGetCurrentSelfRealmsRoleError, CertifGetRealmArchivingConfigurationError,
     CertifGetUserDeviceError, CertifGetUserInfoError, CertifListUserDevicesError,
-    CertifListUsersError, CertifListWorkspaceUsersError, DeviceInfo, UserInfo,
-    WorkspaceUserAccessInfo,
+    CertifListUsersError, CertifListWorkspaceUserRoleChangesError, CertifListWorkspaceUsersError,
+    DeviceInfo, UserInfo, WorkspaceUserAccessInfo, WorkspaceUserRoleChange,
 };
 pub use manifest_validate::{CertifValidateManifestError, InvalidManifestError};
 pub use poll::CertifPollServerError;
@@ -712,6 +712,15 @@ impl CertificateOps {
         realm_id: VlobID,
     ) -> Result<Vec<WorkspaceUserAccessInfo>, CertifListWorkspaceUsersError> {
         list::list_workspace_users(self, realm_id).await
+    }
+
+    /// List all role changes for a user on a given realm.
+    pub async fn list_workspace_user_role_changes(
+        &self,
+        realm_id: VlobID,
+        user_id: UserID,
+    ) -> Result<Vec<WorkspaceUserRoleChange>, CertifListWorkspaceUserRoleChangesError> {
+        list::list_workspace_user_role_changes(self, realm_id, user_id).await
     }
 
     /// Retrieve the current archiving configuration of a realm from the last

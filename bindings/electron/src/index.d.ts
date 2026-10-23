@@ -583,6 +583,13 @@ export interface WorkspaceUserAccessInfo {
 }
 
 
+export interface WorkspaceUserRoleChange {
+    grantedBy: string
+    grantedOn: number
+    role: RealmRole | null
+}
+
+
 export interface X509CertificateReference {
     uri: X509Pkcs11URI | null
     hash: string
@@ -2190,6 +2197,20 @@ export interface ClientListUsersErrorStopped {
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
   | ClientListUsersErrorStopped
+
+
+// ClientListWorkspaceUserRoleChangesError
+export interface ClientListWorkspaceUserRoleChangesErrorInternal {
+    tag: "ClientListWorkspaceUserRoleChangesErrorInternal"
+    error: string
+}
+export interface ClientListWorkspaceUserRoleChangesErrorStopped {
+    tag: "ClientListWorkspaceUserRoleChangesErrorStopped"
+    error: string
+}
+export type ClientListWorkspaceUserRoleChangesError =
+  | ClientListWorkspaceUserRoleChangesErrorInternal
+  | ClientListWorkspaceUserRoleChangesErrorStopped
 
 
 // ClientListWorkspaceUsersError
@@ -5972,6 +5993,11 @@ export function clientListUsers(
     client: number,
     skip_revoked: boolean
 ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+export function clientListWorkspaceUserRoleChanges(
+    client: number,
+    realm_id: string,
+    user_id: string
+): Promise<Result<Array<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError>>
 export function clientListWorkspaceUsers(
     client: number,
     realm_id: string
