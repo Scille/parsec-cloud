@@ -19,7 +19,7 @@ async function openModalWithUser(usersPage: MsPage, userIndex: number, revokeFir
   }
   await user.hover();
   await user.locator('.options-button').click();
-  await checkUserContextMenu(usersPage, 'Administrator', isOutsider ? 'External' : 'Standard', 'View details', { isRevoked: revokeFirst });
+  await checkUserContextMenu(usersPage, 'Administrator', isOutsider ? 'External' : 'Standard', 'Details', { isRevoked: revokeFirst });
   const modal = usersPage.locator('.user-details-modal');
   await expect(modal).toBeVisible();
   return modal;
@@ -29,16 +29,14 @@ msTest('User details modal', async ({ usersPage }) => {
   const modal = await openModalWithUser(usersPage, 1);
 
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
-  const detailsItems = modal.locator('.ms-modal-content').locator('.details-item');
-  await expect(detailsItems.nth(0).locator('.details-item-name__title')).toHaveText('Name');
-  await expect(detailsItems.nth(0).locator('.details-item-name__text')).toHaveText('Boby McBobFace');
-  const timeItems = modal.locator('.ms-modal-content').locator('.time-list-item');
-  await expect(timeItems.nth(0).locator('.time-list-item__title')).toHaveText('Joined on');
-  await expect(timeItems.nth(0).locator('.time-list-item__text')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
+  await expect(modal.locator('.user-header-text__name')).toHaveText('Boby McBobFace');
+  const timeItems = modal.locator('.ms-modal-content').locator('.user-info-item');
+  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Joined on');
+  await expect(timeItems.nth(0).locator('.user-info-item__value')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
   await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9]+$/);
   await expect(modal.locator('.workspace-list')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toBeHidden();
-  await expect(modal.locator('.workspace-list').locator('.workspace-list-item').locator('.item-container__name')).toHaveText('wksp1');
+  await expect(modal.locator('.workspace-list').locator('.workspace-list-item').locator('.workspace-list-item__name')).toHaveText('wksp1');
   await expect(modal.locator('.workspace-list').locator('.workspace-list-item').locator('.label-role')).toHaveText('Reader');
 });
 
@@ -46,14 +44,12 @@ msTest('User details modal no common workspaces', async ({ usersPage }) => {
   const modal = await openModalWithUser(usersPage, 2);
 
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
-  const detailsItems = modal.locator('.ms-modal-content').locator('.details-item');
-  await expect(detailsItems.nth(0).locator('.details-item-name__title')).toHaveText('Name');
   // cspell:disable-next-line
-  await expect(detailsItems.nth(0).locator('.details-item-name__text')).toHaveText('Malloryy McMalloryFace');
-  await expect(detailsItems.nth(0).locator('.label-status')).toBeVisible();
-  const timeItems = modal.locator('.ms-modal-content').locator('.time-list-item');
-  await expect(timeItems.nth(0).locator('.time-list-item__title')).toHaveText('Joined on');
-  await expect(timeItems.nth(0).locator('.time-list-item__text')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
+  await expect(modal.locator('.user-header-text__name')).toHaveText('Malloryy McMalloryFace');
+  await expect(modal.locator('.user-header').locator('.label-status')).toBeVisible();
+  const timeItems = modal.locator('.ms-modal-content').locator('.user-info-item');
+  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Joined on');
+  await expect(timeItems.nth(0).locator('.user-info-item__value')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
   await expect(modal.locator('.workspace-list')).toBeHidden();
   await expect(modal.locator('.workspace-empty')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toHaveText('You have no workspaces in common with this user.');
@@ -63,15 +59,13 @@ msTest('Revoked user details modal no common workspaces', async ({ usersPage }) 
   const modal = await openModalWithUser(usersPage, 2, true);
 
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
-  const detailsItems = modal.locator('.ms-modal-content').locator('.details-item');
-  await expect(detailsItems.nth(0).locator('.details-item-name__title')).toHaveText('Name');
-  await expect(detailsItems.nth(0).locator('.details-item-name__text')).toHaveText('Malloryy McMalloryFace');
-  await expect(detailsItems.nth(0).locator('.label-status')).toBeVisible();
-  const timeItems = modal.locator('.ms-modal-content').locator('.time-list-item');
-  await expect(timeItems.nth(0).locator('.time-list-item__title')).toHaveText('Joined on');
-  await expect(timeItems.nth(0).locator('.time-list-item__text')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
-  await expect(timeItems.nth(1).locator('.time-list-item__title')).toHaveText('Revoked since');
-  await expect(timeItems.nth(1).locator('.time-list-item__text')).toContainText(`${DateTime.now().day}`);
+  await expect(modal.locator('.user-header-text__name')).toHaveText('Malloryy McMalloryFace');
+  await expect(modal.locator('.user-header').locator('.label-status')).toBeVisible();
+  const timeItems = modal.locator('.ms-modal-content').locator('.user-info-item');
+  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Joined on');
+  await expect(timeItems.nth(0).locator('.user-info-item__value')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
+  await expect(timeItems.nth(1).locator('.user-info-item__title')).toHaveText('Revoked since');
+  await expect(timeItems.nth(1).locator('.user-info-item__value')).toContainText(`${DateTime.now().day}`);
   await expect(modal.locator('.workspace-list')).toBeHidden();
   await expect(modal.locator('.workspace-empty')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toHaveText('You have no workspaces in common with this user.');
