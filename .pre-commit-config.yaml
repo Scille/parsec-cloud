@@ -57,14 +57,21 @@ repos:
             scss,
           ]
 
-      - id: static-assets-hash
-        name: static_assets_hash
-        alias: static-assets-hash
-        entry: python ./misc/update_server_static_assets_hash_prefix.py --check
+      - id: server-static-assets-naming
+        name: server-static-assets-naming
+        entry: python ./misc/gen_static_assets_cache_busting_naming.py server
         language: python
         language_version: python3
         pass_filenames: false
-        files: ^server/parsec/static/
+        files: ^server/parsec/(static|templates)/
+
+      - id: client-static-assets-naming
+        name: client-static-assets-naming
+        entry: python ./misc/gen_static_assets_cache_busting_naming.py client
+        language: python
+        language_version: python3
+        pass_filenames: false
+        files: ^client/(public|src)/
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.38.0

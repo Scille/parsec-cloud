@@ -46,9 +46,9 @@ const config = {
     // Only used when we need to measure some things
     'src/services/performanceMonitor.ts',
     // Worker, fetched dynamically at startup
-    'public/file-service-worker.js',
+    'public/file-service-worker-*.js',
     // loaded by the file service worker with `importScripts()`
-    'public/vendor/zip-native.min.js',
+    'public/vendor/zip-native.min-*.js',
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [

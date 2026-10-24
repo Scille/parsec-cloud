@@ -7,10 +7,10 @@ This means the name should change every time the content changes!
 
 1. Create it as `<name>-00000000.<extension>` (e.g. `parsec-00000000.png`)
 2. Use this file name as usual in your template code
-3. Run `python misc/update_server_static_assets_hash_prefix.py`, this will
+3. Run `python misc/gen_static_assets_cache_busting_naming.py`, this will
    update the file (and the templates referencing it) to its correct name.
 
 ## Modifying a file
 
 1. Modify the file content
-2. Run `python misc/update_server_static_assets_hash_prefix.py`
+2. Run `python misc/gen_static_assets_cache_busting_naming.py`
