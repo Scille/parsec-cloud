@@ -116,19 +116,33 @@ class StaticFilesWithCacheControl(StaticFiles):
         return response
 
 
-# This class is used to serve the static files of the web app (SPA)
-# and redirect to the index.html if file not found on server.
-# Useful when the user refresh the page or access a route directly.
-# Note we don't use cache-control for this resource as `index.html` is the
+# This class is used to serve the static files of the web app (SPA):
+# when the requested file is not found on the server, `index.html` is served
+# instead. Useful when the user refresh the page or access a route directly.
+#
+# Cache-control is used for all resources except `index.html`, since it is the
 # entry point from where the other resources are loaded (i.e. it is the
 # one providing the cache-busting info!).
-class StaticFilesWithSPARedirect(StaticFiles):
+class StaticFilesWithCacheControlAndSPARedirect(StaticFilesWithCacheControl):
     def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
         match super().lookup_path(path):
             case (_, None):
                 return super().lookup_path("index.html")
             case found:
                 return found
+
+    def file_response(
+        self,
+        full_path: PathLike,
+        stat_result: os.stat_result,
+        scope: Scope,
+        status_code: int = 200,
+    ) -> Response:
+        # Note this also covers the SPA redirect case above, which serves the
+        # content of `index.html` under any URL.
+        if os.path.basename(full_path) == "index.html":
+            return StaticFiles.file_response(self, full_path, stat_result, scope, status_code)
+        return super().file_response(full_path, stat_result, scope, status_code)
 
 
 class EditicsHostIsolationMiddleware:
@@ -265,10 +279,12 @@ def app_factory(
                 ),
             )
 
+        # The web app resources at the root (i.e. everything except `index.html`,
+        # e.g. `file-service-worker-1a2b3c4d.js`) have cache-busting naming.
         app.mount(
             WEB_APP_BASE_URL,
             _with_editics_isolation(
-                StaticFilesWithSPARedirect(directory=with_client_web_app, html=True),
+                StaticFilesWithCacheControlAndSPARedirect(directory=with_client_web_app, html=True),
                 WEB_APP_BASE_URL,
             ),
         )

@@ -20,9 +20,11 @@ EDITICS_SERVER_DOMAIN = "editics." + SERVER_DOMAIN
 MAIN_INDEX_HTML = "<html><body>Hello, I'm the main web app !</body></html>"
 EDITICS_OFFLINE_HTML = "<html><body>Hello, I'm the editics offline page !</body></html>"
 ASSETS_STYLE_CSS = "body { color: red }"
-
-STATIC_BASE_CSS = "static/base-jFjh9D00.css"
-HTML_CONTENT_TYPE = "text/html; charset=utf-8"
+FILE_SERVICE_WORKER_JS = "// Hello, I'm the file service worker !"
+PDFJS_JBIG2_WASM = "Hello, I'm the jbig2 wasm !"
+# The content doesn't have to be a valid brotli stream: the server only serves
+# the pre-compressed file as-is (i.e. it never compress nor decompress).
+PDFJS_JBIG2_WASM_BR = b"\x8b\x06\x00I'm the brotli-compressed jbig2 wasm"
 
 
 @pytest.fixture
@@ -32,9 +34,14 @@ def web_app_dir(tmp_path: Path) -> Path:
     # tests run isolated from each other)
     (tmp_path / "index.html").write_text(MAIN_INDEX_HTML)
     (tmp_path / "assets").mkdir()
-    (tmp_path / "assets" / "style.css").write_text(ASSETS_STYLE_CSS)
+    (tmp_path / "assets" / "style-DwMtvTZv.css").write_text(ASSETS_STYLE_CSS)
+    (tmp_path / "file-service-worker-McOlcGNE.js").write_text(FILE_SERVICE_WORKER_JS)
+    pdfjs_wasm_dir = tmp_path / "pdfjs" / "6.4.299"
+    pdfjs_wasm_dir.mkdir(parents=True)
+    (pdfjs_wasm_dir / "jbig2.wasm").write_text(PDFJS_JBIG2_WASM)
+    (pdfjs_wasm_dir / "jbig2.wasm.br").write_bytes(PDFJS_JBIG2_WASM_BR)
     (tmp_path / "editics").mkdir()
-    (tmp_path / "editics" / "offline-abc123456.html").write_text(EDITICS_OFFLINE_HTML)
+    (tmp_path / "editics" / "offline-297fee6f.html").write_text(EDITICS_OFFLINE_HTML)
     return tmp_path
 
 
@@ -98,23 +105,52 @@ async def test_web_app_served(backend: Backend, web_app_dir: Path, editics_serve
 
         rep = await main_assert_route("/", 301)
         assert rep.headers["location"] == "/client/"
-        # Editics domain is redirected to a route that leads to a 404, this is a small acceptable quirk
+        # Editics domain is redirected to a route that leads to a 403, this is a small acceptable quirk
         rep = await editics_assert_route("/", 301)
         assert not rep or rep.headers["location"] == "/client/"
+
+        # Test main domain entrypoint (that has no cache control by design)
 
         await main_assert_route("/client/", (200, "text/html; charset=utf-8", MAIN_INDEX_HTML))
         await editics_assert_route("/client/", 403)
 
         await main_assert_route(
-            "/client/assets/style.css",
+            "/client/index.html", (200, "text/html; charset=utf-8", MAIN_INDEX_HTML)
+        )
+        await editics_assert_route("/client/index.html", 403)
+
+        await main_assert_route("/client/dummy", (200, "text/html; charset=utf-8", MAIN_INDEX_HTML))
+        await editics_assert_route("/client/dummy", 403)
+
+        # Test other resources at root level for main domain
+
+        await main_assert_route(
+            "/client/file-service-worker-McOlcGNE.js",
+            (200, "text/javascript; charset=utf-8", FILE_SERVICE_WORKER_JS),
+            expected_cached=True,
+        )
+        await editics_assert_route("/client/file-service-worker-McOlcGNE.js", 403)
+        await main_assert_route(
+            "/client/pdfjs/6.4.299/jbig2.wasm",
+            (200, "application/wasm", PDFJS_JBIG2_WASM),
+            expected_cached=True,
+        )
+        await editics_assert_route("/client/pdfjs/6.4.299/jbig2.wasm", 403)
+
+        # Test resources in sub-folder for main domain
+
+        await main_assert_route(
+            "/client/assets/style-DwMtvTZv.css",
             (200, "text/css; charset=utf-8", ASSETS_STYLE_CSS),
             expected_cached=True,
         )
-        await editics_assert_route("/client/assets/style.css", 403)
+        await editics_assert_route("/client/assets/style-DwMtvTZv.css", 403)
 
-        await main_assert_route("/client/editics/offline-abc123456.html", 403)
+        # Test resources for editics domain
+
+        await main_assert_route("/client/editics/offline-297fee6f.html", 403)
         await editics_assert_route(
-            "/client/editics/offline-abc123456.html",
+            "/client/editics/offline-297fee6f.html",
             (200, "text/html; charset=utf-8", EDITICS_OFFLINE_HTML),
             expected_cached=True,
             expected_editics_csp=True,
@@ -123,6 +159,19 @@ async def test_web_app_served(backend: Backend, web_app_dir: Path, editics_serve
         await main_assert_route("/client/editics/", 403)
         # Editics directory is not a valid route anyway
         await editics_assert_route("/client/editics/", 404)
+
+
+@pytest.mark.asyncio
+async def test_brotli_support(backend: Backend, web_app_dir: Path):
+    async with web_app_client_factory(backend, web_app_dir) as client:
+        rep = await client.get(
+            f"http://{MAIN_SERVER_DOMAIN}/client/pdfjs/6.4.299/jbig2.wasm",
+            headers={"Accept-Encoding": "br"},
+        )
+        assert rep.status_code == 200
+        assert rep.headers["Content-Encoding"] == "br"
+        assert rep.content == PDFJS_JBIG2_WASM_BR
+        assert rep.headers["Cache-Control"] == "max-age=31536000, public, immutable"
 
 
 @pytest.mark.asyncio
@@ -137,8 +186,8 @@ async def test_web_app_not_served(client: AsyncClient):
     for bad_route in (
         "/client/",
         "/client/index.html",
-        "/client/assets/style.css",
-        "/client/editics/offline-abc123456.html",
+        "/client/assets/style-DwMtvTZv.css",
+        "/client/editics/offline-297fee6f.html",
     ):
         await main_assert_route(bad_route, 404)
         await editics_assert_route(bad_route, 404)
