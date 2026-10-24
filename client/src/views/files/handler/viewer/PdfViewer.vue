@@ -53,6 +53,7 @@
 import { getFileContent } from '@/common/file';
 import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
 import { isWeb } from '@/parsec';
+import { BASE } from '@/services/worker';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { scan } from 'ionicons/icons';
@@ -92,7 +93,7 @@ onMounted(async () => {
 
     pdf.value = await pdfjs.getDocument({
       data: content,
-      wasmUrl: import.meta.env.BASE_URL !== '/' ? `${import.meta.env.BASE_URL}/pdfjs/` : 'pdfjs/',
+      wasmUrl: `${BASE}pdfjs/${pdfjs.version}/`,
     }).promise;
     await loadPages();
     await renderPage(1);

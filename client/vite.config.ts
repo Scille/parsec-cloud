@@ -91,12 +91,19 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
   console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
 }
 
+// The pdfjs wasm files are referenced by pdfjs with their plain names, so they cannot
+// get renamed with a hash-based cache busting. Add the version in the path instead.
+const { version: pdfjsDistVersion } = JSON.parse(
+  fs.readFileSync(path.resolve(import.meta.dirname, 'node_modules/pdfjs-dist/package.json'), 'utf8'),
+);
 plugins.push(
   viteStaticCopy({
     targets: [
       {
         src: 'node_modules/pdfjs-dist/wasm/*',
-        dest: 'pdfjs',
+        dest: `pdfjs/${pdfjsDistVersion}`,
+        // Strip the leading `node_modules/pdfjs-dist/wasm/`
+        rename: { stripBase: 3 },
       },
     ],
   }),
