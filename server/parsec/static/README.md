@@ -1,16 +1,27 @@
 # Why the hashes in the names?
 
-The static resources use a cache-busting pattern in their names.
-This means the name should change every time the content changes!
+The content of this folder is served verbatim in the release.
+So we name everything with a cache-busting pattern, meaning a file must be
+renamed every time its content get updated!
+
+> [!NOTE]
+> A pre-commit rule is configured to ensure the file naming and references never
+> goes out of sync with the file content.
 
 ## Adding a new file
 
 1. Create it as `<name>-00000000.<extension>` (e.g. `parsec-00000000.png`)
 2. Use this file name as usual in your template code
-3. Run `python misc/gen_static_assets_cache_busting_naming.py`, this will
-   update the file (and the templates referencing it) to its correct name.
+3. Run `python ../../../misc/gen_static_assets_cache_busting_naming.py server`,
+   this will update the file (and the templates referencing it) to its correct name.
 
 ## Modifying a file
 
 1. Modify the file content
-2. Run `python misc/gen_static_assets_cache_busting_naming.py`
+2. Run `python ../../../misc/gen_static_assets_cache_busting_naming.py server`
+
+## What about *this* file
+
+Since it is in the static directory, this `README.md` also gets served in the release.
+This is considered okay since it is small, doesn't cause any actual issue, and
+avoiding this would require cumbersome configuration in the build pipeline.
