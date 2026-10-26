@@ -191,6 +191,13 @@ impl fuser::Filesystem for Filesystem {
                 log::debug!("cannot add unnamed capability {remaining_bits:#x}",);
             }
         }
+        log::info!(
+            "Initializing filesystem for realm: {} (abi: {})",
+            self.ops.realm_id(),
+            config.kernel_abi()
+        );
+        #[cfg(test)]
+        let _ = crate::unix::FUSE_ABI_VERSION.set(config.kernel_abi());
         Ok(())
     }
 
