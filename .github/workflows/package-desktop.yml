@@ -439,7 +439,7 @@ jobs:
           npm run electron:release -- \
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
-            ${{ contains(fromJSON('["windows", "macos"]'), matrix.platform) && '--sign' || '' }} \
+            ${{ (contains(fromJSON('["windows", "macos"]'), matrix.platform) && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')) && '--sign' || '' }} \
             ${{ matrix.hardened && '--hardened' || '' }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
