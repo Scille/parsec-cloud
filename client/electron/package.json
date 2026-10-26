@@ -13,7 +13,6 @@
     "license": "AGPL-3.0-only",
     "main": "build/src/index.js",
     "type": "module",
-    "packageManager": "traversal",
     "scripts": {
         "libparsec:copy": "node ./scripts/copy_bindings.cjs",
         "build": "npm run libparsec:copy && tsc",
