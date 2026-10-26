@@ -94,6 +94,12 @@ pub async fn close_all_fds(ops: &WorkspaceOps) -> Result<(), WorkspaceFdCloseErr
                 // The Arc is still referenced by others coroutines...
                 Err(our_opened_file_ref) => {
                     our_opened_file_ref.lock().await;
+                    // `lock()` acquires the mutex right away when it is free, even
+                    // if another task is already waiting for it. So without yielding
+                    // here, the other Arc holders (typically waiting for the mutex)
+                    // would never get a chance to run and drop their reference,
+                    // resulting in a livelock on a single-threaded executor.
+                    libparsec_platform_async::yield_now().await;
                     // Put back our reference in the wrapper for the next try
                     our_opened_file_ref_wrapper = Some(our_opened_file_ref);
                 }
@@ -212,6 +218,12 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
                 // The Arc is still referenced by others coroutines
                 Err(our_opened_file_ref) => {
                     our_opened_file_ref.lock().await;
+                    // `lock()` acquires the mutex right away when it is free, even
+                    // if another task is already waiting for it. So without yielding
+                    // here, the other Arc holders (typically waiting for the mutex)
+                    // would never get a chance to run and drop their reference,
+                    // resulting in a livelock on a single-threaded executor.
+                    libparsec_platform_async::yield_now().await;
                     // Put back our reference in the wrapper for the next try
                     our_opened_file_ref_wrapper = Some(our_opened_file_ref);
                 }

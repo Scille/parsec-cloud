@@ -310,6 +310,12 @@ async fn entry_is_busy(#[values(false, true)] concurrent_write: bool, env: &Test
                 p_assert_eq!(event.realm_id, wksp1_id);
                 p_assert_eq!(event.entry_id, wksp1_foo_id);
             });
+            // The concurrent rename also notifies the renamed child itself
+            // (no-op sync if it has no local change)
+            spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncNeeded| {
+                p_assert_eq!(event.realm_id, wksp1_id);
+                p_assert_eq!(event.entry_id, wksp1_foo_egg_txt_id);
+            });
         }
         spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
             p_assert_eq!(event.realm_id, wksp1_id);

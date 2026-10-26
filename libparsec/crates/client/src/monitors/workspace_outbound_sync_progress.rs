@@ -205,13 +205,16 @@ fn task_future_factory(
                         Ok(IncomingOutboundSyncEvent::Needed { entry_id }) => {
                              match workspace_ops.stat_entry_by_id(entry_id).await {
                                 Ok(stat) => {
-                                    if !stat.is_confined(){
+                                    // Only files are tracked in the backlog: folder
+                                    // manifests are synced instantly (and don't have
+                                    // any meaningful size to report anyway).
+                                    // Entries that don't need sync are ignored too.
+                                    if stat.is_file() && !stat.is_confined() && stat.need_sync() {
                                         let mut tracker = progress_tracker
-                        .lock()
-                        .await;
+                                            .lock()
+                                            .await;
                                         tracker.files_to_sync.insert(entry_id, stat.size());
-                                        println!("ok");
-                            }
+                                    }
                                 },
                                 Err(e) => {
                                     // log and ignore

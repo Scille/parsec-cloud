@@ -384,6 +384,21 @@ async fn move_entry_same_parent(
         entry_id: parent_id,
     };
     ops.event_bus.send(&event);
+    // The child manifest is left untouched by a same-parent rename (i.e. its
+    // `parent` field and content don't contain the entry name), so in theory
+    // there is nothing to sync on the child side.
+    // However the rename may have changed the confinement status of the child
+    // (e.g. renaming `foo.tmp` into `foo.txt`), in which case the child may
+    // have local changes that were not syncable while it was confined, and
+    // hence needs an outbound sync now.
+    // Note the outbound sync of the child is a no-op if it has no local
+    // change, so broadcasting this event is always safe (this is also what
+    // `move_entry_different_parents` does).
+    let event = EventWorkspaceOpsOutboundSyncNeeded {
+        realm_id: ops.realm_id,
+        entry_id: child_id,
+    };
+    ops.event_bus.send(&event);
 
     Ok(())
 }

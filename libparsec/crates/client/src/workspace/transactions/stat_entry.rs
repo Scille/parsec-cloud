@@ -88,6 +88,12 @@ impl EntryStat {
             EntryStat::Folder { .. } => false,
         }
     }
+
+    pub fn need_sync(&self) -> bool {
+        match self {
+            EntryStat::File { need_sync, .. } | EntryStat::Folder { need_sync, .. } => *need_sync,
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
