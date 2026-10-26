@@ -1,0 +1,1 @@
+[CLI] Add support to TOTP protected device
