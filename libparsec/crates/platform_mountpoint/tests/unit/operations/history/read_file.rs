@@ -208,7 +208,17 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
                 fd.read_to_end(&mut buff).unwrap_err()
             }).await.unwrap();
 
+            #[cfg(target_os = "windows")]
             p_assert_eq!(err.kind(), std::io::ErrorKind::HostUnreachable, "{err:#?}(kind={})", err.kind());
+            #[cfg(not(target_os = "windows"))]
+            {
+                let abi_version = crate::unix::FUSE_ABI_VERSION.wait();
+                if abi_version >= &fuser::Version(7, 45) {
+                    p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+                } else {
+                    p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+                }
+            }
         }
     );
 }

@@ -349,7 +349,13 @@ impl fuser::Filesystem for Filesystem {
             .set_time_granularity(Duration::from_micros(1))
             .expect("Valid granularity");
 
-        log::info!("Initializing filesystem for realm: {}", self.ops.realm_id());
+        log::info!(
+            "Initializing filesystem for realm: {} (abi: {})",
+            self.ops.realm_id(),
+            config.kernel_abi()
+        );
+        #[cfg(test)]
+        let _ = crate::unix::FUSE_ABI_VERSION.set(config.kernel_abi());
         Ok(())
     }
 

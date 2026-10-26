@@ -10,3 +10,9 @@ pub(crate) use filesystem::LOOKUP_HOOK;
 
 pub use mount::Mountpoint;
 pub use mount::clean_base_mountpoint_dir;
+
+/// Static value that should be initialized during `Filesystem::init`.
+/// Used during offline tests to determine the expected error value that depends on the ABI version.
+#[cfg(test)]
+pub(crate) static FUSE_ABI_VERSION: std::sync::OnceLock<fuser::Version> =
+    std::sync::OnceLock::new();
