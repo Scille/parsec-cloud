@@ -195,7 +195,8 @@ jobs:
         timeout-minutes: 1
 
       - name: Sign files with Artifact Signing
-        if: runner.os == 'Windows'
+        # Only sign on windows and when it's not a PR triggered by dependabot
+        if: runner.os == 'Windows' && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
         uses: azure/artifact-signing-action@v2
         with:
           # Configure authentication to Azure Trusted Signing
