@@ -31,7 +31,7 @@
         "chokidar": "~5.0.0",
         "electron-log": "^5.4.3",
         "electron-unhandled": "~6.0.0",
-        "electron-updater": "6.8.9",
+        "electron-updater": "6.8.10",
         "electron-window-state": "~5.0.3",
         "mime-types": "~3.0.1",
         "regedit": "^5.1.4",
@@ -47,7 +47,7 @@
         "@types/semver": "^7.7.1",
         "commander": "^15.0.0",
         "electron": "^44.0.0",
-        "electron-builder": "~26.15.3",
+        "electron-builder": "~26.17.0",
         "typescript": "~7.0.2"
     },
     "keywords": [
