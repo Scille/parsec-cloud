@@ -66,6 +66,14 @@ repos:
         pass_filenames: false
         files: ^server/parsec/static/
 
+      - id: editics-protocol-consistency
+        name: editics_protocol_consistency
+        entry: python ./misc/check_editics_protocol_consistency.py --fix
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: ^(server/parsec/editics_protocol\.py|client/editics/collaborative_protocol\.js|misc/check_editics_protocol_consistency\.py)$
+
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.38.0
     hooks:
