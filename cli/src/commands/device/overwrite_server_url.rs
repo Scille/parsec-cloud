@@ -13,7 +13,7 @@ use crate::{
 };
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, force]
+    #[with = config_dir, device, force]
     pub struct Args {
         /// The new server URL
         #[arg(short, long, value_parser = ParsecAddr::from_http_url, value_hint = clap::ValueHint::Url)]
@@ -34,13 +34,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
 
     let access_strategy = match device.ty {
         AvailableDeviceType::Password => {
-            let password = read_password(if args.password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter password for the device:",
-                }
-            })?;
+            let password = read_password("Enter password for the device:")?;
 
             DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),

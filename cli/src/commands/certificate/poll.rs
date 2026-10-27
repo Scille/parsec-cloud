@@ -4,7 +4,7 @@ use crate::{ui::Color, utils::*};
 use std::fmt::Write;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device]
     pub struct Args {
     }
 );

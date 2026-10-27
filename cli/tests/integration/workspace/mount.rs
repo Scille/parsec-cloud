@@ -73,7 +73,6 @@ async fn mount_workspace(tmp_path: TmpPath, test_ui: &Ui) {
     let cmd = crate::std_cmd!(
         "workspace",
         "mount",
-        "--password-stdin",
         "--device",
         &alice.device_id.hex(),
         "--workspace",

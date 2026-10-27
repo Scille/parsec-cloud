@@ -9,7 +9,7 @@ use libparsec::DeviceLabel;
 use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, password_stdin, auth]
+    #[with = config_dir, auth]
     pub struct Args {
         /// Path where encrypted recovery device data is
         #[arg(short, long, value_hint = clap::ValueHint::FilePath)]
@@ -24,7 +24,6 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         input,
         config_dir,
-        password_stdin,
         label,
         auth,
     } = args;
@@ -36,14 +35,8 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     );
     let recovery_device = tokio::fs::read(input).await?;
 
-    let passphrase = read_password(if password_stdin {
-        ReadPasswordFrom::Stdin
-    } else {
-        ReadPasswordFrom::Tty {
-            prompt: "Enter passphrase for the recovery file:",
-        }
-    })?;
-    let strategy = auth.get_client_save_strategy(password_stdin).await?;
+    let passphrase = read_password("Enter passphrase for the recovery file:")?;
+    let strategy = auth.get_client_save_strategy().await?;
     let device_label = DeviceLabel::try_from(label.as_str())?;
     let new_device = libparsec_client::import_recovery_device(
         &config_dir,

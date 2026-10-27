@@ -2,7 +2,7 @@
 
 use std::{
     fmt::{Display, Write as _},
-    io::Write as _,
+    io::{IsTerminal, Write as _},
     ops::Deref,
     path::{Path, PathBuf},
     sync::Arc,
@@ -240,7 +240,6 @@ impl From<LoadDeviceError> for LoadAndUnlockDeviceError {
 pub async fn load_and_unlock_device(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
 ) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
     log::trace!(
         "Loading device {device} from {dir}",
@@ -261,13 +260,7 @@ pub async fn load_and_unlock_device(
 
     let access_strategy = match device.ty {
         AvailableDeviceType::Password => {
-            let password = read_password(if password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter password for the device:",
-                }
-            })?;
+            let password = read_password("Enter password for the device:")?;
 
             DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
@@ -322,9 +315,8 @@ pub async fn load_and_unlock_device(
 pub async fn load_cmds(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
 ) -> anyhow::Result<(AuthenticatedCmds, Arc<LocalDevice>)> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let device = load_and_unlock_device(config_dir, device).await?;
     let cmds = AuthenticatedCmds::new(config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
 
     Ok((cmds, device))
@@ -333,9 +325,8 @@ pub async fn load_cmds(
 pub async fn load_client(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
 ) -> anyhow::Result<Arc<StartedClient>> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let device = load_and_unlock_device(config_dir, device).await?;
     let client = start_client(device).await?;
 
     Ok(client)
@@ -344,10 +335,9 @@ pub async fn load_client(
 pub async fn load_client_with_config(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
     config: libparsec_client::ClientConfig,
 ) -> anyhow::Result<Arc<StartedClient>> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let device = load_and_unlock_device(config_dir, device).await?;
     let client = start_client_with_config(device, config).await?;
 
     Ok(client)
@@ -412,20 +402,10 @@ pub fn start_spinner(text: String) -> Spinner {
     Spinner::with_stream(Spinners::Dots, text, Stream::Stdout)
 }
 
-pub fn choose_password(from: ReadPasswordFrom) -> anyhow::Result<Password> {
-    match from {
-        ReadPasswordFrom::Stdin => {
-            let stdin = std::io::stdin();
-            rpassword::read_password_with_config(
-                rpassword::ConfigBuilder::new()
-                    .input_reader(stdin.lock())
-                    .output_discard()
-                    .build(),
-            )
-            .map(Into::into)
-            .map_err(anyhow::Error::from)
-        }
-        ReadPasswordFrom::Tty { prompt } => loop {
+pub fn choose_password(prompt: &'static str) -> anyhow::Result<Password> {
+    let stdin = std::io::stdin();
+    if stdin.is_terminal() {
+        loop {
             let password = rpassword::prompt_password(prompt)?.into();
             let confirm_password = rpassword::prompt_password("Confirm password:")?.into();
 
@@ -434,7 +414,17 @@ pub fn choose_password(from: ReadPasswordFrom) -> anyhow::Result<Password> {
             } else {
                 eprintln!("Password mismatch")
             }
-        },
+        }
+    } else {
+        let stdin = std::io::stdin();
+        rpassword::read_password_with_config(
+            rpassword::ConfigBuilder::new()
+                .input_reader(stdin.lock())
+                .output_discard()
+                .build(),
+        )
+        .map(Into::into)
+        .map_err(anyhow::Error::from)
     }
 }
 
@@ -517,18 +507,17 @@ pub enum ReadPasswordFrom {
     Tty { prompt: &'static str },
 }
 
-pub fn read_password(read_from: ReadPasswordFrom) -> anyhow::Result<libparsec::Password> {
-    match read_from {
-        ReadPasswordFrom::Stdin => {
-            let stdin = std::io::stdin();
-            rpassword::read_password_with_config(
-                rpassword::ConfigBuilder::new()
-                    .input_reader(stdin.lock())
-                    .output_discard()
-                    .build(),
-            )
-        }
-        ReadPasswordFrom::Tty { prompt } => rpassword::prompt_password(prompt),
+pub fn read_password(prompt: &'static str) -> anyhow::Result<libparsec::Password> {
+    let stdin = std::io::stdin();
+    if stdin.is_terminal() {
+        rpassword::prompt_password(prompt)
+    } else {
+        rpassword::read_password_with_config(
+            rpassword::ConfigBuilder::new()
+                .input_reader(stdin.lock())
+                .output_discard()
+                .build(),
+        )
     }
     .map(Into::into)
     .map_err(anyhow::Error::from)
@@ -610,26 +599,14 @@ impl NewAuthMethod {
     // TODO delete when the CLI stops using internal libparsec crates
     pub async fn get_client_save_strategy(
         self,
-        password_stdin: bool,
     ) -> anyhow::Result<libparsec_client::DeviceSaveStrategy> {
-        self.get_save_strategy(password_stdin)?
-            .convert_with_side_effects()
-            .await
+        self.get_save_strategy()?.convert_with_side_effects().await
     }
 
-    pub fn get_save_strategy(
-        self,
-        password_stdin: bool,
-    ) -> anyhow::Result<libparsec::DeviceSaveStrategy> {
+    pub fn get_save_strategy(self) -> anyhow::Result<libparsec::DeviceSaveStrategy> {
         match self {
             NewAuthMethod::Password => {
-                let password = choose_password(if password_stdin {
-                    ReadPasswordFrom::Stdin
-                } else {
-                    ReadPasswordFrom::Tty {
-                        prompt: "New device password:",
-                    }
-                })?;
+                let password = choose_password("New device password:")?;
                 Ok(libparsec::DeviceSaveStrategy {
                     totp_protection: None,
                     primary_protection: libparsec::DevicePrimaryProtectionStrategy::Password {

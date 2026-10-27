@@ -41,13 +41,7 @@ async fn test_accept_tos(tmp_path: TmpPath, test_ui: &Ui) {
         bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     let tos = config_tos(&addr, &organization).await;
 
-    let cmd = crate::std_cmd!(
-        "tos",
-        "accept",
-        "--device",
-        &alice.device_id.hex(),
-        "--password-stdin"
-    );
+    let cmd = crate::std_cmd!("tos", "accept", "--device", &alice.device_id.hex());
     let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
     p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
 
@@ -107,13 +101,7 @@ async fn did_not_accept_tos(
         bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     let tos = config_tos(&addr, &organization).await;
 
-    let cmd = crate::std_cmd!(
-        "tos",
-        "accept",
-        "--device",
-        &alice.device_id.hex(),
-        "--password-stdin"
-    );
+    let cmd = crate::std_cmd!("tos", "accept", "--device", &alice.device_id.hex());
     let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
     p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
 

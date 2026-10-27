@@ -10,7 +10,7 @@ use crate::{
 };
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device]
     pub struct Args {
         /// Claimer email (i.e.: The invitee)
         #[arg(value_hint = clap::ValueHint::EmailAddress)]

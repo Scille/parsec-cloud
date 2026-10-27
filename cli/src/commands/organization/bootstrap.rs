@@ -10,7 +10,7 @@ use libparsec::{
 use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = password_stdin, auth]
+    #[with = auth]
     pub struct Args {
         /// Bootstrap address
         /// (e.g: parsec3://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a
@@ -29,7 +29,6 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Sequester authority verify key path
         #[arg(long, value_hint = clap::ValueHint::FilePath)]
         sequester_key: Option<PathBuf>,
-
     }
 );
 
@@ -66,7 +65,6 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         label,
         addr,
         device_label,
-        password_stdin,
         sequester_key,
         auth,
     } = args;
@@ -77,7 +75,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let human_handle = HumanHandle::new(email, &label)
         .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
 
-    let strategy = auth.get_save_strategy(password_stdin)?;
+    let strategy = auth.get_save_strategy()?;
 
     let sequester_authority_verify_key_pem = if let Some(path) = sequester_key {
         let raw = tokio::fs::read_to_string(path).await?;

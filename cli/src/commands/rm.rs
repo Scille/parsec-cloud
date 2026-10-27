@@ -5,7 +5,7 @@ use libparsec::FsPath;
 use crate::utils::StartedClient;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = config_dir, device, workspace]
     pub struct Args {
         /// Path to remove
         #[arg(value_hint = clap::ValueHint::FilePath)]

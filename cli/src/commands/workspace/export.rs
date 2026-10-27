@@ -10,7 +10,7 @@ use crate::utils::StartedClient;
 const CHUNK_SIZE: usize = 4096;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = config_dir, device, workspace]
     pub struct Args {
         /// File to export (e.g. "myfile.txt")
         #[arg(value_hint = clap::ValueHint::FilePath)]

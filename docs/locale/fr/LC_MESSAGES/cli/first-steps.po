@@ -72,11 +72,3 @@ msgstr ""
 "``--device``, ``-d``: l'id abrégé du l'appareil utilisé pour authentifier "
 "l'opération. Cette option est requise lorsqu'une commande à besoin "
 "d'effectuer des opérations authentifiées."
-
-#: ../../cli/first-steps.rst:111
-msgid ""
-"``--password-stdin``: to read the password from stdin. This is useful to "
-"automate CLI usage."
-msgstr ""
-"``--password-stdin``: pour lire le mot de passe depuis l'entrée standard. "
-"Peut servir à automatisé l'usage de la CLI"

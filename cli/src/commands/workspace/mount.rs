@@ -7,7 +7,7 @@ use crate::utils::StartedClient;
 use std::{io::Write, path::PathBuf};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = config_dir, device, workspace]
     pub struct Args {
         /// Path where to mount the workspace
         #[arg(value_hint = clap::ValueHint::DirPath)]

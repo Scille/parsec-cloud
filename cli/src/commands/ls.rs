@@ -6,7 +6,7 @@ use serde::{Serialize, ser::SerializeSeq};
 use crate::{ui::CLIDisplay, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = config_dir, device, workspace]
     pub struct Args {
         /// The absolute workspace path to list contents (e.g. "/foo/bar")
         #[arg(default_value_t, value_hint = clap::ValueHint::AnyPath)]

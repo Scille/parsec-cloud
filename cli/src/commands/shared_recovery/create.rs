@@ -51,7 +51,7 @@ impl std::str::FromStr for WeightedEmail {
 }
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, force]
+    #[with = config_dir, device, force]
     pub struct Args {
         /// Share recipients, with their weight.
         /// If missing organization's admins will be used instead.

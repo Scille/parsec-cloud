@@ -7,7 +7,7 @@ use dialoguer::Confirm;
 use crate::{ui::compat::TOSDisplay, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = device, config_dir, password_stdin, force]
+    #[with = device, config_dir, force]
     pub struct Args {
 
     }

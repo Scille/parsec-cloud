@@ -8,7 +8,7 @@ use libparsec::AccessToken;
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device]
     pub struct Args {
         /// Invitation token
         #[arg(value_parser = AccessToken::from_hex, value_hint = clap::ValueHint::Other)]
