@@ -22,9 +22,10 @@ pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
-    FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode, OpenOptions,
-    OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    CryptpadSessionKeys, EditicsOriginalContentMedia, EntryStat, FileStat, FolderReader,
+    FolderReaderStatEntryError, FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode,
+    OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceDecryptEditicsOriginalContentError, WorkspaceEncryptEditicsOriginalContentError,
     WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
     WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
@@ -612,6 +613,38 @@ impl WorkspaceOps {
             candidate_view_key,
         )
         .await
+    }
+
+    /// Encrypt the original content of a document (i.e. its x2t conversion
+    /// result, see RFC 1030 §1.2) with the workspace key, so it can be
+    /// uploaded to the collaborative edition session as the canonical base
+    /// all the participants edit against.
+    ///
+    /// The archive is encrypted with the realm key derived for the document,
+    /// and the returned key index must be carried along (the other
+    /// participants need it to resolve the key on their side).
+    pub async fn encrypt_editics_original_content(
+        &self,
+        document_id: VlobID,
+        bin: &[u8],
+        medias: &[(String, Vec<u8>)],
+    ) -> Result<(IndexInt, Vec<u8>), WorkspaceEncryptEditicsOriginalContentError> {
+        transactions::encrypt_editics_original_content(self, document_id, bin, medias).await
+    }
+
+    /// Decrypt an original content fetched from a collaborative edition
+    /// session (see RFC 1030 §1.2): the counterpart of
+    /// [`WorkspaceOps::encrypt_editics_original_content`], resolving the key
+    /// by index from the realm keys bundle.
+    pub async fn decrypt_editics_original_content(
+        &self,
+        document_id: VlobID,
+        key_index: IndexInt,
+        encrypted: &[u8],
+    ) -> Result<(Vec<u8>, Vec<(String, Vec<u8>)>), WorkspaceDecryptEditicsOriginalContentError>
+    {
+        transactions::decrypt_editics_original_content(self, document_id, key_index, encrypted)
+            .await
     }
 
     pub async fn save_and_sync_file_with_origin(

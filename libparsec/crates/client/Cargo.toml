@@ -28,6 +28,9 @@ log = { workspace = true }
 blahaj = { workspace = true }
 smallvec = { workspace = true }
 thiserror = { workspace = true }
+# Editics original content archive serialization (see RFC 1030 §1.2)
+rmp-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 # `alloc` feature is required to properly erase struct containing vec/string
 zeroize = { workspace = true, features = ["alloc"] }
 

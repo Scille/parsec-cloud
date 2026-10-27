@@ -2480,6 +2480,8 @@ dependencies = [
  "paste",
  "proptest",
  "proptest-state-machine",
+ "rmp-serde",
+ "serde",
  "smallvec",
  "thiserror 2.0.20",
  "tokio",

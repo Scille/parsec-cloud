@@ -3,12 +3,13 @@
 use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
-    CryptpadSessionKeys, EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
-    WorkspaceCreateFolderError, WorkspaceDecryptPathAddrError, WorkspaceFdCloseError,
-    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
-    WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
-    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError,
-    WorkspaceRemoveEntryError, WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
+    CryptpadSessionKeys, EditicsOriginalContentMedia, EntryStat, FileStat, MoveEntryMode,
+    OpenOptions, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceDecryptPathAddrError, WorkspaceFdCloseError, WorkspaceFdFlushError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError,
+    WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
+    WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
     WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
@@ -771,6 +772,174 @@ pub async fn workspace_register_cryptpad_session(
     workspace
         .register_cryptpad_session(document_id, candidate_edit_key, candidate_view_key)
         .await
+}
+
+/*
+ * Editics original content (see RFC 1030 §1.2)
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceEncryptEditicsOriginalContentError {
+    #[error("Workspace not found")]
+    WorkspaceNotFound,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
+    #[error("There is no key available in this realm for encryption")]
+    NoKey,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<libparsec_client::InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<libparsec_client::InvalidCertificateError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError>
+    for WorkspaceEncryptEditicsOriginalContentError
+{
+    fn from(
+        value: libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError,
+    ) -> Self {
+        match value {
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::Stopped => Self::Stopped,
+            // The client bindings' API doesn't expose the offline case: the
+            // caller (the editics host page through its parent) only reports
+            // a generic error to the user anyway.
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::Offline(err) => {
+                anyhow::anyhow!("Cannot communicate with the server: {err}").into()
+            }
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::NoRealmAccess => {
+                Self::NoRealmAccess
+            }
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::RealmDeleted => {
+                Self::RealmDeleted
+            }
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::NoKey => Self::NoKey,
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::InvalidKeysBundle(
+                err,
+            ) => Self::InvalidKeysBundle(err),
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::InvalidCertificate(
+                err,
+            ) => Self::InvalidCertificate(err),
+            libparsec_client::workspace::WorkspaceEncryptEditicsOriginalContentError::Internal(err) => {
+                Self::Internal(err)
+            }
+        }
+    }
+}
+
+pub async fn workspace_encrypt_editics_original_content(
+    workspace: Handle,
+    document: VlobID,
+    bin: Bytes,
+    medias: Vec<EditicsOriginalContentMedia>,
+) -> Result<(IndexInt, Bytes), WorkspaceEncryptEditicsOriginalContentError> {
+    let workspace = borrow_workspace(workspace)
+        .map_err(|_| WorkspaceEncryptEditicsOriginalContentError::WorkspaceNotFound)?;
+
+    let medias = medias
+        .into_iter()
+        .map(|media| (media.name, media.content))
+        .collect::<Vec<_>>();
+
+    let (key_index, encrypted) = workspace
+        .encrypt_editics_original_content(document, &bin, &medias)
+        .await
+        .map_err(WorkspaceEncryptEditicsOriginalContentError::from)?;
+
+    Ok((key_index, encrypted.into()))
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceDecryptEditicsOriginalContentError {
+    #[error("Workspace not found")]
+    WorkspaceNotFound,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
+    #[error("The referenced key doesn't exist yet in this realm")]
+    KeyNotFound,
+    #[error("The referenced key appears to be corrupted !")]
+    CorruptedKey,
+    #[error("Cannot decrypt the editics original content")]
+    CorruptedData,
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<libparsec_client::InvalidCertificateError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError>
+    for WorkspaceDecryptEditicsOriginalContentError
+{
+    fn from(
+        value: libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError,
+    ) -> Self {
+        match value {
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::Stopped => Self::Stopped,
+            // See `WorkspaceEncryptEditicsOriginalContentError::from` for the
+            // offline case.
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::Offline(err) => {
+                anyhow::anyhow!("Cannot communicate with the server: {err}").into()
+            }
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::NoRealmAccess => {
+                Self::NoRealmAccess
+            }
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::RealmDeleted => {
+                Self::RealmDeleted
+            }
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::KeyNotFound => {
+                Self::KeyNotFound
+            }
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::CorruptedKey => {
+                Self::CorruptedKey
+            }
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::CorruptedData => {
+                Self::CorruptedData
+            }
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::InvalidCertificate(
+                err,
+            ) => Self::InvalidCertificate(err),
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::InvalidKeysBundle(
+                err,
+            ) => anyhow::Error::from(err)
+                .context("Cannot decrypt the editics original content for realm")
+                .into(),
+            libparsec_client::workspace::WorkspaceDecryptEditicsOriginalContentError::Internal(err) => {
+                Self::Internal(err)
+            }
+        }
+    }
+}
+
+pub async fn workspace_decrypt_editics_original_content(
+    workspace: Handle,
+    document: VlobID,
+    key_index: IndexInt,
+    encrypted: Bytes,
+) -> Result<(Bytes, Vec<EditicsOriginalContentMedia>), WorkspaceDecryptEditicsOriginalContentError>
+{
+    let workspace = borrow_workspace(workspace)
+        .map_err(|_| WorkspaceDecryptEditicsOriginalContentError::WorkspaceNotFound)?;
+
+    let (bin, medias) = workspace
+        .decrypt_editics_original_content(document, key_index, &encrypted)
+        .await
+        .map_err(WorkspaceDecryptEditicsOriginalContentError::from)?;
+
+    let medias = medias
+        .into_iter()
+        .map(|(name, content)| EditicsOriginalContentMedia { name, content })
+        .collect::<Vec<_>>();
+
+    Ok((bin.into(), medias))
 }
 
 pub type WorkspaceSaveAndSyncFileWithCryptpadError = WorkspaceSaveAndSyncFileWithOriginError;
