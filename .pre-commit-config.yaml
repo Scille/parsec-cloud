@@ -334,7 +334,7 @@ repos:
         require_serial: true
         language: system
         files: ^client/
-        types_or: [vue, ts, tsx]
+        types_or: [vue, ts, tsx, javascript]
 
   ######
   # JSON
