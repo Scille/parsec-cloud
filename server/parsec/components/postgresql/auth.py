@@ -10,9 +10,11 @@ from parsec._parsec import (
     EmailAddress,
     InvitationType,
     OrganizationID,
+    RealmRole,
     SecretKey,
     UserID,
     VerifyKey,
+    VlobID,
 )
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.auth import (
@@ -21,10 +23,12 @@ from parsec.components.auth import (
     AuthAnonymousAuthBadOutcome,
     AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
+    AuthEditicsAuthBadOutcome,
     AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthInvitedAuthBadOutcome,
     BaseAuthComponent,
+    EditicsAuthInfo,
     InvitedAuthInfo,
 )
 from parsec.components.events import EventBus
@@ -147,6 +151,78 @@ SELECT
     (SELECT revoked_on FROM my_user) AS user_revoked_on,
     (SELECT frozen FROM my_user) AS user_is_frozen,
     (SELECT user_must_accept_tos FROM my_user) AS user_must_accept_tos
+"""
+)
+
+
+_q_editics_get_info = Q(
+    """
+WITH my_organization AS (
+    SELECT
+        _id,
+        is_expired
+    FROM organization
+    WHERE
+        organization_id = $organization_id
+        -- Only consider bootstrapped organizations
+        AND root_verify_key IS NOT NULL
+    LIMIT 1
+),
+
+my_device AS (
+    SELECT
+        device._id,
+        device.verify_key,
+        device.user_
+    FROM device
+    INNER JOIN my_organization ON device.organization = my_organization._id
+    WHERE
+        device.device_id = $device_id
+    LIMIT 1
+),
+
+my_user AS (
+    SELECT
+        user_.user_id,
+        user_.revoked_on,
+        user_.frozen
+    FROM user_
+    INNER JOIN my_device ON user_._id = my_device.user_
+    LIMIT 1
+),
+
+my_realm AS (
+    SELECT
+        realm._id,
+        realm.status
+    FROM realm
+    INNER JOIN my_organization ON realm.organization = my_organization._id
+    WHERE
+        realm.realm_id = $realm_id
+    LIMIT 1
+),
+
+my_realm_user_role AS (
+    SELECT realm_user_role.role
+    FROM realm_user_role
+    WHERE
+        realm_user_role.user_ = (SELECT my_device.user_ FROM my_device)
+        AND realm_user_role.realm = (SELECT my_realm._id FROM my_realm)
+    ORDER BY realm_user_role.certified_on DESC
+    LIMIT 1
+)
+
+SELECT
+    (SELECT _id FROM my_organization) AS organization_internal_id,
+    (SELECT is_expired FROM my_organization) AS organization_is_expired,
+    (SELECT _id FROM my_device) AS device_internal_id,
+    (SELECT verify_key FROM my_device) AS device_verify_key,
+    (SELECT user_id FROM my_user) AS user_id,
+    (SELECT revoked_on FROM my_user) AS user_revoked_on,
+    (SELECT frozen FROM my_user) AS user_is_frozen,
+    (SELECT _id FROM my_realm) AS realm_internal_id,
+    (SELECT status FROM my_realm) AS realm_status,
+    (SELECT role FROM my_realm_user_role) AS user_realm_role
 """
 )
 
@@ -377,6 +453,107 @@ class PGAuthComponent(BaseAuthComponent):
             device_verify_key=device_verify_key,
             organization_internal_id=organization_internal_id,
             device_internal_id=device_internal_id,
+        )
+
+    @override
+    @no_transaction
+    async def _get_editics_info(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        device_id: DeviceID,
+    ) -> EditicsAuthInfo | AuthEditicsAuthBadOutcome:
+        row = await conn.fetchrow(
+            *_q_editics_get_info(
+                organization_id=organization_id.str,
+                realm_id=realm_id,
+                device_id=device_id,
+            )
+        )
+        assert row is not None
+
+        match row["organization_internal_id"]:
+            case int():
+                pass
+            case _:
+                return AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND
+
+        match row["organization_is_expired"]:
+            case False:
+                pass
+            case True:
+                return AuthEditicsAuthBadOutcome.ORGANIZATION_EXPIRED
+            case _:
+                assert False, row
+
+        match row["device_internal_id"]:
+            case int():
+                pass
+            case None:
+                return AuthEditicsAuthBadOutcome.DEVICE_NOT_FOUND
+            case _:
+                assert False, row
+
+        match row["device_verify_key"]:
+            case bytes() as raw_device_verify_key:
+                device_verify_key = VerifyKey(raw_device_verify_key)
+            case _:
+                assert False, row
+
+        match row["user_id"]:
+            case str() as raw_user_id:
+                user_id = UserID.from_hex(raw_user_id)
+            case _:
+                assert False, row
+
+        match row["user_revoked_on"]:
+            case None:
+                pass
+            case DateTime():
+                return AuthEditicsAuthBadOutcome.USER_REVOKED
+            case _:
+                assert False, row
+
+        match row["user_is_frozen"]:
+            case False:
+                pass
+            case True:
+                return AuthEditicsAuthBadOutcome.USER_FROZEN
+            case _:
+                assert False, row
+
+        match row["realm_internal_id"]:
+            case int():
+                pass
+            case None:
+                return AuthEditicsAuthBadOutcome.REALM_NOT_FOUND
+            case _:
+                assert False, row
+
+        match row["realm_status"]:
+            case "AVAILABLE" | "ARCHIVED_OR_DELETION_PLANNED":
+                pass
+            case "DELETED":
+                return AuthEditicsAuthBadOutcome.REALM_DELETED
+            case _:
+                assert False, row
+
+        match row["user_realm_role"]:
+            case str() as raw_user_realm_role:
+                realm_role = RealmRole.from_str(raw_user_realm_role)
+            case None:
+                return AuthEditicsAuthBadOutcome.USER_NO_REALM_ROLE
+            case _:
+                assert False, row
+
+        return EditicsAuthInfo(
+            organization_id=organization_id,
+            user_id=user_id,
+            device_id=device_id,
+            device_verify_key=device_verify_key,
+            realm_id=realm_id,
+            realm_role=realm_role,
         )
 
     @override

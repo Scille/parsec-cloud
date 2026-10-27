@@ -2,7 +2,7 @@
 
 from typing import Any, override
 
-from parsec._parsec import AccessToken, DateTime, DeviceID, OrganizationID
+from parsec._parsec import AccessToken, DateTime, DeviceID, OrganizationID, VlobID
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.auth import (
     AccountAuthenticationToken,
@@ -10,10 +10,12 @@ from parsec.components.auth import (
     AuthAnonymousAuthBadOutcome,
     AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
+    AuthEditicsAuthBadOutcome,
     AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthInvitedAuthBadOutcome,
     BaseAuthComponent,
+    EditicsAuthInfo,
     InvitedAuthInfo,
 )
 from parsec.components.memory.datamodel import MemoryDatamodel, MemoryOrganization
@@ -120,6 +122,50 @@ class MemoryAuthComponent(BaseAuthComponent):
             device_verify_key=device.cooked.verify_key,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             device_internal_id=0,  # Only used by PostgreSQL implementation
+        )
+
+    async def _get_editics_info(
+        self, organization_id: OrganizationID, realm_id: VlobID, device_id: DeviceID
+    ) -> EditicsAuthInfo | AuthEditicsAuthBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if org.is_expired:
+            return AuthEditicsAuthBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            device = org.devices[device_id]
+        except KeyError:
+            return AuthEditicsAuthBadOutcome.DEVICE_NOT_FOUND
+        user_id = device.cooked.user_id
+        user = org.users[user_id]
+        if user.is_revoked:
+            return AuthEditicsAuthBadOutcome.USER_REVOKED
+        if user.is_frozen:
+            return AuthEditicsAuthBadOutcome.USER_FROZEN
+
+        try:
+            realm = org.realms[realm_id]
+            realm.get_current_role_for(user_id)
+        except KeyError:
+            return AuthEditicsAuthBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return AuthEditicsAuthBadOutcome.REALM_DELETED
+
+        realm_role = realm.get_current_role_for(user_id)
+        if not realm_role:
+            return AuthEditicsAuthBadOutcome.USER_NO_REALM_ROLE
+
+        return EditicsAuthInfo(
+            organization_id=organization_id,
+            user_id=user_id,
+            device_id=device_id,
+            device_verify_key=device.cooked.verify_key,
+            realm_id=realm_id,
+            realm_role=realm_role,
         )
 
     @override
