@@ -4,7 +4,7 @@ use crate::utils::StartedClient;
 use std::fmt::Write as _;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = config_dir, device, workspace]
     pub struct Args {}
 );
 
@@ -15,7 +15,6 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let client = crate::utils::load_client_with_config(
         &args.config_dir,
         args.device.clone(),
-        args.password_stdin,
         crate::utils::default_client_config(),
     )
     .await?;

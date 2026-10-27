@@ -7,7 +7,7 @@ use libparsec::{AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtecti
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, auth]
+    #[with = config_dir, device, auth]
     pub struct Args {
     }
 );
@@ -25,13 +25,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
 
     let current_access_strategy = match device.ty {
         AvailableDeviceType::Password => {
-            let password = read_password(if args.password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter current password for the device:",
-                }
-            })?;
+            let password = read_password("Enter current password for the device:")?;
 
             DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
@@ -77,7 +71,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         }
     };
 
-    let new_save_strategy = args.auth.get_save_strategy(args.password_stdin)?;
+    let new_save_strategy = args.auth.get_save_strategy()?;
 
     libparsec::update_device_change_authentication(
         &args.config_dir,

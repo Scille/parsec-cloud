@@ -4,7 +4,7 @@
 .SH NAME
 parsec\-cli\-device\-import\-recovery\-device \- Import recovery device
 .SH SYNOPSIS
-\fBparsec\-cli device import\-recovery\-device\fR [\fB\-\-auth\fR] [\fB\-\-password\-stdin\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fB\-i\fR|\fB\-\-input\fR> <\fB\-l\fR|\fB\-\-label\fR> 
+\fBparsec\-cli device import\-recovery\-device\fR [\fB\-\-auth\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fB\-i\fR|\fB\-\-input\fR> <\fB\-l\fR|\fB\-\-label\fR> 
 .SH DESCRIPTION
 Import recovery device
 .SH OPTIONS
@@ -21,9 +21,6 @@ keyring
 .IP \(bu 2
 password
 .RE
-.TP
-\fB\-\-password\-stdin\fR
-Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
 .TP
 \fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
 Parsec config directory

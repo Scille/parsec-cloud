@@ -9,7 +9,7 @@ use libparsec_platform_mountpoint::Mountpoint;
 use crate::utils::{default_client_config, load_and_unlock_device};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, password_stdin]
+    #[with = config_dir]
     /// Mount a realm export as a workspace.
     pub struct Args {
         /// Path to the realm export database
@@ -61,7 +61,6 @@ impl std::str::FromStr for Decryptor {
 pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         config_dir,
-        password_stdin,
         export_db_path,
         decryptor: raw_decryptors,
         timestamp,
@@ -79,8 +78,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     for raw_decryptor in raw_decryptors {
         match raw_decryptor {
             Decryptor::User { raw_id } => {
-                let device =
-                    load_and_unlock_device(&config_dir, Some(raw_id), password_stdin).await?;
+                let device = load_and_unlock_device(&config_dir, Some(raw_id)).await?;
                 decryptors.push(WorkspaceHistoryRealmExportDecryptor::User {
                     user_id: device.user_id,
                     private_key: Box::new(device.private_key.to_owned()),

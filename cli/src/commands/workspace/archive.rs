@@ -7,7 +7,7 @@ use libparsec::RequestedRealmArchivingConfiguration;
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, workspace, password_stdin]
+    #[with = config_dir, device, workspace]
     #[command(group(clap::ArgGroup::new("mode").required(true)))]
     pub struct Args {
         /// Archive the workspace in read-only mode

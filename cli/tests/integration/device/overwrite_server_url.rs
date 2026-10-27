@@ -26,8 +26,7 @@ async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
         "--device",
         &alice.device_id.hex(),
         "--server-url",
-        "https://new.invalid:123",
-        "--password-stdin"
+        "https://new.invalid:123"
     );
     let mut p = crate::spawn_interactive_command(cmd, Some(2000)).unwrap();
 

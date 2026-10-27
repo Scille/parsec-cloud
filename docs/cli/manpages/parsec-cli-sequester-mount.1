@@ -4,13 +4,10 @@
 .SH NAME
 parsec\-cli\-sequester\-mount \- Mount a realm export as a workspace
 .SH SYNOPSIS
-\fBparsec\-cli sequester mount\fR [\fB\-\-password\-stdin\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-d\fR|\fB\-\-decryptor\fR] [\fB\-t\fR|\fB\-\-timestamp\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIEXPORT_DB_PATH\fR> 
+\fBparsec\-cli sequester mount\fR [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-d\fR|\fB\-\-decryptor\fR] [\fB\-t\fR|\fB\-\-timestamp\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIEXPORT_DB_PATH\fR> 
 .SH DESCRIPTION
 Mount a realm export as a workspace
 .SH OPTIONS
-.TP
-\fB\-\-password\-stdin\fR
-Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
 .TP
 \fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
 Parsec config directory

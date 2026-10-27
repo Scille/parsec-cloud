@@ -12,7 +12,6 @@ macro_rules! build_main_with_client {
             let client = $crate::utils::load_client_with_config(
                 &args.config_dir,
                 args.device.clone(),
-                args.password_stdin,
                 $config,
             )
             .await?;
@@ -205,32 +204,6 @@ macro_rules! clap_parser_with_shared_opts_builder {
                 #[doc = "Organization ID"]
                 #[arg(short, long, env = "PARSEC_ORGANIZATION_ID", value_hint = clap::ValueHint::Other)]
                 pub(crate) organization: libparsec::OrganizationID,
-                $(
-                    $(#[$field_attr])*
-                    $field_vis $field: $field_type,
-                )*
-            }
-        );
-    };
-    // Password stdin option
-    (
-        #[with = password_stdin $(,$modifier:ident)*]
-        $(#[$struct_attr:meta])*
-        $visibility:vis struct $name:ident {
-            $(
-                $(#[$field_attr:meta])*
-                $field_vis:vis $field:ident: $field_type:ty,
-            )*
-        }
-    ) => {
-        $crate::clap_parser_with_shared_opts_builder!(
-            #[with = $($modifier),*]
-            $(#[$struct_attr])*
-            $visibility struct $name {
-                #[doc = "Read the password from stdin instead of TTY."]
-                #[doc = "This flag needs to be explicitly set (it does not have a env var)."]
-                #[arg(long, default_value_t)]
-                pub(crate) password_stdin: bool,
                 $(
                     $(#[$field_attr])*
                     $field_vis $field: $field_type,

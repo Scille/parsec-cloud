@@ -4,7 +4,7 @@
 .SH NAME
 parsec\-cli\-certificate\-forget\-all\-certificates \- Forget all certificates from the local database, this is not needed under normal circumstances
 .SH SYNOPSIS
-\fBparsec\-cli certificate forget\-all\-certificates\fR [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+\fBparsec\-cli certificate forget\-all\-certificates\fR [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] 
 .SH DESCRIPTION
 Forget all certificates from the local database, this is not needed under normal circumstances.
 .PP
@@ -12,9 +12,6 @@ Clearing the certificates might be useful in case the server database got rolled
 .PP
 Note that this scenario is technically similar to a server compromise, so the user should ensure the rollback is legit before clearing the certificates!
 .SH OPTIONS
-.TP
-\fB\-\-password\-stdin\fR
-Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
 .TP
 \fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
 Device ID

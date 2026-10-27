@@ -40,8 +40,7 @@ async fn poll_and_forget(tmp_path: TmpPath, test_ui: &Ui) {
         "certificate",
         "forget-all-certificates",
         "--device",
-        &alice.device_id.hex(),
-        "--password-stdin"
+        &alice.device_id.hex()
     );
     let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
 

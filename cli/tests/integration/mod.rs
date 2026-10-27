@@ -137,7 +137,7 @@ macro_rules! assert_cmd_success {
 #[macro_export]
 macro_rules! assert_cmd {
     (with_password=$pass:expr, $($cmd:expr),+) => {
-        $crate::assert_cmd!($($cmd),+ , "--password-stdin")
+        $crate::assert_cmd!($($cmd),+)
             .write_stdin(format!("{password}\n", password = $pass))
     };
     ($($cmd:expr),+) => {

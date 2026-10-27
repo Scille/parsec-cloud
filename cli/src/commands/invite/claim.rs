@@ -30,7 +30,7 @@ use crate::{
 use dialoguer::{Confirm, FuzzySelect, Input};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, data_dir, password_stdin, auth]
+    #[with = config_dir, data_dir, auth]
     pub struct Args {
         // cspell:disable-next-line
         /// Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`
@@ -45,7 +45,6 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         config_dir,
         data_dir,
         addr,
-        password_stdin,
         auth,
     } = args;
     let addr = ParsecInvitationAddr::from_any(addr.as_str())?;
@@ -65,7 +64,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(&ui, ctx).await?;
             let ctx = step4_user(&ui, ctx).await?;
-            let save_strategy = auth.get_client_save_strategy(password_stdin).await?;
+            let save_strategy = auth.get_client_save_strategy().await?;
 
             save_user(&ui, ctx, save_strategy).await
         }
@@ -74,7 +73,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
             let ctx = step2_device(ctx).await?;
             let ctx = step3_device(&ui, ctx).await?;
             let ctx = step4_device(&ui, ctx).await?;
-            let save_strategy = auth.get_client_save_strategy(password_stdin).await?;
+            let save_strategy = auth.get_client_save_strategy().await?;
 
             save_device(&ui, ctx, save_strategy).await
         }
@@ -123,7 +122,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
                     }
                 }
             };
-            let save_strategy = auth.get_client_save_strategy(password_stdin).await?;
+            let save_strategy = auth.get_client_save_strategy().await?;
 
             save_shamir_recovery(&ui, final_ctx, save_strategy).await
         }

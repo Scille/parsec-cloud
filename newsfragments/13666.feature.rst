@@ -1,0 +1,1 @@
+[CLI] Remove `--password-stdin`, the CLI now auto-detect when it should use interactive prompt over reading stdin

@@ -28,8 +28,7 @@ async fn ok(tmp_path: TmpPath, test_ui: &Ui, #[case] auth: &str) {
         "--device",
         &alice.device_id.hex(),
         "--auth",
-        auth,
-        "--password-stdin"
+        auth
     )
     .stdin(std::process::Stdio::piped())
     .stderr(std::process::Stdio::inherit())
