@@ -26572,7 +26572,9 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                                     Ok(ok) => ok,
                                     #[allow(clippy::unnecessary_to_owned)]
                                     Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(&err.to_string())));
+                                        return Err(JsValue::from(TypeError::new(
+                                            &err.to_string(),
+                                        )));
                                     }
                                 }
                             }
