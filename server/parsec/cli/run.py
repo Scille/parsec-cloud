@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import click
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, ValidationError
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -46,7 +47,6 @@ from parsec.config import (
     LogLevel,
     MockedEmailConfig,
     OpenBaoAuthConfig,
-    OpenBaoAuthType,
     OpenBaoConfig,
     ScwsConfig,
     SmtpEmailConfig,
@@ -82,6 +82,46 @@ def _parse_organization_initial_tos_url(raw_param: str | None) -> dict[TosLocale
         locales[locale] = url
 
     return locales
+
+
+class _OpenBaoAuthParam(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    id: str = Field(min_length=1)
+    mount_path: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    help_link: HttpUrl | None = None
+    icon: HttpUrl | None = None
+
+
+def _parse_openbao_auths(raw_param: str | None) -> list[OpenBaoAuthConfig] | None:
+    if raw_param is None:
+        return None
+
+    try:
+        raw = TypeAdapter(list[_OpenBaoAuthParam]).validate_json(raw_param)
+    except ValidationError as err:
+        details = "; ".join(
+            f"[{error['loc'][0]}].{'.'.join(map(str, error['loc'][1:]))}: {error['msg']}"
+            if len(error["loc"]) > 1
+            else error["msg"]
+            for error in err.errors()
+        )
+        raise click.BadParameter(
+            f"Invalid format, should be JSON array, see --help: {details}"
+        ) from err
+
+    if len(set(auth.id for auth in raw)) != len(raw):
+        raise click.BadParameter("Duplicate id")
+    return [
+        OpenBaoAuthConfig(
+            id=auth.id,
+            mount_path=auth.mount_path,
+            name=auth.name,
+            help_link=str(auth.help_link) if auth.help_link is not None else None,
+            icon=str(auth.icon) if auth.icon is not None else None,
+        )
+        for auth in raw
+    ]
 
 
 class DevOption(click.Option):
@@ -269,24 +309,33 @@ according to its own threat model.
 """,
 )
 @click.option(
-    "--openbao-auth-pro-connect",
-    envvar="PARSEC_OPENBAO_AUTH_PRO_CONNECT_MOUNT_PATH",
-    metavar="MOUNT_PATH",
+    "--openbao-auths",
+    envvar="PARSEC_OPENBAO_AUTHS",
+    metavar="JSON",
     show_envvar=True,
-    help="""Configure an auth module for end-user authentication using OIDC with ProConnect.
+    callback=lambda _ctx, _param, value: _parse_openbao_auths(value),
+    help="""Configure the auth modules for end-user authentication using OIDC (i.e. the
+SSO providers displayed to the user).
+
+Should be provided as a JSON array of objects with the following fields:
+
+\b
+- id: Opaque identifier of the provider (e.g. `PRO_CONNECT`). It is stored in the
+  user's device file, so it should not be changed once in use.
+- mount_path: Mount path of the OpenBao auth module (e.g. `auth/pro_connect`).
+- name: Name of the provider displayed to the user (e.g. `ProConnect`).
+- help_link (optional): HTTP(S) URL to a documentation/help page about the provider.
+- icon (optional): HTTP(S) URL to an image representing the provider.
+
+For instance:
+
+\b
+    [{"id": "PRO_CONNECT", "mount_path": "auth/pro_connect", "name": "ProConnect",
+      "icon": "https://example.com/pro_connect.svg"}]
 
 (see: https://openbao.org/api-docs/auth/jwt/)
 """,
-)
-@click.option(
-    "--openbao-auth-hexagone",
-    envvar="PARSEC_OPENBAO_AUTH_HEXAGONE_MOUNT_PATH",
-    metavar="MOUNT_PATH",
-    show_envvar=True,
-    help="""Configure an auth module for end-user authentication using OIDC with Hexagone.
-
-(see: https://openbao.org/api-docs/auth/jwt/)
-""",
+    show_default="no SSO configured",
 )
 @click.option(
     "--spontaneous-organization-bootstrap",
@@ -603,8 +652,7 @@ async def run_cmd(
     openbao_server_url: str | None,
     openbao_secret_mount_path: str,
     openbao_transit_mount_path: str,
-    openbao_auth_pro_connect: str | None,
-    openbao_auth_hexagone: str | None,
+    openbao_auths: list[OpenBaoAuthConfig] | None,
     spontaneous_organization_bootstrap: bool,
     organization_bootstrap_webhook: str | None,
     organization_initial_active_users_limit: int | None,
@@ -682,32 +730,16 @@ async def run_cmd(
         if openbao_server_url is None:
             openbao_config = None
         else:
-            auths = []
-            if openbao_auth_hexagone is not None:
-                auths.append(
-                    OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.HEXAGONE,
-                        mount_path=openbao_auth_hexagone,
-                    )
-                )
-            if openbao_auth_pro_connect is not None:
-                auths.append(
-                    OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.PRO_CONNECT,
-                        mount_path=openbao_auth_pro_connect,
-                    )
-                )
-
-            if not auths:
+            if not openbao_auths:
                 raise ValueError(
-                    "At least one --openbao-auth-* option is required when --openbao-server-url is provided"
+                    "--openbao-auths is required when --openbao-server-url is provided"
                 )
 
             openbao_config = OpenBaoConfig(
                 server_url=openbao_server_url,
                 secret_mount_path=openbao_secret_mount_path,
                 transit_mount_path=openbao_transit_mount_path,
-                auths=auths,
+                auths=openbao_auths,
             )
 
         app_config = BackendConfig(
