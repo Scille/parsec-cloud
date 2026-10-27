@@ -68,13 +68,17 @@ WEB_APP_EDITICS_URL = "/client/editics/"
 # cache-busting naming (i.e. having content hash in their name, e.g. `base-jFjh9D00.css`).
 STATIC_ASSETS_CACHE_CONTROL = "max-age=31536000, public, immutable"
 EDITICS_CONTENT_SECURITY_PROTOCOL_TEMPLATE = (
+    # Next line is a marker used by `client/scripts/vite_plugin_editics.ts`
+    # --- Content-Security-Policy template start ---
     "default-src 'self'"
     # x2t compiles its WASM module, OnlyOffice uses `new Function()`
     "; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' 'unsafe-inline'"
     "; style-src 'self' 'unsafe-inline'"
     "; img-src 'self' blob: data:"
     "; font-src 'self' blob: data:"
-    "; connect-src 'self' blob: data:"
+    # In collaborative mode the editics host page connects to the Parsec
+    # server hosting the editics session.
+    "; connect-src 'self' blob: data: https: http:"
     "; worker-src 'self' blob:"
     "; frame-src 'self'"
     "; media-src 'self' blob: data:"
@@ -82,6 +86,7 @@ EDITICS_CONTENT_SECURITY_PROTOCOL_TEMPLATE = (
     "; base-uri 'self'"
     "; form-action 'none'"
     "; frame-ancestors 'self' {web_app_addr}"
+    # --- Content-Security-Policy template end ---
 )
 
 
