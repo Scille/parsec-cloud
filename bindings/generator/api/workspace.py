@@ -8,12 +8,15 @@ from .addr import (
 from .client import CertificateBasedInfoOrigin, RealmArchivingConfiguration
 from .common import (
     U64,
+    Bytes,
+    BytesVec,
     DateTime,
     DeviceID,
     EntryName,
     ErrorVariant,
     FsPath,
     Handle,
+    IndexInt,
     Path,
     RealmRole,
     Ref,
@@ -926,4 +929,84 @@ async def workspace_save_and_sync_file_with_cryptpad(
     cryptpad_session_timestamp: DateTime,
     content: Ref[bytes],
 ) -> Result[None, WorkspaceSaveAndSyncFileWithCryptpadError]:
+    raise NotImplementedError
+
+
+class EditicsOriginalContentMedia(Structure):
+    name: str
+    content: BytesVec
+
+
+class WorkspaceEncryptEditicsOriginalContentError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class WorkspaceNotFound:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class NoKey:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_encrypt_editics_original_content(
+    workspace: Handle,
+    document: VlobID,
+    bin: Bytes,
+    medias: list[EditicsOriginalContentMedia],
+) -> Result[tuple[IndexInt, Bytes], WorkspaceEncryptEditicsOriginalContentError]:
+    raise NotImplementedError
+
+
+class WorkspaceDecryptEditicsOriginalContentError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class WorkspaceNotFound:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class KeyNotFound:
+        pass
+
+    class CorruptedKey:
+        pass
+
+    class CorruptedData:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_decrypt_editics_original_content(
+    workspace: Handle,
+    document: VlobID,
+    key_index: IndexInt,
+    encrypted: Bytes,
+) -> Result[
+    tuple[Bytes, list[EditicsOriginalContentMedia]], WorkspaceDecryptEditicsOriginalContentError
+]:
     raise NotImplementedError
