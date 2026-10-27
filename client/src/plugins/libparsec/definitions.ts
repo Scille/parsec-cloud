@@ -387,6 +387,14 @@ export interface NewInvitationInfo {
     emailSentStatus: InvitationEmailSentStatus
 }
 
+export interface OpenBaoAuthConfig {
+    id: string
+    mountPath: string
+    name: string
+    helpLink: string | null
+    icon: string | null
+}
+
 export interface OpenBaoConfig {
     serverUrl: string
     secret: OpenBaoSecretConfig
@@ -3965,24 +3973,6 @@ export type MoveEntryMode =
   | MoveEntryModeCanReplaceFileOnly
   | MoveEntryModeExchange
   | MoveEntryModeNoReplace
-
-// OpenBaoAuthConfig
-export enum OpenBaoAuthConfigTag {
-    OIDCHexagone = 'OpenBaoAuthConfigOIDCHexagone',
-    OIDCProConnect = 'OpenBaoAuthConfigOIDCProConnect',
-}
-
-export interface OpenBaoAuthConfigOIDCHexagone {
-    tag: OpenBaoAuthConfigTag.OIDCHexagone
-    mountPath: string
-}
-export interface OpenBaoAuthConfigOIDCProConnect {
-    tag: OpenBaoAuthConfigTag.OIDCProConnect
-    mountPath: string
-}
-export type OpenBaoAuthConfig =
-  | OpenBaoAuthConfigOIDCHexagone
-  | OpenBaoAuthConfigOIDCProConnect
 
 // OpenBaoListSelfEmailsError
 export enum OpenBaoListSelfEmailsErrorTag {

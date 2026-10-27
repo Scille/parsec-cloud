@@ -16,7 +16,6 @@ from parsec._parsec import (
     AdvisoryDeviceFileProtection,
     DateTime,
     EmailAddress,
-    OpenBaoAuthType,
     ParsecAddr,
     RsaPrivateKey,
     SecretKey,
@@ -244,8 +243,11 @@ class AccountConfig(enum.Enum):
 
 @dataclass(slots=True)
 class OpenBaoAuthConfig:
-    id: OpenBaoAuthType
+    id: str
     mount_path: str
+    name: str
+    help_link: str | None
+    icon: str | None
 
 
 @dataclass(slots=True)

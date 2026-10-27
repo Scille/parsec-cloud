@@ -333,6 +333,15 @@ export interface NewInvitationInfo {
 }
 
 
+export interface OpenBaoAuthConfig {
+    id: string
+    mountPath: string
+    name: string
+    helpLink: string | null
+    icon: string | null
+}
+
+
 export interface OpenBaoConfig {
     serverUrl: string
     secret: OpenBaoSecretConfig
@@ -3310,20 +3319,6 @@ export type MoveEntryMode =
   | MoveEntryModeCanReplaceFileOnly
   | MoveEntryModeExchange
   | MoveEntryModeNoReplace
-
-
-// OpenBaoAuthConfig
-export interface OpenBaoAuthConfigOIDCHexagone {
-    tag: "OpenBaoAuthConfigOIDCHexagone"
-    mount_path: string
-}
-export interface OpenBaoAuthConfigOIDCProConnect {
-    tag: "OpenBaoAuthConfigOIDCProConnect"
-    mount_path: string
-}
-export type OpenBaoAuthConfig =
-  | OpenBaoAuthConfigOIDCHexagone
-  | OpenBaoAuthConfigOIDCProConnect
 
 
 // OpenBaoListSelfEmailsError

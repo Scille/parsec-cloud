@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Callable, Coroutine
 from hashlib import blake2b
 from pathlib import Path
@@ -46,7 +47,6 @@ from parsec.config import (
     LogLevel,
     MockedEmailConfig,
     OpenBaoAuthConfig,
-    OpenBaoAuthType,
     OpenBaoConfig,
     ScwsConfig,
     SmtpEmailConfig,
@@ -82,6 +82,62 @@ def _parse_organization_initial_tos_url(raw_param: str | None) -> dict[TosLocale
         locales[locale] = url
 
     return locales
+
+
+def _parse_openbao_auths(raw_param: str | None) -> list[OpenBaoAuthConfig] | None:
+    if raw_param is None:
+        return None
+
+    ALLOWED_KEYS = {"id", "mount_path", "name", "help_link", "icon"}
+
+    try:
+        auths = []
+        raw_auths = json.loads(raw_param)
+
+        if not isinstance(raw_auths, list):
+            raise ValueError("Invalid format")
+
+        for raw_auth in raw_auths:
+            if not isinstance(raw_auth, dict):
+                raise ValueError("Invalid format")
+            other_keys = raw_auth.keys() - ALLOWED_KEYS
+            if other_keys:
+                raise ValueError(f"Unknown keys: {', '.join(sorted(other_keys))}")
+            help_link = raw_auth.get("help_link")
+            if help_link is not None and (
+                not isinstance(help_link, str) or not help_link.startswith(("https://", "http://"))
+            ):
+                raise ValueError("Invalid format for `help_link`: should be a http(s) URL")
+            icon = raw_auth.get("icon")
+            if icon is not None and (
+                not isinstance(icon, str) or not icon.startswith(("https://", "http://"))
+            ):
+                raise ValueError("Invalid format for `icon`: should be a http(s) URL")
+            id = raw_auth["id"]
+            if not isinstance(id, str) or id == "":
+                raise ValueError("Invalid format for `id`: should be a non-empty string")
+            name = raw_auth["name"]
+            if not isinstance(name, str) or name == "":
+                raise ValueError("Invalid format for `name`: should be a non-empty string")
+            mount_path = raw_auth["mount_path"]
+            if not isinstance(mount_path, str) or mount_path == "":
+                raise ValueError("Invalid format for `mount_path`: should be a non-empty string")
+            auths.append(
+                OpenBaoAuthConfig(
+                    id=id,
+                    name=name,
+                    mount_path=mount_path,
+                    help_link=help_link,
+                    icon=icon,
+                )
+            )
+        if len(set(auth.id for auth in auths)) != len(auths):
+            raise ValueError("Multiple same id")
+        return auths
+    except ValueError as err:
+        raise click.BadParameter(f"Invalid format, should be JSON array, see --help: {err}")
+    except KeyError as err:
+        raise click.BadParameter(f"Missing key {err.args[0]}")
 
 
 class DevOption(click.Option):
@@ -269,24 +325,33 @@ according to its own threat model.
 """,
 )
 @click.option(
-    "--openbao-auth-pro-connect",
-    envvar="PARSEC_OPENBAO_AUTH_PRO_CONNECT_MOUNT_PATH",
-    metavar="MOUNT_PATH",
+    "--openbao-auths",
+    envvar="PARSEC_OPENBAO_AUTHS",
+    metavar="JSON",
     show_envvar=True,
-    help="""Configure an auth module for end-user authentication using OIDC with ProConnect.
+    callback=lambda _ctx, _param, value: _parse_openbao_auths(value),
+    help="""Configure the auth modules for end-user authentication using OIDC (i.e. the
+SSO providers displayed to the user).
+
+Should be provided as a JSON array of objects with the following fields:
+
+\b
+- id: Opaque identifier of the provider (e.g. `PRO_CONNECT`). It is stored in the
+  user's device file, so it should not be changed once in use.
+- mount_path: Mount path of the OpenBao auth module (e.g. `auth/pro_connect`).
+- name: Name of the provider displayed to the user (e.g. `ProConnect`).
+- help_link (optional): HTTP(S) URL to a documentation/help page about the provider.
+- icon (optional): HTTP(S) URL to an image representing the provider.
+
+For instance:
+
+\b
+    [{"id": "PRO_CONNECT", "mount_path": "auth/pro_connect", "name": "ProConnect",
+      "icon": "https://example.com/pro_connect.svg"}]
 
 (see: https://openbao.org/api-docs/auth/jwt/)
 """,
-)
-@click.option(
-    "--openbao-auth-hexagone",
-    envvar="PARSEC_OPENBAO_AUTH_HEXAGONE_MOUNT_PATH",
-    metavar="MOUNT_PATH",
-    show_envvar=True,
-    help="""Configure an auth module for end-user authentication using OIDC with Hexagone.
-
-(see: https://openbao.org/api-docs/auth/jwt/)
-""",
+    show_default="no SSO configured",
 )
 @click.option(
     "--spontaneous-organization-bootstrap",
@@ -603,8 +668,7 @@ async def run_cmd(
     openbao_server_url: str | None,
     openbao_secret_mount_path: str,
     openbao_transit_mount_path: str,
-    openbao_auth_pro_connect: str | None,
-    openbao_auth_hexagone: str | None,
+    openbao_auths: list[OpenBaoAuthConfig] | None,
     spontaneous_organization_bootstrap: bool,
     organization_bootstrap_webhook: str | None,
     organization_initial_active_users_limit: int | None,
@@ -682,32 +746,16 @@ async def run_cmd(
         if openbao_server_url is None:
             openbao_config = None
         else:
-            auths = []
-            if openbao_auth_hexagone is not None:
-                auths.append(
-                    OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.HEXAGONE,
-                        mount_path=openbao_auth_hexagone,
-                    )
-                )
-            if openbao_auth_pro_connect is not None:
-                auths.append(
-                    OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.PRO_CONNECT,
-                        mount_path=openbao_auth_pro_connect,
-                    )
-                )
-
-            if not auths:
+            if not openbao_auths:
                 raise ValueError(
-                    "At least one --openbao-auth-* option is required when --openbao-server-url is provided"
+                    "--openbao-auths is required when --openbao-server-url is provided"
                 )
 
             openbao_config = OpenBaoConfig(
                 server_url=openbao_server_url,
                 secret_mount_path=openbao_secret_mount_path,
                 transit_mount_path=openbao_transit_mount_path,
-                auths=auths,
+                auths=openbao_auths,
             )
 
         app_config = BackendConfig(
