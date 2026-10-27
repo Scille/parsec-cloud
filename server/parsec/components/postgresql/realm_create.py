@@ -157,7 +157,7 @@ async def realm_create(
         author_verify_key=author_verify_key,
         realm_role_certificate=realm_role_certificate,
     ):
-        case RealmRoleCertificate() as certif:
+        case (new_user_role, certif):
             pass
         case error:
             return error
@@ -224,7 +224,7 @@ async def realm_create(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=certif.user_id,
-            role_removed=certif.role is None,
+            kind=("SHARE", new_user_role),
         ),
     )
 

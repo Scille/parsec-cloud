@@ -169,7 +169,7 @@ async def realm_self_promote_to_owner(
         author_verify_key=author_verify_key,
         realm_role_certificate=realm_role_certificate,
     ):
-        case RealmRoleCertificate() as certif:
+        case (new_user_role, certif):
             assert certif.role == RealmRole.OWNER
         case error:
             return error
@@ -274,7 +274,7 @@ async def realm_self_promote_to_owner(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=certif.user_id,
-            role_removed=False,
+            kind=("SHARE", new_user_role),
         ),
     )
 

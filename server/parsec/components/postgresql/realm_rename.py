@@ -181,7 +181,7 @@ async def realm_rename(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=db_common_data.user_id,
-            role_removed=False,
+            kind="OTHER",
         ),
     )
 
