@@ -201,7 +201,7 @@ async def realm_update_archiving(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=db_common.user_id,
-            role_removed=False,
+            kind="OTHER",
         ),
     )
 
