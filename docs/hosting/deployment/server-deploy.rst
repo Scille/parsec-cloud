@@ -63,8 +63,9 @@ The Parsec Server depends on the following components:
 Optionally, the following components can be used to support additional features:
 
 - A `Sentry Data Source Name (DSN)`_ to support Parsec Server telemetry reports.
-- A `CryptPad`_ server to support document editing from Parsec client applications.
 - An `OpenBAO`_ server to support authentication with SSO.
+- A dedicated sub-domain (e.g. ``editics.mydomain.com``) to support document editing from Parsec client applications.
+  See :ref:`Editics Deployment <doc_hosting_deployment_editics>` for configuration instructions.
 
 .. _PostgreSQL: https://www.postgresql.org/
 .. _OpenStack Swift: https://docs.openstack.org/swift/latest/
@@ -72,7 +73,6 @@ Optionally, the following components can be used to support additional features:
 .. _SMTP server: https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
 .. _TSL/SSL server certificate: https://en.wikipedia.org/wiki/Public_key_certificate#TLS/SSL_server_certificate
 .. _Sentry Data Source Name (DSN): https://docs.sentry.io/product/sentry-basics/concepts/dsn-explainer/
-.. _CryptPad: https://github.com/cryptpad/cryptpad
 .. _OpenBao: https://github.com/openbao/openbao
 
 .. important::
