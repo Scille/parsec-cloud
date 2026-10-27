@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, future::Future, sync::Arc};
 
@@ -12,7 +12,7 @@ use crate::{
         EventBus, EventWorkspaceOpsOutboundSyncAborted, EventWorkspaceOpsOutboundSyncDone,
         EventWorkspaceOpsOutboundSyncNeeded, EventWorkspaceOpsOutboundSyncProgress,
     },
-    workspace::WorkspaceOps,
+    workspace::{WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceOps, WorkspaceStatEntryError},
 };
 
 const WORKSPACE_OUTBOUND_SYNC_PROGRESS_MONITOR_NAME: &str = "workspace_outbound_sync_progress";
@@ -41,6 +41,31 @@ struct ProgressTracker {
     last_sent_event: EventWorkspaceOutboundSyncBacklog,
 }
 
+#[derive(Debug, thiserror::Error)]
+enum WorkspaceOutboundSyncProgressMonitorInitError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    UnableToStatEntry(#[from] WorkspaceStatEntryError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<WorkspaceGetNeedOutboundSyncEntriesError>
+    for WorkspaceOutboundSyncProgressMonitorInitError
+{
+    fn from(value: WorkspaceGetNeedOutboundSyncEntriesError) -> Self {
+        match value {
+            WorkspaceGetNeedOutboundSyncEntriesError::Stopped => {
+                WorkspaceOutboundSyncProgressMonitorInitError::Stopped
+            }
+            WorkspaceGetNeedOutboundSyncEntriesError::Internal(e) => {
+                WorkspaceOutboundSyncProgressMonitorInitError::Internal(e)
+            }
+        }
+    }
+}
+
 impl ProgressTracker {
     fn new(realm_id: VlobID) -> Self {
         Self {
@@ -54,6 +79,24 @@ impl ProgressTracker {
             },
         }
     }
+
+    async fn init(
+        workspace_ops: Arc<WorkspaceOps>,
+    ) -> Result<Self, WorkspaceOutboundSyncProgressMonitorInitError> {
+        // what is left to be sync in DB at startup
+        let mut files_to_sync = HashMap::new();
+        for entry in workspace_ops.get_need_outbound_sync(u32::MAX).await? {
+            let stat = workspace_ops.stat_entry_by_id(entry).await?;
+            if !stat.is_confined() && stat.is_file() {
+                files_to_sync.insert(entry, stat.size());
+            }
+        }
+
+        Ok(Self {
+            files_to_sync,
+            ..Self::new(workspace_ops.realm_id())
+        })
+    }
 }
 
 pub(crate) async fn start_workspace_outbound_sync_progress_monitor(
@@ -62,6 +105,7 @@ pub(crate) async fn start_workspace_outbound_sync_progress_monitor(
     device: Arc<LocalDevice>,
 ) -> Monitor {
     let realm_id = workspace_ops.realm_id();
+
     let task_future = task_future_factory(workspace_ops, event_bus.clone(), device);
     let task_future = pretend_future_is_send_on_web(task_future);
     Monitor::start(
@@ -100,9 +144,6 @@ fn task_future_factory(
 ) -> impl Future<Output = ()> {
     let realm_id = workspace_ops.realm_id();
     let (tx, rx) = channel::unbounded::<IncomingOutboundSyncEvent>();
-
-    // TODO init progress tracker with DB content
-    let mut progress_tracker = ProgressTracker::new(realm_id);
 
     let outbound_sync_needed_events_connection_lifetime = ({
         let tx = tx.clone();
@@ -156,6 +197,16 @@ fn task_future_factory(
     },);
 
     async move {
+        //  init progress tracker with DB content
+        let mut progress_tracker = match ProgressTracker::init(workspace_ops.clone()).await {
+            Ok(p) => p,
+            Err(e) => {
+                log::info!(
+                    "Unexpected error while initializing workspace outbound sync progress tracker {e:?}"
+                );
+                return;
+            }
+        };
         let _outbound_sync_needed_events_connection_lifetime =
             outbound_sync_needed_events_connection_lifetime;
         let _outbound_sync_progress_events_connection_lifetime =
@@ -174,7 +225,7 @@ fn task_future_factory(
                     let (number_of_files_to_sync, size_to_sync) = progress_tracker
                         .files_to_sync
                         .iter()
-                        .fold((0,0), |(acc_files, acc_bytes), (_,size)| (acc_files+1, acc_bytes+size));
+                        .fold((0,0), |(acc_files, acc_bytes), (_,size)| (acc_files + 1, acc_bytes + size));
 
                     // check that it's not the same as previous event
                     if !(number_of_files_to_sync == progress_tracker.last_sent_event.number_of_files_to_sync
