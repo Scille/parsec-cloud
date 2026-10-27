@@ -144,7 +144,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 author_verify_key=author_verify_key,
                 realm_role_certificate=realm_role_certificate,
             ):
-                case RealmRoleCertificate() as certif:
+                case (new_user_role, certif):
                     pass
                 case error:
                     return error
@@ -183,7 +183,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
-                        role_removed=certif.role is None,
+                        kind=("SHARE", new_user_role),
                     )
                 )
 
@@ -234,7 +234,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 author_verify_key=author_verify_key,
                 realm_role_certificate=realm_role_certificate,
             ):
-                case RealmRoleCertificate() as certif:
+                case (new_user_role, certif):
                     pass
                 case error:
                     return error
@@ -261,7 +261,6 @@ class MemoryRealmComponent(BaseRealmComponent):
                 owner_only = (RealmRole.OWNER,)
                 owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
                 existing_user_role = realm.get_current_role_for(certif.user_id)
-                new_user_role = certif.role
                 needed_roles: tuple[RealmRole, ...]
                 if existing_user_role in owner_or_manager or new_user_role in owner_or_manager:
                     needed_roles = owner_only
@@ -325,7 +324,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
-                        role_removed=False,
+                        kind=("SHARE", new_user_role),
                     )
                 )
 
@@ -443,7 +442,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
-                        role_removed=True,
+                        kind="UNSHARE",
                     )
                 )
 
@@ -494,7 +493,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 author_verify_key=author_verify_key,
                 realm_role_certificate=realm_role_certificate,
             ):
-                case RealmRoleCertificate() as certif:
+                case (new_user_role, certif):
                     pass
                 case error:
                     return error
@@ -558,7 +557,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
-                        role_removed=False,
+                        kind=("SHARE", new_user_role),
                     )
                 )
 
@@ -658,7 +657,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=author_user_id,
-                        role_removed=False,
+                        kind="OTHER",
                     )
                 )
 
@@ -754,7 +753,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=author_user_id,
-                        role_removed=False,
+                        kind="OTHER",
                     )
                 )
 
@@ -924,7 +923,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=author_user_id,
-                        role_removed=False,
+                        kind="OTHER",
                     )
                 )
 

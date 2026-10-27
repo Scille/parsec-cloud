@@ -99,7 +99,7 @@ async def test_authenticated_realm_rename_ok_subsequent_rename(
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
                 user_id=coolorg.alice.user_id,
-                role_removed=False,
+                kind="OTHER",
             )
         )
 
@@ -160,7 +160,7 @@ async def test_authenticated_realm_rename_ok_initial_rename(
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
                 user_id=coolorg.alice.user_id,
-                role_removed=False,
+                kind="OTHER",
             )
         )
 
