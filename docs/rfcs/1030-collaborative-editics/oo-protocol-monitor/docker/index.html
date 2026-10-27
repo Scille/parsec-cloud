@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!--
+  index.html — harness page served by run.js.
+
+  The public onlyoffice.com demo page embeds *their* hosted editors, so a
+  local document server needs its own page. This one opens three editors
+  (Alice / Bob / Mallory) on the same document key — a live co-editing
+  session, like the demo's Collaborate tab.
+
+  The client names and user IDs match the Parsec server-side test fixtures
+  (see `server/tests/common/editics.py`), so a captured record is usable as-is
+  by `server/tests/editics/test_records.py`: participant names and
+  `userId`/`idOriginal` fields already have their expected values, and the
+  OnlyOffice per-connection composite ids (`<userId><indexUser>`, e.g.
+  `de10a11cec00100000000000000000001` for Alice) are deterministic. Only
+  `sessionId` still needs a fixup where the record is parsed (it is the
+  OnlyOffice session id on the wire, while the editics protocol reuses the
+  participant id there).
+
+  The opened sample document is selected by the `?doc=<type>` URL param
+  (default: word) — the type buttons in the header just reload the page with
+  the param changed. run.js renders the page per request, adapting the
+  editor config to the document type and giving each type its own document
+  key (same type reloaded = same key, so the document server resumes the
+  same co-editing session).
+
+  The page keeps the demo page's DOM conventions (class names
+  `actions-container` / `actions-content`, editor ids `document-editor-1` /
+  `-2` / `-3`) that monitor.js keys off for the "Start …'s editor" deferral
+  overlays.
+
+  Placeholders {{DS_PORT}} {{PAGE_PORT}} {{DOC_KEY}} {{HOST_ALIAS}}
+  {{IMAGE}} {{DOC_BUTTONS}} {{DOC_TYPE}} {{FILE_TYPE}} {{DOC_TITLE}}
+  {{DOC_URL_FILE}} are filled by run.js when the page is served. The
+  `{{HOST_ALIAS}}` URLs (document.url / callbackUrl) are fetched by the
+  document server from inside the container, not by this page — hence the
+  container→host alias.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>OO protocol monitor — local document server ({{IMAGE}})</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 13px/1.5 system-ui, sans-serif; color: #1a1a1a; background: #f7f8fa; }
+  #hdr { display: flex; align-items: center; gap: 14px; padding: 8px 16px; }
+  #hdr code { background: #eef1f5; border-radius: 4px; padding: 1px 5px; }
+  #api-error { display: none; color: #b00; padding: 0 16px; }
+  #doc-types { display: flex; gap: 6px; }
+  button.doc-button { border: 1px solid #c8ccd4; border-radius: 6px; padding: 5px 10px; background: #fff; color: #444; font: inherit; cursor: pointer; }
+  button.doc-button:hover { background: #eef1f5; }
+  button.doc-button.active { background: #3b5b8c; border-color: #3b5b8c; color: #fff; cursor: default; }
+  .actions-container { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 16px; }
+  /* Alice, Bob and Mallory side by side, each the same size: the scenario
+     recorder clicks the same relative spots in every editor, so all three
+     editors must share the same viewport geometry (a wide-but-short 3rd
+     pane would push the document body below its fold). */
+  .actions-content { position: relative; height: calc(70vh - 66px); border: 1px solid #d8dce3; border-radius: 8px; overflow: hidden; background: #fff; }
+  .actions-content.wide { grid-column: auto; }
+  .actions-content > div { height: 100%; }
+</style>
+</head>
+<body>
+  <div id="hdr">
+    <b>OO protocol monitor</b>
+    <span id="doc-types">
+      <!-- rendered by run.js: one button per openable sample document; the
+           active one is the current `?doc=` param. Clicking reloads the page
+           with the param changed (other params, e.g. manual_flow, are kept). -->
+      {{DOC_BUTTONS}}
+    </span>
+    <span>document server <code>http://127.0.0.1:{{DS_PORT}}</code> — image <code>{{IMAGE}}</code></span>
+    <span>doc key <code>{{DOC_KEY}}</code></span>
+  </div>
+  <!-- .actions-container/.actions-content: monitor.js positions one
+       "Start …'s editor" overlay over each deferred editor's
+       .actions-content. -->
+  <div class="actions-container">
+    <div class="actions-content"><div id="document-editor-1"></div></div>
+    <div class="actions-content"><div id="document-editor-2"></div></div>
+    <div class="actions-content wide"><div id="document-editor-3"></div></div>
+  </div>
+  <div id="api-error">Failed to load <code>api.js</code> from the document server — is the container still running?</div>
+
+  <script src="http://127.0.0.1:{{DS_PORT}}/web-apps/apps/api/documents/api.js"></script>
+  <script>
+    (function () {
+      // Fetched by the document server itself (from inside the container),
+      // hence the host alias instead of 127.0.0.1.
+      var DOC_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/{{DOC_URL_FILE}}';
+      var CALLBACK_URL = 'http://{{HOST_ALIAS}}:{{PAGE_PORT}}/callback';
+
+      // Parsec test fixtures' clients (device IDs), so captured records don't
+      // need `cook_record.py` anymore.
+      var CLIENTS = [
+        { id: 'document-editor-1', name: 'Alice',   uid: 'de10a11cec0010000000000000000000' },
+        { id: 'document-editor-2', name: 'Bob',     uid: 'de10808c001000000000000000000000' },
+        { id: 'document-editor-3', name: 'Mallory', uid: 'de103a11031c00100000000000000000' },
+      ];
+
+      // The `?view=<name>` URL param opens the given editor in view (read-only)
+      // mode: its auth then carries `mode: "view"` and `permissions.edit:
+      // false`, and the document server marks the connection as a viewer (the
+      // monitor's "Start …'s editor as viewer" button does the same at start
+      // time, without reloading the page — see monitor.js's setViewerConfig).
+      var viewEditor = new URLSearchParams(location.search).get('view') || '';
+
+      function openEditor(id, name, uid) {
+        var isView = name === viewEditor;
+        new DocsAPI.DocEditor(id, {
+          documentType: '{{DOC_TYPE}}',
+          type: 'desktop',
+          width: '100%',
+          height: '100%',
+          document: {
+            fileType: '{{FILE_TYPE}}',
+            key: '{{DOC_KEY}}',        // same key on all editors → co-editing
+            title: '{{DOC_TITLE}}',
+            url: DOC_URL,
+            permissions: { edit: !isView }
+          },
+          editorConfig: {
+            mode: isView ? 'view' : 'edit',
+            lang: 'en',
+            callbackUrl: CALLBACK_URL,
+            user: { id: uid, name: name },
+            customization: { about: false, feedback: false, goback: false }
+          }
+        });
+      }
+
+      function start() {
+        CLIENTS.forEach(function (c) { openEditor(c.id, c.name, c.uid); });
+        // The injected monitor's DocEditor trap defers document-editor-2 (Bob)
+        // and document-editor-3 (Mallory) until their "Start …'s editor"
+        // overlay button is clicked, so Alice's editor connects first.
+      }
+
+      // Doc-type buttons: reload the page with the `doc` URL param changed
+      // (other params, e.g. manual_flow, are preserved).
+      Array.prototype.forEach.call(document.querySelectorAll('button[data-doc]'), function (b) {
+        b.addEventListener('click', function () {
+          if (/\bactive\b/.test(b.className)) return;
+          var params = new URLSearchParams(location.search);
+          params.set('doc', b.getAttribute('data-doc'));
+          location.search = '?' + params.toString();
+        });
+      });
+
+      // Wait for api.js, then give the monitor's init script a beat to wrap
+      // DocsAPI.DocEditor (it polls every 50ms) before building the editors,
+      // so the deferral trap is guaranteed to be installed first.
+      var tries = 0;
+      (function waitApi() {
+        if (window.DocsAPI && window.DocsAPI.DocEditor) { setTimeout(start, 300); return; }
+        if (++tries > 600) { document.getElementById('api-error').style.display = 'block'; return; }
+        setTimeout(waitApi, 100);
+      })();
+    })();
+  </script>
+</body>
+</html>

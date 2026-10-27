@@ -1,0 +1,208 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
+# OnlyOffice co-editing protocol monitor
+
+A small investigation harness that watches the live co-editing client↔server
+messages in a draggable panel — **and can hold/release individual frames** to
+craft concurrent-operation scenarios (e.g. one client takes a lock, another
+tries to take the same lock *before* receiving the first client's lock event).
+
+The harness can run in two mode:
+
+- `npm run demo`: (aka Quick&dirty mode): use the public [OnlyOffice "see-it-in-action" demo](https://www.onlyoffice.com/see-it-in-action)
+- `npm run with-docker`: (aka Correct but slow mode): use docker to have the version of OnlyOffice used in Parsec
+
+In `with-docker` mode, the harness page opens the clients under their Parsec
+test fixtures names/IDs (Alice / Bob / Mallory — see `docker/index.html`), so a
+capture can be used as a test record (`server/tests/editics/records/`)
+without running `cook_record.py` on it: only `sessionId` still needs a
+fixup, done where the record is parsed (`server/tests/editics/test_records.py`).
+
+## How it works
+
+A local **WebSocket man-in-the-middle** (`proxy.js`) is started first. The
+in-page script (`monitor.js`) patches `window.WebSocket` only to **redirect**
+OnlyOffice's co-editing socket URL (`wss://…/doc/{id}/c/EIO=4`) to
+`ws://127.0.0.1:PORT/oo`. Everything else about the socket stays native, so
+socket.io/engine.io sees a real `WebSocket` with real `readyState` /
+`MessageEvent`s — no fragile proxy-quacking.
+
+The proxy terminates both legs (browser↔proxy plain `ws`, proxy↔OO real `wss`),
+decodes every Engine.IO v4 / Socket.IO v4 frame in Node, and pipes both
+directions through a **gate**:
+
+- An **`auto-flow`** / **`manual-flow`** toggle (next to copy/clear) controls
+  the gate. In auto-flow (default) frames pass through freely and are shown as
+  normal rows. In manual-flow every non-noise frame is **held** at the proxy
+  and shown as a yellow ⏸ row with a **`send`** button; clicking `send` releases
+  that one frame (recv → delivered to the browser's socket.io; send →
+  forwarded to OnlyOffice). Each held frame produces exactly one row (no
+  duplicate).
+- Keepalive frames (`ping`/`pong`/`noop`) are never gated — holding them would
+  make engine.io time the connection out.
+
+Because the proxy owns the bytes on the wire, **recv can actually be paused**:
+the message cannot reach a client's socket.io until the proxy forwards it.
+This is the only approach that can gate recv; observing alone (e.g.
+Playwright's `page.on('websocket')`) can't prevent delivery.
+
+The panel lives in the top frame and is fed by the proxy over a control
+WebSocket (`/ctl`). Editor identity (John Smith / Kate Cage / Anonymous on the
+demo page, Alice / Bob / Mallory with docker) is resolved in the proxy from
+the `auth` event.
+
+## Run
+
+```bash
+npm install               # installs playwright + ws
+npm run demo       # Quick&dirty: use OnlyOffice public demo page (i.e. www.onlyoffice.com/see-it-in-action)
+npm run with-docker       # Correct: use docker to have the version of OnlyOffice used in Parsec
+```
+
+A draggable "OO Protocol Monitor" panel appears bottom-right. Click
+**auto-flow** to switch to **manual-flow**: frames are then held and each row
+shows a **`send`** button to release it.
+
+The browser is launched with `--allow-running-insecure-content` /
+`--disable-web-security` and `bypassCSP: true` so the https OnlyOffice page can
+connect to the local `ws://127.0.0.1` proxy (mixed content + CSP would
+otherwise block it). If the document doesn't load and you only see `poll` /
+`unknown` events, check the run terminal for `[proxy] /oo connection:` and
+`[proxy] upstream connected` lines — if they're absent, the redirect isn't
+reaching the proxy; run with `PROXY_VERBOSE=1 npm run demo` for full proxy logs.
+If the proxy is unreachable, the in-page script logs `[OO Monitor] proxy NOT
+reachable...` to the page console and falls back to passive mode (OO loads
+normally, no gating).
+
+### Crafting a concurrent scenario
+
+1. Switch to **Collaborate** (demo) / edit solo in the first client's editor
+   (John on the demo page, Alice with docker).
+2. Click **Start …'s editor** on a deferred client's overlay (Kate on the
+   demo page, Bob / Mallory with docker), OR click **Re-start …'s editor in
+   manual-flow** (on the first deferred overlay, labeled after the first
+   client) to reload the whole page with manual-flow armed so the first
+   client's whole socket handshake can be stepped through frame by frame from
+   a clean state — useful to test concurrent joins. Each deferred overlay
+   (docker mode) also carries a **Start …'s editor as viewer** button: the
+   editor then opens with a read-only viewer config (`mode: view` +
+   `permissions.edit: false`, the same connection the page's `?view=` param
+   produces) — e.g. to watch a viewer's late-join.
+3. In manual-flow, drive the action (e.g. the first client takes a lock).
+   Frames now pile up as ⏸ held rows; click each row's **`send`** to release it
+   in the order you want to test (e.g. release the second client's lock send
+   *before* releasing the first client's lock-grant recv to it) to force a
+   race.
+
+## Crafting a disconnection / reconnection scenario
+
+Each editor pane carries a small horizontal control bar docked to its
+top-right corner with the **disconnect/reconnection primitives** — one per
+way to leave, mapped to the wire (docker mode). It is compact (icon buttons
+with explanatory tooltips) and movable like the "OO Protocol Monitor" panel
+itself: dragging its ⠿ grip detaches it from the pane corner.
+
+- **✕ close** — destroy the editor, the way the Parsec client does when the
+  user closes the file. Nothing is sent: no `close` client event, no
+  auto-reconnect — the websocket dies with the editor's JS context and the
+  document server sees an *abrupt* disconnect (verified on the pinned 9.3.0:
+  a plain `destroyEditor()` sends nothing; stock OO only sends the `close`
+  event on explicit internal flows like rights revocation).
+- **✉ close:msg** — the protocol's own graceful goodbye: the editor API call
+  (`asc_coAuthoringDisconnect`) that makes the client send the `close` event,
+  then the editor is destroyed (the record shows what the document server
+  does with the `close` event, e.g. whether/how it closes the connection).
+- **⚡ cut** — lose the connection: the proxy terminates both legs of the
+  socket *without a close frame* (abnormal disconnect, 1006 on both sides).
+  The editor stays open and does what a real OnlyOffice client does after a
+  network loss: auto-reconnect (~2s per the `settings.reconnection` carried
+  by its `auth` event) and re-send its `auth` carrying the previous
+  `sessionId`/`sessionTimeConnect`/`sessionTimeIdle` → the document server
+  *restores* the session (when the document was modified while the client was
+  away — another participant joined and edited — the server instead refuses
+  the restore: `refreshToken` + `error` 4010 "Restore error. Document
+  modified.", which the client answers by closing the co-authoring session;
+  both outcomes are captured by the `6xx_disconnect_*` records). While an
+  editor is marked cut, the proxy silently kills every reconnection attempt,
+  so the participant stays away until **↻ re-join**.
+- **↻ re-join** — bring the participant back: after a **cut** it just clears
+  the cut mark and lets the client's own reconnection retry complete the
+  session restore; after a **close** it re-creates the editor from its
+  remembered config (a fresh handshake, `sessionId: null`, like opening the
+  file again).
+
+The bar shows the editor's name and a colored connection-state dot (online /
+cut / offline / closed; hover for the text). The proxy emits a
+`[Transport WebSocket] ws-close` row for every socket death (client close /
+server close / monitor cut + close code), so a capture shows its disconnect
+boundaries per participant. The record parser skips `[Transport …]` rows
+today, so a record's disconnect is currently invisible to the replay —
+interpreting these rows as "drop this participant's connection now" (and
+handling a repeated `license`/`auth` as a reconnect) is follow-up work on the
+test side.
+
+### Headless (npm run record)
+
+The same actions are exposed for scripts on `window.__OO_MON` (top frame):
+`closeEditor(editorId)`, `sendCloseEvent(editorId)`,
+`closeEditorWithCloseEvent(editorId)`, `cutConnection(editorId)`,
+`reviveConnection(editorId)`, `rejoinEditor(editorId[, view])` (the `view`
+flag brings a closed participant back as a read-only viewer — what the
+overlay's viewer button does at start time, via `startDeferred(editorId,
+view)`); and as proxy commands
+over `/ctl`: `{cmd:'cut', user|editor, keep:'dead'|'once'}` (`keep:'once'`
+lets the stock auto-reconnect go through) and `{cmd:'revive', user|editor}`.
+`record.js` builds its disconnect scenarios (`node docker/record.js list`,
+the `6xx_disconnect_*` family) on top of them: the three ways to leave, the
+restore vs fresh re-join distinction, locks/save-lock/auth-lock held by a
+disconnecting participant, and reconnection after the session state changed
+while away. `npm run record 603_disconnect_lost_reconnect_alone` runs one.
+
+## Files
+
+Two separate code bases, one per mode:
+
+- `demo/` — monitor against the public onlyoffice.com demo page (whatever
+  OnlyOffice version it happens to run today):
+  - `run.js` — Playwright launcher: starts the proxy, injects the monitor,
+    opens the demo page, switches to Collaborate.
+  - `proxy.js` — local WebSocket MITM (`/oo` traffic, `/ctl` control channel),
+    decode + hold/release logic.
+  - `monitor.js` — in-page script: `WebSocket` URL redirect + the panel
+    (scenario chips, Kate-deferral overlay, "Re-start John's editor in
+    manual-flow").
+- `docker/` — monitor against a **pinned local** OnlyOffice Document Server
+  (9.3.0, the release the project's bundled editor is built from), started on
+  demand via podman/docker and destroyed on exit:
+  - `run.js` — launcher: container lifecycle + healthcheck, harness page
+    server, then the same proxy + monitor flow as the demo mode.
+  - `proxy.js` — same WebSocket MITM as `demo/proxy.js`.
+  - `monitor.js` — same panel as `demo/monitor.js`, minus the demo-page
+    specifics (scenario-tab observation); its deferral is per-editor and
+    covers both manual clients (Bob / Mallory), and each overlay also has a
+    **Start …'s editor as viewer** button (read-only viewer config, the same
+    fields the page's `?view=` param sets).
+  - `index.html` — the harness page (Alice / Bob / Mallory editors on one
+    document key, side by side so they share the same viewport geometry);
+    the opened sample document comes from
+    `client/tests/e2e/data/imports/`. Its type is selected by the `?doc=`
+    URL param (`word`/`cell`/`slide`/`pdf`, default `word` — i.e. the docx
+    most common use case), either by clicking a type button in the page
+    (which reloads it with the param changed) or up front with `OO_DOC=<type>`
+    (useful in headless mode). Each type gets its own document key, so the
+    document server opens a fresh session when switching type, and resumes
+    the same session when reloading the same one.
+  - `record.js` — automated scenario recorder (see `npm run record`): the
+    same MITM proxy + harness page, but driven by Playwright instead of by
+    hand. Replays a fixed scenario table (auth / cursor moves / chat
+    messages / document edits / view-mode participants — serial / concurrent /
+    while-another-client-is-authenticating, across the docx / xlsx / pptx
+    sample documents) and writes one ready-to-use test record per scenario
+    to `server/tests/editics/records/new/`, in the panel `copy` format.
+    Concurrency is crafted by holding frames at the proxy (manual-flow) and
+    releasing them back to back. Set `OO_EXISTING_DS_PORT=<port>` to reuse
+    an already-running document server (e.g. the one from `npm run
+    with-docker`) instead of starting a new container — needed in
+    environments that cannot boot the container themselves.
+- `package.json` — the `npm run demo` / `npm run with-docker` / `npm run
+  record` scripts.
