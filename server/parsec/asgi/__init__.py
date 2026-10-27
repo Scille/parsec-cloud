@@ -23,6 +23,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
+from parsec.asgi.editics import editics_router
 from parsec.asgi.redirect import redirect_router
 from parsec.asgi.rpc import Backend, rpc_router
 from parsec.config import BackendConfig
@@ -315,6 +316,7 @@ def app_factory(
 
     app.include_router(redirect_router)
     app.include_router(rpc_router)
+    app.include_router(editics_router)
     app.include_router(administration_router)
 
     return app

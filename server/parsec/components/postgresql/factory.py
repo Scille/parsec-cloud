@@ -10,6 +10,7 @@ from typing import Any
 import httpx
 
 from parsec.components.blockstore import blockstore_factory
+from parsec.components.editics import EditicsComponent
 from parsec.components.postgresql.account import PGAccountComponent
 from parsec.components.postgresql.async_enrollment import PGAsyncEnrollmentComponent
 from parsec.components.postgresql.auth import PGAuthComponent
@@ -57,6 +58,7 @@ async def components_factory(
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 block = PGBlockComponent(pool=pool, blockstore=blockstore)
                 cryptpad = PGCryptpadComponent(pool=pool, config=config)
+                editics = EditicsComponent(config=config, event_bus=event_bus)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 invite = PGInviteComponent(pool=pool, config=config)
                 organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
@@ -76,6 +78,7 @@ async def components_factory(
                     "block": block,
                     "blockstore": blockstore,
                     "cryptpad": cryptpad,
+                    "editics": editics,
                     "event_bus": event_bus,
                     "events": events,
                     "invite": invite,
