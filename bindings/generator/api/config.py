@@ -87,12 +87,12 @@ class OpenBaoSecretConfig(Variant):
         mount_path: str
 
 
-class OpenBaoAuthConfig(Variant):
-    class OIDCHexagone:
-        mount_path: str
-
-    class OIDCProConnect:
-        mount_path: str
+class OpenBaoAuthConfig(Structure):
+    id: str
+    mount_path: str
+    name: str
+    help_link: str | None
+    icon: str | None
 
 
 class OpenBaoConfig(Structure):

@@ -89,9 +89,12 @@ pub use libparsec_client_connection::protocol::anonymous_server_cmds::latest::se
     AccountConfig, OpenBaoSecretConfig, OrganizationBootstrapConfig,
 };
 
-pub enum OpenBaoAuthConfig {
-    OIDCHexagone { mount_path: String },
-    OIDCProConnect { mount_path: String },
+pub struct OpenBaoAuthConfig {
+    pub id: String,
+    pub mount_path: String,
+    pub name: String,
+    pub help_link: Option<String>,
+    pub icon: Option<String>,
 }
 
 pub struct OpenBaoConfig {
@@ -166,14 +169,27 @@ pub async fn get_server_config(
                         },
                         auths: auths
                             .into_iter()
-                            .filter_map(|auth| match OpenBaoAuthType::try_from(auth.id.as_ref()) {
-                                Ok(OpenBaoAuthType::Hexagone) => Some(OpenBaoAuthConfig::OIDCHexagone { mount_path: auth.mount_path }),
-                                Ok(OpenBaoAuthType::ProConnect) => Some(OpenBaoAuthConfig::OIDCProConnect { mount_path: auth.mount_path }),
-                                // Unknown kind of auth, just ignore it
-                                Err(_) => {
-                                    log::warn!("Server config has returned an unknown type OpenBaoAuthConfig: {:?}", auth);
-                                    None
-                                },
+                            .filter_map(|auth| {
+                                if auth.id.is_empty() || auth.mount_path.is_empty() {
+                                    log::warn!("Server config has returned an invalid OpenBaoAuthConfig: {:?}", auth);
+                                    return None;
+                                }
+                                let name = match auth.name {
+                                    Maybe::Present(name) if !name.is_empty() => name,
+                                    // Fallback for older servers
+                                    _ => match auth.id.as_str() {
+                                        "PRO_CONNECT" => String::from("ProConnect"),
+                                        "HEXAGONE" => String::from("Hexagone"),
+                                        _ => auth.id.clone(),
+                                    },
+                                };
+                                Some(OpenBaoAuthConfig {
+                                    id: auth.id,
+                                    mount_path: auth.mount_path,
+                                    name,
+                                    help_link: auth.help_link.unwrap_or(None),
+                                    icon: auth.icon.unwrap_or(None),
+                                })
                         }).collect()
                     }
                 ),

@@ -38,10 +38,6 @@ Asynchronous enrollment
    *asynchronous way*: the user sends a request to join, and the administrator approves (or reject)
    the join request later (no simultaneous presence is required).
 
-.. note:: Only `ProConnect`_ OIDC is fully supported for the moment.
-
-.. _ProConnect: https://www.proconnect.gouv.fr/
-
 Security
 ========
 

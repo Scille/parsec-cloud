@@ -5,7 +5,6 @@ import pytest
 from parsec._parsec import (
     AdvisoryDeviceFilePrimaryProtection,
     AdvisoryDeviceFileProtection,
-    OpenBaoAuthType,
     anonymous_server_cmds,
 )
 from parsec.config import AccountConfig, CryptpadConfig, OpenBaoAuthConfig, OpenBaoConfig
@@ -40,12 +39,18 @@ async def test_anonymous_server_server_config_ok(
                 transit_mount_path="transit",
                 auths=[
                     OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.HEXAGONE,
+                        id="HEXAGONE",
                         mount_path="auth/hexagone",
+                        name="Hexagone",
+                        help_link=None,
+                        icon=None,
                     ),
                     OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.PRO_CONNECT,
+                        id="PRO_CONNECT",
                         mount_path="auth/pro_connect",
+                        name="ProConnect",
+                        help_link="https://proconnect.parsec.invalid/help",
+                        icon="https://proconnect.parsec.invalid/icon.svg",
                     ),
                 ],
             )
@@ -65,10 +70,18 @@ async def test_anonymous_server_server_config_ok(
                     transit_mount_path="transit",
                     auths=[
                         anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
-                            id="HEXAGONE", mount_path="auth/hexagone"
+                            id="HEXAGONE",
+                            mount_path="auth/hexagone",
+                            name="Hexagone",
+                            help_link=None,
+                            icon=None,
                         ),
                         anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
-                            id="PRO_CONNECT", mount_path="auth/pro_connect"
+                            id="PRO_CONNECT",
+                            mount_path="auth/pro_connect",
+                            name="ProConnect",
+                            help_link="https://proconnect.parsec.invalid/help",
+                            icon="https://proconnect.parsec.invalid/icon.svg",
                         ),
                     ],
                 ),

@@ -3483,6 +3483,114 @@ fn struct_new_invitation_info_rs_to_js(
     Ok(js_obj)
 }
 
+// OpenBaoAuthConfig
+
+#[allow(dead_code)]
+fn struct_open_bao_auth_config_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::OpenBaoAuthConfig, JsValue> {
+    let id = {
+        let js_val = Reflect::get(&obj, &"id".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let mount_path = {
+        let js_val = Reflect::get(&obj, &"mountPath".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let name = {
+        let js_val = Reflect::get(&obj, &"name".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let help_link = {
+        let js_val = Reflect::get(&obj, &"helpLink".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?,
+            )
+        }
+    };
+    let icon = {
+        let js_val = Reflect::get(&obj, &"icon".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?,
+            )
+        }
+    };
+    Ok(libparsec::OpenBaoAuthConfig {
+        id,
+        mount_path,
+        name,
+        help_link,
+        icon,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_open_bao_auth_config_rs_to_js(
+    rs_obj: libparsec::OpenBaoAuthConfig,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_id = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.id.as_ref())
+    };
+    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_mount_path = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.mount_path.as_ref())
+    };
+    Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
+    let js_name = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.name.as_ref())
+    };
+    Reflect::set(&js_obj, &"name".into(), &js_name)?;
+    let js_help_link = match rs_obj.help_link {
+        Some(val) =>
+        {
+            #[allow(clippy::useless_asref)]
+            JsValue::from_str(val.as_ref())
+        }
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"helpLink".into(), &js_help_link)?;
+    let js_icon = match rs_obj.icon {
+        Some(val) =>
+        {
+            #[allow(clippy::useless_asref)]
+            JsValue::from_str(val.as_ref())
+        }
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"icon".into(), &js_icon)?;
+    Ok(js_obj)
+}
+
 // OpenBaoConfig
 
 #[allow(dead_code)]
@@ -3515,7 +3623,7 @@ fn struct_open_bao_config_js_to_rs(obj: JsValue) -> Result<libparsec::OpenBaoCon
                 .map_err(|_| TypeError::new("Not an array"))?;
             let mut converted = Vec::with_capacity(js_val.length() as usize);
             for x in js_val.iter() {
-                let x_converted = variant_open_bao_auth_config_js_to_rs(x)?;
+                let x_converted = struct_open_bao_auth_config_js_to_rs(x)?;
                 converted.push(x_converted);
             }
             converted
@@ -3548,7 +3656,7 @@ fn struct_open_bao_config_rs_to_js(rs_obj: libparsec::OpenBaoConfig) -> Result<J
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
         let js_array = Array::new_with_length(rs_obj.auths.len() as u32);
         for (i, elem) in rs_obj.auths.into_iter().enumerate() {
-            let js_elem = variant_open_bao_auth_config_rs_to_js(elem)?;
+            let js_elem = struct_open_bao_auth_config_rs_to_js(elem)?;
             js_array.set(i as u32, js_elem);
         }
         js_array.into()
@@ -15491,81 +15599,6 @@ fn variant_move_entry_mode_rs_to_js(rs_obj: libparsec::MoveEntryMode) -> Result<
         }
         libparsec::MoveEntryMode::NoReplace => {
             Reflect::set(&js_obj, &"tag".into(), &"MoveEntryModeNoReplace".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// OpenBaoAuthConfig
-
-#[allow(dead_code)]
-fn variant_open_bao_auth_config_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::OpenBaoAuthConfig, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "OpenBaoAuthConfigOIDCHexagone" => {
-            let mount_path = {
-                let js_val = Reflect::get(&obj, &"mountPath".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-            };
-            Ok(libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path })
-        }
-        "OpenBaoAuthConfigOIDCProConnect" => {
-            let mount_path = {
-                let js_val = Reflect::get(&obj, &"mountPath".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-            };
-            Ok(libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path })
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a OpenBaoAuthConfig",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_open_bao_auth_config_rs_to_js(
-    rs_obj: libparsec::OpenBaoAuthConfig,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path, .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"OpenBaoAuthConfigOIDCHexagone".into(),
-            )?;
-            let js_mount_path = {
-                #[allow(clippy::useless_asref)]
-                JsValue::from_str(mount_path.as_ref())
-            };
-            Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
-        }
-        #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path, .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"OpenBaoAuthConfigOIDCProConnect".into(),
-            )?;
-            let js_mount_path = {
-                #[allow(clippy::useless_asref)]
-                JsValue::from_str(mount_path.as_ref())
-            };
-            Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
         }
     }
     Ok(js_obj)

@@ -70,18 +70,22 @@
         {
             // Arbitrary field only used by the GUI.
             //
-            // In practice, it is expected to contain a `OpenBaoAuthType`
-            // corresponding to the authentication method that have been used
+            // In practice, it is expected to contain the `id` (as provided by the
+            // `server_config` API command) of the SSO auth that have been used
             // to authenticate to OpenBao during the creation of this device keys file.
+            //
+            // Note devices created before API 5.7 contain instead the legacy tag
+            // used by the GUI at that time (i.e. `OpenBaoAuthConfigOIDCProConnect`
+            // or `OpenBaoAuthConfigOIDCHexagone`).
             //
             // The idea here is to allow the GUI to use this again during subsequent
             // access of this device keys file in order to pre-select the
             // authentication method that should be used.
             //
-            // Note we use a string instead of directly a `OpenBaoAuthType` for backward
-            // compatibility (given, even if the auth ID is unknown, we could still
-            // be able to decrypt this device file if the user can authenticate to
-            // OpenBao using a different SSO auth).
+            // Note this ID is only a hint: even if it is unknown (e.g. the SSO auth
+            // has been removed from the server config), we could still be able to
+            // decrypt this device file if the user can authenticate to OpenBao using
+            // a different SSO auth.
             "name": "openbao_preferred_auth_id",
             "type": "String"
         },

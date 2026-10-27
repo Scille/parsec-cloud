@@ -54,6 +54,7 @@ except ImportError:
 from parsec.asgi import AsgiApp, app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
+from parsec.cli.testbed_sso_icons import TESTBED_SSO_ICONS
 from parsec.cli.utils import cli_exception_handler
 from parsec.components.memory.user import MemoryDatamodel, MemoryUserComponent
 from parsec.config import (
@@ -65,7 +66,6 @@ from parsec.config import (
     MockedEmailConfig,
     MockedSentEmail,
     OpenBaoAuthConfig,
-    OpenBaoAuthType,
     OpenBaoConfig,
     PostgreSQLBlockStoreConfig,
     PostgreSQLDatabaseConfig,
@@ -776,6 +776,15 @@ async def test_openbao_hexagone_auth_url(request: Request):
     return RedirectResponse(url=redirect_uri, status_code=302)
 
 
+@testbed_router.get("/testbed/mock/sso/icon/{name}")
+async def test_openbao_sso_icon(request: Request, name: str):
+    try:
+        content = TESTBED_SSO_ICONS[name]
+        return Response(content=content[0], media_type=content[1])
+    except KeyError:
+        return Response(status_code=404)
+
+
 @testbed_router.get("/testbed/mock/openbao/v1/auth/{auth_provider}/oidc/callback")
 async def test_openbao_hexagone_oidc_callback(request: Request, auth_provider: str):
     # See https://openbao.org/api-docs/auth/jwt/#sample-response-3
@@ -990,12 +999,18 @@ async def testbed_backend_factory(
             transit_mount_path="transit",
             auths=[
                 OpenBaoAuthConfig(
-                    id=OpenBaoAuthType.HEXAGONE,
+                    id="HEXAGONE",
                     mount_path="auth/hexagone",
+                    name="Hexagone",
+                    help_link=None,
+                    icon=server_addr.to_http_url("/testbed/mock/sso/icon/hexagone"),
                 ),
                 OpenBaoAuthConfig(
-                    id=OpenBaoAuthType.PRO_CONNECT,
+                    id="PRO_CONNECT",
                     mount_path="auth/pro_connect",
+                    name="ProConnect",
+                    help_link="https://proconnect.parsec.invalid/help",
+                    icon=server_addr.to_http_url("/testbed/mock/sso/icon/pro_connect"),
                 ),
             ],
         ),
