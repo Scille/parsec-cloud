@@ -108,6 +108,29 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     ord
 );
 
+#[pymethods]
+impl RealmRole {
+    #[getter]
+    fn can_read(&self) -> bool {
+        self.0.can_read()
+    }
+
+    #[getter]
+    fn can_write(&self) -> bool {
+        self.0.can_write()
+    }
+
+    #[getter]
+    fn can_grant_non_owner_role(&self) -> bool {
+        self.0.can_grant_non_owner_role()
+    }
+
+    #[getter]
+    fn can_grant_owner_role(&self) -> bool {
+        self.0.can_grant_owner_role()
+    }
+}
+
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     UserProfile,
     libparsec_types::UserProfile,
