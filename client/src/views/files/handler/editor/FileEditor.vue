@@ -66,13 +66,14 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, closeFile, openFile, WorkspaceHandle, writeFile } from '@/parsec';
+import { ClientInfo, closeFile, getClientInfo, openFile, WorkspaceHandle, writeFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   EditicsError,
   EditicsErrorCodes,
   EditicsHostSession,
   EditicsSaveState,
+  getEditicsCollaborativeSession,
   getEditicsDocumentType,
   openDocument,
 } from '@/services/editics';
@@ -82,7 +83,7 @@ import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus } from '@/views
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
 import { FileHandlerMode, SaveState } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import type { EditicsDocumentTypes } from '@editics_parent_host_api';
+import type { EditicsCollaborativeSession, EditicsDocumentTypes } from '@editics_parent_host_api';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
@@ -211,15 +212,52 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
     emits('fileError');
     return;
   }
+
+  // The collaborative mode is the default edition mode (RFC 1030 §1): the
+  // document is edited through the session hosted by the Parsec server, which
+  // requires the client to be online (and the document to be opened at its
+  // current version, hence not when displaying a file from the workspace
+  // history). When the client is offline, the collaborative edition is not
+  // possible: inform the user and let him choose between going back or
+  // opening the document in offline mode (single-user, local edition).
+  let collaborative: EditicsCollaborativeSession | undefined = undefined;
+  if (!contentInfo.timestamp) {
+    const clientInfo = await getClientInfo();
+    if (!clientInfo.ok || !clientInfo.value.isServerOnline) {
+      // The collaborative edition is not possible (client offline): let the
+      // user choose between the offline mode and going back to the files.
+      if (!(await askOpenInOfflineMode())) {
+        emits('fileError');
+        await routerGoBack();
+        return;
+      }
+    } else if (isCollaborativeEnabledInTests()) {
+      collaborative = await getEditicsCollaborativeSession(workspaceHandle, contentInfo.path);
+      if (!collaborative) {
+        // The session could not be prepared (e.g. the organization address
+        // could not be resolved, see `getEditicsCollaborativeSession`):
+        // fall back on the offline mode.
+        window.nativeAPI.log('warn', 'Editics: falling back on the offline edition mode');
+      }
+    }
+  }
+
   session = await openDocument(
     {
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
       documentType,
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
-      userId: userInfo ? userInfo.userId : crypto.randomUUID(),
+      // The OnlyOffice editor builds its co-authoring identity as
+      // `<user.id><indexUser>` and compares it against the `user` fields of
+      // the locks/changes/cursors it receives to tell its own apart from the
+      // other participants' (see `_onlyofficeUserId` in
+      // `editics/collaborative_protocol.js`): the device id must be used here
+      // so this matches the identities the collaborative events carry.
+      userId: userInfo ? userInfo.deviceId : crypto.randomUUID(),
       mode: readOnly || contentInfo.timestamp ? 'view' : 'edit',
       locale: longLocaleCodeToShort(I18n.getLocale()),
+      collaborative,
     },
     documentContent,
     {
@@ -310,6 +348,31 @@ async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = 
   }
 
   return role as MsModalResult;
+}
+
+// The e2e tests keep the editor in offline mode by default, so the suite
+// doesn't depend on the (still work in progress) collaborative stack: a test
+// can opt in with the `TESTING_ENABLE_EDITICS_COLLABORATIVE` window flag (set
+// like the other `TESTING_*` flags, see `tests/e2e/helpers/fixtures.ts`).
+function isCollaborativeEnabledInTests(): boolean {
+  return (window as any).TESTING !== true || (window as any).TESTING_ENABLE_EDITICS_COLLABORATIVE === true;
+}
+
+// The collaborative edition is not possible (the client is currently
+// offline): inform the user and let him choose between opening the document
+// in offline mode (single-user, local edition) or going back to the files.
+async function askOpenInOfflineMode(): Promise<boolean> {
+  const modal = await modalController.create({
+    component: EditorIssueModal,
+    cssClass: 'editor-issue-modal',
+    componentProps: {
+      status: EditorIssueStatus.CollaborativeUnavailable,
+    },
+    backdropDismiss: false,
+  });
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+  return role === MsModalResult.Confirm;
 }
 
 async function openTimeoutModal(): Promise<'wait' | 'close'> {

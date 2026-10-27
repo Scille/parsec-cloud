@@ -100,6 +100,16 @@ const modalConfig = computed<ModalConfig>(() => {
       theme = MsReportTheme.Warning;
       confirmButtonLabel = EditorButtonAction.Close;
       break;
+    case EditorIssueStatus.CollaborativeUnavailable:
+      title = EditorErrorTitle.CollaborativeUnavailable;
+      message = EditorErrorMessage.CollaborativeUnavailable;
+      theme = MsReportTheme.Info;
+      confirmButtonLabel = EditorButtonAction.OpenOfflineMode;
+      cancelButton = {
+        label: EditorButtonAction.BackToFiles,
+        disabled: false,
+      };
+      break;
     case EditorIssueStatus.UnsupportedFileType:
       title = EditorErrorTitle.UnsupportedFileType;
       message = EditorErrorMessage.EditableOnlyOnSystem;

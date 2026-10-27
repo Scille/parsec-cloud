@@ -366,6 +366,11 @@ export interface DeviceSaveStrategy {
     primaryProtection: DevicePrimaryProtectionStrategy
 }
 
+export interface EditicsOriginalContentMedia {
+    name: string
+    content: BytesVec
+}
+
 export interface FileStat {
     id: VlobID
     created: DateTime
@@ -5301,6 +5306,66 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorRealmDeleted
   | WorkspaceCreateFolderErrorStopped
 
+// WorkspaceDecryptEditicsOriginalContentError
+export enum WorkspaceDecryptEditicsOriginalContentErrorTag {
+    CorruptedData = 'WorkspaceDecryptEditicsOriginalContentErrorCorruptedData',
+    CorruptedKey = 'WorkspaceDecryptEditicsOriginalContentErrorCorruptedKey',
+    Internal = 'WorkspaceDecryptEditicsOriginalContentErrorInternal',
+    InvalidCertificate = 'WorkspaceDecryptEditicsOriginalContentErrorInvalidCertificate',
+    KeyNotFound = 'WorkspaceDecryptEditicsOriginalContentErrorKeyNotFound',
+    NoRealmAccess = 'WorkspaceDecryptEditicsOriginalContentErrorNoRealmAccess',
+    RealmDeleted = 'WorkspaceDecryptEditicsOriginalContentErrorRealmDeleted',
+    Stopped = 'WorkspaceDecryptEditicsOriginalContentErrorStopped',
+    WorkspaceNotFound = 'WorkspaceDecryptEditicsOriginalContentErrorWorkspaceNotFound',
+}
+
+export interface WorkspaceDecryptEditicsOriginalContentErrorCorruptedData {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.CorruptedData
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorCorruptedKey {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.CorruptedKey
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorInternal {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.Internal
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorInvalidCertificate {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorKeyNotFound {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.KeyNotFound
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorNoRealmAccess {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorRealmDeleted {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.RealmDeleted
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorStopped {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.Stopped
+    error: string
+}
+export interface WorkspaceDecryptEditicsOriginalContentErrorWorkspaceNotFound {
+    tag: WorkspaceDecryptEditicsOriginalContentErrorTag.WorkspaceNotFound
+    error: string
+}
+export type WorkspaceDecryptEditicsOriginalContentError =
+  | WorkspaceDecryptEditicsOriginalContentErrorCorruptedData
+  | WorkspaceDecryptEditicsOriginalContentErrorCorruptedKey
+  | WorkspaceDecryptEditicsOriginalContentErrorInternal
+  | WorkspaceDecryptEditicsOriginalContentErrorInvalidCertificate
+  | WorkspaceDecryptEditicsOriginalContentErrorKeyNotFound
+  | WorkspaceDecryptEditicsOriginalContentErrorNoRealmAccess
+  | WorkspaceDecryptEditicsOriginalContentErrorRealmDeleted
+  | WorkspaceDecryptEditicsOriginalContentErrorStopped
+  | WorkspaceDecryptEditicsOriginalContentErrorWorkspaceNotFound
+
 // WorkspaceDecryptPathAddrError
 export enum WorkspaceDecryptPathAddrErrorTag {
     CorruptedData = 'WorkspaceDecryptPathAddrErrorCorruptedData',
@@ -5366,6 +5431,60 @@ export type WorkspaceDecryptPathAddrError =
   | WorkspaceDecryptPathAddrErrorOffline
   | WorkspaceDecryptPathAddrErrorRealmDeleted
   | WorkspaceDecryptPathAddrErrorStopped
+
+// WorkspaceEncryptEditicsOriginalContentError
+export enum WorkspaceEncryptEditicsOriginalContentErrorTag {
+    Internal = 'WorkspaceEncryptEditicsOriginalContentErrorInternal',
+    InvalidCertificate = 'WorkspaceEncryptEditicsOriginalContentErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceEncryptEditicsOriginalContentErrorInvalidKeysBundle',
+    NoKey = 'WorkspaceEncryptEditicsOriginalContentErrorNoKey',
+    NoRealmAccess = 'WorkspaceEncryptEditicsOriginalContentErrorNoRealmAccess',
+    RealmDeleted = 'WorkspaceEncryptEditicsOriginalContentErrorRealmDeleted',
+    Stopped = 'WorkspaceEncryptEditicsOriginalContentErrorStopped',
+    WorkspaceNotFound = 'WorkspaceEncryptEditicsOriginalContentErrorWorkspaceNotFound',
+}
+
+export interface WorkspaceEncryptEditicsOriginalContentErrorInternal {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.Internal
+    error: string
+}
+export interface WorkspaceEncryptEditicsOriginalContentErrorInvalidCertificate {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceEncryptEditicsOriginalContentErrorInvalidKeysBundle {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceEncryptEditicsOriginalContentErrorNoKey {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.NoKey
+    error: string
+}
+export interface WorkspaceEncryptEditicsOriginalContentErrorNoRealmAccess {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceEncryptEditicsOriginalContentErrorRealmDeleted {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.RealmDeleted
+    error: string
+}
+export interface WorkspaceEncryptEditicsOriginalContentErrorStopped {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.Stopped
+    error: string
+}
+export interface WorkspaceEncryptEditicsOriginalContentErrorWorkspaceNotFound {
+    tag: WorkspaceEncryptEditicsOriginalContentErrorTag.WorkspaceNotFound
+    error: string
+}
+export type WorkspaceEncryptEditicsOriginalContentError =
+  | WorkspaceEncryptEditicsOriginalContentErrorInternal
+  | WorkspaceEncryptEditicsOriginalContentErrorInvalidCertificate
+  | WorkspaceEncryptEditicsOriginalContentErrorInvalidKeysBundle
+  | WorkspaceEncryptEditicsOriginalContentErrorNoKey
+  | WorkspaceEncryptEditicsOriginalContentErrorNoRealmAccess
+  | WorkspaceEncryptEditicsOriginalContentErrorRealmDeleted
+  | WorkspaceEncryptEditicsOriginalContentErrorStopped
+  | WorkspaceEncryptEditicsOriginalContentErrorWorkspaceNotFound
 
 // WorkspaceFdCloseError
 export enum WorkspaceFdCloseErrorTag {
@@ -7542,10 +7661,22 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<VlobID, WorkspaceCreateFolderError>>
+    workspaceDecryptEditicsOriginalContent(
+        workspace: Handle,
+        document: VlobID,
+        key_index: IndexInt,
+        encrypted: Bytes
+    ): Promise<Result<[Bytes, Array<EditicsOriginalContentMedia>], WorkspaceDecryptEditicsOriginalContentError>>
     workspaceDecryptPathAddr(
         workspace: Handle,
         link: ParsecWorkspacePathAddr
     ): Promise<Result<FsPath, WorkspaceDecryptPathAddrError>>
+    workspaceEncryptEditicsOriginalContent(
+        workspace: Handle,
+        document: VlobID,
+        bin: Bytes,
+        medias: Array<EditicsOriginalContentMedia>
+    ): Promise<Result<[IndexInt, Bytes], WorkspaceEncryptEditicsOriginalContentError>>
     workspaceFdClose(
         workspace: Handle,
         fd: FileDescriptor

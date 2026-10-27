@@ -13,6 +13,8 @@ import {
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   ConnectionHandle,
+  EditicsOriginalContentMedia,
+  EntryID,
   FsPath,
   MountpointHandle,
   MountpointToOsPathError,
@@ -26,7 +28,9 @@ import {
   SystemPath,
   UserID,
   UserTuple,
+  WorkspaceDecryptEditicsOriginalContentError,
   WorkspaceDecryptPathAddrError,
+  WorkspaceEncryptEditicsOriginalContentError,
   WorkspaceGeneratePathAddrError,
   WorkspaceHandle,
   WorkspaceID,
@@ -439,4 +443,30 @@ export async function selfPromoteToWorkspaceOwner(workspaceId: WorkspaceID): Pro
     return generateNoHandleError<ClientSelfPromoteToWorkspaceOwnerError>();
   }
   return await libparsec.clientSelfPromoteToWorkspaceOwner(handle, workspaceId);
+}
+
+// Encrypts the original content of a document (its x2t conversion result,
+// see RFC 1030 §1.2) with the workspace key: the collaborative edition
+// session's first editor uploads the result so every participant edits
+// against a single canonical base. The key index is carried along so the
+// other participants can resolve the key on their side.
+export async function encryptEditicsOriginalContent(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  bin: Uint8Array,
+  medias: Array<EditicsOriginalContentMedia>,
+): Promise<Result<[bigint, Uint8Array], WorkspaceEncryptEditicsOriginalContentError>> {
+  return await libparsec.workspaceEncryptEditicsOriginalContent(workspaceHandle, documentId, bin, medias);
+}
+
+// Decrypts an original content fetched from a collaborative edition session
+// (see RFC 1030 §1.2): the counterpart of `encryptEditicsOriginalContent`,
+// resolving the key by index from the workspace's realm keys bundle.
+export async function decryptEditicsOriginalContent(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  keyIndex: bigint,
+  encrypted: Uint8Array,
+): Promise<Result<[Uint8Array, Array<EditicsOriginalContentMedia>], WorkspaceDecryptEditicsOriginalContentError>> {
+  return await libparsec.workspaceDecryptEditicsOriginalContent(workspaceHandle, documentId, keyIndex, encrypted);
 }

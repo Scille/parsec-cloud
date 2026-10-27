@@ -19,6 +19,9 @@ interface EditicsHostPagesOptions {
   htmlPath: string;
   // e.g. `offline.ts`
   scriptEntry: string;
+  // Name of the `index.html` meta tag advertising the (content-hashed) host
+  // page name to the app (see `getEditicsHostPage` in `src/services/editics.ts`).
+  metaTagName: string;
   // Build-time injected constants (see the `editics-build-time-paths` plugin).
   define: Record<string, string>;
 }
@@ -95,10 +98,10 @@ function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
           (file): file is Extract<typeof file, { type: 'asset' }> => file.type === 'asset' && file.fileName === 'index.html',
         );
         if (!indexHtml) {
-          throw new Error('Cannot find the emitted `index.html` to inject `editics-offline-page` tag');
+          throw new Error(`Cannot find the emitted \`index.html\` to inject \`${options.metaTagName}\` tag`);
         }
         const indexHtmlSource = indexHtml.source;
-        const metaTag = `<meta name="editics-offline-page" content="${htmlFileName}">`;
+        const metaTag = `<meta name="${options.metaTagName}" content="${htmlFileName}">`;
         if (!/<head>/i.test(indexHtmlSource)) {
           throw new Error('Cannot find `<head>` in `index.html` to inject the editics host page name');
         }
@@ -182,15 +185,28 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
     // TypeScript entries on the fly.
     // plugins.push(editicsHostPages({ buildTarget, rootDir: path.join(import.meta.dirname, '..') }));
     const rootDir = path.join(import.meta.dirname, '..');
-    plugins.push(
-      buildEditicsHostPage({
-        rootDir,
+    const hostPages = [
+      {
         htmlPath: 'editics/offline.html',
         scriptEntry: 'offline.ts',
-        buildTarget,
-        define,
-      }),
-    );
+        metaTagName: 'editics-offline-page',
+      },
+      {
+        htmlPath: 'editics/collaborative.html',
+        scriptEntry: 'collaborative.ts',
+        metaTagName: 'editics-collaborative-page',
+      },
+    ];
+    for (const hostPage of hostPages) {
+      plugins.push(
+        buildEditicsHostPage({
+          rootDir,
+          ...hostPage,
+          buildTarget,
+          define,
+        }),
+      );
+    }
   } else {
     // OnlyOffice  builds font URLs by concatenating the fonts directory (i.e.
     // `/editics/onlyoffice/<version>/fonts/`) with `/fonts/<name>.ttf` (see
@@ -257,26 +273,39 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
 
 const EDITICS_DEV_CSP_REPORT_PATH = '/__editics-csp-report';
 
-// Starting point of the editics origin's policy, meant to be tightened/extended
-// according to the reported violations.
+// Get the actual CSP used in production from `server/parsec/asgi/__init__.py`
+function loadEditicsCspTemplate(): string {
+
+  const CSP_TEMPLATE_START_MARKER = '# --- Content-Security-Policy template start ---';
+  const CSP_TEMPLATE_END_MARKER = '# --- Content-Security-Policy template end ---';
+
+  const serverAsgiInitPath = path.join(import.meta.dirname, '..', '..', 'server', 'parsec', 'asgi', '__init__.py');
+  const lines = fs.readFileSync(serverAsgiInitPath, 'utf8').split('\n');
+  const startIndex = lines.findIndex((line) => line.trim() === CSP_TEMPLATE_START_MARKER);
+  const endIndex = lines.findIndex((line, index) => index > startIndex && line.trim() === CSP_TEMPLATE_END_MARKER);
+  if (startIndex === -1 || endIndex === -1) {
+    throw new Error(`${serverAsgiInitPath}: cannot find the CSP template markers`);
+  }
+  // Between the markers, a line is either a comment or a double-quoted string
+  const fragments: string[] = [];
+  for (const [offset, line] of lines.slice(startIndex + 1, endIndex).entries()) {
+    const trimmed = line.trim();
+    if (trimmed === '' || trimmed.startsWith('#')) {
+      continue;
+    }
+    if (!trimmed.startsWith('"') || !trimmed.endsWith('"')) {
+      throw new Error(`${serverAsgiInitPath}:${startIndex + offset + 2}: expected a comment or a quoted string, got \`${trimmed}\``);
+    }
+    fragments.push(trimmed.slice(1, -1));
+  }
+  return fragments.join('');
+}
+
+// Dev policy = the release one (parsed above) + the report endpoint, so
+// violations show up in the Vite terminal instead of being blocked.
 function buildEditicsDevCsp(parentOrigin: string): string {
-  return [
-    "default-src 'self'",
-    // x2t compiles its WASM module, OnlyOffice uses `new Function()`
-    "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
-    "font-src 'self' blob: data:",
-    "connect-src 'self' blob: data:",
-    "worker-src 'self' blob:",
-    "frame-src 'self'",
-    "media-src 'self' blob: data:",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'none'",
-    `frame-ancestors 'self' ${parentOrigin}`,
-    `report-uri ${EDITICS_DEV_CSP_REPORT_PATH}`,
-  ].join('; ');
+  const releaseCsp = loadEditicsCspTemplate().replaceAll('{web_app_addr}', parentOrigin);
+  return `${releaseCsp}; report-uri ${EDITICS_DEV_CSP_REPORT_PATH}`;
 }
 
 function formatCspReport(body: string): string {

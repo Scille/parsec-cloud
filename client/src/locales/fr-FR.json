@@ -3198,9 +3198,11 @@
                 "tooLongToOpen": "Le fichier semble mettre trop de temps à s'ouvrir",
                 "frameLoadFailed": "Impossible de charger l'éditeur. Veuillez vérifier votre connexion.",
                 "openFailed": "Impossible d'ouvrir ce fichier.",
-                "cryptpadNotAvailable": "La fonction d'édition de documents n'est pas disponible pour votre organisation."
+                "cryptpadNotAvailable": "La fonction d'édition de documents n'est pas disponible pour votre organisation.",
+                "collaborativeUnavailable": "L'édition collaborative n'est pas disponible"
             },
             "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
+            "collaborativeUnavailableMessage": "Vous êtes actuellement hors ligne, le document ne peut pas être ouvert en mode d'édition collaborative. Vous pouvez néanmoins l'ouvrir en mode hors ligne : vos modifications ne seront visibles que par vous, et vous ne verrez pas celles des autres.",
             "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",
             "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut').",
             "contentInfoMissing": "Les informations sur le contenu du fichier sont vides ou manquantes.",
@@ -3220,7 +3222,8 @@
             "openWithDefaultApp": "Ouvrir avec l'app par défaut",
             "downloadFile": "Télécharger le fichier",
             "wait": "Attendre",
-            "close": "Fermer"
+            "close": "Fermer",
+            "openOfflineMode": "Ouvrir en mode hors ligne"
         },
         "insertImage": {
             "title": "Insérer une image",

@@ -4,7 +4,9 @@ import { TestInfo } from '@playwright/test';
 import {
   checkDocumentTitle,
   checkEntryContextMenu,
+  enableCollaborativeMode,
   expect,
+  expectParagraphTexts,
   fillInputModal,
   getClipboardText,
   getEditorFrame,
@@ -13,7 +15,11 @@ import {
   login,
   mockEditicsRequest,
   msTest,
+  pressInDocument,
+  promoteSecondUserToContributor,
   saveDocument,
+  typeInDocument,
+  waitForDocumentLoaded,
   waitUntilSaved,
 } from '@tests/e2e/helpers';
 
@@ -281,160 +287,147 @@ msTest.describe(() => {
       }
     }
   });
-});
 
-// TODO: re-enable when collaborative editing is properly supported
-msTest.skip('Edit file in editor with two users', async ({ documents }) => {
-  msTest.setTimeout(120_000);
-  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  // Both tests below exercise the collaborative edition mode (the default mode
+  // when the client is online, see `editics/README.md`): the e2e tests keep the
+  // editor in offline mode otherwise, so they explicitly opt in with the
+  // `enableCollaborativeMode` helper (see `FileEditor.vue`).
 
-  // Promote Bob
-  await documents.locator('.sidebar').locator('.sidebar-content-workspaces').nth(1).getByRole('listitem').click({ button: 'right' });
-  await expect(documents.locator('ion-popover').locator('ion-item').nth(9)).toHaveText('Sharing and roles');
-  await documents.locator('ion-popover').locator('ion-item').nth(9).click();
-  const bobDropdown = documents.locator('ion-modal').locator('.user-list-members-item').locator('.dropdown-container');
-  await expect(bobDropdown).toHaveText('Reader');
-  await bobDropdown.click();
-  await documents.locator('ion-popover').locator('ion-item').nth(0).click();
-  await expect(bobDropdown).toHaveText('Owner');
-  await documents.locator('ion-modal').locator('.closeBtn').click();
+  msTest('Edit file in editor with two users', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(240_000);
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
+    // Let it process everything, avoid the refresh
+    await documents.waitForTimeout(500);
 
-  // Open in editor with Alice
-  await entries.nth(2).click({ button: 'right' });
-  const menu = documents.locator('#file-context-menu');
-  await expect(menu).toBeVisible();
-  await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
-  await menu.getByRole('listitem').nth(2).click();
-  await expect(documents.locator('#cryptpad-editor')).toBeVisible();
-  const mainFrameAlice = documents.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
-  // Takes an incredibly long time to load on the CI
-  await documents.waitForTimeout(10000);
+    await enableCollaborativeMode(documents);
 
-  // Open editor with Bob
-  const secondTab = await documents.openNewTab();
-  await login(secondTab, 'Boby McBobFace');
-  await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').click();
-  const secondEntries = secondTab.locator('.folder-container').locator('.file-list-item');
-  await secondEntries.nth(2).hover();
-  await secondEntries.nth(2).locator('.ms-checkbox').check();
-  const actionBar = secondTab.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
-  await actionBar.locator('ion-button').nth(1).click();
-  await expect(secondTab.locator('#cryptpad-editor')).toBeVisible();
-  const mainFrameBob = secondTab.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrameBob.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrameBob.locator('.placeholder-message-container')).toHaveText('Loading...');
-  // Takes an incredibly long time to load on the CI
-  await secondTab.waitForTimeout(10000);
+    // Promote Bob to Contributor so that he can edit the document too
+    await promoteSecondUserToContributor(documents);
 
-  // Make some edits and check from the other user
-  await expect(mainFrameAlice.locator('#sbox-iframe')).toBeVisible();
-  const editorAlice = documents
-    .locator('#cryptpad-editor')
-    .contentFrame()
-    .locator('#sbox-iframe')
-    .contentFrame()
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code')
-    .locator('pre')
-    .nth(0);
-  const editorBob = secondTab
-    .locator('#cryptpad-editor')
-    .contentFrame()
-    .locator('#sbox-iframe')
-    .contentFrame()
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code')
-    .locator('pre')
-    .nth(0);
-  await expect(editorAlice).toHaveText('# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS');
-  await expect(editorBob).toHaveText('# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS');
+    // Open the document in the editor with Alice
+    const aliceEntry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+    await aliceEntry.click({ button: 'right' });
+    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
+    await waitForDocumentLoaded(documents);
 
-  await editorAlice.fill('New first line!');
-  await expect(editorAlice).toHaveText('New first line!');
-  await waitUntilSaved(documents);
-  await expect(editorBob).toHaveText('New first line!');
-  await editorBob.fill('New NEWER first line!');
-  await expect(editorBob).toHaveText('New NEWER first line!');
-  await waitUntilSaved(secondTab);
-  await expect(editorAlice).toHaveText('New NEWER first line!');
-});
+    // Open the document in the editor with Bob
+    const secondTab = await documents.openNewTab();
+    await enableCollaborativeMode(secondTab);
+    await login(secondTab, 'Boby McBobFace');
+    await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(secondTab).toBeDocumentPage();
+    const bobEntry = secondTab.locator('.folder-container').locator('.file-list-item').nth(0);
+    await bobEntry.click({ button: 'right' });
+    await checkEntryContextMenu(secondTab, 'file-full', 'Edit', { canEdit: true });
+    await waitForDocumentLoaded(secondTab);
 
-msTest.skip('Check file edited by other user', async ({ documents }) => {
-  msTest.setTimeout(120_000);
-  await documents.locator('.header-label-name').click();
-  const entries = documents.locator('.folder-container').locator('.file-list-item');
+    // Alice types at the very beginning of the document
+    await typeInDocument(documents, 'New first line!');
+    await expectParagraphTexts(documents, ['New first line!Title\r\n']);
+    // Bob should see Alice's changes
+    await expectParagraphTexts(secondTab, ['New first line!Title\r\n']);
 
-  // Promote Bob
-  await documents.locator('.sidebar').locator('.sidebar-content-workspaces').nth(1).getByRole('listitem').click({ button: 'right' });
-  await expect(documents.locator('ion-popover').locator('ion-item').nth(9)).toHaveText('Sharing and roles');
-  await documents.locator('ion-popover').locator('ion-item').nth(9).click();
-  const bobDropdown = documents.locator('ion-modal').locator('.user-list-members-item').locator('.dropdown-container');
-  await expect(bobDropdown).toHaveText('Reader');
-  await bobDropdown.click();
-  await documents.locator('ion-popover').locator('ion-item').nth(0).click();
-  await expect(bobDropdown).toHaveText('Owner');
-  await documents.locator('ion-modal').locator('.closeBtn').click();
+    // Bob types at the very beginning of the document
+    await pressInDocument(secondTab, 'Control+Home');
+    await typeInDocument(secondTab, 'New NEWER first line!');
+    await expectParagraphTexts(secondTab, ['New NEWER first line!New first line!Title\r\n']);
+    // Alice should see Bob's changes
+    await expectParagraphTexts(documents, ['New NEWER first line!New first line!Title\r\n']);
 
-  // Open in editor with Alice
-  await entries.nth(2).click({ button: 'right' });
-  const menu = documents.locator('#file-context-menu');
-  await expect(menu).toBeVisible();
-  await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
-  await menu.getByRole('listitem').nth(2).click();
-  await expect(documents.locator('#cryptpad-editor')).toBeVisible();
-  const mainFrameAlice = documents.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
-  // Takes an incredibly long time to load on the CI
-  await documents.waitForTimeout(10000);
+    // Alice inserts a new line at the very beginning of the document (the
+    // paragraph insertion is a structural change, unlike the plain text edits)
+    await pressInDocument(documents, 'Control+Home');
+    await pressInDocument(documents, 'Enter');
+    await expectParagraphTexts(documents, ['\r\n', 'New NEWER first line!New first line!Title\r\n']);
+    // Bob should see the new line too
+    await expectParagraphTexts(secondTab, ['\r\n', 'New NEWER first line!New first line!Title\r\n']);
+  });
 
-  // Make some edits and check from the other user
-  await expect(mainFrameAlice.locator('#sbox-iframe')).toBeVisible();
-  const editorAlice = documents
-    .locator('#cryptpad-editor')
-    .contentFrame()
-    .locator('#sbox-iframe')
-    .contentFrame()
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code')
-    .locator('pre')
-    .nth(0);
-  await expect(editorAlice).toBeVisible();
-  await expect(editorAlice).toHaveText('# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS');
-  await editorAlice.fill('New first line!');
-  await waitUntilSaved(documents);
+  msTest('Open file in editor while other user is editing', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(240_000);
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
+    // Let it process everything, avoid the refresh
+    await documents.waitForTimeout(500);
 
-  // Open editor with Bob
-  const secondTab = await documents.openNewTab();
-  await login(secondTab, 'Boby McBobFace');
-  await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').click();
-  const secondEntries = secondTab.locator('.folder-container').locator('.file-list-item');
-  await secondEntries.nth(2).hover();
-  await secondEntries.nth(2).locator('.ms-checkbox').check();
-  const actionBar = secondTab.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
-  await actionBar.locator('ion-button').nth(1).click();
-  await expect(secondTab.locator('#cryptpad-editor')).toBeVisible();
+    await enableCollaborativeMode(documents);
 
-  const mainFrameBob = secondTab.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrameBob.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrameBob.locator('.placeholder-message-container')).toHaveText('Loading...');
-  // Takes an incredibly long time to load on the CI
-  await secondTab.waitForTimeout(10000);
+    // Promote Bob to Contributor so that he can edit the document too
+    await promoteSecondUserToContributor(documents);
 
-  // Check modified text
-  const editorBob = secondTab
-    .locator('#cryptpad-editor')
-    .contentFrame()
-    .locator('#sbox-iframe')
-    .contentFrame()
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code')
-    .locator('pre')
-    .nth(0);
-  await expect(editorBob).toBeVisible();
-  await expect(editorBob).toHaveText('New first line!');
+    // Open the document in the editor with Alice
+    const aliceEntry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+    await aliceEntry.click({ button: 'right' });
+    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
+    await waitForDocumentLoaded(documents);
+
+    // Alice types at the very beginning of the document and inserts a new line
+    await typeInDocument(documents, 'New first line!');
+    await expectParagraphTexts(documents, ['New first line!Title\r\n']);
+    await pressInDocument(documents, 'Enter');
+    await expectParagraphTexts(documents, ['New first line!\r\n', 'Title\r\n']);
+
+    // Open the document in the editor with Bob while Alice is still editing: Bob
+    // joins the session and catches up with Alice's changes (delivered as the
+    // session's changes backlog)
+    const secondTab = await documents.openNewTab();
+    await enableCollaborativeMode(secondTab);
+    await login(secondTab, 'Boby McBobFace');
+    await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(secondTab).toBeDocumentPage();
+    const bobEntry = secondTab.locator('.folder-container').locator('.file-list-item').nth(0);
+    await bobEntry.click({ button: 'right' });
+    await checkEntryContextMenu(secondTab, 'file-full', 'Edit', { canEdit: true });
+    await waitForDocumentLoaded(secondTab);
+
+    // Bob must see Alice's changes, including the inserted line
+    await expectParagraphTexts(secondTab, ['New first line!\r\n', 'Title\r\n']);
+
+    // Bob can also edit the document, Alice should see his changes
+    await pressInDocument(secondTab, 'Control+Home');
+    await typeInDocument(secondTab, 'New NEWER first line!');
+    await expectParagraphTexts(secondTab, ['New NEWER first line!New first line!\r\n', 'Title\r\n']);
+    await expectParagraphTexts(documents, ['New NEWER first line!New first line!\r\n', 'Title\r\n']);
+  });
+
+  msTest('Check file edited by other user', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(240_000);
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
+    // Let it process everything, avoid the refresh
+    await documents.waitForTimeout(500);
+
+    await enableCollaborativeMode(documents);
+
+    // Promote Bob to Contributor so that he can open the document in the editor too
+    await promoteSecondUserToContributor(documents);
+
+    // Open the document in the editor with Alice
+    const aliceEntry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+    await aliceEntry.click({ button: 'right' });
+    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
+    await waitForDocumentLoaded(documents);
+
+    // Make some edits and wait for the changes to be sent to the session
+    await typeInDocument(documents, 'New first line!');
+    await expectParagraphTexts(documents, ['New first line!Title\r\n']);
+    await waitUntilSaved(documents);
+
+    // Leaving the editor persists the document into the workspace file (this is
+    // the only way the collaborative mode persists it, see `onSaveRequest` in
+    // `editics/common.ts`)
+    const topbar = documents.locator('.file-handler-topbar');
+    await topbar.locator('.back-button').click();
+    await expect(documents).toBeDocumentPage();
+
+    // Open the document in the editor with Bob and check he sees the modification
+    const secondTab = await documents.openNewTab();
+    await enableCollaborativeMode(secondTab);
+    await login(secondTab, 'Boby McBobFace');
+    await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(secondTab).toBeDocumentPage();
+    const bobEntry = secondTab.locator('.folder-container').locator('.file-list-item').nth(0);
+    await bobEntry.click({ button: 'right' });
+    await checkEntryContextMenu(secondTab, 'file-full', 'Edit', { canEdit: true });
+    await waitForDocumentLoaded(secondTab);
+    await expectParagraphTexts(secondTab, ['New first line!Title\r\n']);
+  });
 });
