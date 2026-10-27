@@ -73,6 +73,14 @@ repos:
         pass_filenames: false
         files: ^client/(public|src)/
 
+      - id: editics-protocol-consistency
+        name: editics_protocol_consistency
+        entry: python ./misc/gen_client_editics_protocol.py
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: ^(server/parsec/editics_protocol\.py|client/editics/collaborative_protocol\.js|misc/gen_client_editics_protocol\.py)$
+
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.38.0
     hooks:
