@@ -74,10 +74,9 @@ async def assert_route(
         assert "Cache-Control" not in rep.headers
 
     if expected_editics_csp:
-        assert (
-            f"frame-ancestors 'self' https://{MAIN_SERVER_DOMAIN}"
-            in rep.headers["Content-Security-Policy"]
-        )
+        csp = rep.headers["Content-Security-Policy"]
+        assert f"connect-src 'self' blob: data: https://{MAIN_SERVER_DOMAIN}" in csp
+        assert f"frame-ancestors 'self' https://{MAIN_SERVER_DOMAIN}" in csp
     else:
         assert "Content-Security-Policy" not in rep.headers
 
