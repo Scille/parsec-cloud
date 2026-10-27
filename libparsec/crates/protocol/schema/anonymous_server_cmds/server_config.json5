@@ -182,6 +182,24 @@
                         // see https://openbao.org/api-docs/auth/jwt/#oidc-authorization-url-request
                         "name": "mount_path",
                         "type": "String"
+                    },
+                    {
+                        // Display name
+                        "introduced_in": "5.7",
+                        "name": "name",
+                        "type": "String"
+                    },
+                    {
+                        // Documentation link, opened in the browser
+                        "introduced_in": "5.7",
+                        "name": "help_link",
+                        "type": "RequiredOption<String>"
+                    },
+                    {
+                        // Image URL
+                        "introduced_in": "5.7",
+                        "name": "icon",
+                        "type": "RequiredOption<String>"
                     }
                 ]
             },

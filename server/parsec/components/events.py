@@ -529,8 +529,11 @@ class BaseEventsComponent:
                 transit_mount_path=self._config.openbao_config.transit_mount_path,
                 auths=[
                     anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
-                        id=auth.id.str,
+                        id=auth.id,
                         mount_path=auth.mount_path,
+                        name=auth.name,
+                        help_link=auth.help_link,
+                        icon=auth.icon,
                     )
                     for auth in self._config.openbao_config.auths
                 ],
