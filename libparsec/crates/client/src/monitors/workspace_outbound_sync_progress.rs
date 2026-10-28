@@ -267,6 +267,7 @@ fn task_future_factory(
                         Ok(IncomingOutboundSyncEvent::Progress { entry_id, blocks, block_index, blocksize }) => {
                             // we are expecting that on the last block it may overflow, as the value that we
                             // used as reference is the real size, whereas here we don't see smaller than a block
+                            // Note that the event was sent before the upload was started
                             progress_tracker
                                 .files_to_sync
                                 .insert(
@@ -280,6 +281,9 @@ fn task_future_factory(
                                     );
                         },
                         Ok(IncomingOutboundSyncEvent::Aborted { entry_id }) => {
+                            // This event is sent when outbound_sync_child is not able to do the outbound sync
+                            // this can happen when the entry is busy, unreachable or confined or when an
+                            // inbound sync is needed first.
                             progress_tracker
                                 .files_to_sync
                                 .remove(&entry_id);

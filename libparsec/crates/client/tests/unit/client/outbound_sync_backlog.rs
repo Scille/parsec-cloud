@@ -6,9 +6,17 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    Broadcastable, ClientGetOutboundSyncBacklog, EventWorkspaceOutboundSyncBacklog,
+    Broadcastable, EventWorkspaceOutboundSyncBacklog,
     client::tests::utils::client_factory_with_monitors, workspace::OpenOptions,
 };
+
+const INPUT: &[u8] = b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, \
+        sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim \
+        ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip \
+        ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate \
+        velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id \
+        est laborum.";
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn not_including_confined_entries(env: &TestbedEnv) {
@@ -21,6 +29,7 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
 
     let mut spy = client.event_bus.spy.start_expecting();
 
+    // Rename the file for it to be confined
     started_workspace
         .rename_entry_by_id(
             wksp1_id,
@@ -36,8 +45,6 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
-
     started_workspace
         .fd_write(fd, 0, b"client-backlog-test")
         .await
@@ -45,8 +52,6 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
     started_workspace.fd_flush(fd).await.unwrap();
 
     started_workspace.fd_close(fd).await.unwrap();
-
-    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
 
     let events = spy.list_not_acknowledged();
 
@@ -59,16 +64,7 @@ async fn not_including_confined_entries(env: &TestbedEnv) {
     spy.ack_remaining_events();
 }
 
-const INPUT: &[u8] = b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, \
-        sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim \
-        ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip \
-        ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate \
-        velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
-        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id \
-        est laborum.";
-
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
-
 async fn rename_tmp_files(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -77,11 +73,8 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     let started_workspace = client.start_workspace(wksp1_id).await.unwrap();
 
     let mut spy = client.event_bus.spy.start_expecting();
-    // let it start with nothing to sync
-    // libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
 
     // write confined file
-
     let file = started_workspace
         .open_file(
             FsPath::from_str("/file.tmp").unwrap(),
@@ -98,10 +91,6 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     started_workspace.fd_write(file, 0, INPUT).await.unwrap();
     started_workspace.fd_flush(file).await.unwrap();
     started_workspace.fd_close(file).await.unwrap();
-
-    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
-
-    // let it sync
 
     // check no backlog event is sent
     let events = spy.list_not_acknowledged();
@@ -141,7 +130,7 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     started_workspace.fd_write(file, 0, INPUT).await.unwrap();
     started_workspace.fd_flush(file).await.unwrap();
     started_workspace.fd_close(file).await.unwrap();
-    libparsec_platform_async::sleep(std::time::Duration::from_secs(2)).await;
+    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
 
     let events = spy.list_not_acknowledged();
 
@@ -166,11 +155,7 @@ async fn rename_tmp_files(env: &TestbedEnv) {
     assert!(file_synced);
 }
 
-#[parsec_test(
-    testbed = "minimal_client_ready",
-    with_server,
-    tokio_flavor = "multi_thread"
-)]
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn many_files(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -180,8 +165,6 @@ async fn many_files(env: &TestbedEnv) {
     let mut spy = client.event_bus.spy.start_expecting();
 
     for i in 0..10 {
-        // println!("file {i}");
-
         let file = started_workspace
             .open_file(
                 FsPath::from_str(&format!("/file_{i}.txt")).unwrap(),
@@ -201,7 +184,7 @@ async fn many_files(env: &TestbedEnv) {
         started_workspace.fd_close(file).await.unwrap();
     }
 
-    libparsec_platform_async::sleep(std::time::Duration::from_secs(1)).await;
+    libparsec_platform_async::sleep(std::time::Duration::from_millis(500)).await;
 
     let events = spy.list_not_acknowledged();
 
@@ -221,14 +204,4 @@ async fn many_files(env: &TestbedEnv) {
 
     spy.ack_remaining_events();
     assert!(file_synced);
-}
-
-fn is_backlog_empty(backlog: ClientGetOutboundSyncBacklog) -> bool {
-    let mut res = true;
-    for e in backlog.per_workspace {
-        res = res && e.pending_bytes == 0 && e.pending_entries == 0
-    }
-
-    res && backlog.total_pending_entries_for_started_workspaces == 0
-        && backlog.total_pending_bytes_for_started_workspaces == 0
 }
