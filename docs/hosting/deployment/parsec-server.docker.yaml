@@ -19,7 +19,7 @@ services:
     container_name: parsec-postgres
     healthcheck:
       # cspell: words pg_isready
-      test: pg_isready -d $${POSTGRES_DB}
+      test: pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
       start_period: 1s
       start_interval: 3s
     environment:

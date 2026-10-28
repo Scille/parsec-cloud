@@ -4,97 +4,107 @@
 
    |english-only|
 
-===================
-Cryptpad Deployment
-===================
+.. _doc_hosting_deployment_editics:
 
-Cryptpad deployment allows to edit documents directly in the application.
+==================
+Editics Deployment
+==================
 
-It's incredibly useful on :ref:`web <doc_hosting_deployment_webapp>` since users won't have access to the file system mountpoints provided by the desktop application.
+Editics is the Parsec module allowing to edit documents directly in the application.
 
-Obtaining the patched server
-============================
+It's useful on :ref:`web <doc_hosting_deployment_webapp>` since users won't have access to the file system mountpoints provided by the desktop application.
 
-.. _cryptpad-repo: https://github.com/Scille/cryptpad
+It's also useful on desktop: the document never leaves the Parsec application, whereas there is no way to know what
+an external application does with the file.
 
-Parsec maintain a `soft-fork of cryptpad <cryptpad-repo_>`_ source as it requires some light modifications to better integrate in parsec.
+Configuration
+=============
 
-.. _cryptpad-server-repo: https://github.com/Scille/cryptpad-server
-.. _cryptpad-docker: https://github.com/Scille/cryptpad-server/pkgs/container/cryptpad-server%2Fcryptpad
-.. _cryptpad-server-static-build: https://github.com/Scille/cryptpad-server/releases/download/v0.3/cryptpad-server.zip
+.. note::
 
-We have a repository used to `build the cryptpad server <cryptpad-server-repo_>`_ either as a `linux container <cryptpad-docker_>`_ format or `the resources needed for a nodejs server <cryptpad-server-static-build_>`_.
+  This configuration is only needed for the :ref:`web application <doc_hosting_deployment_webapp>`:
+  the desktop application provides Editics without any server configuration.
 
-Deploying using the docker testing infra
+Editics requires the web application to be served by the Parsec Server
+(see :ref:`Minimal configuration <doc_hosting_deployment_webapp_minimal>`).
+
+You also need a dedicated sub-domain pointing to the Parsec Server. For example, if your Parsec application
+is hosted on ``mydomain.com``, you can use an ``editics.mydomain.com`` sub-domain.
+
+Then pass its address with ``--editics-server-addr`` (or the ``PARSEC_EDITICS_SERVER_ADDR`` environment variable):
+
+.. code-block:: bash
+
+  PARSEC_SERVER_ADDR=parsec3://mydomain.com
+  PARSEC_EDITICS_SERVER_ADDR=parsec3://editics.mydomain.com
+
+The Parsec Server will then only serve the Parsec application on ``mydomain.com``,
+and only serve Editics on ``editics.mydomain.com`` (The application prepend the hard-coded ``editics.`` prefix to the current host).
+
+.. important::
+
+  The Editics pages **must** be served from their own sub-domain for security reasons.
+
+  Browsers isolate web pages by domain: pages served from the same domain can freely access each other's
+  content and data. The Editics editor runs complex code on the content of the documents being edited,
+  which may come from untrusted sources (e.g. a file shared by another user).
+
+  If Parsec and Editics shared the same domain, a malicious document exploiting a flaw in the editor could:
+
+  - take control of the Parsec application running in the same browser tab, read the decrypted documents
+    of all the user's workspaces and act on behalf of the user (share, modify or delete files...);
+  - access the data stored in the browser by the Parsec web application.
+
+  With a dedicated sub-domain, the browser prevents Editics from accessing the Parsec application:
+  both can only exchange messages through a restricted channel (``postMessage``).
+
+Deploying using the docker-compose stack
 ========================================
 
-To deploy cryptpad using :ref:`the docker-compose stack <doc_hosting_deployment_with_docker>`, we will need to patch some configuration:
+To enable Editics on :ref:`the docker-compose stack <doc_hosting_deployment_with_docker>`, where the Parsec Server
+is reachable at ``https://app.parsec.localhost``, Editics will be served on ``https://editics.app.parsec.localhost``.
 
-#. We will deploy alongside the parsec server our patched cryptpad server.
+#. Configure the web application to be served by the Parsec Server
+   (see :ref:`Minimal configuration <doc_hosting_deployment_webapp_minimal>`).
 
-   The new server will be accessible at ``https://cryptpad.parsec.localhost``
+#. Create the env file ``editics/parsec-editics.env`` to configure the Editics domain of the Parsec Server
+   (``PARSEC_SERVER_ADDR`` is already defined in ``parsec.env``):
+
+   .. admonition:: editics/parsec-editics.env
+      :collapsible: open
+
+      .. literalinclude:: ./parsec-editics.env
+         :language: bash
 
    .. note::
 
-      To use a different URI change every instance of ``https://cryptpad.parsec.localhost`` with the desired URI.
+      Add that file in ``services.parsec.env_file[]`` of the docker compose file.
 
-.. _parsec-specific-config:
+#. Retrieve the patch file for the nginx configuration, which forwards the requests made to ``editics.app.parsec.localhost``
+   to the Parsec Server:
 
-#. Create a new env file for parsec-server
-
-   For the server to announce that client should use the configured Cryptpad server, you need to set ``PARSEC_CRYPTPAD_SERVER_URL`` (or set the option ``--cryptpad-server-url``):
-
-   .. admonition:: editics/parsec-cryptpad.env
+   .. admonition:: editics/parsec-nginx.conf.editics.patch
       :collapsible: open
 
-      .. literalinclude:: ./parsec-cryptpad.env
-         :language: bash
-
-   That value must be the same as ``CRYPTPAD_HTTP_UNSAFE_ORIGIN`` (see next step) when configuring the cryptpad server
-
-#. Retrieve the patch file for the docker-compose file
-
-   .. _cryptpad-domain-doc: https://docs.cryptpad.org/en/admin_guide/installation.html#admin-domain-config
-
-   .. _cryptpad-specific-config:
-
-   For the cryptpad server, we need to set the following env variables:
-
-   - ``CRYPTPAD_CUSTOM_PROTOCOL``: We need to set that value to ``parsec-desktop:`` to allow desktop user to use the Cryptpad service.
-   - ``CRYPTPAD_HTTP_SAFE_ORIGIN``: The URL that Cryptpad should considered safe/sandboxed, it should be different than ``CRYPTPAD_HTTP_UNSAFE_ORIGIN`` (more information on `Cryptpad domain documentation <cryptpad-domain-doc_>`_).
-   - ``CRYPTPAD_HTTP_UNSAFE_ORIGIN``: The URL used to reach the Cryptpad server.
-
-   .. admonition:: editics/parsec-server.docker.yaml.cryptpad.patch
-      :collapsible: open
-
-      .. literalinclude:: ./parsec-server.docker.yaml.cryptpad.patch
+      .. literalinclude:: ./parsec-nginx.conf.editics.patch
          :language: diff
 
-   .. important::
+   .. note::
 
-      You need to use a reverse proxy if you want to configure TLS (see next step) as Cryptpad does not allow to configure it.
+      The ``Host`` header must be kept as ``editics.parsec.localhost``: the Parsec Server relies on it
+      to only serve Editics on this domain.
 
-   In addition of the Cryptpad service, we also update the `parsec-server` service configuration to load the newly created env file ``editics/parsec-cryptpad.env``.
-
-#. Retrieve the patch file for nginx configuration
-
-   .. admonition:: editics/parsec-nginx.conf.cryptpad.patch
-      :collapsible: open
-
-      .. literalinclude:: ./parsec-nginx.conf.cryptpad.patch
-         :language: diff
-
-#. Apply the patches
+   This patch can be applied with:
 
    .. code-block:: shell
 
-      patch -t -i editics/parsec-nginx.conf.cryptpad.patch
-      patch -t -i editics/parsec-server.docker.yaml.cryptpad.patch
+      patch -t -i editics/parsec-nginx.conf.editics.patch
 
 .. note::
 
   The path of the different files above contain the ``editics/`` prefix, because that's where those files are stored on our public repository.
-  You are free to download them somewhere else, but note that you will need to update the path to `parsec-cryptpad.env` in the docker file (``services.parsec-server.env_file[]``)
+  You are free to download them somewhere else, but note that you will need to update the path to ``parsec-editics.env``
+  in the docker file (``services.parsec.env_file[]``).
 
 Next you need to start the updated ``docker-compose`` stack:
 
@@ -102,35 +112,17 @@ Next you need to start the updated ``docker-compose`` stack:
 
    docker compose --file ./parsec-server.docker.yaml up --detach
 
-If you have an already running stack, you need to:
+If you have an already running stack, you need to stop & start the services
+(``restart`` is not enough to reload the service configuration):
 
-#. Start cryptpad:
+.. code-block:: shell
 
-   .. code-block:: shell
-
-      docker compose --file ./parsec-server.docker.yaml up --detach parsec-cryptpad
-
-#. Stop & Start parsec server (``restart`` is not enough to reload the service configuration):
-
-   .. code-block:: shell
-
-      docker compose --file ./parsec-server.docker.yaml stop parsec-server
-      docker compose --file ./parsec-server.docker.yaml up --detach parsec-server
-
-Other deployment methods
-========================
-
-.. _Cryptpad server README: https://github.com/Scille/cryptpad-server
-
-For other deployment methods refer to https://github.com/Scille/cryptpad-server/blob/master/README.md
-
-Further more you need some specific configure of both :ref:`Parsec <parsec-specific-config>` and :ref:`Cryptpad <cryptpad-specific-config>`.
+   docker compose --file ./parsec-server.docker.yaml stop proxy parsec
+   docker compose --file ./parsec-server.docker.yaml up --detach
 
 Verify the deployment
 =====================
 
-Before trying to use CryptPad in parsec, open the server URL (https://cryptpad.parsec.localhost) in the browser, you should get the following page:
+Once configured, open ``https://editics.mydomain.com/client/home`` in a browser: you should get a **Forbidden** error.
 
-.. image:: ./404-welcome-cryptpad.png
-
-If you have the following, it means the Cryptpad server is somewhat working, to confirm how can now try to use it in Parsec.
+If this URL serves the Parsec application instead, the isolation is not effective and the deployment is not secure.
