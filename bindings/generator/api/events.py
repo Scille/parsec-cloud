@@ -71,8 +71,8 @@ class ClientEvent(Variant):
         entry_id: VlobID
 
     class WorkspaceOutboundSyncBacklog:
-        number_of_files_to_sync: SizeInt
-        size_to_sync: SizeInt
+        number_of_files_to_sync: U64
+        size_to_sync: U64
         realm_id: VlobID
         entry_currently_being_synced: VlobID | None
 
