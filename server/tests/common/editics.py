@@ -41,24 +41,12 @@ class EditicsSessionClient:
     def __init__(
         self,
         who: AuthenticatedRpcClient,
-        base_url: str,
-        base_params: dict[str, str],
-        base_headers: dict[str, str],
-        sse_event_source: httpx_sse.EventSource,
-    ):
-        self._who = who
-        self._base_url = base_url
-        self._base_params = base_params
-        self._base_headers = base_headers
-        self._sse_event_source = sse_event_source
-        self._sse_event_source_iter = self._sse_event_source.aiter_sse()
-
-    @staticmethod
-    def build_base_url_and_authorization(
-        who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
-    ) -> tuple[str, str]:
+        participant_id: EditicsParticipantID,
+    ):
+        self._who = who
+
         token = EditicsToken.generate_raw(
             device_id=who.device_id,
             timestamp=who.now_factory(),
@@ -66,48 +54,41 @@ class EditicsSessionClient:
         )
         authorization = f"Bearer {token.decode()}"
 
-        base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
+        self._base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
+        self._base_params = {"participant_id": participant_id}
+        self._base_headers = {
+            "Authorization": authorization,
+            "Api-Version": str(EDITICS_API_VERSION),
+        }
 
-        return (base_url, authorization)
+        self._sse_event_source_iter = None
 
-    @classmethod
     @asynccontextmanager
-    async def join(
-        cls,
-        who: AuthenticatedRpcClient,
-        realm_id: VlobID,
-        document_id: VlobID,
-        participant_id: EditicsParticipantID,
-    ) -> AsyncGenerator[EditicsSessionClient, None]:
+    async def listen(
+        self,
+    ) -> AsyncGenerator[None, None]:
         """
         Open the editics SSE + RPC connection for an editics session.
 
         Yields `(send_client_event, sse_listen_server_events)`
         """
-        base_url, authorization = cls.build_base_url_and_authorization(who, realm_id, document_id)
-        base_params = {"participant_id": participant_id}
-        base_headers = {
-            "Authorization": authorization,
-            "Api-Version": str(EDITICS_API_VERSION),
-        }
+        assert self._sse_event_source_iter is None
 
         async with httpx_sse.aconnect_sse(
-            who.raw_client,
+            self._who.raw_client,
             "GET",
-            f"{base_url}/listen",
-            params=base_params,
+            f"{self._base_url}/listen",
+            params=self._base_params,
             headers={
-                **base_headers,
+                **self._base_headers,
                 "Accept": "text/event-stream",
             },
         ) as sse_event_source:
-            yield cls(
-                who=who,
-                base_url=base_url,
-                base_headers=base_headers,
-                base_params=base_params,
-                sse_event_source=sse_event_source,
-            )
+            self._sse_event_source_iter = sse_event_source.aiter_sse()
+            try:
+                yield
+            finally:
+                self._sse_event_source_iter = None
 
     async def upload_initial_content(
         self, key_index: int, encrypted_initial_content: bytes
@@ -184,6 +165,7 @@ class EditicsSessionClient:
 
     async def recv_raw(self) -> str:
         "Returns the event in JSON encoded format"
+        assert self._sse_event_source_iter is not None
         while True:
             sse = await self._sse_event_source_iter.__anext__()
             if sse.event == "keepalive":
@@ -443,7 +425,7 @@ class EditicsJSClient:
         self.document_id = document_id
         self.participant_id = participant_id
         self.editics_session_client: EditicsSessionClient | None = None
-        self._join_cm: AbstractAsyncContextManager[EditicsSessionClient] | None = None
+        self._listen_cm: AbstractAsyncContextManager[None] | None = None
 
     @property
     def connected(self) -> bool:
@@ -452,22 +434,23 @@ class EditicsJSClient:
     async def server_connect(self) -> None:
         assert not self.connected
 
-        join_cm = EditicsSessionClient.join(
+        editics_session_client = EditicsSessionClient(
             who=self.who,
             realm_id=self.realm_id,
             document_id=self.document_id,
             participant_id=self.participant_id,
         )
-        editics_session_client = await join_cm.__aenter__()
-        self._join_cm = join_cm
+        listen_cm = editics_session_client.listen()
+        await listen_cm.__aenter__()
+        self._listen_cm = listen_cm
         self.editics_session_client = editics_session_client
 
     async def server_disconnect(self) -> None:
         assert self.connected
-        assert self._join_cm is not None
+        assert self._listen_cm is not None
 
-        await self._join_cm.__aexit__(None, None, None)
-        self._join_cm = None
+        await self._listen_cm.__aexit__(None, None, None)
+        self._listen_cm = None
         self.editics_session_client = None
 
     async def inject_oo_client_event(
