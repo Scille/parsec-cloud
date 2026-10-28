@@ -221,11 +221,11 @@ class EditicsSession:
     # Ordered change history, can be truncated from a given index on undo (i.e.
     # `saveChanges` event carrying a `deleteIndex`).
     changes: list[StoredChange] = field(default_factory=list)
-    # The original content uploaded by the first editor of the session:
+    # The initial content uploaded by the first editor of the session:
     # the msgpack archive of the converted document (.bin + media files),
     # encrypted with the workspace key. Opaque to the server.
     # Format: (<Key index>, <ciphertext>).
-    encrypted_original_content: tuple[int, Buffer] | None = None
+    encrypted_initial_content: tuple[int, Buffer] | None = None
     # TODO: rework comment
     # Save lock (i.e. the participant currently saving).
     # Minimal handling for now: taken on `isSaveLock`/`saveChanges`, released on
@@ -416,7 +416,7 @@ def _handshake_auth(session: EditicsSession, participant: Participant) -> Editic
             )
             for m in session.chat_messages
         ],
-        originalContentUploaded=session.encrypted_original_content is not None,
+        originalContentUploaded=session.encrypted_initial_content is not None,
     )
 
 
@@ -437,7 +437,7 @@ class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
     # First client event must be `auth`
     PARTICIPANT_NOT_AUTH = auto()
     # Once `auth` server event received, the first editor knows he must upload the
-    # original content before anything else.
+    # initial content before anything else.
     ORIGINAL_CONTENT_MISSING = auto()
     # Subsequent `auth` are reconnection, and a device cannot do impersonation
     # by reconnecting with a participant ID related to another device!
@@ -573,17 +573,17 @@ class EditicsComponent:
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
         participant_id: EditicsParticipantID,
-        encrypted_original_content: tuple[int, Buffer],
+        encrypted_initial_content: tuple[int, Buffer],
     ) -> EditicsUploadInitialContentBadOutcome | None:
         if not auth_info.realm_role.can_write:
             return EditicsUploadInitialContentBadOutcome.NOT_ALLOWED
 
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
-        if session.encrypted_original_content is not None:
+        if session.encrypted_initial_content is not None:
             return EditicsUploadInitialContentBadOutcome.ALREADY_UPLOADED
 
-        session.encrypted_original_content = encrypted_original_content
+        session.encrypted_initial_content = encrypted_initial_content
         # Notify only the viewers since the connected editor are either the
         # one that have done the upload, or ones that are trying to do a
         # concurrent upload (and will get the info from `alreadyUploaded: true`
@@ -606,10 +606,10 @@ class EditicsComponent:
     ) -> tuple[int, Buffer] | EditicsFetchInitialContentBadOutcome:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
-        if session.encrypted_original_content is None:
+        if session.encrypted_initial_content is None:
             return EditicsFetchInitialContentBadOutcome.NOT_UPLOADED
 
-        return session.encrypted_original_content
+        return session.encrypted_initial_content
 
     @contextmanager
     def participant_listen(
@@ -777,10 +777,10 @@ class EditicsComponent:
         if not participant.authed and not isinstance(event, EditicsClientEventAuth):
             return EditicsParticipantSendBadOutcome.PARTICIPANT_NOT_AUTH
 
-        # The first connecting editor must upload the original content as soon as
+        # The first connecting editor must upload the initial content as soon as
         # its `auth` is done.
         if (
-            session.encrypted_original_content is None
+            session.encrypted_initial_content is None
             and (participant_authed := participant.authed) is not None
             and not participant_authed.view
             # `auth` while participant is already authenticated is for reconnection
@@ -1283,17 +1283,17 @@ class EditicsComponent:
 
             case EditicsClientEventSaveChanges():
                 # No modification is allowed before an editor has uploaded the
-                # original content.
+                # initial content.
                 # This should occurs though since an editor client is expected
                 # to do the upload before actually starting the OnlyOffice editor.
-                if session.encrypted_original_content is None:
+                if session.encrypted_initial_content is None:
                     logger.warning(
-                        "Discarding `saveChanges` event: no original content in the session"
+                        "Discarding `saveChanges` event: no initial content in the session"
                     )
                     # Kick the client out since it is most likely buggy
                     return participant.access_denied_close_sse(
                         send_disconnect_reason_event=False,
-                        description="`saveChange` send before original content upload",
+                        description="`saveChange` send before initial content upload",
                     )
 
                 # Saving requires the save lock: OnlyOffice (re)acquires it at

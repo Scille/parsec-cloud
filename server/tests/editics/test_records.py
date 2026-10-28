@@ -525,13 +525,13 @@ async def _do_test_record(
 
                     # The harness plays the OnlyOffice editor, not the host page.
                     # However the host page is supposed to upload the document
-                    # original content right after the `auth`, so we simulate this here.
+                    # initial content right after the `auth`, so we simulate this here.
                     if event.type == "auth" and event.payload["mode"] == "edit":
                         session = backend.editics._sessions[
                             (coolorg.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
                         ]
-                        if session.encrypted_original_content is None:
-                            session.encrypted_original_content = (1, b"<original_content>")
+                        if session.encrypted_initial_content is None:
+                            session.encrypted_initial_content = (1, b"<original_content>")
 
                 case "server-to-client":
                     # Look for the event in the unacknowledgedd ones...
