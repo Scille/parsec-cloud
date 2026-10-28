@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Generator
+from collections.abc import Buffer, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import auto
@@ -30,8 +30,6 @@ from parsec.editics_protocol import (
     EditicsClientEventGetMessages,
     EditicsClientEventIsSaveLock,
     EditicsClientEventMessage,
-    EditicsClientEventParsecFetchOriginalContent,
-    EditicsClientEventParsecUploadOriginalContent,
     EditicsClientEventSaveChanges,
     EditicsClientEventUnLockDocument,
     EditicsClientEventUnSaveLock,
@@ -49,9 +47,7 @@ from parsec.editics_protocol import (
     EditicsServerEventError,
     EditicsServerEventGetLock,
     EditicsServerEventMessage,
-    EditicsServerEventParsecFetchOriginalContent,
-    EditicsServerEventParsecOriginalContentUploaded,
-    EditicsServerEventParsecUploadOriginalContent,
+    EditicsServerEventParsecInitialContentUploaded,
     EditicsServerEventReleaseLock,
     EditicsServerEventSaveChanges,
     EditicsServerEventSaveLock,
@@ -76,7 +72,7 @@ from parsec.types import BadOutcomeEnum
 logger = get_logger()
 
 PER_PARTICIPANT_MAX_BUFFER_EVENTS = 100
-type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsServerEvent | None]
+type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsServerEvent]
 
 
 @dataclass(slots=True)
@@ -229,7 +225,7 @@ class EditicsSession:
     # the msgpack archive of the converted document (.bin + media files),
     # encrypted with the workspace key. Opaque to the server.
     # Format: (<Key index>, <ciphertext>).
-    encrypted_original_content: tuple[int, bytes] | None = None
+    encrypted_original_content: tuple[int, Buffer] | None = None
     # TODO: rework comment
     # Save lock (i.e. the participant currently saving).
     # Minimal handling for now: taken on `isSaveLock`/`saveChanges`, released on
@@ -577,7 +573,7 @@ class EditicsComponent:
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
         participant_id: EditicsParticipantID,
-        encrypted_original_content: tuple[int, bytes],
+        encrypted_original_content: tuple[int, Buffer],
     ) -> EditicsUploadInitialContentBadOutcome | None:
         if not auth_info.realm_role.can_write:
             return EditicsUploadInitialContentBadOutcome.NOT_ALLOWED
@@ -592,7 +588,7 @@ class EditicsComponent:
         # one that have done the upload, or ones that are trying to do a
         # concurrent upload (and will get the info from `alreadyUploaded: true`
         # in the server response).
-        broadcasted_event = EditicsServerEventParsecOriginalContentUploaded()
+        broadcasted_event = EditicsServerEventParsecInitialContentUploaded()
         for other in session.participants.values():
             if (
                 other.participant_id == participant_id
@@ -607,7 +603,7 @@ class EditicsComponent:
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-    ) -> tuple[int, bytes] | EditicsFetchInitialContentBadOutcome:
+    ) -> tuple[int, Buffer] | EditicsFetchInitialContentBadOutcome:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
         if session.encrypted_original_content is None:
@@ -640,9 +636,9 @@ class EditicsComponent:
         if participant.sse_channel_sender is not None:
             participant.sse_channel_sender.close()
 
-        sse_channel_sender, channel_receiver = anyio.create_memory_object_stream(
-            max_buffer_size=PER_PARTICIPANT_MAX_BUFFER_EVENTS
-        )
+        sse_channel_sender, channel_receiver = anyio.create_memory_object_stream[
+            EditicsServerEvent
+        ](max_buffer_size=PER_PARTICIPANT_MAX_BUFFER_EVENTS)
         participant.sse_channel_sender = sse_channel_sender
 
         try:
@@ -793,7 +789,6 @@ class EditicsComponent:
                 (
                     EditicsClientEventAuth,
                     EditicsClientEventClose,
-                    EditicsClientEventParsecUploadOriginalContent,
                 ),
             )
         ):
@@ -807,8 +802,7 @@ class EditicsComponent:
                 event,
                 EditicsClientEventGetLock
                 | EditicsClientEventSaveChanges
-                | EditicsClientEventIsSaveLock
-                | EditicsClientEventParsecUploadOriginalContent,
+                | EditicsClientEventIsSaveLock,
             )
         ):
             # ...and get their SSE connection kicked out for this!
@@ -1269,32 +1263,6 @@ class EditicsComponent:
 
                 # Fire-and-forget: nothing left to reply to the leaving client.
                 return None
-
-            case EditicsClientEventParsecUploadOriginalContent():
-                if session.encrypted_original_content is not None:
-                    return EditicsServerEventParsecUploadOriginalContent(alreadyUploaded=True)
-
-                session.encrypted_original_content = event.encryptedOriginalContent
-                # Notify only the viewers since the connected editor are either the
-                # one that have done the upload, or ones that are trying to do a
-                # concurrent upload (and will get the info from `alreadyUploaded: true`
-                # in the server response).
-                broadcasted_event = EditicsServerEventParsecOriginalContentUploaded()
-                for other in session.participants.values():
-                    if (
-                        other.participant_id == participant.participant_id
-                        or other.authed is None
-                        or not other.authed.view
-                        or not other.connected
-                    ):
-                        continue
-                    other.send_event(broadcasted_event)
-                return EditicsServerEventParsecUploadOriginalContent(alreadyUploaded=False)
-
-            case EditicsClientEventParsecFetchOriginalContent():
-                return EditicsServerEventParsecFetchOriginalContent(
-                    encryptedOriginalContent=session.encrypted_original_content
-                )
 
             case EditicsClientEventIsSaveLock():
                 # Try to take the save lock.

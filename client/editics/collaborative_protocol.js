@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Here we define `EditicsTranslator` which works as an interface between the
 // OnlyOffice client (speaking the OnlyOffice protocol) and the Parsec client/server
@@ -940,14 +940,7 @@ export const EDITICS_API_VERSION = '1.0';
  * @property {number} savedUpToIndex
  * @property {number} newVersion
  *
- * @typedef {Object} EditicsClientEventParsecUploadOriginalContent
- * @property {'parsecUploadOriginalContent'} type
- * @property {[number, string]} encryptedOriginalContent
- *
- * @typedef {Object} EditicsClientEventParsecFetchOriginalContent
- * @property {'parsecFetchOriginalContent'} type
- *
- * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|EditicsClientEventGetMessages|EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone|EditicsClientEventParsecUploadOriginalContent|EditicsClientEventParsecFetchOriginalContent} EditicsClientEvent
+ * @typedef {EditicsClientEventAuth|EditicsClientEventAuthChangesAck|EditicsClientEventMessage|EditicsClientEventGetMessages|EditicsClientEventCursor|EditicsClientEventGetLock|EditicsClientEventIsSaveLock|EditicsClientEventSaveChanges|EditicsClientEventUnSaveLock|EditicsClientEventUnLockDocument|EditicsClientEventClose|EditicsClientEventSaveDone} EditicsClientEvent
  *
  * @typedef {Object} EditicsServerEventAuth
  * @property {'auth'} type
@@ -1035,18 +1028,10 @@ export const EDITICS_API_VERSION = '1.0';
  * @property {number} code
  * @property {string} description
  *
- * @typedef {Object} EditicsServerEventParsecUploadOriginalContent
- * @property {'parsecUploadOriginalContent'} type
- * @property {boolean} alreadyUploaded
+ * @typedef {Object} EditicsServerEventParsecInitialContentUploaded
+ * @property {'parsecInitialContentUploaded'} type
  *
- * @typedef {Object} EditicsServerEventParsecFetchOriginalContent
- * @property {'parsecFetchOriginalContent'} type
- * @property {[number, string]|null} encryptedOriginalContent
- *
- * @typedef {Object} EditicsServerEventParsecOriginalContentUploaded
- * @property {'parsecOriginalContentUploaded'} type
- *
- * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDisconnectReason|EditicsServerEventDrop|EditicsServerEventWarning|EditicsServerEventError|EditicsServerEventParsecUploadOriginalContent|EditicsServerEventParsecFetchOriginalContent|EditicsServerEventParsecOriginalContentUploaded} EditicsServerEvent
+ * @typedef {EditicsServerEventAuth|EditicsServerEventConnectState|EditicsServerEventAuthChanges|EditicsServerEventWaitAuth|EditicsServerEventMessage|EditicsServerEventCursor|EditicsServerEventGetLock|EditicsServerEventReleaseLock|EditicsServerEventSaveLock|EditicsServerEventSaveChanges|EditicsServerEventSavePartChanges|EditicsServerEventUnSaveLock|EditicsServerEventDisconnectReason|EditicsServerEventDrop|EditicsServerEventWarning|EditicsServerEventError|EditicsServerEventParsecInitialContentUploaded} EditicsServerEvent
  */
 
 /* eslint-enable max-len */

@@ -6,7 +6,7 @@ The editics protocol schemas is defined here, basically:
   field and adding encryption to sensitive ones).
 - The main exposed classes are `EditicsClientEvent` and `EditicsServerEvent`.
 - Commands with the `parsec` prefix are new ones specific for our needs (e.g.
-  `parsecFetchOriginalContent`).
+  `parsecInitialContentUploaded`).
 
 See [RFC 1030](../../docs/rfcs/1030-collaborative-editics.md).
 """
@@ -227,30 +227,6 @@ class EditicsClientEventSaveDone(BaseModel):
     newVersion: int  # the new vlob version just uploaded
 
 
-class EditicsClientEventParsecUploadOriginalContent(BaseModel):
-    """
-    The original content is an archive containing the document converted in the
-    OnlyOffice format (msgpack of {bin, medias}). It is the starting base over
-    which all the patches created during the edition session are to be applied.
-
-    The original content is uploaded once (using this command) by the first
-    editor connecting.
-
-    Any viewer that connects prior to that is expected to obtain the document
-    its own way (i.e. get the original document from the workspace, then convert
-    it with x2t), and will do a reload once once the original content get uploaded
-    (see `parsecOriginalContentUploaded` server event).
-    """
-
-    type: Literal["parsecUploadOriginalContent"] = "parsecUploadOriginalContent"
-    # Format: (<Key index>, <base64(ciphertext)>).
-    encryptedOriginalContent: tuple[int, Base64BytesField]
-
-
-class EditicsClientEventParsecFetchOriginalContent(BaseModel):
-    type: Literal["parsecFetchOriginalContent"] = "parsecFetchOriginalContent"
-
-
 EditicsClientEvent = Annotated[
     EditicsClientEventAuth
     | EditicsClientEventAuthChangesAck
@@ -263,9 +239,7 @@ EditicsClientEvent = Annotated[
     | EditicsClientEventUnSaveLock
     | EditicsClientEventUnLockDocument
     | EditicsClientEventClose
-    | EditicsClientEventSaveDone
-    | EditicsClientEventParsecUploadOriginalContent
-    | EditicsClientEventParsecFetchOriginalContent,
+    | EditicsClientEventSaveDone,
     Field(discriminator="type"),
 ]
 EditicsClientEventAdapter = TypeAdapter(EditicsClientEvent)
@@ -508,21 +482,7 @@ class EditicsServerEventError(BaseModel):
     description: str
 
 
-class EditicsServerEventParsecUploadOriginalContent(BaseModel):
-    type: Literal["parsecUploadOriginalContent"] = "parsecUploadOriginalContent"
-    # `true` = the upload was refused because the session already has an
-    # original content (i.e. a concurrent upload won): the client must
-    # abandon its local conversion and use the existing content instead.
-    alreadyUploaded: bool
-
-
-class EditicsServerEventParsecFetchOriginalContent(BaseModel):
-    type: Literal["parsecFetchOriginalContent"] = "parsecFetchOriginalContent"
-    # `None` when no editor has uploaded an original content yet.
-    encryptedOriginalContent: tuple[int, Base64BytesField] | None
-
-
-class EditicsServerEventParsecOriginalContentUploaded(BaseModel):
+class EditicsServerEventParsecInitialContentUploaded(BaseModel):
     """
     The session's original content just became available: participants
     that opened the document from their own local x2t conversion must
@@ -536,7 +496,7 @@ class EditicsServerEventParsecOriginalContentUploaded(BaseModel):
     is expected to reload a fresh OnlyOffice editor page.
     """
 
-    type: Literal["parsecOriginalContentUploaded"] = "parsecOriginalContentUploaded"
+    type: Literal["parsecInitialContentUploaded"] = "parsecInitialContentUploaded"
 
 
 EditicsServerEvent = Annotated[
@@ -556,9 +516,7 @@ EditicsServerEvent = Annotated[
     | EditicsServerEventDrop
     | EditicsServerEventWarning
     | EditicsServerEventError
-    | EditicsServerEventParsecUploadOriginalContent
-    | EditicsServerEventParsecFetchOriginalContent
-    | EditicsServerEventParsecOriginalContentUploaded,
+    | EditicsServerEventParsecInitialContentUploaded,
     Field(discriminator="type"),
 ]
 EditicsServerEventAdapter = TypeAdapter(EditicsServerEvent)

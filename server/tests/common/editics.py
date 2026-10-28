@@ -7,6 +7,7 @@ import json
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from pathlib import Path
+from struct import pack, unpack
 from typing import Any
 from uuid import uuid4
 
@@ -24,7 +25,7 @@ from parsec.editics_protocol import (
     EditicsParticipantID,
     EditicsServerEvent,
     EditicsServerEventAdapter,
-    EditicsServerEventParsecOriginalContentUploaded,
+    EditicsServerEventParsecInitialContentUploaded,
 )
 from tests.common.backend import SERVER_DOMAIN
 from tests.common.client import AuthenticatedRpcClient, RpcTransportError
@@ -39,20 +40,25 @@ class EditicsSessionClient:
 
     def __init__(
         self,
+        who: AuthenticatedRpcClient,
+        base_url: str,
+        base_params: dict[str, str],
+        base_headers: dict[str, str],
         sse_event_source: httpx_sse.EventSource,
-        send_events_raw: Callable[[str], Awaitable[str | None]],
     ):
+        self._who = who
+        self._base_url = base_url
+        self._base_params = base_params
+        self._base_headers = base_headers
         self._sse_event_source = sse_event_source
         self._sse_event_source_iter = self._sse_event_source.aiter_sse()
-        self.send_event_raw = send_events_raw
 
     @staticmethod
     def build_base_url_and_authorization(
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
-        participant_id: EditicsParticipantID,
-    ) -> tuple[str, str, str]:
+    ) -> tuple[str, str]:
         token = EditicsToken.generate_raw(
             device_id=who.device_id,
             timestamp=who.now_factory(),
@@ -61,8 +67,6 @@ class EditicsSessionClient:
         authorization = f"Bearer {token.decode()}"
 
         base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
-        send_url = f"{base_path}/send/{participant_id}"
-        send_url = f"{base_path}/send/{participant_id}"
 
         return (base_url, authorization)
 
@@ -80,48 +84,72 @@ class EditicsSessionClient:
 
         Yields `(send_client_event, sse_listen_server_events)`
         """
-        base_url, authorization = cls.build_urls_and_authorization(
-            who, realm_id, document_id, participant_id
-        )
-        listen_url = f"{base_url}/listen/{participant_id}"
-        send_url = f"{base_url}/send/{participant_id}"
-
-        api_version = str(EDITICS_API_VERSION)
-
-        async def send_events_raw(raw_event: str) -> str | None:
-            rep = await who.raw_client.post(
-                send_url,
-                headers={
-                    "Authorization": authorization,
-                    "Content-Type": "application/json",
-                    "Api-Version": api_version,
-                },
-                content=raw_event,
-            )
-            match rep.status_code:
-                case 200:
-                    return rep.text
-                case 204:
-                    return None
-                case _:
-                    raise RpcTransportError(rep)
-
-        # `EventSource` (i.e. the browser API used for the SSE listen route) cannot
-        # set custom headers, so a `authorization` query parameter has to be used.
-        sse_headers = {"Accept": "text/event-stream", "Api-Version": api_version}
-        sse_params = {"authorization": authorization}
+        base_url, authorization = cls.build_base_url_and_authorization(who, realm_id, document_id)
+        base_params = {"participant_id": participant_id}
+        base_headers = {
+            "Authorization": authorization,
+            "Api-Version": str(EDITICS_API_VERSION),
+        }
 
         async with httpx_sse.aconnect_sse(
             who.raw_client,
             "GET",
-            listen_url,
-            params=sse_params,
-            headers=sse_headers,
+            f"{base_url}/listen",
+            params=base_params,
+            headers={
+                **base_headers,
+                "Accept": "text/event-stream",
+            },
         ) as sse_event_source:
             yield cls(
-                send_events_raw=send_events_raw,
+                who=who,
+                base_url=base_url,
+                base_headers=base_headers,
+                base_params=base_params,
                 sse_event_source=sse_event_source,
             )
+
+    async def upload_initial_content(
+        self, key_index: int, encrypted_initial_content: bytes
+    ) -> None:
+        rep = await self._who.raw_client.post(
+            f"{self._base_url}/initial_content",
+            params={
+                **self._base_params,
+                "key_index": key_index,
+            },
+            headers={
+                **self._base_headers,
+                "Content-Type": "application/vnd.parsec.key-index-and-ciphertext",
+            },
+            content=(pack("!I", key_index), encrypted_initial_content),
+        )
+        match rep.status_code:
+            case 204:
+                return None
+            case _:
+                raise RpcTransportError(rep)
+
+    async def fetch_initial_content(self) -> tuple[int, bytes]:
+        rep = await self._who.raw_client.get(
+            f"{self._base_url}/initial_content",
+            params=self._base_params,
+            headers={
+                **self._base_headers,
+                "Accept": "application/octet-stream",
+            },
+        )
+        match rep.status_code:
+            case 200:
+                assert (
+                    rep.headers["Content-Type"] == "application/vnd.parsec.key-index-and-ciphertext"
+                )
+                body = await rep.aread()
+                (key_index,) = unpack("!I", body[:4])
+                encrypted_initial_content = body[4:]
+                return (key_index, encrypted_initial_content)
+            case _:
+                raise RpcTransportError(rep)
 
     async def send(self, event: EditicsClientEvent) -> EditicsServerEvent | None:
         match await self.send_event_raw(event.model_dump_json()):
@@ -130,13 +158,15 @@ class EditicsSessionClient:
             case raw_server_event:
                 return EditicsServerEventAdapter.validate_json(raw_server_event)
 
-    async def upload_initial_content(self, encrypted_initial_content: tuple[int, bytes]) -> None:
-        rep = await who.raw_client.post(
-            send_url,
+    async def send_event_raw(self, raw_event: str) -> str | None:
+        "Take and return the events in JSON encoded format"
+
+        rep = await self._who.raw_client.post(
+            f"{self._base_url}/send",
+            params=self._base_params,
             headers={
-                "Authorization": authorization,
+                **self._base_headers,
                 "Content-Type": "application/json",
-                "Api-Version": api_version,
             },
             content=raw_event,
         )
@@ -147,22 +177,6 @@ class EditicsSessionClient:
                 return None
             case _:
                 raise RpcTransportError(rep)
-
-        match await self.send_event_raw(event.model_dump_json()):
-            case None:
-                return None
-            case raw_server_event:
-                return EditicsServerEventAdapter.validate_json(raw_server_event)
-
-    async def fetch_initial_content(self, event: EditicsClientEvent) -> tuple[int, bytes]:
-        match await self.send_event_raw(event.model_dump_json()):
-            case None:
-                return None
-            case raw_server_event:
-                return EditicsServerEventAdapter.validate_json(raw_server_event)
-
-    send_event_raw: Callable[[str], Awaitable[str | None]]  # Set in `__init__`
-    "Take and return the events in JSON encoded format"
 
     async def recv(self) -> EditicsServerEvent:
         raw_event = await self.recv_raw()
@@ -512,10 +526,10 @@ class EditicsJSClient:
         # part doesn't actually validate the schema)
         event = EditicsServerEventAdapter.validate_json(raw_editics_server_event)
 
-        # `parsecOriginalContentUploaded` event is not supposed to get translated:
+        # `parsecInitialContentUploaded` event is not supposed to get translated:
         # instead it should trigger a full reload of the OnlyOffice editor!
         # So just ignore it and look for the next received event.
-        if isinstance(event, EditicsServerEventParsecOriginalContentUploaded):
+        if isinstance(event, EditicsServerEventParsecInitialContentUploaded):
             return await self.listen_oo_server_event()
 
         oo_server_event = await self.js_runtime.async_eval(

@@ -27,7 +27,7 @@ from parsec.editics_protocol import (
     EditicsServerEventError,
     EditicsServerEventMessage,
     EditicsServerEventParsecFetchOriginalContent,
-    EditicsServerEventParsecOriginalContentUploaded,
+    EditicsServerEventParsecInitialContentUploaded,
     EditicsServerEventParsecUploadOriginalContent,
     EditicsServerEventUnSaveLock,
     EditicsServerEventWaitAuth,
@@ -121,7 +121,7 @@ async def test_participant_id_of_another_device_is_refused(
     alice_participant_id = _new_participant_id()
     auth_event = _auth_event(mode="view")
 
-    listen_url, send_url, authorization = EditicsSessionClient.build_urls_and_authorization(
+    listen_url, send_url, authorization = EditicsSessionClient.build_base_url_and_authorization(
         who=coolorg.bob,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
@@ -748,7 +748,7 @@ async def test_update_version_broadcast_to_viewers(
                 # broadcasts of the late joiners).
                 while True:
                     event = await mallory.recv()
-                    if isinstance(event, EditicsServerEventParsecOriginalContentUploaded):
+                    if isinstance(event, EditicsServerEventParsecInitialContentUploaded):
                         assert event.success is True
                         break
                     assert isinstance(event, EditicsServerEventConnectState)

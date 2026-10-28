@@ -27,7 +27,7 @@ from parsec.editics_protocol import (
     EditicsServerEventError,
     EditicsServerEventMessage,
     EditicsServerEventParsecFetchOriginalContent,
-    EditicsServerEventParsecOriginalContentUploaded,
+    EditicsServerEventParsecInitialContentUploaded,
     EditicsServerEventParsecUploadOriginalContent,
     EditicsServerEventUnSaveLock,
     EditicsServerEventWaitAuth,
@@ -748,7 +748,7 @@ async def test_update_version_broadcast_to_viewers(
                 # broadcasts of the late joiners).
                 while True:
                     event = await mallory.recv()
-                    if isinstance(event, EditicsServerEventParsecOriginalContentUploaded):
+                    if isinstance(event, EditicsServerEventParsecInitialContentUploaded):
                         assert event.success is True
                         break
                     assert isinstance(event, EditicsServerEventConnectState)

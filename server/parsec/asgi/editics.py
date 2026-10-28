@@ -11,8 +11,11 @@ enterprise proxies).
 
 Editics ASGI routes:
 
-    GET  /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/listen/{participant_id}
-    POST /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/send/{participant_id}
+    GET  /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/listen
+    POST /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/send
+
+    GET  /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/initial_content
+    POST /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/initial_content
 
 ## Joining a session
 
@@ -23,12 +26,27 @@ the PostgreSQL database is the centralized source of truth).
 In practice this means a device needs to use the `editics_join_session`
 authenticated API command (TODO: this command is not yet implemented) to obtain
 the URL of the editics server to connect to.
+
+## Initial Content
+
+The initial content is an archive containing the document converted in the
+OnlyOffice format (i.e. {bin, medias}). It is the starting base over
+which all the patches created during the edition session are to be applied.
+
+The initial content is uploaded once (using a dedicated route) by the first
+editor connecting.
+
+Any viewer that connects prior to that is expected to obtain the document
+its own way (i.e. get the initial document from the workspace, then convert
+it with x2t), and will do a reload once once the initial content get uploaded
+(see `parsecInitialContentUploaded` server event).
 """
 
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator, AsyncIterable
 from enum import Enum
+from struct import pack, unpack
 from typing import Annotated, NoReturn
 
 from anyio.streams.memory import MemoryObjectReceiveStream
@@ -45,6 +63,8 @@ from parsec.components.editics import (
     EditicsFetchInitialContentBadOutcome,
     EditicsParticipantListenBadOutcome,
     EditicsParticipantSendBadOutcome,
+    EditicsSessionJoinEventStream,
+    EditicsUploadInitialContentBadOutcome,
 )
 from parsec.editics_protocol import (
     EDITICS_API_VERSION,
@@ -203,8 +223,48 @@ async def _editics_auth_or_abort(
 # --- Routes ------------------------------------------------------------------
 
 
+@editics_router.post(
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/initial_content"
+)
+async def editics_upload_initial_content(
+    raw_organization_id: str,
+    raw_realm_id: str,
+    raw_document_id: str,
+    participant_id: EditicsParticipantID,
+    key_index: int,
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    api_version, auth_info, document_id = await _editics_auth_or_abort(
+        backend, request, raw_organization_id, raw_realm_id, raw_document_id
+    )
+
+    if request.headers["Content-Type"] != "application/vnd.parsec.key-index-and-ciphertext":
+        raise NotImplementedError
+    raw = await request.body()
+    (key_index,) = unpack("!I", raw[:4])
+    encrypted_initial_content = memoryview(raw)[4:]
+
+    outcome = backend.editics.upload_initial_content(
+        auth_info, document_id, participant_id, (key_index, encrypted_initial_content)
+    )
+    match outcome:
+        case None:
+            return Response(
+                204,
+                headers={"Api-Version": str(api_version)},
+            )
+        case EditicsUploadInitialContentBadOutcome.NOT_ALLOWED:
+            # _editics_abort(EditicsHttpStatus.ParticipantNotAuth, api_version)
+            raise NotImplementedError  # TODO
+        case EditicsUploadInitialContentBadOutcome.ALREADY_UPLOADED:
+            # _editics_abort(EditicsHttpStatus.ParticipantNotAuth, api_version)
+            raise NotImplementedError  # TODO
+
+
 @editics_router.get(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/{participant_id}/initial_content"
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/initial_content"
 )
 async def editics_fetch_initial_content(
     raw_organization_id: str,
@@ -223,8 +283,8 @@ async def editics_fetch_initial_content(
     match outcome:
         case (key_index, encrypted_initial_content):
             return Response(
-                content=encrypted_initial_content,
-                media_type="application/json",
+                content=(pack("!I", key_index), encrypted_initial_content),
+                media_type="application/vnd.parsec.key-index-and-ciphertext",
                 headers={"Api-Version": str(api_version)},
             )
         case EditicsFetchInitialContentBadOutcome.NOT_UPLOADED:
@@ -237,7 +297,7 @@ async def _editics_listen_auth(
     raw_document_id: str,
     participant_id: EditicsParticipantID,
     request: Request,
-) -> AsyncGenerator[MemoryObjectReceiveStream]:
+) -> AsyncGenerator[EditicsSessionJoinEventStream]:
     backend: Backend = request.app.state.backend
 
     if request.headers.get("Accept") != ACCEPT_TYPE_SSE:
@@ -261,13 +321,13 @@ async def _editics_listen_auth(
 
 
 @editics_router.get(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/listen/{participant_id}",
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/listen",
     response_class=EventSourceResponse,
 )
 async def editics_listen(
     # Auth logic may raise an `HTTPException` which is not allowed from within the
     # event source generator. So it must be executed first in this separated context.
-    channel_receive: Annotated[MemoryObjectReceiveStream, Depends(_editics_listen_auth)],
+    channel_receive: Annotated[EditicsSessionJoinEventStream, Depends(_editics_listen_auth)],
 ) -> AsyncIterable[EditicsServerEvent]:
     # Note we do not handle SSE's last-event-ID here, this is because OnlyOffice
     # protocol (on which the editics protocol is based) already has its own
@@ -277,7 +337,7 @@ async def editics_listen(
 
 
 @editics_router.post(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/send/{participant_id}"
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/send"
 )
 async def editics_send(
     raw_organization_id: str,
