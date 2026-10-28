@@ -25,9 +25,8 @@ from parsec.types import Base64BytesField
 # versioning.
 #
 # Changelog:
-# - v1.0: initial version
+# - v1.0 (Parsec 3.12+): initial version
 EDITICS_API_VERSION = ApiVersion(version=1, revision=0)
-EDITICS_SUPPORTED_API_VERSIONS = (EDITICS_API_VERSION,)
 
 # TODO: remove option fields (we want to explicitly set a field to `None` instead of omitting it)
 
@@ -52,8 +51,9 @@ survives transport disconnections so the connection can be restored).
 This is a purely transport-level concept (the equivalent of the socket.io
 session ID used by the real OnlyOffice server): it only appears in the session
 URLs and as the `auth` reply's `participantId` (which the OnlyOffice client
- echoes back on reconnection). The identity of the participants in the event
-payloads is carried by the `(deviceId, indexUser)` pair instead.
+echoes back on reconnection). The identity of the participants in the event
+payloads is carried by `EditicsParticipantIdentity` (i.e. `(deviceId, indexUser)`
+pair) instead.
 """
 
 
@@ -65,7 +65,7 @@ it receives.
 
 So we have to follow a similar pattern here (instead of just using
 `EditicsParticipantID` for everything :/ ) by providing device ID + index that
-the client combine to rebuild the composite ID.
+the client combines to rebuild the composite ID.
 """
 
 

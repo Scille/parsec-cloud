@@ -8,8 +8,10 @@ from uuid import uuid4
 import pytest
 
 from parsec._parsec import RealmRole, VlobID
+from parsec.asgi.editics import EditicsHttpStatus
 from parsec.components.auth import EditicsToken
 from parsec.editics_protocol import (
+    EDITICS_API_VERSION,
     EditicsClientEventAuth,
     EditicsClientEventAuthReconnect,
     EditicsClientEventClose,
@@ -45,6 +47,9 @@ from tests.common import (
 # participant joins, and the server doesn't check that the document vlob
 # actually exists.
 DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
+
+# The editics routes negotiate the API version through the `Api-Version` header
+API_VERSION = str(EDITICS_API_VERSION)
 
 
 def _new_participant_id() -> EditicsParticipantID:
@@ -128,19 +133,23 @@ async def test_participant_id_of_another_device_is_refused(
 
         rep = await coolorg.bob.raw_client.post(
             send_url,
-            headers={"Authorization": authorization, "Content-Type": "application/json"},
+            headers={
+                "Authorization": authorization,
+                "Content-Type": "application/json",
+                "Api-Version": API_VERSION,
+            },
             content=auth_event.model_dump_json(),
         )
-        assert rep.status_code == 494  # TODO: dummy HTTP error code for now
+        assert rep.status_code == EditicsHttpStatus.ParticipantDeviceMismatch.value
 
         # Listen
 
         rep = await coolorg.bob.raw_client.get(
             listen_url,
-            headers={"Accept": "text/event-stream"},
+            headers={"Accept": "text/event-stream", "Api-Version": API_VERSION},
             params={"authorization": authorization},
         )
-        assert rep.status_code == 494  # TODO: dummy HTTP error code for now
+        assert rep.status_code == EditicsHttpStatus.ParticipantDeviceMismatch.value
 
     async with EditicsSessionClient.join(
         who=coolorg.alice,
@@ -209,7 +218,7 @@ async def test_reconnection_cannot_change_participant_mode(
                 await alice.send(
                     EditicsClientEventAuth(vlobVersion=1, reconnect=reconnect, mode=reconnect_mode)
                 )
-            assert exc.value.rep.status_code == 496  # TODO: dummy HTTP error code for now
+            assert exc.value.rep.status_code == EditicsHttpStatus.ParticipantModeMismatch.value
 
             # The refused reconnection had no effect: Alice can reconnect, provided
             # she asks for her original mode
@@ -229,19 +238,21 @@ async def test_bad_auth(coolorg: CoolorgRpcClients) -> None:
     # Send: missing `Authorization` header
     rep = await coolorg.alice.raw_client.post(
         send_url,
+        headers={"Api-Version": API_VERSION},
         content=_auth_event(mode="edit").model_dump_json(),
     )
-    assert rep.status_code == 401
+    assert rep.status_code == EditicsHttpStatus.MissingAuthenticationInfo.value
 
-    # Listen: missing `authorization` parameter (SSE connection don't use `Authorization` header)
+    # Listen: missing `authorization` header
     rep = await coolorg.alice.raw_client.get(
         listen_url,
         headers={
             "Accept": "text/event-stream",
             "Cache-Control": "no-store",
+            "Api-Version": API_VERSION,
         },
     )
-    assert rep.status_code == 401
+    assert rep.status_code == EditicsHttpStatus.MissingAuthenticationInfo.value
 
     raw_bad_token = EditicsToken.generate_raw(
         device_id=coolorg.alice.device_id,
@@ -252,21 +263,25 @@ async def test_bad_auth(coolorg: CoolorgRpcClients) -> None:
     # Send: invalid authorization token
     rep = await coolorg.alice.raw_client.post(
         send_url,
-        headers={"Authorization": f"Bearer {raw_bad_token.decode('ascii')}"},
+        headers={
+            "Authorization": f"Bearer {raw_bad_token.decode('ascii')}",
+            "Api-Version": API_VERSION,
+        },
         content=_auth_event(mode="edit").model_dump_json(),
     )
-    assert rep.status_code == 403
+    assert rep.status_code == EditicsHttpStatus.BadAuthenticationInfo.value
 
     # Listen: invalid authorization token
     rep = await coolorg.alice.raw_client.get(
         listen_url,
         headers={
+            "Authorization": f"Bearer {raw_bad_token.decode('ascii')}",
             "Accept": "text/event-stream",
             "Cache-Control": "no-store",
+            "Api-Version": API_VERSION,
         },
-        params={"authorization": raw_bad_token},
     )
-    assert rep.status_code == 401
+    assert rep.status_code == EditicsHttpStatus.BadAuthenticationInfo.value
 
 
 async def test_read_only_realm_role_must_join_in_view_mode(
@@ -293,7 +308,7 @@ async def test_read_only_realm_role_must_join_in_view_mode(
     ) as bob:
         with pytest.raises(RpcTransportError) as exc:
             await bob.send(_auth_event(mode="edit"))
-        assert exc.value.rep.status_code == 495  # TODO: dummy HTTP error code for now
+        assert exc.value.rep.status_code == EditicsHttpStatus.ReaderMustBeViewer.value
 
 
 async def test_write_realm_role_can_join_in_view_mode(
@@ -457,13 +472,19 @@ async def test_sse_deco_on_role_change(backend: Backend, coolorg: CoolorgRpcClie
                 with pytest.raises(StopAsyncIteration):
                     event = await bob.recv()
 
-                # Also cannot send request with this participant
+                # Also cannot send request with this participant: the role change
+                # either removed Bob's realm access outright (the request's
+                # authentication is then refused) or kicked him out (which reset
+                # his participant's authentication, so any event but `auth` is
+                # refused)
                 with pytest.raises(RpcTransportError) as exc:
                     await bob.send(EditicsClientEventClose())
-                assert exc.value.rep.status_code in (
-                    492,
-                    493,
-                )  # TODO: dummy HTTP error code for now
+                expected_status = (
+                    EditicsHttpStatus.UserNoRealmRole
+                    if new_role is None
+                    else EditicsHttpStatus.ParticipantNotAuth
+                )
+                assert exc.value.rep.status_code == expected_status.value
 
             else:
                 # Bob is not kicked out: the connection stays functional
@@ -537,37 +558,46 @@ def _save_changes_event(
 async def test_original_content_lifecycle(coolorg: CoolorgRpcClients, backend: Backend) -> None:
     alice_original_content = b"<Alice's original content>"
 
-    # Bob is READER on wksp1: grant him a write role so he can join as an editor.
-    # Note the event bus dispatches the realm certificate asynchronously: wait
-    # for it before joining, since a certificate landing between a participant's
-    # SSE registration and its `auth` would kick it.
-    with backend.event_bus.spy() as spy:
-        await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
-        await spy.wait(EventRealmCertificate)
+    await wksp1_alice_gives_role(
+        coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR, wait_events=True
+    )
 
-    # Alice is the first editor of the session: she must upload the original
-    # content (her x2t conversion result).
+    # Alice is the first editor of the session: she must upload the original content
     async with EditicsSessionClient.join(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
         participant_id=_new_participant_id(),
     ) as alice:
+        # 1. Cannot upload the original content before auth
+
+        with pytest.raises(RpcTransportError) as exc:
+            await alice.send(_upload_original_content_event(b"dummy"))
+        assert exc.value.rep.status_code == EditicsHttpStatus.ParticipantNotAuth.value
+
         rep = await alice.send(_auth_event(mode="edit"))
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.originalContentUploaded is False
+
+        # 2. Actual original content upload
+
+        with pytest.raises(RpcTransportError) as exc:
+            rep = await alice.send(EditicsClientEventParsecFetchOriginalContent())
+        assert exc.value.rep.status_code == EditicsHttpStatus.OriginalContentMissing.value
 
         rep = await alice.send(_upload_original_content_event(alice_original_content))
         assert isinstance(rep, EditicsServerEventParsecUploadOriginalContent)
         assert rep.alreadyUploaded is False
 
-        # Release the auth lock (i.e. switch to co-editing mode) so Bob's
-        # handshake completes right away instead of being parked.
+        # 3. Release the auth lock (i.e. switch to co-editing mode) so Bob's
+        #    handshake completes right away instead of being parked.
+
         rep = await alice.send(EditicsClientEventUnLockDocument(unlock=True, deleteIndex=None))
         assert rep is None
 
-        # Bob joins the session: the original content is already there, so he
-        # is expected to fetch it instead of converting the document himself.
+        # 4. Bob joins the session: the original content is already there, so he
+        #   is expected to fetch it instead of converting the document himself.
+
         async with EditicsSessionClient.join(
             who=coolorg.bob,
             realm_id=coolorg.wksp1_id,
@@ -594,46 +624,12 @@ async def test_original_content_lifecycle(coolorg: CoolorgRpcClients, backend: B
             assert rep.encryptedOriginalContent == (1, alice_original_content)
 
 
-async def test_fetch_original_content_before_upload(coolorg: CoolorgRpcClients) -> None:
-    # A fresh session has no original content yet
-    async with EditicsSessionClient.join(
-        who=coolorg.alice,
-        realm_id=coolorg.wksp1_id,
-        document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
-    ) as alice:
-        rep = await alice.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
-
-        rep = await alice.send(EditicsClientEventParsecFetchOriginalContent())
-        assert isinstance(rep, EditicsServerEventParsecFetchOriginalContent)
-        assert rep.encryptedOriginalContent is None
-
-
-async def test_upload_original_content_requires_auth(coolorg: CoolorgRpcClients) -> None:
-    # The `parsecUploadOriginalContent` event, like any other event but `auth`,
-    # cannot be the first one sent by a participant.
-    async with EditicsSessionClient.join(
-        who=coolorg.alice,
-        realm_id=coolorg.wksp1_id,
-        document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
-    ) as alice:
-        with pytest.raises(RpcTransportError) as exc:
-            await alice.send(_upload_original_content_event(b"dummy"))
-        assert exc.value.rep.status_code == 493  # TODO: dummy HTTP error code for now
-
-
 async def test_viewer_cannot_upload_original_content(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
-    # Mallory is not part of wksp1: give her a read-only role so she can join
-    # as a viewer. Only editors may upload the original content, and a viewer
-    # trying to do so is kicked out of the session (like for the other
-    # editor-only events, record 61).
-    with backend.event_bus.spy() as spy:
-        await wksp1_alice_gives_role(coolorg, backend, coolorg.mallory.user_id, RealmRole.READER)
-        await spy.wait(EventRealmCertificate)
+    await wksp1_alice_gives_role(
+        coolorg, backend, coolorg.mallory.user_id, RealmRole.READER, wait_events=True
+    )
 
     async with EditicsSessionClient.join(
         who=coolorg.mallory,
@@ -652,9 +648,6 @@ async def test_viewer_cannot_upload_original_content(
         with pytest.raises(StopAsyncIteration):
             await mallory.recv()
 
-    # The upload was refused, so nothing was stored (the session itself survives
-    # the kick: Mallory stays in it as a disconnected participant, so she could
-    # restore her connection)
     (session,) = backend.editics._sessions.values()
     assert session.encrypted_original_content is None
 

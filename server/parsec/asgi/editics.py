@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 """
 Editics routes works as a re-implementation of the OnlyOffice server, with a slightly modified
 protocol (called the "editics protocol", by opposition of the original "OnlyOffic protocol")
@@ -13,50 +14,15 @@ Editics ASGI routes:
     GET  /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/listen/{participant_id}
     POST /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/send/{participant_id}
 
-The editics API is versioned: the client provides its version in the `Api-Version` request
-header and the server replies with its own version (see `EDITICS_API_VERSION` in
-`parsec/editics_protocol.py`). The HTTP error statuses are defined in `EditicsHttpStatus`.
-
-- `GET .../listen` opens the SSE stream (server→client).
-- `POST .../send` carries one client event (client→server).
-
-Participant ID is an arbitrary UUID chosen client-side that represent the connection
-session between the client and the server (see "Client connection lifecyle" below).
-
 ## Joining a session
 
-Since an editics session lives within the memory of a server, all participant
+Since an editics session lives within the memory of a server, all participants
 must directly connect to it (this differs from the rest of Parsec server where
 the PostgreSQL database is the centralized source of truth).
 
 In practice this means a device needs to use the `editics_join_session`
-authenticated API command (todo: this command is not yet implemented) to obtain
+authenticated API command (TODO: this command is not yet implemented) to obtain
 the URL of the editics server to connect to.
-
-## Client connection lifecyle
-
-OnlyOffice server has three layers regarding to client connect:
-- The actual websocket connection
-- session ID: ID shared between the client and the server to represent a
-  reconnection-stable client edition session participation.
-  In practice this ID is obtained when sending the first `auth` event (and correspond
-  to the websocket connection ID), then provided in the `auth` event of the
-  re-connections done by subsequent websocket connections.
-  When a new websocket connects to server, any older websocket with the same
-  session ID is considered a zombie and gets closed.
-  Note the client sometime must change its session ID, typically if some changes
-  has occurred while it was trying to reconnect.
-- participant ID (i.e. <idOriginal> + <indexUser>): Similar to the session ID, but
-  at a different layer. This ID is broadcasted to all the participants and is used
-  to identify who holds a auth/save lock.
-
-For simplicity in editics protocol, we merge together the session ID and participant ID:
-instead we only have the concept of participant and the participant ID is chosen client-side
-(this is needed since this info must be known to send a request to the server).
-
-
-TODO: document the time granularity used by the server to generate timestamp for
-document modifications (it seems OnlyOffice uses a second granularity for this...)
 """
 
 from __future__ import annotations
@@ -67,7 +33,6 @@ from typing import Annotated, NoReturn
 
 from anyio.streams.memory import MemoryObjectReceiveStream
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.datastructures import Headers
 from fastapi.responses import Response
 from fastapi.sse import EventSourceResponse
 from pydantic import BaseModel
@@ -77,26 +42,22 @@ from parsec.asgi.rpc import IncompatibleAPIVersionsError, settle_compatible_vers
 from parsec.backend import Backend
 from parsec.components.auth import AuthEditicsAuthBadOutcome, EditicsAuthInfo, EditicsToken
 from parsec.components.editics import (
+    EditicsFetchInitialContentBadOutcome,
     EditicsParticipantListenBadOutcome,
     EditicsParticipantSendBadOutcome,
 )
 from parsec.editics_protocol import (
-    EDITICS_SUPPORTED_API_VERSIONS,
+    EDITICS_API_VERSION,
     EditicsClientEventAdapter,
     EditicsParticipantID,
     EditicsServerEvent,
 )
 
+EDITICS_SUPPORTED_API_VERSIONS = (EDITICS_API_VERSION,)
+
 editics_router = APIRouter(include_in_schema=False)
 
 ACCEPT_TYPE_SSE = "text/event-stream"
-# Max size for the RPC body. This must be big enough for the
-# `parsecUploadOriginalContent` client event, which carries the base64-encoded
-# encrypted original content archive (a converted document and its media can
-# be tens of MB, and base64 adds ~33%; the fetch reply is an HTTP response, so
-# it is not concerned, and the SSE stream is unaffected).
-# TODO justify size (configurable with the client side ?)
-MAX_CONTENT_LENGTH = 100 * 1024**2
 
 
 class EditicsHttpStatus(Enum):
@@ -108,29 +69,38 @@ class EditicsHttpStatus(Enum):
     hence 463/464 have here totally different meanings than for the RPC API).
     """
 
-    # Common statuses
+    # Basic request parsing & authentication errors
+
     MissingAuthenticationInfo = 401
     BadAuthenticationInfo = 403
-    # Information hiding: malformed organization/realm/document ID, missing
-    # organization, missing realm and deleted realm are all indistinguishable
-    # (a too precise outcome would leak the existence/deletion of a realm to
-    # an organization member that has no access to it).
-    NotFound = 404
     BadAcceptType = 406
-    BadContentType = 415
+    PayloadTooLarge = 413
+    BadContentTypeOrInvalidBody = 415
     UnsupportedApiVersion = 422
-    OrganizationExpired = 460
-    UserRevoked = 461
-    UserFrozen = 462
     TokenExpired = 498
-    # Editics-specific statuses
-    UserNoRealmRole = 463
-    ParticipantNotAuth = 464
-    ParticipantDeviceMismatch = 465
-    ParticipantIdMismatch = 466
-    ParticipantModeMismatch = 467
-    ReaderMustBeViewer = 468
-    OriginalContentMissing = 469
+    UserRevoked = 460
+    UserFrozen = 461
+    UserNoRealmRole = 462
+    OrganizationExpired = 465
+
+    # Post-authentication, editics workflow errors
+
+    # First client event must be `auth`
+    ParticipantNotAuth = 480
+    # Subsequent `auth` are reconnection, and a device cannot do impersonation
+    # by reconnecting with a participant ID related to another device!
+    ParticipantDeviceMismatch = 481
+    # A reconnecting participant ID mismatch the transport participant ID (i.e.
+    # the one in the listen/send routes URL). This is not supposed to happen and
+    # indicates a buggy client.
+    ParticipantIdMismatch = 482
+    # A reconnecting participant cannot change the mode it originally joined with
+    ParticipantModeMismatch = 483
+    # Participant has READER role and tries to edit
+    ReaderMustBeViewer = 484
+    # Once `auth` server event received, the first editor knows he must upload the
+    # original content before anything else.
+    OriginalContentMissing = 485
 
 
 # e.g. `ParticipantNotAuth` -> `Participant not auth`
@@ -151,11 +121,19 @@ def _editics_abort(status: EditicsHttpStatus, api_version: ApiVersion, **headers
     )
 
 
-def _parse_api_version_or_abort(headers: Headers) -> ApiVersion:
+async def _editics_auth_or_abort(
+    backend: Backend,
+    request: Request,
+    raw_organization_id: str,
+    raw_realm_id: str,
+    raw_document_id: str,
+) -> tuple[ApiVersion, EditicsAuthInfo, VlobID]:
+    # 1) Get API version
+
     try:
-        client_api_version = ApiVersion.from_str(headers.get("Api-Version", ""))
+        client_api_version = ApiVersion.from_str(request.headers.get("Api-Version", ""))
         settled_api_version, _ = settle_compatible_versions(
-            EDITICS_SUPPORTED_API_VERSIONS, [client_api_version]
+            EDITICS_SUPPORTED_API_VERSIONS, (client_api_version,)
         )
     except (ValueError, IncompatibleAPIVersionsError):
         supported_api_versions = ";".join(str(v) for v in EDITICS_SUPPORTED_API_VERSIONS)
@@ -163,57 +141,32 @@ def _parse_api_version_or_abort(headers: Headers) -> ApiVersion:
             status_code=EditicsHttpStatus.UnsupportedApiVersion.value,
             headers={"Supported-Api-Versions": supported_api_versions},
         )
-    return settled_api_version
 
+    # 2) Parse authorization header
 
-# The editics token is expected in the `Authorization: Bearer <editics_token>` header.
-# Note the listen route (i.e. SSE) is typically consumed from a web browser through
-# the `EventSource` API, which cannot set custom headers: hence the token is also
-# accepted as an `authorization` query parameter.
-# TODO: remove the `authorization` query parameter fallback once the client uses
-# its own SSE implementation (i.e. no longer relies on `EventSource`)
-def _parse_editics_auth_header(request: Request, api_version: ApiVersion) -> EditicsToken:
-    raw_authorization = request.headers.get("Authorization")
-    if raw_authorization is None:
-        raw_authorization = request.query_params.get("authorization")
-    if raw_authorization is None:
-        _editics_abort(EditicsHttpStatus.MissingAuthenticationInfo, api_version)
+    try:
+        raw_authorization = request.headers["Authorization"]
+    except KeyError:
+        _editics_abort(EditicsHttpStatus.MissingAuthenticationInfo, settled_api_version)
 
     try:
         expected_bearer, raw_editics_token = raw_authorization.split()
         if expected_bearer.lower() != "bearer":
             raise ValueError
-        editics_token = EditicsToken.from_raw(raw_editics_token.encode())
+        token = EditicsToken.from_raw(raw_editics_token.encode())
     except ValueError:
-        _editics_abort(EditicsHttpStatus.MissingAuthenticationInfo, api_version)
+        _editics_abort(EditicsHttpStatus.MissingAuthenticationInfo, settled_api_version)
 
-    return editics_token
+    # 3) Parse organization/realm/document IDs
 
-
-def _parse_organization_id(raw_organization_id: str, api_version: ApiVersion) -> OrganizationID:
     try:
-        return OrganizationID(raw_organization_id)
+        organization_id = OrganizationID(raw_organization_id)
+        realm_id = VlobID.from_hex(raw_realm_id)
+        document_id = VlobID.from_hex(raw_document_id)
     except ValueError:
-        _editics_abort(EditicsHttpStatus.NotFound, api_version)
+        _editics_abort(EditicsHttpStatus.BadAuthenticationInfo, settled_api_version)
 
-
-def _parse_vlob_id(raw: str, api_version: ApiVersion) -> VlobID:
-    try:
-        return VlobID.from_hex(raw)
-    except ValueError:
-        _editics_abort(EditicsHttpStatus.NotFound, api_version)
-
-
-async def _editics_auth(
-    backend: Backend,
-    request: Request,
-    raw_organization_id: str,
-    raw_realm_id: str,
-) -> tuple[ApiVersion, EditicsAuthInfo]:
-    api_version = _parse_api_version_or_abort(request.headers)
-    organization_id = _parse_organization_id(raw_organization_id, api_version)
-    realm_id = _parse_vlob_id(raw_realm_id, api_version)
-    token = _parse_editics_auth_header(request, api_version)
+    # 4) Actual auth lookup
 
     outcome = await backend.auth.editics_auth(
         now=DateTime.now(),
@@ -223,31 +176,59 @@ async def _editics_auth(
     )
     match outcome:
         case EditicsAuthInfo() as auth_info:
-            return api_version, auth_info
+            return (settled_api_version, auth_info, document_id)
 
         case (
-            AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND
-            | AuthEditicsAuthBadOutcome.REALM_NOT_FOUND
+            AuthEditicsAuthBadOutcome.DEVICE_NOT_FOUND
+            | AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND
+            | AuthEditicsAuthBadOutcome.INVALID_TOKEN
+        ):
+            _editics_abort(EditicsHttpStatus.BadAuthenticationInfo, settled_api_version)
+        case AuthEditicsAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
+            _editics_abort(EditicsHttpStatus.TokenExpired, settled_api_version)
+        case AuthEditicsAuthBadOutcome.USER_REVOKED:
+            _editics_abort(EditicsHttpStatus.UserRevoked, settled_api_version)
+        case AuthEditicsAuthBadOutcome.USER_FROZEN:
+            _editics_abort(EditicsHttpStatus.UserFrozen, settled_api_version)
+        case (
+            AuthEditicsAuthBadOutcome.REALM_NOT_FOUND
+            | AuthEditicsAuthBadOutcome.USER_NO_REALM_ROLE
             | AuthEditicsAuthBadOutcome.REALM_DELETED
         ):
-            # Information hiding: see `EditicsHttpStatus.NotFound`
-            _editics_abort(EditicsHttpStatus.NotFound, api_version)
-
+            _editics_abort(EditicsHttpStatus.UserNoRealmRole, settled_api_version)
         case AuthEditicsAuthBadOutcome.ORGANIZATION_EXPIRED:
-            _editics_abort(EditicsHttpStatus.OrganizationExpired, api_version)
-        case AuthEditicsAuthBadOutcome.USER_REVOKED:
-            _editics_abort(EditicsHttpStatus.UserRevoked, api_version)
-        case AuthEditicsAuthBadOutcome.USER_FROZEN:
-            _editics_abort(EditicsHttpStatus.UserFrozen, api_version)
-        case AuthEditicsAuthBadOutcome.USER_NO_REALM_ROLE:
-            _editics_abort(EditicsHttpStatus.UserNoRealmRole, api_version)
-        case AuthEditicsAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
-            _editics_abort(EditicsHttpStatus.TokenExpired, api_version)
-        case AuthEditicsAuthBadOutcome.DEVICE_NOT_FOUND | AuthEditicsAuthBadOutcome.INVALID_TOKEN:
-            _editics_abort(EditicsHttpStatus.BadAuthenticationInfo, api_version)
+            _editics_abort(EditicsHttpStatus.OrganizationExpired, settled_api_version)
 
 
 # --- Routes ------------------------------------------------------------------
+
+
+@editics_router.get(
+    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/{participant_id}/initial_content"
+)
+async def editics_fetch_initial_content(
+    raw_organization_id: str,
+    raw_realm_id: str,
+    raw_document_id: str,
+    participant_id: EditicsParticipantID,
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    api_version, auth_info, document_id = await _editics_auth_or_abort(
+        backend, request, raw_organization_id, raw_realm_id, raw_document_id
+    )
+
+    outcome = backend.editics.fetch_initial_content(auth_info, document_id)
+    match outcome:
+        case (key_index, encrypted_initial_content):
+            return Response(
+                content=encrypted_initial_content,
+                media_type="application/json",
+                headers={"Api-Version": str(api_version)},
+            )
+        case EditicsFetchInitialContentBadOutcome.NOT_UPLOADED:
+            _editics_abort(EditicsHttpStatus.ParticipantNotAuth, api_version)
 
 
 async def _editics_listen_auth(
@@ -259,14 +240,12 @@ async def _editics_listen_auth(
 ) -> AsyncGenerator[MemoryObjectReceiveStream]:
     backend: Backend = request.app.state.backend
 
-    api_version, auth_info = await _editics_auth(
-        backend, request, raw_organization_id, raw_realm_id
-    )
-
     if request.headers.get("Accept") != ACCEPT_TYPE_SSE:
-        _editics_abort(EditicsHttpStatus.BadAcceptType, api_version)
+        _editics_abort(EditicsHttpStatus.BadAcceptType, EDITICS_API_VERSION)
 
-    document_id = _parse_vlob_id(raw_document_id, api_version)
+    api_version, auth_info, document_id = await _editics_auth_or_abort(
+        backend, request, raw_organization_id, raw_realm_id, raw_document_id
+    )
 
     with backend.editics.participant_listen(
         auth_info,
@@ -309,27 +288,25 @@ async def editics_send(
 ) -> Response:
     backend: Backend = request.app.state.backend
 
-    api_version, auth_info = await _editics_auth(
-        backend, request, raw_organization_id, raw_realm_id
-    )
-
     if request.headers.get("Content-Type") != "application/json":
-        _editics_abort(EditicsHttpStatus.BadContentType, api_version)
-
-    document_id = _parse_vlob_id(raw_document_id, api_version)
+        _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, EDITICS_API_VERSION)
 
     try:
         content_length = int(request.headers["Content-Length"])
     except (ValueError, KeyError):
-        content_length = MAX_CONTENT_LENGTH
+        content_length = backend.config.editics_send_max_content_length
     else:
-        if content_length > MAX_CONTENT_LENGTH:
-            raise HTTPException(status_code=413)
+        if content_length > backend.config.editics_send_max_content_length:
+            _editics_abort(EditicsHttpStatus.PayloadTooLarge, EDITICS_API_VERSION)
+
+    api_version, auth_info, document_id = await _editics_auth_or_abort(
+        backend, request, raw_organization_id, raw_realm_id, raw_document_id
+    )
 
     try:
         event = EditicsClientEventAdapter.validate_json(await request.body())
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid client event")
+        _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
 
     output = await backend.editics.participant_send(
         auth_info,

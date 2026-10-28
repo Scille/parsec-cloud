@@ -424,12 +424,21 @@ def _handshake_auth(session: EditicsSession, participant: Participant) -> Editic
     )
 
 
+class EditicsUploadInitialContentBadOutcome(BadOutcomeEnum):
+    NOT_ALLOWED = auto()
+    ALREADY_UPLOADED = auto()
+
+
+class EditicsFetchInitialContentBadOutcome(BadOutcomeEnum):
+    NOT_UPLOADED = auto()
+
+
 class EditicsParticipantListenBadOutcome(BadOutcomeEnum):
     PARTICIPANT_DEVICE_MISMATCH = auto()
 
 
 class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
-    # First event must be `auth`
+    # First client event must be `auth`
     PARTICIPANT_NOT_AUTH = auto()
     # Once `auth` server event received, the first editor knows he must upload the
     # original content before anything else.
@@ -562,6 +571,49 @@ class EditicsComponent:
         )
 
         return participant
+
+    def upload_initial_content(
+        self,
+        auth_info: EditicsAuthInfo,
+        document_id: VlobID,
+        participant_id: EditicsParticipantID,
+        encrypted_original_content: tuple[int, bytes],
+    ) -> EditicsUploadInitialContentBadOutcome | None:
+        if not auth_info.realm_role.can_write:
+            return EditicsUploadInitialContentBadOutcome.NOT_ALLOWED
+
+        session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
+        session = self._get_or_create_session(session_key)
+        if session.encrypted_original_content is not None:
+            return EditicsUploadInitialContentBadOutcome.ALREADY_UPLOADED
+
+        session.encrypted_original_content = encrypted_original_content
+        # Notify only the viewers since the connected editor are either the
+        # one that have done the upload, or ones that are trying to do a
+        # concurrent upload (and will get the info from `alreadyUploaded: true`
+        # in the server response).
+        broadcasted_event = EditicsServerEventParsecOriginalContentUploaded()
+        for other in session.participants.values():
+            if (
+                other.participant_id == participant_id
+                or other.authed is None
+                or not other.authed.view
+                or not other.connected
+            ):
+                continue
+            other.send_event(broadcasted_event)
+
+    def fetch_initial_content(
+        self,
+        auth_info: EditicsAuthInfo,
+        document_id: VlobID,
+    ) -> tuple[int, bytes] | EditicsFetchInitialContentBadOutcome:
+        session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
+        session = self._get_or_create_session(session_key)
+        if session.encrypted_original_content is None:
+            return EditicsFetchInitialContentBadOutcome.NOT_UPLOADED
+
+        return session.encrypted_original_content
 
     @contextmanager
     def participant_listen(

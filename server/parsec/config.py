@@ -308,6 +308,12 @@ class BackendConfig:
     # URL to reach this server from the editics domain
     # This is typically used to serve the editics pages in an isolated iframe.
     editics_server_addr: ParsecAddr | None = None
+    # Max size for the send route's body. This must be big enough for the
+    # `parsecUploadOriginalContent` client event, which carries the base64-encoded
+    # encrypted original content archive (a converted document and its media can
+    # be tens of MB, and base64 adds ~33%; the fetch reply is an HTTP response, so
+    # it is not concerned, and the SSE stream is unaffected).
+    editics_send_max_content_length: int = 100 * 1024**2  # 100Mo
 
     # Bearer token used to authenticate the administration API
     administration_token: str

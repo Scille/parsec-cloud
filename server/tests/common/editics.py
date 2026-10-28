@@ -44,10 +44,10 @@ class EditicsSessionClient:
     ):
         self._sse_event_source = sse_event_source
         self._sse_event_source_iter = self._sse_event_source.aiter_sse()
-        self.send_raw = send_events_raw
+        self.send_event_raw = send_events_raw
 
     @staticmethod
-    def build_urls_and_authorization(
+    def build_base_url_and_authorization(
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
@@ -60,11 +60,11 @@ class EditicsSessionClient:
         )
         authorization = f"Bearer {token.decode()}"
 
-        session_path = f"/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
-        listen_url = f"http://{SERVER_DOMAIN}{session_path}/listen/{participant_id}"
-        send_url = f"http://{SERVER_DOMAIN}{session_path}/send/{participant_id}"
+        base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
+        send_url = f"{base_path}/send/{participant_id}"
+        send_url = f"{base_path}/send/{participant_id}"
 
-        return (listen_url, send_url, authorization)
+        return (base_url, authorization)
 
     @classmethod
     @asynccontextmanager
@@ -80,9 +80,11 @@ class EditicsSessionClient:
 
         Yields `(send_client_event, sse_listen_server_events)`
         """
-        listen_url, send_url, authorization = cls.build_urls_and_authorization(
+        base_url, authorization = cls.build_urls_and_authorization(
             who, realm_id, document_id, participant_id
         )
+        listen_url = f"{base_url}/listen/{participant_id}"
+        send_url = f"{base_url}/send/{participant_id}"
 
         api_version = str(EDITICS_API_VERSION)
 
@@ -122,13 +124,44 @@ class EditicsSessionClient:
             )
 
     async def send(self, event: EditicsClientEvent) -> EditicsServerEvent | None:
-        match await self.send_raw(event.model_dump_json()):
+        match await self.send_event_raw(event.model_dump_json()):
             case None:
                 return None
             case raw_server_event:
                 return EditicsServerEventAdapter.validate_json(raw_server_event)
 
-    send_raw: Callable[[str], Awaitable[str | None]]  # Set in `__init__`
+    async def upload_initial_content(self, encrypted_initial_content: tuple[int, bytes]) -> None:
+        rep = await who.raw_client.post(
+            send_url,
+            headers={
+                "Authorization": authorization,
+                "Content-Type": "application/json",
+                "Api-Version": api_version,
+            },
+            content=raw_event,
+        )
+        match rep.status_code:
+            case 200:
+                return rep.text
+            case 204:
+                return None
+            case _:
+                raise RpcTransportError(rep)
+
+        match await self.send_event_raw(event.model_dump_json()):
+            case None:
+                return None
+            case raw_server_event:
+                return EditicsServerEventAdapter.validate_json(raw_server_event)
+
+    async def fetch_initial_content(self, event: EditicsClientEvent) -> tuple[int, bytes]:
+        match await self.send_event_raw(event.model_dump_json()):
+            case None:
+                return None
+            case raw_server_event:
+                return EditicsServerEventAdapter.validate_json(raw_server_event)
+
+    send_event_raw: Callable[[str], Awaitable[str | None]]  # Set in `__init__`
     "Take and return the events in JSON encoded format"
 
     async def recv(self) -> EditicsServerEvent:
@@ -444,7 +477,7 @@ class EditicsJSClient:
             # Ignored OnlyOffice event (e.g. `rpc`)
             return
 
-        maybe_raw_editics_server_event = await self.editics_session_client.send_raw(
+        maybe_raw_editics_server_event = await self.editics_session_client.send_event_raw(
             raw_editics_client_event
         )
         match maybe_raw_editics_server_event:
