@@ -127,6 +127,30 @@ edits to the document anyway, and the tempering is indistinguishable from an inn
 
 ### 1.3 - Participant identities
 
+TODO: use/rework this:
+```
+## Client connection lifecyle
+
+OnlyOffice server has three layers regarding to client connect:
+- The actual websocket connection.
+- Session ID: ID shared between the client and the server to represent a
+  reconnection-stable client edition session participation.
+  In practice this ID is obtained when sending the first `auth` event (and corresponds
+  to the websocket connection ID), then provided in the `auth` event of the
+  re-connections done by subsequent websocket connections.
+  When a new websocket connects to the server, any older websocket with the same
+  session ID is considered a zombie and gets closed.
+  Note the client sometime must change its session ID, typically if some change
+  has occurred while it was trying to reconnect.
+- Participant ID (i.e. <idOriginal> + <indexUser>): Similar to the session ID, but
+  at a different layer. This ID is broadcasted to all the participants and is used
+  to identify who holds a auth/save lock.
+
+For simplicity in editics protocol, we merge together the session ID and participant ID:
+instead we only have the concept of participant and the participant ID is chosen client-side
+(this is needed since this info must be known to send a request to the server).
+```
+
 In the OnlyOffice protocol, each editor instance taking part in a co-authoring
 session is identified by a composite ID, and the whole protocol (locks, changes,
 cursors, chat messages) refers to the participants by it. The concepts are:
