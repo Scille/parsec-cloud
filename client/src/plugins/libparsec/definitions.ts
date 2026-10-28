@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-
 /*
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
@@ -2206,8 +2205,8 @@ export interface ClientEventWorkspaceOpsOutboundSyncStarted {
 }
 export interface ClientEventWorkspaceOutboundSyncBacklog {
     tag: ClientEventTag.WorkspaceOutboundSyncBacklog
-    numberOfFilesToSync: SizeInt
-    sizeToSync: SizeInt
+    numberOfFilesToSync: U64
+    sizeToSync: U64
     realmId: VlobID
     entryCurrentlyBeingSynced: VlobID | null
 }
