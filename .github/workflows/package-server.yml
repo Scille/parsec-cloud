@@ -87,11 +87,11 @@ jobs:
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
-      - name: Install yq-go
+      - name: Install yq
         # TODO: Change me to taiki-e/install-action action once https://github.com/taiki-e/install-action/pull/2036 is merged
-        uses: FirelightFlagboy/install-action@tool-yq-go
+        uses: FirelightFlagboy/install-action@3ff3b05d5550665b1f00f01c03da3bda42294c96
         with:
-          tool: yq-go
+          tool: yq
         timeout-minutes: 1
 
       # Building OpenSSL requires a perl interpreter.
@@ -150,7 +150,7 @@ jobs:
       - name: Generate artifacts.yml file
         shell: bash -eux -o pipefail {0}
         run: |
-          yq-go --null-input ".${{ matrix.platform }}.$(uname -m).server = \"$(cd dist; ls *.whl | head -n 1)\"" | tee dist/artifacts.yml
+          yq --null-input ".${{ matrix.platform }}.$(uname -m).server = \"$(cd dist; ls *.whl | head -n 1)\"" | tee dist/artifacts.yml
 
       # Install syft
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # pin v2.87.29

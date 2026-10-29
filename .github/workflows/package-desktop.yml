@@ -316,9 +316,9 @@ jobs:
 
       - name: Install yq
         # TODO: Change me to taiki-e/install-action action once https://github.com/taiki-e/install-action/pull/2036 is merged
-        uses: FirelightFlagboy/install-action@tool-yq-go
+        uses: FirelightFlagboy/install-action@3ff3b05d5550665b1f00f01c03da3bda42294c96
         with:
-          tool: yq-go
+          tool: yq
         timeout-minutes: 1
 
       - name: Windows > Install TrustedSigning
@@ -501,14 +501,14 @@ jobs:
             grep -q -e "${app_file}" "${latest_file}"
 
             # Update artifact file
-            yq-go -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext} = \"${app_file}\"" $artifact_file
+            yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext} = \"${app_file}\"" $artifact_file
             # AppImage does not have a blockmap file generated
             if [ "$ext" != "AppImage" ]; then
-              yq-go -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
+              yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
             fi
 
             # Add to files_to_upload
-            yq-go . $artifact_file -o json | jq -r '"client/electron/dist/" + (.. | scalars)' | tee -a $GITHUB_OUTPUT
+            yq . $artifact_file -o json | jq -r '"client/electron/dist/" + (.. | scalars)' | tee -a $GITHUB_OUTPUT
           done
 
           # Print artifact file

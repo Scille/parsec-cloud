@@ -130,9 +130,9 @@ jobs:
 
       - name: Install yq
         # TODO: Merge me in the above taiki-e/install-action action once https://github.com/taiki-e/install-action/pull/2036 is merged
-        uses: FirelightFlagboy/install-action@tool-yq-go
+        uses: FirelightFlagboy/install-action@3ff3b05d5550665b1f00f01c03da3bda42294c96
         with:
-          tool: yq-go
+          tool: yq
         timeout-minutes: 1
 
       # Building OpenSSL requires a perl interpreter.
@@ -235,7 +235,7 @@ jobs:
           FINAL_ARTIFACT_NAME="parsec-cli-${{ steps.version.outputs.full }}-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}${{ matrix.extension }}"
           cp -v target/${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}/release/parsec-cli "${{ runner.temp }}/$FINAL_ARTIFACT_NAME"
           echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
-          yq-go --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee "${{ runner.temp }}/artifacts.yml"
+          yq --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee "${{ runner.temp }}/artifacts.yml"
         timeout-minutes: 1
 
       - name: Generate fake package.json for sign script
