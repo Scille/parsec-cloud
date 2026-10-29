@@ -222,10 +222,11 @@ class EditicsSession:
     # `saveChanges` event carrying a `deleteIndex`).
     changes: list[StoredChange] = field(default_factory=list)
     # The initial content uploaded by the first editor of the session:
-    # the msgpack archive of the converted document (.bin + media files),
-    # encrypted with the workspace key. Opaque to the server.
-    # Format: (<Key index>, <ciphertext>).
-    encrypted_initial_content: tuple[int, Buffer] | None = None
+    # the converted document (bin + medias) encrypted with the workspace key.
+    # Opaque to the server (see `parsec/asgi/editics.py`'s module docstring for
+    # the bundle format).
+    # Format: (<Key index>, <parts ciphertexts>), first part being the document bin.
+    encrypted_initial_content: tuple[int, list[Buffer]] | None = None
     # TODO: rework comment
     # Save lock (i.e. the participant currently saving).
     # Minimal handling for now: taken on `isSaveLock`/`saveChanges`, released on
@@ -573,7 +574,7 @@ class EditicsComponent:
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
         participant_id: EditicsParticipantID,
-        encrypted_initial_content: tuple[int, Buffer],
+        encrypted_initial_content: tuple[int, list[Buffer]],
     ) -> EditicsUploadInitialContentBadOutcome | None:
         if not auth_info.realm_role.can_write:
             return EditicsUploadInitialContentBadOutcome.NOT_ALLOWED
@@ -603,7 +604,7 @@ class EditicsComponent:
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-    ) -> tuple[int, Buffer] | EditicsFetchInitialContentBadOutcome:
+    ) -> tuple[int, list[Buffer]] | EditicsFetchInitialContentBadOutcome:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
         if session.encrypted_initial_content is None:

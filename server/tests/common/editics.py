@@ -7,7 +7,7 @@ import json
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from pathlib import Path
-from struct import pack, unpack
+from struct import pack, unpack_from
 from typing import Any
 from uuid import uuid4
 
@@ -32,6 +32,35 @@ from tests.common.client import AuthenticatedRpcClient, RpcTransportError
 
 type EditicsSessionSendClientEvent = Callable[[EditicsClientEvent], Awaitable[BaseModel | None]]
 
+INITIAL_CONTENT_MEDIA_TYPE = "application/vnd.parsec.bundled-initial-content"
+
+
+def pack_initial_content_bundle(key_index: int, parts: list[bytes]) -> bytes:
+    """
+    Build the wire format of the initial content bundle, as described in the
+    `## Initial content` part of `parsec/asgi/editics.py`'s module docstring.
+
+        bundle = <key_index as u32 big endian> + <part 0> + <part 1> + ...
+        part = <part size as u32 big endian> + <part ciphertext>
+    """
+    return pack("!I", key_index) + b"".join(pack("!I", len(part)) + part for part in parts)
+
+
+def unpack_initial_content_bundle(body: bytes) -> tuple[int, list[bytes]]:
+    """
+    Reverse of `pack_initial_content_bundle` (the server is trusted, so no
+    validation of the outer envelope is done here).
+    """
+    (key_index,) = unpack_from("!I", body, 0)
+    parts = []
+    offset = 4
+    while offset < len(body):
+        (part_size,) = unpack_from("!I", body, offset)
+        offset += 4
+        parts.append(body[offset : offset + part_size])
+        offset += part_size
+    return (key_index, parts)
+
 
 class EditicsSessionClient:
     """
@@ -43,9 +72,9 @@ class EditicsSessionClient:
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
-        participant_id: EditicsParticipantID,
+        participant_id: EditicsParticipantID | None = None,
     ):
-        self._who = who
+        self.raw_client = who.raw_client
 
         token = EditicsToken.generate_raw(
             device_id=who.device_id,
@@ -54,14 +83,20 @@ class EditicsSessionClient:
         )
         authorization = f"Bearer {token.decode()}"
 
-        self._base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
-        self._base_params = {"participant_id": participant_id}
-        self._base_headers = {
+        # `base_url`/`base_params`/`base_headers` are public so the tests can
+        # easily craft their own raw requests toward the editics routes.
+        self.base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
+        self.base_params = {"participant_id": participant_id or uuid4().hex}
+        self.base_headers = {
             "Authorization": authorization,
             "Api-Version": str(EDITICS_API_VERSION),
         }
 
         self._sse_event_source_iter = None
+
+    @property
+    def participant_id(self) -> str:
+        return self.base_params["participant_id"]
 
     @asynccontextmanager
     async def listen(
@@ -75,12 +110,12 @@ class EditicsSessionClient:
         assert self._sse_event_source_iter is None
 
         async with httpx_sse.aconnect_sse(
-            self._who.raw_client,
+            self.raw_client,
             "GET",
-            f"{self._base_url}/listen",
-            params=self._base_params,
+            f"{self.base_url}/listen",
+            params=self.base_params,
             headers={
-                **self._base_headers,
+                **self.base_headers,
                 "Accept": "text/event-stream",
             },
         ) as sse_event_source:
@@ -90,20 +125,15 @@ class EditicsSessionClient:
             finally:
                 self._sse_event_source_iter = None
 
-    async def upload_initial_content(
-        self, key_index: int, encrypted_initial_content: bytes
-    ) -> None:
-        rep = await self._who.raw_client.post(
-            f"{self._base_url}/initial_content",
-            params={
-                **self._base_params,
-                "key_index": key_index,
-            },
+    async def upload_initial_content(self, key_index: int, parts: list[bytes]) -> None:
+        rep = await self.raw_client.post(
+            f"{self.base_url}/initial_content",
+            params=self.base_params,
             headers={
-                **self._base_headers,
-                "Content-Type": "application/vnd.parsec.key-index-and-ciphertext",
+                **self.base_headers,
+                "Content-Type": INITIAL_CONTENT_MEDIA_TYPE,
             },
-            content=(pack("!I", key_index), encrypted_initial_content),
+            content=pack_initial_content_bundle(key_index, parts),
         )
         match rep.status_code:
             case 204:
@@ -111,24 +141,19 @@ class EditicsSessionClient:
             case _:
                 raise RpcTransportError(rep)
 
-    async def fetch_initial_content(self) -> tuple[int, bytes]:
-        rep = await self._who.raw_client.get(
-            f"{self._base_url}/initial_content",
-            params=self._base_params,
+    async def fetch_initial_content(self) -> tuple[int, list[bytes]]:
+        rep = await self.raw_client.get(
+            f"{self.base_url}/initial_content",
+            params=self.base_params,
             headers={
-                **self._base_headers,
+                **self.base_headers,
                 "Accept": "application/octet-stream",
             },
         )
         match rep.status_code:
             case 200:
-                assert (
-                    rep.headers["Content-Type"] == "application/vnd.parsec.key-index-and-ciphertext"
-                )
-                body = await rep.aread()
-                (key_index,) = unpack("!I", body[:4])
-                encrypted_initial_content = body[4:]
-                return (key_index, encrypted_initial_content)
+                assert rep.headers["Content-Type"] == INITIAL_CONTENT_MEDIA_TYPE
+                return unpack_initial_content_bundle(await rep.aread())
             case _:
                 raise RpcTransportError(rep)
 
@@ -142,11 +167,11 @@ class EditicsSessionClient:
     async def send_event_raw(self, raw_event: str) -> str | None:
         "Take and return the events in JSON encoded format"
 
-        rep = await self._who.raw_client.post(
-            f"{self._base_url}/send",
-            params=self._base_params,
+        rep = await self.raw_client.post(
+            f"{self.base_url}/send",
+            params=self.base_params,
             headers={
-                **self._base_headers,
+                **self.base_headers,
                 "Content-Type": "application/json",
             },
             content=raw_event,

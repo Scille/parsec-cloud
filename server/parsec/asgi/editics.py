@@ -27,7 +27,7 @@ In practice this means a device needs to use the `editics_join_session`
 authenticated API command (TODO: this command is not yet implemented) to obtain
 the URL of the editics server to connect to.
 
-## Initial Content
+## Initial content
 
 The initial content is an archive containing the document converted in the
 OnlyOffice format (i.e. {bin, medias}). It is the starting base over
@@ -40,13 +40,50 @@ Any viewer that connects prior to that is expected to obtain the document
 its own way (i.e. get the initial document from the workspace, then convert
 it with x2t), and will do a reload once once the initial content get uploaded
 (see `parsecInitialContentUploaded` server event).
+
+### format (Content-type `application/vnd.parsec.bundled-initial-content`)
+
+bundle = <key_index as u32 big endian > + <part 0> + <part 1> + ...
+part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
+part_ciphertext = encrypt_for_workspace(key_index, <part_cleartext> )
+part_cleartext = 0x00 + zstd(msgpack([{'name': <media 0 name>, 'content': <media 0 content>}, ...]))
+
+First part is always the bin (so that OnlyOffice editor can start loading it
+without waiting for the full response), subsequent parts are medias files.
+
+We use a custom format for the outer envelop (i.e. `bundle`):
+- We need a simple format that supports streaming (to load the .bin in OnlyOffice editor asap)
+- Multipart is more complicated and would requires a custom implementation in client
+  (Javascript web API doesn't provide a multipart parser).
+- Msgpack is only available in libparsec, but the editics requests are done in
+  the client GUI (cannot pass a `ReadableStream` Javascript object to libparsec).
+
+The inner envelop (i.e. `part_ciphertext`) uses the regular serialization format v0
+(based on msgpack + zstd) used in Parsec (i.e. certificates, manifests etc.). This
+is because the decryption must be done in libparsec so using this format is simple.
+
+Maximal full document size is limited to 100Mo.
+
+The medias are stored in multiple parts.
+There is no size limit for a part (since a document can be < 100Mo with a single
+very big image in it).
+A part can contain a single or multiple media files (useful when there is plenty
+of small media files)
+Parts are for:
+- Server: Parts are stored in PostgreSQL as-is (TODO: not implemented yet), hence
+  they are useful a upload/fetch requests to stream the content (instead of having
+  the full document on the server's memory).
+- Client: OnlyOffice editor loads the first part (i.e. document .bin) without waiting
+  for the full response body.
+  Note part streaming is not used to reduce memory usage in the client since both
+  OnlyOffice and x2t (used when saving) require to have the whole document in memory.
 """
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, AsyncIterable
+from collections.abc import AsyncGenerator, AsyncIterable, Buffer, Sequence
 from enum import Enum
-from struct import pack, unpack
+from struct import pack, unpack_from
 from typing import Annotated, NoReturn
 
 from anyio.streams.memory import MemoryObjectReceiveStream
@@ -78,6 +115,9 @@ EDITICS_SUPPORTED_API_VERSIONS = (EDITICS_API_VERSION,)
 editics_router = APIRouter(include_in_schema=False)
 
 ACCEPT_TYPE_SSE = "text/event-stream"
+
+INITIAL_CONTENT_MEDIA_TYPE = "application/vnd.parsec.bundled-initial-content"
+INITIAL_CONTENT_MAX_SIZE = 100 * 1024**2
 
 
 class EditicsHttpStatus(Enum):
@@ -118,9 +158,14 @@ class EditicsHttpStatus(Enum):
     ParticipantModeMismatch = 483
     # Participant has READER role and tries to edit
     ReaderMustBeViewer = 484
-    # Once `auth` server event received, the first editor knows he must upload the
-    # original content before anything else.
+    # The session has no initial content yet: the first editor knows (from its
+    # `auth` server event) it must upload it before anything else. This is also
+    # used by the fetch route to tell a client the content is not available yet.
     OriginalContentMissing = 485
+    # The session already has its initial content (first-upload-wins): the client
+    # that lost the concurrent upload race must fetch it instead of uploading
+    # its own conversion.
+    OriginalContentAlreadyUploaded = 486
 
 
 # e.g. `ParticipantNotAuth` -> `Participant not auth`
@@ -220,6 +265,47 @@ async def _editics_auth_or_abort(
             _editics_abort(EditicsHttpStatus.OrganizationExpired, settled_api_version)
 
 
+# --- Initial content bundle ---------------------------------------------------
+
+
+def pack_initial_content_bundle(key_index: int, parts: Sequence[Buffer]) -> bytes:
+    """
+    Build the wire format of the initial content bundle (see the module docstring):
+
+        bundle = <key_index as u32 big endian> + <part 0> + <part 1> + ...
+        part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
+    """
+    return b"".join(
+        [pack("!I", key_index), *(pack("!I", len(part)) + bytes(part) for part in parts)]
+    )
+
+
+def unpack_initial_content_bundle(raw: bytes) -> tuple[int, list[bytes]]:
+    """
+    Reverse of `pack_initial_content_bundle` (the parts' ciphertexts are opaque
+    to the server, so only the outer envelope is parsed).
+
+    Raise `ValueError` if the bundle is malformed.
+    """
+    if len(raw) < 4:
+        raise ValueError("Bundle is missing the key index")
+    (key_index,) = unpack_from("!I", raw, 0)
+    parts: list[bytes] = []
+    offset = 4
+    while offset < len(raw):
+        if len(raw) - offset < 4:
+            raise ValueError("Bundle contains a truncated part size")
+        (part_size,) = unpack_from("!I", raw, offset)
+        offset += 4
+        if len(raw) - offset < part_size:
+            raise ValueError("Bundle contains a truncated part ciphertext")
+        parts.append(raw[offset : offset + part_size])
+        offset += part_size
+    if not parts:
+        raise ValueError("Bundle contains no part (the document bin is expected first)")
+    return (key_index, parts)
+
+
 # --- Routes ------------------------------------------------------------------
 
 
@@ -231,7 +317,6 @@ async def editics_upload_initial_content(
     raw_realm_id: str,
     raw_document_id: str,
     participant_id: EditicsParticipantID,
-    key_index: int,
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -240,27 +325,43 @@ async def editics_upload_initial_content(
         backend, request, raw_organization_id, raw_realm_id, raw_document_id
     )
 
-    if request.headers["Content-Type"] != "application/vnd.parsec.key-index-and-ciphertext":
-        raise NotImplementedError
-    raw = await request.body()
-    (key_index,) = unpack("!I", raw[:4])
-    encrypted_initial_content = memoryview(raw)[4:]
+    if request.headers.get("Content-Type") != INITIAL_CONTENT_MEDIA_TYPE:
+        _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
+
+    # The bundle size is limited (see the module docstring): refuse the
+    # oversized uploads early, before reading their whole body.
+    try:
+        content_length = int(request.headers["Content-Length"])
+    except (ValueError, KeyError):
+        # Header missing (i.e. chunked encoding) or invalid: the size will be
+        # checked on the actual body below.
+        content_length = INITIAL_CONTENT_MAX_SIZE
+    else:
+        if content_length > INITIAL_CONTENT_MAX_SIZE:
+            _editics_abort(EditicsHttpStatus.PayloadTooLarge, api_version)
+
+    raw_bundle = await request.body()
+    if len(raw_bundle) > INITIAL_CONTENT_MAX_SIZE:
+        _editics_abort(EditicsHttpStatus.PayloadTooLarge, api_version)
+
+    try:
+        key_index, parts = unpack_initial_content_bundle(raw_bundle)
+    except ValueError:
+        _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
 
     outcome = backend.editics.upload_initial_content(
-        auth_info, document_id, participant_id, (key_index, encrypted_initial_content)
+        auth_info, document_id, participant_id, (key_index, parts)
     )
     match outcome:
         case None:
             return Response(
-                204,
+                status_code=204,
                 headers={"Api-Version": str(api_version)},
             )
         case EditicsUploadInitialContentBadOutcome.NOT_ALLOWED:
-            # _editics_abort(EditicsHttpStatus.ParticipantNotAuth, api_version)
-            raise NotImplementedError  # TODO
+            _editics_abort(EditicsHttpStatus.ReaderMustBeViewer, api_version)
         case EditicsUploadInitialContentBadOutcome.ALREADY_UPLOADED:
-            # _editics_abort(EditicsHttpStatus.ParticipantNotAuth, api_version)
-            raise NotImplementedError  # TODO
+            _editics_abort(EditicsHttpStatus.OriginalContentAlreadyUploaded, api_version)
 
 
 @editics_router.get(
@@ -270,7 +371,6 @@ async def editics_fetch_initial_content(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
-    participant_id: EditicsParticipantID,
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -281,14 +381,14 @@ async def editics_fetch_initial_content(
 
     outcome = backend.editics.fetch_initial_content(auth_info, document_id)
     match outcome:
-        case (key_index, encrypted_initial_content):
+        case (key_index, parts):
             return Response(
-                content=(pack("!I", key_index), encrypted_initial_content),
-                media_type="application/vnd.parsec.key-index-and-ciphertext",
+                content=pack_initial_content_bundle(key_index, parts),
+                media_type=INITIAL_CONTENT_MEDIA_TYPE,
                 headers={"Api-Version": str(api_version)},
             )
         case EditicsFetchInitialContentBadOutcome.NOT_UPLOADED:
-            _editics_abort(EditicsHttpStatus.ParticipantNotAuth, api_version)
+            _editics_abort(EditicsHttpStatus.OriginalContentMissing, api_version)
 
 
 async def _editics_listen_auth(

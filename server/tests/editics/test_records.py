@@ -531,7 +531,7 @@ async def _do_test_record(
                             (coolorg.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
                         ]
                         if session.encrypted_initial_content is None:
-                            session.encrypted_initial_content = (1, b"<original_content>")
+                            session.encrypted_initial_content = (1, [b"<original_content>"])
 
                 case "server-to-client":
                     # Look for the event in the unacknowledgedd ones...
