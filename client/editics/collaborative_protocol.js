@@ -242,8 +242,8 @@ class EditicsTranslator {
           type: 'unLockDocument',
           isSave: oo.isSave,
           unlock: oo.unlock,
-          deleteIndex: oo.deleteIndex ?? null,
-          releaseLocks: oo.releaseLocks ?? false,
+          deleteIndex: oo.deleteIndex ?? null, // TODO: set to null if value is negative
+          releaseLocks: oo.releaseLocks ?? false, // TODO: remove the `?? false` guard
         };
 
       case 'isSaveLock':
@@ -342,7 +342,7 @@ class EditicsTranslator {
       encryptedChanges,
       startSaveChanges: oo.startSaveChanges,
       endSaveChanges: oo.endSaveChanges,
-      deleteIndex: oo.deleteIndex ?? null,
+      deleteIndex: oo.deleteIndex ?? null, // TODO: set to null if value is negative
       excelAdditionalInfoIndexCols,
       excelAdditionalInfoIndexRows,
       encryptedCursorAdditionalInfo: encryptedCursor,
@@ -408,9 +408,9 @@ class EditicsTranslator {
         // `syncChangesIndex` values) or has been canceled (all `-1`).
         return {
           type: 'unSaveLock',
-          index: editics.index,
+          index: editics.index, // TODO: return `null` instead of -1 marker
           time: editics.time,
-          syncChangesIndex: editics.syncChangesIndex,
+          syncChangesIndex: editics.syncChangesIndex, // TODO: return `null` instead of -1 marker
         };
 
       case 'saveChanges':
@@ -863,6 +863,12 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {number} EditicsTimestampMs
  *
+ * @typedef {string} EditicsBase64Ciphertext
+ *
+ * @typedef {number} EditicsKeyIndex
+ *
+ * @typedef {[EditicsKeyIndex, EditicsBase64Ciphertext]} EditicsEncryptedContent
+ *
  * @typedef {Object} EditicsParticipantEntry
  * @property {EditicsParticipantIndex} indexUser
  * @property {string} deviceId
@@ -897,11 +903,11 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {Object} EditicsClientEventMessage
  * @property {'message'} type
- * @property {[number, string]} encryptedMessage
+ * @property {EditicsEncryptedContent} encryptedMessage
  *
  * @typedef {Object} EditicsClientEventCursor
  * @property {'cursor'} type
- * @property {[number, string]} encryptedCursor
+ * @property {EditicsEncryptedContent} encryptedCursor
  *
  * @typedef {Object} EditicsClientEventGetLock
  * @property {'getLock'} type
@@ -913,13 +919,13 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {Object} EditicsClientEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Array<[number, string]>} encryptedChanges
+ * @property {EditicsEncryptedContent[]} encryptedChanges
  * @property {boolean} startSaveChanges
  * @property {boolean} endSaveChanges
  * @property {number|null} deleteIndex
  * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexCols
  * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexRows
- * @property {[number, string]|null} encryptedCursorAdditionalInfo
+ * @property {EditicsEncryptedContent|null} encryptedCursorAdditionalInfo
  * @property {boolean} [releaseLocks]
  *
  * @typedef {Object} EditicsClientEventUnSaveLock
@@ -949,8 +955,8 @@ export const EDITICS_API_VERSION = '1.0';
  * @property {EditicsParticipantIndex} indexUser
  * @property {EditicsTimestampMs} participantTimeConnect
  * @property {EditicsTimestampMs} openedAt
- * @property {Array<{time:number, holder:EditicsParticipantIdentity, block:*}>} [locks]
- * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedMessage:[number, string]}>} [messages]
+ * @property {Array<{time:EditicsTimestampMs, holder:EditicsParticipantIdentity, block:*}>} [locks]
+ * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedMessage:EditicsEncryptedContent}>} [messages]
  * @property {boolean} originalContentUploaded
  *
  * @typedef {Object} EditicsServerEventConnectState
@@ -961,7 +967,7 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {Object} EditicsServerEventAuthChanges
  * @property {'authChanges'} type
- * @property {Array<{index:number, author:EditicsParticipantIdentity, time:EditicsTimestampMs, encryptedChange:[number, string]}>} [changes]
+ * @property {Array<{index:number, author:EditicsParticipantIdentity, time:EditicsTimestampMs, encryptedChange:EditicsEncryptedContent}>} [changes]
  *
  * @typedef {Object} EditicsServerEventWaitAuth
  * @property {'waitAuth'} type
@@ -969,15 +975,15 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {Object} EditicsServerEventMessage
  * @property {'message'} type
- * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedMessage:[number, string]}>} messages
+ * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedMessage:EditicsEncryptedContent}>} messages
  *
  * @typedef {Object} EditicsServerEventCursor
  * @property {'cursor'} type
- * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedCursor:[number, string]}>} messages
+ * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedCursor:EditicsEncryptedContent}>} messages
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type
- * @property {Record<string, {time:number, holder:EditicsParticipantIdentity, block:*}>} locks
+ * @property {Record<string, {time:EditicsTimestampMs, holder:EditicsParticipantIdentity, block:*}>} locks
  *
  * @typedef {Object} EditicsServerEventReleaseLock
  * @property {'releaseLock'} type
@@ -989,14 +995,14 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {Object} EditicsServerEventSaveChanges
  * @property {'saveChanges'} type
- * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedChange:[number, string]}>} changes
+ * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedChange:EditicsEncryptedContent}>} changes
  * @property {number} changesIndex
  * @property {number} syncChangesIndex
  * @property {boolean} endSaveChanges
  * @property {Array<{block:*, holder:EditicsParticipantIdentity, time:EditicsTimestampMs, changes:null}>} [locks]
  * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexCols
  * @property {EditicsExcelRecalcIndex|null} excelAdditionalInfoIndexRows
- * @property {[number, string]|null} encryptedCursorAdditionalInfo
+ * @property {EditicsEncryptedContent|null} encryptedCursorAdditionalInfo
  *
  * @typedef {Object} EditicsServerEventSavePartChanges
  * @property {'savePartChanges'} type
@@ -1005,9 +1011,9 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {Object} EditicsServerEventUnSaveLock
  * @property {'unSaveLock'} type
- * @property {number} index
- * @property {EditicsTimestampMs} time
- * @property {number} syncChangesIndex
+ * @property {number|null} index
+ * @property {EditicsTimestampMs|null} time
+ * @property {number|null} syncChangesIndex
  *
  * @typedef {Object} EditicsServerEventDisconnectReason
  * @property {'disconnectReason'} type

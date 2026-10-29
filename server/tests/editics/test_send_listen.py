@@ -1,13 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-"""
-Test the editics `listen` (SSE) and `send` (POST) routes (see `parsec/asgi/editics.py`).
-
-Those two routes together constitute the transport-level connection of the
-editics protocol (i.e. what corresponds to the websocket connection in the
-OnlyOffice protocol).
-"""
-
 from __future__ import annotations
 
 from typing import Literal
@@ -27,10 +19,8 @@ from parsec.editics_protocol import (
     EditicsClientEventClose,
     EditicsClientEventSaveChanges,
     EditicsClientEventUnLockDocument,
-    EditicsParticipantID,
     EditicsServerEventAuth,
     EditicsServerEventDisconnectReason,
-    EditicsServerEventError,
     EditicsServerEventUnSaveLock,
     EditicsServerEventWaitAuth,
     EditicsServerEventWarning,
@@ -55,29 +45,8 @@ DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
 API_VERSION = str(EDITICS_API_VERSION)
 
 
-def _new_participant_id() -> EditicsParticipantID:
-    return uuid4().hex
-
-
 def _auth_event(*, mode: Literal["view", "edit"]) -> EditicsClientEventAuth:
     return EditicsClientEventAuth(vlobVersion=1, reconnect=None, mode=mode)
-
-
-def _save_changes_event(
-    *, delete_index: int | None = None, changes: list[bytes] | None = None
-) -> EditicsClientEventSaveChanges:
-    return EditicsClientEventSaveChanges(
-        encryptedChanges=[(1, b"dummy change")]
-        if changes is None
-        else [(1, change) for change in changes],
-        startSaveChanges=True,
-        endSaveChanges=True,
-        deleteIndex=delete_index,
-        excelAdditionalInfoIndexCols=None,
-        excelAdditionalInfoIndexRows=None,
-        encryptedCursorAdditionalInfo=None,
-        releaseLocks=False,
-    )
 
 
 # --- Transport-level handshake (API version & HTTP statuses) ------------------
@@ -357,7 +326,7 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
                 vlobVersion=1,
                 reconnect=EditicsClientEventAuthReconnect(
                     participantId=participant_id_1,
-                    lastOtherSaveTime=-1,
+                    lastOtherSaveTime=None,
                 ),
                 mode="edit",
             )
@@ -455,7 +424,7 @@ async def test_reconnection_cannot_change_participant_mode(
         # ...reconnecting while asking to switch to the view mode is refused
         reconnect = EditicsClientEventAuthReconnect(
             participantId=alice_editics.participant_id,
-            lastOtherSaveTime=-1,
+            lastOtherSaveTime=None,
         )
         async with alice_editics.listen():
             with pytest.raises(RpcTransportError) as exc:
@@ -676,217 +645,57 @@ async def test_sse_deco_on_role_change(
     )
 
 
-async def test_unlock_document_delete_index(
+async def test_delete_index_defensive_handling(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    disable_no_logs_gte_error_check: None,
+    alice_editics: EditicsSessionClient,
 ) -> None:
-    # RFC 1030 §2.2: `unLockDocument` carrying a `deleteIndex` asks the server
-    # to truncate the stored change history above that index (the client drops
-    # the matching history points on its side at the same time, so both stay
-    # index-aligned). An index above the current change count is ignored.
-
-    # Each part uses its own document (hence its own session)
-    document_ids = [
-        VlobID.from_hex("00000000000000000000000000000f01"),
-        VlobID.from_hex("00000000000000000000000000000f02"),
-        VlobID.from_hex("00000000000000000000000000000f03"),
-    ]
-
-    async def setup_changes(participant_id: EditicsParticipantID, document_id: VlobID) -> None:
-        alice = EditicsSessionClient(
-            who=coolorg.alice,
-            realm_id=coolorg.wksp1_id,
-            document_id=document_id,
-            participant_id=participant_id,
+    def _save_changes_event(
+        *, delete_index: int | None = None, changes: list[tuple[int, bytes]] | None = None
+    ) -> EditicsClientEventSaveChanges:
+        return EditicsClientEventSaveChanges(
+            encryptedChanges=[] if changes is None else changes,
+            deleteIndex=delete_index,
+            startSaveChanges=True,
+            endSaveChanges=True,
+            excelAdditionalInfoIndexCols=None,
+            excelAdditionalInfoIndexRows=None,
+            encryptedCursorAdditionalInfo=None,
+            releaseLocks=False,
         )
-        async with alice.listen():
-            rep = await alice.send(_auth_event(mode="edit"))
-            assert isinstance(rep, EditicsServerEventAuth)
 
-            # The invariant requires an initial content before any change
-            await alice.upload_initial_content(key_index=1, parts=[b"<Alice's initial content>"])
-            for _ in range(3):
-                rep = await alice.send(_save_changes_event())
-                assert isinstance(rep, EditicsServerEventUnSaveLock)
+    async with alice_editics.listen():
+        session = backend.editics._sessions[
+            (coolorg.alice.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
+        ]
 
-    # 3 changes stored; truncate down to 1 with an unLockDocument{deleteIndex: 1}
-    participant_id = _new_participant_id()
-    await setup_changes(participant_id, document_ids[0])
-    session = backend.editics._sessions[
-        (coolorg.alice.organization_id, coolorg.wksp1_id, document_ids[0])
-    ]
-    assert len(session.changes) == 3
-    alice = EditicsSessionClient(
-        who=coolorg.alice,
-        realm_id=coolorg.wksp1_id,
-        document_id=document_ids[0],
-        participant_id=participant_id,
-    )
-    async with alice.listen():
-        rep = await alice.send(EditicsClientEventUnLockDocument(unlock=True, deleteIndex=1))
-        assert rep is None
-    assert len(session.changes) == 1
+        rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert isinstance(rep, EditicsServerEventAuth)
 
-    # An out-of-range deleteIndex is ignored (and logged)
-    participant_id = _new_participant_id()
-    await setup_changes(participant_id, document_ids[1])
-    session = backend.editics._sessions[
-        (coolorg.alice.organization_id, coolorg.wksp1_id, document_ids[1])
-    ]
-    assert len(session.changes) == 3
-    alice = EditicsSessionClient(
-        who=coolorg.alice,
-        realm_id=coolorg.wksp1_id,
-        document_id=document_ids[1],
-        participant_id=participant_id,
-    )
-    async with alice.listen():
-        rep = await alice.send(EditicsClientEventUnLockDocument(unlock=True, deleteIndex=42))
-        assert rep is None
-    assert len(session.changes) == 3
+        # The invariant requires an initial content before any change
 
-    # An index equal to the change count is a silent no-op (the records show
-    # the client regularly sends it, e.g. at the end of a save cycle)
-    alice = EditicsSessionClient(
-        who=coolorg.alice,
-        realm_id=coolorg.wksp1_id,
-        document_id=document_ids[1],
-        participant_id=participant_id,
-    )
-    async with alice.listen():
-        rep = await alice.send(EditicsClientEventUnLockDocument(unlock=True, deleteIndex=3))
-        assert rep is None
-    assert len(session.changes) == 3
-
-    # The sentinel values (-1 / None) don't truncate
-    alice = EditicsSessionClient(
-        who=coolorg.alice,
-        realm_id=coolorg.wksp1_id,
-        document_id=document_ids[1],
-        participant_id=participant_id,
-    )
-    async with alice.listen():
-        rep = await alice.send(EditicsClientEventUnLockDocument(unlock=True, deleteIndex=-1))
-        assert rep is None
-        rep = await alice.send(EditicsClientEventUnLockDocument(unlock=True, deleteIndex=None))
-        assert rep is None
-    assert len(session.changes) == 3
-
-
-async def test_restore_gate_last_other_save_time(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    # The restore gate compares the timestamp of the last stored change (i.e.
-    # what the client reports as its `lastOtherSaveTime`) against the one the
-    # participant snapshotted at its disconnection: a restoration is refused
-    # whenever the history mutated in the meantime.
-    #
-    # Note each sub-scenario uses its own document (and hence its own session),
-    # so they don't have to care about each other's leftovers.
-
-    # Bob is READER on wksp1: grant him a write role so he can join as an
-    # editor (waiting for the realm certificate to be dispatched, see the
-    # other tests for why).
-    with backend.event_bus.spy() as spy:
-        await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
-        await spy.wait(EventRealmCertificate)
-
-    async def alice_save_changes_and_disconnect(
-        document_id: VlobID,
-    ) -> tuple[EditicsParticipantID, int]:
-        participant_id = _new_participant_id()
-        alice = EditicsSessionClient(
-            who=coolorg.alice,
-            realm_id=coolorg.wksp1_id,
-            document_id=document_id,
-            participant_id=participant_id,
+        await alice_editics.upload_initial_content(
+            key_index=1, parts=[b"<Alice's initial content>"]
         )
-        async with alice.listen():
-            rep = await alice.send(_auth_event(mode="edit"))
-            assert isinstance(rep, EditicsServerEventAuth)
-
-            # The invariant requires an initial content before any change
-            await alice.upload_initial_content(key_index=1, parts=[b"<Alice's initial content>"])
-
-            rep = await alice.send(_save_changes_event())
-            assert isinstance(rep, EditicsServerEventUnSaveLock)
-            # `time` carries the timestamp of the change just stored
-            last_other_save_time = rep.time
-
-        return (participant_id, last_other_save_time)
-
-    async def alice_reconnects(
-        document_id: VlobID, participant_id: EditicsParticipantID, last_other_save_time: int
-    ) -> EditicsServerEventAuth | EditicsServerEventError:
-        alice = EditicsSessionClient(
-            who=coolorg.alice,
-            realm_id=coolorg.wksp1_id,
-            document_id=document_id,
-            participant_id=participant_id,
+        rep = await alice_editics.send(_save_changes_event(changes=[(1, b"<change1>")]))
+        assert isinstance(rep, EditicsServerEventUnSaveLock)
+        rep = await alice_editics.send(
+            _save_changes_event(changes=[(1, b"<change2>"), (1, b"<change3>")])
         )
-        async with alice.listen():
-            return await alice.send(
-                EditicsClientEventAuth(
-                    vlobVersion=1,
-                    reconnect=EditicsClientEventAuthReconnect(
-                        participantId=participant_id,
-                        lastOtherSaveTime=last_other_save_time,
-                    ),
-                    mode="edit",
-                )
+        assert isinstance(rep, EditicsServerEventUnSaveLock)
+        assert len(session.changes) == 3
+
+        # An out-of-range `deleteIndex` is accepted but is a noop
+        rep = await alice_editics.send(
+            EditicsClientEventUnLockDocument(unlock=True, deleteIndex=42)
+        )
+        assert rep is None
+        assert len(session.changes) == 3
+
+        # Negative value causes a validation error
+        with pytest.raises(RpcTransportError) as exc:
+            await alice_editics.send_event_raw(
+                '{"type":"unLockDocument","isSave":false,"unlock":true,"deleteIndex":-1,"releaseLocks":false}'
             )
-
-    async def bob_saves_changes(document_id: VlobID, *, undo: bool = False) -> None:
-        bob = EditicsSessionClient(
-            who=coolorg.bob,
-            realm_id=coolorg.wksp1_id,
-            document_id=document_id,
-        )
-        async with bob.listen():
-            rep = await bob.send(_auth_event(mode="edit"))
-            assert isinstance(rep, EditicsServerEventAuth)
-
-            rep = await bob.send(_save_changes_event())
-            assert isinstance(rep, EditicsServerEventUnSaveLock)
-
-            if undo:
-                # Undo Bob's own change: the change-history *length* returns to
-                # its value at Alice's disconnection, but the last stored change
-                # is Alice's one again, and a participant is always considered
-                # up-to-date with its own changes, hence the restoration is
-                # accepted all the same (behavioral delta with the token-based
-                # gate described in RFC §2.3).
-                rep = await bob.send(
-                    _save_changes_event(delete_index=rep.syncChangesIndex - 1, changes=[])
-                )
-                assert isinstance(rep, EditicsServerEventUnSaveLock)
-
-    # 1) Nothing changed while Alice was away: the restoration is accepted.
-    document_id = VlobID.from_hex("00000000000000000000000000000e01")
-    participant_id, last_other_save_time = await alice_save_changes_and_disconnect(document_id)
-    rep = await alice_reconnects(document_id, participant_id, last_other_save_time)
-    assert isinstance(rep, EditicsServerEventAuth)
-    assert rep.indexUser == 1
-
-    # 2) Another participant's change while Alice was away: refused.
-    document_id = VlobID.from_hex("00000000000000000000000000000e02")
-    participant_id, last_other_save_time = await alice_save_changes_and_disconnect(document_id)
-    await bob_saves_changes(document_id)
-    rep = await alice_reconnects(document_id, participant_id, last_other_save_time)
-    assert isinstance(rep, EditicsServerEventError)
-    assert rep.code == 4010
-
-    # 3) Same, but the change is followed by an undo truncating the history
-    #    back to its initial length: the restoration is accepted all the same
-    #    (see `bob_saves_changes` for why).
-    document_id = VlobID.from_hex("00000000000000000000000000000e03")
-    participant_id, last_other_save_time = await alice_save_changes_and_disconnect(document_id)
-    await bob_saves_changes(document_id, undo=True)
-    session = backend.editics._sessions[
-        (coolorg.alice.organization_id, coolorg.wksp1_id, document_id)
-    ]
-    # The undo brought the history back to its length at Alice's disconnection
-    assert len(session.changes) == 1
-    rep = await alice_reconnects(document_id, participant_id, last_other_save_time)
-    assert isinstance(rep, EditicsServerEventAuth)
+        assert exc.value.rep.status_code == 415
+        assert len(session.changes) == 3

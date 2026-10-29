@@ -1098,9 +1098,9 @@ class EditicsComponent:
                         # a `deleteIndex` equal to the current change count is a
                         # silent no-op (nothing to destroy), only an index ABOVE
                         # it is a client bookkeeping error.
-                        logger.error(
-                            "Bad `deleteIndex` in `unLockDocument` event: "
-                            f"deleteIndex={event.deleteIndex} > changes count={len(session.changes)}"
+                        logger.warning(
+                            f"Client event `unLockDocument`'s `deleteIndex={event.deleteIndex}` "
+                            f"is incompatible with server's session changes count `{len(session.changes)}`"
                         )
                 # `isSave` asks to cancel an in-progress save: release the save
                 # lock and acknowledge with the cancellation sentinel values.

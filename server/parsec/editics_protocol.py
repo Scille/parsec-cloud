@@ -16,7 +16,15 @@ from __future__ import annotations
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, Field, TypeAdapter
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    Field,
+    NonNegativeInt,
+    PositiveInt,
+    Strict,
+    TypeAdapter,
+)
 
 from parsec._parsec import ApiVersion, DeviceID
 from parsec.types import Base64BytesField
@@ -30,7 +38,7 @@ EDITICS_API_VERSION = ApiVersion(version=1, revision=0)
 
 # TODO: remove option fields (we want to explicitly set a field to `None` instead of omitting it)
 
-type EditicsParticipantIndex = int
+type EditicsParticipantIndex = Annotated[NonNegativeInt, Strict()]
 """
 Equivalent to the `indexUser` in OnlyOffice protocol: 1-based, monotonic per
 edition session, assigned by order of join and never re-used.
@@ -69,9 +77,16 @@ the client combines to rebuild the composite ID.
 """
 
 
-type EditicsTimestampMs = int
+type EditicsTimestampMs = Annotated[NonNegativeInt, Strict()]
 """
 In editics, timestamps use the number of milliseconds since epoch.
+"""
+
+type EditicsBase64Ciphertext = Base64BytesField
+type EditicsKeyIndex = Annotated[NonNegativeInt, Strict()]
+type EditicsEncryptedContent = tuple[EditicsKeyIndex, EditicsBase64Ciphertext]
+"""
+Format: (<Workspace key index>, <base64(ciphertext)>)
 """
 
 
@@ -93,10 +108,10 @@ class EditicsExcelRecalcIndexElement(BaseModel):
     # 1=insert, 2=remove
     recalc_type: Literal[1, 2] = Field(alias="_recalcType")
     # 0-based index of the first inserted/deleted column (or row).
-    position: int = Field(alias="_position", ge=0)
+    position: Annotated[NonNegativeInt, Strict()] = Field(alias="_position")
     # Consecutive positions changed (always 1 in practice, since the OnlyOffice
     # editor expands bigger changes into N adjacent elements).
-    count: int = Field(alias="_count", ge=1)
+    count: Annotated[PositiveInt, Strict()] = Field(alias="_count")
     # True for the save-index markers a client re-emits to acknowledge the
     # structural changes it just applied (i.e. coming from other users' changes
     # it hasn't applied yet): not new geometry changes, the server skips them.
@@ -130,7 +145,7 @@ class EditicsClientEventAuth(BaseModel):
     # The vlob version the client has loaded locally (RFC §1.2). For a fresh
     # session this becomes the session's initial version.
     # (OnlyOffice has no such field; editics addition.)
-    vlobVersion: int
+    vlobVersion: Annotated[NonNegativeInt, Strict()]
     # The client already has a participant ID and want to restore its session, or
     # `null` for a fresh join.
     # This is the same value the transport already carries (the participant ID
@@ -152,14 +167,12 @@ class EditicsClientEventGetMessages(BaseModel):
 
 class EditicsClientEventMessage(BaseModel):
     type: Literal["message"] = "message"
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedMessage: tuple[int, Base64BytesField]
+    encryptedMessage: EditicsEncryptedContent
 
 
 class EditicsClientEventCursor(BaseModel):
     type: Literal["cursor"] = "cursor"
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedCursor: tuple[int, Base64BytesField]
+    encryptedCursor: EditicsEncryptedContent
 
 
 class EditicsClientEventGetLock(BaseModel):
@@ -175,14 +188,13 @@ class EditicsClientEventIsSaveLock(BaseModel):
 
 class EditicsClientEventSaveChanges(BaseModel):
     type: Literal["saveChanges"] = "saveChanges"
-    # Format: [(<Key index>, <base64(ciphertext)>), ...]
-    encryptedChanges: list[tuple[int, Base64BytesField]]
+    encryptedChanges: list[EditicsEncryptedContent]
     startSaveChanges: bool
     endSaveChanges: bool
     # Undo support (Only honored when `startSaveChanges=true`):
-    # - `None` or `-1` = no truncate
+    # - `None` = no truncate
     # - <int> = absolute index, the server deletes all stored changes with index >= deleteIndex.
-    deleteIndex: int | None
+    deleteIndex: Annotated[NonNegativeInt, Strict()] | None
     # In OnlyOffice protocol, the `excelAdditionalInfo` (despite its name) is
     # carried by all the editor types.
     # - The spreadsheet editor only sends it when there is something to carry:
@@ -199,8 +211,7 @@ class EditicsClientEventSaveChanges(BaseModel):
     # - `encryptedCursorAdditionalInfo` that contains the cursor info use by all editors.
     excelAdditionalInfoIndexCols: EditicsExcelRecalcIndex | None
     excelAdditionalInfoIndexRows: EditicsExcelRecalcIndex | None
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None
+    encryptedCursorAdditionalInfo: EditicsEncryptedContent | None
     # Release this user's region locks after the save (OnlyOffice name kept).
     releaseLocks: bool = False
 
@@ -213,7 +224,7 @@ class EditicsClientEventUnLockDocument(BaseModel):
     type: Literal["unLockDocument"] = "unLockDocument"
     isSave: bool = False
     unlock: bool = False
-    deleteIndex: int | None
+    deleteIndex: Annotated[NonNegativeInt, Strict()] | None
     releaseLocks: bool = False
 
 
@@ -223,8 +234,10 @@ class EditicsClientEventClose(BaseModel):
 
 class EditicsClientEventSaveDone(BaseModel):
     type: Literal["saveDone"] = "saveDone"
-    savedUpToIndex: int  # all changes up to this index are in the new version
-    newVersion: int  # the new vlob version just uploaded
+    savedUpToIndex: Annotated[
+        NonNegativeInt, Strict()
+    ]  # all changes up to this index are in the new version
+    newVersion: Annotated[NonNegativeInt, Strict()]  # the new vlob version just uploaded
 
 
 EditicsClientEvent = Annotated[
@@ -251,7 +264,7 @@ EditicsClientEventAdapter = TypeAdapter(EditicsClientEvent)
 class LockRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
-    time: int
+    time: EditicsTimestampMs
     holder: EditicsParticipantIdentity
     # Opaque block descriptor (shape depends on editor type; re-broadcast as-is).
     block: Any
@@ -261,8 +274,7 @@ class MessageRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: EditicsTimestampMs  # Server timestamp
     author: EditicsParticipantIdentity
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedMessage: tuple[int, Base64BytesField]
+    encryptedMessage: EditicsEncryptedContent
 
 
 class EditicsServerEventAuth(BaseModel):
@@ -309,12 +321,11 @@ class AuthChangeRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     # 1-based and monotonic.
-    index: int
+    index: Annotated[PositiveInt, Strict()]
     author: EditicsParticipantIdentity
     # Server timestamp of the change.
     time: EditicsTimestampMs
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedChange: tuple[int, Base64BytesField]
+    encryptedChange: EditicsEncryptedContent
 
 
 class EditicsServerEventWaitAuth(BaseModel):
@@ -331,8 +342,7 @@ class CursorRecord(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     time: EditicsTimestampMs
     author: EditicsParticipantIdentity
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedCursor: tuple[int, Base64BytesField]
+    encryptedCursor: EditicsEncryptedContent
 
 
 class EditicsServerEventCursor(BaseModel):
@@ -373,16 +383,15 @@ class SaveChangeRecord(BaseModel):
     time: EditicsTimestampMs
     author: EditicsParticipantIdentity
     # Opaque encrypted blob (base64 over JSON, §2.4); server never inspects.
-    # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedChange: tuple[int, Base64BytesField]
+    encryptedChange: EditicsEncryptedContent
 
 
 class EditicsServerEventSaveChanges(BaseModel):
     type: Literal["saveChanges"] = "saveChanges"
     # One record per change fragment across all chunks of this save.
     changes: list[SaveChangeRecord]
-    changesIndex: int  # new save point after this save (§2.2)
-    syncChangesIndex: int  # always-advancing total (§2.2)
+    changesIndex: Annotated[NonNegativeInt, Strict()]  # new save point after this save (§2.2)
+    syncChangesIndex: Annotated[NonNegativeInt, Strict()]  # always-advancing total (§2.2)
     endSaveChanges: bool  # mirrors the originator's flag
     # Locks released by the originator in this save (only when its
     # `releaseLocks` was true). Same shape as `releaseLock` records.
@@ -404,7 +413,7 @@ class EditicsServerEventSaveChanges(BaseModel):
     excelAdditionalInfoIndexCols: EditicsExcelRecalcIndex | None
     excelAdditionalInfoIndexRows: EditicsExcelRecalcIndex | None
     # Format: (<Key index>, <base64(ciphertext)>)
-    encryptedCursorAdditionalInfo: tuple[int, Base64BytesField] | None
+    encryptedCursorAdditionalInfo: EditicsEncryptedContent | None
 
 
 class EditicsServerEventSavePartChanges(BaseModel):
@@ -415,9 +424,9 @@ class EditicsServerEventSavePartChanges(BaseModel):
 
 class EditicsServerEventUnSaveLock(BaseModel):
     type: Literal["unSaveLock"] = "unSaveLock"
-    index: int  # save point, or -1 on cancel
-    time: EditicsTimestampMs  # last change time, or -1 on cancel
-    syncChangesIndex: int  # new total, or -1 on cancel
+    index: Annotated[NonNegativeInt, Strict()] | None  # save point, or None on cancel
+    time: EditicsTimestampMs | None  # last change time, or None on cancel
+    syncChangesIndex: Annotated[NonNegativeInt, Strict()] | None  # new total, or None on cancel
 
 
 class EditicsServerEventDisconnectReason(BaseModel):

@@ -72,6 +72,9 @@ class MockApiVersion:
 
 
 mock_pydantic = types.ModuleType("pydantic")
+mock_pydantic.Strict = lambda: None  # type: ignore
+mock_pydantic.NonNegativeInt = int  # type: ignore
+mock_pydantic.PositiveInt = int  # type: ignore
 mock_pydantic.BaseModel = BaseModel  # type: ignore
 mock_pydantic.Field = MockFieldInfo  # type: ignore
 mock_pydantic.TypeAdapter = MagicMock()  # type: ignore
@@ -308,15 +311,17 @@ if __name__ == "__main__":
         print(f"{js_path}: editics protocol JSDoc is up to date")
 
     elif args.check:
-        print("\n".join(
-            difflib.unified_diff(
-                current,
-                expected,
-                fromfile=f"{js_path} (current)",
-                tofile="server/parsec/editics_protocol.py (expected)",
-                # cspell: words lineterm
-                lineterm="",
-            ))
+        print(
+            "\n".join(
+                difflib.unified_diff(
+                    current,
+                    expected,
+                    fromfile=f"{js_path} (current)",
+                    tofile="server/parsec/editics_protocol.py (expected)",
+                    # cspell: words lineterm
+                    lineterm="",
+                )
+            )
         )
         raise SystemExit(
             f"\n{js_path}: editics protocol JSDoc is out of sync, run without `--check` to regenerate it"
