@@ -14,3 +14,4 @@ Troubleshooting
     macos-finder-errors
     ms-filename-too-long
     where-to-find-log-files
+    web-cannot-be-invited-or-create-a-device
