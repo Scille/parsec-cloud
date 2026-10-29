@@ -214,8 +214,8 @@ async function changeLang(lang: Locale): Promise<void> {
 }
 
 async function changeTheme(selectedTheme: Theme): Promise<void> {
-  config.value.theme = selectedTheme as Theme;
-  themeManager.use(selectedTheme as Theme);
+  config.value.theme = selectedTheme;
+  themeManager.use(selectedTheme);
 }
 
 async function openConfigDir(): Promise<void> {
