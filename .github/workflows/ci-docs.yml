@@ -68,7 +68,7 @@ jobs:
 
       - name: No fuzzy translation
         run: |
-          ! rg '#, fuzzy' locale/
+          ! rg --line-number '#, fuzzy' locale/
         timeout-minutes: 1
 
       - name: Check if `*.po` were modified
