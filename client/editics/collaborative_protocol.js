@@ -242,7 +242,8 @@ class EditicsTranslator {
           type: 'unLockDocument',
           isSave: oo.isSave,
           unlock: oo.unlock,
-          deleteIndex: oo.deleteIndex ?? null, // TODO: set to null if value is negative
+          // OnlyOffice uses `-1` as no-truncation marker, editics uses `null`.
+          deleteIndex: typeof oo.deleteIndex === 'number' && oo.deleteIndex >= 0 ? oo.deleteIndex : null,
           releaseLocks: oo.releaseLocks ?? false, // TODO: remove the `?? false` guard
         };
 
@@ -342,7 +343,8 @@ class EditicsTranslator {
       encryptedChanges,
       startSaveChanges: oo.startSaveChanges,
       endSaveChanges: oo.endSaveChanges,
-      deleteIndex: oo.deleteIndex ?? null, // TODO: set to null if value is negative
+      // OnlyOffice uses `-1` as no-truncation marker, editics uses `null`.
+      deleteIndex: typeof oo.deleteIndex === 'number' && oo.deleteIndex >= 0 ? oo.deleteIndex : null,
       excelAdditionalInfoIndexCols,
       excelAdditionalInfoIndexRows,
       encryptedCursorAdditionalInfo: encryptedCursor,
@@ -404,13 +406,15 @@ class EditicsTranslator {
         };
 
       case 'unSaveLock':
-        // Either the save has completed (real `index`/`time`/
-        // `syncChangesIndex` values) or has been canceled (all `-1`).
+        // Either the save has completed (real `index`/`time`/`syncChangesIndex`
+        // values) or has been canceled / did not establish a new save point
+        // (editics `null`): the OnlyOffice editor expects the `-1` sentinel
+        // in those cases (e.g. it does `if (-1 !== data["index"]) ...`).
         return {
           type: 'unSaveLock',
-          index: editics.index, // TODO: return `null` instead of -1 marker
-          time: editics.time,
-          syncChangesIndex: editics.syncChangesIndex, // TODO: return `null` instead of -1 marker
+          index: editics.index ?? -1,
+          time: editics.time ?? -1,
+          syncChangesIndex: editics.syncChangesIndex ?? -1,
         };
 
       case 'saveChanges':

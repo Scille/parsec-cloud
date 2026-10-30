@@ -1090,7 +1090,7 @@ class EditicsComponent:
                 # Like the real OnlyOffice server (its `checkEndAuthLock`, which
                 # handles this *before* anything else), an index above the
                 # current change count is logged and ignored.
-                if event.deleteIndex is not None and event.deleteIndex != -1:
+                if event.deleteIndex is not None:
                     if event.deleteIndex < len(session.changes):
                         del session.changes[event.deleteIndex :]
                     elif event.deleteIndex > len(session.changes):
@@ -1103,10 +1103,13 @@ class EditicsComponent:
                             f"is incompatible with server's session changes count `{len(session.changes)}`"
                         )
                 # `isSave` asks to cancel an in-progress save: release the save
-                # lock and acknowledge with the cancellation sentinel values.
+                # lock and acknowledge with the cancellation sentinel values
+                # (i.e. `None`, where the OnlyOffice protocol uses `-1`).
                 if event.isSave and session.save_lock_holder == participant.participant_id:
                     session.save_lock_holder = None
-                    reply = EditicsServerEventUnSaveLock(index=-1, time=-1, syncChangesIndex=-1)
+                    reply = EditicsServerEventUnSaveLock(
+                        index=None, time=None, syncChangesIndex=None
+                    )
                 # `releaseLocks` asks to release the region locks held by the
                 # participant: like the OnlyOffice server, the releasing
                 # participant is notified too (a `releaseLock` event carrying
@@ -1317,12 +1320,10 @@ class EditicsComponent:
 
                 # Undo support: truncate the change history from `deleteIndex`
                 # (OnlyOffice semantics: only honored on the first chunk of the
-                # save, `null`/`-1` meaning no truncation).
-                delete_index = -1
-                if event.startSaveChanges and event.deleteIndex is not None:
-                    delete_index = event.deleteIndex
-                    if delete_index != -1 and delete_index < len(session.changes):
-                        del session.changes[delete_index:]
+                # save, `null` meaning no truncation).
+                delete_index = event.deleteIndex if event.startSaveChanges else None
+                if delete_index is not None and delete_index < len(session.changes):
+                    del session.changes[delete_index:]
 
                 # Store the new changes (one entry per change fragment, i.e.
                 # OnlyOffice `puckerIndex += len(encryptedChanges)`)
@@ -1338,8 +1339,12 @@ class EditicsComponent:
                     for encrypted_change in event.encryptedChanges
                 )
                 # Save point for the saver (OnlyOffice semantics: only the first
-                # chunk of a non-truncating save establishes a new save point)
-                changes_index = start_index if delete_index == -1 and event.startSaveChanges else -1
+                # chunk of a non-truncating save establishes a new save point).
+                # `None` when no new save point is established (intermediate
+                # chunk or truncating save), where OnlyOffice uses `-1`.
+                changes_index = (
+                    start_index if delete_index is None and event.startSaveChanges else None
+                )
 
                 # `releaseLocks` asks to release the region locks held by the
                 # saver after the save: the released blocks are carried in the
@@ -1400,18 +1405,21 @@ class EditicsComponent:
                     )
                 else:
                     # Intermediate chunk of a save too big for a single event:
-                    # acknowledge it and wait for the next one.
+                    # acknowledge it and wait for the next one. Note unlike
+                    # `unSaveLock` (which uses `None`), `savePartChanges` keeps
+                    # the OnlyOffice `-1` "no save point" sentinel.
                     return EditicsServerEventSavePartChanges(
-                        changesIndex=changes_index,
+                        changesIndex=changes_index if changes_index is not None else -1,
                         syncChangesIndex=len(session.changes),
                     )
 
             case EditicsClientEventUnSaveLock():
                 # Cancel the in-progress save: release the save lock and reply
-                # with the cancellation sentinel values (RFC §2.2).
+                # with the cancellation sentinel values (i.e. `None`, where
+                # the OnlyOffice protocol uses `-1`, RFC §2.2).
                 if session.save_lock_holder == participant.participant_id:
                     session.save_lock_holder = None
-                return EditicsServerEventUnSaveLock(index=-1, time=-1, syncChangesIndex=-1)
+                return EditicsServerEventUnSaveLock(index=None, time=None, syncChangesIndex=None)
 
             case EditicsClientEventCursor():
                 # Cursor messages are ephemeral (i.e. not part of the session
