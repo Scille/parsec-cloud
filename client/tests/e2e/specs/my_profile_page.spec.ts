@@ -190,7 +190,7 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
 
   await expect(changeAuthModal.locator('#next-button')).toHaveText('Confirm change');
   await expect(changeAuthModal.locator('#next-button')).toHaveDisabledAttribute();
-  await changeAuthModal.locator('.proconnect-button').click();
+  await changeAuthModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(changeAuthModal.locator('#next-button')).toNotHaveDisabledAttribute();
   await changeAuthModal.locator('#next-button').click();
   await expect(changeAuthModal).toBeHidden();
@@ -205,7 +205,7 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   const home = myProfilePage;
 
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-  await home.locator('.login-card').locator('.proconnect-button').click();
+  await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);
   const profile = home.locator('.topbar').locator('.profile-header');
@@ -218,8 +218,8 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
 
   await myProfilePage.locator('#change-authentication-button').click();
   await expect(changeAuthModal).toBeVisible();
-  await expect(changeAuthModal.locator('.proconnect-button')).toBeVisible();
-  await changeAuthModal.locator('.proconnect-button').click();
+  await expect(changeAuthModal.locator('.sso-provider-card', { hasText: 'ProConnect' })).toBeVisible();
+  await changeAuthModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
   // Back to password
   await authRadio.nth(0).click();

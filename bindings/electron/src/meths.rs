@@ -3084,6 +3084,81 @@ fn struct_new_invitation_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// OpenBaoAuthConfig
+
+#[allow(dead_code)]
+fn struct_open_bao_auth_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OpenBaoAuthConfig> {
+    let id = {
+        let js_val: Handle<JsString> = obj.get(cx, "id")?;
+        js_val.value(cx)
+    };
+    let mount_path = {
+        let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
+        js_val.value(cx)
+    };
+    let name = {
+        let js_val: Handle<JsString> = obj.get(cx, "name")?;
+        js_val.value(cx)
+    };
+    let help_link = {
+        let js_val: Handle<JsValue> = obj.get(cx, "helpLink")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
+    let icon = {
+        let js_val: Handle<JsValue> = obj.get(cx, "icon")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
+    Ok(libparsec::OpenBaoAuthConfig {
+        id,
+        mount_path,
+        name,
+        help_link,
+        icon,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_open_bao_auth_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OpenBaoAuthConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_id = JsString::try_new(cx, rs_obj.id).or_throw(cx)?;
+    js_obj.set(cx, "id", js_id)?;
+    let js_mount_path = JsString::try_new(cx, rs_obj.mount_path).or_throw(cx)?;
+    js_obj.set(cx, "mountPath", js_mount_path)?;
+    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
+    js_obj.set(cx, "name", js_name)?;
+    let js_help_link = match rs_obj.help_link {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "helpLink", js_help_link)?;
+    let js_icon = match rs_obj.icon {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "icon", js_icon)?;
+    Ok(js_obj)
+}
+
 // OpenBaoConfig
 
 #[allow(dead_code)]
@@ -3110,7 +3185,7 @@ fn struct_open_bao_config_js_to_rs<'a>(
             let mut v = Vec::with_capacity(size as usize);
             for i in 0..size {
                 let js_item: Handle<JsObject> = js_val.get(cx, i)?;
-                v.push(variant_open_bao_auth_config_js_to_rs(cx, js_item)?);
+                v.push(struct_open_bao_auth_config_js_to_rs(cx, js_item)?);
             }
             v
         }
@@ -3139,7 +3214,7 @@ fn struct_open_bao_config_rs_to_js<'a>(
         // JsArray::new allocates with `undefined` value, that's why we `set` value
         let js_array = JsArray::new(cx, rs_obj.auths.len());
         for (i, elem) in rs_obj.auths.into_iter().enumerate() {
-            let js_elem = variant_open_bao_auth_config_rs_to_js(cx, elem)?;
+            let js_elem = struct_open_bao_auth_config_rs_to_js(cx, elem)?;
             js_array.set(cx, i as u32, js_elem)?;
         }
         js_array
@@ -13048,56 +13123,6 @@ fn variant_move_entry_mode_rs_to_js<'a>(
         libparsec::MoveEntryMode::NoReplace => {
             let js_tag = JsString::try_new(cx, "MoveEntryModeNoReplace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// OpenBaoAuthConfig
-
-#[allow(dead_code)]
-fn variant_open_bao_auth_config_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::OpenBaoAuthConfig> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "OpenBaoAuthConfigOIDCHexagone" => {
-            let mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path })
-        }
-        "OpenBaoAuthConfigOIDCProConnect" => {
-            let mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path })
-        }
-        _ => cx.throw_type_error("Object is not a OpenBaoAuthConfig"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_open_bao_auth_config_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::OpenBaoAuthConfig,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path, .. } => {
-            let js_tag = JsString::try_new(cx, "OpenBaoAuthConfigOIDCHexagone").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_mount_path = JsString::try_new(cx, mount_path).or_throw(cx)?;
-            js_obj.set(cx, "mountPath", js_mount_path)?;
-        }
-        libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path, .. } => {
-            let js_tag = JsString::try_new(cx, "OpenBaoAuthConfigOIDCProConnect").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_mount_path = JsString::try_new(cx, mount_path).or_throw(cx)?;
-            js_obj.set(cx, "mountPath", js_mount_path)?;
         }
     }
     Ok(js_obj)

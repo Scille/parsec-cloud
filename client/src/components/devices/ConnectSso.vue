@@ -2,21 +2,21 @@
 
 <template>
   <div
-    class="provider-card"
+    class="connect-sso"
     v-if="serverConfig.openbao"
   >
-    <div class="provider-card-content">
+    <div class="sso-provider-list">
       <sso-provider-card
-        v-for="auth in serverConfig.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
-        :key="auth.tag"
-        :provider="auth.tag"
-        :is-connected="openBaoClient !== undefined && openBaoClient.getConnectionInfo().provider === auth.tag"
+        v-for="provider in serverConfig.openbao.auths"
+        :key="provider.id"
+        :provider="provider"
+        :is-connected="openBaoClient?.getConnectionInfo()?.provider === provider.id"
         @sso-selected="onSSOLoginClicked"
         :class="{ disabled: querying }"
       />
       <ms-spinner
         v-if="querying"
-        class="provider-card-spinner"
+        class="spinner"
       />
     </div>
     <ms-report-text
@@ -30,8 +30,8 @@
 
 <script setup lang="ts">
 import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
-import { OpenBaoAuthConfigTag, ServerConfig } from '@/parsec';
-import { isSSOProviderHandled, OpenBaoClient, openBaoConnect, OpenBaoError, OpenBaoErrorType } from '@/services/openBao';
+import { OpenBaoAuthConfig, ServerConfig } from '@/parsec';
+import { OpenBaoClient, openBaoConnect, OpenBaoError, OpenBaoErrorType } from '@/services/openBao';
 import { MsReportText, MsReportTheme, MsSpinner, Translatable } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -56,7 +56,7 @@ function getOpenBaoClient(): OpenBaoClient | undefined {
   return openBaoClient.value;
 }
 
-async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
+async function onSSOLoginClicked(provider: OpenBaoAuthConfig): Promise<void> {
   if (querying.value) {
     window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
@@ -65,17 +65,13 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     window.nativeAPI.log('error', 'OpenBao not enabled on this server');
     return;
   }
-  const auth = props.serverConfig.openbao.auths.find((auth) => auth.tag === provider);
-  if (!auth) {
-    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
-    return;
-  }
   try {
+    error.value = '';
     querying.value = true;
     const result = await openBaoConnect(
       props.serverConfig.openbao.serverUrl,
-      auth.tag,
-      auth.mountPath,
+      provider.id,
+      provider.mountPath,
       props.serverConfig.openbao.secret.mountPath,
       props.serverConfig.openbao.transitMountPath,
     );
@@ -98,14 +94,15 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
 </script>
 
 <style scoped lang="scss">
-.provider-card {
+.connect-sso {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 
-  &-content {
+  .sso-provider-list {
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
     position: relative;
     align-items: center;
 
@@ -115,7 +112,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     }
   }
 
-  &-spinner {
+  .spinner {
     position: absolute;
     top: 1.75rem;
     left: 50%;

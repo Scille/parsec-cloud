@@ -53,11 +53,29 @@
         >
           {{ $msTranslate(errorMessage) }}
         </ms-report-text>
-        <sso-provider-card
-          v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao"
-          :provider="(device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
-          @sso-selected="onLoginSSOClick"
-        />
+        <div v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao">
+          <div
+            v-if="!loading && serverConfig?.openbao && serverConfig.openbao.auths.length > 0"
+            class="sso-provider-list"
+          >
+            <sso-provider-card
+              v-for="provider of serverConfig.openbao.auths"
+              :key="provider.id"
+              :provider="provider"
+              @sso-selected="onLoginSSOClick"
+            />
+          </div>
+          <div v-else-if="loading">
+            <ms-spinner />
+          </div>
+          <div v-else-if="!loading && !serverConfig">
+            {{ $msTranslate('Authentication.method.sso.serverConfigUnavailable') }}
+            <ion-button @click="refreshServerConfig">{{ $msTranslate('Authentication.method.sso.retry') }}</ion-button>
+          </div>
+          <div v-else>
+            {{ $msTranslate('Authentication.method.sso.unavailable') }}
+          </div>
+        </div>
         <ion-button
           v-else
           @click="onLoginClick"
@@ -83,16 +101,15 @@ import { SsoProviderCard } from '@/components/devices';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import {
   AvailableDevice,
-  AvailableDeviceTypeOpenBao,
   AvailableDeviceTypeTag,
   ClientStartError,
   ClientStartErrorTag,
   constructAccessStrategy,
   DeviceAccessStrategy,
   getServerConfig,
-  GetServerConfigErrorTag,
-  OpenBaoAuthConfigTag,
+  OpenBaoAuthConfig,
   PrimaryProtectionStrategy,
+  ServerConfig,
 } from '@/parsec';
 import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
@@ -111,51 +128,40 @@ const emits = defineEmits<{
 
 const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 const password = ref('');
+const loading = ref(true);
 const errorMessage = ref('');
 const passwordIsInvalid = ref(false);
 const email = props.device.humanHandle.email;
 const isConnectWithSSO = ref(false);
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 onMounted(async () => {
   await passwordInputRef.value?.setFocus();
+  if (props.device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    await refreshServerConfig();
+  }
 });
 
-async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
-  if (props.loginInProgress) {
-    return;
+async function refreshServerConfig(): Promise<void> {
+  loading.value = true;
+  const result = await getServerConfig(props.device.serverAddr);
+  if (result.ok) {
+    serverConfig.value = result.value;
   }
-  const serverConfigResult = await getServerConfig(props.device.serverAddr);
+  loading.value = false;
+}
 
-  if (!serverConfigResult.ok) {
-    if (serverConfigResult.error.tag === GetServerConfigErrorTag.Offline) {
-      errorMessage.value = 'Authentication.openBaoOffline';
-    } else {
-      errorMessage.value = 'Authentication.openBaoUnknown';
-    }
-    window.nativeAPI.log(
-      'error',
-      `Error while retrieving server config: ${serverConfigResult.error.tag} (${serverConfigResult.error.error})`,
-    );
-    return;
-  }
-  if (!serverConfigResult.value.openbao) {
-    window.nativeAPI.log('error', 'Device has OpenBao auth but OpenBao is not configured on this server');
-    errorMessage.value = 'Authentication.openBaoUnavailable';
-    return;
-  }
-  const provInfo = serverConfigResult.value.openbao.auths.find((v) => v.tag === provider);
-  if (!provInfo) {
-    errorMessage.value = 'Authentication.invalidOpenBaoData';
-    window.nativeAPI.log('error', `Device has provider '${provider}' configured, but it's not handled by this server.`);
+async function onLoginSSOClick(provider: OpenBaoAuthConfig): Promise<void> {
+  if (props.loginInProgress || !serverConfig.value?.openbao) {
     return;
   }
 
   const connResult = await openBaoConnect(
-    serverConfigResult.value.openbao.serverUrl,
-    provInfo.tag,
-    provInfo.mountPath,
-    serverConfigResult.value.openbao.secret.mountPath,
-    serverConfigResult.value.openbao.transitMountPath,
+    serverConfig.value.openbao.serverUrl,
+    provider.id,
+    provider.mountPath,
+    serverConfig.value.openbao.secret.mountPath,
+    serverConfig.value.openbao.transitMountPath,
   );
 
   if (!connResult.ok) {
@@ -219,6 +225,13 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
+.sso-provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
 .login-popup {
   height: auto;
   width: 100%;

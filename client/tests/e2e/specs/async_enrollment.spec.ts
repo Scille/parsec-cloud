@@ -63,7 +63,7 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
     await requestModal.locator('.certificate-card').nth(1).click();
   } else {
     await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Single Sign-On (SSO)');
-    await requestModal.locator('.proconnect-button').click();
+    await requestModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
     await expect(requestModal.locator('.modal-info')).toBeHidden();
     await expect(requestModal.locator('.user-information')).toBeVisible();
     await fillIonInput(requestModal.locator('.user-information').locator('ion-input'), expectedPersonName);
@@ -141,9 +141,9 @@ for (const identitySystem of ['pki', 'openbao']) {
       await expect(acceptModal.locator('.async-authentication-modal-header-text__description')).toHaveText(
         'The user has requested to join the organization using SSO. Please log in below to accept the request.',
       );
-      await acceptModal.locator('.proconnect-button').click();
-      await expect(acceptModal.locator('.proconnect-group--connected')).toBeVisible();
-      await expect(acceptModal.locator('.proconnect-group--connected')).toHaveText('Connected');
+      await acceptModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+      await expect(acceptModal.locator('.sso-provider-card--connected')).toBeVisible();
+      await expect(acceptModal.locator('.sso-provider-card--connected').locator('.sso-provider-tag__text')).toHaveText('Connected');
       await acceptModal.locator('#next-button').click();
     }
     await expect(acceptModal).toBeHidden();
@@ -185,7 +185,7 @@ for (const identitySystem of ['pki', 'openbao']) {
       await expect(finalizeModal.locator('.async-authentication-modal-header-text__description')).toHaveText(
         'To join the organization, you must log in using your Single Sign-On authentication.',
       );
-      await finalizeModal.locator('.proconnect-button').click();
+      await finalizeModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
       await expect(finalizeModal.locator('#next-button')).toBeVisible();
       await finalizeModal.locator('#next-button').click();
       await expect(page).toShowToast('You successfully joined the organization.', 'Success');

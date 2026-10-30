@@ -129,27 +129,28 @@
             @update-clicked="changeAuthenticationMethod()"
           />
         </div>
-        <div class="provider-card">
+        <div class="sso-provider-list">
           <sso-provider-card
-            v-for="auth in serverConfig?.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
-            :key="auth.tag"
-            :provider="auth.tag"
-            :is-connected="openBaoClient !== undefined"
+            v-for="provider in serverConfig.openbao.auths"
+            :key="provider.id"
+            :provider="provider"
+            :is-connected="openBaoClient?.getConnectionInfo()?.provider === provider.id"
             @sso-selected="onSSOLoginClicked"
           />
           <ms-spinner
             v-if="querying"
-            class="provider-card-spinner"
+            class="spinner"
           />
         </div>
       </div>
 
-      <span
-        class="form-error subtitles-sm"
-        v-show="error"
+      <ms-report-text
+        v-if="error"
+        :theme="MsReportTheme.Error"
+        class="choose-auth-error"
       >
         {{ $msTranslate(error) }}
-      </span>
+      </ms-report-text>
     </div>
   </div>
 </template>
@@ -165,7 +166,7 @@ import {
   CertificateWithDetailsValid,
   DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  OpenBaoAuthConfigTag,
+  OpenBaoAuthConfig,
   ParsecAddr,
   PrimaryProtectionStrategy,
   ServerConfig,
@@ -175,9 +176,9 @@ import {
   isWeb,
   openCertificate,
 } from '@/parsec';
-import { OpenBaoClient, OpenBaoErrorType, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
+import { OpenBaoClient, OpenBaoErrorType, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
-import { MsChoosePasswordInput, MsSpinner } from 'megashark-lib';
+import { MsChoosePasswordInput, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 
 const authentication = ref<DevicePrimaryProtectionStrategyTag | undefined>(undefined);
@@ -191,7 +192,7 @@ const querying = ref(false);
 const error = ref('');
 
 const openBaoAuthAvailable = computed(() => {
-  return props.serverConfig?.openbao && props.serverConfig?.openbao.auths.some((auth) => isSSOProviderHandled(auth.tag));
+  return props.serverConfig?.openbao && props.serverConfig?.openbao.auths.length > 0;
 });
 
 const props = defineProps<{
@@ -309,7 +310,7 @@ async function areFieldsCorrect(): Promise<boolean> {
   return false;
 }
 
-async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
+async function onSSOLoginClicked(provider: OpenBaoAuthConfig): Promise<void> {
   if (querying.value) {
     window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
@@ -319,18 +320,12 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     window.nativeAPI.log('error', 'OpenBao not enabled on this server');
     return;
   }
-  const auth = props.serverConfig.openbao.auths.find((auth) => auth.tag === provider);
-  if (!auth) {
-    error.value = 'Authentication.invalidOpenBaoData';
-    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
-    return;
-  }
   try {
     querying.value = true;
     const result = await openBaoConnect(
       props.serverConfig.openbao.serverUrl,
-      auth.tag,
-      auth.mountPath,
+      provider.id,
+      provider.mountPath,
       props.serverConfig.openbao.secret.mountPath,
       props.serverConfig.openbao.transitMountPath,
     );
@@ -440,15 +435,22 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
   }
 }
 
-.provider-card {
+.sso-provider-list {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 1.25rem;
 
-  .provider-card-spinner {
+  .spinner {
     position: absolute;
     top: 2rem;
     right: 2rem;
     transform: translate(-50%, -50%);
   }
+}
+
+.choose-auth-error {
+  margin-top: 1rem;
 }
 </style>

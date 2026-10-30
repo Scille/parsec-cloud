@@ -174,11 +174,10 @@ msTest('Login with forbidden auth method and update', async ({ home }) => {
     { password: AuthMethodDisabledReason.Forbidden, keyring: AuthMethodDisabledReason.Forbidden, pki: AuthMethodDisabledReason.Forbidden },
   );
   await authRadio.nth(3).click();
-  await expect(authModal.locator('.proconnect-button')).toBeVisible();
-  await authModal.locator('.proconnect-button').click();
-  await expect(authModal.locator('.proconnect-button')).toBeHidden();
-  await expect(authModal.locator('.proconnect-group--connected')).toBeVisible();
-  await expect(authModal.locator('.proconnect-group--connected')).toHaveText('Connected');
+  await expect(authModal.locator('.sso-provider-card', { hasText: 'ProConnect' })).toBeVisible();
+  await authModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+  await expect(authModal.locator('.sso-provider-card--connected')).toBeVisible();
+  await expect(authModal.locator('.sso-provider-card--connected').locator('.sso-provider-tag__text')).toHaveText('Connected');
   await expect(authModal.locator('#next-button')).toHaveText('Confirm change');
   await expect(authModal.locator('#next-button')).toBeTrulyEnabled();
   await authModal.locator('#next-button').click();
@@ -274,11 +273,10 @@ msTest('Login update auth method and setup totp', async ({ home }) => {
     { password: AuthMethodDisabledReason.Forbidden, keyring: AuthMethodDisabledReason.Forbidden, pki: AuthMethodDisabledReason.Forbidden },
   );
   await authRadio.nth(3).click();
-  await expect(authModal.locator('.proconnect-button')).toBeVisible();
-  await authModal.locator('.proconnect-button').click();
-  await expect(authModal.locator('.proconnect-button')).toBeHidden();
-  await expect(authModal.locator('.proconnect-group--connected')).toBeVisible();
-  await expect(authModal.locator('.proconnect-group--connected')).toHaveText('Connected');
+  await expect(authModal.locator('.sso-provider-card', { hasText: 'ProConnect' })).toBeVisible();
+  await authModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+  await expect(authModal.locator('.sso-provider-card--connected')).toBeVisible();
+  await expect(authModal.locator('.sso-provider-card--connected').locator('.sso-provider-tag__text')).toHaveText('Connected');
   await expect(authModal.locator('#next-button')).toHaveText('Confirm change');
   await expect(authModal.locator('#next-button')).toBeTrulyEnabled();
   await authModal.locator('#next-button').click();

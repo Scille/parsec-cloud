@@ -330,16 +330,4 @@ async function cancel(): Promise<boolean> {
   gap: 0.5rem !important;
   color: var(--parsec-color-light-secondary-text);
 }
-
-.provider-card {
-  position: relative;
-  margin-top: 1.25rem;
-
-  .provider-card-spinner {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    transform: translate(-50%, -50%);
-  }
-}
 </style>

@@ -30,6 +30,9 @@ export function useUpdateManager() {
     const config = await storageManager.retrieveConfig();
 
     if (!config.appVersionLastVisit) {
+      if ((window as any).TESTING === true) {
+        return false;
+      }
       // Users from before `appVersionLastVisit` existed won't have it set, but we consider
       // them as returning users if they already have a device in this browser.
       // Can be removed in later releases once most users have `appVersionLastVisit` stored.
