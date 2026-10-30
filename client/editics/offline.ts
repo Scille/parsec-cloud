@@ -95,11 +95,6 @@ declare global {
 }
 
 const NATIVE_EXTENSION = 'bin';
-const ODF_INTERMEDIARY_FORMAT: Record<string, string> = {
-  odt: 'docx',
-  ods: 'xlsx',
-  odp: 'pptx',
-};
 
 let x2tModulePromise: Promise<X2TModule> | undefined;
 
@@ -155,7 +150,7 @@ function runConversion(module: X2TModule, inputFileName: string, data: Uint8Arra
   return output;
 }
 
-async function convertToNativeFormat(data: Uint8Array, fileName: string, extension: string): Promise<Uint8Array> {
+async function convertToNativeFormat(data: Uint8Array, fileName: string): Promise<Uint8Array> {
   const module = await loadX2T();
 
   // The media of the document being converted are extracted into the x2t
@@ -165,15 +160,8 @@ async function convertToNativeFormat(data: Uint8Array, fileName: string, extensi
   resetMediaFiles(module);
 
   const safeName = sanitizeFileName(fileName);
-  const intermediaryFormat = ODF_INTERMEDIARY_FORMAT[extension];
 
-  let nativeContent: Uint8Array;
-  if (intermediaryFormat) {
-    const intermediaryData = runConversion(module, safeName, data, intermediaryFormat);
-    nativeContent = runConversion(module, `${safeName}.${intermediaryFormat}`, intermediaryData, NATIVE_EXTENSION);
-  } else {
-    nativeContent = runConversion(module, safeName, data, NATIVE_EXTENSION);
-  }
+  const nativeContent = runConversion(module, safeName, data, NATIVE_EXTENSION);
 
   collectMediaFiles(module);
   return nativeContent;
@@ -303,12 +291,6 @@ async function convertFromNativeFormat(data: Uint8Array, fileName: string, exten
 
   const module = await loadX2T();
   const safeName = `${sanitizeFileName(fileName)}.${NATIVE_EXTENSION}`;
-  const intermediaryFormat = ODF_INTERMEDIARY_FORMAT[extension];
-
-  if (intermediaryFormat) {
-    const intermediaryData = runConversion(module, safeName, data, intermediaryFormat);
-    return runConversion(module, `${safeName}.${intermediaryFormat}`, intermediaryData, extension);
-  }
   return runConversion(module, safeName, data, extension);
 }
 
@@ -319,7 +301,7 @@ async function prepareDocumentContent(options: EditicsOpenOptions, documentConte
   if (options.documentExtension === NATIVE_EXTENSION) {
     return documentContent;
   }
-  return convertToNativeFormat(documentContent, options.documentName, options.documentExtension);
+  return convertToNativeFormat(documentContent, options.documentName);
 }
 
 // --- OfflineMockServer -----------------------------------------------------
