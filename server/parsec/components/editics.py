@@ -128,8 +128,9 @@ class ParticipantSession:
     user_id: UserID
     device_id: DeviceID
     realm_role: RealmRole
-    # TODO: does this correspond to the very first connection of the participant or to its last (re)connection ?
-    connected_at: EditicsTimestampMs  # Timestamp of the join
+    # Timestamp of the participant session's creation (i.e. the very first
+    # connection of the participant).
+    created_at: EditicsTimestampMs
     # `None` if no SSE connection is listening for the participant.
     # At most one SSE connection is possible for a given participant (any older
     # one is considered as a zombie and gets closed).
@@ -206,7 +207,7 @@ class EditicsDocumentSession:
     """
 
     # When the document session has been started
-    opened_at: EditicsTimestampMs = field(init=False)  # Initialized in `__post_init__`
+    created_at: EditicsTimestampMs = field(init=False)  # Initialized in `__post_init__`
     document_session_id: UUID = field(default_factory=uuid4)
     next_participant_index: int = 1  # Monotonic
     participants: dict[EditicsParticipantSessionID, ParticipantSession] = field(
@@ -270,7 +271,7 @@ class EditicsDocumentSession:
         return self.last_now
 
     def __post_init__(self):
-        self.opened_at = self.monotonic_now()
+        self.created_at = self.monotonic_now()
 
 
 def _participant_entries(session: EditicsDocumentSession) -> list[EditicsParticipantEntry]:
@@ -409,13 +410,12 @@ def _push_changes_backlog(session: EditicsDocumentSession, participant: Particip
 def _handshake_auth(
     session: EditicsDocumentSession, participant: ParticipantSession
 ) -> EditicsServerEventAuth:
-    """Build the newcomer's `auth` reply (its handshake completion, RFC §2.2)."""
     return EditicsServerEventAuth(
         participants=_participant_entries(session),
-        indexUser=participant.index,
         participantSessionId=participant.participant_session_id,
-        participantTimeConnect=participant.connected_at,
-        openedAt=session.opened_at,
+        participantIndexUser=participant.index,
+        participantSessionTimeConnect=participant.created_at,
+        openedAt=session.created_at,
         locks=list(session.region_locks.values()),
         messages=[
             MessageRecord(
@@ -425,7 +425,7 @@ def _handshake_auth(
             )
             for m in session.chat_messages
         ],
-        originalContentUploaded=session.encrypted_initial_content is not None,
+        initialContentUploaded=session.encrypted_initial_content is not None,
     )
 
 
@@ -443,15 +443,15 @@ class EditicsParticipantListenBadOutcome(BadOutcomeEnum):
 
 
 class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
-    # First client event must be `auth`
+    # First client event must be `auth`.
     PARTICIPANT_NOT_AUTH = auto()
-    # Once `auth` server event received, the first editor knows he must upload the
-    # initial content before anything else.
-    ORIGINAL_CONTENT_MISSING = auto()
+    # Once `auth` server event is received, the first editor knows he must upload
+    # the initial content before anything else.
+    INITIAL_CONTENT_MISSING = auto()
     # Subsequent `auth` are reconnection, and a device cannot do impersonation
-    # by reconnecting with a participant ID related to another device!
+    # by reconnecting with a participant session ID related to another device!
     PARTICIPANT_DEVICE_MISMATCH = auto()
-    # A reconnecting participant cannot change the mode it originally joined with
+    # A reconnecting participant cannot change the mode it originally joined with.
     PARTICIPANT_MODE_MISMATCH = auto()
     # The participant session ID mismatches between the transport (i.e. `psid`
     # parameter in the listen/send URL route) and the `reconnect` field in `auth`
@@ -575,7 +575,7 @@ class EditicsComponent:
             realm_role=realm_role,
             index=participant_index,
             participant_session_id=participant_session_id,
-            connected_at=session.monotonic_now(),
+            created_at=session.monotonic_now(),
         )
 
         return participant
@@ -804,7 +804,7 @@ class EditicsComponent:
                 ),
             )
         ):
-            return EditicsParticipantSendBadOutcome.ORIGINAL_CONTENT_MISSING
+            return EditicsParticipantSendBadOutcome.INITIAL_CONTENT_MISSING
 
         # Viewers are not allowed to send editor-only events...
         if (
@@ -825,8 +825,6 @@ class EditicsComponent:
 
         match event:
             case EditicsClientEventAuth():
-                # TODO: should we update `participant.connected_at` when in reconnection ?
-
                 participant_view: bool
 
                 match event.mode:

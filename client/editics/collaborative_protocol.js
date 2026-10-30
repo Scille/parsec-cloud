@@ -485,12 +485,12 @@ class EditicsTranslator {
     const event = {
       type: 'auth',
       result: 1,
-      sessionId: editics.participantSessionId,
-      // TODO: Check the relashionship between sessionTimeConnect and openedAt.
-      sessionTimeConnect: editics.participantTimeConnect,
       participants: await this._onlyofficeParticipants(editics.participants),
+      sessionId: editics.participantSessionId,
+      indexUser: editics.participantIndexUser,
+      sessionTimeConnect: editics.participantSessionTimeConnect,
+      openedAt: editics.openedAt,
       locks: this._onlyofficeLockTable(editics.locks),
-      indexUser: editics.indexUser,
       hasForgotten: false,
       jwt: '',
       // eslint-disable-next-line camelcase -- OnlyOffice wire field name
@@ -508,7 +508,6 @@ class EditicsTranslator {
         // eslint-disable-next-line camelcase -- OnlyOffice wire field name
         limits_image_types_upload: 'jpg;jpeg;jpe;png;gif;bmp;svg;tiff;tif;webp;heic;heif;avif',
       },
-      openedAt: editics.openedAt,
     };
     // The OnlyOffice `auth` event carries the chat history, which the editics
     // protocol keeps in the server event (the editor only renders the field
@@ -955,12 +954,12 @@ export const EDITICS_API_VERSION = '1.0';
  * @property {'auth'} type
  * @property {EditicsParticipantEntry[]} participants
  * @property {EditicsParticipantSessionID} participantSessionId
- * @property {EditicsParticipantIndex} indexUser
- * @property {EditicsTimestampMs} participantTimeConnect
+ * @property {EditicsParticipantIndex} participantIndexUser
+ * @property {EditicsTimestampMs} participantSessionTimeConnect
  * @property {EditicsTimestampMs} openedAt
  * @property {Array<{time:EditicsTimestampMs, holder:EditicsParticipantIdentity, block:*}>} [locks]
  * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedMessage:EditicsEncryptedContent}>} [messages]
- * @property {boolean} originalContentUploaded
+ * @property {boolean} initialContentUploaded
  *
  * @typedef {Object} EditicsServerEventConnectState
  * @property {'connectState'} type

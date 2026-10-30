@@ -127,9 +127,8 @@ class EditicsHttpStatus(Enum):
     """
     HTTP statuses used by the editics routes.
 
-    The common statuses use the same values as the RPC API's `CustomHttpStatus`
-    (kept in sync for simplicity, though the two APIs are totally independent,
-    hence 463/464 have here totally different meanings than for the RPC API).
+    Try mimic the statuses from the RPC API for simplicity, though the two APIs
+    are totally independent.
     """
 
     # Basic request parsing & authentication errors
@@ -164,11 +163,11 @@ class EditicsHttpStatus(Enum):
     # The session has no initial content yet: the first editor knows (from its
     # `auth` server event) it must upload it before anything else. This is also
     # used by the fetch route to tell a client the content is not available yet.
-    OriginalContentMissing = 485
+    InitialContentMissing = 485
     # The session already has its initial content (first-upload-wins): the client
     # that lost the concurrent upload race must fetch it instead of uploading
     # its own conversion.
-    OriginalContentAlreadyUploaded = 486
+    InitialContentAlreadyUploaded = 486
 
 
 # e.g. `ParticipantNotAuth` -> `Participant not auth`
@@ -364,7 +363,7 @@ async def editics_upload_initial_content(
         case EditicsUploadInitialContentBadOutcome.NOT_ALLOWED:
             _editics_abort(EditicsHttpStatus.ReaderMustBeViewer, api_version)
         case EditicsUploadInitialContentBadOutcome.ALREADY_UPLOADED:
-            _editics_abort(EditicsHttpStatus.OriginalContentAlreadyUploaded, api_version)
+            _editics_abort(EditicsHttpStatus.InitialContentAlreadyUploaded, api_version)
 
 
 @editics_router.get(
@@ -391,7 +390,7 @@ async def editics_fetch_initial_content(
                 headers={"Api-Version": str(api_version)},
             )
         case EditicsFetchInitialContentBadOutcome.NOT_UPLOADED:
-            _editics_abort(EditicsHttpStatus.OriginalContentMissing, api_version)
+            _editics_abort(EditicsHttpStatus.InitialContentMissing, api_version)
 
 
 async def _editics_listen_auth(
@@ -488,8 +487,8 @@ async def editics_send(
             return Response(status_code=204, headers={"Api-Version": str(api_version)})
         case EditicsParticipantSendBadOutcome.PARTICIPANT_NOT_AUTH:
             _editics_abort(EditicsHttpStatus.ParticipantNotAuth, api_version)
-        case EditicsParticipantSendBadOutcome.ORIGINAL_CONTENT_MISSING:
-            _editics_abort(EditicsHttpStatus.OriginalContentMissing, api_version)
+        case EditicsParticipantSendBadOutcome.INITIAL_CONTENT_MISSING:
+            _editics_abort(EditicsHttpStatus.InitialContentMissing, api_version)
         case EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH:
             _editics_abort(EditicsHttpStatus.ParticipantDeviceMismatch, api_version)
         case EditicsParticipantSendBadOutcome.PARTICIPANT_MODE_MISMATCH:

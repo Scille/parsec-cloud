@@ -314,7 +314,7 @@ async def test_upload_payload_too_large(
 ) -> None:
     # The bundle size is limited to 100Mo (see `parsec/asgi/editics.py`'s module
     # docstring): shrink the limit so the test doesn't have to upload 100Mo.
-    monkeypatch.setattr("parsec.asgi.editics.MAX_INITIAL_CONTENT_SIZE", 16)
+    monkeypatch.setattr("parsec.asgi.editics.INITIAL_CONTENT_MAX_SIZE", 16)
 
     alice = EditicsSessionClient(
         who=coolorg.alice,
@@ -349,7 +349,7 @@ async def test_initial_content_can_be_uploaded_before_any_participant(
         # The late-joining editor is told the initial content is already there
         rep = await alice.send(_auth_event(mode="edit"))
         assert isinstance(rep, EditicsServerEventAuth)
-        assert rep.originalContentUploaded is True
+        assert rep.initialContentUploaded is True
         assert await alice.fetch_initial_content() == (1, INITIAL_CONTENT_PARTS)
 
 
@@ -380,17 +380,17 @@ async def test_initial_content_lifecycle(coolorg: CoolorgRpcClients, backend: Ba
 
         rep = await alice.send(_auth_event(mode="edit"))
         assert isinstance(rep, EditicsServerEventAuth)
-        assert rep.originalContentUploaded is False
+        assert rep.initialContentUploaded is False
 
         # The initial content is not available for fetching yet
         with pytest.raises(RpcTransportError) as exc:
             await alice.fetch_initial_content()
-        assert exc.value.rep.status_code == EditicsHttpStatus.OriginalContentMissing.value
+        assert exc.value.rep.status_code == EditicsHttpStatus.InitialContentMissing.value
 
         # Any other editor event but `auth`/`close` is refused until the upload is done
         with pytest.raises(RpcTransportError) as exc:
             await alice.send(EditicsClientEventMessage(encryptedMessage=(1, b"dummy message")))
-        assert exc.value.rep.status_code == EditicsHttpStatus.OriginalContentMissing.value
+        assert exc.value.rep.status_code == EditicsHttpStatus.InitialContentMissing.value
 
         # 2. Actual initial content upload
 
@@ -401,7 +401,7 @@ async def test_initial_content_lifecycle(coolorg: CoolorgRpcClients, backend: Ba
         # the existing content instead of its own conversion.
         with pytest.raises(RpcTransportError) as exc:
             await bob.upload_initial_content(key_index=1, parts=[b"<Bob's bin ciphertext>"])
-        assert exc.value.rep.status_code == EditicsHttpStatus.OriginalContentAlreadyUploaded.value
+        assert exc.value.rep.status_code == EditicsHttpStatus.InitialContentAlreadyUploaded.value
         # The session's content is still Alice's one
         assert await alice.fetch_initial_content() == (1, INITIAL_CONTENT_PARTS)
 
@@ -417,7 +417,7 @@ async def test_initial_content_lifecycle(coolorg: CoolorgRpcClients, backend: Ba
         async with bob.listen():
             rep = await bob.send(_auth_event(mode="edit"))
             assert isinstance(rep, EditicsServerEventAuth)
-            assert rep.originalContentUploaded is True
+            assert rep.initialContentUploaded is True
 
             assert await bob.fetch_initial_content() == (1, INITIAL_CONTENT_PARTS)
 
@@ -441,7 +441,7 @@ async def test_save_changes_refused_before_initial_content(
         # The `saveChanges` event is refused...
         with pytest.raises(RpcTransportError) as exc:
             await alice.send(_save_changes_event())
-        assert exc.value.rep.status_code == EditicsHttpStatus.OriginalContentMissing.value
+        assert exc.value.rep.status_code == EditicsHttpStatus.InitialContentMissing.value
 
         # ...and nothing was stored
         (session,) = backend.editics._document_sessions.values()

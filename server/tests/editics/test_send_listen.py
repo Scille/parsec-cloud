@@ -309,7 +309,7 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
         # The send route still authenticates through the `Authorization` header
         rep = await alice_editics.send(_auth_event(mode="edit"))
         assert isinstance(rep, EditicsServerEventAuth)
-        assert rep.indexUser == 1
+        assert rep.participantIndexUser == 1
 
     # Connection is lost...
 
@@ -326,7 +326,7 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
             )
         )
         assert isinstance(rep, EditicsServerEventAuth)
-        assert rep.indexUser == 1
+        assert rep.participantIndexUser == 1
 
     # Connection is lost again...
 
@@ -337,7 +337,7 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
         assert isinstance(rep, EditicsServerEventAuth)
-        assert rep.indexUser == 2
+        assert rep.participantIndexUser == 2
 
 
 async def test_participant_session_id_of_another_device_is_refused(
@@ -411,7 +411,7 @@ async def test_reconnection_cannot_change_participant_mode(
             # participant ID, which is allowed
             rep = await alice_editics.send(_auth_event(mode=initial_mode))
             assert isinstance(rep, EditicsServerEventAuth)
-            assert rep.indexUser == 1
+            assert rep.participantIndexUser == 1
 
         # Connection is lost...
 
@@ -433,7 +433,7 @@ async def test_reconnection_cannot_change_participant_mode(
                 EditicsClientEventAuth(vlobVersion=1, reconnect=reconnect, mode=initial_mode)
             )
             assert isinstance(rep, EditicsServerEventAuth)
-            assert rep.indexUser == 1
+            assert rep.participantIndexUser == 1
 
 
 async def test_read_only_realm_role_must_join_in_view_mode(
@@ -442,7 +442,7 @@ async def test_read_only_realm_role_must_join_in_view_mode(
     async with bob_editics.listen():
         rep = await bob_editics.send(_auth_event(mode="view"))
         assert isinstance(rep, EditicsServerEventAuth)
-        assert rep.indexUser == 1
+        assert rep.participantIndexUser == 1
         assert [p.view for p in rep.participants] == [True]
 
         with pytest.raises(RpcTransportError) as exc:

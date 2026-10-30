@@ -276,12 +276,11 @@ class MessageRecord(BaseModel):
 
 class EditicsServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
-    participants: list[EditicsParticipantEntry]  # Current participant map
+    participants: list[EditicsParticipantEntry]
     participantSessionId: EditicsParticipantSessionID
-    indexUser: EditicsParticipantIndex  # This connection's assigned index
-    # Reconnect info (forward-compat; unused in step 0 but kept).
-    participantTimeConnect: EditicsTimestampMs  # Server timestamp at connect
-    # When the file edition session has been started
+    participantIndexUser: EditicsParticipantIndex
+    participantSessionTimeConnect: EditicsTimestampMs
+    # When the document edition session has been started
     openedAt: EditicsTimestampMs
     # Region locks currently held, so the newcomer knows which regions are
     # taken (OnlyOffice carries the lock table in its `auth` event).
@@ -293,7 +292,7 @@ class EditicsServerEventAuth(BaseModel):
     # Whether this connection already has an original content uploaded by an
     # editor: `false` means the participant must run x2t locally, (and upload
     # the result if it is an editor).
-    originalContentUploaded: bool
+    initialContentUploaded: bool
 
 
 class EditicsServerEventConnectState(BaseModel):
