@@ -327,6 +327,9 @@
         },
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session",
+        "shamir": {
+            "invalidLink": "Pas un lien de récupération valide."
+        },
         "organizationRequest": {
             "title": "Demandes en attente",
             "status": {
