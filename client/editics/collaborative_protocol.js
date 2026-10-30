@@ -189,9 +189,9 @@ class EditicsTranslator {
         // session ID the server assigned in its `auth` reply (which the editics
         // protocol uses as the participant ID) along with the connect time and
         // the time spent idle since the connection was lost.
-        if (oo.sessionId !== null && oo.sessionId !== undefined) {
+        if (typeof oo.sessionId === 'string') {
           event.reconnect = {
-            participantId: oo.sessionId,
+            participantSessionId: oo.sessionId,
             lastOtherSaveTime: oo.lastOtherSaveTime !== -1 ? oo.lastOtherSaveTime : null,
           };
         }
@@ -485,8 +485,7 @@ class EditicsTranslator {
     const event = {
       type: 'auth',
       result: 1,
-      // Editics protocol merge together the session and participant concepts
-      sessionId: editics.participantId,
+      sessionId: editics.participantSessionId,
       // TODO: Check the relashionship between sessionTimeConnect and openedAt.
       sessionTimeConnect: editics.participantTimeConnect,
       participants: await this._onlyofficeParticipants(editics.participants),
@@ -861,7 +860,7 @@ export const EDITICS_API_VERSION = '1.0';
 /**
  * @typedef {number} EditicsParticipantIndex
  *
- * @typedef {string} EditicsParticipantID
+ * @typedef {string} EditicsParticipantSessionID
  *
  * @typedef {[string, EditicsParticipantIndex]} EditicsParticipantIdentity
  *
@@ -890,7 +889,7 @@ export const EDITICS_API_VERSION = '1.0';
  * @typedef {Record<string, EditicsExcelSheetRecalcIndex>} EditicsExcelRecalcIndex
  *
  * @typedef {Object} EditicsClientEventAuthReconnect
- * @property {EditicsParticipantID} participantId
+ * @property {EditicsParticipantSessionID} participantSessionId
  * @property {EditicsTimestampMs|null} lastOtherSaveTime
  *
  * @typedef {Object} EditicsClientEventAuth
@@ -955,7 +954,7 @@ export const EDITICS_API_VERSION = '1.0';
  * @typedef {Object} EditicsServerEventAuth
  * @property {'auth'} type
  * @property {EditicsParticipantEntry[]} participants
- * @property {EditicsParticipantID} participantId
+ * @property {EditicsParticipantSessionID} participantSessionId
  * @property {EditicsParticipantIndex} indexUser
  * @property {EditicsTimestampMs} participantTimeConnect
  * @property {EditicsTimestampMs} openedAt

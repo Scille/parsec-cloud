@@ -22,7 +22,7 @@ from parsec.components.auth import EditicsToken
 from parsec.editics_protocol import (
     EDITICS_API_VERSION,
     EditicsClientEvent,
-    EditicsParticipantID,
+    EditicsParticipantSessionID,
     EditicsServerEvent,
     EditicsServerEventAdapter,
     EditicsServerEventParsecInitialContentUploaded,
@@ -72,7 +72,7 @@ class EditicsSessionClient:
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
-        participant_id: EditicsParticipantID | None = None,
+        participant_session_id: EditicsParticipantSessionID | None = None,
     ):
         self.raw_client = who.raw_client
 
@@ -85,8 +85,8 @@ class EditicsSessionClient:
 
         # `base_url`/`base_params`/`base_headers` are public so the tests can
         # easily craft their own raw requests toward the editics routes.
-        self.base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/sessions/{realm_id.hex}/{document_id.hex}"
-        self.base_params = {"participant_id": participant_id or uuid4().hex}
+        self.base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/{realm_id.hex}/{document_id.hex}"
+        self.base_params = {"psid": participant_session_id or uuid4().hex}
         self.base_headers = {
             "Authorization": authorization,
             "Api-Version": str(EDITICS_API_VERSION),
@@ -95,8 +95,8 @@ class EditicsSessionClient:
         self._sse_event_source_iter = None
 
     @property
-    def participant_id(self) -> str:
-        return self.base_params["participant_id"]
+    def participant_session_id(self) -> str:
+        return self.base_params["psid"]
 
     @asynccontextmanager
     async def listen(
@@ -328,13 +328,13 @@ class EditicsJSRuntime:
         document_id: VlobID,
         editor_type: int,  # 0=Word, 1=Spreadsheet, 2=Presentation
         vlob_version: int = 1,
-        participant_id: EditicsParticipantID | None = None,
+        participant_session_id: EditicsParticipantSessionID | None = None,
     ) -> AsyncGenerator[EditicsJSClient, None]:
-        participant_id = participant_id or uuid4().hex
+        participant_session_id = participant_session_id or uuid4().hex
 
         self._js_runtime.eval(
             f"""
-            globalThis.__editics_instances['{participant_id}'] = new globalThis.__EditicsTranslator(
+            globalThis.__editics_instances['{participant_session_id}'] = new globalThis.__EditicsTranslator(
                 {{
                     workspaceId: '{realm_id.hex}',
                     vlobId: '{document_id.hex}',
@@ -383,14 +383,16 @@ class EditicsJSRuntime:
             who=who,
             realm_id=realm_id,
             document_id=document_id,
-            participant_id=participant_id,
+            participant_session_id=participant_session_id,
         )
         try:
             yield client
         finally:
             if client.connected:
                 await client.server_disconnect()
-            self._js_runtime.eval(f"""delete globalThis.__editics_instances['{participant_id}'];""")
+            self._js_runtime.eval(
+                f"""delete globalThis.__editics_instances['{participant_session_id}'];"""
+            )
 
     async def async_eval(self, code: str) -> Any:
         """
@@ -442,13 +444,13 @@ class EditicsJSClient:
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
-        participant_id: EditicsParticipantID,
+        participant_session_id: EditicsParticipantSessionID,
     ):
         self.js_runtime = js_runtime
         self.who = who
         self.realm_id = realm_id
         self.document_id = document_id
-        self.participant_id = participant_id
+        self.participant_session_id = participant_session_id
         self.editics_session_client: EditicsSessionClient | None = None
         self._listen_cm: AbstractAsyncContextManager[None] | None = None
 
@@ -463,7 +465,7 @@ class EditicsJSClient:
             who=self.who,
             realm_id=self.realm_id,
             document_id=self.document_id,
-            participant_id=self.participant_id,
+            participant_session_id=self.participant_session_id,
         )
         listen_cm = editics_session_client.listen()
         await listen_cm.__aenter__()
@@ -490,7 +492,7 @@ class EditicsJSClient:
 
         raw_editics_client_event: str | None = await self.js_runtime.async_eval(
             f"""
-            globalThis.__editics_instances['{self.participant_id}']
+            globalThis.__editics_instances['{self.participant_session_id}']
                 .cookClientEvent({json.dumps(oo_client_event)})
                 .then(obj => (obj != null ? JSON.stringify(obj) : null))
             """
@@ -512,7 +514,7 @@ class EditicsJSClient:
                 EditicsServerEventAdapter.validate_json(raw_editics_server_event)
                 raw_oo_client_event = await self.js_runtime.async_eval(
                     f"""
-                    globalThis.__editics_instances['{self.participant_id}']
+                    globalThis.__editics_instances['{self.participant_session_id}']
                         .cookServerEvent({raw_editics_server_event})
                         .then(obj => (obj != null ? JSON.stringify(obj) : null))
                     """
@@ -542,7 +544,7 @@ class EditicsJSClient:
 
         oo_server_event = await self.js_runtime.async_eval(
             f"""
-            globalThis.__editics_instances['{self.participant_id}'].cookServerEvent({raw_editics_server_event})
+            globalThis.__editics_instances['{self.participant_session_id}'].cookServerEvent({raw_editics_server_event})
                 .then(obj => (obj != null ? JSON.stringify(obj) : null))
             """
         )

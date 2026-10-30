@@ -11,11 +11,11 @@ enterprise proxies).
 
 Editics ASGI routes:
 
-    GET  /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/listen
-    POST /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/send
+    GET  /authenticated/{raw_organization_id}/editics/{realm_id}/{document_id}/listen
+    POST /authenticated/{raw_organization_id}/editics/{realm_id}/{document_id}/send
 
-    GET  /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/initial_content
-    POST /authenticated/{raw_organization_id}/editics/sessions/{realm_id}/{document_id}/initial_content
+    GET  /authenticated/{raw_organization_id}/editics/{realm_id}/{document_id}/initial_content
+    POST /authenticated/{raw_organization_id}/editics/{realm_id}/{document_id}/initial_content
 
 ## Joining a session
 
@@ -23,7 +23,7 @@ Since an editics session lives within the memory of a server, all participants
 must directly connect to it (this differs from the rest of Parsec server where
 the PostgreSQL database is the centralized source of truth).
 
-In practice this means a device needs to use the `editics_join_session`
+In practice, this means a device needs to use the `editics_join_session`
 authenticated API command (TODO: this command is not yet implemented) to obtain
 the URL of the editics server to connect to.
 
@@ -37,16 +37,16 @@ The initial content is uploaded once (using a dedicated route) by the first
 editor connecting.
 
 Any viewer that connects prior to that is expected to obtain the document
-its own way (i.e. get the initial document from the workspace, then convert
-it with x2t), and will do a reload once once the initial content get uploaded
-(see `parsecInitialContentUploaded` server event).
+its own way (i.e. read the document from the workspace, then convert it with x2t),
+and will do a reload once once the initial content gets uploaded (see
+`parsecInitialContentUploaded` server event).
 
 ### format (Content-type `application/vnd.parsec.bundled-initial-content`)
 
 bundle = <key_index as u32 big endian > + <part 0> + <part 1> + ...
 part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
 part_ciphertext = encrypt_for_workspace(key_index, <part_cleartext> )
-part_cleartext = 0x00 + zstd(msgpack([{'name': <media 0 name>, 'content': <media 0 content>}, ...]))
+part_cleartext = 0x00 + zstd(msgpack([{'name': <media 0 path>, 'content': <media 0 content>}, ...]))
 
 First part is always the bin (so that OnlyOffice editor can start loading it
 without waiting for the full response), subsequent parts are medias files.
@@ -54,9 +54,9 @@ without waiting for the full response), subsequent parts are medias files.
 We use a custom format for the outer envelop (i.e. `bundle`):
 - We need a simple format that supports streaming (to load the .bin in OnlyOffice editor asap)
 - Multipart is more complicated and would requires a custom implementation in client
-  (Javascript web API doesn't provide a multipart parser).
+    (Javascript web API doesn't provide a multipart parser).
 - Msgpack is only available in libparsec, but the editics requests are done in
-  the client GUI (cannot pass a `ReadableStream` Javascript object to libparsec).
+    the client GUI (cannot pass a `ReadableStream` Javascript object to libparsec).
 
 The inner envelop (i.e. `part_ciphertext`) uses the regular serialization format v0
 (based on msgpack + zstd) used in Parsec (i.e. certificates, manifests etc.). This
@@ -65,10 +65,13 @@ is because the decryption must be done in libparsec so using this format is simp
 Maximal full document size is limited to 100Mo.
 
 The medias are stored in multiple parts.
-There is no size limit for a part (since a document can be < 100Mo with a single
-very big image in it).
+
+There is no size limit for a part (a document could be slighly < 100Mo with a single
+very big image taking all the space...).
+
 A part can contain a single or multiple media files (useful when there is plenty
-of small media files)
+of small media files).
+
 Parts are for:
 - Server: Parts are stored in PostgreSQL as-is (TODO: not implemented yet), hence
   they are useful a upload/fetch requests to stream the content (instead of having
@@ -100,13 +103,13 @@ from parsec.components.editics import (
     EditicsFetchInitialContentBadOutcome,
     EditicsParticipantListenBadOutcome,
     EditicsParticipantSendBadOutcome,
-    EditicsSessionJoinEventStream,
+    EditicsParticipantSessionEventStream,
     EditicsUploadInitialContentBadOutcome,
 )
 from parsec.editics_protocol import (
     EDITICS_API_VERSION,
     EditicsClientEventAdapter,
-    EditicsParticipantID,
+    EditicsParticipantSessionID,
     EditicsServerEvent,
 )
 
@@ -310,13 +313,13 @@ def unpack_initial_content_bundle(raw: bytes) -> tuple[int, list[bytes]]:
 
 
 @editics_router.post(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/initial_content"
+    "/authenticated/{raw_organization_id}/editics/{raw_realm_id}/{raw_document_id}/initial_content"
 )
 async def editics_upload_initial_content(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
-    participant_id: EditicsParticipantID,
+    psid: EditicsParticipantSessionID,
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -350,7 +353,7 @@ async def editics_upload_initial_content(
         _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
 
     outcome = backend.editics.upload_initial_content(
-        auth_info, document_id, participant_id, (key_index, parts)
+        auth_info, document_id, psid, (key_index, parts)
     )
     match outcome:
         case None:
@@ -365,7 +368,7 @@ async def editics_upload_initial_content(
 
 
 @editics_router.get(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/initial_content"
+    "/authenticated/{raw_organization_id}/editics/{raw_realm_id}/{raw_document_id}/initial_content"
 )
 async def editics_fetch_initial_content(
     raw_organization_id: str,
@@ -395,9 +398,9 @@ async def _editics_listen_auth(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
-    participant_id: EditicsParticipantID,
+    psid: EditicsParticipantSessionID,
     request: Request,
-) -> AsyncGenerator[EditicsSessionJoinEventStream]:
+) -> AsyncGenerator[EditicsParticipantSessionEventStream]:
     backend: Backend = request.app.state.backend
 
     if request.headers.get("Accept") != ACCEPT_TYPE_SSE:
@@ -410,7 +413,7 @@ async def _editics_listen_auth(
     with backend.editics.participant_listen(
         auth_info,
         document_id,
-        participant_id,
+        psid,
     ) as outcome:
         match outcome:
             case MemoryObjectReceiveStream() as channel_receive:
@@ -421,13 +424,13 @@ async def _editics_listen_auth(
 
 
 @editics_router.get(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/listen",
+    "/authenticated/{raw_organization_id}/editics/{raw_realm_id}/{raw_document_id}/listen",
     response_class=EventSourceResponse,
 )
 async def editics_listen(
     # Auth logic may raise an `HTTPException` which is not allowed from within the
     # event source generator. So it must be executed first in this separated context.
-    channel_receive: Annotated[EditicsSessionJoinEventStream, Depends(_editics_listen_auth)],
+    channel_receive: Annotated[EditicsParticipantSessionEventStream, Depends(_editics_listen_auth)],
 ) -> AsyncIterable[EditicsServerEvent]:
     # Note we do not handle SSE's last-event-ID here, this is because OnlyOffice
     # protocol (on which the editics protocol is based) already has its own
@@ -437,13 +440,13 @@ async def editics_listen(
 
 
 @editics_router.post(
-    "/authenticated/{raw_organization_id}/editics/sessions/{raw_realm_id}/{raw_document_id}/send"
+    "/authenticated/{raw_organization_id}/editics/{raw_realm_id}/{raw_document_id}/send"
 )
 async def editics_send(
     raw_organization_id: str,
     raw_realm_id: str,
     raw_document_id: str,
-    participant_id: EditicsParticipantID,
+    psid: EditicsParticipantSessionID,
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -471,7 +474,7 @@ async def editics_send(
     output = await backend.editics.participant_send(
         auth_info,
         document_id,
-        participant_id,
+        psid,
         event,
     )
     match output:
@@ -491,7 +494,7 @@ async def editics_send(
             _editics_abort(EditicsHttpStatus.ParticipantDeviceMismatch, api_version)
         case EditicsParticipantSendBadOutcome.PARTICIPANT_MODE_MISMATCH:
             _editics_abort(EditicsHttpStatus.ParticipantModeMismatch, api_version)
-        case EditicsParticipantSendBadOutcome.PARTICIPANT_ID_MISMATCH:
+        case EditicsParticipantSendBadOutcome.PARTICIPANT_SESSION_ID_MISMATCH:
             _editics_abort(EditicsHttpStatus.ParticipantIdMismatch, api_version)
         case EditicsParticipantSendBadOutcome.READER_MUST_BE_VIEWER:
             _editics_abort(EditicsHttpStatus.ReaderMustBeViewer, api_version)

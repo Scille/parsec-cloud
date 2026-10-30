@@ -35,7 +35,7 @@ from parsec.editics_protocol import (
     EditicsClientEventMessage,
     EditicsClientEventSaveChanges,
     EditicsClientEventUnLockDocument,
-    EditicsParticipantID,
+    EditicsParticipantSessionID,
     EditicsServerEventAuth,
     EditicsServerEventConnectState,
     EditicsServerEventMessage,
@@ -71,7 +71,7 @@ INITIAL_CONTENT_PARTS = [
 ]
 
 
-def _new_participant_id() -> EditicsParticipantID:
+def _new_participant_session_id() -> EditicsParticipantSessionID:
     return uuid4().hex
 
 
@@ -111,7 +111,7 @@ async def test_unsupported_api_version(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     headers = dict(alice.base_headers)
     if bad_api_version is None:
@@ -148,7 +148,7 @@ async def test_compatible_api_version(coolorg: CoolorgRpcClients) -> None:
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     key_index = 1
 
@@ -189,7 +189,7 @@ async def test_missing_authorization(coolorg: CoolorgRpcClients) -> None:
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
 
     # POST initial content
@@ -224,7 +224,7 @@ async def test_realm_not_found_is_indistinguishable_from_realm_without_role(
             who=coolorg.mallory,
             realm_id=realm_id,
             document_id=DOCUMENT_ID,
-            participant_id=_new_participant_id(),
+            participant_session_id=_new_participant_session_id(),
         )
 
         # POST initial content
@@ -260,7 +260,7 @@ async def test_upload_bad_content_type(coolorg: CoolorgRpcClients) -> None:
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
 
     rep = await coolorg.alice.raw_client.post(
@@ -295,7 +295,7 @@ async def test_upload_invalid_bundle(coolorg: CoolorgRpcClients, raw_bundle: byt
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
 
     rep = await coolorg.alice.raw_client.post(
@@ -320,7 +320,7 @@ async def test_upload_payload_too_large(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
 
     with pytest.raises(RpcTransportError) as exc:
@@ -341,7 +341,7 @@ async def test_initial_content_can_be_uploaded_before_any_participant(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     await alice.upload_initial_content(key_index=1, parts=INITIAL_CONTENT_PARTS)
 
@@ -363,7 +363,7 @@ async def test_initial_content_lifecycle(coolorg: CoolorgRpcClients, backend: Ba
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     # Bob joins the session in step 4, but his client is also used before that
     # to attempt a concurrent initial content upload in step 2.
@@ -371,7 +371,7 @@ async def test_initial_content_lifecycle(coolorg: CoolorgRpcClients, backend: Ba
         who=coolorg.bob,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     async with alice.listen():
         # 1. Joining as the first editor: no initial content yet, so Alice is
@@ -432,7 +432,7 @@ async def test_save_changes_refused_before_initial_content(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     async with alice.listen():
         rep = await alice.send(_auth_event(mode="edit"))
@@ -444,7 +444,7 @@ async def test_save_changes_refused_before_initial_content(
         assert exc.value.rep.status_code == EditicsHttpStatus.OriginalContentMissing.value
 
         # ...and nothing was stored
-        (session,) = backend.editics._sessions.values()
+        (session,) = backend.editics._document_sessions.values()
         assert session.changes == []
 
         # Once the initial content is uploaded, the changes are stored again
@@ -454,7 +454,7 @@ async def test_save_changes_refused_before_initial_content(
         assert isinstance(rep, EditicsServerEventUnSaveLock)
         assert rep.index == 0
         assert rep.syncChangesIndex == 1
-        (session,) = backend.editics._sessions.values()
+        (session,) = backend.editics._document_sessions.values()
         assert len(session.changes) == 1
 
 
@@ -466,13 +466,13 @@ async def test_viewer_cannot_upload_initial_content(
         who=coolorg.bob,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     with pytest.raises(RpcTransportError) as exc:
         await bob.upload_initial_content(key_index=1, parts=[b"<Bob's bin ciphertext>"])
     assert exc.value.rep.status_code == EditicsHttpStatus.ReaderMustBeViewer.value
     # The refused upload didn't even create the session
-    assert backend.editics._sessions == {}
+    assert backend.editics._document_sessions == {}
 
 
 async def test_initial_content_upload_is_broadcast_to_viewers(
@@ -512,7 +512,7 @@ async def test_initial_content_upload_is_broadcast_to_viewers(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=DOCUMENT_ID,
-        participant_id=_new_participant_id(),
+        participant_session_id=_new_participant_session_id(),
     )
     async with alice.listen():
         rep = await alice.send(_auth_event(mode="edit"))
@@ -524,7 +524,7 @@ async def test_initial_content_upload_is_broadcast_to_viewers(
             who=coolorg.mallory,
             realm_id=coolorg.wksp1_id,
             document_id=DOCUMENT_ID,
-            participant_id=_new_participant_id(),
+            participant_session_id=_new_participant_session_id(),
         )
         async with mallory.listen():
             rep = await mallory.send(_auth_event(mode="view"))
@@ -536,7 +536,7 @@ async def test_initial_content_upload_is_broadcast_to_viewers(
                 who=coolorg.bob,
                 realm_id=coolorg.wksp1_id,
                 document_id=DOCUMENT_ID,
-                participant_id=_new_participant_id(),
+                participant_session_id=_new_participant_session_id(),
             )
             async with bob.listen():
                 rep = await bob.send(_auth_event(mode="edit"))

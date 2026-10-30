@@ -298,10 +298,10 @@ async def test_bad_content_type_and_accept_headers(alice_editics: EditicsSession
 
 
 async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
-    participant_id_1 = "e562e5fd21794d2b8e485d527d28b900"
-    participant_id_2 = "b146ee2c144c485e924f6082c4ee66bf"
+    participant_session_id_1 = "e562e5fd21794d2b8e485d527d28b900"
+    participant_session_id_2 = "b146ee2c144c485e924f6082c4ee66bf"
 
-    alice_editics.base_params["participant_id"] = participant_id_1
+    alice_editics.base_params["psid"] = participant_session_id_1
 
     # Good initial auth
 
@@ -319,7 +319,7 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
             EditicsClientEventAuth(
                 vlobVersion=1,
                 reconnect=EditicsClientEventAuthReconnect(
-                    participantId=participant_id_1,
+                    participantSessionId=participant_session_id_1,
                     lastOtherSaveTime=None,
                 ),
                 mode="edit",
@@ -332,7 +332,7 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
 
     # ...reconnect with a different participant ID
 
-    alice_editics.base_params["participant_id"] = participant_id_2
+    alice_editics.base_params["psid"] = participant_session_id_2
 
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
@@ -340,13 +340,13 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
         assert rep.indexUser == 2
 
 
-async def test_participant_id_of_another_device_is_refused(
+async def test_participant_session_id_of_another_device_is_refused(
     alice_editics: EditicsSessionClient,
     bob_editics: EditicsSessionClient,
 ) -> None:
     # The participant ID is related to the device that created it: Bob cannot
     # connect with the participant ID of Alice (i.e. impersonation attempt ?)
-    bob_editics.base_params["participant_id"] = alice_editics.participant_id
+    bob_editics.base_params["psid"] = alice_editics.participant_session_id
 
     auth_event = _auth_event(mode="view")
 
@@ -373,7 +373,7 @@ async def test_participant_id_of_another_device_is_refused(
         assert rep.status_code == EditicsHttpStatus.ParticipantDeviceMismatch.value
 
     async with alice_editics.listen():
-        # Participant created on the server but not `auth` yet
+        # ParticipantSession created on the server but not `auth` yet
 
         await assert_bob_refused()
 
@@ -417,7 +417,7 @@ async def test_reconnection_cannot_change_participant_mode(
 
         # ...reconnecting while asking to switch to the view mode is refused
         reconnect = EditicsClientEventAuthReconnect(
-            participantId=alice_editics.participant_id,
+            participantSessionId=alice_editics.participant_session_id,
             lastOtherSaveTime=None,
         )
         async with alice_editics.listen():
@@ -512,8 +512,8 @@ async def test_full_event_channel_closes_the_sse_connection(
 
     # The SSE connection teardown handled Bob as disconnected: he stays in the
     # session (hidden from the participants lists) so he can restore it
-    (session,) = backend.editics._sessions.values()
-    bob_participant = session.participants[bob_editics.participant_id]
+    (session,) = backend.editics._document_sessions.values()
+    bob_participant = session.participants[bob_editics.participant_session_id]
     assert not bob_participant.connected
 
 
@@ -521,18 +521,18 @@ async def test_close_by_last_participant_destroys_session(
     alice_editics: EditicsSessionClient,
     backend: Backend,
 ) -> None:
-    assert backend.editics._sessions == {}
+    assert backend.editics._document_sessions == {}
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
         assert isinstance(rep, EditicsServerEventAuth)
-        assert len(backend.editics._sessions) == 1
+        assert len(backend.editics._document_sessions) == 1
 
         # `close` is a voluntary leave: nothing is expected in reply
         rep = await alice_editics.send(EditicsClientEventClose())
         assert rep is None
 
         # The session only lives through its participants
-        assert backend.editics._sessions == {}
+        assert backend.editics._document_sessions == {}
 
 
 async def test_sse_deco_on_role_change(
@@ -541,9 +541,11 @@ async def test_sse_deco_on_role_change(
     bob_editics: EditicsSessionClient,
 ) -> None:
 
-    def send_event_warning(participant_id: str, message: str) -> EditicsServerEventWarning:
-        assert len(backend.editics._sessions) == 1
-        participant = next(iter(backend.editics._sessions.values())).participants[participant_id]
+    def send_event_warning(participant_session_id: str, message: str) -> EditicsServerEventWarning:
+        assert len(backend.editics._document_sessions) == 1
+        participant = next(iter(backend.editics._document_sessions.values())).participants[
+            participant_session_id
+        ]
         assert participant.sse_channel_sender is not None
         event = EditicsServerEventWarning(code=0, message=message)
         participant.sse_channel_sender.send_nowait(event)
@@ -555,15 +557,15 @@ async def test_sse_deco_on_role_change(
         auth: Literal["view", "edit"] | None = None,
         expected: Literal["deco", "no_deco"] = "deco",
     ):
-        participant_id = uuid4().hex
-        bob_editics.base_params["participant_id"] = participant_id
+        participant_session_id = uuid4().hex
+        bob_editics.base_params["psid"] = participant_session_id
         async with bob_editics.listen():
             if auth:
                 await bob_editics.send(
                     EditicsClientEventAuth(vlobVersion=1, reconnect=None, mode=auth)
                 )
 
-            expected_before_event = send_event_warning(participant_id, "before")
+            expected_before_event = send_event_warning(participant_session_id, "before")
             with backend.event_bus.spy() as spy:
                 await wksp1_alice_gives_role(coolorg, backend, who.user_id, new_role)
                 # Wait for the event that told the editics system about the revocation
@@ -600,7 +602,7 @@ async def test_sse_deco_on_role_change(
 
             else:
                 # Bob is not kicked out: the connection stays functional
-                expected_after_event = send_event_warning(participant_id, "after")
+                expected_after_event = send_event_warning(participant_session_id, "after")
                 event = await bob_editics.recv()
                 assert event == expected_after_event
 
@@ -659,7 +661,7 @@ async def test_delete_index_defensive_handling(
         )
 
     async with alice_editics.listen():
-        session = backend.editics._sessions[
+        session = backend.editics._document_sessions[
             (coolorg.alice.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
         ]
 

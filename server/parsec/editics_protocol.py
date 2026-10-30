@@ -50,18 +50,15 @@ gets an ID like "3_42" (where 3 is the editor's `indexUser`).
 
 
 # Don't type this as UUID to avoid serialization mixing between `UUID.__str__` and `UUID.hex`
-type EditicsParticipantID = Annotated[str, AfterValidator(lambda v: UUID(v).hex)]
+type EditicsParticipantSessionID = Annotated[str, AfterValidator(lambda v: UUID(v).hex)]
 """
-Random UUID controlled by the client and used to identify its connection
-to the session (it must be known before the SSE connection is created, and
-survives transport disconnections so the connection can be restored).
+Random UUID controlled by the client identifying its *participant session*
+(it must be known before the SSE connection is created, and survives transport
+disconnections so the connection can be restored).
 
 This is a purely transport-level concept (the equivalent of the socket.io
-session ID used by the real OnlyOffice server): it only appears in the session
-URLs and as the `auth` reply's `participantId` (which the OnlyOffice client
-echoes back on reconnection). The identity of the participants in the event
-payloads is carried by `EditicsParticipantIdentity` (i.e. `(deviceId, indexUser)`
-pair) instead.
+`sessionId` used by the real OnlyOffice server), the identity of the participants
+in the event payloads is carried by `EditicsParticipantIdentity` instead.
 """
 
 
@@ -72,8 +69,8 @@ and compares it against the `user` fields of the locks/changes/cursors/messages
 it receives.
 
 So we have to follow a similar pattern here (instead of just using
-`EditicsParticipantID` for everything :/ ) by providing device ID + index that
-the client combines to rebuild the composite ID.
+`EditicsParticipantSessionID` for everything :/ ) by providing device ID + index
+that the client combines to rebuild the composite ID.
 """
 
 
@@ -133,7 +130,7 @@ type EditicsExcelRecalcIndex = dict[str, EditicsExcelSheetRecalcIndex]
 
 
 class EditicsClientEventAuthReconnect(BaseModel):
-    participantId: EditicsParticipantID
+    participantSessionId: EditicsParticipantSessionID
     # Last save (i.e. document modification or undo) timestamp the client knows
     # about. The server rejects reconnection if this is not up to date.
     # Set to `None` if the client has not received any save yet.
@@ -280,7 +277,7 @@ class MessageRecord(BaseModel):
 class EditicsServerEventAuth(BaseModel):
     type: Literal["auth"] = "auth"
     participants: list[EditicsParticipantEntry]  # Current participant map
-    participantId: EditicsParticipantID
+    participantSessionId: EditicsParticipantSessionID
     indexUser: EditicsParticipantIndex  # This connection's assigned index
     # Reconnect info (forward-compat; unused in step 0 but kept).
     participantTimeConnect: EditicsTimestampMs  # Server timestamp at connect

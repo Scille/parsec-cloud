@@ -35,9 +35,9 @@ from parsec.editics_protocol import (
     EditicsClientEventUnSaveLock,
     EditicsExcelRecalcIndex,
     EditicsParticipantEntry,
-    EditicsParticipantID,
     EditicsParticipantIdentity,
     EditicsParticipantIndex,
+    EditicsParticipantSessionID,
     EditicsServerEvent,
     EditicsServerEventAuth,
     EditicsServerEventAuthChanges,
@@ -72,7 +72,7 @@ from parsec.types import BadOutcomeEnum
 logger = get_logger()
 
 PER_PARTICIPANT_MAX_BUFFER_EVENTS = 100
-type EditicsSessionJoinEventStream = MemoryObjectReceiveStream[EditicsServerEvent]
+type EditicsParticipantSessionEventStream = MemoryObjectReceiveStream[EditicsServerEvent]
 
 
 @dataclass(slots=True)
@@ -93,7 +93,7 @@ class StoredChange:
 
 
 @dataclass(slots=True)
-class ParticipantAuthed:
+class ParticipantSessionAuthed:
     # Joined while the auth lock was held: the participant is queued to receive
     # its `auth` server event when the lock is released.
     # Note this also marks newcomers that got their `auth` reply right away
@@ -111,17 +111,19 @@ class ParticipantAuthed:
 
 
 @dataclass(slots=True)
-class Participant:
+class ParticipantSession:
     """
-    Participant represents a single OnlyOffice editor connected to a document edition session.
+    Represents a single OnlyOffice editor's *participant session* within a
+    *document session* (see `EditicsDocumentSession`).
 
-    - A device can have multiple participants.
-    - Participant is created by having a client send a `auth` event.
-    - Participant survives SSE disconnection: instead it is only destroyed when the
-      client timeouts or sends a `close` event.
+    - A device can have multiple participant sessions.
+    - Participant sessions are automatically created on client request (typically
+      the client starts by SSE on /listen route).
+    - A participant session survives SSE disconnection: instead it is only destroyed
+      when the client timeouts or sends a `close` event.
     """
 
-    participant_id: EditicsParticipantID
+    participant_session_id: EditicsParticipantSessionID
     index: EditicsParticipantIndex
     user_id: UserID
     device_id: DeviceID
@@ -135,7 +137,7 @@ class Participant:
     # Completed its `auth` handshake: only then does the participant appear in
     # the participants lists (before that, only its SSE connection is
     # registered in the session).
-    authed: ParticipantAuthed | None = None
+    authed: ParticipantSessionAuthed | None = None
 
     # Whether the participant currently has a live SSE connection: a participant
     # whose connection dropped is hidden from the participants lists and loses
@@ -158,7 +160,7 @@ class Participant:
             # The channel is full: close it so the coroutine serving the SSE
             # connection ends.
             logger.warning(
-                f"Closing the SSE connection of participant {self.participant_id}: "
+                f"Closing the SSE connection of participant {self.participant_session_id}: "
                 "its event channel is full"
             )
             self.sse_channel_sender.close()
@@ -196,16 +198,20 @@ class Participant:
 
 
 @dataclass(slots=True)
-class EditicsSession:
+class EditicsDocumentSession:
     """
-    In-memory state of a document edition session
+    In-memory state of a *document session*: the server-side collaborative
+    edition of a given document, torn down once all participant sessions
+    have left.
     """
 
-    # When the file edition session has been started
+    # When the document session has been started
     opened_at: EditicsTimestampMs = field(init=False)  # Initialized in `__post_init__`
-    session_id: UUID = field(default_factory=uuid4)
+    document_session_id: UUID = field(default_factory=uuid4)
     next_participant_index: int = 1  # Monotonic
-    participants: dict[EditicsParticipantID, Participant] = field(default_factory=dict)
+    participants: dict[EditicsParticipantSessionID, ParticipantSession] = field(
+        default_factory=dict
+    )
     chat_messages: list[ChatMessage] = field(default_factory=list)
     # When set, the session is in single-editor mode (i.e. the first editor to
     # connect take this lock).
@@ -217,7 +223,7 @@ class EditicsSession:
     # connecting don't get parked (i.e. they receive a `auth` event even if lock
     # is still held). This is okay since the auth release is already supposed to
     # be under way.
-    auth_lock_holder: EditicsParticipantID | None = None
+    auth_lock_holder: EditicsParticipantSessionID | None = None
     # Ordered change history, can be truncated from a given index on undo (i.e.
     # `saveChanges` event carrying a `deleteIndex`).
     changes: list[StoredChange] = field(default_factory=list)
@@ -234,7 +240,7 @@ class EditicsSession:
     # (i.e. `unSaveLock`/`unLockDocument{isSave:true}`); no expiration (OnlyOffice
     # expires it after 60s). Desynchronized clients are denied the lock until
     # they catch up (see the `isSaveLock` client event handler).
-    save_lock_holder: EditicsParticipantID | None = None
+    save_lock_holder: EditicsParticipantSessionID | None = None
     # TODO: rework comment
     # Block key (the block itself for the document editor, its `guid` for the
     # other editors) -> lock record (the holder being the `user` field).
@@ -267,7 +273,7 @@ class EditicsSession:
         self.opened_at = self.monotonic_now()
 
 
-def _participant_entries(session: EditicsSession) -> list[EditicsParticipantEntry]:
+def _participant_entries(session: EditicsDocumentSession) -> list[EditicsParticipantEntry]:
     return [
         EditicsParticipantEntry(
             indexUser=participant.index,
@@ -300,7 +306,7 @@ _LOCK_RECALC_SKIP_SUB_TYPES = (2, 4)  # InsertColumns, InsertRows
 
 
 def _recalculate_locks(
-    session: EditicsSession,
+    session: EditicsDocumentSession,
     saver_identity: EditicsParticipantIdentity,
     index_cols: EditicsExcelRecalcIndex | None,
     index_rows: EditicsExcelRecalcIndex | None,
@@ -359,7 +365,7 @@ def _recalculate_locks(
 
 
 def _release_participant_locks(
-    session: EditicsSession, participant: Participant
+    session: EditicsDocumentSession, participant: ParticipantSession
 ) -> list[ReleaseLockRecord]:
     """Remove all the region locks held by `participant`, as records ready to
     be embedded in a `saveChanges` broadcast or a standalone `releaseLock`
@@ -379,7 +385,7 @@ def _release_participant_locks(
     return released
 
 
-def _push_changes_backlog(session: EditicsSession, participant: Participant) -> None:
+def _push_changes_backlog(session: EditicsDocumentSession, participant: ParticipantSession) -> None:
     """Push on the participant's SSE channel the backlog of changes that
     occurred since the session was created (delivered as a single `authChanges`
     chunk, RFC §2.2), so a newcomer can catch up before its `auth` reply."""
@@ -400,12 +406,14 @@ def _push_changes_backlog(session: EditicsSession, participant: Participant) -> 
     )
 
 
-def _handshake_auth(session: EditicsSession, participant: Participant) -> EditicsServerEventAuth:
+def _handshake_auth(
+    session: EditicsDocumentSession, participant: ParticipantSession
+) -> EditicsServerEventAuth:
     """Build the newcomer's `auth` reply (its handshake completion, RFC §2.2)."""
     return EditicsServerEventAuth(
         participants=_participant_entries(session),
         indexUser=participant.index,
-        participantId=participant.participant_id,
+        participantSessionId=participant.participant_session_id,
         participantTimeConnect=participant.connected_at,
         openedAt=session.opened_at,
         locks=list(session.region_locks.values()),
@@ -445,11 +453,12 @@ class EditicsParticipantSendBadOutcome(BadOutcomeEnum):
     PARTICIPANT_DEVICE_MISMATCH = auto()
     # A reconnecting participant cannot change the mode it originally joined with
     PARTICIPANT_MODE_MISMATCH = auto()
-    # A reconnecting participant ID mismatch the transport participant ID (i.e.
-    # the one in the listen/send routes URL). This is not supposed to happen and
-    # indicates a buggy client.
-    PARTICIPANT_ID_MISMATCH = auto()
-    # Participant has READER role and tries to edit
+    # The participant session ID mismatches between the transport (i.e. `psid`
+    # parameter in the listen/send URL route) and the `reconnect` field in `auth`
+    # client event.
+    # This is not supposed to happen and indicates a buggy client.
+    PARTICIPANT_SESSION_ID_MISMATCH = auto()
+    # ParticipantSession has READER role and tries to edit
     READER_MUST_BE_VIEWER = auto()
 
 
@@ -458,7 +467,9 @@ class EditicsComponent:
         self._config = config
         self._event_bus = event_bus
         # Sessions key is (organization ID, realm ID, document ID)
-        self._sessions: dict[tuple[OrganizationID, VlobID, VlobID], EditicsSession] = {}
+        self._document_sessions: dict[
+            tuple[OrganizationID, VlobID, VlobID], EditicsDocumentSession
+        ] = {}
         # # (workspace_id, vlob_id, participant_uuid) -> channel
         # self._pending: dict[tuple[VlobID, VlobID, UUID], EditicsSseChannel] = {}
 
@@ -469,7 +480,7 @@ class EditicsComponent:
     def _on_event(self, event: Event) -> None:
         match event:
             case EventOrganizationExpired():
-                for (organization_id, _, _), session in self._sessions.items():
+                for (organization_id, _, _), session in self._document_sessions.items():
                     if organization_id != event.organization_id:
                         continue
                     for participant in session.participants.values():
@@ -478,7 +489,7 @@ class EditicsComponent:
                     break
 
             case EventUserRevokedOrFrozen():
-                for (organization_id, _, _), session in self._sessions.items():
+                for (organization_id, _, _), session in self._document_sessions.items():
                     if organization_id != event.organization_id:
                         continue
                     for participant in session.participants.values():
@@ -489,7 +500,7 @@ class EditicsComponent:
                     break
 
             case EventRealmCertificate():
-                for (organization_id, _, _), session in self._sessions.items():
+                for (organization_id, _, _), session in self._document_sessions.items():
                     if organization_id != event.organization_id:
                         continue
                     for participant in session.participants.values():
@@ -519,7 +530,7 @@ class EditicsComponent:
                                             continue
                                 case "OTHER":
                                     continue
-                        # Participant's new role is not longer enough
+                        # ParticipantSession's new role is not longer enough
                         participant.access_denied_close_sse()
 
                     break
@@ -530,11 +541,11 @@ class EditicsComponent:
     def _get_or_create_session(
         self,
         key: tuple[OrganizationID, VlobID, VlobID],
-    ) -> EditicsSession:
+    ) -> EditicsDocumentSession:
         try:
-            return self._sessions[key]
+            return self._document_sessions[key]
         except KeyError:
-            session = self._sessions[key] = EditicsSession()
+            session = self._document_sessions[key] = EditicsDocumentSession()
             return session
 
     def _get_or_insert_participant(
@@ -542,14 +553,14 @@ class EditicsComponent:
         user_id: UserID,
         device_id: DeviceID,
         realm_role: RealmRole,
-        participant_id: EditicsParticipantID,
-        session: EditicsSession,
-    ) -> Participant | None:
+        participant_session_id: EditicsParticipantSessionID,
+        session: EditicsDocumentSession,
+    ) -> ParticipantSession | None:
         """
         Return `None` if the participant exists but is related to another device
         (i.e. impersonation attempt ?)
         """
-        participant = session.participants.get(participant_id)
+        participant = session.participants.get(participant_session_id)
         if participant is not None:
             if participant.device_id == device_id:
                 return participant
@@ -558,12 +569,12 @@ class EditicsComponent:
 
         participant_index = session.next_participant_index
         session.next_participant_index += 1
-        participant = session.participants[participant_id] = Participant(
+        participant = session.participants[participant_session_id] = ParticipantSession(
             user_id=user_id,
             device_id=device_id,
             realm_role=realm_role,
             index=participant_index,
-            participant_id=participant_id,
+            participant_session_id=participant_session_id,
             connected_at=session.monotonic_now(),
         )
 
@@ -573,7 +584,7 @@ class EditicsComponent:
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-        participant_id: EditicsParticipantID,
+        participant_session_id: EditicsParticipantSessionID,
         encrypted_initial_content: tuple[int, list[Buffer]],
     ) -> EditicsUploadInitialContentBadOutcome | None:
         if not auth_info.realm_role.can_write:
@@ -592,7 +603,7 @@ class EditicsComponent:
         broadcasted_event = EditicsServerEventParsecInitialContentUploaded()
         for other in session.participants.values():
             if (
-                other.participant_id == participant_id
+                other.participant_session_id == participant_session_id
                 or other.authed is None
                 or not other.authed.view
                 or not other.connected
@@ -617,15 +628,15 @@ class EditicsComponent:
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-        participant_id: EditicsParticipantID,
-    ) -> Generator[EditicsSessionJoinEventStream | EditicsParticipantListenBadOutcome]:
+        participant_session_id: EditicsParticipantSessionID,
+    ) -> Generator[EditicsParticipantSessionEventStream | EditicsParticipantListenBadOutcome]:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
         participant = self._get_or_insert_participant(
             auth_info.user_id,
             auth_info.device_id,
             auth_info.realm_role,
-            participant_id,
+            participant_session_id,
             session,
         )
         if participant is None:
@@ -657,8 +668,8 @@ class EditicsComponent:
 
     def _handle_participant_disconnected(
         self,
-        session: EditicsSession,
-        participant: Participant,
+        session: EditicsDocumentSession,
+        participant: ParticipantSession,
     ) -> None:
         """Handle the participant's SSE connection dropping (i.e. the
         transport-level connection was lost, like a websocket dying without a
@@ -673,7 +684,7 @@ class EditicsComponent:
         """
         # The participant may have already left the session (e.g. it sent a
         # `close` client event before closing its SSE connection).
-        if session.participants.get(participant.participant_id) is not participant:
+        if session.participants.get(participant.participant_session_id) is not participant:
             return
 
         # Snapshot of the remaining established editors (i.e. connected
@@ -686,7 +697,7 @@ class EditicsComponent:
             other
             for other in session.participants.values()
             if (
-                other.participant_id != participant.participant_id
+                other.participant_session_id != participant.participant_session_id
                 and other.connected
                 and other.authed is not None
                 and not other.authed.parked
@@ -697,7 +708,7 @@ class EditicsComponent:
             other_authed.parked
             for other in session.participants.values()
             if (
-                other.participant_id != participant.participant_id
+                other.participant_session_id != participant.participant_session_id
                 and (other_authed := other.authed) is not None
             )
         )
@@ -706,7 +717,7 @@ class EditicsComponent:
         # sent: the only participant it is relevant to is the one leaving, see
         # record 609 where the save is cancelled so another participant can
         # save).
-        if session.save_lock_holder == participant.participant_id:
+        if session.save_lock_holder == participant.participant_session_id:
             session.save_lock_holder = None
 
         # Release the region locks held by the participant: the records show no
@@ -717,7 +728,7 @@ class EditicsComponent:
 
         # Release the auth lock if the participant held it: the participants
         # parked behind it can then complete their handshake (record 610).
-        if session.auth_lock_holder == participant.participant_id:
+        if session.auth_lock_holder == participant.participant_session_id:
             session.auth_lock_holder = None
             for other in session.participants.values():
                 if (other_authed := other.authed) and other_authed.parked:
@@ -735,7 +746,7 @@ class EditicsComponent:
             and not remaining_parked
             and len(established_editors) == 1
         ):
-            session.auth_lock_holder = established_editors[0].participant_id
+            session.auth_lock_holder = established_editors[0].participant_session_id
 
         # Broadcast the new participant list (without the departed participant)
         # to the remaining ones (records 607/608/609). Like the OnlyOffice server,
@@ -750,7 +761,7 @@ class EditicsComponent:
             waitAuth=False,
         )
         for other in session.participants.values():
-            if other.participant_id == participant.participant_id:
+            if other.participant_session_id == participant.participant_session_id:
                 continue
             other.send_event(broadcasted_event)
 
@@ -758,7 +769,7 @@ class EditicsComponent:
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-        participant_id: EditicsParticipantID,
+        participant_session_id: EditicsParticipantSessionID,
         event: EditicsClientEvent,
     ) -> EditicsServerEvent | EditicsParticipantSendBadOutcome | None:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
@@ -767,11 +778,11 @@ class EditicsComponent:
             auth_info.user_id,
             auth_info.device_id,
             auth_info.realm_role,
-            participant_id,
+            participant_session_id,
             session,
         )
         if participant is None:
-            # Participant exists but is related to another device (i.e. impersonation attempt ?)
+            # ParticipantSession exists but is related to another device (i.e. impersonation attempt ?)
             return EditicsParticipantSendBadOutcome.PARTICIPANT_DEVICE_MISMATCH
 
         # Special case for participant creation, achieved by the first `auth`
@@ -843,8 +854,8 @@ class EditicsComponent:
                 # restores a participant's session when the client explicitly says so, and
                 # echoing the ID lets it validate the client's bookkeeping.
                 if participant.authed is not None and event.reconnect is not None:
-                    if event.reconnect.participantId != participant_id:
-                        return EditicsParticipantSendBadOutcome.PARTICIPANT_ID_MISMATCH
+                    if event.reconnect.participantSessionId != participant_session_id:
+                        return EditicsParticipantSendBadOutcome.PARTICIPANT_SESSION_ID_MISMATCH
                     if participant.authed.view != participant_view:
                         return EditicsParticipantSendBadOutcome.PARTICIPANT_MODE_MISMATCH
 
@@ -870,8 +881,8 @@ class EditicsComponent:
                     # The OnlyOffice server re-adds a restored participant at the
                     # end of the participants lists (its entry was dropped when
                     # the connection was lost, see the `disconnection` records).
-                    del session.participants[participant_id]
-                    session.participants[participant_id] = participant
+                    del session.participants[participant_session_id]
+                    session.participants[participant_session_id] = participant
                     # Back to single-editor mode: a restored non-viewer takes the
                     # auth lock when no other established editor remains (record
                     # 612: Alice restores while only a viewer is connected, so
@@ -888,14 +899,14 @@ class EditicsComponent:
                             not other_authed.view
                             for other in session.participants.values()
                             if (
-                                other.participant_id != participant.participant_id
+                                other.participant_session_id != participant.participant_session_id
                                 and other.connected
                                 and (other_authed := other.authed) is not None
                                 and not other_authed.parked
                             )
                         )
                     ):
-                        session.auth_lock_holder = participant.participant_id
+                        session.auth_lock_holder = participant.participant_session_id
                     # Push the lock table (the OnlyOffice server pushes it as a
                     # `getLock` event on restoration) to the restorer and the
                     # non-viewer participants: its restore path re-checks the
@@ -909,8 +920,9 @@ class EditicsComponent:
                         lock_table_event = EditicsServerEventGetLock(locks=session.region_locks)
                         for other in session.participants.values():
                             other_authed = other.authed
-                            if other.participant_id != participant.participant_id and (
-                                other_authed is None or other_authed.view
+                            if (
+                                other.participant_session_id != participant.participant_session_id
+                                and (other_authed is None or other_authed.view)
                             ):
                                 continue
                             other.send_event(lock_table_event)
@@ -926,7 +938,7 @@ class EditicsComponent:
                         waitAuth=False,
                     )
                     for other in session.participants.values():
-                        if other.participant_id == participant.participant_id:
+                        if other.participant_session_id == participant.participant_session_id:
                             continue
                         other.send_event(broadcasted_event)
                     return _handshake_auth(session, participant)
@@ -935,7 +947,7 @@ class EditicsComponent:
                 # in the participants lists (i.e. the `auth` replies and
                 # `connectState` broadcasts), before that only its SSE
                 # connection was registered in the session.
-                participant.authed = ParticipantAuthed(view=participant_view)
+                participant.authed = ParticipantSessionAuthed(view=participant_view)
 
                 # Viewers are ignored from the auth lock logic (don't take or wait for lock)
                 if participant_view:
@@ -975,7 +987,7 @@ class EditicsComponent:
                         other_authed.parked
                         for other in session.participants.values()
                         if (
-                            other.participant_id != participant.participant_id
+                            other.participant_session_id != participant.participant_session_id
                             and other.connected
                             and (other_authed := other.authed) is not None
                         )
@@ -1013,7 +1025,7 @@ class EditicsComponent:
                             not other_authed.view
                             for other in session.participants.values()
                             if (
-                                other.participant_id != participant.participant_id
+                                other.participant_session_id != participant.participant_session_id
                                 and other.connected
                                 and (other_authed := other.authed) is not None
                             )
@@ -1022,7 +1034,7 @@ class EditicsComponent:
                             # We are the first non-viewer connecting to the session,
                             # so it switches to single-editor mode with us as the
                             # auth lock holder.
-                            session.auth_lock_holder = participant.participant_id
+                            session.auth_lock_holder = participant.participant_session_id
 
                         reply = _handshake_auth(session, participant)
                         _push_changes_backlog(session, participant)
@@ -1040,7 +1052,10 @@ class EditicsComponent:
                     waitAuth=isinstance(reply, EditicsServerEventWaitAuth),
                 )
                 for other_participant in session.participants.values():
-                    if other_participant.participant_id == participant.participant_id:
+                    if (
+                        other_participant.participant_session_id
+                        == participant.participant_session_id
+                    ):
                         continue
                     other_participant.send_event(broadcasted_event)
 
@@ -1076,7 +1091,10 @@ class EditicsComponent:
                 # broadcast to the auth in the response since it is faster.
                 broadcasted_event = EditicsServerEventMessage(messages=[message_record])
                 for other_participant in session.participants.values():
-                    if other_participant.participant_id == participant.participant_id:
+                    if (
+                        other_participant.participant_session_id
+                        == participant.participant_session_id
+                    ):
                         continue
                     other_participant.send_event(broadcasted_event)
                 return broadcasted_event
@@ -1105,7 +1123,7 @@ class EditicsComponent:
                 # `isSave` asks to cancel an in-progress save: release the save
                 # lock and acknowledge with the cancellation sentinel values
                 # (i.e. `None`, where the OnlyOffice protocol uses `-1`).
-                if event.isSave and session.save_lock_holder == participant.participant_id:
+                if event.isSave and session.save_lock_holder == participant.participant_session_id:
                     session.save_lock_holder = None
                     reply = EditicsServerEventUnSaveLock(
                         index=None, time=None, syncChangesIndex=None
@@ -1163,7 +1181,8 @@ class EditicsComponent:
                 for other_participant in session.participants.values():
                     other_authed = other_participant.authed
                     if (
-                        other_participant.participant_id == participant.participant_id
+                        other_participant.participant_session_id
+                        == participant.participant_session_id
                         or other_authed is None
                         or other_authed.view
                     ):
@@ -1186,7 +1205,7 @@ class EditicsComponent:
                 # anymore anyway, given broadcasts only target the participants present
                 # in the session).
 
-                del session.participants[participant_id]
+                del session.participants[participant_session_id]
 
                 # Snapshot of the remaining established editors (i.e. connected
                 # participants that completed their handshake and are not waiting
@@ -1212,7 +1231,7 @@ class EditicsComponent:
 
                 # Release the save lock if the leaving participant held it (no `unSaveLock`
                 # is sent: the only participant it is relevant to is the one leaving!).
-                if session.save_lock_holder == participant_id:
+                if session.save_lock_holder == participant_session_id:
                     session.save_lock_holder = None
 
                 # Release the region locks if the leaving participant held some: the
@@ -1226,7 +1245,7 @@ class EditicsComponent:
                 # Release the auth lock if the leaving participant held it: the
                 # participants parked behind the lock can then complete their
                 # handshake (like for a `unLockDocument{unlock:true}`, RFC §2.2).
-                if session.auth_lock_holder == participant_id:
+                if session.auth_lock_holder == participant_session_id:
                     session.auth_lock_holder = None
                     for other in session.participants.values():
                         if (other_authed := other.authed) and other_authed.parked:
@@ -1242,7 +1261,7 @@ class EditicsComponent:
                     and not remaining_parked
                     and len(established_editors) == 1
                 ):
-                    session.auth_lock_holder = established_editors[0].participant_id
+                    session.auth_lock_holder = established_editors[0].participant_session_id
 
                 # Broadcast the new participant list to the remaining participants
                 # (including the ones just un-parked, like any other participant).
@@ -1263,7 +1282,7 @@ class EditicsComponent:
                 # anyway, given a participant always loads the document from the vlob
                 # and never from the session).
                 if not session.participants:
-                    del self._sessions[session_key]
+                    del self._document_sessions[session_key]
 
                 # Fire-and-forget: nothing left to reply to the leaving client.
                 return None
@@ -1278,9 +1297,9 @@ class EditicsComponent:
                 desynchronized = event.syncChangesIndex not in (0, len(session.changes))
                 if not desynchronized and session.save_lock_holder in (
                     None,
-                    participant.participant_id,
+                    participant.participant_session_id,
                 ):
-                    session.save_lock_holder = participant.participant_id
+                    session.save_lock_holder = participant.participant_session_id
                     return EditicsServerEventSaveLock(lockedBySomebodyElse=False)
                 else:
                     return EditicsServerEventSaveLock(lockedBySomebodyElse=True)
@@ -1303,8 +1322,8 @@ class EditicsComponent:
                 # Saving requires the save lock: OnlyOffice (re)acquires it at
                 # the start of `saveChanges`, so do the same as a safety net.
                 if session.save_lock_holder is None:
-                    session.save_lock_holder = participant.participant_id
-                elif session.save_lock_holder != participant.participant_id:
+                    session.save_lock_holder = participant.participant_session_id
+                elif session.save_lock_holder != participant.participant_session_id:
                     # Another participant holds the save lock, this should not
                     # happen given the client is expected to acquire the lock
                     # with `isSaveLock` first...
@@ -1389,14 +1408,17 @@ class EditicsComponent:
                     locks=released_locks,
                 )
                 for other_participant in session.participants.values():
-                    if other_participant.participant_id == participant.participant_id:
+                    if (
+                        other_participant.participant_session_id
+                        == participant.participant_session_id
+                    ):
                         continue
                     other_participant.send_event(broadcasted_event)
 
                 if event.endSaveChanges:
                     # Save complete: release the save lock and reply to the saver
                     # with its new save point (RFC §2.2).
-                    if session.save_lock_holder == participant.participant_id:
+                    if session.save_lock_holder == participant.participant_session_id:
                         session.save_lock_holder = None
                     return EditicsServerEventUnSaveLock(
                         index=changes_index,
@@ -1417,7 +1439,7 @@ class EditicsComponent:
                 # Cancel the in-progress save: release the save lock and reply
                 # with the cancellation sentinel values (i.e. `None`, where
                 # the OnlyOffice protocol uses `-1`, RFC §2.2).
-                if session.save_lock_holder == participant.participant_id:
+                if session.save_lock_holder == participant.participant_session_id:
                     session.save_lock_holder = None
                 return EditicsServerEventUnSaveLock(index=None, time=None, syncChangesIndex=None)
 
@@ -1435,7 +1457,10 @@ class EditicsComponent:
                     ],
                 )
                 for other_participant in session.participants.values():
-                    if other_participant.participant_id == participant.participant_id:
+                    if (
+                        other_participant.participant_session_id
+                        == participant.participant_session_id
+                    ):
                         continue
                     other_participant.send_event(broadcasted_event)
                 return None

@@ -18,7 +18,7 @@ from uuid import NAMESPACE_URL, uuid5
 import anyio
 
 from parsec._parsec import RealmRole, VlobID
-from parsec.editics_protocol import EditicsParticipantID
+from parsec.editics_protocol import EditicsParticipantSessionID
 from tests.common import (
     AuthenticatedRpcClient,
     Backend,
@@ -51,7 +51,7 @@ DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
 #
 # In editics protocol however:
 # - Session and participant are merged together (hence `sessionId` == `participant.id`).
-# - Participant ID is a UUID chosen client-side (needed since it must be known before
+# - ParticipantSession ID is a UUID chosen client-side (needed since it must be known before
 #   creating the SSE connection).
 # - We still have OnlyOffice's `participant.id` composite ID, but call it participant
 #   identity.
@@ -63,7 +63,7 @@ DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
 # OnlyOffice session IDs, so that a restore (whose `auth` carries the previous
 # `sessionId`) naturally reuses the restored participant's ID, while a rejoin with a
 # fresh editor (whose `auth` carries a `null` `sessionId`) gets its own new ID.
-def _participant_id_from_session_id(session_id: str) -> EditicsParticipantID:
+def _participant_session_id_from_session_id(session_id: str) -> EditicsParticipantSessionID:
     return uuid5(NAMESPACE_URL, session_id).hex
 
 
@@ -120,10 +120,10 @@ class RecordEvent:
     participant: str
     # Special events types:
     # - `ws-open` (direction `transport`): open the transport-level connection,
-    #   its payload carries the participant ID to use (`participant_id` field)
-    # - `ws-close` (direction `transport`): close the transport-level connection
+    #   its payload carries the participant session ID to use.
+    # - `ws-close` (direction `transport`): close the transport-level connection.
     # - `license`: in our OnlyOffice fork, the client generates its own license
-    #   event instead of waiting for the server to send it
+    #   event instead of waiting for the server to send it.
     # - `documentOpen`: in our OnlyOffice fork, this event is never sent by the server
     #   and instead is injected by the client when it receives the server `auth` event.
     type: Literal["license", "documentOpen", "ws-open", "ws-close"] | str
@@ -140,7 +140,7 @@ class RecordEvent:
 
 def _parse_record(
     record_path: Path,
-) -> tuple[int, list[RecordEvent], dict[EditicsParticipantID, str]]:
+) -> tuple[int, list[RecordEvent], dict[EditicsParticipantSessionID, str]]:
     """
     Parse the record's events, returning the editor type (0=Word, 1=Spreadsheet,
     2=Presentation), the events, and a label per participant ID (for readable
@@ -203,30 +203,35 @@ def _parse_record(
             )
         stint_of_event.append(per_participant_stint_count[raw_event.participant])
 
-    # Each stint's participant ID is derived from the OnlyOffice session ID
-    # carried by its `auth` events (both the request of a restore and the reply
-    # of a fresh join carry it, and a restore's request/reply agree on it).
-    stint_participant_ids: dict[tuple[str, int], EditicsParticipantID] = {}
+    # Each stint's participant session ID is derived from the OnlyOffice session ID
+    # carried by its `auth` client/server events.
+    stint_participant_session_ids: dict[tuple[str, int], EditicsParticipantSessionID] = {}
     for raw_event, stint in zip(raw_events, stint_of_event, strict=True):
         if raw_event.type != "auth":
             continue
-        session_id = (
-            raw_event.payload.get("sessionId") if isinstance(raw_event.payload, dict) else None
+        session_id = raw_event.payload["sessionId"]
+        # `sessionId` is mandarory in `auth` server event and optional in client event.
+        # Some reconnection tests don't return a server event, and in this case
+        # the client event must contain the `sessionId`.
+        if raw_event.direction == "server-to-client":
+            assert session_id is not None
+        elif session_id is None:
+            continue
+        stint_participant_session_ids.setdefault(
+            (raw_event.participant, stint), _participant_session_id_from_session_id(session_id)
         )
-        if session_id is not None:
-            stint_participant_ids.setdefault(
-                (raw_event.participant, stint), _participant_id_from_session_id(session_id)
-            )
     for participant, stint in sorted(opened_stints):
-        assert (participant, stint) in stint_participant_ids, (
+        assert (participant, stint) in stint_participant_session_ids, (
             f"No `auth` event with a session ID found for {participant} stint {stint}"
         )
 
     # Reverse label map (participant ID -> human readable label), used to make the
     # test failure messages readable (the derived participant IDs are opaque).
-    participant_id_labels: dict[EditicsParticipantID, str] = {}
-    for (participant, stint), participant_id in stint_participant_ids.items():
-        participant_id_labels.setdefault(participant_id, f"{participant} stint {stint}")
+    participant_session_id_labels: dict[EditicsParticipantSessionID, str] = {}
+    for (participant, stint), participant_session_id in stint_participant_session_ids.items():
+        participant_session_id_labels.setdefault(
+            participant_session_id, f"{participant} stint {stint}"
+        )
 
     # Pass 3: patch the payloads.
 
@@ -235,7 +240,9 @@ def _parse_record(
         if raw_event.direction == "transport":
             if raw_event.type == "ws-open":
                 payload: Any = {
-                    "participant_id": stint_participant_ids[(raw_event.participant, stint)]
+                    "participant_session_id": stint_participant_session_ids[
+                        (raw_event.participant, stint)
+                    ]
                 }
             else:  # ws-close (the payload is the close reason, e.g. `client close, code 1001`)
                 payload = {"reason": raw_event.payload}
@@ -256,7 +263,7 @@ def _parse_record(
         # client turns into the `reconnect` info); a `null` `sessionId` (a fresh join)
         # is kept as-is, since this is what tells the server this is not a restore.
         if isinstance(payload, dict) and payload.get("sessionId") is not None:
-            payload["sessionId"] = _participant_id_from_session_id(payload["sessionId"])
+            payload["sessionId"] = _participant_session_id_from_session_id(payload["sessionId"])
 
         # Patch the non-deterministic fields from the server events
         if raw_event.direction == "server-to-client":
@@ -355,7 +362,7 @@ def _parse_record(
         if event.type == "auth" and event.direction == "client-to-server"
     )
 
-    return editor_type, events, participant_id_labels
+    return editor_type, events, participant_session_id_labels
 
 
 def _compare_server_event(event_from_record: OOEvent, actual_event: OOEvent) -> bool:
@@ -383,7 +390,7 @@ async def _do_test_record(
     The transport-level rows (`ws-open`/`ws-close`) open/close the SSE connection
     of the corresponding participant's JS client.
     """
-    editor_type, events, participant_id_labels = _parse_record(record_path)
+    editor_type, events, participant_session_id_labels = _parse_record(record_path)
 
     # Originally, Bob is READER and Mallory is not part of the workspace. Correct
     # those roles if needed.
@@ -438,13 +445,13 @@ async def _do_test_record(
             # 1) Handle client connect/disconnect
 
             if event.direction == "transport" and event.type == "ws-open":
-                participant_id = event.payload["participant_id"]
+                participant_session_id = event.payload["participant_session_id"]
 
                 if js_client is not None:
                     # Sanity check: we must have been disconnected if we reconnect reconnect
                     assert not js_client.connected
                     # Re-use the JS client if in case of a session re-join
-                    if js_client.participant_id != participant_id:
+                    if js_client.participant_session_id != participant_session_id:
                         js_client = None
 
                 if js_client is None:
@@ -453,7 +460,7 @@ async def _do_test_record(
                             who=per_participant_rpc_client[participant],
                             realm_id=coolorg.wksp1_id,
                             document_id=DOCUMENT_ID,
-                            participant_id=participant_id,
+                            participant_session_id=participant_session_id,
                             editor_type=editor_type,
                         )
                     )
@@ -501,7 +508,7 @@ async def _do_test_record(
                     # the patch is ad-hoc per-test since it depends of what is
                     # expected in the scenario)
                     if event.type == "auth" and event.payload["lastOtherSaveTime"] != -1:
-                        session = backend.editics._sessions[
+                        session = backend.editics._document_sessions[
                             (coolorg.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
                         ]
                         if record_path.name == "613_disconnect_reconnect_applied_changes.md":
@@ -531,7 +538,7 @@ async def _do_test_record(
                     # However the host page is supposed to upload the document
                     # initial content right after the `auth`, so we simulate this here.
                     if event.type == "auth" and event.payload["mode"] == "edit":
-                        session = backend.editics._sessions[
+                        session = backend.editics._document_sessions[
                             (coolorg.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
                         ]
                         if session.encrypted_initial_content is None:
@@ -567,17 +574,19 @@ async def _do_test_record(
                             blue = "\x1b[34m"
                             no_color = "\x1b[0;0m"
                             exc.add_note(
-                                f"{pink}Participant {blue}{participant}{pink} was waiting for event {blue}{event.type}{pink}:{no_color}\n{textwrap.indent(pprint.pformat(event.payload), prefix='\t')}"
+                                f"{pink}ParticipantSession {blue}{participant}{pink} "
+                                f"was waiting for event {blue}{event.type}{pink}:{no_color}\n"
+                                f"{textwrap.indent(pprint.pformat(event.payload), prefix='\t')}"
                             )
-                            if participant_id_labels:
+                            if participant_session_id_labels:
                                 labels = ", ".join(
-                                    f"{blue}{label}{no_color}={participant_id}"
-                                    for participant_id, label in sorted(
-                                        participant_id_labels.items(),
+                                    f"{blue}{label}{no_color}={participant_session_id}"
+                                    for participant_session_id, label in sorted(
+                                        participant_session_id_labels.items(),
                                         key=lambda item: item[1],
                                     )
                                 )
-                                exc.add_note(f"{pink}Participant IDs:{no_color} {labels}")
+                                exc.add_note(f"{pink}ParticipantSession IDs:{no_color} {labels}")
 
                             display_unacknowledged_events = ""
                             for (
