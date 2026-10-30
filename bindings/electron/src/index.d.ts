@@ -193,20 +193,6 @@ export interface ClientConfig {
 }
 
 
-export interface ClientGetOutboundSyncBacklog {
-    totalPendingEntriesForStartedWorkspaces: number
-    totalPendingBytesForStartedWorkspaces: number
-    perWorkspace: Array<ClientGetOutboundSyncBacklogItem>
-}
-
-
-export interface ClientGetOutboundSyncBacklogItem {
-    realmId: string
-    pendingEntries: number
-    pendingBytes: number
-}
-
-
 export interface ClientInfo {
     organizationAddr: string
     organizationId: string
@@ -1892,6 +1878,13 @@ export interface ClientEventWorkspaceOpsOutboundSyncStarted {
     realm_id: string
     entry_id: string
 }
+export interface ClientEventWorkspaceOutboundSyncBacklog {
+    tag: "ClientEventWorkspaceOutboundSyncBacklog"
+    number_of_files_to_sync: number
+    size_to_sync: number
+    realm_id: string
+    entry_currently_being_synced: string | null
+}
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: "ClientEventWorkspaceWatchedEntryChanged"
     realm_id: string
@@ -1931,6 +1924,7 @@ export type ClientEvent =
   | ClientEventWorkspaceOpsOutboundSyncDone
   | ClientEventWorkspaceOpsOutboundSyncProgress
   | ClientEventWorkspaceOpsOutboundSyncStarted
+  | ClientEventWorkspaceOutboundSyncBacklog
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
 
@@ -5953,9 +5947,6 @@ export function clientGetAsyncEnrollmentAddr(
 export function clientGetOrganizationBootstrapDate(
     client_handle: number
 ): Promise<Result<number, ClientGetOrganizationBootstrapDateError>>
-export function clientGetOutboundSyncBacklog(
-    client: number
-): Promise<Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError>>
 export function clientGetSelfShamirRecovery(
     client_handle: number
 ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>

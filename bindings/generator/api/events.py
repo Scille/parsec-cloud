@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from .common import (
+    U64,
     AccessToken,
     ApiVersion,
     DateTime,
@@ -68,6 +69,12 @@ class ClientEvent(Variant):
     class WorkspaceOpsInboundSyncDone:
         realm_id: VlobID
         entry_id: VlobID
+
+    class WorkspaceOutboundSyncBacklog:
+        number_of_files_to_sync: U64
+        size_to_sync: U64
+        realm_id: VlobID
+        entry_currently_being_synced: VlobID | None
 
     class InvitationChanged:
         token: AccessToken

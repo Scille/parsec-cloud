@@ -119,6 +119,12 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
         p_assert_eq!(e.realm_id, wksp1_id);
         p_assert_eq!(e.entry_id, parent_id);
     });
+    // Renaming may have changed the confinement status of the child, hence it
+    // is also notified as needing sync (no-op if it has no local change)
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, dir1_id);
+    });
 
     p_assert_eq!(ls!(ops, &base_path_str).await, ["dir2", "dir3"]);
     p_assert_eq!(ls!(ops, &dir2_str).await, ["subdir1"]);
@@ -132,6 +138,12 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
         p_assert_eq!(e.realm_id, wksp1_id);
         p_assert_eq!(e.entry_id, parent_id);
+    });
+    // Renaming may have changed the confinement status of the child, hence it
+    // is also notified as needing sync (no-op if it has no local change)
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, dir3_id);
     });
 
     p_assert_eq!(ls!(ops, &base_path_str).await, ["dir2"]);

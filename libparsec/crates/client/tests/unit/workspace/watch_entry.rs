@@ -22,6 +22,7 @@ async fn ok_local_change(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
@@ -95,6 +96,12 @@ async fn ok_local_change(env: &TestbedEnv) {
         p_assert_eq!(e.realm_id, wksp1_id);
         p_assert_eq!(e.entry_id, wksp1_foo_id);
     });
+    // Renaming may have changed the confinement status of the child, hence it
+    // is also notified as needing sync (no-op if it has no local change)
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, wksp1_foo_spam_id);
+    });
 
     // Subsequent change is ignored
 
@@ -108,6 +115,12 @@ async fn ok_local_change(env: &TestbedEnv) {
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
         p_assert_eq!(e.realm_id, wksp1_id);
         p_assert_eq!(e.entry_id, wksp1_foo_id);
+    });
+    // Renaming may have changed the confinement status of the child, hence it
+    // is also notified as needing sync (no-op if it has no local change)
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, wksp1_foo_spam_id);
     });
     spy.assert_no_events();
 
