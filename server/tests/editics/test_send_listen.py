@@ -36,13 +36,7 @@ from tests.common import (
     wksp1_alice_gives_role,
 )
 
-# Any document ID would do here: the editics session is created when the first
-# participant joins, and the server doesn't check that the document vlob
-# actually exists.
 DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
-
-# The editics routes negotiate the API version through the `Api-Version` header
-API_VERSION = str(EDITICS_API_VERSION)
 
 
 def _auth_event(*, mode: Literal["view", "edit"]) -> EditicsClientEventAuth:
@@ -89,7 +83,7 @@ async def test_unsupported_api_version(
         content=_auth_event(mode="edit").model_dump_json(),
     )
     assert rep.status_code == EditicsHttpStatus.UnsupportedApiVersion.value
-    assert rep.headers["Supported-Api-Versions"] == API_VERSION
+    assert rep.headers["Supported-Api-Versions"] == str(EDITICS_API_VERSION)
     # No version could be settled, hence no `Api-Version` reply header
     assert "Api-Version" not in rep.headers
 
@@ -103,7 +97,7 @@ async def test_unsupported_api_version(
         headers={**headers, "Accept": "text/event-stream"},
     )
     assert rep.status_code == EditicsHttpStatus.UnsupportedApiVersion.value
-    assert rep.headers["Supported-Api-Versions"] == API_VERSION
+    assert rep.headers["Supported-Api-Versions"] == str(EDITICS_API_VERSION)
     assert "Api-Version" not in rep.headers
 
 
@@ -124,7 +118,7 @@ async def test_compatible_api_version(alice_editics: EditicsSessionClient) -> No
         content=_auth_event(mode="view").model_dump_json(),
     )
     assert rep.status_code == 200
-    assert rep.headers["Api-Version"] == API_VERSION
+    assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
 
     # Listen
 
@@ -285,7 +279,7 @@ async def test_bad_content_type_and_accept_headers(alice_editics: EditicsSession
         content=_auth_event(mode="edit").model_dump_json(),
     )
     assert rep.status_code == EditicsHttpStatus.BadContentTypeOrInvalidBody.value
-    assert rep.headers["Api-Version"] == API_VERSION
+    assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
     assert rep.json()["detail"] == {"detail": "Bad content type or invalid body"}
 
     # Listen (Accept)
@@ -296,7 +290,7 @@ async def test_bad_content_type_and_accept_headers(alice_editics: EditicsSession
         headers={**alice_editics.base_headers, "Accept": "application/json"},
     )
     assert rep.status_code == EditicsHttpStatus.BadAcceptType.value
-    assert rep.headers["Api-Version"] == API_VERSION
+    assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
     assert rep.json()["detail"] == {"detail": "Bad accept type"}
 
 
