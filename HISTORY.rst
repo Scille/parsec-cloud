@@ -8,6 +8,21 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.11.1-a.0.dev.20756+3c72797 (2026-10-30)
+-------------------------------------------------
+
+Features
+~~~~~~~~
+
+* [CLI] Remove `--password-stdin`, the CLI now auto-detect when it should use
+  interactive prompt over reading stdin
+  (`#13666 <https://github.com/Scille/parsec-cloud/issues/13666>`__)
+
+* Added a workspace details modal, available from the workspace context menu
+  (`#13590 <https://github.com/Scille/parsec-cloud/issues/13590>`__)
+
+
+
 Parsec v3.11.0 (2026-10-28)
 ---------------------------
 

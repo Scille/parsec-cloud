@@ -159,7 +159,7 @@ const options = {
   appId: 'ParsecCloud.Parsec.Parsec.3',
   productName: 'Parsec',
   artifactName: ARTIFACT_NAME,
-  buildVersion: '3.11.1-a.0+dev',
+  buildVersion: '3.11.1-a.0.dev.20756+3c72797',
   protocols: {
     name: 'Parsec-v3',
     schemes: [PARSEC_SCHEME],

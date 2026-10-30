@@ -1,7 +1,7 @@
 {
     "name": "libparsec_bindings_web",
     "private": true,
-    "version": "3.11.1-a.0+dev",
+    "version": "3.11.1-a.0.dev.20756+3c72797",
     "license": "AGPL-3.0-only",
     "scripts": {
         "build": "node scripts/build.js",
