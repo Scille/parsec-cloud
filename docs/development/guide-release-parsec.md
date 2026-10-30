@@ -140,56 +140,15 @@ The script will:
 After the script has finished and pushed the release branch & tag to the repository,
 this will trigger the `releaser` workflow that will:
 
-1. Create the release as a draft in <https://github.com/Scille/parsec-cloud/releases>.
+1. Create the release and publish it either as **pre-release** (release candidates or alphas) or as **latest** in <https://github.com/Scille/parsec-cloud/releases>.
 2. Package the server code in Python wheels.
-3. Package the client code in multiple formats (Linux: AppImage/Snap, Windows: unsigned MSI, MacOS: DMG)
+3. Package the client code in multiple formats (Linux: AppImage/Snap, Windows: MSI, MacOS: DMG)
 
-#### After the release build script: Windows signing
-
-> [!IMPORTANT]
-> This step requires specific access that not all team members have. Before proceeding, make sure you have:
-> - **Windows** OS
-> - **Azure Trusted Signing credentials** — the `AZURE_CLIENT_SECRET` of the signing app registration
->   (ask the DevOps team), plus access to the Azure resources (tenant, client id, endpoint, account
->   name & certificate profile name, provided as environment variables, see below)
-> - **.NET SDK** installed (e.g. `winget install Microsoft.DotNet.SDK.8`) — required by the
->   `TrustedSigning` PowerShell module
->
-> If you don't have these, delegate this step to a team member who does.
-
-Once the workflow is done, Windows builds require to be manually signed. This is done by running a script:
-
-```shell
-python misc/sign_windows_release.py --version X.Y.Z
-```
-
-This command will download the GUI & CLI artifacts, sign them, and re-upload the result on the release.
-
-Signing is done through **Azure Trusted Signing** (the same service the CI now uses to sign the
-Windows electron installers). Authentication uses the standard Azure environment variables, and the
-Trusted Signing resources are provided through the same variables used by the electron packaging:
-
-```shell
-export AZURE_TENANT_ID=<tenant id>
-export AZURE_CLIENT_ID=<client id>
-export AZURE_CLIENT_SECRET=<client secret>
-export AZURE_TRUSTED_SIGNING_ENDPOINT=https://weu.codesigning.azure.net/
-export AZURE_TRUSTED_SIGNING_ACCOUNT_NAME=parsec-cloud-signing
-export AZURE_TRUSTED_SIGNING_PROFILE_NAME=parsec-cloud-release-profile
-```
-
-> [!NOTE]
-> On first use, the `TrustedSigning` PowerShell module and its dependencies (signtool,
-> Microsoft.Trusted.Signing.Client) are downloaded & installed automatically for the current user.
-> This requires the .NET SDK to be available in `PATH`.
-
-#### After the release build script: publishing
-
-With the release published, this will trigger the workflow `publish` that will upload the generated python wheels to `pypi`.
+With the release automatically published, the workflow `publish` will be triggered and upload the generated python wheels to `pypi`.
 
 ### Continue stabilizing the release
 
-When we prepare a release we first mark-it as a pre-release denoted by the release candidate part of the version (the `-rc.N` thingy).
+When we prepare a release it is marked as a pre-release denoted by the release candidate part of the version (the `-rc.N` suffix).
 Once a pre-release is published, it goes through a test campaign to assess its stability.
 
 If the tests suite reveal that the current release candidate is stable, you can go to next step [Once the release is stable](#once-the-release-is-stable)
@@ -215,7 +174,8 @@ Once the release candidate is considered stable and ready for a stable (that the
 python misc/releaser.py build --version X.Y.Z
 ```
 
-Then follow the remaining steps described in [after the release build script](#after-the-release-build-script-outcome)
+> [!IMPORTANT]
+> This will automatically publish the release and set it as **Latest**, making the update available to all users.
 
 Once the stable release is published, [acknowledging it](#acknowledge-the-release) is **mandatory**.
 
@@ -270,17 +230,19 @@ in the release branch that are not yet in `master`.
 
 ```mermaid
 flowchart TD;
-  A{Create release}
-  B[Draft release created]
-  subgraph "manual" [User manual action]
-    E(Publish the release)
+  subgraph "manualA" [User manual action]
+    A{Create release}
   end
-  F["The python wheels are published on <code>pypi</code>"]
-  G(Acknowledge the release)
+  B["(Pre-)release is published on GitHub"]
+  C["The python wheels are published on <code>pypi</code>"]
+  subgraph "manualD" [User manual action]
+    D(Acknowledge the release)
+  end
 
-  A-->B-->manual-->F-->G
-
-  click B "https://github.com/Scille/parsec-cloud/releases?q=draft%3Atrue" "Parsec drafted releases"
+  manualA-->B
+  manualA-->C
+  B-->manualD
+  C-->manualD
 ```
 
 ## Release patch version
