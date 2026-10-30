@@ -30,6 +30,8 @@ from tests.common import (
 
 RECORDS_DIR = Path(__file__).resolve().parent / "records"
 
+# Each record is generated using `docs/rfcs/1030-collaborative-editics/oo-protocol-monitor`,
+# which exposes those three users.
 DEVICE_ID_TO_PARTICIPANT = {
     "de10a11cec0010000000000000000000": "Alice",  # alice@dev1
     "de10808c001000000000000000000000": "Bob",  # bob@dev1
@@ -43,14 +45,16 @@ DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
 # - `connectionId`: transport-level connection (i.e. websocket connection ID)
 # - `sessionId`: logical session surviving websocket reconnects
 #   (initially = first socket id; reused on restore).
-# - `participantId`: server's primary per-participant key, its lifespan
+# - `participant.id`: server's primary per-participant key, its lifespan
 #   is equal to the logical session. It is a composite ID made of `<idOriginal><indexUser>`
 #   (e.g. `de10a11cec00100000000000000000001` for Alice with `indexUser` 1).
 #
 # In editics protocol however:
-# - Session and participant are merged together (hence `sessionId` == `participantId`).
-# - Participant ID is chosen client-side (needed since it must be known before creating
-#   the SSE connection).
+# - Session and participant are merged together (hence `sessionId` == `participant.id`).
+# - Participant ID is a UUID chosen client-side (needed since it must be known before
+#   creating the SSE connection).
+# - We still have OnlyOffice's `participant.id` composite ID, but call it participant
+#   identity.
 
 
 # Since the participant ID is chosen client-side, the harness must decide which ID to
