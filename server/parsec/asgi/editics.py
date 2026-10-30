@@ -238,8 +238,8 @@ async def _editics_get_initial_content_parts_with_limit_check(
             current_data: list[bytes | memoryview[int]]
             if pending_data:
                 current_data = [pending_data]
-                pending_data = memoryview(b"")
                 remaining_data_size = n - len(pending_data)
+                pending_data = memoryview(b"")
             else:
                 current_data = []
                 remaining_data_size = n
@@ -256,8 +256,9 @@ async def _editics_get_initial_content_parts_with_limit_check(
                     return b"".join(current_data)
                 elif remaining_data_size < 0:
                     # We have too much data!
-                    pending_data = memoryview[int](current_data[-1])[remaining_data_size:]
-                    current_data[-1] = current_data[-1][:remaining_data_size]
+                    last_chunk = memoryview[int](current_data[-1])
+                    pending_data = last_chunk[remaining_data_size:]
+                    current_data[-1] = last_chunk[:remaining_data_size]
                     return b"".join(current_data)
 
     try:

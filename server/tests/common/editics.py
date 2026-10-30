@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncGenerator, Awaitable, Callable
+from collections.abc import AsyncGenerator, AsyncIterable, Awaitable, Callable, Iterable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from pathlib import Path
 from struct import pack, unpack_from
@@ -28,7 +28,7 @@ from parsec.editics_protocol import (
     EditicsServerEventParsecInitialContentUploaded,
 )
 from tests.common.backend import SERVER_DOMAIN
-from tests.common.client import AuthenticatedRpcClient, RpcTransportError
+from tests.common.client import AuthenticatedRpcClient, CoolorgRpcClients, RpcTransportError
 
 type EditicsSessionSendClientEvent = Callable[[EditicsClientEvent], Awaitable[BaseModel | None]]
 
@@ -37,8 +37,7 @@ INITIAL_CONTENT_MEDIA_TYPE = "application/vnd.parsec.bundled-initial-content"
 
 def pack_initial_content_bundle(key_index: int, parts: list[bytes]) -> bytes:
     """
-    Build the wire format of the initial content bundle, as described in the
-    `## Initial content` part of `parsec/asgi/editics.py`'s module docstring.
+    Wire format of the initial content bundle:
 
         bundle = <key_index as u32 big endian> + <part 0> + <part 1> + ...
         part = <part size as u32 big endian> + <part ciphertext>
@@ -75,6 +74,7 @@ class EditicsSessionClient:
         participant_session_id: EditicsParticipantSessionID | None = None,
     ):
         self.raw_client = who.raw_client
+        self.document_id = document_id
 
         token = EditicsToken.generate_raw(
             device_id=who.device_id,
@@ -164,7 +164,9 @@ class EditicsSessionClient:
             case raw_server_event:
                 return EditicsServerEventAdapter.validate_json(raw_server_event)
 
-    async def send_event_raw(self, raw_event: str) -> str | None:
+    async def send_event_raw(
+        self, raw_event: str | bytes | Iterable[bytes] | AsyncIterable[bytes]
+    ) -> str | None:
         "Take and return the events in JSON encoded format"
 
         rep = await self.raw_client.post(
@@ -552,3 +554,26 @@ class EditicsJSClient:
             f"Editics server event failed to be translated: {raw_editics_server_event}"
         )
         return json.loads(oo_server_event)
+
+
+# Note editics doesn't check if the document ID correspond to a vlob in the realm,
+# in order to support a placeholder (i.e. unsynchronized) document edition.
+EDITICS_DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
+
+
+@pytest.fixture
+async def alice_editics(coolorg: CoolorgRpcClients) -> EditicsSessionClient:
+    return EditicsSessionClient(
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=EDITICS_DOCUMENT_ID,
+    )
+
+
+@pytest.fixture
+async def bob_editics(coolorg: CoolorgRpcClients) -> EditicsSessionClient:
+    return EditicsSessionClient(
+        who=coolorg.bob,
+        realm_id=coolorg.wksp1_id,
+        document_id=EDITICS_DOCUMENT_ID,
+    )

@@ -36,32 +36,12 @@ from tests.common import (
     wksp1_alice_gives_role,
 )
 
-DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
-
 
 def _auth_event(*, mode: Literal["view", "edit"]) -> EditicsClientEventAuth:
     return EditicsClientEventAuth(vlobVersion=1, reconnect=None, mode=mode)
 
 
 # --- Transport-level handshake (API version & HTTP statuses) ------------------
-
-
-@pytest.fixture
-async def alice_editics(coolorg: CoolorgRpcClients) -> EditicsSessionClient:
-    return EditicsSessionClient(
-        who=coolorg.alice,
-        realm_id=coolorg.wksp1_id,
-        document_id=DOCUMENT_ID,
-    )
-
-
-@pytest.fixture
-async def bob_editics(coolorg: CoolorgRpcClients) -> EditicsSessionClient:
-    return EditicsSessionClient(
-        who=coolorg.bob,
-        realm_id=coolorg.wksp1_id,
-        document_id=DOCUMENT_ID,
-    )
 
 
 @pytest.mark.parametrize("bad_api_version", [None, "not a version", "2.0", "1"])
@@ -237,7 +217,7 @@ async def test_realm_not_found_is_indistinguishable_from_realm_without_role(
         mallory_editics = EditicsSessionClient(
             who=coolorg.mallory,
             realm_id=realm_id,
-            document_id=DOCUMENT_ID,
+            document_id=coolorg.wksp1_id,
         )
 
         # Send
@@ -662,7 +642,7 @@ async def test_delete_index_defensive_handling(
 
     async with alice_editics.listen():
         session = backend.editics._document_sessions[
-            (coolorg.alice.organization_id, coolorg.wksp1_id, DOCUMENT_ID)
+            (coolorg.alice.organization_id, coolorg.wksp1_id, alice_editics.document_id)
         ]
 
         rep = await alice_editics.send(_auth_event(mode="edit"))
@@ -723,3 +703,39 @@ async def test_delete_index_defensive_handling(
             )
         assert exc.value.rep.status_code == 415
         assert len(session.changes) == 3
+
+
+async def test_send_too_large(
+    backend: Backend,
+    alice_editics: EditicsSessionClient,
+) -> None:
+
+    rep = await alice_editics.send(_auth_event(mode="edit"))
+    assert isinstance(rep, EditicsServerEventAuth)
+
+    event = (
+        '{"type":"saveChanges",'
+        '"encryptedChanges":[[1,"abcdef=="]],'
+        '"startSaveChanges":true,'
+        '"endSaveChanges":true,'
+        '"deleteIndex":null,'
+        '"excelAdditionalInfoIndexCols":null,'
+        '"excelAdditionalInfoIndexRows":null,'
+        '"encryptedCursorAdditionalInfo":null,'
+        '"releaseLocks":false}'
+    )
+    backend.config.editics_max_part_size = len(event) - 1
+
+    # Regular request with `Content-Length` header
+    with pytest.raises(RpcTransportError) as exc:
+        await alice_editics.send_event_raw(event)
+    assert exc.value.rep.status_code == 413
+
+    # Request without `Content-Length` header
+    async def async_iterator():
+        yield event[:50].encode()
+        yield event[50:].encode()
+
+    with pytest.raises(RpcTransportError) as exc:
+        await alice_editics.send_event_raw(async_iterator())
+    assert exc.value.rep.status_code == 413
