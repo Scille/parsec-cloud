@@ -141,6 +141,7 @@ async fn create_shared_recovery_default(tmp_path: TmpPath, test_ui: &Ui) {
     let (_, TestOrganization { bob, .. }, _) =
         bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     let cmd = crate::std_cmd!(
+        "--progress=plain",
         "shared-recovery",
         "create",
         "--device",
