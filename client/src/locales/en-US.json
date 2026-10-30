@@ -2803,6 +2803,8 @@
         "openWithDefault": "Open with default app",
         "details": "Details",
         "copyLink": "Copy link",
+        "convert": "Convert...",
+        "convertToPdf": "...to PDF",
         "openInEditor": "Edit",
         "download": "Download",
         "hideMenu": "Hide menu",

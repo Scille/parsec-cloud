@@ -120,7 +120,7 @@ const emits = defineEmits<{
   (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
 
-defineExpose({ save });
+defineExpose({ save, convert });
 
 onMounted(async () => {
   // The document type is resolved from the file content type detected on this
@@ -350,6 +350,15 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
 
   // Modal was dismissed (close button) - just close without navigating
   return 'close';
+}
+
+async function convert(format: 'pdf'): Promise<Uint8Array> {
+  // Ask the editor to convert the current document to PDF.
+  if (!session) {
+    throw new Error('Not opened');
+  }
+  console.log('LAUNCHING CONVERSION');
+  return await session.convert(format);
 }
 
 async function save(): Promise<boolean> {

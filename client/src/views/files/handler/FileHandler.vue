@@ -150,6 +150,18 @@
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
+                @click="convertFile"
+                v-if="isComponentEditor()"
+                :disabled="pathOpener.currentlyOpening.value"
+              >
+                <ms-image
+                  :image="DownloadIcon"
+                  class="item-icon"
+                />
+                {{ $msTranslate('fileViewers.convert') }}
+              </ion-button>
+              <ion-button
+                class="file-handler-topbar-buttons__item"
                 @click="downloadFile"
                 v-if="isWeb()"
                 :disabled="pathOpener.currentlyOpening.value"
@@ -278,6 +290,7 @@ import {
   MsImage,
   MsModalResult,
   MsSpinner,
+  openSpinnerModal,
   SidebarToggle,
   UnsavedIcon,
   useWindowSize,
@@ -598,6 +611,23 @@ async function showDetails(): Promise<void> {
     });
     await modal.present();
     await modal.onWillDismiss();
+  }
+}
+
+async function convertFile(): Promise<void> {
+  if (!handlerRef.value?.convert) {
+    console.log('CONVERSION NOT AVAILABLE');
+    return;
+  }
+
+  const loadingModal = await openSpinnerModal();
+  try {
+    const data = await handlerRef.value.convert('pdf');
+    console.log('CONVERSION SUCCESS', data);
+  } catch (err: any) {
+    console.log('SHOW TOAST CONVERT FAILED', err);
+  } finally {
+    await loadingModal.dismiss();
   }
 }
 

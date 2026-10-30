@@ -74,6 +74,8 @@ export enum EditicsErrorCodes {
   EventError = 'event-error',
   SaveFailed = 'save-failed',
   SaveTimeout = 'save-timeout',
+  ConvertFailed = 'convert-failed',
+  ConvertTimeout = 'convert-timeout',
 }
 
 export class EditicsError extends Error {
@@ -114,6 +116,7 @@ export interface EditicsHostSession {
   // persisted (or `false` if it could not be). `nothingToSave` resolves `true`
   // too: there was simply nothing modified to write back.
   save: () => Promise<boolean>;
+  convert: (format: 'pdf') => Promise<Uint8Array>;
 }
 
 // Time we give the host page to signal it is ready after its iframe is loaded.
@@ -172,6 +175,9 @@ export async function openDocument(
       handlers.onSaveStateChange?.(success ? EditicsSaveState.Saved : EditicsSaveState.Error);
     }
   };
+
+  const pendingRequests: Map<number, (reply: any) => void> = new Map();
+  let requestId = 0;
 
   let session: EditicsHostSession | undefined = undefined;
 
@@ -275,6 +281,17 @@ export async function openDocument(
               handleRequestImage(frame.contentWindow, event.data.requestId);
               break;
             }
+
+            case 'oo-convert-result': {
+              if (!frame.contentWindow) {
+                return;
+              }
+              const resolver = pendingRequests.get(event.data.requestId);
+              if (resolver) {
+                pendingRequests.delete(event.data.requestId);
+                resolver(event.data);
+              }
+            }
           }
         },
         { signal: controller.signal },
@@ -322,6 +339,32 @@ export async function openDocument(
           resolve(success);
         };
         frame.contentWindow!.postMessage({ command: 'oo-save-request' } satisfies EditicsParentToHostMessage, hostOrigin);
+      });
+    },
+    convert: (format: 'pdf', timeout = 10000): Promise<Uint8Array> => {
+      return new Promise<Uint8Array>((resolve, reject) => {
+        if (!frame.contentWindow) {
+          reject(EditicsErrorCodes.FrameNotLoaded);
+        }
+        const id = requestId++;
+        const timer = setTimeout(() => {
+          pendingRequests.delete(id);
+          reject(EditicsErrorCodes.ConvertTimeout);
+        }, timeout);
+
+        pendingRequests.set(id, (data: any) => {
+          clearTimeout(timer);
+          if (data.error || !data.data) {
+            reject(EditicsErrorCodes.ConvertFailed);
+          } else {
+            resolve(data.data);
+          }
+        });
+        console.log('POSTING CONVERT MESSAGE TO FRAME', id);
+        frame.contentWindow!.postMessage(
+          { command: 'oo-convert-request', requestId: requestId, format: format } satisfies EditicsParentToHostMessage,
+          hostOrigin,
+        );
       });
     },
   };

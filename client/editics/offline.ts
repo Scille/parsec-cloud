@@ -103,7 +103,7 @@ const ODF_INTERMEDIARY_FORMAT: Record<string, string> = {
 
 let x2tModulePromise: Promise<X2TModule> | undefined;
 
-function loadX2T(): Promise<X2TModule> {
+async function loadX2T(): Promise<X2TModule> {
   if (!x2tModulePromise) {
     x2tModulePromise = new Promise<X2TModule>((resolve, reject) => {
       const module = (window.Module = window.Module || ({} as X2TModule));
@@ -849,6 +849,17 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
   editor.loadBinary(binDocumentContent);
 }
 
+async function convertDocument(requestId: number, format: 'pdf'): Promise<void> {
+  const native = getApi()?.asc_nativeGetFile();
+  if (!native) {
+    postToParent({ command: 'oo-convert-result', requestId: requestId, error: 'failed to convert' });
+    return;
+  }
+  const bin = new TextEncoder().encode(native);
+  const converted = await convertFromNativeFormat(bin, 'placeholder_name', format);
+  postToParent({ command: 'oo-convert-result', requestId: requestId, data: converted });
+}
+
 window.addEventListener('message', function (event: MessageEvent) {
   // Filter messages that are not from the parent window.
   if (event.source !== parentWindow || event.origin !== PARENT_ORIGIN) {
@@ -875,6 +886,12 @@ window.addEventListener('message', function (event: MessageEvent) {
         pendingImageRequests.delete(data.requestId);
         resolver(data);
       }
+      break;
+    }
+
+    case 'oo-convert-request': {
+      console.log('GOT CONVERT REQUEST', data);
+      convertDocument(data.requestId, data.format);
       break;
     }
   }
