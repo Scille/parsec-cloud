@@ -685,7 +685,15 @@ async def test_delete_index_defensive_handling(
         assert isinstance(rep, EditicsServerEventUnSaveLock)
         assert len(session.changes) == 3
 
+        # `deleteIndex` can be passed either in `saveChanges` or `unLockDocument`,
+        # we test both here
+
         # An out-of-range `deleteIndex` is accepted but is a noop
+
+        rep = await alice_editics.send(_save_changes_event(delete_index=42))
+        assert isinstance(rep, EditicsServerEventUnSaveLock)
+        assert len(session.changes) == 3
+
         rep = await alice_editics.send(
             EditicsClientEventUnLockDocument(unlock=True, deleteIndex=42)
         )
@@ -693,9 +701,29 @@ async def test_delete_index_defensive_handling(
         assert len(session.changes) == 3
 
         # Negative value causes a validation error
+
         with pytest.raises(RpcTransportError) as exc:
             await alice_editics.send_event_raw(
-                '{"type":"unLockDocument","isSave":false,"unlock":true,"deleteIndex":-1,"releaseLocks":false}'
+                '{"type":"saveChanges",'
+                '"encryptedChanges":[],'
+                '"startSaveChanges":true,'
+                '"endSaveChanges":true,'
+                '"deleteIndex":-1,'  # Here!
+                '"excelAdditionalInfoIndexCols":null,'
+                '"excelAdditionalInfoIndexRows":null,'
+                '"encryptedCursorAdditionalInfo":null,'
+                '"releaseLocks":false}'
+            )
+        assert exc.value.rep.status_code == 415
+        assert len(session.changes) == 3
+
+        with pytest.raises(RpcTransportError) as exc:
+            await alice_editics.send_event_raw(
+                '{"type":"unLockDocument",'
+                '"isSave":false,'
+                '"unlock":true,'
+                '"deleteIndex":-1,'  # Here!
+                '"releaseLocks":false}'
             )
         assert exc.value.rep.status_code == 415
         assert len(session.changes) == 3
