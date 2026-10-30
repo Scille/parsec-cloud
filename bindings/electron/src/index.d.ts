@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+
 /*
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
@@ -190,20 +191,6 @@ export interface ClientConfig {
     withMonitors: boolean
     preventSyncPattern: string | null
     logLevel: LogLevel | null
-}
-
-
-export interface ClientGetOutboundSyncBacklog {
-    totalPendingEntriesForStartedWorkspaces: number
-    totalPendingBytesForStartedWorkspaces: number
-    perWorkspace: Array<ClientGetOutboundSyncBacklogItem>
-}
-
-
-export interface ClientGetOutboundSyncBacklogItem {
-    realmId: string
-    pendingEntries: number
-    pendingBytes: number
 }
 
 
@@ -1892,6 +1879,13 @@ export interface ClientEventWorkspaceOpsOutboundSyncStarted {
     realm_id: string
     entry_id: string
 }
+export interface ClientEventWorkspaceOutboundSyncBacklog {
+    tag: "ClientEventWorkspaceOutboundSyncBacklog"
+    number_of_files_to_sync: number
+    size_to_sync: number
+    realm_id: string
+    entry_currently_being_synced: string | null
+}
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: "ClientEventWorkspaceWatchedEntryChanged"
     realm_id: string
@@ -1931,6 +1925,7 @@ export type ClientEvent =
   | ClientEventWorkspaceOpsOutboundSyncDone
   | ClientEventWorkspaceOpsOutboundSyncProgress
   | ClientEventWorkspaceOpsOutboundSyncStarted
+  | ClientEventWorkspaceOutboundSyncBacklog
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
 
@@ -5953,9 +5948,6 @@ export function clientGetAsyncEnrollmentAddr(
 export function clientGetOrganizationBootstrapDate(
     client_handle: number
 ): Promise<Result<number, ClientGetOrganizationBootstrapDateError>>
-export function clientGetOutboundSyncBacklog(
-    client: number
-): Promise<Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError>>
 export function clientGetSelfShamirRecovery(
     client_handle: number
 ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>

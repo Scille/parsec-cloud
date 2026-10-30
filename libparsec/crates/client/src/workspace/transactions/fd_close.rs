@@ -212,6 +212,8 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
                 // The Arc is still referenced by others coroutines
                 Err(our_opened_file_ref) => {
                     our_opened_file_ref.lock().await;
+                    // yield now to let the other party a chance to get that lock too
+                    libparsec_platform_async::yield_now().await;
                     // Put back our reference in the wrapper for the next try
                     our_opened_file_ref_wrapper = Some(our_opened_file_ref);
                 }

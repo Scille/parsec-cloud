@@ -8,7 +8,10 @@ use libparsec_types::prelude::*;
 use super::Client;
 use crate::{
     WorkspaceOps,
-    monitors::{start_workspace_inbound_sync_monitor, start_workspace_outbound_sync_monitor},
+    monitors::{
+        start_workspace_inbound_sync_monitor, start_workspace_outbound_sync_monitor,
+        start_workspace_outbound_sync_progress_monitor,
+    },
     workspace::WorkspaceExternalInfo,
 };
 
@@ -76,22 +79,32 @@ pub async fn start_workspace(
         let inbound_sync_monitor =
             start_workspace_inbound_sync_monitor(workspace_ops.clone(), client.event_bus.clone())
                 .await;
-        let outbound_sync_monitor = if entry.role.can_write() {
+        let outbound_sync_monitors = if entry.role.can_write() {
             let outbound_sync_monitor = start_workspace_outbound_sync_monitor(
                 workspace_ops.clone(),
                 client.event_bus.clone(),
                 client.device.clone(),
             )
             .await;
-            Some(outbound_sync_monitor)
+            let outbound_sync_progress_monitor = start_workspace_outbound_sync_progress_monitor(
+                workspace_ops.clone(),
+                client.event_bus.clone(),
+                client.device.clone(),
+            )
+            .await;
+
+            Some((outbound_sync_monitor, outbound_sync_progress_monitor))
         } else {
             None
         };
 
         let mut monitors = client.monitors.lock().expect("Mutex is poisoned");
         monitors.push(inbound_sync_monitor);
-        if let Some(outbound_sync_monitor) = outbound_sync_monitor {
+        if let Some((outbound_sync_monitor, outbound_sync_progress_monitor)) =
+            outbound_sync_monitors
+        {
             monitors.push(outbound_sync_monitor);
+            monitors.push(outbound_sync_progress_monitor);
         }
     }
 
