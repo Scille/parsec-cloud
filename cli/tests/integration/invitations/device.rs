@@ -73,6 +73,7 @@ async fn invite_device_dance(
     // spawn greeter thread
 
     let program_greeter = std_cmd!(
+        "--progress=plain",
         "invite",
         "greet",
         "--device",
@@ -92,7 +93,7 @@ async fn invite_device_dance(
         _ => unimplemented!(),
     };
 
-    let program_claimer = std_cmd!("invite", "claim", &addr, "--auth", auth);
+    let program_claimer = std_cmd!("--progress=plain", "invite", "claim", &addr, "--auth", auth);
 
     let p_claimer = Arc::new(Mutex::new(
         crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
@@ -115,6 +116,7 @@ async fn invite_device_dance(
 
         locked
             .exp_string("Select code provided by greeter")
+            .inspect_err(|e| log::error!("Error while expecting code claimer code choice: {e}"))
             .unwrap();
     });
     greeter.await.unwrap();

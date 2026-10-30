@@ -82,6 +82,7 @@ async fn invite_user_dance(
     // spawn greeter thread
 
     let program_greeter = crate::std_cmd!(
+        "--progress=plain",
         "invite",
         "greet",
         "--device",
@@ -100,7 +101,8 @@ async fn invite_user_dance(
         _ => unimplemented!(),
     };
 
-    let program_claimer = crate::std_cmd!("invite", "claim", &addr, "--auth", auth);
+    let program_claimer =
+        crate::std_cmd!("--progress=plain", "invite", "claim", &addr, "--auth", auth);
 
     let p_claimer = Arc::new(Mutex::new(
         crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
