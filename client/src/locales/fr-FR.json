@@ -815,7 +815,7 @@
             "title": "Archiver cet espace de travail",
             "subtitle": "Vous êtes sur le point d'archiver l'espace de travail <b>{workspace}</b>. Il sera toujours accessible en <u>lecture seule</u> pour tous les utilisateurs y ayant accès.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
             "yes": "Archiver",
-            "no": "Cancel",
+            "no": "Annuler",
             "info": "Vos espaces de travail archivés restent consultables en lecture seule pour tous les utilisateurs.",
             "loading": "Chargement de vos espaces de travail archivés...",
             "backToWorkspace": "Retour à mes espaces de travail",
@@ -969,7 +969,7 @@
             "failedToListWorkspaces": "Impossible de lister les espaces de travail (raison: {reason}).",
             "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
             "failedToListContent": "Impossible de lister le contenu de ce dossier.",
-            "createFileFailed": "Failed to create the file.",
+            "createFileFailed": "Impossible de créer le fichier.",
             "createFileFailedAlreadyExists": "Impossible de créer le nouveau fichier car un fichier du même nom existe déjà."
         },
         "CreateFolderModal": {
@@ -1355,8 +1355,8 @@
             "description": "Ajoutez une couche de sécurité lors de la connexion à cette organisation depuis votre appareil.",
             "info": "L'organisation requiert une authentification multifacteur.",
             "or": "ou",
-            "inactive": "Inactive",
-            "active": "Active",
+            "inactive": "Inactif",
+            "active": "Actif",
             "inactiveInfo": "L'authentification multifacteur est configurée mais pas activée sur cet appareil.",
             "totpRequired": "Une authentification multifacteur est requise pour cette organisation.",
             "totpRequiredSubtitle": "Veuillez saisir le code fourni par votre application d'authentification pour vous connecter à cette organisation.",
@@ -2395,29 +2395,29 @@
         },
         "personalDataPage": {
             "personalInfo": {
-                "title": "Personal information",
-                "firstname": "Firstname",
-                "lastname": "Lastname",
-                "phone": "Phone",
-                "notDefined": "Not defined"
+                "title": "Informations personnelles",
+                "firstname": "Prénom",
+                "lastname": "Nom",
+                "phone": "Téléphone",
+                "notDefined": "Non renseigné"
             },
             "professionalInfo": {
-                "title": "Professional information",
+                "title": "Informations professionnelles",
                 "representCompany": {
-                    "title": "I represent a company",
-                    "yes": "Yes",
-                    "no": "No"
+                    "title": "Je représente une entreprise",
+                    "yes": "Oui",
+                    "no": "Non"
                 },
-                "company": "Company",
-                "job": "Job"
+                "company": "Entreprise",
+                "job": "Poste"
             },
             "authentication": {
-                "title": "Authentication",
+                "title": "Authentification",
                 "email": "Email"
             },
             "security": {
-                "title": "Security",
-                "password": "Password"
+                "title": "Sécurité",
+                "password": "Mot de passe"
             },
             "modals": {
                 "personalInfo": {
