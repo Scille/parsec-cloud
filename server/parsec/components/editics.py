@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Buffer, Generator
+from collections.abc import AsyncIterator, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import auto
@@ -233,7 +233,7 @@ class EditicsDocumentSession:
     # Opaque to the server (see `parsec/asgi/editics.py`'s module docstring for
     # the bundle format).
     # Format: (<Key index>, <parts ciphertexts>), first part being the document bin.
-    encrypted_initial_content: tuple[int, list[Buffer]] | None = None
+    encrypted_initial_content: tuple[int, list[bytes]] | None = None
     # TODO: rework comment
     # Save lock (i.e. the participant currently saving).
     # Minimal handling for now: taken on `isSaveLock`/`saveChanges`, released on
@@ -432,6 +432,8 @@ def _handshake_auth(
 class EditicsUploadInitialContentBadOutcome(BadOutcomeEnum):
     NOT_ALLOWED = auto()
     ALREADY_UPLOADED = auto()
+    # First part is mandatory since it contains the `/Editor.bin`
+    NO_PART_PROVIDED = auto()
 
 
 class EditicsFetchInitialContentBadOutcome(BadOutcomeEnum):
@@ -580,12 +582,13 @@ class EditicsComponent:
 
         return participant
 
-    def upload_initial_content(
+    async def upload_initial_content(
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
         participant_session_id: EditicsParticipantSessionID,
-        encrypted_initial_content: tuple[int, list[Buffer]],
+        key_index: int,
+        parts: AsyncIterator[bytes | memoryview[int]],
     ) -> EditicsUploadInitialContentBadOutcome | None:
         if not auth_info.realm_role.can_write:
             return EditicsUploadInitialContentBadOutcome.NOT_ALLOWED
@@ -595,7 +598,12 @@ class EditicsComponent:
         if session.encrypted_initial_content is not None:
             return EditicsUploadInitialContentBadOutcome.ALREADY_UPLOADED
 
-        session.encrypted_initial_content = encrypted_initial_content
+        # TODO: The stream will be used when we will store the parts in PostgreSQL
+        ciphertext = [bytes(part) async for part in parts]
+        if not ciphertext:
+            return EditicsUploadInitialContentBadOutcome.NO_PART_PROVIDED
+
+        session.encrypted_initial_content = (key_index, ciphertext)
         # Notify only the viewers since the connected editor are either the
         # one that have done the upload, or ones that are trying to do a
         # concurrent upload (and will get the info from `alreadyUploaded: true`
@@ -611,17 +619,23 @@ class EditicsComponent:
                 continue
             other.send_event(broadcasted_event)
 
-    def fetch_initial_content(
+    async def fetch_initial_content(
         self,
         auth_info: EditicsAuthInfo,
         document_id: VlobID,
-    ) -> tuple[int, list[Buffer]] | EditicsFetchInitialContentBadOutcome:
+    ) -> tuple[int, AsyncIterator[bytes]] | EditicsFetchInitialContentBadOutcome:
         session_key = (auth_info.organization_id, auth_info.realm_id, document_id)
         session = self._get_or_create_session(session_key)
         if session.encrypted_initial_content is None:
             return EditicsFetchInitialContentBadOutcome.NOT_UPLOADED
 
-        return session.encrypted_initial_content
+        key_index, parts = session.encrypted_initial_content
+
+        async def _stream_parts() -> AsyncIterator[bytes]:
+            for part in parts:
+                yield part
+
+        return (key_index, _stream_parts())
 
     @contextmanager
     def participant_listen(

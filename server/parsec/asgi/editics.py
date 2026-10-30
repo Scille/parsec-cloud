@@ -41,15 +41,33 @@ its own way (i.e. read the document from the workspace, then convert it with x2t
 and will do a reload once once the initial content gets uploaded (see
 `parsecInitialContentUploaded` server event).
 
-### format (Content-type `application/vnd.parsec.bundled-initial-content`)
+Initial content size is limited to 100Mo (configurable).
 
-bundle = <key_index as u32 big endian > + <part 0> + <part 1> + ...
-part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
-part_ciphertext = encrypt_for_workspace(key_index, <part_cleartext> )
-part_cleartext = 0x00 + zstd(msgpack([{'name': <media 0 path>, 'content': <media 0 content>}, ...]))
+### Initial content upload/fetch API
 
-First part is always the bin (so that OnlyOffice editor can start loading it
-without waiting for the full response), subsequent parts are medias files.
+Initial content upload/fetch API uses a custom format (Content-type `application/vnd.parsec.bundled-initial-content`):
+
+    bundle = <key_index as u32 big endian > + <part 0> + <part 1> + ...
+    part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
+    part_ciphertext = sign_and_encrypt_for_workspace(key_index, <part_cleartext> )
+    part_cleartext = 0x00 + zstd(msgpack({'path': <file_path>, 'content': <file_content>}))
+
+Each part contain one file and has a size limit of 25Mo (configurable).
+
+The initial content bin file must have the path `/Editior.bin`, and is expected to
+be in the first part (so that OnlyOffice editor can start loading it without
+waiting for the full response).
+
+Other files have arbitrary path with a namespace (e.g. `/media/foo.png`).
+
+Parts are for:
+- Server: Parts are stored in PostgreSQL as-is (TODO: not implemented yet), hence
+  they are useful a upload/fetch requests to stream the content (instead of having
+  the full document on the server's memory).
+- Client: OnlyOffice editor loads the first part (i.e. document .bin) without waiting
+  for the full response body.
+  Note part streaming is not used to reduce memory usage in the client since both
+  OnlyOffice and x2t (used when saving) require to have the whole document in memory.
 
 We use a custom format for the outer envelop (i.e. `bundle`):
 - We need a simple format that supports streaming (to load the .bin in OnlyOffice editor asap)
@@ -62,38 +80,38 @@ The inner envelop (i.e. `part_ciphertext`) uses the regular serialization format
 (based on msgpack + zstd) used in Parsec (i.e. certificates, manifests etc.). This
 is because the decryption must be done in libparsec so using this format is simple.
 
-Maximal full document size is limited to 100Mo.
+## Medias added during edition
 
-The medias are stored in multiple parts.
+Parsec has a specific behavior when a media (most likely an image, OnlyOffice
+doesn't support custom font) is added to the document during the edition session:
+- Regular OnlyOffice: the media is uploaded in the OnlyOffice server and a regular
+  URL (e.g. `medias/image.png`) is inserted in the document.
+- Parsec: the media is embedded within the URL (i.e. `data:[<media-type>][;base64],<data>`)).
 
-There is no size limit for a part (a document could be slighly < 100Mo with a single
-very big image taking all the space...).
+Having the media self-contained in the URL simplify the code (no need for a dedicated route),
+but also means the media content is transmitted through the `saveChanges` events (hence
+the /send route that should accept payload as big as the media size limit...).
 
-A part can contain a single or multiple media files (useful when there is plenty
-of small media files).
+Note those self-contained URLs only exist during the edition session: x2t turns them
+into a regular URLs (referencing a file in the archive) when converting the document
+into its final format (e.g. docx).
 
-Parts are for:
-- Server: Parts are stored in PostgreSQL as-is (TODO: not implemented yet), hence
-  they are useful a upload/fetch requests to stream the content (instead of having
-  the full document on the server's memory).
-- Client: OnlyOffice editor loads the first part (i.e. document .bin) without waiting
-  for the full response body.
-  Note part streaming is not used to reduce memory usage in the client since both
-  OnlyOffice and x2t (used when saving) require to have the whole document in memory.
+Media size is limited to 25Mo (configurable).
 """
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, AsyncIterable, Buffer, Sequence
+from collections.abc import AsyncGenerator, AsyncIterable
 from enum import Enum
 from struct import pack, unpack_from
 from typing import Annotated, NoReturn
 
 from anyio.streams.memory import MemoryObjectReceiveStream
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi.sse import EventSourceResponse
 from pydantic import BaseModel
+from starlette.requests import ClientDisconnect
 
 from parsec._parsec import ApiVersion, DateTime, OrganizationID, VlobID
 from parsec.asgi.rpc import IncompatibleAPIVersionsError, settle_compatible_versions
@@ -120,7 +138,6 @@ editics_router = APIRouter(include_in_schema=False)
 ACCEPT_TYPE_SSE = "text/event-stream"
 
 INITIAL_CONTENT_MEDIA_TYPE = "application/vnd.parsec.bundled-initial-content"
-INITIAL_CONTENT_MAX_SIZE = 100 * 1024**2
 
 
 class EditicsHttpStatus(Enum):
@@ -136,7 +153,7 @@ class EditicsHttpStatus(Enum):
     MissingAuthenticationInfo = 401
     BadAuthenticationInfo = 403
     BadAcceptType = 406
-    PayloadTooLarge = 413
+    ContentTooLarge = 413
     BadContentTypeOrInvalidBody = 415
     UnsupportedApiVersion = 422
     TokenExpired = 498
@@ -188,6 +205,121 @@ def _editics_abort(status: EditicsHttpStatus, api_version: ApiVersion, **headers
     )
 
 
+async def _editics_get_initial_content_parts_with_limit_check(
+    request: Request,
+    max_document_size: int,
+    max_part_size: int,
+    api_version: ApiVersion,
+) -> tuple[int, AsyncGenerator[bytes | memoryview[int]]]:
+    """
+    Read the wire format:
+
+        bundle = <key_index as u32 big endian > + <part 0> + <part 1> + ...
+        part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
+
+    The implementation is rather cumbersome but is needed in order to have in
+    memory a single part at a time instead of the whole initial document.
+    """
+    chunks_stream = _editics_get_body_with_limit_check(request, max_document_size, api_version)
+    # Data from previous chunk belonging to the next part
+    pending_data: memoryview[int] = memoryview(b"")
+
+    async def _read(n: int) -> bytes | memoryview[int]:
+        nonlocal pending_data
+
+        if len(pending_data) >= n:
+            # Already enough data
+            data = pending_data[:n]
+            pending_data = pending_data[n:]
+            return data
+
+        else:
+            # No enough data yet
+            current_data: list[bytes | memoryview[int]]
+            if pending_data:
+                current_data = [pending_data]
+                pending_data = memoryview(b"")
+                remaining_data_size = n - len(pending_data)
+            else:
+                current_data = []
+                remaining_data_size = n
+            while True:
+                # Raises `StopAsyncIteration` once the body done
+                chunk = await chunks_stream.asend(None)
+
+                remaining_data_size -= len(chunk)
+                current_data.append(chunk)
+                if remaining_data_size == 0:
+                    # We have enough data!
+                    # (Note CPython has a fast path if `current_data` contains a
+                    # single bytes instance by just returning it as-is)
+                    return b"".join(current_data)
+                elif remaining_data_size < 0:
+                    # We have too much data!
+                    pending_data = memoryview[int](current_data[-1])[remaining_data_size:]
+                    current_data[-1] = current_data[-1][:remaining_data_size]
+                    return b"".join(current_data)
+
+    try:
+        (key_index,) = unpack_from("!I", await _read(4), 0)
+    except (StopAsyncIteration, ValueError):
+        _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
+
+    async def _stream_parts() -> AsyncGenerator[bytes | memoryview[int]]:
+        while True:
+            try:
+                (part_size,) = unpack_from("!I", await _read(4), 0)
+            except StopAsyncIteration:
+                break
+            except ValueError:
+                _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
+
+            if part_size > max_part_size:
+                _editics_abort(EditicsHttpStatus.ContentTooLarge, api_version)
+
+            try:
+                part = await _read(part_size)
+            except StopAsyncIteration:
+                _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
+
+            yield part
+            del part
+
+    return (key_index, _stream_parts())
+
+
+async def _editics_get_body_with_limit_check(
+    request: Request, max_content_length: int, api_version: ApiVersion
+) -> AsyncGenerator[bytes]:
+    try:
+        content_length = int(request.headers["Content-Length"])
+
+    except ValueError:
+        _editics_abort(EditicsHttpStatus.ContentTooLarge, api_version)
+
+    except KeyError:
+        # Header missing, we must be in chunk-encoding mode
+        content_length = max_content_length
+
+    else:
+        if content_length > max_content_length:
+            _editics_abort(EditicsHttpStatus.ContentTooLarge, api_version)
+
+    streamed_size = 0
+    try:
+        async for chunk in request.stream():
+            streamed_size += len(chunk)
+            if streamed_size > content_length:
+                _editics_abort(EditicsHttpStatus.ContentTooLarge, api_version)
+            yield chunk
+
+    # The client disconnected while sending the body.
+    # Here we simply raise an HTTP exception to ignore the `ClientDisconnect` exception
+    # so that it doesn't get logged as an error.
+    except ClientDisconnect:
+        _editics_abort(EditicsHttpStatus.ContentTooLarge, api_version)
+
+
 async def _editics_auth_or_abort(
     backend: Backend,
     request: Request,
@@ -204,9 +336,11 @@ async def _editics_auth_or_abort(
         )
     except (ValueError, IncompatibleAPIVersionsError):
         supported_api_versions = ";".join(str(v) for v in EDITICS_SUPPORTED_API_VERSIONS)
+        status_code = EditicsHttpStatus.UnsupportedApiVersion
         raise HTTPException(
-            status_code=EditicsHttpStatus.UnsupportedApiVersion.value,
+            status_code=status_code.value,
             headers={"Supported-Api-Versions": supported_api_versions},
+            detail=EDITICS_HTTP_STATUS_DETAILS[status_code],
         )
 
     # 2) Parse authorization header
@@ -267,47 +401,6 @@ async def _editics_auth_or_abort(
             _editics_abort(EditicsHttpStatus.OrganizationExpired, settled_api_version)
 
 
-# --- Initial content bundle ---------------------------------------------------
-
-
-def pack_initial_content_bundle(key_index: int, parts: Sequence[Buffer]) -> bytes:
-    """
-    Build the wire format of the initial content bundle (see the module docstring):
-
-        bundle = <key_index as u32 big endian> + <part 0> + <part 1> + ...
-        part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
-    """
-    return b"".join(
-        [pack("!I", key_index), *(pack("!I", len(part)) + bytes(part) for part in parts)]
-    )
-
-
-def unpack_initial_content_bundle(raw: bytes) -> tuple[int, list[bytes]]:
-    """
-    Reverse of `pack_initial_content_bundle` (the parts' ciphertexts are opaque
-    to the server, so only the outer envelope is parsed).
-
-    Raise `ValueError` if the bundle is malformed.
-    """
-    if len(raw) < 4:
-        raise ValueError("Bundle is missing the key index")
-    (key_index,) = unpack_from("!I", raw, 0)
-    parts: list[bytes] = []
-    offset = 4
-    while offset < len(raw):
-        if len(raw) - offset < 4:
-            raise ValueError("Bundle contains a truncated part size")
-        (part_size,) = unpack_from("!I", raw, offset)
-        offset += 4
-        if len(raw) - offset < part_size:
-            raise ValueError("Bundle contains a truncated part ciphertext")
-        parts.append(raw[offset : offset + part_size])
-        offset += part_size
-    if not parts:
-        raise ValueError("Bundle contains no part (the document bin is expected first)")
-    return (key_index, parts)
-
-
 # --- Routes ------------------------------------------------------------------
 
 
@@ -330,29 +423,19 @@ async def editics_upload_initial_content(
     if request.headers.get("Content-Type") != INITIAL_CONTENT_MEDIA_TYPE:
         _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
 
-    # The bundle size is limited (see the module docstring): refuse the
-    # oversized uploads early, before reading their whole body.
-    try:
-        content_length = int(request.headers["Content-Length"])
-    except (ValueError, KeyError):
-        # Header missing (i.e. chunked encoding) or invalid: the size will be
-        # checked on the actual body below.
-        content_length = INITIAL_CONTENT_MAX_SIZE
-    else:
-        if content_length > INITIAL_CONTENT_MAX_SIZE:
-            _editics_abort(EditicsHttpStatus.PayloadTooLarge, api_version)
+    key_index, stream_parts = await _editics_get_initial_content_parts_with_limit_check(
+        request,
+        backend.config.editics_max_document_size,
+        backend.config.editics_max_part_size,
+        api_version,
+    )
 
-    raw_bundle = await request.body()
-    if len(raw_bundle) > INITIAL_CONTENT_MAX_SIZE:
-        _editics_abort(EditicsHttpStatus.PayloadTooLarge, api_version)
-
-    try:
-        key_index, parts = unpack_initial_content_bundle(raw_bundle)
-    except ValueError:
-        _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
-
-    outcome = backend.editics.upload_initial_content(
-        auth_info, document_id, psid, (key_index, parts)
+    outcome = await backend.editics.upload_initial_content(
+        auth_info,
+        document_id,
+        psid,
+        key_index,
+        stream_parts,
     )
     match outcome:
         case None:
@@ -364,6 +447,8 @@ async def editics_upload_initial_content(
             _editics_abort(EditicsHttpStatus.ReaderMustBeViewer, api_version)
         case EditicsUploadInitialContentBadOutcome.ALREADY_UPLOADED:
             _editics_abort(EditicsHttpStatus.InitialContentAlreadyUploaded, api_version)
+        case EditicsUploadInitialContentBadOutcome.NO_PART_PROVIDED:
+            _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
 
 
 @editics_router.get(
@@ -381,11 +466,25 @@ async def editics_fetch_initial_content(
         backend, request, raw_organization_id, raw_realm_id, raw_document_id
     )
 
-    outcome = backend.editics.fetch_initial_content(auth_info, document_id)
+    outcome = await backend.editics.fetch_initial_content(auth_info, document_id)
     match outcome:
-        case (key_index, parts):
-            return Response(
-                content=pack_initial_content_bundle(key_index, parts),
+        case (key_index, stream_parts):
+            # Stream the wire format:
+            #   bundle = <key_index as u32 big endian> + <part 0> + <part 1> + ...
+            #   part = <part_ciphertext size as u32 big endian> + <part_ciphertext>
+            async def _stream_content():
+                first = True
+                async for part in stream_parts:
+                    if first:
+                        packet = pack("!I", key_index)
+                        first = False
+                    else:
+                        packet = b""
+                    packet += pack("!I", len(part)) + part
+                    yield packet
+
+            return StreamingResponse(
+                content=_stream_content(),
                 media_type=INITIAL_CONTENT_MEDIA_TYPE,
                 headers={"Api-Version": str(api_version)},
             )
@@ -453,22 +552,20 @@ async def editics_send(
     if request.headers.get("Content-Type") != "application/json":
         _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, EDITICS_API_VERSION)
 
-    try:
-        content_length = int(request.headers["Content-Length"])
-    except (ValueError, KeyError):
-        content_length = backend.config.editics_send_max_content_length
-    else:
-        if content_length > backend.config.editics_send_max_content_length:
-            _editics_abort(EditicsHttpStatus.PayloadTooLarge, EDITICS_API_VERSION)
-
     api_version, auth_info, document_id = await _editics_auth_or_abort(
         backend, request, raw_organization_id, raw_realm_id, raw_document_id
     )
 
+    raw_event = b""
+    async for chunk in _editics_get_body_with_limit_check(
+        request, backend.config.editics_max_part_size, api_version
+    ):
+        raw_event += chunk
     try:
-        event = EditicsClientEventAdapter.validate_json(await request.body())
+        event = EditicsClientEventAdapter.validate_json(raw_event)
     except ValueError:
         _editics_abort(EditicsHttpStatus.BadContentTypeOrInvalidBody, api_version)
+    del raw_event
 
     output = await backend.editics.participant_send(
         auth_info,

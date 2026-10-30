@@ -313,7 +313,12 @@ class BackendConfig:
     # encrypted original content archive (a converted document and its media can
     # be tens of MB, and base64 adds ~33%; the fetch reply is an HTTP response, so
     # it is not concerned, and the SSE stream is unaffected).
-    editics_send_max_content_length: int = 100 * 1024**2  # 100Mo  # TODO name ?
+
+    # Max allowed size for the whole document opened in editics.
+    editics_max_document_size: int = 100 * 1024**2  # 100Mo
+    # Max allowed size for a single part (e.g. embedded image) in a document
+    # opened in editics.
+    editics_max_part_size: int = 25 * 1024**2  # 25Mo
 
     # Bearer token used to authenticate the administration API
     administration_token: str
