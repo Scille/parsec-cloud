@@ -3,7 +3,7 @@
 import { BrowserContext, expect, FrameLocator } from '@playwright/test';
 import { MsPage } from '@tests/e2e/helpers/types';
 
-export async function waitUntilSaved(page: MsPage, timeout = 10000): Promise<void> {
+export async function waitUntilSaved(page: MsPage, timeout = 3000): Promise<void> {
   await expect(page.locator('#unsaved-changes')).toBeHidden();
   await expect(page.locator('#saved-changes')).toBeVisible({ timeout: timeout });
 }
