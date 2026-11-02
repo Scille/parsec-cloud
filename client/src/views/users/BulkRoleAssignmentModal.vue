@@ -6,7 +6,8 @@
     <ion-button
       slot="icon-only"
       @click="cancel()"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
     >
       <ion-icon
         :icon="close"

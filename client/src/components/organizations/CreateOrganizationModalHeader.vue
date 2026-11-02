@@ -4,7 +4,8 @@
   <ion-button
     v-if="!hideCloseButton"
     slot="icon-only"
-    class="closeBtn"
+    fill="clear"
+    class="closeBtn color-secondary"
     :class="{
       'closeBtn--small-display': smallDisplayStepper && isSmallDisplay,
     }"

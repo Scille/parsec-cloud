@@ -4,7 +4,8 @@
   <ion-button
     v-if="!hideCloseButton"
     slot="icon-only"
-    class="closeBtn closeBtn-stepper"
+    fill="clear"
+    class="closeBtn closeBtn-stepper color-secondary"
     @click="$emit('closeClicked')"
   >
     <ion-icon

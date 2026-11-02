@@ -5,7 +5,8 @@
     <ion-button
       v-show="!hideHeader"
       slot="icon-only"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
       @click="$emit('closeRequested')"
     >
       <ion-icon

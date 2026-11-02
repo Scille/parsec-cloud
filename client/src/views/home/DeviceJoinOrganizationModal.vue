@@ -19,7 +19,8 @@
       slot="icon-only"
       @click="cancelModal()"
       v-show="pageStep !== DeviceJoinOrganizationStep.Finish && isLargeDisplay"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
     >
       <ion-icon
         :icon="close"
