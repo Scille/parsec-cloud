@@ -140,6 +140,7 @@ jobs:
         with:
           working-directory: server
           version: 0.13.4 # marker:uv-version
+          save-cache: false
         timeout-minutes: 5
 
       - run: git status --porcelain
