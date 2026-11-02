@@ -11,7 +11,7 @@
       class="shamir-done"
     >
       <ms-image
-        :image="isDarkTheme ? ShamirIconCircleDark : ShamirIconCircleLight"
+        :image="theme === Theme.Dark ? ShamirIconCircleDark : ShamirIconCircleLight"
         class="shamir-done-image"
         alt="Shamir Icon"
       />
@@ -129,7 +129,7 @@ import { deleteSelfShamirRecovery } from '@/parsec/shamir';
 import { SelfShamirRecoveryInfoTag } from '@/plugins/libparsec';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { checkmarkCircle, informationCircle, shieldCheckmark } from 'ionicons/icons';
-import { Answer, askQuestion, MsImage, MsReportText, MsReportTheme, useTheme } from 'megashark-lib';
+import { Answer, askQuestion, MsImage, MsReportText, MsReportTheme, Theme, useTheme } from 'megashark-lib';
 
 defineProps<{
   shamirInfo: SelfShamirRecoveryInfo;
@@ -140,7 +140,7 @@ const emits = defineEmits<{
   (e: 'closeModal'): void;
 }>();
 
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 async function deleteShamir(): Promise<void> {
   const answer = await askQuestion(

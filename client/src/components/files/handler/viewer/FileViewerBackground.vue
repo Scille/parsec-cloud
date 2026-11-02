@@ -2,7 +2,7 @@
 
 <template>
   <div class="file-viewer-background">
-    <img :src="isDarkTheme ? BackgroundFileViewerDark : BackgroundFileViewer" />
+    <img :src="theme === Theme.Dark ? BackgroundFileViewerDark : BackgroundFileViewer" />
     <ion-icon
       v-if="icon"
       :icon="icon"
@@ -15,9 +15,9 @@
 import BackgroundFileViewerDark from '@/assets/images/background/background-fileviewer-dark.svg';
 import BackgroundFileViewer from '@/assets/images/background/background-fileviewer.svg';
 import { IonIcon } from '@ionic/vue';
-import { useTheme } from 'megashark-lib';
+import { Theme, useTheme } from 'megashark-lib';
 
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 defineProps<{
   icon?: string;

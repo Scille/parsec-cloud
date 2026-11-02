@@ -164,7 +164,7 @@
             class="no-active"
           >
             <div class="no-active-content">
-              <ms-image :image="isDarkTheme ? NoInvitationDark : NoInvitation" />
+              <ms-image :image="theme === Theme.Dark ? NoInvitationDark : NoInvitation" />
               <ion-text>
                 {{ $msTranslate('InvitationsPage.emailInvitation.emptyState') }}
               </ion-text>
@@ -192,7 +192,7 @@
             class="no-active"
           >
             <div class="no-active-content">
-              <ms-image :image="isDarkTheme ? NoInvitationDark : NoInvitation" />
+              <ms-image :image="theme === Theme.Dark ? NoInvitationDark : NoInvitation" />
               <ion-text>
                 {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.emptyState') }}
               </ion-text>
@@ -276,6 +276,7 @@ import {
   MsReportTheme,
   NoInvitation,
   NoInvitationDark,
+  Theme,
   Translatable,
   useTheme,
   useWindowSize,
@@ -284,7 +285,7 @@ import {
 import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 const view = ref(InvitationView.EmailInvitation);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;

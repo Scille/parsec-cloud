@@ -2,7 +2,7 @@
 
 <template>
   <ms-image
-    :image="isDarkTheme ? UpdateRocketDark : UpdateRocket"
+    :image="theme === Theme.Dark ? UpdateRocketDark : UpdateRocket"
     class="update-rocket"
   />
   <ms-modal
@@ -54,14 +54,14 @@
 <script setup lang="ts">
 import { APP_VERSION, Env } from '@/services/environment';
 import { IonButton, IonText, modalController } from '@ionic/vue';
-import { MsImage, MsModal, MsModalResult, UpdateRocket, UpdateRocketDark, useTheme } from 'megashark-lib';
+import { MsImage, MsModal, MsModalResult, Theme, UpdateRocket, UpdateRocketDark, useTheme } from 'megashark-lib';
 
 const props = defineProps<{
   currentVersion?: string;
   targetVersion: string;
 }>();
 
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 async function openChangelog(): Promise<void> {
   await Env.Links.openChangelogLink(props.targetVersion);

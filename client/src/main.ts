@@ -4,7 +4,7 @@ import { createApp } from 'vue';
 
 import App from '@/App.vue';
 import { getConnectionHandle, getRouter } from '@/router';
-import { Config, StorageManagerKey, ThemeManagerKey, persistStorage, storageManagerInstance } from '@/services/storageManager';
+import { Config, StorageManagerKey, persistStorage, storageManagerInstance } from '@/services/storageManager';
 import { IonicVue, isPlatform, modalController, popoverController } from '@ionic/vue';
 
 /* Theme variables */
@@ -45,7 +45,7 @@ import { GUILogger, LogLevel } from '@/services/webLogger';
 import { initFileServiceWorker } from '@/services/worker';
 import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
-import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, ThemeManager, askQuestion } from 'megashark-lib';
+import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, askQuestion, useTheme } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -343,11 +343,9 @@ async function setupApp(): Promise<void> {
     if (locale) {
       I18n.changeLocale(locale);
     }
+    useTheme().themePreference.value = config.theme;
     app.mount('#app');
     appElem.setAttribute('app-state', AppState.Ready);
-
-    const themeManager = new ThemeManager(config.theme);
-    app.provide(ThemeManagerKey, themeManager);
 
     if ((await libparsec.getPlatform()) === Platform.Web) {
       window.addEventListener('unload', async (_event: Event) => {

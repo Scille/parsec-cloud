@@ -122,7 +122,7 @@
             v-if="workspaceMenuState === WorkspaceMenu.All && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="isDarkTheme ? NoWorkspaceDark : NoWorkspace"
+              :image="theme === Theme.Dark ? NoWorkspaceDark : NoWorkspace"
               class="no-workspaces__image"
             />
             <ion-text v-if="workspaceList.length > 0">
@@ -165,7 +165,7 @@
             v-if="workspaceMenuState === WorkspaceMenu.Recent && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="isDarkTheme ? NoRecentWorkspaceDark : NoRecentWorkspace"
+              :image="theme === Theme.Dark ? NoRecentWorkspaceDark : NoRecentWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
@@ -177,7 +177,7 @@
             v-if="workspaceMenuState === WorkspaceMenu.Favorites && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="isDarkTheme ? NoFavoriteWorkspaceDark : NoFavoriteWorkspace"
+              :image="theme === Theme.Dark ? NoFavoriteWorkspaceDark : NoFavoriteWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
@@ -189,7 +189,7 @@
             v-if="workspaceMenuState === WorkspaceMenu.Hidden && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="isDarkTheme ? NoHiddenWorkspaceDark : NoHiddenWorkspace"
+              :image="theme === Theme.Dark ? NoHiddenWorkspaceDark : NoHiddenWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
@@ -319,6 +319,7 @@ import {
   NoRecentWorkspaceDark,
   NoWorkspace,
   NoWorkspaceDark,
+  Theme,
   useTheme,
   useWindowSize,
 } from 'megashark-lib';
@@ -336,7 +337,7 @@ const contextMenu = useWorkspaceContextMenu(false);
 const workspaceAttributes = useWorkspaceAttributes();
 const actions = useWorkspaceActions();
 
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const sortBy = ref(SortWorkspaceBy.Name);

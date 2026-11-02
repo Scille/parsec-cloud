@@ -9,7 +9,7 @@
       >
         <div class="recovery-method-content">
           <ms-image
-            :image="isDarkTheme ? RecoveryFileIconDark : RecoveryFileIcon"
+            :image="theme === Theme.Dark ? RecoveryFileIconDark : RecoveryFileIcon"
             class="recovery-method-content-image"
           />
 
@@ -67,7 +67,7 @@
       >
         <div class="recovery-method-content">
           <ms-image
-            :image="isDarkTheme ? RecoveryDeviceIconDark : RecoveryDeviceIcon"
+            :image="theme === Theme.Dark ? RecoveryDeviceIconDark : RecoveryDeviceIcon"
             class="recovery-method-content-image"
           />
 
@@ -135,7 +135,7 @@
       <div class="recovery-method">
         <div class="recovery-method-content">
           <ms-image
-            :image="isDarkTheme ? RecoveryTrustIconDark : RecoveryTrustIcon"
+            :image="theme === Theme.Dark ? RecoveryTrustIconDark : RecoveryTrustIcon"
             class="recovery-method-content-image"
           />
 
@@ -216,12 +216,12 @@ import ExportRecoveryDevice from '@/views/profile/ExportRecoveryDeviceModal.vue'
 import ShamirRecoveryModal from '@/views/profile/ShamirRecoveryModal.vue';
 import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { Answer, askQuestion, MsImage, MsModalResult, MsSpinner, useTheme, useWindowSize } from 'megashark-lib';
+import { Answer, askQuestion, MsImage, MsModalResult, MsSpinner, Theme, useTheme, useWindowSize } from 'megashark-lib';
 import { computed, inject, onMounted, Ref, ref } from 'vue';
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 const { isLargeDisplay } = useWindowSize();
 
 const shamirThreshold = ref(3);

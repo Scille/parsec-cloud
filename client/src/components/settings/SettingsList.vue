@@ -156,12 +156,12 @@ import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isDesktop, isMacOS, usesTestbed } from '@/parsec/environment';
 import { Env } from '@/services/environment';
 import { Sentry } from '@/services/sentry';
-import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
+import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { IonButton, IonList, IonText, IonToggle, isPlatform } from '@ionic/vue';
-import { I18n, Locale, LocaleOptions, MsDropdown, MsOptions, Theme, ThemeManager } from 'megashark-lib';
+import { I18n, Locale, LocaleOptions, MsDropdown, MsOptions, ThemePreference, useTheme } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 
-const themeManager: ThemeManager = inject(ThemeManagerKey)!;
+const { themePreference } = useTheme();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
@@ -173,15 +173,15 @@ const languageOptions: MsOptions = new MsOptions(LocaleOptions);
 
 const themeOptions: MsOptions = new MsOptions([
   {
-    key: Theme.Dark,
+    key: ThemePreference.Dark,
     label: 'SettingsModal.theme.values.dark',
   },
   {
-    key: Theme.Light,
+    key: ThemePreference.Light,
     label: 'SettingsModal.theme.values.light',
   },
   {
-    key: Theme.System,
+    key: ThemePreference.System,
     label: 'SettingsModal.theme.values.system',
   },
 ]);
@@ -213,9 +213,9 @@ async function changeLang(lang: Locale): Promise<void> {
   await setupAppMenu();
 }
 
-async function changeTheme(selectedTheme: Theme): Promise<void> {
+async function changeTheme(selectedTheme: ThemePreference): Promise<void> {
   config.value.theme = selectedTheme;
-  themeManager.use(selectedTheme);
+  themePreference.value = selectedTheme;
 }
 
 async function openConfigDir(): Promise<void> {

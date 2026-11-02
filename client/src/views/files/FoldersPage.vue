@@ -171,7 +171,7 @@
               class="no-files-content"
               v-else
             >
-              <ms-image :image="isDarkTheme ? NoFileImportedDark : NoFileImported" />
+              <ms-image :image="theme === Theme.Dark ? NoFileImportedDark : NoFileImported" />
               <ion-text>
                 {{ $msTranslate('FoldersPage.emptyFolder') }}
               </ion-text>
@@ -257,6 +257,7 @@ import {
   NoFileImported,
   NoFileImportedDark,
   RenameIcon,
+  Theme,
   Translatable,
   asyncComputed,
   getTextFromUser,
@@ -343,7 +344,7 @@ const customTabBar = useCustomTabBar();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const { hideHeader, showHeader } = useHeaderControl();
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 const msSorterOptions: MsOptions = new MsOptions([
   { label: 'FoldersPage.sort.byName', key: SortProperty.Name },
