@@ -17,7 +17,7 @@ export interface EditicsOpenOptions {
   userId: string;
   mode: EditicsOpenModes;
   locale: string;
-  theme?: 'light' | 'dark';
+  theme: 'light' | 'dark';
 }
 
 // Reply sent back by the parent to the host on the MessagePort transferred with the `oo-save` message.
@@ -49,4 +49,6 @@ export type EditicsHostToParentMessage =
 export type EditicsParentToHostMessage =
   | { command: 'oo-open'; options: EditicsOpenOptions; documentContent: Uint8Array }
   | { command: 'oo-save-request' }
+  // The app theme changed while the editor is open.
+  | { command: 'oo-set-theme'; theme: EditicsOpenOptions['theme'] }
   | { command: 'oo-insert-image-result'; requestId: number; fileName?: string; data?: Uint8Array; error?: string };
