@@ -314,12 +314,11 @@ jobs:
           echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
-      - name: Install yq
-        # TODO: Change me to taiki-e/install-action action once https://github.com/taiki-e/install-action/pull/2036 is merged
-        uses: FirelightFlagboy/install-action@3ff3b05d5550665b1f00f01c03da3bda42294c96
+      - name: Install tools
+        uses: taiki-e/install-action@1919c4a95903d2c33e4a221102edca87309fc14b # v2.89.0
         with:
-          tool: yq
-        timeout-minutes: 1
+          tool: syft@0.84.0, yq
+        timeout-minutes: 2
 
       - name: Windows > Install TrustedSigning
         if: matrix.platform == 'windows'
@@ -465,11 +464,6 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
         timeout-minutes: 2
-
-      # Install syft
-      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
-        with:
-          tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}${{ matrix.hardened && '-hardened' || '' }}-${{ runner.arch }}.spdx.json .
