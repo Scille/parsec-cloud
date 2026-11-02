@@ -270,8 +270,8 @@ jobs:
         id: version
         shell: bash
         run: |
-          cat version.patch/version.ini > "$GITHUB_OUTPUT"
-          cat "$GITHUB_OUTPUT"
+          cat version.patch/version.ini | tee "$GITHUB_OUTPUT"
+          echo sign=${{ (contains(fromJSON('["windows", "macos"]'), matrix.platform) && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')) }} | tee -a "$GITHUB_OUTPUT"
         working-directory: ${{ runner.temp }}
 
       - name: Apply version.patch
@@ -395,7 +395,7 @@ jobs:
       # Do not prepare codesign if the PR is from dependabot (it does not have access to secrets).
       - name: Prepare codesign
         shell: bash -o pipefail -eux {0}
-        if: matrix.platform == 'macos' && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
+        if: matrix.platform == 'macos' && steps.version.outputs.sign == 'true'
         run: |
           printenv MACOS_CERT | base64 --decode > certificate.p12
 
@@ -444,7 +444,7 @@ jobs:
           npm run electron:release -- \
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
-            ${{ (contains(fromJSON('["windows", "macos"]'), matrix.platform) && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')) && '--sign' || '' }} \
+            ${{ steps.version.outputs.sign == 'true' && '--sign' || '' }} \
             ${{ matrix.hardened && '--hardened' || '' }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -483,7 +483,7 @@ jobs:
         shell: bash -eux -o pipefail {0}
         run: |
           arch=$(uname -m)
-          app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ matrix.hardened && '.hardened' || '' }}${{ matrix.platform == 'linux-gnu' && '.unsigned' || '' }}"
+          app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ matrix.hardened && '.hardened' || '' }}${{ steps.version.outputs.sign != 'true' && '.unsigned' || '' }}"
           latest_file="latest-${{ matrix.hardened && 'hardened-' || '' }}${{ matrix.os_alias }}-${arch}.yml"
           artifact_file=artifacts.yml
 
