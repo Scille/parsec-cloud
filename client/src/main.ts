@@ -10,7 +10,7 @@ import { IonicVue, isPlatform, modalController, popoverController } from '@ionic
 /* Theme variables */
 import '@/theme/global.scss';
 
-import { MenuBarActions, ParsecMenuItem, dispatchMenuAction, setupAppMenu } from '@/common/menu';
+import { MenuBarActions, ParsecMenuItem, dispatchMenuAction, setupAppMenu, setupWindowTheme } from '@/common/menu';
 import { sanitizeCustomTranslations } from '@/common/utils';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
@@ -357,6 +357,8 @@ async function setupApp(): Promise<void> {
     }
 
     if (isElectron()) {
+      setupWindowTheme();
+
       if ((await libparsec.getPlatform()) === Platform.Windows) {
         const mountpoint = await libparsec.getDefaultMountpointBaseDir();
         window.nativeAPI.sendMountpointFolder(mountpoint);
@@ -595,6 +597,7 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
     setupActionMenu: (_items: ParsecMenuItem[]): void => {
       console.log('setupActionMenu: Not available');
     },
+    setWindowTheme: (_theme: 'light' | 'dark', _overlay: boolean): void => {},
   };
 }
 
@@ -653,6 +656,7 @@ declare global {
       readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
       openPopup: (url: string) => boolean;
       setupActionMenu: (items: ParsecMenuItem[]) => void;
+      setWindowTheme: (theme: 'light' | 'dark', overlay: boolean) => void;
     };
   }
 }
