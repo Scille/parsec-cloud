@@ -112,7 +112,6 @@ pub struct WorkspaceExternalInfo {
 }
 
 pub struct WorkspaceOps {
-    #[allow(unused)]
     config: Arc<ClientConfig>,
     device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,

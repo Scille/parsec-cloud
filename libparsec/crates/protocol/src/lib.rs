@@ -2,12 +2,10 @@
 
 #![doc = include_str!("../README.md")]
 
-mod error;
 mod version;
 
 use libparsec_serialization_format::parsec_protocol_cmds_family;
 
-pub use error::*;
 pub use version::*;
 
 // `libparsec_types` must be in the scope given the macro access it from submodule
