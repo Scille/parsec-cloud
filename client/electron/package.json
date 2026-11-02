@@ -25,28 +25,28 @@
         "sentry:sourcemaps": "sentry-cli sourcemaps inject --org scille --project parsec3-frontend ./build && sentry-cli sourcemaps upload --org scille --project parsec3-frontend ./build"
     },
     "dependencies": {
-        "@sentry/electron": "^8.1.0",
+        "@sentry/electron": "^8.3.0",
         "builder-util-runtime": "9.7.0",
-        "chokidar": "~5.0.0",
-        "electron-log": "^5.4.3",
+        "chokidar": "~6.0.0",
+        "electron-log": "^5.4.4",
         "electron-unhandled": "~6.0.0",
-        "electron-updater": "6.8.10",
+        "electron-updater": "6.8.11",
         "electron-window-state": "~5.0.3",
         "mime-types": "~3.0.1",
         "regedit": "^5.1.4",
-        "semver": "^7.8.1",
+        "semver": "^7.8.5",
         "tslib": "^2.8.1"
     },
     "//": "⚠️ Updating Electron requires to also update `build.target` config in `client/vite.config.ts`",
     "devDependencies": {
-        "@electron/notarize": "^3.1.1",
-        "@sentry/cli": "^3.3.5",
+        "@electron/notarize": "^3.1.2",
+        "@sentry/cli": "^3.8.2",
         "@types/mime-types": "^3.0.1",
-        "@types/node": "^26.2.0",
-        "@types/semver": "^7.7.1",
+        "@types/node": "^26.6.5",
+        "@types/semver": "^7.8.0",
         "commander": "^15.0.0",
         "electron": "^44.0.0",
-        "electron-builder": "~26.17.0",
+        "electron-builder": "~26.18.0",
         "typescript": "~7.0.2"
     },
     "keywords": [
