@@ -98,7 +98,7 @@ async function onNoneClicked(): Promise<void> {
 .button-choice {
   border-radius: ms.radius('lg');
   @include ms.font('heading-h2');
-  font-weight: var(--parsec-font-weight-bold);
+  font-size: ms.font('heading-h2-text-size') !important;
   letter-spacing: 9px;
   text-transform: uppercase;
   height: 4em;

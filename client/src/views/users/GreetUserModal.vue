@@ -13,7 +13,8 @@
     <ion-button
       slot="icon-only"
       @click="cancelModal()"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
       v-if="pageStep !== GreetUserStep.Summary && isLargeDisplay"
     >
       <ion-icon
