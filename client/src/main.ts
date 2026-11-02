@@ -45,7 +45,7 @@ import { GUILogger, LogLevel } from '@/services/webLogger';
 import { initFileServiceWorker } from '@/services/worker';
 import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
-import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, askQuestion, useTheme } from 'megashark-lib';
+import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, Theme, ThemePreference, askQuestion, useTheme } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -595,7 +595,7 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
     setupActionMenu: (_items: ParsecMenuItem[]): void => {
       console.log('setupActionMenu: Not available');
     },
-    setWindowTheme: (_theme: 'light' | 'dark', _overlay: boolean): void => {},
+    setWindowTheme: (_themePreference: ThemePreference, _theme: Theme, _overlay: boolean): void => {},
   };
 }
 
@@ -654,7 +654,7 @@ declare global {
       readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
       openPopup: (url: string) => boolean;
       setupActionMenu: (items: ParsecMenuItem[]) => void;
-      setWindowTheme: (theme: 'light' | 'dark', overlay: boolean) => void;
+      setWindowTheme: (themePreference: ThemePreference, theme: Theme, overlay: boolean) => void;
     };
   }
 }
