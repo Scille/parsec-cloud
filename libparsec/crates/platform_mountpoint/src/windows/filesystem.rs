@@ -56,7 +56,6 @@ static SECURITY_DESCRIPTOR: Lazy<SecurityDescriptor> = Lazy::new(|| {
 /// virtual file f"{file_path}.{ENTRY_INFO_EXTENSION}".
 const ENTRY_INFO_EXTENSION: &str = "__parsec_entry_info__";
 
-#[allow(dead_code)]
 fn is_entry_info_path(path: &FsPath) -> bool {
     path.parts()
         .last()
@@ -82,9 +81,7 @@ pub(crate) enum OpenedObj {
     },
     File {
         // Keeping file name here is useful for debug logs
-        #[allow(dead_code)]
         parsec_file_name: FsPath,
-        #[allow(dead_code)]
         id: VlobID,
         fd: FileDescriptor,
     },
@@ -180,8 +177,6 @@ fn parsec_entry_stat_to_winfsp_file_info(stat: &EntryStat, is_read_only: bool) -
 
 #[cfg(test)]
 #[allow(clippy::type_complexity)]
-// TODO
-#[allow(dead_code)]
 pub(crate) static LOOKUP_HOOK: Mutex<
     Option<Box<dyn FnMut(&FsPath) -> Option<Result<EntryStat, WorkspaceStatEntryError>> + Send>>,
 > = Mutex::new(None);

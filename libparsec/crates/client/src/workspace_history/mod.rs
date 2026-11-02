@@ -47,7 +47,6 @@ impl WorkspaceHistoryOpsReadWriteAttributes {
 }
 
 pub struct WorkspaceHistoryOps {
-    #[allow(unused)]
     config: Arc<ClientConfig>,
     rw: Mutex<WorkspaceHistoryOpsReadWriteAttributes>,
     store: store::WorkspaceHistoryStore,

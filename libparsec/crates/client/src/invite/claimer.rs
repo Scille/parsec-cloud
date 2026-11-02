@@ -547,7 +547,6 @@ impl ShamirRecoveryClaimPickRecipientCtx {
                     claimer_user_id: self.claimer_user_id,
                     claimer_human_handle: self.claimer_human_handle,
                     secret,
-                    time_provider: self.time_provider,
                 },
             ))
         } else {
@@ -588,14 +587,12 @@ pub enum ShamirRecoveryClaimMaybeFinalizeCtx {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct ShamirRecoveryClaimRecoverDeviceCtx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
     claimer_user_id: UserID,
     claimer_human_handle: HumanHandle,
     secret: ShamirRecoverySecret,
-    time_provider: TimeProvider,
 }
 
 impl ShamirRecoveryClaimRecoverDeviceCtx {
