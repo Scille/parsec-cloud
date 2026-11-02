@@ -85,8 +85,8 @@ process.once('loaded', async () => {
     setupActionMenu: (items: ParsecMenuItem) => {
       ipcRenderer.send(PageToWindowChannel.SetupActionMenu, items);
     },
-    setWindowTheme: (theme: 'light' | 'dark', overlay: boolean) => {
-      ipcRenderer.send(PageToWindowChannel.SetWindowTheme, theme, overlay);
+    setWindowTheme: (themePreference: 'system' | 'light' | 'dark', theme: 'light' | 'dark', overlay: boolean) => {
+      ipcRenderer.send(PageToWindowChannel.SetWindowTheme, themePreference, theme, overlay);
     },
   });
 

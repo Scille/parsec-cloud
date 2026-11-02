@@ -251,10 +251,11 @@ export class ParsecApp {
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
   }
 
-  setWindowTheme(theme: 'light' | 'dark', overlay: boolean): void {
+  setWindowTheme(themePreference: 'system' | 'light' | 'dark', theme: 'light' | 'dark', overlay: boolean): void {
     // Chromium uses the native theme for the hover color on title bar buttons.
-    if (nativeTheme.themeSource !== theme) {
-      nativeTheme.themeSource = theme;
+    // This is also what `prefers-color-scheme` reads, so "system" must stay as such for the page to see the OS changes.
+    if (nativeTheme.themeSource !== themePreference) {
+      nativeTheme.themeSource = themePreference;
     }
     const colors = WINDOW_CONTROLS_COLORS[theme];
     this.MainWindow.setBackgroundColor(colors.normal.color);

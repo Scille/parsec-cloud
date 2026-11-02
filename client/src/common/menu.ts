@@ -38,7 +38,8 @@ function _sendWindowTheme(): void {
   if (!isElectron()) {
     return;
   }
-  window.nativeAPI.setWindowTheme(useTheme().isDarkTheme.value ? 'dark' : 'light', overlaysWithBackdrop.size > 0);
+  const { themePreference, theme } = useTheme();
+  window.nativeAPI.setWindowTheme(themePreference.value, theme.value, overlaysWithBackdrop.size > 0);
 }
 
 function _onOverlayOpen(event: Event): void {
@@ -83,9 +84,9 @@ document.addEventListener('ionModalWillDismiss', _onModalClose);
 document.addEventListener('ionPopoverWillPresent', _onPopoverOpen);
 document.addEventListener('ionPopoverWillDismiss', _onPopoverClose);
 
-// Must be called after the ThemeManager is created, `themeSource` being what "system" is resolved from
 export function setupWindowTheme(): void {
-  watch(useTheme().isDarkTheme, _sendWindowTheme, { immediate: true });
+  const { themePreference, theme } = useTheme();
+  watch([themePreference, theme], _sendWindowTheme, { immediate: true });
 }
 
 watchRoute(async (newRoute) => {
