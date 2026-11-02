@@ -175,7 +175,7 @@ jobs:
           yq --null-input ".linux-gnu.$ARCH.client.snap = \"$FINAL_ARTIFACT_NAME\"" | tee artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # pin v2.87.29
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
         with:
           tool: syft@0.84.0
 
@@ -344,7 +344,7 @@ jobs:
 
       - name: Setup rust cache for debugging
         if: false
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # pin v2.9.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
         with:
           cache-on-failure: true
           save-if: true
@@ -467,7 +467,7 @@ jobs:
         timeout-minutes: 2
 
       # Install syft
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # pin v2.87.29
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
         with:
           tool: syft@0.84.0
 
