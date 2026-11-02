@@ -161,11 +161,12 @@ msTest.describe(() => {
     await expect(menu).toBeVisible();
     await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
     await menu.getByRole('listitem').nth(2).click();
-
-    await documents.waitForTimeout(5000);
+    const topbar = documents.locator('.file-handler-topbar');
+    await expect(topbar).toBeVisible();
+    await expect(documents.locator('.file-editor')).toBeVisible();
+    await documents.waitForTimeout(3000);
     const frame = await getEditorFrame(documents);
     await expect(frame.locator('#editor-container')).toBeVisible();
-    const topbar = documents.locator('.file-handler-topbar');
     await expect(topbar.locator('.save-info-text')).toBeHidden();
     await frame.locator('#editor-container').focus();
     await documents.keyboard.insertText('TEST');
