@@ -18,6 +18,7 @@ export enum PageToWindowChannel {
   GetLogs = 'parsec-get-logs',
   OpenPopup = 'parsec-open-popup',
   SetupActionMenu = 'parsec-setup-action-menu',
+  SetWindowTheme = 'parsec-set-window-theme',
 }
 
 export enum WindowToPageChannel {

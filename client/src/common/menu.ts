@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { openBugReportModal } from '@/components/misc';
-import { UserProfile } from '@/parsec';
+import { isElectron, UserProfile } from '@/parsec';
 import { libparsec, Platform } from '@/plugins/libparsec';
 import { getConnectionHandle, navigateTo, ProfilePages, Routes, watchRoute } from '@/router';
 import { Env } from '@/services/environment';
@@ -9,8 +9,8 @@ import { Events } from '@/services/eventDistributor';
 import { InjectionProvider } from '@/services/injectionProvider';
 import { openAboutModal } from '@/views/about';
 import { openSettingsModal } from '@/views/settings';
-import { I18n } from 'megashark-lib';
-import { ref } from 'vue';
+import { I18n, useTheme } from 'megashark-lib';
+import { ref, watch } from 'vue';
 
 // Keep in sync with Electron/menu.ts
 interface ParsecMenuAction {
@@ -32,31 +32,61 @@ export type ParsecMenuItem = ParsecMenuAction | ParsecMenuSeparator;
 const modalOpened = ref(false);
 const popoverOpened = ref(false);
 const loggedIn = ref(false);
+const overlaysWithBackdrop = new Set<EventTarget>();
 
-function _onModalClose(): void {
+function _sendWindowTheme(): void {
+  if (!isElectron()) {
+    return;
+  }
+  window.nativeAPI.setWindowTheme(useTheme().isDarkTheme.value ? 'dark' : 'light', overlaysWithBackdrop.size > 0);
+}
+
+function _onOverlayOpen(event: Event): void {
+  if ((event.target as HTMLIonModalElement | HTMLIonPopoverElement).showBackdrop) {
+    overlaysWithBackdrop.add(event.target as EventTarget);
+    _sendWindowTheme();
+  }
+}
+
+function _onOverlayClose(event: Event): void {
+  if (overlaysWithBackdrop.delete(event.target as EventTarget)) {
+    _sendWindowTheme();
+  }
+}
+
+function _onModalClose(event: Event): void {
   modalOpened.value = false;
   setupAppMenu();
+  _onOverlayClose(event);
 }
 
-function _onModalOpen(): void {
+function _onModalOpen(event: Event): void {
   modalOpened.value = true;
   setupAppMenu();
+  _onOverlayOpen(event);
 }
 
-function _onPopoverClose(): void {
+function _onPopoverClose(event: Event): void {
   popoverOpened.value = false;
   setupAppMenu();
+  _onOverlayClose(event);
 }
 
-function _onPopoverOpen(): void {
+function _onPopoverOpen(event: Event): void {
   popoverOpened.value = true;
   setupAppMenu();
+  _onOverlayOpen(event);
 }
 
-document.addEventListener('ionModalDidPresent', _onModalOpen);
+document.addEventListener('ionModalWillPresent', _onModalOpen);
 document.addEventListener('ionModalWillDismiss', _onModalClose);
-document.addEventListener('ionPopoverDidPresent', _onPopoverOpen);
+document.addEventListener('ionPopoverWillPresent', _onPopoverOpen);
 document.addEventListener('ionPopoverWillDismiss', _onPopoverClose);
+
+// Must be called after the ThemeManager is created, `themeSource` being what "system" is resolved from
+export function setupWindowTheme(): void {
+  watch(useTheme().isDarkTheme, _sendWindowTheme, { immediate: true });
+}
 
 watchRoute(async (newRoute) => {
   const old = loggedIn.value;

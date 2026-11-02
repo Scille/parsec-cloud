@@ -203,6 +203,10 @@ ipcMain.on(PageToWindowChannel.SetupActionMenu, (_event, items: ParsecMenuItem[]
   setupAppMenu(parsecApp, items);
 });
 
+ipcMain.on(PageToWindowChannel.SetWindowTheme, (_event, theme: 'light' | 'dark', overlay: boolean) => {
+  parsecApp.setWindowTheme(theme, overlay);
+});
+
 ipcMain.on(PageToWindowChannel.CloseApp, async (_event) => {
   parsecApp.forceClose = true;
   await parsecApp.quitApp();

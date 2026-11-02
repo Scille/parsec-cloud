@@ -27,6 +27,18 @@ export interface CapacitorElectronConfig {
 
 const AUTHORIZED_PROTOCOLS = ['http', 'https', 'parsec3'];
 const CHECK_UPDATE_INTERVAL = 1000 * 60 * 60; // 1 hour
+// `overlay` colors are the `normal` ones under a modal or popover backdrop.
+// Keep in sync with the theme and the backdrop opacity in src/theme.
+const WINDOW_CONTROLS_COLORS = {
+  light: {
+    normal: { color: '#fcfcfc', symbolColor: '#006eff' },
+    overlay: { color: '#909090', symbolColor: '#004bad' },
+  },
+  dark: {
+    normal: { color: '#171725', symbolColor: '#ffffff' },
+    overlay: { color: '#13131a', symbolColor: '#adadad' },
+  },
+};
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher: any = {
@@ -239,6 +251,18 @@ export class ParsecApp {
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
   }
 
+  setWindowTheme(theme: 'light' | 'dark', overlay: boolean): void {
+    // Chromium uses the native theme for the hover color on title bar buttons.
+    if (nativeTheme.themeSource !== theme) {
+      nativeTheme.themeSource = theme;
+    }
+    const colors = WINDOW_CONTROLS_COLORS[theme];
+    this.MainWindow.setBackgroundColor(colors.normal.color);
+    if (process.platform !== 'darwin') {
+      this.MainWindow.setTitleBarOverlay(overlay ? colors.overlay : colors.normal);
+    }
+  }
+
   updateMountpoint(path: string): void {
     this.log('debug', 'Updating mountpoint');
     fs.mkdirSync(path, { recursive: true });
@@ -332,16 +356,12 @@ export class ParsecApp {
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
     const windowState = process.platform === 'linux' ? {} : this.mainWindowState;
 
-    // Chromium uses the desktop theme for the hover color on title bar buttons.
-    // This is okay for now since we don't have a dark theme yet.
-    nativeTheme.themeSource = process.platform === 'win32' ? 'light' : 'system';
-
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
       titleBarStyle: 'hidden',
       trafficLightPosition: { x: 12, y: 12 },
-      titleBarOverlay: process.platform !== 'darwin' ? { color: '#fcfcfc', symbolColor: '#006eff', height: 40 } : undefined,
-      backgroundColor: '#fcfcfc',
+      titleBarOverlay: process.platform !== 'darwin' ? { ...WINDOW_CONTROLS_COLORS.light.normal, height: 40 } : undefined,
+      backgroundColor: WINDOW_CONTROLS_COLORS.light.normal.color,
       show: false,
       ...windowState,
       minWidth: 1280,
