@@ -680,6 +680,25 @@ function trackSaveState(): void {
 
 // --- open ---------------------------------------------------------------
 
+// The theme follows the Parsec app, so the editor's own controls to change it
+// (File > Advanced Settings and View > Interface Theme) must not be reachable.
+const HIDE_THEME_CONTROLS_CSS = '#fm-btn-settings, #slot-btn-interface-theme { display: none !important; }';
+
+function getUiTheme(theme: EditicsOpenOptions['theme']): string {
+  return theme === 'dark' ? 'theme-dark' : 'theme-classic-light';
+}
+
+let currentTheme: EditicsOpenOptions['theme'] = 'light';
+
+// There is no API to change the theme once the editor is open, so this does
+// what the editor's own interface theme button does. It is a no-op until the
+// editor is loaded, or if the theme is already the current one.
+function applyTheme(): void {
+  const editorFrame = document.querySelector('iframe[name="frameEditor"]') as HTMLIFrameElement | null;
+  const editorWindow = editorFrame?.contentWindow as any | undefined;
+  editorWindow?.Common?.UI?.Themes?.setTheme?.(getUiTheme(currentTheme));
+}
+
 function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
   return {
     offline: true,
@@ -720,7 +739,7 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
         about: false,
         feedback: false,
         anonymous: { request: false },
-        uiTheme: options.theme === 'dark' ? 'theme-dark' : 'theme-classic-light',
+        uiTheme: getUiTheme(options.theme),
       },
     },
     events: {
@@ -748,11 +767,16 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
 // `openDocument` is expected to be called only once since it loads OnlyOffice
 // scripts and set global variables (e.g. `window.APP`, `window.ooDocEditor`).
 async function openDocument(options: EditicsOpenOptions, documentContent: Uint8Array): Promise<void> {
+  currentTheme = options.theme;
   const prepareDocumentPromise = prepareDocumentContent(options, documentContent);
 
   await loadScript(ONLYOFFICE_API_URL);
 
   // 1. Create & initialize the editor
+
+  // The editor gives priority to the theme it stored over the `uiTheme` config.
+  // The frame shares our origin, so overwrite it to always start with the right theme.
+  localStorage.setItem('ui-theme-id', getUiTheme(options.theme));
 
   const config = buildConfig(options);
   const editor = new window.DocsAPI.DocEditor('placeholder');
@@ -811,6 +835,9 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
   };
   await editor.init(config, mockServer);
   window.ooDocEditor = editor;
+  editor.injectCSS(HIDE_THEME_CONTROLS_CSS);
+  // The theme may have changed while the editor was loading
+  applyTheme();
 
   // 2. Load the document and start the actual edition
 
@@ -859,6 +886,11 @@ window.addEventListener('message', function (event: MessageEvent) {
 
     case 'oo-save-request':
       onSaveRequest();
+      break;
+
+    case 'oo-set-theme':
+      currentTheme = data.theme;
+      applyTheme();
       break;
 
     case 'oo-insert-image-result': {

@@ -114,6 +114,8 @@ export interface EditicsHostSession {
   // persisted (or `false` if it could not be). `nothingToSave` resolves `true`
   // too: there was simply nothing modified to write back.
   save: () => Promise<boolean>;
+  // Applies a new theme to the editor while it is open.
+  setTheme: (theme: EditicsOpenOptions['theme']) => void;
 }
 
 // Time we give the host page to signal it is ready after its iframe is loaded.
@@ -323,6 +325,9 @@ export async function openDocument(
         };
         frame.contentWindow!.postMessage({ command: 'oo-save-request' } satisfies EditicsParentToHostMessage, hostOrigin);
       });
+    },
+    setTheme: (theme: EditicsOpenOptions['theme']): void => {
+      frame.contentWindow?.postMessage({ command: 'oo-set-theme', theme } satisfies EditicsParentToHostMessage, hostOrigin);
     },
   };
 

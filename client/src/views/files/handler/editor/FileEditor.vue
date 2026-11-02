@@ -82,11 +82,11 @@ import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus } from '@/views
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
 import { FileHandlerMode, SaveState } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import type { EditicsDocumentTypes } from '@editics_parent_host_api';
+import type { EditicsDocumentTypes, EditicsOpenOptions } from '@editics_parent_host_api';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner, Theme, useTheme } from 'megashark-lib';
+import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 // Time to wait for the document to be fully loaded (fonts, dictionaries, etc.) before offering
 // the user the option to keep waiting or give up, see openTimeoutModal(). OnlyOffice's own assets
@@ -95,6 +95,7 @@ import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 const READY_TIMEOUT_MS = 30_000;
 const AUTOSAVE_INTERVAL = 600_000;
 
+const { theme } = useTheme();
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
 const error = ref('');
 const showErrorTips = ref(false);
@@ -121,6 +122,14 @@ const emits = defineEmits<{
 }>();
 
 defineExpose({ save });
+
+function getEditorTheme(): EditicsOpenOptions['theme'] {
+  return theme.value === Theme.Dark ? 'dark' : 'light';
+}
+
+watch(theme, () => {
+  session?.setTheme(getEditorTheme());
+});
 
 onMounted(async () => {
   // The document type is resolved from the file content type detected on this
@@ -225,6 +234,7 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
       mode: readOnly || contentInfo.timestamp ? 'view' : 'edit',
       locale: longLocaleCodeToShort(I18n.getLocale()),
+      theme: getEditorTheme(),
     },
     documentContent,
     {
