@@ -20,7 +20,7 @@
         {{ $msTranslate({ key: 'FoldersPage.DownloadFile.downloadWarningText', count: multipleFiles ? 2 : 1 }) }}
       </ms-report-text>
       <ms-image
-        :image="isDarkTheme ? DownloadWarningImageDark : DownloadWarningImageLight"
+        :image="theme === Theme.Dark ? DownloadWarningImageDark : DownloadWarningImageLight"
         class="download-warning-image"
       />
       <i18n-t
@@ -54,7 +54,7 @@ import DownloadWarningImageDark from '@/assets/images/warning-download-dark.svg'
 import DownloadWarningImageLight from '@/assets/images/warning-download-light.svg';
 import { Env } from '@/services/environment';
 import { modalController } from '@ionic/vue';
-import { MsCheckbox, MsImage, MsModal, MsModalResult, MsReportText, MsReportTheme, useTheme } from 'megashark-lib';
+import { MsCheckbox, MsImage, MsModal, MsModalResult, MsReportText, MsReportTheme, Theme, useTheme } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
 const noReminder = ref(false);
@@ -63,7 +63,7 @@ defineProps<{
   multipleFiles?: boolean;
 }>();
 
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 onMounted(async () => {});
 

@@ -9,7 +9,7 @@
     >
       <div class="shamir-information-header">
         <ms-image
-          :image="isDarkTheme ? ShamirIconCircleDark : ShamirIconCircleLight"
+          :image="theme === Theme.Dark ? ShamirIconCircleDark : ShamirIconCircleLight"
           class="shamir-information-header__image"
           alt="Shamir Icon"
         />
@@ -224,6 +224,7 @@ import {
   MsReportText,
   MsReportTheme,
   MsSearchInput,
+  Theme,
   Translatable,
   useTheme,
 } from 'megashark-lib';
@@ -234,7 +235,7 @@ enum ShamirSetupStep {
   AddPeople = 'shamir-setup-step-add-people',
 }
 
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 const step = ref<ShamirSetupStep>(ShamirSetupStep.Initial);
 const allUsers = ref<Array<UserInfo>>([]);

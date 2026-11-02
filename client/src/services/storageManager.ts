@@ -3,10 +3,9 @@
 import { isElectron, isWeb } from '@/parsec';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
-import { I18n, Locale, Theme } from 'megashark-lib';
+import { I18n, Locale, ThemePreference } from 'megashark-lib';
 
 export const StorageManagerKey = 'storageManager';
-export const ThemeManagerKey = 'themeManager';
 
 export async function persistStorage(): Promise<void> {
   async function _persist(): Promise<void> {
@@ -40,7 +39,7 @@ export interface BmsAccessData {
 
 export interface Config {
   locale: Locale;
-  theme: Theme;
+  theme: ThemePreference;
   enableTelemetry: boolean;
   minimizeToTray: boolean;
   confirmBeforeQuit: boolean;
@@ -65,7 +64,7 @@ export class StorageManager {
   static get DEFAULT_CONFIG(): Config {
     return {
       locale: I18n.getPreferredLocale(),
-      theme: Theme.System,
+      theme: ThemePreference.System,
       enableTelemetry: true,
       minimizeToTray: true,
       confirmBeforeQuit: true,
@@ -204,7 +203,7 @@ export class StorageManager {
       return StorageManager.DEFAULT_CONFIG;
     }
 
-    const currentTheme = Object.values(Theme).find((t) => t === data.theme);
+    const currentTheme = Object.values(ThemePreference).find((t) => t === data.theme);
 
     // We could just return directly but we create a new object explicitly
     // so we don't have any implicit deserialization that we don't want

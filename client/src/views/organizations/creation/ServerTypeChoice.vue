@@ -58,14 +58,14 @@
             class="trial-visual"
           >
             <img
-              :src="isDarkTheme ? TrialFRDark : TrialFR"
+              :src="theme === Theme.Dark ? TrialFRDark : TrialFR"
               alt="trial"
             />
             <ion-text class="trial-visual__badge">{{ $msTranslate('CreateOrganization.server.trial.badge') }}</ion-text>
           </div>
           <img
             v-else
-            :src="isDarkTheme ? TrialUSDark : TrialUS"
+            :src="theme === Theme.Dark ? TrialUSDark : TrialUS"
             alt="trial"
           />
         </div>
@@ -113,11 +113,11 @@ import { ServerType } from '@/services/parsecServers';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { I18n, MsImage, useTheme, useWindowSize } from 'megashark-lib';
+import { I18n, MsImage, Theme, useTheme, useWindowSize } from 'megashark-lib';
 import { ref } from 'vue';
 
 const { isSmallDisplay } = useWindowSize();
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 const emits = defineEmits<{
   (e: 'serverChosen', serverType: ServerType): void;

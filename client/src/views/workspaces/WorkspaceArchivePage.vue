@@ -33,7 +33,7 @@
           v-if="!querying && filteredWorkspaces.length === 0"
         >
           <ms-image
-            :image="isDarkTheme ? NoArchivedWorkspaceDark : NoArchivedWorkspace"
+            :image="theme === Theme.Dark ? NoArchivedWorkspaceDark : NoArchivedWorkspace"
             class="no-archived-workspaces__image"
           />
           <ion-text class="no-archived-workspaces__text">
@@ -81,11 +81,11 @@ import { EventDistributor, EventDistributorKey, Events } from '@/services/eventD
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { arrowBack } from 'ionicons/icons';
-import { MsImage, MsSpinner, NoArchivedWorkspace, NoArchivedWorkspaceDark, useTheme } from 'megashark-lib';
+import { MsImage, MsSpinner, NoArchivedWorkspace, NoArchivedWorkspaceDark, Theme, useTheme } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, Ref, ref } from 'vue';
 
 const contextMenu = useWorkspaceContextMenu(false);
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 const querying = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;

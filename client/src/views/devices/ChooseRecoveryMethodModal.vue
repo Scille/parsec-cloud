@@ -21,7 +21,7 @@
         >
           <div class="recovery-method-item__container">
             <ms-image
-              :image="isDarkTheme ? RecoveryDeviceIconDark : RecoveryDeviceIcon"
+              :image="theme === Theme.Dark ? RecoveryDeviceIconDark : RecoveryDeviceIcon"
               class="recovery-method-item__image"
             />
             <div class="recovery-method-item__content">
@@ -46,7 +46,7 @@
           :class="{ 'recovery-method-item--selected': selectedMethod === RecoveryMethod.RecoveryFile }"
         >
           <ms-image
-            :image="isDarkTheme ? RecoveryFileIconDark : RecoveryFileIcon"
+            :image="theme === Theme.Dark ? RecoveryFileIconDark : RecoveryFileIcon"
             class="recovery-method-item__image"
           />
           <div class="recovery-method-item__content">
@@ -66,7 +66,7 @@
           :class="{ 'recovery-method-item--selected': selectedMethod === RecoveryMethod.Shamir }"
         >
           <ms-image
-            :image="isDarkTheme ? RecoveryTrustIconDark : RecoveryTrustIcon"
+            :image="theme === Theme.Dark ? RecoveryTrustIconDark : RecoveryTrustIcon"
             class="recovery-method-item__image"
           />
           <div class="recovery-method-item__content">
@@ -139,7 +139,7 @@ import RecoveryTrustIcon from '@/assets/images/recovery-trusted-user-icon.svg?ra
 import { RecoveryMethod } from '@/views/devices/types';
 import { IonIcon, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
 import { add, link, logIn, phonePortraitOutline } from 'ionicons/icons';
-import { MsImage, MsModal, MsModalResult, useTheme } from 'megashark-lib';
+import { MsImage, MsModal, MsModalResult, Theme, useTheme } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 enum RecoveryMethodStep {
@@ -147,7 +147,7 @@ enum RecoveryMethodStep {
   ConnectedDevice = 'connected-device',
 }
 
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 const currentStep = ref<RecoveryMethodStep>(RecoveryMethodStep.MethodChoice);
 const selectedMethod = ref<RecoveryMethod | undefined>(undefined);
 

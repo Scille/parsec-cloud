@@ -65,7 +65,7 @@
           class="no-active"
         >
           <div class="no-active-content">
-            <ms-image :image="isDarkTheme ? NoActiveUserDark : NoActiveUser" />
+            <ms-image :image="theme === Theme.Dark ? NoActiveUserDark : NoActiveUser" />
             <ion-text>
               {{ $msTranslate('UsersPage.emptyList') }}
             </ion-text>
@@ -167,6 +167,7 @@ import {
   MsSorter,
   NoActiveUser,
   NoActiveUserDark,
+  Theme,
   useTheme,
   useWindowSize,
 } from 'megashark-lib';
@@ -194,7 +195,7 @@ let eventCbId: string | null = null;
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const { hideHeader, showHeader } = useHeaderControl();
-const { isDarkTheme } = useTheme();
+const { theme } = useTheme();
 
 const customTabBar = useCustomTabBar();
 
