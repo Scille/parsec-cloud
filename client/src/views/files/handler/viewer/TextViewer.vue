@@ -51,9 +51,9 @@ import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import DOMPurify from 'dompurify';
 import MarkdownIt, { type MarkdownIt as MarkdownItType } from 'markdown-it';
-import { I18n, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
+import { I18n, MsReportText, MsReportTheme, MsSpinner, Theme, useTheme, useWindowSize } from 'megashark-lib';
 import * as monaco from 'monaco-editor';
-import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -64,6 +64,7 @@ const SAVE_INTERVAL = 5000;
 const PREVIEW_DEBOUNCE = 500;
 
 const { isLargeDisplay } = useWindowSize();
+const { theme } = useTheme();
 
 const loading = ref(true);
 const error = ref('');
@@ -102,6 +103,14 @@ defineExpose({
   saveDocument,
 });
 
+function getEditorTheme(): string {
+  return theme.value === Theme.Dark ? 'vs-dark' : 'vs';
+}
+
+watch(theme, () => {
+  monaco.editor.setTheme(getEditorTheme());
+});
+
 onMounted(async () => {
   loading.value = true;
 
@@ -113,6 +122,7 @@ onMounted(async () => {
     const content = new TextDecoder().decode(raw);
     editor = monaco.editor.create(containerRef.value, {
       value: content,
+      theme: getEditorTheme(),
       contextmenu: false,
       language: detectLanguage(),
       readOnly: isReadOnly.value,
