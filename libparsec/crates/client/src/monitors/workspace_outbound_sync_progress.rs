@@ -237,7 +237,7 @@ fn task_future_factory(
                                 realm_id,
                                 entry_currently_being_synced: progress_tracker.last_updated_file
                             };
-                            event_bus.send(dbg!(&new_event));
+                            event_bus.send(&new_event);
                             progress_tracker.last_sent_event = new_event;
                         }
                     due_time = device.time_provider.now()+BACKLOG_TRACKER_WAIT;
