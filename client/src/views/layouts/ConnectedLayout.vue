@@ -416,13 +416,6 @@ async function onFrozen(): Promise<void> {
 }
 
 async function onIncompatibleServer(): Promise<void> {
-  injections.informationManager.present(
-    new Information({
-      message: 'notification.incompatibleServer',
-      level: InformationLevel.Error,
-    }),
-    PresentationMode.Notification,
-  );
   await injections.informationManager.present(
     new Information({
       message: 'globalErrors.incompatibleServer',
@@ -443,13 +436,6 @@ async function onOrganizationNotFound(): Promise<void> {
 }
 
 async function onExpiredOrganization(): Promise<void> {
-  injections.informationManager.present(
-    new Information({
-      message: 'notification.expiredOrganization',
-      level: InformationLevel.Error,
-    }),
-    PresentationMode.Notification,
-  );
   await injections.informationManager.present(
     new Information({
       message: 'globalErrors.expiredOrganization',

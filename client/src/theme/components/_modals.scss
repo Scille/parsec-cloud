@@ -1129,7 +1129,6 @@ ion-modal {
   }
 }
 
-.notification-center-modal,
 .invitations-list-modal {
   --width: var(--parsec-modal-width-sm);
 
@@ -1152,7 +1151,6 @@ ion-modal {
     }
   }
 
-  .notification-center-container,
   .invitations-list-container {
     display: flex;
     align-items: center;
@@ -1161,8 +1159,7 @@ ion-modal {
     overflow: visible;
   }
 
-  .invitations-list-header,
-  .notification-center-header {
+  .invitations-list-header {
     display: flex;
     align-items: center;
     gap: ms.spacing('gap-lg');
@@ -1188,7 +1185,6 @@ ion-modal {
     }
   }
 
-  .notification-center-content,
   .invitations-list-content {
     background: ms.color('surface-base-default');
     color: ms.color('text-brand-default');

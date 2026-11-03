@@ -110,14 +110,6 @@
         "fileNotFound": "Failed to find the file associated with this link."
     },
     "notificationCenter": {
-        "title": "Notifications",
-        "readOnly": "Only unread",
-        "goToWorkspace": "Go to this workspace",
-        "openImportedMenu": "Open imported files menu",
-        "viewJoinedUsers": "View users",
-        "goToDevices": "Go to my devices",
-        "openEnclosingFolder": "Open destination folder",
-        "noNotification": "You are up to date!",
         "update": "Update",
         "newVersionAvailable": "A new version is available"
     },
@@ -131,17 +123,6 @@
         "addFile": "Add a file",
         "removeFile": "Remove",
         "currentFilesCount": "Included files: {current} / {limit}"
-    },
-    "notification": {
-        "changeRole": "Your role has been changed to <b>{role}</b> on the workspace <b>{workspace}</b>",
-        "workspaceAccess": "You have access to the workspace <b>{workspace}</b>",
-        "userJoinWorkspace": "<b>{name}</b> has joined the workspace <b>{workspace}</b>",
-        "multipleUsersJoinWorkspace": "<b>{count} users</b> have joined the workspace <b>{workspace}</b>",
-        "userSharedDocument": "<b>{name}</b> shared a new document",
-        "allImportedElements": "All your elements have been imported",
-        "newDeviceAdded": "A new device has been added to the organization",
-        "incompatibleServer": "Your application is not compatible with the server.",
-        "expiredOrganization": "This organization has expired."
     },
     "HomePage": {
         "appUpdated": {
