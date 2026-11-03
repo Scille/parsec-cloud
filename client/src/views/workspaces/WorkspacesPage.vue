@@ -149,7 +149,7 @@
               v-if="workspaceList.length === 0"
               v-show="clientProfile !== UserProfile.Outsider"
               id="new-workspace"
-              class="button-large"
+              size="large"
               fill="outline"
               @click="actions.openCreateWorkspaceModal()"
             >

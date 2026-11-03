@@ -233,7 +233,7 @@
       width: 1.125rem;
       height: 1.125rem;
       flex-shrink: 0;
-      border-radius: var(--parsec-radius-circle);
+      border-radius: ms.radius('full');
       font-size: 1.25rem;
       transition: all 0.15s ease-in-out;
       cursor: pointer !important;

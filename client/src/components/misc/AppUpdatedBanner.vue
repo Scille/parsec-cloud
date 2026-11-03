@@ -76,7 +76,7 @@ async function openChanges(): Promise<void> {
   justify-content: center;
   width: fit-content;
   flex-shrink: 0;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   z-index: 10;
   background: linear-gradient(93deg, ms.color('surface-extra-purple-default') 1%, ms.color('surface-extra-purple-default-pressed') 100%);
 
@@ -93,7 +93,7 @@ async function openChanges(): Promise<void> {
     @include ms.font('heading-h5');
     color: ms.color('text-on-color-label');
     --background: transparent;
-    --background-hover: color-mix(in srgb, var(--parsec-color-light-secondary-white) 20%, transparent);
+    --background-hover: #{ms.color('surface-neutral-on-color')};
     --border-radius: #{ms.radius('none')};
     height: 100%;
     margin: 0;
@@ -134,7 +134,7 @@ async function openChanges(): Promise<void> {
     --color: #{ms.color('icon-on-color-label')};
     --color-hover: #{ms.color('surface-base-default')};
     --background: transparent;
-    --background-hover: color-mix(in srgb, var(--parsec-color-light-secondary-white) 20%, transparent);
+    --background-hover: #{ms.color('surface-neutral-on-color')};
     position: absolute;
     right: ms.spacing('padding-2xl');
     height: auto;

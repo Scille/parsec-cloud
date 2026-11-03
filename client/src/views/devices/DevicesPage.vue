@@ -117,7 +117,6 @@ async function onAddDeviceClick(): Promise<void> {
     width: calc(100% - 4rem);
     margin: auto;
     z-index: 2;
-    box-shadow: var(--parsec-shadow-strong);
   }
 }
 

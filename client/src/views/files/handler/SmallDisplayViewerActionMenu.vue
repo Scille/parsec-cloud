@@ -13,7 +13,7 @@
             class="list-group-item__icon"
             :icon="informationCircle"
           />
-          <ion-text class="button-large list-group-item__label-small">
+          <ion-text class="list-group-item__label-small">
             {{ $msTranslate('fileViewers.details') }}
           </ion-text>
         </ion-item>
@@ -27,7 +27,7 @@
             class="list-group-item__icon"
             :icon="create"
           />
-          <ion-text class="button-large list-group-item__label-small">
+          <ion-text class="list-group-item__label-small">
             {{ $msTranslate('fileViewers.openInEditor') }}
           </ion-text>
         </ion-item>
@@ -40,7 +40,7 @@
             class="list-group-item__icon"
             :icon="link"
           />
-          <ion-text class="button-large list-group-item__label-small">
+          <ion-text class="list-group-item__label-small">
             {{ $msTranslate('fileViewers.copyLink') }}
           </ion-text>
         </ion-item>
@@ -54,7 +54,7 @@
             :image="DownloadIcon"
             class="item-icon"
           />
-          <ion-text class="button-large list-group-item__label-small">
+          <ion-text class="list-group-item__label-small">
             {{ $msTranslate('fileViewers.download') }}
           </ion-text>
         </ion-item>
@@ -68,7 +68,7 @@
             class="list-group-item__icon"
             :icon="open"
           />
-          <ion-text class="button-large list-group-item__label-small">
+          <ion-text class="list-group-item__label-small">
             {{ $msTranslate('fileViewers.openWithDefault') }}
           </ion-text>
         </ion-item>
@@ -100,6 +100,6 @@ function onClick(action: FileHandlerAction): Promise<boolean> {
   height: 1.125rem;
   max-width: 1.125rem;
   max-height: 1.125rem;
-  --fill-color: var(--parsec-color-light-secondary-hard-grey);
+  --fill-color: #{ms.color('icon-neutral-default')};
 }
 </style>

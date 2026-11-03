@@ -7,7 +7,7 @@
 /**** Global CSS overloads ****/
 // ------ switch specific variables for dark mode ------ //
 :root {
-  --parsec-color-popover-header-background: var(--parsec-color-light-primary-800);
+  --parsec-color-popover-header-background: #{ms.color('brand-800')};
   --parsec-color-sidebar: #{ms.color('brand-800')};
 }
 

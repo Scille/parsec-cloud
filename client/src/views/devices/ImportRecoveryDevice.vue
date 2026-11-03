@@ -409,7 +409,7 @@ async function finishRecovery(): Promise<void> {
       border-radius: ms.radius('full');
       background: ms.color('surface-base-default');
       border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
-      box-shadow: var(--parsec-shadow-input);
+      box-shadow: ms.shadow('elevation-sm');
     }
 
     .file-waiting {

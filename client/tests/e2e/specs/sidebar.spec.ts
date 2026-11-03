@@ -199,7 +199,7 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
   // Set contributor
   await roles.nth(0).click();
-  await workspaces.locator('.sheet-modal').locator('.button-solid').nth(1).click();
+  await workspaces.locator('.sheet-modal').locator('.button-solid').nth(0).click();
   await expect(users.nth(1).locator('#dropdown-popover-button').locator('.input-text')).toHaveText('Owner');
   await workspaces.locator('.toast-container').locator('.toast-button').click();
   await workspaceSharingModal.locator('.closeBtn').click();

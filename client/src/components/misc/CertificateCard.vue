@@ -237,7 +237,7 @@ async function openAdditionalEmailPopover(event: Event): Promise<void> {
 
 .isSelected {
   background: ms.color('surface-brand-default-subtle-hover');
-  box-shadow: var(--parsec-shadow-input);
+  box-shadow: ms.shadow('elevation-sm');
   border: ms.border('thin') solid ms.color('border-brand-default');
 
   .certificate-card-header__name {

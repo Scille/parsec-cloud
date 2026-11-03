@@ -9,7 +9,8 @@
     <ion-button
       slot="icon-only"
       @click="cancel()"
-      class="closeBtn"
+      class="closeBtn color-secondary"
+      fill="clear"
       v-if="isLargeDisplay"
     >
       <ion-icon

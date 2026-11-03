@@ -145,7 +145,7 @@ onMounted(() => {
   &::after {
     content: '';
     opacity: 0.5;
-    background: linear-gradient(180deg, rgba(27, 27, 40, 0) 0%, var(--parsec-color-light-secondary-black) 100%);
+    background: linear-gradient(180deg, rgba(27, 27, 40, 0) 0%, ms.color('grey-950') 100%);
     position: absolute;
     width: 100%;
     height: 15rem;
@@ -163,7 +163,7 @@ onMounted(() => {
   &::after {
     content: '';
     opacity: 0.5;
-    background: linear-gradient(180deg, rgba(27, 27, 40, 0) 0%, var(--parsec-color-light-secondary-black) 100%);
+    background: linear-gradient(180deg, rgba(27, 27, 40, 0) 0%, ms.color('grey-950') 100%);
     position: absolute;
     width: 100%;
     height: 15rem;

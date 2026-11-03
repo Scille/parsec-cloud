@@ -110,14 +110,14 @@ export async function addUser(
 
   const [greetData, joinData] = await initGreetUserModals(usersPage, secondPage, email);
 
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   await expect(joinData.content.locator('.button-choice')).toHaveCount(4);
   await joinData.content.locator('.button-choice', { hasText: greetCode }).click();
 
   await expect(joinData.content.locator('.guest-code')).toBeVisible();
-  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.button-code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   await expect(greetData.content.locator('.button-choice')).toHaveCount(4);

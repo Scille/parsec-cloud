@@ -115,7 +115,7 @@ async function onClick(action: RecommendationAction): Promise<void> {
 
   &__title {
     @include ms.font('heading-h5');
-    background: var(--parsec-color-light-gradient-background);
+    background: linear-gradient(113deg, ms.color('surface-gradient-from') -1.49%, ms.color('surface-gradient-to') 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

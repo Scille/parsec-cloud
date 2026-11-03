@@ -7,19 +7,19 @@
       lines="full"
       v-if="isLargeDisplay"
     >
-      <ion-text class="list-header-label cell-title label-email">
+      <ion-text class="list-header-label label-email">
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.email') }}
       </ion-text>
-      <ion-text class="list-header-label cell-title label-sentOn">
+      <ion-text class="list-header-label label-sentOn">
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentOn') }}
       </ion-text>
       <ion-text
         v-if="windowWidth > WindowSizeBreakpoints.XL"
-        class="list-header-label cell-title label-sentBy"
+        class="list-header-label label-sentBy"
       >
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentBy') }}
       </ion-text>
-      <ion-text class="list-header-label list-item-end cell-title label-space" />
+      <ion-text class="list-header-label list-item-end label-space" />
     </ion-list-header>
     <invitation-item
       v-for="invitation in invitations"

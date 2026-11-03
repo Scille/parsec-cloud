@@ -155,7 +155,7 @@ function getLastLoginText(): string {
 
   &:hover:not(.header-only) {
     background: ms.color('surface-elevated-subtle-hover');
-    box-shadow: var(--parsec-shadow-light);
+    box-shadow: ms.shadow('elevation-sm');
     border-color: ms.color('border-brand-default');
 
     .organization-card-icon {

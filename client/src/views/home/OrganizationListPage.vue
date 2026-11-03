@@ -512,7 +512,7 @@ async function openDocumentation(): Promise<void> {
 
   @include ms.responsive-breakpoint('xs') {
     margin-inline: 0;
-    box-shadow: var(--parsec-shadow-strong);
+    box-shadow: ms.shadow('elevation-md');
   }
 
   .organization-filter {
@@ -895,7 +895,7 @@ async function openDocumentation(): Promise<void> {
     transition: all 0.2s ease-in-out;
 
     &:hover {
-      box-shadow: var(--parsec-shadow-light);
+      box-shadow: ms.shadow('elevation-sm');
       border: ms.border('thin') solid ms.color('border-brand-default-hover');
     }
 

@@ -7,19 +7,19 @@
       lines="full"
       v-if="isLargeDisplay"
     >
-      <ion-text class="list-header-label cell-title label-name">
+      <ion-text class="list-header-label label-name">
         {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.listDisplayTitles.name') }}
       </ion-text>
-      <ion-text class="list-header-label cell-title label-email">
+      <ion-text class="list-header-label label-email">
         {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.listDisplayTitles.email') }}
       </ion-text>
-      <ion-text class="list-header-label cell-title label-createdOn">
+      <ion-text class="list-header-label label-createdOn">
         {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.listDisplayTitles.createdOn') }}
       </ion-text>
-      <ion-text class="list-header-label cell-title label-type">
+      <ion-text class="list-header-label label-type">
         {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.listDisplayTitles.type') }}
       </ion-text>
-      <ion-text class="list-header-label list-item-end cell-title label-space" />
+      <ion-text class="list-header-label list-item-end label-space" />
     </ion-list-header>
     <async-enrollment-request-item
       v-for="request in requests"

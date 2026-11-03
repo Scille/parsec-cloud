@@ -36,13 +36,15 @@
       <div class="update-footer">
         <ion-button
           @click="dismiss(MsModalResult.Confirm)"
-          class="update-footer__button button-large"
+          class="update-footer__button"
+          size="large"
         >
           {{ $msTranslate('HomePage.topbar.updateYes') }}
         </ion-button>
         <ion-button
           @click="dismiss(MsModalResult.Cancel)"
-          class="update-footer__button button-large"
+          class="update-footer__button"
+          size="large"
         >
           {{ $msTranslate('HomePage.topbar.updateNo') }}
         </ion-button>

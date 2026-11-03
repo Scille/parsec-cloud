@@ -181,7 +181,7 @@ async function deleteShamir(): Promise<void> {
   &-image {
     width: 4.5rem;
     height: 4.5rem;
-    box-shadow: var(--parsec-shadow-card);
+    box-shadow: ms.shadow('elevation-sm');
     background: ms.color('surface-base-default');
     border-radius: ms.radius('full');
   }
@@ -257,11 +257,11 @@ async function deleteShamir(): Promise<void> {
   border-radius: ms.radius('lg');
   background: ms.color('surface-base-default');
   overflow-y: auto;
-  box-shadow: var(--parsec-shadow-card);
+  box-shadow: ms.shadow('elevation-sm');
 
   &-item {
     border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
-    box-shadow: var(--parsec-shadow-card);
+    box-shadow: ms.shadow('elevation-sm');
     flex-shrink: 0;
 
     &::part(native) {

@@ -488,7 +488,7 @@ async function startSetup(): Promise<void> {
     background: ms.color('surface-base-default');
     padding: ms.spacing('padding-3xl');
     border-radius: ms.radius('2xl');
-    box-shadow: var(--parsec-shadow-card);
+    box-shadow: ms.shadow('elevation-sm');
 
     &-header {
       display: flex;
@@ -540,7 +540,7 @@ async function startSetup(): Promise<void> {
 
     &-item {
       border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
-      box-shadow: var(--parsec-shadow-card);
+      box-shadow: ms.shadow('elevation-sm');
 
       &::part(native) {
         padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');

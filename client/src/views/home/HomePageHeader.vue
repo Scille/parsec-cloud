@@ -315,7 +315,7 @@ const emits = defineEmits<{
 
   &:hover {
     --background-hover: none;
-    box-shadow: var(--parsec-shadow-light);
+    box-shadow: ms.shadow('elevation-sm');
   }
 
   @include ms.responsive-breakpoint('md') {

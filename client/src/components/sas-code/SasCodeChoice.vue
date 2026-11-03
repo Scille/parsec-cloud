@@ -3,7 +3,7 @@
 <template>
   <div class="button-list">
     <ion-button
-      class="button-choice code"
+      class="button-choice button-code"
       fill="outline"
       :disabled="disabled"
       @click="$emit('select', choices[0])"
@@ -11,7 +11,7 @@
       {{ choices[0] }}
     </ion-button>
     <ion-button
-      class="button-choice code"
+      class="button-choice button-code"
       fill="outline"
       :disabled="disabled"
       @click="$emit('select', choices[1])"
@@ -19,7 +19,7 @@
       {{ choices[1] }}
     </ion-button>
     <ion-button
-      class="button-choice code"
+      class="button-choice button-code"
       fill="outline"
       :disabled="disabled"
       @click="$emit('select', choices[2])"
@@ -27,7 +27,7 @@
       {{ choices[2] }}
     </ion-button>
     <ion-button
-      class="button-choice code"
+      class="button-choice button-code"
       fill="outline"
       :disabled="disabled"
       @click="$emit('select', choices[3])"

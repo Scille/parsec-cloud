@@ -367,7 +367,7 @@ function scrollToTop(): void {
         }
 
         &:hover {
-          background-color: var(--parsec-color-light-primary-30-opacity15);
+          background-color: ms.color('surface-neutral-on-color');
         }
       }
     }

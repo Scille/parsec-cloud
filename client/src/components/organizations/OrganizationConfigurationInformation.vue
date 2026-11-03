@@ -154,7 +154,7 @@ async function copyAddress(address: string): Promise<void> {
   max-width: 30rem;
   border-radius: ms.radius('2xl');
   height: fit-content;
-  box-shadow: var(--parsec-shadow-input);
+  box-shadow: ms.shadow('elevation-sm');
   padding: ms.spacing('padding-4xl');
 
   .card-header {

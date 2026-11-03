@@ -106,7 +106,7 @@ async function validate(): Promise<void> {
 
   .switch-item {
     gap: ms.spacing('gap-lg');
-    font-size: var(--parsec-font-size-md);
+    font-size: ms.font('body-lg-regular-text-size');
     color: ms.color('text-neutral-default');
     padding: ms.spacing('padding-3xl');
     border: ms.border('thin') solid ms.color('border-base-default');

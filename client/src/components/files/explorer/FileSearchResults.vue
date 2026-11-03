@@ -58,16 +58,16 @@
         lines="full"
         v-if="isLargeDisplay"
       >
-        <ion-text class="list-header-label cell-title ion-text-nowrap header-label-name">
+        <ion-text class="list-header-label ion-text-nowrap header-label-name">
           <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.name') }}</span>
         </ion-text>
-        <ion-text class="list-header-label cell-title ion-text-nowrap header-label-last-update">
+        <ion-text class="list-header-label ion-text-nowrap header-label-last-update">
           <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}</span>
         </ion-text>
-        <ion-text class="list-header-label cell-title ion-text-nowrap header-label-size">
+        <ion-text class="list-header-label ion-text-nowrap header-label-size">
           <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.size') }}</span>
         </ion-text>
-        <ion-text class="list-header-label list-item-end cell-title ion-text-nowrap header-label-space" />
+        <ion-text class="list-header-label list-item-end ion-text-nowrap header-label-space" />
       </ion-list-header>
       <file-search-result-item
         v-for="result in filteredResults"

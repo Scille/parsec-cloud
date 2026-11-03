@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <div class="container code">
+  <div class="container button-code">
     {{ code }}
   </div>
 </template>
@@ -17,6 +17,9 @@ defineProps<{
   margin: auto;
   width: 8em;
   height: 4em;
+  @include ms.font('heading-h2');
+  letter-spacing: 9px;
+  text-transform: uppercase;
   background-color: ms.color('surface-base-default-secondary');
   color: ms.color('text-brand-default');
   display: flex;
