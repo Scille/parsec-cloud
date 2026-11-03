@@ -308,7 +308,7 @@ async function downloadFile(
     color: ms.color('text-base-body');
     border-radius: ms.radius('full');
     background: ms.color('surface-base-default');
-    box-shadow: var(--parsec-shadow-input);
+    box-shadow: ms.shadow('elevation-sm');
   }
 
   &:is(.recovery-key) {

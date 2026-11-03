@@ -19,7 +19,7 @@
     <ion-menu-toggle>
       <ion-button
         id="trigger-version-button"
-        class="menu-secondary-collapse-buttons-item button-large"
+        class="menu-secondary-collapse-buttons-item"
         @click="openAboutModal"
       >
         <ion-icon
@@ -32,7 +32,7 @@
     <!-- doc button -->
     <ion-menu-toggle>
       <ion-button
-        class="menu-secondary-collapse-buttons-item button-large"
+        class="menu-secondary-collapse-buttons-item"
         @click="Env.Links.openDocumentationLink"
       >
         <ion-icon
@@ -46,7 +46,7 @@
     <!-- contact button -->
     <ion-menu-toggle>
       <ion-button
-        class="menu-secondary-collapse-buttons-item button-large"
+        class="menu-secondary-collapse-buttons-item"
         @click="Env.Links.openContactLink"
       >
         <ion-icon
@@ -61,7 +61,7 @@
     <ion-menu-toggle>
       <ion-button
         id="trigger-settings-button"
-        class="menu-secondary-collapse-buttons-item button-large"
+        class="menu-secondary-collapse-buttons-item"
         @click="$emit('settingsClick')"
       >
         <ion-icon
@@ -76,7 +76,7 @@
     <ion-menu-toggle>
       <ion-button
         id="report-bug-button"
-        class="menu-secondary-collapse-buttons-item button-large"
+        class="menu-secondary-collapse-buttons-item"
         @click="$emit('reportBugClick')"
       >
         <ion-icon
@@ -91,7 +91,7 @@
     <ion-menu-toggle>
       <ion-button
         id="trigger-customer-area-button"
-        class="menu-secondary-collapse-buttons-item button-large"
+        class="menu-secondary-collapse-buttons-item"
         v-show="!Env.isStripeDisabled()"
         @click="$emit('customerAreaClick')"
         v-if="showCustomerAreaButton"

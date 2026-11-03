@@ -629,8 +629,7 @@ onMounted(async () => {
     border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
     padding: ms.spacing('padding-3xl');
     border-radius: ms.radius('2xl');
-    //should be replaced by a shadow token --parsec-shadow-filter when it will be available
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    box-shadow: ms.shadow('elevation-xs');
 
     &-qrcode {
       margin: 0;

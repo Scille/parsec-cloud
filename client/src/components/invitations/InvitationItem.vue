@@ -168,7 +168,7 @@ const inviterLabel = computed(() => {
 }
 
 .invitation-sentBy {
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('text-base-description');
 }
 
 .invitation-actions {

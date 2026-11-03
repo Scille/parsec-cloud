@@ -19,14 +19,16 @@
 
       <div class="redirect-buttons">
         <ion-button
-          class="redirect-buttons__item button-large button-primary"
+          class="redirect-buttons__item button-primary"
+          size="large"
           @click="Env.Links.openUrl(redirectLink)"
         >
           {{ $msTranslate('WebRedirectPage.desktop') }}
         </ion-button>
         <ion-button
           @click="openLinkInWeb()"
-          class="redirect-buttons__item button-large"
+          class="redirect-buttons__item"
+          size="large"
           fill="clear"
         >
           {{ $msTranslate('WebRedirectPage.web') }}

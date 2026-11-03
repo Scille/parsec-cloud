@@ -15,7 +15,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.title).toHaveText('Share your code');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -27,7 +27,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   // Check the provide code page from the guest and retrieve the code
   await expect(usersPage.locator('.modal-header__step')).toHaveText('Step 1 of 4');
   await expect(joinData.title).toHaveText('Share your code');
-  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.button-code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code
@@ -133,7 +133,7 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -145,7 +145,7 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   // Check the provide code page from the guest and retrieve the code
   await expect(joinData.title).toHaveText('Share your code');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 1);
-  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.button-code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code
@@ -262,7 +262,7 @@ msTest('Host selects invalid SAS code', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -274,7 +274,7 @@ msTest('Host selects invalid SAS code', async ({ usersPage }) => {
   // Check the provide code page from the guest and retrieve the code
   await expect(joinData.title).toHaveText('Share your code');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 1);
-  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.button-code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code
@@ -307,7 +307,7 @@ msTest('Host selects no SAS code', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -319,7 +319,7 @@ msTest('Host selects no SAS code', async ({ usersPage }) => {
   // Check the provide code page from the guest and retrieve the code
   await expect(joinData.title).toHaveText('Share your code');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 1);
-  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.button-code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code
@@ -367,7 +367,7 @@ msTest('Host closes greet process', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -379,7 +379,7 @@ msTest('Host closes greet process', async ({ usersPage }) => {
   // Check the provide code page from the guest and retrieve the code
   await expect(joinData.title).toHaveText('Share your code');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 1);
-  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.button-code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code
@@ -425,7 +425,7 @@ msTest('Guest selects invalid SAS code', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -457,7 +457,7 @@ msTest('Guest selects no SAS code', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -503,7 +503,7 @@ msTest('Guest closes greet process', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -564,7 +564,7 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
   await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
-  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  const greetCode = (await greetData.content.locator('.host-code').locator('.button-code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
@@ -576,7 +576,7 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   // Check the provide code page from the guest and retrieve the code
   await expect(joinData.title).toHaveText('Share your code');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 1);
-  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.button-code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code

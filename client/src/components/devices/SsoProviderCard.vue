@@ -13,7 +13,7 @@
       class="sso-provider-card__logo"
       alt=""
     />
-    <ion-text class="button-large sso-provider-name">
+    <ion-text class="sso-provider-name">
       {{ $msTranslate({ key: 'Authentication.method.sso.continueWith', data: { name: provider.name } }) }}
     </ion-text>
     <div
@@ -24,7 +24,7 @@
         :icon="checkmarkCircle"
         class="sso-provider-tag__icon"
       />
-      <ion-text class="button-medium sso-provider-tag__text">
+      <ion-text class="sso-provider-tag__text">
         {{ $msTranslate('Authentication.method.sso.connected') }}
       </ion-text>
     </div>
@@ -57,7 +57,7 @@ defineProps<{
   background: ms.color('surface-elevated-default');
   border: ms.border('thin') solid ms.color('border-base-default');
   border-radius: ms.radius('4xl');
-  box-shadow: var(--parsec-shadow-input);
+  box-shadow: ms.shadow('elevation-sm');
   color: ms.color('text-base-body');
   text-align: left;
   cursor: pointer;

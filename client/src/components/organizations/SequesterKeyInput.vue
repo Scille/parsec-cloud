@@ -188,10 +188,8 @@ async function onUploadKeyClicked(): Promise<void> {
 
     &::part(native) {
       border: ms.border('thin') dashed ms.color('border-base-default');
-      // --background: #{ms.color('surface-base-default')};
       --background: #{ms.color('surface-neutral-default-subtle')};
       --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
-      --box-shadow: var(--parsec-shadow-2);
     }
 
     &-icon {
@@ -224,7 +222,6 @@ async function onUploadKeyClicked(): Promise<void> {
       &::part(native) {
         --background: none;
         --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
-        --box-shadow: var(--parsec-shadow-2);
         padding-inline: ms.spacing('padding-none');
       }
 

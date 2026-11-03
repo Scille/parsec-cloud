@@ -53,10 +53,6 @@ ion-modal {
   }
 }
 
-.closeBtn::part(native) {
-  height: 2rem;
-}
-
 /* -- modal-stepper -- */
 // Only apply the scroll fix to join/device-join modals where it's needed.
 // greet-organization-modal and role-assignment-modal have their own working scroll mechanism.

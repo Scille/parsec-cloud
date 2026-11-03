@@ -605,7 +605,7 @@
       transform: translateY(16%);
       right: auto;
       background: ms.color('surface-base-default');
-      border-radius: var(--parsec-radius-circle);
+      border-radius: ms.radius('full');
       padding: ms.spacing('padding-xs');
     }
   }
@@ -677,7 +677,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--parsec-radius-circle);
+    border-radius: ms.radius('full');
     left: 58%;
     bottom: -8px;
     width: 1.75rem;

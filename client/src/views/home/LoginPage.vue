@@ -276,7 +276,7 @@ defineExpose({
   }
 
   &:has(.has-focus) {
-    box-shadow: var(--parsec-shadow-light);
+    box-shadow: ms.shadow('elevation-sm');
   }
 
   &-header {

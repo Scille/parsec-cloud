@@ -104,12 +104,6 @@ function isFormValid(): boolean {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-
-  .represent-company {
-    .form-label {
-      margin: 0;
-    }
-  }
 }
 
 .represent-company__label {

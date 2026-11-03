@@ -53,7 +53,7 @@
                   {{ $msTranslate('loginPage.createAccount.description') }}
                 </ion-text>
                 <ion-button
-                  class="account-create__button button-large"
+                  class="account-create__button"
                   @click="goToCreateAccount"
                   :disabled="disableGoTo"
                 >

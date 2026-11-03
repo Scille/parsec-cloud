@@ -85,7 +85,7 @@
       <ion-button
         @click="$emit('serverChosen', ServerType.Custom)"
         fill="clear"
-        class="button-large"
+        size="large"
       >
         {{ $msTranslate('CreateOrganization.server.ownServer') }}
       </ion-button>
@@ -93,7 +93,6 @@
         @click="onChoiceMade"
         size="large"
         :disabled="serverChoice === undefined"
-        class="button-large"
       >
         {{ $msTranslate('CreateOrganization.button.continue') }}
       </ion-button>

@@ -32,7 +32,7 @@
             />
           </ion-label>
           <ion-text
-            class="list-header-label cell-title ion-text-nowrap header-label-name"
+            class="list-header-label ion-text-nowrap header-label-name"
             @click="onHeaderSortChange(SortProperty.Name)"
             :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.Name }"
           >
@@ -43,13 +43,13 @@
             />
           </ion-text>
           <ion-text
-            class="list-header-label cell-title ion-text-nowrap header-label-updated-by"
+            class="list-header-label ion-text-nowrap header-label-updated-by"
             v-if="ownProfile !== UserProfile.Outsider"
           >
             {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
           </ion-text>
           <ion-text
-            class="list-header-label cell-title ion-text-nowrap header-label-last-update"
+            class="list-header-label ion-text-nowrap header-label-last-update"
             @click="onHeaderSortChange(SortProperty.LastUpdate)"
             :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.LastUpdate }"
           >
@@ -60,7 +60,7 @@
             />
           </ion-text>
           <ion-text
-            class="list-header-label cell-title ion-text-nowrap header-label-creation-date"
+            class="list-header-label ion-text-nowrap header-label-creation-date"
             @click="onHeaderSortChange(SortProperty.CreationDate)"
             :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.CreationDate }"
           >
@@ -71,7 +71,7 @@
             />
           </ion-text>
           <ion-text
-            class="list-header-label cell-title ion-text-nowrap header-label-size list-header-label"
+            class="list-header-label ion-text-nowrap header-label-size list-header-label"
             @click="onHeaderSortChange(SortProperty.Size)"
             :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.Size }"
           >
@@ -81,7 +81,7 @@
               class="sort-icon"
             />
           </ion-text>
-          <ion-text class="list-header-label list-item-end cell-title ion-text-nowrap header-label-space" />
+          <ion-text class="list-header-label list-item-end ion-text-nowrap header-label-space" />
         </ion-list-header>
         <div>
           <file-list-item

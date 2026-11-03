@@ -29,7 +29,7 @@
       <div class="add-file-container">
         <ion-text
           id="label"
-          class="form-label"
+          class="input-label"
         >
           {{ $msTranslate('ReportBugModal.form.joinFile') }}
         </ion-text>

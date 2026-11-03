@@ -48,7 +48,7 @@ defineProps<{
     text-align: left;
     @include ms.font('label-md-medium');
     color: ms.color('text-error-default');
-    text-shadow: var(--parsec-shadow-light);
+    text-shadow: ms.shadow('elevation-sm');
   }
 
   &:hover {
