@@ -1,0 +1,14 @@
+{
+  "name": "oo-protocol-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Investigate the OnlyOffice client↔server co-editing protocol by injecting a socket.io monitor into a pinned local document server.",
+  "scripts": {
+    "start": "node harness/run.js",
+    "start:headless": "HEADLESS=1 STAY=20000 node harness/run.js"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1",
+    "ws": "^8.21.3"
+  }
+}

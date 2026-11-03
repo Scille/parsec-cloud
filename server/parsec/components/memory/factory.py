@@ -10,6 +10,7 @@ from typing import Any
 import httpx
 
 from parsec.components.blockstore import blockstore_factory
+from parsec.components.editics import EditicsComponent
 from parsec.components.memory.account import MemoryAccountComponent
 from parsec.components.memory.async_enrollment import MemoryAsyncEnrollmentComponent
 from parsec.components.memory.auth import MemoryAuthComponent
@@ -50,6 +51,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             block = MemoryBlockComponent(data, blockstore)
             cryptpad = MemoryCryptpadComponent(data, config)
             events = MemoryEventsComponent(data, config, event_bus)
+            editics = EditicsComponent(config, event_bus)
             invite = MemoryInviteComponent(data, event_bus, config)
             organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
             ping = MemoryPingComponent(event_bus)
@@ -68,6 +70,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "block": block,
                 "blockstore": blockstore,
                 "cryptpad": cryptpad,
+                "editics": editics,
                 "event_bus": event_bus,
                 "events": events,
                 "invite": invite,

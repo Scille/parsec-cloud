@@ -11,6 +11,7 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     DevicePurpose,
+    OrganizationID,
     RealmArchivingCertificate,
     RealmArchivingConfiguration,
     RealmNameCertificate,
@@ -28,7 +29,9 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.components.user import UserInfo
-from parsec.events import EventRealmCertificate, EventUserRevokedOrFrozen, EventUserUpdated
+from parsec.events import (
+    EventOrganizationTosUpdated,
+)
 from tests.common import Backend, CoolorgRpcClients, RpcTransportError, ShamirOrgRpcClients
 
 
@@ -230,6 +233,14 @@ def alice_generated_realm_wksp1_data(
     return _alice_generated_realm_data
 
 
+async def _wait_for_event_bus_to_settle(backend: Backend) -> None:
+    # Event are FIFO, so just inject and wait for a sentinel
+    sentinel = EventOrganizationTosUpdated(organization_id=OrganizationID("settle-sentinel"))
+    with backend.event_bus.spy() as spy:
+        await backend.event_bus.send(sentinel)
+        await spy.wait(EventOrganizationTosUpdated)
+
+
 async def alice_gives_profile(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -238,53 +249,42 @@ async def alice_gives_profile(
     now: DateTime | None = None,
     wait_events: bool = False,
 ) -> RevokedUserCertificate | UserUpdateCertificate:
-    spy_ctx = spy = None
+    now = now or DateTime.now()
+    if new_profile is None:
+        certif = RevokedUserCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            user_id=recipient,
+        )
+
+        outcome = await backend.user.revoke_user(
+            now=now,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        )
+        assert isinstance(outcome, RevokedUserCertificate)
+
+    else:
+        certif = UserUpdateCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            user_id=recipient,
+            new_profile=new_profile,
+        )
+
+        outcome = await backend.user.update_user(
+            now=now,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        )
+        assert isinstance(outcome, UserUpdateCertificate)
+
     if wait_events:
-        spy_ctx = backend.event_bus.spy()
-        spy = spy_ctx.__enter__()
-
-    try:
-        now = now or DateTime.now()
-        if new_profile is None:
-            certif = RevokedUserCertificate(
-                author=coolorg.alice.device_id,
-                timestamp=now,
-                user_id=recipient,
-            )
-
-            outcome = await backend.user.revoke_user(
-                now=now,
-                organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
-                author_verify_key=coolorg.alice.signing_key.verify_key,
-                revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
-            )
-            assert isinstance(outcome, RevokedUserCertificate)
-            if spy:
-                await spy.wait(EventUserRevokedOrFrozen)
-
-        else:
-            certif = UserUpdateCertificate(
-                author=coolorg.alice.device_id,
-                timestamp=now,
-                user_id=recipient,
-                new_profile=new_profile,
-            )
-
-            outcome = await backend.user.update_user(
-                now=now,
-                organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
-                author_verify_key=coolorg.alice.signing_key.verify_key,
-                user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
-            )
-            assert isinstance(outcome, UserUpdateCertificate)
-            if spy:
-                await spy.wait(EventUserUpdated)
-
-    finally:
-        if spy_ctx:
-            spy_ctx.__exit__(None, None, None)
+        await _wait_for_event_bus_to_settle(backend)
 
     return certif
 
@@ -294,37 +294,28 @@ async def bob_becomes_admin(
     backend: Backend,
     wait_events: bool = False,
 ) -> tuple[UserUpdateCertificate, bytes]:
-    spy_ctx = spy = None
+    # Bob becomes ADMIN...
+
+    t0 = DateTime.now()
+    certif0 = UserUpdateCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t0,
+        user_id=coolorg.bob.user_id,
+        new_profile=UserProfile.ADMIN,
+    )
+    raw_certif0 = certif0.dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.user.update_user(
+        now=t0,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        user_update_certificate=raw_certif0,
+    )
+    assert isinstance(outcome, UserUpdateCertificate)
+
     if wait_events:
-        spy_ctx = backend.event_bus.spy()
-        spy = spy_ctx.__enter__()
-
-    try:
-        # Bob becomes ADMIN...
-
-        t0 = DateTime.now()
-        certif0 = UserUpdateCertificate(
-            author=coolorg.alice.device_id,
-            timestamp=t0,
-            user_id=coolorg.bob.user_id,
-            new_profile=UserProfile.ADMIN,
-        )
-        raw_certif0 = certif0.dump_and_sign(coolorg.alice.signing_key)
-
-        outcome = await backend.user.update_user(
-            now=t0,
-            organization_id=coolorg.organization_id,
-            author=coolorg.alice.device_id,
-            author_verify_key=coolorg.alice.signing_key.verify_key,
-            user_update_certificate=raw_certif0,
-        )
-        assert isinstance(outcome, UserUpdateCertificate)
-        if spy:
-            await spy.wait(EventUserUpdated)
-
-    finally:
-        if spy_ctx:
-            spy_ctx.__exit__(None, None, None)
+        await _wait_for_event_bus_to_settle(backend)
 
     return certif0, raw_certif0
 
@@ -342,55 +333,44 @@ async def bob_becomes_admin_and_changes_alice(
 
     # ...then change Alice's profile (or revoke her) !
 
-    spy_ctx = spy = None
+    t1 = DateTime.now()
+    if new_alice_profile is None:
+        certif1 = RevokedUserCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
+            user_id=coolorg.alice.user_id,
+        )
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
+
+        outcome = await backend.user.revoke_user(
+            now=t1,
+            organization_id=coolorg.organization_id,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
+            revoked_user_certificate=raw_certif1,
+        )
+        assert isinstance(outcome, RevokedUserCertificate)
+
+    else:
+        certif1 = UserUpdateCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
+            user_id=coolorg.alice.user_id,
+            new_profile=new_alice_profile,
+        )
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
+
+        outcome = await backend.user.update_user(
+            now=t1,
+            organization_id=coolorg.organization_id,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
+            user_update_certificate=raw_certif1,
+        )
+        assert isinstance(outcome, UserUpdateCertificate)
+
     if wait_events:
-        spy_ctx = backend.event_bus.spy()
-        spy = spy_ctx.__enter__()
-
-    try:
-        t1 = DateTime.now()
-        if new_alice_profile is None:
-            certif1 = RevokedUserCertificate(
-                author=coolorg.bob.device_id,
-                timestamp=t1,
-                user_id=coolorg.alice.user_id,
-            )
-            raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
-
-            outcome = await backend.user.revoke_user(
-                now=t1,
-                organization_id=coolorg.organization_id,
-                author=coolorg.bob.device_id,
-                author_verify_key=coolorg.bob.signing_key.verify_key,
-                revoked_user_certificate=raw_certif1,
-            )
-            assert isinstance(outcome, RevokedUserCertificate)
-            if spy:
-                await spy.wait(EventUserRevokedOrFrozen)
-
-        else:
-            certif1 = UserUpdateCertificate(
-                author=coolorg.bob.device_id,
-                timestamp=t1,
-                user_id=coolorg.alice.user_id,
-                new_profile=new_alice_profile,
-            )
-            raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
-
-            outcome = await backend.user.update_user(
-                now=t1,
-                organization_id=coolorg.organization_id,
-                author=coolorg.bob.device_id,
-                author_verify_key=coolorg.bob.signing_key.verify_key,
-                user_update_certificate=raw_certif1,
-            )
-            assert isinstance(outcome, UserUpdateCertificate)
-            if spy:
-                await spy.wait(EventUserUpdated)
-
-    finally:
-        if spy_ctx:
-            spy_ctx.__exit__(None, None, None)
+        await _wait_for_event_bus_to_settle(backend)
 
     return (certif0, raw_certif0), (certif1, raw_certif1)
 
@@ -403,60 +383,49 @@ async def wksp1_alice_gives_role(
     now: DateTime | None = None,
     wait_events: bool = False,
 ) -> tuple[RealmRoleCertificate, bytes]:
-    spy_ctx = spy = None
+    now = now or DateTime.now()
+    if new_role is None:
+        certif = RealmRoleCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            realm_id=coolorg.wksp1_id,
+            role=None,
+            user_id=recipient,
+        )
+        raw_certif = certif.dump_and_sign(coolorg.alice.signing_key)
+
+        outcome = await backend.realm.unshare(
+            now=now,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            realm_role_certificate=raw_certif,
+        )
+        assert isinstance(outcome, RealmRoleCertificate)
+
+    else:
+        certif = RealmRoleCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            realm_id=coolorg.wksp1_id,
+            role=new_role,
+            user_id=recipient,
+        )
+        raw_certif = certif.dump_and_sign(coolorg.alice.signing_key)
+
+        outcome = await backend.realm.share(
+            now=now,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            realm_role_certificate=raw_certif,
+            key_index=1,
+            recipient_keys_bundle_access=b"<dummy key bundle access>",
+        )
+        assert isinstance(outcome, RealmRoleCertificate)
+
     if wait_events:
-        spy_ctx = backend.event_bus.spy()
-        spy = spy_ctx.__enter__()
-
-    try:
-        now = now or DateTime.now()
-        if new_role is None:
-            certif = RealmRoleCertificate(
-                author=coolorg.alice.device_id,
-                timestamp=now,
-                realm_id=coolorg.wksp1_id,
-                role=None,
-                user_id=recipient,
-            )
-            raw_certif = certif.dump_and_sign(coolorg.alice.signing_key)
-
-            outcome = await backend.realm.unshare(
-                now=now,
-                organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
-                author_verify_key=coolorg.alice.signing_key.verify_key,
-                realm_role_certificate=raw_certif,
-            )
-            assert isinstance(outcome, RealmRoleCertificate)
-            if spy:
-                await spy.wait(EventRealmCertificate)
-
-        else:
-            certif = RealmRoleCertificate(
-                author=coolorg.alice.device_id,
-                timestamp=now,
-                realm_id=coolorg.wksp1_id,
-                role=new_role,
-                user_id=recipient,
-            )
-            raw_certif = certif.dump_and_sign(coolorg.alice.signing_key)
-
-            outcome = await backend.realm.share(
-                now=now,
-                organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
-                author_verify_key=coolorg.alice.signing_key.verify_key,
-                realm_role_certificate=raw_certif,
-                key_index=1,
-                recipient_keys_bundle_access=b"<dummy key bundle access>",
-            )
-            assert isinstance(outcome, RealmRoleCertificate)
-            if spy:
-                await spy.wait(EventRealmCertificate)
-
-    finally:
-        if spy_ctx:
-            spy_ctx.__exit__(None, None, None)
+        await _wait_for_event_bus_to_settle(backend)
 
     return (certif, raw_certif)
 
@@ -467,88 +436,74 @@ async def wksp1_bob_becomes_owner_and_changes_alice(
     new_alice_role: RealmRole | None,
     wait_events: bool = False,
 ) -> tuple[tuple[RealmRoleCertificate, bytes], tuple[RealmRoleCertificate, bytes]]:
-    spy_ctx = spy = None
-    if wait_events:
-        spy_ctx = backend.event_bus.spy()
-        spy = spy_ctx.__enter__()
+    # Bob becomes OWNER...
 
-    try:
-        # Bob becomes OWNER...
+    t0 = DateTime.now()
+    certif0 = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t0,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.OWNER,
+        user_id=coolorg.bob.user_id,
+    )
+    raw_certif0 = certif0.dump_and_sign(coolorg.alice.signing_key)
 
-        t0 = DateTime.now()
-        certif0 = RealmRoleCertificate(
-            author=coolorg.alice.device_id,
-            timestamp=t0,
+    outcome = await backend.realm.share(
+        now=t0,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        realm_role_certificate=raw_certif0,
+        key_index=1,
+        recipient_keys_bundle_access=b"<dummy key bundle access>",
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    # ...then change Alice's access !
+
+    t1 = DateTime.now()
+    if new_alice_role is None:
+        certif1 = RealmRoleCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
             realm_id=coolorg.wksp1_id,
-            role=RealmRole.OWNER,
-            user_id=coolorg.bob.user_id,
+            role=None,
+            user_id=coolorg.alice.user_id,
         )
-        raw_certif0 = certif0.dump_and_sign(coolorg.alice.signing_key)
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
+
+        outcome = await backend.realm.unshare(
+            now=t1,
+            organization_id=coolorg.organization_id,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
+            realm_role_certificate=raw_certif1,
+        )
+        assert isinstance(outcome, RealmRoleCertificate)
+
+    else:
+        certif1 = RealmRoleCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
+            realm_id=coolorg.wksp1_id,
+            role=new_alice_role,
+            user_id=coolorg.alice.user_id,
+        )
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
 
         outcome = await backend.realm.share(
-            now=t0,
+            now=t1,
             organization_id=coolorg.organization_id,
-            author=coolorg.alice.device_id,
-            author_verify_key=coolorg.alice.signing_key.verify_key,
-            realm_role_certificate=raw_certif0,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
+            realm_role_certificate=raw_certif1,
             key_index=1,
             recipient_keys_bundle_access=b"<dummy key bundle access>",
         )
         assert isinstance(outcome, RealmRoleCertificate)
-        if spy:
-            await spy.wait(EventRealmCertificate)
-            spy.clear()
 
-        # ...then change Alice's access !
-
-        t1 = DateTime.now()
-        if new_alice_role is None:
-            certif1 = RealmRoleCertificate(
-                author=coolorg.bob.device_id,
-                timestamp=t1,
-                realm_id=coolorg.wksp1_id,
-                role=None,
-                user_id=coolorg.alice.user_id,
-            )
-            raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
-
-            outcome = await backend.realm.unshare(
-                now=t1,
-                organization_id=coolorg.organization_id,
-                author=coolorg.bob.device_id,
-                author_verify_key=coolorg.bob.signing_key.verify_key,
-                realm_role_certificate=raw_certif1,
-            )
-            assert isinstance(outcome, RealmRoleCertificate)
-            if spy:
-                await spy.wait(EventRealmCertificate)
-
-        else:
-            certif1 = RealmRoleCertificate(
-                author=coolorg.bob.device_id,
-                timestamp=t1,
-                realm_id=coolorg.wksp1_id,
-                role=new_alice_role,
-                user_id=coolorg.alice.user_id,
-            )
-            raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
-
-            outcome = await backend.realm.share(
-                now=t1,
-                organization_id=coolorg.organization_id,
-                author=coolorg.bob.device_id,
-                author_verify_key=coolorg.bob.signing_key.verify_key,
-                realm_role_certificate=raw_certif1,
-                key_index=1,
-                recipient_keys_bundle_access=b"<dummy key bundle access>",
-            )
-            assert isinstance(outcome, RealmRoleCertificate)
-            if spy:
-                await spy.wait(EventRealmCertificate)
-
-    finally:
-        if spy_ctx:
-            spy_ctx.__exit__(None, None, None)
+    if wait_events:
+        await _wait_for_event_bus_to_settle(backend)
 
     return (certif0, raw_certif0), (certif1, raw_certif1)
 
@@ -560,35 +515,26 @@ async def wksp1_alice_update_archiving_config(
     now: DateTime | None = None,
     wait_events: bool = False,
 ) -> tuple[RealmArchivingCertificate, bytes]:
-    spy_ctx = spy = None
+    now = now or DateTime.now()
+    certif = RealmArchivingCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=now,
+        realm_id=coolorg.wksp1_id,
+        configuration=configuration,
+    )
+    raw_certif = certif.dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.update_archiving(
+        now=now,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        realm_archiving_certificate=raw_certif,
+    )
+    assert isinstance(outcome, RealmArchivingCertificate), outcome
+
     if wait_events:
-        spy_ctx = backend.event_bus.spy()
-        spy = spy_ctx.__enter__()
-
-    try:
-        now = now or DateTime.now()
-        certif = RealmArchivingCertificate(
-            author=coolorg.alice.device_id,
-            timestamp=now,
-            realm_id=coolorg.wksp1_id,
-            configuration=configuration,
-        )
-        raw_certif = certif.dump_and_sign(coolorg.alice.signing_key)
-
-        outcome = await backend.realm.update_archiving(
-            now=now,
-            organization_id=coolorg.organization_id,
-            author=coolorg.alice.device_id,
-            author_verify_key=coolorg.alice.signing_key.verify_key,
-            realm_archiving_certificate=raw_certif,
-        )
-        assert isinstance(outcome, RealmArchivingCertificate), outcome
-        if spy:
-            await spy.wait(EventRealmCertificate)
-
-    finally:
-        if spy_ctx:
-            spy_ctx.__exit__(None, None, None)
+        await _wait_for_event_bus_to_settle(backend)
 
     return (certif, raw_certif)
 
