@@ -127,22 +127,6 @@
               >
                 <ion-icon :icon="ellipsisHorizontal" />
               </ion-button>
-
-              <!-- Notifications button -->
-              <ion-button
-                slot="icon-only"
-                id="trigger-notifications-button"
-                fill="outline"
-                class="topbar-right-buttons__item color-secondary"
-                :class="{
-                  active: notificationPopoverIsVisible,
-                  unread: informationManager.notificationManager.hasUnreadNotifications(),
-                }"
-                @click="openNotificationCenter($event)"
-                ref="notificationCenterButton"
-              >
-                <ion-icon :icon="notifications" />
-              </ion-button>
             </template>
           </div>
 
@@ -209,10 +193,7 @@ import {
 } from '@/services/eventDistributor';
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
-import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
 import WorkspaceSwitchModal from '@/views/header/WorkspaceSwitchModal.vue';
 import { openSettingsModal } from '@/views/settings';
@@ -228,9 +209,8 @@ import {
   IonText,
   IonToolbar,
   modalController,
-  popoverController,
 } from '@ionic/vue';
-import { archive, chevronDown, ellipsisHorizontal, home, notifications, trash } from 'ionicons/icons';
+import { archive, chevronDown, ellipsisHorizontal, home, trash } from 'ionicons/icons';
 import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
@@ -242,10 +222,7 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSide
 const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
-const notificationPopoverIsVisible: Ref<boolean> = ref(false);
-const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
-const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const securityWarnings = ref<SecurityWarnings | undefined>();
 
 const workspaceIsArchivedOrTrashed = computed(
@@ -418,10 +395,6 @@ onMounted(async () => {
     { key: 'arrowleft', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true },
     async () => await routerGoBack(),
   );
-  hotkeys.add(
-    { key: 'n', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true },
-    async () => await notificationCenterButtonRef.value?.$el.click(),
-  );
 
   const result = await getClientInfo();
   if (result.ok) {
@@ -476,47 +449,6 @@ async function openContextualMenu(event: Event): Promise<void> {
       event,
     } as OpenContextualMenuData);
   }
-}
-
-async function openNotificationCenter(event: Event): Promise<void> {
-  event.stopPropagation();
-  notificationPopoverIsVisible.value = true;
-
-  if (isLargeDisplay.value) {
-    const popover = await popoverController.create({
-      component: NotificationCenterPopover,
-      alignment: 'center',
-      event: event,
-      cssClass: 'notification-center-popover',
-      showBackdrop: false,
-      componentProps: {
-        notificationManager: informationManager.value.notificationManager,
-        eventDistributor: eventDistributor.value,
-      },
-    });
-    await popover.present();
-    await popover.onDidDismiss();
-    await popover.dismiss();
-  } else {
-    const modal = await modalController.create({
-      component: NotificationCenterModal,
-      cssClass: 'notification-center-modal',
-      showBackdrop: true,
-      handle: true,
-      backdropDismiss: true,
-      breakpoints: isLargeDisplay.value ? undefined : [0, 0.5, 1],
-      expandToScroll: false,
-      initialBreakpoint: isLargeDisplay.value ? undefined : 0.5,
-      componentProps: {
-        notificationManager: informationManager.value.notificationManager,
-        eventDistributor: eventDistributor.value,
-      },
-    });
-    await modal.present();
-    await modal.onDidDismiss();
-    await modal.dismiss();
-  }
-  notificationPopoverIsVisible.value = false;
 }
 
 async function openSecurityWarningsModal(): Promise<void> {
@@ -762,32 +694,6 @@ async function openWorkspacesSwitchModal(): Promise<void> {
         --border-radius: #{ms.radius('2xl')};
         height: auto;
         margin: 0;
-      }
-
-      &.active {
-        ion-icon {
-          color: ms.color('icon-brand-default-hover');
-        }
-      }
-
-      &#trigger-notifications-button.unread {
-        position: relative;
-
-        &::part(native) {
-          --background: #{ms.color('surface-base-default')};
-        }
-
-        &::after {
-          content: '';
-          position: absolute;
-          background: ms.color('surface-error-default');
-          right: 0.45rem;
-          top: 0.35rem;
-          width: 0.625rem;
-          height: 0.625rem;
-          border: ms.border('thick') solid ms.color('border-base-on-color');
-          border-radius: ms.radius('2xl');
-        }
       }
     }
   }

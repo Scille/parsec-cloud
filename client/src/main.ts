@@ -35,7 +35,7 @@ import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
-import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { handleParsecLink } from '@/services/linkHandler';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
@@ -407,17 +407,6 @@ async function setupApp(): Promise<void> {
       });
       window.nativeAPI.receive('parsec-update-availability', async (updateAvailable: boolean, version?: string) => {
         injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: updateAvailable, version: version });
-        if (updateAvailable && version) {
-          injectionProvider.notifyAll(
-            new Information({
-              message: '',
-              level: InformationLevel.Info,
-              unique: true,
-              data: { type: InformationDataType.NewVersionAvailable, newVersion: version },
-            }),
-            PresentationMode.Notification,
-          );
-        }
       });
       window.nativeAPI.receive('parsec-clean-up-before-update', async () => {
         await cleanBeforeQuitting(injectionProvider, true);
@@ -528,15 +517,6 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
     getUpdateAvailability: (force?: boolean): void => {
       if ((window as any).TESTING_ENABLE_UPDATE_EVENT === true || force) {
         injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
-        injectionProvider.notifyAll(
-          new Information({
-            message: '',
-            level: InformationLevel.Info,
-            unique: true,
-            data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
-          }),
-          PresentationMode.Notification,
-        );
         console.log('GetUpdateAvailability: MOCKED');
       }
     },

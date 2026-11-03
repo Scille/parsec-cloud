@@ -110,14 +110,6 @@
         "fileNotFound": "Impossible de trouver le fichier associé à ce lien."
     },
     "notificationCenter": {
-        "title": "Notifications",
-        "readOnly": "Non lues uniquement",
-        "goToWorkspace": "Accéder à l'espace de travail",
-        "openImportedMenu": "Ouvrir le menu d'importations",
-        "viewJoinedUsers": "Voir les utilisateurs",
-        "goToDevices": "Accéder à mes appareils",
-        "openEnclosingFolder": "Ouvrir le dossier",
-        "noNotification": "Vous êtes à jour !",
         "update": "Mettre à jour",
         "newVersionAvailable": "Mise à jour disponible"
     },
@@ -131,17 +123,6 @@
         "addFile": "Ajouter un fichier",
         "removeFile": "Supprimer",
         "currentFilesCount": "Fichiers inclus: {current} / {limit}"
-    },
-    "notification": {
-        "changeRole": "Votre rôle a été modifié en tant que <b>{role}</b> dans l'espace de travail <b>{workspace}</b>",
-        "workspaceAccess": "Vous avez accès à l'espace de travail <b>{workspace}</b>",
-        "userJoinWorkspace": "<b>{name}</b> vient de rejoindre l'espace de travail <b>{workspace}</b>",
-        "multipleUsersJoinWorkspace": "<b>{count} utilisateurs</b> viennent de rejoindre l'espace de travail <b>{workspace}</b>",
-        "userSharedDocument": "<b>{name}</b> a partagé un nouveau document",
-        "allImportedElements": "Tous vos fichiers ont été importés",
-        "newDeviceAdded": "Un nouvel appareil a été ajouté",
-        "incompatibleServer": "Votre application n'est pas compatible avec le serveur.",
-        "expiredOrganization": "Cette organisation a expiré."
     },
     "HomePage": {
         "appUpdated": {

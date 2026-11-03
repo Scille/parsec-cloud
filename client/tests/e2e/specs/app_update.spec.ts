@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DisplaySize, expect, MsPage, msTest, sendUpdateEvent, setupNewPage } from '@tests/e2e/helpers';
+import { expect, MsPage, msTest, sendUpdateEvent, setupNewPage } from '@tests/e2e/helpers';
 
 async function checkAppUpdateModal(page: Page): Promise<void> {
   const modal = page.locator('.update-app-modal');
@@ -79,36 +79,6 @@ msTest("Dismiss update on connected page and update modal shouldn't be appear ag
 
   await expect(modal).toBeHidden();
 });
-
-for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
-  msTest(`Opens app update modal with notification on ${displaySize}`, async ({ connected }) => {
-    await sendUpdateEvent(connected);
-    const modal = connected.locator('.update-app-modal');
-    await modal.locator('.update-footer').locator('ion-button').nth(1).click();
-    const header = connected.locator('#connected-header');
-    const notifButton = header.locator('#trigger-notifications-button');
-    await expect(notifButton).toHaveTheClass('unread');
-    const notifCenter =
-      displaySize === DisplaySize.Small
-        ? connected.locator('.notification-center-modal')
-        : connected.locator('.notification-center-popover');
-
-    if (displaySize === DisplaySize.Small) {
-      await connected.setDisplaySize(DisplaySize.Small);
-    }
-    await expect(notifCenter).toBeHidden();
-    await notifButton.click();
-    await expect(notifCenter).toBeVisible();
-    await expect(notifCenter.locator('.notification-center-header__counter')).toHaveText('1');
-    const notifs = notifCenter.locator('.notification-container').locator('.notification');
-    await expect(notifs).toHaveCount(1);
-    await expect(notifs.nth(0).locator('.notification-details__message')).toHaveText('A new version is available (v13.37)');
-    await notifs.nth(0).click();
-    await expect(notifCenter).toBeHidden();
-
-    await checkAppUpdateModal(connected);
-  });
-}
 
 msTest('Opens app update modal with profile popover', async ({ connected }) => {
   await sendUpdateEvent(connected);

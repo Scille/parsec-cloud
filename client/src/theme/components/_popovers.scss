@@ -15,15 +15,6 @@
   --offset-y: 0.5em;
 }
 
-/* --- notification center popover --- */
-.notification-center-popover {
-  --background: none;
-  --box-shadow: #{ms.shadow('strong')};
-  --width: var(--popover-notification-center-width);
-  --offset-y: 0.5rem;
-  --offset-x: -5%;
-}
-
 /* --- invitations list popover --- */
 .invitations-list-popover {
   --background: none;
