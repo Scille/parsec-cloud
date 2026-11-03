@@ -167,13 +167,6 @@ class EditicsTranslator {
    */
   async cookClientEvent(oo) {
     console.log('->s Client event', oo);
-    // Still to be translated (disabled until the server side of the
-    // collaborative mode is finished; move back into the switch below to
-    // enable, see the matching server events in the RFC):
-    //
-    //   case 'saveDone':
-    //     return { type: 'saveDone', savedUpToIndex: oo.savedUpToIndex, newVersion: oo.newVersion };
-
     switch (oo.type) {
       case 'auth': {
         /** @type {EditicsClientEventAuth} */
@@ -218,7 +211,7 @@ class EditicsTranslator {
 
       case 'message':
         // The chat message is encrypted as an opaque blob (RFC §2.2)
-        const [msgKeyIndex, msgCipherText] = await this.libparsec.encrypt(bytesFromStr(String(oo.message)));
+        const [msgKeyIndex, msgCipherText] = await this.libparsec.encrypt(bytesFromStr(oo.message));
         /** @type {EditicsClientEventMessage} */
         return {
           type: 'message',
@@ -292,25 +285,23 @@ class EditicsTranslator {
     // Parse it into an array of fragment strings, then encrypt each fragment
     // independently as `encryptedChanges` (one entry per fragment, RFC §2.2).
     let fragments = [];
-    if (oo.changes !== null && oo.changes !== undefined) {
-      if (typeof oo.changes === 'string') {
-        try {
-          const parsed = JSON.parse(oo.changes);
-          if (Array.isArray(parsed)) fragments = parsed;
-        } catch (_e) {
-          fragments = [oo.changes];
-        }
-      } else if (Array.isArray(oo.changes)) {
-        // `binaryChanges` mode: already a real array of fragments
-        fragments = oo.changes;
-      } else {
+    if (typeof oo.changes === 'string') {
+      try {
+        const parsed = JSON.parse(oo.changes);
+        if (Array.isArray(parsed)) fragments = parsed;
+      } catch (_e) {
         fragments = [oo.changes];
       }
+    } else if (Array.isArray(oo.changes)) {
+      // `binaryChanges` mode: already a real array of fragments
+      fragments = oo.changes;
+    } else {
+      fragments = [oo.changes];
     }
     /** @type {[number, string][]} */
     const encryptedChanges = [];
     for (const fragment of fragments) {
-      const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(String(fragment)));
+      const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(fragment));
       encryptedChanges.push([keyIndex, cipherText.toBase64()]);
     }
 
@@ -335,7 +326,7 @@ class EditicsTranslator {
     /** @type {[number, string] | null} */
     let encryptedCursor = null;
     if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
-      const parsed = JSON.parse(String(oo.excelAdditionalInfo));
+      const parsed = JSON.parse(oo.excelAdditionalInfo);
       excelAdditionalInfoIndexCols = parsed.indexCols ?? null;
       excelAdditionalInfoIndexRows = parsed.indexRows ?? null;
       /** @type {Record<string, any>} */
@@ -522,7 +513,7 @@ class EditicsTranslator {
     // The OnlyOffice `auth` event carries the chat history, which the editics
     // protocol keeps in the server event (the editor only renders the field
     // when non-empty, like for the `message` event).
-    if (editics.messages && editics.messages.length !== 0) {
+    if (editics.messages.length !== 0) {
       event.messages = await this._cookMessageEntries(editics.messages);
     }
     return event;
@@ -588,7 +579,7 @@ class EditicsTranslator {
    */
   async _cookAuthChanges(editics) {
     const changes = await Promise.all(
-      (editics.changes || []).map(async (c) => {
+      editics.changes.map(async (c) => {
         // The author's identity is carried by the record (`(device id,
         // index)` tuple): the backlog can contain changes from participants
         // that left the session before we joined, hence the index is carried
@@ -639,7 +630,7 @@ class EditicsTranslator {
   async _cookMessage(editics) {
     /** @type {OOServerEventMessage} */
     const event = { type: 'message' };
-    if (editics.messages && editics.messages.length !== 0) {
+    if (editics.messages.length !== 0) {
       event.messages = await this._cookMessageEntries(editics.messages);
     }
     return event;
@@ -655,7 +646,7 @@ class EditicsTranslator {
    */
   async _cookCursor(editics) {
     const messages = await Promise.all(
-      (editics.messages || []).map(async (m) => {
+      editics.messages.map(async (m) => {
         // The author's identity is carried by the record, like for a `message`.
         const [authorDeviceId, _authorIndexUser] = m.author;
         const [keyIndex, b64CipherText] = m.encryptedCursor;
@@ -679,7 +670,7 @@ class EditicsTranslator {
   _cookGetLock(editics) {
     /** @type {Record<string, OOLockEntry>} */
     const ooLocks = {};
-    for (const key in editics.locks || {}) {
+    for (const key in editics.locks) {
       const lock = editics.locks[key];
       // The holder's identity is carried by the record (`(device id,
       // index)` tuple): the holder may have left the session, e.g. its lock
@@ -700,7 +691,7 @@ class EditicsTranslator {
    * @returns {OOServerEventReleaseLock}
    */
   _cookReleaseLock(editics) {
-    const locks = (editics.locks || []).map((lock) => {
+    const locks = editics.locks.map((lock) => {
       // The holder's identity is carried by the record, like in `getLock`.
       return {
         block: lock.block,
@@ -719,7 +710,7 @@ class EditicsTranslator {
    * @returns {Object<string, OOLockEntry>|Array<OOLockEntry>}
    */
   _onlyofficeLockTable(locks) {
-    const records = (locks || []).map((lock) => {
+    const records = locks.map((lock) => {
       // The holder's identity is carried by the record, like in `getLock`.
       return {
         time: lock.time,
@@ -748,7 +739,7 @@ class EditicsTranslator {
    */
   async _cookServerSaveChanges(editics) {
     const changes = await Promise.all(
-      (editics.changes || []).map(async (c) => {
+      editics.changes.map(async (c) => {
         // The author's identity is carried by the record (`(device id,
         // index)` tuple), like for the `authChanges` entries: the author may
         // have left the session before we joined.
@@ -767,7 +758,7 @@ class EditicsTranslator {
         };
       }),
     );
-    const locks = (editics.locks || []).map((lock) => {
+    const locks = editics.locks.map((lock) => {
       // The holder's identity is carried by the record, like in `getLock`.
       return {
         block: lock.block,
@@ -782,7 +773,7 @@ class EditicsTranslator {
       changes,
       changesIndex: editics.changesIndex,
       syncChangesIndex: editics.syncChangesIndex,
-      endSaveChanges: !!editics.endSaveChanges,
+      endSaveChanges: editics.endSaveChanges,
       locks,
     };
     // Reassemble the OnlyOffice blob from its editics parts (the mirror of the
@@ -790,16 +781,16 @@ class EditicsTranslator {
     // save carries them), then the decrypted cursor keys.
     let hasExcelAdditionalInfo = false;
     let excelObj = {};
-    const hasIndexCols = editics.excelAdditionalInfoIndexCols !== null && editics.excelAdditionalInfoIndexCols !== undefined;
-    const hasIndexRows = editics.excelAdditionalInfoIndexRows !== null && editics.excelAdditionalInfoIndexRows !== undefined;
+    const hasIndexCols = editics.excelAdditionalInfoIndexCols !== null;
+    const hasIndexRows = editics.excelAdditionalInfoIndexRows !== null;
     if (hasIndexCols || hasIndexRows) {
       // On a structural-change save the OnlyOffice blob always carries both
       // keys (the unchanged axis as `null`), re-emit it as-is.
-      excelObj.indexCols = editics.excelAdditionalInfoIndexCols ?? null;
-      excelObj.indexRows = editics.excelAdditionalInfoIndexRows ?? null;
+      excelObj.indexCols = editics.excelAdditionalInfoIndexCols;
+      excelObj.indexRows = editics.excelAdditionalInfoIndexRows;
       hasExcelAdditionalInfo = true;
     }
-    if (editics.encryptedCursorAdditionalInfo !== null && editics.encryptedCursorAdditionalInfo !== undefined) {
+    if (editics.encryptedCursorAdditionalInfo !== null) {
       const [keyIndex, b64CipherText] = editics.encryptedCursorAdditionalInfo;
       excelObj = Object.assign(
         excelObj,
@@ -841,11 +832,11 @@ class EditicsTranslator {
       indexUser: entry.indexUser,
       // Never provided by the editics protocol, and unused by the editor
       connectionId: '',
-      view: !!entry.view,
+      view: entry.view,
       // The editics protocol has no separate flag: a viewer of a live session
       // is a "live viewer" (the OnlyOffice editor uses this to know it must
       // relay the changes to the participant).
-      isLiveViewer: !!entry.view,
+      isLiveViewer: entry.view,
       isCloseCoAuthoring: false,
       encrypted: false,
     };
