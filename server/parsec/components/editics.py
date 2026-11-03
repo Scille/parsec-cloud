@@ -210,6 +210,8 @@ class EditicsDocumentSession:
     have left.
     """
 
+    last_now: EditicsTimestampMs = 0
+
     # When the document session has been started
     created_at: EditicsTimestampMs = field(init=False)  # Initialized in `__post_init__`
     document_session_id: UUID = field(default_factory=uuid4)
@@ -218,17 +220,6 @@ class EditicsDocumentSession:
         default_factory=dict
     )
     chat_messages: list[ChatMessage] = field(default_factory=list)
-    # When set, the session is in single-editor mode (i.e. the first editor to
-    # connect take this lock).
-    # The second editor to connect get parked (i.e. receive a `waitAuth` event)
-    # until the first editor release the lock  (i.e. sends `unLockDocument{unlock:true}`,
-    # which is done after being notified of the other editor presence by a
-    # `connectState` event).
-    # Note a weird behavior (mimicking OnlyOffice server): subsequent editors
-    # connecting don't get parked (i.e. they receive a `auth` event even if lock
-    # is still held). This is okay since the auth release is already supposed to
-    # be under way.
-    auth_lock_holder: EditicsParticipantSessionID | None = None
     # Ordered change history, can be truncated from a given index on undo (i.e.
     # `saveChanges` event carrying a `deleteIndex`).
     changes: list[StoredChange] = field(default_factory=list)
@@ -236,11 +227,36 @@ class EditicsDocumentSession:
     # the converted document (bin + medias) encrypted with the workspace key.
     # Format: (<Key index>, <parts ciphertexts>), first part being the document bin.
     encrypted_initial_content: tuple[EditicsKeyIndex, list[bytes]] | None = None
-    # Save lock (i.e. the participant currently saving a change).
+
+    # Document session has three kind of locks:
+    #
+    # - Auth lock: the single-editor vs co-editing gate.
+    #   The first non-viewer takes it; the second non-viewer to join gets parked
+    #   with a `waitAuth` event until the holder sends `unLockDocument{unlock:true}`.
+    #   Note a weird behavior (mimicking OnlyOffice server): subsequent editors
+    #   connecting don't get parked (i.e. they receive a `auth` event even if lock
+    #   is still held). This is okay since the auth release is already supposed to
+    #   be under way.
+    #
+    # - Save lock: A single mutex for who's currently mid-saveChanges.
+    #   Taken on `isSaveLock`/`saveChanges`, released on
+    #   `endSaveChanges:true`/`unSaveLock`/`unLockDocument{isSave:true}`.
+    #   Clients are denied (i.e. `saveLock{lockedBySomebodyElse:true}`) while
+    #   another participant holds it or while their `syncChangesIndex` is stale.
+    #
+    # - Region locks: The cell/paragraph locking. It lock a "block" which shape
+    #   depends on the editor (e.g. Word: paragraph/block ID, Excel: range of
+    #   cells/columns).
+    #   Locking is mostly optimistic (client send edit without prior locking) but
+    #   can also be done explicitly by `getLock`.
+    #   Release comes from explict events (i.e. `saveChanges{releaseLocks:true}` or
+    #  `unLockDocument{releaseLocks:true}`),voluntary close (i.e. `close` client
+    #  event), or SSE disconnect.
+    #
+    # Viewers are never allowed to take locks.
+    auth_lock_holder: EditicsParticipantSessionID | None = None
     save_lock_holder: EditicsParticipantSessionID | None = None
     region_locks: dict[EditicsRegionLockID, LockRecord] = field(default_factory=dict)
-
-    last_now: EditicsTimestampMs = 0
 
     def monotonic_now(self) -> EditicsTimestampMs:
         """

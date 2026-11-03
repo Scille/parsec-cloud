@@ -349,13 +349,13 @@ class EditicsJSRuntime:
                         // Hardcoded common values used for the test
                         switch (deviceId) {{
                             case "de10a11cec0010000000000000000000":
-                                return "Alice";
+                                return {{ok: true, value: "Alice"}};
                             case "de10808c001000000000000000000000":
-                                return "Bob";
+                                return {{ok: true, value: "Bob"}};
                             case "de103a11031c00100000000000000000":
-                                return "Mallory";
+                                return {{ok: true, value: "Mallory"}};
                             default:
-                                throw new Error(`Unknown device ID (you may want to patch the test code): ${{ deviceId }}`)
+                                return {{ok: false, error: `Unknown device ID (you may want to patch the test code): ${{ deviceId }}`}}
                         }}
                     }},
                     // Simulate encryption
@@ -369,12 +369,12 @@ class EditicsJSRuntime:
                         try {{
                             content = JSON.parse(bytesToStr(ciphertext));
                         }} catch(err) {{
-                            throw new Error(`Decryption failed: ${{err}}`);
+                            return {{ok: false, error: `Decryption failed: ${{err}}`}};
                         }}
                         if (content.keyIndex != keyIndex) {{
-                            throw new Error("Decryption failed: keyIndex mismatch (expected: ${{keyIndex}}, got: ${{content.keyIndex}}");
+                            return {{ok: false, error: "Decryption failed: keyIndex mismatch (expected: ${{keyIndex}}, got: ${{content.keyIndex}}"}};
                         }}
-                        return bytesFromStr(content.cleartext);
+                        return {{ok: true, value: bytesFromStr(content.cleartext)}};
                     }},
                 }},
             );
@@ -496,7 +496,10 @@ class EditicsJSClient:
             f"""
             globalThis.__editics_instances['{self.participant_session_id}']
                 .cookClientEvent({json.dumps(oo_client_event)})
-                .then(obj => (obj != null ? JSON.stringify(obj) : null))
+                .then((result) => {{
+                    if (!result.ok) throw new Error(result.error);
+                    return result.value !== null ? JSON.stringify(result.value) : null;
+                }})
             """
         )
         if raw_editics_client_event is None:
@@ -518,7 +521,10 @@ class EditicsJSClient:
                     f"""
                     globalThis.__editics_instances['{self.participant_session_id}']
                         .cookServerEvent({raw_editics_server_event})
-                        .then(obj => (obj != null ? JSON.stringify(obj) : null))
+                        .then((result) => {{
+                            if (!result.ok) throw new Error(result.error);
+                            return result.value !== null ? JSON.stringify(result.value) : null;
+                        }})
                     """
                 )
                 assert raw_oo_client_event is not None, (
@@ -547,7 +553,10 @@ class EditicsJSClient:
         oo_server_event = await self.js_runtime.async_eval(
             f"""
             globalThis.__editics_instances['{self.participant_session_id}'].cookServerEvent({raw_editics_server_event})
-                .then(obj => (obj != null ? JSON.stringify(obj) : null))
+                .then((result) => {{
+                    if (!result.ok) throw new Error(result.error);
+                    return result.value !== null ? JSON.stringify(result.value) : null;
+                }})
             """
         )
         assert oo_server_event is not None, (

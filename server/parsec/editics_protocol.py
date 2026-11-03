@@ -258,7 +258,7 @@ class EditicsClientEventSaveChanges(BaseModel):
     excelAdditionalInfoIndexCols: EditicsExcelRecalcIndex | None
     excelAdditionalInfoIndexRows: EditicsExcelRecalcIndex | None
     encryptedCursorAdditionalInfo: EditicsEncryptedContent | None
-    # Release this user's region locks after the save (OnlyOffice name kept).
+    # Release this user's region locks after the save.
     releaseLocks: bool
 
 
@@ -337,7 +337,7 @@ class EditicsServerEventAuth(BaseModel):
 
 class EditicsServerEventConnectState(BaseModel):
     type: Literal["connectState"] = "connectState"
-    # Monotonic ms timestamp of this participant-set update (OnlyOffice name).
+    # Monotonic ms timestamp of this participant-set update.
     participantsTimestamp: EditicsTimestampMs
     participants: list[EditicsParticipantEntry]
     # True only in the broadcast announcing a non-viewer newcomer parked behind
@@ -450,7 +450,6 @@ class EditicsServerEventSaveChanges(BaseModel):
     # - `encryptedCursorAdditionalInfo` that contains the cursor info use by all editors.
     excelAdditionalInfoIndexCols: EditicsExcelRecalcIndex | None
     excelAdditionalInfoIndexRows: EditicsExcelRecalcIndex | None
-    # Format: (<Key index>, <base64(ciphertext)>)
     encryptedCursorAdditionalInfo: EditicsEncryptedContent | None
 
 
