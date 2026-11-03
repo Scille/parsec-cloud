@@ -124,6 +124,27 @@ jobs:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
 
+      # Restore cache used by `ci-web`
+      - name: Gen cache keys + paths
+        id: cachedata
+        run: |
+          arch="$(echo '${{ runner.arch }}' | tr '[:upper:]' '[:lower:]')"
+          base_key="node-cache-${{ runner.os }}-${arch}-npm"
+
+          echo "path=$(npm config get cache)" | tee -a $GITHUB_OUTPUT
+          echo "key=${base_key}-${{ hashFiles('client/package-lock.json', 'client/electron/package-lock.json') }}" | tee -a $GITHUB_OUTPUT
+          echo "restore-key=${base_key}-" | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
+
+      - name: Restore cache
+        id: restore-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
+        with:
+          path: ${{ steps.cachedata.outputs.path }}
+          key: ${{ steps.cachedata.outputs.key }}
+          restore-keys: ${{ steps.cachedata.outputs.restore-key }}
+        timeout-minutes: 2
+
       - name: Install dependencies for ionic project
         if: steps.should-run-js-analysis.outputs.run == 'true'
         run: npm clean-install
@@ -139,4 +160,5 @@ jobs:
         if: steps.should-run-js-analysis.outputs.run == 'true'
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # pin v4.39.1
         with:
+          upload-database: ${{ github.ref == 'refs/heads/master' }}
           category: /language:typescript

@@ -74,6 +74,7 @@ jobs:
 
       # Inspired by https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md#caching-packages-data
       # About how to manually restore cache
+      # NOTE: The cache is also used by `codeql` workflow, do not forget to update it.
       - name: Gen cache keys + paths
         id: cachedata
         run: |
