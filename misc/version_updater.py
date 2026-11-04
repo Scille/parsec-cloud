@@ -17,6 +17,8 @@ from fileinput import FileInput
 from pathlib import Path
 from re import Pattern
 
+import releaser  # type: ignore (pyright struggles with this when run from server folder)
+
 ReplacementPattern = str | Callable[[str], str]
 
 RawRegexes = list["ReplaceRegex"]
@@ -47,6 +49,13 @@ def hide_patch_version(template: str, separator: str = ".") -> Callable[[str], s
         return template.format(version=separator.join(version.split(".")[:2]))
 
     return _hide_patch_version
+
+
+def convert_to_pep440(template: str, separator: str = ".") -> Callable[[str], str]:
+    def _convert_to_pep440(version: str) -> str:
+        return template.format(version=releaser.Version.parse(version).to_pep440())
+
+    return _convert_to_pep440
 
 
 def only_major_version(template: str, separator: str = ".") -> Callable[[str], str]:
@@ -129,7 +138,7 @@ def refresh_cargo_lock(updated_files: set[Path]) -> set[Path]:
     if not a_cargo_file_has_been_updated:
         return set()
 
-    print("Refreshing Cargo.lock file ...")
+    print("Refreshing Cargo.lock file...")
     cargo_lock = ROOT_DIR / "Cargo.lock"
 
     lines: list[str] = []
@@ -163,7 +172,7 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
 
         lock_file = file.parent / "package-lock.json"
 
-        print(f"Refreshing npm lock file {lock_file} ...")
+        print(f"Refreshing npm lock file {lock_file}...")
         input_lines = lock_file.read_text().splitlines()
 
         # The project's license field is the first "license" field in the file
@@ -209,10 +218,13 @@ def refresh_uv_lock(updated_files: set[Path]) -> set[Path]:
             continue
 
         lock_file = file.parent / "uv.lock"
-        print(f"Refreshing uv lock file {lock_file} ...")
+        print(f"Refreshing uv lock file {lock_file}...")
         lines: list[str] = []
         previous_line = None
-        regex, replace = TOML_VERSION_FIELD.compile(get_tool_version(Tool.Parsec))
+        regex, replace = TOML_VERSION_FIELD.compile(
+            # Patch Parsec version in uv.lock because uv only supports PEP 440
+            releaser.Version.parse(get_tool_version(Tool.Parsec)).to_pep440()
+        )
         for line in lock_file.read_text().splitlines():
             if previous_line == 'name = "parsec-cloud"':
                 match = regex.search(line)
@@ -519,7 +531,7 @@ FILES_WITH_VERSION_INFO: dict[Matcher, dict[Tool, RawRegexes]] = {
                 r'"Programming Language :: Python :: .*"',
                 hide_patch_version('"Programming Language :: Python :: {version}"'),
             ),
-            ReplaceRegex(r'requires-python = "~=.*"', 'requires-python = "~={version}"'),
+            ReplaceRegex(r'^requires-python = "~=.*"', 'requires-python = "~={version}"'),
             ReplaceRegex(
                 r'build = "cp\d+-{manylinux,macos,win}\*"',
                 hide_patch_version('build = "cp{version}-{{manylinux,macos,win}}*"', separator=""),
@@ -528,7 +540,9 @@ FILES_WITH_VERSION_INFO: dict[Matcher, dict[Tool, RawRegexes]] = {
                 'pythonVersion = ".*"', hide_patch_version(r'pythonVersion = "{version}"')
             ),
         ],
-        Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
+        Tool.Parsec: [
+            ReplaceRegex(r'^version = ".*"$', convert_to_pep440('version = "{version}"'))
+        ],
         Tool.ServerLicense: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
     },
     Matcher.simple(ROOT_DIR / ".nvmrc"): {
