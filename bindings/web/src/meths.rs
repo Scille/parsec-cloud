@@ -11843,6 +11843,36 @@ fn variant_client_list_users_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientListWorkspaceTimelineError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_timeline_error_rs_to_js(
+    rs_obj: libparsec::ClientListWorkspaceTimelineError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientListWorkspaceTimelineError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspaceTimelineErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientListWorkspaceTimelineError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspaceTimelineErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientListWorkspaceUserRoleChangesError
 
 #[allow(dead_code)]
@@ -24229,6 +24259,647 @@ fn variant_workspace_storage_cache_size_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceTimelineEntry
+
+#[allow(dead_code)]
+fn variant_workspace_timeline_entry_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceTimelineEntry, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "WorkspaceTimelineEntryArchived" => {
+            let timestamp = {
+                let js_val = Reflect::get(&obj, &"timestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                }
+            };
+            let author = {
+                let js_val = Reflect::get(&obj, &"author".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Archived { timestamp, author })
+        }
+        "WorkspaceTimelineEntryCreated" => {
+            let timestamp = {
+                let js_val = Reflect::get(&obj, &"timestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                }
+            };
+            let author = {
+                let js_val = Reflect::get(&obj, &"author".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            let initial_name = {
+                let js_val = Reflect::get(&obj, &"initialName".into())?;
+                if js_val.is_null() {
+                    None
+                } else {
+                    Some(
+                        js_val
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
+                            })?,
+                    )
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Created {
+                timestamp,
+                author,
+                initial_name,
+            })
+        }
+        "WorkspaceTimelineEntryDeletionPlanned" => {
+            let timestamp = {
+                let js_val = Reflect::get(&obj, &"timestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                }
+            };
+            let author = {
+                let js_val = Reflect::get(&obj, &"author".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            let deletion_date = {
+                let js_val = Reflect::get(&obj, &"deletionDate".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::DeletionPlanned {
+                timestamp,
+                author,
+                deletion_date,
+            })
+        }
+        "WorkspaceTimelineEntryRenamed" => {
+            let timestamp = {
+                let js_val = Reflect::get(&obj, &"timestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                }
+            };
+            let author = {
+                let js_val = Reflect::get(&obj, &"author".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            let previous_name = {
+                let js_val = Reflect::get(&obj, &"previousName".into())?;
+                if js_val.is_null() {
+                    None
+                } else {
+                    Some(
+                        js_val
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
+                            })?,
+                    )
+                }
+            };
+            let new_name = {
+                let js_val = Reflect::get(&obj, &"newName".into())?;
+                if js_val.is_null() {
+                    None
+                } else {
+                    Some(
+                        js_val
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
+                            })?,
+                    )
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Renamed {
+                timestamp,
+                author,
+                previous_name,
+                new_name,
+            })
+        }
+        "WorkspaceTimelineEntryRestored" => {
+            let timestamp = {
+                let js_val = Reflect::get(&obj, &"timestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                }
+            };
+            let author = {
+                let js_val = Reflect::get(&obj, &"author".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Restored { timestamp, author })
+        }
+        "WorkspaceTimelineEntryUserRoleChanged" => {
+            let timestamp = {
+                let js_val = Reflect::get(&obj, &"timestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                }
+            };
+            let author = {
+                let js_val = Reflect::get(&obj, &"author".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            let previous_role = {
+                let js_val = Reflect::get(&obj, &"previousRole".into())?;
+                if js_val.is_null() {
+                    None
+                } else {
+                    Some({
+                        let raw_string = js_val.as_string().ok_or_else(|| {
+                            let type_error = TypeError::new("value is not a string");
+                            type_error.set_cause(&js_val);
+                            JsValue::from(type_error)
+                        })?;
+                        enum_realm_role_js_to_rs(raw_string.as_str())
+                    }?)
+                }
+            };
+            let new_role = {
+                let js_val = Reflect::get(&obj, &"newRole".into())?;
+                if js_val.is_null() {
+                    None
+                } else {
+                    Some({
+                        let raw_string = js_val.as_string().ok_or_else(|| {
+                            let type_error = TypeError::new("value is not a string");
+                            type_error.set_cause(&js_val);
+                            JsValue::from(type_error)
+                        })?;
+                        enum_realm_role_js_to_rs(raw_string.as_str())
+                    }?)
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::UserRoleChanged {
+                timestamp,
+                author,
+                user_id,
+                previous_role,
+                new_role,
+            })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a WorkspaceTimelineEntry",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_workspace_timeline_entry_rs_to_js(
+    rs_obj: libparsec::WorkspaceTimelineEntry,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceTimelineEntry::Archived {
+            timestamp, author, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceTimelineEntryArchived".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+            let js_author = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(author) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"author".into(), &js_author)?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceTimelineEntry::Created {
+            timestamp,
+            author,
+            initial_name,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceTimelineEntryCreated".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+            let js_author = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(author) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"author".into(), &js_author)?;
+            let js_initial_name = match initial_name {
+                Some(val) => JsValue::from_str(val.as_ref()),
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"initialName".into(), &js_initial_name)?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceTimelineEntry::DeletionPlanned {
+            timestamp,
+            author,
+            deletion_date,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceTimelineEntryDeletionPlanned".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+            let js_author = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(author) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"author".into(), &js_author)?;
+            let js_deletion_date = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(deletion_date) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"deletionDate".into(), &js_deletion_date)?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceTimelineEntry::Renamed {
+            timestamp,
+            author,
+            previous_name,
+            new_name,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceTimelineEntryRenamed".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+            let js_author = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(author) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"author".into(), &js_author)?;
+            let js_previous_name = match previous_name {
+                Some(val) => JsValue::from_str(val.as_ref()),
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"previousName".into(), &js_previous_name)?;
+            let js_new_name = match new_name {
+                Some(val) => JsValue::from_str(val.as_ref()),
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"newName".into(), &js_new_name)?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceTimelineEntry::Restored {
+            timestamp, author, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceTimelineEntryRestored".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+            let js_author = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(author) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"author".into(), &js_author)?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceTimelineEntry::UserRoleChanged {
+            timestamp,
+            author,
+            user_id,
+            previous_role,
+            new_role,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceTimelineEntryUserRoleChanged".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+            let js_author = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(author) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"author".into(), &js_author)?;
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+            let js_previous_role = match previous_role {
+                Some(val) => JsValue::from_str(enum_realm_role_rs_to_js(val)),
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"previousRole".into(), &js_previous_role)?;
+            let js_new_role = match new_role {
+                Some(val) => JsValue::from_str(enum_realm_role_rs_to_js(val)),
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"newRole".into(), &js_new_role)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceWatchEntryOneShotError
 
 #[allow(dead_code)]
@@ -26940,6 +27611,48 @@ pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_list_users_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_list_workspace_timeline
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListWorkspaceTimeline(client: u32, realm_id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+        let ret = libparsec::client_list_workspace_timeline(client, realm_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = variant_workspace_timeline_entry_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_list_workspace_timeline_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
