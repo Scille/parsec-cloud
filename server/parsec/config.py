@@ -310,6 +310,14 @@ class BackendConfig:
     # URL to reach this server from the editics domain
     # This is typically used to serve the editics pages in an isolated iframe.
     editics_server_addr: ParsecAddr | None = None
+    # Max allowed size for the whole document opened in editics.
+    # This limit is used in initial content upload route.
+    editics_max_document_size: int = 100 * 1024**2  # 100Mo
+    # Max allowed size for a single part (e.g. embedded image) in a document
+    # opened in editics.
+    # This limit is used both in the initial content upload and in the send
+    # event routes.
+    editics_max_part_size: int = 25 * 1024**2  # 25Mo
 
     # Bearer token used to authenticate the administration API
     administration_token: str

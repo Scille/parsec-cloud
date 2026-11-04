@@ -20,6 +20,7 @@ aread
 argjson
 arrowleft
 arrowup
+asend
 asgi
 asynchronousness
 asyncness
