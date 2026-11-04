@@ -50,7 +50,7 @@ PYTHON_EXECUTABLE_PATH = sys.executable
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
-BUSL_LICENSE_FILE = PROJECT_DIR / "LICENSE"
+BUSL_LICENSE_FILE = PROJECT_DIR / "LICENSE-BUSL"
 
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
 FRAGMENT_TYPES = {
@@ -71,7 +71,7 @@ DESCRIPTION = f"""TL,DR:
 Create release commit&tag: {COLOR_GREEN}./misc/releaser.py build v1.2.3{COLOR_END}
 Oops I've made a mistake: {COLOR_GREEN}./misc/releaser.py rollback{COLOR_END}
     """ + (
-    __doc__ if __doc__ else ""
+    __doc__ or ""
 )  # __doc__ is "str | None", see https://github.com/microsoft/pyright/discussions/3820
 
 PRERELEASE_EXPR = r"(?P<pre_l>(a|b|rc))\.?(?P<pre_n>[0-9]+)"
@@ -107,7 +107,7 @@ class Version:
         self.major = major
         self.minor = minor
         self.patch = patch
-        self.pre: None | tuple[str, int] = None
+        self.pre: tuple[str, int] | None = None
         self._dev = dev
         self.local: str | None = local
 
@@ -208,7 +208,7 @@ class Version:
         return base
 
     @property
-    def is_preversion(self) -> bool:
+    def is_pre_version(self) -> bool:
         return self.pre is not None
 
     @property
@@ -956,7 +956,7 @@ def acknowledge_main(args: argparse.Namespace) -> None:
 
     version: Version = args.version
 
-    if any((version.is_preversion, version.is_dev, version.local)):
+    if any((version.is_pre_version, version.is_dev, version.local)):
         print(
             f"[{COLOR_YELLOW}WARNING{COLOR_END}] You are trying to acknowledge a non-stable version (it has a prerelease, dev or local part in the version), you are on your own"
         )

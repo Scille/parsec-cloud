@@ -6,6 +6,7 @@ on:
   pull_request:
   push:
     branches:
+      - master
       - releases/*
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
@@ -17,14 +18,14 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-
 permissions:
   contents: read
   packages: read
+  pull-requests: read # Needed by `dorny/paths-filter` action
 
 jobs:
   dispatch:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       rust: ${{ steps.need-check.outputs.rust }}
       python: ${{ steps.need-check.outputs.python }}
@@ -34,10 +35,10 @@ jobs:
       web: ${{ steps.need-check.outputs.web }}
       docs: ${{ steps.need-check.outputs.docs }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin v4.0.3
         id: changes
         with:
           list-files: shell
@@ -124,11 +125,11 @@ jobs:
   quality-assurance:
     name: 📊 Q&A
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
       - name: Ensure the PR head ref is not a perennial branch
@@ -145,7 +146,7 @@ jobs:
           fi
         timeout-minutes: 1
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin v4.0.3
         id: newsfragment-have-changed
         with:
           filters: |
@@ -153,10 +154,10 @@ jobs:
               - newsfragments/**
 
       - name: Install python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # pin v6.1.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # pin v7.1.0
         id: setup-python
         with:
-          python-version: 3.12
+          python-version: 3.14
 
       - name: Check tools version
         run: |
@@ -192,7 +193,7 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
         with:
           tool: taplo-cli@0.9.3
 

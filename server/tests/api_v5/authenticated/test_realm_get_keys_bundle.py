@@ -16,6 +16,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
@@ -33,6 +34,16 @@ async def test_authenticated_realm_get_keys_bundle_ok(coolorg: CoolorgRpcClients
         keys_bundle=expected_key_bundle,
         keys_bundle_access=expected_key_bundle_access,
     )
+
+
+async def test_authenticated_realm_get_keys_bundle_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.realm_get_keys_bundle(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        key_index=1,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.realm_get_keys_bundle.RepOk)
 
 
 async def test_authenticated_realm_get_keys_bundle_access_not_available_for_author(
@@ -128,6 +139,16 @@ async def test_authenticated_realm_get_keys_bundle_bad_key_index(
         key_index=10,
     )
     assert rep == authenticated_cmds.latest.realm_get_keys_bundle.RepBadKeyIndex()
+
+
+async def test_authenticated_realm_get_keys_bundle_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    rep = await workspace_archived_org.alice.realm_get_keys_bundle(
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        key_index=1,
+    )
+    assert rep == authenticated_cmds.latest.realm_get_keys_bundle.RepRealmDeleted()
 
 
 async def test_authenticated_realm_get_keys_bundle_http_common_errors(

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import importlib
@@ -19,6 +20,7 @@ from parsec._parsec import (
     GreetingAttemptID,
     PKIEnrollmentID,
     SequesterServiceID,
+    TOTPOpaqueKeyID,
     UserID,
     VlobID,
 )
@@ -46,6 +48,7 @@ SqlQueryParam = (
     | VlobID
     | AccountAuthMethodID
     | AsyncEnrollmentID
+    | TOTPOpaqueKeyID
     | Iterable["SqlQueryParam"]
 )
 
@@ -239,7 +242,7 @@ def _table_q_factory(
     ) -> str:
         # Use table alias if specified
         from_table = f"{table} AS {table_alias}" if table_alias else table
-        select_table = table_alias if table_alias else table
+        select_table = table_alias or table
 
         # Use either internal ID (_id) or public ID for the WHERE condition
         if _id is not None:

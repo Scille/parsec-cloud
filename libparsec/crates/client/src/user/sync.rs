@@ -1,17 +1,18 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
-use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError};
+use libparsec_client_connection::{ConnectionError, protocol::authenticated_cmds};
 use libparsec_types::prelude::*;
 
 use super::{UserOps, UserStoreUpdateError};
 use crate::{
+    EventUserOpsOutboundSyncDone, GreaterTimestampOffset,
     certif::{
         CertifEnsureRealmCreatedError, CertifValidateManifestError, InvalidCertificateError,
         InvalidManifestError,
     },
-    greater_timestamp, EventUserOpsOutboundSyncDone, GreaterTimestampOffset,
+    greater_timestamp,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -31,7 +32,9 @@ pub enum UserSyncError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     // Note `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -139,6 +142,9 @@ async fn upload_manifest(
                     | Rep::RealmNotFound
                     // The user realm is never supposed to do key rotation
                     | Rep::BadKeyIndex { .. }
+                    // A user realm is never archived or deleted
+                    | Rep::RealmArchived
+                    | Rep::RealmDeleted
                     | Rep::UnknownStatus { .. }
                 ) => Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into()),
             }
@@ -194,6 +200,9 @@ async fn upload_manifest(
                     | Rep::VlobNotFound
                     // The user realm is never supposed to do key rotation
                     | Rep::BadKeyIndex { .. }
+                    // A user realm is never archived or deleted
+                    | Rep::RealmArchived
+                    | Rep::RealmDeleted
                     | Rep::UnknownStatus { .. }
                 ) => Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into()),
             }
@@ -295,39 +304,32 @@ async fn find_last_valid_manifest(
     for candidate_version in (local_base_version + 1..last_version).rev() {
         match fetch_old_remote_user_manifest(ops, candidate_version).await {
             // Finally found a valid manifest !
-            Ok(manifest) => {
-                return Ok(manifest)
-            },
+            Ok(manifest) => return Ok(manifest),
 
             // Yet another invalid manifest, just skip it
             Err(FetchRemoteUserManifestError::InvalidManifest(_)) => continue,
 
             // Errors that prevent us from continuing :(
-
             Err(FetchRemoteUserManifestError::Stopped) => {
                 return Err(UserSyncError::Stopped);
             }
-            Err(FetchRemoteUserManifestError::Offline(e)) => {
-                return Err(UserSyncError::Offline(e))
-            }
+            Err(FetchRemoteUserManifestError::Offline(e)) => return Err(UserSyncError::Offline(e)),
             Err(FetchRemoteUserManifestError::InvalidCertificate(err)) => {
-                return Err(UserSyncError::InvalidCertificate(err))
-            },
+                return Err(UserSyncError::InvalidCertificate(err));
+            }
             // The version we sent was lower than the one of the invalid manifest previously
             // sent by the server, so this error should not occur in theory (unless the server
             // have just done a rollback, but this is very unlikely !)
             Err(FetchRemoteUserManifestError::BadVersion) => {
-                return Err(UserSyncError::Internal(
-                    anyhow::anyhow!(
-                        "Server sent us vlob `{}` with version {} but now complains version {} we ask for doesn't exist",
-                        ops.device.user_realm_id,
-                        last_version,
-                        candidate_version
-                    )
-                ))
-            },
+                return Err(UserSyncError::Internal(anyhow::anyhow!(
+                    "Server sent us vlob `{}` with version {} but now complains version {} we ask for doesn't exist",
+                    ops.device.user_realm_id,
+                    last_version,
+                    candidate_version
+                )));
+            }
             Err(err @ FetchRemoteUserManifestError::Internal(_)) => {
-                return Err(UserSyncError::Internal(err.into()))
+                return Err(UserSyncError::Internal(err.into()));
             }
         }
     }
@@ -399,7 +401,7 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), UserSyncError> {
 
         // D'Oh :/
         Err(err @ FetchRemoteUserManifestError::Internal(_)) => {
-            return Err(UserSyncError::Internal(err.into()))
+            return Err(UserSyncError::Internal(err.into()));
         }
     };
 
@@ -457,6 +459,8 @@ async fn fetch_last_remote_user_manifest(
             Rep::AuthorNotAllowed |
             // User manifest's vlob is supposed to exist !
             Rep::RealmNotFound |
+            // A user realm is never deleted
+            Rep::RealmDeleted |
             // Don't know what to do with this status :/
             Rep::UnknownStatus { .. }
         ) => {
@@ -482,6 +486,8 @@ async fn fetch_last_remote_user_manifest(
             CertifValidateManifestError::InvalidKeysBundle(_)
             // User realm is never shared (hence initial owner can never lose it role)
             | CertifValidateManifestError::NotAllowed
+            // User realm is never deleted
+            | CertifValidateManifestError::RealmDeleted
         ) => {
             FetchRemoteUserManifestError::Internal(anyhow::anyhow!("Unexpected error: {:?}", err))
         }
@@ -523,6 +529,8 @@ async fn fetch_old_remote_user_manifest(
             Rep::AuthorNotAllowed |
             // User manifest's vlob is supposed to exist !
             Rep::RealmNotFound |
+            // A user realm is never deleted
+            Rep::RealmDeleted |
             // Don't know what to do with this status :/
             Rep::UnknownStatus { .. }
         ) => {
@@ -548,6 +556,8 @@ async fn fetch_old_remote_user_manifest(
             CertifValidateManifestError::InvalidKeysBundle(_)
             // User realm is never shared (hence initial owner can never lose it role)
             | CertifValidateManifestError::NotAllowed
+            // User realm is never deleted
+            | CertifValidateManifestError::RealmDeleted
         ) => {
             FetchRemoteUserManifestError::Internal(anyhow::anyhow!("Unexpected error: {:?}", err))
         }

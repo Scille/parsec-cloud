@@ -1,7 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page } from '@playwright/test';
-import { answerQuestion, createWorkspace, DisplaySize, expect, fillInputModal, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { Locator, Page, TestInfo } from '@playwright/test';
+import {
+  checkEntryContextMenu,
+  createFolder,
+  createWorkspace,
+  DisplaySize,
+  expect,
+  fillIonInput,
+  importDefaultFiles,
+  ImportDocuments,
+  login,
+  mockLibParsec,
+  msTest,
+} from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -39,30 +51,31 @@ msTest('Check workspace card', async ({ workspaces }) => {
 });
 
 for (const gridMode of [false, true]) {
-  msTest.fail(`Empty workspaces in ${gridMode ? 'grid' : 'list'} mode`, { tag: '@important' }, async ({ connected }) => {
+  msTest(`Empty workspaces for external in ${gridMode ? 'grid' : 'list'} mode`, async ({ home }) => {
+    await login(home, 'Malloryy McMalloryFace');
     if (!gridMode) {
-      await toggleViewMode(connected);
+      await toggleViewMode(home);
     }
-    const actionBar = connected.locator('#workspaces-ms-action-bar');
-    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(1);
-    await expect(actionBar.getByText('New workspace')).toHaveText('New workspace');
+    const actionBar = home.locator('#workspaces-ms-action-bar');
+    // Externals can't create workspaces
+    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(0);
     await expect(actionBar.locator('.counter')).toHaveText('No items');
     await expect(actionBar.locator('#workspace-filter-select')).toHaveText('Name');
     if (gridMode) {
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).toHaveDisabledAttribute();
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#list-view')).toBeEnabled();
-      await expect(connected.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(0);
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content')).toBeVisible();
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content').locator('ion-text')).toHaveText(
-        'You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.',
+      await expect(home.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(0);
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces').locator('span').nth(0)).toHaveText(
+        'You do not have access to any workspaces. Workspaces that have been shared with you will be listed here.',
       );
     } else {
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).toBeEnabled();
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#list-view')).toHaveDisabledAttribute();
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content')).toBeVisible();
-      await expect(connected.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(0);
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content').locator('ion-text')).toHaveText(
-        'You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.',
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+      await expect(home.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(0);
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces').locator('span').nth(0)).toHaveText(
+        'You do not have access to any workspaces. Workspaces that have been shared with you will be listed here.',
       );
     }
   });
@@ -90,7 +103,7 @@ for (const gridMode of [false, true]) {
     await expect(workspacesStandard.locator('.popover-viewport')).toBeHidden();
     await sortSelector.click();
     const popover = workspacesStandard.locator('.popover-viewport');
-    const sortItems = popover.getByRole('listitem');
+    const sortItems = popover.locator('ion-item');
     await expect(sortItems).toHaveCount(3);
     await expect(sortItems).toHaveText(['Ascending', 'Name', 'Role']);
     for (const [index, checked] of [false, true].entries()) {
@@ -110,7 +123,7 @@ for (const gridMode of [false, true]) {
     } else {
       await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
-    await expect(workspacesStandard.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
+    await expect(workspacesStandard.locator('.popover-viewport').locator('ion-item').nth(0)).toHaveText('Descending');
 
     // Order by role desc
     await sortItems.nth(2).click();
@@ -147,9 +160,9 @@ for (const gridMode of [false, true]) {
     await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
 
     const categoriesMenu = workspaces.locator('.workspace-categories-menu');
-    const recentWorkspacesButton = categoriesMenu.locator('.workspace-categories-menu-item').nth(1);
+    const recentWorkspacesButton = categoriesMenu.locator('.workspace-categories-menu-item').nth(0);
     await recentWorkspacesButton.click();
-    await verifyActiveCategory(workspaces, 1);
+    await verifyActiveCategory(workspaces, 0, 2);
     const recentWorkspaces = workspaces.locator('.workspaces-container');
 
     if (!gridMode) {
@@ -166,7 +179,9 @@ async function toggleFavorite(page: Page, index: number, displaySize: DisplaySiz
     if (await isInGridMode(page)) {
       item = page.locator('.workspace-card-item').nth(index);
     } else {
-      item = page.locator('.workspaces-container').locator('.workspace-list-item').nth(index);
+      item = page.locator('.workspace-list-item').nth(index);
+      await expect(item).toBeVisible();
+      await expect(item.locator('.workspace-favorite-icon')).toBeVisible();
     }
   } else {
     item = page.locator('.workspace-card-item').nth(index);
@@ -191,17 +206,12 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       'The Copper Coronet',
     ]);
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
-    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
-    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-      'All workspaces',
-      'Recently viewed',
-      'Pinned',
-    ]);
+    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Favorites');
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
     await expect(workspaceCategoriesMenu).toBeVisible();
     await expect(favoriteWorkspacesButton).toBeVisible();
     await favoriteWorkspacesButton.click({ force: true });
-    await allWorkspacesButton.click({ force: true });
+    await favoriteWorkspacesButton.click({ force: true });
     await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
       'wksp1',
       'The Copper Coronet',
@@ -232,35 +242,185 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await workspaces.setDisplaySize(DisplaySize.Small);
     }
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
+    const workspaceCategoriesMenuItems = workspaceCategoriesMenu.locator('.workspace-categories-menu-item');
+    const sidebarAllWorkspacesButton = workspaces.locator('#sidebar-all-workspaces');
 
     await expect(workspaceCategoriesMenu).toBeVisible();
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-      'All workspaces',
-      'Recently viewed',
-      'Pinned',
-    ]);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
+    await expect(sidebarAllWorkspacesButton).toContainClass('active');
 
-    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
-    const recentsWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
-    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
+    const recentWorkspacesButton = workspaceCategoriesMenuItems.getByText('Recent');
+    const favoriteWorkspacesButton = workspaceCategoriesMenuItems.getByText('Favorites');
 
-    await verifyActiveCategory(workspaces, 0);
+    for (let i = 0; i < 2; i++) {
+      await expect(workspaceCategoriesMenuItems.nth(i)).not.toHaveClass(/active/);
+    }
 
-    await recentsWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 1);
+    await recentWorkspacesButton.click({ force: true });
+    await verifyActiveCategory(workspaces, 0, 2);
 
-    await allWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 0);
+    await recentWorkspacesButton.click({ force: true });
+    await expect(sidebarAllWorkspacesButton).toContainClass('active');
+    for (let i = 0; i < 2; i++) {
+      await expect(workspaceCategoriesMenuItems.nth(i)).not.toHaveClass(/active/);
+    }
 
     await favoriteWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 2);
+    await verifyActiveCategory(workspaces, 1, 2);
+  });
+
+  msTest(`Show/hide workspace ${displaySize} display`, async ({ workspaces }) => {
+    if (displaySize === DisplaySize.Small) {
+      await workspaces.setDisplaySize(DisplaySize.Small);
+    }
+    const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
+
+    await createWorkspace(workspaces, 'The Copper Coronet');
+    const workspaceCard = workspaces.locator('.workspace-card-item');
+
+    await expect(workspaceCard.locator('.workspace-card-content__title')).toHaveText(['The Copper Coronet', 'wksp1']);
+
+    const noWorkspaces = workspaces.locator('.no-all-workspaces');
+    await expect(noWorkspaces).toBeHidden();
+
+    // Hide workspaces
+    await workspaceCard.nth(0).click({ button: 'right' });
+    let popover;
+
+    if (displaySize === DisplaySize.Large) {
+      popover = workspaces.locator('#workspace-context-menu');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('group')).toHaveCount(3);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Workspace management',
+        'Rename',
+        'History',
+        'Hide this workspace',
+        'Archive this workspace',
+        'Details',
+        'Delete this workspace',
+        'Collaboration',
+        'Copy link',
+        'Sharing and roles',
+        'Miscellaneous',
+        'Add to Favorites',
+      ]);
+      await popover.getByRole('listitem').nth(3).click();
+    } else {
+      popover = workspaces.locator('.workspace-context-sheet-modal');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Rename',
+        'History',
+        'Hide this workspace',
+        'Archive this workspace',
+        'Details',
+        'Delete this workspace',
+        'Copy link',
+        'Sharing and roles',
+        'Add to Favorites',
+      ]);
+      await popover.getByRole('listitem').nth(2).click();
+    }
+
+    await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites', 'Hidden']);
+
+    await expect(workspaceCard.nth(0).locator('.workspace-card-content__title')).toHaveText('wksp1');
+    await expect(workspaceCard.nth(1)).toBeHidden();
+    await workspaceCard.nth(0).click({ button: 'right' });
+    if (displaySize === DisplaySize.Large) {
+      popover = workspaces.locator('#workspace-context-menu');
+      await expect(popover).toBeVisible();
+      await popover.getByRole('listitem').nth(3).click();
+    } else {
+      popover = workspaces.locator('.workspace-context-sheet-modal');
+      await expect(popover).toBeVisible();
+      await popover.getByRole('listitem').nth(2).click();
+    }
+    await expect(workspaceCard.nth(0)).toBeHidden();
+    await expect(workspaceCard.nth(1)).toBeHidden();
+
+    await expect(noWorkspaces).toBeVisible();
+    await expect(noWorkspaces.locator('ion-text')).toHaveText(
+      'All your workspaces are hidden. Go to the Hidden category or click the button below to show them.',
+    );
+
+    await workspaces.locator('.workspace-categories-menu-item').nth(2).click();
+    await expect(workspaceCard.nth(0).locator('.workspace-hidden')).toHaveText('Hidden');
+    await expect(workspaceCard.nth(0)).toBeVisible();
+    await expect(workspaceCard.nth(1).locator('.workspace-hidden')).toHaveText('Hidden');
+    await expect(workspaceCard.nth(0)).toBeVisible();
+
+    // Show workspaces
+    await workspaceCard.nth(0).click({ button: 'right' });
+    await expect(popover).toBeVisible();
+    if (displaySize === DisplaySize.Large) {
+      popover = workspaces.locator('#workspace-context-menu');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('group')).toHaveCount(3);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Workspace management',
+        'Rename',
+        'History',
+        'Show this workspace',
+        'Archive this workspace',
+        'Details',
+        'Delete this workspace',
+        'Collaboration',
+        'Copy link',
+        'Sharing and roles',
+        'Miscellaneous',
+        'Add to Favorites',
+      ]);
+      await popover.getByRole('listitem').nth(3).click();
+    } else {
+      popover = workspaces.locator('.workspace-context-sheet-modal');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Rename',
+        'History',
+        'Show this workspace',
+        'Archive this workspace',
+        'Details',
+        'Delete this workspace',
+        'Copy link',
+        'Sharing and roles',
+        'Add to Favorites',
+      ]);
+      await popover.getByRole('listitem').nth(2).click();
+    }
+
+    await workspaceCard.nth(0).click({ button: 'right' });
+    await expect(popover).toBeVisible();
+    if (displaySize === DisplaySize.Large) {
+      await workspaces.locator('#workspace-context-menu').getByRole('listitem').nth(3).click();
+    } else {
+      await workspaces.locator('.workspace-context-sheet-modal').getByRole('listitem').nth(2).click();
+    }
+
+    // Auto redirect to default tab, hidden tab inaccessible
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);
+    for (let i = 0; i < 2; i++) {
+      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(i)).not.toHaveClass(/active/);
+    }
   });
 }
 
 for (const gridMode of [false, true]) {
-  msTest(`Workspace search filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }) => {
+  msTest(`Workspace search in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }, testingInfo: TestInfo) => {
+    const container = workspaces.locator('.workspaces-container');
+
+    let wkContainer!: Locator;
+    let workspaceItems!: Locator;
     if (!gridMode) {
       await toggleViewMode(workspaces);
+      wkContainer = workspaces.locator('.workspaces-container-list');
+      workspaceItems = container.locator('.workspace-list-item');
+    } else {
+      wkContainer = workspaces.locator('.workspaces-container-grid');
+      workspaceItems = container.locator('.workspace-card-item');
     }
     for (const wk of WORKSPACES) {
       if (wk !== 'wksp1') {
@@ -269,42 +429,72 @@ for (const gridMode of [false, true]) {
     }
 
     const searchInput = workspaces.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
-    const container = workspaces.locator('.workspaces-container');
-    const titles = gridMode ? container.locator('.workspace-card-content__title') : container.locator('.workspace-name__label');
 
-    await expect(titles).toHaveCount(4);
-    await expect(workspaces.locator('.no-workspaces')).toBeHidden();
+    await expect(workspaceItems).toHaveCount(4);
+    for (let i = 0; i < 4; i++) {
+      await workspaceItems.nth(i).click();
+      await expect(workspaces).toBeDocumentPage();
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Pdf | ImportDocuments.Txt, false);
+      await workspaces.locator('#connected-header').locator('.back-button').click();
+      await expect(workspaces).toBeWorkspacePage();
+    }
 
-    // await expect(titles).toHaveText(WORKSPACES);
-    await fillIonInput(searchInput, 'ee');
-    await expect(titles).toHaveText(WORKSPACES.filter((name) => name.includes('ee')));
-    await fillIonInput(searchInput, 'eep');
-    await expect(titles).toHaveText(WORKSPACES.filter((name) => name.includes('eep')));
-    await fillIonInput(searchInput, '');
-    await expect(workspaces.locator('.no-workspaces')).toBeHidden();
-    await expect(titles).toHaveText(WORKSPACES);
-    await fillIonInput(searchInput, 'No match');
-    await expect(titles).not.toBeVisible();
-    await expect(workspaces.locator('.no-workspaces')).toBeVisible();
-    await expect(workspaces.locator('.no-workspaces').locator('ion-text')).toHaveText('No workspace match this search filter.');
-    await fillIonInput(searchInput, '');
-    await expect(workspaces.locator('.no-workspaces')).toBeHidden();
-    await expect(titles).toHaveText(WORKSPACES);
+    const actionButtons = workspaces.locator('.action-bar').locator('.ms-action-bar-button');
+    const filterButton = workspaces.locator('.action-bar').locator('.filter-button');
+    const sortButton = workspaces.locator('.action-bar').locator('.sorter-button');
+    const gridListButton = workspaces.locator('.action-bar').locator('.ms-grid-list-toggle');
+
+    const searchResult = workspaces.locator('.file-search-results');
+    await expect(searchResult).toBeHidden();
+    await expect(actionButtons).toHaveCount(1);
+    await expect(filterButton).toBeVisible();
+    await expect(sortButton).toBeVisible();
+    await expect(gridListButton).toBeVisible();
+    await expect(wkContainer).toBeVisible();
+
+    await fillIonInput(searchInput, 'pdf');
+
+    await expect(searchResult).toBeVisible();
+    await expect(actionButtons).toBeHidden();
+    await expect(filterButton).toBeHidden();
+    await expect(sortButton).toBeHidden();
+    await expect(gridListButton).toBeHidden();
+    await expect(wkContainer).toBeHidden();
+
+    await expect(searchResult.locator('.results-header')).toHaveText('Search results (4 results)');
+
+    const searchItems = searchResult.locator('.result-list-item');
+    await expect(searchItems).toHaveCount(4);
+    await expect(searchItems.locator('.label-name')).toHaveText([
+      'pdfDocument.pdf',
+      'pdfDocument.pdf',
+      'pdfDocument.pdf',
+      'pdfDocument.pdf',
+    ]);
+    await expect(searchItems.locator('.workspace-path')).toHaveText([...WORKSPACES].sort((a, b) => a.localeCompare(b)));
+    await expect(searchItems.locator('.label-path')).toHaveText(['/', '/', '/', '/']);
+
+    // Clear the search
+    await searchInput.locator('.input-clear-icon').click();
+
+    await expect(searchResult).toBeHidden();
+    await expect(actionButtons).toHaveCount(1);
+    await expect(filterButton).toBeVisible();
+    await expect(sortButton).toBeVisible();
+    await expect(gridListButton).toBeVisible();
+    await expect(wkContainer).toBeVisible();
   });
 
   msTest(`Workspace list filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspacesStandard }) => {
     if (!gridMode) {
       await toggleViewMode(workspacesStandard);
     }
-    for (const wk of WORKSPACES) {
-      if (wk !== 'wksp1') {
-        await createWorkspace(workspacesStandard, wk);
-      }
-    }
+    await createWorkspace(workspacesStandard, 'wksp2');
     const container = workspacesStandard.locator('.workspaces-container');
     const titles = gridMode ? container.locator('.workspace-card-content__title') : container.locator('.workspace-name__label');
     const roles = gridMode ? container.locator('.workspace-card-bottom').locator('.label-role') : container.locator('.label-role-text');
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await expect(titles).toHaveText(['wksp1', 'wksp2']);
+    await expect(roles).toHaveText(['Reader', 'Owner']);
 
     const filterButton = workspacesStandard.locator('.filter-button');
     await filterButton.click();
@@ -315,20 +505,140 @@ for (const gridMode of [false, true]) {
     await expect(popoverItems).toHaveCount(4);
     await expect(popoverItems).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader']);
 
-    await expect(titles).toHaveCount(4);
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await expect(titles).toHaveText(['wksp1', 'wksp2']);
+    await expect(roles).toHaveText(['Reader', 'Owner']);
     await popoverItems.nth(2).click();
-    await expect(titles).toHaveCount(4);
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await expect(titles).toHaveText(['wksp1', 'wksp2']);
+    await expect(roles).toHaveText(['Reader', 'Owner']);
     await popoverItems.nth(0).click();
     await expect(titles).toHaveCount(1);
+    await expect(titles).toHaveText(['wksp1']);
     await expect(roles).toHaveText(['Reader']);
     await popoverItems.nth(0).click();
     await popoverItems.nth(3).click();
-    await expect(titles).toHaveCount(3);
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner']);
+    await expect(titles).toHaveText(['wksp2']);
+    await expect(roles).toHaveText(['Owner']);
   });
 }
+
+for (const entryType of ['file', 'folder']) {
+  msTest(`Workspace search result context menu for ${entryType}`, async ({ workspaces }, testingInfo: TestInfo) => {
+    const workspaceItems = workspaces.locator('.workspaces-container').locator('.workspace-card-item');
+    await createWorkspace(workspaces, 'wksp2');
+    await expect(workspaceItems).toHaveCount(2);
+
+    const searchInput = workspaces.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
+
+    for (let i = 0; i < 2; i++) {
+      await workspaceItems.nth(i).click();
+      await expect(workspaces).toBeDocumentPage();
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Txt, true);
+      await workspaces.locator('#connected-header').locator('.back-button').click();
+      await expect(workspaces).toBeWorkspacePage();
+    }
+
+    const searchResult = workspaces.locator('.file-search-results');
+    await expect(searchResult).toBeHidden();
+    if (entryType === 'file') {
+      await fillIonInput(searchInput, 'text');
+    } else {
+      await fillIonInput(searchInput, 'folder');
+    }
+    await expect(searchResult).toBeVisible();
+    await expect(searchResult.locator('.results-header')).toHaveText('Search results (2 results)');
+
+    const searchItems = searchResult.locator('.result-list-item');
+    await expect(searchItems).toHaveCount(2);
+    if (entryType === 'file') {
+      await expect(searchItems.locator('.label-name')).toHaveText(['text.txt', 'text.txt']);
+    } else {
+      await expect(searchItems.locator('.label-name')).toHaveText(['Dir_Folder', 'Dir_Folder']);
+    }
+    const detailsModal = workspaces.locator('.file-details-modal');
+    await expect(detailsModal).toBeHidden();
+    await searchItems.nth(0).click({ button: 'right' });
+    await checkEntryContextMenu(workspaces, entryType === 'file' ? 'file-full' : 'folder-full', 'Details', {
+      fromSearch: true,
+      canEdit: entryType === 'file',
+    });
+    await expect(detailsModal).toBeVisible();
+  });
+}
+
+msTest('Workspace interact with search results', async ({ workspaces }, testingInfo: TestInfo) => {
+  const container = workspaces.locator('.workspaces-container');
+  const workspaceItems = container.locator('.workspace-card-item');
+  const searchInput = workspaces.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
+
+  for (const wk of WORKSPACES) {
+    if (wk !== 'wksp1') {
+      await createWorkspace(workspaces, wk);
+    }
+  }
+
+  await expect(workspaceItems).toHaveCount(4);
+  for (let i = 0; i < 2; i++) {
+    await workspaceItems.nth(i).click();
+    await expect(workspaces).toBeDocumentPage();
+    if (i % 2 === 0) {
+      await createFolder(workspaces, 'documentFolder');
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Pdf, false);
+      await workspaces.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Txt, false);
+    } else {
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Docx, false);
+    }
+    await workspaces.locator('#connected-header').locator('ion-breadcrumb').nth(0).click();
+    await expect(workspaces).toBeWorkspacePage();
+  }
+
+  await workspaces.waitForTimeout(1000);
+  const searchResult = workspaces.locator('.file-search-results');
+  await expect(searchResult).toBeHidden();
+  await fillIonInput(searchInput, 'document');
+  await expect(searchResult).toBeVisible();
+
+  const searchItems = searchResult.locator('.result-list-item');
+
+  await expect(searchResult.locator('.results-header')).toHaveText('Search results (4 results)');
+  await expect(searchItems).toHaveCount(4);
+  expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual([
+    'document.docx',
+    'documentFolder',
+    'pdfDocument.pdf',
+    'text.txt',
+  ]);
+  expect((await searchItems.locator('.label-path').allInnerTexts()).sort()).toEqual(['/', '/', '/', '/documentFolder']);
+  await searchResult.locator('.only-titles-toggle').click();
+
+  await expect(searchResult.locator('.results-header')).toHaveText('Search results (3 results)');
+  await expect(searchItems).toHaveCount(3);
+  expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual(['document.docx', 'documentFolder', 'pdfDocument.pdf']);
+  expect((await searchItems.locator('.label-path').allInnerTexts()).sort()).toEqual(['/', '/', '/']);
+  const filterPopover = workspaces.locator('.document-filter-popover');
+  await expect(filterPopover).toBeHidden();
+  await expect(searchResult.locator('#select-filter-popover-button')).toHaveText('Document types');
+  await searchResult.locator('#select-filter-popover-button').click();
+  await expect(filterPopover).toBeVisible();
+  await expect(filterPopover.locator('ion-item')).toHaveText([
+    'Folder',
+    'Document',
+    'Spreadsheet',
+    'Presentation',
+    'PDF',
+    'Audio',
+    'Video',
+    'Image',
+    'Text',
+  ]);
+  await filterPopover.locator('ion-item').nth(0).click();
+  await filterPopover.locator('ion-item').nth(4).click();
+  await filterPopover.locator('.filter-apply-button').click();
+  await expect(filterPopover).toBeHidden();
+  await expect(searchResult.locator('#select-filter-popover-button')).toHaveText('Folder, PDF');
+  await expect(searchItems).toHaveCount(2);
+  expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual(['documentFolder', 'pdfDocument.pdf']);
+});
 
 msTest('Back from files with back button', async ({ workspaces }) => {
   await workspaces.locator('.workspace-card-item').nth(0).click();
@@ -374,50 +684,58 @@ msTest('Create new workspace name too long', async ({ workspaces }) => {
   await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['A'.repeat(64), 'wksp1']);
 });
 
-msTest('Create new workspace with similar name', async ({ workspaces }) => {
-  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
-  await workspaces.locator('#workspaces-ms-action-bar').getByText('New workspace').click();
-  await fillInputModal(workspaces, 'Workspace');
-  await expect(workspaces).toShowToast("The workspace 'Workspace' has been created!", 'Success');
-  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1', 'Workspace']);
-
-  const wkList = ['wksp1', 'Workspace'];
-  for (const newWorkspace of ['Workspace', 'workspace', 'Workspace 1', 'A Workspace']) {
-    await workspaces.locator('#workspaces-ms-action-bar').getByText('New workspace').click();
-    // Similar name, saying no, doesn't create the workspace
-    await fillInputModal(workspaces, newWorkspace);
-    await answerQuestion(workspaces, false, {
-      expectedNegativeText: 'Cancel',
-      expectedPositiveText: 'Create anyway',
-      expectedQuestionText: 'Another workspace already exists with the same or a similar name. Do you still want to create this workspace?',
-      expectedTitleText: 'Duplicate workspace name',
-    });
-    // Similar name, saying yes, does create the workspace
-    await fillInputModal(workspaces, newWorkspace);
-    await answerQuestion(workspaces, true);
-    await expect(workspaces).toShowToast(`The workspace '${newWorkspace}' has been created!`, 'Success');
-    wkList.push(newWorkspace);
-    wkList.sort((a, b) => a.localeCompare(b));
-    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(wkList);
-  }
-});
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Create new with context menu in ${displaySize} display`, async ({ workspaces }) => {
+    if (displaySize === DisplaySize.Small) {
+      await workspaces.setDisplaySize(DisplaySize.Small);
+    }
+    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+    const popover = workspaces.locator(
+      displaySize === DisplaySize.Large ? '.workspace-global-context-menu' : '.workspace-context-sheet-modal',
+    );
+    await expect(popover).toBeHidden();
+    await workspaces.locator('.workspaces-container').click({ button: 'right' });
+    await expect(popover).toBeVisible();
+    await expect(popover.locator('.list-group-item__label')).toHaveText(['New workspace']);
+    await popover.locator('.list-group-item__label').nth(0).click();
+    const modal = workspaces.locator('.text-input-modal');
+    await expect(modal).toBeVisible();
+    const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
+    await fillIonInput(modal.locator('ion-input'), 'Another Workspace');
+    await okButton.click();
+    await expect(modal).toBeHidden();
+    await expect(workspaces).toShowToast("The workspace 'Another Workspace' has been created!", 'Success');
+    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['Another Workspace', 'wksp1']);
+  });
+}
 
 msTest('Check no favorite or recent workspaces', async ({ connected }) => {
   const workspaceCategoriesMenu = connected.locator('.workspace-categories-menu');
 
-  const recentsWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
-  await expect(recentsWorkspacesButton).toBeVisible();
-  await recentsWorkspacesButton.click({ force: true });
+  const recentWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
+  await expect(recentWorkspacesButton).toBeVisible();
+  await recentWorkspacesButton.click({ force: true });
   await expect(connected.locator('.workspaces-container').locator('.no-recent-workspaces')).toBeVisible();
   await expect(connected.locator('.workspaces-container').locator('.no-recent-workspaces').locator('ion-text')).toHaveText(
     'You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.',
   );
 
-  const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
+  const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
   await expect(favoriteWorkspacesButton).toBeVisible();
   await favoriteWorkspacesButton.click({ force: true });
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces')).toBeVisible();
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces').locator('ion-text')).toHaveText(
-    'You have not pinned any workspaces yet. Pin a workspace to have it be listed here.',
+    'You have not set any workspaces to Favorites yet. Favorite workspaces will be listed here.',
   );
+});
+
+msTest('Workspace list error', async ({ home }) => {
+  await mockLibParsec(home, [
+    {
+      name: 'clientListWorkspaces',
+      result: { ok: false, error: { tag: 'ClientListWorkspacesErrorInternal', error: 'failed' } },
+    },
+  ]);
+  await login(home, 'Alicey McAliceFace');
+  await expect(home).toShowToast('Failed to list the workspaces.', 'Error');
 });

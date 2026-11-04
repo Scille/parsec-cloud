@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-controls-group class="file-controls-pagination">
@@ -8,7 +8,7 @@
       @on-submitted-value="onChange"
       :restrict-change="validatePageNumber"
       prefix="fileViewers.controls.pagination.page"
-      :suffix="I18n.valueAsTranslatable(`/ ${length}`)"
+      :suffix="{ key: 'fileViewers.controls.pagination.suffix', data: { totalPages: length } }"
       @keydown.up.prevent="next"
       @keydown.right.prevent="next"
       @keydown.down.prevent="previous"
@@ -21,7 +21,6 @@
 
 <script setup lang="ts">
 import { FileControlsGroup, FileControlsInput } from '@/components/files/handler/viewer';
-import { I18n } from 'megashark-lib';
 import { computed, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{

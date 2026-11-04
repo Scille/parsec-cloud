@@ -1,19 +1,21 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
-use crate::{certif::realm_keys_bundle, CertifDecryptForRealmError, EncrytionUsage};
+use crate::{CertifDecryptForRealmError, EncryptionUsage, certif::realm_keys_bundle};
 
 use super::{
-    store::{CertifForReadWithRequirementsError, CertificatesStoreReadGuard, GetCertificateError},
     CertificateOps, InvalidCertificateError, InvalidKeysBundleError, UpTo,
+    store::{CertifForReadWithRequirementsError, CertificatesStoreReadGuard, GetCertificateError},
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidManifestError {
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !"
+    )]
     CannotDecrypt {
         realm: VlobID,
         vlob: VlobID,
@@ -22,7 +24,9 @@ pub enum InvalidManifestError {
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}"
+    )]
     CleartextCorrupted {
         realm: VlobID,
         vlob: VlobID,
@@ -31,7 +35,9 @@ pub enum InvalidManifestError {
         timestamp: DateTime,
         error: Box<DataError>,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time, key index {key_index} didn't exist !")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time, key index {key_index} didn't exist !"
+    )]
     NonExistentKeyIndex {
         realm: VlobID,
         vlob: VlobID,
@@ -40,7 +46,9 @@ pub enum InvalidManifestError {
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): encrypted by key index {key_index} which appears corrupted !")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): encrypted by key index {key_index} which appears corrupted !"
+    )]
     CorruptedKey {
         realm: VlobID,
         vlob: VlobID,
@@ -49,7 +57,9 @@ pub enum InvalidManifestError {
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author didn't exist !")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author didn't exist !"
+    )]
     NonExistentAuthor {
         realm: VlobID,
         vlob: VlobID,
@@ -57,7 +67,9 @@ pub enum InvalidManifestError {
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author was already revoked !")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author was already revoked !"
+    )]
     RevokedAuthor {
         realm: VlobID,
         vlob: VlobID,
@@ -65,7 +77,9 @@ pub enum InvalidManifestError {
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author couldn't write in the realm given it role was `{author_role:?}`")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author couldn't write in the realm given its role was `{author_role:?}`"
+    )]
     AuthorRealmRoleCannotWrite {
         realm: VlobID,
         vlob: VlobID,
@@ -74,7 +88,9 @@ pub enum InvalidManifestError {
         timestamp: DateTime,
         author_role: RealmRole,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author didn't have access to the realm and hence couldn't write in it")]
+    #[error(
+        "Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author didn't have access to the realm and hence couldn't write in it"
+    )]
     AuthorNoAccessToRealm {
         realm: VlobID,
         vlob: VlobID,
@@ -92,6 +108,8 @@ pub enum CertifValidateManifestError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
@@ -201,7 +219,7 @@ pub(super) async fn validate_workspace_manifest(
             let cleartext = realm_keys_bundle::decrypt_for_realm(
                 ops,
                 store,
-                EncrytionUsage::Vlob(realm_id),
+                EncryptionUsage::Vlob(realm_id),
                 realm_id,
                 key_index,
                 encrypted,
@@ -211,6 +229,9 @@ pub(super) async fn validate_workspace_manifest(
                 CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
                 CertifDecryptForRealmError::Offline(e) => CertifValidateManifestError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
+                CertifDecryptForRealmError::RealmDeleted => {
+                    CertifValidateManifestError::RealmDeleted
+                }
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateManifestError::InvalidManifest(Box::new(
                         InvalidManifestError::NonExistentKeyIndex {
@@ -318,7 +339,7 @@ pub(super) async fn validate_child_manifest(
             let cleartext = realm_keys_bundle::decrypt_for_realm(
                 ops,
                 store,
-                EncrytionUsage::Vlob(vlob_id),
+                EncryptionUsage::Vlob(vlob_id),
                 realm_id,
                 key_index,
                 encrypted,
@@ -328,6 +349,9 @@ pub(super) async fn validate_child_manifest(
                 CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
                 CertifDecryptForRealmError::Offline(e) => CertifValidateManifestError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
+                CertifDecryptForRealmError::RealmDeleted => {
+                    CertifValidateManifestError::RealmDeleted
+                }
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateManifestError::InvalidManifest(Box::new(
                         InvalidManifestError::NonExistentKeyIndex {
@@ -452,7 +476,7 @@ async fn validate_manifest<M>(
 
         // D'oh :/
         Err(err @ GetCertificateError::Internal(_)) => {
-            return Err(CertifValidateManifestError::Internal(err.into()))
+            return Err(CertifValidateManifestError::Internal(err.into()));
         }
     };
     let author_user_id = author_certif.user_id;

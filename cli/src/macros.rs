@@ -1,21 +1,22 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 /// This macro builds a main function that takes the `Args` struct defined in the same module.
 ///
-/// Once called, it will initialize a client using the provided arguments and then call the sub-task and cleanup the client ressource before returning.
+/// Once called, it will initialize a client using the provided arguments and then call the sub-task and cleanup the client resource before returning.
 ///
 /// the callback takes (args: Args, client: &StartedClient) as arguments and returns anyhow::Result<()>
 #[macro_export]
 macro_rules! build_main_with_client {
     ($fn_name:ident, $callback:expr, $config:expr) => {
-        pub async fn $fn_name(args: Args) -> anyhow::Result<()> {
+        pub async fn $fn_name(ui: $crate::Ui, args: Args) -> anyhow::Result<()> {
             let client = $crate::utils::load_client_with_config(
                 &args.config_dir,
                 args.device.clone(),
-                args.password_stdin,
                 $config,
             )
             .await?;
 
-            let res = ($callback)(args, client.as_ref()).await;
+            let res = ($callback)(ui, args, client.as_ref()).await;
 
             client.stop().await;
 
@@ -83,7 +84,13 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Parsec config directory"]
-                #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = $crate::utils::PARSEC_CONFIG_DIR)]
+                #[arg(
+                    short,
+                    long,
+                    default_value_os_t = libparsec::get_default_config_dir(),
+                    env = $crate::utils::PARSEC_CONFIG_DIR,
+                    value_hint = clap::ValueHint::DirPath
+                )]
                 pub(crate) config_dir: std::path::PathBuf,
                 $(
                     $(#[$field_attr])*
@@ -108,7 +115,13 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Parsec data directory"]
-                #[arg(short, long, default_value_os_t = libparsec::get_default_data_base_dir(), env = $crate::utils::PARSEC_DATA_DIR)]
+                #[arg(
+                    short,
+                    long,
+                    default_value_os_t = libparsec::get_default_data_base_dir(),
+                    env = $crate::utils::PARSEC_DATA_DIR,
+                    value_hint = clap::ValueHint::DirPath
+                )]
                 pub(crate) data_dir: std::path::PathBuf,
                 $(
                     $(#[$field_attr])*
@@ -133,7 +146,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Device ID"]
-                #[arg(short, long, env = "PARSEC_DEVICE_ID")]
+                #[arg(short, long, env = "PARSEC_DEVICE_ID", value_hint = clap::ValueHint::Other)]
                 pub(crate) device: Option<String>,
                 $(
                     $(#[$field_attr])*
@@ -158,7 +171,13 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Workspace ID"]
-                #[arg(short, long, env = "PARSEC_WORKSPACE_ID", value_parser = libparsec::VlobID::from_hex)]
+                #[arg(
+                    short,
+                    long,
+                    env = "PARSEC_WORKSPACE_ID",
+                    value_parser = libparsec::VlobID::from_hex,
+                    value_hint = clap::ValueHint::Other
+                )]
                 pub(crate) workspace: libparsec::VlobID,
                 $(
                     $(#[$field_attr])*
@@ -183,34 +202,8 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Organization ID"]
-                #[arg(short, long, env = "PARSEC_ORGANIZATION_ID")]
+                #[arg(short, long, env = "PARSEC_ORGANIZATION_ID", value_hint = clap::ValueHint::Other)]
                 pub(crate) organization: libparsec::OrganizationID,
-                $(
-                    $(#[$field_attr])*
-                    $field_vis $field: $field_type,
-                )*
-            }
-        );
-    };
-    // Password stdin option
-    (
-        #[with = password_stdin $(,$modifier:ident)*]
-        $(#[$struct_attr:meta])*
-        $visibility:vis struct $name:ident {
-            $(
-                $(#[$field_attr:meta])*
-                $field_vis:vis $field:ident: $field_type:ty,
-            )*
-        }
-    ) => {
-        $crate::clap_parser_with_shared_opts_builder!(
-            #[with = $($modifier),*]
-            $(#[$struct_attr])*
-            $visibility struct $name {
-                #[doc = "Read the password from stdin instead of TTY"]
-                #[doc = "Note: this flag need to be explicitly set, that why it does not have a env var"]
-                #[arg(long, default_value_t)]
-                pub(crate) password_stdin: bool,
                 $(
                     $(#[$field_attr])*
                     $field_vis $field: $field_type,
@@ -234,7 +227,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Server address (e.g: parsec3://127.0.0.1:6770?no_ssl=true)"]
-                #[arg(short, long, env = "PARSEC_SERVER_ADDR")]
+                #[arg(short, long, env = "PARSEC_SERVER_ADDR", value_hint = clap::ValueHint::Url)]
                 pub(crate) addr: libparsec::ParsecAddr,
                 $(
                     $(#[$field_attr])*
@@ -259,8 +252,58 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Administration token"]
-                #[arg(short, long, env = "PARSEC_ADMINISTRATION_TOKEN")]
+                #[arg(short, long, env = "PARSEC_ADMINISTRATION_TOKEN", value_hint = clap::ValueHint::Other)]
                 pub(crate) token: String,
+                $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
+    // force option
+    (
+        #[with = force $(,$modifier:ident)*]
+                $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = $($modifier),*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                     #[doc = "force default option to bypass interaction"]
+                #[arg(long, default_value_t)]
+                pub(crate) force: bool,
+                 $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
+     // New authentication method
+    (
+        #[with = auth $(,$modifier:ident)*]
+        $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = $($modifier),*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                #[doc = "New authentication method for the new device"]
+                #[arg(long, value_hint = clap::ValueHint::Other, default_value_t )]
+                pub(crate) auth: NewAuthMethod,
                 $(
                     $(#[$field_attr])*
                     $field_vis $field: $field_type,
@@ -278,8 +321,8 @@ macro_rules! clap_parser_with_shared_opts_builder {
             )*
         }
     ) => {
-        $(#[$struct_attr])*
         #[derive(clap::Parser)]
+        $(#[$struct_attr])*
         $visibility struct $name {
             $(
                 $(#[$field_attr])*

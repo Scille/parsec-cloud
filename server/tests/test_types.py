@@ -4,6 +4,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     DateTime,
     DeviceID,
@@ -18,23 +19,9 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.types import (
-    ActiveUsersLimitField,
     Base64BytesField,
-    DateTimeField,
-    DeviceIDField,
-    EmailAddressField,
-    GreetingAttemptIDField,
-    InvitationStatusField,
-    InvitationToken,
-    InvitationTokenField,
-    OrganizationIDField,
-    RealmRoleField,
-    SequesterServiceIDField,
     Unset,
     UnsetType,
-    UserIDField,
-    UserProfileField,
-    VlobIDField,
 )
 
 
@@ -44,19 +31,19 @@ class AllTypesSchema(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
 
     base64_bytes: Base64BytesField | UnsetType = Unset
-    organization_id: OrganizationIDField | UnsetType = Unset
-    user_id: UserIDField | UnsetType = Unset
-    device_id: DeviceIDField | UnsetType = Unset
-    sequester_service_id: SequesterServiceIDField | UnsetType = Unset
-    invitation_token: InvitationTokenField | UnsetType = Unset
-    greeting_attempt_id: GreetingAttemptIDField | UnsetType = Unset
-    invitation_status: InvitationStatusField | UnsetType = Unset
-    realm_role: RealmRoleField | UnsetType = Unset
-    vlob_id: VlobIDField | UnsetType = Unset
-    date_time: DateTimeField | UnsetType = Unset
-    user_profile: UserProfileField | UnsetType = Unset
-    active_users_limit: ActiveUsersLimitField | UnsetType = Unset
-    email_address: EmailAddressField | UnsetType = Unset
+    organization_id: OrganizationID | UnsetType = Unset
+    user_id: UserID | UnsetType = Unset
+    device_id: DeviceID | UnsetType = Unset
+    sequester_service_id: SequesterServiceID | UnsetType = Unset
+    invitation_token: AccessToken | UnsetType = Unset
+    greeting_attempt_id: GreetingAttemptID | UnsetType = Unset
+    invitation_status: InvitationStatus | UnsetType = Unset
+    realm_role: RealmRole | UnsetType = Unset
+    vlob_id: VlobID | UnsetType = Unset
+    date_time: DateTime | UnsetType = Unset
+    user_profile: UserProfile | UnsetType = Unset
+    active_users_limit: ActiveUsersLimit | UnsetType = Unset
+    email_address: EmailAddress | UnsetType = Unset
 
 
 @pytest.mark.parametrize(
@@ -81,7 +68,7 @@ def test_good(field: str):
             expected = SequesterServiceID.from_hex("4263b5fb763b48e897bbef8228f71a45")
         case "invitation_token":
             data = {"invitation_token": "4263b5fb763b48e897bbef8228f71a45"}
-            expected = InvitationToken.from_hex("4263b5fb763b48e897bbef8228f71a45")
+            expected = AccessToken.from_hex("4263b5fb763b48e897bbef8228f71a45")
         case "greeting_attempt_id":
             data = {"greeting_attempt_id": "4263b5fb763b48e897bbef8228f71a45"}
             expected = GreetingAttemptID.from_hex("4263b5fb763b48e897bbef8228f71a45")
@@ -117,7 +104,14 @@ def test_good(field: str):
     out = AllTypesSchema(**data)  # type: ignore
     assert getattr(out, field) == expected
     # serialization
-    dump = {k: v for k, v in out.model_dump().items() if k in data.keys()}
+    dump = {
+        k: v
+        for k, v in out.model_dump(
+            # Set `mode` to force usage of primitive type
+            mode="json"
+        ).items()
+        if k in data.keys()
+    }
     assert dump == data
 
 

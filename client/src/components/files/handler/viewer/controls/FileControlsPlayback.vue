@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-controls-group class="file-controls-playback">
@@ -7,8 +7,10 @@
       v-show="false"
     />
     <file-controls-button
+      class="file-controls-playback-main"
       :class="{ 'flip-horizontal-ion-icon': ended }"
       :icon="playbackIcon"
+      fill="solid"
     />
     <file-controls-button
       :icon="playForward"
@@ -38,5 +40,9 @@ const playbackIcon = computed((): string => {
 <style scoped lang="scss">
 .file-controls-playback::after {
   display: none !important;
+}
+
+.file-controls-playback .file-controls-playback-main::part(native) {
+  border-radius: ms.radius('full');
 }
 </style>

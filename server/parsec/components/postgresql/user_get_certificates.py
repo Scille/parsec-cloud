@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -138,6 +139,15 @@ sql_fragment_all_realm_certificates = """
             realm_name_certificate AS certificate
         FROM realm_name
     )
+    UNION
+    -- Realm archiving certificate
+    (
+        SELECT
+            realm,
+            certified_on AS certificate_timestamp,
+            certificate
+        FROM realm_archiving
+    )
 """
 
 
@@ -182,8 +192,8 @@ my_realm_certificates AS (
 
 realm_after AS (
     SELECT
-        UNNEST($realm_after_ids::UUID []) AS realm_id,
-        UNNEST($realm_after_timestamps::TIMESTAMPTZ []) AS realm_after
+        UNNEST($realm_after_ids::UUID[]) AS realm_id,
+        UNNEST($realm_after_timestamps::TIMESTAMPTZ[]) AS realm_after
 ),
 
 my_all_certificates AS (

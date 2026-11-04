@@ -8,8 +8,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::{
-    workspace_history_ops_with_server_access_factory, DataAccessStrategy,
-    StartWorkspaceHistoryOpsError,
+    DataAccessStrategy, StartWorkspaceHistoryOpsError,
+    workspace_history_ops_with_server_access_factory,
 };
 use crate::workspace_history::{
     WorkspaceHistoryEntryStat, WorkspaceHistoryStatFolderChildrenError,

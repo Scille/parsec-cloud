@@ -1,15 +1,18 @@
-use libparsec::{tmp_path, RealmRole, TmpPath};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+use libparsec::{RealmRole, TmpPath, tmp_path};
 
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::utils::start_client;
+use parsec_cli::{ui::Ui, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn create_workspace(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn create_workspace(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -19,14 +22,16 @@ async fn create_workspace(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "new-workspace"
     )
-    .stdout(predicates::str::contains("Workspace has been created"));
+    .stderr(predicates::str::contains("Workspace has been created"));
 
     let client = start_client(alice).await.unwrap();
 
     let workspaces = client.list_workspaces().await;
 
     let workspace_name = "new-workspace".parse().unwrap();
-    assert!(workspaces
-        .iter()
-        .any(|w| w.current_name == workspace_name && w.current_self_role == RealmRole::Owner));
+    assert!(
+        workspaces
+            .iter()
+            .any(|w| w.name == workspace_name && w.self_role == RealmRole::Owner)
+    );
 }

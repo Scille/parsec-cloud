@@ -1,10 +1,13 @@
 # Avoid auto-generated files
 android
 electron/app
+electron/app-editics
 electron/build
 electron/dist
 electron/node_modules
 dist
+# Third-party code, vendored as-is
+public/vendor
 # Auto-generated/boilerplate
 scripts
 # Node files

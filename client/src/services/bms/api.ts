@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { isWeb } from '@/parsec';
 import {
@@ -738,7 +738,8 @@ export interface FileData {
 }
 
 interface BugReportOptions {
-  logs?: Array<string>;
+  guiLogs?: string;
+  libparsecLogs?: string;
   includeScreenshot?: boolean;
   files?: Array<FileData>;
 }
@@ -759,8 +760,11 @@ async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Pr
     formData.append('title', 'Bug Report');
     formData.append('description', query.description);
     formData.append('version', APP_VERSION);
-    if (opts?.logs) {
-      formData.append('logs', new Blob([JSON.stringify(opts?.logs)], { type: 'application/json' }), 'logs');
+    if (opts?.guiLogs) {
+      formData.append('gui-logs', new Blob([opts.guiLogs], { type: 'text/plain' }), 'gui-logs.txt');
+    }
+    if (opts?.libparsecLogs) {
+      formData.append('libparsec-logs', new Blob([opts.libparsecLogs], { type: 'text/plain' }), 'libparsec-logs.txt');
     }
     // For later
     // if (opts.includeScreenshot) {

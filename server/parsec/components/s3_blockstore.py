@@ -1,11 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from functools import partial
 from typing import override
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 import boto3
+from botocore.client import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 from parsec._parsec import BlockID, OrganizationID
@@ -34,16 +40,25 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
         s3_secret: str,
         s3_endpoint_url: str | None = None,
     ):
-        self._s3_bucket = None
-        self._s3 = boto3.client(
-            "s3",
+        # Create a session object, so that we can simplify creating resources or clients using a similar "configuration"
+        self._s3_session = boto3.Session(
             region_name=s3_region,
             aws_access_key_id=s3_key,
             aws_secret_access_key=s3_secret,
-            endpoint_url=s3_endpoint_url,
         )
-        self._s3_bucket = s3_bucket
-        self._s3.head_bucket(Bucket=s3_bucket)
+        self._s3_config = Config()
+
+        # Verify that bucket exists
+        client = self._s3_session.client("s3", config=self._s3_config, endpoint_url=s3_endpoint_url)
+        client.head_bucket(Bucket=s3_bucket)
+
+        # Create s3 resource & bucket
+        self._s3 = self._s3_session.resource(
+            "s3", config=self._s3_config, endpoint_url=s3_endpoint_url
+        )
+        self._s3_bucket = self._s3.Bucket(s3_bucket)
+
+        # Configure logger
         self._logger = logger.bind(blockstore_type="S3", s3_region=s3_region, s3_bucket=s3_bucket)
 
     @override
@@ -52,8 +67,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
     ) -> bytes | BlockStoreReadBadOutcome:
         slug = build_s3_slug(organization_id=organization_id, block_id=block_id)
         try:
-            assert self._s3 is not None
-            obj = self._s3.get_object(Bucket=self._s3_bucket, Key=slug)
+            obj = await anyio.to_thread.run_sync(self._s3_bucket.Object(slug).get)
         except (BotoCoreError, ClientError) as exc:
             self._logger.warning(
                 "Block read error",
@@ -68,13 +82,10 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         slug = build_s3_slug(organization_id=organization_id, block_id=block_id)
         try:
-            assert self._s3 is not None
-            await anyio.to_thread.run_sync(
-                partial(self._s3.put_object, Bucket=self._s3_bucket, Key=slug, Body=block)
-            )
+            await anyio.to_thread.run_sync(partial(self._s3_bucket.Object(slug).put, Body=block))
         except (BotoCoreError, ClientError) as exc:
             self._logger.warning(
                 "Block create error",
@@ -83,3 +94,16 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
                 exc_info=exc,
             )
             return BlockStoreCreateBadOutcome.STORE_UNAVAILABLE
+
+    async def wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        await anyio.to_thread.run_sync(
+            partial(self.sync_wipe_organization_data, organization_id=organization_id)
+        )
+
+    def sync_wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        # Each object uploaded to the bucket are prefixed by the org id
+        prefix = f"{organization_id}/"
+
+        # Delete every objects and versions having the same prefix
+        # https://docs.aws.amazon.com/boto3/latest/reference/services/s3/bucket/object_versions.html
+        self._s3_bucket.object_versions.filter(Prefix=prefix).delete()

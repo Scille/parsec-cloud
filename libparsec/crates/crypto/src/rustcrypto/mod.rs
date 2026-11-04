@@ -1,9 +1,10 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod hash;
 mod key_derivation;
 mod password;
 mod private;
+mod rsa;
 mod secret;
 mod sequester;
 mod sign;
@@ -13,7 +14,10 @@ pub use hash::*;
 pub use key_derivation::*;
 pub(crate) use password::*;
 pub use private::*;
+pub use rsa::*;
 pub use secret::*;
 pub use sequester::*;
 pub use sign::*;
 pub(crate) use utils::*;
+
+pub const CRYPTO_BACKEND: &str = "rust-crypto";

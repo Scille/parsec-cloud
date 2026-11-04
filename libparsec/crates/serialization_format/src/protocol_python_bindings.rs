@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
@@ -102,14 +102,14 @@ fn quote_versioned_cmds(
 
             #(#cmds_impl_codes)*
 
-            #[pyclass(module = #py_module_path_as_str)]
+            #[pyclass(module = #py_module_path_as_str, from_py_object)]
             #[derive(Clone)]
             pub struct AnyCmdReq(pub #protocol_versioned_cmds_path::AnyCmdReq);
 
             #[pymethods]
             impl AnyCmdReq {
                 #[staticmethod]
-                fn load(py: Python, raw: &[u8]) -> PyResult<PyObject> {
+                fn load(py: Python, raw: &[u8]) -> PyResult<Py<PyAny>> {
                     let cmd = #protocol_versioned_cmds_path::AnyCmdReq::load(raw).map_err(|e| PyValueError::new_err(e.to_string()))?;
                     match cmd {
                         #(
@@ -216,7 +216,7 @@ fn quote_reps(
             GenCmdRepKind::Unit { nested_type_name } => {
                 let nested_type_name = format_ident!("{}", nested_type_name);
                 quote!{
-                    #[pyclass(module = #py_module_path_as_str, extends = Rep)]
+                    #[pyclass(module = #py_module_path_as_str, extends = Rep, from_py_object)]
                     #[derive(Clone)]
                     pub(crate) struct #subclass_name;
 
@@ -224,11 +224,8 @@ fn quote_reps(
                     impl #subclass_name {
                         #[new]
                         #[pyo3(signature = (unit))]
-                        fn new(unit: #nested_type_name) -> PyResult<(Self, Rep)> {
-                            Ok((
-                                Self,
-                                Rep(#protocol_path::Rep::#variant_name (unit.0))
-                            ))
+                        fn new(unit: #nested_type_name) -> PyResult<PyClassInitializer<Self>> {
+                            Ok(PyClassInitializer::from(Rep(#protocol_path::Rep::#variant_name ( unit.0 ))).add_subclass(Self))
                         }
 
                         #[getter]
@@ -257,14 +254,11 @@ fn quote_reps(
                     quote! {
                         #[new]
                         #[pyo3(signature = (#signature))]
-                        fn new<'py>(py: Python<'py>, #(#params),*) -> PyResult<(Self, Rep)> {
+                        fn new<'py>(py: Python<'py>, #(#params),*) -> PyResult<PyClassInitializer<Self>> {
                             #(#conversions)*
-                            Ok((
-                                Self,
-                                Rep(#protocol_path::Rep::#variant_name {
-                                    #signature
-                                })
-                            ))
+                            Ok(PyClassInitializer::from(Rep(#protocol_path::Rep::#variant_name {
+                                #signature
+                            })).add_subclass(Self))
                         }
                     }
                 };
@@ -304,7 +298,7 @@ fn quote_reps(
                 });
 
                 quote!{
-                    #[pyclass(module = #py_module_path_as_str, extends = Rep)]
+                    #[pyclass(module = #py_module_path_as_str, extends = Rep, from_py_object)]
                     #[derive(Clone)]
                     pub(crate) struct #subclass_name;
 
@@ -331,7 +325,7 @@ fn quote_reps(
     });
 
     let impl_code = quote! {
-        #[pyclass(module = #py_module_path_as_str, subclass)]
+        #[pyclass(module = #py_module_path_as_str, subclass, from_py_object)]
         #[derive(Clone)]
         pub(crate) struct Rep(pub #protocol_path::Rep);
 
@@ -362,7 +356,7 @@ fn quote_reps(
             }
         }
 
-        #[pyclass(extends = Rep)]
+        #[pyclass(extends = Rep, from_py_object)]
         #[derive(Clone)]
         pub(crate) struct RepUnknownStatus;
 
@@ -370,11 +364,8 @@ fn quote_reps(
         impl RepUnknownStatus {
             #[new]
             #[pyo3(signature = (status, reason))]
-            fn new(status: String, reason: Option<String>) -> PyResult<(Self, Rep)> {
-                Ok((
-                    Self,
-                    Rep(#protocol_path::Rep::UnknownStatus { unknown_status: status, reason })
-                ))
+            fn new(status: String, reason: Option<String>) -> PyResult<PyClassInitializer<Self>> {
+                Ok(PyClassInitializer::from(Rep(#protocol_path::Rep::UnknownStatus { unknown_status: status, reason })).add_subclass(Self))
             }
 
             #[getter]
@@ -413,7 +404,7 @@ fn quote_req(
         GenCmdReqKind::Unit { nested_type_name } => {
             let nested_type_name = format_ident!("{}", nested_type_name);
             quote! {
-                #[pyclass(module = #py_module_path_as_str)]
+                #[pyclass(module = #py_module_path_as_str, from_py_object)]
                 #[derive(Clone)]
                 pub(crate) struct Req(pub #protocol_path::Req);
 
@@ -501,7 +492,7 @@ fn quote_req(
             };
 
             quote! {
-                #[pyclass(module = #py_module_path_as_str)]
+                #[pyclass(module = #py_module_path_as_str, from_py_object)]
                 #[derive(Clone)]
                 pub(crate) struct Req(pub #protocol_path::Req);
 
@@ -588,14 +579,11 @@ fn quote_nested_type(
                     quote! {
                         #[new]
                         #[pyo3(signature = (#signature))]
-                        fn new<'py>(py: Python<'py>, #(#params),*) -> PyResult<(Self, #nested_type_name)> {
+                        fn new<'py>(py: Python<'py>, #(#params),*) -> PyResult<PyClassInitializer<Self>> {
                             #(#conversions)*
-                            Ok((
-                                Self,
-                                #nested_type_name(#protocol_path::#nested_type_name::#variant_name {
-                                    #signature
-                                })
-                            ))
+                            Ok(PyClassInitializer::from(#nested_type_name(#protocol_path::#nested_type_name::#variant_name {
+                                #signature
+                            })).add_subclass(Self))
                         }
                     }
                 };
@@ -637,7 +625,7 @@ fn quote_nested_type(
                 });
 
                 quote!{
-                    #[pyclass(module = #py_module_path_as_str, extends = #nested_type_name)]
+                    #[pyclass(module = #py_module_path_as_str, extends = #nested_type_name, from_py_object)]
                     #[derive(Clone)]
                     pub(crate) struct #subclass_name;
 
@@ -662,7 +650,7 @@ fn quote_nested_type(
             });
 
             let impl_code = quote! {
-                #[pyclass(module = #py_module_path_as_str, subclass)]
+                #[pyclass(module = #py_module_path_as_str, subclass, from_py_object)]
                 #[derive(Clone)]
                 pub(crate) struct #nested_type_name(pub #protocol_path::#nested_type_name);
 
@@ -744,7 +732,7 @@ fn quote_nested_type(
             });
 
             let impl_code = quote! {
-                #[pyclass(module = #py_module_path_as_str)]
+                #[pyclass(module = #py_module_path_as_str, from_py_object)]
                 #[derive(Clone)]
                 pub(crate) struct #nested_type_name(pub #protocol_path::#nested_type_name);
 
@@ -917,12 +905,14 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::AccountVaultItemOpaqueKeyID => {
             quote_rs_to_py_class!(crate::ids::AccountVaultItemOpaqueKeyID)
         }
+        FieldType::TOTPOpaqueKeyID => {
+            quote_rs_to_py_class!(crate::ids::TOTPOpaqueKeyID)
+        }
         FieldType::DeviceLabel => quote_rs_to_py_class!(crate::ids::DeviceLabel),
         FieldType::HumanHandle => quote_rs_to_py_class!(crate::ids::HumanHandle),
         FieldType::UserProfile => quote_rs_to_py_class!(crate::enumerate::UserProfile),
         FieldType::RealmRole => quote_rs_to_py_class!(crate::enumerate::RealmRole),
-        FieldType::BootstrapToken => quote_rs_to_py_class!(crate::token::BootstrapToken),
-        FieldType::InvitationToken => quote_rs_to_py_class!(crate::token::InvitationToken),
+        FieldType::AccessToken => quote_rs_to_py_class!(crate::ids::AccessToken),
         FieldType::InvitationStatus => quote_rs_to_py_class!(crate::enumerate::InvitationStatus),
         FieldType::InvitationType => quote_rs_to_py_class!(crate::enumerate::InvitationType),
         FieldType::CertificateSigner => {
@@ -962,6 +952,12 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::GreeterOrClaimer => quote_rs_to_py_class!(crate::enumerate::GreeterOrClaimer),
         FieldType::EmailAddress => quote_rs_to_py_class!(crate::ids::EmailAddress),
         FieldType::ValidationCode => quote_rs_to_py_class!(crate::misc::ValidationCode),
+        FieldType::RealmArchivingConfiguration => {
+            quote_rs_to_py_class!(crate::data::RealmArchivingConfiguration)
+        }
+        FieldType::FileManifestOrigin => {
+            quote_rs_to_py_class!(crate::data::FileManifestOrigin)
+        }
     }
 }
 
@@ -978,7 +974,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         }
         FieldType::Set(nested) => {
             let nested = quote_type_as_fn_new_param(nested);
-            quote! { HashSet<#nested> }
+            quote! { std::collections::HashSet<#nested> }
         }
         FieldType::RequiredOption(nested) => {
             let nested = quote_type_as_fn_new_param(nested);
@@ -1031,12 +1027,14 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::AccountVaultItemOpaqueKeyID => {
             quote! { crate::ids::AccountVaultItemOpaqueKeyID }
         }
+        FieldType::TOTPOpaqueKeyID => {
+            quote! { crate::ids::TOTPOpaqueKeyID }
+        }
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { crate::enumerate::UserProfile },
         FieldType::RealmRole => quote! { crate::enumerate::RealmRole },
-        FieldType::BootstrapToken => quote! { crate::token::BootstrapToken },
-        FieldType::InvitationToken => quote! { crate::token::InvitationToken },
+        FieldType::AccessToken => quote! { crate::ids::AccessToken },
         FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
         FieldType::InvitationType => quote! { crate::enumerate::InvitationType },
         FieldType::CertificateSigner => quote! { crate::certif::CertificateSigner },
@@ -1066,6 +1064,12 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::GreeterOrClaimer => quote! { crate::enumerate::GreeterOrClaimer },
         FieldType::EmailAddress => quote! { crate::ids::EmailAddress },
         FieldType::ValidationCode => quote! { crate::misc::ValidationCode },
+        FieldType::RealmArchivingConfiguration => {
+            quote! { crate::data::RealmArchivingConfiguration }
+        }
+        FieldType::FileManifestOrigin => {
+            quote! { crate::data::FileManifestOrigin }
+        }
     }
 }
 
@@ -1177,13 +1181,13 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::SequesterServiceID
         | FieldType::AccountAuthMethodID
         | FieldType::AccountVaultItemOpaqueKeyID
+        | FieldType::TOTPOpaqueKeyID
         | FieldType::DeviceLabel
         | FieldType::HumanHandle
         | FieldType::EmailAddress
         | FieldType::UserProfile
         | FieldType::RealmRole
-        | FieldType::BootstrapToken
-        | FieldType::InvitationToken
+        | FieldType::AccessToken
         | FieldType::InvitationStatus
         | FieldType::InvitationType
         | FieldType::CertificateSigner

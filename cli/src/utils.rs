@@ -1,19 +1,29 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-use std::{fmt::Display, ops::Deref, path::Path, sync::Arc};
+use std::{
+    fmt::{Display, Write as _},
+    io::{IsTerminal, Write as _},
+    ops::Deref,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use anyhow::anyhow;
+use clap::ValueEnum;
 use dialoguer::FuzzySelect;
 use libparsec::{
+    AuthenticatedCmds, AvailableDevice, AvailableDeviceType, DeviceLabel, HumanHandle, LocalDevice,
+    Password, ProxyConfig, SASCode, UserProfile,
     internal::{Client, EventBus},
-    list_available_devices, AuthenticatedCmds, AvailableDevice, AvailableDeviceType, DeviceLabel,
-    HumanHandle, LocalDevice, Password, ProxyConfig, SASCode, UserProfile,
+    list_available_devices,
 };
-use libparsec_client::DeviceAccessStrategy;
+use libparsec_client::{DeviceAccessStrategy, DevicePrimaryProtectionStrategy};
 use libparsec_platform_ipc::{
-    lock_device_for_use, try_lock_device_for_use, InUseDeviceLockGuard, TryLockDeviceForUseError,
+    InUseDeviceLockGuard, TryLockDeviceForUseError, lock_device_for_use, try_lock_device_for_use,
 };
 use spinners::{Spinner, Spinners, Stream};
+
+use crate::ui::{Color, ColorFormatter};
 
 /// Environment variable to set the Parsec config directory
 /// Should not be confused with [`libparsec::PARSEC_BASE_CONFIG_DIR`]
@@ -26,8 +36,13 @@ pub const GREEN: &str = "\x1B[92m";
 pub const RED: &str = "\x1B[91m";
 pub const RESET: &str = "\x1B[39m";
 pub const YELLOW: &str = "\x1B[33m";
+pub const CHECKMARK: &str = "✔";
 pub const GREEN_CHECKMARK: &str = "\x1B[92m✔\x1B[39m";
 pub const BULLET_CHAR: &str = "•";
+
+pub fn make_checkmark_symbol(fmt: &ColorFormatter, out: &mut String) -> std::fmt::Result {
+    write!(out, "{}", fmt.wrap_in_color(Color::Green, CHECKMARK))
+}
 
 pub fn format_single_device(device: &AvailableDevice) -> String {
     let short_id = &device.device_id.hex()[..MINIMAL_SHORT_ID_SIZE];
@@ -72,11 +87,11 @@ where
 
     devices
         // Generate combinations of the ids
-        .tuple_combinations::<(_, _)>()
+        .array_combinations::<2>()
         // Find the first different bit between the two ids:
         // We use the fact that we will display the id in hex format to compare both ids using the bitwise XOR and count the leading zeros.
         // Since it takes 4 bits to represent a hex digit, we divide the leading zeros by 4 to get the position of the first different hex digit.
-        .map(|(a, b)| {
+        .map(|[a, b]| {
             let cmp = a.as_u128() ^ b.as_u128();
             let position = cmp.leading_zeros() / 4;
             position as usize + 1
@@ -178,6 +193,8 @@ pub enum LoadAndUnlockDeviceError {
     LoadDevice(LoadDeviceError),
     /// The device file authentication is not supported
     UnsupportedAuthentication(AvailableDeviceType),
+    /// The device file uses TOTP as secondary protection, which is not supported
+    UnsupportedTOTPAuthentication,
     /// Error while unlocking the device
     UnlockDevice(libparsec::LoadDeviceError),
     /// Internal error
@@ -192,6 +209,9 @@ impl Display for LoadAndUnlockDeviceError {
             LoadAndUnlockDeviceError::LoadDevice(e) => e.fmt(f),
             LoadAndUnlockDeviceError::UnsupportedAuthentication(ty) => {
                 write!(f, "Unsupported device file authentication `{ty:?}`")
+            }
+            LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication => {
+                write!(f, "Unsupported device file authentication `TOTP`")
             }
             LoadAndUnlockDeviceError::UnlockDevice(e) => e.fmt(f),
             LoadAndUnlockDeviceError::Internal(e) => e.fmt(f),
@@ -220,7 +240,6 @@ impl From<LoadDeviceError> for LoadAndUnlockDeviceError {
 pub async fn load_and_unlock_device(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
 ) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
     log::trace!(
         "Loading device {device} from {dir}",
@@ -231,19 +250,22 @@ pub async fn load_and_unlock_device(
 
     log::debug!("Loading device {:?}", device.ty);
 
+    if device.totp_opaque_key_id.is_some() {
+        // In theory we should support this authentication method here,
+        // however:
+        // - It is cumbersome since it requires a TOTP challenge involving the server.
+        // - In practice it is a niche usage that will most likely only be used in the GUI.
+        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication);
+    }
+
     let access_strategy = match device.ty {
         AvailableDeviceType::Password => {
-            let password = read_password(if password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter password for the device:",
-                }
-            })?;
+            let password = read_password("Enter password for the device:")?;
 
-            DeviceAccessStrategy::Password {
+            DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
-                password,
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
             }
         }
         AvailableDeviceType::PKI { .. } => {
@@ -253,8 +275,10 @@ pub async fn load_and_unlock_device(
             //     key_file: device.key_file_path.clone(),
             // }
         }
-        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy {
             key_file: device.key_file_path.clone(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
         },
         AvailableDeviceType::AccountVault => {
             // In theory we should support this authentication method here,
@@ -291,9 +315,8 @@ pub async fn load_and_unlock_device(
 pub async fn load_cmds(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
 ) -> anyhow::Result<(AuthenticatedCmds, Arc<LocalDevice>)> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let device = load_and_unlock_device(config_dir, device).await?;
     let cmds = AuthenticatedCmds::new(config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
 
     Ok((cmds, device))
@@ -302,9 +325,8 @@ pub async fn load_cmds(
 pub async fn load_client(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
 ) -> anyhow::Result<Arc<StartedClient>> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let device = load_and_unlock_device(config_dir, device).await?;
     let client = start_client(device).await?;
 
     Ok(client)
@@ -313,10 +335,9 @@ pub async fn load_client(
 pub async fn load_client_with_config(
     config_dir: &Path,
     device: Option<String>,
-    password_stdin: bool,
     config: libparsec_client::ClientConfig,
 ) -> anyhow::Result<Arc<StartedClient>> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let device = load_and_unlock_device(config_dir, device).await?;
     let client = start_client_with_config(device, config).await?;
 
     Ok(client)
@@ -381,15 +402,10 @@ pub fn start_spinner(text: String) -> Spinner {
     Spinner::with_stream(Spinners::Dots, text, Stream::Stdout)
 }
 
-pub fn choose_password(from: ReadPasswordFrom) -> anyhow::Result<Password> {
-    match from {
-        ReadPasswordFrom::Stdin => {
-            let stdin = std::io::stdin();
-            rpassword::read_password_from_bufread(&mut stdin.lock())
-                .map(Into::into)
-                .map_err(anyhow::Error::from)
-        }
-        ReadPasswordFrom::Tty { prompt } => loop {
+pub fn choose_password(prompt: &'static str) -> anyhow::Result<Password> {
+    let stdin = std::io::stdin();
+    if stdin.is_terminal() {
+        loop {
             let password = rpassword::prompt_password(prompt)?.into();
             let confirm_password = rpassword::prompt_password("Confirm password:")?.into();
 
@@ -398,13 +414,23 @@ pub fn choose_password(from: ReadPasswordFrom) -> anyhow::Result<Password> {
             } else {
                 eprintln!("Password mismatch")
             }
-        },
+        }
+    } else {
+        let stdin = std::io::stdin();
+        rpassword::read_password_with_config(
+            rpassword::ConfigBuilder::new()
+                .input_reader(stdin.lock())
+                .output_discard()
+                .build(),
+        )
+        .map(Into::into)
+        .map_err(anyhow::Error::from)
     }
 }
 
-pub fn choose_device_label(input: &mut String) -> anyhow::Result<DeviceLabel> {
+pub fn choose_device_label(ui: &crate::Ui, input: &mut String) -> anyhow::Result<DeviceLabel> {
     loop {
-        println!("Enter device label:");
+        ui.with_message(|_, out| writeln!(out, "Enter device label:"))?;
         input.clear();
         std::io::stdin().read_line(input)?;
 
@@ -415,15 +441,15 @@ pub fn choose_device_label(input: &mut String) -> anyhow::Result<DeviceLabel> {
     }
 }
 
-pub fn choose_human_handle(input: &mut String) -> anyhow::Result<HumanHandle> {
+pub fn choose_human_handle(ui: &crate::Ui, input: &mut String) -> anyhow::Result<HumanHandle> {
     loop {
-        println!("Enter email:");
+        ui.with_message(|_, out| writeln!(out, "Enter email:"))?;
         input.clear();
         std::io::stdin().read_line(input)?;
 
         let email = input.trim().to_string();
 
-        println!("Enter name:");
+        ui.with_message(|_, out| writeln!(out, "Enter name:"))?;
         input.clear();
         std::io::stdin().read_line(input)?;
 
@@ -466,10 +492,13 @@ pub fn choose_user_profile() -> anyhow::Result<UserProfile> {
     Ok(profiles[selected_profile])
 }
 
-pub async fn poll_server_for_new_certificates(client: &StartedClient) -> anyhow::Result<()> {
-    let mut spinner = start_spinner("Poll server for new certificates".into());
+pub async fn poll_server_for_new_certificates(
+    ui: &crate::Ui,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
+    let spinner = ui.with_spinner(|_, out| write!(out, "Poll server for new certificates"))?;
     client.poll_server_for_new_certificates().await?;
-    spinner.stop_with_symbol(GREEN_CHECKMARK);
+    spinner.stop_with_symbol(make_checkmark_symbol)?;
     Ok(())
 }
 
@@ -478,22 +507,117 @@ pub enum ReadPasswordFrom {
     Tty { prompt: &'static str },
 }
 
-pub fn read_password(read_from: ReadPasswordFrom) -> anyhow::Result<libparsec::Password> {
-    match read_from {
-        ReadPasswordFrom::Stdin => {
-            let stdin = std::io::stdin();
-            rpassword::read_password_from_bufread(&mut stdin.lock())
-        }
-        ReadPasswordFrom::Tty { prompt } => rpassword::prompt_password(prompt),
+pub fn read_password(prompt: &'static str) -> anyhow::Result<libparsec::Password> {
+    let stdin = std::io::stdin();
+    if stdin.is_terminal() {
+        rpassword::prompt_password(prompt)
+    } else {
+        rpassword::read_password_with_config(
+            rpassword::ConfigBuilder::new()
+                .input_reader(stdin.lock())
+                .output_discard()
+                .build(),
+        )
     }
     .map(Into::into)
     .map_err(anyhow::Error::from)
 }
 
-pub fn maybe_plural(number: &u8) -> &str {
-    if *number == 1 {
-        ""
-    } else {
-        "s"
+pub fn maybe_plural(number: u8) -> &'static str {
+    if number == 1 { "" } else { "s" }
+}
+
+#[derive(Clone)]
+pub enum OutputFile {
+    Stdout,
+    Path(PathBuf),
+}
+
+impl OutputFile {
+    pub async fn with_created_file<F, T>(&self, f: F) -> std::io::Result<T>
+    where
+        F: AsyncFnOnce(&mut (dyn tokio::io::AsyncWrite + Unpin)) -> std::io::Result<T>,
+    {
+        match self {
+            OutputFile::Stdout => f(&mut tokio::io::stdout()).await,
+            OutputFile::Path(path) => {
+                let mut file = tokio::fs::File::create(path).await?;
+                f(&mut file).await
+            }
+        }
+    }
+}
+
+impl clap::builder::ValueParserFactory for OutputFile {
+    type Parser = OutputFileParser;
+
+    fn value_parser() -> Self::Parser {
+        OutputFileParser
+    }
+}
+
+#[derive(Clone)]
+pub struct OutputFileParser;
+
+impl clap::builder::TypedValueParser for OutputFileParser {
+    type Value = OutputFile;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        if value == "-" {
+            Ok(Self::Value::Stdout)
+        } else {
+            let path_parser = clap::builder::PathBufValueParser::new();
+            path_parser
+                .parse_ref(cmd, arg, value)
+                .map(Self::Value::Path)
+        }
+    }
+}
+
+#[derive(ValueEnum, Debug, Clone, Default)]
+pub enum NewAuthMethod {
+    Keyring,
+    #[default]
+    Password,
+}
+
+impl Display for NewAuthMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        self.to_possible_value()
+            .expect("no values are skipped")
+            .get_name()
+            .fmt(f)
+    }
+}
+
+impl NewAuthMethod {
+    // TODO delete when the CLI stops using internal libparsec crates
+    pub async fn get_client_save_strategy(
+        self,
+    ) -> anyhow::Result<libparsec_client::DeviceSaveStrategy> {
+        self.get_save_strategy()?.convert_with_side_effects().await
+    }
+
+    pub fn get_save_strategy(self) -> anyhow::Result<libparsec::DeviceSaveStrategy> {
+        match self {
+            NewAuthMethod::Password => {
+                let password = choose_password("New device password:")?;
+                Ok(libparsec::DeviceSaveStrategy {
+                    totp_protection: None,
+                    primary_protection: libparsec::DevicePrimaryProtectionStrategy::Password {
+                        password,
+                    },
+                })
+            }
+            NewAuthMethod::Keyring => Ok(libparsec::DeviceSaveStrategy {
+                totp_protection: None,
+                primary_protection: libparsec::DevicePrimaryProtectionStrategy::Keyring,
+            }),
+        }
     }
 }

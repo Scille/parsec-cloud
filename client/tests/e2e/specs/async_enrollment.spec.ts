@@ -1,0 +1,449 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+import {
+  answerQuestion,
+  expect,
+  fillInputModal,
+  fillIonInput,
+  getClipboardText,
+  getOrganizationAddr,
+  login,
+  logout,
+  mockLibParsec,
+  MsPage,
+  msTest,
+  setupNewPage,
+  setWriteClipboardPermission,
+} from '@tests/e2e/helpers';
+
+function getAsyncEnrollmentJoinLink(orgName: string): string {
+  const orgAddr = getOrganizationAddr(orgName);
+  if (orgAddr.includes('?')) {
+    return `${orgAddr}&a=async_enrollment`;
+  } else {
+    return `${orgAddr}?a=async_enrollment`;
+  }
+}
+
+async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Promise<void> {
+  const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
+  const requests = page.locator('.organization-request');
+  await expect(requests).toBeHidden();
+  const orgName = await page.locator('.organization-card').first().locator('.organization-name').textContent();
+  expect(orgName).not.toBeNull();
+  const link = getAsyncEnrollmentJoinLink(orgName as string);
+  await page.locator('#create-organization-button').click();
+  await expect(page.locator('.homepage-popover')).toBeVisible();
+  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  await fillInputModal(page, link);
+  const requestModal = page.locator('.async-enrollment-modal');
+  await expect(requestModal).toBeVisible();
+  const nextButton = requestModal.locator('#next-button');
+  const previousButton = requestModal.locator('#cancel-button');
+
+  await expect(requestModal.locator('.ms-modal-header__title')).toHaveText(`Join organization ${orgName}`);
+  await expect(nextButton).toBeTrulyDisabled();
+  await expect(nextButton).toHaveText('Continue');
+  await expect(previousButton).toHaveText('Cancel');
+
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await expect(options.locator('.choose-method-options-item__label')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
+  if (identitySystem === 'pki') {
+    await options.nth(0).click();
+  } else {
+    await options.nth(1).click();
+  }
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
+  await expect(requestModal.locator('.modal-info')).toBeVisible();
+
+  if (identitySystem === 'pki') {
+    await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+    await requestModal.locator('.certificate-card').nth(1).click();
+  } else {
+    await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Single Sign-On (SSO)');
+    await requestModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+    await expect(requestModal.locator('.modal-info')).toBeHidden();
+    await expect(requestModal.locator('.user-information')).toBeVisible();
+    await fillIonInput(requestModal.locator('.user-information').locator('ion-input'), expectedPersonName);
+    await expect(requestModal.locator('.user-information').locator('.dropdown-button').locator('.input-text')).toHaveText(
+      /^[a-f0-9-]+@example\.invalid$/,
+    );
+  }
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
+  await expect(page).toShowToast('Your request to join the organization has been sent.', 'Success');
+  await expect(requestModal).toBeHidden();
+  await expect(requests).toHaveCount(1);
+  await expect(requests.locator('.organization-request-organization')).toHaveText(orgName as string);
+  await expect(requests.locator('.organization-request-username')).toHaveText(expectedPersonName);
+  await expect(requests.locator('.organization-request-status')).toHaveText('Pending');
+}
+
+for (const identitySystem of ['pki', 'openbao']) {
+  msTest(`Async enrollment using ${identitySystem}`, async ({ context }) => {
+    msTest.setTimeout(60_000);
+    const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
+
+    const page = (await context.newPage()) as MsPage;
+    const sidebar = page.locator('.sidebar');
+
+    await setupNewPage(page, { mockPki: true });
+
+    await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeHidden();
+
+    await addRequest(page, identitySystem as 'pki' | 'openbao');
+
+    const requests = page.locator('.organization-request');
+
+    await login(page, 'Alicey McAliceFace');
+
+    await page.locator('.sidebar').locator('#sidebar-invitations').click();
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
+    await sidebar.locator('#sidebar-invitations').click();
+
+    await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeVisible();
+
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
+
+    await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
+      'Join requests',
+    );
+    await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
+    await page.locator('.toggle-view-container').locator('.pki-button').click();
+
+    const linkRequests = page.locator('.invitations-container').locator('.request-list-item');
+    await expect(linkRequests).toHaveCount(1);
+    await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText(identitySystem === 'pki' ? 'PKI' : 'SSO');
+    await expect(linkRequests.nth(0).locator('.person-name')).toHaveText(expectedPersonName);
+    await expect(linkRequests.nth(0).locator('.label-email')).toHaveText(
+      identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^ [a-f0-9-]+@example\.invalid$/,
+    );
+
+    const acceptButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(0);
+    await expect(acceptButton).toHaveText('Accept');
+    const acceptModal = page.locator(identitySystem === 'pki' ? '.async-enrollment-pki-modal' : '.async-enrollment-openbao-modal');
+    await expect(acceptModal).toBeHidden();
+    await acceptButton.click();
+    await expect(acceptModal).toBeVisible();
+
+    if (identitySystem === 'pki') {
+      await expect(acceptModal.locator('.async-authentication-modal-header-text__title')).toHaveText(
+        'A certificate is required to accept the PKI request',
+      );
+      await expect(acceptModal.locator('.async-authentication-modal-header-text__description')).toHaveText(
+        'For security reasons, it must be provided each time the organization is reopened.',
+      );
+      await acceptModal.locator('.certificate-card').nth(1).click();
+    } else {
+      await expect(acceptModal.locator('.async-authentication-modal-header-text__title')).toHaveText(
+        'You must be logged in to accept the request',
+      );
+      await expect(acceptModal.locator('.async-authentication-modal-header-text__description')).toHaveText(
+        'The user has requested to join the organization using SSO. Please log in below to accept the request.',
+      );
+      await acceptModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+      await expect(acceptModal.locator('.sso-provider-card--connected')).toBeVisible();
+      await expect(acceptModal.locator('.sso-provider-card--connected').locator('.sso-provider-tag__text')).toHaveText('Connected');
+      await acceptModal.locator('#next-button').click();
+    }
+    await expect(acceptModal).toBeHidden();
+    const selectProfileModal = page.locator('.select-profile-modal');
+    await expect(selectProfileModal).toBeVisible();
+    await expect(selectProfileModal.locator('.user-details').locator('ion-input').nth(0).locator('input')).toHaveValue(expectedPersonName);
+    await expect(selectProfileModal.locator('.user-details').locator('ion-input').nth(1).locator('input')).toHaveValue(
+      identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^[a-f0-9-]+@example\.invalid$/,
+    );
+    await expect(selectProfileModal.locator('#dropdown-popover-button')).toHaveText('Select a profile');
+    await expect(selectProfileModal.locator('#next-button')).toHaveText('Validate request');
+    await expect(selectProfileModal.locator('#next-button')).toBeTrulyDisabled();
+    const profilePopover = page.locator('.dropdown-popover');
+    await expect(profilePopover).toBeHidden();
+    await selectProfileModal.locator('#dropdown-popover-button').click();
+    await expect(profilePopover).toBeVisible();
+    await expect(profilePopover.locator('.option').locator('.option-text__label')).toHaveText(['Administrator', 'Member', 'External']);
+    await profilePopover.locator('.option').nth(1).click();
+    await expect(selectProfileModal.locator('#next-button')).toBeTrulyEnabled();
+    await selectProfileModal.locator('#next-button').click();
+    await expect(page).toShowToast('This request has been accepted', 'Success');
+
+    // Pki is mocked, it doesn't have the event to refresh the notification
+    if (identitySystem === 'openbao') {
+      await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeHidden();
+    }
+
+    await logout(page);
+
+    await expect(requests).toHaveCount(1);
+    await expect(requests.nth(0).locator('.organization-request-button')).toBeVisible();
+    await expect(requests.nth(0).locator('.organization-request-button')).toHaveText('Add to my organizations');
+    await requests.nth(0).locator('.organization-request-button').click();
+
+    if (identitySystem !== 'pki') {
+      const finalizeModal = page.locator('.async-enrollment-openbao-modal');
+      await expect(finalizeModal).toBeVisible();
+      await expect(finalizeModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Log in to join the organization');
+      await expect(finalizeModal.locator('.async-authentication-modal-header-text__description')).toHaveText(
+        'To join the organization, you must log in using your Single Sign-On authentication.',
+      );
+      await finalizeModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+      await expect(finalizeModal.locator('#next-button')).toBeVisible();
+      await finalizeModal.locator('#next-button').click();
+      await expect(page).toShowToast('You successfully joined the organization.', 'Success');
+      await expect(page).toBeWorkspacePage();
+    } else {
+      // Using a fake device so we can't log in, and testing for toast causes problems because two toasts
+      // are opened one after the other.
+      await expect(requests).toHaveCount(0);
+    }
+
+    await page.release();
+  });
+
+  msTest(`Cancel request using ${identitySystem}`, async ({ context }) => {
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page, { mockPki: true });
+
+    await addRequest(page, identitySystem as 'pki' | 'openbao');
+
+    const requests = page.locator('.organization-request');
+
+    await expect(requests).toHaveCount(1);
+    await requests.nth(0).locator('.organization-request-icon').click();
+    await answerQuestion(page, true, {
+      expectedNegativeText: 'No, wait for validation',
+      expectedPositiveText: 'Cancel request',
+      expectedQuestionText: 'Your request to join the organization is still pending. Are you sure you want to cancel it?',
+      expectedTitleText: 'Organization request pending',
+    });
+    await expect(requests).toHaveCount(0);
+
+    // Check that the admin doesn't see the request
+    await login(page, 'Alicey McAliceFace');
+
+    await page.locator('.sidebar').locator('#sidebar-invitations').click();
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
+
+    await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
+      'Join requests',
+    );
+    await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('0');
+    await page.locator('.toggle-view-container').locator('.pki-button').click();
+
+    const linkRequests = page.locator('.invitations-container').locator('.request-list-item');
+    await expect(linkRequests).toHaveCount(0);
+
+    await expect(page.locator('.invitations-container').locator('.no-active-content')).toBeVisible();
+    await expect(page.locator('.invitations-container').locator('.no-active-content')).toHaveText(
+      // eslint-disable-next-line max-len
+      'No pending join requests. Users requesting to join the organization with a SmartCard (PKI) or a ProConnect account (SSO) will be listed here.',
+    );
+    await page.release();
+  });
+
+  msTest(`Reject async enrollment using ${identitySystem}`, async ({ context }) => {
+    const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
+
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page, { mockPki: true });
+
+    await addRequest(page, identitySystem as 'pki' | 'openbao');
+
+    const requests = page.locator('.organization-request');
+
+    await login(page, 'Alicey McAliceFace');
+
+    await page.locator('.sidebar').locator('#sidebar-invitations').click();
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
+
+    await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
+      'Join requests',
+    );
+    await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
+    await page.locator('.toggle-view-container').locator('.pki-button').click();
+
+    const linkRequests = page.locator('.invitations-container').locator('.request-list-item');
+    await expect(linkRequests).toHaveCount(1);
+    await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText(identitySystem === 'pki' ? 'PKI' : 'SSO');
+    await expect(linkRequests.nth(0).locator('.person-name')).toHaveText(expectedPersonName);
+    await expect(linkRequests.nth(0).locator('.label-email')).toHaveText(
+      identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^ [a-f0-9-]+@example\.invalid$/,
+    );
+
+    const rejectButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(1);
+    await rejectButton.click();
+    await answerQuestion(page, true, {
+      expectedNegativeText: 'Cancel',
+      expectedPositiveText: 'Refuse request',
+      expectedQuestionText:
+        'Are you sure you want to refuse this request? The user will have to submit a new request to join the organization.',
+      expectedTitleText: 'Refuse request',
+    });
+    await expect(page).toShowToast('This request has been rejected', 'Info');
+    await expect(linkRequests).toHaveCount(0);
+    await expect(page.locator('.invitations-container').locator('.no-active-content')).toBeVisible();
+    await expect(page.locator('.invitations-container').locator('.no-active-content').locator('ion-text')).toHaveText(
+      'No pending join requests. Users requesting to join the organization with a SmartCard (PKI) or a ' +
+        'ProConnect account (SSO) will be listed here.',
+    );
+
+    await logout(page);
+
+    await expect(requests).toHaveCount(1);
+    await expect(requests.nth(0).locator('.organization-request-status')).toHaveText('Rejected');
+    await requests.nth(0).locator('.organization-request-icon').click();
+    await expect(page).toShowToast('Your request to join the organization has been deleted.', 'Info');
+    await expect(requests).toHaveCount(0);
+
+    await page.release();
+  });
+}
+
+msTest('Cannot accept PKI request', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, { mockPki: false });
+
+  await login(page, 'Alicey McAliceFace');
+
+  const sidebar = page.locator('.sidebar');
+  await page.locator('.sidebar').locator('#sidebar-invitations').click();
+  await expect(page).toHavePageTitle('Invitations & Join Requests');
+  await sidebar.locator('#sidebar-invitations').click();
+
+  await expect(page).toHavePageTitle('Invitations & Join Requests');
+  await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('0');
+  await page.locator('.toggle-view-container').locator('.pki-button').click();
+
+  const linkRequests = page.locator('.invitations-container').locator('.request-list-item');
+  await expect(linkRequests).toHaveCount(0);
+
+  await setWriteClipboardPermission(context, true);
+  await page.locator('#copy-link-pki-request-button').click();
+
+  // Make a request with the second tab
+  const secondTab = await page.openNewTab({ mockPki: true });
+
+  const requests = secondTab.locator('.organization-request');
+  await expect(requests).toBeHidden();
+  await secondTab.locator('#create-organization-button').click();
+  await expect(secondTab.locator('.homepage-popover')).toBeVisible();
+  await secondTab.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+
+  await fillInputModal(secondTab, await getClipboardText(page));
+  const requestModal = secondTab.locator('.async-enrollment-modal');
+  await expect(requestModal).toBeVisible();
+  const nextButton = requestModal.locator('#next-button');
+
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await expect(options.locator('.choose-method-options-item__label')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
+  await options.nth(0).click();
+  await nextButton.click();
+  await expect(requestModal.locator('.modal-info')).toBeVisible();
+
+  await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+  await requestModal.locator('.certificate-card').nth(1).click();
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
+  await expect(secondTab).toShowToast('Your request to join the organization has been sent.', 'Success');
+  await expect(requestModal).toBeHidden();
+  await expect(requests).toHaveCount(1);
+  secondTab.close();
+
+  await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
+  await expect(linkRequests).toHaveCount(1);
+
+  await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText('PKI');
+  await expect(linkRequests.nth(0).locator('.person-name')).toHaveText('Bob');
+  await expect(linkRequests.nth(0).locator('.label-email')).toHaveText('bob@black-mesa.corp');
+
+  const acceptButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(0);
+  await expect(acceptButton).toBeHidden();
+  const cannotAccept = linkRequests.nth(0).locator('.request-actions').locator('.request-actions-secondary__text');
+  await expect(cannotAccept).toBeVisible();
+  await expect(cannotAccept).toHaveText('Cannot be accepted');
+  const reason = linkRequests.nth(0).locator('.request-error-content');
+  await expect(reason).toBeHidden();
+  await cannotAccept.click();
+  await expect(reason).toBeVisible();
+  await expect(reason).toHaveText('Error details:PKI is not available on this organization.');
+
+  await page.release();
+});
+
+msTest('Check certificate cards', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, { mockPki: true });
+
+  const link = getAsyncEnrollmentJoinLink('Test');
+  await page.locator('#create-organization-button').click();
+  await expect(page.locator('.homepage-popover')).toBeVisible();
+  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  await fillInputModal(page, link);
+  const requestModal = page.locator('.async-enrollment-modal');
+  await expect(requestModal).toBeVisible();
+  const nextButton = requestModal.locator('#next-button');
+
+  await expect(requestModal.locator('.ms-modal-header__title')).toHaveText('Join organization Test');
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await options.nth(0).click();
+  await nextButton.click();
+  await expect(requestModal.locator('.modal-info')).toBeVisible();
+  await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+  const certs = requestModal.locator('.certificate-card');
+  const gordonCert = certs.nth(3);
+  await gordonCert.scrollIntoViewIfNeeded();
+  await expect(gordonCert.locator('.certificate-card-header__name')).toHaveText('Gordon');
+  await expect(gordonCert.locator('.card-expire__text').nth(0)).toHaveText('Apr 30, 2026');
+  await expect(gordonCert.locator('.card-expire__text').nth(1)).toHaveText('Oct 19, 2123');
+  await expect(gordonCert.locator('.card-email__text').nth(0)).toHaveText('gordon@black-mesa.corp');
+  await expect(gordonCert.locator('.additional-emails')).toBeVisible();
+  await expect(gordonCert.locator('.additional-emails')).toHaveText(' + 1');
+
+  await expect(gordonCert.locator('.card-id')).toHaveText(
+    'Serial number: 540af45a0c85717d70482227bb3856ff61448178-540af45a0c85717d70482227bb3856ff61448178',
+  );
+  await expect(certs.nth(2).locator('.additional-emails')).toBeHidden();
+
+  const emailPopover = page.locator('.additional-emails-popover');
+  await expect(emailPopover).toBeHidden();
+  await gordonCert.locator('.additional-emails').click();
+  await expect(emailPopover).toBeVisible();
+  await expect(emailPopover.locator('.emails-list-item__text')).toHaveText(['gordon@black-mesa.corp', 'gordon@black-mesa.corp']);
+});
+
+msTest('List certificates error', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, { mockPki: true });
+  await mockLibParsec(page, [
+    {
+      name: 'pkiListUserCertificates',
+      result: { ok: false, error: { tag: 'PkiSystemListUserCertificateErrorInternal', error: 'Failed' } },
+    },
+  ]);
+
+  const link = getAsyncEnrollmentJoinLink('Test');
+  await page.locator('#create-organization-button').click();
+  await expect(page.locator('.homepage-popover')).toBeVisible();
+  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  await fillInputModal(page, link);
+  const requestModal = page.locator('.async-enrollment-modal');
+  await expect(requestModal).toBeVisible();
+  const nextButton = requestModal.locator('#next-button');
+
+  await expect(requestModal.locator('.ms-modal-header__title')).toHaveText('Join organization Test');
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await options.nth(0).click();
+  await nextButton.click();
+  await expect(requestModal.locator('.modal-info')).toBeVisible();
+  await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+  const container = requestModal.locator('.certificate-container');
+  await expect(container.locator('.no-certificate')).toBeVisible();
+  await expect(container.locator('.no-certificate')).toHaveText('No certificates available');
+  await expect(container.locator('.container-textinfo')).toBeVisible();
+  await expect(container.locator('.container-textinfo')).toHaveText('Failed to list the certificates.');
+  await expect(requestModal.locator('#next-button')).toBeTrulyDisabled();
+});

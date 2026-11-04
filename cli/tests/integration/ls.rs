@@ -1,14 +1,20 @@
-use libparsec::{tmp_path, TmpPath};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+use libparsec::{TmpPath, tmp_path};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::bootstrap_cli_test;
-use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
-use parsec_cli::utils::start_client;
+use crate::{
+    test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
+};
+use parsec_cli::{ui::Ui, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn ls_files(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn ls_files(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let wid = {
         let client = start_client(alice.clone()).await.unwrap();
@@ -29,13 +35,17 @@ async fn ls_files(tmp_path: TmpPath) {
             .create_folder("/foo".parse().unwrap())
             .await
             .unwrap();
+        workspace
+            .create_file("/foo/bar.txt".parse().unwrap())
+            .await
+            .unwrap();
 
         client.stop().await;
 
         wid
     };
 
-    // List the files
+    // List files at "/" directory (workspace root)
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "ls",
@@ -45,4 +55,16 @@ async fn ls_files(tmp_path: TmpPath) {
         &wid.hex()
     )
     .stdout(predicates::str::contains("test.txt\n").and(predicates::str::contains("foo\n")));
+
+    // List files at "/foo" directory
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "ls",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace",
+        &wid.hex(),
+        "/foo"
+    )
+    .stdout(predicates::str::contains("bar.txt\n"));
 }

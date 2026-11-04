@@ -2,12 +2,12 @@
 
 import asyncio
 import math
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import override
 
 import anyio
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
+from anyio.streams.memory import MemoryObjectSendStream
 
 from parsec._parsec import OrganizationID, UserID, UserProfile, VlobID
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
@@ -33,10 +33,8 @@ class MemoryEventBus(EventBus):
 
 
 @asynccontextmanager
-async def event_bus_factory() -> AsyncIterator[MemoryEventBus]:
-    # TODO: add typing once use anyio>=4 (currently incompatible with fastapi)
-    send_events_channel, receive_events_channel = anyio.create_memory_object_stream(math.inf)
-    receive_events_channel: MemoryObjectReceiveStream[Event]
+async def event_bus_factory() -> AsyncGenerator[MemoryEventBus]:
+    send_events_channel, receive_events_channel = anyio.create_memory_object_stream[Event](math.inf)
 
     event_bus = MemoryEventBus(send_events_channel)
 
@@ -89,6 +87,7 @@ class MemoryEventsComponent(BaseEventsComponent):
             organization_id=org.organization_id,
             user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             active_users_limit=org.active_users_limit,
+            realm_minimum_archiving_period_before_deletion=org.realm_minimum_archiving_period_before_deletion,
         )
 
         user_realms = set()

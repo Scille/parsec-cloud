@@ -100,6 +100,32 @@
                 {
                     "name": "role_origin",
                     "type": "CertificateBasedInfoOrigin"
+                },
+                {
+                    "name": "archiving_configuration",
+                    "type": "RealmArchivingConfiguration",
+                    // Introduced in Parsec 3.9.0
+                    "introduced_in_revision": 390
+                },
+                // The way `CertificateBasedInfoOrigin` should be interpreted is a bit peculiar here:
+                // `CertificateBasedInfoOrigin::Placeholder` means that no `RealmArchivingCertificate`
+                // exists yet (hence in this case the configuration should in theory always be
+                // `RealmArchivingConfiguration::Available` since this is the default value).
+                {
+                    "name": "archiving_configuration_origin",
+                    "type": "CertificateBasedInfoOrigin",
+                    // Introduced in Parsec 3.9.0
+                    "introduced_in_revision": 390
+                },
+                {
+                    // If all OWNERs have been revoked, it is up to a non-OUTSIDER user
+                    // with the highest role to self-promote themselves to OWNER.
+                    // If `true`, we are among those users... This is our chance to
+                    // become king of the Realm!
+                    "name": "can_self_promote_to_owner",
+                    "type": "Boolean",
+                    // Introduced in Parsec 3.9.0
+                    "introduced_in_revision": 390
                 }
             ]
         }

@@ -25,7 +25,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
-    TestPki,
+    PkiCollection,
     generate_new_device_certificates,
     generate_new_user_certificates,
 )
@@ -68,7 +68,7 @@ async def submit_for(
 async def test_authenticated_async_enrollment_list_ok(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
 ) -> None:
     # Rejected enrollment, should be ignored
 
@@ -146,6 +146,7 @@ async def test_authenticated_async_enrollment_list_ok(
         submitter_redacted_user_certificate=blacky_user_certificates.signed_redacted_certificate,
         submitter_device_certificate=blacky_device_certificates.signed_certificate,
         submitter_redacted_device_certificate=blacky_device_certificates.signed_redacted_certificate,
+        send_mail=True,
     )
     assert isinstance(outcome, tuple)
 

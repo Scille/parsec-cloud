@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod merge;
 mod store;
@@ -13,7 +13,7 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
 
 use self::store::{UserForUpdateLocalWorkspacesUpdater, UserStore};
-use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
+use crate::{ClientConfig, certif::CertificateOps, event_bus::EventBus};
 
 #[derive(Debug)]
 pub struct UserOps {

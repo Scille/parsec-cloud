@@ -2,7 +2,18 @@ name: CI Web
 
 on:
   workflow_call:
+    inputs:
+      enable-coverage:
+        description: Collect e2e coverage and publish an HTML report artifact. Off by default since it's only meant to be checked occasionally, not on every run.
+        type: boolean
+        default: false
+        required: false
   workflow_dispatch:
+    inputs:
+      enable-coverage:
+        description: Collect e2e coverage and publish an HTML report artifact. Off by default since it's only meant to be checked occasionally, not on every run.
+        type: boolean
+        default: false
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
 # But on the main branch, we don't want that behavior.
@@ -14,8 +25,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 22.14.0
+  node-version: 24.22.1
   wasm-pack-version: 0.12.1
+  libparsec-cache-version: 1
+  UV_EXTRA_ARGS: --verbose
 
 permissions:
   contents: read
@@ -34,14 +47,14 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.7.2-a.0.dev.20462.c20c78b
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.9.3-a.0.dev.20648.a5d5731
         ports:
           - 6777:6777
         env:
           # Setting the server addr so that getServerConfig() returns the proper host for openBao
           PARSEC_SERVER_ADDR: parsec3://parsec-testbed-server:6777?no_ssl=true
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 2
 
       - name: Retrieve runner specs
@@ -49,7 +62,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # pin v7.1.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -61,7 +74,7 @@ jobs:
         run: |
           # Execute 'npm install' until success,
           # This is done that way because sometime some CDN respond with 503
-          until npm install --ignore-scripts; do
+          until npm install --ignore-scripts --no-audit; do
             echo "Failed install, retrying ...";
           done
           # Failed if package-lock.json was modified
@@ -73,25 +86,48 @@ jobs:
         working-directory: client
         timeout-minutes: 5
 
+      # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
+      # stripping locales and dictionaries (only keeping English and French).
+      - name: Prune node_modules/onlyoffice-editor
+        run: bash .github/scripts/prune_node_modules_onlyoffice.sh
+        timeout-minutes: 1
+
+      - name: Install electron dependencies
+        shell: bash -o pipefail -ex {0}
+        run: |
+          # Execute 'npm install' until success,
+          # This is done that way because sometime some CDN respond with 503
+          until npm install --ignore-scripts --no-audit; do
+            echo "Failed install, retrying ...";
+          done
+          # Failed if package-lock.json was modified
+          # This is done to ensure the lock file is up-to-date
+          test -z "$(git status --porcelain package-lock.json)"
+          # Prune dependencies present in `node_modules/` not listed in `package-lock.json`
+          # Likely older dependencies unlisted but still present in the cache
+          npm prune
+        working-directory: client/electron
+        timeout-minutes: 5
+
       - name: Check lint with eslint
-        run: npx eslint . --max-warnings=0
+        run: npm run lint:eslint
         working-directory: client
         timeout-minutes: 2
 
       - name: Check lint with vue-tsc
-        run: npx vue-tsc --noEmit
+        run: npm run lint:tsc
         working-directory: client
         timeout-minutes: 2
 
       - name: Check prettier
-        run: npx prettier . --check
+        run: npm run prettier:check
         working-directory: client
         timeout-minutes: 5
 
       - name: Setup cache-key
         id: cache-key
         run: >-
-          echo "key=web-${{ hashFiles(
+          echo "key=web-v${{ env.libparsec-cache-version }}-${{ hashFiles(
             'bindings/web/**',
             'libparsec/**',
             'rust-toolchain.toml',
@@ -101,7 +137,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -110,7 +146,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c # pin v1.15.2
+        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           target: wasm32-unknown-unknown
@@ -119,7 +155,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # pin v2.8.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
@@ -131,26 +167,38 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
       - name: Build web bindings
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        run: npm run build:dev
+        run: npm run build:ci
         working-directory: bindings/web
         timeout-minutes: 10
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
             bindings/web/pkg/
             bindings/web/pkg/
         timeout-minutes: 2
+
+      - name: Check knip
+        run: npm run knip
+        working-directory: client
+        timeout-minutes: 2
+
+      - name: Check translation keys
+        working-directory: client
+        timeout-minutes: 4
+        shell: bash -ex {0}
+        run: |
+          python scripts/check_translations.py src/ --no-color
 
       - name: Unit tests
         run: npm run test:unit
@@ -170,13 +218,13 @@ jobs:
         shard_total: [2]
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.7.2-a.0.dev.20462.c20c78b
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.9.3-a.0.dev.20648.a5d5731
         ports:
           - 6777:6777
         env:
           # Setting the server addr so that getServerConfig() returns the proper host for openBao
           PARSEC_SERVER_ADDR: parsec3://parsec-testbed-server:6777?no_ssl=true
-    timeout-minutes: 25
+    timeout-minutes: ${{ inputs.enable-coverage && 35 || 25 }}
     steps:
       - name: Inspect runner config
         run: |
@@ -184,10 +232,10 @@ jobs:
           grep MemTotal /proc/meminfo
         timeout-minutes: 1
 
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 2
 
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # pin v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # pin v7.1.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -197,7 +245,7 @@ jobs:
       - name: Setup cache-key
         id: cache-key
         run: >-
-          echo "key=web-${{ hashFiles(
+          echo "key=web-v${{ env.libparsec-cache-version }}-${{ hashFiles(
             'bindings/web/**',
             'libparsec/**',
             'rust-toolchain.toml',
@@ -207,7 +255,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
         with:
           # We use the cache setup by `test-web-app`
           fail-on-cache-miss: true
@@ -218,8 +266,14 @@ jobs:
         timeout-minutes: 2
 
       - name: Install client deps
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --no-audit
         working-directory: client
+
+      # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
+      # stripping locales and dictionaries (only keeping English and French).
+      - name: Prune node_modules/onlyoffice-editor
+        run: bash .github/scripts/prune_node_modules_onlyoffice.sh
+        timeout-minutes: 1
 
       - name: Check testbed server is running
         run: curl http://localhost:6777
@@ -230,7 +284,7 @@ jobs:
         timeout-minutes: 1
 
       - name: E2E tests
-        uses: docker://playwright/chrome:playwright-1.51.0
+        uses: docker://mcr.microsoft.com/playwright:v1.64.0
         with:
           # To use `playwright-chrome` docker image, we need 2 things, settings the entrypoint to `sh` and configure the user inside the container because it use a different uid:gid than CI.
           #
@@ -241,15 +295,27 @@ jobs:
         env:
           TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
-        timeout-minutes: 25
+          COLLECT_COVERAGE: ${{ inputs.enable-coverage }}
+        timeout-minutes: ${{ inputs.enable-coverage && 35 || 25 }}
 
       - name: Upload blob report to GitHub Actions Artifacts
         if: "!cancelled()" # We always upload the artifacts even in case of failure of playwright.
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
         with:
           name: blob-report-${{ matrix.shard_index }}
           if-no-files-found: error
           path: client/blob-report
+          retention-days: 1
+
+      - name: Upload coverage cache to GitHub Actions Artifacts
+        if: inputs.enable-coverage && !cancelled()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
+        with:
+          name: coverage-cache-${{ matrix.shard_index }}
+          if-no-files-found: error
+          path: client/coverage/.cache
+          # `.cache` is a dot-directory, excluded by default and silently reported as "no files found".
+          include-hidden-files: true
           retention-days: 1
 
   playwright-reports:
@@ -262,10 +328,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 2
 
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # pin v7.1.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -273,9 +339,10 @@ jobs:
         timeout-minutes: 2
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # pin v8.0.2
         with:
           path: client/all-blob-reports
+          digest-mismatch: error
           pattern: blob-report-*
           merge-multiple: true
 
@@ -285,8 +352,42 @@ jobs:
 
       - name: Archive test results
         # Always upload playwright report when playwright tests are run
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
         with:
           name: playwright-report
           if-no-files-found: error
           path: client/playwright-report
+
+      - name: Download coverage caches from GitHub Actions Artifacts
+        if: inputs.enable-coverage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # pin v8.0.2
+        with:
+          path: client/coverage/.cache
+          digest-mismatch: error
+          pattern: coverage-cache-*
+          merge-multiple: true
+
+      - name: Install client deps
+        if: inputs.enable-coverage
+        run: npm install --ignore-scripts --no-audit
+        working-directory: client
+
+      # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
+      # stripping locales and dictionaries (only keeping English and French).
+      - name: Prune node_modules/onlyoffice-editor
+        if: inputs.enable-coverage
+        run: bash .github/scripts/prune_node_modules_onlyoffice.sh
+        timeout-minutes: 1
+
+      - name: Generate coverage report
+        if: inputs.enable-coverage
+        run: npm run test:e2e:coverage:report
+        working-directory: client
+
+      - name: Archive coverage report
+        if: inputs.enable-coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
+        with:
+          name: coverage-report
+          if-no-files-found: error
+          path: client/coverage

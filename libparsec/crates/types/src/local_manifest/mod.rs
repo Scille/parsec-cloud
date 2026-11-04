@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 //! Types used to store the content of the workspace on local storage.
 //! These types are never sent to the server.

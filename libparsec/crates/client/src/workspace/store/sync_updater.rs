@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -6,20 +6,20 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::store::cache::{
-        populate_cache_from_local_storage, PopulateCacheFromLocalStorageError,
-    },
     InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
+    workspace::store::cache::{
+        PopulateCacheFromLocalStorageError, populate_cache_from_local_storage,
+    },
 };
 use libparsec_platform_storage::workspace::UpdateManifestData;
 
 use super::{
+    RetrievePathFromIDEntry,
     cache::{
-        populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+        PopulateCacheFromLocalStorageOrServerError, populate_cache_from_local_storage_or_server,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
     resolve_path::RetrievePathFromIdAndLockForUpdateError,
-    RetrievePathFromIDEntry,
 };
 
 pub(super) type UpdateManifestForSyncError = super::WorkspaceStoreOperationError;
@@ -42,6 +42,8 @@ pub(crate) enum ForUpdateSyncError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Entry is already being updated")]
     WouldBlock,
     #[error(transparent)]
@@ -68,6 +70,8 @@ pub(crate) enum IntoSyncConflictUpdaterError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -132,7 +136,7 @@ pub(super) async fn for_update_sync_local_only(
         let entry_guard = match outcome {
             LockForUpdateOutcome::GoToStep3(entry_guard) => entry_guard,
             LockForUpdateOutcome::GoToStep4((entry_guard, manifest)) => {
-                break 'get_lock_and_manifest (entry_guard, Some(manifest))
+                break 'get_lock_and_manifest (entry_guard, Some(manifest));
             }
             LockForUpdateOutcome::WouldBlock => {
                 return Err(ForUpdateSyncLocalOnlyError::WouldBlock);
@@ -148,7 +152,7 @@ pub(super) async fn for_update_sync_local_only(
         match outcome {
             Ok(manifest) => break 'get_lock_and_manifest (entry_guard, Some(manifest)),
             Err(PopulateCacheFromLocalStorageError::EntryNotFound) => {
-                break 'get_lock_and_manifest (entry_guard, None)
+                break 'get_lock_and_manifest (entry_guard, None);
             }
             Err(err) => {
                 release_guard_on_error!(entry_guard);
@@ -191,6 +195,9 @@ pub(super) async fn for_update_sync(
                 RetrievePathFromIdAndLockForUpdateError::Stopped => ForUpdateSyncError::Stopped,
                 RetrievePathFromIdAndLockForUpdateError::NoRealmAccess => {
                     ForUpdateSyncError::NoRealmAccess
+                }
+                RetrievePathFromIdAndLockForUpdateError::RealmDeleted => {
+                    ForUpdateSyncError::RealmDeleted
                 }
                 RetrievePathFromIdAndLockForUpdateError::WouldBlock => {
                     ForUpdateSyncError::WouldBlock
@@ -459,6 +466,9 @@ impl<'a> SyncUpdater<'a> {
                             PopulateCacheFromLocalStorageOrServerError::NoRealmAccess => {
                                 IntoSyncConflictUpdaterError::NoRealmAccess
                             }
+                            PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                                IntoSyncConflictUpdaterError::RealmDeleted
+                            }
                             PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err) => {
                                 IntoSyncConflictUpdaterError::InvalidKeysBundle(err)
                             }
@@ -485,7 +495,7 @@ impl<'a> SyncUpdater<'a> {
         let parent_manifest = match parent_manifest {
             ArcLocalChildManifest::Folder(parent_manifest) => parent_manifest,
             ArcLocalChildManifest::File(_) => {
-                return Err((self, IntoSyncConflictUpdaterError::ParentIsNotAFolder))
+                return Err((self, IntoSyncConflictUpdaterError::ParentIsNotAFolder));
             }
         };
 
@@ -554,14 +564,18 @@ impl SyncConflictUpdater<'_> {
                 self.original_parent_manifest.base.id
             );
             assert_eq!(parent_manifest.base, self.original_parent_manifest.base);
-            assert!(parent_manifest
-                .children
-                .iter()
-                .any(|(_, id)| *id == conflicting_new_child_manifest.id()));
-            assert!(parent_manifest
-                .children
-                .iter()
-                .any(|(_, id)| *id == child_manifest.id()));
+            assert!(
+                parent_manifest
+                    .children
+                    .iter()
+                    .any(|(_, id)| *id == conflicting_new_child_manifest.id())
+            );
+            assert!(
+                parent_manifest
+                    .children
+                    .iter()
+                    .any(|(_, id)| *id == child_manifest.id())
+            );
             match (&self.original_child_manifest, &child_manifest) {
                 (ArcLocalChildManifest::File(_), ArcLocalChildManifest::File(_)) => (),
                 (ArcLocalChildManifest::Folder(_), ArcLocalChildManifest::Folder(_)) => (),

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -9,11 +9,11 @@ use libparsec_types::prelude::*;
 use crate::InvalidCertificateError;
 
 use super::{
-    encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard, CertificateOps,
+    CertificateOps, encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard,
 };
 
 #[derive(Debug, Clone, Copy)]
-pub enum EncrytionUsage {
+pub enum EncryptionUsage {
     /// Canary is the encrypted payload within the key rotation certificate used to
     /// validate the key from the keys bundle is correct.
     Canary,
@@ -25,16 +25,19 @@ pub enum EncrytionUsage {
     Vlob(VlobID),
     /// Encrypted block.
     Block(BlockID),
+    /// Encrypt `CryptpadSessionKey` for a given file
+    CryptpadSessionKey(VlobID),
 }
 
-impl EncrytionUsage {
+impl EncryptionUsage {
     pub fn key_derivation_uuid(&self) -> uuid::Uuid {
         match self {
-            EncrytionUsage::Canary => CANARY_KEY_DERIVATION_UUID,
-            EncrytionUsage::RealmRename => REALM_RENAME_KEY_DERIVATION_UUID,
-            EncrytionUsage::PathUrl => PATH_URL_KEY_DERIVATION_UUID,
-            EncrytionUsage::Vlob(id) => **id,
-            EncrytionUsage::Block(id) => **id,
+            EncryptionUsage::Canary => CANARY_KEY_DERIVATION_UUID,
+            EncryptionUsage::RealmRename => REALM_RENAME_KEY_DERIVATION_UUID,
+            EncryptionUsage::PathUrl => PATH_URL_KEY_DERIVATION_UUID,
+            EncryptionUsage::Vlob(id) => **id,
+            EncryptionUsage::Block(id) => **id,
+            EncryptionUsage::CryptpadSessionKey(id) => **id,
         }
     }
 }
@@ -153,6 +156,8 @@ enum LoadLastKeysBundleError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("The realm doesn't have any key yet")]
     NoKey,
     #[error(transparent)]
@@ -218,6 +223,7 @@ async fn load_last_realm_keys_bundle(
             } => (keys_bundle, keys_bundle_access),
             Rep::AccessNotAvailableForAuthor
             | Rep::AuthorNotAllowed => return Err(LoadLastKeysBundleError::NotAllowed),
+            Rep::RealmDeleted => return Err(LoadLastKeysBundleError::RealmDeleted),
             // Unexpected errors :(
             bad_rep @ (
                 // We didn't specify a key index
@@ -279,6 +285,8 @@ pub(super) enum AttemptRealmKeysBundleHealingError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     // TODO: finish key bundle healing !
     #[allow(dead_code)]
     #[error("The realm doesn't have any key yet")]
@@ -371,8 +379,9 @@ async fn recover_realm_keys_from_previous_bundles(
                 } => (keys_bundle, keys_bundle_access),
 
                 Rep::AuthorNotAllowed => {
-                    return Err(AttemptRealmKeysBundleHealingError::NotAllowed)
+                    return Err(AttemptRealmKeysBundleHealingError::NotAllowed);
                 }
+                Rep::RealmDeleted => return Err(AttemptRealmKeysBundleHealingError::RealmDeleted),
                 // This key rotation has been done while we were not part of the realm,
                 // so we have no choice but to skip it.
                 // Not we still continue to fetch the previous keys bundle, as we might
@@ -431,7 +440,7 @@ async fn recover_realm_keys_from_previous_bundles(
                     }
                 }
                 ValidateKeysBundleError::Internal(err) => {
-                    return Err(err.context("Cannot validate realm keys bundle").into())
+                    return Err(err.context("Cannot validate realm keys bundle").into());
                 }
             },
         }
@@ -488,6 +497,8 @@ pub enum EncryptRealmKeysBundleAccessForUserError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("User not found")]
     UserNotFound,
     #[error("The realm doesn't have any key yet")]
@@ -512,6 +523,9 @@ pub(super) async fn encrypt_realm_keys_bundle_access_for_user(
             }
             LoadLastKeysBundleError::NotAllowed => {
                 EncryptRealmKeysBundleAccessForUserError::NotAllowed
+            }
+            LoadLastKeysBundleError::RealmDeleted => {
+                EncryptRealmKeysBundleAccessForUserError::RealmDeleted
             }
             LoadLastKeysBundleError::NoKey => EncryptRealmKeysBundleAccessForUserError::NoKey,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
@@ -542,7 +556,9 @@ pub(super) async fn encrypt_realm_keys_bundle_access_for_user(
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidKeysBundleError {
-    #[error("`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is corrupted: {error}")]
+    #[error(
+        "`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is corrupted: {error}"
+    )]
     CorruptedAccess {
         realm: VlobID,
         key_index: IndexInt,
@@ -555,7 +571,9 @@ pub enum InvalidKeysBundleError {
     },
     /// Note the keys bundle is signed before being encrypted. So with this error we
     /// don't know which one of the key or data is at fault.
-    #[error("`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is not able to decrypt the keys bundle")]
+    #[error(
+        "`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is not able to decrypt the keys bundle"
+    )]
     Decryption {
         realm: VlobID,
         key_index: IndexInt,
@@ -563,7 +581,9 @@ pub enum InvalidKeysBundleError {
         key_rotation_timestamp: DateTime,
         recipient: UserID,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}` is corrupted: {error}")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}` is corrupted: {error}"
+    )]
     Corrupted {
         realm: VlobID,
         key_index: IndexInt,
@@ -571,21 +591,27 @@ pub enum InvalidKeysBundleError {
         timestamp: DateTime,
         error: DataError,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author didn't exist !")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author didn't exist !"
+    )]
     NonExistentAuthor {
         realm: VlobID,
         key_index: IndexInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author was already revoked !")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author was already revoked !"
+    )]
     RevokedAuthor {
         realm: VlobID,
         key_index: IndexInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {expected_key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: wrong key index specified ({bad_key_index})")]
+    #[error(
+        "Keys bundle with index {expected_key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: wrong key index specified ({bad_key_index})"
+    )]
     KeyIndexMismatch {
         realm: VlobID,
         expected_key_index: IndexInt,
@@ -593,7 +619,9 @@ pub enum InvalidKeysBundleError {
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{expected_realm_id}`: wrong realm ID specified ({bad_realm_id})")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{expected_realm_id}`: wrong realm ID specified ({bad_realm_id})"
+    )]
     RealmIDMismatch {
         expected_realm_id: VlobID,
         bad_realm_id: VlobID,
@@ -601,7 +629,9 @@ pub enum InvalidKeysBundleError {
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{expected_author}` on {timestamp}) for realm `{realm}`: wrong author specified ({bad_author})")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{expected_author}` on {timestamp}) for realm `{realm}`: wrong author specified ({bad_author})"
+    )]
     AuthorMismatch {
         realm: VlobID,
         key_index: IndexInt,
@@ -609,7 +639,9 @@ pub enum InvalidKeysBundleError {
         bad_author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {expected_timestamp}) for realm `{realm}`: wrong timestamp specified ({bad_timestamp})")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {expected_timestamp}) for realm `{realm}`: wrong timestamp specified ({bad_timestamp})"
+    )]
     TimestampMismatch {
         realm: VlobID,
         key_index: IndexInt,
@@ -828,7 +860,7 @@ async fn validate_keys_bundle(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CertifEncryptForRealmError {
+pub enum CertifGetLatestRealmKeyForEncryptionError {
     /// Stopped is not used by `encrypt_for_realm`, but is convenient anyways given
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
@@ -837,6 +869,8 @@ pub enum CertifEncryptForRealmError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("There is no key available in this realm for encryption")]
     NoKey,
     #[error(transparent)]
@@ -845,21 +879,27 @@ pub enum CertifEncryptForRealmError {
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn encrypt_for_realm(
+pub(super) async fn get_latest_realm_key_for_encryption(
     ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
-    usage: EncrytionUsage,
+    usage: EncryptionUsage,
     realm_id: VlobID,
-    data: &[u8],
-) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
+) -> Result<(SecretKey, IndexInt), CertifGetLatestRealmKeyForEncryptionError> {
     let realm_keys = load_last_realm_keys_bundle(ops, store, realm_id)
         .await
         .map_err(|e| match e {
-            LoadLastKeysBundleError::Offline(e) => CertifEncryptForRealmError::Offline(e),
-            LoadLastKeysBundleError::NotAllowed => CertifEncryptForRealmError::NotAllowed,
-            LoadLastKeysBundleError::NoKey => CertifEncryptForRealmError::NoKey,
+            LoadLastKeysBundleError::Offline(e) => {
+                CertifGetLatestRealmKeyForEncryptionError::Offline(e)
+            }
+            LoadLastKeysBundleError::NotAllowed => {
+                CertifGetLatestRealmKeyForEncryptionError::NotAllowed
+            }
+            LoadLastKeysBundleError::RealmDeleted => {
+                CertifGetLatestRealmKeyForEncryptionError::RealmDeleted
+            }
+            LoadLastKeysBundleError::NoKey => CertifGetLatestRealmKeyForEncryptionError::NoKey,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                CertifEncryptForRealmError::InvalidKeysBundle(err)
+                CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err)
             }
             LoadLastKeysBundleError::Internal(err) => {
                 err.context("Cannot retrieve realm encryption info").into()
@@ -868,13 +908,11 @@ pub(super) async fn encrypt_for_realm(
 
     let (key_derivation, key_index) = realm_keys
         .last_valid_key()
-        .ok_or(CertifEncryptForRealmError::NoKey)?;
+        .ok_or(CertifGetLatestRealmKeyForEncryptionError::NoKey)?;
 
     let key = key_derivation.derive_secret_key_from_uuid(usage.key_derivation_uuid());
 
-    let encrypted = key.encrypt(data);
-
-    Ok((encrypted, key_index))
+    Ok((key, key_index))
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -887,6 +925,8 @@ pub enum CertifDecryptForRealmError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("The referenced key doesn't exist yet in this realm")]
     KeyNotFound,
     #[error("The referenced key appears to be corrupted !")]
@@ -907,7 +947,7 @@ pub enum CertifDecryptForRealmError {
 pub(super) async fn decrypt_for_realm(
     ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
-    usage: EncrytionUsage,
+    usage: EncryptionUsage,
     realm_id: VlobID,
     key_index: IndexInt,
     encrypted: &[u8],
@@ -917,6 +957,7 @@ pub(super) async fn decrypt_for_realm(
         .map_err(|e| match e {
             LoadLastKeysBundleError::Offline(e) => CertifDecryptForRealmError::Offline(e),
             LoadLastKeysBundleError::NotAllowed => CertifDecryptForRealmError::NotAllowed,
+            LoadLastKeysBundleError::RealmDeleted => CertifDecryptForRealmError::RealmDeleted,
             LoadLastKeysBundleError::NoKey => CertifDecryptForRealmError::KeyNotFound,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
                 CertifDecryptForRealmError::InvalidKeysBundle(err)
@@ -943,6 +984,8 @@ pub enum GenerateNextKeyBundleForRealmError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -967,16 +1010,19 @@ pub(super) async fn generate_next_keys_bundle_for_realm(
             LoadLastKeysBundleError::NoKey => None,
 
             LoadLastKeysBundleError::Offline(e) => {
-                return Err(GenerateNextKeyBundleForRealmError::Offline(e))
+                return Err(GenerateNextKeyBundleForRealmError::Offline(e));
             }
             LoadLastKeysBundleError::NotAllowed => {
-                return Err(GenerateNextKeyBundleForRealmError::NotAllowed)
+                return Err(GenerateNextKeyBundleForRealmError::NotAllowed);
+            }
+            LoadLastKeysBundleError::RealmDeleted => {
+                return Err(GenerateNextKeyBundleForRealmError::RealmDeleted);
             }
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                return Err(GenerateNextKeyBundleForRealmError::InvalidKeysBundle(err))
+                return Err(GenerateNextKeyBundleForRealmError::InvalidKeysBundle(err));
             }
             LoadLastKeysBundleError::Internal(err) => {
-                return Err(GenerateNextKeyBundleForRealmError::Internal(err))
+                return Err(GenerateNextKeyBundleForRealmError::Internal(err));
             }
         },
     };

@@ -1,5 +1,7 @@
 name: Package desktop
 
+# cspell: words pfctl
+
 on:
   pull_request:
     paths:
@@ -46,6 +48,22 @@ on:
         required: true
       MACOS_NOTARIZATION_PASSWD:
         required: true
+      # Azure Trusted Signing credentials, used to sign the Windows artifacts.
+      # Note the workflow is also triggered directly by pull_request/workflow_dispatch
+      # (i.e. not through workflow_call), in which case those secrets are not
+      # provided: `client/electron/package.cjs` then falls back to an unsigned build.
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_CLIENT_SECRET:
+        required: true
+      AZURE_TRUSTED_SIGNING_ENDPOINT:
+        required: true
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME:
+        required: true
+      AZURE_TRUSTED_SIGNING_PROFILE_NAME:
+        required: true
   workflow_dispatch:
     inputs:
       version:
@@ -61,7 +79,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 22.14.0
+  node-version: 24.22.1
   WINFSP_VERSION: 2.1.25156
 
 permissions:
@@ -77,19 +95,20 @@ jobs:
 
   electron-snap:
     needs: version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: inputs.version_patch_run_id != '' && always() || success()
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # pin v8.0.2
         with:
           name: version.patch
+          digest-mismatch: error
           path: ${{ runner.temp }}/version.patch
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
@@ -115,8 +134,7 @@ jobs:
 
       - name: Patch snapcraft for nightly build
         if: inputs.nightly_build
-        run:
-          sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
+        run: sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
         working-directory: client/electron
 
       # We need to patch the vite.config.js because we cannot pass the secret to the snap build (either via build-args or env).
@@ -157,14 +175,14 @@ jobs:
           yq --null-input ".linux-gnu.$ARCH.client.snap = \"$FINAL_ARTIFACT_NAME\"" | tee artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux-snap.spdx.json .
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
         with:
           name: linux-snap-${{ runner.arch }}-electron
           path: |
@@ -205,29 +223,46 @@ jobs:
             artifact_tag: macos-dmg
           - name: 🐧 AppImage 4 Linux
             platform: linux-gnu
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             raw_latest_file: latest-linux.yml
             os_alias: linux
             extensions: AppImage
             artifact_tag: linux-appimage
+          - name: 🏁 Windows-hardened
+            platform: windows
+            os: windows-2022
+            raw_latest_file: latest.yml
+            extensions: exe
+            os_alias: win
+            artifact_tag: windows-exe
+            hardened: true
+          - name: 🍎 macOS x86-hardened
+            platform: macos
+            os: macos-15-intel
+            raw_latest_file: latest-mac.yml
+            extensions: dmg zip
+            os_alias: mac
+            artifact_tag: macos-dmg
+            hardened: true
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # pin v7.1.0
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # pin v8.0.2
         with:
           name: version.patch
+          digest-mismatch: error
           path: ${{ runner.temp }}/version.patch
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
@@ -242,15 +277,31 @@ jobs:
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
-      - name: Windows > Install WinFSP
+      - name: Download WinFsp
         if: matrix.platform == 'windows'
         shell: bash -eux {0}
-        run: |
-          choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
-          curl -L https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
-          unzip '${{ runner.temp }}/winfsp-tests.zip' -d '${{ runner.temp }}/'
-          mv '${{ runner.temp }}/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
+        run: >-
+          curl -L --fail
+          https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-${{ env.WINFSP_VERSION }}.msi -o '${{ runner.temp }}/winfsp.msi'
         timeout-minutes: 2
+
+      - name: Install WinFsp
+        if: matrix.platform == 'windows'
+        run: |
+          $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList @(
+            '/i', '${{ runner.temp }}\winfsp.msi',
+            '/qn', '/norestart',
+            'INSTALLLEVEL=1000'
+          )
+
+          # Ensure install is successful
+          if (@(0, 3010, 1641) -notcontains $p.ExitCode) {
+            throw "WinFsp install failed with exit code $($p.ExitCode)"
+          }
+
+          # Sanity check
+          Get-ChildItem "${env:ProgramFiles(x86)}\WinFsp\bin" | Select-Object -First 20
+        timeout-minutes: 1
 
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
@@ -263,9 +314,20 @@ jobs:
           echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
-      - name: Windows > Install yq
+      - name: Install tools
+        uses: taiki-e/install-action@1919c4a95903d2c33e4a221102edca87309fc14b # v2.89.0
+        with:
+          tool: syft@0.84.0, yq
+        timeout-minutes: 2
+
+      - name: Windows > Install TrustedSigning
         if: matrix.platform == 'windows'
-        run: choco install yq
+        run: Install-Module -Name TrustedSigning -Force -Scope CurrentUser
+        timeout-minutes: 3
+
+      - name: Windows > Install TrustedSigning
+        if: matrix.platform == 'windows'
+        run: Install-Module -Name TrustedSigning -Force -Scope CurrentUser
         timeout-minutes: 3
 
       - name: MacOS > Install macFUSE
@@ -281,7 +343,7 @@ jobs:
 
       - name: Setup rust cache for debugging
         if: false
-        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # pin v2.8.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
         with:
           cache-on-failure: true
           save-if: true
@@ -308,7 +370,7 @@ jobs:
         run: npm run build:release
         working-directory: bindings/electron
         # MacOS is really slow when building rust
-        timeout-minutes: 30
+        timeout-minutes: 35
 
       - name: Inspect rust electron build
         run: ls -Rl .
@@ -317,16 +379,17 @@ jobs:
         timeout-minutes: 1
 
       - name: Build client for electron
-        run: npm run native:build -- ${{ matrix.platform == 'windows' && '--' || '' }} --mode ${{ steps.version.outputs.type }}
+        run: npm run native:build -- --mode ${{ steps.version.outputs.type }}${{ matrix.hardened && '.hardened' || '' }}
         working-directory: client
         timeout-minutes: 5
         env:
+          PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=8092
 
       - name: Copy client build result to electron
-        run: npm exec cap copy @capacitor-community/electron
+        run: npm run electron:copy:webapp
         working-directory: client
-        timeout-minutes: 1
+        timeout-minutes: 5
 
       # Do not prepare codesign if the PR is from dependabot (it does not have access to secrets).
       - name: Prepare codesign
@@ -342,6 +405,19 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.MACOS_CI_KEYCHAIN_PASSWD }}" build.keychain
         env:
           MACOS_CERT: ${{ secrets.MACOS_CERT }}
+        timeout-minutes: 2
+
+      # Since October 2026, notarization is unstable (often fail to reach Apple servers)
+      # Other users are also impacted by this:
+      # https://github.com/actions/runner-images/issues/14924
+      # And this comment:
+      # https://github.com/actions/runner-images/issues/14924#issuecomment-6188826956
+      # Recommand to block port UDP/443 so notarization instead of using QUICK protocol, fallback to HTTPS
+      - name: Stabilize notarization
+        if: matrix.platform == 'macos'
+        run: |
+          echo "block return out quick proto udp from any to any port 443" | sudo pfctl -f -
+          sudo pfctl -E
         timeout-minutes: 2
 
       - name: Build Electron apps
@@ -364,13 +440,19 @@ jobs:
             export APPLE_ID='${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}'
             export APPLE_APP_SPECIFIC_PASSWORD='${{ secrets.MACOS_NOTARIZATION_PASSWD }}'
           fi
-          npm run electron:release \
-            ${{ (matrix.platform == 'linux-gnu' || inputs.nightly_build || matrix.platform == 'macos') && '--' || '' }} \
+          npm run electron:release -- \
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
-            ${{ matrix.platform == 'macos' && '--sign' || ''}}
+            ${{ (contains(fromJSON('["windows", "macos"]'), matrix.platform) && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')) && '--sign' || '' }} \
+            ${{ matrix.hardened && '--hardened' || '' }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+          AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+          AZURE_TRUSTED_SIGNING_PROFILE_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE_NAME }}
         working-directory: client/electron
         timeout-minutes: 10
 
@@ -381,15 +463,10 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
-        timeout-minutes: 1
-
-      # Install syft
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
-        with:
-          tool: syft@0.84.0
+        timeout-minutes: 2
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}-${{ runner.arch }}.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}${{ matrix.hardened && '-hardened' || '' }}-${{ runner.arch }}.spdx.json .
 
       - name: Debug dist folder
         if: runner.debug || false
@@ -400,8 +477,8 @@ jobs:
         shell: bash -eux -o pipefail {0}
         run: |
           arch=$(uname -m)
-          app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ (matrix.platform == 'windows' || matrix.platform == 'linux-gnu') && '.unsigned' || '' }}"
-          latest_file="latest-${{ matrix.os_alias }}-${arch}.yml"
+          app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ matrix.hardened && '.hardened' || '' }}${{ matrix.platform == 'linux-gnu' && '.unsigned' || '' }}"
+          latest_file="latest-${{ matrix.hardened && 'hardened-' || '' }}${{ matrix.os_alias }}-${arch}.yml"
           artifact_file=artifacts.yml
 
           EOF="EOF-$(dd if=/dev/urandom bs=15 count=1 status=none | base64)"
@@ -423,11 +500,14 @@ jobs:
             grep -q -e "${app_file}" "${latest_file}"
 
             # Update artifact file
-            yq -i ".${{ matrix.platform }}.${arch}.client.${ext} = \"${app_file}\"" $artifact_file
+            yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext} = \"${app_file}\"" $artifact_file
+            # AppImage does not have a blockmap file generated
+            if [ "$ext" != "AppImage" ]; then
+              yq -i ".${{ matrix.platform }}.${arch}.${{ matrix.hardened && 'hardened-' || '' }}client.${ext}-blockmap = \"${app_file}.blockmap\"" $artifact_file
+            fi
 
             # Add to files_to_upload
-            echo client/electron/dist/$app_file | tee -a $GITHUB_OUTPUT
-            echo client/electron/dist/$app_file.blockmap | tee -a $GITHUB_OUTPUT
+            yq . $artifact_file -o json | jq -r '"client/electron/dist/" + (.. | scalars)' | tee -a $GITHUB_OUTPUT
           done
 
           # Print artifact file
@@ -437,25 +517,27 @@ jobs:
           echo $EOF >> $GITHUB_OUTPUT
         working-directory: client/electron/dist
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
+      - name: Upload application artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
         with:
-          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
+          name: ${{ matrix.artifact_tag }}${{ matrix.hardened && '-hardened' || '' }}-${{ runner.arch }}-electron
           path: |
             ${{ steps.build-info.outputs.files_to_upload }}
             client/electron/dist/Parsec-SBOM-*.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
+      - name: Upload Windows pre-built artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
         if: matrix.platform == 'windows'
         with:
-          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron-pre-built
+          name: ${{ matrix.artifact_tag }}${{ matrix.hardened && '-hardened' || '' }}-${{ runner.arch }}-electron-pre-built
           path: |
             client/electron/app
             client/electron/build
             client/electron/assets
             client/electron/scripts
-            client/electron/package.js
+            client/electron/package.cjs
             client/electron/package.json
             client/electron/package-lock.json
             client/electron/sign-windows-package.cmd

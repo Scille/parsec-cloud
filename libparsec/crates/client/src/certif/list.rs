@@ -1,18 +1,20 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertifStoreError, GetCertificateError},
     CertificateOps, UpTo,
+    store::{CertifStoreError, GetCertificateError},
 };
 
-pub use super::store::CertifStoreError as CertifGetCurrentSelfProfileError;
-pub use super::store::CertifStoreError as CertifGetCurrentSelfRealmsRoleError;
-pub use super::store::CertifStoreError as CertifGetCurrentSelfRealmRoleError;
-pub use super::store::CertifStoreError as CertifListUsersError;
-pub use super::store::CertifStoreError as CertifListUserDevicesError;
-pub use super::store::CertifStoreError as CertifListWorkspaceUsersError;
+pub type CertifGetCurrentSelfProfileError = super::store::CertifStoreError;
+pub type CertifGetCurrentSelfRealmsRoleError = super::store::CertifStoreError;
+pub type CertifGetCurrentSelfRealmRoleError = super::store::CertifStoreError;
+pub type CertifGetRealmArchivingConfigurationError = super::store::CertifStoreError;
+pub type CertifListUsersError = super::store::CertifStoreError;
+pub type CertifListUserDevicesError = super::store::CertifStoreError;
+pub type CertifListWorkspaceUsersError = super::store::CertifStoreError;
+pub type CertifListWorkspaceUserRoleChangesError = super::store::CertifStoreError;
 
 pub(super) async fn get_current_self_profile(
     ops: &CertificateOps,
@@ -40,6 +42,7 @@ pub(super) async fn get_current_self_realms_role(
 
     let mut roles = Vec::with_capacity(certifs.len());
     for certif in certifs {
+        // Note this O(n) operation is fine since we expect `certifs` to be small
         let maybe_exists = roles
             .iter()
             .position(|(realm_id, _, _)| *realm_id == certif.realm_id);
@@ -196,10 +199,10 @@ pub(super) async fn get_user_info(
                     unreachable!("query up to current")
                 }
                 Err(GetCertificateError::NonExisting) => {
-                    return Err(CertifGetUserInfoError::NonExisting)
+                    return Err(CertifGetUserInfoError::NonExisting);
                 }
                 Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserInfoError::Internal(err))
+                    return Err(CertifGetUserInfoError::Internal(err));
                 }
             };
             let revoked_certificate = store
@@ -294,11 +297,16 @@ pub(super) async fn get_user_device(
                     unreachable!("query up to current")
                 }
                 Err(GetCertificateError::NonExisting) => {
-                    return Err(CertifGetUserDeviceError::NonExisting)
+                    return Err(CertifGetUserDeviceError::NonExisting);
                 }
                 Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserDeviceError::Internal(err))
+                    return Err(CertifGetUserDeviceError::Internal(err));
                 }
+            };
+
+            let device_created_by = match &device_certif.author {
+                CertificateSigner::User(author) => Some(author.to_owned()),
+                CertificateSigner::Root => None,
             };
 
             let user_id = device_certif.user_id;
@@ -314,7 +322,7 @@ pub(super) async fn get_user_device(
                     return Err(CertifGetUserDeviceError::NonExisting);
                 }
                 Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserDeviceError::Internal(err))
+                    return Err(CertifGetUserDeviceError::Internal(err));
                 }
             };
 
@@ -347,22 +355,6 @@ pub(super) async fn get_user_device(
                 created_by: user_created_by,
                 revoked_on,
                 revoked_by,
-            };
-
-            let device_certif = match store.get_device_certificate(UpTo::Current, device_id).await {
-                Ok(certif) => certif,
-                Err(GetCertificateError::ExistButTooRecent { .. }) => unreachable!(),
-                Err(GetCertificateError::NonExisting) => {
-                    return Err(CertifGetUserDeviceError::NonExisting)
-                }
-                Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserDeviceError::Internal(err))
-                }
-            };
-
-            let device_created_by = match &device_certif.author {
-                CertificateSigner::User(author) => Some(author.to_owned()),
-                CertificateSigner::Root => None,
             };
 
             let device_info = DeviceInfo {
@@ -446,4 +438,58 @@ pub(super) async fn list_workspace_users(
         })
         .await?
         .map_err(|err| err.into())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct WorkspaceUserRoleChange {
+    pub granted_by: DeviceID,
+    pub granted_on: DateTime,
+    /// None means unshared
+    pub role: Option<RealmRole>,
+}
+
+/// Give a list of role changes for a user on a workspace
+/// Roles are returned ordered by timestamp in increasing order (i.e. oldest first)
+pub(super) async fn list_workspace_user_role_changes(
+    ops: &CertificateOps,
+    realm_id: VlobID,
+    user_id: UserID,
+) -> Result<Vec<WorkspaceUserRoleChange>, CertifListWorkspaceUserRoleChangesError> {
+    ops.store
+        .for_read(async |store| {
+            let realm_certifs = store.get_realm_roles(UpTo::Current, realm_id).await?;
+            Ok::<_, anyhow::Error>(
+                realm_certifs
+                    .into_iter()
+                    .filter(|cert| cert.user_id == user_id)
+                    .map(|cert| WorkspaceUserRoleChange {
+                        granted_by: cert.author,
+                        granted_on: cert.timestamp,
+                        role: cert.role,
+                    })
+                    .collect(),
+            )
+        })
+        .await?
+        .map_err(|err| err.into())
+}
+
+pub(super) async fn get_realm_archiving_configuration(
+    ops: &CertificateOps,
+    realm_id: VlobID,
+) -> Result<
+    (RealmArchivingConfiguration, Option<DateTime>),
+    CertifGetRealmArchivingConfigurationError,
+> {
+    ops.store
+        .for_read(async |store| {
+            let certif = store
+                .get_realm_last_archiving_certificate(UpTo::Current, realm_id)
+                .await?;
+            Ok(match certif {
+                Some(certif) => (certif.configuration, Some(certif.timestamp)),
+                None => (RealmArchivingConfiguration::Available, None),
+            })
+        })
+        .await?
 }

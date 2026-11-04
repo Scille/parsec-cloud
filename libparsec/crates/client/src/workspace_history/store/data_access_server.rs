@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -8,9 +8,9 @@ use super::{
     AuthenticatedCmds, CertificateOps, DataAccessFetchBlockError, DataAccessFetchManifestError,
 };
 use crate::server_fetch::{
+    ServerFetchBlockError, ServerFetchManifestError, ServerFetchVersionsManifestError,
     server_fetch_block, server_fetch_child_manifest, server_fetch_versions_workspace_manifest,
-    server_fetch_workspace_manifest, ServerFetchBlockError, ServerFetchManifestError,
-    ServerFetchVersionsManifestError,
+    server_fetch_workspace_manifest,
 };
 
 pub(super) struct ServerDataAccess {
@@ -85,6 +85,9 @@ impl ServerDataAccess {
                 ServerFetchManifestError::NoRealmAccess => {
                     DataAccessFetchManifestError::NoRealmAccess
                 }
+                ServerFetchManifestError::RealmDeleted => {
+                    DataAccessFetchManifestError::RealmDeleted
+                }
                 ServerFetchManifestError::InvalidKeysBundle(err) => {
                     DataAccessFetchManifestError::InvalidKeysBundle(err)
                 }
@@ -123,6 +126,7 @@ impl ServerDataAccess {
             ServerFetchBlockError::RealmNotFound => DataAccessFetchBlockError::BlockNotFound,
             ServerFetchBlockError::BlockNotFound => DataAccessFetchBlockError::BlockNotFound,
             ServerFetchBlockError::NoRealmAccess => DataAccessFetchBlockError::NoRealmAccess,
+            ServerFetchBlockError::RealmDeleted => DataAccessFetchBlockError::RealmDeleted,
             ServerFetchBlockError::ServerBlockstoreUnavailable => {
                 DataAccessFetchBlockError::ServerBlockstoreUnavailable
             }
@@ -172,6 +176,9 @@ impl ServerDataAccess {
                     }
                     ServerFetchVersionsManifestError::NoRealmAccess => {
                         Err(DataAccessFetchManifestError::NoRealmAccess)
+                    }
+                    ServerFetchVersionsManifestError::RealmDeleted => {
+                        Err(DataAccessFetchManifestError::RealmDeleted)
                     }
                     ServerFetchVersionsManifestError::InvalidKeysBundle(err) => {
                         Err(DataAccessFetchManifestError::InvalidKeysBundle(err))

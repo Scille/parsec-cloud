@@ -25,11 +25,11 @@ async function toggleSidebar(page: MsPage): Promise<void> {
 msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
 
-  const mainButtons = sidebar.locator('.list-sidebar-header-text');
-  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
+  const mainButtons = sidebar.locator('.list-sidebar-header__text');
+  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const items = sidebar.locator('#sidebar-organization').locator('.sidebar-content-organization-button__text');
-  await expect(items).toHaveText(['Users', 'Invitations', 'Information']);
+  await expect(items).toHaveText(['Users', 'Invitations & Join Requests', 'Information']);
 });
 
 msTest('Sidebar in workspaces page', async ({ workspaces }) => {
@@ -37,28 +37,28 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
 
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
 
-  const mainButtons = sidebar.locator('.list-sidebar-header-text');
-  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
+  const mainButtons = sidebar.locator('.list-sidebar-header__text');
+  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const currentWorkspace = sidebar.locator('#sidebar-workspaces').locator('.current-workspace').locator('.sidebar-item');
   await expect(currentWorkspace).toBeVisible();
-  await expect(sidebar.locator('#sidebar-all-workspaces')).toHaveText('All workspaces');
-  await sidebar.locator('.sidebar-content-organization-button').nth(0).click();
+  await expect(sidebar.locator('#sidebar-all-workspaces')).toHaveText('My workspaces');
+  await sidebar.locator('#sidebar-all-workspaces').click();
   await expect(currentWorkspace).toBeHidden();
 });
 
 msTest('Sidebar in connected page', async ({ workspaces }) => {
   const sidebar = workspaces.locator('.sidebar');
 
-  const mainButtons = sidebar.locator('.list-sidebar-header-text');
-  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
+  const mainButtons = sidebar.locator('.list-sidebar-header__text');
+  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const organizationContent = sidebar.locator('#sidebar-organization');
   const workspacesContent = sidebar.locator('#sidebar-workspaces');
   const filesContent = sidebar.locator('#sidebar-files');
 
   async function checkSidebarToggleVisibility(content: Locator, title: string): Promise<void> {
-    await expect(content.locator('.list-sidebar-header-text')).toHaveText(title);
+    await expect(content.locator('.list-sidebar-header__text')).toHaveText(title);
     await expect(content.locator('.list-sidebar-content')).toBeVisible();
     await content.locator('.list-sidebar-header__toggle').click();
     await expect(content.locator('.list-sidebar-content')).toBeHidden();
@@ -67,7 +67,7 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   }
 
   await checkSidebarToggleVisibility(organizationContent, 'Organization');
-  await checkSidebarToggleVisibility(workspacesContent, 'My workspaces');
+  await checkSidebarToggleVisibility(workspacesContent, 'Workspaces');
   await checkSidebarToggleVisibility(filesContent, 'Recent documents');
 
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
@@ -94,7 +94,7 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
 
   await expect(checklistPopover).toBeHidden();
   await expect(checklist).toBeVisible();
-  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security checklist');
+  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security recommendations');
   await expect(checklist.locator('.checklist-text__description')).toHaveText('2 remaining tasks');
   await checklist.click();
   await expect(checklistPopover).toBeVisible();
@@ -116,7 +116,7 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   workspaces.locator('.dropdown-popover').getByRole('listitem').nth(0).click();
   await workspaceSharingModal.locator('.closeBtn').click();
 
-  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security checklist');
+  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security recommendations');
   await expect(checklist.locator('.checklist-text__description')).toHaveText('1 remaining task');
   await checklist.click();
   await expect(checklistPopover).toBeVisible();
@@ -134,17 +134,22 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   await workspaces.locator('.topbar').locator('.profile-header').click();
   workspaces.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0).click();
   const profilePage = workspaces;
-  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
   await profilePage.locator('.menu-list__item').nth(3).click();
   const recovery = profilePage.locator('.recovery');
-  const recoveryFiles = recovery.locator('.recovery-list');
-  await recovery.locator('.restore-password-button').click();
-  await expect(recoveryFiles).toBeVisible();
-  const recoveryItems = recoveryFiles.locator('.recovery-item');
+  await expect(profilePage.locator('.export-recovery-device-modal')).toBeHidden();
+  await recovery.locator('.recovery-section--file').locator('.action-button').click();
+  const exportRecoveryDeviceModal = profilePage.locator('.export-recovery-device-modal');
+  await expect(exportRecoveryDeviceModal).toBeVisible();
+  const recoveryItems = exportRecoveryDeviceModal.locator('.step-item');
   await expect(recoveryItems).toHaveCount(2);
 
-  await recoveryItems.nth(0).locator('.recovery-item-download').locator('ion-button').click();
-  await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
+  await recoveryItems.nth(0).locator('.input-action-button').nth(1).click();
+  await recoveryItems.nth(1).locator('.input-action-button').click();
+  await exportRecoveryDeviceModal.locator('.confirmation-checkbox').click();
+  await expect(exportRecoveryDeviceModal.locator('#next-button')).toBeEnabled();
+  await exportRecoveryDeviceModal.locator('#next-button').click();
+  await expect(exportRecoveryDeviceModal).toBeHidden();
   await expect(checklist).toBeHidden();
 });
 
@@ -199,8 +204,6 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await workspaces.locator('.toast-container').locator('.toast-button').click();
   await workspaceSharingModal.locator('.closeBtn').click();
 
-  await expect(checklistButton).toHaveTheClass('unread');
-
   await checklistButton.click();
   await expect(checklistModal).toBeVisible();
   // `order` only re-orders the items visually, not in the DOM.
@@ -216,12 +219,24 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(3).click();
   workspaces.locator('.menu-list__item').nth(3).click();
   const profilePage = workspaces;
-  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
-  await profilePage.locator('.restore-password-button').click();
+  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
+  const recovery = profilePage.locator('.recovery');
+  await expect(profilePage.locator('.export-recovery-device-modal')).toBeHidden();
+  await recovery.locator('.recovery-section--file').locator('.action-button').click();
 
-  await workspaces.locator('.recovery-item-download').locator('ion-button').nth(0).click();
-  await workspaces.locator('.recovery-item-download').locator('ion-button').nth(1).click();
+  const exportRecoveryDeviceModal = profilePage.locator('.export-recovery-device-modal');
+  await expect(exportRecoveryDeviceModal).toBeVisible();
+  const recoveryItems = exportRecoveryDeviceModal.locator('.step-item');
+  await expect(recoveryItems).toHaveCount(2);
+
+  await recoveryItems.nth(0).locator('.input-action-button').nth(1).click();
+  await recoveryItems.nth(1).locator('.input-action-button').click();
+  await exportRecoveryDeviceModal.locator('.confirmation-checkbox').click();
+  await expect(exportRecoveryDeviceModal.locator('#next-button')).toBeEnabled();
+  await exportRecoveryDeviceModal.locator('#next-button').click();
+
   await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(1).click();
+  await expect(exportRecoveryDeviceModal).toBeHidden();
   await expect(checklistModal).toBeHidden();
 });
 
@@ -411,36 +426,6 @@ msTest.describe(() => {
 
     await expect(documents.locator('.sidebar')).toBeVisible();
   });
-
-  msTest('Sidebar persistence switching workspace categories', async ({ workspaces }) => {
-    const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
-    const workspaceCategoriesMenuItem = workspaceCategoriesMenu.locator('.workspace-categories-menu-item');
-    const workspaceCategoriesSidebar = workspaces.locator('#sidebar-workspaces');
-    const workspaceCategoriesSidebarItem = workspaceCategoriesSidebar.locator('.sidebar-content-organization-button');
-
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-      'All workspaces',
-      'Recently viewed',
-      'Pinned',
-    ]);
-
-    await expect(workspaceCategoriesSidebar.locator('.sidebar-content-organization-button__text')).toHaveText([
-      'All workspaces',
-      'Recently viewed',
-      'Pinned',
-    ]);
-
-    async function checkActiveCategories(activeItemsClicked: Locator, activeItemsResult: Locator, activeIndex: number): Promise<void> {
-      for (let i = 0; i < activeIndex; i++) {
-        await activeItemsClicked.nth(i).click();
-        await expect(activeItemsClicked.nth(i)).toHaveClass(/active/);
-        await expect(activeItemsResult.nth(i)).toHaveClass(/active/);
-      }
-    }
-
-    await checkActiveCategories(workspaceCategoriesMenuItem, workspaceCategoriesSidebarItem, 3);
-    await checkActiveCategories(workspaceCategoriesSidebarItem, workspaceCategoriesMenuItem, 3);
-  });
 });
 
 msTest('Trying to navigate through the workspace content, profile, invitations, and back to workspaces page', async ({ connected }) => {
@@ -459,11 +444,11 @@ msTest('Trying to navigate through the workspace content, profile, invitations, 
   const sidebar = connected.locator('.sidebar');
 
   await sidebar.locator('#sidebar-invitations').click();
-  await expect(connected).toHavePageTitle('Invitations');
+  await expect(connected).toHavePageTitle('Invitations & Join Requests');
   await expect(connected).toBeInvitationPage();
 
   const allWorkspacesButton = connected.locator('#sidebar-all-workspaces');
-  await expect(allWorkspacesButton).toHaveText('All workspaces');
+  await expect(allWorkspacesButton).toHaveText('My workspaces');
   await allWorkspacesButton.click();
   await expect(connected).toBeWorkspacePage();
 });

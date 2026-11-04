@@ -29,13 +29,13 @@ async fn ok(env: &TestbedEnv) {
             account.cmds.addr().to_owned(),
             "Org1".parse().unwrap(),
             InvitationType::User,
-            InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+            AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         ),
         ParsecInvitationAddr::new(
             account.cmds.addr().to_owned(),
             "Org2".parse().unwrap(),
             InvitationType::Device,
-            InvitationToken::from_hex("e4eaf751ba3546a899a9088002e51918").unwrap(),
+            AccessToken::from_hex("e4eaf751ba3546a899a9088002e51918").unwrap(),
         ),
     ];
 

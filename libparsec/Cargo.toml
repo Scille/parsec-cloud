@@ -7,6 +7,7 @@ homepage.workspace = true
 license.workspace = true
 version.workspace = true
 repository.workspace = true
+exclude = ["tests/", "examples/", "benches/"]
 
 [lints]
 workspace = true
@@ -21,6 +22,7 @@ test-utils = [
     "libparsec_platform_device_loader/test-with-testbed",
     "libparsec_platform_storage/test-with-testbed",
     "libparsec_platform_ipc/test-with-testbed",
+    "libparsec_platform_pki/test-with-testbed",
     "libparsec_types/test-mock-time",
 ]
 cli-tests = ["dep:libparsec_tests_fixtures"]
@@ -38,6 +40,7 @@ libparsec_platform_device_loader = { workspace = true }
 libparsec_platform_pki = { workspace = true }
 libparsec_platform_storage = { workspace = true }
 libparsec_serialization_format = { workspace = true }
+libparsec_totp = { workspace = true }
 
 libparsec_testbed = { workspace = true, optional = true }
 libparsec_tests_fixtures = { workspace = true, optional = true }

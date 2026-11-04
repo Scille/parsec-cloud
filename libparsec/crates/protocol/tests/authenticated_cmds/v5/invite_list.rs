@@ -76,7 +76,7 @@ pub fn rep_ok() {
     let expected = authenticated_cmds::invite_list::Rep::Ok {
         invitations: vec![
             authenticated_cmds::invite_list::InviteListItem::User {
-                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
                     human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
@@ -86,7 +86,7 @@ pub fn rep_ok() {
                 status: InvitationStatus::Pending,
             },
             authenticated_cmds::invite_list::InviteListItem::Device {
-                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
                     human_handle: HumanHandle::from_raw("carl@dev1", "carl").unwrap(),
@@ -161,7 +161,7 @@ pub fn rep_ok() {
     let expected = authenticated_cmds::invite_list::Rep::Ok {
         invitations: vec![
             authenticated_cmds::invite_list::InviteListItem::User {
-                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
                     human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
@@ -171,7 +171,7 @@ pub fn rep_ok() {
                 status: InvitationStatus::Pending,
             },
             authenticated_cmds::invite_list::InviteListItem::Device {
-                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
                     human_handle: HumanHandle::from_raw("carl@dev1", "carl").unwrap(),
@@ -180,7 +180,7 @@ pub fn rep_ok() {
                 status: InvitationStatus::Pending,
             },
             authenticated_cmds::invite_list::InviteListItem::ShamirRecovery {
-                token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::ExternalService {
                     service_label: "LDAP".to_owned(),

@@ -8,7 +8,7 @@
             "fields": [
                 {
                     "name": "token",
-                    "type": "InvitationToken"
+                    "type": "AccessToken"
                 }
             ]
         },

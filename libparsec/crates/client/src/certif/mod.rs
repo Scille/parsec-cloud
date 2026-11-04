@@ -1,23 +1,28 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
+// Re-expose for convenience
+pub use libparsec_platform_storage::certificates::UpTo;
 
 mod add;
 mod block_validate;
+mod cryptpad_validate;
 mod encrypt;
 mod forget_all_certificates;
 mod list;
 mod manifest_validate;
 mod poll;
+mod realm_archive;
 mod realm_create;
 mod realm_decrypt_name;
 mod realm_key_rotation;
 mod realm_keys_bundle;
 mod realm_rename;
+mod realm_self_promote_to_owner;
 mod realm_share;
 mod realms_needs;
 mod shamir_recovery_delete;
@@ -30,24 +35,33 @@ mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use block_validate::{CertifValidateBlockError, InvalidBlockAccessError};
+pub use cryptpad_validate::{
+    CertifValidateCryptpadSessionKeysError, CryptpadSessionKeys, InvalidCryptpadSessionKeysError,
+};
 pub use encrypt::CertifEncryptForSequesterServicesError;
 pub use forget_all_certificates::CertifForgetAllCertificatesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
     CertifGetCurrentSelfProfileError, CertifGetCurrentSelfRealmRoleError,
-    CertifGetCurrentSelfRealmsRoleError, CertifGetUserDeviceError, CertifGetUserInfoError,
-    CertifListUserDevicesError, CertifListUsersError, CertifListWorkspaceUsersError, DeviceInfo,
-    UserInfo, WorkspaceUserAccessInfo,
+    CertifGetCurrentSelfRealmsRoleError, CertifGetRealmArchivingConfigurationError,
+    CertifGetUserDeviceError, CertifGetUserInfoError, CertifListUserDevicesError,
+    CertifListUsersError, CertifListWorkspaceUserRoleChangesError, CertifListWorkspaceUsersError,
+    DeviceInfo, UserInfo, WorkspaceUserAccessInfo, WorkspaceUserRoleChange,
 };
 pub use manifest_validate::{CertifValidateManifestError, InvalidManifestError};
 pub use poll::CertifPollServerError;
+pub use realm_archive::{CertifArchiveRealmError, RequestedRealmArchivingConfiguration};
 pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
 pub use realm_keys_bundle::{
-    CertifDecryptForRealmError, CertifEncryptForRealmError, EncrytionUsage, InvalidKeysBundleError,
+    CertifDecryptForRealmError, CertifGetLatestRealmKeyForEncryptionError, EncryptionUsage,
+    InvalidKeysBundleError,
 };
 pub use realm_rename::CertifRenameRealmError;
+pub use realm_self_promote_to_owner::{
+    CertifGetRealmCanSelfPromoteToOwnerError, CertifSelfPromoteToOwnerError,
+};
 pub use realm_share::CertifShareRealmError;
 pub use realms_needs::{CertifGetRealmNeedsError, RealmNeeds};
 pub use shamir_recovery_delete::CertifDeleteShamirRecoveryError;
@@ -58,12 +72,12 @@ pub use shamir_recovery_list::{
 pub use shamir_recovery_setup::{
     CertifSetupShamirRecoveryError, ShamirRecoverySetupCertificateTimestamps,
 };
-pub use store::{CertifStoreError, UpTo};
+use store::CertifStoreError;
 pub use user_revoke::CertifRevokeUserError;
 pub use user_update_profile::CertifUpdateUserProfileError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
 
-use crate::{event_bus::EventBus, ClientConfig};
+use crate::{ClientConfig, event_bus::EventBus};
 
 // The following values define an offset to be used when processing
 // a require greater timestamp error. They are different to give priority
@@ -418,22 +432,50 @@ impl CertificateOps {
         .await
     }
 
-    /// Encrypt the data with the last known key from the most recent realm keys bundle.
+    #[expect(clippy::too_many_arguments)]
+    pub async fn validate_cryptpad_session_keys(
+        &self,
+        needed_realm_certificate_timestamp: DateTime,
+        needed_common_certificate_timestamp: DateTime,
+        realm_id: VlobID,
+        key_index: IndexInt,
+        document_id: VlobID,
+        author: DeviceID,
+        timestamp: DateTime,
+        encrypted_view_key: &[u8],
+        encrypted_edit_key: Option<&[u8]>,
+    ) -> Result<CryptpadSessionKeys, CertifValidateCryptpadSessionKeysError> {
+        cryptpad_validate::validate_cryptpad_session_keys(
+            self,
+            needed_realm_certificate_timestamp,
+            needed_common_certificate_timestamp,
+            realm_id,
+            key_index,
+            document_id,
+            author,
+            timestamp,
+            encrypted_view_key,
+            encrypted_edit_key,
+        )
+        .await
+    }
+
+    /// Get the last known key from the most recent realm keys bundle.
     ///
     /// Be aware this function potentially do server accesses (to fetch the keys bundle).
-    pub async fn encrypt_for_realm(
+    pub async fn get_latest_realm_key_for_encryption(
         &self,
-        usage: EncrytionUsage,
+        usage: EncryptionUsage,
         realm_id: VlobID,
-        data: &[u8],
-    ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
+    ) -> Result<(SecretKey, IndexInt), CertifGetLatestRealmKeyForEncryptionError> {
         self.store
             .for_read(async |store| {
-                realm_keys_bundle::encrypt_for_realm(self, store, usage, realm_id, data).await
+                realm_keys_bundle::get_latest_realm_key_for_encryption(self, store, usage, realm_id)
+                    .await
             })
             .await
             .map_err(|e| match e {
-                CertifStoreError::Stopped => CertifEncryptForRealmError::Stopped,
+                CertifStoreError::Stopped => CertifGetLatestRealmKeyForEncryptionError::Stopped,
                 CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
             })?
     }
@@ -447,7 +489,7 @@ impl CertificateOps {
     /// Be aware this function potentially do server accesses (to fetch the keys bundle).
     pub async fn decrypt_opaque_data_for_realm(
         &self,
-        usage: EncrytionUsage,
+        usage: EncryptionUsage,
         realm_id: VlobID,
         key_index: IndexInt,
         encrypted: &[u8],
@@ -536,6 +578,26 @@ impl CertificateOps {
         new_name: EntryName,
     ) -> Result<CertificateBasedActionOutcome, CertifRenameRealmError> {
         realm_rename::rename_realm(self, realm_id, new_name).await
+    }
+
+    /// Returns `true` if all OWNERs of the workspace are revoked and the current
+    /// user has the highest remaining role (so they can self-promote to OWNER).
+    pub async fn get_realm_can_self_promote_to_owner(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<bool, CertifGetRealmCanSelfPromoteToOwnerError> {
+        realm_self_promote_to_owner::get_realm_can_self_promote_to_owner(self, realm_id).await
+    }
+
+    /// Self-promote the current user to OWNER of the given realm.
+    ///
+    /// This is only allowed when all existing OWNERs have been revoked and the
+    /// current user holds the highest remaining role.
+    pub async fn self_promote_to_owner(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<CertificateBasedActionOutcome, CertifSelfPromoteToOwnerError> {
+        realm_self_promote_to_owner::self_promote_to_owner(self, realm_id).await
     }
 
     /// Returns the timestamp of the uploaded certificate
@@ -650,6 +712,37 @@ impl CertificateOps {
         realm_id: VlobID,
     ) -> Result<Vec<WorkspaceUserAccessInfo>, CertifListWorkspaceUsersError> {
         list::list_workspace_users(self, realm_id).await
+    }
+
+    /// List all role changes for a user on a given realm.
+    pub async fn list_workspace_user_role_changes(
+        &self,
+        realm_id: VlobID,
+        user_id: UserID,
+    ) -> Result<Vec<WorkspaceUserRoleChange>, CertifListWorkspaceUserRoleChangesError> {
+        list::list_workspace_user_role_changes(self, realm_id, user_id).await
+    }
+
+    /// Retrieve the current archiving configuration of a realm from the last
+    /// realm archiving certificate. Returns `Available` if no archiving
+    /// certificate exists for the realm.
+    pub async fn get_realm_archiving_configuration(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<
+        (RealmArchivingConfiguration, Option<DateTime>),
+        CertifGetRealmArchivingConfigurationError,
+    > {
+        list::get_realm_archiving_configuration(self, realm_id).await
+    }
+
+    /// Returns the timestamp of the uploaded certificate
+    pub async fn archive_realm(
+        &self,
+        realm_id: VlobID,
+        configuration: RequestedRealmArchivingConfiguration,
+    ) -> Result<CertificateBasedActionOutcome, CertifArchiveRealmError> {
+        realm_archive::archive_realm(self, realm_id, configuration).await
     }
 
     /// Retrieve the realm name from the last realm name certificate, if any).

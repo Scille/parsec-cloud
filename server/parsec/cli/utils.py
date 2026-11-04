@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import datetime
 import traceback
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from collections.abc import AsyncGenerator, Awaitable, Callable, Generator
 from contextlib import asynccontextmanager, contextmanager
 from functools import partial
 from typing import (
@@ -14,6 +15,10 @@ from typing import (
 )
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 import click
 
 from parsec._parsec import DateTime, ParsecAddr, SecretKey
@@ -41,82 +46,26 @@ SCHEMES: dict[str, SchemesInternalType] = {
     "dots": {"interval": 80, "frames": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]}
 }
 
-ok = click.style("✔", fg="green")
-ko = click.style("✘", fg="red")
+OK = click.style("✔", fg="green")
+KO = click.style("✘", fg="red")
 
 
 @contextmanager
-def operation(txt: str) -> Iterator[None]:
-    click.echo(txt, nl=False)
-    try:
-        yield
-
-    except Exception:
-        click.echo(f"\r\033[K{txt} {ko}")
-        raise
-
-    else:
-        click.echo(f"\r\033[K{txt} {ok}")
-
-
-@asynccontextmanager
-async def spinner(
-    txt: str, sep: str = " ", scheme: str = "dots", color: str = "magenta"
-) -> AsyncIterator[None]:
-    scheme_theme = SCHEMES[scheme]
-    interval = scheme_theme["interval"]
-    frames = scheme_theme["frames"]
-    result: str | None = None
-
-    def _render_line(frame: str | None) -> None:
-        # Clear line then re-print it
-        click.echo(f"\r\033[K{txt}{sep}{frame}", nl=False)
-
-    async def _update_spinner() -> NoReturn:
-        try:
-            i: int = 1
-            while True:
-                await anyio.sleep(interval / 1000)
-                _render_line(click.style(frames[i], fg=color))
-                i = (i + 1) % len(frames)
-        finally:
-            # Last render for result
-            _render_line(result)
-            click.echo()
-
-    async with anyio.create_task_group() as task_group:
-        _render_line(frames[0])
-        task_group.start_soon(_update_spinner)
-
-        try:
-            yield
-
-        except Exception:
-            result = ko
-            raise
-
-        else:
-            result = ok
-
-        finally:
-            task_group.cancel_scope.cancel()
-
-
-@contextmanager
-def cli_exception_handler(debug: bool) -> Iterator[bool]:
+def cli_exception_handler(debug: bool) -> Generator[bool]:
+    # NOTE: since anyio>=4, functions using task groups always wrap exceptions in groups (thus, the except* syntax below)
+    #       See: https://anyio.readthedocs.io/en/stable/migration.html#task-groups-now-wrap-single-exceptions-in-groups
     try:
         yield debug
-
-    except KeyboardInterrupt:
+    except* KeyboardInterrupt:
         raise SystemExit(0)
-
-    except Exception as exc:
+    except* Exception as excgrp:
+        exc = excgrp.exceptions[0]
         exc_msg = str(exc)
         if not exc_msg.strip():
             exc_msg = repr(exc)
         click.echo(click.style("Error: ", fg="red") + exc_msg)
         if debug:
-            raise
+            raise exc
         else:
             raise SystemExit(1)
 
@@ -261,7 +210,7 @@ async def start_backend(
     blockstore_config: BaseBlockStoreConfig,
     debug: bool,
     populate_with_template: str | None = None,
-):
+) -> AsyncGenerator[Backend, Any]:
     """
     Start backend for CLI usage.
 

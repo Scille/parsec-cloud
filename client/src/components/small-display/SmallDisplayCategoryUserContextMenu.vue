@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page id="user-context-sheet-modal">
@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import SmallDisplayContextMenuButtons from '@/components/small-display/SmallDisplayContextMenuButtons.vue';
-import { UserAction } from '@/views/users/types';
+import { UserAction } from '@/services/contextMenu';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { checkbox, checkmarkCircle } from 'ionicons/icons';
 
@@ -38,6 +38,6 @@ async function onButtonClick(action: UserAction): Promise<boolean> {
 .content {
   display: flex;
   flex-direction: column;
-  height: 20rem;
+  min-height: 20rem;
 }
 </style>

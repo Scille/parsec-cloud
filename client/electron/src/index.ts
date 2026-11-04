@@ -1,20 +1,21 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, MenuItem, app, dialog, ipcMain, shell } from 'electron';
-import log from 'electron-log/main';
+import log from 'electron-log/main.js';
 import unhandled from 'electron-unhandled';
-import { electronIsDev } from './utils';
+import { electronIsDev } from './utils.js';
 
 import fs from 'fs';
 import path from 'path';
-import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels';
-import { setupContentSecurityPolicy } from './cspRules';
-import { Env } from './envVariables';
-import { ElectronCapacitorApp, setupReloadWatcher } from './setup';
+import capacitorConfig from '../capacitor.config.js';
+import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels.js';
+import { setupContentSecurityPolicy } from './cspRules.js';
+import { setupCustomCaFile } from './customCa.js';
+import { FEATURE_FLAGS } from './features.js';
+import { ParsecMenuItem, setupAppMenu } from './menu.js';
+import { ParsecApp, setupReloadWatcher } from './setup.js';
 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
 const ELECTRON_CONFIG_DIR_NAME = electronIsDev ? 'app-dev' : 'app';
@@ -37,16 +38,16 @@ function initSentry(): void {
   if (!sentry_dsn && !electronIsDev) {
     sentry_dsn = SENTRY_DSN_GUI_ELECTRON_DEFAULT;
   }
-  if (sentry_dsn && !Env.DISABLE_SENTRY) {
+  if (sentry_dsn && FEATURE_FLAGS.sentryEnabled()) {
     Sentry.init({
       dsn: sentry_dsn,
       integrations: [Sentry.captureConsoleIntegration({ levels: ['warn', 'error', 'assert'] })],
     });
   } else {
-    if (Env.DISABLE_SENTRY) {
-      console.info('Sentry is disabled');
-    } else {
+    if (FEATURE_FLAGS.sentryEnabled()) {
       console.info('Sentry not configured ("SENTRY_DSN_GUI_ELECTRON" env variable was not set).');
+    } else {
+      console.info('Sentry is disabled');
     }
   }
 }
@@ -69,6 +70,8 @@ try {
 
 log.initialize();
 Object.assign(console, log.functions);
+// Use UTC ISO timestamps (e.g. `2026-09-24T14:58:58.722Z`)
+log.transports.file.format = '[{iso}] [{level}]{scope} {text}';
 if (!electronIsDev) {
   log.transports.file.level = 'info';
   log.transports.console.level = 'info';
@@ -83,17 +86,14 @@ if (!electronIsDev) {
 // https://docs.sentry.io/platforms/javascript/guides/electron/#app-userdata-directory
 initSentry();
 
-// Get Config options from capacitor.config
-const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
-
 // Initialize our app. You can pass menu templates into the app here.
-const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarMenuTemplate);
+const parsecApp = new ParsecApp(capacitorConfig, appMenuBarMenuTemplate);
 
 function openLink(link: string): void {
-  if (myCapacitorApp.pageIsInitialized) {
-    myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, link);
+  if (parsecApp.pageIsInitialized) {
+    parsecApp.sendEvent(WindowToPageChannel.OpenLink, link);
   } else {
-    myCapacitorApp.storedLink = link;
+    parsecApp.storedLink = link;
   }
 }
 
@@ -103,15 +103,16 @@ if (!lock) {
   app.quit();
 } else {
   // If deep linking is enabled then we will set it up here.
-  if (capacitorFileConfig.electron?.deepLinkingEnabled) {
-    setupElectronDeepLinking(myCapacitorApp, {
-      customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'parsec3',
-    });
+  if (capacitorConfig.electron?.deepLinkingEnabled) {
+    const customProtocol = capacitorConfig.electron.deepLinkingCustomProtocol ?? 'parsec3';
+    if (!app.isDefaultProtocolClient(customProtocol)) {
+      app.setAsDefaultProtocolClient(customProtocol);
+    }
   }
 
   // If we are in Dev mode, use the file watcher components.
   if (electronIsDev) {
-    setupReloadWatcher(myCapacitorApp);
+    setupReloadWatcher(parsecApp);
   }
 
   // Run Application
@@ -120,40 +121,41 @@ if (!lock) {
     // Wait for electron app to be ready.
     await app.whenReady();
     // Security - Set Content-Security-Policy based on whether or not we are in dev mode.
-    setupContentSecurityPolicy(myCapacitorApp.getCustomURLScheme());
+    setupContentSecurityPolicy(parsecApp.getCustomURLScheme());
+    await setupCustomCaFile(process.env.SSL_CAFILE);
     // Initialize our app, build windows, and load content.
-    await myCapacitorApp.init();
-    myCapacitorApp.sendEvent(WindowToPageChannel.CustomBrandingFolder, path.join(app.getPath('userData'), 'custom'));
+    await parsecApp.init();
+    parsecApp.sendEvent(WindowToPageChannel.CustomBrandingFolder, path.join(app.getPath('userData'), 'custom'));
 
     process.on('SIGINT', () => {
       if (!sigProcessed) {
         console.log('Killed by SIGINT, cleaning up Parsec...');
-        myCapacitorApp.sendEvent(WindowToPageChannel.CloseRequest, true);
+        parsecApp.sendEvent(WindowToPageChannel.CloseRequest, true);
       }
       sigProcessed = true;
     });
     process.on('SIGTERM', () => {
       if (!sigProcessed) {
         console.log('Killed by SIGTERM, cleaning up Parsec...');
-        myCapacitorApp.sendEvent(WindowToPageChannel.CloseRequest, true);
+        parsecApp.sendEvent(WindowToPageChannel.CloseRequest, true);
       }
       sigProcessed = true;
     });
   })();
 
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
-    if (myCapacitorApp.pageIsInitialized) {
-      if (!myCapacitorApp.isMainWindowVisible()) {
-        myCapacitorApp.showMainWindow();
+    if (parsecApp.pageIsInitialized) {
+      if (!parsecApp.isMainWindowVisible()) {
+        parsecApp.showMainWindow();
       } else {
-        myCapacitorApp.focusMainWindow();
+        parsecApp.focusMainWindow();
       }
     }
 
     if (commandLine.length > 0) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
-      if (lastArg.startsWith('parsec3://')) {
+      if (lastArg && lastArg.startsWith('parsec3://')) {
         openLink(lastArg);
       }
     }
@@ -171,7 +173,7 @@ app.on('open-url', (_event, url) => {
 // This is used to differentiate cmd+Q from red X which also fires `close`.
 app.on('before-quit', async () => {
   if (process.platform === 'darwin') {
-    myCapacitorApp.macOSForceQuit = true;
+    parsecApp.macOSForceQuit = true;
   }
 });
 
@@ -180,26 +182,37 @@ app.on('window-all-closed', async () => {
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
-    await myCapacitorApp.quitApp();
+    await parsecApp.quitApp();
   }
 });
 
 // When the MacOS dock icon is clicked.
 app.on('activate', async () => {
-  myCapacitorApp.showMainWindow();
+  parsecApp.showMainWindow();
 });
 
 ipcMain.on(PageToWindowChannel.ConfigUpdate, (_event, data) => {
-  myCapacitorApp.updateConfig(data);
+  parsecApp.updateConfig(data);
 });
 
 ipcMain.on(PageToWindowChannel.MountpointUpdate, (_event, path) => {
-  myCapacitorApp.updateMountpoint(path);
+  parsecApp.updateMountpoint(path);
 });
 
+ipcMain.on(PageToWindowChannel.SetupActionMenu, (_event, items: ParsecMenuItem[]) => {
+  setupAppMenu(parsecApp, items);
+});
+
+ipcMain.on(
+  PageToWindowChannel.SetWindowTheme,
+  (_event, themePreference: 'system' | 'light' | 'dark', theme: 'light' | 'dark', overlay: boolean) => {
+    parsecApp.setWindowTheme(themePreference, theme, overlay);
+  },
+);
+
 ipcMain.on(PageToWindowChannel.CloseApp, async (_event) => {
-  myCapacitorApp.forceClose = true;
-  await myCapacitorApp.quitApp();
+  parsecApp.forceClose = true;
+  await parsecApp.quitApp();
 });
 
 ipcMain.on(PageToWindowChannel.OpenFile, async (_event, path: string) => {
@@ -217,7 +230,7 @@ ipcMain.on(PageToWindowChannel.OpenFile, async (_event, path: string) => {
       updatedPath = encodeURI(updatedPath);
       await shell.openExternal(updatedPath);
     } catch (e: any) {
-      myCapacitorApp.sendEvent(WindowToPageChannel.OpenPathFailed, path, error);
+      parsecApp.sendEvent(WindowToPageChannel.OpenPathFailed, path, error);
     }
   }
 });
@@ -227,29 +240,29 @@ ipcMain.on(PageToWindowChannel.SeeInExplorer, async (_event, path: string) => {
 });
 
 ipcMain.on(PageToWindowChannel.UpdateApp, async () => {
-  myCapacitorApp.updateApp();
+  parsecApp.updateApp();
 });
 
 ipcMain.on(PageToWindowChannel.UpdateAvailabilityRequest, async () => {
-  myCapacitorApp.checkForUpdates();
+  parsecApp.checkForUpdates();
 });
 
 ipcMain.on(PageToWindowChannel.PrepareUpdate, async () => {
-  if (myCapacitorApp.updater && myCapacitorApp.updater.isUpdateDownloaded()) {
-    myCapacitorApp.sendEvent(WindowToPageChannel.CleanUpBeforeUpdate);
+  if (parsecApp.updater && parsecApp.updater.isUpdateDownloaded()) {
+    parsecApp.sendEvent(WindowToPageChannel.CleanUpBeforeUpdate);
   }
 });
 
 ipcMain.on(PageToWindowChannel.Log, async (_event, level: 'debug' | 'info' | 'warn' | 'error', message: string) => {
-  myCapacitorApp.log(level, message);
+  parsecApp.log(level, message);
 });
 
 ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
-  myCapacitorApp.onPageInitialized();
+  parsecApp.onPageInitialized();
 });
 
 ipcMain.on(PageToWindowChannel.PageInitError, async (_event, error?: string) => {
-  myCapacitorApp.onRendererInitError(error);
+  parsecApp.onRendererInitError(error);
 });
 
 ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
@@ -272,29 +285,47 @@ automatiquement, le guide peut être trouvé à cette adresse : ${INSTALL_GUIDE_
 in which you can find steps to install macFUSE in the "macOS" tab.\n\nIf the link did not automatically open, the guide can be found \
 at this address: ${INSTALL_GUIDE_URL_EN}`,
   );
-  myCapacitorApp.forceClose = true;
-  await myCapacitorApp.quitApp();
+  parsecApp.forceClose = true;
+  await parsecApp.quitApp();
 });
 
 ipcMain.on(PageToWindowChannel.CriticalError, async (_event, message: string, error: Error) => {
   dialog.showErrorBox('Critical error', `${message}: ${error.message}`);
-  myCapacitorApp.forceClose = true;
-  await myCapacitorApp.quitApp();
+  parsecApp.forceClose = true;
+  await parsecApp.quitApp();
 });
 
-ipcMain.on(PageToWindowChannel.GetLogs, async () => {
-  const RE = /^\[(.+)\] \[(debug|info|warn|error|critical)\] (.+)$/;
-  const logs = log.transports.file.readAllLogs().flatMap((v) => {
-    return v.lines
-      .map((line) => {
-        const match = line.match(RE);
-        if (match && match.length === 4) {
-          return { message: match[3], level: match[2], timestamp: match[1] };
-        }
-      })
-      .filter((record) => record !== undefined);
-  });
-  myCapacitorApp.sendEvent(WindowToPageChannel.LogRecords, logs);
+const MAX_LOG_SIZE = 2 * 1024 * 1024;
+
+// Log files can grow large (libparsec's is never rotated), only keep the last `MAX_LOG_SIZE` bytes
+function readLogTail(logFile: string): string {
+  const fd = fs.openSync(logFile, 'r');
+  try {
+    const size = fs.fstatSync(fd).size;
+    const start = Math.max(0, size - MAX_LOG_SIZE);
+    const buffer = Buffer.alloc(size - start);
+    fs.readSync(fd, buffer, 0, buffer.length, start);
+    if (start === 0) {
+      return buffer.toString('utf-8');
+    }
+    // We most likely started in the middle of a line, skip to the next one
+    const firstNewLine = buffer.indexOf('\n');
+    return buffer.subarray(firstNewLine + 1).toString('utf-8');
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+ipcMain.on(PageToWindowChannel.GetLogs, async (_event, source: 'GUI' | 'libparsec') => {
+  const logFile =
+    source === 'GUI' ? log.transports.file.getFile().path : path.join(app.getPath('userData'), '..', 'libparsec', 'libparsec.log');
+  try {
+    const content = readLogTail(logFile);
+    parsecApp.sendEvent(WindowToPageChannel.LogRecords, source, content);
+  } catch (err: any) {
+    log.error(err);
+    parsecApp.sendEvent(WindowToPageChannel.LogRecords, source, '');
+  }
 });
 
 ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
@@ -305,7 +336,7 @@ ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
     frame: true,
     alwaysOnTop: true,
     resizable: false,
-    parent: myCapacitorApp.getMainWindow(),
+    parent: parsecApp.getMainWindow(),
     show: false,
     webPreferences: {
       nodeIntegration: false,
@@ -319,13 +350,20 @@ ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
     return { action: 'deny' };
   });
   popup.webContents.on('will-redirect', (event, url) => {
-    // When the redirect URL is called, check that it contains code & state, and if so,
+    // When the redirect URL is called, check that it is the URL callback, and if so,
     // close the popup and send the infos
     const parsed = new URL(url);
     const params = parsed.searchParams;
     // If the hostname changes, don't forget to also change it in the client
-    if (parsed.hostname === 'callback.parsec.cloud.invalid' && params.get('code') && params.get('state')) {
-      myCapacitorApp.sendEvent(WindowToPageChannel.SSOComplete, params.get('code'), params.get('state'));
+    if (parsed.hostname === 'callback.parsec.cloud.invalid') {
+      if (params.get('code') && params.get('state')) {
+        parsecApp.sendEvent(WindowToPageChannel.SSOComplete, { ok: true, value: { code: params.get('code'), state: params.get('state') } });
+      } else {
+        parsecApp.sendEvent(WindowToPageChannel.SSOComplete, {
+          ok: false,
+          error: { error: params.get('error') ?? 'unknown', description: params.get('error_description') },
+        });
+      }
       event.preventDefault();
       popup.hide();
       popup.destroy();

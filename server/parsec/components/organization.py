@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     DeviceCertificate,
     DeviceID,
@@ -25,8 +26,11 @@ from parsec.api import api
 from parsec.ballpark import TimestampOutOfBallpark, timestamps_in_the_ballpark
 from parsec.client_context import AnonymousClientContext, AuthenticatedClientContext
 from parsec.config import BackendConfig
+from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum, Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
+
+logger = get_logger()
 
 
 @dataclass(slots=True)
@@ -60,12 +64,15 @@ class TermsOfService:
 @dataclass(slots=True)
 class OrganizationDump:
     organization_id: OrganizationID
-    bootstrap_token: BootstrapToken | None
+    created_on: DateTime
+    bootstrap_token: AccessToken | None
+    bootstrapped_on: DateTime | None
     is_bootstrapped: bool
+    expired_on: DateTime | None
     is_expired: bool
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
-    minimum_archiving_period: int
+    realm_minimum_archiving_period_before_deletion: int
     tos: TermsOfService | None
 
 
@@ -169,10 +176,11 @@ def organization_bootstrap_validate(
 @dataclass(slots=True)
 class Organization:
     organization_id: OrganizationID
-    bootstrap_token: BootstrapToken | None
+    bootstrap_token: AccessToken | None
     is_expired: bool
+    expired_on: DateTime | None
     created_on: DateTime
-    minimum_archiving_period: int
+    realm_minimum_archiving_period_before_deletion: int
     bootstrapped_on: DateTime | None
     root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
@@ -227,6 +235,10 @@ class OrganizationUpdateBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+class WipeOrganizationBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+
+
 @dataclass(slots=True)
 class OrganizationDumpTopics:
     common: DateTime
@@ -253,10 +265,10 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
-        force_bootstrap_token: BootstrapToken | None = None,
-    ) -> BootstrapToken | OrganizationCreateBadOutcome:
+        force_bootstrap_token: AccessToken | None = None,
+    ) -> AccessToken | OrganizationCreateBadOutcome:
         raise NotImplementedError
 
     async def get(self, id: OrganizationID) -> Organization | OrganizationGetBadOutcome:
@@ -266,7 +278,7 @@ class BaseOrganizationComponent:
         self,
         id: OrganizationID,
         now: DateTime,
-        bootstrap_token: BootstrapToken | None,
+        bootstrap_token: AccessToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
         device_certificate: bytes,
@@ -311,17 +323,17 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
-        tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
-    ) -> None | OrganizationUpdateBadOutcome:
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
+        tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset,
+    ) -> OrganizationUpdateBadOutcome | None:
         raise NotImplementedError
 
     async def get_tos(
         self, id: OrganizationID
-    ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
+    ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
         raise NotImplementedError
 
-    async def test_dump_organizations(
+    async def list_organizations(
         self, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
         raise NotImplementedError
@@ -335,6 +347,9 @@ class BaseOrganizationComponent:
     async def test_duplicate_organization(
         self, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:
+        raise NotImplementedError
+
+    async def wipe_organization(self, id: OrganizationID) -> WipeOrganizationBadOutcome | None:
         raise NotImplementedError
 
     #

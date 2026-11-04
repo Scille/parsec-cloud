@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -9,25 +9,38 @@
       <ms-action-bar
         id="workspaces-ms-action-bar"
         v-if="isLargeDisplay"
-        :buttons="actionBarOptionsWorkspacesPage"
+        :buttons="search ? [] : actionBarOptionsWorkspacesPage"
       >
         <div class="right-side">
-          <div class="counter">
-            <ion-text class="body">
-              {{ $msTranslate({ key: 'WorkspacesPage.itemCount', data: { count: workspaceList.length }, count: workspaceList.length }) }}
+          <div
+            class="counter"
+            v-show="!search"
+          >
+            <ion-text>
+              {{
+                $msTranslate({
+                  key: 'WorkspacesPage.itemCount',
+                  data: { count: workspaceList.length },
+                  count: workspaceList.length,
+                })
+              }}
             </ion-text>
           </div>
           <ms-search-input
-            v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
+            ref="searchInputRef"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
           />
           <workspace-filter
-            :filters="workspaceFilters"
-            @change="onFilterUpdate"
+            v-show="!search"
+            v-model:filters="workspaceFilters"
             class="mobile-filters__filter"
           />
           <ms-sorter
+            v-show="!search"
             id="workspace-filter-select"
             :options="msSorterOptions"
             default-option="name"
@@ -35,6 +48,7 @@
             @change="onMsSorterChange($event)"
           />
           <ms-grid-list-toggle
+            v-show="!search"
             v-model="displayView"
             @update:model-value="onDisplayStateChange"
           />
@@ -43,28 +57,33 @@
 
       <div
         class="workspace-filters-menu"
-        v-if="isLargeDisplay"
+        v-if="isLargeDisplay && !search"
       >
         <workspace-categories-menu
           :active-menu="workspaceMenuState"
-          @update-menu="workspaceMenuState = $event"
+          :show-hidden="someHiddenWorkspaces"
+          @update-menu="onMenuUpdate"
         />
       </div>
 
       <!-- workspaces -->
-      <div class="workspaces-container scroll">
+      <div
+        class="main-container workspaces-container scroll"
+        @contextmenu.stop="openWorkspaceGlobalContextMenu"
+      >
         <div
           class="mobile-filters"
           v-if="isSmallDisplay"
         >
           <div class="mobile-filters-buttons">
             <workspace-filter
-              :filters="workspaceFilters"
-              @change="onFilterUpdate"
+              v-show="!search"
+              v-model:filters="workspaceFilters"
               class="mobile-filters-buttons__filter"
             />
             <ms-sorter
               id="workspace-filter-select"
+              v-show="!search"
               :options="msSorterOptions"
               default-option="name"
               :sorter-labels="msSorterLabels"
@@ -73,14 +92,18 @@
             />
           </div>
           <workspace-categories-menu
+            v-show="!search"
             :active-menu="workspaceMenuState"
-            @update-menu="workspaceMenuState = $event"
+            :show-hidden="someHiddenWorkspaces"
+            @update-menu="onMenuUpdate"
           />
           <ms-search-input
-            v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
             class="mobile-filters__search"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
           />
         </div>
         <div
@@ -92,40 +115,57 @@
 
         <div
           v-if="!querying && filteredWorkspaces.length === 0"
-          class="no-workspaces body-lg"
+          class="no-workspaces"
         >
           <div
             class="no-all-workspaces"
-            v-if="workspaceMenuState === WorkspaceMenu.All"
+            v-if="workspaceMenuState === WorkspaceMenu.All && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="NoWorkspace"
+              :image="theme === Theme.Dark ? NoWorkspaceDark : NoWorkspace"
               class="no-workspaces__image"
             />
-            <ion-text v-if="clientProfile !== UserProfile.Outsider">
-              {{
-                workspaceList.length > 0 ? $msTranslate('WorkspacesPage.noMatchingWorkspaces') : $msTranslate('WorkspacesPage.noWorkspaces')
-              }}
+            <ion-text v-if="workspaceList.length > 0">
+              <ms-rich-text
+                v-if="workspaceList.every((wk) => workspaceAttributes.isHidden(wk.id))"
+                text="WorkspacesPage.allWorkspacesHidden"
+              />
+              <span v-else-if="filteredWorkspaces.length === 0"> {{ $msTranslate('WorkspacesPage.noMatchingWorkspaces') }}</span>
             </ion-text>
-            <ion-text v-else>
-              {{ $msTranslate('WorkspacesPage.noWorkspacesExternal') }}
-            </ion-text>
+            <span v-else>
+              <span v-if="userInfo?.currentProfile === UserProfile.Outsider">{{
+                $msTranslate('WorkspacesPage.noWorkspacesExternal')
+              }}</span>
+              <span v-else>{{ $msTranslate('WorkspacesPage.noWorkspaces') }}</span>
+            </span>
             <ion-button
+              v-if="showHiddenWorkspacesButton"
+              @click="workspaceMenuState = WorkspaceMenu.Hidden"
+              id="show-hidden-workspaces"
+            >
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspaces') }}
+            </ion-button>
+            <ion-button
+              v-if="workspaceList.length === 0"
               v-show="clientProfile !== UserProfile.Outsider"
               id="new-workspace"
+              class="button-large"
               fill="outline"
-              @click="openCreateWorkspaceModal()"
+              @click="actions.openCreateWorkspaceModal()"
             >
-              <ion-icon :icon="addCircle" />
+              <ion-icon
+                class="button-icon-left"
+                :icon="addCircle"
+              />
               {{ $msTranslate('WorkspacesPage.createWorkspace') }}
             </ion-button>
           </div>
           <div
             class="no-recent-workspaces"
-            v-if="workspaceMenuState === WorkspaceMenu.Recents"
+            v-if="workspaceMenuState === WorkspaceMenu.Recent && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="NoRecentWorkspaces"
+              :image="theme === Theme.Dark ? NoRecentWorkspaceDark : NoRecentWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
@@ -134,67 +174,96 @@
           </div>
           <div
             class="no-favorite-workspaces"
-            v-if="workspaceMenuState === WorkspaceMenu.Favorites"
+            v-if="workspaceMenuState === WorkspaceMenu.Favorites && filteredWorkspaces.length === 0"
           >
             <ms-image
-              :image="NoFavoriteWorkspaces"
+              :image="theme === Theme.Dark ? NoFavoriteWorkspaceDark : NoFavoriteWorkspace"
               class="no-workspaces__image"
             />
             <ion-text>
               {{ $msTranslate('WorkspacesPage.categoriesMenu.noFavoriteWorkspaces') }}
             </ion-text>
           </div>
+          <div
+            class="no-hidden-workspaces"
+            v-if="workspaceMenuState === WorkspaceMenu.Hidden && filteredWorkspaces.length === 0"
+          >
+            <ms-image
+              :image="theme === Theme.Dark ? NoHiddenWorkspaceDark : NoHiddenWorkspace"
+              class="no-workspaces__image"
+            />
+            <ion-text>
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.noHiddenWorkspaces') }}
+            </ion-text>
+          </div>
         </div>
-
-        <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
-          <ion-list class="workspaces-container-list list">
-            <workspace-list-item
+        <template v-if="filteredWorkspaces.length > 0 && !search">
+          <div v-if="displayView === DisplayState.List">
+            <ion-list
+              class="list-container workspaces-container-list"
+              id="workspaces-page-workspace-list"
+            >
+              <workspace-list-item
+                v-for="workspace in filteredWorkspaces"
+                :key="workspace.id"
+                :workspace="workspace"
+                :client-profile="clientProfile"
+                :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+                :is-hidden="workspaceAttributes.isHidden(workspace.id)"
+                @click="onWorkspaceClick"
+                @favorite-click="onWorkspaceFavoriteClick"
+                @menu-click="onOpenWorkspaceContextMenu"
+                @share-click="onWorkspaceShareClick"
+                @self-promote-click="onSelfPromoteClick"
+              />
+            </ion-list>
+          </div>
+          <div
+            v-if="displayView === DisplayState.Grid"
+            class="workspaces-container-grid"
+          >
+            <workspace-card
               v-for="workspace in filteredWorkspaces"
               :key="workspace.id"
               :workspace="workspace"
               :client-profile="clientProfile"
               :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+              :is-hidden="workspaceAttributes.isHidden(workspace.id)"
               @click="onWorkspaceClick"
               @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
+              @self-promote-click="onSelfPromoteClick"
             />
-          </ion-list>
-        </div>
-        <div
-          v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.Grid"
-          class="workspaces-container-grid list"
-        >
-          <workspace-card
-            v-for="workspace in filteredWorkspaces"
-            :key="workspace.id"
-            :workspace="workspace"
-            :client-profile="clientProfile"
-            :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
-            @click="onWorkspaceClick"
-            @favorite-click="onWorkspaceFavoriteClick"
-            @menu-click="onOpenWorkspaceContextMenu"
-            @share-click="onWorkspaceShareClick"
+          </div>
+        </template>
+        <template v-if="search">
+          <file-search-results
+            :pattern="search.pattern"
+            :search-results="search.results"
+            :active="search.active"
+            :multiple-workspaces="true"
+            @item-click="onSearchResultClick"
+            @menu-item-click="onSearchResultContextMenu"
+            @update-pattern="search.pattern = $event"
           />
-        </div>
+        </template>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import NoFavoriteWorkspaces from '@/assets/images/no-favorite-workspaces.svg?raw';
-import NoRecentWorkspaces from '@/assets/images/no-recent-workspaces.svg?raw';
-import { workspaceNameValidator } from '@/common/validators';
+import { FileSearchResults } from '@/components/files';
+import { FileSearch } from '@/components/files/handler/viewer/types';
 import {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
   WorkspaceFilter,
+  WorkspacesPageFilters,
   WorkspacesPageSavedData,
-  openWorkspaceContextMenu,
-  workspaceShareClick,
+  compareWorkspaceRoles,
 } from '@/components/workspaces';
-import { WorkspacesPageFilters, compareWorkspaceRoles } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceCategoriesMenu from '@/components/workspaces/WorkspaceCategoriesMenu.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
@@ -203,49 +272,58 @@ import {
   EntryName,
   ParsecWorkspacePathAddr,
   Path,
+  SearchResult,
   UserProfile,
   WorkspaceInfo,
-  WorkspaceName,
   WorkspaceRole,
   decryptFileLink,
   entryStat,
+  fileSearch,
   getClientProfile,
+  getWorkspaceInfo,
   isDesktop,
   parseFileLink,
-  createWorkspace as parsecCreateWorkspace,
   getClientInfo as parsecGetClientInfo,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
-  listWorkspaces as parsecListWorkspaces,
+  listAvailableWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
+import { useFileContextMenu, useWorkspaceActions, useWorkspaceContextMenu } from '@/services/contextMenu';
 import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
-import { workspaceMenuState } from '@/services/workspaceMenuState';
+import { FileAction } from '@/views/files';
 import { WorkspaceAction, WorkspaceMenu, isWorkspaceAction } from '@/views/workspaces/types';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import {
-  Answer,
   DisplayState,
   MsActionBar,
   MsGridListToggle,
   MsImage,
   MsOptions,
+  MsRichText,
   MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
   MsSpinner,
+  NoFavoriteWorkspace,
+  NoFavoriteWorkspaceDark,
+  NoHiddenWorkspace,
+  NoHiddenWorkspaceDark,
+  NoRecentWorkspace,
+  NoRecentWorkspaceDark,
   NoWorkspace,
-  askQuestion,
-  getTextFromUser,
+  NoWorkspaceDark,
+  Theme,
+  useTheme,
   useWindowSize,
 } from 'megashark-lib';
-import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref } from 'vue';
 
 enum SortWorkspaceBy {
   Name = 'name',
@@ -254,24 +332,35 @@ enum SortWorkspaceBy {
   LastUpdate = 'lastUpdate',
 }
 
+const fileContextMenu = useFileContextMenu();
+const contextMenu = useWorkspaceContextMenu(false);
 const workspaceAttributes = useWorkspaceAttributes();
+const actions = useWorkspaceActions();
 
+const { theme } = useTheme();
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
-const searchFilterContent = ref('');
 const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
+const searchInputRef = ref();
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+const search = ref<FileSearch | undefined>(undefined);
+let searchAborter: AbortController | undefined = undefined;
+const searchPattern = ref('');
+const searchInputValue = ref('');
+const someHiddenWorkspaces = computed(() => workspaceList.value.some((wk) => workspaceAttributes.isHidden(wk.id)));
 
 let eventCbId: string | null = null;
+
+const workspaceMenuState = ref<WorkspaceMenu>(WorkspaceMenu.All);
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Workspaces)) {
@@ -279,14 +368,14 @@ const routeWatchCancel = watchRoute(async () => {
   }
 
   const query = getCurrentRouteQuery();
-  if (query.workspaceName) {
-    await createWorkspace(query.workspaceName);
-    await navigateTo(Routes.Workspaces, { replace: true, query: {} });
-  } else if (query.fileLink) {
+  if (query.fileLink) {
     const success = await handleFileLink(query.fileLink);
     if (!success) {
       await navigateTo(Routes.Workspaces, { query: {} });
     }
+  }
+  if (query.workspaceMenu && Object.values(WorkspaceMenu).includes(query.workspaceMenu)) {
+    workspaceMenuState.value = query.workspaceMenu as WorkspaceMenu;
   }
   await refreshWorkspacesList();
 });
@@ -300,19 +389,19 @@ const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 let hotkeys: HotkeyGroup | null = null;
 
 onMounted(async (): Promise<void> => {
-  window.electronAPI.log('debug', 'Mounted WorkspacePage');
+  window.nativeAPI.log('debug', 'Mounted WorkspacePage');
   displayView.value = (
     await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
   ).displayState;
 
-  window.electronAPI.log('debug', 'Loading favorite workspaces');
+  window.nativeAPI.log('debug', 'Loading favorite workspaces');
 
   await workspaceAttributes.load();
 
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'n', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
-    openCreateWorkspaceModal,
+    actions.openCreateWorkspaceModal,
   );
   hotkeys.add(
     { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
@@ -320,13 +409,18 @@ onMounted(async (): Promise<void> => {
       displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
     },
   );
+  hotkeys.add(
+    { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
+    async () => await searchInputRef.value?.setFocus(),
+  );
 
-  eventCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction,
+  eventCbId = await eventDistributor.value.registerCallback(
+    [Events.WorkspaceUpdated, Events.WorkspaceCreated, Events.MenuAction, Events.WorkspaceMountpointsSync],
     async (event: Events, data?: EventData) => {
       switch (event) {
         case Events.WorkspaceUpdated:
         case Events.WorkspaceCreated:
+        case Events.WorkspaceMountpointsSync:
           await refreshWorkspacesList();
           break;
         case Events.MenuAction:
@@ -335,35 +429,38 @@ onMounted(async (): Promise<void> => {
           }
           break;
         default:
-          window.electronAPI.log('warn', `Unhandled event ${event}`);
+          window.nativeAPI.log('warn', `Unhandled event ${event}`);
           break;
       }
     },
   );
 
-  window.electronAPI.log('debug', 'Getting user profile');
+  window.nativeAPI.log('debug', 'Getting user profile');
   clientProfile.value = await getClientProfile();
 
-  window.electronAPI.log('debug', 'Refreshing workspace list');
+  window.nativeAPI.log('debug', 'Refreshing workspace list');
   await refreshWorkspacesList();
 
-  window.electronAPI.log('debug', 'Getting Parsec client info');
+  window.nativeAPI.log('debug', 'Getting Parsec client info');
   const infoResult = await parsecGetClientInfo();
 
   if (infoResult.ok) {
     userInfo.value = infoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
 
   const query = getCurrentRouteQuery();
   if (query.fileLink) {
-    window.electronAPI.log('debug', 'Handling file link');
+    window.nativeAPI.log('debug', 'Handling file link');
     const success = await handleFileLink(query.fileLink);
     if (!success) {
-      window.electronAPI.log('warn', 'Could not handle file link, going back to workspaces');
+      window.nativeAPI.log('warn', 'Could not handle file link, going back to workspaces');
       await navigateTo(Routes.Workspaces, { query: {} });
     }
+  }
+  if (query.workspaceMenu && Object.values(WorkspaceMenu).includes(query.workspaceMenu)) {
+    workspaceMenuState.value = query.workspaceMenu as WorkspaceMenu;
   }
 });
 
@@ -373,7 +470,7 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
   if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -381,7 +478,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
   const parseResult = await parseFileLink(fileLink);
 
   if (!parseResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.invalidFileLink',
         level: InformationLevel.Error,
@@ -393,7 +490,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
 
   const workspace = workspaceList.value.find((w) => w.id === parseResult.value.workspaceId);
   if (!workspace) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.workspaceNotFound',
         level: InformationLevel.Error,
@@ -405,7 +502,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
 
   const decryptResult = await decryptFileLink(workspace.handle, fileLink);
   if (!decryptResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.invalidFileLink',
         level: InformationLevel.Error,
@@ -417,7 +514,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
 
   const fileInfoResult = await entryStat(workspace.handle, decryptResult.value);
   if (!fileInfoResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.fileNotFound',
         level: InformationLevel.Error,
@@ -452,28 +549,41 @@ async function onDisplayStateChange(): Promise<void> {
   );
 }
 
+async function openWorkspaceGlobalContextMenu(event: Event): Promise<void> {
+  if (userInfo.value?.currentProfile === UserProfile.Outsider) {
+    return;
+  }
+  event.preventDefault();
+  await contextMenu.openGlobalContextMenu(event);
+}
+
+async function onSelfPromoteClick(workspace: WorkspaceInfo): Promise<void> {
+  await actions.takeOwnershipOfWorkspace(workspace);
+  await refreshWorkspacesList();
+}
+
 async function refreshWorkspacesList(): Promise<void> {
   if (!currentRouteIs(Routes.Workspaces)) {
     return;
   }
   querying.value = true;
-  window.electronAPI.log('debug', 'Starting Parsec list workspaces');
+  window.nativeAPI.log('debug', 'Starting Parsec list workspaces');
   const result = await parsecListWorkspaces();
   if (result.ok) {
     for (const wk of result.value) {
-      window.electronAPI.log('debug', `Processing workspace: ${wk.currentName}`);
+      window.nativeAPI.log('debug', `Processing workspace: ${wk.name}`);
       const sharingResult = await parsecGetWorkspaceSharing(wk.id, false);
       if (sharingResult.ok) {
         wk.sharing = sharingResult.value;
       } else {
-        window.electronAPI.log('warn', `Failed to get sharing for ${wk.currentName}`);
+        window.nativeAPI.log('warn', `Failed to get sharing for ${wk.name}`);
       }
-      if (isDesktop() && wk.mountpoints.length === 0) {
+      if (isDesktop() && wk.mountpoints.length === 0 && !workspaceAttributes.isHidden(wk.id)) {
         const mountResult = await parsecMountWorkspace(wk.handle);
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
         } else {
-          window.electronAPI.log('warn', `Failed to mount ${wk.currentName}: ${mountResult.error.error}`);
+          window.nativeAPI.log('warn', `Failed to mount ${wk.name}: ${mountResult.error.error}`);
         }
       }
     }
@@ -486,9 +596,11 @@ async function refreshWorkspacesList(): Promise<void> {
       }
     }
     await recentDocumentManager.saveToStorage(storageManager);
+    if (workspaceMenuState.value === WorkspaceMenu.Hidden && !someHiddenWorkspaces.value) {
+      workspaceMenuState.value = WorkspaceMenu.All;
+    }
   } else {
-    window.electronAPI.log('error', 'Error listing workspaces');
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'WorkspacesPage.listError',
         level: InformationLevel.Error,
@@ -499,21 +611,36 @@ async function refreshWorkspacesList(): Promise<void> {
   querying.value = false;
 }
 
+const showHiddenWorkspacesButton = computed(() => {
+  return (
+    workspaceList.value.length > 0 &&
+    workspaceList.value.every((wk) => workspaceAttributes.isHidden(wk.id)) &&
+    filteredWorkspaces.value.length === 0 &&
+    workspaceMenuState.value !== WorkspaceMenu.Hidden
+  );
+});
+
 const filteredWorkspaces = computed(() => {
-  const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
     .filter((workspace) => {
-      switch (workspaceMenuState.value) {
-        case WorkspaceMenu.Recents:
-          return recentDocumentManager.getWorkspaces().find((workspaceRecents) => workspaceRecents.id === workspace.id) !== undefined;
-        case WorkspaceMenu.Favorites:
-          return workspaceAttributes.isFavorite(workspace.id);
-        default:
-          break;
+      if (isWorkspaceFiltered(workspace.selfRole)) {
+        return false;
       }
 
-      if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
-        return false;
+      switch (workspaceMenuState.value) {
+        case WorkspaceMenu.Recent:
+          return (
+            recentDocumentManager.getWorkspaces().find((workspaceRecent) => workspaceRecent.id === workspace.id) !== undefined &&
+            !workspaceAttributes.isHidden(workspace.id)
+          );
+        case WorkspaceMenu.Favorites:
+          return workspaceAttributes.isFavorite(workspace.id) && !workspaceAttributes.isHidden(workspace.id);
+        case WorkspaceMenu.Hidden:
+          return workspaceAttributes.isHidden(workspace.id);
+        case WorkspaceMenu.All:
+          return workspaceAttributes.isHidden(workspace.id) === false;
+        default:
+          break;
       }
       return true;
     })
@@ -522,9 +649,9 @@ const filteredWorkspaces = computed(() => {
         return workspaceAttributes.isFavorite(b.id) ? 1 : -1;
       }
       if (sortBy.value === SortWorkspaceBy.Name) {
-        return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
+        return sortByAsc.value ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       } else if (sortBy.value === SortWorkspaceBy.Role) {
-        return compareWorkspaceRoles(b.currentSelfRole, a.currentSelfRole) * (sortByAsc.value ? 1 : -1);
+        return compareWorkspaceRoles(b.selfRole, a.selfRole) * (sortByAsc.value ? 1 : -1);
       } else if (sortBy.value === SortWorkspaceBy.Size) {
         return sortByAsc.value ? a.size - b.size : b.size - a.size;
       } else if (sortBy.value === SortWorkspaceBy.LastUpdate) {
@@ -547,89 +674,6 @@ function onMsSorterChange(event: MsSorterChangeEvent): void {
   sortByAsc.value = event.sortByAsc;
 }
 
-async function createWorkspace(name: WorkspaceName): Promise<void> {
-  // Externals shouldn't be able to access here, but putting this as safety
-  if (clientProfile.value === UserProfile.Outsider) {
-    return;
-  }
-  const result = await parsecCreateWorkspace(name);
-  if (result.ok) {
-    informationManager.present(
-      new Information({
-        message: {
-          key: 'WorkspacesPage.newWorkspaceSuccess',
-          data: {
-            workspace: name,
-          },
-        },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.present(
-      new Information({
-        message: 'WorkspacesPage.newWorkspaceError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-}
-
-async function openCreateWorkspaceModal(): Promise<void> {
-  let workspaceName: string | null = null;
-  while (true) {
-    workspaceName = await getTextFromUser(
-      {
-        title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
-        trim: true,
-        validator: workspaceNameValidator,
-        inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
-        placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
-        okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
-        defaultValue: workspaceName ?? undefined,
-      },
-      isLargeDisplay.value,
-    );
-
-    if (!workspaceName) {
-      return;
-    }
-    const found = workspaceList.value.find((wi) => {
-      // eslint thinks workspaceName can be null here, no idea why
-      const newName = workspaceName!.toLocaleLowerCase();
-      const current = wi.currentName.toLocaleLowerCase();
-
-      // If we find a case-insensitive match or one name contains the other and the name is a bit longer that a few letters,
-      // both names are not too far off each other in length (3 characters difference at most)
-      // For example, we already have a 'Workspace', and we're trying to create 'Workspace 1'
-      if (newName === current) {
-        return true;
-      }
-      return (
-        newName.length > 6 && Math.abs(newName.length - current.length) <= 3 && (current.includes(newName) || newName.includes(current))
-      );
-    });
-    if (found) {
-      const answer = await askQuestion(
-        'WorkspacesPage.CreateWorkspaceModal.sameNameExistsTitle',
-        'WorkspacesPage.CreateWorkspaceModal.sameNameExistsQuestion',
-        {
-          yesText: 'WorkspacesPage.CreateWorkspaceModal.createAnyway',
-          noText: 'WorkspacesPage.CreateWorkspaceModal.cancel',
-        },
-      );
-      if (answer === Answer.Yes) {
-        break;
-      }
-    } else {
-      break;
-    }
-  }
-  await createWorkspace(workspaceName);
-}
-
 async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
   recentDocumentManager.addWorkspace(workspace);
   await recentDocumentManager.saveToStorage(storageManager);
@@ -642,23 +686,22 @@ async function onWorkspaceFavoriteClick(workspace: WorkspaceInfo): Promise<void>
 }
 
 async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
-  await workspaceShareClick(workspace, informationManager, eventDistributor, isLargeDisplay.value);
+  await actions.workspaceShareClick(workspace);
   await refreshWorkspacesList();
 }
 
 async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
   if (action === WorkspaceAction.CreateWorkspace) {
-    return await openCreateWorkspaceModal();
+    await actions.openCreateWorkspaceModal();
   }
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, false, isLargeDisplay.value);
-  await refreshWorkspacesList();
-
+  await contextMenu.openContextMenu(event, workspace);
   if (onFinished) {
     onFinished();
   }
+  await refreshWorkspacesList();
 }
 
 const actionBarOptionsWorkspacesPage = computed(() => {
@@ -670,7 +713,7 @@ const actionBarOptionsWorkspacesPage = computed(() => {
       label: 'WorkspacesPage.createWorkspace',
       icon: addCircle,
       onClick: async (): Promise<void> => {
-        await openCreateWorkspaceModal();
+        await actions.openCreateWorkspaceModal();
       },
     });
   }
@@ -690,63 +733,158 @@ function isWorkspaceFiltered(role: WorkspaceRole): boolean {
   }
 }
 
-async function onFilterUpdate(): Promise<void> {
-  await refreshWorkspacesList();
+async function onMenuUpdate(menu: WorkspaceMenu): Promise<void> {
+  if (workspaceMenuState.value === menu) {
+    menu = WorkspaceMenu.All;
+  }
+  await navigateTo(Routes.Workspaces, { query: { workspaceMenu: menu } });
+}
+
+function onSearchValueChange(pattern: string): void {
+  searchInputValue.value = pattern;
+  startSearch(pattern);
+}
+
+async function cancelSearch(): Promise<void> {
+  if (searchAborter) {
+    searchAborter.abort();
+  }
+  search.value = undefined;
+}
+
+async function startSearch(pattern: string): Promise<void> {
+  await cancelSearch();
+  if (pattern.length < 3) {
+    return;
+  }
+  search.value = {
+    results: [],
+    pattern: pattern,
+    active: true,
+  };
+  searchAborter = new AbortController();
+  for (const wkInfo of filteredWorkspaces.value) {
+    for await (const result of fileSearch(wkInfo.handle, '/', pattern, searchAborter.signal)) {
+      if (search.value) {
+        search.value.results.push(result);
+      }
+      await nextTick();
+    }
+  }
+  if (search.value) {
+    search.value.active = false;
+  }
+  searchAborter = undefined;
+}
+
+async function onSearchResultClick(entry: SearchResult): Promise<void> {
+  searchPattern.value = '';
+  await cancelSearch();
+  navigateTo(Routes.Documents, {
+    query: { documentPath: entry.parent, selectFile: entry.stats.name, workspaceHandle: entry.workspaceHandle },
+  });
+}
+
+async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFinished?: () => void): Promise<void> {
+  if (!userInfo.value) {
+    return;
+  }
+  const wkInfoResult = await getWorkspaceInfo(entry.workspaceHandle);
+  if (!wkInfoResult.ok) {
+    return;
+  }
+
+  const action = await fileContextMenu.openEntryContextMenu(
+    event,
+    [entry.stats],
+    wkInfoResult.value.selfRole === WorkspaceRole.Reader,
+    true,
+  );
+
+  if (action) {
+    await fileContextMenu.dispatchContextMenuAction(action, [entry.stats], wkInfoResult.value, userInfo.value.currentProfile);
+    if ([FileAction.Delete, FileAction.Rename, FileAction.MoveTo, FileAction.MakeACopy].includes(action)) {
+      if (search.value) {
+        await startSearch(searchPattern.value);
+      }
+    }
+  }
+  if (onFinished) {
+    onFinished();
+  }
 }
 </script>
 
 <style lang="scss" scoped>
+.counter {
+  @include ms.font('body-md-regular');
+}
+
 .content-scroll {
   &::part(background) {
     @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-page');
     }
   }
 
   &::part(scroll) {
     @include ms.responsive-breakpoint('sm') {
-      padding-top: 1rem;
+      padding-top: ms.spacing('padding-3xl');
     }
   }
 }
 
 .no-workspaces {
+  @include ms.font('body-lg-regular');
+
   max-width: 30rem;
-  color: var(--parsec-color-light-secondary-soft-text);
+  color: ms.color('text-neutral-default');
   display: flex;
   justify-content: center;
   margin: auto;
   height: 100%;
   align-items: center;
 
+  @include ms.responsive-breakpoint('xs') {
+    align-items: start;
+    height: fit-content;
+  }
+
   &-loading,
   .no-all-workspaces,
   .no-recent-workspaces,
-  .no-favorite-workspaces {
-    border-radius: var(--parsec-radius-8);
+  .no-favorite-workspaces,
+  .no-hidden-workspaces {
+    border-radius: ms.radius('lg');
     display: flex;
     height: fit-content;
     text-align: center;
     flex-direction: column;
     justify-content: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
     align-items: center;
-    padding: 3rem 1rem;
+    padding: ms.spacing('padding-7xl') ms.spacing('padding-3xl');
+
+    #show-hidden-workspaces {
+      @include ms.font('label-md-medium');
+    }
 
     #new-workspace {
+      @include ms.font('label-lg-medium');
+
       display: flex;
       align-items: center;
-
-      ion-icon {
-        margin-inline: 0em;
-        margin-right: 0.375rem;
-      }
     }
   }
 
   &__image {
     width: 8rem;
     height: 8rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      width: 6rem;
+      height: 6rem;
+    }
   }
 
   .no-all-workspaces .no-workspaces__image {
@@ -759,21 +897,21 @@ async function onFilterUpdate(): Promise<void> {
   @include ms.responsive-breakpoint('sm') {
     position: sticky;
     z-index: 10;
-    background: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-strong);
-    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    background: ms.color('surface-base-default');
+    box-shadow: ms.shadow('strong');
+    border-radius: ms.radius('4xl') ms.radius('4xl') 0 0;
   }
 }
 
 .workspaces-container-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5em;
+  gap: ms.spacing('gap-4xl');
   overflow: visible;
-  padding: 1.5rem 0;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-none');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl');
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
@@ -784,28 +922,80 @@ async function onFilterUpdate(): Promise<void> {
 }
 
 .workspaces-container-list {
-  padding: 1rem 0;
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-none');
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   position: relative;
   z-index: 4;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl');
   }
 }
 
 .workspace-filters-menu {
   display: flex;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   align-items: center;
-  padding: 1.5rem 2rem 0;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl') ms.spacing('padding-none');
 
   @include ms.responsive-breakpoint('lg') {
     width: 100%;
     flex-direction: column;
-    padding: 1.5rem 1.25rem 0;
+    padding: ms.spacing('padding-4xl') 1.25rem ms.spacing('padding-none');
+  }
+}
+
+.hidden-workspaces-checkbox {
+  position: relative;
+  z-index: 3;
+  align-self: stretch;
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  background: ms.color('surface-base-default');
+  padding: ms.spacing('padding-lg') 0.875rem;
+  display: flex;
+  align-items: center;
+  color: ms.color('text-base-description');
+  --checkbox-background-checked: #{ms.color('surface-neutral-default')};
+  --checkbox-border-checked: #{ms.color('border-neutral-default')};
+  --border-color-checked: #{ms.color('border-neutral-default')};
+  transition: all 0.2s ease-in-out;
+
+  &::part(label) {
+    margin-left: 0.675rem;
+  }
+
+  &.checkbox-checked::part(container) {
+    border-color: ms.color('border-neutral-default');
+  }
+
+  &:hover {
+    box-shadow: ms.shadow('light');
+  }
+
+  &:is(.checkbox-checked) {
+    box-shadow: ms.shadow('light');
+    border-color: ms.color('border-base-default-hover');
+    color: ms.color('text-base-body');
+  }
+
+  @include ms.responsive-breakpoint('lg') {
+    margin-right: auto;
+  }
+}
+
+.workspace-filters-menu {
+  display: flex;
+  gap: ms.spacing('gap-3xl');
+  align-items: center;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl') ms.spacing('padding-lg');
+
+  @include ms.responsive-breakpoint('lg') {
+    width: 100%;
+    flex-direction: column;
+    padding: ms.spacing('padding-4xl') 1.25rem ms.spacing('padding-none');
   }
 }
 </style>

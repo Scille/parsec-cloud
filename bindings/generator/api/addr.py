@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from .common import (
     U16,
+    AccessToken,
     ErrorVariant,
     IndexInt,
-    InvitationToken,
     OrganizationID,
     Ref,
     Result,
     StrBasedType,
+    UserID,
     Variant,
+    VariantItemTuple,
     VlobID,
 )
 
@@ -50,6 +51,85 @@ class ParsecPkiEnrollmentAddr(StrBasedType):
 class ParsecAsyncEnrollmentAddr(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string()) }"
     custom_to_rs_string = "|addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+
+
+class ParsecTOTPResetAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecTOTPResetAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+
+
+class ParsecOrganizationBootstrapRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecInvitationRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecWorkspacePathRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecPkiEnrollmentRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecAsyncEnrollmentRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecTOTPResetRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+type ParsecOrganizationBootstrapAddrAndRedirectionURL = tuple[
+    ParsecOrganizationBootstrapAddr, ParsecOrganizationBootstrapRedirectionURL
+]
+type ParsecInvitationAddrAndRedirectionURL = tuple[
+    ParsecInvitationAddr, ParsecInvitationRedirectionURL
+]
+type ParsecWorkspacePathAddrAndRedirectionURL = tuple[
+    ParsecWorkspacePathAddr, ParsecWorkspacePathRedirectionURL
+]
+type ParsecPkiEnrollmentAddrAndRedirectionURL = tuple[
+    ParsecPkiEnrollmentAddr, ParsecPkiEnrollmentRedirectionURL
+]
+type ParsecAsyncEnrollmentAddrAndRedirectionURL = tuple[
+    ParsecAsyncEnrollmentAddr, ParsecAsyncEnrollmentRedirectionURL
+]
+type ParsecTOTPResetAddrAndRedirectionURL = tuple[
+    ParsecTOTPResetAddr, ParsecTOTPResetRedirectionURL
+]
 
 
 class ParseParsecAddrError(ErrorVariant):
@@ -95,7 +175,7 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
-        token: InvitationToken
+        token: AccessToken
 
     class InvitationDevice:
         hostname: str
@@ -103,7 +183,7 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
-        token: InvitationToken
+        token: AccessToken
 
     class InvitationShamirRecovery:
         hostname: str
@@ -111,7 +191,7 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
-        token: InvitationToken
+        token: AccessToken
 
     class PkiEnrollment:
         hostname: str
@@ -126,6 +206,15 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
+
+    class TOTPReset:
+        hostname: str
+        port: U16
+        is_default_port: bool
+        use_ssl: bool
+        organization_id: OrganizationID
+        user_id: UserID
+        token: AccessToken
 
 
 def parse_parsec_addr(url: Ref[str]) -> Result[ParsedParsecAddr, ParseParsecAddrError]:
@@ -143,4 +232,28 @@ def build_parsec_addr(
     port: U16 | None,
     use_ssl: bool,
 ) -> ParsecAddr:
+    raise NotImplementedError
+
+
+class AddrError(ErrorVariant):
+    class InvalidUrl: ...
+
+    class NotARedirection: ...
+
+    class InvalidUrlScheme:
+        expected: str
+
+    class InvalidParamValue:
+        param: str
+        help: str
+
+    DuplicateParam = VariantItemTuple(str)
+    MissingParam = VariantItemTuple(str)
+
+    class ShouldNotHaveAPath: ...
+
+    class InvalidOrganizationID: ...
+
+
+def try_convert_http_to_parsec_addr(http_url: Ref[str]) -> Result[ParsecAddr, AddrError]:
     raise NotImplementedError

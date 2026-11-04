@@ -76,6 +76,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -114,6 +115,7 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -135,7 +137,8 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
         )
         # When the server detect backpressure, it should close the connection
         with pytest.raises(StopAsyncIteration):
-            await alice_sse.next_event()
+            event = await alice_sse.next_event()
+            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed
 
         mock_send_nowait.assert_called_once()
 
@@ -160,6 +163,7 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -219,6 +223,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -237,6 +242,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         # And then the connection is closed
         with pytest.raises(StopAsyncIteration):
             event = await bob_sse.next_event()
+            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed
 
 
 async def test_close_on_organization_tos_updated(
@@ -268,6 +274,7 @@ async def test_close_on_organization_tos_updated(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -280,3 +287,4 @@ async def test_close_on_organization_tos_updated(
         # And then the connection is closed
         with pytest.raises(StopAsyncIteration):
             event = await bob_sse.next_event()
+            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed

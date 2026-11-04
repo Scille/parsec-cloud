@@ -1,10 +1,10 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="user-information">
     <ms-input
-      :label="'CreateOrganization.fullname'"
-      :placeholder="'CreateOrganization.fullnamePlaceholder'"
+      label="CreateOrganization.fullname"
+      placeholder="CreateOrganization.fullnamePlaceholder"
       name="fullname"
       v-model="fullName"
       ref="firstInputField"
@@ -14,8 +14,8 @@
       :validator="userNameValidator"
     />
     <ms-input
-      :label="'CreateOrganization.email'"
-      :placeholder="'CreateOrganization.emailPlaceholder'"
+      label="CreateOrganization.email"
+      placeholder="CreateOrganization.emailPlaceholder"
       v-model="email"
       name="email"
       :disabled="!$props.emailEnabled"
@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { emailValidator, userNameValidator } from '@/common/validators';
+import { HumanHandle } from '@/parsec';
 import { MsInput, Validity } from 'megashark-lib';
 import { ref, useTemplateRef } from 'vue';
 
@@ -64,10 +65,25 @@ defineExpose({
   email,
   fullName,
   setFocus,
+  getEmail,
+  getFullName,
+  getHumanHandle,
 });
 
 async function setFocus(): Promise<void> {
   await firstInputFieldRef.value?.setFocus();
+}
+
+function getEmail(): string {
+  return email.value;
+}
+
+function getFullName(): string {
+  return fullName.value;
+}
+
+function getHumanHandle(): HumanHandle {
+  return { label: fullName.value, email: email.value };
 }
 
 async function areFieldsCorrect(): Promise<boolean> {
@@ -81,6 +97,6 @@ async function areFieldsCorrect(): Promise<boolean> {
 .user-information {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 </style>

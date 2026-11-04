@@ -7,7 +7,7 @@
 use super::authenticated_cmds;
 
 use libparsec_tests_lite::{hex, p_assert_eq};
-use libparsec_types::InvitationToken;
+use libparsec_types::AccessToken;
 
 // Request
 
@@ -71,7 +71,7 @@ pub fn rep_ok() {
         "10d864b93ded264aae9ae583fd3d40c45a"
     );
     let expected = authenticated_cmds::invite_new_user::Rep::Ok {
-        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+        token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         email_sent: authenticated_cmds::invite_new_user::InvitationEmailSentStatus::Success,
     };
 

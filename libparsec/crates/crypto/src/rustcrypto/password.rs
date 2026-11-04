@@ -1,9 +1,9 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use argon2::{Algorithm, Argon2, Params, Version};
 use generic_array::{
-    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
+    typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
 
 use crate::{CryptoError, Password, PasswordAlgorithm};

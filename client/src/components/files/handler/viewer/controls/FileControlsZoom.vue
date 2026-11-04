@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-controls-group>
@@ -135,6 +135,6 @@ async function validateZoomLevel(value: string): Promise<string> {
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 </style>

@@ -32,7 +32,7 @@ on:
     types:
       # triggered when a draft release is published
       # and also if the release is edited later on
-      - edited
+      - published
   pull_request:
     paths:
       - .github/workflows/publish.yml
@@ -53,7 +53,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           sparse-checkout: |
             misc
@@ -63,7 +63,7 @@ jobs:
         shell: bash -eux -o pipefail {0}
         run: |
           case '${{ github.event_name }}' in
-            # In the conext of a release event, `ref_name` is set to the tag of the release.
+            # In the context of a release event, `ref_name` is set to the tag of the release.
             release)
               tag='${{ github.ref_name }}'
               ;;
@@ -72,8 +72,9 @@ jobs:
             schedule | pull_request)
               tag='nightly'
               ;;
-            # For workflow_call or dispatch, we use the provided release_tag.
-            workflow_call | workflow_dispatch)
+            # For everything else, we consider that the workflow was reused or manually called.
+            # So we retrieve the value from `inputs` context
+            *)
               tag='${{ inputs.release_tag }}'
               ;;
           esac
@@ -163,7 +164,7 @@ jobs:
 
       - name: Publish wheel on PyPI
         if: steps.version.outputs.local == ''
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # pin v1.13.0
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # pin v1.14.3
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}

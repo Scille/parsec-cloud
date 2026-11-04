@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div>
@@ -15,7 +15,11 @@ onMounted(async () => {
   // get the params.
   const params = new URLSearchParams(location.search);
   const bc = new BroadcastChannel('openbao-oidc');
-  bc.postMessage({ code: params.get('code'), state: params.get('state') });
+  if (params.has('code') && params.has('state')) {
+    bc.postMessage({ ok: true, value: { code: params.get('code'), state: params.get('state') } });
+  } else {
+    bc.postMessage({ ok: false, error: { error: params.get('error') ?? 'unknown', description: params.get('error_description') } });
+  }
   bc.close();
   window.close();
 });

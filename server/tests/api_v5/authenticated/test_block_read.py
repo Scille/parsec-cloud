@@ -8,6 +8,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -83,6 +84,16 @@ async def test_authenticated_block_read_ok(
         key_index=1,
         needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
     )
+
+
+async def test_authenticated_block_read_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.block_read(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        block_id=workspace_archived_org.wksp_archived_block_id,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.block_read.RepOk)
 
 
 async def test_authenticated_block_read_realm_not_found(
@@ -172,6 +183,16 @@ async def test_authenticated_block_read_store_unavailable(
 
     rep = await coolorg.alice.block_read(block_id, realm_id)
     assert rep == authenticated_cmds.latest.block_read.RepStoreUnavailable()
+
+
+async def test_authenticated_block_read_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    rep = await workspace_archived_org.alice.block_read(
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        block_id=BlockID.new(),
+    )
+    assert rep == authenticated_cmds.latest.block_read.RepRealmDeleted()
 
 
 async def test_authenticated_block_read_http_common_errors(

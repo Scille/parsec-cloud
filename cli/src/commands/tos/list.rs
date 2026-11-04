@@ -1,43 +1,26 @@
-use libparsec_client::Tos;
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-use crate::utils::{StartedClient, BULLET_CHAR};
+use std::io::Write;
+
+use crate::{ui::compat::TOSDisplay, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device]
     pub struct Args {
     }
 );
 
 crate::build_main_with_client!(main, list_tos);
 
-pub async fn list_tos(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn list_tos(ui: crate::Ui, _args: Args, client: &StartedClient) -> anyhow::Result<()> {
     log::trace!("Listing Term of Service");
 
     match client.get_tos().await {
-        Ok(tos) => display_tos(&tos),
+        Ok(tos) => ui.data_print(&TOSDisplay(tos)).map_err(Into::into),
         Err(libparsec_client::ClientGetTosError::NoTos) => {
-            no_tos_available();
+            ui.with_message(|_, out| writeln!(out, "No Terms of Service available"))?;
             Ok(())
         }
         Err(e) => Err(e.into()),
     }
-}
-
-fn no_tos_available() {
-    println!("No Terms of Service available");
-}
-
-pub(super) fn display_tos(tos: &Tos) -> anyhow::Result<()> {
-    use std::io::Write;
-
-    let mut stdout = std::io::stdout().lock();
-    writeln!(
-        stdout,
-        "Terms of Service updated on {}:",
-        tos.updated_on.to_rfc3339()
-    )?;
-    for (locale, url) in &tos.per_locale_urls {
-        writeln!(stdout, "{BULLET_CHAR} {locale}: {url}")?;
-    }
-    Ok(())
 }

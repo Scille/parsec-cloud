@@ -1,60 +1,70 @@
-use std::io::{BufReader, Write};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{tmp_path, ParsecAddr, TmpPath};
+#[cfg(target_family = "unix")]
+use libparsec::{ParsecAddr, TmpPath, tmp_path};
+#[cfg(target_family = "unix")]
 use libparsec_tests_fixtures::prelude::*;
+#[cfg(target_family = "unix")]
+use parsec_cli::ui::Ui;
 
+#[cfg(target_family = "unix")]
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    wait_for,
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::utils::YELLOW;
+
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
+#[rstest::rstest]
+#[tokio::test]
+async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
+
+    let cmd = crate::std_cmd!(
+        "device",
+        "overwrite-server-url",
+        "--device",
+        &alice.device_id.hex(),
+        "--server-url",
+        "https://new.invalid:123"
+    );
+    let mut p = crate::spawn_interactive_command(cmd, Some(2000)).unwrap();
+
+    p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+
+    let old_server_addr: ParsecAddr = alice.organization_addr.clone().into();
+    p.exp_string(&format!("Current server URL: {old_server_addr}"))
+        .unwrap();
+
+    p.exp_regex(".*New server URL: parsec3://new.invalid:123.*")
+        .unwrap();
+    p.exp_regex(".*Are you sure?.*").unwrap();
+
+    p.send_line("y").unwrap();
+
+    p.exp_regex("Device updated successfully").unwrap();
+    p.exp_eof().unwrap();
+
+    // TODO: Inspect the device content once `device info` CLI command is available
+}
 
 #[rstest::rstest]
 #[tokio::test]
-async fn ok(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn ok_force(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
-    let mut process = crate::std_cmd!(
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
         "device",
         "overwrite-server-url",
         "--device",
         &alice.device_id.hex(),
         "--server-url",
         "https://new.invalid:123",
-        "--password-stdin"
+        "--force"
     )
-    .stdin(std::process::Stdio::piped())
-    .stderr(std::process::Stdio::inherit())
-    .stdout(std::process::Stdio::piped())
-    .spawn()
-    .unwrap();
-
-    let mut stdout = BufReader::new(process.stdout.as_mut().unwrap());
-    let stdin = process.stdin.as_mut().unwrap();
-
-    stdin.write_all(DEFAULT_DEVICE_PASSWORD.as_bytes()).unwrap();
-    stdin.write_all(b"\n").unwrap();
-
-    let mut buf = String::new();
-    wait_for(&mut stdout, &mut buf, "Are you sure? (y/n)");
-
-    let old_server_addr: ParsecAddr = alice.organization_addr.clone().into();
-    assert!(
-        buf.contains(&format!("Current server URL: {YELLOW}{old_server_addr}")),
-        "stdout: {buf}"
-    );
-    assert!(
-        buf.contains(&format!(
-            "New server URL: {YELLOW}parsec3://new.invalid:123"
-        )),
-        "stdout: {buf}"
-    );
-
-    stdin.write_all(b"y\n").unwrap();
-
-    wait_for(&mut stdout, &mut buf, "Device updated successfully");
-    process.wait().unwrap();
+    .stderr(predicates::str::contains("Device updated successfully"));
 
     // TODO: Inspect the device content once `device info` CLI command is available
 }

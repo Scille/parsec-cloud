@@ -1,15 +1,9 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 #![allow(dead_code)]
 
 mod list_frozen_users;
 mod organization_info;
-mod pki_enrollment_accept;
-mod pki_enrollment_finalize;
-mod pki_enrollment_info;
-mod pki_enrollment_list;
-mod pki_enrollment_reject;
-mod pki_enrollment_submit;
 mod pki_get_addr;
 mod recovery_device;
 mod shamir_recovery_delete;
@@ -19,12 +13,15 @@ mod start_invitation_greet;
 mod tos;
 mod user_revoke;
 mod user_update_profile;
+mod workspace_archive;
 mod workspace_bootstrap;
 mod workspace_create;
 mod workspace_list;
 mod workspace_needs;
+mod workspace_outbound_sync_backlog;
 mod workspace_refresh_list;
 mod workspace_rename;
+mod workspace_self_promote;
 mod workspace_share;
 mod workspace_start;
 
@@ -37,23 +34,19 @@ use std::{
 
 pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
-    pki_enrollment_accept::PkiEnrollmentAcceptError,
-    pki_enrollment_finalize::{finalize as pki_enrollment_finalize, PkiEnrollmentFinalizeError},
-    pki_enrollment_info::{info as pki_enrollment_info, PKIInfoItem, PkiEnrollmentInfoError},
-    pki_enrollment_list::{
-        verify_untrusted_items as pki_list_verify_items, InvalidityReason, PkiEnrollmentListError,
-        PkiEnrollmentListItem,
-    },
-    pki_enrollment_reject::PkiEnrollmentRejectError,
-    pki_enrollment_submit::{pki_enrollment_submit, PkiEnrollmentSubmitError},
     start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
+    workspace_archive::ClientArchiveWorkspaceError,
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
     workspace_create::ClientCreateWorkspaceError,
     workspace_list::WorkspaceInfo,
     workspace_needs::ClientProcessWorkspacesNeedsError,
+    workspace_outbound_sync_backlog::{
+        ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogItem,
+    },
     workspace_refresh_list::ClientRefreshWorkspacesListError,
     workspace_rename::ClientRenameWorkspaceError,
+    workspace_self_promote::ClientSelfPromoteToWorkspaceOwnerError,
     workspace_share::ClientShareWorkspaceError,
     workspace_start::ClientStartWorkspaceError,
 };
@@ -62,24 +55,24 @@ use crate::{
     config::{ClientConfig, ServerOrganizationConfig},
     event_bus::EventBus,
     monitors::{
-        start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
+        Monitor, start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
         start_workspaces_bootstrap_monitor, start_workspaces_process_needs_monitor,
-        start_workspaces_refresh_list_monitor, Monitor,
+        start_workspaces_refresh_list_monitor,
     },
     user::UserOps,
+    workspace::WorkspaceGetOutboundSyncBacklogError,
     workspace_history::{WorkspaceHistoryOps, WorkspaceHistoryOpsStartError},
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-pub use libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem as RawPkiEnrollmentListItem;
 
 use libparsec_types::prelude::*;
 pub use organization_info::{
     ClientGetOrganizationBootstrapDateError, ClientOrganizationInfoError, OrganizationInfo,
 };
 pub use recovery_device::{
-    import_recovery_device, register_new_device, ClientExportRecoveryDeviceError,
-    ImportRecoveryDeviceError, RegisterNewDeviceError,
+    ClientExportRecoveryDeviceError, ImportRecoveryDeviceError, RegisterNewDeviceError,
+    import_recovery_device, register_new_device,
 };
 
 // Re-exposed for public API
@@ -90,16 +83,18 @@ pub use crate::certif::{
     CertifGetUserInfoError as ClientGetUserInfoError,
     CertifListUserDevicesError as ClientListUserDevicesError,
     CertifListUsersError as ClientListUsersError,
+    CertifListWorkspaceUserRoleChangesError as ClientListWorkspaceUserRoleChangesError,
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
     CertifRevokeUserError as ClientRevokeUserError,
     CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError,
-    CertifUpdateUserProfileError as ClientUserUpdateProfileError, DeviceInfo, UserInfo,
-    WorkspaceUserAccessInfo,
+    CertifUpdateUserProfileError as ClientUserUpdateProfileError, DeviceInfo,
+    RequestedRealmArchivingConfiguration, UserInfo, WorkspaceUserAccessInfo,
+    WorkspaceUserRoleChange,
 };
 pub use crate::invite::{
     AcceptAsyncEnrollmentError as ClientAcceptAsyncEnrollmentError,
     AcceptAsyncEnrollmentIdentityStrategy, AsyncEnrollmentUntrusted,
-    CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx,
+    CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx, EmailSentStatus,
     InvitationEmailSentStatus, InviteListItem,
     ListAsyncEnrollmentsError as ClientListAsyncEnrollmentsError,
     ListInvitationsError as ClientListInvitationsError,
@@ -117,6 +112,7 @@ pub use shamir_recovery_list::{
 };
 
 pub type ClientStartWorkspaceHistoryError = WorkspaceHistoryOpsStartError;
+pub type ClientGetOutboundSyncBacklogError = WorkspaceGetOutboundSyncBacklogError;
 
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
@@ -310,6 +306,10 @@ impl Client {
         &self.config
     }
 
+    pub fn cmds(&self) -> Arc<AuthenticatedCmds> {
+        self.cmds.clone()
+    }
+
     pub fn server_organization_config(&self) -> ServerOrganizationConfig {
         self.server_organization_config
             .lock()
@@ -351,6 +351,10 @@ impl Client {
 
     pub fn human_handle(&self) -> &HumanHandle {
         &self.device.human_handle
+    }
+
+    pub fn device(&self) -> &LocalDevice {
+        self.device.as_ref()
     }
 
     pub async fn get_current_self_profile(
@@ -408,12 +412,30 @@ impl Client {
         self.certificates_ops.list_workspace_users(realm_id).await
     }
 
+    /// List all role changes for a user on a given realm.
+    pub async fn list_workspace_user_role_changes(
+        &self,
+        realm_id: VlobID,
+        user_id: UserID,
+    ) -> Result<Vec<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError> {
+        self.certificates_ops
+            .list_workspace_user_role_changes(realm_id, user_id)
+            .await
+    }
+
     /// List workspaces available to the current user.
     ///
     /// This is done according to the user manifest cache, hence some very
     /// recent remote changes may not be visible.
     pub async fn list_workspaces(&self) -> Vec<WorkspaceInfo> {
         workspace_list::list_workspaces(self).await
+    }
+
+    /// Get how much bytes and how many files are awaiting synchronization for started workspaces only
+    pub async fn get_outbound_sync_backlog(
+        &self,
+    ) -> Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError> {
+        workspace_outbound_sync_backlog::get_outbound_sync_backlog(self).await
     }
 
     /// Create a new workspace.
@@ -451,6 +473,30 @@ impl Client {
         role: Option<RealmRole>,
     ) -> Result<(), ClientShareWorkspaceError> {
         workspace_share::share_workspace(self, realm_id, recipient, role).await
+    }
+
+    /// Self-promote the current user to OWNER role in the given workspace.
+    ///
+    /// This is only allowed if all current OWNERs of the workspace have been
+    /// revoked and the current user has the highest remaining role (and is not
+    /// OUTSIDER).
+    pub async fn self_promote_to_workspace_owner(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<(), ClientSelfPromoteToWorkspaceOwnerError> {
+        workspace_self_promote::self_promote_to_workspace_owner(self, realm_id).await
+    }
+
+    /// Archive, unarchive or plan deletion for a workspace, this function requires to be online.
+    ///
+    /// If the workspace is not bootstrapped, this function will try to bootstrap
+    /// it (this may fail if the current user does not have the OWNER role).
+    pub async fn archive_workspace(
+        &self,
+        realm_id: VlobID,
+        configuration: RequestedRealmArchivingConfiguration,
+    ) -> Result<(), ClientArchiveWorkspaceError> {
+        workspace_archive::archive_workspace(self, realm_id, configuration).await
     }
 
     /// Ensure all workspaces are bootstrapped.
@@ -598,14 +644,14 @@ impl Client {
         &self,
         claimer_email: EmailAddress,
         send_email: bool,
-    ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewUserInvitationError> {
+    ) -> Result<(AccessToken, InvitationEmailSentStatus), ClientNewUserInvitationError> {
         crate::invite::new_user_invitation(&self.cmds, claimer_email, send_email).await
     }
 
     pub async fn new_device_invitation(
         &self,
         send_email: bool,
-    ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewDeviceInvitationError> {
+    ) -> Result<(AccessToken, InvitationEmailSentStatus), ClientNewDeviceInvitationError> {
         crate::invite::new_device_invitation(&self.cmds, send_email).await
     }
 
@@ -613,14 +659,14 @@ impl Client {
         &self,
         user_id: UserID,
         send_email: bool,
-    ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewShamirRecoveryInvitationError>
+    ) -> Result<(AccessToken, InvitationEmailSentStatus), ClientNewShamirRecoveryInvitationError>
     {
         crate::invite::new_shamir_recovery_invitation(&self.cmds, user_id, send_email).await
     }
 
     pub async fn cancel_invitation(
         &self,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Result<(), ClientCancelInvitationError> {
         crate::invite::cancel_invitation(&self.cmds, token).await
     }
@@ -631,17 +677,17 @@ impl Client {
         crate::invite::list_invitations(&self.cmds).await
     }
 
-    pub fn start_user_invitation_greet(&self, token: InvitationToken) -> UserGreetInitialCtx {
+    pub fn start_user_invitation_greet(&self, token: AccessToken) -> UserGreetInitialCtx {
         start_invitation_greet::start_user_invitation_greet(self, token)
     }
 
-    pub fn start_device_invitation_greet(&self, token: InvitationToken) -> DeviceGreetInitialCtx {
+    pub fn start_device_invitation_greet(&self, token: AccessToken) -> DeviceGreetInitialCtx {
         start_invitation_greet::start_device_invitation_greet(self, token)
     }
 
     pub async fn start_shamir_recovery_invitation_greet(
         &self,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Result<ShamirRecoveryGreetInitialCtx, ClientStartShamirRecoveryInvitationGreetError> {
         start_invitation_greet::start_shamir_recovery_invitation_greet(self, token).await
     }
@@ -707,47 +753,7 @@ impl Client {
         pki_get_addr::get_addr(self).await
     }
 
-    pub async fn pki_list_enrollments_untrusted(
-        &self,
-    ) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {
-        pki_enrollment_list::list_enrollments_untrusted(&self.cmds).await
-    }
-
-    pub async fn pki_list_verify_items(
-        &self,
-        cert_ref: X509CertificateReference,
-        untrusted_items: Vec<RawPkiEnrollmentListItem>,
-    ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
-        pki_enrollment_list::verify_untrusted_items(&self.cmds, cert_ref, untrusted_items).await
-    }
-
-    pub async fn pki_enrollment_reject(
-        &self,
-        enrollment_id: PKIEnrollmentID,
-    ) -> Result<(), PkiEnrollmentRejectError> {
-        pki_enrollment_reject::reject(&self.cmds, enrollment_id).await
-    }
-
-    pub async fn pki_enrollment_accept(
-        &self,
-        profile: UserProfile,
-        enrollment_id: PKIEnrollmentID,
-        accepter_cert_ref: &X509CertificateReference,
-        submitter_der_cert: &[u8],
-        submit_payload: PkiEnrollmentSubmitPayload,
-    ) -> Result<(), PkiEnrollmentAcceptError> {
-        pki_enrollment_accept::accept(
-            self,
-            profile,
-            enrollment_id,
-            accepter_cert_ref,
-            submitter_der_cert,
-            submit_payload,
-        )
-        .await
-    }
-
-    pub async fn async_enrollment_get_addr(&self) -> ParsecAsyncEnrollmentAddr {
+    pub fn get_async_enrollment_addr(&self) -> ParsecAsyncEnrollmentAddr {
         ParsecAsyncEnrollmentAddr::new(
             self.device.organization_addr.clone(),
             self.device.organization_id().to_owned(),
@@ -772,7 +778,8 @@ impl Client {
         profile: UserProfile,
         enrollment_id: AsyncEnrollmentID,
         identity_strategy: &dyn AcceptAsyncEnrollmentIdentityStrategy,
-    ) -> Result<(), ClientAcceptAsyncEnrollmentError> {
+        send_email: bool,
+    ) -> Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError> {
         crate::invite::accept_async_enrollment(
             &self.cmds,
             &self.event_bus,
@@ -780,6 +787,7 @@ impl Client {
             enrollment_id,
             profile,
             identity_strategy,
+            send_email,
         )
         .await
     }

@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import os
 import re
 from functools import partial
 from pathlib import Path
-from typing import IO
+from typing import IO, Sequence
 
 try:
     import fcntl
@@ -17,6 +18,10 @@ from contextlib import asynccontextmanager, contextmanager
 from time import sleep
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 from click.testing import CliRunner, Result
 
 from parsec._parsec import (
@@ -100,6 +105,8 @@ def cli_running(cmd: str, wait_for: str | None = None, env: dict[str, str] = {})
         if wait_for:
             out = ""
             for _ in range(SUBPROCESS_TIMEOUT * 10):  # 10ms sleep steps
+                if p.poll() is not None:
+                    raise RuntimeError("Command exited before we found 'wait_for' in output")
                 out = p.live_stdout.read()[len(out) :]
                 if out:
                     print(out, end="")
@@ -189,10 +196,16 @@ async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
         task_group.cancel_scope.cancel()
 
 
-async def cli_invoke_in_thread(cmd: str, input: str | None = None) -> Result:
-    runner = CliRunner()
+async def cli_invoke_in_thread(
+    cmd: str | Sequence[str],
+    runner: CliRunner | None = None,
+    input: str | None = None,
+    env: dict[str, str] = {},
+    command: click.Command = cli,
+) -> Result:
+    runner = runner or CliRunner()
     # We must run the command from another thread given it will create it own asyncio loop
     # Pass DEBUG environment variable for better output on crash
     return await anyio.to_thread.run_sync(
-        lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1"})
+        lambda: runner.invoke(command, cmd, input=input, env={"DEBUG": "1", **env})
     )

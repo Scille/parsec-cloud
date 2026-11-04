@@ -1,22 +1,22 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use bytes::Bytes;
 use reqwest::{
-    header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
+    header::{CONTENT_LENGTH, CONTENT_TYPE, HeaderMap, HeaderValue},
 };
 use std::fmt::Debug;
 use std::path::Path;
 
 use libparsec_platform_http_proxy::ProxyConfig;
-use libparsec_protocol::{api_version_major_to_full, API_LATEST_VERSION};
+use libparsec_protocol::{API_LATEST_VERSION, api_version_major_to_full};
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
-use crate::testbed::{get_send_hook, SendHookConfig};
+use crate::testbed::{SendHookConfig, get_send_hook};
 use crate::{
-    error::{ConnectionError, ConnectionResult},
     API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    error::{ConnectionError, ConnectionResult},
 };
 
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
@@ -67,10 +67,23 @@ impl AnonymousServerCmds {
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
+        self.send_verbose(request).await.map(|(rep, _)| rep)
+    }
+
+    /// Returns response, server version
+    pub async fn send_verbose<T>(
+        &self,
+        request: T,
+    ) -> ConnectionResult<(<T>::Response, Option<String>)>
+    where
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+    {
         #[cfg(feature = "test-with-testbed")]
         let request = {
             match self.send_hook.high_level_send(request).await {
-                crate::testbed::HighLevelSendResult::Resolved(rep) => return rep,
+                crate::testbed::HighLevelSendResult::Resolved(rep) => {
+                    return Ok((rep?, Some("testbed".to_string())));
+                }
                 crate::testbed::HighLevelSendResult::PassToLowLevel(req) => req,
             }
         };
@@ -80,16 +93,18 @@ impl AnonymousServerCmds {
         // Split non-generic code out of `send` to limit the amount of code generated
         // by monomorphization
         let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
-        let response_body = self.internal_send(api_version, request_body).await?;
+        let (response_body, version) = self.internal_send(api_version, request_body).await?;
 
-        Ok(T::api_load_response(&response_body)?)
+        let rep = T::api_load_response(&response_body)?;
+        Ok((rep, version))
     }
 
+    /// Returns (content, server version)
     async fn internal_send(
         &self,
         api_version: &ApiVersion,
         request_body: Vec<u8>,
-    ) -> Result<Bytes, ConnectionError> {
+    ) -> Result<(Bytes, Option<String>), ConnectionError> {
         let api_version_header_value = HeaderValue::from_str(&api_version.to_string())
             .expect("api version must contains valid char");
         let request_builder = self.client.post(self.url.clone());
@@ -101,10 +116,15 @@ impl AnonymousServerCmds {
         #[cfg(not(feature = "test-with-testbed"))]
         let resp = req.send().await?;
 
+        let server_version = resp
+            .headers()
+            .get("Server")
+            .and_then(|v| Some(v.to_str().ok()?.to_string()));
+
         match resp.status().as_u16() {
             200 => {
                 let response_body = resp.bytes().await?;
-                Ok(response_body)
+                Ok((response_body, server_version))
             }
 
             // HTTP codes used by Parsec

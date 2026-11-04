@@ -5,64 +5,25 @@ import pytest
 from parsec._parsec import (
     AsyncEnrollmentAcceptPayload,
     AsyncEnrollmentID,
-    AsyncEnrollmentSubmitPayload,
     DateTime,
-    DeviceLabel,
-    EmailAddress,
-    HumanHandle,
-    OrganizationID,
     PkiSignatureAlgorithm,
-    PrivateKey,
-    SigningKey,
     anonymous_cmds,
 )
 from parsec.components.async_enrollment import (
-    AsyncEnrollmentPayloadSignature,
     AsyncEnrollmentPayloadSignatureOpenBao,
     AsyncEnrollmentPayloadSignaturePKI,
 )
-from parsec.events import EventAsyncEnrollment
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
-    TestPki,
+    PkiCollection,
     generate_new_device_certificates,
     generate_new_user_certificates,
 )
 
-
-async def submit_for_mike(
-    backend: Backend,
-    organization_id: OrganizationID,
-    submit_payload_signature: AsyncEnrollmentPayloadSignature,
-    submitted_on: DateTime | None = None,
-) -> tuple[AsyncEnrollmentID, AsyncEnrollmentSubmitPayload]:
-    enrollment_id = AsyncEnrollmentID.new()
-    submitted_on = submitted_on or DateTime.now()
-    submit_payload = AsyncEnrollmentSubmitPayload(
-        verify_key=SigningKey.generate().verify_key,
-        public_key=PrivateKey.generate().public_key,
-        requested_device_label=DeviceLabel("Dev1"),
-        requested_human_handle=HumanHandle(
-            label="Mike", email=EmailAddress("mike@example.invalid")
-        ),
-    )
-
-    with backend.event_bus.spy() as spy:
-        outcome = await backend.async_enrollment.submit(
-            now=submitted_on,
-            organization_id=organization_id,
-            enrollment_id=enrollment_id,
-            force=True,
-            submit_payload=submit_payload.dump(),
-            submit_payload_signature=submit_payload_signature,
-        )
-        assert outcome is None
-        await spy.wait_event_occurred(EventAsyncEnrollment(organization_id=organization_id))
-
-    return (enrollment_id, submit_payload)
+from .test_async_enrollment_submit import submit_for_mike
 
 
 @pytest.mark.parametrize(
@@ -71,7 +32,7 @@ async def submit_for_mike(
 async def test_anonymous_async_enrollment_info_ok(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ):
     if kind.endswith("_pki"):
@@ -189,6 +150,7 @@ async def test_anonymous_async_enrollment_info_ok(
                 submitter_redacted_user_certificate=mike_user_certificates.signed_redacted_certificate,
                 submitter_device_certificate=mike_device_certificates.signed_certificate,
                 submitter_redacted_device_certificate=mike_device_certificates.signed_redacted_certificate,
+                send_mail=True,
             )
             assert isinstance(outcome, tuple)
 
@@ -252,6 +214,7 @@ async def test_anonymous_async_enrollment_info_ok(
                 submitter_redacted_user_certificate=mike_user_certificates.signed_redacted_certificate,
                 submitter_device_certificate=mike_device_certificates.signed_certificate,
                 submitter_redacted_device_certificate=mike_device_certificates.signed_redacted_certificate,
+                send_mail=True,
             )
             assert isinstance(outcome, tuple)
 

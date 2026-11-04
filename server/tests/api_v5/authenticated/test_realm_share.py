@@ -24,6 +24,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     alice_gives_profile,
     generate_realm_role_certificate,
     get_last_realm_certificate_timestamp,
@@ -141,7 +142,7 @@ async def test_authenticated_realm_share_ok(
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
                 user_id=certif.user_id,
-                role_removed=False,
+                kind=("SHARE", role),
             )
         )
 
@@ -162,6 +163,27 @@ async def test_authenticated_realm_share_ok(
 
     topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     assert topics == expected_topics
+
+
+async def test_authenticated_realm_share_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    # Bob is the only other user in this org, but he is revoked.
+    # The important thing is that the archived status does not prevent the
+    # operation: we should get `RecipientRevoked` (not a realm-level error).
+    certif = RealmRoleCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_archived_id,
+        user_id=workspace_archived_org.bob_user_id,
+        role=RealmRole.READER,
+    )
+    rep = await workspace_archived_org.alice.realm_share(
+        realm_role_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+        recipient_keys_bundle_access=b"<dummy>",
+        key_index=1,
+    )
+    assert rep == authenticated_cmds.latest.realm_share.RepRecipientRevoked()
 
 
 async def test_authenticated_realm_share_role_already_granted(
@@ -683,6 +705,24 @@ async def test_authenticated_realm_share_require_greater_timestamp(
     assert rep == authenticated_cmds.latest.realm_share.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_realm_share_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    certif = RealmRoleCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        user_id=workspace_archived_org.bob_user_id,
+        role=RealmRole.READER,
+    )
+    rep = await workspace_archived_org.alice.realm_share(
+        realm_role_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+        recipient_keys_bundle_access=b"<dummy>",
+        key_index=1,
+    )
+    assert rep == authenticated_cmds.latest.realm_share.RepRealmDeleted()
 
 
 async def test_authenticated_realm_share_http_common_errors(

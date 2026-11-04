@@ -2,7 +2,7 @@
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::fixtures::{bob, Device};
+use crate::fixtures::{Device, bob};
 use crate::prelude::*;
 
 #[rstest]

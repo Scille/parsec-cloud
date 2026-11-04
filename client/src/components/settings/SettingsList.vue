@@ -1,10 +1,10 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="settings-list-container">
     <ion-list class="settings-list">
       <div class="settings-list-group">
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.display') }}
         </ion-text>
         <!-- change lang -->
@@ -21,7 +21,6 @@
           />
         </settings-option>
         <!-- change theme -->
-        <!-- TODO: REMOVE "disabled=true' : " WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427 -->
         <settings-option
           class="settings-list__item"
           title="SettingsModal.theme.label"
@@ -32,13 +31,12 @@
             :options="themeOptions"
             :default-option-key="config.theme"
             @change="changeTheme($event.option.key)"
-            :disabled="true"
           />
         </settings-option>
       </div>
 
       <div class="settings-list-group">
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.config') }}
         </ion-text>
         <!-- minimize in status bar -->
@@ -109,7 +107,7 @@
         v-if="Env.isAccountEnabled()"
         class="settings-list-group"
       >
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.account') }}
         </ion-text>
 
@@ -126,7 +124,7 @@
         v-if="isDesktop()"
         class="settings-list-group"
       >
-        <ion-text class="title-large settings-list-group__title title-h3">
+        <ion-text class="settings-list-group__title">
           {{ $msTranslate('SettingsModal.titles.file') }}
         </ion-text>
         <!-- display unsync files -->
@@ -140,7 +138,6 @@
         </settings-option>
         <!-- skip file viewers -->
         <settings-option
-          v-if="isDesktop()"
           class="settings-list__item"
           title="SettingsModal.skipViewers.label"
           description="SettingsModal.skipViewers.description"
@@ -153,17 +150,18 @@
 </template>
 
 <script setup lang="ts">
+import { setupAppMenu } from '@/common/menu';
 import { openLogDisplayModal } from '@/components/misc';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isDesktop, isMacOS, usesTestbed } from '@/parsec/environment';
 import { Env } from '@/services/environment';
 import { Sentry } from '@/services/sentry';
-import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
+import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { IonButton, IonList, IonText, IonToggle, isPlatform } from '@ionic/vue';
-import { I18n, Locale, LocaleOptions, MsDropdown, MsOptions, Theme, ThemeManager } from 'megashark-lib';
+import { I18n, Locale, LocaleOptions, MsDropdown, MsOptions, ThemePreference, useTheme } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 
-const themeManager: ThemeManager = inject(ThemeManagerKey)!;
+const { themePreference } = useTheme();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
@@ -175,15 +173,15 @@ const languageOptions: MsOptions = new MsOptions(LocaleOptions);
 
 const themeOptions: MsOptions = new MsOptions([
   {
-    key: Theme.Dark,
+    key: ThemePreference.Dark,
     label: 'SettingsModal.theme.values.dark',
   },
   {
-    key: Theme.Light,
+    key: ThemePreference.Light,
     label: 'SettingsModal.theme.values.light',
   },
   {
-    key: Theme.System,
+    key: ThemePreference.System,
     label: 'SettingsModal.theme.values.system',
   },
 ]);
@@ -212,15 +210,16 @@ const configUnwatch = watch(
 async function changeLang(lang: Locale): Promise<void> {
   config.value.locale = lang;
   I18n.changeLocale(lang);
+  await setupAppMenu();
 }
 
-async function changeTheme(selectedTheme: Theme): Promise<void> {
-  config.value.theme = selectedTheme as Theme;
-  themeManager.use(selectedTheme as Theme);
+async function changeTheme(selectedTheme: ThemePreference): Promise<void> {
+  config.value.theme = selectedTheme;
+  themePreference.value = selectedTheme;
 }
 
 async function openConfigDir(): Promise<void> {
-  window.electronAPI.openConfigDir();
+  window.nativeAPI.openConfigDir();
 }
 
 async function openLogs(): Promise<void> {
@@ -243,31 +242,40 @@ onUnmounted(async (): Promise<void> => {
   display: flex;
   flex-direction: column;
   background: none;
-  padding-top: 0px;
-  padding-bottom: 0px;
-  gap: 2rem;
+  padding-top: ms.spacing('padding-none');
+  padding-bottom: ms.spacing('padding-none');
+  gap: ms.spacing('gap-4xl');
+  contain: layout;
 
   &-container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
   }
 
   &-group {
-    background: var(--parsec-color-light-secondary-white);
-    border-radius: var(--parsec-radius-12);
-    padding: 1.5rem 0 0;
-    box-shadow: var(--parsec-shadow-input);
+    background: ms.color('surface-base-page');
+    border-radius: ms.radius('2xl');
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-none') ms.spacing('padding-none');
+    box-shadow:
+      0 1px 1px 0 rgba(0, 0, 0, 0.05),
+      0 1px 4px 0 rgba(0, 0, 0, 0.03),
+      0 0 1px 0 rgba(0, 0, 0, 0.2);
 
     &__title {
-      color: var(--parsec-color-light-primary-700);
-      padding-inline: 1.5rem;
+      @include ms.font('heading-h4');
+      color: ms.color('text-brand-default');
+      padding-inline: ms.spacing('padding-4xl');
     }
   }
 
   &__item {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 1.25rem ms.spacing('padding-4xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
+
+    @include ms.responsive-breakpoint('xs') {
+      flex-direction: column;
+    }
 
     &:last-child {
       border-bottom: none;

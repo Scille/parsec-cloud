@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod store;
 mod transactions;
@@ -47,7 +47,6 @@ impl WorkspaceHistoryOpsReadWriteAttributes {
 }
 
 pub struct WorkspaceHistoryOps {
-    #[allow(unused)]
     config: Arc<ClientConfig>,
     rw: Mutex<WorkspaceHistoryOpsReadWriteAttributes>,
     store: store::WorkspaceHistoryStore,
@@ -82,6 +81,8 @@ pub enum WorkspaceHistorySetTimestampOfInterestError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -216,6 +217,9 @@ impl WorkspaceHistoryOps {
                 }
                 WorkspaceHistoryStoreResolvePathError::NoRealmAccess => {
                     WorkspaceHistorySetTimestampOfInterestError::NoRealmAccess
+                }
+                WorkspaceHistoryStoreResolvePathError::RealmDeleted => {
+                    WorkspaceHistorySetTimestampOfInterestError::RealmDeleted
                 }
                 WorkspaceHistoryStoreResolvePathError::InvalidKeysBundle(err) => {
                     WorkspaceHistorySetTimestampOfInterestError::InvalidKeysBundle(err)

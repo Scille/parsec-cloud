@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -6,8 +6,8 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace_history::{
-        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
         InvalidManifestHistoryError, WorkspaceHistoryOps,
+        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
     },
 };
 
@@ -52,6 +52,8 @@ pub enum WorkspaceHistoryStatEntryError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -83,6 +85,9 @@ pub(crate) async fn stat_entry_by_id(
             }
             WorkspaceHistoryStoreGetEntryError::NoRealmAccess => {
                 WorkspaceHistoryStatEntryError::NoRealmAccess
+            }
+            WorkspaceHistoryStoreGetEntryError::RealmDeleted => {
+                WorkspaceHistoryStatEntryError::RealmDeleted
             }
             WorkspaceHistoryStoreGetEntryError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryStatEntryError::InvalidKeysBundle(err)
@@ -145,6 +150,9 @@ pub(crate) async fn stat_entry(
             }
             WorkspaceHistoryStoreResolvePathError::NoRealmAccess => {
                 WorkspaceHistoryStatEntryError::NoRealmAccess
+            }
+            WorkspaceHistoryStoreResolvePathError::RealmDeleted => {
+                WorkspaceHistoryStatEntryError::RealmDeleted
             }
             WorkspaceHistoryStoreResolvePathError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryStatEntryError::InvalidKeysBundle(err)

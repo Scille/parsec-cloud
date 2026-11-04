@@ -1,5 +1,6 @@
-#![allow(clippy::unwrap_used)]
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+#![allow(clippy::unwrap_used)]
 
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::UserID;

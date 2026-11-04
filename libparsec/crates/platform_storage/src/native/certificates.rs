@@ -1,12 +1,12 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Certificate storage relies on the upper layer to do the actual certification
 // validation work and takes care of handling concurrency issues.
 // Hence no unique violation should occur under normal circumstances here.
 
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, Sqlite, SqliteConnection, Transaction,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
 };
 use std::{collections::HashMap, path::Path};
 
@@ -118,7 +118,7 @@ const SQL_IN_FRAGMENT_SHAMIR_RECOVERY_TYPES: &str =
 fn build_get_certificate_query<'a: 'b, 'b>(
     query: &'a GetCertificateQuery<'b>,
     up_to: UpTo,
-) -> sqlx::QueryBuilder<'a, sqlx::Sqlite> {
+) -> sqlx::QueryBuilder<sqlx::Sqlite> {
     let mut builder = sqlx::QueryBuilder::new(
         "\
         SELECT \
@@ -563,7 +563,6 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
-    #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         let rows = sqlx::query(
             "SELECT \
@@ -625,7 +624,9 @@ impl PlatformCertificatesStorage {
         };
 
         #[cfg(feature = "test-with-testbed")]
-        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info).await;
+        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info)
+            .await
+            .map(|(conn, _)| conn);
 
         #[cfg(not(feature = "test-with-testbed"))]
         let conn: Option<SqliteConnection> = None;
@@ -762,7 +763,6 @@ impl PlatformCertificatesStorage {
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
-    #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         self.for_update(async |mut updater| updater.debug_dump().await)
             .await?

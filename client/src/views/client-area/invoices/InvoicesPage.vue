@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="client-page-invoices">
@@ -53,6 +53,6 @@ onMounted(async () => {
 .client-page-invoices {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 }
 </style>

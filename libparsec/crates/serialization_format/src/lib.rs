@@ -1,4 +1,5 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 #![warn(missing_docs)]
 #![doc = include_str!("../README.md")]
 
@@ -13,7 +14,7 @@ use std::{
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
 };
-use syn::{parse_macro_input, LitStr};
+use syn::{LitStr, parse_macro_input};
 
 fn path_from_str(path: &str) -> PathBuf {
     let manifest_dir_path: PathBuf = std::env::var("CARGO_MANIFEST_DIR")

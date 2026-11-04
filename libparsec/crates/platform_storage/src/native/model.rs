@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::path::PathBuf;
 
@@ -34,32 +34,36 @@ pub(super) fn get_user_storage_db_relative_path(device: &LocalDevice) -> PathBuf
     ])
 }
 
-#[allow(unused)]
+/// Path relative to config dir
+///
+/// Path of the folder that contains both the workspace's data and cache databases.
+pub(super) fn get_workspace_folder_relative_path(
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> PathBuf {
+    PathBuf::from_iter([device.device_id.hex(), realm_id.hex()])
+}
+
 /// Path relative to config dir
 pub(super) fn get_workspace_storage_db_relative_path(
     device: &LocalDevice,
     realm_id: VlobID,
 ) -> PathBuf {
-    PathBuf::from_iter([
-        device.device_id.hex(),
-        realm_id.hex(),
-        format!("workspace_data-v{STORAGE_REVISION}.sqlite"),
-    ])
+    let mut path = get_workspace_folder_relative_path(device, realm_id);
+    path.push(format!("workspace_data-v{STORAGE_REVISION}.sqlite"));
+    path
 }
 
 // TODO: remove reference to workspace cache database: now cache is stored in the
 //       same database as the data.
-#[allow(unused)]
 /// Path relative to config dir
 pub(super) fn get_workspace_cache_storage_db_relative_path(
     device: &LocalDevice,
     realm_id: VlobID,
 ) -> PathBuf {
-    PathBuf::from_iter([
-        device.device_id.hex(),
-        realm_id.hex(),
-        format!("workspace_cache-v{STORAGE_REVISION}.sqlite"),
-    ])
+    let mut path = get_workspace_folder_relative_path(device, realm_id);
+    path.push(format!("workspace_cache-v{STORAGE_REVISION}.sqlite"));
+    path
 }
 
 pub(super) async fn sqlx_initialize_model_if_needed(

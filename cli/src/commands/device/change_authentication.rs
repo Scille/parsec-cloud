@@ -1,55 +1,36 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-use libparsec::{AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy};
+use std::io::Write;
+
+use libparsec::{AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy};
 
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, auth]
     pub struct Args {
-   #[clap(long, short, action)]
-        password: bool,
-   #[clap(long, short, action)]
-        keyring: bool,
     }
 );
 
-enum NewAccessStrategyChoice {
-    Password,
-    Keyring,
-}
-
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
 
-    let new_save_strategy_choice = match (args.password, args.keyring) {
-        (true, false) => NewAccessStrategyChoice::Password,
-        (false, true) => NewAccessStrategyChoice::Keyring,
-        (true, true) => {
-            return Err(anyhow::anyhow!(
-                "Only one of --password and --keyring can be specified"
-            ));
-        }
-        (false, false) => {
-            return Err(anyhow::anyhow!(
-                "One of --password and --keyring must be specified"
-            ));
-        }
-    };
+    if device.totp_opaque_key_id.is_some() {
+        // In theory we should support this authentication method here,
+        // however:
+        // - It is cumbersome since it requires a TOTP challenge involving the server.
+        // - In practice it is a niche usage that will most likely only be used in the GUI.
+        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication.into());
+    }
 
     let current_access_strategy = match device.ty {
         AvailableDeviceType::Password => {
-            let password = read_password(if args.password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter current password for the device:",
-                }
-            })?;
+            let password = read_password("Enter current password for the device:")?;
 
-            DeviceAccessStrategy::Password {
+            DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
-                password,
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
             }
         }
 
@@ -61,8 +42,10 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             // }
         }
 
-        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy {
             key_file: device.key_file_path.clone(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
         },
 
         AvailableDeviceType::AccountVault => {
@@ -88,21 +71,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         }
     };
 
-    let new_save_strategy = match new_save_strategy_choice {
-        NewAccessStrategyChoice::Password => {
-            let password = choose_password(if args.password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter new password for the device:",
-                }
-            })?;
-
-            DeviceSaveStrategy::Password { password }
-        }
-
-        NewAccessStrategyChoice::Keyring => DeviceSaveStrategy::Keyring,
-    };
+    let new_save_strategy = args.auth.get_save_strategy()?;
 
     libparsec::update_device_change_authentication(
         &args.config_dir,
@@ -111,7 +80,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     )
     .await?;
 
-    println!("Device authentication changed successfully");
+    ui.with_message(|_, out| writeln!(out, "Device authentication changed successfully"))?;
 
     Ok(())
 }

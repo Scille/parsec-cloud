@@ -59,11 +59,37 @@ class OpenBaoSecretConfigKV2(OpenBaoSecretConfig):
     def mount_path(self) -> str: ...
 
 class OpenBaoAuthConfig:
-    def __init__(self, id: str, mount_path: str) -> None: ...
+    def __init__(
+        self,
+        id: str,
+        mount_path: str,
+        name: str | None,
+        help_link: str | None | None,
+        icon: str | None | None,
+    ) -> None: ...
+    @property
+    def help_link(self) -> str | None | None: ...
+    @property
+    def icon(self) -> str | None | None: ...
     @property
     def id(self) -> str: ...
     @property
     def mount_path(self) -> str: ...
+    @property
+    def name(self) -> str | None: ...
+
+class CryptPadConfig:
+    pass
+
+class CryptPadConfigDisabled(CryptPadConfig):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class CryptPadConfigEnabled(CryptPadConfig):
+    def __init__(self, server_url: str) -> None: ...
+    @property
+    def server_url(self) -> str: ...
 
 class Req:
     def __init__(
@@ -89,9 +115,15 @@ class RepOk(Rep):
         account: AccountConfig,
         organization_bootstrap: OrganizationBootstrapConfig,
         openbao: OpenBaoConfig,
+        cryptpad: CryptPadConfig | None,
+        advisory_device_file_protection: list[str] | None,
     ) -> None: ...
     @property
     def account(self) -> AccountConfig: ...
+    @property
+    def advisory_device_file_protection(self) -> list[str] | None: ...
+    @property
+    def cryptpad(self) -> CryptPadConfig | None: ...
     @property
     def openbao(self) -> OpenBaoConfig: ...
     @property

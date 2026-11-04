@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="organization">
@@ -6,7 +6,7 @@
       class="account-invitations"
       v-if="invitationList.length > 0"
     >
-      <ion-text class="title-h4 account-invitations__title">
+      <ion-text class="account-invitations__title">
         {{
           $msTranslate({
             key: 'HomePage.invitationList.title',
@@ -21,8 +21,8 @@
         @click="$emit('invitationClick', invitation)"
       >
         <div class="account-invitation-text">
-          <ion-text class="account-invitation-text__title title-h4">{{ invitation.organizationId }}</ion-text>
-          <ion-text class="account-invitation-text__subtitle body">{{ $msTranslate('HomePage.invitationList.validation') }}</ion-text>
+          <ion-text class="account-invitation-text__title">{{ invitation.organizationId }}</ion-text>
+          <ion-text class="account-invitation-text__subtitle">{{ $msTranslate('HomePage.invitationList.validation') }}</ion-text>
         </div>
         <ms-image
           :image="MailUnreadGradient"
@@ -31,29 +31,26 @@
       </div>
     </div>
 
-    <template v-if="deviceList.length === 0 && pkiRequestList.length === 0 && !querying">
+    <template v-if="deviceList.length === 0 && joinRequestList.length === 0 && !querying">
       <!-- No organization -->
       <div class="organization-content no-devices">
         <div class="create-organization">
           <div class="create-organization-text">
-            <ion-text class="create-organization-text__title title-h3">
+            <ion-text class="create-organization-text__title">
               {{ $msTranslate('HomePage.noDevices.titleCreateOrga') }}
             </ion-text>
-            <ion-text class="create-organization-text__subtitle body-lg">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
-            <ion-button
-              @click="$emit('createOrganizationClick')"
-              size="default"
-              id="create-organization-button"
-              class="button-default"
-            >
-              <ion-icon
-                :icon="addCircle"
-                class="icon"
-              />
-              {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
-            </ion-button>
-            <div class="recovery-no-devices">
-              <ion-text class="body">{{ $msTranslate('HomePage.lostDevice') }}</ion-text>
+            <ion-text class="create-organization-text__subtitle">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
+            <div class="buttons-container">
+              <ion-button
+                @click="$emit('createOrganizationClick')"
+                id="create-organization-button"
+              >
+                <ion-icon
+                  :icon="addCircle"
+                  class="icon button-icon-left"
+                />
+                {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
+              </ion-button>
               <ion-button
                 @click="$emit('recoverClick')"
                 fill="clear"
@@ -68,7 +65,7 @@
           />
         </div>
         <div class="invitation">
-          <ion-text class="invitation__title title-h4">
+          <ion-text class="invitation__title">
             {{ $msTranslate('HomePage.noDevices.titleInvitation') }}
           </ion-text>
           <div class="invitation-link">
@@ -97,10 +94,10 @@
             class="webAccess-header"
           >
             <div class="webAccess-header__title-container">
-              <ion-text class="webAccess-header__title title-h4">
+              <ion-text class="webAccess-header__title">
                 {{ $msTranslate('HomePage.webAccess.title') }}
               </ion-text>
-              <ion-text class="webAccess-header-info button-medium">
+              <ion-text class="webAccess-header-info">
                 <span
                   v-if="!showWebAccess"
                   class="webAccess-header-info__text"
@@ -121,7 +118,7 @@
               </ion-text>
             </div>
             <ion-text
-              class="webAccess-header__subtitle body-lg"
+              class="webAccess-header__subtitle"
               v-show="showWebAccess"
             >
               {{ $msTranslate('HomePage.webAccess.subtitle') }}
@@ -132,61 +129,31 @@
               class="webAccess-step"
               v-show="showWebAccess"
             >
-              <ion-text class="body webAccess-step-item">
+              <ion-text class="webAccess-step-item">
                 <ion-icon
                   :icon="caretForward"
                   class="webAccess-step-item__icon"
                 />
                 <span class="webAccess-step-item__text">
-                  <i18n-t
-                    keypath="HomePage.webAccess.step.one"
-                    scope="global"
-                  >
-                    <template #application>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.application') }} </strong>
-                    </template>
-                    <template #login>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.login') }} </strong>
-                    </template>
-                  </i18n-t>
+                  <ms-rich-text text="HomePage.webAccess.step.one" />
                 </span>
               </ion-text>
-              <ion-text class="body webAccess-step-item">
+              <ion-text class="webAccess-step-item">
                 <ion-icon
                   :icon="caretForward"
                   class="webAccess-step-item__icon"
                 />
                 <span class="webAccess-step-item__text">
-                  <i18n-t
-                    keypath="HomePage.webAccess.step.two"
-                    scope="global"
-                  >
-                    <template #myDevices>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.myDevices') }} </strong>
-                    </template>
-                    <template #addDevice>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.addDevice') }} </strong>
-                    </template>
-                    <template #copyInvitation>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.copyInvitation') }} </strong>
-                    </template>
-                  </i18n-t>
+                  <ms-rich-text text="HomePage.webAccess.step.two" />
                 </span>
               </ion-text>
-              <ion-text class="body webAccess-step-item">
+              <ion-text class="webAccess-step-item">
                 <ion-icon
                   :icon="caretForward"
                   class="webAccess-step-item__icon"
                 />
                 <span class="webAccess-step-item__text">
-                  <i18n-t
-                    keypath="HomePage.webAccess.step.three"
-                    scope="global"
-                  >
-                    <template #pasteInvitation>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.pasteInvitation') }} </strong>
-                    </template>
-                  </i18n-t>
+                  <ms-rich-text text="HomePage.webAccess.step.three" />
                 </span>
               </ion-text>
             </div>
@@ -208,7 +175,7 @@
                 {{ $msTranslate('HomePage.webAccess.joinButton') }}
               </ion-button>
             </div>
-            <ion-text class="webAccess-info body">
+            <ion-text class="webAccess-info">
               <i18n-t
                 keypath="HomePage.webAccess.info"
                 scope="global"
@@ -236,7 +203,7 @@
             placeholder="HomePage.organizationList.search"
             v-model="searchQuery"
             id="search-input-organization"
-            ref="searchInput"
+            ref="searchInputRef"
           />
           <ms-sorter
             v-if="confLoaded"
@@ -252,6 +219,7 @@
           <!-- will be added with Parsec Auth -->
           <ion-button
             class="organization-add-button"
+            slot="icon-only"
             @click="$emit('createOrJoinOrganizationClick', $event)"
             v-if="isSmallDisplay && false"
           >
@@ -263,29 +231,29 @@
         </div>
         <div class="organization-list">
           <ion-text
-            class="organization-list__title title-h5"
-            v-if="pkiRequestList.length > 0"
+            class="organization-list__title"
+            v-if="joinRequestList.length > 0"
           >
             {{ $msTranslate('HomePage.organizationRequest.title') }}
           </ion-text>
-          <organization-pki-request
-            v-for="pkiRequest in pkiRequestList"
-            :key="pkiRequest.certificate"
-            :request="pkiRequest"
-            @join-organization="$emit('pkiRequestClick', $event)"
-            @delete-request="$emit('pkiRequestClick', $event)"
+          <organization-join-request
+            v-for="joinRequest in joinRequestList"
+            :key="joinRequest.enrollment.enrollmentId"
+            :request="joinRequest"
+            @join-organization="$emit('joinRequestClick', $event)"
+            @delete-request="$emit('joinRequestClick', $event)"
           />
 
           <ion-text
-            class="no-match-result body"
+            class="no-match-result"
             v-show="searchQuery.length > 0 && filteredDevices.length === 0 && deviceList.length > 0"
           >
             {{ $msTranslate({ key: 'HomePage.organizationList.noMatch', data: { query: searchQuery } }) }}
           </ion-text>
 
           <ion-text
-            class="organization-list__title title-h5"
-            v-if="pkiRequestList.length > 0"
+            class="organization-list__title"
+            v-if="filteredDevices.length > 0"
           >
             {{ $msTranslate('HomePage.organizationList.subtitle') }}
           </ion-text>
@@ -301,16 +269,6 @@
           />
         </div>
       </div>
-      <div class="recovery-devices">
-        <ion-text class="body">{{ $msTranslate('HomePage.lostDevice') }}</ion-text>
-        <ion-button
-          @click="$emit('recoverClick')"
-          fill="clear"
-          class="button-medium"
-        >
-          {{ $msTranslate('HomePage.recoverDevice') }}
-        </ion-button>
-      </div>
     </template>
   </div>
 </template>
@@ -319,8 +277,8 @@
 import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
 import { bootstrapLinkValidator, claimAndBootstrapLinkValidator } from '@/common/validators';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import OrganizationPkiRequest from '@/components/organizations/OrganizationPkiRequest.vue';
-import { AccountInvitation, AvailableDevice, getLoggedInDevices, LocalJoinRequest, LoggedInDeviceInfo } from '@/parsec';
+import OrganizationJoinRequest from '@/components/organizations/OrganizationJoinRequest.vue';
+import { AccountInvitation, AsyncEnrollmentRequest, AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
 import { Routes } from '@/router';
 import { Env } from '@/services/environment';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -333,6 +291,7 @@ import {
   MsImage,
   MsInput,
   MsOptions,
+  MsRichText,
   MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
@@ -351,13 +310,13 @@ const emits = defineEmits<{
   (e: 'recoverClick'): void;
   (e: 'createOrJoinOrganizationClick', event: Event): void;
   (e: 'invitationClick', invitation: AccountInvitation): void;
-  (e: 'pkiRequestClick', pkiRequest: LocalJoinRequest): void;
+  (e: 'joinRequestClick', request: AsyncEnrollmentRequest): void;
 }>();
 
 const props = defineProps<{
   deviceList: AvailableDevice[];
   invitationList: AccountInvitation[];
-  pkiRequestList: LocalJoinRequest[];
+  joinRequestList: AsyncEnrollmentRequest[];
   querying: boolean;
 }>();
 
@@ -425,11 +384,7 @@ onMounted(async (): Promise<void> => {
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Home },
-    async () => {
-      if (searchInputRef.value) {
-        searchInputRef.value.setFocus();
-      }
-    },
+    async () => await searchInputRef.value?.setFocus(),
   );
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   const storedData = await storageManager.retrieveComponentData<OrganizationListSavedData>(ORGANIZATION_LIST_DATA_KEY, {
@@ -536,29 +491,26 @@ async function openDocumentation(): Promise<void> {
   display: flex;
   margin: 0;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
   flex-grow: 1;
 }
 
 .organization-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   overflow: hidden;
-  margin-bottom: 4rem;
   height: 100%;
-  border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-  padding: 2rem 2rem 0 2rem;
+  padding: ms.spacing('padding-sm') ms.spacing('padding-5xl') ms.spacing('padding-sm') ms.spacing('padding-sm');
   width: 100%;
   max-width: 40rem;
-  background: var(--parsec-color-light-secondary-white);
 
   @include ms.responsive-breakpoint('sm') {
     margin-inline: auto;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl') 0;
   }
 
   @include ms.responsive-breakpoint('xs') {
-    padding: 1.5rem 1.5rem 0 1.5rem;
     margin-inline: 0;
     box-shadow: var(--parsec-shadow-strong);
   }
@@ -568,11 +520,10 @@ async function openDocumentation(): Promise<void> {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
-    #search-input-organization:focus-within {
-      outline: none;
-      border: 1px solid var(--parsec-color-light-primary-300);
+    @include ms.responsive-breakpoint('xs') {
+      flex-direction: column;
     }
 
     #organization-filter-select {
@@ -580,18 +531,18 @@ async function openDocumentation(): Promise<void> {
     }
 
     .organization-add-button {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
+      --background: #{ms.color('surface-neutral-default')};
+      --background-hover: #{ms.color('surface-neutral-default-hover')};
       width: 2.5rem;
       height: 2.5rem;
 
       &::part(native) {
-        padding: 0.625rem;
-        border-radius: var(--parsec-radius-8);
+        padding: ms.spacing('padding-xl');
+        border-radius: ms.radius('lg');
       }
 
       .add-button-icon {
-        --fill-color: var(--parsec-color-light-secondary-white);
+        --fill-color: #{ms.color('icon-neutral-on-color')};
         width: fit-content;
       }
     }
@@ -603,45 +554,30 @@ async function openDocumentation(): Promise<void> {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     position: relative;
     z-index: 100;
+    // Reserve space for overlay scrollbar on Firefox
+    @supports (-moz-appearance: none) {
+      padding-right: ms.spacing('padding-2xl');
+    }
 
     @include ms.responsive-breakpoint('md') {
       width: 100%;
     }
 
     &__title {
-      margin-top: 0.5rem;
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('heading-h6');
+      margin-top: ms.spacing('padding-lg');
+      color: ms.color('text-base-description');
     }
-  }
-}
-
-.recovery-devices {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
-  width: 100%;
-  gap: 0.5rem;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 0.5rem 0.5rem 1.5rem;
-  color: var(--parsec-color-light-secondary-grey);
-  bottom: 0;
-  left: 0;
-  z-index: 10;
-
-  @include ms.responsive-breakpoint('sm') {
-    position: fixed;
   }
 }
 
 .no-devices {
   max-width: 50rem;
-  margin-bottom: 0.5rem;
-  gap: 1.5rem;
+  margin-bottom: ms.spacing('padding-lg');
+  gap: ms.spacing('gap-4xl');
   padding: 0;
   overflow: auto;
   background: transparent;
@@ -650,28 +586,23 @@ async function openDocumentation(): Promise<void> {
   .create-organization,
   .invitation,
   .webAccess {
-    background: var(--parsec-color-light-secondary-white);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-12);
+    background: ms.color('surface-base-default');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl');
     display: flex;
   }
 
   .invitation,
   .webAccess {
     flex-direction: column;
-    gap: 1rem;
-    padding: 2rem;
+    gap: ms.spacing('gap-3xl');
+    padding: ms.spacing('padding-5xl');
 
     @include ms.responsive-breakpoint('xs') {
-      padding: 1.5rem;
+      padding: ms.spacing('padding-4xl');
     }
 
     ion-button {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
-      --color: var(--parsec-color-light-secondary-white);
-      --color-hover: var(--parsec-color-light-secondary-white);
-      padding-bottom: 0.25rem;
       min-width: 7rem;
 
       @include ms.responsive-breakpoint('xs') {
@@ -682,11 +613,11 @@ async function openDocumentation(): Promise<void> {
 
   .create-organization {
     align-items: center;
-    gap: 1.5rem;
-    padding: 2rem 2rem;
+    gap: ms.spacing('gap-4xl');
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-5xl');
 
     @include ms.responsive-breakpoint('xs') {
-      padding: 1.5rem;
+      padding: ms.spacing('padding-4xl');
     }
 
     &-text {
@@ -699,13 +630,24 @@ async function openDocumentation(): Promise<void> {
       }
 
       &__title {
-        color: var(--parsec-color-light-primary-700);
-        margin-bottom: 1rem;
+        @include ms.font('heading-h4');
+        color: ms.color('text-brand-default');
+        margin-bottom: ms.spacing('padding-3xl');
       }
 
       &__subtitle {
-        color: var(--parsec-color-light-secondary-hard-grey);
-        margin-bottom: 1.5rem;
+        @include ms.font('body-lg-regular');
+        color: ms.color('text-base-description');
+        margin-bottom: ms.spacing('padding-4xl');
+      }
+
+      .buttons-container {
+        display: flex;
+        gap: ms.spacing('gap-xl');
+
+        @include ms.responsive-breakpoint('md') {
+          flex-direction: column;
+        }
       }
 
       #create-organization-button {
@@ -716,7 +658,7 @@ async function openDocumentation(): Promise<void> {
         }
 
         ion-icon {
-          margin-inline-end: 0.5rem;
+          margin-inline-end: ms.spacing('gap-lg');
           font-size: 1rem;
         }
       }
@@ -724,15 +666,17 @@ async function openDocumentation(): Promise<void> {
       .recovery-no-devices {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-secondary-grey);
-        margin-top: 1rem;
+        gap: ms.spacing('gap-lg');
+        color: ms.color('text-base-description');
+        margin-top: ms.spacing('padding-3xl');
 
         @include ms.responsive-breakpoint('sm') {
           flex-direction: column;
         }
 
         ion-text {
+          @include ms.font('body-md-regular');
+
           @include ms.responsive-breakpoint('xs') {
             display: none;
           }
@@ -757,14 +701,15 @@ async function openDocumentation(): Promise<void> {
 
   .invitation {
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h5');
+      color: ms.color('text-neutral-default');
       padding: 0;
     }
 
     &-link {
       display: flex;
-      gap: 1rem;
-      align-items: flex-start;
+      gap: ms.spacing('gap-3xl');
+      align-items: flex-end;
 
       @include ms.responsive-breakpoint('xs') {
         flex-direction: column;
@@ -774,50 +719,49 @@ async function openDocumentation(): Promise<void> {
         width: 100%;
         max-width: 33rem;
       }
-
-      #join-organization-button {
-        padding-top: 1.75rem;
-      }
     }
   }
 
   .webAccess {
     position: relative;
-    margin-bottom: 2rem;
+    margin-bottom: ms.spacing('padding-5xl');
 
     &-header {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 0.75rem;
+      gap: ms.spacing('gap-2xl');
       cursor: pointer;
 
       &__title-container {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
       }
 
       &__title {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('heading-h5');
+        color: ms.color('text-neutral-default');
         padding: 0;
         width: auto;
 
         &:hover {
-          color: var(--parsec-color-light-secondary-text);
+          color: ms.color('text-neutral-default');
         }
       }
 
       &__subtitle {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-lg-regular');
+        color: ms.color('text-base-description');
       }
 
       &-info {
+        @include ms.font('label-md-medium');
         display: flex;
         align-items: center;
-        gap: 0.25rem;
-        color: var(--parsec-color-light-secondary-grey);
+        gap: ms.spacing('gap-sm');
+        color: ms.color('text-base-description');
         position: relative;
         right: 0;
         top: 0;
@@ -843,7 +787,7 @@ async function openDocumentation(): Promise<void> {
         }
 
         &:hover {
-          color: var(--parsec-color-light-secondary-text);
+          color: ms.color('text-neutral-default');
         }
       }
     }
@@ -851,42 +795,43 @@ async function openDocumentation(): Promise<void> {
     &__content {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
     }
 
     &-step {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-grey);
-      padding: 1rem;
-      border-radius: var(--parsec-radius-8);
-      background: var(--parsec-color-light-secondary-background);
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-base-description');
+      padding: ms.spacing('padding-3xl');
+      border-radius: ms.radius('lg');
+      background: ms.color('surface-base-default-secondary');
 
       @include ms.responsive-breakpoint('sm') {
         flex-direction: column;
       }
 
       &-item {
+        @include ms.font('body-md-regular');
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
 
         &__icon {
-          color: var(--parsec-color-light-secondary-light);
+          color: ms.color('icon-disabled-default');
           font-size: 1rem;
           flex-shrink: 0;
         }
 
         &__text {
-          color: var(--parsec-color-light-secondary-text);
+          color: ms.color('text-neutral-default');
         }
       }
     }
 
     &-link {
       display: flex;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
       justify-content: flex-start;
 
       @include ms.responsive-breakpoint('xs') {
@@ -899,22 +844,22 @@ async function openDocumentation(): Promise<void> {
       }
 
       #join-organization-button {
-        margin-top: 0.25rem;
         flex-grow: 0;
         height: fit-content;
       }
     }
 
     &-info {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-md-regular');
+      color: ms.color('text-base-description');
 
       .more-link {
-        color: var(--parsec-color-light-primary-500);
+        color: ms.color('text-brand-default');
         cursor: pointer;
         text-decoration: underline;
 
         &:hover {
-          color: var(--parsec-color-light-primary-600);
+          color: ms.color('text-brand-default-hover');
         }
       }
     }
@@ -924,49 +869,52 @@ async function openDocumentation(): Promise<void> {
 .account-invitations {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  border-radius: var(--parsec-radius-12);
-  padding: 2rem;
+  gap: ms.spacing('gap-4xl');
+  border-radius: ms.radius('2xl');
+  padding: ms.spacing('padding-5xl');
   width: 100%;
   max-width: 40rem;
-  background: var(--parsec-color-light-secondary-white);
+  background: ms.color('surface-base-default');
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h5');
+    color: ms.color('text-neutral-default');
     margin-left: auto;
   }
 
   .account-invitation {
     padding: 0.825rem 1.25rem;
-    border: 1px solid var(--parsec-color-light-primary-200);
+    border: ms.border('thin') solid ms.color('border-brand-default-subtle');
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-radius: var(--parsec-radius-12);
-    background: var(--parsec-color-light-secondary-background);
+    border-radius: ms.radius('2xl');
+    background: ms.color('surface-base-default-secondary');
     cursor: pointer;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
     transition: all 0.2s ease-in-out;
 
     &:hover {
       box-shadow: var(--parsec-shadow-light);
-      border: 1px solid var(--parsec-color-light-primary-600);
+      border: ms.border('thin') solid ms.color('border-brand-default-hover');
     }
 
     &-text {
       display: flex;
       flex-direction: column;
       &__title {
-        color: var(--parsec-color-light-secondary-text);
+        @include ms.font('heading-h5');
+        color: ms.color('text-neutral-default');
       }
 
       &__subtitle {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
 
     &-image {
-      margin: 0.5rem;
+      margin: ms.spacing('padding-lg');
       width: 1.75rem;
       height: 1.75rem;
       flex-shrink: 0;

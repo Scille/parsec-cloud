@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import sys
+from pathlib import Path
+
+# cspell:dictionaries fr-fr
+rst_prolog = """
+.. |english-only| replace:: Cette section n'est disponible qu'en anglais.
+"""
+
 # -*- coding: utf-8 -*-
 #
-# parsec documentation build configuration file, created by
+# Parsec documentation build configuration file, created by
 # sphinx-quickstart on Tue Jul  9 22:26:36 2013.
 #
 # This file is execfile()d with the current directory set to its
@@ -21,17 +29,20 @@
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
+sys.path.append(str(Path("./_ext").resolve()))
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx_copybutton",
     "sphinx_rtd_theme",
     "sphinx_tabs.tabs",
+    "sphinxmermaid",
     # Allow to use svg images in latex build.
     # https://www.sphinx-doc.org/en/master/usage/extensions/imgconverter.html
     "sphinx.ext.imgconverter",
+    "manpages",  # Custom extension to support manpages
 ]
-
 # Sphinx-intl config
 locale_dirs = ["locale/"]
 # Configure how pot & po file are generated:
@@ -43,9 +54,6 @@ gettext_compact = False
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
-# The suffix of source filenames.
-source_suffix = ".rst"
-
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
@@ -53,7 +61,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Parsec"
+project = "Parsec Documentation"
 copyright = "2016-present, Scille SAS"
 
 # The version info for the project you're documenting, acts as replacement
@@ -61,7 +69,7 @@ copyright = "2016-present, Scille SAS"
 # the built documents.
 #
 # The short X.Y version.
-version = "3.7.2-a.0+dev"
+version = "3.11.1-a.0+dev"
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -77,7 +85,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["_build", ".venv"]
+exclude_patterns = ["_build", ".venv", "rfcs", "development", "HOSTING.md", "README.md"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -95,7 +103,7 @@ exclude_patterns = ["_build", ".venv"]
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
+pygments_style = "material"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -127,7 +135,8 @@ html_theme_options = {
     "collapse_navigation": False,  # Collapse navigation (False makes it tree-like)
     "version_selector": True,  # Display a version selector below the title (only if hosted on RTD and if more than 1 active version)
     "language_selector": True,  # Display a language selector below the title (only if hosted on RTD and if more than 1 active version)
-    # 'navigation_depth': 4,  # Depth of the headers shown in the navigation bar
+    "navigation_depth": 3,  # Depth of the headers shown in the navigation bar
+    "style_external_links": True,  # Display external links with a different style
 }
 
 # The name for this set of Sphinx documents.  If None, it defaults to
@@ -303,6 +312,9 @@ texinfo_documents = [
     )
 ]
 
+# manpages config (Our custom extension)
+command_prefixes = ["parsec-cli"]
+
 # Documents to append as an appendix to all manuals.
 # texinfo_appendices = []
 
@@ -314,3 +326,23 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+
+def add_language_tag(app, config):
+    """
+    Add the language tag to be available during doc generation.
+
+    Example:
+
+    For the `fr` language, the corresponding `fr` tag would be set.
+
+    Note:
+
+    This cannot be done directly at the root level in `conf.py`, as it would require `language` to be define
+    and would not support passing `-D language=fr` in the sphinx options
+    """
+    app.tags.add(config.language)
+
+
+def setup(app):
+    app.connect("config-inited", add_language_tag)

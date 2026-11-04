@@ -1,0 +1,357 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+use schannel::{
+    cert_context::{CertContext, HashAlgorithm},
+    cert_store::CertStore,
+};
+
+use libparsec_types::prelude::*;
+
+use super::{PlatformPkiCertificate, find_in_store, schannel_utils};
+use crate::{
+    AvailablePkiCertificate, PkiCertificate, PkiScwsConfig,
+    PkiSystemGetCertificateRevocationListsError, PkiSystemInitError,
+    PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
+    ShowCertificateSelectionDialogError, X509CertificateDer, X509CertificateRevocationList,
+    X509TrustAnchor,
+};
+
+// Windows has multiple certificate stores.
+// - `My`: User's certificates, typically to get access to the Smartcards
+// - `Trust`: Certificate Trust Lists (CTLs), we don't use this so we can ignore this store.
+// - `CA`: Intermediate CA certificates & their Certificate Revocation Lists (CRLs)
+// - `Root`: Self-signed root CA certificates & their Certificate Revocation Lists (CRLs)
+//
+// On top of that, these store exist twice: as `LocalMachine` (e.g. `LocalMachine/CA`) and `CurrentUser` (e.g. `CA`),
+// however the `CurrentUser` inherit the content of `LocalMachine` so we just have to use the former.
+//
+// see:
+// - https://learn.microsoft.com/en-us/windows/win32/seccrypto/system-store-locations
+// - https://learn.microsoft.com/en-us/windows/win32/seccrypto/managing-certificates-with-certificate-stores
+// - https://learn.microsoft.com/en-us/windows-hardware/drivers/install/local-machine-and-current-user-certificate-stores
+const LEAF_CERTIFICATE_STORE: &str = "My";
+const INTERMEDIATE_CERTIFICATE_STORE: &str = "CA";
+const ROOT_CERTIFICATE_STORE: &str = "Root";
+
+#[derive(Debug)]
+pub struct PlatformPkiSystem {
+    my_cert_store: CertStore,
+}
+
+impl PlatformPkiSystem {
+    pub async fn init(
+        _config_dir: &std::path::Path,
+        _scws_config: Option<PkiScwsConfig>,
+    ) -> Result<Self, PkiSystemInitError> {
+        let store = CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
+            .map(|store| Self {
+                my_cert_store: store,
+            })
+            .context("Cannot open windows cert store")
+            .map_err(PkiSystemInitError::Internal)?;
+        configure_auto_resync_store(&store.my_cert_store)
+            .context("Failed to configure auto resync for certificate store")
+            .map_err(PkiSystemInitError::Internal)?;
+        Ok(store)
+    }
+
+    pub async fn open_certificate(
+        &self,
+        cert_ref: &X509CertificateReference,
+    ) -> Result<PkiCertificate, PkiSystemOpenCertificateError> {
+        open_certificate(&self.my_cert_store, cert_ref)
+            .map(PlatformPkiCertificate::from)
+            .map(wrap_platform_certificate)
+            .ok_or(PkiSystemOpenCertificateError::NotFound)
+    }
+
+    pub async fn list_user_certificates(
+        &self,
+    ) -> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
+        Ok(self
+            .my_cert_store
+            .certs()
+            .map(|cert| {
+                AvailablePkiCertificate::load_der(None, cert.friendly_name().ok(), cert.to_der())
+            })
+            .collect())
+    }
+
+    pub async fn get_certificate_revocation_lists(
+        &self,
+    ) -> Result<
+        Vec<X509CertificateRevocationList<'static>>,
+        PkiSystemGetCertificateRevocationListsError,
+    > {
+        list_x509_certificate_revocation_lists()
+            .await
+            .map_err(|err| PkiSystemGetCertificateRevocationListsError::Internal(err.into()))
+    }
+}
+
+#[cfg(not(feature = "test-with-testbed"))]
+fn wrap_platform_certificate(platform: PlatformPkiCertificate) -> PkiCertificate {
+    PkiCertificate { platform }
+}
+
+#[cfg(feature = "test-with-testbed")]
+fn wrap_platform_certificate(platform: PlatformPkiCertificate) -> PkiCertificate {
+    PkiCertificate {
+        platform: crate::testbed::MaybeWithTestbed::WithPlatform(platform),
+    }
+}
+
+fn get_hash_algo(hash: &X509CertificateHash) -> HashAlgorithm {
+    match hash {
+        X509CertificateHash::SHA256(..) => HashAlgorithm::sha256(),
+    }
+}
+
+fn hash_from_certificate_context(context: &CertContext) -> std::io::Result<X509CertificateHash> {
+    context
+        .fingerprint(HashAlgorithm::sha256())
+        .and_then(|buf| {
+            buf.try_into().map_err(|_| {
+                std::io::Error::new(std::io::ErrorKind::InvalidData, "Not a sha256 hash")
+            })
+        })
+        .map(X509CertificateHash::SHA256)
+}
+
+fn open_certificate(
+    store: &CertStore,
+    certificate_ref: &X509CertificateReference,
+) -> Option<CertContext> {
+    match &certificate_ref.uri {
+        Maybe::Present(uri) => {
+            let mut uri = uri.to_owned();
+            let (issuer, serial) = get_issuer_serial_from_pkcs11_uri(&mut uri);
+            log::trace!("Looking for cert with issuer:{issuer:x?} serial:{serial:x?}");
+            let filter = find_in_store::CertFilter::cert_id(issuer, serial);
+            find_in_store::find_cert_in_store(store, filter).next()
+        }
+        Maybe::Absent => {
+            log::trace!("Certificate reference has no uri, fallback to fingerprint");
+            let hash_algo = get_hash_algo(&certificate_ref.hash);
+            store.certs().find(|candidate: &CertContext| {
+                let Ok(cert_hash) = candidate.fingerprint(hash_algo) else {
+                    return false;
+                };
+                match &certificate_ref.hash {
+                    X509CertificateHash::SHA256(data) => data.as_ref() == cert_hash.as_slice(),
+                }
+            })
+        }
+    }
+}
+
+// Use a function to be able to test the obtained issuer and serial to be similar to the one
+// obtained in CERT_INFO for a given certificate.
+pub(crate) fn get_issuer_serial_from_pkcs11_uri(
+    pkcs11: &mut X509Pkcs11URI,
+) -> (&mut [u8], &mut [u8]) {
+    let issuer = pkcs11.der_issuer.as_mut();
+    let serial: &mut [u8] = pkcs11.serial.as_mut();
+    // We need to revers the bytes order of serial as Windows expect the serial to
+    // be in little-endian as indicated in the description of `SerialNumber` in:
+    // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-cert_info
+    serial.reverse();
+    (issuer, serial)
+}
+
+pub(super) type ListX509CertificateRevocationListsError = ListX509CertificatesError;
+
+pub(super) async fn list_x509_certificate_revocation_lists()
+-> Result<Vec<X509CertificateRevocationList<'static>>, ListX509CertificateRevocationListsError> {
+    let mut crls = vec![];
+    // Need to look in both stores to get CRL from root *and* intermediate CAs
+    for store_name in [INTERMEDIATE_CERTIFICATE_STORE, ROOT_CERTIFICATE_STORE] {
+        let store = CertStore::open_current_user(store_name)
+            .map_err(ListX509CertificateRevocationListsError::CannotOpenStore)?;
+        collect_crls_from_store(&store, &mut crls);
+    }
+    Ok(crls)
+}
+
+fn collect_crls_from_store(
+    store: &CertStore,
+    crls: &mut Vec<X509CertificateRevocationList<'static>>,
+) {
+    let raw_store = schannel_utils::get_raw_store(store);
+
+    let mut prev: *mut windows_sys::Win32::Security::Cryptography::CRL_CONTEXT =
+        core::ptr::null_mut();
+    loop {
+        // SAFETY: `raw_store` is a valid `HCERTSTORE` obtained from `store`.
+        // `prev` is either NULL on the first iteration or the value returned by
+        // the previous call to `CertEnumCRLsInStore`. Per the documentation,
+        // the function takes ownership of (and frees) `prev` when non-null.
+        let next = unsafe {
+            windows_sys::Win32::Security::Cryptography::CertEnumCRLsInStore(raw_store, prev)
+        };
+        if next.is_null() {
+            break;
+        }
+
+        // SAFETY: `next` is a non-null pointer to a `CRL_CONTEXT` whose
+        // lifetime is managed by the cert store enumeration. `pbCrlEncoded`
+        // points to `cbCrlEncoded` bytes of valid memory.
+        let crl_der: Vec<u8> = unsafe {
+            let crl_ctx = &*next;
+            std::slice::from_raw_parts(crl_ctx.pbCrlEncoded, crl_ctx.cbCrlEncoded as usize)
+        }
+        .to_vec();
+
+        match webpki::OwnedCertRevocationList::from_der(&crl_der) {
+            Ok(crl) => crls.push(crl.into()),
+            Err(err) => log::warn!("Invalid certificate revocation list (CRL): {err}"),
+        }
+
+        prev = next;
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(super) enum ListX509CertificatesError {
+    #[error("Cannot open certificate store: {0}")]
+    CannotOpenStore(std::io::Error),
+}
+
+pub(super) type ListX509TrustAnchors = ListX509CertificatesError;
+
+pub(super) async fn list_x509_trust_anchors()
+-> Result<Vec<X509TrustAnchor<'static>>, ListX509TrustAnchors> {
+    let store = CertStore::open_current_user(ROOT_CERTIFICATE_STORE)
+        .map_err(ListX509TrustAnchors::CannotOpenStore)?;
+
+    let res = store
+        .certs()
+        // NOTE: We could filter the root certificate on their valid usages, but we could easily
+        // miss out the expected root certificate as the init script
+        // `../../examples/init_windows_credstore.ps1` generate a test CA cert with the type
+        // `SSLServerAuthentication` (the default value).
+        //
+        // .filter(|ctx| match ctx.valid_uses() {
+        //     Ok(ValidUses::All) => true,
+        //     Ok(ValidUses::Oids(oids)) => {
+        //         log::trace!(cert_name:?=ctx.friendly_name().ok(), oids:?; "Certificate valid uses");
+        //         false
+        //     }
+        //     Err(err) => { log::trace!(cert_name:?=ctx.friendly_name().ok(), err:?; "Certificate with no valid use, skipping"); false },
+        // })
+        .filter_map(|ctx| {
+            webpki::anchor_from_trusted_cert(&ctx.to_der().into())
+                .map(|anchor| anchor.to_owned())
+                .inspect_err(|err| {
+                    log::warn!(
+                        "Invalid root certificate: name={:?}, fingerprint={:?}, err={err}",
+                        ctx.friendly_name().ok(),
+                        ctx.fingerprint(HashAlgorithm::sha256()).ok()
+                    )
+                })
+                .ok()
+        })
+        .collect::<Vec<_>>();
+
+    Ok(res)
+}
+
+pub(super) type ListIntermediateX509CertificatesError = ListX509CertificatesError;
+
+pub(super) async fn list_intermediate_x509_certificates()
+-> Result<Vec<X509CertificateDer<'static>>, ListIntermediateX509CertificatesError> {
+    let store = CertStore::open_current_user(INTERMEDIATE_CERTIFICATE_STORE)
+        .map_err(ListIntermediateX509CertificatesError::CannotOpenStore)?;
+
+    Ok(store
+        .certs()
+        .map(|ctx| X509CertificateDer::from(ctx.to_der()).into_owned())
+        .collect::<Vec<_>>())
+}
+
+pub fn show_certificate_selection_dialog_windows_only()
+-> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
+    let store = CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
+        .map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
+
+    ask_user_to_select_certificate(&store)
+        .as_ref()
+        .map(|context| {
+            let hash = hash_from_certificate_context(context)?;
+
+            Ok(X509CertificateReference {
+                uri: Maybe::Absent,
+                hash,
+            })
+        })
+        .transpose()
+        .map_err(ShowCertificateSelectionDialogError::CannotGetCertificateInfo)
+}
+
+fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
+    use windows_sys::Win32::Security::Cryptography::UI::CryptUIDlgSelectCertificateFromStore;
+
+    let raw_store = schannel_utils::get_raw_store(store);
+
+    // SAFETY: We use `CryptUIDlgSelectCertificateFromStore` by providing it with a correct pointer
+    // that come from windows, and use default value (NULL) as detailed by the documentation.
+    //
+    // Documentation of the below function:
+    // https://learn.microsoft.com/en-us/windows/win32/api/cryptuiapi/nf-cryptuiapi-cryptuidlgselectcertificatefromstore
+    // Rust doc:
+    // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/UI/fn.CryptUIDlgSelectCertificateFromStore.html
+    unsafe {
+        let raw_cert_context = CryptUIDlgSelectCertificateFromStore(
+            raw_store,
+            core::ptr::null_mut(), // Will create a dedicated window
+            core::ptr::null(),     // Use default title
+            core::ptr::null(),     // Use default dialog phrase
+            0,                     // Do not hide any column
+            0,                     // Not used by windows per documentation
+            core::ptr::null(),     // Reversed for future use per documentation
+        );
+        schannel_utils::cert_context_from_raw(raw_cert_context)
+    }
+}
+
+/// Try our best to configure auto-resync for a given certificate store.
+///
+/// Without auto-resync, a certificate created after opening the store will be ignored (not in cache).
+/// This is typically an issue when a user start Parsec first (hence opening the certificate store)
+/// and only then plug its personal Smartcard to the machine.
+///
+/// The support of auto-resync is provider specific, we try to enable it but will not fail if not supported.
+///
+/// ## Errors
+///
+/// Will error if auto-resync is supported, but the configuration fails nevertheless.
+fn configure_auto_resync_store(store: &CertStore) -> std::io::Result<()> {
+    use windows_sys::Win32::Security::Cryptography;
+
+    let raw_store = schannel_utils::get_raw_store(store);
+
+    // SAFETY: `CertControlStore` is provided with correct pointer following the documentation
+    //
+    // The store pointer come from a valid certificate store.
+    //
+    // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-certcontrolstore
+    unsafe {
+        let res = Cryptography::CertControlStore(
+            raw_store,
+            0, // When dwCtrlType is set to RESYNC, dwFlags must be set to 0
+            Cryptography::CERT_STORE_CTRL_AUTO_RESYNC, // Automatically re-sync store on enumeration
+            // or find call
+            core::ptr::null(), // Do not need to provide a handle when dwCtrlType is set to auto resync.
+        );
+
+        if res == windows_sys::Win32::Foundation::FALSE {
+            let err = std::io::Error::last_os_error();
+            if err.kind() != std::io::ErrorKind::Unsupported {
+                return Err(err);
+            } else {
+                log::warn!("Certificate store does not support auto resync");
+            }
+        }
+    }
+    Ok(())
+}

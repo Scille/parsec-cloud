@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -10,21 +10,17 @@
         <div class="head-content">
           <ion-text
             v-if="workspaceInfo && isLargeDisplay"
-            class="title-h3 head-content__title"
+            class="head-content__title"
           >
-            <span class="body-lg">{{ $msTranslate('workspaceHistory.workspace') }}</span>
-            {{ workspaceInfo.currentName }}
+            <span>{{ $msTranslate('workspaceHistory.workspace') }}</span>
+            {{ workspaceInfo.name }}
+            <div v-if="workspaceInfo.isArchived">{{ $msTranslate('workspaceHistory.archived') }}</div>
+            <div v-if="workspaceInfo.isTrashed">{{ $msTranslate('workspaceHistory.deleted') }}</div>
             <div v-show="querying">
               <ms-spinner />
             </div>
           </ion-text>
           <div class="date-selector">
-            <ion-text
-              class="date-selector__label body-sm"
-              v-if="isLargeDisplay"
-            >
-              {{ $msTranslate('workspaceHistory.date') }}
-            </ion-text>
             <ms-datetime-picker
               v-model="selectedDateTime"
               @update:model-value="onDateTimeChange"
@@ -54,6 +50,7 @@
                   @click="back()"
                   class="navigation-buttons__item"
                   id="navigation-back-button"
+                  slot="icon-only"
                   :disabled="backStack.length === 0"
                   :class="{ disabled: backStack.length === 0 }"
                 >
@@ -66,12 +63,14 @@
                   :class="{ disabled: forwardStack.length === 0 }"
                   class="navigation-buttons__item"
                   id="navigation-forward-button"
+                  slot="icon-only"
                 >
                   <ion-icon :icon="chevronForward" />
                 </ion-button>
               </div>
               <header-breadcrumbs
-                v-if="isLargeDisplay"
+                v-if="workspaceInfo && isLargeDisplay"
+                :workspace-name="workspaceInfo.name"
                 :path-nodes="headerPath"
                 @change="onPathChange"
                 class="navigation-breadcrumb"
@@ -85,10 +84,23 @@
               class="folder-header__actions"
               ref="topbarRight"
             >
+              <ion-text
+                class="read-only-info"
+                v-if="workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager"
+              >
+                <ion-icon
+                  :icon="eye"
+                  class="read-only-info__icon"
+                />
+                {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+              </ion-text>
               <ion-button
-                class="select-button button-medium button-default"
+                class="select-button color-secondary"
+                fill="outline"
                 @click="entries.selectAll(!allSelected)"
-                v-if="isLargeDisplay && entries.entriesCount() > 0"
+                v-if="
+                  isLargeDisplay && entries.entriesCount() > 0 && !(workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager)
+                "
               >
                 <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
                 <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
@@ -101,38 +113,36 @@
               />
               <ion-button
                 id="restore-button"
+                v-show="!(workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager)"
                 :disabled="!someSelected || querying"
                 @click="onRestoreClicked"
-                class="button-default button-medium"
               >
                 {{ $msTranslate('workspaceHistory.actions.restore') }}
               </ion-button>
             </div>
           </div>
           <div
-            class="current-folder button-medium"
-            v-if="headerPath.length > 0 && isSmallDisplay"
+            class="current-folder"
+            v-if="isSmallDisplay"
           >
             <ms-image
               v-show="pathLength > 1"
               :image="Folder"
               class="current-folder__icon"
             />
-            <ion-text class="current-folder__text">{{ `${headerPath[headerPath.length - 1].display}` }}</ion-text>
             <header-breadcrumbs
-              v-if="pathLength > 1"
+              v-if="workspaceInfo"
+              :workspace-name="workspaceInfo.name"
               :path-nodes="headerPath"
               @change="onPathChange"
               class="navigation-breadcrumb"
-              :items-before-collapse="0"
-              :items-after-collapse="0"
-              :max-shown="0"
-              :available-width="breadcrumbsWidth"
+              :from-header-page="false"
               :show-parent-node="false"
             />
             <ion-button
-              class="select-button button-medium button-default"
+              class="select-button"
               @click="entries.selectAll(!allSelected)"
+              v-if="entries.entriesCount() > 0 && !(workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager)"
             >
               <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
               <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
@@ -143,16 +153,16 @@
               v-show="querying"
               class="folder-content__loading"
             >
-              <ion-text class="subtitles-sm">{{ $msTranslate('workspaceHistory.loading') }}</ion-text>
+              <ion-text class="folder-content__loading-text">{{ $msTranslate('workspaceHistory.loading') }}</ion-text>
             </div>
             <div
               v-show="!querying && entries.entriesCount() === 0 && !error"
-              class="body-lg folder-content__empty"
+              class="folder-content__empty"
             >
               {{ $msTranslate('workspaceHistory.empty') }}
             </div>
             <div
-              class="body-lg folder-content__empty"
+              class="folder-content__empty"
               v-show="!querying && error"
             >
               <ion-icon :icon="warning" />
@@ -162,12 +172,14 @@
               v-show="!querying && entries.entriesCount() > 0"
               class="folder-list"
             >
-              <ion-list class="folder-list-main ion-no-padding">
+              <ion-list class="list-container folder-list-main ion-no-padding">
                 <history-file-list-item
                   v-for="entry in entries.getEntries()"
                   :key="entry.id"
                   :entry="entry"
-                  :show-checkbox="true"
+                  v-model:selected="entry.isSelected"
+                  :show-checkbox="someSelected"
+                  :read-only="workspaceInfo?.isArchived || workspaceInfo?.isTrashed || !isManager"
                   @click="onEntryClicked(entry)"
                 />
               </ion-list>
@@ -184,21 +196,19 @@ import { pxToRem } from '@/common/utils';
 import { HistoryFileListItem, WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel } from '@/components/files';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { SortProperty } from '@/components/users';
-import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
+import { EntryName, FsPath, getWorkspaceInfo, Path, WorkspaceHistory, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
-import { chevronBack, chevronForward, home, warning } from 'ionicons/icons';
+import { chevronBack, chevronForward, eye, home, warning } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Answer, askQuestion, Folder, I18n, MsDatetimePicker, MsImage, MsSearchInput, MsSpinner, useWindowSize } from 'megashark-lib';
 import { computed, inject, onBeforeUnmount, onMounted, onUnmounted, ref, Ref, useTemplateRef, watch } from 'vue';
 
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 const selectedDateTime = ref(DateTime.now().toJSDate());
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
@@ -211,6 +221,12 @@ const headerButtonsRef = useTemplateRef<HTMLDivElement>('headerButtons');
 const topbarRightRef = useTemplateRef<HTMLDivElement>('topbarRight');
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const pathOpener = usePathOpener();
+const isManager = computed((): boolean => {
+  if (workspaceInfo.value) {
+    return [WorkspaceRole.Manager, WorkspaceRole.Owner].includes(workspaceInfo.value.selfRole);
+  }
+  return false;
+});
 
 const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> = ref(
   new WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>(),
@@ -220,8 +236,9 @@ let timeoutId: number | null = null;
 const resultFromSearch = ref(false);
 const error = ref('');
 const selectEntry: Ref<EntryName> = ref('');
-const minDate = ref(DateTime.now().toJSDate());
-const maxDate = ref(DateTime.now().toJSDate());
+// Not adding too much of a constraint while we're initializing
+const minDate = ref(DateTime.fromMillis(0).toJSDate());
+const maxDate = ref(DateTime.now().plus({ minutes: 1 }).toJSDate());
 
 const allSelected = computed(() => {
   return entries.value.selectedCount() === entries.value.entriesCount();
@@ -267,6 +284,7 @@ async function loadHistory(): Promise<void> {
 }
 
 onMounted(async () => {
+  selectedDateTime.value = DateTime.now().toJSDate();
   await loadHistory();
 });
 
@@ -337,7 +355,7 @@ async function listCurrentPath(): Promise<void> {
     headerPath.value = [];
     headerPath.value.push({
       id: 0,
-      display: workspaceInfo.value.currentName,
+      display: workspaceInfo.value.name,
       route: Routes.History,
       popoverIcon: home,
       query: { documentPath: path },
@@ -401,9 +419,10 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
       return;
     }
 
-    await pathOpener.openPath(workspaceInfo.value.handle, entry.path, informationManager, {
+    await pathOpener.openPath(workspaceInfo.value.handle, entry.path, {
       disallowSystem: true,
       atTime: DateTime.fromJSDate(selectedDateTime.value),
+      readOnly: true,
     });
   } else {
     backStack.push(currentPath.value);
@@ -437,6 +456,10 @@ async function onSearchChanged(value: string): Promise<void> {
 }
 
 async function onRestoreClicked(): Promise<void> {
+  if (workspaceInfo.value?.isArchived || workspaceInfo.value?.isTrashed) {
+    // Restore shouldn't be accessible from archived or deleted workspaces
+    return;
+  }
   const selectedEntries = entries.value.getSelectedEntries();
 
   if (selectedEntries.length === 0 || !workspaceInfo.value) {
@@ -451,14 +474,14 @@ async function onRestoreClicked(): Promise<void> {
     return;
   }
   const dateTime = DateTime.fromJSDate(selectedDateTime.value);
-  await fileOperationManager.restore(workspaceInfo.value.handle, selectedEntries, dateTime, DuplicatePolicy.Replace);
+  await fileOperationManager.value.restore(workspaceInfo.value.handle, selectedEntries, dateTime, DuplicatePolicy.Replace);
   entries.value.selectAll(false);
 }
 </script>
 
 <style scoped lang="scss">
 .global-content {
-  --background: var(--parsec-color-light-secondary-background);
+  --background: #{ms.color('surface-base-page')};
 }
 
 .history-container {
@@ -467,14 +490,14 @@ async function onRestoreClicked(): Promise<void> {
   height: 100%;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-top: 0.25rem;
+    padding-top: ms.spacing('padding-sm');
   }
 }
 
 .head-content {
   display: flex;
   align-items: end;
-  margin-inline: 2.5rem;
+  margin: 1rem 2.5rem 0;
   justify-content: space-between;
   position: relative;
 
@@ -483,28 +506,28 @@ async function onRestoreClicked(): Promise<void> {
   }
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h4');
+
+    color: ms.color('text-base-body');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding-bottom: 0.25rem;
+    gap: ms.spacing('gap-lg');
+    padding-bottom: ms.spacing('padding-sm');
 
     span {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-lg-regular');
+
+      color: ms.color('text-base-description');
     }
   }
 
   .date-selector {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: ms.spacing('gap-sm');
 
     @include ms.responsive-breakpoint('sm') {
       width: 100%;
-    }
-
-    &__label {
-      color: var(--parsec-color-light-secondary-hard-grey);
     }
   }
 }
@@ -515,15 +538,23 @@ async function onRestoreClicked(): Promise<void> {
   flex-direction: column;
   flex-grow: 1;
 
+  &__loading-text {
+    @include ms.font('body-md-medium');
+  }
+
+  &__empty {
+    @include ms.font('body-lg-regular');
+  }
+
   &__loading,
   &__empty {
     margin: 1rem;
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('text-base-description');
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 }
 
@@ -531,10 +562,10 @@ async function onRestoreClicked(): Promise<void> {
   // multiple lines for cross-browser compatibility
   height: 100%;
   height: -webkit-fill-available;
-  margin: 1.5rem 2.5rem;
-  background: var(--parsec-color-light-secondary-white);
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  margin: 1rem 2.5rem 1.5rem;
+  background: ms.color('surface-base-default');
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-base-default');
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -547,8 +578,8 @@ async function onRestoreClicked(): Promise<void> {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1.5rem 0.75rem 1rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-4xl') ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
     &__navigation {
       display: flex;
@@ -559,32 +590,36 @@ async function onRestoreClicked(): Promise<void> {
     .navigation-buttons {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-
-      &__item {
-        min-height: 1rem;
-
-        &::part(native) {
-          padding: 0.5rem;
-        }
-      }
+      gap: ms.spacing('gap-lg');
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.75rem;
+      padding: ms.spacing('padding-2xl');
       border-bottom: none;
-      border-top: 1px solid var(--parsec-color-light-secondary-medium);
+      border-top: ms.border('thin') solid ms.color('border-base-default');
       order: 3;
     }
 
     &__actions {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
     }
 
-    #restore-button {
-      min-width: 6rem;
+    .read-only-info {
+      @include ms.font('label-md-medium');
+
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+      flex-shrink: 0;
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-brand-default');
+
+      &__icon {
+        width: 1rem;
+        height: 1rem;
+      }
     }
   }
 
@@ -595,45 +630,44 @@ async function onRestoreClicked(): Promise<void> {
   }
 
   .current-folder {
-    color: var(--parsec-color-light-secondary-grey);
-    background: var(--parsec-color-light-secondary-white);
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 0.5rem 1.75rem;
+    @include ms.font('label-lg-medium');
+
+    color: ms.color('text-base-description');
+    background: ms.color('surface-base-default');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
+    padding: ms.spacing('padding-lg') 1.75rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     overflow: hidden;
 
     @include ms.responsive-breakpoint('sm') {
       order: 1;
-      padding: 0.5rem 1rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       flex-shrink: 0;
     }
 
     &__text {
       width: fit-content;
       max-width: 10rem;
+      display: flex;
+      align-items: center;
+      gap: ms.spacing('gap-lg');
+
+      .chevron-icon {
+        font-size: 1rem;
+        color: ms.color('text-base-body');
+        font-size: 0.75rem;
+        padding: ms.spacing('padding-xs');
+        flex-shrink: 0;
+        border-radius: ms.radius('full');
+        background: ms.color('surface-neutral-default-subtle-pressed');
+      }
     }
 
     &__icon {
       flex-shrink: 0;
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-  }
-
-  .select-button {
-    color: var(--parsec-color-light-primary-500);
-    cursor: pointer;
-    margin-left: auto;
-    font-size: 0.875rem;
-    --background: transparent;
-    --background-hover: var(--parsec-color-light-primary-50);
-
-    @include ms.responsive-breakpoint('sm') {
-      &::part(native) {
-        padding: 0.25rem 0.5rem;
-      }
+      width: 1.375rem;
+      height: 1.375rem;
     }
   }
 }

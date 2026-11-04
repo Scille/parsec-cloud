@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -19,6 +19,8 @@ pub enum DataAccessFetchManifestError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -42,6 +44,8 @@ pub enum DataAccessFetchBlockError {
     BlockNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Block access is temporary unavailable on the server")]
     ServerBlockstoreUnavailable,
     #[error(transparent)]

@@ -4,17 +4,50 @@
         "developer": "Parsec Cloud",
         "developerLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
-        "issueUrl": "https://github.com/Scille/parsec-cloud/issues/{issue}",
-        "license": "BUSL-1.1",
-        "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE",
+        "license": "AGPLv3",
+        "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE-AGPL3",
         "history": "https://docs.parsec.cloud/fr/{version}/history.html",
-        "pricingLink": "https://parsec.cloud/tarifs/"
+        "pricingLink": "https://parsec.cloud/tarifs/",
+        "whatsNew": "https://parsec.cloud/fr/blog/releases/{version}/"
     },
     "quit": {
         "title": "Quitter Parsec",
         "subtitle": "Êtes-vous sûr(e) de vouloir quitter l'application ? Les espaces de travail montés seront désactivés et tout import en cours sera annulé.",
         "yes": "Quitter",
         "no": "Annuler"
+    },
+    "appMenu": {
+        "main": {
+            "settings": "Paramètres",
+            "about": "À propos",
+            "logOut": "Déconnexion",
+            "quit": "Quitter"
+        },
+        "edit": {
+            "name": "Édition",
+            "cut": "Couper",
+            "copy": "Copier",
+            "paste": "Coller"
+        },
+        "window": {
+            "name": "Fenêtre",
+            "zoomIn": "Zoom avant",
+            "minimize": "Réduire",
+            "zoomOut": "Zoom arrière",
+            "resetZoom": "Réinitialiser le zoom"
+        },
+        "go": {
+            "name": "Aller",
+            "workspaces": "Espaces de travail",
+            "users": "Utilisateurs",
+            "profile": "Mon profil"
+        },
+        "help": {
+            "name": "Aide",
+            "documentation": "Documentation",
+            "contact": "Contact",
+            "bugReport": "Signaler un bug"
+        }
     },
     "globalErrors": {
         "openFileFailed": "L'élément `{path}` n'a pas pu être ouvert.",
@@ -24,9 +57,16 @@
         "organizationNotFound": "Cette organisation n'a pas été trouvée sur le serveur. Contactez un administrateur du serveur.",
         "expiredOrganization": "Cette organisation a expiré. Veuillez contacter un administrateur.",
         "unexpected": "Une erreur inattendue est survenue. Veuillez réessayer plus tard.",
-        "smallDisplayWarning": "Nous travaillons actuellement sur les formats d'écran plus petits pour Parsec afin de la rendre complètement compatible. Nous vous recommandons vivement d'utiliser un écran plus large pour y accéder.",
         "incompatibleEnvironment": "Votre navigateur n'est pas encore compatible avec Parsec.",
-        "incompatibleWithSafari": "Parsec ne prend pas encore en charge Safari. Veuillez utiliser un autre navigateur tel que Chrome, Firefox ou Edge."
+        "incompatibleWithSafari": "Parsec ne prend pas encore en charge Safari. Veuillez utiliser un autre navigateur tel que Chrome, Firefox ou Edge.",
+        "clockDesync": {
+            "title": "L'horloge de votre appareil est incorrecte",
+            "message": "La date ou l'heure de votre ordinateur semble désynchronisée par rapport au serveur. Cela peut provoquer des problèmes de connexion. Veuillez vérifier la date, l'heure et le fuseau horaire de votre appareil, puis réessayez."
+        },
+        "webAppNotAllowed": {
+            "title": "Application de bureau requise",
+            "message": "Votre organisation n'autorise pas l'accès depuis l'application web pour des raisons de sécurité. Veuillez utiliser l'application de bureau pour continuer. Si vous pensez qu'il s'agit d'une erreur, contactez l'administrateur de votre organisation."
+        }
     },
     "formatter": {
         "version": "(v{version}) "
@@ -38,9 +78,7 @@
             "insufficientRole": "Seuls les Gérants et les Propriétaires peuvent changer les rôles",
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
-            "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire",
-            "sameRole": "Rôle actuel",
-            "alreadyNotShared": "Déjà non partagé avec cet utilisateur"
+            "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire"
         },
         "reader": {
             "label": "Lecteur",
@@ -59,7 +97,8 @@
             "description": "Peut gérer l'accès des utilisateurs et rechiffrer l'espace de travail. Peut promouvoir d'autres utilisateurs au rôle de Propriétaire."
         },
         "none": "Non partagé",
-        "members": "Membre ({count}) | Membres ({count})",
+        "haveAccess": "Ayant accès ({count})",
+        "haveAccessFiltered": "Ayant accès ({count}/{total})",
         "suggestion": "Recommandés"
     },
     "link": {
@@ -88,34 +127,27 @@
         "noInvitations": "Aucune invitation"
     },
     "browseFiles": {
-        "title": "Joindre un fichier",
-        "noFilesFound": "Aucun fichier ajouté",
-        "browse": "Parcourir",
         "maxFileSize": "taille maximum : {maxFileSize}",
         "addFile": "Ajouter un fichier",
         "removeFile": "Supprimer",
-        "currentFilesCount": "Fichiers inclus: {current} / {limit}",
-        "errors": {
-            "generic": "Impossible de lister les fichiers.",
-            "offline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet."
-        }
+        "currentFilesCount": "Fichiers inclus: {current} / {limit}"
     },
     "notification": {
-        "changeRole": "Votre rôle a été modifié en tant que {role} dans l'espace de travail {workspace}",
-        "workspaceAccess": "Vous avez accès à l'espace de travail {workspace}",
-        "userJoinWorkspace": "{name} vient de rejoindre l'espace de travail {workspace}",
-        "multipleUsersJoinWorkspace": "{count} viennent de rejoindre l'espace de travail {workspace}",
-        "users": "utilisateurs",
-        "userSharedDocument": "{name} a partagé un nouveau document",
+        "changeRole": "Votre rôle a été modifié en tant que <b>{role}</b> dans l'espace de travail <b>{workspace}</b>",
+        "workspaceAccess": "Vous avez accès à l'espace de travail <b>{workspace}</b>",
+        "userJoinWorkspace": "<b>{name}</b> vient de rejoindre l'espace de travail <b>{workspace}</b>",
+        "multipleUsersJoinWorkspace": "<b>{count} utilisateurs</b> viennent de rejoindre l'espace de travail <b>{workspace}</b>",
+        "userSharedDocument": "<b>{name}</b> a partagé un nouveau document",
         "allImportedElements": "Tous vos fichiers ont été importés",
         "newDeviceAdded": "Un nouvel appareil a été ajouté",
-        "serverOnline": "Vous êtes connecté au serveur Parsec",
-        "serverOffline": "Vous n'êtes plus connecté au serveur Parsec",
         "incompatibleServer": "Votre application n'est pas compatible avec le serveur.",
-        "nextButton": "fermer",
         "expiredOrganization": "Cette organisation a expiré."
     },
     "HomePage": {
+        "appUpdated": {
+            "title": "Parsec a été mis à jour en {version} !",
+            "close": "Fermer"
+        },
         "sidebar": {
             "tagline": "Gardez le contrôle sur la confidentialité de vos données",
             "poweredBy": "Développé par"
@@ -126,13 +158,8 @@
             "authentication": "Authentification"
         },
         "profile": {
-            "settings": {
-                "title": "Paramètres",
-                "description": "Gérer vos paramètres Parsec"
-            },
             "account": {
                 "title": "Mon compte",
-                "description": "Gérer votre compte Parsec",
                 "personalData": {
                     "title": "Données personnelles",
                     "name": "Nom",
@@ -151,15 +178,14 @@
                     "codeModal": {
                         "title": "Entrez le code pour supprimer votre compte",
                         "description": "Nous avons envoyé un code de vérification à l'adresse e-mail associée à votre compte.",
-                        "irreversible": "Cette action est irréversible. Une fois votre compte supprimé, vous ne pourrez plus accéder à vos données ou services associés.",
                         "resendCode": "Renvoyer le code",
-                        "button": "Supprimer mon compte",
-                        "cancel": "Annuler"
+                        "button": "Supprimer mon compte"
                     },
                     "success": "Votre compte a été supprimé avec succès.",
                     "error": {
                         "delete": "Le code est incorrect ou a expiré.",
-                        "sendCode": "Échec d'envoi du code."
+                        "sendCode": "Échec d'envoi du code.",
+                        "reSentCode": "Échec d'envoie du code à votre adresse e-mail. Veuillez vérifier votre connexion Internet."
                     }
                 }
             },
@@ -181,27 +207,22 @@
         "topbar": {
             "welcome": "Bienvenue sur Parsec",
             "backToList": "Retour aux organisations",
-            "backToLogin": "Retour à la connexion",
             "back": "Retour",
             "settings": "Paramètres",
             "devices": "Mes appareils",
             "authentication": "Authentification",
             "account": "Compte",
-            "recovery": "Fichier de récupération",
-            "contactUs": "Nous contacter",
+            "recovery": "Récupération d'accès",
             "documentation": "Documentation",
             "logout": "Déconnexion",
             "customerArea": "Espace client",
             "feedback": "Commentaires",
-            "myProfile": "Mon profil",
             "logoutConfirmTitle": "Déconnexion",
             "logoutConfirmQuestion": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
             "logoutImportsConfirmQuestion": "Les imports en cours seront annulés. Êtes-vous sûr(e) de vouloir vous déconnecter ?",
             "logoutYes": "Se déconnecter",
             "logoutNo": "Rester connecté(e)",
             "logoutWait": "Déconnexion. Veuillez patienter...",
-            "logoutFailed": "Une erreur est survenue lors de la déconnexion.",
-            "updateConfirmTitle": "Mettre à jour Parsec",
             "updateConfirmQuestion": "Vous serez déconnecté(e) et l'application sera fermée. Assurez vous de ne pas avoir d'opérations en cours. Souhaitez-vous continuer ?",
             "updateYes": "Mettre à jour Parsec",
             "updateNo": "Plus tard",
@@ -224,7 +245,6 @@
             "search": "Rechercher",
             "loggedIn": "Connecté",
             "noMatch": "Aucune organisation trouvée qui correspond à la recherche '{query}'.",
-            "trialOrganization": "Version d'essai",
             "expiration": {
                 "days": "1 jour restant | {days} jours restants",
                 "hours": "Moins d'une heure | {hours} heures restantes",
@@ -232,7 +252,7 @@
             },
             "noLastLogin": "--",
             "errors": {
-                "noStorage": "Impossible de lister ou de sauvegarder vos organisations : le stockage de l'application n'est pas disponible. Assurez-vous que votre disque a suffisamment d'espace et que vous avez les permissions d'accéder au dossier de configuration Parsec en lecture et en écriture.",
+                "noStorageDesktop": "Impossible de lister ou de sauvegarder vos organisations : le stockage de l'application n'est pas disponible. Assurez-vous que votre disque a suffisamment d'espace et que vous avez les permissions d'accéder au dossier de configuration Parsec en lecture et en écriture.",
                 "noStorageWeb": "Impossible de lister ou de sauvegarder vos organisations : le stockage de l'application n'est pas disponible. Assurez-vous de ne pas naviguer en mode privé ou Incognito et que ce site a les permissions suffisantes pour accéder au stockage.",
                 "generic": "Impossible de lister vos organisations."
             }
@@ -257,12 +277,12 @@
             "passwordLabel": "Mot de passe",
             "passwordError": "Le mot de passe est invalide.",
             "deviceNotFound": "Le fichier de l'appareil n'a pas été trouvé.",
-            "invalidData": "Le fichier de l'appareil contient des données invalides.",
             "unknownError": "Erreur inconnue.",
             "login": "Se connecter à une organisation",
             "loginButton": "Se connecter",
             "loading": "Chargement...",
-            "deviceAlreadyUsed": "Cet appareil est déjà utilisé par une autre application."
+            "deviceAlreadyUsed": "Cet appareil est déjà utilisé par une autre application.",
+            "deviceInvalidData": "Le fichier de l'appareil contient des données invalides. Veuillez vérifier que vous avez sélectionné le bon appareil et réessayer."
         },
         "expiredDevice": {
             "questionTitle": "Organisation expirée",
@@ -272,7 +292,6 @@
             "archiveSuccess": "L'appareil a été archivé.",
             "archiveFailure": "Impossible d'archiver l'appareil."
         },
-        "organizationActionSheet": "Organisation",
         "loginErrors": {
             "keyringFailed": "Impossible de se connecter",
             "keyringFailedTitle": "Impossible de se connecter",
@@ -280,7 +299,8 @@
             "keyringFailedUsedRecovery": "Utiliser un fichier de récupération",
             "keyringFailedAbort": "Non",
             "vaultFailed": "Impossible de se connecter avec Parsec Account.",
-            "openBaoFailed": "Impossible de se connecter avec l'authentification unique. Assurez vous d'être en ligne."
+            "openBaoFailed": "Impossible de se connecter avec l'authentification unique. Assurez vous d'être en ligne.",
+            "pkiFailed": "Impossible de se connecter avec la carte. Assurez-vous qu'elle est disponible."
         },
         "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",
         "noDevices": {
@@ -296,17 +316,10 @@
             "step": {
                 "showButton": "Voir les étapes",
                 "hideButton": "Masquer les étapes",
-                "one": "{application} (version ordinateur) et {login} à votre organisation.",
-                "two": "Dans le menu de votre compte (en haut à droite), sélectionnez {myDevices}, puis cliquez sur {addDevice} et {copyInvitation}.",
-                "three": "{pasteInvitation} ci-dessous et suivez les instructions pour configurer votre navigateur web.",
-                "application": "Ouvrez Parsec",
-                "login": "se connecter",
-                "myDevices": "Mes appareils",
-                "addDevice": "Ajouter un nouvel appareil",
-                "copyInvitation": "copier le lien",
-                "pasteInvitation": "Coller le lien"
+                "one": "<b>Ouvrez Parsec</b> (version ordinateur) et <b>connectez-vous</b> à votre organisation.",
+                "two": "Dans le menu de votre compte (en haut à droite), sélectionnez <b>Mes appareils</b>, puis cliquez sur <b>Ajouter un nouvel appareil</b> et <b>copiez le lien</b>.",
+                "three": "<b>Collez le lien</b> ci-dessous et suivez les instructions pour configurer votre navigateur web."
             },
-            "pasteLinkLabel": "Coller le lien d'invitation",
             "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
             "joinButton": "Continuer",
             "info": "Parsec stocke en toute sécurité vos clés d'accès dans votre navigateur. Assurez-vous que le stockage du navigateur est activé et qu'il n'est pas supprimé lorsque vous fermez votre navigateur ({more}).",
@@ -318,15 +331,20 @@
             "title": "Demandes en attente",
             "status": {
                 "pending": "En attente",
-                "rejected": "Rejetée"
+                "rejected": "Rejetée",
+                "cancelled": "Annulée"
+            },
+            "totp": {
+                "invalidLink": "Ce lien n'est pas un lien de réinitialisation d'authentification multifacteur valide."
             },
             "requestSent": {
-                "success": "Votre demande pour rejoindre l'organisation a été envoyée.",
-                "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard."
+                "success": "Votre demande pour rejoindre l'organisation a été envoyée."
             },
             "requestCancelled": "Votre demande pour rejoindre l'organisation a bien été annulée.",
+            "requestCancelError": "Impossible d'annuler la requête.",
             "requestDeleted": "Votre demande pour rejoindre l'organisation a bien été supprimée.",
-            "joinButton": "Rejoindre",
+            "joinButton": "Ajouter à mes organisations",
+            "confirmMissingCertificate": "Impossible d'accéder au certificat utilisé pour faire cette demande.",
             "pending": {
                 "title": "Demande d'organisation en attente",
                 "message": "Votre demande pour rejoindre l'organisation est toujours en attente. Êtes-vous sûr de vouloir l'annuler ?",
@@ -335,15 +353,57 @@
                 "tooltip": "Votre demande pour rejoindre cette organisation est en attente d'approbation par un administrateur."
             },
             "rejected": {
-                "title": "Demande d'organisation rejetée",
-                "message": "Votre demande pour rejoindre l'organisation a été rejetée par un administrateur. Voulez-vous la supprimer ?",
                 "yes": "Supprimer la demande",
-                "no": "Conserver la demande",
                 "tooltip": "Votre demande pour rejoindre cette organisation a été rejetée par un administrateur."
             },
             "accepted": {
                 "joinSuccess": "Vous avez rejoint l'organisation avec succès.",
-                "joinFailure": "Échec de l'adhésion à l'organisation. Veuillez réessayer plus tard."
+                "joinFailure": "Échec de l'adhésion à l'organisation. Veuillez réessayer plus tard.",
+                "tooltip": "Votre demande pour rejoindre cette organisation a été acceptée par un administrateur."
+            },
+            "cancelled": {
+                "tooltip": "Votre demande pour rejoindre cette organisation a été annulée."
+            },
+            "asyncEnrollmentModal": {
+                "title": "Rejoindre l'organisation {organization}",
+                "chooseMethod": "Choisissez votre méthode d'authentification",
+                "sso": {
+                    "label": "Continuer avec SSO",
+                    "title": "Authentification unique (SSO)",
+                    "noEmail": "Aucun email enregistré sur OpenBAO.",
+                    "join": "Rejoindre avec SSO",
+                    "connected": "Vous êtes connecté avec ProConnect.",
+                    "finalizeTitle": "Connectez-vous pour rejoindre l'organisation",
+                    "finalizeMessage": "Pour rejoindre l'organisation, vous devez vous connecter en utilisant votre authentification Single Sign-On (SSO)."
+                },
+                "pki": {
+                    "label": "Continuer avec PKI",
+                    "title": "Authentification par certificat (PKI)",
+                    "description": "Utilisez un certificat pour vous authentifier auprès de votre organisation Parsec."
+                },
+                "errors": {
+                    "invalidLink": "La PKI n'est pas disponible sur ce système et ce serveur ne prend pas en charge l'authentification unique (SSO).",
+                    "pkiSsoNotAvailable": "Le lien pour rejoindre l'organisation n'est pas valide.",
+                    "failedToGetEmailsFromOpenBao": "Impossible d'obtenir les adresses e-mail auprès du fournisseur SSO. Veuillez réessayer.",
+                    "existingEmail": "Un utilisateur avec cet e-mail existe déjà. Veuillez utiliser une autre adresse e-mail.",
+                    "problemWithRequestCertificate": "Il y a un problème avec le certificat de demande.",
+                    "offline": "Vous êtes hors ligne. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
+                    "failedToJoinWithPKI": "Impossible de rejoindre l'organisation en utilisant PKI. Vérifier le certificat fournis et réessayer.",
+                    "failedToJoinWithOpenBao": "Impossible de rejoindre l'organisation en utilisant OpenBAO. Veuillez vérifier que vous êtes connecté(e) à Internet.",
+                    "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet et que l'adresse du serveur est correcte."
+                },
+                "buttons": {
+                    "next": "Continuer",
+                    "previous": "Précédent",
+                    "cancel": "Annuler"
+                },
+                "certificate": {
+                    "noEmail": "Aucun email lié.",
+                    "expired": "Expiré",
+                    "serialNb": "Numéro de série : {serial}",
+                    "showExpired": "Afficher les certificats expirés",
+                    "noCertificates": "Aucun certificat disponible"
+                }
             }
         }
     },
@@ -365,8 +425,6 @@
         "organizationNamePlaceholder": "MonOrganisation",
         "serverAddress": "Adresse du serveur Parsec",
         "serverAddressPlaceholder": "parsec3://",
-        "useParsecServer": "Utiliser le serveur Parsec principal",
-        "useMyOwnServer": "Je dispose de mon propre serveur Parsec",
         "saas": "Parsec SaaS",
         "customServer": "Serveur personnel",
         "keyringChoice": "Authentification du système",
@@ -392,22 +450,17 @@
                 "acceptError": "Une erreur est survenue."
             }
         },
-        "parsecServerUrl": "URL de votre serveur Parsec",
         "loading": "Un instant, nous mettons en place votre organisation",
         "organizationCreated": "Félicitations ! Vous avez créé votre nouvelle organisation.",
         "title": {
             "create": "Créer une nouvelle organisation",
             "personalDetails": "Saisissez vos informations",
-            "server": "Choisissez votre serveur adapté",
             "authentication": "Authentification",
             "overview": "Récapitulatif de votre organisation",
-            "done": "Votre organisation a bien été créée !",
             "nameAndServer": "Créer une organisation sur mon serveur Parsec"
         },
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
-            "personalDetails": "Renseignez votre nom et votre email.",
-            "server": "Choisissez le type de serveur dont vous avez besoin.",
             "needs": "Choisissez l'option qui correspond le mieux à vos besoins :",
             "authentication": "Choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
@@ -431,10 +484,10 @@
         },
         "server": {
             "saas": "Créer mon organisation sur Parsec",
-            "soon": "Bientôt disponible",
             "trial": {
                 "title": "Essayer Parsec pendant 15 jours",
-                "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)"
+                "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)",
+                "badge": "essai"
             },
             "ownServer": "Utiliser un autre serveur Parsec"
         },
@@ -465,12 +518,8 @@
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre une organisation",
-        "pleaseEnterUrl": "Si vous avez reçu un lien d'invitation, veuillez le coller ci-dessous.",
+        "pleaseEnterUrl": "Veuillez coller ci-dessous le lien que vous avez récupéré depuis votre autre appareil/navigateur.",
         "join": "Rejoindre"
-    },
-    "QuestionModal": {
-        "yes": "Oui",
-        "no": "Non"
     },
     "TextInputModal": {
         "moveHere": "Déplacer ici",
@@ -492,7 +541,6 @@
         "doc": "Doc.",
         "settings": "Paramètres",
         "downloadParsec": "Télécharger l'application de bureau",
-        "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/fr/{version}",
         "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html#{anchor}",
@@ -508,30 +556,47 @@
             "workspaces": "Mes espaces",
             "about": "À propos",
             "users": "Utilisateurs",
-            "invitations": "Invitations",
+            "invitationsRequests": "Invitations & Demandes",
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
             },
             "myProfile": "Mon profil",
-            "recoveryExport": "Fichier de récupération",
             "history": "Historique",
-            "viewer": "Aperçu du fichier",
-            "editor": "Édition du fichier"
+            "archived": "Espaces archivés",
+            "trashed": "Espaces à la corbeille"
         },
         "previous": "Précédent",
-        "invitations": {
-            "title": "Aucune invitation | Une invitation | {count} invitations",
-            "smallDisplayTitle": "invitation en cours | invitations en cours"
+        "workspaceSwitchModal": {
+            "actions": {
+                "confirm": "Confirmer"
+            }
         },
         "modalHeader": {
             "step": "Étape {current} sur {total}"
+        },
+        "breadcrumbs": {
+            "archived": "Archivés",
+            "trashed": "Corbeille"
+        }
+    },
+    "WorkspaceDetails": {
+        "title": "Détails de l'espace de travail",
+        "generalInfo": "Informations générales",
+        "role": "Droits d'accès",
+        "created": "Créé le",
+        "availableOffline": "Disponible hors-ligne",
+        "notAvailableOffline": "Non disponible hors-ligne",
+        "rights": {
+            "manageWorkspace": "Gérer l'espace de travail (renommer, archiver, supprimer)",
+            "share": "Gérer les accès (partager l'espace de travail)",
+            "editDocuments": "Modifier les documents (ajouter, modifier, renommer, supprimer)",
+            "viewDocuments": "Consulter les documents (ouvrir, prévisualiser)"
         }
     },
     "WorkspaceSharing": {
         "title": "Partager l'espace de travail",
         "searchPlaceholder": "Jean Martin",
-        "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
         "updateRoleSuccess": "Le rôle de {user} est désormais {role}.",
         "updateRoleFailure": "Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
@@ -541,30 +606,27 @@
             "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
         },
         "batchSharing": {
-            "outsiderRoleWarning": "Les profils {external} ne peuvent avoir que les rôles {contributor} ou {reader}.",
-            "external": "Externe",
-            "contributor": "Contributeur",
-            "reader": "Lecteur",
-            "buttonSelect": "Sélection multiple",
-            "buttonFinish": "Terminer",
+            "buttonSelect": "Sélectionner",
+            "buttonCancel": "Annuler",
             "counter": "{count} utilisateur sélectionné | {count} utilisateurs sélectionnés",
             "chooseRole": "Choisir un rôle",
-            "noChanges": "Les membres sélectionnés étaient déjà {role}.",
             "someFailed": "Certaines assignations de rôle ont échoué.",
             "allFailed": "Une erreur est survenue, les assignations de rôle ont échoué. (Raison : {reason})",
             "updateRoleSuccess": "Le rôle des membres sélectionnées est désormais {role}.",
             "unshareSuccess": "L'espace de travail n'est plus partagé avec les membres sélectionnés."
         },
-        "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
-        "owner": "Propriétaire",
+        "onlyUserWarning": "Afin d'éviter toute perte de données, partagez cet espace de travail avec d'autres utilisateurs ({link}).",
+        "seeMore": "en savoir plus",
         "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'.",
-        "information": "Informations sur le partage"
+        "filter": {
+            "all": "Tous",
+            "admins": "Administrateurs",
+            "standards": "Membres",
+            "externals": "Externes"
+        }
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",
-        "description": "Accédez à l'ensemble des paramètres de langue, de thème et de confidentialité de l'application.",
-        "general": "Général",
-        "advanced": "Avancé",
         "titles": {
             "display": "Affichage",
             "config": "Configuration",
@@ -578,7 +640,9 @@
         "seeLogs": {
             "label": "Logs",
             "description": "Afficher les logs de l'application",
-            "seeLogs": "Voir les logs"
+            "seeLogs": "Voir les logs",
+            "sourceGUI": "GUI",
+            "sourceLibparsec": "libparsec"
         },
         "minimizeToSystemTray": {
             "label": "Réduire dans la barre d'état",
@@ -602,16 +666,12 @@
             "open": "Ouvrir dans l'explorateur"
         },
         "skipViewers": {
-            "label": "Ne pas utiliser l'aperçu des fichiers",
-            "description": "Toujours ouvrir les fichiers dans l'application par défaut de votre système"
+            "label": "Utiliser les applications du système pour ouvrir les fichiers",
+            "description": "Lorsque cette option est activée, les fichiers seront ouverts avec les applications par défaut du système plutôt qu'avec l'aperçu et l'éditeur intégrés à Parsec."
         },
         "language": {
             "label": "Langue",
-            "description": "Choisir la langue de l'application",
-            "values": {
-                "frFR": "Français",
-                "enUS": "English"
-            }
+            "description": "Choisir la langue de l'application"
         },
         "theme": {
             "label": "Thème",
@@ -634,10 +694,11 @@
         "noWorkspacesExternal": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail qui vous seront partagés s'afficheront ici.",
         "loading": "Chargement de vos espaces de travail...",
         "noMatchingWorkspaces": "Aucun espace de travail ne correspond à cette recherche.",
+        "allWorkspacesHidden": "Tous vos espaces de travail sont masqués. Allez dans la catégorie <b>Masqués</b> ou cliquez sur le bouton ci-dessous pour les afficher.",
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
         "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
-        "filterPlaceholder": "Nom d'un espace",
+        "filterPlaceholder": "Rechercher",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",
@@ -650,18 +711,29 @@
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
-            "actionAddFavorite": "Épingler",
-            "actionRemoveFavorite": "Désépingler"
+            "actionHide": "Masquer cet espace",
+            "actionShow": "Afficher cet espace",
+            "actionArchive": "Archiver cet espace",
+            "actionRestore": "Restaurer cet espace",
+            "actionDelete": "Supprimer définitivement",
+            "actionAddFavorite": "Ajouter aux favoris",
+            "actionRemoveFavorite": "Supprimer des favoris",
+            "actionTakeOwnership": "Devenir propriétaire"
+        },
+        "missingOwnership": {
+            "label": "Propriétaire manquant",
+            "title": "Propriétaire requis pour cet espace de travail",
+            "subtitle": "Aucun propriétaire n'est défini pour l'espace de travail {workspace}. Vous pouvez en devenir propriétaire.",
+            "yes": "M'attribuer le rôle de propriétaire",
+            "no": "Pas maintenant",
+            "failed": "Impossible de devenir propriétaire de l'espace de travail.",
+            "success": "Vous êtes désormais propriétaire de l'espace de travail {workspace}."
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Créer un nouvel espace de travail",
             "label": "Nom de l'espace de travail",
             "placeholder": "Mon espace",
-            "create": "Créer",
-            "sameNameExistsTitle": "Nom d'espace dupliqué",
-            "sameNameExistsQuestion": "Un autre espace de travail existe avec ce nom ou un nom similaire. Souhaitez-vous créer cet espace?",
-            "createAnyway": "Créer",
-            "cancel": "Annuler"
+            "create": "Créer"
         },
         "RenameWorkspaceModal": {
             "pageTitle": "Renommer l'espace de travail",
@@ -676,16 +748,8 @@
             }
         },
         "Workspace": {
-            "lastUpdate": "Dernière modification :",
             "notShared": "Non partagé",
             "hidden": "Masqué"
-        },
-        "listDisplayTitles": {
-            "name": "Nom",
-            "role": "Rôle",
-            "sharedWith": "Utilisateurs",
-            "lastUpdate": "Dernière modif.",
-            "size": "Taille"
         },
         "sort": {
             "sortByName": "Nom",
@@ -698,14 +762,120 @@
         "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
         "filter": {
             "title": "Filtrer",
-            "roles": "Rôle"
+            "roles": "Rôle",
+            "reset": "Réinitialiser"
         },
         "categoriesMenu": {
-            "all": "Tous les espaces",
-            "recents": "Vus récemment",
-            "favorites": "Épinglés",
+            "recent": "Récents",
+            "favorites": "Favoris",
+            "hidden": "Masqués",
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
-            "noFavoriteWorkspaces": "Vous n'avez encore épinglé aucun espace de travail. Épinglez un espace pour qu'il apparaisse ici."
+            "noFavoriteWorkspaces": "Vous n'avez encore aucun espace de travail favori. Les espaces favoris apparaîtront ici.",
+            "noHiddenWorkspaces": "Vous n'avez encore aucun espace de travail masqué. Les espaces masqués apparaîtront ici.",
+            "noArchivedWorkspaces": "Vos espaces de travail archivés seront consultables en lecture seule uniquement. Le partage ne sera plus actif tant qu'ils seront archivés. Les propriétaires d'espaces de travail archivés peuvent les restaurer.",
+            "noTrashedWorkspaces": "Vos espaces de travail programmés pour suppression peuvent être consultés ici en lecture seule durant {duration}, durée après laquelle ils seront définitivement supprimés. Les propriétaires d'espaces de travail peuvent les restaurer avant cette échéance.",
+            "showHiddenWorkspaces": "Afficher les espaces masqués"
+        },
+        "showHideWorkspace": {
+            "successDesktopHidden": "L'espace de travail est maintenant masqué et n'apparaîtra plus dans votre explorateur.",
+            "successWebHidden": "L'espace de travail est maintenant masqué dans Parsec.",
+            "failedHidden": "Impossible de masquer l'espace de travail. Veuillez réessayer.",
+            "successDesktopShown": "L'espace de travail est maintenant visible dans Parsec et votre explorateur.",
+            "successWebShown": "L'espace de travail est maintenant visible dans Parsec.",
+            "failedShown": "Impossible d'afficher l'espace de travail. Veuillez réessayer."
+        },
+        "workspaceHiddenModal": {
+            "title": "Masquer un espace de travail",
+            "affectedWorkspaces": "Vous êtes sur le point de masquer l'espace de travail <b>{workspace}</b>. Cet espace de travail ne sera plus visible depuis l'explorateur de fichiers.",
+            "actionConfirm": "Masquer l'espace de travail",
+            "actionCancel": "Annuler",
+            "noReminder": "Ne plus me rappeler"
+        },
+        "openInExplorerModal": {
+            "file": {
+                "title": "Espace de travail masqué",
+                "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
+            },
+            "workspace": {
+                "title": "Espace de travail masqué",
+                "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
+            },
+            "actionConfirm": "Rendre cet espace de travail visible",
+            "actionCancel": "Annuler"
+        },
+        "openFile": {
+            "title": "Espace de travail masqué",
+            "description": "Vous devez rendre cet espace de travail visible afin de pouvoir ouvrir votre fichier avec votre application par défaut.",
+            "actionConfirm": "Rendre cet espace de travail visible",
+            "actionCancel": "Annuler"
+        },
+        "archiveWorkspace": {
+            "title": "Archiver cet espace de travail",
+            "subtitle": "Vous êtes sur le point d'archiver l'espace de travail <b>{workspace}</b>. Il sera toujours accessible en <u>lecture seule</u> pour tous les utilisateurs y ayant accès.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
+            "yes": "Archiver",
+            "no": "Annuler",
+            "info": "Vos espaces de travail archivés restent consultables en lecture seule pour tous les utilisateurs.",
+            "loading": "Chargement de vos espaces de travail archivés...",
+            "backToWorkspace": "Retour à mes espaces de travail",
+            "archive": {
+                "success": "L'espace {workspace} a bien été archivé.",
+                "fail": "Impossible d'archiver l'espace {workspace}."
+            },
+            "readOnly": "Lecture seule",
+            "timestamp": "Archivé le : {timestamp}",
+            "count": "1 espace de travail | {count} espaces de travail",
+            "isArchived": "Espace de travail archivé (lecture seule)",
+            "isTrashed": "Espace de travail supprimé (lecture seule)"
+        },
+        "restoreWorkspace": {
+            "title": "Restaurer cet espace de travail",
+            "subtitleArchived": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Les précédents accès en lecture et écriture seront restaurés.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
+            "subtitleTrashed": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Sa suppression programmée sera annulée.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
+            "yes": "Restaurer",
+            "no": "Annuler",
+            "restore": {
+                "success": "L'espace {workspace} a bien été restauré.",
+                "fail": "Impossible de restaurer l'espace {workspace}."
+            }
+        },
+        "trashWorkspace": {
+            "title": "Supprimer cet espace de travail",
+            "subtitleBin": "Vous êtes sur le point de programmer la suppression de l'espace de travail <b>{workspace}</b>. Il restera accessible en lecture seule jusqu'à sa suppression le <b>{deletionDate}</b>.",
+            "subtitleDelete": "Vous êtes sur le point de supprimer l'espace de travail <b>{workspace}</b>. Ses données et historique seront <u>définitivement supprimés</u> et vous ne pourrez pas le restaurer.",
+            "label": "Saisissez '{workspace}' pour confirmer",
+            "yesBin": "Déplacer dans la corbeille",
+            "yesDelete": "Supprimer définitivement",
+            "info": "Vos espaces de travail programmés pour suppression restent consultables en lecture seule durant {duration}, suite à quoi ils seront supprimés définitivement. Les propriétaires d'espaces supprimés peuvent les restaurer avant cette échéance.",
+            "loading": "Chargement de la corbeille...",
+            "backToWorkspace": "Retour à mes espaces de travail",
+            "count": "1 espace de travail | {count} espaces de travail",
+            "question": {
+                "title": "Informations importantes",
+                "subtitleBin": "Si vous supprimez l'espace de travail <b>{workspace}</b>, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs. Il sera déplacé à la corbeille puis <u>supprimé définitivement</u> après <b>{deletionDelay}</b>.",
+                "subtitleDelete": "Si vous supprimez l'espace de travail <b>{workspace}</b>, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs.",
+                "yes": "J'ai compris",
+                "no": "Annuler"
+            },
+            "trash": {
+                "successBin": "L'espace {workspace} a bien été mis à la corbeille.",
+                "successDelete": "L'espace {workspace} a bien été supprimé."
+            },
+            "error": {
+                "failBin": "Impossible de mettre l'espace {workspace} à la corbeille.",
+                "failDelete": "Impossible de supprimer l'espace {workspace}.",
+                "offline": "Impossible de contacter le serveur. Assurez-vous d'être en ligne.",
+                "tooShort": "Le délai de suppression d'espace de travail est plus court que ce qui est autorisé. Assurez-vous d'être en ligne.",
+                "notFound": "Impossible de trouver cet espace de travail. Assurez-vous qu'il n'est pas déjà supprimé."
+            },
+            "timestamp": "Suppression prévue le :",
+            "deletionDelay": {
+                "default": "30 jours",
+                "immediate": "Immédiat",
+                "seconds": "{amount} seconde | {amount} secondes",
+                "minutes": "{amount} minute | {amount} minutes",
+                "hours": "{amount} heure | {amount} heures",
+                "days": "{amount} jour | {amount} jours"
+            }
         }
     },
     "FoldersPage": {
@@ -716,6 +886,26 @@
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "loading": "Chargement du dossier...",
+        "noFilesToImport": "Aucun fichier à importer.",
+        "noFilesToMove": "Aucun fichier à déplacer.",
+        "noFilesToCopy": "Aucun fichier à copier.",
+        "createFile": {
+            "button": "Nouveau fichier",
+            "fileName": "Nom du fichier",
+            "label": "Choisissez le nom du fichier",
+            "placeholder": "Nom du fichier",
+            "create": "Créer le nouveau fichier",
+            "createDocument": "Document",
+            "createSpreadsheet": "Feuille de calcul",
+            "createPresentation": "Présentation",
+            "createText": "Texte",
+            "defaultName": {
+                "document": "Nouveau document",
+                "spreadsheet": "Nouvelle feuille de calcul",
+                "presentation": "Nouvelle présentation",
+                "text": "Nouveau fichier texte"
+            }
+        },
         "actions": {
             "select": "Tout sélect.",
             "unselect": "Déselect.",
@@ -737,10 +927,10 @@
             "desc": "Décroissant"
         },
         "File": {
-            "lastUpdate": "Dernière modification :",
             "importing": "Importation...",
             "copying": "Copie...",
-            "moving": "Déplacement..."
+            "moving": "Déplacement...",
+            "restoring": "Restauration..."
         },
         "fileContextMenu": {
             "titleManageFile": "Gestion du fichier",
@@ -760,18 +950,11 @@
             "actionSeeInExplorer": "Afficher dans l'explorateur",
             "actionSelect": "Sélection",
             "actionSelectAll": "Tout sélectionner",
-            "actionUnselectAll": "Tout désélectionner",
-            "actionShare": "Partager"
+            "actionShare": "Partager",
+            "actionShowEnclosingFolder": "Voir dans le dossier"
         },
         "importModal": {
-            "title": "Importer vos fichiers",
-            "dragAndDrop": "Glisser/Déposer vos fichiers ici",
-            "or": "ou",
-            "browse": "Parcourir",
-            "replaceTitle": "Remplacer ou ignorer le fichier | Remplacer ou ignorer les fichiers",
-            "replaceQuestion": "Un fichier avec le nom `{file}` existe déjà. Souhaitez-vous le remplacer ? | {count} fichiers existent déjà. Souhaitez-vous les remplacer ?",
-            "skipText": "Ignorer | Tout ignorer",
-            "replaceText": "Remplacer | Tout remplacer"
+            "or": "ou"
         },
         "errors": {
             "deleteFailed": "Le fichier `{name}` n'a pas pu être supprimé, veuillez réessayer.",
@@ -779,19 +962,13 @@
             "renameFailedAlreadyExists": "Un fichier du même nom existe déjà dans ce répertoire.",
             "createFolderFailed": "Le dossier `{name}` n'a pas pu être créé, veuillez réessayer.",
             "createFolderAlreadyExists": "Impossible de créer le répertoire `{name}` car un élément du même nom existe déjà.",
-            "listFailed": "Le contenu du dossier `{path}` n'a pas pu être listé.",
             "deleteMultipleAllFailed": "Aucun élément n'a pu être supprimé.",
             "deleteMultipleSomeFailed": "Certains éléments n'ont pas pu être supprimés.",
-            "copyOneFailed": "Le fichier `{name}` n'a pas pu être copié, veuillez réessayer.",
-            "copyMultipleAllFailed": "Aucun élément n'a pu être copié.",
-            "copyMultipleSomeFailed": "Certains éléments n'ont pas pu être copiés.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail (raison: {reason}).",
-            "copyFailedTooManyFiles": "Trop d'éléments à copier.",
-            "copyFailedMaxRecursion": "Trop d'éléments à copier.",
-            "copyFailedOneFailed": "Un ou plusieurs éléments n'ont pas pu être copiés.",
-            "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas.",
             "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
-            "failedToListContent": "Impossible de lister le contenu de ce dossier."
+            "failedToListContent": "Impossible de lister le contenu de ce dossier.",
+            "createFileFailed": "Impossible de créer le fichier.",
+            "createFileFailedAlreadyExists": "Impossible de créer le nouveau fichier car un fichier du même nom existe déjà."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",
@@ -809,16 +986,16 @@
             "folderPlaceholder": "Mon dossier"
         },
         "events": {
-            "workspaceUnshared": "L'espace de travail {name} n'est plus partagé avec vous.",
+            "workspaceUnshared": "L'espace de travail <b>{name}</b> n'est plus partagé avec vous.",
             "roleUpdateNoLongerReader": "Votre rôle sur cet espace de travail a été mis à jour. Vous n'êtes plus Lecteur et pouvez mettre à jour les fichiers ou en importer de nouveaux.",
             "roleUpdateNowReader": "Votre rôle sur cet espace de travail a été mis à jour. Vous êtes à présent Lecteur et ne pouvez plus mettre à jour les fichiers ou en importer de nouveaux."
         },
         "deleteOneFileQuestionTitle": "Suppression d'un fichier",
-        "deleteOneFileQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le fichier `{name}` ?",
+        "deleteOneFileQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le fichier <b>{name}</b> ?",
         "deleteOneFolderQuestionTitle": "Suppression d'un dossier",
-        "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?",
+        "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier <b>{name}</b> ?",
         "deleteMultipleQuestionTitle": "Suppression de plusieurs éléments",
-        "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces {count} éléments ?",
+        "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces <b>{count} éléments</b> ?",
         "deleteOneFileYes": "Supprimer le fichier",
         "deleteOneFileNo": "Conserver le fichier",
         "deleteOneFolderYes": "Supprimer le dossier",
@@ -828,15 +1005,10 @@
         "copySelectFolderTitle": "Copier un élément | Copier {count} éléments",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
         "copyMoveFolderNoElement": "Aucun élément dans ce dossier",
-        "moveAlreadyExistTitle": "Remplacer ou ignorer l'élément | Remplacer ou ignorer les éléments",
-        "moveAlreadyExistQuestion": "Un élément nommé `{file}` existe déjà dans le dossier de destination. Que souhaitez-vous faire ? | Plusieurs éléments du même nom existent déjà dans le dossier de destination. Que souhaitez-vous faire ?",
-        "moveAlreadyExistSkip": "Ignorer | Tout ignorer",
-        "moveAlreadyExistReplace": "Remplacer | Tout remplacer",
         "open": {
             "fileFailed": "Le fichier `{name}` n'a pas pu être ouvert.",
             "fileFailedGeneric": "Impossible d'ouvrir ce fichier.",
             "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",
-            "unavailableOnWeb": "Cette fonctionnalité n'est pas encore disponible en mode web.",
             "unhandledFileType": "Impossible d'afficher le contenu de ce fichier.",
             "noVisibleOnWeb": "Parsec ne peut pas afficher ce type de document. Vous pouvez télécharger ce fichier en le sélectionnant ou en ouvrant les options puis en cliquant sur 'Télécharger'.",
             "noVisibleOnWebTitle": "Impossible d'afficher ce fichier",
@@ -851,15 +1023,14 @@
             "cancelled": "Annulé",
             "cancelling": "Annulation...",
             "cancel": "Annuler",
-            "failed": "Échoué",
-            "files": "fichiers"
+            "failed": "Échoué"
         },
         "ImportFile": {
-            "importMultiplesFiles": "Import de {count}",
+            "importMultipleFiles": "Import de <b>{count} fichiers</b>",
+            "gatherMultipleFiles": "Collecte de <b>{count} fichiers</b>",
             "importFilesAction": "Importer des fichiers",
             "importFolderAction": "Importer un dossier",
             "title": "Tâches de fond",
-            "failedDetails": "Vérifier votre connexion internet",
             "browse": "Aller à l'emplacement",
             "tabs": {
                 "inProgress": "En cours",
@@ -869,49 +1040,30 @@
             },
             "noTasks": "Aucune tâche",
             "noCurrentTasks": "Aucun tâche dans cette catégorie",
-            "noImportDone": "Pas d'import terminé",
-            "noImportFailed": "Pas d'import échoué",
             "dropInstructions": "Glissez & déposez vos fichiers pour les importer",
             "noDropForReader": "Vous êtes Lecteur sur cet espace de travail et ne pouvez pas importer des fichiers."
         },
         "CopyFile": {
-            "copyMultiplesFiles": "Copie de {count}",
-            "copy": "Copie de {name}"
+            "copyMultipleFiles": "Copie de <b>{count} fichiers</b>",
+            "copy": "Copie de <b>{name}</b>"
         },
         "MoveFile": {
-            "moveMultiplesFiles": "Déplacement de {count}",
-            "move": "Déplacement de {name}",
-            "failedDetails": "Veuillez vous assurer que vous êtes en ligne."
+            "moveMultipleFiles": "Déplacement de <b>{count} fichiers</b>",
+            "move": "Déplacement de <b>{name}</b>"
         },
         "RestoreFile": {
-            "restoreMultiplesFiles": "Restauration de {count}",
-            "restore": "Restauration de {name}",
-            "failedDetails": "Impossible de restaurer ce fichier ou dossier."
+            "restoreMultipleFiles": "Restauration de <b>{count} fichiers</b>",
+            "restore": "Restauration de <b>{name}</b>"
         },
         "DownloadFile": {
-            "download": "Téléchargement de {name}",
-            "downloadWarningTitle": "Êtes-vous sûr de vouloir télécharger ce fichier ?",
-            "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité.",
+            "downloadWarningTitle": "Êtes-vous sûr de vouloir télécharger ce fichier ?|Êtes-vous sûr de vouloir télécharger ces fichiers ?",
+            "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité.|SI vous téléchargez ces fichiers en dehors de Parsec, nous ne pourrons plus garantir leur sécurité.",
             "downloadWarningDocMessage": "Pour plus d'informations, vous pouvez consulter notre {0}.",
             "downloadWarningDoc": "documentation",
-            "cannotDownloadFolders": "Impossible de télécharger des dossiers.",
-            "foldersNotDownloaded": "Les dossiers ne seront pas téléchargés.",
             "allFailed": "Impossible de démarrer le téléchargement des fichiers.",
-            "someFailed": "Impossible de démarrer le téléchargement de certains fichiers.",
-            "selectFolderFailed": "Impossible de sauvegarder des fichiers dans ce dossier. Assurez-vous d'avoir les permissions suffisantes.",
-            "noPermissions": "Ce site n'a pas les autorisations requises pour sauvegarder un fichier sur votre disque. Veuillez donner les permissions d'édition de fichier à ce site si vous souhaitez télécharger un fichier.",
-            "openFailed": "Impossible d'ouvrir le fichier. Vous pouvez essayer en utilisant la liste des téléchargement de votre navigateur.",
             "cancel": "Annuler",
-            "downloadButton": "Télécharger le fichier",
-            "notRemindMe": "Ne plus me le rappeler",
-            "maximumRecursionReached": "Profondeur maximale de sous-dossiers atteinte, impossible de télécharger",
-            "maximumFilesReached": "Trop de fichiers sélectionnés, impossible de télécharger",
-            "archiveTitle": "Téléchargement de fichiers",
-            "archiveQuestion": "Les fichiers sélectionnées seront téléchargés dans une archive, avec une taille totale de {size}. Souhaitez-vous continuer ?",
-            "archiveYes": "Télécharger l'archive",
-            "archiveNo": "Annuler",
-            "archiveDownload": "Téléchargement des fichiers (archive)",
-            "archive": "Création de l'archive"
+            "downloadButton": "Télécharger le fichier|Télécharger les fichiers",
+            "notRemindMe": "Ne plus me le rappeler"
         },
         "ConflictsFile": {
             "title": "Conflits: noms de fichiers déjà existants",
@@ -924,30 +1076,34 @@
                 "keepAll": "Conserver les deux"
             }
         },
-        "uploadsLeft": "{amount} imports en attente",
-        "copiesLeft": "{amount} copies en attente",
-        "movesLeft": "{amount} déplacements en attente",
-        "itemsDoneAmount": "Une autre opération terminée | {amount} autres opérations terminées",
-        "itemsErrorAmount": "Une autre opération annulée ou échouée | {amount} autres opérations annulées ou échouées",
-        "operationAmount": "{amount} opération",
-        "tabbar": {
-            "rename": "Renommer",
-            "move": "Déplacer",
-            "duplicate": "Copier",
-            "delete": "Supprimer",
-            "share": "Partager",
-            "download": "Télécharger",
-            "copyLink": "Copier le lien",
-            "history": "Historique",
-            "preview": "Aperçu",
-            "openWithDefault": "Ouvrir avec l'app par défaut",
-            "seeInExplorer": "Afficher dans l'explorateur",
-            "details": "Détails",
-            "edit": "Éditer"
+        "search": {
+            "title": "Résultats de la recherche",
+            "resultsCount": "{count} résultat | {count} résultats",
+            "currentWorkspaceOnly": "Résultats uniquement dans l'espace de travail actuel.",
+            "onlyMatchTitles": "Correspondance sur le titre uniquement",
+            "filterButtonDefault": "Types de documents",
+            "applyFilters": "Appliquer",
+            "filters": {
+                "folders": "Dossier",
+                "documents": "Document",
+                "spreadsheets": "Feuille de calcul",
+                "presentations": "Présentation",
+                "pdfDocuments": "PDF",
+                "audios": "Audio",
+                "videos": "Vidéo",
+                "images": "Image",
+                "texts": "Texte"
+            },
+            "placeholder": "Rechercher un fichier ou un dossier",
+            "noResults": {
+                "title": "Aucun résultat ne correspond à votre recherche dans cet espace",
+                "subtitle": "Vérifiez l'orthographe ou essayez d'utiliser des termes de recherche plus simples, puis de filtrer les résultats. Vous ne trouvez toujours pas ce que vous cherchez ?"
+            }
         }
     },
     "FileDetails": {
-        "title": "Détails de {name}",
+        "fileTitle": "Détails du fichier",
+        "folderTitle": "Détails du dossier",
         "stats": {
             "generalInfo": "Informations générales",
             "lastUpdate": "Dernière modification",
@@ -970,7 +1126,6 @@
         "folderSyncKo": "Ce dossier n'est pas synchronisé avec le serveur."
     },
     "OrganizationPage": {
-        "title": "Informations",
         "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
         "users": {
             "revokedUsers": "Révoqué | Révoqués",
@@ -978,10 +1133,9 @@
             "frozenUsers": "Suspendu | Suspendus",
             "title": "Utilisateurs",
             "seeUsers": "Voir tous les utilisateurs",
-            "addUser": "Ajouter un utilisateur",
             "invitations": {
                 "emailInvitations": "Invitations par e-mail",
-                "pkiRequests": "Demandes PKI"
+                "linkRequests": "Demandes par lien"
             }
         },
         "size": {
@@ -998,7 +1152,9 @@
             "allowed": "Activé",
             "forbidden": "Désactivé",
             "title": "Configuration",
-            "serverAddr": "Adresse du serveur",
+            "workspaceDeletionDelay": "Délai de suppression d'espace de travail",
+            "serverAddress": "Adresse du serveur",
+            "serverVersion": "Version du serveur",
             "copyPath": "Copié",
             "copyFailed": "Impossible de copier l'adresse de l'organisation. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
         }
@@ -1025,30 +1181,25 @@
             "macos": "MacOS",
             "linux": "Linux",
             "android": "Android",
-            "unknown": "Inconnu"
+            "unknown": "Inconnu ({label})",
+            "mobileWeb": "Mobile Web"
         },
-        "sortBy": "Trier par :",
         "technicalId": "ID interne :"
     },
     "SideMenu": {
         "organization": "Organisation",
-        "workspaces": "Mes espaces de travail",
-        "recentWorkspaces": "Vus récemment",
-        "favorites": "Épinglés",
-        "noFavorites": "Aucun espace de travail épinglé",
-        "noWorkspace": "Aucun espace de travail",
-        "noRecentWorkspace": "Aucun espace de travail récent",
+        "workspaces": "Espaces de travail",
+        "recent": "Récents",
+        "archived": "Archivés",
+        "trashed": "Corbeille",
         "users": "Utilisateurs",
-        "invitations": "Invitations",
-        "storage": "Stockage",
+        "invitationsRequests": "Invitations & Demandes",
         "information": "Informations",
-        "goToHome": "Mes espaces",
-        "allWorkspaces": "Tous les espaces",
+        "myWorkspaces": "Mes espaces",
         "recentDocuments": "Documents récents",
         "noRecentDocuments": "Aucun document récent",
-        "back": "Retour",
         "checklist": {
-            "title": "Actions recommandées",
+            "title": "Recommandations de sécurité",
             "description": "Pour réduire le risque de perte de données, nous vous recommandons d'effectuer les tâches suivantes.",
             "remaining": "1 tâche restante | {count} tâches restantes",
             "open": "Ouvrir",
@@ -1061,15 +1212,7 @@
         "tabbar": {
             "workspaces": "Espaces de travail",
             "files": "Fichiers",
-            "organization": "Organisation",
-            "myProfile": "Mon profil",
-            "newWorkspace": "Créer un espace de travail",
-            "newFolder": "Nouveau dossier",
-            "importFile": "Importer un fichier",
-            "importFolder": "Importer un dossier",
-            "scanDocument": "Scanner un document",
-            "importPhoto": "Importer une photo",
-            "addUser": "Ajouter un utilisateur"
+            "organization": "Organisation"
         },
         "tabbarOptions": {
             "more": "Plus",
@@ -1084,7 +1227,6 @@
             "title": "Votre organisation est gelée",
             "description": "Vous avez toujours accès à vos données, mais vous ne pouvez pas créer de nouveaux espaces de travail ni partager les espaces existants.",
             "contact": "Contacter le service technique",
-            "contactAdmin": "Contacter un administrateur",
             "email": "contact{'@'}parsec.cloud"
         }
     },
@@ -1093,10 +1235,8 @@
         "description": "Les appareils listés ci-dessous vous permettent d'accéder à cette organisation.",
         "addDevice": "Ajouter un nouvel appareil",
         "greetDevice": "Accueillir un nouvel appareil",
-        "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
         "joinedOn": "Rejoint :",
-        "now": "À l'instant",
         "greet": {
             "steps": {
                 "hostCode": "Code hôte",
@@ -1115,13 +1255,12 @@
                 "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché sur l'appareil invité.",
                 "summary": "L'appareil {label} a été ajouté à votre profil.",
                 "getDeviceInfo": "En attente des informations de l'appareil invité.",
-                "waitForGuest": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout.",
-                "waitForGuestVersionInfo": "Avant de commencer, assurez-vous d'utiliser la version la plus récente de Parsec sur vos deux appareils.",
-                "scanOrShare1": "Scanner le QR Code ",
-                "scanOrShare2": "ou ",
-                "scanOrShare3": "partager le lien",
-                "cancelGreet": "Êtes-vous sûr(e) de vouloir annuler le processus d'ajout d'appareil ?",
-                "copiedToClipboard": "Copié dans le presse-papier"
+                "cancelGreet": "Êtes-vous sûr(e) de vouloir annuler le processus d'ajout d'appareil ?"
+            },
+            "step1": {
+                "title": "Ouvrez Parsec sur le nouvel appareil",
+                "description": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout.",
+                "info": "Avant de commencer, assurez-vous d'utiliser la version la plus récente de Parsec sur vos deux appareils."
             },
             "errors": {
                 "retrieveDeviceInfoFailed": "Impossible de récupérer les informations.",
@@ -1142,9 +1281,10 @@
                 "finish": "Terminer",
                 "start": "Démarrer",
                 "copyLink": "Copier le lien",
+                "copied": "Copié",
                 "sendEmail": "Envoyer le lien par email",
                 "reSendEmail": "Renvoyer l'email",
-                "waitBeforeResending": "Attendez {seconds}s",
+                "waitBeforeResending": "Attendez {seconds}s avant de renvoyer",
                 "cancelGreet": {
                     "yes": "Annuler le processus",
                     "no": "Reprendre"
@@ -1154,21 +1294,14 @@
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
             "emailSent": "L'email a été envoyé !",
+            "emailSentToast": "L'email a été envoyé à votre adresse email.",
             "cancelled": "Le processus a été annulé.",
-            "waiting": "En attente de l'invité..."
+            "waiting": "En attente de l'invité"
         }
     },
     "Password": {
         "password": "Mot de passe",
-        "currentPassword": "Mot de passe actuel",
-        "newPassword": "Nouveau mot de passe",
-        "confirmPassword": "Confirmer le mot de passe",
-        "passwordInfo": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail.",
-        "passwordLevelLow": "Faible",
-        "passwordLevelMedium": "Moyen",
-        "passwordLevelHigh": "Fort",
-        "passwordCriteria": "Assurez-vous qu'il correspond à un niveau fort : évitez les répétitions, les mots trop communs et les suites.",
-        "noMatch": "Ne correspondent pas"
+        "currentPassword": "Mot de passe actuel"
     },
     "Authentication": {
         "title": "Authentification",
@@ -1187,66 +1320,170 @@
                     "yes": "Continuer",
                     "no": "Conserver la méthode actuelle"
                 },
-                "selectButton": "Choisir un certificat",
-                "selectOther": "Modifier",
-                "selectInstructions": "Une fenêtre va s'ouvrir pour vous demander de sélectionner le certificat.",
-                "certificateSelected": "Certificat sélectionné"
+                "errors": {
+                    "listCertificatesFailed": "Impossible de lister les certificats."
+                }
             },
             "sso": {
                 "title": "Authentification unique (SSO)",
                 "description": "S'authentifier avec un compte externe",
-                "connected": "Connecté"
+                "continueWith": "Continuer avec {name}",
+                "serverConfigUnavailable": "Impossible de récupérer la configuration du serveur. Vérifiez que vous êtes en ligne.",
+                "retry": "Réessayer",
+                "connected": "Connecté",
+                "unavailable": "Cette méthode n'est pas autorisée par ce serveur."
             }
         },
-        "methodChosen": "Méthode choisie :",
+        "forbidden": "Cette organisation n'autorise pas cette méthode d'authentification.",
         "active": "Méthode active",
-        "update": "Modifier",
+        "update": "Change de méthode",
         "changeAuthenticationButton": "Changer de méthode",
-        "changePasswordButton": "Modifier le mot de passe",
         "useKeyring": "Authentification du système",
         "usePassword": "Mot de passe",
+        "useSmartcard": "Carte à puce",
         "useSso": "Authentification unique (SSO)",
         "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web",
         "openBaoUnavailable": "L'authentification unique (SSO) n'est pas disponible sur ce serveur.",
         "invalidOpenBaoData": "La configuration SSO fournie par le serveur est invalide. Veuillez contacter un administrateur.",
-        "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site."
-    },
-    "PasswordInputModal": {
-        "passwordNeeded": "Mot de passe requis",
-        "enterPassword": "Veuillez saisir le mot de passe {org} pour continuer.",
-        "password": "Mot de passe",
-        "validate": "Valider",
-        "invalid": "Mot de passe invalide.",
-        "otherError": "Une erreur est survenue."
+        "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site.",
+        "mfa": {
+            "title": "Authentification multifacteur (MFA)",
+            "description": "Ajoutez une couche de sécurité lors de la connexion à cette organisation depuis votre appareil.",
+            "info": "L'organisation requiert une authentification multifacteur.",
+            "or": "ou",
+            "inactive": "Désactivée",
+            "active": "Activée",
+            "inactiveInfo": "L'authentification multifacteur est configurée mais pas activée sur cet appareil.",
+            "totpRequired": "Une authentification multifacteur est requise pour cette organisation.",
+            "totpRequiredSubtitle": "Veuillez saisir le code fourni par votre application d'authentification pour vous connecter à cette organisation.",
+            "step1": {
+                "title": "1. Installer une application d'authentification sur votre mobile",
+                "description": "Téléchargez et installez une application d'authentification, telle que FreeOTP ou Aegis Authenticator, sur votre appareil mobile."
+            },
+            "step2": {
+                "title": "2. Scanner le QR code ou copier la clé",
+                "description": "Scannez le QR code dans l'application d'authentification ou copiez/collez le code dans l'application.",
+                "buttonCopy": "Copier la clé",
+                "buttonCopied": "Clé copiée",
+                "copyError": "Impossible de copier le code."
+            },
+            "buttons": {
+                "next": "Suivant",
+                "done": "Terminé",
+                "back": "Précédent",
+                "configure": "Configurer MFA"
+            },
+            "error": {
+                "invalidCode": "Le code que vous avez saisi est invalide. Veuillez réessayer.",
+                "emptyCode": "Veuillez saisir le code à 6 chiffres de votre application d'authentification.",
+                "emptyStatus": "Impossible d'obtenir le statut de l'authentification multifacteur. Vous êtes peut-être hors ligne ou le serveur ne supporte pas l'authentification multi-facteurs.",
+                "failedToRetrieveKey": "Impossible de récupérer la clé de configuration MFA. Veuillez vous assurer que vous êtes en ligne et réessayer.",
+                "failedToConfigure": "Impossible de configurer l'authentification multifacteur. Veuillez vous assurer que vous êtes en ligne et réessayer.",
+                "failedToActivate": "Impossible d'activer' l'authentification multifacteur. Veuillez vous assurer que vous êtes en ligne et réessayer.",
+                "failedToDelete": "Impossible de supprimer l'authentification multifacteur",
+                "failedToReset": "Impossible de reconfigurer l'authentification multifacteur."
+            },
+            "digitCode": {
+                "label": "Saisissez le code à 6 chiffres de votre application d'authentification",
+                "placeholder": "Code à 6 chiffres"
+            },
+            "mfaSuccess": {
+                "info": "Votre méthode d'authentification a été mise à jour avec succès.",
+                "description": "L'authentification multifacteur a été activée avec succès et sera désormais requise pour vous connecter à cette organisation.",
+                "deleteOk": "L'authentification multifacteur a été supprimée."
+            },
+            "delete": {
+                "title": "Désactiver l'authentification multifacteur",
+                "subtitle": "L'authentification multifacteur sera désactivée sur cet appareil, mais restera configurée pour l'organisation. Vous pouvez décider de la réactiver à tout moment.",
+                "moreInformation": "Plus d'informations",
+                "warning": "La désactivation de l'authentification multifacteur sur cet appareil réduira la sécurité.",
+                "totpCodeTitle": "Code MFA",
+                "confirmButton": "Supprimer le MFA",
+                "cancelButton": "Annuler",
+                "error": {
+                    "notSetup": "L'authentification multifacteur n'est pas configurée."
+                }
+            },
+            "modalRequired": {
+                "title": "Authentification multifacteur requise",
+                "subtitle": "Votre organisation requiert une authentification multifacteur. Veuillez la configurer pour accéder à cette organisation.",
+                "configureButton": "Configurer le MFA",
+                "cancelButton": "Se déconnecter"
+            }
+        },
+        "modalCurrentAuthNotAllow": {
+            "title": "Méthode d'authentification actuelle interdite",
+            "subtitle": "La méthode d'authentification actuelle n'est pas autorisée par l'organisation. Veuillez en choisir une autre.",
+            "yesText": "Changer de méthode d'authentification",
+            "noText": "Se déconnecter"
+        }
     },
     "ImportRecoveryDevicePage": {
-        "titles": {
-            "forgottenPassword": "Mot de passe oublié",
-            "recoveryFile": "Fichier de récupération",
-            "recoveryKey": "Clé secrète",
-            "setNewPassword": "Choisissez votre nouveau mot de passe",
-            "setNewAuthentication": "Choisissez une méthode d'authentification",
-            "passwordChanged": "L'authentification a bien été modifiée"
-        },
         "subtitles": {
-            "recoveryFilesMustExistWarning": "Vous devez avoir créé un fichier de récupération pour réinitialiser votre authentification.",
-            "password": "Mot de passe",
-            "passwordModified": "Vous pouvez vous connecter avec votre nouvelle authentification.",
-            "noFileSelected": "Aucun fichier sélectionné"
+            "recoveryFilesMustExistWarning": "Vous devez avoir créé un fichier de récupération pour réinitialiser votre authentification."
         },
         "actions": {
-            "browse": "Parcourir",
-            "next": "Suivant",
-            "validateAuth": "Confirmer",
-            "login": "Se connecter"
+            "validateAuth": "Confirmer"
+        },
+        "modal": {
+            "title": "Comment souhaitez-vous restaurer votre appareil ?",
+            "subtitle": "L'appareil ou le navigateur que vous utilisiez pour accéder à votre organisation n'est plus disponible ? Choisissez ci-dessous une méthode de récupération.",
+            "actions": {
+                "next": "Continuer",
+                "chooseMethod": "Continuer avec cette méthode"
+            },
+            "options": {
+                "otherConnectedDevice": {
+                    "title": "Autre appareil/navigateur connecté",
+                    "subtitle": "Uniquement si vous êtes connecté à un autre appareil ou navigateur au sein de cette organisation.",
+                    "badge": "Recommandé"
+                },
+                "recoveryFile": {
+                    "title": "Fichier de récupération",
+                    "subtitle": "Vous devez avoir créé un fichier de restauration et une clé secrète"
+                },
+                "shamir": {
+                    "title": "Cercle de confiance",
+                    "subtitle": "Vous devez avoir créé un cercle de confiance avec trois personnes minimum"
+                }
+            },
+            "connectedDevice": {
+                "title": "Récupération à partir d'un appareil existant",
+                "subtitle": "Veuillez suivre les étapes suivantes pour restaurer votre appareil à partir de votre autre appareil ou navigateur connecté.",
+                "joinLinkSubtitle": "Veuillez coller ci-dessous le lien que vous avez récupéré depuis votre autre appareil/navigateur.",
+                "joinLinkInputLabel": "Coller le lien d'invitation",
+                "joinLinkConfirmLink": "Valider le lien",
+                "steps": {
+                    "step1": "Connectez-vous à votre appareil existant",
+                    "step2": "Allez dans votre profil, puis cliquez sur Mes appareils",
+                    "step3": "Cliquez sur Ajouter un appareil",
+                    "step4": "Copiez (ou scannez) le lien depuis la fenêtre"
+                }
+            },
+            "recoveryFile": {
+                "title": "Récupération à partir d'un fichier de récupération",
+                "subtitle": "Vous devez ajouter votre fichier de récupération et saisir la clé secrète que vous avez enregistrée pour récupérer votre accès à partir de cet appareil/navigateur.",
+                "itemRecoveryFile": "Fichier de récupération",
+                "itemRecoveryKey": "Clé secrète",
+                "actions": {
+                    "addRecoveryFile": "Ajouter le fichier de récupération (.psrk)",
+                    "updateRecoveryFile": "Modifier"
+                }
+            },
+            "authentication": {
+                "title": "Choisissez une nouvelle méthode d'authentification",
+                "subtitle": "Sélectionnez une méthode d'authentification disponible pour récupérer cet appareil/navigateur. Vous pourrez ensuite utiliser cette nouvelle méthode d'authentification pour vous connecter à l'organisation et la modifier à tout moment."
+            },
+            "done": {
+                "title": "Votre session a été récupérée !",
+                "login": "Se connecter à l'organisation"
+            }
         },
         "errors": {
             "fileErrorMessage": "Le fichier de récupération est invalide.",
             "keyErrorMessage": "La clé secrète ne correspond pas au fichier de récupération.",
-            "passwordErrorMessage": "Les mots de passe ne correspondent pas ou ne sont pas assez forts.",
-            "saveDeviceErrorMessage": "Une erreur est survenue, la récupération d'appareil a échoué.",
             "internalErrorMessage": "Une erreur est survenue"
         },
         "secretKeyPlaceholder": "FH3H-N3DW-ABED-A6Q7-.."
@@ -1257,19 +1494,15 @@
             "recoveryKey": "Clé secrète"
         },
         "subtitles": {
-            "aboutRecoveryFiles": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "keepFilesSeparate": "Vous devez enregistrer le fichier de récupération et sa clé secrète. Assurez-vous que les deux ne sont pas stockés au même endroit.",
-            "warningUniqueness": "Veuillez noter que ces fichiers ne sont pas stockés par Parsec. Si vous perdez l'un de ces fichiers ou les deux, vous devrez créer un nouveau fichier de récupération.",
-            "keyExplanation": "La clé secrète est un code qui doit être utilisé avec le fichier de récupération pour créer un nouveau mot de passe."
+            "aboutRecoveryFiles": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils."
         },
         "actions": {
-            "createRecoveryButton": "Créer des fichiers de récupération",
             "download": "Télécharger",
             "downloadAgain": "Télécharger à nouveau",
             "backToDevices": "Retour à mes appareils"
         },
         "toasts": {
-            "fileDownloadOk": "Le fichier de récupération a bien été téléchargé",
+            "keyCopiedToClipboard": "La clé secrète a bien été copié dans le presse-papier",
             "keyDownloadOk": "La clé secrète a bien été téléchargée"
         },
         "filenames": {
@@ -1295,9 +1528,8 @@
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
         "continueWith": "Continuer avec {greeter}",
-        "waitingForAnyHost": "(En attente d'un administrateur)",
-        "waitingForHost": "(En attente de l'administrateur)",
-        "linkFormLabel": "Lien d'invitation",
+        "waitingForHost": "En attente de l'administrateur",
+        "linkFormLabel": "Coller le lien d'invitation",
         "linkFormPlaceholder": "parsec3://exemple.com/Org?...",
         "successMessage": "Vous avez rejoint l'organisation avec succès.",
         "stepTitles": {
@@ -1371,6 +1603,7 @@
         "inviteUser": "Inviter un utilisateur",
         "currentUser": "(Vous)",
         "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs",
+        "anonymous": "Anonyme",
         "profile": {
             "admin": {
                 "label": "Administrateur",
@@ -1413,7 +1646,7 @@
         "emptyList": "Aucun utilisateur à afficher.",
         "noMatch": "Aucun utilisateur ne correspond à vos filtres.",
         "listUsersFailed": "Impossible d'obtenir les utilisateurs de l'organisation. Veuillez vérifier votre connexion internet.",
-        "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
+        "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",
@@ -1422,12 +1655,11 @@
             "titleAssignRoles": "Copie de rôles",
             "actionAssignRoles": "Copier les rôles des espaces de travail",
             "cannotAssignRolesToSelf": "Impossible de copier les rôles à vous-même.",
-            "subtitleAssignRoles": "Vous pouvez copier les rôles de {sourceUser} vers une autre personne. Les rôles des espaces de travail ne seront pas retirés.",
+            "subtitleAssignRoles": "Vous pouvez copier les rôles de <b>{sourceUser}</b> vers une autre personne. Les rôles des espaces de travail ne seront pas retirés.",
             "titleUpdateProfile": "Profil",
             "actionUpdateProfile": "Modifier le profil | Modifier les profils",
             "actionSelect": "Sélection",
-            "actionSelectAll": "Tout sélectionner",
-            "actionUnselectAll": "Tout désélectionner"
+            "actionSelectAll": "Tout sélectionner"
         },
         "greet": {
             "titles": {
@@ -1472,7 +1704,9 @@
                     "manuallyCancelled": "La personne invitée a annulé le processus.",
                     "automaticallyCancelled": "Le processus a été annulé.",
                     "default": "Une erreur est survenue. Le processus a été annulé."
-                }
+                },
+                "missingUserInfo": "Impossible d'obtenir les informations sur le nouvel utilisateur.",
+                "createUserFailed": "Impossible de créer le nouvel utilisateur."
             },
             "success": "{user} peut maintenant se connecter à l'organisation.",
             "cancelConfirm": "Annulation",
@@ -1480,11 +1714,10 @@
             "cancelYes": "Annuler le processus",
             "cancelNo": "Reprendre",
             "cancelled": "Le processus a été annulé.",
-            "waiting": "En attente de l'invité..."
+            "waiting": "En attente de l'invité"
         },
         "invitation": {
             "greetUser": "Accueillir",
-            "rejectUser": "Annuler",
             "sendEmailTitle": "Renvoyer le lien par email",
             "sendEmailMessage": "L'utilisateur devrait déjà avoir reçu un email contenant le lien. Êtes-vous sûr(e) de vouloir en envoyer un autre ?",
             "sendEmail": "Renvoyer l'email",
@@ -1492,7 +1725,6 @@
             "inviteSuccessMailSent": "Une invitation à rejoindre l'organisation a été envoyée à {email}. | Les invitations à rejoindre l'organisation ont été envoyées à {count} emails.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé à {email}. Veuillez transmettre le lien d'invitation manuellement. | Les invitations ont été créées mais certains emails n'ont pas pu être envoyés. Veuillez transmettre les liens d'invitation manuellement.",
             "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation. | Les invitations ont été envoyées avec succès, mais une ou plusieurs adresses appartiennent déjà à des membres de cette organisation.",
-            "inviteFailedAlreadyInvited": "Une invitation a déjà été créée par un autre administrateur pour l'email {email}.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
@@ -1503,10 +1735,9 @@
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
             "copyLink": "Copier le lien",
-            "manageInvitation": "Gérer l'invitation",
             "cancelInvitation": {
                 "title": "Annuler l'invitation",
-                "message": "L'invitation envoyée à {email} et le lien d'invitation ne seront plus valides. Êtes-vous sûr(e) de vouloir continuer ?",
+                "message": "L'invitation envoyée à <b>{email}</b> et le lien d'invitation ne seront plus valides.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ?",
                 "yes": {
                     "short": "Supprimer",
                     "long": "Supprimer l'invitation"
@@ -1524,7 +1755,7 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",
-            "subtitle": "Vous pouvez envoyer plusieurs invitations simultanément en séparant les emails par ';'",
+            "subtitle": "Vous pouvez envoyer plusieurs invitations simultanément en séparant les emails par un point-virgule « <b>;</b> »",
             "label": "Email de l'utilisateur",
             "placeholder": "jean.martin{'@'}exemple.com",
             "create": "Envoyer l'invitation | Envoyer l'invitation | Envoyer {count} invitations",
@@ -1534,21 +1765,18 @@
         "UserDetailsModal": {
             "title": "Détails de l'utilisateur",
             "subtitles": {
-                "name": "Nom",
-                "joined": "Rejoint",
+                "generalInfo": "Informations générales",
+                "joined": "Rejoint le",
                 "commonWorkspaces": "Espaces de travail communs",
                 "revoked": "Révoqué",
                 "revokedSince": "Révoqué depuis le"
-            },
-            "actions": {
-                "close": "Fermer"
             },
             "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec cet utilisateur.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."
         },
         "revocation": {
             "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
-            "revokeQuestion": "{user} sera révoqué(e) et ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
+            "revokeQuestion": "<b>{user}</b> sera révoqué(e) et ne pourra plus accéder à l'organisation.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ? | Ces <b>{count} utilisateurs</b> seront révoqués. Ils ne pourront plus accéder à l'organisation.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ?",
             "revokeYes": "Révoquer",
             "revokeNo": "Annuler",
             "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
@@ -1560,6 +1788,7 @@
             "byJoined": "Date d'inscription",
             "byProfile": "Profil",
             "byStatus": "Statut",
+            "byEmail": "Email",
             "asc": "Croissant",
             "desc": "Décroissant"
         },
@@ -1569,7 +1798,8 @@
             "profile": "Profil",
             "admin": "Administrateur",
             "standard": "Membre",
-            "outsider": "Externe"
+            "outsider": "Externe",
+            "reset": "Réinitialiser"
         },
         "assignRoles": {
             "title": "Transférer les rôles",
@@ -1600,13 +1830,15 @@
     },
     "InvitationsPage": {
         "emailInvitation": {
+            "tabLabel": "Invitations envoyées",
             "tab": "Invitations par adresse email",
             "tabShort": "Email",
             "emptyState": "Aucune invitation par email en attente.",
             "inviteUser": "Inviter un utilisateur",
             "listDisplayTitles": {
                 "email": "Adresse email",
-                "sentOn": "Envoyée le"
+                "sentOn": "Envoyée le",
+                "sentBy": "Envoyée par"
             },
             "greet": "Accueillir",
             "tooltips": {
@@ -1615,55 +1847,30 @@
                 "copyLink": "Copier le lien"
             }
         },
-        "pkiRequests": {
-            "tab": "Demandes par PKI",
-            "tabShort": "PKI",
-            "emptyState": "Aucune demande PKI en attente.",
-            "copyLink": "Copier le lien (PKI)",
-            "pkiFeature": "Cette fonctionnalité nécessite une PKI (Infrastructure à clés publiques).",
+        "asyncEnrollmentRequest": {
+            "tabLabel": "Demandes d'adhésion",
+            "tab": "Demandes par lien (PKI/SSO)",
+            "emptyState": "Aucune demande par lien en attente. Les demandes d'utilisateurs pour rejoindre l'organisation avec une carte à puce (PKI) ou un compte ProConnect (SSO) seront répertoriées ici.",
+            "copyLink": "Copier le lien (PKI/SSO)",
+            "accept": "Accepter",
+            "reject": "Refuser",
             "listDisplayTitles": {
                 "name": "Nom",
                 "email": "Email",
                 "createdOn": "Date de la demande",
-                "certificate": "Certificat"
+                "type": "Type de demande"
             },
-            "accept": "Accepter",
-            "certificate": {
-                "valid": "Valide",
-                "invalid": "Invalide",
-                "unknown": "Inconnu"
-            },
-            "rootCertificate": {
-                "missingCertificateTitle": "Certificat racine requis",
-                "missingCertificateDescription": "Un certificat racine est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation.",
-                "setRootCertificate": "Ajouter le certificat racine",
-                "updateRootCertificate": "Mettre à jour le certificat racine"
-            },
-            "validationModal": {
-                "error": {
-                    "unknown": {
-                        "title": "Ajout d'un utilisateur avec certificat inconnu",
-                        "description": "Vous êtes sur le point d'ajouter un utilisateur possédant un certificat inconnu. Nous ne pouvons vérifier son identité. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?"
-                    },
-                    "notValid": {
-                        "title": "Ajout d'un utilisateur avec certificat non valide",
-                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?",
-                        "no": "Annuler",
-                        "yes": "Confirmer l'ajout"
-                    }
-                },
-                "button": {
-                    "cancel": "Annuler",
-                    "confirm": "Confirmer l'ajout de l'utilisateur"
-                },
-                "acceptedFailed": "Échec de l'acceptation de cette demande",
-                "acceptedSuccess": "Cette demande a été acceptée",
-                "rejectedFailed": "Échec du rejet de cette demande",
-                "rejectedSuccess": "Cette demande a été rejetée"
+            "type": {
+                "pki": "PKI",
+                "sso": "SSO",
+                "pkiCorrupted": "PKI (corrompu)"
             },
             "linkCopiedToClipboard": {
-                "success": "Le lien PKI a été copié dans le presse-papiers.",
-                "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+                "success": "Le lien pour rejoindre l'organisation via PKI/SSO a été copié dans le presse-papier.",
+                "failed": "Impossible de copier le lien. Votre navigateur ou votre appareil ne semble pas prendre en charge le copier-coller."
+            },
+            "tooltips": {
+                "copyLinkInfo": "Partagez ce lien avec les utilisateurs souhaitant rejoindre l'organisation avec une carte à puce (PKI) ou un compte ProConnect (SSO)."
             },
             "selectProfileModal": {
                 "title": "Compléter les informations de l'utilisateur",
@@ -1672,13 +1879,48 @@
                 "actions": {
                     "confirm": "Valider la demande",
                     "cancel": "Annuler"
-                },
-                "errors": {
-                    "noProfile": "Vous devez sélectionner un profil."
                 }
             },
-            "tooltips": {
-                "reject": "Refuser la demande"
+            "rejectModal": {
+                "title": "Refuser la demande",
+                "message": "Êtes-vous sûr(e) de vouloir refuser cette demande ? L'utilisateur devra soumettre une nouvelle demande pour rejoindre l'organisation.",
+                "actions": {
+                    "confirm": "Refuser la demande",
+                    "cancel": "Annuler"
+                }
+            },
+            "validationModal": {
+                "acceptedFailed": "Échec de l'acceptation de cette demande",
+                "acceptedSuccess": "Cette demande a été acceptée",
+                "rejectedFailed": "Échec du rejet de cette demande",
+                "rejectedSuccess": "Cette demande a été rejetée"
+            },
+            "pkiRequests": {
+                "modal": {
+                    "title": "Sélectionner un certificat",
+                    "info": "Un certificat est requis pour accepter la demande",
+                    "description": "Un certificat est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation."
+                }
+            },
+            "ssoRequests": {
+                "modal": {
+                    "title": "Vous devez être connecté pour accepter la demande",
+                    "description": "L'utilisateur a demandé à rejoindre l'organisation en utilisant SSO. Veuillez vous connecter ci-dessous pour accepter la demande.",
+                    "next": "Continuer"
+                }
+            },
+            "errors": {
+                "failToListRequests": "Échec de la récupération des demandes. Veuillez vous assurer que vous êtes en ligne.",
+                "noSsoConfigured": "SSO n'est pas configuré.",
+                "pkiNotAvailable": "PKI n'est pas disponible dans cette organisation.",
+                "unknownIdentitySystem": "Le système d'identité utilisé pour cette demande est inconnu.",
+                "problemWithRequestCertificate": "Il y a un problème avec le certificat de la demande.",
+                "unknownName": "Nom inconnu",
+                "unknownEmail": "Email inconnu",
+                "offline": "Vous êtes hors ligne. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
+                "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
+                "canNotAccept": "Impossible à accepter",
+                "errorDetail": "Détails de l'erreur :"
             }
         },
         "confirm": "Confirmer"
@@ -1705,7 +1947,6 @@
             "email": "Votre email",
             "description": "Description du problème",
             "joinFile": "Joindre un fichier",
-            "browse": "Parcourir",
             "cancel": "Annuler",
             "submit": "Envoyer le rapport"
         },
@@ -1717,7 +1958,14 @@
     },
     "LogDisplayModal": {
         "title": "Logs",
-        "noLog": "Aucun log disponible."
+        "noLog": "Aucun log disponible.",
+        "download": "Télécharger",
+        "copy": "Copier",
+        "close": "Fermer",
+        "copySuccess": "Copié!",
+        "copyFailed": "Échec",
+        "downloadSuccess": "Téléchargé!",
+        "downloadFailed": "Échec"
     },
     "ClaimDeviceModal": {
         "stepper": {
@@ -1736,13 +1984,12 @@
             "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée du processus d'accueil.",
             "getCode": "Sélectionnez le code que vous apercevez sur l'appareil principal.",
             "provideCode": "Sur l'appareil principal, veuillez sélectionner le code que vous voyez ci-dessous.",
-            "authentication": "Pour finir, choisissez une méthode d'authentification pour votre nouvel appareil.",
-            "done": "L'appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connecter à Parsec avec celui-ci."
+            "authentication": "Pour finir, choisissez une méthode d'authentification pour votre nouvel appareil."
         },
         "buttons": {
             "understand": "J'ai compris !",
             "confirm": "Confirmer",
-            "login": "Se connecter"
+            "login": "Se connecter à l'organisation"
         },
         "currentDevice": "Cet appareil",
         "newDevice": "Votre nouvel appareil",
@@ -1766,22 +2013,19 @@
             }
         }
     },
-    "Changelog": {
-        "features": "Fonctionnalités",
-        "fixes": "Corrections",
-        "misc": "Divers",
-        "title": "Journal des modifications"
-    },
     "MyProfilePage": {
+        "settings": {
+            "title": "Paramètres",
+            "description": "Accédez à l'ensemble des paramètres de langue, de thème et de confidentialité de l'application."
+        },
         "titleCurrentPassword": "Saisissez votre mot de passe",
         "titleCurrentOpenBao": "Connectez-vous à votre fournisseur de SSO",
+        "titleCurrentCertificate": "Connectez-vous avec votre PKI",
         "titleNewAuthentication": "Changer de méthode d'authentification",
-        "password": "Mot de passe",
-        "systemAuthentication": "Votre session est gérée avec l'authentification votre appareil.",
+        "titleTotp": "Code d'authentification multi-facteurs",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
-        "passwordPlaceholder": "••••••••••",
-        "changeAuthenticationButton": "Modifier",
+        "changeAuthenticationButton": "Confirmer le changement",
         "authenticationUpdated": "L'authentification a été mise à jour.",
         "tabs": {
             "account": {
@@ -1789,7 +2033,7 @@
                 "settings": "Paramètres",
                 "devices": "Mes appareils",
                 "authentication": "Authentification",
-                "recovery": "Fichiers de récupération"
+                "recovery": "Récupération d'accès"
             },
             "support": {
                 "title": "Support",
@@ -1801,42 +2045,133 @@
         "errors": {
             "wrongAuthentication": "Authentification invalide.",
             "cannotChangeAuthentication": "Impossible de changer l'authentification",
-            "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."
+            "keyringFailed": "Impossible d'accéder à l'authentification système.",
+            "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
+            "invalidTotpCode": "Le code d'authentification multi-facteurs est invalide.",
+            "totpOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet.",
+            "totpError": "Une erreur est survenu lors de la tentative de valider votre authentification multi-facteurs."
         }
     },
     "OrganizationRecovery": {
-        "title": "Fichiers de récupération d'organisation",
-        "recoveryFile": "Fichiers de récupération",
-        "recoveryKey": "Clé secrète",
-        "advice": "Nous vous conseillons de créer des fichiers de récupération pour chaque organisation.",
-        "adviceDone": "Vous avez déjà créé des fichiers de récupération.",
+        "title": "Récupération d'accès",
+        "description": "Activez des moyens de récupération en cas de perte de votre accès (mot de passe oublié, authentification perdue, etc.) depuis un appareil ou un navigateur.",
+        "file": {
+            "title": "Fichiers de récupération",
+            "description": "Un fichier de récupération et une clé secrète vous permettent, une fois assemblés, de retrouver l'accès à vos données.",
+            "info": "Il est nécessaire de sauvegarder ce fichier de récupération et cette clé secrète dans des emplacements sûrs, de préférence dans deux emplacements séparés, sachant que les deux sont nécessaires pour restaurer un accès perdu d'un appareil à une organisation.",
+            "downloaded": "Fichiers téléchargés",
+            "action": "Créer des fichiers de récupération"
+        },
+        "device": {
+            "title": "Appareils ou navigateurs de récupération",
+            "description": "Ajoutez des appareils ou des navigateurs (Chrome ou Firefox) secondaires comme accès alternatifs à cette organisation.",
+            "otherActiveDevices": "{count} autres appareils/navigateurs actifs",
+            "action": "Ajouter un appareil"
+        },
+        "shamir": {
+            "title": "Personnes de confiance",
+            "description": "Désignez au moins {count} personnes de confiance. En cas de perte d'accès, elles pourront ensemble rétablir l'accès à votre compte.",
+            "action": "Définir mes personnes de confiance",
+            "actionSecondary": "Aider à récupérer un accès",
+            "modalSelf": {
+                "title": "Mon cercle de confiance",
+                "subtitle": "Gérez votre cercle de confiance pour la récupération d'accès",
+                "setupInfo": {
+                    "title": "Désignez des personnes de confiance",
+                    "subtitle": "Si vous perdez votre mot de passe ou votre appareil, {threshold} de ces personnes pourront ensemble vous redonner accès à votre compte.",
+                    "info1Title": "Choisissez au moins {threshold} collègues",
+                    "info1Subtitle": "Parmi les membres de votre organisation - des personnes que vous pouvez contacter facilement",
+                    "info2Title": "Ils sont notifiés et informés de leur rôle",
+                    "info2Subtitle": "Ils sauront qu'ils peuvent vous aider à récupérer votre accès si besoin",
+                    "startSetup": "Choisir mes personnes de confiance"
+                },
+                "threshold": {
+                    "title": "Personnes de confiance",
+                    "minUsers": "{count} / {threshold} minimum",
+                    "selected": "{count} sélectionnées",
+                    "subtitle": "Ces personnes pourront participer à la récupération de votre accès."
+                },
+                "trustedPeople": {
+                    "input": "Rechercher par nom ou email",
+                    "noPeopleAddedTitle": "Recherchez des personnes en qui vous avez confiance pour créer votre cercle.",
+                    "noPeopleAddedSubtitle": "Vous pouvez ajouter des personnes en recherchant leur nom ou leur email.",
+                    "checkbox": "Je confirme mon choix de personnes de confiance en cas de récupération d'accès",
+                    "confirmSetup": "Créer mon cercle de confiance"
+                },
+                "deleteModal": {
+                    "title": "Supprimer mon cercle de confiance",
+                    "message": "Votre cercle actuel sera supprimé. Vous pourrez ensuite en créer un nouveau avec d'autres personnes.",
+                    "yes": "Supprimer mon cercle",
+                    "no": "Conserver"
+                },
+                "setupDone": "Votre cercle de confiance est configuré",
+                "revoked": "Révoqué",
+                "warningRevokedRecipients": "Attention : certaines de vos personnes de confiance sont révoquées.",
+                "errorRecipientsAllRevoked": "Le cercle de confiance contient uniquement des personnes révoquées. Veuillez le supprimer et en créer un nouveau.",
+                "numberPeople": "{count} personnes de confiance",
+                "necessaryPeople": "{threshold} personnes sont nécessaires pour récupérer votre accès.",
+                "close": "Fermer",
+                "delete": "Supprimer mon cercle de confiance",
+                "toasts": {
+                    "setupSuccess": "Votre cercle de confiance a été créé.",
+                    "setupFailed": "Impossible de configurer votre cercle de confiance. Veuillez réessayer."
+                },
+                "errors": {
+                    "setupFailed": "Impossible de configurer votre cercle de confiance. Veuillez réessayer."
+                }
+            },
+            "modalOthers": {
+                "title": "Aider à récupérer un accès",
+                "subtitle": "Aidez quelqu'un à récupérer son accès en faisant partie de son cercle de confiance.",
+                "info": "Si l'un d'eux vous contacte, copiez son lien et envoyez-le lui - il pourra ensuite déclencher l'échange de code.",
+                "noPeopleTitle": "Vous n'appartenez à aucun cercle de confiance",
+                "noPeopleSubtitle": "Les personnes qui vous ajoutent à leur cercle de confiance apparaîtront ici. Vous pourrez alors les aider à récupérer leur accès s'ils le perdent.",
+                "copyLink": "Copier le lien",
+                "startRecovery": "Commencer la récupération",
+                "toasts": {
+                    "linkCopied": "Lien de récupération copié dans le presse-papiers.",
+                    "linkNotCopied": "Impossible de copier le lien de récupération dans le presse-papiers."
+                }
+            },
+            "errors": {
+                "generic": "Une erreur est survenue. Veuillez réessayer plus tard.",
+                "failedToGetLink": "Impossible d'obtenir le lien de récupération.",
+                "notEnoughPeople": "Votre organisation ne contient pas assez d'utilisateurs. La mise en place du cercle de confiance requiert au moins {needed} personnes avec un profil différent d'Externe.",
+                "notEnoughAdmins": "Votre organisation ne contient pas assez d'administrateurs. La mise en place du cercle de confiance requiert au moins {needed} administrateurs."
+            }
+        },
+        "state": {
+            "active": "Actif",
+            "inactive": "Inactif"
+        },
+        "modal": {
+            "title": "Fichiers de récupération",
+            "confirmation": "Je confirme avoir sauvegardé ma clé secrète et téléchargé mon fichier de récupération."
+        },
         "done": {
-            "subtitle": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "subtitle2": "Sans fichiers de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
-            "subtitle3": "Ils comportent un fichier de récupération et une clé de récupération. Il est nécessaire de les sauvegarder dans des emplacements sûrs, de préférence dans deux emplacements séparés, sachant que les deux sont nécessaires pour restaurer un accès perdu d'un appareil à une organisation.",
-            "button": "Créer un fichier de récupération",
             "recreateQuestionTitle": "Nouveaux fichiers de récupération",
             "recreateQuestionMessage": "Vous avez déjà créé des fichiers de récupération dans le passé. Souhaitez-vous en créer de nouveaux ?",
             "recreateYes": "Créer de nouveaux fichiers",
             "recreateNo": "Annuler"
-        },
-        "notDone": {
-            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
-            "button": "Créer des fichiers de récupération"
         }
     },
     "validators": {
         "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
         "organizationName": {
-            "tooLong": "Le nom est trop long, la limite est de 32 symboles.",
-            "forbiddenCharacters": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles."
+            "tooLong": "Le nom est trop long, la limite est de 32 caractères.",
+            "forbiddenCharacters": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 caractères."
         },
         "workspaceName": {
-            "tooLong": "Le nom de l'espace est trop long, la limite est de {limit} symboles."
+            "tooLong": "Le nom de l'espace est trop long, la limite est de {limit} caractères."
         },
         "fileName": {
-            "tooLong": "Le nom du fichier est trop long, la limite est de {limit} symboles."
+            "fileTooLong": "Le nom du fichier est trop long, la limite est de {limit} caractères.",
+            "folderTooLong": "Le nom du dossier est trop long, la limite est de {limit} caractères.",
+            "fileAlreadyExists": "Un fichier du même nom existe déjà.",
+            "folderAlreadyExists": "Un dossier du même nom existe déjà.",
+            "isConfined": "Ce nom est réservé.",
+            "unauthorizedExtension": "L'extension de fichier n'est pas autorisée. L'extension doit être '{allowedExtensions}'. | L'extension de fichier n'est pas autorisée. L'extension doit être parmi '{allowedExtensions}'.",
+            "missingExtension": "L'extension de fichier n'est pas présente. L'extension doit être '{allowedExtensions}'. | L'extension de fichier n'est pas présente. L'extension doit être parmi '{allowedExtensions}'."
         },
         "claimLink": {
             "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
@@ -1871,22 +2206,13 @@
         },
         "userInfo": {
             "name": "Le nom contient des caractères invalides.",
+            "nameTooLong": "Le nom est trop long, la limite est de {limit} caractères.",
             "email": "Le format de l'adresse email est invalide."
         }
     },
     "OrganizationSwitch": {
         "loggedInOrgs": "Organisations connectées",
-        "myOrgs": "Mes organisations",
-        "invite": "Inviter un membre",
-        "manage": "Gérer",
         "goToLogin": "Changer d'organisation"
-    },
-    "lib": {
-        "components": {
-            "msChoosePasswordInput": {
-                "description": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail."
-            }
-        }
     },
     "UserSelect": {
         "defaultLabel": "Chercher un utilisateur",
@@ -1898,14 +2224,12 @@
         "title": "Mon compte Parsec",
         "logIn": "Se connecter",
         "forgotPassword": "Mot de passe oublié ?",
-        "noAccount": "Pas de compte Parsec ?",
         "createAccount": {
             "title": {
                 "default": "Créer un compte",
                 "codeTitle": "Validez votre email",
                 "authenticationTitle": "Choisissez votre méthode d'authentification",
-                "creatingTitle": "Création de votre compte",
-                "createdTitle": "Compte créé !"
+                "creatingTitle": "Création de votre compte"
             },
             "subtitle": {
                 "default": "Saisissez vos coordonnées pour commencer votre inscription.",
@@ -1915,7 +2239,6 @@
             "description": "Pas encore de compte Parsec ?",
             "createAccountButton": "Créer un compte",
             "alreadyHaveAnAccount": "Vous avez déjà un compte ?",
-            "loginButton": "Se connecter",
             "nextButton": "Suivant",
             "sendCode": "Envoyer un code de validation",
             "resendCode": "Renvoyer un code",
@@ -1930,7 +2253,8 @@
                 "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet.",
                 "offlineOrIncorrectServer": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet ou que l'adresse du serveur est correcte.",
                 "invalidEmail": "Cet email ne semble pas valide.",
-                "generic": "Une erreur inconnue est survenue."
+                "generic": "Une erreur inconnue est survenue.",
+                "missingFields": "Des champs sont manquants."
             }
         },
         "inputFields": {
@@ -1940,22 +2264,19 @@
             "firstname": "Prénom",
             "lastname": "Nom de famille",
             "email": "Adresse email",
-            "password": "Mot de passe",
-            "confirmPassword": "Confirmer le mot de passe"
+            "password": "Mot de passe"
         },
         "recoverAccount": {
             "step1": {
                 "title": "Récupérer votre compte",
-                "description": "Veuillez renseigner l'adresse email liée à votre compte pour continuer.",
-                "nextButton": "Envoyer un code de validation"
+                "description": "Veuillez renseigner l'adresse email liée à votre compte pour continuer."
             },
             "step2": {
                 "title": "Vérification de votre email",
                 "description": "Un code de vérification a été envoyé à votre adresse électronique. Veuillez le saisir pour mettre à jour votre mot de passe.",
                 "resendCode": "Renvoyer un code",
                 "nextButton": "Valider",
-                "update": "Modifier",
-                "info": "Si vous ne recevez pas le code, veuillez vérifier votre dossier de spam ou de courrier indésirable."
+                "update": "Modifier"
             },
             "step3": {
                 "title": "Choisissez votre nouveau mot de passe",
@@ -1981,7 +2302,6 @@
             "title": "Espace client",
             "button": "Accéder"
         },
-        "logOut": "Se déconnecter",
         "skip": "Passer cette étape",
         "storeAccountTitle": "Stocker dans Parsec Account",
         "storeAccountQuestion": "Cet appareil n'est pas stocké dans Parsec Account. Voulez-vous le stocker pour qu'il soit disponible partout ?",
@@ -1997,21 +2317,16 @@
             "password": "Mot de passe",
             "forgottenPassword": "Mot de passe oublié ?",
             "login": "Se connecter",
-            "backButton": "Retour",
             "saveLogin": "Se souvenir de moi",
             "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
             "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
-            "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
-            "noAccount": "Vous n'avez pas encore d'espace client ?",
             "createAccount": "Créer un compte"
         },
         "forgotPassword": {
             "getEmailStep": {
                 "title": "Mot de passe oublié",
                 "description": "Pas d'inquiétude, nous allons vous aider à réinitialiser votre mot de passe.",
-                "email": "Adresse mail",
                 "nextButton": "Soumettre",
-                "previousButton": "Retour à la connexion",
                 "error": "Impossible de réinitialiser votre mot de passe. Veuillez vérifier votre email."
             },
             "emailSentStep": {
@@ -2028,7 +2343,6 @@
             "logoutConfirmQuestion": "Souhaitez-vous vous déconnecter?",
             "logoutYes": "Me déconnecter",
             "logoutNo": "Rester connecté",
-            "createNewOrganization": "Créer une nouvelle organisation",
             "createFirstOrganization": "Créer mon organisation",
             "allOrganization": "Toutes les organisations",
             "noOrganization": "Aucune organisation",
@@ -2067,9 +2381,7 @@
                 "personalData": "Mon profil",
                 "statistics": "Statistiques",
                 "customOrderBillingDetails": "Coordonnées de facturation",
-                "customOrderInvoices": "Factures",
                 "customOrderStatistics": "Statistiques",
-                "customOrderProcessing": "Suivi de commande",
                 "orders": "Commandes"
             },
             "settings": "Paramètres",
@@ -2081,7 +2393,7 @@
                 "firstname": "Prénom",
                 "lastname": "Nom",
                 "phone": "Téléphone",
-                "notDefined": "Non défini"
+                "notDefined": "Non renseigné"
             },
             "professionalInfo": {
                 "title": "Informations professionnelles",
@@ -2131,7 +2443,6 @@
                     "newEmail": "Nouvel email",
                     "password": "Mot de passe",
                     "resend": "Vous n'avez pas reçu de code ?",
-                    "confirmPassword": "Confirmation de mot de passe",
                     "errors": {
                         "wrongPassword": "Le mot de passe est incorrect.",
                         "invalidCode": "Le code est incorrect.",
@@ -2139,7 +2450,6 @@
                         "emailAlreadyUsed": "Cet email est déjà utilisé.",
                         "resendFailed": "Impossible d'envoyer un autre email."
                     },
-                    "noEmptyFields": "Aucun champ ne doit être vide.",
                     "newEmailMustBeDifferent": "Le nouvel email doit être différent de l'actuel.",
                     "success": "L'adresse email a bien été mise à jour.",
                     "continue": "Continuer",
@@ -2163,12 +2473,8 @@
                 }
             }
         },
-        "billingDetails": {
-            "retrieveFailed": "Impossible de récupérer les informations de paiement."
-        },
         "statistics": {
             "titles": {
-                "stats": "Statistiques",
                 "users": "Utilisateurs",
                 "active": "actifs",
                 "revoked": "révoqués",
@@ -2192,8 +2498,7 @@
             "used": "utilisé",
             "additionalCost": "(Coût supplémentaire par tranche de 100 Go)",
             "almostFullUsed": "Vous avez presque atteint votre limite de stockage.",
-            "fullUsed": "Vous avez consommé toute la quantité de stockage prévue dans votre contrat.",
-            "overUsed": "Vous avez dépassé la quantité de stockage prévue dans votre contrat, veuillez réajuster."
+            "fullUsed": "Vous avez consommé toute la quantité de stockage prévue dans votre contrat."
         },
         "invoices": {
             "title": "Aperçu de vos factures",
@@ -2208,8 +2513,7 @@
                 "organization": "Organisation",
                 "date": "Date de facturation",
                 "price": {
-                    "title": "Montant",
-                    "amount": "{count} €"
+                    "title": "Montant"
                 },
                 "contractPeriod": {
                     "title": "Période du contrat",
@@ -2229,14 +2533,6 @@
         },
         "invoicesCustomOrder": {
             "contract": "Contrat n°{number}",
-            "contractStatus": {
-                "unknown": "Inconnu",
-                "contractEnded": "Contrat terminé",
-                "estimateLinked": "Devis lié",
-                "invoicePaid": "Actif",
-                "invoiceToBePaid": "Facture à payer",
-                "nothingLinked": "En cours de traitement"
-            },
             "number": "Numéro de facture",
             "information": "Informations",
             "startingDate": "Date de début",
@@ -2313,13 +2609,12 @@
             "summary": {
                 "estimatedAmount": "Montant estimé",
                 "withdrawal": "Prélèvement le {date} | Prélèvement aujourd'hui",
-                "withdrawalDescriptionDescription": "Montant estimé selon le nombre d'utilisateurs actifs et le stockage utilisé.",
+                "withdrawalDescription": "Montant estimé selon le nombre d'utilisateurs actifs et le stockage utilisé.",
                 "users": "Utilisateurs actifs",
                 "storage": "Stockage utilisé"
             },
             "invoices": {
                 "title": "Dernières factures",
-                "noBill": "Aucune facture à afficher.",
                 "date": "Date",
                 "organization": "Organisation",
                 "price": {
@@ -2401,17 +2696,9 @@
         },
         "contracts": {
             "loading": "Votre contrat arrive...",
-            "title": "Contrat n°{number}",
             "previewOrganization": "Utilisation de votre organisation",
-            "noContract": "Vous n'avez pas encore de contrat.",
-            "duration": "Durée",
-            "from": "Depuis",
-            "to": "Jusqu'au",
-            "amount": "Montant",
             "multipleOrganizations": "Vous possédez plusieurs organisations. Veuillez en choisir une en utilisant le bouton dans le coin supérieur gauche ou sélectionnez-là ci-dessous pour voir le contrat.",
-            "selectAnOrganization": "Veuillez sélectionner une organisation",
             "errors": {
-                "noOrganizations": "Impossible de lister vos organisations",
                 "noInfo": "Impossible de récupérer les informations",
                 "unavailable": "Non disponible"
             },
@@ -2420,28 +2707,14 @@
                 "admin": "Administrateur | Administrateurs",
                 "external": "Externe | Externes",
                 "remaining": "{number} restant | {number} restants",
-                "fullAccess": "Tous les accès",
-                "allFeaturesAccess": "Accès à toutes les fonctionnalités",
-                "rightLimited": "Droits limités",
                 "onTotal": "/ {count} membres",
                 "errorExceed": "Vous dépassez le nombre de membres prévu dans votre contrat. Pensez à supprimer des membres."
             },
             "storage": {
                 "title": "Stockage",
-                "stack": "par tranche de 100 Go",
                 "used": "{percentage}% utilisés",
                 "onTotal": "/ {count}",
                 "errorExceed": "Vous dépassez le stockage prévu dans votre contract. Pensez à supprimer des fichiers."
-            },
-            "invoice": {
-                "title": "Facture",
-                "noInvoice": "Vous n'avez pas encore de facture.",
-                "paymentMethod": "Méthode de paiement",
-                "transfer": "Virement bancaire",
-                "date": "Date : ",
-                "payment": "Paiement : ",
-                "price": "{count} €",
-                "download": "Télécharger"
             }
         },
         "orders": {
@@ -2489,18 +2762,7 @@
                 "serverFailure": "Un problème est survenu (requête serveur refusée)."
             },
             "progress": {
-                "orderNumber": "Commande n°{number}",
-                "noOrder": "Vous n'avez pas de commande en cours."
-            },
-            "passed": {
-                "title": "Commande terminée",
-                "header": {
-                    "orderNumber": "Numéro de commande",
-                    "period": "Période",
-                    "users": "Nombre d'utilisateurs",
-                    "storage": "Volume de données",
-                    "status": "Statut"
-                }
+                "orderNumber": "Commande n°{number}"
             },
             "quantityOrdered": {
                 "administrator": "{count} administrateur | {count} administrateurs",
@@ -2511,10 +2773,7 @@
                 "title": "À régler par virement",
                 "description": "La facture est à payer par virement bancaire.",
                 "price": "{amount} €",
-                "paid": "Montant payé",
-                "waiting": "En attente",
-                "download": "Télécharger",
-                "extend": "Prolonger le contrat"
+                "paid": "Montant payé"
             }
         }
     },
@@ -2531,7 +2790,8 @@
         "error": "Impossible de récupérer l'historique de l'espace de travail pour la date sélectionnée",
         "loading": "Chargement...",
         "workspace": "Espace de travail :",
-        "date": "Date de prévisualisation :"
+        "archived": "(Archivé)",
+        "deleted": "(Supprimé)"
     },
     "fileViewers": {
         "openWithDefault": "Ouvrir avec l'app par défaut",
@@ -2541,20 +2801,13 @@
         "download": "Télécharger",
         "hideMenu": "Cacher le menu",
         "showMenu": "Afficher le menu",
-        "menu": "Menu",
-        "openingFile": "Ouverture du fichier...",
         "errors": {
             "titles": {
-                "fileTooBig": "Fichier trop volumineux",
-                "impossibleToOpen": "Impossible d'éditer ce fichier",
                 "genericError": "Impossible d'ouvrir ce fichier",
                 "unsupportedFileType": "Type de fichier non pris en charge par Parsec",
                 "editionNotAvailable": "L'édition de documents n'est pas disponible"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
-            "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
-            "unknownFileExtension": "L'extension de ce fichier n'a pas pu être reconnue. Veuillez vérifier qu'elle est correctement écrite (.txt, .pdf, .doc, etc.).",
-            "noContentFileType": "Impossible d'ouvrir ce fichier, son type n'ayant pas pu être reconnu dans l'éditeur de Parsec.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
             "mediaNotSupported": "Ce média ne peut pas être joué.",
             "statsFailed": "Impossible de récupérer les informations du fichier."
@@ -2563,7 +2816,8 @@
         "openLink": {
             "title": "Ouvrir un lien externe",
             "question": "Ce lien sera ouvert en dehors de l'application. Voulez-vous continuer ?",
-            "yes": "Ouvrir le lien"
+            "yes": "Ouvrir le lien",
+            "invalid": "Ce lien n'est pas valide."
         },
         "controls": {
             "zoom": {
@@ -2572,25 +2826,20 @@
                 "reset": "Réinitialiser le zoom"
             },
             "pagination": {
-                "page": "Page"
+                "page": "Page",
+                "suffix": "/ {totalPages}"
             }
-        },
-        "spreadsheet": {
-            "loadSheetError": "Impossible de charger cette feuille.",
-            "loadDocumentError": "Impossible de charger ce document.",
-            "loadingDocument": "Chargement du document...",
-            "loadingSheet": "Chargement de la feuille `{page}`"
         },
         "pdf": {
             "loadDocumentError": "Impossible de charger ce document.",
             "loadPageError": "Impossible de charger cette page."
         },
-        "document": {
-            "loadDocumentError": "Impossible de charger ce document."
+        "image": {
+            "loadImageError": "Impossible d'afficher l'image."
         },
         "text": {
             "loadDocumentError": "Impossible de charger ce document.",
-            "loadingDocument": "Chargement du document..."
+            "imagePlaceholder": "Les images ne peuvent pas être chargées."
         },
         "players": {
             "playback": {
@@ -2614,17 +2863,11 @@
             "titles": {
                 "networkOffline": "Connexion réseau perdue",
                 "tooLongToOpen": "Le fichier semble mettre trop de temps à s'ouvrir",
-                "frameLoadFailed": "Impossible de charger l'éditeur. Veuillez vérifier votre connexion.",
-                "openFailed": "Impossible d'ouvrir ce fichier."
+                "frameLoadFailed": "Impossible de charger l'éditeur. Veuillez vérifier votre connexion."
             },
             "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
             "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",
-            "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut').",
-            "contentInfoMissing": "Les informations sur le contenu du fichier sont vides ou manquantes.",
-            "fileExtensionMissing": "Le type de fichier (extension) est manquant ou vide.",
-            "fileNameMissing": "Le nom du fichier est vide ou manquant.",
-            "fileIdMissing": "L'identifiant du fichier est vide ou manquant.",
-            "fileDataMissing": "Les données du fichier sont vides ou manquantes."
+            "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut')."
         },
         "advices": {
             "title": "Quelques conseils pour résoudre ce problème",
@@ -2633,11 +2876,30 @@
         },
         "actions": {
             "backToFiles": "Retour aux fichiers",
-            "retry": "Recharger la page",
-            "openWithDefaultApp": "Ouvrir avec l'app par défaut",
-            "downloadFile": "Télécharger le fichier",
             "wait": "Attendre",
             "close": "Fermer"
+        },
+        "insertImage": {
+            "title": "Insérer une image",
+            "emptyFolder": "Aucune image dans ce dossier",
+            "insert": "Insérer cette image",
+            "tabs": {
+                "label": "Source de l'image",
+                "fromPC": "Depuis mon ordinateur",
+                "fromWorkspace": "Depuis l'espace de travail"
+            },
+            "dropZone": {
+                "title": "Glissez-déposez votre image ici",
+                "or": "ou",
+                "browse": "parcourez vos fichiers"
+            },
+            "changeImage": "Remplacer",
+            "selectedImage": "Image sélectionnée",
+            "errors": {
+                "loadContent": "Impossible de lire le contenu de l'image.",
+                "notAnImage": "Ce fichier n'est pas une image prise en charge.",
+                "tooManyFiles": "Veuillez déposer une seule image."
+            }
         },
         "saving": {
             "unsaved": "Modifications non sauvegardées",
@@ -2649,29 +2911,20 @@
             "tooltipUnsaved": "Les modifications ne sont pas encore sauvegardées.",
             "tooltipError": "Les modifications n'ont pas été sauvegardées.",
             "tooltipOffline": "Vous êtes hors-ligne, les changements ne peuvent pas être sauvegardés.",
-            "readOnly": "Document en lecture seule",
+            "readOnly": "Lecture seule",
             "notSavedTitle": "Abandonner les modifications ?",
             "notSavedQuestion": "Certaines modifications n'ont pas encore été enregistrées. Voulez-vous abandonner les modifications ?",
             "notSavedDiscard": "Abandonner les modifications",
             "notSavedStay": "Rester sur la page"
         }
     },
-    "openFallback": {
-        "title": "Parsec Edition n'est pas disponible",
-        "subtitle": {
-            "download": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
-            "previewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil."
-        },
-        "actions": {
-            "viewer": "Prévisualiser",
-            "download": "Télécharger",
-            "open": "Afficher dans l'explorateur",
-            "cancel": "Annuler"
-        }
-    },
-    "proConnect": {
-        "title": "S'identifier avec ProConnect",
-        "description": "Qu'est-ce que ProConnect ?",
-        "link": "https://www.proconnect.gouv.fr/"
+    "export": {
+        "exportWorkspace": "Télécharger l'export (.json)",
+        "exportUsers": "Exporter les données (.json)",
+        "exporting": "En cours d'export...",
+        "exportWorkspaceFailed": "Impossible d'exporter les données de cet espace de travail.",
+        "exportUsersFailed": "Impossible d'exporter les données utilisateur.",
+        "exportWorkspaceDescription": "Téléchargez les informations et les membres de cet espace de travail, avec leurs rôles, dans un fichier JSON. Les fichiers et dossiers ne sont pas inclus.",
+        "exportWorkspaceTitle": "Exporter les données"
     }
 }

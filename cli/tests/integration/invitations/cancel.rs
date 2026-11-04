@@ -1,17 +1,21 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use libparsec::{
-    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
+    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
 };
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn cancel_invitation(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn cancel_invitation(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -45,7 +49,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
         "cancel",
         "--device",
         &alice.device_id.hex(),
-        &token.hex().to_string()
+        &token.hex()
     )
-    .stdout(predicates::str::contains("Invitation canceled"));
+    .stderr(predicates::str::contains("Invitation canceled"));
 }

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -22,41 +22,45 @@ export default defineConfig({
   forbidOnly: IN_CI,
   /* Retry on CI only */
   retries: IN_CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: IN_CI ? '80%' : '50%',
+  /* Opt out of parallel tests on CI. Keep 1 worker when running locally, easier to debug */
+  workers: IN_CI ? '80%' : 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: IN_CI ? 'blob' : 'list',
   webServer: {
     command: 'npm run dev -- --port 8080',
-    url: 'https://localhost:8080',
+    url: 'http://localhost:8080',
     ignoreHTTPSErrors: true,
     reuseExistingServer: true,
   },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'https://localhost:8080',
+    baseURL: 'http://localhost:8080',
 
     /* Ignore HTTPS errors for self-signed certificates */
     ignoreHTTPSErrors: true,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: IN_CI ? 'on-first-retry' : 'retain-on-failure',
   },
   /* Leaving the empty array to make it easier to ignore tests */
   testIgnore: [],
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'Google Chrome',
+      name: 'Chromium',
       use: {
         ...devices['Desktop Chrome'],
-        // We use chrome over chromium because we need some media codec during e2e test for the file viewer feature.
-        channel: 'chrome',
         // Allow mixed content for testbed communication in CI
         ...(IN_CI && {
           launchOptions: {
-            args: ['--disable-web-security', '--allow-running-insecure-content'],
+            args: [
+              '--ignore-certificate-errors',
+              '--disable-web-security',
+              '--allow-running-insecure-content',
+              '--disable-features=BlockInsecurePrivateNetworkRequests',
+              `--unsafely-treat-insecure-origin-as-secure=http://parsec-testbed-server:6777`,
+            ],
           },
         }),
       },

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{
     path::{Path, PathBuf},
@@ -8,8 +8,8 @@ use std::{
 pub use libparsec_client::{MountpointMountStrategy, ProxyConfig, WorkspaceStorageCacheSize};
 use libparsec_client_connection::{AnonymousServerCmds, ConnectionError};
 pub use libparsec_platform_device_loader::{
-    get_default_config_dir, get_default_data_base_dir, get_default_mountpoint_base_dir,
-    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
+    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, get_default_config_dir,
+    get_default_data_base_dir, get_default_mountpoint_base_dir,
 };
 use libparsec_types::prelude::*;
 
@@ -89,9 +89,12 @@ pub use libparsec_client_connection::protocol::anonymous_server_cmds::latest::se
     AccountConfig, OpenBaoSecretConfig, OrganizationBootstrapConfig,
 };
 
-pub enum OpenBaoAuthConfig {
-    OIDCHexagone { mount_path: String },
-    OIDCProConnect { mount_path: String },
+pub struct OpenBaoAuthConfig {
+    pub id: String,
+    pub mount_path: String,
+    pub name: String,
+    pub help_link: Option<String>,
+    pub icon: Option<String>,
 }
 
 pub struct OpenBaoConfig {
@@ -100,11 +103,16 @@ pub struct OpenBaoConfig {
     pub transit_mount_path: String,
     pub auths: Vec<OpenBaoAuthConfig>,
 }
-
+pub struct CryptPadConfig {
+    pub server_url: String,
+}
 pub struct ServerConfig {
     pub account: AccountConfig,
     pub organization_bootstrap: OrganizationBootstrapConfig,
     pub openbao: Option<OpenBaoConfig>,
+    pub cryptpad: Option<CryptPadConfig>,
+    pub advisory_device_file_protection: Vec<AdvisoryDeviceFileProtection>,
+    pub server_version: Option<String>,
 }
 
 pub async fn get_server_config(
@@ -117,14 +125,34 @@ pub async fn get_server_config(
         Rep, Req,
     };
 
-    match cmds.send(Req).await? {
+    let (rep, server_version) = cmds.send_verbose(Req).await?;
+
+    match  rep{
         Rep::Ok {
             account,
             organization_bootstrap,
             openbao,
+            cryptpad,
+            advisory_device_file_protection,
         } => Ok(ServerConfig {
             account,
             organization_bootstrap,
+            // This field has been introduced in Parsec 3.9
+            cryptpad: match cryptpad {
+                Maybe::Absent => None,
+                Maybe::Present(cryptpad) => match cryptpad {
+                   libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Disabled => None,
+                   libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Enabled { server_url } => Some(CryptPadConfig{ server_url }),
+                }
+            },
+            // This field has been introduced in Parsec 3.9
+            advisory_device_file_protection: match advisory_device_file_protection {
+                Maybe::Absent => vec![],
+                Maybe::Present(advisory_device_file_protection) => advisory_device_file_protection.into_iter().filter_map(|raw| {
+                    // Just skip unrecognized items for forward-compatibility
+                    raw.parse().ok()
+                }).collect(),
+            },
             openbao: match openbao {
                 libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Disabled => None,
                 libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Enabled {
@@ -135,21 +163,38 @@ pub async fn get_server_config(
                         secret,
                         // This field has been introduced in Parsec 3.8, for older server version
                         // we just assume the mount path is `transit`.
-                        transit_mount_path: transit_mount_path.unwrap_or("transit".to_string()),
+                        transit_mount_path: match transit_mount_path {
+                            Maybe::Absent => "transit".to_string(),
+                            Maybe::Present(transit_mount_path) => transit_mount_path
+                        },
                         auths: auths
                             .into_iter()
-                            .filter_map(|auth| match OpenBaoAuthType::try_from(auth.id.as_ref()) {
-                                Ok(OpenBaoAuthType::Hexagone) => Some(OpenBaoAuthConfig::OIDCHexagone { mount_path: auth.mount_path }),
-                                Ok(OpenBaoAuthType::ProConnect) => Some(OpenBaoAuthConfig::OIDCProConnect { mount_path: auth.mount_path }),
-                                // Unknown kind of auth, just ignore it
-                                Err(_) => {
-                                    log::warn!("Server config has returned an unknown type OpenBaoAuthConfig: {:?}", auth);
-                                    None
-                                },
+                            .filter_map(|auth| {
+                                if auth.id.is_empty() || auth.mount_path.is_empty() {
+                                    log::warn!("Server config has returned an invalid OpenBaoAuthConfig: {:?}", auth);
+                                    return None;
+                                }
+                                let name = match auth.name {
+                                    Maybe::Present(name) if !name.is_empty() => name,
+                                    // Fallback for older servers
+                                    _ => match auth.id.as_str() {
+                                        "PRO_CONNECT" => String::from("ProConnect"),
+                                        "HEXAGONE" => String::from("Hexagone"),
+                                        _ => auth.id.clone(),
+                                    },
+                                };
+                                Some(OpenBaoAuthConfig {
+                                    id: auth.id,
+                                    mount_path: auth.mount_path,
+                                    name,
+                                    help_link: auth.help_link.unwrap_or(None),
+                                    icon: auth.icon.unwrap_or(None),
+                                })
                         }).collect()
                     }
                 ),
             },
+            server_version
         }),
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())

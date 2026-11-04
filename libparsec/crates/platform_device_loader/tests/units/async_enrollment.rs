@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
+    AvailablePendingAsyncEnrollment, AvailablePendingAsyncEnrollmentIdentitySystem,
+    RemovePendingAsyncEnrollmentError, SaveAsyncEnrollmentLocalPendingError,
     list_pending_async_enrollments, load_pending_async_enrollment, remove_pending_async_enrollment,
-    save_pending_async_enrollment, AvailablePendingAsyncEnrollment,
-    AvailablePendingAsyncEnrollmentIdentitySystem, RemovePendingAsyncEnrollmentError,
-    SaveAsyncEnrollmentLocalPendingError,
+    save_pending_async_enrollment,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_tests_lite::{p_assert_eq, p_assert_matches};
@@ -82,7 +82,6 @@ async fn save_list_load(tmp_path: TmpPath) {
         tmp_path.clone(), // The target file is already a folder !
     )
     .await;
-    // TODO #11955
     p_assert_matches!(
         output,
         Err(SaveAsyncEnrollmentLocalPendingError::InvalidPath)
@@ -119,8 +118,10 @@ async fn save_list_load(tmp_path: TmpPath) {
         [AvailablePendingAsyncEnrollment {
             file_path: file_path.clone(),
             submitted_on: cleartext_content.submitted_on,
-            server_addr: cleartext_content.server_url,
-            organization_id: cleartext_content.organization_id,
+            addr: ParsecAsyncEnrollmentAddr::new(
+                cleartext_content.server_url,
+                cleartext_content.organization_id
+            ),
             enrollment_id,
             requested_device_label: cleartext_content.requested_device_label,
             requested_human_handle: cleartext_content.requested_human_handle,
@@ -223,8 +224,10 @@ async fn testbed(env: &TestbedEnv) {
         [AvailablePendingAsyncEnrollment {
             file_path: file_path.clone(),
             submitted_on: cleartext_content.submitted_on,
-            server_addr: cleartext_content.server_url,
-            organization_id: cleartext_content.organization_id,
+            addr: ParsecAsyncEnrollmentAddr::new(
+                cleartext_content.server_url,
+                cleartext_content.organization_id
+            ),
             enrollment_id,
             requested_device_label: cleartext_content.requested_device_label,
             requested_human_handle: cleartext_content.requested_human_handle,

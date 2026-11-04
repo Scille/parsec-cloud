@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import {
   EntryID,
@@ -10,6 +10,46 @@ import {
 } from '@/parsec';
 import { FileOperationDataType } from '@/services/fileOperation';
 import { Translatable } from 'megashark-lib';
+
+export interface DocumentFilters {
+  Folders: boolean;
+  Documents: boolean;
+  Spreadsheets: boolean;
+  Presentations: boolean;
+  PdfDocuments: boolean;
+  Texts: boolean;
+  Images: boolean;
+  Videos: boolean;
+  Audios: boolean;
+}
+
+export const DocumentFiltersIncludeAll = (): DocumentFilters => {
+  return structuredClone({
+    Folders: true,
+    Documents: true,
+    Spreadsheets: true,
+    Presentations: true,
+    PdfDocuments: true,
+    Texts: true,
+    Images: true,
+    Videos: true,
+    Audios: true,
+  });
+};
+
+export const DocumentFiltersIncludeNone = (): DocumentFilters => {
+  return structuredClone({
+    Folders: false,
+    Documents: false,
+    Spreadsheets: false,
+    Presentations: false,
+    PdfDocuments: false,
+    Texts: false,
+    Images: false,
+    Videos: false,
+    Audios: false,
+  });
+};
 
 export enum SortProperty {
   Name,
@@ -50,11 +90,13 @@ export enum EntrySyncStatus {
 export interface FileModel extends EntryStatFile {
   isSelected: boolean;
   syncStatus?: EntrySyncStatus;
+  syncProgress?: number;
 }
 
 export interface FolderModel extends EntryStatFolder {
   isSelected: boolean;
   syncStatus?: EntrySyncStatus;
+  syncProgress?: number;
 }
 
 export type EntryModel = FileModel | FolderModel;
@@ -92,6 +134,10 @@ export class EntryCollection<Model extends EntryModel> {
     return this.entries.filter((entry) => entry.isSelected).length;
   }
 
+  hasAllSelected(): boolean {
+    return this.selectedCount() === this.entries.length;
+  }
+
   sort(property: SortProperty, ascending: boolean): void {
     this.entries.sort((item1, item2) => {
       if (item1.isFile() !== item2.isFile()) {
@@ -99,11 +145,11 @@ export class EntryCollection<Model extends EntryModel> {
       }
 
       if (property === SortProperty.Name) {
-        return ascending ? item2.name.localeCompare(item1.name) : item1.name.localeCompare(item2.name);
+        return ascending ? item1.name.localeCompare(item2.name) : item2.name.localeCompare(item1.name);
       } else if (property === SortProperty.LastUpdate) {
-        return ascending ? item1.updated.diff(item2.updated).toMillis() : item2.updated.diff(item1.updated).toMillis();
+        return ascending ? item2.updated.diff(item1.updated).toMillis() : item1.updated.diff(item2.updated).toMillis();
       } else if (property === SortProperty.CreationDate) {
-        return ascending ? item1.updated.diff(item2.updated).toMillis() : item2.updated.diff(item1.updated).toMillis();
+        return ascending ? item2.updated.diff(item1.updated).toMillis() : item1.updated.diff(item2.updated).toMillis();
       } else if (property === SortProperty.Size) {
         const size1 = item1.isFile() ? (item1 as FileModel).size : 0;
         const size2 = item1.isFile() ? (item2 as FileModel).size : 0;

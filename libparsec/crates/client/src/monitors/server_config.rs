@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{future::Future, sync::Arc};
 
@@ -6,8 +6,8 @@ use libparsec_platform_async::{pretend_future_is_send_on_web, sleep};
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventServerConfigChanged, EventServerConfigNotified},
     Client, ServerOrganizationConfig,
+    event_bus::{EventBus, EventServerConfigChanged, EventServerConfigNotified},
 };
 
 const SERVER_CONFIG_MONITOR_NAME: &str = "server_config";
@@ -30,10 +30,13 @@ fn task_future_factory(client: Arc<Client>, event_bus: EventBus) -> impl Future<
             let EventServerConfigNotified {
                 active_users_limit,
                 user_profile_outsider_allowed,
+                realm_minimum_archiving_period_before_deletion,
             } = e;
             let new = ServerOrganizationConfig {
                 active_users_limit: *active_users_limit,
                 user_profile_outsider_allowed: *user_profile_outsider_allowed,
+                realm_minimum_archiving_period_before_deletion:
+                    *realm_minimum_archiving_period_before_deletion,
             };
             let mut config_has_changed = false;
 

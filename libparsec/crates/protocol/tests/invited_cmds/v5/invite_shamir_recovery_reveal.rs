@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![allow(clippy::unwrap_used)]
 
 use super::invited_cmds;
 use libparsec_tests_lite::{hex, p_assert_eq};
-use libparsec_types::InvitationToken;
+use libparsec_types::AccessToken;
 
 pub fn rep_bad_invitation_type() {
     // Generated from Parsec 3.2.1-a.0+dev
@@ -56,7 +57,7 @@ pub fn req() {
     .as_ref();
 
     let req = invited_cmds::invite_shamir_recovery_reveal::InviteShamirRecoveryRevealReq {
-        reveal_token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+        reveal_token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
     };
     println!("***expected: {:?}", req.dump().unwrap());
 

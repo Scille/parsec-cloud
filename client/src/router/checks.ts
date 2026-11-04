@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle, getWorkspaceHandle } from '@/router/params';
@@ -41,6 +41,10 @@ export function currentRouteIsOneOf(routes: Routes[]): boolean {
   return (routes as string[]).includes(currentRouteName as string);
 }
 
+export function currentRouteIsWorkspaceManagementRoute(): boolean {
+  return currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash]);
+}
+
 export function currentRouteIsWorkspaceRoute(workspaceHandle: WorkspaceHandle): boolean {
   return currentRouteIs(Routes.Documents) && getWorkspaceHandle() === workspaceHandle;
 }
@@ -74,10 +78,11 @@ export function currentRouteIsLoggedRoute(): boolean {
     Routes.Users,
     Routes.Storage,
     Routes.Organization,
-    Routes.About,
     Routes.MyProfile,
     Routes.History,
     Routes.FileHandler,
+    Routes.Archived,
+    Routes.Trash,
   ]);
 }
 

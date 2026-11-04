@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div>
@@ -10,15 +10,14 @@
       {{ $msTranslate(error) }}
     </ms-report-text>
     <div class="account-login-content-list">
-      <ion-text
-        button
-        class="input-edit-button button-small"
+      <ion-button
+        class="input-edit-button"
         :class="{ 'input-edit-button--active': isEditingServer }"
         @click="toggleEditServer()"
         :disabled="isEditingServer"
       >
         {{ isEditingServer ? $msTranslate('loginPage.inputFields.cancel') : $msTranslate('loginPage.inputFields.edit') }}
-      </ion-text>
+      </ion-button>
       <ms-input
         v-show="isEditingServer"
         class="login-server-input account-login-content__input"
@@ -64,7 +63,7 @@
     </div>
     <div class="account-login-content-button">
       <ion-button
-        class="account-login-content-button__item button-large"
+        class="account-login-content-button__item"
         @click="submit"
         :disabled="querying || !validInfo"
       >
@@ -82,7 +81,7 @@
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import { AccountCreateSendValidationEmailErrorTag, AccountCreationStepper } from '@/parsec';
 import { Env } from '@/services/environment';
-import { IonButton, IonText } from '@ionic/vue';
+import { IonButton } from '@ionic/vue';
 import { MsInput, MsReportText, MsReportTheme, MsSpinner, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
@@ -108,13 +107,13 @@ const error = ref<string>('');
 const validInfo = computed(() => {
   return Boolean(
     email.value.length > 0 &&
-      emailInputRef.value !== undefined &&
-      emailInputRef.value?.validity === Validity.Valid &&
-      !querying.value &&
-      lastName.value.length > 0 &&
-      firstName.value.length > 0 &&
-      serverInputRef.value !== undefined &&
-      serverInputRef.value?.validity === Validity.Valid,
+    emailInputRef.value !== undefined &&
+    emailInputRef.value?.validity === Validity.Valid &&
+    !querying.value &&
+    lastName.value.length > 0 &&
+    firstName.value.length > 0 &&
+    serverInputRef.value !== undefined &&
+    serverInputRef.value?.validity === Validity.Valid,
   );
 });
 
@@ -147,7 +146,7 @@ async function submit(): Promise<void> {
           break;
         default:
           error.value = 'loginPage.createAccount.errors.generic';
-          window.electronAPI.log('error', `Create account start error: ${result.error.tag} (${result.error.error})`);
+          window.nativeAPI.log('error', `Create account start error: ${result.error.tag} (${result.error.error})`);
           break;
       }
     } else {
@@ -163,7 +162,7 @@ async function submit(): Promise<void> {
 .account-login-content-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   width: 100%;
   position: relative;
 }
@@ -172,7 +171,6 @@ async function submit(): Promise<void> {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 
   &__spinner {
     width: 1rem;

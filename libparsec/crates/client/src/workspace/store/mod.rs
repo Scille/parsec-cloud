@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod cache;
 mod file_updater;
@@ -18,13 +18,15 @@ use std::{
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage};
+use libparsec_platform_storage::workspace::{
+    UpdateManifestData, WorkspaceOutboundSyncBacklog, WorkspaceStorage,
+};
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::CertificateOps,
-    server_fetch::{server_fetch_block, ServerFetchBlockError},
     InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
+    certif::CertificateOps,
+    server_fetch::{ServerFetchBlockError, server_fetch_block},
 };
 
 use cache::CurrentViewCache;
@@ -79,6 +81,8 @@ pub(super) enum ReadChunkOrBlockError {
     ChunkNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -97,6 +101,8 @@ pub(super) enum EnsureManifestExistsWithParentError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -105,6 +111,14 @@ pub(super) enum EnsureManifestExistsWithParentError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceGetOutboundSyncBacklogError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error("Component has stopped")]
+    Stopped,
 }
 
 /*
@@ -129,7 +143,7 @@ mod data {
 
     use super::*;
     #[cfg(debug_assertions)]
-    use libparsec_platform_async::{try_task_id, TaskID};
+    use libparsec_platform_async::{TaskID, try_task_id};
 
     /*
      * WorkspaceStoreData
@@ -192,7 +206,10 @@ mod data {
             unsafe fn pretend_static(
                 src: &mut Option<WorkspaceStorage>,
             ) -> &'static mut Option<WorkspaceStorage> {
-                std::mem::transmute(src)
+                #[expect(clippy::undocumented_unsafe_blocks)]
+                unsafe {
+                    std::mem::transmute(src)
+                }
             }
             // SAFETY: It is not currently possible to express the fact the lifetime
             // of a Future returned by a closure depends on the closure parameter if
@@ -281,7 +298,10 @@ mod data {
             let mut guard = lock_tracking.lock().expect("Mutex is poisoned !");
             for (candidate_id, candidate_lock) in guard.iter() {
                 if *candidate_id == id {
-                    panic!("Running future {:?} is trying to acquire {:?} lock while holding another {:?} lock !", id, lock, *candidate_lock);
+                    panic!(
+                        "Running future {:?} is trying to acquire {:?} lock while holding another {:?} lock !",
+                        id, lock, *candidate_lock
+                    );
                 }
             }
             guard.push((id, lock));
@@ -424,6 +444,23 @@ impl WorkspaceStore {
             .with_current_view_cache(|cache| cache.manifests.root_manifest().clone())
     }
 
+    pub async fn get_outbound_sync_backlog(
+        &self,
+    ) -> Result<WorkspaceOutboundSyncBacklog, WorkspaceGetOutboundSyncBacklogError> {
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| WorkspaceGetOutboundSyncBacklogError::Stopped)?;
+
+                storage
+                    .get_outbound_sync_backlog()
+                    .await
+                    .map_err(WorkspaceGetOutboundSyncBacklogError::Internal)
+            })
+            .await
+    }
+
     pub async fn get_manifest(
         &self,
         entry_id: VlobID,
@@ -454,6 +491,9 @@ impl WorkspaceStore {
                     GetManifestError::NoRealmAccess => {
                         Err(EnsureManifestExistsWithParentError::NoRealmAccess)
                     }
+                    GetManifestError::RealmDeleted => {
+                        Err(EnsureManifestExistsWithParentError::RealmDeleted)
+                    }
                     GetManifestError::InvalidKeysBundle(err) => {
                         Err(EnsureManifestExistsWithParentError::InvalidKeysBundle(err))
                     }
@@ -464,7 +504,7 @@ impl WorkspaceStore {
                         Err(EnsureManifestExistsWithParentError::InvalidManifest(err))
                     }
                     GetManifestError::Internal(err) => Err(err.into()),
-                }
+                };
             }
         };
 
@@ -664,7 +704,7 @@ impl WorkspaceStore {
             Err(err) => match err {
                 ReadChunkOrBlockLocalOnlyError::ChunkNotFound => (),
                 ReadChunkOrBlockLocalOnlyError::Stopped => {
-                    return Err(ReadChunkOrBlockError::Stopped)
+                    return Err(ReadChunkOrBlockError::Stopped);
                 }
                 ReadChunkOrBlockLocalOnlyError::Internal(err) => return Err(err.into()),
             },
@@ -707,6 +747,7 @@ impl WorkspaceStore {
                 ReadChunkOrBlockError::ChunkNotFound
             }
             ServerFetchBlockError::NoRealmAccess => ReadChunkOrBlockError::NoRealmAccess,
+            ServerFetchBlockError::RealmDeleted => ReadChunkOrBlockError::RealmDeleted,
             ServerFetchBlockError::InvalidBlockAccess(err) => {
                 ReadChunkOrBlockError::InvalidBlockAccess(err)
             }

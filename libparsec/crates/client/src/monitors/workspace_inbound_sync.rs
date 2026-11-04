@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{
     collections::{HashMap, HashSet},
@@ -10,13 +10,13 @@ use libparsec_types::prelude::*;
 
 use super::Monitor;
 use crate::{
+    EventBusConnectionLifetime, EventMonitorCrashed, EventWorkspaceOpsInboundSyncDone,
+    EventWorkspaceOpsOutboundSyncNeeded,
     event_bus::{Broadcastable, EventBus, EventMissedServerEvents, EventRealmVlobUpdated},
     workspace::{
         InboundSyncOutcome, WorkspaceGetNeedInboundSyncEntriesError, WorkspaceOps,
         WorkspaceSyncError,
     },
-    EventBusConnectionLifetime, EventMonitorCrashed, EventWorkspaceOpsInboundSyncDone,
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 const WORKSPACE_INBOUND_SYNC_MONITOR_NAME: &str = "workspace_inbound_sync";
@@ -319,6 +319,9 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 // ops should soon be notified and work accordingly (typically
                                 // by stopping the workspace and its monitors).
                                 WorkspaceSyncError::NotAllowed
+                                // The workspace's realm has been archived or deleted
+                                | WorkspaceSyncError::RealmArchived
+                                | WorkspaceSyncError::RealmDeleted
                                 // Other errors are unexpected ones
                                 | WorkspaceSyncError::NoKey
                                 | WorkspaceSyncError::NoRealm
@@ -346,11 +349,15 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 // Shouldn't occur in practice given the monitors are expected
                                 // to be stopped before the opses. In any case we have no
                                 // choice but to also stop.
-                                log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                log::error!(
+                                    "Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop"
+                                );
                                 return;
                             }
                             WorkspaceGetNeedInboundSyncEntriesError::Internal(err) => {
-                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!(
+                                    "Workspace {realm_id}: stopping due to unexpected error: {err:?}"
+                                );
                                 return;
                             }
                         }
@@ -422,7 +429,10 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         // We have lost read access to the workspace, the certificates
                         // ops should soon be notified and work accordingly (typically
                         // by stopping the workspace and its monitors).
-                        WorkspaceSyncError::NotAllowed => {
+                        WorkspaceSyncError::NotAllowed
+                        // The workspace's realm has been archived or deleted
+                        | WorkspaceSyncError::RealmArchived
+                        | WorkspaceSyncError::RealmDeleted => {
                             log::info!("Workspace {realm_id}: stopping as we no longer allowed to access this realm");
                             return;
                         }

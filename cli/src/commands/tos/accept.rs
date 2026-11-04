@@ -1,37 +1,41 @@
-use crate::{commands::tos::list::display_tos, utils::StartedClient};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+use std::io::Write;
+
+use dialoguer::Confirm;
+
+use crate::{ui::compat::TOSDisplay, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = device, config_dir, password_stdin]
+    #[with = device, config_dir, force]
     pub struct Args {
-        #[arg(long)]
-        yes: bool,
+
     }
 );
 
 crate::build_main_with_client!(main, accept_tos);
 
-pub async fn accept_tos(args: Args, client: &StartedClient) -> anyhow::Result<()> {
-    let Args { yes, .. } = args;
+pub async fn accept_tos(ui: crate::Ui, args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args { force, .. } = args;
 
     let tos = match client.get_tos().await {
-        Ok(tos) => tos,
+        Ok(tos) => TOSDisplay(tos),
         Err(libparsec_client::ClientGetTosError::NoTos) => {
-            println!("No Terms of Service available");
+            ui.with_message(|_, out| writeln!(out, "No Terms of Service available"))?;
             return Ok(());
         }
         Err(e) => return Err(e.into()),
     };
 
-    if !yes {
-        display_tos(&tos)?;
-
-        println!("Do you accept these terms of service? (y/N) ");
-        let mut input = String::with_capacity(2);
-        std::io::stdin().read_line(&mut input)?;
-        if input.trim() != "y" {
+    if !force {
+        ui.message_println(&tos)?;
+        if !Confirm::new()
+            .with_prompt("Do you accept these terms of service?")
+            .interact()?
+        {
             return Err(anyhow::anyhow!("Operation cancelled"));
         }
     }
-    client.accept_tos(tos.updated_on).await?;
+    client.accept_tos(tos.0.updated_on).await?;
     Ok(())
 }

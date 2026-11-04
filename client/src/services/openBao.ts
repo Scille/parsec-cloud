@@ -1,6 +1,6 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import { getServerConfig, isElectron, OpenBaoAuthConfigTag } from '@/parsec';
+import { getServerConfig, isElectron, Result } from '@/parsec';
 import { getRouter } from '@/router';
 import axios, { AxiosInstance } from 'axios';
 
@@ -24,7 +24,7 @@ export interface OpenBaoConnectionInfo {
   userId: string;
   token: string;
   server: string;
-  provider: OpenBaoAuthConfigTag;
+  provider: string;
   secretMountpoint: string;
   transitMountpoint: string;
 }
@@ -36,7 +36,7 @@ export class OpenBaoClient {
   _userId: string;
   _token: string;
   _server: string;
-  _provider: OpenBaoAuthConfigTag;
+  _provider: string;
   _mountpoint: string;
   _secretMountpoint: string;
   _transitMountpoint: string;
@@ -45,7 +45,7 @@ export class OpenBaoClient {
     token: string,
     id: string,
     server: string,
-    provider: OpenBaoAuthConfigTag,
+    provider: string,
     mountpoint: string,
     secretMountpoint: string,
     transitMountpoint: string,
@@ -73,52 +73,6 @@ export class OpenBaoClient {
       transitMountpoint: this._transitMountpoint,
       provider: this._provider,
     };
-  }
-
-  private async _store(key: string, data: object): Promise<OpenBaoResult<undefined>> {
-    try {
-      const path = `${this._secretMountpoint}/${this._userId}/${key}`;
-      await this._client.post(
-        path,
-        { data: data },
-        {
-          validateStatus: (status) => {
-            return status === 200;
-          },
-        },
-      );
-      return { ok: true, value: undefined };
-    } catch (err: any) {
-      if (err.response) {
-        return {
-          ok: false,
-          error: { type: OpenBaoErrorType.HTTPError, httpStatus: err.response.status, errors: err.response.data.errors },
-        };
-      } else {
-        return { ok: false, error: { type: OpenBaoErrorType.NetworkError, detail: err.toString() } };
-      }
-    }
-  }
-
-  private async _retrieve(key: string): Promise<OpenBaoResult<any>> {
-    try {
-      const path = `${this._secretMountpoint}/${this._userId}/${key}`;
-      const response = await this._client.get(path, {
-        validateStatus: (status) => {
-          return status === 200;
-        },
-      });
-      return { ok: true, value: response.data.data.data };
-    } catch (err: any) {
-      if (err.response) {
-        return {
-          ok: false,
-          error: { type: OpenBaoErrorType.HTTPError, httpStatus: err.response.status, errors: err.response.data.errors },
-        };
-      } else {
-        return { ok: false, error: { type: OpenBaoErrorType.NetworkError, detail: err.toString() } };
-      }
-    }
   }
 }
 
@@ -186,44 +140,56 @@ async function isOpenBaoAvailable(parsecServer: string): Promise<boolean> {
 
 async function openBaoConnect(
   openBaoServer: string,
-  provider: OpenBaoAuthConfigTag,
+  idSSO: string,
   mountpoint: string,
   secretMountpoint: string,
   transitMountpoint: string,
 ): Promise<OpenBaoResult<OpenBaoClient>> {
   const connResult = await getConnectionUrl(openBaoServer, mountpoint);
   if (!connResult.ok) {
-    window.electronAPI.log('error', `Failed to retrieve SSO auth url: ${JSON.stringify(connResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve SSO auth url: ${JSON.stringify(connResult.error)}`);
     return connResult;
   }
   let resultPromise!: Promise<{ code: string; state: string }>;
   if (isElectron()) {
     resultPromise = new Promise<{ code: string; state: string }>((resolve, reject) => {
-      window.electronAPI.receive('parsec-sso-complete', async (code?: string, state?: string) => {
-        if (code && state) {
-          resolve({ code, state });
-        } else {
-          reject();
-        }
-      });
+      // Set a 5min timeout
+      const t = setTimeout(
+        () => {
+          reject({ error: 'timeout' });
+        },
+        5 * 60 * 1000,
+      );
+
+      window.nativeAPI.receive(
+        'parsec-sso-complete',
+        async (result: Result<{ code: string; state: string }, { error: string; description?: string }>) => {
+          if (result.ok) {
+            resolve(result.value);
+          } else {
+            reject(result.error);
+          }
+          clearTimeout(t);
+        },
+      );
     });
   } else {
     const bc = new BroadcastChannel('openbao-oidc');
     resultPromise = new Promise<{ code: string; state: string }>((resolve, reject) => {
-      bc.onmessage = (event): void => {
-        // Set a 5min timeout
-        const t = setTimeout(
-          () => {
-            bc.close();
-            reject(new Error('timeout'));
-          },
-          5 * 60 * 1000,
-        );
+      // Set a 5min timeout
+      const t = setTimeout(
+        () => {
+          bc.close();
+          reject({ error: 'timeout' });
+        },
+        5 * 60 * 1000,
+      );
 
-        if (!event.data.code || !event.data.state) {
-          reject();
+      bc.onmessage = (event: MessageEvent<Result<{ code: string; state: string }, { error: string; description?: string }>>): void => {
+        if (!event.data.ok) {
+          reject({ error: event.data.error.error ?? 'unknown', description: event.data.error.description });
         } else {
-          resolve({ code: event.data.code, state: event.data.state });
+          resolve({ code: event.data.value.code, state: event.data.value.state });
         }
         clearTimeout(t);
         bc.close();
@@ -231,8 +197,8 @@ async function openBaoConnect(
     });
   }
 
-  if (!window.electronAPI.openPopup(connResult.value)) {
-    window.electronAPI.log('error', 'Failed to open popup');
+  if (!window.nativeAPI.openPopup(connResult.value)) {
+    window.nativeAPI.log('error', 'Failed to open popup');
     return { ok: false, error: { type: OpenBaoErrorType.PopupFailed } };
   }
 
@@ -246,21 +212,16 @@ async function openBaoConnect(
       result.value.token,
       result.value.id,
       openBaoServer,
-      provider,
+      idSSO,
       mountpoint,
       secretMountpoint,
       transitMountpoint,
     );
     return { ok: true, value: client };
   } catch (err: any) {
-    return { ok: false, error: { type: OpenBaoErrorType.InitError, detail: err.toString() } };
+    window.nativeAPI.log('error', `Error when connecting to SSO: ${err.error} (${err.description})`);
+    return { ok: false, error: { type: OpenBaoErrorType.InitError, detail: err.error ?? err.toString() } };
   }
 }
 
-const HandledSSOProviders = [OpenBaoAuthConfigTag.OIDCProConnect];
-
-function isSSOProviderHandled(provider: OpenBaoAuthConfigTag): boolean {
-  return HandledSSOProviders.includes(provider);
-}
-
-export { isOpenBaoAvailable, isSSOProviderHandled, openBaoConnect, OpenBaoError, OpenBaoErrorType, OpenBaoResult };
+export { isOpenBaoAvailable, openBaoConnect, OpenBaoError, OpenBaoErrorType, OpenBaoResult };

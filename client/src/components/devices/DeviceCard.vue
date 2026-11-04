@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div
@@ -7,15 +7,15 @@
   >
     <div class="card-content">
       <ion-icon
-        class="icon-device"
-        :icon="desktopOutline"
+        class="device-icon"
+        :icon="deviceInfo.icon"
       />
       <div class="card-text">
         <div class="card-text-info">
-          <ion-text class="device-name subtitles-sm">
-            {{ device.deviceLabel }}
+          <ion-text class="device-name">
+            {{ $msTranslate(deviceInfo.label) }}
           </ion-text>
-          <ion-text class="join-date body-sm">
+          <ion-text class="join-date">
             {{ $msTranslate('DevicesPage.joinedOn') }}
             <span>{{ $msTranslate(formatTimeSince(device.createdOn, '--', 'short', true)) }}</span>
           </ion-text>
@@ -23,7 +23,7 @@
       </div>
 
       <ion-text
-        class="badge button-medium"
+        class="badge-active"
         v-show="isCurrent"
         :outline="true"
       >
@@ -39,72 +39,94 @@
 </template>
 
 <script setup lang="ts">
+import { DeviceLabel } from '@/common/device';
 import { TechnicalId } from '@/components/misc';
 import { DeviceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { desktopOutline } from 'ionicons/icons';
-import { formatTimeSince } from 'megashark-lib';
+import { desktopOutline, logoAndroid, logoApple, logoTux, logoWindows, phonePortraitOutline } from 'ionicons/icons';
+import { formatTimeSince, Translatable } from 'megashark-lib';
+import { computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   device: DeviceInfo;
   isCurrent?: boolean;
   showId?: boolean;
 }>();
+
+const DEVICE_PLATFORMS: Map<DeviceLabel, { label: Translatable; icon: string }> = new Map([
+  [DeviceLabel.Android, { label: 'common.deviceTypes.android', icon: logoAndroid }],
+  [DeviceLabel.Linux, { label: 'common.deviceTypes.linux', icon: logoTux }],
+  [DeviceLabel.Windows, { label: 'common.deviceTypes.windows', icon: logoWindows }],
+  [DeviceLabel.MacOS, { label: 'common.deviceTypes.macos', icon: logoApple }],
+  [DeviceLabel.MobileWeb, { label: 'common.deviceTypes.mobileWeb', icon: phonePortraitOutline }],
+  [DeviceLabel.Web, { label: 'common.deviceTypes.web', icon: desktopOutline }],
+]);
+
+const deviceInfo = computed(() => {
+  return (
+    DEVICE_PLATFORMS.get(props.device.deviceLabel as DeviceLabel) ?? {
+      label: { key: 'common.deviceTypes.unknown', data: { label: props.device.deviceLabel } },
+      icon: desktopOutline,
+    }
+  );
+});
 </script>
 
 <style scoped lang="scss">
 .card {
-  background-color: var(--parsec-color-light-secondary-white);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
-  padding: 1em;
+  background-color: ms.color('surface-base-page');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  padding: ms.spacing('padding-3xl');
   width: 100%;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('xl');
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &-content {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
   }
 
-  .icon-device {
+  .device-icon {
     font-size: 1.5rem;
     flex-shrink: 0;
-    padding: 0.5rem;
-    border-radius: var(--parsec-radius-circle);
-    color: var(--parsec-color-light-secondary-grey);
-    background-color: var(--parsec-color-light-secondary-premiere);
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('full');
+    color: ms.color('icon-neutral-default');
+    background-color: ms.color('surface-base-page-secondary');
   }
 
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     overflow: hidden;
 
     &-info {
       display: flex;
       flex-direction: column;
-      gap: 0.125rem;
+      gap: ms.spacing('gap-xs');
     }
 
     .device-name {
-      color: var(--parsec-color-light-primary-700);
+      @include ms.font('body-md-medium');
+      color: ms.color('text-base-body');
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
     }
 
     .join-date {
-      color: var(--parsec-color-light-secondary-soft-text);
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-neutral-default');
 
       &:has(.join-date-now) {
         position: relative;
         display: flex;
         align-items: center;
-        gap: 0.125rem;
+        gap: ms.spacing('gap-xs');
 
         &::before {
           content: '';
@@ -112,29 +134,37 @@ defineProps<{
           display: block;
           width: 0.5em;
           height: 0.5em;
-          border-radius: var(--parsec-radius-circle);
-          background-color: var(--parsec-color-light-primary-500);
+          border-radius: ms.radius('full');
+          background-color: ms.color('surface-brand-default');
         }
       }
     }
   }
 
   &.device-active {
-    background-color: var(--parsec-color-light-secondary-background);
+    background-color: ms.color('surface-base-default');
 
-    .icon-device {
-      color: var(--parsec-color-light-secondary-hard-grey);
-      background-color: var(--parsec-color-light-secondary-medium);
+    .device-icon {
+      color: ms.color('icon-neutral-default');
+      background-color: ms.color('surface-neutral-default-subtle-pressed');
+    }
+
+    .device-name {
+      color: ms.color('text-brand-default');
     }
   }
 }
 
-.badge {
-  font-size: 0.8125rem;
-  margin: auto 0 auto auto;
-  border-radius: var(--parsec-radius-32);
-  padding: 0.25em 0.5em;
-  color: var(--parsec-color-light-primary-600);
-  background: var(--parsec-color-light-primary-100);
+.badge-active {
+  @include ms.font('label-md-medium');
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: ms.color('surface-brand-default-subtle-hover');
+  color: ms.color('text-brand-default');
+  flex-shrink: 0;
+  padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+  border-radius: ms.radius('2xl');
+  white-space: nowrap;
 }
 </style>

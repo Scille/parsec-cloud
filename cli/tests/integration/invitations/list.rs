@@ -1,16 +1,18 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use libparsec::{
+    AccessToken, AuthenticatedCmds, ProxyConfig, TmpPath,
     authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
-    AuthenticatedCmds, InvitationToken, ProxyConfig, TmpPath,
 };
+use parsec_cli::ui::Ui;
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::utils::{RESET, YELLOW};
 
-async fn invite_device(cmds: &AuthenticatedCmds) -> InvitationToken {
+async fn invite_device(cmds: &AuthenticatedCmds) -> AccessToken {
     let rep = cmds
         .send(invite_new_device::Req { send_email: false })
         .await
@@ -26,8 +28,9 @@ async fn invite_device(cmds: &AuthenticatedCmds) -> InvitationToken {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn list_invitations(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn list_invitations(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -46,15 +49,15 @@ async fn list_invitations(tmp_path: TmpPath) {
         &alice.device_id.hex()
     )
     .stdout(predicates::str::contains(format!(
-        "{}\t{YELLOW}pending{RESET}\tdevice",
-        token.hex()
+        "{token}\tpending\tdevice",
     )));
 }
 
 #[rstest::rstest]
 #[tokio::test]
-async fn issue_9176_list_more_than_one_invitations(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn issue_9176_list_more_than_one_invitations(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -67,9 +70,8 @@ async fn issue_9176_list_more_than_one_invitations(tmp_path: TmpPath) {
     let token2 = invite_device(&cmds).await;
     let token3 = invite_device(&cmds).await;
 
-    let contains_invite = |token: InvitationToken| {
-        predicates::str::contains(format!("{token}\t{YELLOW}pending{RESET}\tdevice"))
-    };
+    let contains_invite =
+        |token: AccessToken| predicates::str::contains(format!("{token}\tpending\tdevice"));
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -87,8 +89,9 @@ async fn issue_9176_list_more_than_one_invitations(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn no_invitations(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn no_invitations(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -97,5 +100,5 @@ async fn no_invitations(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains("No invitation."));
+    .stderr(predicates::str::contains("No invitation."));
 }

@@ -1,11 +1,11 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 use crate::certif::{CertifPollServerError, CertificateBasedActionOutcome};
 
-pub use crate::certif::CertifRevokeUserError as ClientRevokeUserError;
+pub type ClientRevokeUserError = crate::certif::CertifRevokeUserError;
 
 use super::Client;
 

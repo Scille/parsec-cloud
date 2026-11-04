@@ -4,12 +4,12 @@
 
 from __future__ import annotations
 
-from parsec._parsec import BootstrapToken, DateTime, VerifyKey
+from parsec._parsec import AccessToken, DateTime, VerifyKey
 
 class Req:
     def __init__(
         self,
-        bootstrap_token: BootstrapToken | None,
+        bootstrap_token: AccessToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
         device_certificate: bytes,
@@ -19,7 +19,7 @@ class Req:
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def bootstrap_token(self) -> BootstrapToken | None: ...
+    def bootstrap_token(self) -> AccessToken | None: ...
     @property
     def device_certificate(self) -> bytes: ...
     @property

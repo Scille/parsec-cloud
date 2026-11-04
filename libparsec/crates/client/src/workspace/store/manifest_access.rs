@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError};
 
 use super::cache::{
-    populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+    PopulateCacheFromLocalStorageOrServerError, populate_cache_from_local_storage_or_server,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -19,6 +19,8 @@ pub(crate) enum GetManifestError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -47,6 +49,9 @@ pub(super) async fn get_manifest(
         .map_err(|err| match err {
             PopulateCacheFromLocalStorageOrServerError::Offline(e) => GetManifestError::Offline(e),
             PopulateCacheFromLocalStorageOrServerError::Stopped => GetManifestError::Stopped,
+            PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                GetManifestError::RealmDeleted
+            }
             PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                 GetManifestError::EntryNotFound
             }

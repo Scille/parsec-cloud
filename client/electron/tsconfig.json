@@ -1,12 +1,15 @@
+// Unlike the root `tsconfig.json` that is only used for type checking, this
+// config is actually used to do the .ts -> .js transpilation.
 {
     "compileOnSave": true,
     "include": ["./src/**/*", "./capacitor.config.ts", "./capacitor.config.js"],
     "compilerOptions": {
         "outDir": "./build",
         "importHelpers": true,
-        "target": "ES2017",
-        "module": "CommonJS",
-        "moduleResolution": "node",
+        "target": "ES2022",
+        "lib": ["ES2022", "DOM"],
+        "module": "Node16",
+        "moduleResolution": "Node16",
         "esModuleInterop": true,
         "typeRoots": ["./node_modules/@types"],
         "allowJs": true,
@@ -14,7 +17,6 @@
         "rootDirs": [".", "build/generated-ts/"],
         "sourceMap": true,
         "inlineSources": true,
-
         // Set `sourceRoot` to  "/" to strip the build path prefix
         // from generated source code references.
         // This improves issue grouping in Sentry.

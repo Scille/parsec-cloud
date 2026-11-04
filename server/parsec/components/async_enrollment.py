@@ -1,10 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+from email.message import Message
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from enum import auto
-from hashlib import sha256
 from typing import Literal
+
+from jinja2 import Environment
 
 from parsec._parsec import (
     AsyncEnrollmentAcceptPayload,
@@ -13,6 +18,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    EmailAddress,
     OrganizationID,
     PkiSignatureAlgorithm,
     UserCertificate,
@@ -31,6 +37,8 @@ from parsec.client_context import (
     AnonymousClientContext,
     AuthenticatedClientContext,
 )
+from parsec.components.email import SendEmailBadOutcome, send_email
+from parsec.config import BackendConfig
 from parsec.logging import get_logger
 from parsec.types import BadOutcome, BadOutcomeEnum
 
@@ -74,6 +82,13 @@ class AsyncEnrollmentListBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
+
+
+class AsyncEnrollmentCancelBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    ENROLLMENT_NOT_FOUND = auto()
+    ENROLLMENT_NO_LONGER_AVAILABLE = auto()
 
 
 class AsyncEnrollmentRejectBadOutcome(BadOutcomeEnum):
@@ -174,42 +189,18 @@ class AsyncEnrollmentListItem:
     submit_payload_signature: AsyncEnrollmentPayloadSignature
 
 
-# TODO: `X509Certificate` is error prone since it's validation is currently lazy
-# (see https://github.com/Scille/parsec-cloud/issues/12012).
-@dataclass(slots=True, frozen=True)
-class X509Certificate2:
-    der: bytes
-    issuer: bytes
-    subject: bytes
-    sha256_fingerprint: bytes
-
-    @classmethod
-    def from_der(cls, der: bytes) -> X509Certificate2:
-        certificate = X509Certificate.from_der(der)
-        return X509Certificate2(
-            der=der,
-            # Raises `PkiInvalidCertificateDER` which is a subclass of `ValueError`
-            issuer=certificate.issuer(),
-            subject=certificate.subject(),
-            sha256_fingerprint=sha256(der).digest(),
-        )
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}(subject={self.subject}, issuer={self.issuer})"
-
-
 def _validate_x509_trustchain(
     leaf: bytes, intermediates: list[bytes]
 ) -> (
-    list[X509Certificate2]
+    list[X509Certificate]
     | Literal["INVALID_DER_X509_CERTIFICATE"]
     | Literal["INVALID_X509_TRUSTCHAIN"]
 ):
     # Validate format for each x509 certificate
     try:
-        author_der_x509_certificate = X509Certificate2.from_der(leaf)
+        author_der_x509_certificate = X509Certificate.load_der(leaf)
         intermediate_der_x509_certificates = [
-            X509Certificate2.from_der(certif) for certif in intermediates
+            X509Certificate.load_der(certif) for certif in intermediates
         ]
     except ValueError:
         return "INVALID_DER_X509_CERTIFICATE"
@@ -245,7 +236,7 @@ def async_enrollment_submit_validate(
     submit_payload: bytes,
     submit_payload_signature: AsyncEnrollmentPayloadSignature,
 ) -> (
-    tuple[AsyncEnrollmentSubmitPayload, list[X509Certificate2] | None]
+    tuple[AsyncEnrollmentSubmitPayload, list[X509Certificate] | None]
     | AsyncEnrollmentSubmitValidateBadOutcome
 ):
     try:
@@ -289,7 +280,7 @@ def async_enrollment_accept_validate(
         AsyncEnrollmentAcceptPayload,
         UserCertificate,
         DeviceCertificate,
-        list[X509Certificate2] | None,
+        list[X509Certificate] | None,
     ]
     | TimestampOutOfBallpark
     | AsyncEnrollmentAcceptValidateBadOutcome
@@ -370,6 +361,9 @@ def async_enrollment_accept_validate(
 
 
 class BaseAsyncEnrollmentComponent:
+    def __init__(self, config: BackendConfig):
+        self._config = config
+
     async def submit(
         self,
         now: DateTime,
@@ -379,10 +373,10 @@ class BaseAsyncEnrollmentComponent:
         submit_payload: bytes,
         submit_payload_signature: AsyncEnrollmentPayloadSignature,
     ) -> (
-        None
-        | AsyncEnrollmentSubmitValidateBadOutcome
+        AsyncEnrollmentSubmitValidateBadOutcome
         | AsyncEnrollmentEmailAlreadySubmitted
         | AsyncEnrollmentSubmitBadOutcome
+        | None
     ):
         raise NotImplementedError
 
@@ -400,13 +394,21 @@ class BaseAsyncEnrollmentComponent:
     ) -> list[AsyncEnrollmentListItem] | AsyncEnrollmentListBadOutcome:
         raise NotImplementedError
 
+    async def cancel(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        enrollment_id: AsyncEnrollmentID,
+    ) -> AsyncEnrollmentCancelBadOutcome | None:
+        raise NotImplementedError
+
     async def reject(
         self,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentRejectBadOutcome:
+    ) -> AsyncEnrollmentRejectBadOutcome | None:
         raise NotImplementedError
 
     async def accept(
@@ -422,12 +424,14 @@ class BaseAsyncEnrollmentComponent:
         submitter_redacted_user_certificate: bytes,
         submitter_device_certificate: bytes,
         submitter_redacted_device_certificate: bytes,
+        send_mail: bool,
     ) -> (
         tuple[UserCertificate, DeviceCertificate]
         | AsyncEnrollmentAcceptValidateBadOutcome
         | AsyncEnrollmentAcceptBadOutcome
         | RequireGreaterTimestamp
         | TimestampOutOfBallpark
+        | SendEmailBadOutcome
     ):
         raise NotImplementedError
 
@@ -553,6 +557,31 @@ class BaseAsyncEnrollmentComponent:
                 client_ctx.organization_expired_abort()
 
     @api
+    async def api_async_enrollment_cancel(
+        self,
+        client_ctx: AnonymousClientContext,
+        req: anonymous_cmds.latest.async_enrollment_cancel.Req,
+    ) -> anonymous_cmds.latest.async_enrollment_cancel.Rep:
+        outcome = await self.cancel(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            enrollment_id=req.enrollment_id,
+        )
+        match outcome:
+            case None:
+                return anonymous_cmds.latest.async_enrollment_cancel.RepOk()
+            case AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NOT_FOUND:
+                return anonymous_cmds.latest.async_enrollment_cancel.RepEnrollmentNotFound()
+            case AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE:
+                return (
+                    anonymous_cmds.latest.async_enrollment_cancel.RepEnrollmentNoLongerAvailable()
+                )
+            case AsyncEnrollmentCancelBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case AsyncEnrollmentCancelBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+
+    @api
     async def api_async_enrollment_list(
         self,
         client_ctx: AuthenticatedClientContext,
@@ -669,10 +698,20 @@ class BaseAsyncEnrollmentComponent:
             submitter_redacted_user_certificate=req.submitter_redacted_user_certificate,
             submitter_device_certificate=req.submitter_device_certificate,
             submitter_redacted_device_certificate=req.submitter_redacted_device_certificate,
+            send_mail=(
+                req.send_email or False
+            ),  # if send mail is not specified don't attempt to send mail
         )
         match outcome:
             case (_, _):
-                return authenticated_cmds.latest.async_enrollment_accept.RepOk()
+                email_sent = (
+                    authenticated_cmds.latest.async_enrollment_accept.EmailSentStatus.SUCCESS
+                )
+            case SendEmailBadOutcome.SERVER_UNAVAILABLE | SendEmailBadOutcome.BAD_SMTP_CONFIG:
+                email_sent = authenticated_cmds.latest.async_enrollment_accept.EmailSentStatus.SERVER_UNAVAILABLE
+            case SendEmailBadOutcome.RECIPIENT_REFUSED:
+                email_sent = authenticated_cmds.latest.async_enrollment_accept.EmailSentStatus.RECIPIENT_REFUSED
+
             case AsyncEnrollmentAcceptBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.async_enrollment_accept.RepAuthorNotAllowed()
             case AsyncEnrollmentAcceptBadOutcome.ENROLLMENT_NOT_FOUND:
@@ -720,6 +759,7 @@ class BaseAsyncEnrollmentComponent:
                 return authenticated_cmds.latest.async_enrollment_accept.RepRequireGreaterTimestamp(
                     strictly_greater_than=error.strictly_greater_than
                 )
+
             case AsyncEnrollmentAcceptBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case AsyncEnrollmentAcceptBadOutcome.ORGANIZATION_EXPIRED:
@@ -728,3 +768,68 @@ class BaseAsyncEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case AsyncEnrollmentAcceptBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
+        return authenticated_cmds.latest.async_enrollment_accept.RepOk(email_sent=email_sent)
+
+
+async def send_accepted_enrollment_email(
+    config: BackendConfig,
+    organization_id: OrganizationID,
+    claimer_email: EmailAddress,
+    user_label: str,
+) -> SendEmailBadOutcome | None:
+    if not config.server_addr:
+        return SendEmailBadOutcome.BAD_SMTP_CONFIG
+    message = generate_accepted_enrollment_email(
+        jinja_env=config.jinja_env,
+        from_addr=config.email_config.sender,
+        to_addr=claimer_email,
+        organization_id=organization_id,
+        user_label=user_label,
+        server_url=config.server_addr.to_http_url(),
+    )
+    return await send_email(
+        email_config=config.email_config,
+        to_addr=claimer_email,
+        message=message,
+    )
+
+
+def generate_accepted_enrollment_email(
+    jinja_env: Environment,
+    from_addr: EmailAddress,
+    to_addr: EmailAddress,
+    organization_id: OrganizationID,
+    user_label: str,
+    server_url: str,
+) -> Message:
+    # Quick fix to have a similar behavior between Rust and Python
+    server_url = server_url.removesuffix("/")
+
+    html = jinja_env.get_template("email/async_enrollment_accepted.html.j2").render(
+        organization_id=organization_id.str,
+        user_label=user_label,
+        server_url=server_url,
+    )
+    text = jinja_env.get_template("email/async_enrollment_accepted.txt.j2").render(
+        organization_id=organization_id.str,
+        user_label=user_label,
+        server_url=server_url,
+    )
+
+    # mail settings
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = f"[Parsec] Your request to join {organization_id.str} has been accepted"
+    message["From"] = str(from_addr)
+    message["To"] = str(to_addr)
+
+    # Turn parts into MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part1)
+    message.attach(part2)
+
+    return message

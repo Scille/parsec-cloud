@@ -1,10 +1,10 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    CertifDecryptForRealmError, CertifEncryptForRealmError, EncrytionUsage,
+    CertifDecryptForRealmError, CertifGetLatestRealmKeyForEncryptionError, EncryptionUsage,
     InvalidCertificateError, InvalidKeysBundleError, WorkspaceOps,
 };
 
@@ -18,6 +18,8 @@ pub enum WorkspaceGeneratePathAddrError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("There is no key available in this realm for encryption")]
     NoKey,
     #[error(transparent)]
@@ -34,22 +36,35 @@ pub async fn generate_path_addr(
     let path_as_str = path.to_string();
     let cleartext = path_as_str.as_bytes();
 
-    let (encrypted, key_index) = ops
+    let (key, key_index) = ops
         .certificates_ops
-        .encrypt_for_realm(EncrytionUsage::PathUrl, ops.realm_id, cleartext)
+        .get_latest_realm_key_for_encryption(EncryptionUsage::PathUrl, ops.realm_id)
         .await
         .map_err(|err| match err {
-            CertifEncryptForRealmError::Stopped => WorkspaceGeneratePathAddrError::Stopped,
-            CertifEncryptForRealmError::Offline(e) => WorkspaceGeneratePathAddrError::Offline(e),
-            CertifEncryptForRealmError::NotAllowed => WorkspaceGeneratePathAddrError::NotAllowed,
-            CertifEncryptForRealmError::NoKey => WorkspaceGeneratePathAddrError::NoKey,
-            CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+            CertifGetLatestRealmKeyForEncryptionError::Stopped => {
+                WorkspaceGeneratePathAddrError::Stopped
+            }
+            CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                WorkspaceGeneratePathAddrError::Offline(e)
+            }
+            CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                WorkspaceGeneratePathAddrError::NotAllowed
+            }
+            CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
+                WorkspaceGeneratePathAddrError::RealmDeleted
+            }
+            CertifGetLatestRealmKeyForEncryptionError::NoKey => {
+                WorkspaceGeneratePathAddrError::NoKey
+            }
+            CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                 WorkspaceGeneratePathAddrError::InvalidKeysBundle(err)
             }
-            CertifEncryptForRealmError::Internal(err) => {
+            CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                 err.context("cannot encrypt path for realm").into()
             }
         })?;
+
+    let encrypted = key.encrypt(cleartext);
 
     Ok(ParsecWorkspacePathAddr::new(
         ops.device.organization_addr.clone(),
@@ -70,6 +85,8 @@ pub enum WorkspaceDecryptPathAddrError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("The referenced key doesn't exist yet in this realm")]
     KeyNotFound,
     #[error("The referenced key appears to be corrupted !")]
@@ -91,7 +108,7 @@ pub async fn decrypt_path_addr(
     let cleartext = ops
         .certificates_ops
         .decrypt_opaque_data_for_realm(
-            EncrytionUsage::PathUrl,
+            EncryptionUsage::PathUrl,
             ops.realm_id,
             link.key_index(),
             link.encrypted_path(),
@@ -101,6 +118,7 @@ pub async fn decrypt_path_addr(
             CertifDecryptForRealmError::Stopped => WorkspaceDecryptPathAddrError::Stopped,
             CertifDecryptForRealmError::Offline(e) => WorkspaceDecryptPathAddrError::Offline(e),
             CertifDecryptForRealmError::NotAllowed => WorkspaceDecryptPathAddrError::NotAllowed,
+            CertifDecryptForRealmError::RealmDeleted => WorkspaceDecryptPathAddrError::RealmDeleted,
             CertifDecryptForRealmError::KeyNotFound => WorkspaceDecryptPathAddrError::KeyNotFound,
             CertifDecryptForRealmError::CorruptedKey => WorkspaceDecryptPathAddrError::CorruptedKey,
             CertifDecryptForRealmError::CorruptedData => {

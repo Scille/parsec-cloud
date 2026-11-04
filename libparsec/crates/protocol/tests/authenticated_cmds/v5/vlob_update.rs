@@ -118,6 +118,48 @@ pub fn rep_realm_not_found() {
     p_assert_eq!(data2, expected);
 }
 
+pub fn rep_realm_archived() {
+    // Generated from Parsec 3.8.2-a.0+dev
+    // Content:
+    //   status: 'realm_archived'
+    let raw = hex!("81a6737461747573ae7265616c6d5f6172636869766564");
+
+    let expected = authenticated_cmds::vlob_update::Rep::RealmArchived;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = authenticated_cmds::vlob_update::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_update::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_realm_deleted() {
+    // Generated from Parsec 3.8.2-a.0+dev
+    // Content:
+    //   status: 'realm_deleted'
+    let raw = hex!("81a6737461747573ad7265616c6d5f64656c65746564");
+
+    let expected = authenticated_cmds::vlob_update::Rep::RealmDeleted;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = authenticated_cmds::vlob_update::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_update::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
 pub fn rep_vlob_not_found() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:

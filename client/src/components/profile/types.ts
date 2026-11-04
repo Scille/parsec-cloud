@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 export enum AuthenticationCardState {
   Default = 'default',
@@ -8,4 +8,10 @@ export enum AuthenticationCardState {
   Update = 'update',
   Disabled = 'disabled',
   Unavailable = 'unavailable',
+  Forbidden = 'forbidden',
+}
+
+export enum ShamirTab {
+  Self = 'shamir-tab-self',
+  Others = 'shamir-tab-others',
 }

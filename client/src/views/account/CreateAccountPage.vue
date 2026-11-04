@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -348,7 +348,7 @@ async function validateCode(): Promise<void> {
         error.value = 'loginPage.createAccount.errors.offlineOrIncorrectServer';
       } else {
         error.value = 'loginPage.createAccount.errors.offlineOrIncorrectServer';
-        window.electronAPI.log('error', `Failed to validated the code: ${result.error.tag} (${result.error.error})`);
+        window.nativeAPI.log('error', `Failed to validated the code: ${result.error.tag} (${result.error.error})`);
       }
     }
   } finally {

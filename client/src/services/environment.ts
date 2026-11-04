@@ -1,9 +1,16 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { isWeb } from '@/parsec';
 import { EnvironmentType, I18n } from 'megashark-lib';
 
+// Returns the `X.Y` part of a version (`v3.5.1-a.0+dev` -> `3.5`), or `undefined` if it can't be parsed
+export function getMajorMinorVersion(version: string): string | undefined {
+  const match = version.trim().match(/^v?(\d+)\.(\d+)/);
+  return match ? `${match[1]}.${match[2]}` : undefined;
+}
+
 export const APP_VERSION = __APP_VERSION__;
+export const APP_MAJOR_MINOR_VERSION = getMajorMinorVersion(APP_VERSION);
 
 /*
  STRIPE
@@ -146,17 +153,45 @@ function isAccountAutoLoginEnabled(): boolean {
 
 const CUSTOM_BRANDING_ENV_VARIABLE = 'PARSEC_APP_ENABLE_CUSTOM_BRANDING';
 
-function isCustomBrandingEnabled(): boolean {
-  return import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_CUSTOM_BRANDING === true;
+function isCustomBrandingEnabled(): [boolean, string] {
+  // On non-web platforms, custom branding is enabled/disabled at build time
+  // (and always without cache busting suffix). The rational being that:
+  // - Unlike for web, the meta flag in `index.html` cannot easily be modified
+  //   in the released version of Parsec.
+  // - It is no big deal to have the application always looking for custom
+  //   branding files in a config folder at startup.
+  // - We don't always enable custom branding on non-web platform since we
+  //   want to exclude it from hardened build (see CSPN build).
+  if ((!isWeb() && import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true') || (window as any).TESTING_ENABLE_CUSTOM_BRANDING === true) {
+    return [true, ''];
+  }
+
+  const obj = document.querySelector('meta[name="custom-branding"]') as HTMLMetaElement | null;
+  // Allowed values:
+  // - `false`: Custom branding is disabled
+  // - `true,cacheBustingSuffix=...`: Custom branding is enabled, note the mandatory cache
+  //   busting suffix parameter that will be added to the resources names (e.g. using
+  //   `cacheBustingSuffix=-xxx` means `custom_en-US-xxx.json` will be fetched).
+  if (obj === null || obj.content === 'false') {
+    return [false, ''];
+  }
+  const expectedPrefix = 'true,cacheBustingSuffix=';
+  if (!obj.content.startsWith(expectedPrefix)) {
+    throw Error(
+      `Invalid value for \`meta[name="custom-branding"]\`, expected \`false\` or \`${expectedPrefix}...\`, got \`${obj.content}\``,
+    );
+  }
+  const suffix = obj.content.substring(expectedPrefix.length);
+  return [true, suffix];
 }
 
-const OPEN_BAO_SERVER_ENV_VARIABLE = 'PARSEC_APP_OPEN_BAO_SERVER';
+/*
+ * Shamir
+ */
+const SHAMIR_ENV_VARIABLE = 'PARSEC_APP_ENABLE_SHAMIR';
 
-function getOpenBaoServer(): string | undefined {
-  if ((window as any).TESTING_OPEN_BAO_SERVER) {
-    return (window as any).TESTING_OPEN_BAO_SERVER;
-  }
-  return import.meta.env[OPEN_BAO_SERVER_ENV_VARIABLE];
+function isShamirEnabled(): boolean {
+  return import.meta.env[SHAMIR_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_SHAMIR === true;
 }
 
 /*
@@ -176,7 +211,7 @@ const CLEAN_APP_VERSION = normalizeAppVersion(
 );
 
 async function openUrl(url: string): Promise<void> {
-  window.electronAPI.log('debug', `Opening ${url}`);
+  window.nativeAPI.log('debug', `Opening ${url}`);
   window.open(url, '_blank');
 }
 
@@ -191,12 +226,15 @@ type Pages =
   | 'parsec_workspaces'
   | 'manage_files'
   | 'manage_devices'
-  | 'security';
+  | 'security'
+  | 'mfa';
+
+function getDocumentationUserGuideLink(page: Pages, anchor = ''): string {
+  return I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: CLEAN_APP_VERSION, page: page, anchor: anchor } });
+}
 
 async function openDocumentationUserGuideLink(page: Pages, anchor = ''): Promise<void> {
-  await openUrl(
-    I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: CLEAN_APP_VERSION, page: page, anchor: anchor } }),
-  );
+  await openUrl(getDocumentationUserGuideLink(page, anchor));
 }
 
 async function openDocumentationLink(): Promise<void> {
@@ -223,6 +261,11 @@ async function openChangelogLink(version?: string): Promise<void> {
   await openUrl(I18n.translate({ key: 'app.history', data: { version: version ? normalizeAppVersion(version) : CLEAN_APP_VERSION } }));
 }
 
+async function openWhatsNewLink(version?: string): Promise<void> {
+  const majorMinor = version ? getMajorMinorVersion(version) : APP_MAJOR_MINOR_VERSION;
+  await openUrl(I18n.translate({ key: 'app.whatsNew', data: { version: majorMinor } }));
+}
+
 async function openSourcesLink(): Promise<void> {
   await openUrl(I18n.translate('app.projectSources'));
 }
@@ -235,41 +278,38 @@ async function openTOS(tosLink: string): Promise<void> {
   await openUrl(tosLink);
 }
 
-/* Editics / Cryptpad variables */
+/* Editics variables */
 
 const ENABLE_EDITICS_VARIABLE = 'PARSEC_APP_ENABLE_EDITICS';
-const CRYPTPAD_SERVER_VARIABLE = 'PARSEC_APP_DEFAULT_CRYPTPAD_SERVER';
-const DEFAULT_CRYPTPAD_SERVER = 'https://cryptpad-dev.parsec.cloud';
 
 function isEditicsEnabled(): boolean {
   return import.meta.env[ENABLE_EDITICS_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_EDITICS === true;
 }
 
-function getDefaultCryptpadServer(): string {
-  if ((window as any).TESTING_CRYPTPAD_SERVER) {
-    return (window as any).TESTING_CRYPTPAD_SERVER;
+export function ensureHttpsProtocol(server: string): string {
+  if (!server.startsWith('http://') && !server.startsWith('https://') && !server.startsWith('parsec3://')) {
+    window.nativeAPI.log('warn', `URL ${server} doesn't start with http/https/parsec3, forcing https.`);
+    return `https://${server}`;
   }
-  if (import.meta.env[CRYPTPAD_SERVER_VARIABLE]) {
-    return import.meta.env[CRYPTPAD_SERVER_VARIABLE];
-  }
-  return DEFAULT_CRYPTPAD_SERVER;
+  return server;
 }
 
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
+  getDocumentationUserGuideLink,
   getSignUrl,
   getSaasServers,
   getTrialServers,
   isStripeDisabled,
   isSentryDisabled,
   getAccountServer,
-  getOpenBaoServer,
   isAccountEnabled,
   isEditicsEnabled,
-  getDefaultCryptpadServer,
   isAccountAutoLoginEnabled,
   isCustomBrandingEnabled,
+  ensureHttpsProtocol,
+  isShamirEnabled,
   Links: {
     openDocumentationLink,
     openDocumentationUserGuideLink,
@@ -282,5 +322,6 @@ export const Env = {
     openTOS,
     openUrl,
     openSequesterDocumentationLink,
+    openWhatsNewLink,
   },
 };

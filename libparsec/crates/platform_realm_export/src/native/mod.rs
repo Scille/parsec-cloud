@@ -1,10 +1,10 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::path::Path;
 
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Row, SqliteConnection,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
 };
 
 use libparsec_types::prelude::*;
@@ -98,7 +98,7 @@ impl RealmExportDB {
                 return Err(RealmExportDBStartError::InvalidDatabase(anyhow::anyhow!(
                     "Magic number `{}` not found",
                     OUTPUT_DB_MAGIC_NUMBER
-                )))
+                )));
             }
             Some(row) => {
                 let version = row

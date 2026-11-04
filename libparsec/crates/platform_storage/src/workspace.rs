@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 //! Workspace storage is only responsible for storing/fetching encrypted items:
 //! - No cache&concurrency is handled at this level: better let the higher level
@@ -34,6 +34,12 @@ pub struct UpdateManifestData {
     pub encrypted: RawEncryptedManifest,
     pub need_sync: bool,
     pub base_version: VersionInt,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorkspaceOutboundSyncBacklog {
+    pub pending_entries: u64,
+    pub pending_bytes: u64,
 }
 
 pub type RawEncryptedManifest = Vec<u8>;
@@ -143,6 +149,12 @@ impl WorkspaceStorage {
 
     pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
         self.platform.get_outbound_need_sync(limit).await
+    }
+
+    pub async fn get_outbound_sync_backlog(
+        &mut self,
+    ) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+        self.platform.get_outbound_sync_backlog().await
     }
 
     pub async fn get_manifest(
@@ -296,6 +308,22 @@ pub async fn workspace_storage_non_speculative_init(
     // 4) All done ! Don't forget to close the database before exiting ;-)
 
     storage.stop().await?;
+
+    Ok(())
+}
+
+pub async fn workspace_storage_remove_data(
+    data_base_dir: &Path,
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> anyhow::Result<()> {
+    crate::platform::workspace::workspace_storage_remove_data(data_base_dir, device, realm_id)
+        .await?;
+
+    // Without this, and if the database has never been opened before, `WorkspaceStorage::start`
+    // would re-populate the now-empty database with testbed data :/
+    #[cfg(feature = "test-with-testbed")]
+    crate::testbed::mark_as_populated_workspace_storage(data_base_dir, device, realm_id).await;
 
     Ok(())
 }

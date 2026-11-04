@@ -1,18 +1,20 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod distinguished_name;
 mod extensions;
 
-pub use distinguished_name::extract_dn_list_from_rnd_seq;
+use rsa::pkcs8::DecodePublicKey;
 use x509_cert::{
-    der::{Decode, Error as DERError, SliceReader},
     Version,
+    der::{Decode, Encode, Error as DERError, SliceReader},
+    time::Validity,
 };
 
 use libparsec_types::prelude::*;
 
-pub use distinguished_name::DistinguishedNameValue;
-pub use extensions::{Extensions, SubjectAltName};
+pub(crate) use distinguished_name::extract_common_name_from_subject;
+pub use distinguished_name::{DistinguishedNameValue, extract_dn_list_from_rnd_seq};
+pub(crate) use extensions::{Extensions, SubjectAltName};
 
 error_set::error_set! {
     X509LoadError := {
@@ -22,7 +24,7 @@ error_set::error_set! {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum HandleFromCertInfoError {
+pub enum X509CertificateInformationHumanHandleError {
     #[error("missing name")]
     MissingName,
     #[error("missing email")]
@@ -35,6 +37,8 @@ pub enum HandleFromCertInfoError {
 pub struct X509CertificateInformation {
     pub subject: Vec<DistinguishedNameValue>,
     pub issuer: Vec<DistinguishedNameValue>,
+    pub validity: Validity,
+    pub serial: Vec<u8>,
     pub extensions: Extensions,
 }
 
@@ -82,11 +86,13 @@ impl X509CertificateInformation {
         self.emails().next()
     }
 
-    pub fn human_handle(&self) -> Result<HumanHandle, HandleFromCertInfoError> {
+    pub fn human_handle(&self) -> Result<HumanHandle, X509CertificateInformationHumanHandleError> {
         let name = self
             .common_name()
-            .ok_or(HandleFromCertInfoError::MissingName)?;
-        let email = self.email().ok_or(HandleFromCertInfoError::MissingEmail)?;
+            .ok_or(X509CertificateInformationHumanHandleError::MissingName)?;
+        let email = self
+            .email()
+            .ok_or(X509CertificateInformationHumanHandleError::MissingEmail)?;
         HumanHandle::from_raw(email, name).map_err(Into::into)
     }
 }
@@ -95,17 +101,24 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
     type Error = X509LoadError;
 
     fn try_from(value: x509_cert::Certificate) -> Result<Self, Self::Error> {
-        let subject = extract_dn_list_from_rnd_seq(value.tbs_certificate.subject);
+        let inner_cert = value.tbs_certificate();
+        let subject = extract_dn_list_from_rnd_seq(inner_cert.subject());
         log::trace!("Collected subject: {subject:?}");
 
-        let issuer = extract_dn_list_from_rnd_seq(value.tbs_certificate.issuer);
+        let issuer = extract_dn_list_from_rnd_seq(inner_cert.issuer());
         log::trace!("Collected issuer: {issuer:?}");
 
+        let serial = inner_cert.serial_number();
+        log::trace!("Collected serial: {serial:?}");
+
+        let validity = inner_cert.validity();
+        log::trace!("Collected validity: {validity:?}");
+
         // Extensions are only available on V3 certificate
-        let extensions: Extensions = if value.tbs_certificate.version == Version::V3 {
-            value
-                .tbs_certificate
-                .extensions
+        let extensions: Extensions = if inner_cert.version() == Version::V3 {
+            inner_cert
+                .extensions()
+                .map(|v| v.as_slice())
                 .unwrap_or_default()
                 .try_into()?
         } else {
@@ -116,6 +129,44 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
             subject,
             issuer,
             extensions,
+            validity: *validity,
+            serial: serial.as_bytes().into(),
         })
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum GetCertificatePublicKeyError {
+    #[error("Invalid certificate DER: {}", .0)]
+    InvalidDer(#[from] x509_cert::der::Error),
+    #[error("Unsupported public key ({})", .0)]
+    UnsupportedPubKey(x509_cert::der::oid::ObjectIdentifier),
+    #[error("Invalid SPKI: {}", .0)]
+    SpkiError(rsa::pkcs8::spki::Error),
+}
+
+pub(crate) fn get_certificate_public_key(
+    raw_cert: &[u8],
+) -> Result<PublicKey, GetCertificatePublicKeyError> {
+    let cert = x509_cert::Certificate::decode(&mut SliceReader::new(raw_cert)?)?;
+    let spki = cert.tbs_certificate().subject_public_key_info();
+
+    match spki.algorithm.oid {
+        x509_cert::der::oid::db::rfc5912::RSA_ENCRYPTION => {
+            // TODO: Use RsaPublicKey::try_from(spki::SubjectPublicKeyInfo) once rsa is update and
+            // use the same version of spki.
+            // https://github.com/Scille/parsec-cloud/issues/11457
+            let mut buffer = Vec::new();
+            spki.encode_to_vec(&mut buffer)
+                .map_err(GetCertificatePublicKeyError::InvalidDer)?;
+            rsa::RsaPublicKey::from_public_key_der(buffer.as_slice())
+                .map(PublicKey::Rsa)
+                .map_err(GetCertificatePublicKeyError::SpkiError)
+        }
+        ty => Err(GetCertificatePublicKeyError::UnsupportedPubKey(ty)),
+    }
+}
+
+pub(crate) enum PublicKey {
+    Rsa(rsa::RsaPublicKey),
 }

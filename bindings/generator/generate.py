@@ -14,9 +14,11 @@ from types import ModuleType, UnionType
 from typing import (  # noqa: UP035
     Any,
     Dict,
+    ForwardRef,
     List,
     Set,
     Tuple,
+    TypeAliasType,
     TypeVar,
     Union,
     get_args,
@@ -31,6 +33,7 @@ BASEDIR = Path(__file__).parent
 META_TYPES = [
     "Result",
     "Ref",
+    "Box",
     "StrBasedType",
     "BytesBasedType",
     "F64BasedType",
@@ -55,6 +58,9 @@ class Result: ...
 
 
 class Ref: ...
+
+
+class Box: ...
 
 
 class StrBasedType(str): ...
@@ -200,6 +206,18 @@ class BaseTypeInUse:
         assert not isinstance(param, str), (
             f"Bad param `{param!r}`, passing type as string is not supported"
         )
+
+        alias_param = None
+        if isinstance(param, TypeAliasType):
+            alias_param = param
+            param = param.__value__
+
+        if isinstance(param, ForwardRef):
+            assert isinstance(param.__forward_arg__, str), (
+                "Only forward reference on str is supported"
+            )
+            return LazyTypeInUse(param.__forward_arg__)
+
         origin = getattr(param, "__origin__", None)
         args = get_args(param)
         if origin is Union or isinstance(
@@ -225,7 +243,10 @@ class BaseTypeInUse:
             )
 
         elif origin is tuple:
-            return TupleTypeInUse([BaseTypeInUse.parse(x) for x in args])
+            values = [BaseTypeInUse.parse(x) for x in args]
+            return TupleTypeInUse(
+                values=values, alias_name=alias_param.__name__ if alias_param else None
+            )
 
         elif origin is Result:
             assert len(args) == 2
@@ -238,6 +259,10 @@ class BaseTypeInUse:
         elif origin is Ref:
             assert len(args) == 1
             return RefTypeInUse(elem=BaseTypeInUse.parse(args[0]))
+
+        elif origin is Box:
+            assert len(args) == 1
+            return BoxTypeInUse(elem=BaseTypeInUse.parse(args[0]))
 
         elif param is OnClientEventCallback:
             spec = OpaqueSpec(kind="OnClientEventCallback")
@@ -325,6 +350,36 @@ class BaseTypeInUse:
 
 
 @dataclass
+class LazyTypeInUse(BaseTypeInUse):
+    """
+    Type needed to implement ForwardRef used in recursive structures
+    """
+
+    type_name: str
+    _resolved: BaseTypeInUse | None = None
+
+    def __repr__(self) -> str:
+        try:
+            resolved = repr(self.resolve())
+        except AssertionError:
+            resolved = "<not available yet>"
+        return f"LazyTypeInUse(type_name={self.type_name!r}, resolved={resolved})"
+
+    def resolve(self) -> BaseTypeInUse:
+        if self._resolved:
+            return self._resolved
+        for k, v in TYPES_DB.items():
+            if k.__name__ == self.type_name:
+                self._resolved = v
+                return v
+        else:
+            assert False, f"No type named `{self.type_name}` !"
+
+    def __getattr__(self, name):
+        return getattr(self.resolve(), name)
+
+
+@dataclass
 class NoneTypeInUse(BaseTypeInUse):
     kind = "none"
 
@@ -358,6 +413,7 @@ class SetTypeInUse(BaseTypeInUse):
 class TupleTypeInUse(BaseTypeInUse):
     kind = "tuple"
     values: list[BaseTypeInUse]
+    alias_name: str | None
 
 
 @dataclass
@@ -388,6 +444,13 @@ class UnitStructSpec(StructSpec):
 
     def list_attributes(self) -> str:
         return ""
+
+
+@dataclass
+class TupleAliasSpec(BaseTypeInUse):
+    kind = "tuple"
+    name: str
+    elems: list[BaseTypeInUse]
 
 
 @dataclass
@@ -422,14 +485,20 @@ class RefTypeInUse(BaseTypeInUse):
 
 
 @dataclass
+class BoxTypeInUse(BaseTypeInUse):
+    kind = "box"
+    elem: BaseTypeInUse
+
+
+@dataclass
 class StrBasedTypeInUse(BaseTypeInUse):
     kind = "str_based"
     name: str
     # If set, custom_from_rs_string/custom_to_rs_string contains a Rust closure snippet
     # `fn (String) -> Result<X, AsRef<str>>`
-    custom_from_rs_string: str | None = None
+    custom_from_rs_string: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<String, AsRef<str>>`
-    custom_to_rs_string: str | None = None
+    custom_to_rs_string: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -438,9 +507,9 @@ class BytesBasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_bytes/custom_to_rs_bytes contains a Rust closure snippet
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
-    custom_from_rs_bytes: str | None = None
+    custom_from_rs_bytes: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
-    custom_to_rs_bytes: str | None = None
+    custom_to_rs_bytes: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -449,9 +518,9 @@ class F64BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_f64/custom_to_rs_f64 contains a Rust closure snippet
     # `fn (f64) -> Result<X, AsRef<str>>`
-    custom_from_rs_f64: str | None = None
+    custom_from_rs_f64: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<f64, AsRef<str>>`
-    custom_to_rs_f64: str | None = None
+    custom_to_rs_f64: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -460,9 +529,9 @@ class U8BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u8/custom_to_rs_u8 contains a Rust closure snippet
     # `fn (u8) -> Result<X, AsRef<str>>`
-    custom_from_rs_u8: str | None = None
+    custom_from_rs_u8: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u8, AsRef<str>>`
-    custom_to_rs_u8: str | None = None
+    custom_to_rs_u8: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -471,9 +540,9 @@ class U16BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u16/custom_to_rs_u16 contains a Rust closure snippet
     # `fn (u16) -> Result<X, AsRef<str>>`
-    custom_from_rs_u16: str | None = None
+    custom_from_rs_u16: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u16, AsRef<str>>`
-    custom_to_rs_u16: str | None = None
+    custom_to_rs_u16: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -482,9 +551,9 @@ class I32BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_i32/custom_to_rs_i32 contains a Rust closure snippet
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
-    custom_from_rs_i32: str | None = None
+    custom_from_rs_i32: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
-    custom_to_rs_i32: str | None = None
+    custom_to_rs_i32: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -493,9 +562,9 @@ class U32BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u32/custom_to_rs_u32 contains a Rust closure snippet
     # `fn (u32) -> Result<X, AsRef<str>>`
-    custom_from_rs_u32: str | None = None
+    custom_from_rs_u32: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u32, AsRef<str>>`
-    custom_to_rs_u32: str | None = None
+    custom_to_rs_u32: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -504,9 +573,9 @@ class I64BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_i64/custom_to_rs_i64 contains a Rust closure snippet
     # `fn (i64) -> Result<X, AsRef<str>>`
-    custom_from_rs_i64: str | None = None
+    custom_from_rs_i64: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<i64, AsRef<str>>`
-    custom_to_rs_i64: str | None = None
+    custom_to_rs_i64: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -515,9 +584,9 @@ class U64BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u64/custom_to_rs_u64 contains a Rust closure snippet
     # `fn (u64) -> Result<X, AsRef<str>>`
-    custom_from_rs_u64: str | None = None
+    custom_from_rs_u64: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u64, AsRef<str>>`
-    custom_to_rs_u64: str | None = None
+    custom_to_rs_u64: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -559,6 +628,7 @@ class ApiSpecs:
     u64_based_types: list[BasedTypeSpec]
     meths: list[MethSpec]
     structs: list[StructSpec]
+    tuple_aliases: list[TupleAliasSpec]
     variants: list[VariantSpec]
     enums: list[EnumSpec]
     rust_code_to_inject: str | None  # Hack for the dummy test api
@@ -568,7 +638,7 @@ class ApiSpecs:
 # be used in template generation.
 # For instance, if we have `def foo() -> Bar: ...` in the api:
 # The `Bar` object is going to be a key in TYPES_DB, and the value will be the `StructSpec` built by introspecting `Bar`
-TYPES_DB: dict[type, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {
+TYPES_DB: dict[type | TypeAliasType, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {
     bool: OpaqueSpec(kind="bool"),
     float: OpaqueSpec(kind="float"),
     str: OpaqueSpec(kind="str"),
@@ -603,12 +673,15 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
         pass
 
     for item_name, item in api_items.items():
-        if isclass(item) and issubclass(item, (Variant, Structure, Enum)):
+        if (isclass(item) and issubclass(item, (Variant, Structure, Enum))) or isinstance(
+            item, TypeAliasType
+        ):
             TYPES_DB[item] = ParsingPlaceholder()  # type: ignore[assignment]
 
     # Second pass
     variants: list[VariantSpec] = []
     structs: list[StructSpec] = []
+    tuple_aliases: list[TupleAliasSpec] = []
     enums: list[EnumSpec] = []
     for item_name, item in api_items.items():
         if isclass(item) and issubclass(item, Variant):
@@ -689,6 +762,16 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             placeholder.__class__ = enum.__class__  # type: ignore[assignment]
             enums.append(placeholder)  # type: ignore[arg-type]
 
+        elif isinstance(item, TypeAliasType):
+            assert item.__value__.__origin__ is tuple, "Only `type Foo = tuple[...]` is supported"
+            placeholder = TYPES_DB[item]
+            tuple_alias = TupleAliasSpec(
+                name=item.__name__, elems=[BaseTypeInUse.parse(x) for x in item.__value__.__args__]
+            )
+            placeholder.__dict__ = tuple_alias.__dict__
+            placeholder.__class__ = tuple_alias.__class__  # type: ignore[assignment]
+            tuple_aliases.append(placeholder)  # type: ignore[arg-type]
+
     # Make sure all types have a unique name, this is not strictly required but it is very convenient when testing type in the template
     reserved: dict[Any, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {}
     for v in TYPES_DB.values():
@@ -718,7 +801,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                 )
             )
 
-    T = TypeVar("T", BasedTypeSpec, EnumSpec, VariantSpec, StructSpec, MethSpec)
+    T = TypeVar("T", BasedTypeSpec, EnumSpec, VariantSpec, StructSpec, TupleAliasSpec, MethSpec)
 
     def sorted_by_name(items: Iterable[T]) -> list[T]:
         return sorted(items, key=lambda x: x.name)
@@ -772,6 +855,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
         enums=sorted_by_name(enums),
         variants=sorted_by_name(variants),
         structs=sorted_by_name(structs),
+        tuple_aliases=sorted_by_name(tuple_aliases),
         meths=sorted_by_name(meths),
         rust_code_to_inject=getattr(api_module, "BINDING_ELECTRON_METHS_INJECT_RUST_CODE", None),
     )

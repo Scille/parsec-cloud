@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -35,7 +36,9 @@ WITH my_organization AS (
 ),
 
 my_realm AS (
-    SELECT _id
+    SELECT
+        _id,
+        status
     FROM realm
     WHERE
         organization = (SELECT my_organization._id FROM my_organization)
@@ -46,7 +49,8 @@ my_realm AS (
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT root_verify_key FROM my_organization) AS root_verify_key,
-    (SELECT _id FROM my_realm) AS realm_internal_id
+    (SELECT _id FROM my_realm) AS realm_internal_id,
+    (SELECT status FROM my_realm) AS realm_status
 """)
 
 
@@ -143,6 +147,14 @@ async def realm_export_do_base_info(
             pass
         case None:
             return RealmExportDoBaseInfoBadOutcome.REALM_NOT_FOUND
+        case _:
+            assert False, row
+
+    match row["realm_status"]:
+        case "AVAILABLE" | "ARCHIVED_OR_DELETION_PLANNED":
+            pass
+        case "DELETED":
+            return RealmExportDoBaseInfoBadOutcome.REALM_DELETED
         case _:
             assert False, row
 

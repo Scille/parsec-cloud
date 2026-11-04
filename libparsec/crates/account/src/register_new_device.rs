@@ -1,16 +1,16 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
 use libparsec_client::RegisterNewDeviceError;
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_device_loader::{
-    get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy, RemoteOperationServer,
-    SaveDeviceError,
+    AvailableDevice, DeviceSaveStrategy, RemoteOperationServer, SaveDeviceError,
+    get_default_key_file, save_device,
 };
 use libparsec_types::prelude::*;
 
-use super::{fetch_vault_items, Account, FetchVaultItemsError};
+use super::{Account, FetchVaultItemsError, fetch_vault_items};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountRegisterNewDeviceError {
@@ -24,11 +24,13 @@ pub enum AccountRegisterNewDeviceError {
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error("Storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -148,12 +150,12 @@ pub(super) async fn account_register_new_device(
         save_device(&account.config_dir, &save_strategy, &new_device, key_file)
             .await
             .map_err(|err| match err {
-                SaveDeviceError::StorageNotAvailable => {
-                    AccountRegisterNewDeviceError::StorageNotAvailable
+                SaveDeviceError::NoSpaceAvailable => {
+                    AccountRegisterNewDeviceError::NoSpaceAvailable
                 }
-                SaveDeviceError::InvalidPath => AccountRegisterNewDeviceError::InvalidPath(
-                    anyhow::anyhow!("invalid path while saving device"),
-                ),
+                SaveDeviceError::InvalidPath(error) => {
+                    AccountRegisterNewDeviceError::InvalidPath(error)
+                }
                 SaveDeviceError::Internal(error) => AccountRegisterNewDeviceError::Internal(error),
                 SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
                     AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline { server, error }

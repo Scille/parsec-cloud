@@ -1,15 +1,89 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types, PKIEncryptionAlgorithm, X509CertificateReference};
 use crate::{
-    impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
-    DeviceLabel, HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, UserID,
+    AccountVaultItemOpaqueKeyID, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
+    ParsecAddr, PasswordAlgorithm, TOTPOpaqueKeyID, UserID,
+    impl_transparent_data_format_conversion,
 };
+
+/*
+ * AdvisoryDeviceFileProtection
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum AdvisoryDeviceFilePrimaryProtection {
+    Password,
+    Keyring,
+    PKI,
+    OpenBao,
+    AccountVault,
+}
+
+/// Advisory device protection configuration combining a primary strategy with an
+/// optional TOTP second factor.
+/// This gets serialized as a string (e.g. `"PASSWORD+TOTP"`, `"PKI"`).
+///
+/// Note this type doesn't implement serde (de)serialization but instead relies
+/// on manual conversion from/to string. This is because this deserialization
+/// is expected to be run manually *after* the object containing it (i.e. server
+/// response to a `server_config` command) is deserialized, hence allowing to
+/// ignore unknown strings to stays forward-compatible.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AdvisoryDeviceFileProtection {
+    pub primary: AdvisoryDeviceFilePrimaryProtection,
+    pub with_totp: bool,
+}
+
+impl FromStr for AdvisoryDeviceFileProtection {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (primary_str, with_totp) = if let Some(base) = s.strip_suffix("+TOTP") {
+            (base, true)
+        } else {
+            (s, false)
+        };
+
+        let primary = match primary_str {
+            "PASSWORD" => AdvisoryDeviceFilePrimaryProtection::Password,
+            "KEYRING" => AdvisoryDeviceFilePrimaryProtection::Keyring,
+            "PKI" => AdvisoryDeviceFilePrimaryProtection::PKI,
+            "OPENBAO" => AdvisoryDeviceFilePrimaryProtection::OpenBao,
+            "ACCOUNT_VAULT" => AdvisoryDeviceFilePrimaryProtection::AccountVault,
+            _ => return Err(()),
+        };
+
+        Ok(AdvisoryDeviceFileProtection { primary, with_totp })
+    }
+}
+
+impl AdvisoryDeviceFileProtection {
+    pub fn as_str(&self) -> &'static str {
+        match (&self.primary, self.with_totp) {
+            (AdvisoryDeviceFilePrimaryProtection::Password, false) => "PASSWORD",
+            (AdvisoryDeviceFilePrimaryProtection::Password, true) => "PASSWORD+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::Keyring, false) => "KEYRING",
+            (AdvisoryDeviceFilePrimaryProtection::Keyring, true) => "KEYRING+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::PKI, false) => "PKI",
+            (AdvisoryDeviceFilePrimaryProtection::PKI, true) => "PKI+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::OpenBao, false) => "OPENBAO",
+            (AdvisoryDeviceFilePrimaryProtection::OpenBao, true) => "OPENBAO+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::AccountVault, false) => "ACCOUNT_VAULT",
+            (AdvisoryDeviceFilePrimaryProtection::AccountVault, true) => "ACCOUNT_VAULT+TOTP",
+        }
+    }
+}
+
+/*
+ * DeviceFileKeyring
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileKeyringData", try_from = "DeviceFileKeyringData")]
@@ -25,6 +99,7 @@ pub struct DeviceFileKeyring {
     pub keyring_service: String,
     pub keyring_user: String,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_keyring.json5");
@@ -43,7 +118,12 @@ impl_transparent_data_format_conversion!(
     keyring_service,
     keyring_user,
     ciphertext,
+    totp_opaque_key_id,
 );
+
+/*
+ * DeviceFilePassword
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePasswordData", try_from = "DeviceFilePasswordData")]
@@ -58,6 +138,7 @@ pub struct DeviceFilePassword {
     pub device_label: DeviceLabel,
     pub algorithm: PasswordAlgorithm,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_password.json5");
@@ -75,7 +156,12 @@ impl_transparent_data_format_conversion!(
     device_label,
     algorithm,
     ciphertext,
+    totp_opaque_key_id,
 );
+
+/*
+ * DeviceFileRecovery
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileRecoveryData", try_from = "DeviceFileRecoveryData")]
@@ -107,6 +193,10 @@ impl_transparent_data_format_conversion!(
     ciphertext,
 );
 
+/*
+ * DeviceFilePKI
+ */
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePKIData", try_from = "DeviceFilePKIData")]
 pub struct DeviceFilePKI {
@@ -122,6 +212,7 @@ pub struct DeviceFilePKI {
     pub algorithm: PKIEncryptionAlgorithm,
     pub encrypted_key: Bytes,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_pki.json5");
@@ -141,7 +232,12 @@ impl_transparent_data_format_conversion!(
     algorithm,
     encrypted_key,
     ciphertext,
+    totp_opaque_key_id,
 );
+
+/*
+ * DeviceFileAccountVault
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
@@ -159,6 +255,7 @@ pub struct DeviceFileAccountVault {
     pub device_label: DeviceLabel,
     pub ciphertext_key_id: AccountVaultItemOpaqueKeyID,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_account_vault.json5");
@@ -176,7 +273,12 @@ impl_transparent_data_format_conversion!(
     device_label,
     ciphertext_key_id,
     ciphertext,
+    totp_opaque_key_id,
 );
+
+/*
+ * DeviceFileOpenBao
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileOpenBaoData", try_from = "DeviceFileOpenBaoData")]
@@ -193,6 +295,7 @@ pub struct DeviceFileOpenBao {
     pub openbao_entity_id: String,
     pub openbao_ciphertext_key_path: String,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_openbao.json5");
@@ -212,7 +315,12 @@ impl_transparent_data_format_conversion!(
     openbao_entity_id,
     openbao_ciphertext_key_path,
     ciphertext,
+    totp_opaque_key_id,
 );
+
+/*
+ * DeviceFile
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]

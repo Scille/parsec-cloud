@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::path::PathBuf;
 
@@ -8,8 +8,8 @@ use libparsec_client_connection::{
 use libparsec_types::prelude::*;
 
 use crate::{
-    derive_auth_method_keys, retrieve_auth_method_master_secret_from_password, Account,
-    AccountLoginStrategy, RetrieveAuthMethodMasterSecretFromPasswordError,
+    Account, AccountLoginStrategy, RetrieveAuthMethodMasterSecretFromPasswordError,
+    derive_auth_method_keys, retrieve_auth_method_master_secret_from_password,
 };
 
 #[derive(Debug, thiserror::Error)]

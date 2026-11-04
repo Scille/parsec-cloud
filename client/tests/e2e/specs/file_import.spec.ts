@@ -17,7 +17,7 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
-async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFilesCount = 1): Promise<void> {
+async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFilesCount = 1, fileNames: Array<string> = []): Promise<void> {
   const uploadMenu = page.locator('.upload-menu');
   await expect(uploadMenu).toBeVisible();
   const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
@@ -44,6 +44,13 @@ async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFile
   if (lastOneFilesCount > 1) {
     await expect(lastElement).toHaveTheClass('multiple_elements');
     await expect(lastElement.locator('.element-details-title__name')).toHaveText(`Importing ${lastOneFilesCount} files`);
+    if (fileNames.length) {
+      const fileList = lastElement.locator('.multiples-file-list');
+      await expect(fileList).toBeHidden();
+      await lastElement.locator('.element-details-title__name').click();
+      await expect(fileList).toBeVisible();
+      await expect(fileList.locator('.multiples-file-item__label')).toHaveText(fileNames);
+    }
   } else {
     await expect(lastElement).not.toHaveTheClass('multiple_elements');
     await expect(lastElement.locator('.element-details-title__name')).toHaveText(/^[A-Za-z0-9-_.]+$/);
@@ -67,20 +74,42 @@ for (const mode of ['list', 'grid']) {
       path.join(testInfo.config.rootDir, 'data', 'imports', 'yo.png'),
       path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
     ]);
-    await checkFilesUploaded(documents, 1, 2);
+    await checkFilesUploaded(documents, 1, 2, ['yo.png', 'hell_yeah.png']);
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('2 items', { useInnerText: true });
     if (mode === 'list') {
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.label-name')).toHaveText(['hell_yeah.png', 'yo.png']);
     } else {
       const entries = documents.locator('.folder-container').locator('.file-card-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.file-card__title')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.file-card__title')).toHaveText(['hell_yeah.png', 'yo.png']);
     }
   });
 }
+
+msTest('Import by drag and drop ignores confined files', async ({ workspaces }) => {
+  await createWorkspace(workspaces, 'New_Workspace');
+  await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+
+  const documents = workspaces;
+  const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
+  await dragAndDropFile(
+    documents,
+    dropZone,
+    [],
+    [
+      { name: 'file.txt', content: btoa('a') },
+      { name: '.DS_Store', content: btoa('b') },
+    ],
+  );
+  await checkFilesUploaded(documents, 1, 1);
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await expect(entries).toHaveCount(1);
+  await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
+});
 
 for (const mode of ['list', 'grid']) {
   msTest(`Import by drag and drop on folder in ${mode} mode`, async ({ workspaces }, testInfo: TestInfo) => {
@@ -115,11 +144,11 @@ for (const mode of ['list', 'grid']) {
     if (mode === 'list') {
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.label-name')).toHaveText(['hell_yeah.png', 'yo.png']);
     } else {
       const entries = documents.locator('.folder-container').locator('.file-card-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.file-card__title')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.file-card__title')).toHaveText(['hell_yeah.png', 'yo.png']);
     }
 
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
@@ -147,7 +176,11 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     // Start with an empty workspace
     await createWorkspace(workspaces, 'New_Workspace');
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    if (displaySize === DisplaySize.Large) {
+      await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    } else {
+      await expect(workspaces.locator('.breadcrumb-file-mobile__title')).toHaveText('New_Workspace');
+    }
     const documents = workspaces;
 
     if (displaySize === DisplaySize.Small) {
@@ -174,8 +207,10 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await checkFilesUploaded(documents, 1, 11);
     await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(documents.locator('.upload-menu')).toBeHidden();
-    await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
-    await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
+    await documents.locator('.folder-container').locator('.file-list-item').locator('.label-name').nth(0).click();
+    if (displaySize === DisplaySize.Large) {
+      await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
+    }
     await expect(documents.locator('.folder-container').locator('.file-list-item')).toHaveCount(fs.readdirSync(importPath).length);
   });
 }
@@ -189,7 +224,9 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     // Start with an empty workspace
     await createWorkspace(workspaces, 'New_Workspace');
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    if (displaySize === DisplaySize.Large) {
+      await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    }
     const documents = workspaces;
 
     if (displaySize === DisplaySize.Small) {
@@ -227,7 +264,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await expect(entries).toHaveCount(2);
-    await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
+    await expect(entries.locator('.label-name')).toHaveText(['hell_yeah.png', 'yo.png']);
   });
 }
 
@@ -263,17 +300,20 @@ for (const dupPolicy of ['replace', 'ignore', 'addCount']) {
       await expect(entries).toHaveCount(1);
       await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
       await expect(entries.nth(0).locator('.label-size')).toHaveText('5 B');
+      await checkFilesUploaded(documents, 2, 1);
     } else if (dupPolicy === 'ignore') {
       await buttons.nth(0).click();
+      await expect(workspaces).toShowToast('No files to import.', 'Info');
       await expect(entries).toHaveCount(1);
       await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
       await expect(entries.nth(0).locator('.label-size')).toHaveText('1 B');
+      await checkFilesUploaded(documents, 1, 1);
     } else {
       await buttons.nth(2).click();
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['file.txt', 'file (2).txt']);
-      await expect(entries.locator('.label-size')).toHaveText(['1 B', '5 B']);
+      await expect(entries.locator('.label-name')).toHaveText(['file (2).txt', 'file.txt']);
+      await expect(entries.locator('.label-size')).toHaveText(['5 B', '1 B']);
+      await checkFilesUploaded(documents, 2, 1);
     }
-    await checkFilesUploaded(documents, 2, 1);
   });
 }

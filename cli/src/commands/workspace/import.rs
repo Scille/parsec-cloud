@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
@@ -12,9 +14,10 @@ use tokio::{io::AsyncReadExt, task::JoinSet};
 use crate::utils::StartedClient;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = config_dir, device, workspace]
     pub struct Args {
         /// Local file or folder to import (e.g. "myfile.txt")
+        #[arg(value_hint = clap::ValueHint::FilePath)]
         pub(crate) src: PathBuf,
         /// Destination path in the workspace (e.g. "/path/to/myfile.txt")
         ///
@@ -22,6 +25,7 @@ crate::clap_parser_with_shared_opts_builder!(
         /// parent directories do not exist, unless the `parents` option is enabled.
         ///
         /// If the destination file already exists, its content will be replaced.
+        #[arg(value_hint = clap::ValueHint::DirPath)]
         pub(crate) dest: FsPath,
         /// If specified, create parent directories as needed
         ///
@@ -55,7 +59,11 @@ crate::build_main_with_client!(
     .into()
 );
 
-pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn workspace_import(
+    _ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args {
         src,
         dest,
@@ -283,10 +291,7 @@ fn notify_sync_completion(
     let notify2 = notify.clone();
 
     let event_conn = event_bus.connect(move |event| {
-        let libparsec_client::EventWorkspaceOpsOutboundSyncDone {
-            ref realm_id,
-            entry_id,
-        } = event;
+        let libparsec_client::EventWorkspaceOpsOutboundSyncDone { realm_id, entry_id } = event;
         let mut files_to_sync = files_to_sync.lock().expect("Mutex poisoned");
         if realm_id == &wid && files_to_sync.remove(entry_id) {
             log::debug!("Outbound sync done for file ({realm_id}:{entry_id})");

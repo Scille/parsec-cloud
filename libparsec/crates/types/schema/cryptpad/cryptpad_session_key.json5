@@ -1,0 +1,49 @@
+{
+    "label": "CryptpadSessionKey",
+    "type": "cryptpad_session_key",
+    "introduced_in_revision": 3100,
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            // ID of the document that is expected to be accessed in this session.
+            // Passing a vlob ID that doesn't exist in the realm is allowed, as
+            // this allows to start a session for a newly created document that
+            // hasn't been synchronized yet.
+            "name": "document_id",
+            "type": "VlobID"
+        },
+        // Accessing a Cryptpad editing session requires three things that are derived
+        // from two seed keys:
+        //
+        // edit key ──────┬───────> Decryption symmetric key
+        //                └──> view key ──────┬───────> Session ID
+        //                                    └───────> Signing asymmetric key
+        //
+        // Couple of notes:
+        // - The edit key is a string of `base64_encode(<seed1>)` with `seed1` being 18 octets randomly generated.
+        // - The view key is a string of `base64_encode(<seed2>)` with `seed2` 32 octets derived from `seed1`
+        // - The edit key can derive everything.
+        // - The view key is enough to access the session without being able to modify it.
+        //
+        // see: https://github.com/cryptpad/chainpad-crypto/blob/a9cb410e0a4617cc5c9e2d25555f6b873ae2e89a/crypto.js#L196-L278
+        {
+            // `key` meaning depends on this field:
+            // - `true`: key is an edit key
+            // - `false`: key is a view key
+            "name": "can_edit",
+            "type": "Boolean"
+        },
+        {
+            // Cryptpad session key, can be either an edit or a view one
+            "name": "key",
+            "type": "String"
+        }
+    ]
+}

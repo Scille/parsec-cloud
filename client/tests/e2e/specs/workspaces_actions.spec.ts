@@ -1,7 +1,22 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page } from '@playwright/test';
-import { expect, fillInputModal, getClipboardText, login, msTest, resizePage } from '@tests/e2e/helpers';
+import { Locator, Page } from '@playwright/test';
+import {
+  answerQuestion,
+  checkWorkspaceContextMenu,
+  createWorkspace,
+  expect,
+  fillInputModal,
+  getClipboardText,
+  login,
+  logout,
+  mockLibParsec,
+  msTest,
+  resizePage,
+  revokeUser,
+  shareWorkspace,
+} from '@tests/e2e/helpers';
+import { mockDesktop } from '@tests/e2e/helpers/mock';
 
 type Mode = 'grid' | 'list' | 'sidebar';
 
@@ -22,7 +37,7 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
-async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): Promise<void> {
+async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): Promise<Locator> {
   if (mode === 'grid') {
     const wk = page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
     if (method === OpenMenuMethod.Button) {
@@ -49,12 +64,14 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
       await wk.click({ button: 'right' });
     }
   }
+  await expect(page.locator('.workspace-context-menu')).toBeVisible();
+  return page.locator('.workspace-context-menu');
 }
 
 const MENU = [
   {
-    title: 'Manage workspace',
-    actions: ['Rename', 'History'],
+    title: 'Workspace management',
+    actions: ['Rename', 'History', 'Hide this workspace', 'Archive this workspace', 'Details', 'Delete this workspace'],
   },
   {
     title: 'Collaboration',
@@ -62,16 +79,29 @@ const MENU = [
   },
   {
     title: 'Miscellaneous',
-    actions: ['Pin'],
+    actions: ['Add to Favorites'],
+  },
+];
+
+const READER_MENU = [
+  {
+    title: 'Workspace management',
+    actions: ['History', 'Hide this workspace', 'Details'],
+  },
+  {
+    title: 'Collaboration',
+    actions: ['Copy link', 'Sharing and roles'],
+  },
+  {
+    title: 'Miscellaneous',
+    actions: ['Add to Favorites'],
   },
 ];
 
 for (const mode of ['grid', 'list', 'sidebar']) {
   msTest(`Checks workspace context menu ${mode}`, async ({ workspaces }) => {
     await expect(workspaces.locator('.workspace-context-menu')).toBeHidden();
-    await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    const contextMenu = workspaces.locator('.workspace-context-menu');
-    await expect(contextMenu).toBeVisible();
+    const contextMenu = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     await expect(contextMenu.getByRole('group')).toHaveCount(MENU.length);
     for (const [index, group] of MENU.entries()) {
       await expect(contextMenu.getByRole('group').nth(index).getByRole('listitem').nth(0)).toHaveText(group.title);
@@ -87,12 +117,27 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     }
   });
 
+  msTest(`Checks read-only workspace context menu ${mode}`, async ({ workspacesStandard }) => {
+    await expect(workspacesStandard.locator('.workspace-context-menu')).toBeHidden();
+    const contextMenu = await openContextMenu(workspacesStandard, mode as Mode, OpenMenuMethod.Button);
+    await expect(contextMenu.getByRole('group')).toHaveCount(MENU.length);
+    for (const [index, group] of READER_MENU.entries()) {
+      await expect(contextMenu.getByRole('group').nth(index).getByRole('listitem').nth(0)).toHaveText(group.title);
+      for (const [actionIndex, action] of group.actions.entries()) {
+        await expect(
+          contextMenu
+            .getByRole('group')
+            .nth(index)
+            .getByRole('listitem')
+            .nth(actionIndex + 1),
+        ).toHaveText(action);
+      }
+    }
+  });
+
   msTest(`Checks workspace context menu with right click ${mode}`, async ({ workspaces }) => {
     await expect(workspaces.locator('.workspace-context-menu')).toBeHidden();
-    await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.RightClick);
-
-    const contextMenu = workspaces.locator('.workspace-context-menu');
-    await expect(contextMenu).toBeVisible();
+    const contextMenu = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.RightClick);
     await expect(contextMenu.getByRole('group')).toHaveCount(MENU.length);
     for (const [index, group] of MENU.entries()) {
       await expect(contextMenu.getByRole('group').nth(index).getByRole('listitem').nth(0)).toHaveText(group.title);
@@ -127,8 +172,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
   });
 
   msTest(`Rename a workspace ${mode}`, async ({ workspaces }) => {
-    await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    const popover = workspaces.locator('.workspace-context-menu');
+    const popover = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     await popover.getByRole('listitem').nth(1).click();
     await fillInputModal(workspaces, 'New Workspace Name', true);
     await expect(workspaces).toShowToast('Workspace has been successfully renamed to New Workspace Name.', 'Success');
@@ -136,30 +180,23 @@ for (const mode of ['grid', 'list', 'sidebar']) {
 
   msTest(`Check copy link workspace action with permission ${mode}`, async ({ workspaces, context }) => {
     await context.grantPermissions(['clipboard-write']);
-    await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    const contextMenu = workspaces.locator('.workspace-context-menu');
-    await expect(contextMenu).toBeVisible();
+    const contextMenu = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     await expect(contextMenu.getByRole('group').nth(1).getByRole('listitem').nth(1)).toHaveText('Copy link');
     await contextMenu.getByRole('group').nth(1).getByRole('listitem').nth(1).click();
     await expect(workspaces).toShowToast('Workspace link has been copied to clipboard.', 'Info');
-    expect(await getClipboardText(workspaces)).toMatch(/^parsec3:\/\/.+$/);
+    expect(await getClipboardText(workspaces)).toMatch(/^https?:\/\/.+\/redirect\/.+a=path&p=.+$/);
   });
 
   msTest(`Check copy link workspace action without permission ${mode}`, async ({ workspaces }) => {
-    await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    const contextMenu = workspaces.locator('.workspace-context-menu');
-    await expect(contextMenu).toBeVisible();
+    const contextMenu = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     await expect(contextMenu.getByRole('group').nth(1).getByRole('listitem').nth(1)).toHaveText('Copy link');
     await contextMenu.getByRole('group').nth(1).getByRole('listitem').nth(1).click();
     await expect(workspaces).toShowToast('Failed to copy the link. Your browser or device does not seem to support copy/paste.', 'Error');
   });
 
   msTest(`Toggle workspace favorite ${mode}`, async ({ workspaces }) => {
-    const favorites = workspaces.locator('.sidebar').locator('#sidebar-favorite-workspaces');
-    await expect(favorites).toBeVisible();
-    await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(7).click();
+    const popover = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
+    await popover.getByRole('listitem').nth(11).click();
     await expect(popover).toBeHidden();
     if (mode === 'sidebar') {
       await workspaces.locator('.sidebar').locator('#sidebar-all-workspaces').click();
@@ -174,18 +211,19 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       await expect(wk.locator('.workspace-name')).toHaveText('wksp1');
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
-    await expect(favorites).toBeVisible();
-    await expect(favorites.locator('.sidebar-content-organization-button__text')).toHaveText('Pinned');
+
+    await wk.click({ button: 'right' });
+    await checkWorkspaceContextMenu(workspaces, 'owner', 'Remove from Favorites', { isFavorite: true });
+    await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__off');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ workspaces }) => {
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeHidden();
-    await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
-    const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(5).click();
+    const popover = await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
+    await popover.getByRole('listitem').nth(9).click();
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeVisible();
     await expect(workspaces.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
-    await expect(workspaces.locator('.sharing-modal__title')).toHaveText('wksp1');
+    await expect(workspaces.locator('.sharing-modal__workspace__title')).toHaveText('wksp1');
   });
 }
 
@@ -236,4 +274,130 @@ msTest('Check if action bar updates when resizing the window', async ({ connecte
   await expect(connected.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('New workspace');
   await connected.keyboard.press('Escape');
   await expect(connected.locator('.popover-viewport')).toBeHidden();
+});
+
+for (const method of ['button', 'context']) {
+  msTest(`Take workspace ownership with ${method}`, async ({ home }) => {
+    msTest.setTimeout(45_000);
+    await login(home, 'Boby McBobFace');
+    await expect(home).toBeWorkspacePage();
+    await createWorkspace(home, 'BOB WORKSPACE');
+    await shareWorkspace(home, 'BOB WORKSPACE', 'Alicey McAliceFace', 'Contributor');
+    await logout(home);
+    await login(home, 'Alicey McAliceFace');
+    await expect(home).toBeWorkspacePage();
+    await expect(home.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(2);
+    await expect(home.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(['BOB WORKSPACE', 'wksp1']);
+    await home.locator('.sidebar').locator('#sidebar-users').click();
+    await expect(home).toBeUserPage();
+    await expect(home).toHavePageTitle('Users');
+    await revokeUser(home, 'Boby McBobFace');
+    await home.locator('.sidebar').locator('#sidebar-all-workspaces').click();
+    await expect(home).toBeWorkspacePage();
+    const workspace = home.locator('.workspace-card-item', { hasText: 'BOB WORKSPACE' });
+    const wkContextMenu = home.locator('.workspace-context-menu');
+    await expect(workspace.locator('.missing-ownership-label')).toBeVisible();
+    await expect(workspace.locator('.missing-ownership-label')).toHaveText('Missing ownership');
+    if (method === 'button') {
+      await workspace.locator('.missing-ownership-label').click();
+    } else {
+      await expect(wkContextMenu).toBeHidden();
+      await workspace.click({ button: 'right' });
+      await expect(wkContextMenu).toBeVisible();
+      await expect(wkContextMenu.locator('.list-group-item__label:visible')).toHaveText([
+        'Claim ownership',
+        'History',
+        'Hide this workspace',
+        'Details',
+        'Copy link',
+        'Sharing and roles',
+        'Add to Favorites',
+      ]);
+      await wkContextMenu.locator('.list-group-item__label:visible').nth(0).click();
+      await expect(wkContextMenu).toBeHidden();
+    }
+    await answerQuestion(home, true, {
+      expectedNegativeText: 'Not now',
+      expectedPositiveText: 'Claim ownership',
+      expectedQuestionText: 'No owner is set for the workspace BOB WORKSPACE. You can claim the ownership for yourself.',
+      expectedTitleText: 'Owner required for this workspace',
+    });
+    await expect(home).toShowToast('You claimed ownership of the workspace BOB WORKSPACE.', 'Success');
+    await home.waitForTimeout(1000);
+    await expect(workspace.locator('.missing-ownership-label')).toBeHidden();
+    await expect(workspace.locator('.workspace-card-bottom__role')).toBeVisible();
+    await expect(workspace.locator('.workspace-card-bottom__role')).toHaveText('Owner');
+    await workspace.click({ button: 'right' });
+    await expect(wkContextMenu).toBeVisible();
+    await expect(wkContextMenu.locator('.list-group-item__label:visible')).toHaveText([
+      'Rename',
+      'History',
+      'Hide this workspace',
+      'Archive this workspace',
+      'Details',
+      'Delete this workspace',
+      'Copy link',
+      'Sharing and roles',
+      'Add to Favorites',
+    ]);
+  });
+}
+
+msTest('Test workspace unmount/mount', async ({ connected }) => {
+  await mockDesktop(connected);
+  await mockLibParsec(connected, [
+    {
+      name: 'workspaceMount',
+      result: { ok: true, value: [1337, '/workspace'] },
+    },
+    {
+      name: 'mountpointUnmount',
+      result: { ok: true, value: null },
+    },
+  ]);
+  const contextMenu = await openContextMenu(connected, 'grid', OpenMenuMethod.Button);
+  await expect(contextMenu.locator('.list-group-item__label:visible')).toHaveText([
+    'Rename',
+    'Open in explorer',
+    'History',
+    'Hide this workspace',
+    'Archive this workspace',
+    'Details',
+    'Delete this workspace',
+    'Copy link',
+    'Sharing and roles',
+    'Add to Favorites',
+  ]);
+
+  const modal = connected.locator('.workspace-hidden-modal');
+  await expect(modal).toBeHidden();
+  await contextMenu.locator('.list-group-item__label:visible').nth(3).click();
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Hide a workspace');
+  await expect(modal.locator('.workspace-hidden__description')).toHaveText(
+    'You are about to hide the workspace wksp1 and it will no longer be visible from the file explorer.',
+  );
+  await expect(modal.locator('#next-button')).toHaveText('Hide workspace');
+  await expect(modal.locator('.workspace-hidden__checkbox')).toHaveText("Don't remind me again");
+  await modal.locator('#next-button').click();
+  await expect(modal).toBeHidden();
+  await expect(connected).toShowToast('The workspace is now hidden and will no longer appear in your explorer.', 'Success');
+  await expect(connected.locator('.no-all-workspaces')).toBeVisible();
+  await connected.locator('#show-hidden-workspaces').click();
+  const newContextMenu = await openContextMenu(connected, 'grid', OpenMenuMethod.RightClick);
+  await expect(newContextMenu.locator('.list-group-item__label:visible')).toHaveText([
+    'Rename',
+    'Open in explorer',
+    'History',
+    'Show this workspace',
+    'Archive this workspace',
+    'Details',
+    'Delete this workspace',
+    'Copy link',
+    'Sharing and roles',
+    'Add to Favorites',
+  ]);
+  await newContextMenu.locator('.list-group-item__label:visible').nth(3).click();
+  await expect(connected).toShowToast('The workspace is now visible in Parsec and your explorer.', 'Success');
+  await expect(connected.locator('.no-all-workspaces')).toBeHidden();
 });

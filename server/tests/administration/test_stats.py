@@ -10,6 +10,7 @@ from parsec._parsec import (
     BlockID,
     DateTime,
     OrganizationID,
+    RealmArchivingConfiguration,
     RevokedUserCertificate,
     UserProfile,
     UserUpdateCertificate,
@@ -22,6 +23,7 @@ from tests.common import (
     CoolorgRpcClients,
     MinimalorgRpcClients,
     next_organization_id,
+    wksp1_alice_update_archiving_config,
 )
 
 
@@ -247,6 +249,32 @@ async def test_ok(
     stats = await server_stats()
     assert stats == expected_server_stats
 
+    # Finally ensure deleted workspaces are not costing any space
+
+    deletion_date = DateTime.now().add(days=31)
+    outcome = await wksp1_alice_update_archiving_config(
+        coolorg, backend, RealmArchivingConfiguration.deletion_planned(deletion_date)
+    )
+    outcome = await backend.realm.delete_2_do_delete_metadata(
+        organization_id=coolorg.organization_id,
+        realm_id=coolorg.wksp1_id,
+        now=deletion_date,
+    )
+    assert outcome is None
+
+    expected_coolorg_stats["realms"] -= 1
+    expected_coolorg_stats["data_size"] -= 30
+    expected_coolorg_stats["metadata_size"] -= 266
+    expected_coolorg_server_stats["realms"] -= 1
+    expected_coolorg_server_stats["data_size"] -= 30
+    expected_coolorg_server_stats["metadata_size"] -= 266
+
+    stats = await org_stats(coolorg.organization_id)
+    assert stats == expected_coolorg_stats
+
+    stats = await server_stats()
+    assert stats == expected_server_stats
+
 
 async def test_server_stats_format(
     administration_client: httpx.AsyncClient,
@@ -304,8 +332,8 @@ async def test_server_stats_at(
         assert response.status_code == 200, response.content
         return _strip_other_orgs(response.json(), allowed=(minimalorg.organization_id,))
 
-    # Org1 was created at 1970-01-01T00:00:00Z
-    response = await server_stats("1990-01-01T00:00:00Z")
+    # Org1 was created at 2000-01-01T00:00:00Z
+    response = await server_stats("2000-01-01T00:00:00Z")
     expected = {
         "stats": [
             {

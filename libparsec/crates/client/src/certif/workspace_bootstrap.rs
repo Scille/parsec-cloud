@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -6,10 +6,10 @@ use libparsec_types::prelude::*;
 use crate::EventTooMuchDriftWithServerClock;
 
 use super::{
-    store::{CertifStoreError, RealmBootstrapState},
     CertifEnsureRealmCreatedError, CertifPollServerError, CertifRenameRealmError,
     CertifRotateRealmKeyError, CertificateBasedActionOutcome, CertificateOps,
     InvalidCertificateError, InvalidKeysBundleError,
+    store::{CertifStoreError, RealmBootstrapState},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -20,9 +20,13 @@ pub enum CertifBootstrapWorkspaceError {
     Stopped,
     #[error("Author not allowed")]
     AuthorNotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     // Note `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -99,13 +103,13 @@ pub(super) async fn bootstrap_workspace(
             Ok(_) => (),
             Err(err) => match err {
                 CertifEnsureRealmCreatedError::Offline(e) => {
-                    return Err(CertifBootstrapWorkspaceError::Offline(e))
+                    return Err(CertifBootstrapWorkspaceError::Offline(e));
                 }
                 CertifEnsureRealmCreatedError::Stopped => {
-                    return Err(CertifBootstrapWorkspaceError::Stopped)
+                    return Err(CertifBootstrapWorkspaceError::Stopped);
                 }
                 CertifEnsureRealmCreatedError::AuthorNotAllowed => {
-                    return Err(CertifBootstrapWorkspaceError::AuthorNotAllowed)
+                    return Err(CertifBootstrapWorkspaceError::AuthorNotAllowed);
                 }
                 CertifEnsureRealmCreatedError::TimestampOutOfBallpark {
                     server_timestamp,
@@ -129,7 +133,7 @@ pub(super) async fn bootstrap_workspace(
                     });
                 }
                 CertifEnsureRealmCreatedError::Internal(err) => {
-                    return Err(err.context("Cannot do server-side realm creation").into())
+                    return Err(err.context("Cannot do server-side realm creation").into());
                 }
             },
         }
@@ -149,6 +153,7 @@ pub(super) async fn bootstrap_workspace(
                 CertifRotateRealmKeyError::Offline(e) => return Err(CertifBootstrapWorkspaceError::Offline(e)),
                 CertifRotateRealmKeyError::Stopped => return Err(CertifBootstrapWorkspaceError::Stopped),
                 CertifRotateRealmKeyError::AuthorNotAllowed => return Err(CertifBootstrapWorkspaceError::AuthorNotAllowed),
+                CertifRotateRealmKeyError::RealmDeleted => return Err(CertifBootstrapWorkspaceError::RealmDeleted),
                 CertifRotateRealmKeyError::TimestampOutOfBallpark {
                     server_timestamp, client_timestamp, ballpark_client_early_offset, ballpark_client_late_offset
                 } => {
@@ -223,6 +228,7 @@ pub(super) async fn bootstrap_workspace(
                 CertifRenameRealmError::Offline(e) => Err(CertifBootstrapWorkspaceError::Offline(e)),
                 CertifRenameRealmError::Stopped => Err(CertifBootstrapWorkspaceError::Stopped),
                 CertifRenameRealmError::AuthorNotAllowed => Err(CertifBootstrapWorkspaceError::AuthorNotAllowed),
+                CertifRenameRealmError::RealmDeleted => Err(CertifBootstrapWorkspaceError::RealmDeleted),
                 CertifRenameRealmError::TimestampOutOfBallpark {
                     server_timestamp, client_timestamp, ballpark_client_early_offset, ballpark_client_late_offset
                 } => {

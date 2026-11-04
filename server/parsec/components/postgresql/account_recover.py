@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from typing import Literal, cast
 
 from parsec._parsec import (
@@ -206,7 +205,7 @@ async def recover_proceed(
     new_auth_method_id: AccountAuthMethodID,
     new_auth_method_mac_key: SecretKey,
     new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-) -> None | AccountRecoverProceedBadOutcome:
+) -> AccountRecoverProceedBadOutcome | None:
     # Acquire a connection from the pool by hand is needed here since we don't
     # want a rollback-on-error behavior (which is what the `@transaction`
     # decorator does).
@@ -258,7 +257,7 @@ async def _recover_proceed(
     new_auth_method_id: AccountAuthMethodID,
     new_auth_method_mac_key: SecretKey,
     new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-) -> tuple[bool, None | AccountRecoverProceedBadOutcome]:
+) -> tuple[bool, AccountRecoverProceedBadOutcome | None]:
     # 1) Check the validation code and retrieve the account
 
     row = await conn.fetchrow(*_q_get_account_and_validation_code(email=email.str))

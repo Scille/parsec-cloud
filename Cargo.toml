@@ -21,11 +21,11 @@ members = [
     "libparsec/crates/tests_fixtures",
     "libparsec/crates/tests_lite",
     "libparsec/crates/tests_macros",
+    "libparsec/crates/totp",
     "libparsec/crates/types",
     "libparsec/crates/zstd",
     "bindings/web",
     "bindings/electron",
-    "bindings/android/libparsec/rust",
     "cli",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
@@ -51,6 +51,7 @@ default-members = [
     "libparsec/crates/tests_fixtures",
     "libparsec/crates/tests_lite",
     "libparsec/crates/tests_macros",
+    "libparsec/crates/totp",
     "libparsec/crates/types",
     "libparsec/crates/zstd",
     "cli",
@@ -64,14 +65,14 @@ resolver = "2"
 # https://doc.rust-lang.org/cargo/reference/workspaces.html#the-package-table
 [workspace.package]
 authors = ["@Scille/parsec-dev", "@Scille/rust-code-owners"]
-edition = "2021"
+edition = "2024"
 homepage = "https://parsec.cloud"
-license = "BUSL-1.1"
+license = "AGPL-3.0-only"
 publish = false
 repository = "https://github.com/Scille/parsec-cloud"
 # We use the same version for all crates.
 # This comment is used to prevent `taplo` from adding multiple spaces between the version and the comment.
-version = "3.7.2-a.0+dev" # __PARSEC_VERSION__
+version = "3.11.1-a.0+dev" # __PARSEC_VERSION__
 
 [workspace.lints.clippy]
 undocumented_unsafe_blocks = "deny"
@@ -114,122 +115,129 @@ libparsec_testbed = { path = "libparsec/crates/testbed", default-features = fals
 libparsec_tests_fixtures = { path = "libparsec/crates/tests_fixtures", default-features = false }
 libparsec_tests_lite = { path = "libparsec/crates/tests_lite", default-features = false }
 libparsec_tests_macros = { path = "libparsec/crates/tests_macros", default-features = false }
+libparsec_totp = { path = "libparsec/crates/totp", default-features = false }
 libparsec_types = { path = "libparsec/crates/types", default-features = false }
 libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
-android_logger = { version = "0.15", default-features = false }
-anyhow = { version = "1.0.100", default-features = false }
+anyhow = { version = "1.0.102", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
-assert_cmd = { version = "2.1.2", default-features = false }
+assert_cmd = { version = "2.2.2", default-features = false }
 async-broadcast = { version = "0.7.2", default-features = false }
 async-lock = { version = "3.4.2", default-features = false }
-blahaj = "0.6.0"
+blahaj = "0.7.0"
 blake2 = { version = "0.10.6", default-features = false }
-bytes = { version = "1.11.0", default-features = false }
-chrono = { version = "0.4.43", default-features = false }
-clap = { version = "4.5.54", default-features = false }
-console_error_panic_hook = { version = "=0.1.6", default-features = false }
+bytes = { version = "1.11.1", default-features = false }
+chrono = { version = "0.4.45", default-features = false }
+clap = { version = "4.6.1", default-features = false }
+clap_complete = { version = "4.6.8", default-features = false }
+clap_mangen = { version = "0.3.0", default-features = false }
+console_error_panic_hook = { version = "=0.1.7", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
-crc32fast = { version = "1.5.0", default-features = false }                              # Fast hasher used only by the testbed
+crc32fast = { version = "1.5.0", default-features = false }                                                                                                       # Fast hasher used only by the testbed
 crypto_box = { version = "0.9.1", default-features = false }
 crypto_secretbox = { version = "0.1.1", default-features = false }
-cryptoki = { version = "0.11.0", default-features = false }                              # Allow to interact with pkcs11 interfaces
-ctrlc = { version = "3.5.1", default-features = false }
-curve25519-dalek = { version = "4.1.3", default-features = false }
-data-encoding = { version = "2.10.0", default-features = false }                         # You need base64&co ? This is the crate you need !
+cryptoki = { version = "0.12.0", default-features = false }                                                                                                       # Allow to interact with pkcs11 interfaces
+ctrlc = { version = "3.5.2", default-features = false }
+curve25519-dalek = { version = "5.0.0", default-features = false }
+data-encoding = { version = "2.11.0", default-features = false }                                                                                                  # You need base64&co ? This is the crate you need !
 dialoguer = { version = "0.12.0", default-features = false }
 digest = { version = "0.10.7", default-features = false }
-dirs = { version = "6.0.0", default-features = false }
+dirs = { version = "7.0.0", default-features = false }
 ed25519-dalek = { version = "2.2.0", default-features = false }
-email-address-parser = { version = "2.0.0", default-features = false }
-env_logger = { version = "0.11.8", default-features = false }
+email-address-parser = { version = "2.0.2", default-features = false }
+env_logger = { version = "0.11.10", default-features = false }
 error_set = { version = "0.9.1", default-features = false }
 event-listener = { version = "5.4.1", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
 flume = { version = "0.12.0", default-features = false }
-fnmatch-regex = { version = "0.2.1", default-features = false }
-fuser = { version = "0.16.0", default-features = false }
-futures = { version = "0.3.31", default-features = false }
+fnmatch-regex = { version = "0.3.0", default-features = false }
+fuser = { git = "https://github.com/FirelightFlagboy/fuser.git", rev = "0df39be9337f44417cbad7c84f7ae2fa0170441c", version = "0.18.0", default-features = false }
+futures = { version = "0.3.32", default-features = false }
 generic-array = { version = "0.14.7", default-features = false }
-getrandom = { package = "getrandom", version = "0.3.4", default-features = false }
-gloo-timers = { version = "0.3.0", default-features = false }
+getrandom = { package = "getrandom", version = "0.4.3", default-features = false }
+gloo-timers = { version = "0.4.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "1.1.0", default-features = false }
 indexed-db = { version = "0.5.0-alpha.1", default-features = false }
-itertools = { version = "0.14.0", default-features = false }
-jni = { version = "0.21.1", default-features = false }
-js-sys = { version = "0.3.78", default-features = false }
+itertools = { version = "0.15.0", default-features = false }
+js-sys = { version = "0.3.95", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.180", default-features = false }
-libsodium-rs = { version = "0.2.2", default-features = false }
-libsqlite3-sys = { version = "0.30.1", default-features = false }
+libsodium-rs = { version = "0.2.4", default-features = false }
+libsqlite3-sys = { version = "0.37.0", default-features = false }
 log = { version = "0.4.29", default-features = false }
 miniserde = { version = "0.1.45", default-features = false }
 neon = { version = "1.1.1", default-features = false }
-once_cell = { version = "1.21.3", default-features = false }
-openssl = { version = "0.10.75", default-features = false }
+once_cell = { version = "1.21.4", default-features = false }
+openssl = { version = "0.10.80", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 percent-encoding = { version = "2.3.2", default-features = false }
-pin-project = { version = "1.1.10", default-features = false }
-pkg-config = { version = "0.3.32", default-features = false }                            # Utility crate to find system artifacts
-predicates = { version = "3.1.3", default-features = false }
+pin-project = { version = "1.1.12", default-features = false }
+pkg-config = { version = "0.3.33", default-features = false }                                                                                                     # Utility crate to find system artifacts
+predicates = { version = "3.1.4", default-features = false }
 pretty_assertions = { version = "1.4.1", default-features = false }
-proc-macro2 = { version = "1.0.105", default-features = false }
-proptest = { version = "1.9.0", default-features = false }
-proptest-state-machine = { version = "0.6.0", default-features = false }
-pyo3 = { version = "0.25.1", default-features = false }
-quote = { version = "1.0.43", default-features = false }
-rand = { version = "0.8.5", default-features = false }
-regex = { version = "1.12.2", default-features = false }
-regex-syntax = { version = "0.8.8", default-features = false }
-reqwest = { version = "0.13.1", default-features = false }
-rexpect = "0.6.3"
+proc-macro2 = { version = "1.0.106", default-features = false }
+proptest = { version = "1.11.0", default-features = false }
+proptest-state-machine = { version = "0.9.0", default-features = false }
+pyo3 = { version = "0.29.0", default-features = false }
+quote = { version = "1.0.45", default-features = false }
+rand = { version = "0.10.3", default-features = false }
+rand8 = { package = "rand", version = "0.8.5", default-features = false }
+regex = { version = "1.12.3", default-features = false }
+regex-syntax = { version = "0.8.10", default-features = false }
+reqwest = { version = "0.13.2", default-features = false }
+rexpect = "0.7.1"
 rmp-serde = { version = "1.3.1", default-features = false }
-rpassword = { version = "7.4.0", default-features = false }
-rsa = { version = "0.8.2", default-features = false }
-rstest = { version = "0.26.1", default-features = false }
+rpassword = { version = "7.5.2", default-features = false }
+rsa = { version = "0.10.0-rc.19", default-features = false }
+rstest = { version = "0.28.0", default-features = false }
 rstest_reuse = { version = "0.7.0", default-features = false }
-rustls-pki-types = { version = "1.14.0", default-features = false }
-rustls-webpki = { version = "0.103.9", default-features = false }
-ruzstd = { version = "0.8.2", default-features = true }
-schannel = { version = "0.1.28", default-features = false }                              # Crate to interact with windows credential store, it's used notably in `native-tls` crate.
-sentry = { version = "0.46.1", default-features = false }
-sentry-log = { version = "0.43.0", default-features = false }
+rustls-pki-types = { version = "1.14.1", default-features = false }
+rustls-webpki = { version = "0.103.10", default-features = false }
+ruzstd = { version = "0.9", default-features = true }
+# Crate to interact with windows credential store, it's used notably in `native-tls` crate.
+schannel = { version = "0.1.29", default-features = false }
+scwsapi = { git = "https://github.com/Scille/scwsapi-rs.git", rev = "beb3aa2e79f622a65025a7b07af6ef298e622c38", default-features = false }
+scwsapi-sys = { git = "https://github.com/Scille/scwsapi-rs.git", rev = "beb3aa2e79f622a65025a7b07af6ef298e622c38", default-features = false }
+sentry = { version = "0.49.0", default-features = false }
+sentry-log = { version = "0.47.0", default-features = false }
 serde = { version = "1.0.228", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.19", default-features = false }
 serde_json = { version = "1.0.149", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
-serde_with = { version = "3.16.1", default-features = false }
+serde_with = { version = "3.19.0", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
+shadow-rs = { version = "2.0.0", default-features = false }
 smallvec = { version = "1.15.1", default-features = false }
-spinners = { version = "4.1.1", default-features = false }
-sqlx = { version = "0.8.6", default-features = false }
-syn = { version = "2.0.114", default-features = false }
+spinners = { version = "4.2.0", default-features = false }
+sqlx = { version = "0.9.0", default-features = false }
+syn = { version = "3.0.3", default-features = false }
+textwrap = { version = "0.16.2", default-features = false }
 thiserror = { version = "2.0.18", default-features = false }
-tokio = { version = "1.49.0", default-features = false }
+tokio = { version = "1.54.0", default-features = false }
 unicode-normalization = { version = "0.1.25", default-features = false }
 url = { version = "2.5.8", default-features = false }
-uuid = { version = "1.19.0", default-features = false }
+uuid = { version = "1.23.1", default-features = false }
 wasm-bindgen = { version = "0.2.101", default-features = false }
 wasm-bindgen-futures = { version = "0.4.51", default-features = false }
 wasm-bindgen-test = { version = "0.3.55", default-features = false, features = ["std"] }
-web-sys = { version = "0.3.78", default-features = false }
+web-sys = { version = "0.3.95", default-features = false }
 web-time = { version = "1.1.0", default-features = false }
 widestring = { version = "1.2.1", default-features = false }
 windows-sys = { version = "0.61.2", default-features = false }
 winfsp_wrs = { version = "0.4.1", default-features = false }
 winfsp_wrs_build = { version = "0.4.1", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
-x509-cert = { version = "0.2.5", default-features = false }
+x509-cert = { version = "0.3.0", default-features = false }
 zeroize = { version = "1.8.2", default-features = false }
-zstd = { version = "0.13.3", default-features = false }
+zstd = { version = "0.14.0", default-features = false }
 
 [workspace.dependencies.criterion]
 default-features = false
-version = "0.8.1"
+version = "0.8.2"
 # We specify a set of features here instead of defining them in every other crates,
 # since we will use the same set of features.
 features = [
@@ -238,6 +246,7 @@ features = [
     "rayon",               # Allow to run benchmarks in parallel
     "html_reports",        # Generate HTML reports
     "csv_output",          # Generate CSV reports
+    "async_tokio",         # Support benchmarking async functions
 ]
 
 # Rust unoptimized code is really slow with crypto algorithm and regex compilation,
@@ -261,7 +270,11 @@ debug = false
 # ground. Removing that saves ~20% in artifacts size.
 incremental = false
 
-[profile.ci-python]
+# Profile used when the rust code is not the component being tested (since we benefit
+# from a more optimized libparsec, especially given its compilation is entirely skipped
+# for any PR that doesn't touch the libparsec source code \o/).
+# This profile is typically used by the CI jobs testing Python and web.
+[profile.ci-bindings]
 inherits = "ci-rust"
 # Using `opt-level = 0` divides by 2 compilation time, however it makes code run much
 # slower which is a no-go for Python tests :'(

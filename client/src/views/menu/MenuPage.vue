@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -7,6 +7,7 @@
       :user-info="userInfo"
       @sidebar-width-changed="onSidebarWidthChanged"
       @window-width-changed="updateToastOffset"
+      :class="sidebarWidth === 0 ? 'menu-collapse' : ''"
     />
   </ion-page>
 </template>
@@ -42,7 +43,7 @@ onMounted(async () => {
   if (infoResult.ok) {
     userInfo.value = infoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
   updateToastOffset();
 });

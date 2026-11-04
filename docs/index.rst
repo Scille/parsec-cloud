@@ -10,11 +10,6 @@
 Parsec Documentation
 ====================
 
-.. image:: parsec_doc_logo.png
-    :align: center
-    :alt: parsec banner
-    :class: extra-margin-bottom·
-
 Welcome to the Parsec documentation. Take a look at the :ref:`Introduction <doc_userguide_introduction>`
 to get an overview of what Parsec can do for you.
 
@@ -29,15 +24,16 @@ You can also use the search function in the top left corner.
 
     userguide/introduction
     userguide/installation
-    userguide/new_organization
-    userguide/first_steps
-    userguide/manage_organization
-    userguide/join_organization
-    userguide/parsec_workspaces
-    userguide/manage_files
-    userguide/manage_devices
+    userguide/new-organization
+    userguide/first-steps
+    userguide/manage-organization
+    userguide/join-organization
+    userguide/parsec-workspaces
+    userguide/manage-files
+    userguide/manage-devices
+    userguide/mfa
     userguide/security
-    userguide/troubleshooting
+    userguide/troubleshooting/index
 
 .. toctree::
     :maxdepth: 1
@@ -45,21 +41,34 @@ You can also use the search function in the top left corner.
     :name: section-hosting-guide
 
     hosting/introduction
-    hosting/install_cli
-    hosting/deployment/index
+    hosting/architecture
+    hosting/client-deploy
+    hosting/deployment/s3-deploy
+    hosting/deployment/server-deploy
+    hosting/deployment/editics/index
+    hosting/deployment/webapp/index
     hosting/maintenance/index
     hosting/administration/index
     hosting/sequester/index
-    hosting/custom_branding
+    hosting/openbao/index
+    hosting/custom-branding
+    hosting/install-cli
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Parsec CLI
+    :name: section-cli
+
+    cli/index.rst
 
 .. only:: html
 
-   .. toctree::
-       :maxdepth: 1
-       :caption: Development
-       :name: section-development
+    .. toctree::
+        :maxdepth: 1
+        :caption: Development
+        :name: section-development
 
-       history
+        history
 
 .. Indices and tables
 .. ------------------

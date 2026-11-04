@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, login, logout, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, expect, login, logout, mockLibParsec, msTest, sendEvent } from '@tests/e2e/helpers';
 
 msTest('Revoked event', async ({ usersPage }) => {
   msTest.setTimeout(60_000);
@@ -14,7 +14,7 @@ msTest('Revoked event', async ({ usersPage }) => {
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
     expectedQuestionText:
-      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
@@ -28,7 +28,7 @@ msTest('Revoked event', async ({ usersPage }) => {
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
     expectedQuestionText:
-      'This will revoke Malloryy McMalloryFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke Malloryy McMalloryFace, preventing them from accessing this organization.Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
@@ -65,4 +65,119 @@ msTest('Revoked event', async ({ usersPage }) => {
   await expect(usersPage).toBeHomePage();
   await expect(modal).not.toBeVisible();
   await expect(cards).toHaveCount(1);
+});
+
+msTest('Test must accept TOS event', async ({ connected }) => {
+  await mockLibParsec(connected, [
+    {
+      name: 'clientGetTos',
+      result: {
+        ok: true,
+        value: { perLocaleUrls: [['en', 'http://invalid']], updatedOn: 1337 },
+      },
+      valueConverter: [['perLocaleUrls', 'toMap']],
+    },
+  ]);
+
+  const modal = connected.locator('.modal-tos');
+  await expect(modal).toBeHidden();
+  await sendEvent(connected, 'ClientEventMustAcceptTos');
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('#next-button')).toBeTrulyDisabled();
+  await modal.locator('.ms-checkbox').check();
+  await expect(modal.locator('#next-button')).toBeTrulyEnabled();
+  await modal.locator('#next-button').click();
+  await expect(modal).toBeHidden();
+});
+
+msTest('Test incompatible server event', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventIncompatibleServer');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    'Your application and the server are not compatible. \
+Online features will not be available. \
+Please check that your application is up-to-date, \
+and if so, contact an administrator.',
+    'Error',
+  );
+});
+
+msTest('Test revoked self user event', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventRevokedSelfUser');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    "You have been revoked from this organization. \
+You will be logged out and won't be able to access it anymore. \
+If you think this is a mistake or have any issues, please contact an administrator.",
+    'Error',
+  );
+  await expect(connected).toBeHomePage();
+});
+
+msTest('Multiple simultaneous events', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventRevokedSelfUser');
+  await sendEvent(connected, 'ClientEventIncompatibleServer');
+  await sendEvent(connected, 'ClientEventExpiredOrganization');
+
+  const modal = connected.locator('.information-modal');
+
+  // Should always occur in the same order
+  await connected.waitForTimeout(500);
+
+  // Checking manually to make sure there's only one modal opened at once
+
+  await expect(modal).toBeVisible();
+  await expect(modal).toHaveCount(1);
+  await expect(modal.locator('.container-textinfo')).toHaveText(
+    'Your application and the server are not compatible. \
+Online features will not be available. \
+Please check that your application is up-to-date, \
+and if so, contact an administrator.',
+  );
+  await expect(modal.locator('.container-textinfo')).toHaveTheClass('ms-error');
+  await modal.locator('#next-button').click();
+
+  await connected.waitForTimeout(500);
+
+  await expect(modal).toBeVisible();
+  await expect(modal).toHaveCount(1);
+  await expect(modal.locator('.container-textinfo')).toHaveText('This organization has expired. Please contact an administrator.');
+  await expect(modal.locator('.container-textinfo')).toHaveTheClass('ms-error');
+  await modal.locator('#next-button').click();
+
+  await connected.waitForTimeout(500);
+
+  await expect(modal).toBeVisible();
+  await expect(modal).toHaveCount(1);
+  await expect(modal.locator('.container-textinfo')).toHaveText(
+    "You have been revoked from this organization. \
+You will be logged out and won't be able to access it anymore. \
+If you think this is a mistake or have any issues, please contact an administrator.",
+  );
+  await expect(modal.locator('.container-textinfo')).toHaveTheClass('ms-error');
+  await modal.locator('#next-button').click();
+
+  await expect(connected).toBeHomePage();
+});
+
+msTest('Test desync clock', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventTooMuchDriftWithServerClock');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    // eslint-disable-next-line max-len
+    "Your computer's date or time appears to be out of sync with the server. This can cause connection issues. Please check your system date, time, and time zone settings, then try again.",
+    'Warning',
+  );
+  await expect(connected).toBeWorkspacePage();
+});
+
+msTest('Test web client not allowed', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventWebClientNotAllowedByOrganization');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    // eslint-disable-next-line max-len
+    'Your organization does not allow access from the web application for security reasons. Please use the desktop application to continue. If you believe this is an error, contact your organization administrator.',
+    'Error',
+  );
+  await expect(connected).toBeHomePage();
 });

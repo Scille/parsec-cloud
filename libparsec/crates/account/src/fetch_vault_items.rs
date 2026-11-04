@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -53,8 +53,8 @@ pub(super) async fn fetch_vault_items(
 
     // Deserialize items
     let vault_items = raw_items
-        .into_iter()
-        .filter_map(|(_, raw_item)| match AccountVaultItem::load(&raw_item) {
+        .into_values()
+        .filter_map(|raw_item| match AccountVaultItem::load(&raw_item) {
             Ok(item) => Some(item),
             Err(err) => {
                 log::warn!("Cannot deserialize account vault item: {err}");

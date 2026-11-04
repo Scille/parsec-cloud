@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page id="file-context-sheet-modal">
@@ -21,7 +21,7 @@
               class="list-group-item__icon"
               :icon="checkmarkCircle"
             />
-            <ion-text class="button-large list-group-item__label-small">
+            <ion-text class="list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionSelectAll') }}
             </ion-text>
           </ion-item>

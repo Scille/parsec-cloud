@@ -106,6 +106,7 @@ impl std::str::FromStr for Resolve {
                         size: 0,
                         blocksize: 512.try_into().unwrap(),
                         blocks: vec![],
+                        origin: FileManifestOrigin::Default,
                     }));
 
                     CacheResolvedEntry::Exists(manifest)

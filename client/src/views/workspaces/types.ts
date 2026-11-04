@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 enum WorkspaceAction {
   CreateWorkspace = 'workspace-create-workspace',
@@ -10,13 +10,19 @@ enum WorkspaceAction {
   ShowHistory = 'workspace-show-history',
   OpenInExplorer = 'workspace-open-in-explorer',
   Mount = 'workspace-mount',
+  UnMount = 'workspace-unmount',
   Favorite = 'workspace-favorite',
+  Archive = 'workspace-archive',
+  Restore = 'workspace-restore',
+  Trash = 'workspace-trash',
+  TakeOwnership = 'workspace-take-ownership',
 }
 
 enum WorkspaceMenu {
   All = 'all',
-  Recents = 'recents',
+  Recent = 'recent',
   Favorites = 'favorites',
+  Hidden = 'hidden',
 }
 
 function isWorkspaceAction(value: any): value is WorkspaceAction {

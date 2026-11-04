@@ -2,7 +2,7 @@
 
 from typing import Any, override
 
-from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
+from parsec._parsec import AccessToken, DateTime, DeviceID, OrganizationID
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.auth import (
     AccountAuthenticationToken,
@@ -38,7 +38,7 @@ class MemoryAuthComponent(BaseAuthComponent):
                     bootstrap_token=None,
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
                     active_users_limit=self._config.organization_initial_active_users_limit,
-                    minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
+                    realm_minimum_archiving_period_before_deletion=self._config.organization_initial_realm_deletion_min_archiving_period,
                     tos=None
                     if self._config.organization_initial_tos is None
                     else TermsOfService(
@@ -61,7 +61,7 @@ class MemoryAuthComponent(BaseAuthComponent):
 
     @override
     async def invited_auth(
-        self, now: DateTime, organization_id: OrganizationID, token: InvitationToken
+        self, now: DateTime, organization_id: OrganizationID, token: AccessToken
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         try:
             org = self._data.organizations[organization_id]

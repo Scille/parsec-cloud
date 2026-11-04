@@ -1,18 +1,18 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::path::Path;
 
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_device_loader::{
-    get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy,
-    LoadRecoveryDeviceError, RemoteOperationServer, SaveDeviceError,
+    AvailableDevice, DeviceSaveStrategy, LoadRecoveryDeviceError, RemoteOperationServer,
+    SaveDeviceError, get_default_key_file, save_device,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::latest::device_create;
 use libparsec_types::prelude::*;
 
 use crate::{
-    greater_timestamp, CertifPollServerError, GreaterTimestampOffset, InvalidCertificateError,
+    CertifPollServerError, GreaterTimestampOffset, InvalidCertificateError, greater_timestamp,
 };
 
 use super::Client;
@@ -73,7 +73,9 @@ pub enum ClientExportRecoveryDeviceError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -114,10 +116,12 @@ pub enum ImportRecoveryDeviceError {
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error("Storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
 
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -189,10 +193,8 @@ impl From<RegisterNewDeviceError> for ImportRecoveryDeviceError {
 impl From<SaveDeviceError> for ImportRecoveryDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
-            SaveDeviceError::StorageNotAvailable => ImportRecoveryDeviceError::StorageNotAvailable,
-            SaveDeviceError::InvalidPath => {
-                ImportRecoveryDeviceError::InvalidPath(anyhow::anyhow!("invalid path"))
-            }
+            SaveDeviceError::NoSpaceAvailable => ImportRecoveryDeviceError::NoSpaceAvailable,
+            SaveDeviceError::InvalidPath(error) => ImportRecoveryDeviceError::InvalidPath(error),
             SaveDeviceError::Internal(error) => ImportRecoveryDeviceError::Internal(error),
             SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
                 ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline { server, error }
@@ -276,7 +278,9 @@ pub enum RegisterNewDeviceError {
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from collections import deque
@@ -41,7 +42,7 @@ class EmailRateLimit:
         now: DateTime,
         client_ip_address: str | Literal[""],
         recipient: EmailAddress,
-    ) -> None | DateTime:
+    ) -> DateTime | None:
         # 1) Start with some cleanup: since we use a 1 hours sliding window, we
         #    discard anything older than that.
 

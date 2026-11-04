@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,6 +17,7 @@ else:
     AsyncpgPool = asyncpg.Pool
 
 # from parsec.components.postgresql.block import PGBlockComponent, PGBlockStoreComponent
+from parsec.components.postgresql.cryptpad import PGCryptpadComponent
 from parsec.components.postgresql.factory import components_factory
 from parsec.components.postgresql.handler import (
     MigrationItem,
@@ -25,18 +27,19 @@ from parsec.components.postgresql.handler import (
 )
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.ping import PGPingComponent
-from parsec.components.postgresql.pki import PGPkiEnrollmentComponent
 from parsec.components.postgresql.realm import PGRealmComponent
+from parsec.components.postgresql.totp import PGTOTPComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
 
 __all__ = [
     "MigrationItem",
     "MigrationResult",
+    "PGCryptpadComponent",
     "PGOrganizationComponent",
     "PGPingComponent",
-    "PGPkiEnrollmentComponent",
     "PGRealmComponent",
+    "PGTOTPComponent",
     "PGUserComponent",
     "PGVlobComponent",
     "apply_migrations",

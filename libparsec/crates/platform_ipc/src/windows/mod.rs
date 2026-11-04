@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
 
@@ -9,10 +9,10 @@ use std::path::Path;
 use windows_sys::Win32::Foundation::ERROR_LOCK_VIOLATION;
 use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Storage::FileSystem::{
-    LockFileEx, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
+    LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY, LockFileEx,
 };
 
-use super::{get_lock_file_path, TryLockDeviceForUseError};
+use super::{TryLockDeviceForUseError, get_lock_file_path};
 
 // Note exclusive lock gets automatically released on file close (i.e. on drop).
 #[derive(Debug)]
@@ -98,6 +98,5 @@ fn try_flock_exclusive(file: &File) -> std::io::Result<()> {
 }
 
 fn error_is_lock_violation(err: &std::io::Error) -> bool {
-    err.raw_os_error()
-        .map_or(false, |x| x == ERROR_LOCK_VIOLATION as i32)
+    err.raw_os_error() == Some(ERROR_LOCK_VIOLATION as i32)
 }

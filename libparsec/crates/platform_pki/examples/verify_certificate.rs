@@ -1,67 +1,82 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![allow(clippy::unwrap_used)]
 
 mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_types::DateTime;
+use libparsec_platform_pki::{PkiSystem, X509CertificateDer};
+use x509_cert::der::Length;
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[command(flatten)]
-    cert: utils::CertificateOrRef,
+    /// Hash of the certificate to verify.
+    #[arg(value_parser = utils::CertificateSRIHashParser)]
+    certificate_hash: libparsec_types::X509CertificateHash,
 }
 
-pub fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+pub async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
 
-    let trusted_roots = libparsec_platform_pki::list_trusted_root_certificate_anchors()
-        .context("Cannot list trusted root certificates")?;
-    println!("Found {} trusted roots", trusted_roots.len());
+    // Config dir is only used for testbed, we can safely provide an empty path here
+    let pki = PkiSystem::init(std::path::Path::new(""), None)
+        .await
+        .context("Failed to initialize PKI system")?;
 
-    let intermediate_certificates = libparsec_platform_pki::list_intermediate_certificates()
-        .context("Cannot list intermediate certificates")?;
-    println!(
-        "Found {} intermediate certificates",
-        intermediate_certificates.len()
-    );
+    let cert_ref: libparsec_types::X509CertificateReference = args.certificate_hash.into();
+    let cert = pki
+        .open_certificate(&cert_ref)
+        .await
+        .context("Failed to find certificate")?;
 
-    let untrusted_certificate = args
-        .cert
-        .get_certificate()
-        .context("Cannot get certificate")?;
-
-    let end_cert = untrusted_certificate
-        .to_end_certificate()
-        .context("Invalid certificate")?;
-    println!("Untrusted certificate: {}", utils::display_cert(&end_cert));
-
-    let path = libparsec_platform_pki::verify_certificate(
-        &end_cert,
-        &trusted_roots,
-        &intermediate_certificates,
-        DateTime::now(),
-        webpki::KeyUsage::client_auth(),
-    )
-    .context("Cannot trust certificate")?;
+    let validation_path = cert
+        .get_validation_path()
+        .await
+        .context("Failed to get validation path")?;
 
     println!("trusted path:");
     println!(
         "  root: subject={}",
-        utils::display_x509_raw_name(&path.anchor().subject)
+        display_x509_raw_name(&validation_path.root.subject)
     );
-    let mut intermediate = path.intermediate_certificates().enumerate().peekable();
-    if intermediate.peek().is_some() {
+    if !validation_path.intermediates.is_empty() {
         println!("  intermediate certificates:");
-        for (i, cert) in intermediate {
-            println!("  {:02}. {}", i + 1, utils::display_cert(cert));
+        for (i, cert) in validation_path.intermediates.iter().enumerate() {
+            println!("    {:02}. {}", i + 1, display_x509_certificate_der(cert)?);
         }
     }
-    let trusted_cert = path.end_entity();
-    println!("  leaf: {}", utils::display_cert(trusted_cert));
+    println!(
+        "  leaf: {}",
+        display_x509_certificate_der(&validation_path.leaf)?
+    );
 
     Ok(())
+}
+
+fn display_x509_raw_name(raw_name: &[u8]) -> String {
+    use x509_cert::der::{DecodeValue, Header, SliceReader, Tag};
+
+    let components = x509_cert::name::Name::decode_value(
+        &mut SliceReader::new(raw_name).unwrap(),
+        Header::new(Tag::Sequence, Length::new(raw_name.len() as u32)),
+    )
+    .map(|n| libparsec_platform_pki::x509::extract_dn_list_from_rnd_seq(&n))
+    .unwrap_or_default();
+
+    format!("{:?}", components)
+}
+
+fn display_x509_certificate_der(cert: &X509CertificateDer<'_>) -> anyhow::Result<String> {
+    let details = libparsec_platform_pki::UserX509CertificateDetails::load_der(cert.as_ref())
+        .context("Invalid certificate DER")?;
+
+    Ok(format!(
+        "subject={subject:?}, issuer={issuer:?}",
+        subject = details.subject,
+        issuer = details.issuer
+    ))
 }

@@ -1,20 +1,17 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
-require('./rt/electron-rt');
-import * as fs from 'fs';
-
-// User Defined Preload scripts below
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { contextBridge, ipcRenderer } from 'electron';
+import * as fs from 'fs';
+import { createRequire } from 'module';
 import path from 'path';
-import { PageToWindowChannel } from './communicationChannels';
+import { PageToWindowChannel } from './communicationChannels.js';
+import { ParsecMenuItem } from './menu.js';
+const _require = createRequire(import.meta.url);
 
-import unhandled from 'electron-unhandled';
+contextBridge.exposeInMainWorld('CapacitorCustomPlatform', { name: 'electron', plugins: {} });
 
-// Graceful handling of unhandled errors.
-unhandled({
-  showDialog: false,
-  logger: (error: Error) => ipcRenderer.send(PageToWindowChannel.Log, 'error', `Unhandled error in renderer: ${String(error)}`),
+process.on('uncaughtException', (error: Error) => {
+  ipcRenderer.send(PageToWindowChannel.Log, 'error', `Unhandled error in renderer: ${String(error)}`);
 });
 
 let CUSTOM_BRANDING_FOLDER = './';
@@ -24,7 +21,7 @@ ipcRenderer.on('parsec-custom-branding-folder', (_event, ...args: any[]) => {
 });
 
 process.once('loaded', async () => {
-  contextBridge.exposeInMainWorld('electronAPI', {
+  contextBridge.exposeInMainWorld('nativeAPI', {
     sendConfig: (config: any) => {
       ipcRenderer.send(PageToWindowChannel.ConfigUpdate, config);
     },
@@ -64,14 +61,14 @@ process.once('loaded', async () => {
     seeInExplorer: (path: string) => {
       ipcRenderer.send(PageToWindowChannel.SeeInExplorer, path);
     },
-    getLogs: () => {
-      ipcRenderer.send(PageToWindowChannel.GetLogs);
+    getLogs: (source: 'GUI' | 'libparsec') => {
+      ipcRenderer.send(PageToWindowChannel.GetLogs, source);
     },
     openPopup: (url: string) => {
       ipcRenderer.send(PageToWindowChannel.OpenPopup, url);
       return true;
     },
-    readCustomFile: (file: string): Promise<ArrayBuffer> => {
+    readCustomFile: (file: string): Promise<ArrayBuffer | undefined> => {
       return new Promise((resolve, _reject) => {
         // make sure that it's only a file name to avoid path injections
         file = path.basename(file);
@@ -85,15 +82,24 @@ process.once('loaded', async () => {
         }
       });
     },
+    setupActionMenu: (items: ParsecMenuItem) => {
+      ipcRenderer.send(PageToWindowChannel.SetupActionMenu, items);
+    },
+    setWindowTheme: (themePreference: 'system' | 'light' | 'dark', theme: 'light' | 'dark', overlay: boolean) => {
+      ipcRenderer.send(PageToWindowChannel.SetWindowTheme, themePreference, theme, overlay);
+    },
   });
 
   try {
-    const libparsec = await import('./libparsec');
+    const libparsec = _require('./libparsec');
     contextBridge.exposeInMainWorld('libparsec_plugin', libparsec);
   } catch (error: any) {
     console.error(error);
     ipcRenderer.send(PageToWindowChannel.Log, 'error', JSON.stringify(error));
-    if (process.platform === 'darwin' && error.toString().includes("Reason: tried: '/usr/local/lib/libfuse.2.dylib' (no such file)")) {
+    if (
+      process.platform === 'darwin' &&
+      error.toString().match(/.*Reason: tried: '\/usr\/local\/lib\/libfuse\d*(?:\.\d+)*\.dylib' \(no such file\).*/)
+    ) {
       ipcRenderer.send(PageToWindowChannel.MacfuseNotInstalled);
     } else {
       ipcRenderer.send(PageToWindowChannel.CriticalError, 'Failed to initialize Parsec', error);

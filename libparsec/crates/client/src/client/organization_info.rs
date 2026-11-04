@@ -1,10 +1,10 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_protocol::authenticated_cmds::latest::organization_info::{Rep, Req};
-use libparsec_types::{anyhow, DateTime};
+use libparsec_types::{DateTime, anyhow};
 
-use crate::{CertifPollServerError, CertifStoreError, InvalidCertificateError};
+use crate::{CertifListUsersError, CertifPollServerError, InvalidCertificateError};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct OrganizationInfo {
@@ -51,11 +51,11 @@ pub enum ClientGetOrganizationBootstrapDateError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
 }
 
-impl From<CertifStoreError> for ClientGetOrganizationBootstrapDateError {
-    fn from(value: CertifStoreError) -> Self {
+impl From<CertifListUsersError> for ClientGetOrganizationBootstrapDateError {
+    fn from(value: CertifListUsersError) -> Self {
         match value {
-            CertifStoreError::Stopped => Self::Stopped,
-            CertifStoreError::Internal(err) => err.into(),
+            CertifListUsersError::Stopped => Self::Stopped,
+            CertifListUsersError::Internal(err) => err.into(),
         }
     }
 }

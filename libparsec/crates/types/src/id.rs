@@ -1,7 +1,7 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DeserializeFromStr, SerializeDisplay};
+use serde_with::{DeserializeFromStr, SerializeDisplay, serde_as};
 use std::{convert::TryFrom, fmt::Display, hash::Hash, ops::Deref, str::FromStr};
 use unicode_normalization::UnicodeNormalization;
 
@@ -256,6 +256,8 @@ new_uuid_type!(pub PKIEnrollmentID);
 new_uuid_type!(pub GreetingAttemptID);
 new_uuid_type!(pub AccountAuthMethodID);
 new_uuid_type!(pub AccountVaultItemOpaqueKeyID);
+new_uuid_type!(pub TOTPOpaqueKeyID);
+impl_from_maybe!(Option<TOTPOpaqueKeyID>);
 
 impl_from_maybe!(std::collections::HashSet<VlobID>);
 
@@ -340,6 +342,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl FromStr for UserID {
         type Err = String;
 
@@ -348,6 +351,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl TryFrom<&str> for UserID {
         type Error = String;
 
@@ -384,6 +388,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl FromStr for DeviceID {
         type Err = String;
 
@@ -392,6 +397,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl TryFrom<&str> for DeviceID {
         type Error = String;
 
@@ -559,6 +565,7 @@ pub enum HumanHandleParseError {
     InvalidLabel,
 }
 
+// Only needed for tests as a helper
 impl TryFrom<&str> for HumanHandle {
     type Error = HumanHandleParseError;
 
@@ -575,7 +582,7 @@ impl TryFrom<&str> for HumanHandle {
     }
 }
 
-// Note: FromStr is used for Deserialization !
+// Only needed for tests as a helper
 impl FromStr for HumanHandle {
     type Err = HumanHandleParseError;
 
@@ -680,7 +687,7 @@ impl From<HumanHandle> for (String, String) {
     }
 }
 
-crate::impl_from_maybe!(Option<HumanHandle>);
+impl_from_maybe!(Option<HumanHandle>);
 
 /// An email address, nothing fancy... or is it ?
 /// Email basically exists since the dawn of humanity,
@@ -791,7 +798,7 @@ impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
  * UserProfile
  */
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 /// `UserProfile` represents the different profiles a user can have in the organization.
 ///
@@ -807,6 +814,23 @@ pub enum UserProfile {
     /// cannot be shared and the outsider cannot be OWNER/MANAGER
     /// on a realm shared with him)
     Outsider,
+}
+
+impl std::cmp::Ord for UserProfile {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let priority = |x| match x {
+            UserProfile::Admin => 3,
+            UserProfile::Standard => 2,
+            UserProfile::Outsider => 1,
+        };
+        priority(*self).cmp(&priority(*other))
+    }
+}
+
+impl PartialOrd for UserProfile {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -844,7 +868,7 @@ impl Display for UserProfile {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct FileDescriptor(pub u32);
+pub struct FileDescriptor(pub u64);
 
 #[cfg(test)]
 #[path = "../tests/unit/id.rs"]

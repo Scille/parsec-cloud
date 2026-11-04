@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{
     ffi::OsStr,
@@ -10,8 +10,8 @@ use libparsec_platform_async::{
     future::{self, FutureExt},
     stream::{Stream, StreamExt},
 };
-use wasm_bindgen_futures::{stream::JsStream, JsFuture};
-use web_sys::{js_sys, wasm_bindgen::JsCast, DomException};
+use wasm_bindgen_futures::{JsFuture, stream::JsStream};
+use web_sys::{DomException, js_sys, wasm_bindgen::JsCast};
 
 use super::error::{
     CastError, GetDirectoryHandleError, GetFileHandleError, GetRootDirectoryError, ReadToEndError,
@@ -157,7 +157,6 @@ impl Directory {
             .inspect(|_v| log::trace!("Found handle `{dirname}` in {}", self.path.display()))
     }
 
-    #[expect(unused)]
     pub async fn get_file_from_path(
         &self,
         path: &Path,
@@ -168,7 +167,7 @@ impl Directory {
         let filename = path
             .file_name()
             .and_then(OsStr::to_str)
-            .expect("Missing filename");
+            .ok_or(GetFileHandleError::NotAFile(path.to_path_buf()))?;
         let dir = self.get_parent_directory(path.parent(), None).await?;
         dir.as_ref()
             .unwrap_or(self)
@@ -213,7 +212,6 @@ impl Directory {
             .inspect(|_v| log::trace!("Found handle `{filename}` in {}", self.path.display()))
     }
 
-    #[expect(unused)]
     pub fn entries(&self) -> impl Stream<Item = DirEntry> + use<'_> {
         log::trace!("Listing entries at {}", self.path.display());
         JsStream::from(self.handle.values()).filter_map(|v| {
@@ -237,7 +235,6 @@ impl Directory {
         })
     }
 
-    #[expect(unused)]
     pub async fn remove_entry_from_path(&self, path: &Path) -> Result<(), RemoveEntryError> {
         log::trace!("Remove entry `{}` from path", path.display());
         debug_assert!(path.has_root());
@@ -355,7 +352,6 @@ impl File {
         &self.path
     }
 
-    #[expect(unused)]
     pub async fn read_to_end(&self) -> Result<Vec<u8>, ReadToEndError> {
         let file = JsFuture::from(self.handle.get_file())
             .await
@@ -377,7 +373,7 @@ impl File {
         let blob = file.deref();
         let array_buffer = JsFuture::from(blob.array_buffer())
             .await
-            .map_err(|e| ReadToEndError::Promise(e))
+            .map_err(ReadToEndError::Promise)
             .inspect_err(|e| log::error!("Failed to get blob array buffer: {e:?}"))
             .and_then(|v| {
                 v.dyn_into::<js_sys::ArrayBuffer>()
@@ -428,10 +424,10 @@ impl File {
                 Err(e) => WriteAllError::Write(e),
             })?
             .await
-            .map_err(|e| WriteAllError::Write(e))?;
+            .map_err(WriteAllError::Write)?;
         wasm_bindgen_futures::JsFuture::from(stream.close())
             .await
-            .map_err(|e| WriteAllError::Close(e))
+            .map_err(WriteAllError::Close)
             .and(Ok(()))
     }
 }

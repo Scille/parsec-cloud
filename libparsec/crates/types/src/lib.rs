@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Currently only used when generating the mocked version of the time provider
 #[cfg(feature = "test-mock-time")]
@@ -57,6 +57,7 @@ mod account;
 mod addr;
 mod async_enrollment;
 mod certif;
+mod cryptpad;
 pub mod data_macros;
 mod error;
 mod ext_types;
@@ -67,7 +68,6 @@ mod local_device;
 mod local_device_file;
 mod local_manifest;
 mod manifest;
-mod openbao;
 mod organization;
 mod pki;
 mod prevent_sync_pattern;
@@ -85,6 +85,7 @@ pub use account::*;
 pub use addr::*;
 pub use async_enrollment::*;
 pub use certif::*;
+pub use cryptpad::*;
 pub use error::*;
 pub use ext_types::*;
 pub use fs_path::*;
@@ -94,7 +95,6 @@ pub use local_device::*;
 pub use local_device_file::*;
 pub use local_manifest::*;
 pub use manifest::*;
-pub use openbao::*;
 pub use organization::*;
 pub use pki::*;
 pub use prevent_sync_pattern::*;

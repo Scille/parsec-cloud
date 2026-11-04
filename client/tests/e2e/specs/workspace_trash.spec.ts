@@ -1,0 +1,273 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+import {
+  answerQuestion,
+  checkEntryContextMenu,
+  checkWorkspaceContextMenu,
+  DisplaySize,
+  expect,
+  fillInputModal,
+  fillIonInput,
+  login,
+  mockLibParsec,
+  msTest,
+} from '@tests/e2e/helpers';
+import { DateTime } from 'luxon';
+
+msTest('Trash a workspace', async ({ workspaces }) => {
+  const sidebarTrashButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+  const sidebarWorkspacesButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
+  await expect(sidebarTrashButton).toHaveText('Bin');
+  await sidebarTrashButton.click();
+  await expect(workspaces).toHavePageTitle('Workspaces bin');
+  await expect(workspaces.locator('.workspaces-container').locator('.no-trashed-workspaces').locator('ion-text')).toHaveText(
+    'Workspaces scheduled for deletion can be consulted here in read-only for 30 days, after that time they will be permanently deleted. \
+    Workspace Owners can restore them before this date.',
+  );
+  await sidebarWorkspacesButton.click();
+
+  // Move workspace to bin
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+  await answerQuestion(workspaces, false);
+  await expect(wk).toBeVisible();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+  await answerQuestion(workspaces, true);
+  await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(0)).toHaveText('Delete this workspace');
+  await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(1)).toContainText(
+    'You are about to schedule for deletion the workspace wksp1. It will remain accessible in read-only until its deletion',
+  );
+  await workspaces.locator('.text-input-modal').locator('#cancel-button').click();
+  await expect(wk).toBeVisible();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+  await answerQuestion(workspaces, true);
+  const inputModal = workspaces.locator('.text-input-modal');
+  await fillIonInput(inputModal.locator('ion-input'), 'wksp2');
+  await expect(inputModal.locator('#next-button')).toHaveAttribute('disabled');
+  await fillIonInput(inputModal.locator('ion-input'), 'wksp1');
+  await expect(inputModal.locator('#next-button')).toBeEnabled();
+  await inputModal.locator('#next-button').click();
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+
+  // Check bin and context menu
+  await expect(wk).not.toBeVisible();
+  await sidebarTrashButton.click();
+  await expect(wk).toBeVisible();
+  await expect(wk.locator('.custom-icon')).toBeVisible();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'dismiss');
+});
+
+msTest('Trash a workspace with no deletion delay', async ({ workspaces }) => {
+  // Delete workspace
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await mockLibParsec(workspaces, [
+    {
+      name: 'clientInfo',
+      result: {
+        ok: true,
+        value: {
+          serverOrganizationConfig: { realmMinimumArchivingPeriodBeforeDeletion: 0 },
+          currentProfile: 'UserProfileAdmin',
+        },
+      },
+    },
+  ]);
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+  await answerQuestion(workspaces, true);
+  await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(0)).toHaveText('Delete this workspace');
+  await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(1)).toHaveText(
+    "You are about to delete the workspace wksp1. Its data and history will be permanently deleted and you won't be \
+    able to restore it.",
+  );
+  await workspaces.locator('.text-input-modal').locator('#cancel-button').click();
+});
+
+msTest('Trash an archived workspace', async ({ workspaces }) => {
+  const sidebarArchiveButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
+  const sidebarTrashButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+  const sidebarWorkspacesButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
+  await sidebarWorkspacesButton.click();
+
+  // Archive workspace
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
+  await expect(workspaces.locator('.question-modal').locator('.ms-modal-header__title')).toHaveText(['Archive this workspace']);
+  await answerQuestion(workspaces, true);
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
+
+  // Move workspace to bin
+  await expect(wk).not.toBeVisible();
+  await sidebarArchiveButton.click();
+  await expect(wk).toBeVisible();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'archived', 'Delete this workspace');
+  await answerQuestion(workspaces, true);
+  await fillInputModal(workspaces, 'wksp1');
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+
+  // Check bin
+  await expect(wk).not.toBeVisible();
+  await sidebarTrashButton.click();
+  await expect(wk).toBeVisible();
+});
+
+msTest('Restore a trashed workspace', async ({ workspaces }) => {
+  const sidebarTrashButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+  const sidebarWorkspacesButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+
+  // Move workspace to bin
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+
+  await answerQuestion(workspaces, true);
+  await fillInputModal(workspaces, 'wksp1');
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+
+  // Restore workspace
+  await expect(wk).not.toBeVisible();
+  await sidebarTrashButton.click();
+  await expect(wk).toBeVisible();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'Restore this workspace');
+  await answerQuestion(workspaces, false);
+  await expect(wk).toBeVisible();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'Restore this workspace');
+  await answerQuestion(workspaces, true);
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
+
+  await expect(wk).not.toBeVisible();
+  await sidebarWorkspacesButton.click();
+  await expect(wk).toBeVisible();
+});
+
+msTest('Check trashed workspace is read-only', async ({ documents }) => {
+  const sidebarTrashButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+  const sidebarWorkspacesButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces');
+  await sidebarWorkspacesButton.click();
+  const wk = documents.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+
+  // Check file context menu
+  await wk.click();
+  await expect(documents.locator('.file-context-menu')).toBeHidden();
+  const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
+  await entry.click({ button: 'right' });
+  await checkEntryContextMenu(documents, 'file-full', 'dismiss', { canEdit: true });
+
+  // Move workspace to bin
+  await sidebarWorkspacesButton.click();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(documents, 'owner', 'Delete this workspace');
+  await answerQuestion(documents, true);
+  await fillInputModal(documents, 'wksp1');
+  await expect(documents).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+  await expect(wk).not.toBeVisible();
+  await sidebarTrashButton.click();
+  await expect(wk).toBeVisible();
+
+  // Check file context menu
+  await wk.click();
+  await entry.click({ button: 'right' });
+  await checkEntryContextMenu(documents, 'file-readonly', 'dismiss', { canEdit: true });
+});
+
+msTest('Trash a workspace in small display', async ({ workspaces }) => {
+  await workspaces.setDisplaySize(DisplaySize.Small);
+
+  // Move workspace to bin
+  const workspaceCard = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await workspaceCard.locator('.icon-option-container').click();
+
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+  await expect(workspaces.locator('.question-modal').locator('.ms-small-display-modal-header__title')).toHaveText('Important information');
+  await answerQuestion(workspaces, true);
+  await fillInputModal(workspaces, 'wksp1');
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+  await expect(workspaceCard).not.toBeVisible();
+
+  // Check bin
+  const switchRouteButton = workspaces.locator('.topbar-left-workspaces-mobile-dropdown');
+  await expect(switchRouteButton).toBeVisible();
+  await switchRouteButton.click();
+
+  const switchModal = workspaces.locator('.workspace-switch-modal');
+  await expect(switchModal).toBeVisible();
+  await expect(switchModal.locator('.switch-item')).toHaveText(['My workspaces', 'Archived workspaces', 'Workspaces bin']);
+  await switchModal.locator('.switch-item').nth(2).click();
+  await switchModal.locator('.workspace-switch-button').click();
+
+  // Check card and header
+  await expect(workspaces.locator('.topbar-left-workspaces-mobile-dropdown__title')).toHaveText('Workspaces bin');
+  const trashedCard = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await expect(trashedCard).toBeVisible();
+  await expect(trashedCard).toHaveClass(/workspace-card-item--trashed/);
+
+  await trashedCard.click();
+  await expect(workspaces.locator('.header-archived')).toBeVisible();
+  await expect(workspaces.locator('.header-archived')).toHaveText('Deleted workspace (read-only)');
+});
+
+msTest('Check workspace deletion sync on second client', async ({ workspaces }) => {
+  const secondTab = await workspaces.openNewTab();
+  await login(secondTab, 'Boby McBobFace');
+
+  const aliceSidebarTrashButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+  const bobSidebarTrashButton = secondTab.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+
+  const bobWk = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await expect(bobWk).toBeVisible();
+  await bobSidebarTrashButton.click();
+  await expect(bobWk).not.toBeVisible();
+
+  // Move workspace to bin
+  const aliceWk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await aliceWk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+  await answerQuestion(workspaces, true);
+  await fillInputModal(workspaces, 'wksp1');
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+
+  // Check on first tab
+  await expect(aliceWk).not.toBeVisible();
+  await aliceSidebarTrashButton.click();
+  await expect(aliceWk).toBeVisible();
+
+  // Check on second tab
+  await expect(bobWk).toBeVisible();
+
+  // Restore workspace
+  await aliceWk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'Restore this workspace');
+  await answerQuestion(workspaces, true);
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
+
+  // Check on both tabs
+  await expect(aliceWk).not.toBeVisible();
+  await expect(bobWk).not.toBeVisible();
+});
+
+msTest('Check deleted workspace displayed timestamp', async ({ workspaces }) => {
+  const sidebarTrashButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+
+  // Move workspace to bin
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+  await answerQuestion(workspaces, true);
+  const deletionTimestamp = DateTime.now().plus({ days: 30 });
+  await fillInputModal(workspaces, 'wksp1');
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
+
+  // Check timestamp
+  await sidebarTrashButton.click();
+  const wkTimestamp = wk.locator('.workspace-card-content__update');
+  await expect(wkTimestamp).toContainText('Planned deletion date:');
+  await expect(wkTimestamp).toContainText(`${deletionTimestamp.month}/${deletionTimestamp.day}/${deletionTimestamp.year}`);
+});

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // What is this crate even for ? Can't we just use tokio anywhere and call it a day ?
 //
@@ -130,8 +130,8 @@ macro_rules! select3_biased {
 #[cfg(target_arch = "wasm32")]
 pub use platform::WithTaskIDFuture;
 pub use platform::{
-    pretend_future_is_send_on_web, pretend_stream_is_send_on_web, sleep, spawn, try_task_id,
-    yield_now, AbortHandle, Instant, JoinHandle, TaskID,
+    AbortHandle, Instant, JoinHandle, TaskID, pretend_future_is_send_on_web,
+    pretend_stream_is_send_on_web, sleep, spawn, try_task_id, yield_now,
 };
 
 pub use std::time::Duration; // Re-exposed to simplify use of `sleep`

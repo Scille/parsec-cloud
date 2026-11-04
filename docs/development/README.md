@@ -25,20 +25,20 @@ To start hacking, follow the basic steps detailed below:
 2. You need to have the following tools available:
     1. [`git`](https://git-scm.com/)
 
-       Once you have installed `git` you need to clone the repository (it will be required to correctly configure the virtual environment used by `poetry` in the below steps).
+       Once you have installed `git` you need to clone the repository (it will be required to correctly configure the virtual environment used by `uv` in the below steps).
 
        ```shell
        git clone git@github.com:Scille/parsec-cloud.git
        cd parsec-cloud
        ```
 
-    2. [`Rust v1.89.0`](https://www.rust-lang.org/fr/learn/get-started)
+    2. [`Rust v1.96.0`](https://www.rust-lang.org/fr/learn/get-started)
 
        > We use a `rust-toolchain.toml` file, so you can just install `rustup` and `cargo`
        > The required toolchain will be installed automatically.
 
        ```shell
-       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.89.0
+       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.96.0
        ```
 
        > You then need to add the installation path to your `PATH` variable (or equivalent).
@@ -61,64 +61,19 @@ To start hacking, follow the basic steps detailed below:
 
        > Replace `C:/Strawberry/perl/bin/perl` with the correct installation path.
 
-    4. [`python v3.12`](https://www.python.org/)
-
-       To install the correct python version, we use `pyenv` instead of relaying on a system package:
-
-       1. Install `pyenv`:
-
-          ```shell
-          # Install Pyenv
-          curl --proto '=https' --tlsv1.2 -sSL https://pyenv.run | bash
-          ```
-
-          > For more installation methods for `pyenv`, see <https://github.com/pyenv/pyenv#installation>
-
-       2. Check your `pyenv` installation:
-
-          ```shell
-          pyenv --version
-          ```
-
-          If the previous command worked, you can skip directly to step 3.
-
-          If this command failed with `command not found` (or alike) this means your OS can't find `pyenv` inside your `PATH` variable.
-
-          To correct that you need to update your `PATH` variable. If you've installed `pyenv` via the step above you need to add `$HOME/.pyenv/bin` to that variable.
-
-          > `$HOME` is you home path.
-
-       3. Install the correct python version using `pyenv`
-
-          ```shell
-          # Install a specific Python version
-          pyenv install 3.12.0
-          ```
-
-    5. [`poetry >=2.2.1`](https://python-poetry.org/docs/#installation)
-
-       Install Poetry (Does not require a specific version of Python)
+    4. Install [`uv >=0.13.4`](https://docs.astral.sh/uv/getting-started/installation/)
 
        ```shell
-       curl --proto '=https' --tlsv1.2 -sSL https://install.python-poetry.org/ | python - --version=2.2.1
+       curl -LsSf https://astral.sh/uv/0.13.4/install.sh | sh
        ```
 
-       To verify the installation of `poetry` run
+       To verify the installation of `uv` run:
 
        ```shell
-       poetry --version
+       uv --version
        ```
 
-       You then need to indicate which `python` interpreter to use for `poetry`:
-
-       If you have installed `python` using `pyenv` from above:
-
-       ```shell
-       # Create the project virtual with the correct version of Python
-       poetry env use $(pyenv prefix 3.12.0)/bin/python -C server/pyproject.toml
-       ```
-
-       > If you don't have installed `python` with `pyenv`, you need to replace `$(pyenv prefix 3.12.0)/bin/python` with the path where the python you want to use is located.
+       `uv` manages the Python version used by the project.
 
 ## Hacking Parsec Server
 
@@ -130,19 +85,26 @@ In addition to the [shared requirements](#shared-requirements), for working with
 
 ### Base requirement
 
-1. Install [`Node 22.14.0`](https://nodejs.org/en/download/releases).
+1. Install [`Node 24.22.1`](https://nodejs.org/en/download/releases).
 
    We recommend using [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
 
    > [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
 
    ```shell
-   nvm install 22.14.0
+   nvm install 24.22.1
    ```
+
+   If you have installed multiple versions, make sure you are using the right one.
+   You can choose one of the following options:
+
+   - Enable it each time for the current session: `nvm use 24.22.1` (or `nvm use` from the `client` directory)
+   - Enable it automatically via [deeper shell integration](https://github.com/nvm-sh/nvm#deeper-shell-integration)
+   - Set it as default globally: `nvm alias default 24.22.1`
 
 2. Install `wasm-pack`
 
-   Currently we use `wasm-pack@0.13.1`.
+   Currently, we use `wasm-pack@0.13.1`.
 
    Install it with:
 
@@ -247,7 +209,7 @@ In addition to the [shared requirements](#shared-requirements), for working with
 Before start working on the web client you need to setup a mock server
 that will provide some mocked data.
 
-1. Make sure you have the latest change for the python testbed server, see [Initialize a poetry env](#init-server-python-env)
+1. Make sure you have the latest change for the python testbed server, see [Initialize a uv env](#init-server-python-env)
 
 2. Start the testbed server that will provide the mocked data.
 

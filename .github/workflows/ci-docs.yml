@@ -10,11 +10,10 @@ on:
 #
 # For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
 concurrency:
-  group: ci-docs-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.2.1
   # Convert sphinx warning into errors.
   SPHINXOPTS: --fail-on-warning --verbose
 
@@ -30,7 +29,7 @@ jobs:
       run:
         working-directory: docs
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           sparse-checkout: |
             .github
@@ -38,41 +37,38 @@ jobs:
             docs
         timeout-minutes: 2
 
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
         with:
           tool: ripgrep
 
-      - uses: ./.github/actions/setup-python-poetry
-        id: setup-python
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./docs
-        timeout-minutes: 10
+          version: 0.13.4 # marker:uv-version
+        timeout-minutes: 5
 
       - name: Install gettext (required by powrap)
         run: |
-          sudo apt-get install -y gettext
+          sudo apt-get install -y gettext pandoc
           gettext --version
         timeout-minutes: 5
 
       - name: Install docs deps
         run: |
-          poetry env info
-          poetry install
-          poetry show
+          uv sync
         timeout-minutes: 5
 
       - name: Update translation
-        run: poetry run make --environment-overrides intl-fr
+        run: uv run make --environment-overrides intl-fr
         timeout-minutes: 2
 
       - name: Wrap `*.po` files
-        run: poetry run make --environment-overrides wrap
+        run: uv run make --environment-overrides wrap
         timeout-minutes: 1
 
       - name: No fuzzy translation
         run: |
-          ! rg '#, fuzzy' locale/
+          ! rg --line-number '#, fuzzy' locale/
         timeout-minutes: 1
 
       - name: Check if `*.po` were modified
@@ -86,6 +82,9 @@ jobs:
             exit 0
           fi
 
+      - name: Lint docs with sphinx-lint
+        run: uv run make --environment-overrides lint
+
       - name: Build html documentation
-        run: poetry run make --environment-overrides html
+        run: uv run make --environment-overrides html
         timeout-minutes: 2

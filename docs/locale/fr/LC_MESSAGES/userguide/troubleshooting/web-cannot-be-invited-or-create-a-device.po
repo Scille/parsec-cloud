@@ -1,0 +1,158 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.10.1-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-30 11:28+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:6
+msgid "Cannot Join an Organization or Add a Device on Web"
+msgstr "Impossible d'être invité ou de créer un appareil sur le Web"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:8
+msgid ""
+"When joining a Parsec organization or adding a device via Parsec web, the "
+"last step of the operation may fail if Parsec is not permitted to access the "
+"web browser's storage."
+msgstr ""
+"Lorsque vous rejoignez une organisation Parsec ou ajoutez un appareil via "
+"Parsec sur le web, la dernière étape de l'opération peut échouer si Parsec "
+"n'est pas autorisé à accéder au stockage du navigateur web."
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:11
+msgid ""
+"When you first access Parsec on web, a message will ask you to grant "
+"persistent storage permission. Follow the steps below to check whether the "
+"permission is already granted and, if not, to grant it."
+msgstr ""
+"Lors de votre premier accès à Parsec sur le web, un message vous demandera "
+"d'accorder la permission de stockage persistant. Suivez les étapes ci-"
+"dessous pour vérifier si la permission est déjà accordée et, dans le cas "
+"contraire, pour l'accorder."
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:16
+msgid "Refresh Parsec web application (`F5` or `Ctrl+R` or `Command+R`)"
+msgstr "Rechargez l'application web Parsec (`F5` ou `Ctrl+R` ou `Command+R`)"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:17
+msgid "Does it show you a prompt asking for persistent storage permission?"
+msgstr ""
+"Une invite vous demandant la permission de stockage persistant s'affiche-t-"
+"elle ?"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:19
+msgid "If it shows you the following:"
+msgstr "Si l'écran suivant s'affiche :"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:23
+msgid "Click on `Allow`."
+msgstr "Cliquez sur `Autoriser`."
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:27
+msgid "Did you previously set the permission?"
+msgstr "Avez-vous déjà défini cette permission ?"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:29
+msgid ""
+"At the right side of the URL on Firefox, but on the left of the Shield icon "
+"🛡️, there should be an icon."
+msgstr ""
+"À droite de l'URL sur Firefox, mais à gauche de l'icône Bouclier 🛡️, devrait "
+"se trouver une icône."
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:31
+msgid ""
+"If you do not have another icon at the right of the URL beside the Shield "
+"icon, go to :ref:`step 4 <manually-ask-permission>`"
+msgstr ""
+"Si aucune autre icône ne se trouve à droite de l'URL à côté de l'icône "
+"Bouclier, passez à :ref:`l'étape 4 <manually-ask-permission>`"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:33
+msgid ""
+"If you click on it, it will show you a list of granted permissions for the "
+"current website:"
+msgstr ""
+"Si vous cliquez dessus, une liste des permissions accordées au site web "
+"actuel s'affichera :"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:37
+msgid "What is the permission status for `Store data in persistent storage`?"
+msgstr ""
+"Quel est l'état de la permission pour `Stocker des données dans le stockage "
+"persistant` ?"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:39
+msgid ""
+"If it's set to `Allow`, you provided the correct permission for the Parsec "
+"web application."
+msgstr ""
+"Si elle est réglée sur `Autoriser`, vous avez accordé la bonne permission à "
+"l'application web Parsec."
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:40
+msgid ""
+"If it's `Blocked`, revoke the status by clicking on the cross ❌, then go "
+"to :ref:`step 1 <refresh-webapp>`"
+msgstr ""
+"Si elle est `Bloquée`, révoquez cet état en cliquant sur la croix ❌, puis "
+"revenez à :ref:`l'étape 1 <refresh-webapp>`"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:44
+msgid ""
+"Parsec did not prompt you to grant it permission on storage, nor have you "
+"previously granted the permission"
+msgstr ""
+"Parsec ne vous a pas demandé d'accorder la permission de stockage, et vous "
+"n'avez pas non plus accordé cette permission auparavant"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:46
+msgid "In that case, you can manually ask for the permission:"
+msgstr "Dans ce cas, vous pouvez demander manuellement la permission :"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:48
+msgid "Anywhere on the page, do Right-click then Inspect"
+msgstr "N'importe où sur la page, faites un clic droit puis `Inspecter`"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:49
+msgid "On the side window that opened, select the `Console` tab"
+msgstr ""
+"Dans la fenêtre latérale qui s'est ouverte, sélectionnez l'onglet `Console`"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:50
+msgid "Then enter the following command:"
+msgstr "Saisissez ensuite la commande suivante :"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:57
+msgid ""
+"After entering the command, it will prompt you to grant the persistent "
+"storage permission:"
+msgstr ""
+"Après avoir saisi la commande, une invite vous demandera d'accorder la "
+"permission de stockage persistant :"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:61
+msgid "Click on `Allow`"
+msgstr "Cliquez sur `Autoriser`"
+
+#: ../../userguide/troubleshooting/web-cannot-be-invited-or-create-a-device.rst:63
+msgid ""
+"If the browser did not show the prompt, it means that it's configured to "
+"prevent a web application from accessing the storage API used by Parsec web "
+"application"
+msgstr ""
+"Si le navigateur n'a pas affiché l'invite, cela signifie qu'il est configuré "
+"pour empêcher une application web d'accéder à l'API de stockage utilisée par "
+"l'application web Parsec"

@@ -93,7 +93,9 @@ async fn require_greater_timestamp_then_ok(env: &TestbedEnv) {
                 let user_certif =
                     UserCertificate::unsecure_load(req.submitter_user_certificate).unwrap();
                 assert!(*user_certif.timestamp() >= strictly_greater_than);
-                protocol::authenticated_cmds::latest::async_enrollment_accept::Rep::Ok
+                protocol::authenticated_cmds::latest::async_enrollment_accept::Rep::Ok {
+                    email_sent: Maybe::Present(protocol::authenticated_cmds::latest::async_enrollment_accept::EmailSentStatus::Success)
+                }
             }
         },
     );
@@ -104,9 +106,10 @@ async fn require_greater_timestamp_then_ok(env: &TestbedEnv) {
                 UserProfile::Outsider,
                 enrollment_id,
                 identity_strategy.as_ref(),
+                false
             )
             .await,
-        Ok(())
+        Ok(crate::EmailSentStatus::Success)
     );
 }
 
@@ -120,7 +123,12 @@ async fn offline(env: &TestbedEnv) {
 
     p_assert_matches!(
         client
-            .accept_async_enrollment(UserProfile::Outsider, enrollment_id, &identity_strategy,)
+            .accept_async_enrollment(
+                UserProfile::Outsider,
+                enrollment_id,
+                &identity_strategy,
+                false
+            )
             .await,
         Err(ClientAcceptAsyncEnrollmentError::Offline(_))
     )
@@ -153,7 +161,7 @@ async fn bad_submit_payload(env: &TestbedEnv) {
 
     p_assert_matches!(
         client
-            .accept_async_enrollment(UserProfile::Outsider, enrollment_id, &identity_strategy)
+            .accept_async_enrollment(UserProfile::Outsider, enrollment_id, &identity_strategy, false )
             .await,
         Err(err @ ClientAcceptAsyncEnrollmentError::BadSubmitPayload(_))
         if err.to_string() == "Submitter has provided an invalid request payload: Invalid serialization: format <unknown> step <format detection>"
@@ -192,7 +200,7 @@ async fn identity_strategy_mismatch(env: &TestbedEnv) {
 
     p_assert_matches!(
         client
-            .accept_async_enrollment(UserProfile::Outsider, enrollment_id, &identity_strategy)
+            .accept_async_enrollment(UserProfile::Outsider, enrollment_id, &identity_strategy, false)
             .await,
         Err(err @ ClientAcceptAsyncEnrollmentError::IdentityStrategyMismatch{ .. })
         if err.to_string() == "Submit payload is signed with a different identity system (PKI) than ours (OpenBao)"
@@ -231,7 +239,12 @@ async fn test_server_error(
     );
 
     client
-        .accept_async_enrollment(UserProfile::Outsider, enrollment_id, &identity_strategy)
+        .accept_async_enrollment(
+            UserProfile::Outsider,
+            enrollment_id,
+            &identity_strategy,
+            false,
+        )
         .await
         .unwrap_err()
 }
@@ -305,7 +318,7 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
 async fn invalid_x509_trustchain(env: &TestbedEnv) {
     p_assert_matches!(
         test_server_error(env, protocol::authenticated_cmds::latest::async_enrollment_accept::Rep::InvalidX509Trustchain).await,
-        ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain
+        ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain
     );
 }
 

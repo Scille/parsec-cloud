@@ -1,9 +1,9 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-label class="label-profile profile">
     <ion-chip
-      class="button-small tag"
+      class="tag"
       :class="getClassForProfile(profile)"
     >
       {{ $msTranslate(getProfileTranslationKey(profile)) }}
@@ -34,4 +34,8 @@ function getClassForProfile(profile: UserProfile): string {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.tag {
+  @include ms.font('label-sm-medium');
+}
+</style>

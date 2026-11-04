@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -6,11 +6,11 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             GetManifestError, PathConfinementPoint, ResolvePathError, RetrievePathFromIDEntry,
             RetrievePathFromIDError,
         },
-        WorkspaceOps,
     },
 };
 
@@ -74,6 +74,8 @@ pub enum WorkspaceStatEntryError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -100,6 +102,7 @@ pub(crate) async fn stat_entry_by_id(
                     GetManifestError::Stopped => WorkspaceStatEntryError::Stopped,
                     GetManifestError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
                     GetManifestError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                    GetManifestError::RealmDeleted => WorkspaceStatEntryError::RealmDeleted,
                     GetManifestError::InvalidKeysBundle(err) => {
                         WorkspaceStatEntryError::InvalidKeysBundle(err)
                     }
@@ -124,6 +127,9 @@ pub(crate) async fn stat_entry_by_id(
                         RetrievePathFromIDError::NoRealmAccess => {
                             WorkspaceStatEntryError::NoRealmAccess
                         }
+                        RetrievePathFromIDError::RealmDeleted => {
+                            WorkspaceStatEntryError::RealmDeleted
+                        }
                         RetrievePathFromIDError::InvalidKeysBundle(err) => {
                             WorkspaceStatEntryError::InvalidKeysBundle(err)
                         }
@@ -139,7 +145,7 @@ pub(crate) async fn stat_entry_by_id(
                     })?;
             match retrieval {
                 RetrievePathFromIDEntry::Missing => {
-                    return Err(WorkspaceStatEntryError::EntryNotFound)
+                    return Err(WorkspaceStatEntryError::EntryNotFound);
                 }
                 RetrievePathFromIDEntry::Unreachable { manifest } => {
                     (manifest, PathConfinementPoint::NotConfined)
@@ -214,6 +220,7 @@ pub(crate) async fn stat_entry(
                 ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
                 ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                ResolvePathError::RealmDeleted => WorkspaceStatEntryError::RealmDeleted,
                 ResolvePathError::InvalidKeysBundle(err) => {
                     WorkspaceStatEntryError::InvalidKeysBundle(err)
                 }

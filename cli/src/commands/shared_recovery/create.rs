@@ -1,98 +1,125 @@
-use std::{collections::HashMap, num::NonZeroU8};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+use std::{collections::HashMap, fmt::Write as _, io::Write as _, num::NonZeroU8};
 
 use dialoguer::{Confirm, Input};
-use itertools::Itertools;
 use libparsec::{EmailAddress, UserID, UserProfile};
 
-use crate::utils::{
-    maybe_plural, poll_server_for_new_certificates, start_spinner, StartedClient, BULLET_CHAR,
-    GREEN_CHECKMARK,
+use crate::{
+    ui::Color,
+    utils::{
+        BULLET_CHAR, CHECKMARK, StartedClient, maybe_plural, poll_server_for_new_certificates,
+    },
 };
 
-// TODO: should provide the recipients and their share count as a single parameter
-//       e.g. `--recipients=foo@example.com=2,bar@example.com=3`
+const ONE: NonZeroU8 = NonZeroU8::new(1).expect("always valid");
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct WeightedEmail {
+    pub email: EmailAddress,
+    pub weight: NonZeroU8,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum WeightedEmailParseError {
+    #[error("Invalid email address")]
+    InvalidEmail,
+    #[error("Invalid weight")]
+    InvalidWeight,
+}
+
+impl std::str::FromStr for WeightedEmail {
+    type Err = WeightedEmailParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (email, weight) = match s.split_once(':') {
+            Some((email, weight)) => (
+                email,
+                weight
+                    .parse::<NonZeroU8>()
+                    .map_err(|_| WeightedEmailParseError::InvalidWeight)?,
+            ),
+            None => (s, ONE), // default weight is 1
+        };
+
+        let email = email
+            .parse::<EmailAddress>()
+            .map_err(|_| WeightedEmailParseError::InvalidEmail)?;
+
+        Ok(WeightedEmail { email, weight })
+    }
+}
+
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, force]
     pub struct Args {
-        /// Share recipients, if missing organization's admins will be used instead
+        /// Share recipients, with their weight.
+        /// If missing organization's admins will be used instead.
         /// Author must not be included as recipient.
-        /// User email is expected.
-        #[arg(short, long, num_args = 1..=255)]
-        recipients: Option<Vec<EmailAddress>>,
-        /// Share weights. Requires Share recipient list.
-        /// Must have the same length as recipients.
-        /// Defaults to one per recipient.
-        #[arg(short, long, requires = "recipients", num_args = 1..=255)]
-        weights: Option<Vec<NonZeroU8>>,
+        /// email or email:weight format is expected (weight defaults to one if not provided).
+        #[arg(long, num_args = 1..=255, value_hint = clap::ValueHint::EmailAddress)]
+        recipients: Option<Vec<WeightedEmail>>,
         /// Threshold number of shares required to proceed with recovery.
         #[arg(short, long, requires = "recipients")]
         threshold: Option<NonZeroU8>,
-        /// Whether to ask for confirmation or not
-        #[arg(long, default_value_t)]
-        no_confirmation: bool,
     }
 );
 
 crate::build_main_with_client!(main, create_shared_recovery);
 
-pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn create_shared_recovery(
+    ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args {
         recipients,
-        weights,
         threshold,
-        no_confirmation,
+        force,
         ..
     } = args;
 
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&ui, client).await?;
 
-    let mut handle = start_spinner("Creating shared recovery setup".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating shared recovery setup"))?;
     let users = client.list_users(true, None, None).await?;
-    let recipients_ids: Vec<_> = if let Some(recipients) = recipients {
-        let recipient_info: HashMap<_, _> = users
+
+    let per_recipient_shares: HashMap<UserID, NonZeroU8> = if let Some(recipients) = recipients {
+        let users_ids: HashMap<_, _> = users
             .iter()
-            .filter(|info| recipients.contains(info.human_handle.email()))
             .map(|info| (info.human_handle.email().to_owned(), info.id))
             .collect();
-        if recipient_info.len() != recipients.len() {
-            return Err(anyhow::anyhow!("A user is missing"));
-        }
+
         recipients
             .iter()
-            .map(|human| *recipient_info.get(human).expect("human should be here"))
-            .collect()
+            .map(|recipient| {
+                users_ids
+                    .get(&recipient.email)
+                    .copied()
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("A user with email {} not found", recipient.email)
+                    })
+                    .map(|id| (id, recipient.weight))
+            })
+            .collect::<Result<HashMap<_, _>, _>>()?
     } else {
-        users
+        let admins: HashMap<_, _> = users
             .iter()
             .filter(|info| {
                 info.current_profile == UserProfile::Admin && info.id != client.user_id()
             })
-            .map(|info| info.id)
-            .collect()
+            .map(|info| (info.id, ONE))
+            .collect();
+        anyhow::ensure!(!admins.is_empty(), "No default recipient available");
+        admins
     };
 
-    let per_recipient_shares: HashMap<UserID, NonZeroU8> = if let Some(weights) = weights {
-        if recipients_ids.len() != weights.len() {
-            return Err(anyhow::anyhow!("incoherent weights count"));
-        }
-
-        recipients_ids
-            .into_iter()
-            .zip(weights.into_iter())
-            .collect()
-    } else {
-        let weight = NonZeroU8::new(1).expect("always valid");
-        recipients_ids
-            .into_iter()
-            .map(|user_id| (user_id, weight))
-            .collect()
-    };
     // we must stop the handle here to avoid messing up with the threshold choice
-    handle.stop_with_symbol("..."); // not green check mark because it's not finished
+    handle.stop_with_symbol(|_, out| write!(out, "..."))?; // not green check mark because it's not finished
     let threshold = if let Some(t) = threshold {
         t
     } else {
-        println!("The threshold is the minimum number of recipients that one must gather to recover the account");
+        ui.with_message(|_, out| writeln!(out, "The threshold is the minimum number of shares that one must gather to recover the account"))?;
         // note that this is a blocking call
         Input::<NonZeroU8>::new()
             .with_prompt(format!(
@@ -102,37 +129,42 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
             .interact_text()?
     };
 
-    println!(
-        "The following shared recovery setup will be created:\n{BULLET_CHAR} Threshold: {threshold}\n{}",
+    ui.with_message(|_, out| {
+        writeln!(out, "The following shared recovery setup with a threshold set to {threshold} will be created:")?;
         per_recipient_shares
             .iter()
-            .map(|(recipient, share)| {
+            .try_for_each(|(recipient, share)| {
                 let user = &users
                     .iter()
                     .find(|x| x.id == *recipient)
                     .expect("missing recipient")
                     .human_handle;
-                format!("{BULLET_CHAR} User {user} will have {share} share{}", maybe_plural(&share.get()))
+                writeln!(out, "{BULLET_CHAR} User {user} will have {share} share{}", maybe_plural(share.get()))
             })
-            .join("\n"));
-    if !no_confirmation
+    })?;
+
+    if !force
         && !Confirm::new()
             .with_prompt("Do you want to proceed?")
             .interact()?
     {
-        println!("Shared recovery creation aborted.");
+        ui.with_message(|_, out| writeln!(out, "Shared recovery creation aborted."))?;
         return Ok(());
     }
 
-    let mut handle = start_spinner("Creating shared recovery setup".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating shared recovery setup"))?;
 
     client
         .setup_shamir_recovery(per_recipient_shares, threshold)
         .await?;
 
-    handle.stop_with_message(format!(
-        "{GREEN_CHECKMARK} Shared recovery setup has been created"
-    ));
+    handle.stop_with(|fmt, out| {
+        write!(
+            out,
+            "{} Shared recovery setup has been created",
+            fmt.wrap_in_color(Color::Green, CHECKMARK)
+        )
+    })?;
 
     Ok(())
 }

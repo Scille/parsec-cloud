@@ -4,13 +4,13 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, InvitationToken
+from parsec._parsec import AccessToken, DateTime
 
 class Req:
     def __init__(
         self,
         ciphered_data: bytes,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
         shamir_recovery_brief_certificate: bytes,
         shamir_recovery_share_certificates: list[bytes],
     ) -> None: ...
@@ -18,7 +18,7 @@ class Req:
     @property
     def ciphered_data(self) -> bytes: ...
     @property
-    def reveal_token(self) -> InvitationToken: ...
+    def reveal_token(self) -> AccessToken: ...
     @property
     def shamir_recovery_brief_certificate(self) -> bytes: ...
     @property

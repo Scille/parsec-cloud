@@ -1,16 +1,19 @@
-use libparsec::{tmp_path, TmpPath};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+use libparsec::{TmpPath, tmp_path};
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::utils::{GREEN, RESET};
+use parsec_cli::ui::Ui;
 
 #[rstest::rstest]
 #[tokio::test]
-async fn list_users(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn list_users(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -19,9 +22,9 @@ async fn list_users(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
+    .stderr(predicates::str::contains("Found 3 user(s)"))
     .stdout(
-        predicates::str::contains(format!("Found {GREEN}3{RESET} user(s)"))
-            .and(predicates::str::contains("Alice"))
+        predicates::str::contains("Alice")
             .and(predicates::str::contains("Bob"))
             .and(predicates::str::contains("Toto")),
     );

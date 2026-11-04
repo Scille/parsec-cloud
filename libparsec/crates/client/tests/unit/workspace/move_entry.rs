@@ -373,3 +373,41 @@ async fn replace_file_only_but_dst_is_folder(env: &TestbedEnv) {
         .unwrap_err();
     p_assert_matches!(err, WorkspaceMoveEntryError::DestinationExists { entry_id } if entry_id == wksp1_foo_id);
 }
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn read_only_workspace(
+    #[values("reader_role", "archived_workspace")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    match kind {
+        "reader_role" => {
+            ops.update_workspace_external_info(|info| {
+                info.entry.role = RealmRole::Reader;
+            });
+        }
+        "archived_workspace" => {
+            ops.update_workspace_external_info(|info| {
+                info.entry.archiving_configuration = RealmArchivingConfiguration::Archived.into();
+            });
+        }
+        unknown => panic!("Unknown kind: {unknown}"),
+    }
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    let err = ops
+        .move_entry(
+            "/foo".parse().unwrap(),
+            "/bar".parse().unwrap(),
+            MoveEntryMode::CanReplace,
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, WorkspaceMoveEntryError::ReadOnlyRealm);
+    spy.assert_no_events();
+}

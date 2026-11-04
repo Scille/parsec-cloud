@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
@@ -6,8 +6,8 @@ use libparsec_types::prelude::*;
 
 use super::Client;
 use crate::{
-    certif::{CertifPollServerError, InvalidCertificateError},
     CertifDeleteShamirRecoveryError, CertificateBasedActionOutcome,
+    certif::{CertifPollServerError, InvalidCertificateError},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -16,7 +16,9 @@ pub enum ClientDeleteShamirRecoveryError {
     Stopped,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

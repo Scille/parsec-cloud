@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -65,7 +66,9 @@ my_user AS (
 ),
 
 my_realm AS (
-    SELECT _id
+    SELECT
+        _id,
+        status
     FROM realm
     WHERE
         realm_id = $realm_id
@@ -84,9 +87,8 @@ SELECT
         WHERE organization = (SELECT my_organization._id FROM my_organization)
         LIMIT 1
     ) AS last_common_certificate_timestamp,
-    (
-        SELECT my_realm._id FROM my_realm
-    ) AS realm_internal_id,
+    (SELECT _id FROM my_realm) AS realm_internal_id,
+    (SELECT status FROM my_realm) AS realm_status,
     (
         SELECT last_timestamp
         FROM realm_topic
@@ -169,6 +171,14 @@ async def vlob_poll_changes(
             pass
         case None:
             return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
+        case _:
+            assert False, row
+
+    match row["realm_status"]:
+        case "AVAILABLE" | "ARCHIVED_OR_DELETION_PLANNED":
+            pass
+        case "DELETED":
+            return VlobPollChangesAsUserBadOutcome.REALM_DELETED
         case _:
             assert False, row
 

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 #![doc = include_str!("../README.md")]
 
@@ -28,7 +28,8 @@ pub use workspace_history::*;
 
 // Re-expose device save/access objects since they are part of this crate interface
 pub use libparsec_platform_device_loader::{
-    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy,
+    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+    DeviceSaveStrategy,
 };
 
 // Testing on web requires this macro configuration to be present anywhere in

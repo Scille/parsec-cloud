@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{
     collections::HashSet,
@@ -22,11 +22,12 @@ use libparsec_platform_device_loader::{LoadDeviceError, RemoteOperationServer};
 use libparsec_types::prelude::*;
 
 use crate::{
-    handle::{
-        borrow_from_handle, iter_opened_handles, register_handle, take_and_close_handle, Handle,
-        HandleItem,
-    },
     AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy,
+    ParsecInvitationAddrAndRedirectionURL,
+    handle::{
+        Handle, HandleItem, borrow_from_handle, iter_opened_handles, register_handle,
+        take_and_close_handle,
+    },
 };
 
 // TODO: must reimplement this structure since the bindings doesn't support
@@ -247,9 +248,9 @@ pub async fn account_list_invitations(
     account: Handle,
 ) -> Result<
     Vec<(
-        ParsecInvitationAddr,
+        ParsecInvitationAddrAndRedirectionURL,
         OrganizationID,
-        InvitationToken,
+        AccessToken,
         InvitationType,
     )>,
     AccountListInvitationsError,
@@ -263,7 +264,12 @@ pub async fn account_list_invitations(
             let organization_id = addr.organization_id().to_owned();
             let token = addr.token();
             let invitation_type = addr.invitation_type();
-            (addr, organization_id, token, invitation_type)
+            (
+                (addr.clone(), addr.to_http_redirection_url()),
+                organization_id,
+                token,
+                invitation_type,
+            )
         })
         .collect())
 }
@@ -291,7 +297,9 @@ pub async fn account_create_registration_device(
 ) -> Result<(), AccountCreateRegistrationDeviceError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
-    let existing_local_device_access = existing_local_device_access.convert_with_side_effects()?;
+    let existing_local_device_access = existing_local_device_access
+        .convert_with_side_effects()
+        .await?;
 
     let existing_local_device = libparsec_platform_device_loader::load_device(
         account.config_dir(),
@@ -315,7 +323,7 @@ pub async fn account_register_new_device(
 ) -> Result<AvailableDevice, AccountRegisterNewDeviceError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
-    let save_strategy = save_strategy.convert_with_side_effects()?;
+    let save_strategy = save_strategy.convert_with_side_effects().await?;
 
     account
         .register_new_device(organization_id, user_id, new_device_label, save_strategy)
@@ -353,19 +361,33 @@ pub async fn account_delete_2_proceed(
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountCreateRegistrationDeviceError {
-    #[error("Cannot load device file: invalid path ({})", .0)]
+    #[error("Cannot load device file: Invalid path: {0}")]
     LoadDeviceInvalidPath(anyhow::Error),
-    #[error("Cannot load device file: invalid data")]
-    LoadDeviceInvalidData,
-    #[error("Cannot load device file: decryption failed")]
-    LoadDeviceDecryptionFailed,
+    #[error("Cannot load device file: Invalid data: {0}")]
+    LoadDeviceInvalidData(anyhow::Error),
+    #[error(
+        "Cannot load device file: Device file doesn't match the access strategy (invalid {what})"
+    )]
+    LoadDeviceBadAccessStrategy { what: &'static str },
+    #[error("Cannot load device file: Ciphertext key generation failed: {0}")]
+    LoadDeviceCiphertextKeyGenerationFailed(anyhow::Error),
+    #[error(
+        "Cannot load device file: Decryption failed with the key obtained from TOTP challenge: {0}"
+    )]
+    LoadDeviceTOTPDecryptionFailed(anyhow::Error),
+    #[error("Cannot load device file: Decryption failed: {0}")]
+    LoadDeviceDecryptionFailed(anyhow::Error),
     #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error("error while attempting to use the keyring: {0}")]
+    KeyringError(anyhow::Error),
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -398,8 +420,15 @@ impl From<LoadDeviceError> for AccountCreateRegistrationDeviceError {
         match value {
             e @ LoadDeviceError::StorageNotAvailable => Self::LoadDeviceInvalidPath(e.into()),
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
-            LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
-            LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
+            LoadDeviceError::InvalidData(err) => Self::LoadDeviceInvalidData(err),
+            LoadDeviceError::BadAccessStrategy { what } => {
+                Self::LoadDeviceBadAccessStrategy { what }
+            }
+            LoadDeviceError::CiphertextKeyGenerationFailed(err) => {
+                Self::LoadDeviceCiphertextKeyGenerationFailed(err)
+            }
+            LoadDeviceError::DecryptionFailed(err) => Self::LoadDeviceDecryptionFailed(err),
+            LoadDeviceError::TOTPDecryptionFailed(err) => Self::LoadDeviceTOTPDecryptionFailed(err),
             LoadDeviceError::Internal(e) => Self::Internal(e),
             LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
                 Self::RemoteOpaqueKeyFetchOffline { server, error }
@@ -407,6 +436,7 @@ impl From<LoadDeviceError> for AccountCreateRegistrationDeviceError {
             LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
                 Self::RemoteOpaqueKeyFetchFailed { server, error }
             }
+            LoadDeviceError::KeyringError(error) => Self::KeyringError(error),
         }
     }
 }

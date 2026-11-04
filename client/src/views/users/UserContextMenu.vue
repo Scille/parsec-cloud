@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-content id="user-context-menu">
@@ -7,7 +7,7 @@
         class="list-group"
         v-if="canRevoke"
       >
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleRemove') }}
           </ion-text>
@@ -22,7 +22,7 @@
             class="list-group-item__icon"
             :icon="personRemove"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: multipleSelected ? 2 : 1 }) }}
           </ion-text>
         </ion-item>
@@ -30,57 +30,9 @@
 
       <ion-item-group
         class="list-group"
-        v-if="canUpdateProfile"
-      >
-        <ion-item class="list-group-title button-small">
-          <ion-text class="list-group-title__label">
-            {{ $msTranslate('UsersPage.userContextMenu.titleUpdateProfile') }}
-          </ion-text>
-        </ion-item>
-        <ion-item
-          button
-          @click="onClick(UserAction.UpdateProfile)"
-          class="ion-no-padding list-group-item"
-        >
-          <ion-icon
-            class="list-group-item__icon"
-            :icon="repeat"
-          />
-          <ion-text class="button-medium list-group-item__label">
-            {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: multipleSelected ? 2 : 1 }) }}
-          </ion-text>
-        </ion-item>
-      </ion-item-group>
-
-      <ion-item-group
-        class="list-group"
         v-if="!multipleSelected"
       >
-        <ion-item class="list-group-title button-small">
-          <ion-text class="list-group-title__label">
-            {{ $msTranslate('UsersPage.userContextMenu.titleDetails') }}
-          </ion-text>
-        </ion-item>
-        <ion-item
-          button
-          @click="onClick(UserAction.Details)"
-          class="ion-no-padding list-group-item"
-        >
-          <ion-icon
-            class="list-group-item__icon"
-            :icon="informationCircle"
-          />
-          <ion-text class="button-medium list-group-item__label">
-            {{ $msTranslate('UsersPage.userContextMenu.actionDetails') }}
-          </ion-text>
-        </ion-item>
-      </ion-item-group>
-
-      <ion-item-group
-        class="list-group"
-        v-if="!multipleSelected"
-      >
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
           </ion-text>
@@ -94,8 +46,56 @@
             class="list-group-item__icon"
             :icon="returnUpForward"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
+          </ion-text>
+        </ion-item>
+      </ion-item-group>
+
+      <ion-item-group
+        class="list-group"
+        v-if="canUpdateProfile"
+      >
+        <ion-item class="list-group-title">
+          <ion-text class="list-group-title__label">
+            {{ $msTranslate('UsersPage.userContextMenu.titleUpdateProfile') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(UserAction.UpdateProfile)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="repeat"
+          />
+          <ion-text class="list-group-item__label">
+            {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: multipleSelected ? 2 : 1 }) }}
+          </ion-text>
+        </ion-item>
+      </ion-item-group>
+
+      <ion-item-group
+        class="list-group"
+        v-if="!multipleSelected"
+      >
+        <ion-item class="list-group-title">
+          <ion-text class="list-group-title__label">
+            {{ $msTranslate('UsersPage.userContextMenu.titleDetails') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(UserAction.Details)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="informationCircle"
+          />
+          <ion-text class="list-group-item__label">
+            {{ $msTranslate('UsersPage.userContextMenu.actionDetails') }}
           </ion-text>
         </ion-item>
       </ion-item-group>
@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { UserAction } from '@/views/users/types';
+import { UserAction } from '@/services/contextMenu';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { informationCircle, personRemove, repeat, returnUpForward } from 'ionicons/icons';
 

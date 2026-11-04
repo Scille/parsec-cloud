@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use pyo3::{pyclass, pymethods, Python};
+use pyo3::{Python, pyclass, pymethods};
 
 // #[non_exhaustive] macro must be set for every enum like type,
 // because we would like to call `is` in `python`, then
@@ -103,15 +103,42 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
         contributor,
         libparsec_types::RealmRole::Contributor
     ],
-    ["READER", reader, libparsec_types::RealmRole::Reader]
+    ["READER", reader, libparsec_types::RealmRole::Reader],
+    __richcmp__,
+    ord
 );
+
+#[pymethods]
+impl RealmRole {
+    #[getter]
+    fn can_read(&self) -> bool {
+        self.0.can_read()
+    }
+
+    #[getter]
+    fn can_write(&self) -> bool {
+        self.0.can_write()
+    }
+
+    #[getter]
+    fn can_grant_non_owner_role(&self) -> bool {
+        self.0.can_grant_non_owner_role()
+    }
+
+    #[getter]
+    fn can_grant_owner_role(&self) -> bool {
+        self.0.can_grant_owner_role()
+    }
+}
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     UserProfile,
     libparsec_types::UserProfile,
     ["ADMIN", admin, libparsec_types::UserProfile::Admin],
     ["STANDARD", standard, libparsec_types::UserProfile::Standard],
-    ["OUTSIDER", outsider, libparsec_types::UserProfile::Outsider]
+    ["OUTSIDER", outsider, libparsec_types::UserProfile::Outsider],
+    __richcmp__,
+    ord
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
@@ -137,19 +164,4 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
         registration,
         libparsec_types::DevicePurpose::Registration
     ]
-);
-
-crate::binding_utils::gen_py_wrapper_class_for_enum!(
-    OpenBaoAuthType,
-    libparsec_types::OpenBaoAuthType,
-    [
-        "HEXAGONE",
-        hexagone,
-        libparsec_types::OpenBaoAuthType::Hexagone
-    ],
-    [
-        "PRO_CONNECT",
-        pro_connect,
-        libparsec_types::OpenBaoAuthType::ProConnect
-    ],
 );

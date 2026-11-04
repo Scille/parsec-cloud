@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec.components.postgresql.utils import (
@@ -69,6 +70,12 @@ deleted_realm_user_roles AS (
     RETURNING _id
 ),
 
+deleted_realm_archiving AS (
+    DELETE FROM realm_archiving
+    WHERE realm IN (SELECT * FROM deleted_realms)
+    RETURNING _id
+),
+
 deleted_vlob_atoms AS (
     DELETE FROM vlob_atom
     WHERE realm IN (SELECT * FROM deleted_realms)
@@ -111,7 +118,7 @@ deleted_realm_vlob_updates AS (
     RETURNING _id
 ),
 
-deleted_block_datas AS (
+deleted_block_data AS (
     DELETE FROM block_data
     WHERE organization_id = $organization_id
     RETURNING _id
@@ -194,7 +201,7 @@ new_organization_ids AS (
         _created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
-        minimum_archiving_period
+        realm_minimum_archiving_period_before_deletion
     )
     SELECT
         $target_id AS organization_id,
@@ -208,7 +215,7 @@ new_organization_ids AS (
         _created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
-        minimum_archiving_period
+        realm_minimum_archiving_period_before_deletion
     FROM organization
     WHERE organization_id = $source_id
     RETURNING _id
@@ -522,13 +529,15 @@ new_realms AS (
         organization,
         realm_id,
         key_index,
-        created_on
+        created_on,
+        status
     )
     SELECT
         (SELECT new_organization_ids._id FROM new_organization_ids) AS organization,
         realm_id,
         key_index,
-        created_on
+        created_on,
+        status
     FROM realm
     WHERE organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
     ORDER BY _id
@@ -567,6 +576,37 @@ new_realm_user_roles AS (
     INNER JOIN realm ON realm_user_role.realm = realm._id
     WHERE realm.organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
     ORDER BY realm_user_role._id
+    RETURNING _id
+),
+
+new_realm_archivings AS (
+    INSERT INTO realm_archiving (
+        realm,
+        configuration,
+        deletion_date,
+        certificate,
+        certified_by,
+        certified_on
+    )
+    SELECT
+        (
+            SELECT new_realms._id
+            FROM new_realms
+            WHERE new_realms.realm_id = {q_realm(_id="realm_archiving.realm", select="realm_id")}  -- noqa: LT05,LT14
+        ) AS realm,
+        realm_archiving.configuration,
+        realm_archiving.deletion_date,
+        realm_archiving.certificate,
+        (
+            SELECT new_devices._id
+            FROM new_devices
+            WHERE new_devices.device_id = {q_device(_id="realm_archiving.certified_by", select="device_id")}  -- noqa: LT05,LT14
+        ) AS certified_by,
+        realm_archiving.certified_on
+    FROM realm_archiving
+    INNER JOIN realm ON realm_archiving.realm = realm._id
+    WHERE realm.organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
+    ORDER BY realm_archiving._id
     RETURNING _id
 ),
 
@@ -694,7 +734,12 @@ new_realm_keys_bundle_access AS (
             SELECT new_realm_keys_bundle._id
             FROM new_realm_keys_bundle
             WHERE
-                new_realm_keys_bundle.key_index = (
+                new_realm_keys_bundle.realm = (
+                    SELECT new_realms._id
+                    FROM new_realms
+                    WHERE new_realms.realm_id = realm.realm_id
+                )
+                AND new_realm_keys_bundle.key_index = (
                     SELECT realm_keys_bundle.key_index
                     FROM realm_keys_bundle
                     WHERE realm_keys_bundle._id = realm_keys_bundle_access.realm_keys_bundle

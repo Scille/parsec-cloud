@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -126,6 +127,8 @@ async def realm_rename(
                 return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmRenameStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -178,7 +181,7 @@ async def realm_rename(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=db_common_data.user_id,
-            role_removed=False,
+            kind="OTHER",
         ),
     )
 

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -12,7 +12,7 @@ use libparsec_platform_storage::workspace::UpdateManifestData;
 use super::per_manifest_update_lock::ManifestUpdateLockTakeOutcome;
 use super::{
     cache::{
-        populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+        PopulateCacheFromLocalStorageOrServerError, populate_cache_from_local_storage_or_server,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
 };
@@ -31,6 +31,8 @@ pub(crate) enum ForUpdateFileError {
     EntryNotAFile { entry_id: VlobID },
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Entry is already being updated")]
     WouldBlock,
     #[error(transparent)]
@@ -99,7 +101,7 @@ pub(super) async fn for_update_file(
         let update_guard = match outcome {
             LockForUpdateOutcome::GoToStep3(update_guard) => update_guard,
             LockForUpdateOutcome::GoToStep4((update_guard, manifest)) => {
-                break (update_guard, manifest)
+                break (update_guard, manifest);
             }
             LockForUpdateOutcome::WaitAndRetryStep1(listener) => {
                 if !wait {
@@ -121,6 +123,9 @@ pub(super) async fn for_update_file(
                     ForUpdateFileError::Offline(e)
                 }
                 PopulateCacheFromLocalStorageOrServerError::Stopped => ForUpdateFileError::Stopped,
+                PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                    ForUpdateFileError::RealmDeleted
+                }
                 PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                     ForUpdateFileError::EntryNotFound
                 }

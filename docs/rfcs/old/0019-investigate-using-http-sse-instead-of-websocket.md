@@ -4,7 +4,7 @@
 
 From [ISSUE-2358](https://github.com/Scille/parsec-cloud/issues/2358)
 
-Current websocket api doesn't support requests multiplexing (i.e. it works in a strict request/reply order), so the client has to deal with connection pool which is complex (and eat up more ressources than needed given we keep open multiple connections per client)
+Current websocket api doesn't support requests multiplexing (i.e. it works in a strict request/reply order), so the client has to deal with connection pool which is complex (and eat up more resources than needed given we keep open multiple connections per client)
 
 A low hanging fruit would be to modify the websocket api to support request multiplexing (typically by adding an id to each request).
 

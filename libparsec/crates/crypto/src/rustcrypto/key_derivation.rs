@@ -1,15 +1,15 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use blake2::Blake2bMac;
 use digest::Mac;
 use generic_array::{
-    typenum::{
-        consts::{U32, U64},
-        IsLessOrEqual, LeEq, NonZero,
-    },
     ArrayLength, GenericArray,
+    typenum::{
+        IsLessOrEqual, LeEq, NonZero,
+        consts::{U32, U64},
+    },
 };
-use rand::{rngs::OsRng, RngCore};
+use rand::{TryRng, rngs::SysRng};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
@@ -29,7 +29,9 @@ impl KeyDerivation {
 
     pub fn generate() -> Self {
         let mut bytes = [0u8; Self::SIZE];
-        OsRng.fill_bytes(&mut bytes);
+        SysRng
+            .try_fill_bytes(&mut bytes)
+            .expect("Failed to generate random data");
         Self(bytes.into())
     }
 

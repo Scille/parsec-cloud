@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::convert::Infallible;
 use std::path::Path;
@@ -8,16 +8,16 @@ use libparsec_types::prelude::*;
 use wasm_bindgen::{JsCast, JsValue};
 
 use super::utils::{
-    js_to_rs_bytes, js_to_rs_string, js_to_rs_u32, js_to_rs_u64, js_to_rs_vlob_id,
-    rs_to_js_timestamp, rs_to_js_u64, with_transaction, CustomErrMarker,
+    CustomErrMarker, js_to_rs_bytes, js_to_rs_string, js_to_rs_u32, js_to_rs_u64, js_to_rs_vlob_id,
+    rs_to_js_timestamp, rs_to_js_u64, with_transaction,
 };
+use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 #[cfg(any(test, feature = "expose-test-methods"))]
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::workspace::{
     MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
-    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
+    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData, WorkspaceOutboundSyncBacklog,
 };
-use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 
 pub(super) fn get_workspace_storage_db_name(
     data_base_dir: &Path,
@@ -81,6 +81,20 @@ const BLOCKS_SIZE_FIELD: &str = "size";
 const BLOCKS_OFFLINE_FIELD: &str = "offline";
 const BLOCKS_ACCESSED_ON_FIELD: &str = "accessed_on";
 const BLOCKS_DATA_FIELD: &str = "data";
+
+pub(crate) async fn workspace_storage_remove_data(
+    data_base_dir: &Path,
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> anyhow::Result<()> {
+    let db_name = &get_workspace_storage_db_name(data_base_dir, device.device_id, realm_id);
+
+    Factory::get()
+        .map_err(anyhow::Error::from)?
+        .delete_database(db_name)
+        .await
+        .map_err(anyhow::Error::from)
+}
 
 async fn initialize_database(
     evt: &indexed_db::VersionChangeEvent<Infallible>,
@@ -339,6 +353,46 @@ impl PlatformWorkspaceStorage {
                 }
 
                 Ok(vlobs)
+            },
+        )
+        .await?
+    }
+
+    pub async fn get_outbound_sync_backlog(
+        &mut self,
+    ) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE, CHUNKS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let vlobs = transaction.object_store(VLOBS_STORE)?;
+                let mut pending_entries = 0_u64;
+                let mut cursor = vlobs
+                    .index(VLOBS_INDEX_OUTBOUND_NEED_SYNC)?
+                    .cursor()
+                    .range(JsValue::from(1)..=JsValue::from(1))?
+                    .open_key()
+                    .await?;
+                while cursor.primary_key().is_some() {
+                    pending_entries += 1;
+                    cursor.advance(1).await?;
+                }
+
+                let chunks = transaction.object_store(CHUNKS_STORE)?;
+                let mut pending_bytes = 0_u64;
+                let mut cursor = chunks.cursor().open().await?;
+                while let Some(obj) = cursor.value() {
+                    let size_js = js_sys::Reflect::get(&obj, &CHUNKS_SIZE_FIELD.into())
+                        .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"))?;
+                    pending_bytes += js_to_rs_u64(size_js)?;
+                    cursor.advance(1).await?;
+                }
+
+                Ok(WorkspaceOutboundSyncBacklog {
+                    pending_entries,
+                    pending_bytes,
+                })
             },
         )
         .await?

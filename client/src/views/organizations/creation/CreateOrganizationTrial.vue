@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -16,6 +16,7 @@
       :class="step === Steps.Authentication ? 'active' : ''"
       :is-last-step="true"
       :server-config="serverConfig"
+      :server-addr="serverAddr"
       @authentication-chosen="onAuthenticationChosen"
       @go-back-requested="onGoBackRequested"
       @close-requested="$emit('closeRequested')"
@@ -42,10 +43,11 @@ import {
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
+  buildParsecAddr,
   DeviceSaveStrategy,
-  forgeServerAddr,
   getServerConfig,
   OrganizationID,
+  ParsecAddr,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
   ParsedParsecAddrTag,
@@ -62,7 +64,7 @@ import OrganizationCreationPage from '@/views/organizations/creation/Organizatio
 import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
 import { IonPage, modalController } from '@ionic/vue';
 import { I18n, MsModalResult, Translatable } from 'megashark-lib';
-import { isProxy, onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 
 enum Steps {
   PersonalInformation,
@@ -90,17 +92,18 @@ const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const organizationName = ref<OrganizationID | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
 
 onMounted(async () => {
-  let server = getTrialServerAddress();
+  serverAddr.value = getTrialServerAddress();
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
-      server = await forgeServerAddr(result.value);
+      serverAddr.value = await buildParsecAddr(result.value);
     }
   }
-  const configResult = await getServerConfig(server);
+  const configResult = await getServerConfig(serverAddr.value);
   if (configResult.ok) {
     serverConfig.value = configResult.value;
   }
@@ -127,7 +130,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
       name.value,
       email.value,
       getDefaultDeviceName(),
-      (isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value) as DeviceSaveStrategy,
+      toRaw(saveStrategy.value),
     );
     if (result.ok) {
       organizationName.value = orgName;
@@ -157,14 +160,14 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
     name.value,
     email.value,
     getDefaultDeviceName(),
-    (isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value) as DeviceSaveStrategy,
+    toRaw(saveStrategy.value),
   );
   return result;
 }
 
 async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<void> {
   if (!name.value || !email.value) {
-    window.electronAPI.log('error', 'Missing data on org creation step, should not happen');
+    window.nativeAPI.log('error', 'Missing data on org creation step, should not happen');
     return;
   }
 
@@ -190,7 +193,7 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
     currentError.value = undefined;
     step.value = Steps.Created;
   } else {
-    window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
+    window.nativeAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
     switch (result.error.tag) {
       case BootstrapOrganizationErrorTag.Offline:
         currentError.value = 'CreateOrganization.errors.offline';
@@ -238,10 +241,10 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
 
 async function onGoClicked(): Promise<void> {
   if (!saveStrategy.value || !availableDevice.value || !organizationName.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
-  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value as DeviceSaveStrategy);
+  emits('organizationCreated', organizationName.value, availableDevice.value, toRaw(saveStrategy.value));
 }
 
 async function onGoBackRequested(): Promise<void> {

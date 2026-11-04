@@ -1,7 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { TestInfo } from '@playwright/test';
-import { expect, importDefaultFiles, ImportDocuments, msTest, openFileType, testFileViewerZoomLevel } from '@tests/e2e/helpers';
+import {
+  expect,
+  importDefaultFiles,
+  ImportDocuments,
+  mockLibParsec,
+  msTest,
+  openFileType,
+  testFileViewerZoomLevel,
+} from '@tests/e2e/helpers';
 
 msTest.describe(() => {
   msTest.use({
@@ -23,6 +31,21 @@ msTest.describe(() => {
     await expect(zoom).toHaveCount(1);
   });
 
+  msTest('Image viewer opening error', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+
+    await mockLibParsec(documents, [
+      {
+        name: 'workspaceFdRead',
+        result: { ok: false, error: { tag: 'WorkspaceFdReadErrorInternal', error: 'Failed' } },
+      },
+    ]);
+
+    await documents.locator('.folder-container').locator('.file-list-item').nth(0).locator('.label-name').click();
+    await expect(documents).toBeViewerPage();
+    await expect(documents.locator('.image-viewer-container').locator('.image-error')).toHaveText('Could not display the image.');
+  });
+
   msTest('Image viewer zoom', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
     await openFileType(documents, 'png');
@@ -32,8 +55,8 @@ msTest.describe(() => {
     const wrapper = documents.locator('.file-viewer-wrapper');
     const zoom = bottomBar.locator('.zoom-controls');
     const zoomReset = bottomBar.locator('#reset-zoom');
-    const zoomOut = zoom.locator('.file-controls-button-container').nth(0);
-    const zoomIn = zoom.locator('.file-controls-button-container').nth(1);
+    const zoomOut = zoom.locator('.file-controls-button').nth(0);
+    const zoomIn = zoom.locator('.file-controls-button').nth(1);
     const zoomLevel = zoom.locator('ion-text.file-controls-input');
     const zoomLevelInput = zoom.locator('ion-input.file-controls-input');
 

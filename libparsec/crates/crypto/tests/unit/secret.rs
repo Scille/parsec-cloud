@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
-use serde_test::{assert_tokens, Token};
+use serde_test::{Token, assert_tokens};
 
 use super::{
     platform,
@@ -67,7 +67,12 @@ fn mac_512() {
     ));
     let data = b"all your base are belong to us";
     let hmac = sk.mac_512(data);
-    assert_eq!(hmac, hex!("37e763810a922d4ff377f648d2a92fbabc3dc1271fd343fc961b387a2817b493788eb928a8550bf2ba2512fac822046b9365c525e0627455de89c74758880066"));
+    assert_eq!(
+        hmac,
+        hex!(
+            "37e763810a922d4ff377f648d2a92fbabc3dc1271fd343fc961b387a2817b493788eb928a8550bf2ba2512fac822046b9365c525e0627455de89c74758880066"
+        )
+    );
 }
 
 #[platform::test]

@@ -1,24 +1,24 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <user-card
-    v-for="user in users.getUsers()"
-    :key="user.id"
-    :user="user"
-    :disabled="user.isCurrent"
-    :show-checkbox="someSelected || selectionEnabled === true"
-    @menu-click="onMenuClick"
-    @select="$emit('checkboxClick')"
-    :class="{
-      'current-user': user.isCurrent,
-    }"
-  />
-  <ion-text
-    class="no-match-result body"
-    v-show="users.getUsers().length === 0"
-  >
-    {{ $msTranslate('UsersPage.noMatch') }}
-  </ion-text>
+  <div class="grid-container users-grid-container">
+    <user-card
+      v-for="user in users.getUsers()"
+      :key="user.id"
+      :user="user"
+      :disabled="user.isCurrent"
+      :active-checkbox="someSelected || selectionEnabled === true"
+      :allow-selection="allowSelection"
+      @menu-click="onMenuClick"
+      @select="onUserSelected"
+    />
+    <ion-text
+      class="no-match-result"
+      v-show="users.getUsers().length === 0"
+    >
+      {{ $msTranslate('UsersPage.noMatch') }}
+    </ion-text>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -29,6 +29,7 @@ import { computed, ref } from 'vue';
 defineProps<{
   users: UserCollection;
   selectionEnabled?: boolean;
+  allowSelection: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -45,6 +46,34 @@ const someSelected = computed(() => {
 async function onMenuClick(event: Event, user: UserModel, onFinished: () => void): Promise<void> {
   emits('menuClick', event, user, onFinished);
 }
+
+function onUserSelected(user: UserModel, selected: boolean): void {
+  if (user.isRevoked()) {
+    return;
+  }
+  user.isSelected = selected;
+  emits('checkboxClick');
+}
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.users-grid-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: ms.spacing('gap-4xl');
+  overflow-y: auto;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl') ms.spacing('padding-none');
+    gap: ms.spacing('gap-4xl');
+  }
+
+  @include ms.responsive-breakpoint('xs') {
+    gap: ms.spacing('gap-3xl');
+  }
+}
+
+.no-match-result {
+  @include ms.font('body-md-regular');
+}
+</style>

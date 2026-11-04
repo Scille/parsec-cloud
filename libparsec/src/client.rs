@@ -1,33 +1,35 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 
 pub use libparsec_client::{
-    ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
-    ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
-    ClientGetOrganizationBootstrapDateError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
+    ClientAcceptTosError, ClientArchiveWorkspaceError, ClientCreateWorkspaceError,
+    ClientDeleteShamirRecoveryError, ClientForgetAllCertificatesError,
+    ClientGetCurrentSelfProfileError, ClientGetOrganizationBootstrapDateError,
+    ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError,
+    ClientGetOutboundSyncBacklogItem, ClientGetSelfShamirRecoveryError, ClientGetTosError,
     ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
     ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
-    ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
-    ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
-    ClientUserUpdateProfileError, DeviceInfo, InvalidityReason, OrganizationInfo,
-    OtherShamirRecoveryInfo, PKIInfoItem, PkiEnrollmentAcceptError, PkiEnrollmentInfoError,
-    PkiEnrollmentListError, PkiEnrollmentListItem, PkiEnrollmentRejectError,
-    RawPkiEnrollmentListItem, SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo,
-    WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientListWorkspaceUserRoleChangesError, ClientListWorkspaceUsersError,
+    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
+    ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
+    ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo,
+    OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration, SelfShamirRecoveryInfo,
+    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    WorkspaceUserRoleChange,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::RemoteOperationServer;
-use libparsec_types::prelude::*;
 pub use libparsec_types::RealmRole;
+use libparsec_types::prelude::*;
 
 use crate::{
-    handle::{
-        borrow_from_handle, filter_close_handles, iter_opened_handles, register_handle_with_init,
-        take_and_close_handle, FilterCloseHandle, Handle, HandleItem,
-    },
     ClientConfig, ClientEvent, DeviceAccessStrategy, OnEventCallbackPlugged,
+    handle::{
+        FilterCloseHandle, Handle, HandleItem, borrow_from_handle, filter_close_handles,
+        iter_opened_handles, register_handle_with_init, take_and_close_handle,
+    },
 };
 
 fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
@@ -93,12 +95,22 @@ pub async fn wait_for_device_available(
 pub enum ClientStartError {
     #[error("Device already used by another process")]
     DeviceUsedByAnotherProcess,
-    #[error("Cannot load device file: invalid path ({})", .0)]
+    #[error("Cannot load device file: Invalid path: {0}")]
     LoadDeviceInvalidPath(anyhow::Error),
-    #[error("Cannot load device file: invalid data")]
-    LoadDeviceInvalidData,
-    #[error("Cannot load device file: decryption failed")]
-    LoadDeviceDecryptionFailed,
+    #[error("Cannot load device file: Invalid data: {0}")]
+    LoadDeviceInvalidData(anyhow::Error),
+    #[error(
+        "Cannot load device file: Device file doesn't match the access strategy (invalid {what})"
+    )]
+    LoadDeviceBadAccessStrategy { what: &'static str },
+    #[error("Cannot load device file: Ciphertext key generation failed: {0}")]
+    LoadDeviceCiphertextKeyGenerationFailed(anyhow::Error),
+    #[error(
+        "Cannot load device file: Decryption failed with the key obtained from TOTP challenge: {0}"
+    )]
+    LoadDeviceTOTPDecryptionFailed(anyhow::Error),
+    #[error("Cannot load device file: Decryption failed: {0}")]
+    LoadDeviceDecryptionFailed(anyhow::Error),
     /// Client start is a fully offline operation, except for some device
     /// access strategies (e.g. account vault), where the ciphertext key
     /// protecting the device is itself encrypted by an opaque key that
@@ -119,6 +131,8 @@ pub enum ClientStartError {
         server: RemoteOperationServer,
         error: anyhow::Error,
     },
+    #[error("error while attempting to use the keyring: {0}")]
+    KeyringError(anyhow::Error),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -129,8 +143,15 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
         match value {
             e @ LoadDeviceError::StorageNotAvailable => Self::LoadDeviceInvalidPath(e.into()),
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
-            LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
-            LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
+            LoadDeviceError::InvalidData(err) => Self::LoadDeviceInvalidData(err),
+            LoadDeviceError::BadAccessStrategy { what } => {
+                Self::LoadDeviceBadAccessStrategy { what }
+            }
+            LoadDeviceError::CiphertextKeyGenerationFailed(err) => {
+                Self::LoadDeviceCiphertextKeyGenerationFailed(err)
+            }
+            LoadDeviceError::DecryptionFailed(err) => Self::LoadDeviceDecryptionFailed(err),
+            LoadDeviceError::TOTPDecryptionFailed(err) => Self::LoadDeviceTOTPDecryptionFailed(err),
             LoadDeviceError::Internal(e) => Self::Internal(e),
             LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
                 Self::LoadDeviceRemoteOpaqueKeyFetchOffline { server, error }
@@ -138,6 +159,7 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
             LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
                 Self::LoadDeviceRemoteOpaqueKeyFetchFailed { server, error }
             }
+            LoadDeviceError::KeyringError(error) => Self::KeyringError(error),
         }
     }
 }
@@ -149,6 +171,7 @@ pub async fn client_start(
     log::trace!("Starting client_start");
     let access = access
         .convert_with_side_effects()
+        .await
         .map_err(ClientStartError::Internal)?;
 
     let config: Arc<libparsec_client::ClientConfig> = config.into();
@@ -216,7 +239,7 @@ pub(super) async fn client_start_from_local_device(
     // On web there is no other processes able to use the devices we have access of.
     #[cfg(not(target_arch = "wasm32"))]
     let device_in_use_guard = {
-        use libparsec_platform_ipc::{try_lock_device_for_use, TryLockDeviceForUseError};
+        use libparsec_platform_ipc::{TryLockDeviceForUseError, try_lock_device_for_use};
 
         try_lock_device_for_use(&config.config_dir, device.device_id).map_err(|err| match err {
             TryLockDeviceForUseError::AlreadyInUse => ClientStartError::DeviceUsedByAnotherProcess,
@@ -562,6 +585,21 @@ pub async fn client_list_workspace_users(
 }
 
 /*
+ * List a user's role changes on a workspace
+ */
+pub async fn client_list_workspace_user_role_changes(
+    client: Handle,
+    realm_id: VlobID,
+    user_id: UserID,
+) -> Result<Vec<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError> {
+    let client = borrow_client(client)?;
+
+    client
+        .list_workspace_user_role_changes(realm_id, user_id)
+        .await
+}
+
+/*
  * List workspaces
  */
 
@@ -579,6 +617,14 @@ pub async fn client_list_workspaces(
     let workspaces = client.list_workspaces().await;
 
     Ok(workspaces)
+}
+
+pub async fn client_get_outbound_sync_backlog(
+    client: Handle,
+) -> Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError> {
+    let client = borrow_client(client)?;
+
+    client.get_outbound_sync_backlog().await
 }
 
 /*
@@ -621,6 +667,33 @@ pub async fn client_share_workspace(
     let client = borrow_client(client)?;
 
     client.share_workspace(realm_id, recipient, role).await
+}
+
+/*
+ * Client self-promote to workspace owner
+ */
+
+pub async fn client_self_promote_to_workspace_owner(
+    client: Handle,
+    realm_id: VlobID,
+) -> Result<(), ClientSelfPromoteToWorkspaceOwnerError> {
+    let client = borrow_client(client)?;
+
+    client.self_promote_to_workspace_owner(realm_id).await
+}
+
+/*
+ * Client archive workspace
+ */
+
+pub async fn client_archive_workspace(
+    client: Handle,
+    realm_id: VlobID,
+    configuration: RequestedRealmArchivingConfiguration,
+) -> Result<(), ClientArchiveWorkspaceError> {
+    let client = borrow_client(client)?;
+
+    client.archive_workspace(realm_id, configuration).await
 }
 
 /*
@@ -703,24 +776,6 @@ pub async fn client_get_organization_bootstrap_date(
     client.get_organization_bootstrap_date().await
 }
 
-pub async fn client_pki_list_enrollments_untrusted(
-    client: Handle,
-) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {
-    let client = borrow_client(client)?;
-    client.pki_list_enrollments_untrusted().await
-}
-
-pub async fn client_pki_list_verify_items(
-    client: Handle,
-    cert_ref: X509CertificateReference,
-    untrusted_items: Vec<RawPkiEnrollmentListItem>,
-) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
-    let client = borrow_client(client)?;
-    client
-        .pki_list_verify_items(cert_ref, untrusted_items)
-        .await
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum PkiGetAddrError {
     #[error(transparent)]
@@ -734,30 +789,13 @@ pub async fn client_pki_get_addr(
     Ok(client.pki_get_addr().await)
 }
 
-pub async fn client_pki_enrollment_reject(
-    client: Handle,
-    enrollment_id: PKIEnrollmentID,
-) -> Result<(), PkiEnrollmentRejectError> {
-    let client = borrow_client(client)?;
-    client.pki_enrollment_reject(enrollment_id).await
-}
-
-pub async fn client_pki_enrollment_accept(
-    client: Handle,
-    profile: UserProfile,
-    enrollment_id: PKIEnrollmentID,
-    accepter_cert_ref: &X509CertificateReference,
-    submitter_der_cert: &[u8],
-    submit_payload: PkiEnrollmentSubmitPayload,
-) -> Result<(), PkiEnrollmentAcceptError> {
-    let client = borrow_client(client)?;
-    client
-        .pki_enrollment_accept(
-            profile,
-            enrollment_id,
-            accepter_cert_ref,
-            submitter_der_cert,
-            submit_payload,
-        )
-        .await
+pub fn is_path_confined(client: Handle, path: &str) -> bool {
+    let Ok(client) = borrow_client(client) else {
+        return false;
+    };
+    let pattern = &client.config().prevent_sync_pattern;
+    std::path::Path::new(path).components().any(|c| match c {
+        std::path::Component::Normal(name) => name.to_str().is_some_and(|s| pattern.is_match(s)),
+        _ => false,
+    })
 }

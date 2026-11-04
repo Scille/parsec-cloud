@@ -38,6 +38,9 @@
                 "status": "realm_not_found"
             },
             {
+                "status": "realm_deleted"
+            },
+            {
                 "status": "block_not_found"
             },
             {

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::{Arc, Mutex};
 
@@ -67,6 +67,8 @@ pub enum WorkspaceHistoryStoreStartError {
     NoHistory,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -172,6 +174,9 @@ impl WorkspaceHistoryStore {
                     }
                     DataAccessFetchManifestError::NoRealmAccess => {
                         WorkspaceHistoryStoreStartError::NoRealmAccess
+                    }
+                    DataAccessFetchManifestError::RealmDeleted => {
+                        WorkspaceHistoryStoreStartError::RealmDeleted
                     }
                     DataAccessFetchManifestError::InvalidKeysBundle(err) => {
                         WorkspaceHistoryStoreStartError::InvalidKeysBundle(err)

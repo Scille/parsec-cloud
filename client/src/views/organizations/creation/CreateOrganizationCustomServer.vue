@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -14,6 +14,8 @@
       @go-back-requested="$emit('backRequested')"
       @close-requested="$emit('closeRequested')"
       :hide-previous="bootstrapLink !== undefined"
+      :querying="querying"
+      :error="currentError"
     />
     <organization-user-information-page
       v-show="step === Steps.PersonalInformation"
@@ -21,11 +23,13 @@
       @user-information-filled="onUserInformationFilled"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
+      ref="userInformation"
     />
     <organization-authentication-page
       v-show="step === Steps.Authentication"
       :class="step === Steps.Authentication ? 'active' : ''"
       :server-config="serverConfig"
+      :server-addr="serverAddr"
       @authentication-chosen="onAuthenticationChosen"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
@@ -37,14 +41,18 @@
       :error="currentError"
       :email="email"
       :name="name"
-      :save-strategy="saveStrategy.tag"
+      :protection-strategy="saveStrategy.primaryProtection.tag"
       :organization-name="organizationName"
       :server-type="ServerType.Custom"
-      :can-edit-email="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
-      :can-edit-name="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :can-edit-email="
+        ![DevicePrimaryProtectionStrategyTag.AccountVault, DevicePrimaryProtectionStrategyTag.OpenBao].includes(
+          saveStrategy.primaryProtection.tag,
+        )
+      "
+      :can-edit-name="saveStrategy.primaryProtection.tag !== DevicePrimaryProtectionStrategyTag.AccountVault"
       :can-edit-organization-name="props.bootstrapLink === undefined"
       :can-edit-server-address="props.bootstrapLink === undefined"
-      :can-edit-save-strategy="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :can-edit-save-strategy="saveStrategy.primaryProtection.tag !== DevicePrimaryProtectionStrategyTag.AccountVault"
       :use-sequester-key="sequesterKey !== undefined"
       @create-clicked="onCreateClicked"
       @update-email-clicked="onUpdatePersonalInformationClicked"
@@ -72,22 +80,25 @@
 <script setup lang="ts">
 import { getDefaultDeviceName } from '@/common/device';
 import {
+  AccountHandle,
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
+  buildParsecAddr,
+  constructSaveStrategy,
+  DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
-  forgeServerAddr,
   getServerConfig,
   isWeb,
   OrganizationID,
   ParsecAccount,
+  ParsecAddr,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
   ParsedParsecAddrTag,
   parseParsecAddr,
+  PrimaryProtectionStrategy,
   Result,
-  SaveStrategy,
   ServerConfig,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
@@ -100,7 +111,7 @@ import OrganizationSummaryPage from '@/views/organizations/creation/Organization
 import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
 import { IonPage } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
-import { isProxy, onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw, useTemplateRef } from 'vue';
 
 enum Steps {
   OrganizationNameAndServer,
@@ -124,7 +135,7 @@ const emits = defineEmits<{
 const bootstrapLink = ref<string | undefined>(props.bootstrapLink);
 const step = ref<Steps>(Steps.OrganizationNameAndServer);
 const organizationName = ref<OrganizationID | undefined>(undefined);
-const serverAddr = ref<string | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
 const email = ref<string | undefined>(undefined);
 const name = ref<string | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
@@ -133,13 +144,15 @@ const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const initialized = ref(false);
 const sequesterKey = ref<string | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const querying = ref(false);
+const userInformationRef = useTemplateRef<InstanceType<typeof OrganizationUserInformationPage>>('userInformation');
 
 onMounted(async () => {
   if (bootstrapLink.value) {
     const result = await parseParsecAddr(bootstrapLink.value);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
-      serverAddr.value = await forgeServerAddr(result.value);
+      serverAddr.value = await buildParsecAddr(result.value);
     }
   }
   initialized.value = true;
@@ -150,33 +163,49 @@ async function onOrganizationNameAndServerChosen(
   chosenServerAddr: string,
   seqKey: string | undefined,
 ): Promise<void> {
-  if (!props.bootstrapLink) {
-    organizationName.value = chosenOrganizationName;
-    serverAddr.value = chosenServerAddr;
-  }
-  const serverConfigResult = await getServerConfig(serverAddr.value as string);
-  if (serverConfigResult.ok) {
-    serverConfig.value = serverConfigResult.value;
-  }
-  sequesterKey.value = seqKey;
-  if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
-    const infoResult = await ParsecAccount.getInfo();
-    if (infoResult.ok) {
-      email.value = infoResult.value.humanHandle.email;
-      name.value = infoResult.value.humanHandle.label;
-      if (isWeb()) {
-        // Create a new vault save strategy
-        const saveStrategy = SaveStrategy.useAccountVault();
-        // Skip the auth page
-        await onAuthenticationChosen(saveStrategy);
+  try {
+    querying.value = true;
+    currentError.value = undefined;
+    if (!props.bootstrapLink) {
+      organizationName.value = chosenOrganizationName;
+      serverAddr.value = chosenServerAddr;
+    }
+    const serverConfigResult = await getServerConfig(serverAddr.value as string);
+    if (serverConfigResult.ok) {
+      serverConfig.value = serverConfigResult.value;
+    } else {
+      currentError.value = 'CreateOrganization.errors.customOffline';
+      return;
+    }
+    sequesterKey.value = seqKey;
+    if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
+      const infoResult = await ParsecAccount.getInfo();
+      if (infoResult.ok) {
+        email.value = infoResult.value.humanHandle.email;
+        name.value = infoResult.value.humanHandle.label;
+        if (isWeb()) {
+          // Create a new vault save strategy
+          const handle = ParsecAccount.getHandle() as AccountHandle;
+          const saveStrategy = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(handle));
+          // Skip the auth page
+          await onAuthenticationChosen(saveStrategy);
+        } else {
+          step.value = Steps.Authentication;
+        }
       } else {
-        step.value = Steps.Authentication;
+        step.value = Steps.PersonalInformation;
+        if (userInformationRef.value) {
+          await userInformationRef.value.setFocus();
+        }
       }
     } else {
       step.value = Steps.PersonalInformation;
+      if (userInformationRef.value) {
+        await userInformationRef.value.setFocus();
+      }
     }
-  } else {
-    step.value = Steps.PersonalInformation;
+  } finally {
+    querying.value = false;
   }
 }
 
@@ -203,7 +232,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
     name.value,
     email.value,
     getDefaultDeviceName(),
-    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    toRaw(saveStrategy.value),
     sequesterKey.value,
   );
   return result;
@@ -218,7 +247,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
     name.value,
     email.value,
     getDefaultDeviceName(),
-    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    toRaw(saveStrategy.value),
     sequesterKey.value,
   );
   return result;
@@ -226,7 +255,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
 
 async function onCreateClicked(): Promise<void> {
   if (!organizationName.value || !serverAddr.value || !email.value || !name.value || !saveStrategy.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
     return;
   }
 
@@ -259,7 +288,7 @@ async function onCreateClicked(): Promise<void> {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
     }
     step.value = Steps.Summary;
-    window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
+    window.nativeAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
     return;
   }
   availableDevice.value = result.value;
@@ -269,10 +298,10 @@ async function onCreateClicked(): Promise<void> {
 
 async function onGoClicked(): Promise<void> {
   if (!saveStrategy.value || !availableDevice.value || !organizationName.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
-  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value);
+  emits('organizationCreated', organizationName.value, availableDevice.value, toRaw(saveStrategy.value));
 }
 
 async function onUpdatePersonalInformationClicked(): Promise<void> {

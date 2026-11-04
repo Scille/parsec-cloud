@@ -1,11 +1,11 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::{store::ReadChunkOrBlockError, ReadMode, WorkspaceOps},
     InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError,
+    workspace::{ReadMode, WorkspaceOps, store::ReadChunkOrBlockError},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -22,6 +22,8 @@ pub enum WorkspaceFdReadError {
     NotInReadMode,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -97,6 +99,7 @@ pub async fn fd_read(
                         }
                         ReadChunkOrBlockError::Stopped => WorkspaceFdReadError::Stopped,
                         ReadChunkOrBlockError::NoRealmAccess => WorkspaceFdReadError::NoRealmAccess,
+                        ReadChunkOrBlockError::RealmDeleted => WorkspaceFdReadError::RealmDeleted,
                         ReadChunkOrBlockError::InvalidBlockAccess(err) => {
                             WorkspaceFdReadError::InvalidBlockAccess(err)
                         }

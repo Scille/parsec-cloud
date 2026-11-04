@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from enum import auto
@@ -66,7 +67,13 @@ class BaseBlockStoreComponent:
 
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
+        raise NotImplementedError
+
+    async def wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        """
+        Delete data associated with the given organization.
+        """
         raise NotImplementedError
 
 

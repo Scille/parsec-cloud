@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from parsec._parsec import (
+    AccessToken,
     DateTime,
     DeviceID,
-    InvitationToken,
     OrganizationID,
     ShamirRecoveryBriefCertificate,
     VerifyKey,
@@ -114,7 +113,7 @@ async def shamir_setup(
     author: DeviceID,
     author_verify_key: VerifyKey,
     ciphered_data: bytes,
-    reveal_token: InvitationToken,
+    reveal_token: AccessToken,
     shamir_recovery_brief_certificate: bytes,
     shamir_recovery_share_certificates: list[bytes],
 ) -> (

@@ -68,7 +68,7 @@ async fn multiple(env: &TestbedEnv) {
         .collect::<Vec<_>>();
 
     // list_workspace_users is unstable
-    res.sort_by(|x, y| x.0.cmp(&y.0));
+    res.sort_by_key(|x| x.0);
 
     p_assert_eq!(
         res,

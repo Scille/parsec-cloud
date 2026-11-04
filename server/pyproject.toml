@@ -1,6 +1,6 @@
 [project]
 name = "parsec-cloud"
-version = "3.7.2-a.0+dev"
+version = "3.11.1-a.0+dev"
 description = "Secure file sharing in the cloud"
 authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 license = "BUSL-1.1"
@@ -13,29 +13,30 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
 ]
-requires-python = "~=3.12.0"
+requires-python = "~=3.14.0"
 dependencies = [
     # Base requirements
-    "anyio>=3.7.1, <4",
+    "anyio>=3.7.1, <5",
     "click>=8.0, <9",
+    "cryptography>=46.0.6",
     "httpx>=0.28.1, <0.29",
-    "pbr>=6.1.1, <7",
+    "pbr>=6.1.1,<8",
     "pydantic>=2.12.4, <3",
     "pydantic-core>=2.41.5, <3",
     "sentry-sdk>=2.30.0, <3",
-    "starlette>=0.49.3, <1",
-    "structlog>=25.4.0, <26",
+    "starlette>=0.49.3, <2",
+    "structlog>=25.4.0,<27",
     # ASGI server
-    "fastapi>=0.121.2, <1",
-    "uvicorn>=0.35.0, <0.36",
+    "fastapi>=0.135.0, <1",
+    "uvicorn>=0.35.0,<0.55",
     "jinja2>=3.0, <4",
     # PostgreSQL
-    "asyncpg>=0.29.0, <0.30",
+    "asyncpg~=0.31",
     # S3
-    "boto3>=1.38, <2",
-    "botocore>=1.38, <2",
+    "boto3>=1.42, <2",
+    "botocore>=1.42, <2",
     # Swift
     "python-swiftclient>=4.8.0, <5",
 ]
@@ -47,59 +48,48 @@ parsec = "parsec.cli:cli"
 homepage = "https://github.com/Scille/parsec-cloud"
 documentation = "https://docs.parsec.cloud"
 
-[tool.poetry]
-packages = [{ include = "parsec" }]
-exclude = []
-include = [
-    { path = "parsec/_parsec*.so", format = "wheel" },  # Rust lib for Linux & MacOS
-    { path = "parsec/_parsec*.pyd", format = "wheel" }, # Rust lib for Windows
+[tool.uv]
+# Prevent `uv` from building the server package during `sync` & `run`.
+# You can still do `uv build`, `pip install` or `maturin build` ...
+package = false
+# Not including rust files, since the project "does not depends on it":
+# With `package=false`, `uv sync` & `uv run` only install the project dependencies and skip build/installing `parsec_cloud` package.
+# https://docs.astral.sh/uv/reference/settings/#cache-keys
+cache-keys = [{ file = "pyproject.toml" }]
+
+[dependency-groups]
+dev = [
+    # build
+    "cibuildwheel>=4.0,<4.4",
+    "maturin>=1.14.1,<1.16.0",
+    "patchelf>=0.17.2.4,<0.19.2.0; platform_system=='Linux'",
+    # lint
+    "deptry~=0.25.1",
+    "editorconfig-checker>=3.2.1,<3.12.0",
+    "pyright~=1.1.353",
+    "ruff>=0.15,<0.18",
+    "sqlfluff>=4.0,<4.5",
+    # test
+    "httpx-sse~=0.4.1",
+    "pytest>=9.0.1,<9.2.0",
+    "pytest-asyncio~=1.0",
+    "pytest-cov>=7.0,<7.2",
+    "pytest-rerunfailures~=16.0",
+    "pytest-timeout>=2.2,<2.5",
+    "pytest-xdist~=3.1",
+    "trustme~=1.2.1",
+    # type-stubs
+    "asyncpg-stubs~=0.31",
+    "types-boto3[boto3, s3]>=1.42,<2",
+    # used only in misc/test_expected_payload_cooker.py
+    # to generate payloads for libparsec protocol serialization tests
+    "msgpack>=1.1.2,<1.3.0",
+    "pynacl~=1.6.2",
 ]
-
-# NOTE: poetry 2.2.0 supports [dependency-groups] (PEP 735) but it is not yet supported by
-#       dependabot. See https://github.com/dependabot/dependabot-core/issues/10847
-[tool.poetry.group.dev.dependencies]
-# build
-cibuildwheel = "^3.0.0"
-maturin = "^1.9.5"
-patchelf = { version = "^0.17.2.4", markers = "platform_system=='Linux'" }
-setuptools = "^80.9.0"
-# lint
-deptry = "^0.24.0"
-editorconfig-checker = "^3.2.1"
-pyright = "^1.1.353"
-ruff = "^0.14.0"
-sqlfluff = "^3.5.0"
-# test
-httpx-sse = "^0.4.1"
-pytest = "^9.0.1"
-pytest-asyncio = "^1.0.0"
-pytest-cov = "^7.0.0"
-pytest-rerunfailures = "^16.0"
-pytest-timeout = "^2.2.0"
-pytest-xdist = "^3.1"
-trustme = "^1.2.1"
-# type-stubs
-asyncpg-stubs = "^0.29.1"
-boto3-stubs = "^1.40.45"
-types-requests = "^2.32.4"
-# other dependencies
-poetry-lock-package = "^0.5.2"
-
-[tool.poetry.group.testbed-server]
-optional = true
-
-[tool.poetry.group.testbed-server.dependencies]
-psutil = "^7.0.0"
-
-[tool.poetry.build]
-generate-setup-file = false
-script = "build.py"
-
-[tool.poetry.requires-plugins]
-poetry-plugin-export = "^1.8" # provides poetry export
+testbed-server = ["psutil>=7.0,<7.3"]
 
 [tool.cibuildwheel]
-build = "cp312-{manylinux,macos,win}*"
+build = "cp314-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash {project}/misc/setup-rust.sh"
@@ -109,6 +99,7 @@ test-command = "parsec --version"
 [tool.cibuildwheel.linux]
 # perl-IPC-Cmd needed to build openssl
 before-all = "yum install -y perl-IPC-Cmd && bash {project}/misc/setup-rust.sh"
+environment-pass = ["MATURIN_PEP517_ARGS"]
 
 [tool.cibuildwheel.environment]
 # As its name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will
@@ -123,16 +114,11 @@ LIBPARSEC_FORCE_VENDORED_OPENSSL = "true"
 [tool.deptry]
 extend_exclude = ["server/tests/", "server/parsec/cli/testbed.py"]
 
-
-[tool.maturin]
-module-name = "parsec._parsec"
-bindings = "pyo3"
-
 # Per-module customization
 
 [tool.pyright]
-pythonVersion = "3.12"
-include = ["parsec", "tests", "build.py", "../docs", "../misc", "../bindings/generator"]
+pythonVersion = "3.14"
+include = ["parsec", "tests", "../docs", "../misc", "../bindings/generator"]
 exclude = ["**/__pycache__", "../**/.venv/"]
 ignore = [
     "parsec/components/postgresql/sequester.py",
@@ -156,14 +142,17 @@ reportUnnecessaryComparison = true
 reportSelfClsParameterName = true
 reportMissingTypeArgument = true
 
+[tool.maturin]
+module-name = "parsec._parsec"
+bindings = "pyo3"
+
 [build-system]
-# Be careful `build-system` entry works out of poetry,
-# hence those dependencies are not resolved & pinned into `poetry.lock`
+# Be careful `build-system` entry works out of uv,
+# hence those dependencies are not resolved & pinned into `uv.lock`
 requires = [
-    "poetry-core>=2.0",
-    "setuptools",
-    "maturin==1.8.7",
-    "maturin[patchelf]==1.8.7; platform_system=='Linux'",
-    "patchelf~=0.17.2.1; platform_system=='Linux'",
+    "maturin<2.0,>=1.14.1", # Need to build rust lib
+    # Fix rust lib 3rd lib dependencies
+    "maturin[patchelf]>=1.14.1,<2.0; platform_system=='Linux'",
+    "patchelf>=0.17.2.1,<0.19.2.0; platform_system=='Linux'",
 ]
-build-backend = "poetry.core.masonry.api"
+build-backend = "maturin"

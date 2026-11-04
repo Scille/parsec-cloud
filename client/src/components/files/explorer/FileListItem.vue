@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-drop-zone
@@ -12,55 +12,75 @@
       button
       :lines="isLargeDisplay ? 'full' : 'none'"
       :detail="false"
-      class="file-list-item"
+      class="list-item file-list-item"
       :class="{
-        selected: entry.isSelected,
-        'file-hovered': !entry.isSelected && (menuOpened || isHovered),
+        selected: selected,
+        'file-list-item--hovered': !selected && (menuOpened || isHovered),
         'file-list-item-mobile': isSmallDisplay,
       }"
       @dblclick="$emit('openItem', $event, entry)"
-      @click.stop="$emit('update:modelValue', !props.entry.isSelected)"
+      @click="$emit('update:selected', !selected)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"
     >
-      <div class="list-item-container">
+      <div class="list-item-container file-list-item-container">
         <div
-          class="file-selected"
-          v-if="isLargeDisplay || entry.isSelected || showCheckbox"
+          class="list-item-column file-selected"
+          v-if="isLargeDisplay || selected || showCheckbox"
         >
-          <!-- eslint-disable vue/no-mutating-props -->
           <ms-checkbox
-            v-model="entry.isSelected"
-            v-show="entry.isSelected || isHovered || showCheckbox"
+            @change="$emit('update:selected', !selected)"
+            :checked="selected"
+            v-show="selected || isHovered || showCheckbox"
             @click.stop
             @dblclick.stop
           />
-          <!-- eslint-enable vue/no-mutating-props -->
         </div>
 
         <!-- file name -->
         <div
-          class="file-name"
+          class="list-item-column file-name"
           :class="{ 'file-mobile-content': isSmallDisplay }"
         >
           <ms-image
             :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
             class="file-icon"
           />
-          <div class="file-mobile-text">
+
+          <!-- large display view -->
+          <ion-text
+            v-if="isLargeDisplay"
+            class="list-item-label label-name cell"
+            :class="{ selection: showCheckbox }"
+            :title="entry.name"
+            @click="showCheckbox ? null : !($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
+            @dblclick.stop
+          >
+            {{ entry.name }}
+          </ion-text>
+
+          <ion-icon
+            class="cloud-overlay"
+            :class="syncStatus.class"
+            :icon="syncStatus.icon"
+          />
+
+          <!-- small display view -->
+          <div
+            v-if="isSmallDisplay"
+            class="file-mobile-text"
+          >
             <ion-text
-              class="label-name cell"
+              class="list-item-label label-name cell"
+              :class="{ selection: showCheckbox }"
               :title="entry.name"
-              @click="!($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
+              @click="showCheckbox ? null : !($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
               @dblclick.stop
             >
               {{ entry.name }}
             </ion-text>
-            <ion-text
-              v-if="isSmallDisplay"
-              class="file-mobile-text__data body-sm"
-            >
+            <ion-text class="list-item-label label-data">
               <span class="data-date">{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
               <span v-if="entry.isFile()"> &bull; </span>
               <span
@@ -71,16 +91,18 @@
               </span>
             </ion-text>
           </div>
-          <ion-icon
-            class="cloud-overlay"
-            :class="syncStatus.class"
-            :icon="syncStatus.icon"
-          />
+
+          <span
+            v-if="entry.syncStatus === EntrySyncStatus.Uploading && entry.syncProgress"
+            class="upload-progress"
+          >
+            {{ entry.syncProgress }}%
+          </span>
         </div>
 
         <!-- updated by -->
         <div
-          class="file-updated-by"
+          class="list-item-column file-updated-by"
           v-if="entry.lastUpdater && isLargeDisplay && ownProfile !== UserProfile.Outsider"
         >
           <user-avatar-name
@@ -90,33 +112,34 @@
         </div>
 
         <!-- last update -->
-        <div class="file-last-update">
-          <ion-text class="label-last-update cell">
+        <div class="list-item-column file-last-update">
+          <ion-text class="list-item-label label-last-update cell">
             {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
           </ion-text>
         </div>
 
         <!-- creation date -->
-        <div class="file-creation-date">
-          <ion-text class="label-creation-date cell">
+        <div class="list-item-column file-creation-date">
+          <ion-text class="list-item-label label-creation-date cell">
             {{ $msTranslate(formatTimeSince(entry.created, '--', 'short')) }}
           </ion-text>
         </div>
 
         <!-- file size -->
-        <div class="file-size">
+        <div class="list-item-column file-size">
           <ion-text
             v-if="entry.isFile()"
-            class="label-size cell"
+            class="list-item-label label-size cell"
           >
             {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
           </ion-text>
         </div>
 
         <!-- options -->
-        <div class="file-options ion-item-child-clickable">
+        <div class="list-item-end file-options ion-item-child-clickable">
           <ion-button
             fill="clear"
+            slot="icon-only"
             v-show="isHovered || menuOpened || isSmallDisplay"
             class="options-button"
             @click.stop="onOptionsClick($event)"
@@ -124,7 +147,6 @@
           >
             <ion-icon
               :icon="ellipsisHorizontal"
-              slot="icon-only"
               class="options-button__icon"
             />
           </ion-button>
@@ -155,16 +177,16 @@ const props = defineProps<{
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
   disableDrop?: boolean;
-  modelValue: boolean;
+  selected: boolean;
 }>();
 
 const emits = defineEmits<{
   (e: 'click', event: Event, entry: EntryModel): void;
   (e: 'openItem', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
-  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
+  (e: 'filesAdded', gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
-  (e: 'update:modelValue', value: boolean): void;
+  (e: 'update:selected', value: boolean): void;
 }>();
 
 defineExpose({
@@ -197,84 +219,7 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
   height: fit-content;
 }
 
-.file-name {
-  position: relative;
-  display: flex;
-  gap: 1rem;
-
-  .file-icon {
-    width: 2rem;
-    height: 2rem;
-    flex-shrink: 0;
-  }
-
-  .label-name {
-    color: var(--parsec-color-light-secondary-text);
-
-    &:hover {
-      text-decoration: underline;
-      cursor: pointer !important;
-    }
-  }
-
-  .cloud-overlay {
-    font-size: 1rem;
-    flex-shrink: 0;
-    margin-left: auto;
-    position: absolute;
-    right: 0;
-
-    @include ms.responsive-breakpoint('sm') {
-      display: none;
-    }
-
-    &-ok {
-      color: var(--parsec-color-light-primary-500);
-    }
-
-    &-ko {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-  }
-}
-
-.file-list-item-mobile {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin: 0 0.5rem;
-  border-radius: var(--parsec-radius-8);
-
-  .file-mobile-content {
-    gap: 1rem;
-    width: 100%;
-  }
-
-  .file-selected {
-    max-width: 2.5rem;
-  }
-}
-
-.file-mobile-text {
-  flex-grow: 1;
-  overflow: hidden;
-  color: var(--parsec-color-light-secondary-grey);
-  display: flex;
-  gap: 0.125rem;
-  flex-direction: column;
-
-  &__data {
-    display: flex;
-    gap: 0.5rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
+.label-data {
+  @include ms.font('body-sm-regular');
 }
 </style>

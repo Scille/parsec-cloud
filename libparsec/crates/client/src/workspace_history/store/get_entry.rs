@@ -1,9 +1,9 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
 
 use super::{
-    populate_manifest_cache, CacheResolvedEntry, PopulateManifestCacheError, WorkspaceHistoryStore,
+    CacheResolvedEntry, PopulateManifestCacheError, WorkspaceHistoryStore, populate_manifest_cache,
 };
 
 pub(crate) type WorkspaceHistoryStoreGetEntryError = PopulateManifestCacheError;
@@ -20,7 +20,7 @@ pub(super) async fn get_entry(
         match cache.resolve_manifest_at(at, entry_id) {
             CacheResolvedEntry::Exists(manifest) => return Ok(manifest),
             CacheResolvedEntry::NotFound => {
-                return Err(WorkspaceHistoryStoreGetEntryError::EntryNotFound)
+                return Err(WorkspaceHistoryStoreGetEntryError::EntryNotFound);
             }
             CacheResolvedEntry::CacheMiss => {}
         }

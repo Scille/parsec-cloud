@@ -9,7 +9,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::{
-    inbound_sync_monitor_loop, InboundSyncManagerIO, IncomingEvent, WaitForNextIncomingEventOutcome,
+    InboundSyncManagerIO, IncomingEvent, WaitForNextIncomingEventOutcome, inbound_sync_monitor_loop,
 };
 use crate::event_bus::AnySpiedEvent;
 use crate::monitors::workspace_inbound_sync::RealInboundSyncManagerIO;
@@ -221,6 +221,9 @@ async fn real_io_provides_a_starting_event(env: &TestbedEnv) {
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: RealmRole::Owner,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
+                    archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                    archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                    can_self_promote_to_owner: false.into(),
                 },
                 workspace_index: 0,
                 total_workspaces: 1,

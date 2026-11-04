@@ -1,18 +1,24 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import {
+  entryStat,
+  FsPath,
+  isPathConfined,
   isValidDeviceName,
   isValidEmail,
   isValidEntryName,
   isValidOrganizationName,
   isValidUserName,
   isValidWorkspaceName,
+  ParsedParsecAddrTag,
   parseParsecAddr,
+  Path,
+  WorkspaceHandle,
 } from '@/parsec';
-import { ParsedParsecAddrTag } from '@/plugins/libparsec';
 import { IValidator, Validity } from 'megashark-lib';
 
 const ENTRY_NAME_LIMIT = 128;
+const USER_NAME_LIMIT = 128;
 
 export const emailValidator: IValidator = async function (value: string) {
   value = value.trim();
@@ -34,6 +40,8 @@ export const userNameValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
+  } else if (value.length > USER_NAME_LIMIT) {
+    return { validity: Validity.Invalid, reason: { key: 'validators.userInfo.nameTooLong', data: { limit: USER_NAME_LIMIT } } };
   }
   return (await isValidUserName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid, reason: 'validators.userInfo.name' };
 };
@@ -49,15 +57,74 @@ export const workspaceNameValidator: IValidator = async function (value: string)
   return (await isValidWorkspaceName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
 };
 
-export const entryNameValidator: IValidator = async function (value: string) {
-  value = value.trim();
-  if (value.length === 0) {
-    return { validity: Validity.Intermediate };
-  } else if (value.length > ENTRY_NAME_LIMIT) {
-    return { validity: Validity.Invalid, reason: { key: 'validators.fileName.tooLong', data: { limit: ENTRY_NAME_LIMIT } } };
-  }
-  return (await isValidEntryName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
-};
+export const matchingStringValidator = (toMatch: string): IValidator =>
+  async function (value: string) {
+    value = value.trim();
+    if (value.length === 0) {
+      return { validity: Validity.Intermediate };
+    }
+    return toMatch.localeCompare(value) === 0 ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  };
+
+export const entryNameValidator = (
+  isFile: boolean,
+  options?: { checkExists: { workspaceHandle: WorkspaceHandle; path: FsPath }; checkConfined?: boolean; allowedExtensions?: Array<string> },
+): IValidator =>
+  async function (value: string) {
+    value = value.trim();
+    if (value.length === 0) {
+      return { validity: Validity.Intermediate };
+    } else if (value.length > ENTRY_NAME_LIMIT) {
+      return {
+        validity: Validity.Invalid,
+        reason: {
+          key: isFile ? 'validators.fileName.fileTooLong' : 'validators.fileName.folderTooLong',
+          data: { limit: ENTRY_NAME_LIMIT },
+        },
+      };
+    }
+    // pathJoin will fail anyway for those conditions, this way we avoid "unjustified" error messages in the logs
+    if (value.includes('/') || value === '.') {
+      return {
+        validity: Validity.Invalid,
+      };
+    }
+    if (options?.allowedExtensions && !options.allowedExtensions.some((allowedExt) => value.endsWith(`.${allowedExt}`))) {
+      const ext = Path.getFileExtension(value);
+      return {
+        validity: Validity.Invalid,
+        reason: {
+          key: ext ? 'validators.fileName.unauthorizedExtension' : 'validators.fileName.missingExtension',
+          data: { allowedExtensions: options.allowedExtensions.join(', ') },
+          count: options.allowedExtensions.length,
+        },
+      };
+    }
+    if (options?.checkExists) {
+      const fullPath = await Path.join(options.checkExists.path, value);
+      const statsResult = await entryStat(options.checkExists.workspaceHandle, fullPath);
+
+      if (statsResult.ok) {
+        return {
+          validity: Validity.Invalid,
+          reason: {
+            key: statsResult.value.isFile() ? 'validators.fileName.fileAlreadyExists' : 'validators.fileName.folderAlreadyExists',
+          },
+        };
+      }
+    }
+    if (options?.checkConfined) {
+      if (await isPathConfined(value)) {
+        return {
+          validity: Validity.Invalid,
+          reason: {
+            key: 'validators.fileName.isConfined',
+          },
+        };
+      }
+    }
+    return (await isValidEntryName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  };
 
 export const parsecAddrValidator: IValidator = async function (value: string) {
   value = value.trim();
@@ -138,17 +205,16 @@ export const claimAndBootstrapLinkValidator: IValidator = async function (value:
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_enrollment')) {
-    return { validity: Validity.Valid };
-  }
   const result = await parseParsecAddr(value);
 
   if (
     result.ok &&
     (result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ||
       result.value.tag === ParsedParsecAddrTag.InvitationUser ||
-      result.value.tag === ParsedParsecAddrTag.InvitationDevice)
+      result.value.tag === ParsedParsecAddrTag.InvitationDevice ||
+      result.value.tag === ParsedParsecAddrTag.AsyncEnrollment ||
+      // Not a join link but it we can use it as a backup
+      result.value.tag === ParsedParsecAddrTag.TOTPReset)
   ) {
     return { validity: Validity.Valid };
   }
@@ -247,14 +313,26 @@ export const secretKeyValidator: IValidator = async function (value: string) {
   return { validity: /^([A-Z0-9]{4}-){12}[A-Z0-9]{4}$/.test(value) ? Validity.Valid : Validity.Invalid };
 };
 
-export const pkiLinkValidator: IValidator = async function (value: string) {
+export const asyncEnrollmentLinkValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_enrollment')) {
-    return { validity: Validity.Valid };
+  const result = await parseParsecAddr(value);
+  if (result.ok) {
+    return result.value.tag === ParsedParsecAddrTag.AsyncEnrollment ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
-  return { validity: Validity.Invalid };
+  return { validity: Validity.Invalid, reason: '' };
+};
+
+export const totpResetLinkValidator: IValidator = async function (value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return { validity: Validity.Intermediate };
+  }
+  const result = await parseParsecAddr(value);
+  if (result.ok) {
+    return result.value.tag === ParsedParsecAddrTag.TOTPReset ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  }
+  return { validity: Validity.Invalid, reason: 'HomePage.organizationRequest.totp.invalidLink' };
 };

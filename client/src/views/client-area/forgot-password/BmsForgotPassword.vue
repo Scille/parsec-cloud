@@ -1,11 +1,12 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="saas-forgot-password">
     <ion-button
       v-if="!hideHeader"
       slot="icon-only"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
       @click="$emit('closeRequested')"
     >
       <ion-icon
@@ -94,11 +95,15 @@ function onEmailSent(email: string): void {
   display: flex;
   flex-direction: row;
   width: 100%;
-  background: var(--parsec-color-light-primary-50);
+  background: ms.color('surface-base-default');
   position: relative;
-  padding: 2.5rem;
-  min-width: 35.75rem;
-  max-width: 35.75rem;
+  padding: ms.spacing('padding-5xl');
+  border: 1px solid ms.color('border-neutral-default-subtle');
+  max-width: 40rem;
+
+  @include ms.responsive-breakpoint('md') {
+    padding: ms.spacing('padding-4xl');
+  }
 
   &-container {
     display: flex;
@@ -106,6 +111,10 @@ function onEmailSent(email: string): void {
     width: 100%;
     position: relative;
     z-index: 2;
+  }
+
+  :deep(.modal-header-title__icon) {
+    background: ms.color('surface-brand-default-subtle');
   }
 }
 </style>

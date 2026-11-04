@@ -1,8 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use futures::FutureExt;
 
-pub use tokio::task::{try_id as try_task_id, Id as TaskID};
+pub use tokio::task::{Id as TaskID, try_id as try_task_id};
 
 pub struct Instant(std::time::Instant);
 

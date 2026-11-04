@@ -1,22 +1,22 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{
+    WorkspaceHistoryOpsStartError as WorkspaceHistoryStartError,
     workspace_history::{
         WorkspaceHistoryEntryStat, WorkspaceHistoryFdCloseError, WorkspaceHistoryFdReadError,
         WorkspaceHistoryFdStatError, WorkspaceHistoryFileStat, WorkspaceHistoryOpenFileError,
         WorkspaceHistorySetTimestampOfInterestError, WorkspaceHistoryStatEntryError,
         WorkspaceHistoryStatFolderChildrenError,
     },
-    WorkspaceHistoryOpsStartError as WorkspaceHistoryStartError,
 };
 use libparsec_types::prelude::*;
 
 use crate::{
     device::DeviceAccessStrategy,
     handle::{
-        borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+        Handle, HandleItem, borrow_from_handle, register_handle_with_init, take_and_close_handle,
     },
 };
 
@@ -132,7 +132,7 @@ pub async fn workspace_history_start_with_realm_export(
         for raw_decryptor in decryptors {
             let cooked_decryptor = match raw_decryptor {
                 WorkspaceHistoryRealmExportDecryptor::User { access } => {
-                    let access = access.convert_with_side_effects()?;
+                    let access = access.convert_with_side_effects().await?;
 
                     let device =
                         libparsec_platform_device_loader::load_device(&config.config_dir, &access)

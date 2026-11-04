@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::path::Path;
 use std::{collections::HashMap, convert::Infallible};
@@ -8,8 +8,8 @@ use indexed_db::{Factory, OwnedDatabase, Transaction};
 use libparsec_types::prelude::*;
 
 use super::utils::{
-    js_to_rs_bytes, js_to_rs_timestamp, js_to_rs_vlob_id, rs_to_js_filter, rs_to_js_timestamp,
-    with_transaction, CustomErrMarker,
+    CustomErrMarker, js_to_rs_bytes, js_to_rs_timestamp, js_to_rs_vlob_id, rs_to_js_filter,
+    rs_to_js_timestamp, with_transaction,
 };
 use crate::certificates::{
     FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps,

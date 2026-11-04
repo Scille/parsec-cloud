@@ -1,16 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    IntoPyObjectExt,
     exceptions::PyValueError,
     prelude::*,
     types::{PyBool, PyBytes, PyDict, PyList, PyString},
-    IntoPyObjectExt,
 };
 use std::collections::HashMap;
 use std::num::NonZeroU8;
 use std::sync::Arc;
 
 use crate::{
+    AccessToken, BlockID, DateTime, DeviceID, DeviceLabel, EmailAddress, HumanHandle, PrivateKey,
+    RealmRole, SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
+    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
     data::{
         DeviceCertificate, RealmArchivingCertificate, RealmKeyRotationCertificate,
         RealmNameCertificate, RealmRoleCertificate, RevokedUserCertificate,
@@ -20,13 +23,9 @@ use crate::{
         UserUpdateCertificate,
     },
     protocol::ActiveUsersLimit,
-    BlockID, DateTime, DeviceID, DeviceLabel, EmailAddress, HumanHandle, InvitationToken,
-    PrivateKey, RealmRole, SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer,
-    SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID,
-    UserProfile, VlobID,
 };
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub(crate) struct TestbedTemplateContent {
     template: Arc<libparsec_testbed::TestbedTemplate>,
@@ -155,7 +154,7 @@ event_wrapper!(
         first_device_id: DeviceID,
         first_device_label: DeviceLabel,
         first_device_signing_key: SigningKey,
-        initial_profile: &'static PyObject,
+        initial_profile: &'static Py<PyAny>,
         user_realm_id: VlobID,
         user_realm_key: SecretKey,
         local_symkey: SecretKey,
@@ -208,7 +207,7 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         user: UserID,
-        profile: &'static PyObject,
+        profile: &'static Py<PyAny>,
         certificate: UserUpdateCertificate,
         raw_certificate: Py<PyBytes>,
     ],
@@ -245,7 +244,7 @@ event_wrapper!(
     [
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ],
     |_py, x: &TestbedEventNewDeviceInvitation| -> PyResult<String> {
         Ok(format!(
@@ -261,7 +260,7 @@ event_wrapper!(
         claimer_email: EmailAddress,
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ],
     |_py, x: &TestbedEventNewUserInvitation| -> PyResult<String> {
         Ok(format!(
@@ -277,7 +276,7 @@ event_wrapper!(
         claimer: UserID,
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ],
     |_py, x: &TestbedEventNewShamirRecoveryInvitation| -> PyResult<String> {
         Ok(format!(
@@ -311,7 +310,7 @@ event_wrapper!(
         author: DeviceID,
         realm: VlobID,
         user: UserID,
-        role: Option<&'static PyObject>,
+        role: Option<&'static Py<PyAny>>,
         key_index: Option<libparsec_types::IndexInt>,
         recipient_keys_bundle_access: Option<Py<PyBytes>>,
         certificate: RealmRoleCertificate,
@@ -397,6 +396,21 @@ event_wrapper!(
 );
 
 event_wrapper!(
+    TestbedEventDeleteRealm,
+    [
+        timestamp: DateTime,
+        realm: VlobID,
+    ],
+    |_py, x: &TestbedEventDeleteRealm| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, realm={:?}",
+            x.timestamp.0,
+            x.realm.0,
+        ))
+    }
+);
+
+event_wrapper!(
     TestbedEventNewShamirRecovery,
     [
         timestamp: DateTime,
@@ -406,7 +420,7 @@ event_wrapper!(
         per_recipient_shares: HashMap<UserID, NonZeroU8>,
         recovery_device: DeviceID,
         data_key: SecretKey,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
         ciphered_data: Py<PyBytes>,
         brief_certificate: ShamirRecoveryBriefCertificate,
         raw_brief_certificate: Py<PyBytes>,
@@ -516,20 +530,20 @@ event_wrapper!(
     TestbedEventUpdateOrganization,
     [
         timestamp: DateTime,
-        is_expired: PyObject,
-        active_users_limit: PyObject,
-        user_profile_outsider_allowed: PyObject,
-        minimum_archiving_period: PyObject,
-        tos: PyObject,
+        is_expired: Py<PyAny>,
+        active_users_limit: Py<PyAny>,
+        user_profile_outsider_allowed: Py<PyAny>,
+        realm_minimum_archiving_period_before_deletion: Py<PyAny>,
+        tos: Py<PyAny>,
     ],
     |py, x: &TestbedEventUpdateOrganization| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, is_expired={}, active_users_limit={}, user_profile_outsider_allowed={}, minimum_archiving_period={}, tos={}",
+            "timestamp={:?}, is_expired={}, active_users_limit={}, user_profile_outsider_allowed={}, realm_minimum_archiving_period_before_deletion={}, tos={}",
             x.timestamp.0,
             x.is_expired.bind(py).repr()?.to_str()?,
             x.active_users_limit.bind(py).repr()?.to_str()?,
             x.user_profile_outsider_allowed.bind(py).repr()?.to_str()?,
-            x.minimum_archiving_period.bind(py).repr()?.to_str()?,
+            x.realm_minimum_archiving_period_before_deletion.bind(py).repr()?.to_str()?,
             x.tos.bind(py).repr()?.to_str()?,
         ))
     }
@@ -608,7 +622,7 @@ fn event_to_pyobject(
     py: Python,
     template: &libparsec_testbed::TestbedTemplate,
     event: &libparsec_testbed::TestbedEvent,
-) -> PyResult<Option<PyObject>> {
+) -> PyResult<Option<Py<PyAny>>> {
     macro_rules! single_certificate {
         ($py: expr, $event: expr, $template: expr, $name: ident) => {{
             let certif = $event
@@ -949,6 +963,14 @@ fn event_to_pyobject(
             obj.into_py_any(py).map(Some)
         }
 
+        libparsec_testbed::TestbedEvent::DeleteRealm(x) => {
+            let obj = TestbedEventDeleteRealm {
+                timestamp: x.timestamp.into(),
+                realm: x.realm.into(),
+            };
+            obj.into_py_any(py).map(Some)
+        }
+
         libparsec_testbed::TestbedEvent::NewShamirRecovery(x) => {
             let mut certifs = x.certificates(template);
 
@@ -1123,9 +1145,13 @@ fn event_to_pyobject(
                         user_profile_outsider_allowed.into_py_any(py)?
                     }
                 },
-                minimum_archiving_period: match x.minimum_archiving_period {
+                realm_minimum_archiving_period_before_deletion: match x
+                    .realm_minimum_archiving_period_before_deletion
+                {
                     None => unset_tag.clone().unbind(),
-                    Some(minimum_archiving_period) => minimum_archiving_period.into_py_any(py)?,
+                    Some(realm_minimum_archiving_period_before_deletion) => {
+                        realm_minimum_archiving_period_before_deletion.into_py_any(py)?
+                    }
                 },
                 tos: match &x.tos {
                     None => unset_tag.clone().unbind(),
@@ -1143,6 +1169,21 @@ fn event_to_pyobject(
         }
 
         // Ignore non-server events
-        _ => Ok(None),
+        // Be explict so to make sure this code is updated whenever a new event type is added
+        libparsec_testbed::TestbedEvent::CertificatesStorageFetchCertificates(_)
+        | libparsec_testbed::TestbedEvent::UserStorageFetchUserVlob(_)
+        | libparsec_testbed::TestbedEvent::UserStorageFetchRealmCheckpoint(_)
+        | libparsec_testbed::TestbedEvent::UserStorageLocalUpdate(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageChunkCreate(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(
+            _,
+        )
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_) => {
+            Ok(None)
+        }
     }
 }

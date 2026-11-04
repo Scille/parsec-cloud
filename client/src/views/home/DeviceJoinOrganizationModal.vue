@@ -1,7 +1,8 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page
+    id="device-join-organization-modal"
     class="modal-stepper"
     :class="DeviceJoinOrganizationStep[pageStep]"
   >
@@ -18,7 +19,8 @@
       slot="icon-only"
       @click="cancelModal()"
       v-show="pageStep !== DeviceJoinOrganizationStep.Finish && isLargeDisplay"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
     >
       <ion-icon
         :icon="close"
@@ -34,13 +36,14 @@
       <ion-header
         class="modal-header"
         v-if="isLargeDisplay"
+        v-show="pageStep !== DeviceJoinOrganizationStep.Finish"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
           v-if="steps[pageStep]?.subtitle"
-          class="modal-header__text body"
+          class="modal-header__text"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
@@ -57,7 +60,7 @@
           @close-clicked="cancelModal()"
           :title="'DevicesPage.addDevice'"
           :icon="phonePortrait"
-          :steps="steps.slice(1, steps.length - 1)"
+          :steps="steps.slice(1, steps.length)"
           :current-step="pageStep - 1"
         />
       </template>
@@ -71,7 +74,7 @@
         >
           <information-join-device />
           <ms-report-text :theme="MsReportTheme.Info">
-            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuestVersionInfo') }}
+            {{ $msTranslate('DevicesPage.greet.step1.info') }}
           </ms-report-text>
         </div>
 
@@ -106,20 +109,39 @@
           <choose-authentication
             ref="authChoice"
             :server-config="serverConfig"
+            :server-addr="serverAddr"
+            @auth-reset="fieldsUpdated = true"
           />
         </div>
+
         <!-- part 5 (finish the process)-->
         <div
           v-show="pageStep === DeviceJoinOrganizationStep.Finish"
-          class="step final-step"
+          class="final-step"
         >
-          <ms-informative-text :icon="checkmarkCircle">
-            {{ $msTranslate('ClaimDeviceModal.subtitles.done') }}
-          </ms-informative-text>
+          <ms-image
+            :image="ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string"
+            class="final-step__logo"
+          />
+          <ion-text class="final-step__title">
+            {{ $msTranslate('ClaimDeviceModal.titles.done') }}
+          </ion-text>
+          <ion-button
+            fill="solid"
+            size="default"
+            @click="nextStep()"
+            class="final-step__button"
+          >
+            {{ $msTranslate('ClaimDeviceModal.buttons.login') }}
+          </ion-button>
         </div>
       </div>
+
       <!-- the buttons must be only enabled if all fields are filled in -->
-      <ion-footer class="modal-footer">
+      <ion-footer
+        class="modal-footer"
+        v-show="pageStep !== DeviceJoinOrganizationStep.Finish"
+      >
         <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
@@ -153,28 +175,30 @@ import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepMod
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import {
-  AccessStrategy,
+  buildParsecAddr,
   CancelledGreetingAttemptReason,
   ClaimerRetrieveInfoErrorTag,
   ClaimInProgressErrorTag,
+  constructAccessStrategy,
   DeviceClaim,
-  DeviceSaveStrategy,
-  forgeServerAddr,
   getServerConfig,
   OrganizationID,
   ParsedParsecAddrTag,
   parseParsecAddr,
   ServerConfig,
 } from '@/parsec';
+import { ParsecAddr, ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
+import { close, phonePortrait } from 'ionicons/icons';
 import {
   Answer,
   askQuestion,
   asyncComputed,
-  MsInformativeText,
+  LogoIconWhite,
+  MsImage,
   MsModalResult,
   MsReportText,
   MsReportTheme,
@@ -200,9 +224,11 @@ const claimer = ref(new DeviceClaim());
 const authChoiceRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('authChoice');
 const cancelled = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
+const fieldsUpdated = ref(false);
 
 const props = defineProps<{
-  invitationLink: string;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
   informationManager: InformationManager;
 }>();
 
@@ -221,14 +247,6 @@ const steps = computed(() => [
   {
     title: 'ClaimDeviceModal.titles.authentication',
     subtitle: 'ClaimDeviceModal.subtitles.authentication',
-  },
-  {
-    title: {
-      key: 'ClaimDeviceModal.titles.done',
-      data: {
-        org: organizationName.value,
-      },
-    },
   },
 ]);
 
@@ -293,6 +311,9 @@ const nextButtonIsVisible = computed(() => {
 });
 
 const canGoForward = asyncComputed(async () => {
+  if (fieldsUpdated.value) {
+    fieldsUpdated.value = false;
+  }
   if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
     return await authChoiceRef.value?.areFieldsCorrect();
   }
@@ -321,13 +342,16 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
-    const deviceName = await getDefaultDeviceName();
+    const deviceName = getDefaultDeviceName();
+    const strategy = await authChoiceRef.value?.getSaveStrategy();
+    if (!strategy) {
+      return;
+    }
+
     waitingForHost.value = true;
     const doClaimResult = await claimer.value.doClaim(deviceName);
+    waitingForHost.value = false;
     if (doClaimResult.ok) {
-      waitingForHost.value = false;
-      const strategy = authChoiceRef.value?.getSaveStrategy();
-      if (!strategy) return;
       const result = await claimer.value.finalize(strategy);
       if (!result.ok) {
         props.informationManager.present(
@@ -352,9 +376,9 @@ async function nextStep(): Promise<void> {
       level: InformationLevel.Success,
     });
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
-    const saveStrategy: DeviceSaveStrategy | undefined = authChoiceRef.value?.getSaveStrategy();
+    const saveStrategy = await authChoiceRef.value?.getSaveStrategy();
     if (!saveStrategy) return;
-    const accessStrategy = await AccessStrategy.fromSaveStrategy(claimer.value.device, saveStrategy);
+    const accessStrategy = constructAccessStrategy(claimer.value.device, saveStrategy.primaryProtection, saveStrategy.totpProtection);
     await modalController.dismiss({ device: claimer.value.device, access: accessStrategy }, MsModalResult.Confirm);
     return;
   }
@@ -364,8 +388,8 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === DeviceJoinOrganizationStep.ProvideGuestCode) {
     waitingForHost.value = true;
     const result = await claimer.value.waitHostTrust();
+    waitingForHost.value = false;
     if (result.ok) {
-      waitingForHost.value = false;
       pageStep.value += 1;
     } else {
       let message: Translatable = '';
@@ -468,16 +492,17 @@ onMounted(async () => {
 
   if (addrResult.ok) {
     if (addrResult.value.tag !== ParsedParsecAddrTag.InvitationDevice) {
-      window.electronAPI.log('error', 'Not a device invitation link');
+      window.nativeAPI.log('error', 'Not a device invitation link');
       return;
     }
     organizationName.value = addrResult.value.organizationId;
-    const configResult = await getServerConfig(await forgeServerAddr(addrResult.value));
+    serverAddr.value = await buildParsecAddr(addrResult.value);
+    const configResult = await getServerConfig(serverAddr.value);
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }
   } else {
-    window.electronAPI.log('error', `Failed to parse invitation link: ${addrResult.error.tag} (${addrResult.error.error})`);
+    window.nativeAPI.log('error', `Failed to parse invitation link: ${addrResult.error.tag} (${addrResult.error.error})`);
     return;
   }
   await startProcess();
@@ -485,6 +510,18 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.modal-header__title {
+  @include ms.font('heading-h4');
+}
+
+.modal-header__text {
+  @include ms.font('body-lg-regular');
+}
+
+.final-step__title {
+  @include ms.font('heading-h4');
+}
+
 .organization-name {
   display: flex;
   flex-direction: column;

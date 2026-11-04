@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod addr;
 mod merge;
@@ -13,20 +13,24 @@ use std::{
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_storage::workspace::WorkspaceOutboundSyncBacklog;
 use libparsec_types::prelude::*;
 
-use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
+pub use crate::workspace::store::WorkspaceGetOutboundSyncBacklogError;
+use crate::{ClientConfig, certif::CertificateOps, event_bus::EventBus};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
-    InboundSyncOutcome, MoveEntryMode, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
-    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
-    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
-    WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
-    WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
-    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
+    CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
+    FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode, OpenOptions,
+    OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
+    WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
+    WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
+    WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
     WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
@@ -69,9 +73,11 @@ struct OpenedFile {
     bytes_written_since_last_flush: u64,
     /// Chunks no longer used since the last flush. They should be removed from
     /// the database  on the next flush.
+    /// Note we don't use a `HashSet` since this should contain a small number of items.
     removed_chunks: Vec<ChunkID>,
     /// Chunks created since the last flush. They currently live in memory and should
     /// be written in the database on the next flush.
+    /// Note we don't use a `HashMap` since this should contain a small number of items.
     new_chunks: Vec<(ChunkID, Vec<u8>)>,
     /// In theory we could deduce from `removed_chunks`&`new_chunks` if the flush
     /// is needed, but (at least for now) we instead value the simplicity of setting
@@ -106,7 +112,6 @@ pub struct WorkspaceExternalInfo {
 }
 
 pub struct WorkspaceOps {
-    #[allow(unused)]
     config: Arc<ClientConfig>,
     device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,
@@ -302,13 +307,26 @@ impl WorkspaceOps {
         self.realm_id
     }
 
-    pub fn get_current_name_and_self_role(&self) -> (EntryName, RealmRole) {
+    pub(crate) async fn get_outbound_sync_backlog(
+        &self,
+    ) -> Result<WorkspaceOutboundSyncBacklog, WorkspaceGetOutboundSyncBacklogError> {
+        self.store.get_outbound_sync_backlog().await
+    }
+
+    /// TL;DR: Use this function to access current workspace name, and our role.
+    /// External info are things related to the workspace that can change at any time
+    /// (typically because they are updated by certificates).
+    /// So whenever those info changes, `update_workspace_external_info` is expected
+    /// to be called.
+    pub fn get_workspace_external_info<T>(
+        &self,
+        cb: impl FnOnce(&WorkspaceExternalInfo) -> T,
+    ) -> T {
         let guard = self
             .workspace_external_info
             .lock()
             .expect("Mutex is poisoned");
-
-        (guard.entry.name.clone(), guard.entry.role)
+        cb(&guard)
     }
 
     /// Only needed for WinFSP
@@ -475,9 +493,7 @@ impl WorkspaceOps {
         entry_id: VlobID,
         options: OpenOptions,
     ) -> Result<FileDescriptor, WorkspaceOpenFileError> {
-        transactions::open_file_by_id(self, entry_id, options)
-            .await
-            .map(|(fd, _)| fd)
+        transactions::open_file_by_id(self, entry_id, options).await
     }
 
     pub async fn open_file_and_get_id(
@@ -568,6 +584,42 @@ impl WorkspaceOps {
         link: &ParsecWorkspacePathAddr,
     ) -> Result<FsPath, WorkspaceDecryptPathAddrError> {
         addr::decrypt_path_addr(self, link).await
+    }
+
+    /// Registering a session means two things:
+    /// - if no session exists for the document: create a new session.
+    /// - if a session exists: get the session.
+    ///
+    /// Hence why this function takes keys as parameter and also return keys:
+    /// - The `candidate_*_key` provided in parameter will only be used to create a new session.
+    /// - The returned keys are the actual one being used (and differ from the `candidate_*_key`
+    ///   if creating a new session wasn't needed).
+    ///
+    /// Also note `document_id` doesn't have to be a valid vlob (i.e. the server never checks for
+    /// its existence), as this allow to start a cryptpad session on a file that haven't been
+    /// synchronized yet.
+    pub async fn register_cryptpad_session(
+        &self,
+        document_id: VlobID,
+        candidate_edit_key: String,
+        candidate_view_key: String,
+    ) -> Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError> {
+        transactions::register_cryptpad_session(
+            self,
+            document_id,
+            candidate_edit_key,
+            candidate_view_key,
+        )
+        .await
+    }
+
+    pub async fn save_and_sync_file_with_origin(
+        &self,
+        entry_id: VlobID,
+        origin: FileManifestOrigin,
+        content: &[u8],
+    ) -> Result<(), WorkspaceSaveAndSyncFileWithOriginError> {
+        transactions::save_and_sync_file_with_origin(self, entry_id, origin, content).await
     }
 }
 

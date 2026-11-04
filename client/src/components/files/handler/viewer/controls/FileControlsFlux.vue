@@ -1,9 +1,10 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
+
 <template>
   <file-controls-group class="file-controls-flux-container">
     <div class="file-controls-flux">
-      <div class="progress-label-start button-medium">
-        {{ `${(sliderState.progress / 100).toFixed(0)}` }}
+      <div class="progress-label-start">
+        {{ progressDuration.toFormat('hh:mm:ss') }}
       </div>
       <ms-slider
         class="progress-slider"
@@ -12,8 +13,8 @@
         :max-value="length"
         :increment-value="500"
       />
-      <div class="progress-label-end button-medium">
-        {{ `${(length / 100).toFixed(0)}` }}
+      <div class="progress-label-end">
+        {{ duration.toFormat('hh:mm:ss') }}
       </div>
     </div>
   </file-controls-group>
@@ -21,8 +22,9 @@
 
 <script setup lang="ts">
 import { FileControlsGroup } from '@/components/files/handler/viewer';
+import { Duration } from 'luxon';
 import { MsSlider, SliderState } from 'megashark-lib';
-import { onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
   modelValue: SliderState;
@@ -34,12 +36,14 @@ const emits = defineEmits<{
 }>();
 
 const sliderState = ref<SliderState>({ progress: 0, paused: true });
+const progressDuration = ref<Duration>(Duration.fromMillis(0));
 
 // Update the slider as the media is playing
 const cancelProgressWatch = watch(
   () => props.modelValue.progress,
   () => {
     sliderState.value.progress = props.modelValue.progress;
+    progressDuration.value = Duration.fromMillis(props.modelValue.progress * 10);
   },
 );
 const cancelPausedWatch = watch(
@@ -48,6 +52,9 @@ const cancelPausedWatch = watch(
     sliderState.value.paused = props.modelValue.paused;
   },
 );
+const duration = computed(() => {
+  return Duration.fromMillis(props.length * 10);
+});
 
 onUnmounted(() => {
   cancelProgressWatch();
@@ -69,7 +76,7 @@ function updateSliderState(value: SliderState): void {
   .file-controls-flux {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
     width: 100%;
   }
 
@@ -78,18 +85,21 @@ function updateSliderState(value: SliderState): void {
   }
 
   [class*='progress-label'] {
+    @include ms.font('label-md-medium');
     width: 3.5rem;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-neutral-default');
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
   }
 
   .progress-label-start {
+    width: 7rem;
     text-align: right;
   }
 
   .progress-label-end {
+    width: 7rem;
     text-align: left;
   }
 }

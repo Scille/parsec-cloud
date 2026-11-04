@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -34,6 +34,7 @@
       @close-requested="$emit('closeRequested', false)"
       @go-back-requested="onGoBackRequested"
       :server-config="serverConfig"
+      :server-addr="serverAddr"
       :hide-back-button="bootstrapLink !== undefined"
     />
     <organization-summary-page
@@ -43,14 +44,14 @@
       :error="currentError"
       :email="personalInformation.email"
       :name="`${personalInformation.firstName} ${personalInformation.lastName}`"
-      :save-strategy="saveStrategy.tag"
+      :protection-strategy="saveStrategy.primaryProtection.tag"
       :organization-name="organizationName"
       :server-type="ServerType.Saas"
       :can-edit-email="false"
       :can-edit-name="false"
       :can-edit-organization-name="bootstrapLink === undefined"
       :can-edit-server-address="false"
-      :can-edit-save-strategy="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :can-edit-save-strategy="saveStrategy.primaryProtection.tag !== DevicePrimaryProtectionStrategyTag.AccountVault"
       :use-sequester-key="sequesterKey !== undefined"
       @create-clicked="onCreateClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
@@ -76,19 +77,22 @@
 <script setup lang="ts">
 import { getDefaultDeviceName } from '@/common/device';
 import {
+  AccountHandle,
   AvailableDevice,
   bootstrapOrganization,
   BootstrapOrganizationErrorTag,
+  buildParsecAddr,
+  constructSaveStrategy,
+  DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
-  forgeServerAddr,
   getServerConfig,
   isWeb,
   OrganizationID,
   ParsecAccount,
+  ParsecAddr,
   ParsedParsecAddrTag,
   parseParsecAddr,
-  SaveStrategy,
+  PrimaryProtectionStrategy,
   ServerConfig,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
@@ -112,7 +116,7 @@ import OrganizationNamePage from '@/views/organizations/creation/OrganizationNam
 import OrganizationSummaryPage from '@/views/organizations/creation/OrganizationSummaryPage.vue';
 import { IonPage } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
-import { isProxy, onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 
 enum Steps {
   BmsLogin,
@@ -143,18 +147,19 @@ const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const sequesterKey = ref<string | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
 
 onMounted(async () => {
-  let server = Env.getSaasServers()[0] ?? '';
+  serverAddr.value = Env.getSaasServers()[0] ?? '';
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
-      server = await forgeServerAddr(result.value);
+      serverAddr.value = await buildParsecAddr(result.value);
     }
   }
-  if (server) {
-    const configResult = await getServerConfig(server);
+  if (serverAddr.value) {
+    const configResult = await getServerConfig(serverAddr.value);
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }
@@ -185,11 +190,11 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
 
   step.value = Steps.OrganizationName;
   if (props.bootstrapLink) {
-    if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
+    const accountHandle = ParsecAccount.getHandle();
+    if (isWeb() && accountHandle && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
       const parseResult = await parseParsecAddr(props.bootstrapLink);
       if (parseResult.ok && parseResult.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
-        const saveStrategy = SaveStrategy.useAccountVault();
-        // Skip the auth page
+        const saveStrategy = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(accountHandle));
         await onAuthenticationChosen(saveStrategy);
       }
     }
@@ -198,10 +203,7 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
 
 async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID, seqKey: string | undefined): Promise<void> {
   if (!personalInformation.value) {
-    window.electronAPI.log(
-      'error',
-      'OrganizationCreation: no authentication token after choosing the organization name, should not happen',
-    );
+    window.nativeAPI.log('error', 'OrganizationCreation: no authentication token after choosing the organization name, should not happen');
     return;
   }
   organizationName.value = chosenOrganizationName;
@@ -209,7 +211,7 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID, 
   const accountHandle = ParsecAccount.getHandle();
   if (isWeb() && accountHandle && Env.getSaasServers().some((addr) => ParsecAccount.addressMatchesAccountServer(`parsec3://${addr}`))) {
     // Fake one, will get overwritten later
-    saveStrategy.value = { tag: DeviceSaveStrategyTag.AccountVault, accountHandle };
+    saveStrategy.value = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(accountHandle));
     step.value = Steps.Summary;
   } else {
     step.value = Steps.Authentication;
@@ -218,7 +220,7 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID, 
 
 async function onAuthenticationChosen(chosenSaveStrategy: DeviceSaveStrategy): Promise<void> {
   if (!personalInformation.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data on auth chosen, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data on auth chosen, should not happen');
   }
   currentError.value = undefined;
   saveStrategy.value = chosenSaveStrategy;
@@ -236,7 +238,7 @@ async function onCreationError(startTime: number): Promise<void> {
 
 async function onCreateClicked(): Promise<void> {
   if (!organizationName.value || !personalInformation.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
     return;
   }
 
@@ -248,14 +250,14 @@ async function onCreateClicked(): Promise<void> {
     const response = await BmsAccessInstance.get().createOrganization(organizationName.value);
 
     if (response.isError) {
-      window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(response.errors)}`);
+      window.nativeAPI.log('error', `Failed to create organization: ${JSON.stringify(response.errors)}`);
       // TODO: Change this error handling with the real backend response
       if (response.errors && response.errors.some((error) => error.code === 'parsec_bad_status')) {
         currentError.value = 'CreateOrganization.errors.alreadyExists';
       } else if (response.status === CONNECTION_ERROR_STATUS) {
         currentError.value = 'CreateOrganization.errors.offline';
       } else {
-        window.electronAPI.log('error', `Failed to create Saas organization, unhandled error ${JSON.stringify(response.errors)}`);
+        window.nativeAPI.log('error', `Failed to create Saas organization, unhandled error ${JSON.stringify(response.errors)}`);
         currentError.value = {
           key: 'CreateOrganization.errors.generic',
           data: { reason: 'Unknown' },
@@ -270,14 +272,15 @@ async function onCreateClicked(): Promise<void> {
       await onCreationError(startTime);
       return;
     } else if (!response.isError && !response.data.bootstrapLink) {
-      window.electronAPI.log('error', 'Server did not provide a bootstrap link');
+      window.nativeAPI.log('error', 'Server did not provide a bootstrap link');
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: 'MissingBootstrapLink' } };
       return;
     } else {
       bootstrapLink = response.data.bootstrapLink;
       if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(bootstrapLink)) {
+        const accountHandle = ParsecAccount.getHandle() as AccountHandle;
         // Don't like it, but we can't create the organization from the tests
-        saveStrategy.value = SaveStrategy.useAccountVault();
+        saveStrategy.value = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(accountHandle));
       }
     }
   }
@@ -294,7 +297,7 @@ async function onCreateClicked(): Promise<void> {
     `${personalInformation.value.firstName} ${personalInformation.value.lastName}`,
     personalInformation.value.email,
     getDefaultDeviceName(),
-    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    toRaw(saveStrategy.value),
     sequesterKey.value,
   );
 
@@ -327,10 +330,10 @@ async function onCreateClicked(): Promise<void> {
 
 async function onGoClicked(): Promise<void> {
   if (!saveStrategy.value || !availableDevice.value || !organizationName.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
-  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value);
+  emits('organizationCreated', organizationName.value, availableDevice.value, toRaw(saveStrategy.value));
 }
 
 async function onGoBackRequested(): Promise<void> {

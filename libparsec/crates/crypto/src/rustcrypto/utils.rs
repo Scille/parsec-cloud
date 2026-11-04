@@ -1,14 +1,14 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use blake2::{Blake2b, Digest};
 use generic_array::{
-    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
+    typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
-use rand::{rngs::OsRng, RngCore};
+use rand::{TryRng, rngs::SysRng};
 
 pub(crate) fn generate_rand(out: &mut [u8]) {
-    OsRng.fill_bytes(out);
+    SysRng.try_fill_bytes(out).expect("Failed to fill bytes")
 }
 
 pub(crate) fn blake2b_hash<'a, Size>(data: impl Iterator<Item = &'a [u8]>) -> GenericArray<u8, Size>

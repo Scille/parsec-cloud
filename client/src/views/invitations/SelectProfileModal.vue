@@ -1,16 +1,16 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ms-modal
-    title="InvitationsPage.pkiRequests.selectProfileModal.title"
+    title="InvitationsPage.asyncEnrollmentRequest.selectProfileModal.title"
     :close-button="{ visible: true }"
     :confirm-button="{
       disabled: selectedProfile === undefined,
-      label: 'InvitationsPage.pkiRequests.selectProfileModal.actions.confirm',
+      label: 'InvitationsPage.asyncEnrollmentRequest.selectProfileModal.actions.confirm',
       onClick: validateProfile,
     }"
     :cancel-button="{
-      label: 'InvitationsPage.pkiRequests.selectProfileModal.actions.cancel',
+      label: 'InvitationsPage.asyncEnrollmentRequest.selectProfileModal.actions.cancel',
       disabled: false,
       onClick: dismissModal,
     }"
@@ -25,8 +25,8 @@
       />
       <ms-dropdown
         class="dropdown"
-        title="InvitationsPage.pkiRequests.selectProfileModal.profileLabel"
-        label="InvitationsPage.pkiRequests.selectProfileModal.profilePlaceholder"
+        title="InvitationsPage.asyncEnrollmentRequest.selectProfileModal.profileLabel"
+        label="InvitationsPage.asyncEnrollmentRequest.selectProfileModal.profilePlaceholder"
         :options="profileOptions"
         @change="selectedProfile = $event.option.key"
       />
@@ -83,7 +83,7 @@ async function dismissModal(): Promise<boolean> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 
 .dropdown,

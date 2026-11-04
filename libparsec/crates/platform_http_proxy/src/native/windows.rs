@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::ffi::c_void;
 
@@ -6,10 +6,10 @@ use widestring::{U16CStr, U16CString};
 use windows_sys::Win32::{
     Foundation::{GetLastError, GlobalFree},
     Networking::WinHttp::{
-        WinHttpCloseHandle, WinHttpGetIEProxyConfigForCurrentUser, WinHttpGetProxyForUrl,
-        WinHttpOpen, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_AUTOPROXY_CONFIG_URL,
-        WINHTTP_AUTOPROXY_OPTIONS, WINHTTP_AUTO_DETECT_TYPE_DHCP, WINHTTP_AUTO_DETECT_TYPE_DNS_A,
-        WINHTTP_CURRENT_USER_IE_PROXY_CONFIG, WINHTTP_PROXY_INFO,
+        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_AUTO_DETECT_TYPE_DHCP,
+        WINHTTP_AUTO_DETECT_TYPE_DNS_A, WINHTTP_AUTOPROXY_CONFIG_URL, WINHTTP_AUTOPROXY_OPTIONS,
+        WINHTTP_CURRENT_USER_IE_PROXY_CONFIG, WINHTTP_PROXY_INFO, WinHttpCloseHandle,
+        WinHttpGetIEProxyConfigForCurrentUser, WinHttpGetProxyForUrl, WinHttpOpen,
     },
 };
 

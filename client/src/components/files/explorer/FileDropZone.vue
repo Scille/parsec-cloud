@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div
@@ -23,7 +23,7 @@
         :image="DocumentImport"
         class="restore-password-header-img"
       />
-      <ion-text class="subtitles-sm">
+      <ion-text class="drop-message__text">
         {{ $msTranslate('FoldersPage.ImportFile.dropInstructions') }}
       </ion-text>
     </div>
@@ -47,7 +47,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'filesAdded', files: Array<File>): void;
+  (e: 'filesAdded', gen: AsyncGenerator<File[]>): void;
   (e: 'dropAsReader'): void;
   (e: 'globalMenuClick', event: Event): void;
 }>();
@@ -94,10 +94,7 @@ async function onDrop(event: DragEvent): Promise<void> {
   }
   event.stopPropagation();
   dragEnterCount.value = 0;
-  const files = await getFilesFromDrop(event);
-  if (files.length) {
-    emits('filesAdded', files);
-  }
+  emits('filesAdded', getFilesFromDrop(event));
 }
 
 function preventDefaults(event: Event): void {
@@ -143,11 +140,13 @@ function reset(): void {
     @include ms.responsive-breakpoint('sm') {
       top: 0.75rem;
       bottom: 0.75rem;
+      left: 0.5rem;
+      right: 0.5rem;
     }
 
     &.drop-active {
-      outline: 1px dashed var(--parsec-color-light-primary-400);
-      border-radius: var(--parsec-radius-8);
+      outline: 1px dashed ms.color('border-brand-default');
+      border-radius: ms.radius('lg');
     }
   }
 }
@@ -158,15 +157,19 @@ function reset(): void {
   bottom: 2em;
   transform: translate(-50%, -50%);
   width: fit-content;
-  background-color: var(--parsec-color-light-secondary-premiere);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-8);
-  box-shadow: var(--parsec-shadow-strong);
-  padding: 0.75rem;
+  background-color: ms.color('surface-base-page-secondary');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
+  border-radius: ms.radius('lg');
+  box-shadow: ms.shadow('strong');
+  padding: ms.spacing('padding-2xl');
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--parsec-color-light-secondary-text);
+  gap: ms.spacing('gap-lg');
+  color: ms.color('text-base-body');
   z-index: 10;
+
+  &__text {
+    @include ms.font('body-md-medium');
+  }
 }
 </style>

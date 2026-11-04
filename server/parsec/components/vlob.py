@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -41,6 +42,8 @@ class VlobCreateBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_ARCHIVED = auto()
+    REALM_DELETED = auto()
     VLOB_ALREADY_EXISTS = auto()
 
 
@@ -51,6 +54,8 @@ class VlobUpdateBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_ARCHIVED = auto()
+    REALM_DELETED = auto()
     VLOB_NOT_FOUND = auto()
     BAD_VLOB_VERSION = auto()
 
@@ -62,6 +67,7 @@ class VlobReadAsUserBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
 
 
 class VlobPollChangesAsUserBadOutcome(BadOutcomeEnum):
@@ -71,6 +77,7 @@ class VlobPollChangesAsUserBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
 
 
 class VlobListVersionsBadOutcome(BadOutcomeEnum):
@@ -96,13 +103,13 @@ class BaseVlobComponent:
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobCreateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         raise NotImplementedError
 
@@ -118,13 +125,13 @@ class BaseVlobComponent:
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobUpdateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         raise NotImplementedError
 
@@ -198,6 +205,10 @@ class BaseVlobComponent:
                 )
             case VlobCreateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_create.RepRealmNotFound()
+            case VlobCreateBadOutcome.REALM_ARCHIVED:
+                return authenticated_cmds.latest.vlob_create.RepRealmArchived()
+            case VlobCreateBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_create.RepRealmDeleted()
             case VlobCreateBadOutcome.VLOB_ALREADY_EXISTS:
                 return authenticated_cmds.latest.vlob_create.RepVlobAlreadyExists()
             case TimestampOutOfBallpark() as error:
@@ -265,6 +276,10 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_update.RepBadVlobVersion()
             case VlobUpdateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_update.RepRealmNotFound()
+            case VlobUpdateBadOutcome.REALM_ARCHIVED:
+                return authenticated_cmds.latest.vlob_update.RepRealmArchived()
+            case VlobUpdateBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_update.RepRealmDeleted()
             case VlobUpdateBadOutcome.VLOB_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_update.RepVlobNotFound()
             case TimestampOutOfBallpark() as error:
@@ -323,6 +338,8 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_read_batch.RepAuthorNotAllowed()
             case VlobReadAsUserBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_read_batch.RepRealmNotFound()
+            case VlobReadAsUserBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_read_batch.RepRealmDeleted()
             case VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED:
@@ -358,6 +375,8 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_read_versions.RepAuthorNotAllowed()
             case VlobReadAsUserBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_read_versions.RepRealmNotFound()
+            case VlobReadAsUserBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_read_versions.RepRealmDeleted()
             case VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED:
@@ -388,6 +407,8 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_poll_changes.RepAuthorNotAllowed()
             case VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_poll_changes.RepRealmNotFound()
+            case VlobPollChangesAsUserBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_poll_changes.RepRealmDeleted()
             case VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED:

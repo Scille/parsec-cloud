@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,6 +10,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -75,7 +77,6 @@ class KeysBundle:
 
 class RealmCreateValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     INVALID_ROLE = auto()
     USER_ID_MISMATCH = auto()
 
@@ -86,7 +87,9 @@ def realm_create_validate(
     expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
-) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmCreateValidateBadOutcome:
+) -> (
+    tuple[RealmRole, RealmRoleCertificate] | TimestampOutOfBallpark | RealmCreateValidateBadOutcome
+):
     try:
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
@@ -106,15 +109,15 @@ def realm_create_validate(
     if expected_author_user_id != data.user_id:
         return RealmCreateValidateBadOutcome.USER_ID_MISMATCH
 
-    if data.role != RealmRole.OWNER:
-        return RealmCreateValidateBadOutcome.INVALID_ROLE
-
-    return data
+    match data.role:
+        case RealmRole.OWNER:
+            return (data.role, data)
+        case _:
+            return RealmCreateValidateBadOutcome.INVALID_ROLE
 
 
 class RealmShareValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     INVALID_ROLE = auto()
     CANNOT_SELF_SHARE = auto()
 
@@ -125,7 +128,7 @@ def realm_share_validate(
     expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
-) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmShareValidateBadOutcome:
+) -> tuple[RealmRole, RealmRoleCertificate] | TimestampOutOfBallpark | RealmShareValidateBadOutcome:
     try:
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
@@ -147,13 +150,12 @@ def realm_share_validate(
 
     if data.role is None:
         return RealmShareValidateBadOutcome.INVALID_ROLE
-
-    return data
+    else:
+        return (data.role, data)
 
 
 class RealmUnshareValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     INVALID_ROLE = auto()
     CANNOT_SELF_UNSHARE = auto()
 
@@ -190,9 +192,51 @@ def realm_unshare_validate(
     return data
 
 
+class RealmSelfPromoteToOwnerValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    INVALID_ROLE = auto()
+    MUST_SELF_PROMOTE = auto()
+
+
+def realm_self_promote_to_owner_validate(
+    now: DateTime,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
+    author_verify_key: VerifyKey,
+    realm_role_certificate: bytes,
+) -> (
+    tuple[RealmRole, RealmRoleCertificate]
+    | TimestampOutOfBallpark
+    | RealmSelfPromoteToOwnerValidateBadOutcome
+):
+    try:
+        data = RealmRoleCertificate.verify_and_load(
+            realm_role_certificate,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author_device_id,
+        )
+
+    except ValueError:
+        return RealmSelfPromoteToOwnerValidateBadOutcome.INVALID_CERTIFICATE
+
+    match timestamps_in_the_ballpark(data.timestamp, now):
+        case TimestampOutOfBallpark() as error:
+            return error
+        case _:
+            pass
+
+    if expected_author_user_id != data.user_id:
+        return RealmSelfPromoteToOwnerValidateBadOutcome.MUST_SELF_PROMOTE
+
+    match data.role:
+        case RealmRole.OWNER:
+            return (data.role, data)
+        case _:
+            return RealmSelfPromoteToOwnerValidateBadOutcome.INVALID_ROLE
+
+
 class RealmRenameValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
 
 
 def realm_rename_validate(
@@ -222,7 +266,6 @@ def realm_rename_validate(
 
 class RealmRotateKeyValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
@@ -263,6 +306,7 @@ class RealmShareStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -275,6 +319,7 @@ class RealmUnshareStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -285,6 +330,7 @@ class RealmRenameStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -294,16 +340,74 @@ class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
+class RealmUpdateArchivingValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+
+
+def realm_update_archiving_validate(
+    now: DateTime,
+    expected_author: DeviceID,
+    author_verify_key: VerifyKey,
+    realm_archiving_certificate: bytes,
+) -> RealmArchivingCertificate | TimestampOutOfBallpark | RealmUpdateArchivingValidateBadOutcome:
+    try:
+        data = RealmArchivingCertificate.verify_and_load(
+            realm_archiving_certificate,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author,
+        )
+
+    except ValueError:
+        return RealmUpdateArchivingValidateBadOutcome.INVALID_CERTIFICATE
+
+    match timestamps_in_the_ballpark(data.timestamp, now):
+        case TimestampOutOfBallpark() as error:
+            return error
+        case _:
+            pass
+
+    return data
+
+
+class RealmUpdateArchivingStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    ARCHIVING_PERIOD_TOO_SHORT = auto()
+
+
+@dataclass(slots=True)
+class RealmSelfPromoteToOwnerActiveOwnerAlreadyExists(BadOutcome):
+    last_realm_certificate_timestamp: DateTime
+
+
+class RealmSelfPromoteToOwnerStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_IS_OUTSIDER = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
 class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -361,6 +465,7 @@ class RealmExportDoBaseInfo:
 class RealmExportDoBaseInfoBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     REALM_DIDNT_EXIST_AT_SNAPSHOT_TIMESTAMP = auto()
 
 
@@ -434,6 +539,63 @@ class RealmExportDoBlocksBatchMetadataBadOutcome(BadOutcomeEnum):
     REALM_NOT_FOUND = auto()
 
 
+class RealmDelete1GetBlocksBatchBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+    # No error if the realm is already deleted or not in a deletable
+    # state, this is because this check is going to be done anyway
+    # in `delete_2_do_delete_metadata` (and in practice we should
+    # start by calling `list_deletion_candidates` to know which
+    # realm should be deleted).
+
+
+type RealmDeleteGetBlocksBatchOffsetMarker = int
+
+
+@dataclass(slots=True)
+class RealmDeleteGetBlocksBatch:
+    blocks: list[BlockID]
+    batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker
+
+
+class RealmDelete2DoDeleteMetadataBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+    REALM_ALREADY_DELETED = auto()
+    REALM_NOT_ORPHANED_NOR_DELETION_PLANNED = auto()
+    REALM_DELETION_DATE_NOT_REACHED = auto()
+
+
+class RealmListDeletionCandidatesBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmDeletionCandidate:
+    realm_id: VlobID
+
+
+@dataclass(slots=True)
+class RealmDeletionCandidateOrphaned(RealmDeletionCandidate):
+    """
+    Realm that can be deleted since all its members have been revoked.
+
+    Note, even without user having access to it, the realm's data can still
+    be accessed in case of a sequestered organization.
+    """
+
+    orphaned_since: DateTime
+
+
+@dataclass(slots=True)
+class RealmDeletionCandidatePlanned(RealmDeletionCandidate):
+    """
+    Realm planned for deletion according to its last realm archiving certificate.
+    """
+
+    deletion_date: DateTime
+
+
 class BaseRealmComponent:
     def __init__(self, webhooks: WebhooksComponent):
         self.webhooks = webhooks
@@ -496,6 +658,23 @@ class BaseRealmComponent:
     ):
         raise NotImplementedError
 
+    async def self_promote_to_owner(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_role_certificate: bytes,
+    ) -> (
+        RealmRoleCertificate
+        | RealmSelfPromoteToOwnerActiveOwnerAlreadyExists
+        | RealmSelfPromoteToOwnerValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmSelfPromoteToOwnerStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        raise NotImplementedError
+
     async def rename(
         self,
         now: DateTime,
@@ -537,6 +716,22 @@ class BaseRealmComponent:
         | SequesterServiceMismatch
         | SequesterServiceUnavailable
         | RejectedBySequesterService
+    ):
+        raise NotImplementedError
+
+    async def update_archiving(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_archiving_certificate: bytes,
+    ) -> (
+        RealmArchivingCertificate
+        | RealmUpdateArchivingValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmUpdateArchivingStoreBadOutcome
+        | RequireGreaterTimestamp
     ):
         raise NotImplementedError
 
@@ -593,6 +788,63 @@ class BaseRealmComponent:
         batch_offset_marker: RealmExportBatchOffsetMarker,
         batch_size: int,
     ) -> RealmExportBlocksMetadataBatch | RealmExportDoBlocksBatchMetadataBadOutcome:
+        raise NotImplementedError
+
+    async def delete_1_get_blocks_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmDeleteGetBlocksBatch | RealmDelete1GetBlocksBatchBadOutcome:
+        """
+        Return the IDs of all the blocks related to the realm.
+
+        These IDs are expected to then be turned into slugs (i.e. path in the object storage)
+        according to the object storage configuration.
+
+        Those slugs MUST BE exported before going on with the actual deletion, this is because
+        1) this list won't be available once the deletion done; and 2) the blocks must be
+        manually removed from the object storage by the server admin (given object storage has
+        its own backup logic Parsec doesn't know about).
+
+        Note there is no risk for the list of blocks to change between this call and the actual
+        deletion since the realm is either not accessible by any user (i.e. orphaned realm) or
+        is in read-only (i.e. archived realm planned for deletion).
+        """
+        raise NotImplementedError
+
+    async def delete_2_do_delete_metadata(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        now: DateTime,
+    ) -> RealmDelete2DoDeleteMetadataBadOutcome | None:
+        """
+        Mark the realm as deleted, and delete its vlobs, keys bundles and blocks metadata.
+
+        Certificates are not deleted because Parsec clients need to fetch them in
+        order to determine whether a realm, to which the user has access, is no longer
+        accessible for a legitimate reason (i.e. it has a `RealmArchivingCertificate`
+        with a deletion date in the past).
+
+        Two situations in which realms can be deleted:
+        - Realms planned for deletion by their last archiving certificate, and
+          whose deletion date has been reached.
+        - Orphaned realms, i.e. realms shared with users who have all been revoked.
+        """
+        raise NotImplementedError
+
+    async def list_deletion_candidates(
+        self,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> list[RealmDeletionCandidate] | RealmListDeletionCandidatesBadOutcome:
+        """
+        List the realm that are ready for deletion (deletion planned or orphaned).
+        Note a given realm can be both planned for deletion AND orphaned, in this case
+        it will be listed twice.
+        """
         raise NotImplementedError
 
     #
@@ -684,6 +936,8 @@ class BaseRealmComponent:
                 )
             case RealmShareStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_share.RepRealmNotFound()
+            case RealmShareStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_share.RepRealmDeleted()
             case RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_share.RepAuthorNotAllowed()
             case RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND:
@@ -736,6 +990,8 @@ class BaseRealmComponent:
                 )
             case RealmUnshareStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_unshare.RepRealmNotFound()
+            case RealmUnshareStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_unshare.RepRealmDeleted()
             case RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_unshare.RepAuthorNotAllowed()
             case RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND:
@@ -747,6 +1003,58 @@ class BaseRealmComponent:
             case RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
             case RealmUnshareStoreBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+    @api
+    async def api_realm_self_promote_to_owner(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.realm_self_promote_to_owner.Req,
+    ) -> authenticated_cmds.latest.realm_self_promote_to_owner.Rep:
+        outcome = await self.self_promote_to_owner(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
+            realm_role_certificate=req.realm_role_certificate,
+        )
+        match outcome:
+            case RealmRoleCertificate():
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepOk()
+            case RequireGreaterTimestamp() as error:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepRequireGreaterTimestamp(
+                    strictly_greater_than=error.strictly_greater_than
+                )
+            case TimestampOutOfBallpark() as error:
+                return (
+                    authenticated_cmds.latest.realm_self_promote_to_owner.RepTimestampOutOfBallpark(
+                        server_timestamp=error.server_timestamp,
+                        client_timestamp=error.client_timestamp,
+                        ballpark_client_early_offset=error.ballpark_client_early_offset,
+                        ballpark_client_late_offset=error.ballpark_client_late_offset,
+                    )
+                )
+            case RealmSelfPromoteToOwnerValidateBadOutcome():
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepInvalidCertificate()
+            case RealmSelfPromoteToOwnerActiveOwnerAlreadyExists() as error:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepActiveOwnerAlreadyExists(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp
+                )
+            case RealmSelfPromoteToOwnerStoreBadOutcome.REALM_NOT_FOUND:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepRealmNotFound()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepRealmDeleted()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_IS_OUTSIDER:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepAuthorIsOutsider()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepAuthorNotAllowed()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
 
     @api
@@ -789,6 +1097,8 @@ class BaseRealmComponent:
                 )
             case RealmRenameStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rename.RepRealmNotFound()
+            case RealmRenameStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_rename.RepRealmDeleted()
             case RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rename.RepAuthorNotAllowed()
             case RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -854,6 +1164,8 @@ class BaseRealmComponent:
                 )
             case RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
+            case RealmRotateKeyStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_rotate_key.RepRealmDeleted()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rotate_key.RepAuthorNotAllowed()
             case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
@@ -865,6 +1177,52 @@ class BaseRealmComponent:
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+    @api
+    async def api_realm_update_archiving(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.realm_update_archiving.Req,
+    ) -> authenticated_cmds.latest.realm_update_archiving.Rep:
+        outcome = await self.update_archiving(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
+            realm_archiving_certificate=req.archiving_certificate,
+        )
+        match outcome:
+            case RealmArchivingCertificate():
+                return authenticated_cmds.latest.realm_update_archiving.RepOk()
+            case RequireGreaterTimestamp() as error:
+                return authenticated_cmds.latest.realm_update_archiving.RepRequireGreaterTimestamp(
+                    strictly_greater_than=error.strictly_greater_than
+                )
+            case TimestampOutOfBallpark() as error:
+                return authenticated_cmds.latest.realm_update_archiving.RepTimestampOutOfBallpark(
+                    server_timestamp=error.server_timestamp,
+                    client_timestamp=error.client_timestamp,
+                    ballpark_client_early_offset=error.ballpark_client_early_offset,
+                    ballpark_client_late_offset=error.ballpark_client_late_offset,
+                )
+            case RealmUpdateArchivingValidateBadOutcome():
+                return authenticated_cmds.latest.realm_update_archiving.RepInvalidCertificate()
+            case RealmUpdateArchivingStoreBadOutcome.REALM_NOT_FOUND:
+                return authenticated_cmds.latest.realm_update_archiving.RepRealmNotFound()
+            case RealmUpdateArchivingStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_update_archiving.RepRealmDeleted()
+            case RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.realm_update_archiving.RepAuthorNotAllowed()
+            case RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT:
+                return authenticated_cmds.latest.realm_update_archiving.RepArchivingPeriodTooShort()
+            case RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case RealmUpdateArchivingStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
 
     @api
@@ -890,6 +1248,8 @@ class BaseRealmComponent:
                 | RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
             ):
                 return authenticated_cmds.latest.realm_get_keys_bundle.RepAuthorNotAllowed()
+            case RealmGetKeysBundleBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_get_keys_bundle.RepRealmDeleted()
             case RealmGetKeysBundleBadOutcome.ACCESS_NOT_AVAILABLE_FOR_AUTHOR:
                 return (
                     authenticated_cmds.latest.realm_get_keys_bundle.RepAccessNotAvailableForAuthor()

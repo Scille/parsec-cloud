@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 /// Client-server communication is divided into two parts:
 /// - Client commands sent to the server through an RPC-like mechanism.
@@ -69,11 +69,16 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
         APIEvent::OrganizationConfig {
             active_users_limit,
             user_profile_outsider_allowed,
+            realm_minimum_archiving_period_before_deletion,
             sse_keepalive_seconds: _,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,
                 user_profile_outsider_allowed,
+                realm_minimum_archiving_period_before_deletion:
+                    realm_minimum_archiving_period_before_deletion
+                        .unwrap_or(0)
+                        .max(0) as u64,
             };
             event_bus.send(&event);
         }

@@ -7,7 +7,13 @@ import httpx
 import pytest
 
 from parsec._parsec import ActiveUsersLimit
-from parsec.components.organization import OrganizationDump, TermsOfService, TosLocale, TosUrl
+from parsec.components.organization import (
+    Organization,
+    OrganizationDump,
+    TermsOfService,
+    TosLocale,
+    TosUrl,
+)
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from tests.common import AdminUnauthErrorsTester, Backend, CoolorgRpcClients
 
@@ -33,8 +39,8 @@ async def test_get_organization_auth(
         "bad_type_user_profile_outsider_allowed",
         "bad_type_active_users_limit",
         "bad_value_active_users_limit",
-        "bad_type_minimum_archiving_period",
-        "bad_value_minimum_archiving_period",
+        "bad_type_realm_minimum_archiving_period_before_deletion",
+        "bad_value_realm_minimum_archiving_period_before_deletion",
         "bad_type_tos",
         "bad_value_tos",
     ),
@@ -58,10 +64,10 @@ async def test_bad_data(
             body_args = {"json": {"active_users_limit": "42"}}
         case "bad_value_active_users_limit":
             body_args = {"json": {"active_users_limit": -1}}
-        case "bad_type_minimum_archiving_period":
-            body_args = {"json": {"minimum_archiving_period": "42"}}
-        case "bad_value_minimum_archiving_period":
-            body_args = {"json": {"minimum_archiving_period": -1}}
+        case "bad_type_realm_minimum_archiving_period_before_deletion":
+            body_args = {"json": {"realm_minimum_archiving_period_before_deletion": "42"}}
+        case "bad_value_realm_minimum_archiving_period_before_deletion":
+            body_args = {"json": {"realm_minimum_archiving_period_before_deletion": -1}}
         case "bad_type_tos":
             body_args = {"json": {"tos": "{}"}}
         case "bad_value_tos":
@@ -102,12 +108,12 @@ class PatchOrganizationParams(TypedDict):
         {"is_expired": True},
         {"active_users_limit": 1},
         {"user_profile_outsider_allowed": False},
-        {"minimum_archiving_period": 1},
+        {"realm_minimum_archiving_period_before_deletion": 1},
         {
             "is_expired": False,
             "active_users_limit": None,
             "user_profile_outsider_allowed": True,
-            "minimum_archiving_period": 0,
+            "realm_minimum_archiving_period_before_deletion": 0,
             "tos": {"en_HK": "https://parsec.invalid/tos_en"},
         },
     ),
@@ -126,15 +132,26 @@ async def test_ok(
     assert response.status_code == 200, response.content
     assert response.json() == {}
 
-    dump = await backend.organization.test_dump_organizations()
+    dump = await backend.organization.list_organizations()
+    org = await backend.organization.get(coolorg.organization_id)
+    assert isinstance(org, Organization)
+    is_expired = params.get("is_expired", False)
+    assert (is_expired and org.expired_on is not None) or (
+        not is_expired and org.expired_on is None
+    )
     assert dump[coolorg.organization_id] == OrganizationDump(
         organization_id=coolorg.organization_id,
+        created_on=org.created_on,
         bootstrap_token=ANY,
         is_bootstrapped=True,
-        is_expired=params.get("is_expired", False),
+        bootstrapped_on=org.bootstrapped_on,
+        is_expired=is_expired,
+        expired_on=org.expired_on,
         active_users_limit=ActiveUsersLimit.from_maybe_int(params.get("active_users_limit", None)),
         user_profile_outsider_allowed=params.get("user_profile_outsider_allowed", True),
-        minimum_archiving_period=params.get("minimum_archiving_period", 2592000),
+        realm_minimum_archiving_period_before_deletion=params.get(
+            "realm_minimum_archiving_period_before_deletion", 2592000
+        ),
         tos=TermsOfService(updated_on=ANY, per_locale_urls=params["tos"])
         if "tos" in params
         else None,
@@ -162,7 +179,7 @@ async def test_expire_and_cancel_expire(
             EventOrganizationExpired(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is True
 
         # Re-expire, should be a no-op
@@ -180,7 +197,7 @@ async def test_expire_and_cancel_expire(
             EventOrganizationExpired(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is True
 
         # Cancel expiration
@@ -194,7 +211,7 @@ async def test_expire_and_cancel_expire(
 
         # Cancelling the expiration doesn't trigger any event
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is False
 
         # Re-cancel expiration, should be a no-op
@@ -208,7 +225,7 @@ async def test_expire_and_cancel_expire(
 
         # Cancelling the expiration doesn't trigger any event
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired is False
 
 
@@ -233,7 +250,7 @@ async def test_set_unset_tos(
             EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].tos == TermsOfService(
             updated_on=ANY, per_locale_urls={"fr_CA": "https://parsec.invalid/tos_fr1"}
         )
@@ -256,7 +273,7 @@ async def test_set_unset_tos(
             EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].tos == TermsOfService(
             updated_on=ANY,
             per_locale_urls={
@@ -278,7 +295,7 @@ async def test_set_unset_tos(
             EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
         )
 
-        dump = await backend.organization.test_dump_organizations()
+        dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].tos is None
 
 

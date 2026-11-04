@@ -8,11 +8,11 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from parsec._parsec import (
-    BootstrapToken,
-    DateTime,
+    AccessToken,
     DeviceCertificate,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
@@ -30,20 +30,23 @@ from parsec.components.async_enrollment import BaseAsyncEnrollmentComponent
 from parsec.components.auth import BaseAuthComponent
 from parsec.components.block import BaseBlockComponent
 from parsec.components.blockstore import BaseBlockStoreComponent
+from parsec.components.cryptpad import BaseCryptpadComponent
 from parsec.components.events import BaseEventsComponent, EventBus
 from parsec.components.invite import BaseInviteComponent
 from parsec.components.memory import components_factory as mocked_components_factory
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.components.organization import BaseOrganizationComponent
 from parsec.components.ping import BasePingComponent
-from parsec.components.pki import BasePkiEnrollmentComponent
 from parsec.components.postgresql import components_factory as postgresql_components_factory
 from parsec.components.realm import BaseRealmComponent
+from parsec.components.scws import ScwsComponent
 from parsec.components.sequester import BaseSequesterComponent, SequesterServiceType
 from parsec.components.shamir import BaseShamirComponent
+from parsec.components.totp import BaseTOTPComponent
 from parsec.components.user import BaseUserComponent, UserInfo
 from parsec.components.vlob import BaseVlobComponent
 from parsec.config import BackendConfig
+from parsec.events import EventPinged
 from parsec.logging import get_logger
 from parsec.webhooks import WebhooksComponent
 
@@ -73,49 +76,54 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
         yield Backend(
             config=config,
             mocked_data=components.get("mocked_data"),
-            event_bus=components["event_bus"],
-            webhooks=components["webhooks"],
-            auth=components["auth"],
-            user=components["user"],
-            invite=components["invite"],
-            organization=components["organization"],
-            realm=components["realm"],
-            vlob=components["vlob"],
-            ping=components["ping"],
-            blockstore=components["blockstore"],
-            block=components["block"],
-            pki=components["pki"],
-            sequester=components["sequester"],
-            events=components["events"],
-            shamir=components["shamir"],
             account=components["account"],
             async_enrollment=components["async_enrollment"],
+            auth=components["auth"],
+            block=components["block"],
+            blockstore=components["blockstore"],
+            cryptpad=components["cryptpad"],
+            event_bus=components["event_bus"],
+            events=components["events"],
+            invite=components["invite"],
+            organization=components["organization"],
+            ping=components["ping"],
+            realm=components["realm"],
+            scws=components["scws"],
+            sequester=components["sequester"],
+            shamir=components["shamir"],
+            totp=components["totp"],
+            user=components["user"],
+            vlob=components["vlob"],
+            webhooks=components["webhooks"],
         )
 
 
-TEST_BOOTSTRAP_TOKEN = BootstrapToken.from_hex("672bc6ba9c43455da28344e975dc72b7")
+TEST_BOOTSTRAP_TOKEN = AccessToken.from_hex("672bc6ba9c43455da28344e975dc72b7")
 
 
 @dataclass(slots=True, eq=False, repr=False)
 class Backend:
     config: BackendConfig
     event_bus: EventBus
-    webhooks: WebhooksComponent
-    auth: BaseAuthComponent
-    user: BaseUserComponent
-    invite: BaseInviteComponent
-    organization: BaseOrganizationComponent
-    realm: BaseRealmComponent
-    vlob: BaseVlobComponent
-    ping: BasePingComponent
-    blockstore: BaseBlockStoreComponent
-    block: BaseBlockComponent
-    pki: BasePkiEnrollmentComponent
-    sequester: BaseSequesterComponent
-    events: BaseEventsComponent
-    shamir: BaseShamirComponent
+
     account: BaseAccountComponent
     async_enrollment: BaseAsyncEnrollmentComponent
+    auth: BaseAuthComponent
+    block: BaseBlockComponent
+    blockstore: BaseBlockStoreComponent
+    cryptpad: BaseCryptpadComponent
+    events: BaseEventsComponent
+    invite: BaseInviteComponent
+    organization: BaseOrganizationComponent
+    ping: BasePingComponent
+    realm: BaseRealmComponent
+    scws: ScwsComponent
+    sequester: BaseSequesterComponent
+    shamir: BaseShamirComponent
+    totp: BaseTOTPComponent
+    user: BaseUserComponent
+    vlob: BaseVlobComponent
+    webhooks: WebhooksComponent
 
     # Only available if `config.db_config.type == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
@@ -124,19 +132,21 @@ class Backend:
 
     def __post_init__(self) -> None:
         self.apis = collect_apis(
-            self.user,
-            self.invite,
-            self.organization,
-            self.realm,
-            self.vlob,
-            self.ping,
-            self.blockstore,
-            self.block,
-            self.pki,
-            self.events,
-            self.shamir,
             self.account,
             self.async_enrollment,
+            self.block,
+            self.blockstore,
+            self.cryptpad,
+            self.events,
+            self.invite,
+            self.organization,
+            self.ping,
+            self.realm,
+            self.scws,
+            self.shamir,
+            self.totp,
+            self.user,
+            self.vlob,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )
@@ -153,6 +163,9 @@ class Backend:
         await self.apply_events(
             org_id=id,
             events=template.events + customization,
+            # Must wait for the events to settle since we are customizing the
+            # organization that is actually used in the test.
+            wait_for_in_flight_events=True,
             skip_events_offset=len(template.events),
         )
 
@@ -160,21 +173,46 @@ class Backend:
         await self.organization.test_drop_organization(id)
 
     async def test_load_template(self, template: TestbedTemplateContent) -> OrganizationID:
+        from parsec._parsec import testbed
+
         org_id = OrganizationID(f"{template.id.title().replace('_', '')}OrgTemplate")
+        bootstrap_event = next(
+            event
+            for event in template.events
+            if isinstance(event, testbed.TestbedEventBootstrapOrganization)
+        )
+        creation_date = bootstrap_event.timestamp.add(days=-1)
+        logger.info(
+            "Load org template",
+            ord_id=org_id.str,
+            creation_date=creation_date,
+            template=template.id,
+        )
         match await self.organization.create(
-            now=DateTime(1970, 1, 1), id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
+            now=creation_date, id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
         ):
-            case BootstrapToken():
+            case AccessToken():
                 pass
             case error:
                 assert False, error
 
-        await self.apply_events(org_id=org_id, events=template.events)
+        await self.apply_events(
+            org_id=org_id,
+            events=template.events,
+            # Don't need to wait for the events to settle: they are related to
+            # a template organization that we always duplicate (hence ending up
+            # with a different organization ID) before using it in the tests.
+            wait_for_in_flight_events=False,
+        )
 
         return org_id
 
     async def apply_events(
-        self, org_id: OrganizationID, events: list[TestbedEvent], skip_events_offset: int = 0
+        self,
+        org_id: OrganizationID,
+        events: list[TestbedEvent],
+        wait_for_in_flight_events: bool,
+        skip_events_offset: int = 0,
     ) -> None:
         from parsec._parsec import testbed
 
@@ -344,8 +382,21 @@ class Backend:
                 )
                 assert isinstance(outcome, RealmKeyRotationCertificate)
             elif isinstance(event, testbed.TestbedEventArchiveRealm):
-                # TODO #6092: support archiving here !
-                raise NotImplementedError
+                outcome = await self.realm.update_archiving(
+                    now=event.timestamp,
+                    organization_id=org_id,
+                    author=event.author,
+                    author_verify_key=_get_device_verify_key(event.author),
+                    realm_archiving_certificate=event.raw_certificate,
+                )
+                assert isinstance(outcome, RealmArchivingCertificate)
+            elif isinstance(event, testbed.TestbedEventDeleteRealm):
+                outcome = await self.realm.delete_2_do_delete_metadata(
+                    now=event.timestamp,
+                    organization_id=org_id,
+                    realm_id=event.realm,
+                )
+                assert outcome is None
             elif isinstance(event, testbed.TestbedEventNewShamirRecovery):
                 outcome = await self.shamir.setup(
                     now=event.timestamp,
@@ -430,7 +481,17 @@ class Backend:
                     is_expired=event.is_expired,
                     active_users_limit=event.active_users_limit,
                     user_profile_outsider_allowed=event.user_profile_outsider_allowed,
-                    minimum_archiving_period=event.minimum_archiving_period,
+                    realm_minimum_archiving_period_before_deletion=event.realm_minimum_archiving_period_before_deletion,
                     tos=event.tos,
                 )
                 assert outcome is None, outcome
+
+        # At this point we may still have in-flight events from the populate operations
+        # (e.g. `EventVlob` emitted from a `vlob.update()`).
+        if wait_for_in_flight_events:
+            sentinel_event = EventPinged(organization_id=org_id, ping="__sentinel__")
+            with self.event_bus.create_waiter(
+                lambda candidate: candidate == sentinel_event
+            ) as waiter:
+                await self.event_bus.send(sentinel_event)
+                await waiter.wait()

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 # ruff: noqa: F403
 
 from .account import *
@@ -11,10 +12,12 @@ from .config import *
 from .device import *
 from .events import *
 from .invite import *
+from .openbao import *
 from .path import *
 from .pki import *
 from .platform import *
 from .testbed import *
+from .totp import *
 from .validation import *
 from .workspace import *
 from .workspace_history import *

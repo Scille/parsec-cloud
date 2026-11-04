@@ -11,11 +11,12 @@ use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
-    workspace::{
-        tests::utils::restart_workspace_ops, EntryStat, OpenOptions, WorkspaceFdReadError,
-        WorkspaceFdWriteError, WorkspaceIsFileContentLocalError, WorkspaceOpenFileError,
-    },
     EventWorkspaceOpsOutboundSyncNeeded,
+    workspace::{
+        EntryStat, OpenOptions, WorkspaceFdReadError, WorkspaceFdWriteError,
+        WorkspaceIsFileContentLocalError, WorkspaceOpenFileError,
+        tests::utils::restart_workspace_ops,
+    },
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -119,10 +120,11 @@ async fn is_file_content_local_ok(env: &TestbedEnv) {
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    assert!(ops
-        .is_file_content_local("/bar.txt".parse().unwrap())
-        .await
-        .unwrap());
+    assert!(
+        ops.is_file_content_local("/bar.txt".parse().unwrap())
+            .await
+            .unwrap()
+    );
 
     spy.assert_no_events();
 
@@ -176,10 +178,11 @@ async fn is_file_content_local_new_file(env: &TestbedEnv) {
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    assert!(ops
-        .is_file_content_local("/new_file.txt".parse().unwrap())
-        .await
-        .unwrap());
+    assert!(
+        ops.is_file_content_local("/new_file.txt".parse().unwrap())
+            .await
+            .unwrap()
+    );
 
     spy.assert_no_events();
 
@@ -675,6 +678,9 @@ async fn close_on_workspace_ops_stop(
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
+                archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                can_self_promote_to_owner: false.into(),
             },
             workspace_index: 0,
             total_workspaces: 1,
@@ -709,3 +715,37 @@ async fn close_on_workspace_ops_stop(
 // TODO: open with parent or target manifest not in client
 // TODO: multiple_opens_with_truncate once read is available !
 // TODO: truncate on open also remove the chunks in the manifest and in the local storage
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn read_only_workspace_write_open(
+    #[values("reader_role", "archived_workspace")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    match kind {
+        "reader_role" => {
+            ops.update_workspace_external_info(|info| {
+                info.entry.role = RealmRole::Reader;
+            });
+        }
+        "archived_workspace" => {
+            ops.update_workspace_external_info(|info| {
+                info.entry.archiving_configuration = RealmArchivingConfiguration::Archived.into();
+            });
+        }
+        unknown => panic!("Unknown kind: {unknown}"),
+    }
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    let err = ops
+        .open_file("/bar.txt".parse().unwrap(), OpenOptions::read_write())
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, WorkspaceOpenFileError::ReadOnlyRealm);
+    spy.assert_no_events();
+}

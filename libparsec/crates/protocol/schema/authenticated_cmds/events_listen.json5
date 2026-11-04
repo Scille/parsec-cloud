@@ -50,6 +50,12 @@
                             {
                                 "name": "sse_keepalive_seconds",
                                 "type": "RequiredOption<NonZeroInteger>"
+                            },
+                            {
+                                // In seconds; default 2592000 (30 days)
+                                "name": "realm_minimum_archiving_period_before_deletion",
+                                "type": "Integer",
+                                "introduced_in": "5.5"
                             }
                         ]
                     },
@@ -59,7 +65,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "invitation_status",
@@ -73,7 +79,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "greeting_attempt",
@@ -87,7 +93,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "greeting_attempt",
@@ -101,7 +107,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "greeting_attempt",
@@ -138,7 +144,7 @@
                     // provides the certificates and the client rely on this assumption
                     // (e.g. to determine an user realm role at a given point in time).
                     // So the best way to avoid messing with this is to always rely on
-                    // `certificate_get` everytime we detect we need to fetch new stuff.
+                    // `certificate_get` every time we detect we need to fetch new stuff.
                     {
                         "name": "CommonCertificate",
                         "discriminant_value": "COMMON_CERTIFICATE",

@@ -10,8 +10,9 @@ use std::{
 };
 
 use libparsec_client_connection::{
+    AnonymousServerCmds, ProxyConfig,
     protocol::{anonymous_server_cmds, authenticated_account_cmds},
-    test_register_sequence_of_send_hooks, AnonymousServerCmds, ProxyConfig,
+    test_register_sequence_of_send_hooks,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

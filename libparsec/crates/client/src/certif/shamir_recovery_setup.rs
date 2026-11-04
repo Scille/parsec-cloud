@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, num::NonZeroU8};
 
@@ -7,12 +7,11 @@ use libparsec_platform_storage::certificates::{PerTopicLastTimestamps, UpTo};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
-use crate::{
-    certif::store::{LastShamirRecovery, LastUserExistAndRevokedInfo},
-    CertificateOps, EventTooMuchDriftWithServerClock, InvalidCertificateError,
+use super::{
+    CertifPollServerError, GreaterTimestampOffset, greater_timestamp,
+    store::{CertifStoreError, LastShamirRecovery, LastUserExistAndRevokedInfo},
 };
-
-use super::{greater_timestamp, CertifPollServerError, CertifStoreError, GreaterTimestampOffset};
+use crate::{CertificateOps, EventTooMuchDriftWithServerClock, InvalidCertificateError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifSetupShamirRecoveryError {
@@ -32,7 +31,9 @@ pub enum CertifSetupShamirRecoveryError {
     RecipientRevoked,
     #[error("Shamir recovery already exists")]
     ShamirRecoveryAlreadyExists,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -198,10 +199,10 @@ async fn check_against_local_certificates(
                     {
                         LastUserExistAndRevokedInfo::Valid(certif) => certif.public_key.clone(),
                         LastUserExistAndRevokedInfo::Revoked(_, _) => {
-                            return Err(CertifSetupShamirRecoveryError::RecipientRevoked)
+                            return Err(CertifSetupShamirRecoveryError::RecipientRevoked);
                         }
                         LastUserExistAndRevokedInfo::Unknown => {
-                            return Err(CertifSetupShamirRecoveryError::RecipientNotFound)
+                            return Err(CertifSetupShamirRecoveryError::RecipientNotFound);
                         }
                     };
 
@@ -338,7 +339,7 @@ async fn do_shamir_recovery_setup(
     .into();
 
     let data_key = SecretKey::generate();
-    let reveal_token = InvitationToken::default();
+    let reveal_token = AccessToken::default();
 
     let ciphered_data = data_key.encrypt(&recovery_device.dump()).into();
 

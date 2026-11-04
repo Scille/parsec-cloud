@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="modal incompatible-environment">
@@ -14,10 +14,10 @@
         />
       </div>
       <div class="incompatible-content">
-        <ion-text class="incompatible-content__title title-h2">
+        <ion-text class="incompatible-content__title">
           {{ $msTranslate('globalErrors.incompatibleEnvironment') }}
         </ion-text>
-        <ion-text class="incompatible-content__description body-lg">
+        <ion-text class="incompatible-content__description">
           {{ $msTranslate(message) }}
         </ion-text>
       </div>
@@ -52,15 +52,17 @@ defineProps<{
 .incompatible-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   text-align: center;
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h3');
+    color: ms.color('text-neutral-default');
   }
 
   &__description {
-    color: var(--parsec-color-light-secondary-grey);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-base-description');
   }
 }
 </style>

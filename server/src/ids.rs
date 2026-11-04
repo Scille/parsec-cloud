@@ -2,7 +2,11 @@
 
 use std::str::FromStr;
 
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
+use pyo3::{
+    exceptions::PyValueError,
+    prelude::*,
+    types::{PyType, PyTypeMethods},
+};
 
 // UUID based type
 
@@ -41,6 +45,12 @@ macro_rules! gen_uuid {
                 &self.0.as_bytes()[..]
             }
 
+            // Similar to the property `hex` but required by `pydantic` as it does not seems to like
+            // using property instead of method
+            fn to_hex(&self) -> String {
+                self.0.hex()
+            }
+
             #[getter]
             fn hex(&self) -> String {
                 self.0.hex()
@@ -55,7 +65,40 @@ macro_rules! gen_uuid {
             fn hyphenated(&self) -> String {
                 self.0.as_hyphenated().to_string()
             }
+
+            #[classmethod]
+            #[pyo3(name = "__get_pydantic_core_schema__")]
+            fn get_pydantic_core_schema<'py>(
+                cls: &Bound<'py, PyType>,
+                _source_type: &Bound<'_, PyType>,
+                _handler: &Bound<'py, PyAny>,
+                py: Python<'py>,
+            ) -> PyResult<Bound<'py, PyAny>> {
+                use crate::pydantic_support::{
+                    inner::CoreSchemaModule, str_like_serializer, str_like_validator,
+                };
+                let core_schema = CoreSchemaModule::new(py)?;
+
+                let ser_schema = str_like_serializer!(core_schema, cls.getattr("to_hex")?, py)?;
+
+                str_like_validator!(
+                    core_schema,
+                    cls,
+                    ser = ser_schema,
+                    der = cls.getattr("from_hex")?,
+                    py
+                )
+            }
         }
+
+
+        crate::pydantic_support::pydantic_json_schema!(
+            $class,
+            type = "string",
+            format = "uuid",
+            description = ::std::concat!("The ID of an ", ::std::stringify!($class)),
+            examples = ["4263b5fb763b48e897bbef8228f71a45"]
+        );
     };
 }
 
@@ -166,6 +209,18 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 );
 gen_uuid!(AccountAuthMethodID);
 
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    TOTPOpaqueKeyID,
+    libparsec_types::TOTPOpaqueKeyID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
+gen_uuid!(TOTPOpaqueKeyID);
+
 // Other ids
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
@@ -191,7 +246,12 @@ impl OrganizationID {
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             }
         } else {
-            Err(PyValueError::new_err("Unimplemented"))
+            // NOTE: We return `ValueError` instead of `TypeError` to be able to use it with
+            // pydantic `PlainValidator`
+            Err(PyValueError::new_err(format!(
+                "Does not support converting {} to OrganizationID",
+                organization_id.get_type().name()?.to_str()?
+            )))
         }
     }
 
@@ -199,7 +259,36 @@ impl OrganizationID {
     fn str(&self) -> &str {
         self.0.as_ref()
     }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'_, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{inner::CoreSchemaModule, str_like_validator};
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        str_like_validator!(
+            core_schema,
+            cls,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            ser = core_schema.to_string_ser_schema()?,
+            // Use constructor to deserialize the value
+            der = cls,
+            py
+        )
+    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(
+    OrganizationID,
+    type = "string",
+    description = "The organization name",
+    examples = ["MyOrganization"]
+);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     UserID,
@@ -361,4 +450,116 @@ impl EmailAddress {
     fn str(&self) -> String {
         self.0.to_string()
     }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'py, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{inner::CoreSchemaModule, str_like_validator};
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        str_like_validator!(
+            core_schema,
+            cls,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            ser = core_schema.to_string_ser_schema()?,
+            // Use constructor to deserialize the value
+            der = cls,
+            py
+        )
+    }
 }
+
+crate::pydantic_support::pydantic_json_schema!(
+    EmailAddress,
+    type = "string",
+    format = "email",
+    description = "An email address",
+    examples = ["zack@example.com"]
+);
+
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    AccessToken,
+    libparsec_types::AccessToken,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ eq,
+    __hash__,
+);
+
+#[pymethods]
+impl AccessToken {
+    #[classmethod]
+    fn from_bytes(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>, bytes: &[u8]) -> PyResult<Self> {
+        libparsec_types::AccessToken::try_from(bytes)
+            .map(Self)
+            .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
+    }
+
+    #[classmethod]
+    fn from_hex(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>, hex: &str) -> PyResult<Self> {
+        libparsec_types::AccessToken::from_hex(hex)
+            .map(Self)
+            .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
+    }
+
+    #[classmethod]
+    #[pyo3(name = "new")]
+    fn default(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>) -> Self {
+        Self(libparsec_types::AccessToken::default())
+    }
+
+    #[getter]
+    fn bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+
+    fn to_hex(&self) -> String {
+        self.0.hex()
+    }
+
+    #[getter]
+    fn hex(&self) -> String {
+        self.0.hex()
+    }
+
+    #[classmethod]
+    #[pyo3(name = "__get_pydantic_core_schema__")]
+    fn get_pydantic_core_schema<'py>(
+        cls: &Bound<'py, PyType>,
+        _source_type: &Bound<'_, PyType>,
+        _handler: &Bound<'py, PyAny>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        use crate::pydantic_support::{
+            inner::CoreSchemaModule, str_like_serializer, str_like_validator,
+        };
+        let core_schema = CoreSchemaModule::new(py)?;
+
+        let ser_schema = str_like_serializer!(core_schema, cls.getattr("to_hex")?, py)?;
+
+        str_like_validator!(
+            core_schema,
+            cls,
+            // Indicate to pydantic that it just need to call `str(val)` to serialize the value
+            ser = ser_schema,
+            // Use constructor to deserialize the value
+            der = cls.getattr("from_hex")?,
+            py
+        )
+    }
+}
+
+crate::pydantic_support::pydantic_json_schema!(
+    AccessToken,
+    type = "string",
+    format = "uuid",
+    description = "A Token",
+    examples = ["4263b5fb763b48e897bbef8228f71a45"]
+);

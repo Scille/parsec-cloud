@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import type {
   ClientConfig,
@@ -10,10 +10,13 @@ import type {
   Result,
 } from '@/plugins/libparsec/definitions';
 import { ClientStartErrorTag } from '@/plugins/libparsec/definitions';
+import { captureConsole, libparsecLogger } from '@/services/webLogger';
 
+/** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 // eslint-disable-next-line camelcase
 import init_module from 'libparsec_bindings_web';
+/** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 import * as module from 'libparsec_bindings_web';
 
@@ -44,14 +47,17 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
     throw new Error('libparsec is not available with Vitest, use playwright instead !');
   }
 
+  // Needed to read the logs written by libparsec (either from the shared worker or this tab)
+  await libparsecLogger.init();
+
   // SharedWorker is not available with Chrome for Android :/
   // So in this case we fallback to have libparsec running in the tab, with some
   // web locks to avoid having multiple tabs using the same device.
   if (window.SharedWorker !== undefined) {
-    console.log('Starting libparsec in shared worker mode');
+    console.info('Starting libparsec in shared worker mode');
     return await withSharedWorker();
   } else {
-    console.log('Starting libparsec in non worker mode');
+    console.info('Starting libparsec in non worker mode');
     return await withoutSharedWorker();
   }
 }
@@ -87,7 +93,6 @@ async function withSharedWorker(): Promise<any> {
   };
 
   worker.port.onmessage = (e: MessageEvent): void => {
-    // console.debug('libparsec_port: onmessage', e.data);
     const data = e.data as { id: number; result: any; isException: boolean };
     for (let i = 0; i < inFlight.length; i += 1) {
       const candidate = inFlight[i];
@@ -98,7 +103,6 @@ async function withSharedWorker(): Promise<any> {
         } else {
           candidate.reject(data.result);
         }
-        // console.debug('libparsec_port: method call resolved', e.data);
         return;
       }
     }
@@ -107,7 +111,7 @@ async function withSharedWorker(): Promise<any> {
 
   // Notify that we are ready to process messages.
   // This needs to be done after setting up the event listener.
-  console.log('Client is ready to process events from worker');
+  console.info('Client is ready to process events from worker');
   worker.port.start();
 
   class WorkerProxy {
@@ -157,6 +161,8 @@ async function withSharedWorker(): Promise<any> {
 }
 
 async function withoutSharedWorker(): Promise<any> {
+  // libparsec runs in this tab, so GUI console output is captured as well
+  captureConsole(libparsecLogger);
   await init_module();
   module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
@@ -230,9 +236,10 @@ async function withoutSharedWorker(): Promise<any> {
 
       if (name === 'clientStart') {
         return async (config: ClientConfig, access: DeviceAccessStrategy): Promise<Result<Handle, ClientStartError>> => {
+          const keyFile = access.keyFile;
           const onLockTaken = new Promise((onLockTakenResolve: (value: undefined | ClientStartError) => void) => {
             navigator.locks.request(
-              access.keyFile,
+              keyFile,
               {
                 mode: 'exclusive',
                 ifAvailable: true,
@@ -241,7 +248,7 @@ async function withoutSharedWorker(): Promise<any> {
               async (lock: Lock | null) => {
                 if (lock === null) {
                   // Lock already taken... but by whom ?
-                  if (isLockFromThisTab(access.keyFile)) {
+                  if (isLockFromThisTab(keyFile)) {
                     // Our tab has the lock, libparsec will handle this fine by
                     // going idempotent (i.e. returning the already start client).
                     onLockTakenResolve(undefined);
@@ -257,7 +264,7 @@ async function withoutSharedWorker(): Promise<any> {
 
                   // Register in the locks
                   const onDone = new Promise((resolve: (value: any) => void) => {
-                    registerTabLock(access.keyFile, () => resolve(null));
+                    registerTabLock(keyFile, () => resolve(null));
                   });
 
                   onLockTakenResolve(undefined);
@@ -276,9 +283,9 @@ async function withoutSharedWorker(): Promise<any> {
 
           if (!ret.ok) {
             // Release the lock since we failed to start the client !
-            releaseTabLock(access.keyFile, undefined);
+            releaseTabLock(keyFile, undefined);
           } else {
-            registerTabLockClientHandle(access.keyFile, ret.value);
+            registerTabLockClientHandle(keyFile, ret.value);
           }
 
           return ret;
@@ -296,6 +303,35 @@ async function withoutSharedWorker(): Promise<any> {
           }
 
           return ret;
+        };
+      }
+
+      // SCWS needs to be dynamically loaded.
+      // We're loading it in TypeScript and attaching it to the global context.
+      if (name === 'pkiInitForScws') {
+        return async (
+          configDir: string,
+          parsecAddr: string,
+          scwsLocation: string,
+          certificate: string,
+          skipScwsApiImport: boolean | undefined,
+        ) => {
+          try {
+            // Skipping `scwsapi.js` import is only done during tests
+            // to use instead the mocked version provided by the testbed.
+            if (skipScwsApiImport) {
+              console.info('Skipping loading scwsapi.js');
+            } else {
+              console.info(`Loading SCWS from ${scwsLocation}`);
+              const scwsapi = await import(/* @vite-ignore */ scwsLocation);
+              (globalThis as any).SCWS = scwsapi.SCWS;
+              (globalThis as any).SCWS_WEBAPP_CERT = certificate;
+            }
+            return await module.pkiInitForScws(configDir, parsecAddr);
+          } catch (err: any) {
+            console.error(`Failed to import scwsapi: ${err.toString()}`);
+            return { ok: false, error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` } };
+          }
         };
       }
 

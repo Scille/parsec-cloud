@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="organization-page">
@@ -11,9 +11,9 @@
         @click="openOrganizationChoice($event)"
         v-if="isSmallDisplay"
       >
-        <template v-if="userInfo">
-          <ion-avatar class="organization-header-avatar body-lg">
-            <span v-if="!isTrialOrg">{{ userInfo.organizationId.substring(0, 2) }}</span>
+        <template v-if="orgInfo">
+          <ion-avatar class="organization-header-avatar">
+            <span v-if="!isTrialOrg">{{ orgInfo.clientInfo.organizationId.substring(0, 2) }}</span>
             <!-- prettier-ignore -->
             <ms-image
               v-else
@@ -21,7 +21,7 @@
               class="avatar-logo"
             />
           </ion-avatar>
-          <ion-text class="organization-header-text title-h2">{{ userInfo.organizationId }}</ion-text>
+          <ion-text class="organization-header-text">{{ orgInfo.clientInfo.organizationId }}</ion-text>
           <ms-image
             :image="ChevronExpand"
             class="header-icon"
@@ -45,54 +45,56 @@
         </template>
       </div>
 
-      <template v-if="orgInfo && userInfo">
+      <template v-else>
+        <template v-if="!orgInfo && !error">
+          <div
+            class="skeleton"
+            v-for="n in 3"
+            :key="n"
+          >
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton__title"
+            />
+            <div class="skeleton-content">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-content__text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-content__text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-content__text"
+              />
+            </div>
+          </div>
+        </template>
+
+        <template v-if="error">
+          <ms-report-text
+            :theme="MsReportTheme.Error"
+            class="organization-page-error"
+          >
+            {{ $msTranslate(error) }}
+          </ms-report-text>
+        </template>
+      </template>
+
+      <template v-if="orgInfo">
         <div class="organization-sections">
-          <organization-user-information
-            :org-info="orgInfo"
-            :user-info="userInfo"
-          />
+          <organization-user-information :org-info="orgInfo" />
           <!-- ------------- Information ------------- -->
-          <organization-configuration-information :org-info="orgInfo" />
+          <organization-configuration-information
+            :org-info="orgInfo"
+            :server-config="serverConfig"
+          />
 
           <!-- ------------- Storage list ------------- -->
           <organization-storage-information :org-info="orgInfo" />
         </div>
-      </template>
-
-      <template v-else-if="!error">
-        <div
-          class="skeleton"
-          v-for="n in 3"
-          :key="n"
-        >
-          <ion-skeleton-text
-            :animated="true"
-            class="skeleton__title"
-          />
-          <div class="skeleton-content">
-            <ion-skeleton-text
-              :animated="true"
-              class="skeleton-content__text"
-            />
-            <ion-skeleton-text
-              :animated="true"
-              class="skeleton-content__text"
-            />
-            <ion-skeleton-text
-              :animated="true"
-              class="skeleton-content__text"
-            />
-          </div>
-        </div>
-      </template>
-
-      <template v-else>
-        <ms-report-text
-          :theme="MsReportTheme.Error"
-          class="organization-page-error"
-        >
-          {{ $msTranslate(error) }}
-        </ms-report-text>
       </template>
     </ion-content>
   </ion-page>
@@ -104,13 +106,7 @@ import OrganizationConfigurationInformation from '@/components/organizations/Org
 import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
-import {
-  ClientInfo,
-  OrganizationInfo,
-  getCurrentAvailableDevice,
-  getOrganizationInfo,
-  getClientInfo as parsecGetClientInfo,
-} from '@/parsec';
+import { OrganizationInfo, ServerConfig, getCurrentAvailableDevice, getOrganizationInfo, getServerConfig } from '@/parsec';
 import { Routes, currentRouteIs, switchOrganization, watchRoute } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
@@ -121,7 +117,7 @@ import { Ref, onMounted, onUnmounted, ref } from 'vue';
 const { isSmallDisplay } = useWindowSize();
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
-const userInfo: Ref<ClientInfo | null> = ref(null);
+const serverConfig: Ref<ServerConfig | null> = ref(null);
 const isTrialOrg = ref(false);
 const error = ref('');
 
@@ -138,23 +134,15 @@ async function updateInformation(): Promise<void> {
       error.value = '';
     } else {
       error.value = 'OrganizationPage.getInfoFailed';
-      window.electronAPI.log('error', `Failed to retrieve organization info: ${result.error.tag})`);
-    }
-  });
-  parsecGetClientInfo().then((result) => {
-    if (result.ok) {
-      error.value = '';
-      userInfo.value = result.value;
-    } else {
-      error.value = 'OrganizationPage.getInfoFailed';
-      window.electronAPI.log('error', `Failed to retrieve user info: ${result.error.tag} (${result.error.error})`);
     }
   });
   getCurrentAvailableDevice().then(async (result) => {
     if (result.ok) {
       isTrialOrg.value = await isTrialOrganizationDevice(result.value);
-    } else {
-      window.electronAPI.log('error', `Failed to retrieve current device: ${result.error.tag}`);
+      const serverInfo = await getServerConfig(result.value.serverAddr);
+      if (serverInfo.ok) {
+        serverConfig.value = serverInfo.value;
+      }
     }
   });
 }
@@ -188,31 +176,26 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .organization-page {
-  background: var(--parsec-color-light-secondary-premiere);
   display: flex;
   flex-wrap: wrap;
   justify-content: start;
-  gap: 2rem;
-
-  &:has(.organization-page-error) {
-    background: var(--parsec-color-light-secondary-background);
-  }
+  gap: ms.spacing('gap-5xl');
 
   &-content {
     --background: none;
 
     &::part(scroll) {
       display: flex;
-      gap: 2rem;
-      padding: 2em;
+      gap: ms.spacing('gap-5xl');
+      padding: ms.spacing('padding-5xl');
 
       @include ms.responsive-breakpoint('xl') {
         flex-wrap: wrap;
       }
 
       @include ms.responsive-breakpoint('sm') {
-        gap: 1.5rem;
-        padding: 1.5rem;
+        gap: ms.spacing('gap-4xl');
+        padding: ms.spacing('padding-4xl');
         justify-content: center;
         align-items: baseline;
       }
@@ -221,7 +204,7 @@ onUnmounted(() => {
 
   .organization-sections {
     display: flex;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
     height: fit-content;
 
     @include ms.responsive-breakpoint('xl') {
@@ -230,7 +213,7 @@ onUnmounted(() => {
 
     @include ms.responsive-breakpoint('sm') {
       width: 100%;
-      gap: 1.5rem;
+      gap: ms.spacing('gap-4xl');
       justify-content: center;
     }
   }
@@ -243,21 +226,22 @@ onUnmounted(() => {
   height: fit-content;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem;
-  border-radius: var(--parsec-radius-12);
-  background: var(--parsec-color-light-secondary-white);
-  gap: 0.75rem;
+  padding: ms.spacing('padding-2xl');
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-default');
+  gap: ms.spacing('gap-2xl');
 
   &-avatar {
+    @include ms.font('body-lg-regular');
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 2.5rem;
     width: 2.5rem;
     height: 2.5rem;
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-12);
-    padding: 0.25rem;
+    background: ms.color('surface-neutral-default-subtle');
+    border-radius: ms.radius('2xl');
+    padding: ms.spacing('padding-sm');
 
     .avatar-logo {
       width: 1.5rem;
@@ -266,13 +250,14 @@ onUnmounted(() => {
     span {
       font-size: 1.25rem;
       font-weight: bold;
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default');
     }
   }
 
   &-text {
+    @include ms.font('heading-h3');
     width: 100%;
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 }
 
@@ -283,7 +268,7 @@ onUnmounted(() => {
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   width: 100%;
   max-width: 30rem;
 
@@ -296,12 +281,12 @@ onUnmounted(() => {
   .skeleton-content {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     width: 100%;
     max-width: 30rem;
-    padding: 1.5rem;
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-secondary-white);
+    padding: ms.spacing('padding-4xl');
+    border-radius: ms.radius('lg');
+    background: ms.color('surface-base-default');
 
     &__text {
       width: 100%;

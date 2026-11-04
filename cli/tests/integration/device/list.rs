@@ -1,17 +1,19 @@
-use libparsec::{tmp_path, TmpPath};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::bootstrap_cli_test;
-use parsec_cli::utils::{GREEN, RESET, YELLOW};
+use libparsec::{TmpPath, tmp_path};
+use parsec_cli::ui::Ui;
+
+use crate::{bootstrap_cli_test, test_ui};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn list_devices(tmp_path: TmpPath) {
-    bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn list_devices(tmp_path: TmpPath, test_ui: &Ui) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let path = tmp_path.join("config/parsec3/libparsec");
     let path_str = path.to_string_lossy();
 
-    crate::assert_cmd_success!("device", "list").stdout(predicates::str::contains(format!(
-        "Found {GREEN}4{RESET} device(s) in {YELLOW}{path_str}{RESET}:"
+    crate::assert_cmd_success!("device", "list").stderr(predicates::str::contains(format!(
+        "Found 4 device(s) in {path_str}"
     )));
 }

@@ -1,10 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import type { ClientEvent, LibParsecPlugin } from '@/plugins/libparsec/definitions';
+import { captureConsole, libparsecLogger } from '@/services/webLogger';
 
+/** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 // eslint-disable-next-line camelcase
 import init_module from 'libparsec_bindings_web';
+/** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 import * as module from 'libparsec_bindings_web';
 
@@ -40,34 +43,85 @@ self.onconnect = async (msg: MessageEvent): Promise<void> => {
       return;
     }
 
-    // Since libparsec bindings never raise exceptions under normal conditions,
-    // we don't need to catch them: any exception here is a bug and we should
-    // just let it bubble up so that Sentry takes care of it.
-    const result = await promise;
-
-    port.postMessage({ id, result, isException: false });
+    try {
+      const result = await promise;
+      port.postMessage({ id, result, isException: false });
+    } catch (err) {
+      // Forward exceptions to the GUI where they are treated as generic errors,
+      // otherwise it may block for all eternity because it doesn't get a return value.
+      // It's also helpful to have the error directly in the console instead of having to inspect
+      // the worker.
+      port.postMessage({ id, result: err, isException: true });
+      // re-throw for Sentry
+      throw err;
+    }
   };
 
   // Notify the client that the worker is ready to process messages.
   // This needs to be done after setting up the event listener.
-  console.log('Worker is ready to process events from client');
+  console.info('Worker is ready to process events from client');
   port.start();
 };
 
-let _libparsec: LibParsecPlugin | undefined = undefined;
+let _libparsecPromise: Promise<LibParsecPlugin> | undefined = undefined;
+
 async function maybeInit(): Promise<LibParsecPlugin> {
   // Initialization is done once the shared worker is created.
-  if (_libparsec === undefined) {
-    console.log('Initializing libparsec module');
-    await init_module();
-    module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
+  if (_libparsecPromise === undefined) {
+    _libparsecPromise = (async (): Promise<LibParsecPlugin> => {
+      // Capture before anything is printed, entries are buffered until the database is opened
+      captureConsole(libparsecLogger);
+      await libparsecLogger.init();
+      console.info('Initializing libparsec module');
+      await init_module();
+      module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
-    module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
-      onEventBroadcast.postMessage({ handle, event });
-    });
-    console.log('Done initializing libparsec module');
+      module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
+        onEventBroadcast.postMessage({ handle, event });
+      });
 
-    _libparsec = module;
+      // Proxy an empty object instead of `module` to avoid invariant problems.
+      const wrappedLibparsec = new Proxy({} as typeof module, {
+        get(_target, prop, _receiver) {
+          // SCWS needs to be dynamically loaded.
+          // We're loading it in TypeScript inside the shared worker and attaching
+          // it to the global context.
+          if (prop === 'pkiInitForScws') {
+            return async (
+              configDir: string,
+              parsecAddr: string,
+              scwsLocation: string,
+              certificate: string,
+              skipScwsApiImport: boolean | undefined,
+            ) => {
+              try {
+                if (skipScwsApiImport) {
+                  console.info('Skipping loading scwsapi.js');
+                } else {
+                  console.info(`Loading SCWS from ${scwsLocation} in shared worker...`);
+                  const scwsapi = await import(/* @vite-ignore */ scwsLocation);
+                  console.info('Imported SCWS', scwsapi);
+                  (globalThis as any).SCWS = scwsapi.SCWS;
+                  (globalThis as any).SCWS_WEBAPP_CERT = certificate;
+                }
+                return await module.pkiInitForScws(configDir, parsecAddr);
+              } catch (err: any) {
+                console.error(`Failed to import scwsapi: ${err.toString()}`);
+                return {
+                  ok: false,
+                  error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` },
+                };
+              }
+            };
+          }
+          return (module as any)[prop];
+        },
+      });
+
+      console.info('Done initializing libparsec module');
+
+      return wrappedLibparsec;
+    })();
   }
-  return _libparsec as LibParsecPlugin;
+  return _libparsecPromise;
 }

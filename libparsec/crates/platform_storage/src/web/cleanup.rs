@@ -1,8 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::path::Path;
 
-use libparsec_types::{anyhow, DeviceID};
+use libparsec_types::{DeviceID, anyhow};
 
 use super::{certificates::get_certificates_storage_db_name, user::get_user_storage_db_name};
 

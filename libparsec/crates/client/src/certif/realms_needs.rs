@@ -1,11 +1,11 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::collections::HashSet;
 
 use libparsec_platform_storage::certificates::UpTo;
 use libparsec_types::prelude::*;
 
-use super::{store::CertifStoreError, CertificateOps};
+use super::{CertificateOps, store::CertifStoreError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifGetRealmNeedsError {

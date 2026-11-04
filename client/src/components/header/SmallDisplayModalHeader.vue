@@ -1,10 +1,11 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-button
     v-if="!hideCloseButton"
     slot="icon-only"
-    class="closeBtn"
+    fill="clear"
+    class="closeBtn color-secondary"
     @click="$emit('closeClicked')"
   >
     <ion-icon
@@ -13,11 +14,11 @@
     />
   </ion-button>
   <ion-header class="modal-header">
-    <ion-text class="modal-header__title title-h3">
+    <ion-text class="modal-header__title">
       {{ $msTranslate(title) }}
     </ion-text>
     <ion-text
-      class="modal-header__subtitle body-lg"
+      class="modal-header__subtitle"
       v-if="subtitle"
     >
       {{ $msTranslate(subtitle) }}
@@ -47,20 +48,22 @@ defineEmits<{
   flex-direction: column;
   text-wrap: wrap;
   margin-bottom: 1.5rem;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: ms.spacing('padding-4xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
   }
 
   &__title {
-    color: var(--parsec-color-light-primary-800);
+    @include ms.font('heading-h4');
+    color: ms.color('text-brand-default');
     margin-bottom: 0 !important;
   }
 
   &__subtitle {
-    color: var(--parsec-color-light-secondary-soft-text);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-base-label');
   }
 }
 </style>

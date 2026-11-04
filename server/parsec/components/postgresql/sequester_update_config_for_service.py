@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import OrganizationID, SequesterServiceID
@@ -65,7 +66,7 @@ async def sequester_update_config_for_service(
     organization_id: OrganizationID,
     service_id: SequesterServiceID,
     config: SequesterServiceConfig,
-) -> None | SequesterUpdateConfigForServiceStoreBadOutcome:
+) -> SequesterUpdateConfigForServiceStoreBadOutcome | None:
     match config:
         case SequesterServiceType.STORAGE as service_type:
             webhook_url = None

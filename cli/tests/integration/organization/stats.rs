@@ -1,14 +1,17 @@
-use libparsec::{tmp_path, TmpPath};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::{bootstrap_cli_test, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
+use libparsec::{TmpPath, tmp_path};
+use parsec_cli::ui::Ui;
+
+use crate::{bootstrap_cli_test, test_ui, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn stats_organization(tmp_path: TmpPath) {
-    let (url, _, org_id) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn stats_organization(tmp_path: TmpPath, test_ui: &Ui) {
+    let (url, _, org_id) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let expect = format!(
-        "{:#}\n",
+        "{:#}",
         serde_json::json!({
             "active_users": 3,
             "data_size": 0,

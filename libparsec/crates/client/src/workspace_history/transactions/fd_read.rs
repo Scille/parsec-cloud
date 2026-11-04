@@ -1,13 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-use std::cmp::{min, Ordering};
+use std::cmp::{Ordering, min};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace_history::{WorkspaceHistoryOps, WorkspaceHistoryStoreGetBlockError},
     InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError,
+    workspace_history::{WorkspaceHistoryOps, WorkspaceHistoryStoreGetBlockError},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -20,6 +20,8 @@ pub enum WorkspaceHistoryFdReadError {
     BadFileDescriptor,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Block access is temporary unavailable on the server")]
     ServerBlockstoreUnavailable,
     #[error(transparent)]
@@ -83,12 +85,18 @@ pub async fn fd_read(
 
     // Note since zero-filled blocks are not stored, we cannot just use
     // `manifest.blocksize` to determine the range of indexes of involved blocks.
-    let involved_blocks = manifest
-        .blocks
-        .iter()
-        // TODO: use binary search to avoid O(n) complexity
-        .skip_while(|block| block.offset + block.size.get() <= offset)
-        .take_while(|block| block.offset < end);
+    let involved_blocks = {
+        let start_idx = manifest
+            .blocks
+            .partition_point(|block| block.offset + block.size.get() <= offset);
+        // In practice, a big read operation is always split into multiple calls of `fd_read`
+        // to avoid having ending up with the whole file in memory.
+        // Hence why we don't use a binary search here: we are practically certain that we
+        // are reading a very small number of blocks.
+        manifest.blocks[start_idx..]
+            .iter()
+            .take_while(|b| b.offset < end)
+    };
 
     let mut current_position = offset;
     for block_access in involved_blocks {
@@ -137,6 +145,9 @@ pub async fn fd_read(
                     }
                     WorkspaceHistoryStoreGetBlockError::NoRealmAccess => {
                         WorkspaceHistoryFdReadError::NoRealmAccess
+                    }
+                    WorkspaceHistoryStoreGetBlockError::RealmDeleted => {
+                        WorkspaceHistoryFdReadError::RealmDeleted
                     }
                     WorkspaceHistoryStoreGetBlockError::BlockNotFound => {
                         WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable

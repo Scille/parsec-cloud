@@ -200,7 +200,7 @@ async def test_authenticated_user_revoke_ok(
         user_id=to_revoke.user_id,
     )
 
-    expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
+    expected_dump = await backend.user.dump_current_users(coolorg.organization_id)
     expected_dump[to_revoke.user_id].revoked_on = certif.timestamp
     expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     expected_topics.common = certif.timestamp
@@ -218,7 +218,7 @@ async def test_authenticated_user_revoke_ok(
             )
         )
 
-    dump = await backend.user.test_dump_current_users(coolorg.organization_id)
+    dump = await backend.user.dump_current_users(coolorg.organization_id)
     assert dump == expected_dump
     topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     assert topics == expected_topics

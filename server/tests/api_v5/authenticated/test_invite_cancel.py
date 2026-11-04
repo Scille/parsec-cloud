@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from parsec._parsec import DateTime, InvitationToken, authenticated_cmds
+from parsec._parsec import AccessToken, DateTime, authenticated_cmds
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
@@ -11,7 +11,7 @@ async def test_authenticated_invite_cancel_ok(coolorg: CoolorgRpcClients) -> Non
 
 
 async def test_authenticated_invite_cancel_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
-    rep = await coolorg.alice.invite_cancel(InvitationToken.new())
+    rep = await coolorg.alice.invite_cancel(AccessToken.new())
 
     assert rep == authenticated_cmds.latest.invite_cancel.RepInvitationNotFound()
 

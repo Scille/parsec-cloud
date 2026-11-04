@@ -1,15 +1,15 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ms-modal
-    title="FoldersPage.DownloadFile.downloadWarningTitle"
+    :title="{ key: 'FoldersPage.DownloadFile.downloadWarningTitle', count: multipleFiles ? 2 : 1 }"
     :close-button="{ visible: true }"
     :cancel-button="{
       disabled: false,
       label: 'FoldersPage.DownloadFile.cancel',
     }"
     :confirm-button="{
-      label: 'FoldersPage.DownloadFile.downloadButton',
+      label: { key: 'FoldersPage.DownloadFile.downloadButton', count: multipleFiles ? 2 : 1 },
       disabled: false,
       theme: MsReportTheme.Success,
       onClick: onConfirmClicked,
@@ -17,17 +17,18 @@
   >
     <div class="download-warning">
       <ms-report-text :theme="MsReportTheme.Warning">
-        {{ $msTranslate('FoldersPage.DownloadFile.downloadWarningText') }}
+        {{ $msTranslate({ key: 'FoldersPage.DownloadFile.downloadWarningText', count: multipleFiles ? 2 : 1 }) }}
       </ms-report-text>
       <ms-image
-        :image="DownloadWarningImage"
+        :image="theme === Theme.Dark ? DownloadWarningImageDark : DownloadWarningImageLight"
         class="download-warning-image"
       />
       <i18n-t
+        scope="global"
         keypath="FoldersPage.DownloadFile.downloadWarningDocMessage"
         tag="label"
         for="FoldersPage.DownloadFile.downloadWarningDoc"
-        class="download-warning-documentation body"
+        class="download-warning-documentation"
       >
         <a
           class="doc-link"
@@ -41,7 +42,7 @@
       v-model="noReminder"
       label-placement="end"
       justify="start"
-      class="download-warning-checkbox body"
+      class="download-warning-checkbox"
     >
       {{ $msTranslate('FoldersPage.DownloadFile.notRemindMe') }}
     </ms-checkbox>
@@ -49,13 +50,20 @@
 </template>
 
 <script setup lang="ts">
-import DownloadWarningImage from '@/assets/images/warning-download.svg';
+import DownloadWarningImageDark from '@/assets/images/warning-download-dark.svg';
+import DownloadWarningImageLight from '@/assets/images/warning-download-light.svg';
 import { Env } from '@/services/environment';
 import { modalController } from '@ionic/vue';
-import { MsCheckbox, MsImage, MsModal, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
+import { MsCheckbox, MsImage, MsModal, MsModalResult, MsReportText, MsReportTheme, Theme, useTheme } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
 const noReminder = ref(false);
+
+defineProps<{
+  multipleFiles?: boolean;
+}>();
+
+const { theme } = useTheme();
 
 onMounted(async () => {});
 
@@ -73,7 +81,7 @@ async function onConfirmClicked(): Promise<boolean> {
   margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   position: relative;
 
   &-image {
@@ -84,16 +92,16 @@ async function onConfirmClicked(): Promise<boolean> {
   }
 
   &-documentation {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-label');
   }
 
   &-checkbox {
     position: absolute;
-    bottom: 2.5rem;
-    color: var(--parsec-color-light-secondary-soft-text);
+    z-index: 200;
+    bottom: 1.75rem;
 
     @include ms.responsive-breakpoint('sm') {
-      bottom: 3.5rem;
     }
 
     @include ms.responsive-breakpoint('xs') {
@@ -103,13 +111,14 @@ async function onConfirmClicked(): Promise<boolean> {
     }
   }
 }
+
 .doc-link {
   cursor: pointer;
   text-decoration: underline;
   font-weight: 500;
 
   &:hover {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('text-brand-default-hover');
   }
 }
 </style>

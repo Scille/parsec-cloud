@@ -1,11 +1,11 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion, DataResult, DateTime,
-    DeviceID, UserManifest, VlobID,
+    self as libparsec_types, DataResult, DateTime, DeviceID, Maybe, RealmArchivingConfiguration,
+    UserManifest, VlobID, impl_transparent_data_format_conversion,
 };
 
 use super::{impl_local_manifest_dump, impl_local_manifest_load};
@@ -42,6 +42,19 @@ impl_local_manifest_dump!(LocalUserManifest);
 impl_local_manifest_load!(LocalUserManifest);
 
 parsec_data!("schema/local_manifest/local_user_manifest.json5");
+
+impl LocalUserManifestWorkspaceEntry {
+    pub fn is_read_only(&self) -> bool {
+        !self.role.can_write()
+            || matches!(
+                self.archiving_configuration,
+                Maybe::Present(
+                    RealmArchivingConfiguration::Archived
+                        | RealmArchivingConfiguration::DeletionPlanned { .. }
+                )
+            )
+    }
+}
 
 impl_transparent_data_format_conversion!(
     LocalUserManifest,

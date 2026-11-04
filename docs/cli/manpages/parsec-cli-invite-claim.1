@@ -1,0 +1,41 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-invite-claim 1  "claim " 
+.SH NAME
+parsec\-cli\-invite\-claim \- Claim an invitation
+.SH SYNOPSIS
+\fBparsec\-cli invite claim\fR [\fB\-\-auth\fR] [\fB\-d\fR|\fB\-\-data\-dir\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIADDR\fR> 
+.SH DESCRIPTION
+Claim an invitation
+.SH OPTIONS
+.TP
+\fB\-\-auth\fR \fI<AUTH>\fR [default: password]
+New authentication method for the new device
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+keyring
+.IP \(bu 2
+password
+.RE
+.TP
+\fB\-d\fR, \fB\-\-data\-dir\fR \fI<DATA_DIR>\fR [default: /home/redacted/.local/share/parsec3]
+Parsec data directory
+.RS
+May also be specified with the \fBPARSEC_DATA_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIADDR\fR>
+Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL` or http://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`)

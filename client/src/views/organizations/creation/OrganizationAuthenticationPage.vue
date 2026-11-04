@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="authentication-page page-modal-container">
@@ -13,7 +13,7 @@
       ref="chooseAuthentication"
       class="authentication-content"
       :server-config="serverConfig"
-      @field-update="onFieldUpdated"
+      :server-addr="serverAddr"
     />
 
     <ion-footer class="authentication-page-footer">
@@ -25,12 +25,11 @@
           id="previous-button"
           @click="$emit('goBackRequested')"
         >
-          {{ $msTranslate('CreateOrganization.button.previous') }}
           <ion-icon
-            slot="start"
+            class="button-icon-left"
             :icon="chevronBack"
-            size="small"
           />
+          {{ $msTranslate('CreateOrganization.button.previous') }}
         </ion-button>
 
         <ion-button
@@ -43,9 +42,8 @@
             {{ isLastStep ? $msTranslate('CreateOrganization.button.create') : $msTranslate('CreateOrganization.button.next') }}
           </span>
           <ion-icon
-            slot="start"
+            class="button-icon-right"
             :icon="chevronForward"
-            size="small"
           />
         </ion-button>
       </div>
@@ -56,7 +54,7 @@
 <script setup lang="ts">
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
-import { DeviceSaveStrategy, ServerConfig } from '@/parsec';
+import { DeviceSaveStrategy, ParsecAddr, ServerConfig } from '@/parsec';
 import { IonButton, IonFooter, IonIcon, IonPage } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { asyncComputed } from 'megashark-lib';
@@ -66,6 +64,7 @@ defineProps<{
   hideBackButton?: boolean;
   isLastStep?: boolean;
   serverConfig?: ServerConfig;
+  serverAddr: ParsecAddr;
 }>();
 
 const emits = defineEmits<{
@@ -83,24 +82,17 @@ const valid = asyncComputed(async () => {
 });
 
 async function authenticationChosen(): Promise<void> {
-  if (chooseAuthenticationRef.value?.getSaveStrategy()) {
-    emits('authenticationChosen', chooseAuthenticationRef.value.getSaveStrategy() as DeviceSaveStrategy);
+  const strategy = await chooseAuthenticationRef.value?.getSaveStrategy();
+  if (strategy) {
+    emits('authenticationChosen', strategy);
   }
-}
-
-// TODO: Since valid is supposed to be read-only, we should check if this is really necessary
-async function onFieldUpdated(): Promise<void> {
-  if (!chooseAuthenticationRef.value) {
-    return;
-  }
-  valid.value = await chooseAuthenticationRef.value.areFieldsCorrect();
 }
 </script>
 
 <style scoped lang="scss">
 .authentication-content {
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 1rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
   }
 }
 </style>

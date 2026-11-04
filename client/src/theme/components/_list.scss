@@ -1,43 +1,89 @@
-/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS */
 
 // must be at the top of the file
 // at the moment, we are forced to put this in every scss file, since vite is not adding preprocessors additionalData to files imported by @use & @forward
 @use 'megashark-lib/theme' as ms;
 
-/* ------- Workspaces, Files, Users ------- */
-.user-list-header,
-.folder-list-header,
-.invitations-list-header,
-.pkiRequests-list-header {
-  color: var(--parsec-color-light-secondary-grey);
-  padding-inline-start: 0;
+/* ------- Global list header ------- */
+
+.list-header {
+  color: ms.color('text-base-description');
+  padding-inline-start: ms.spacing('padding-none');
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--parsec-color-light-secondary-opacity30);
-  backdrop-filter: blur(10px);
+  background: transparent;
+  backdrop-filter: blur(25px);
+
+  &::part(inner) {
+    --border-color: #{ms.color('border-neutral-on-color')};
+    padding: 0 ms.spacing('padding-3xl') 0 0;
+    width: 100%;
+  }
 }
 
-.file-list-item,
-.file-list-item-processing,
-.user-list-item {
-  border-radius: var(--parsec-radius-4);
-  --show-full-highlight: 0;
+.list-header-label {
+  @include ms.font('label-xs-emphasis');
+
   display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-md');
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
+  cursor: pointer;
+
+  &:hover {
+    color: ms.color('text-neutral-default');
+
+    .sort-icon {
+      display: block;
+    }
+  }
+
+  .label-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .sort-icon {
+    display: none;
+    flex-shrink: 0;
+    font-size: 0.875rem;
+  }
+
+  &--sorted {
+    color: ms.color('text-neutral-default');
+
+    .sort-icon {
+      display: block;
+    }
+  }
+}
+
+/* ------- Global list items ------- */
+
+.list-item {
+  border-radius: ms.radius('sm');
+  --show-full-highlight: 0;
   --padding-start: 0px;
-  --inner-padding-end: 0px;
-  --background-hover: var(--parsec-color-light-primary-30);
+  --inner-padding-end: #{ms.spacing('padding-none')};
+  --background: transparent;
+  --background-hover: #{ms.color('surface-brand-default-subtle')};
   --background-hover-opacity: 1;
 
   &::part(native) {
-    border: none;
+    border: ms.border('none');
+    height: 3rem;
     width: 100%;
     cursor: default;
-  }
+    padding: 0 ms.spacing('padding-3xl') 0 0;
 
-  .options-button__icon {
-    font-size: 1.25rem;
-    flex-shrink: 0;
+    @include ms.responsive-breakpoint('sm') {
+      height: auto;
+    }
   }
 
   // border between items
@@ -49,25 +95,21 @@
     left: 0;
     width: 100%;
     height: 1px;
-    background: var(--parsec-color-light-secondary-medium);
+    border-bottom: 1px solid ms.color('border-neutral-default-subtle');
     z-index: 1;
     cursor: default;
-
-    @include ms.responsive-breakpoint('sm') {
-      left: 4rem;
-    }
   }
 
   &.selected {
-    --background: var(--parsec-color-light-primary-100);
-    --background-hover: var(--parsec-color-light-primary-100);
+    --background: #{ms.color('surface-brand-default-subtle-hover')};
+    --background-hover: #{ms.color('surface-brand-default-subtle-hover')};
     --border-width: 0;
 
     &:hover {
       .cell,
       .options-button__icon,
       .person-name {
-        color: var(--parsec-color-light-secondary-text) !important;
+        color: ms.color('text-base-body') !important;
       }
       &::part(native) {
         --padding-start: 0px;
@@ -76,362 +118,385 @@
   }
 
   &.item-checkbox-checked {
-    --background: var(--parsec-color-light-primary-100);
+    --background: #{ms.color('surface-brand-default-subtle-pressed')};
     --background-checked-opacity: 1;
 
     .cell,
     .options-button__icon,
     .person-name {
-      color: var(--parsec-color-light-secondary-text);
+      color: ms.color('text-base-body');
+    }
+  }
+
+  &-sorted {
+    color: ms.color('text-neutral-default');
+
+    .sort-icon {
+      display: block;
     }
   }
 }
 
-.workspace-list-item-content > [class^='workspace-'],
-.list-item-container > [class^='file-'],
-.user-list-item > [class^='user-'] {
-  padding: 0 1rem;
+.list-item-container {
+  display: flex;
+  width: 100%;
+  padding: ms.spacing('padding-none');
+}
+
+.list-item-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.list-item-column {
+  padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
   display: flex;
   align-items: center;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: ms.color('text-base-description');
   --background-hover-opacity: 1;
-  --background-hover: var(--parsec-color-light-primary-30);
+  --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
   cursor: default !important;
-}
 
-// ------- File & User -------
-.file-options,
-.user-options {
-  display: flex;
-  justify-content: flex-end;
-
-  .options-button {
-    --background-hover: none;
-
-    &::part(native) {
-      padding: 0;
-    }
-
-    &__icon {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-
-    &:hover {
-      .options-button__icon {
-        color: var(--parsec-color-light-primary-500);
-      }
-    }
-  }
-}
-.file-selected,
-.user-selected {
   .checkbox {
     max-width: 1.25rem;
   }
 }
 
-.user-selected {
-  .checkbox {
-    @include ms.responsive-breakpoint('sm') {
-      max-width: 100%;
-      width: 100%;
-    }
-  }
-}
+.list-item-end {
+  display: flex;
+  justify-content: flex-end;
+  margin-left: auto;
+  flex-shrink: 0;
 
-// Allow to keep hover when context menu is open
-.file-hovered,
-.user-hovered:not(.revoked) {
-  --background: var(--parsec-color-light-primary-30) !important;
-  background-color: var(--parsec-color-light-primary-30) !important;
-}
-
-// ------- Workspaces only -------
-.workspace-list-item-content > [class^='workspace-'],
-.workspace-list-item::part(native) {
-  cursor: pointer !important;
-}
-
-.workspace-hovered {
-  background: var(--parsec-color-light-secondary-white);
-}
-
-// ------- Files/folders only -------
-.folder-container {
-  .list-item-container {
-    display: flex;
-    width: 100%;
-    padding: 0;
-  }
-
-  .header-label-selected,
-  .header-label-name,
-  .header-label-last-update,
-  .header-label-creation-date,
-  .header-label-size {
-    cursor: pointer;
+  .file-options {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  }
 
-    &__text {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
+  .options-button {
+    height: fit-content;
+    --background: none !important;
+    --background-hover: #{ms.color('surface-brand-default-subtle-hover')};
 
-    &__sort-icon {
-      display: none;
-      flex-shrink: 0;
-      font-size: 0.875rem;
+    &__icon {
+      color: ms.color('icon-neutral-default');
     }
 
     &:hover {
-      color: var(--parsec-color-light-secondary-soft-text);
-
-      ion-icon {
-        display: block;
+      .options-button__icon {
+        color: ms.color('icon-brand-default');
       }
     }
-
-    &-sorted {
-      color: var(--parsec-color-light-secondary-soft-text);
-
-      ion-icon {
-        display: block;
-      }
-    }
-  }
-
-  .label-name,
-  .label-last-update,
-  .label-creation-date,
-  .label-size {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    width: 100%;
-  }
-
-  // Define the width of each cell
-  --width-cell-selected: 4rem;
-  --width-cell-name: calc(40% - var(--width-cell-selected) - var(--width-cell-options));
-  --width-cell-updated-by: 20%;
-  --width-cell-last-update: 15%;
-  --width-cell-creation-date: 15%;
-  --width-cell-size: 10%;
-  --width-cell-options: 4rem;
-
-  @include ms.responsive-breakpoint('xl') {
-    --width-cell-name: calc(45% - var(--width-cell-selected) - var(--width-cell-options));
-    --width-cell-updated-by: 25%;
-    --width-cell-last-update: 20%;
-    --width-cell-creation-date: 0;
-    --width-cell-size: 10%;
-  }
-
-  @include ms.responsive-breakpoint('lg') {
-    --width-cell-name: calc(60% - var(--width-cell-selected) - var(--width-cell-options));
-    --width-cell-updated-by: 0;
-    --width-cell-last-update: 20%;
-    --width-cell-size: 20%;
-  }
-
-  @include ms.responsive-breakpoint('md') {
-    --width-cell-name: calc(70% - var(--width-cell-selected) - var(--width-cell-options));
-    --width-cell-last-update: 15%;
-    --width-cell-size: 15%;
-  }
-
-  @include ms.responsive-breakpoint('sm') {
-    --width-cell-name: calc(100% - var(--width-cell-selected));
-    --width-cell-last-update: 0;
-    --width-cell-size: 0;
-  }
-
-  .header-label-selected,
-  .file-selected,
-  .file-loading {
-    flex-basis: var(--width-cell-selected);
-    max-width: var(--width-cell-selected);
-    justify-content: end;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0;
-    }
-  }
-
-  .header-label-name,
-  .file-name {
-    flex-basis: var(--width-cell-name);
-    padding: 0.5rem 1rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0.75rem 1rem;
-    }
-  }
-
-  .header-label-updated-by,
-  .file-updated-by {
-    flex-basis: var(--width-cell-updated-by);
-
-    @include ms.responsive-breakpoint('lg') {
-      display: none;
-    }
-  }
-
-  .header-label-last-update,
-  .file-last-update {
-    flex-basis: var(--width-cell-last-update);
-
-    @include ms.responsive-breakpoint('sm') {
-      display: none;
-    }
-  }
-
-  .header-label-creation-date,
-  .file-creation-date {
-    flex-basis: var(--width-cell-creation-date);
-
-    @include ms.responsive-breakpoint('xl') {
-      display: none;
-    }
-  }
-
-  .header-label-size,
-  .file-size {
-    flex-basis: var(--width-cell-size);
-
-    @include ms.responsive-breakpoint('sm') {
-      display: none;
-    }
-  }
-
-  .label-size:is(.cell),
-  .label-creation-date:is(.cell),
-  .label-last-update:is(.cell) {
-    color: var(--parsec-color-light-secondary-hard-grey);
-  }
-
-  .header-label-space,
-  .file-options,
-  .file-empty {
-    flex-basis: var(--width-cell-options);
-    position: sticky;
-    right: 0;
-  }
-
-  // Set special drop zone style when dragging elements on folder
-  .files-container-list .drop-zone-active .drop-zone-dashed {
-    left: 0.5rem !important;
-    top: 0.25rem !important;
-    right: 0.5rem !important;
-    bottom: 0.25rem !important;
-    background: hsla(214, 100%, 60%, 0.3);
   }
 }
 
-// ------- Users only -------
-.users-container-list {
-  .user-list-item {
-    display: flex;
-    width: 100%;
+/* ------- Column sizing ------- */
+
+.list-container {
+  // File list
+  &:is(.files-list-container),
+  &:has(.file-list-item) {
+    .header-label-selected,
+    .file-selected,
+    .file-loading {
+      flex-basis: 4rem;
+      min-width: 4rem;
+      max-width: 4rem;
+      justify-content: end;
+
+      @include ms.responsive-breakpoint('sm') {
+        padding: ms.spacing('padding-none');
+        flex-basis: 2.5rem;
+        max-width: 2.5rem;
+        min-width: 2.5rem;
+      }
+    }
+
+    .header-label-name,
+    .file-name {
+      flex-basis: 40rem;
+
+      @include ms.responsive-breakpoint('xxl') {
+        flex-basis: calc(65% - 8rem);
+      }
+
+      @include ms.responsive-breakpoint('xl') {
+        flex-basis: calc(45% - 8rem);
+      }
+
+      @include ms.responsive-breakpoint('lg') {
+        flex-basis: calc(60% - 8rem);
+      }
+
+      @include ms.responsive-breakpoint('md') {
+        flex-basis: calc(70% - 8rem);
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        flex-basis: calc(100% - 4rem);
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+      }
+    }
+
+    .files-list-header .header-label-name,
+    .result-list-item .file-name {
+      flex-basis: 40rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+      }
+    }
+
+    .header-label-updated-by,
+    .file-updated-by {
+      flex-basis: 20%;
+      min-width: 20%;
+
+      @include ms.responsive-breakpoint('xl') {
+        min-width: 20%;
+        flex-basis: 25%;
+      }
+
+      @include ms.responsive-breakpoint('lg') {
+        display: none;
+      }
+    }
+
+    .header-label-last-update,
+    .file-last-update {
+      flex-basis: 15%;
+      min-width: 15%;
+
+      @include ms.responsive-breakpoint('xl') {
+        flex-basis: 20%;
+        min-width: 20%;
+      }
+
+      @include ms.responsive-breakpoint('md') {
+        flex-basis: 15%;
+        min-width: 15%;
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        display: none;
+      }
+    }
+
+    .header-label-creation-date,
+    .file-creation-date {
+      flex-basis: 15%;
+      min-width: 15%;
+
+      @include ms.responsive-breakpoint('xl') {
+        display: none;
+      }
+    }
+
+    .header-label-size,
+    .file-size {
+      flex-basis: 10%;
+      min-width: 10%;
+
+      @include ms.responsive-breakpoint('lg') {
+        flex-basis: 20%;
+        min-width: 20%;
+      }
+
+      @include ms.responsive-breakpoint('md') {
+        flex-basis: 15%;
+        min-width: 15%;
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        display: none;
+      }
+    }
+
+    .label-size:is(.cell),
+    .label-creation-date:is(.cell),
+    .label-last-update:is(.cell) {
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
+      opacity: ms.opacity('8');
+    }
+
+    .header-label-space,
+    .file-options,
+    .file-empty {
+      flex-basis: 4rem;
+      position: sticky;
+      right: 0;
+    }
   }
 
-  .user-list-header__label {
-    padding: 0 1rem;
-    height: 100%;
-    display: flex;
-    align-items: center;
-  }
-
-  .label-selected,
-  .user-selected {
-    min-width: 4rem;
-    flex-grow: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 1rem;
-      position: absolute;
+  // User list
+  &:is(.users-list-container),
+  &:has(.user-list-item) {
+    .header-label-selected,
+    .user-selected {
+      min-width: 4rem;
+      flex-grow: 0;
       justify-content: center;
+
+      @include ms.responsive-breakpoint('sm') {
+        padding: ms.spacing('padding-3xl');
+        position: absolute;
+      }
+    }
+
+    .header-label-name,
+    .user-name {
+      width: 100%;
+      min-width: 11.25rem;
+      max-width: 25rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        max-width: 100%;
+      }
+    }
+
+    .header-label-profile:not(.user-mobile-text-info__profile),
+    .user-profile {
+      max-width: 9.5rem;
+      width: 9.5rem;
+      flex-shrink: 0;
+
+      @include ms.responsive-breakpoint('sm') {
+        display: none;
+      }
+    }
+
+    .header-label-email,
+    .user-email {
+      min-width: 12rem;
+      width: 16rem;
+      flex-grow: 1;
+
+      @include ms.responsive-breakpoint('lg') {
+        display: none;
+      }
+    }
+
+    .header-label-join-date,
+    .user-join {
+      min-width: 11.25rem;
+      flex-grow: 0;
+
+      @include ms.responsive-breakpoint('xl') {
+        display: none;
+      }
+    }
+
+    .header-label-status:not(.user-mobile-text-info__status),
+    .user-status {
+      flex: 0 0 8rem;
+
+      @include ms.responsive-breakpoint('md') {
+        display: none;
+      }
+    }
+
+    .header-label-space,
+    .user-options {
+      min-width: 4rem;
+      flex: 1 0 4rem;
+    }
+
+    .label-join-date:is(.cell),
+    .label-email:is(.cell) {
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
     }
   }
 
-  .label-name,
-  .user-name {
-    width: 100%;
-    min-width: 11.25rem;
-    max-width: 25rem;
-    white-space: nowrap;
-    overflow: hidden;
-    padding: 0.5rem 1rem;
+  // PKI Requests
+  &:is(.requests-list-container),
+  &:has(.request-list-item) {
+    .label-name,
+    .request-name {
+      width: 100%;
+      min-width: 11.25rem;
+      max-width: 25rem;
 
-    @include ms.responsive-breakpoint('sm') {
-      max-width: 100%;
+      @include ms.responsive-breakpoint('sm') {
+        max-width: 100%;
+      }
+    }
+
+    .label-email,
+    .request-email {
+      min-width: 16rem;
+      max-width: 16rem;
+      flex-grow: 1;
+
+      @include ms.responsive-breakpoint('lg') {
+        display: none;
+      }
+    }
+
+    .label-createdOn,
+    .request-createdOn {
+      min-width: 11.25rem;
+      flex-grow: 0;
+
+      @include ms.responsive-breakpoint('xl') {
+        display: none;
+      }
+    }
+
+    .label-type,
+    .request-type {
+      min-width: 12rem;
+      max-width: 12rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        min-width: fit-content;
+        flex-basis: auto;
+      }
+    }
+
+    .label-space,
+    .request-actions {
+      min-height: 1rem;
+      min-width: 15rem;
+      flex-grow: 0;
     }
   }
 
-  .label-profile:not(.user-mobile-text__profile),
-  .user-profile {
-    max-width: 9.5rem;
-    width: 9.5rem;
-    flex-shrink: 0;
+  // Invitations
+  &:is(.invitations-list-container),
+  &:has(.invitation-list-item) {
+    .label-email,
+    .invitation-email {
+      width: 100%;
+      min-width: 11.25rem;
+      max-width: 25rem;
 
-    @include ms.responsive-breakpoint('sm') {
-      display: none;
-    }
-  }
-
-  .label-email,
-  .user-email {
-    min-width: 12rem;
-    width: 16rem;
-    flex-grow: 1;
-    overflow: hidden;
-
-    @include ms.responsive-breakpoint('lg') {
-      display: none;
+      @include ms.responsive-breakpoint('sm') {
+        max-width: 100%;
+      }
     }
 
-    &__label {
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
+    .label-sentOn,
+    .invitation-sentOn {
+      min-width: 11.25rem;
+      flex-grow: 0;
     }
-  }
 
-  .label-joined-on,
-  .user-join {
-    min-width: 11.25rem;
-    flex-grow: 0;
-
-    @include ms.responsive-breakpoint('xl') {
-      display: none;
+    .label-space,
+    .invitation-actions {
+      min-width: 15.625rem;
+      flex-grow: 0;
     }
-  }
-
-  .label-status:not(.user-mobile-text__status),
-  .user-status {
-    flex: 0 0 8rem;
-
-    @include ms.responsive-breakpoint('md') {
-      display: none;
-    }
-  }
-
-  .label-space,
-  .user-options {
-    min-width: 4rem;
-    flex: 1 0 4rem;
-    padding: 0.75rem;
   }
 }
+
+/* ------- Specific User ------- */
 
 .user-list-item,
 .user-card-item,
@@ -449,134 +514,269 @@
       width: 100%;
       height: 100%;
       opacity: 0.4;
-      background: var(--parsec-color-light-secondary-disabled);
+      background: ms.color('surface-disabled-default');
       z-index: 1;
     }
   }
 
-  .checkbox-mobile {
-    --size: 1.875rem;
-
-    &::part(container) {
-      border: 2px solid var(--parsec-color-light-secondary-light);
-      border-radius: var(--parsec-radius-circle);
-      padding: 0.375rem;
-    }
-
-    &.checkbox-checked::part(container) {
-      border: 2px solid var(--parsec-color-light-primary-600);
-    }
+  .checkbox-mobile .ms-checkbox {
+    scale: 1.2;
   }
 }
 
-.user-list-item:nth-child(2)::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--parsec-color-light-secondary-medium);
-  z-index: 2;
+// User items - Allow to keep hover when context menu is open
+.user-list-item--hovered {
+  --background: #{ms.color('surface-neutral-default-subtle-hover')} !important;
+  background-color: ms.color('surface-neutral-default-subtle-hover') !important;
+
+  .ms-checkbox {
+    outline: 1px solid ms.color('border-brand-default');
+    outline-offset: 2px;
+  }
 }
 
 .revoked {
-  --background: var(--parsec-color-light-secondary-premiere) !important;
   --background-hover: none;
 
   .user-name,
   .user-card-avatar {
     filter: grayscale(100%);
-
-    .person-name,
-    .user-card-info__name {
-      color: var(--parsec-color-light-secondary-grey) !important;
-    }
   }
+
+  [class*=' user-'] {
+    opacity: ms.opacity('6');
+  }
+
   .tag {
-    background: var(--parsec-color-light-secondary-disabled) !important;
-    color: var(--parsec-color-light-secondary-grey) !important;
+    background: ms.color('surface-disabled-default') !important;
+    color: ms.color('text-disabled-default') !important;
   }
 }
 
-// ------- Invitation emails + PKI -------
-.invitations-container-list,
-.pkiRequests-container-list {
-  padding: 0 !important;
+/* ------- Specific File ------- */
+
+// File items - Allow to keep hover when context menu is open
+.file-list-item--hovered {
+  .ms-checkbox {
+    outline: 1px solid ms.color('border-brand-default');
+    outline-offset: 2px;
+  }
+}
+
+.file-name {
+  position: relative;
+  display: flex;
+  gap: ms.spacing('gap-3xl');
+
+  .file-icon {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+
+  .label-name {
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
+
+    &:not(.selection):hover {
+      text-decoration: underline;
+      cursor: pointer !important;
+    }
+  }
+
+  .cloud-overlay {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-left: auto;
+    position: absolute;
+    right: 0;
+
+    &-ok {
+      color: ms.color('icon-brand-default');
+    }
+
+    &-ko {
+      color: ms.color('icon-neutral-default');
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      left: 2.125rem;
+      top: 50%;
+      transform: translateY(16%);
+      right: auto;
+      background: ms.color('surface-base-default');
+      border-radius: var(--parsec-radius-circle);
+      padding: ms.spacing('padding-xs');
+    }
+  }
+}
+
+.file-list-item-mobile {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 0.5rem;
+  border-radius: ms.radius('lg');
+
+  .file-mobile-content {
+    gap: ms.spacing('gap-3xl');
+    width: 100%;
+  }
+
+  .file-selected {
+    max-width: 2.5rem;
+    overflow: visible;
+  }
+
+  .file-mobile-text {
+    flex-grow: 1;
+    overflow: hidden;
+    color: ms.color('text-base-description');
+    display: flex;
+    gap: ms.spacing('gap-xs');
+    flex-direction: column;
+
+    &__data {
+      @include ms.font('body-sm-regular');
+      display: flex;
+      gap: ms.spacing('gap-lg');
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+.file-list-item.file-list-item--hovered,
+.file-card-item.file-list-item--hovered {
+  .file-list-item-container:has(.label-name:not(.selection):hover) .ms-checkbox,
+  .drop-zone:has(.file-card__title:not(.selection):hover) .ms-checkbox {
+    outline: none;
+  }
+}
+
+.upload-progress {
+  @include ms.font('label-sm-medium');
+  color: ms.color('text-base-description');
+  visibility: hidden;
+  flex-shrink: 0;
+
+  :is(.file-list-item) & {
+    position: relative;
+    right: 0.375rem;
+  }
+
+  :is(.file-card-item) & {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--parsec-radius-circle);
+    left: 58%;
+    bottom: -8px;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: ms.color('surface-base-default');
+    text-wrap: nowrap;
+  }
+
+  :is(.file-list-item, .file-card-item):hover & {
+    visibility: visible;
+  }
+}
+
+// Set special drop zone style when dragging elements on folder
+.files-list-container .drop-zone-active .drop-zone-dashed {
+  left: 0.5rem !important;
+  top: 0.25rem !important;
+  right: 0.5rem !important;
+  bottom: 0.25rem !important;
+  background: hsla(214, 100%, 60%, 0.3);
+  outline: none !important;
+}
+
+// Set special style when search results are displayed
+.main-container:has(.file-search-results) {
+  background: ms.color('surface-base-default-secondary');
+  padding: ms.spacing('padding-4xl');
+  margin: 1rem 0 0;
+  overflow: hidden;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem !important;
+    padding: ms.spacing('padding-none');
+  }
+}
+
+/* ------- Specific Workspace ------- */
+
+// Workspace items - Manage hover state when context menu is open
+.workspace-card-item--hovered,
+.workspace-list-item--hovered {
+  background: ms.color('surface-base-default');
+}
+
+/* ------- Specific Invitations ------- */
+
+// Invitation emails + PKI
+.list-container:has(.invitation-list-item, .request-list-item) {
+  padding: ms.spacing('padding-none') !important;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: ms.spacing('padding-3xl') !important;
   }
 
   .invitation-actions,
-  .pkiRequest-actions {
+  .request-actions {
     display: flex;
     gap: 1.25rem;
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
 
-    .primary-button {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
-      color: var(--parsec-color-light-secondary-white);
-
-      &::part(native) {
-        padding: 0.7rem 1rem;
-      }
+    @include ms.responsive-breakpoint('sm') {
+      justify-content: flex-start;
     }
 
     &-secondary {
       display: flex;
-      gap: 0.75rem;
-
-      &__button {
-        --background: transparent;
-        color: var(--parsec-color-light-secondary-soft-text);
-
-        &::part(native) {
-          border: 1px solid var(--parsec-color-light-secondary-medium);
-          box-shadow: var(--parsec-shadow-input);
-          padding: 0.5rem;
-        }
-
-        .button-icon {
-          flex-shrink: 0;
-          font-size: 1.25rem;
-        }
-
-        &:hover {
-          color: var(--parsec-color-light-secondary-text);
-          --background-hover: var(--parsec-color-light-secondary-medium);
-        }
-      }
+      gap: ms.spacing('gap-2xl');
     }
   }
 
   .invitations-list-header,
-  .pkiRequests-list-header {
-    display: flex;
-    align-items: center;
-    padding: 0 1rem 0 2rem;
+  .requests-list-header {
+    padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
   }
 
   .invitation-list-item,
-  .pkiRequest-list-item {
+  .request-list-item {
     display: flex;
     width: 100%;
-    padding: 0;
-    --background-hover: var(--parsec-color-light-secondary-background);
-    --background-hover-opacity: 1;
+    padding: ms.spacing('padding-none');
+    --background: transparent;
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+    --background-focused: #{ms.color('surface-neutral-default-subtle-hover')};
+    --background-hover-opacity: #{ms.opacity('4')};
+    --border-color: #{ms.color('border-neutral-default-subtle')};
 
     &::part(native) {
-      padding: 0.625rem 1rem 0.625rem 2rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+      overflow: visible;
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+      overflow: visible;
       cursor: default;
 
       @include ms.responsive-breakpoint('sm') {
         flex-direction: column;
-        padding: 0;
-        border-radius: var(--parsec-radius-12);
-        border: 1px solid var(--parsec-color-light-secondary-medium);
+        padding: ms.spacing('padding-none');
+        border-radius: ms.radius('2xl');
+        border: ms.border('thin') solid ms.color('border-base-default');
       }
     }
 
@@ -586,108 +786,37 @@
   }
 }
 
-// ------- Invitations only -------
-.invitations-container-list {
-  .label-email,
-  .invitation-email {
-    width: 100%;
-    min-width: 11.25rem;
-    max-width: 25rem;
-    white-space: nowrap;
-    overflow: hidden;
+// SSO
+.sso-provider-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-2xl');
 
-    @include ms.responsive-breakpoint('sm') {
-      max-width: 100%;
-    }
+  &:has(.spinner)::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    background: ms.color('base-black');
+    opacity: ms.opacity('2');
   }
 
-  .label-sentOn,
-  .invitation-sentOn {
-    min-width: 11.25rem;
-    flex-grow: 0;
+  .spinner {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    max-height: fit-content !important;
+
+    left: 50%;
+    z-index: 1002;
+    background: ms.color((surface-base-default));
+    border-radius: ms.radius('full');
+    padding: ms.spacing('padding-lg') !important;
+    border: 1px solid ms.color('border-neutral-default-subtle');
   }
 
-  .label-space,
-  .invitation-actions {
-    min-width: 15.625rem;
-    margin-left: auto;
-    flex-grow: 0;
-  }
-
-  .invitation-actions-secondary__button {
-    &:last-of-type {
-      position: relative;
-      display: flex;
-      align-items: center;
-
-      &::before {
-        content: '';
-        position: relative;
-        display: block;
-        width: 2px;
-        height: calc(100% - 0.825rem);
-        background: var(--parsec-color-light-secondary-medium);
-        margin-right: 0.75rem;
-      }
-    }
-  }
-}
-
-// ------- PKI Requests only -------
-.pkiRequests-container-list {
-  .label-name,
-  .pkiRequest-name {
-    width: 100%;
-    min-width: 11.25rem;
-    max-width: 25rem;
-    white-space: nowrap;
-    overflow: hidden;
-
-    @include ms.responsive-breakpoint('sm') {
-      max-width: 100%;
-    }
-  }
-
-  .label-email,
-  .pkiRequest-email {
-    min-width: 16rem;
-    max-width: 18rem;
-    flex-grow: 1;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-
-    @include ms.responsive-breakpoint('lg') {
-      display: none;
-    }
-
-    &__label {
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-  }
-
-  .label-createdOn,
-  .pkiRequest-createdOn {
-    min-width: 11.25rem;
-    flex-grow: 0;
-
-    @include ms.responsive-breakpoint('xl') {
-      display: none;
-    }
-  }
-
-  .label-certificate,
-  .pkiRequest-certificate {
-    flex: 0 0 12rem;
-  }
-
-  .label-space,
-  .pkiRequest-actions {
-    min-height: 1rem;
-    min-width: 10rem;
-    margin-left: auto;
-    flex-grow: 0;
+  .disabled {
+    pointer-events: none;
+    opacity: ms.opacity('2');
   }
 }

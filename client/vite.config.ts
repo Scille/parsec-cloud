@@ -1,18 +1,25 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 // eslint-disable-next-line spaced-comment
 /// <reference types="vitest" />
 
 import { sentryVitePlugin } from '@sentry/vite-plugin';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 import vue from '@vitejs/plugin-vue';
+import fs from 'fs';
 import path from 'path';
+import { promisify } from 'util';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
-import topLevelAwait from 'vite-plugin-top-level-await';
-// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
-import wasmPack from './scripts/vite_plugin_wasm_pack';
+import { brotliCompress } from 'zlib';
+import generateEditicsPlugins from './scripts/vite_plugin_editics.ts';
+import wasmPack from './scripts/vite_plugin_wasm_pack.ts';
 
-const plugins: PluginOption[] = [vue(), topLevelAwait()];
+// Vue hoists static template parts into module-level constants, created once at import time
+// regardless of whether the component ever mounts. That's invisible in normal use, but it means
+// V8 coverage would count a component's template as "covered" just by being imported. Disable it
+// for coverage runs so template code only counts as covered once the component actually renders.
+const vueOptions = process.env.COLLECT_COVERAGE === 'true' ? { template: { compilerOptions: { hoistStatic: false } } } : {};
+const plugins: PluginOption[] = [vue(vueOptions)];
 // Web workers are packaged separately and rely on their own set of plugins.
 //
 // This is because each worker makes additional calls to callbacks that would otherwise
@@ -27,9 +34,6 @@ const plugins: PluginOption[] = [vue(), topLevelAwait()];
 const workerPluginsFactories: (() => PluginOption)[] = [
   (): PluginOption => {
     return vue();
-  },
-  (): PluginOption => {
-    return topLevelAwait();
   },
 ];
 let platform: string;
@@ -87,30 +91,67 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
   console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
 }
 
-// 3) Add dev specific plugins
-if (process.env.NODE_ENV === 'development' || process.env.CI) {
-  plugins.push(basicSsl());
-}
-
+// The pdfjs wasm files are referenced by pdfjs with their plain names, so they cannot
+// get renamed with a hash-based cache busting. Add the version in the path instead.
+const { version: pdfjsDistVersion } = JSON.parse(
+  fs.readFileSync(path.resolve(import.meta.dirname, 'node_modules/pdfjs-dist/package.json'), 'utf8'),
+);
 plugins.push(
   viteStaticCopy({
     targets: [
       {
         src: 'node_modules/pdfjs-dist/wasm/*',
-        dest: 'pdfjs',
+        dest: `pdfjs/${pdfjsDistVersion}`,
+        // Strip the leading `node_modules/pdfjs-dist/wasm/`
+        rename: { stripBase: 3 },
       },
     ],
   }),
 );
 
-// 4) Finally configure Vite
+// 4) Pre-compress built assets with Brotli
+
+const brotliCompressAsync = promisify(brotliCompress);
+const BROTLI_COMPRESSIBLE = /\.(js|css|html|svg|wasm)$/;
+
+if (platform === 'web') {
+  plugins.push({
+    name: 'brotli-compress',
+    apply: 'build',
+    async closeBundle() {
+      async function compressDir(dir: string): Promise<void> {
+        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        await Promise.all(
+          entries.map(async (entry) => {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              await compressDir(fullPath);
+            } else if (BROTLI_COMPRESSIBLE.test(entry.name)) {
+              const content = await fs.promises.readFile(fullPath);
+              const compressed = await brotliCompressAsync(content);
+              await fs.promises.writeFile(`${fullPath}.br`, compressed);
+            }
+          }),
+        );
+      }
+      await compressDir(path.resolve(import.meta.dirname, 'dist'));
+    },
+  });
+}
+
+// 5) Finally configure Vite
+
+// For native, Electron 41 ships Chrome 146 (see https://www.electronjs.org/blog/electron-41-0).
+// For web, we pin these minimums so the build target is explicit and stable across Vite versions.
+// See https://oxc.rs/docs/guide/usage/transformer/lowering#target for allowed target values.
+const BUILD_TARGET = platform === 'native' ? 'chrome146' : ['chrome107', 'edge107', 'firefox104', 'safari16'];
 
 // scss additionalData is used to inject the theme variables in SCSS files imported in main.ts & .vue files
 // for SCSS files imported with sass @use / @forward methods, you need to add manually the theme import
 const additionalData = '@use "megashark-lib/theme" as ms;';
 
 // https://vitejs.dev/config/
-const config: UserConfigFnObject = (_env: ConfigEnv) => ({
+const config: UserConfigFnObject = (env: ConfigEnv) => ({
   css: {
     preprocessorOptions: {
       scss: {
@@ -123,7 +164,7 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
   base: process.env.BASE_URL || './',
   test: {
     include: ['tests/unit/specs/*.spec.ts'],
-    setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
+    setupFiles: [path.resolve(import.meta.dirname, './tests/component/support/setup.ts')],
     server: {
       deps: {
         inline: ['megashark-lib'],
@@ -132,22 +173,56 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     env: loadEnv('development', process.cwd(), ''),
     globals: true,
     alias: {
-      '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
-      '@': path.resolve(__dirname, './src'),
-      '@tests': path.resolve(__dirname, './tests'),
+      '@libparsec_trampoline': path.resolve(import.meta.dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
+      '@': path.resolve(import.meta.dirname, './src'),
+      // `./editics` is isolated from the main app, expected for  `parent_host_api.ts`
+      // which defines how the two communicate.
+      '@editics_parent_host_api': path.resolve(import.meta.dirname, './editics/parent_host_api.ts'),
+      '@tests': path.resolve(import.meta.dirname, './tests'),
     },
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'Date'],
     },
   },
-  plugins: plugins,
+  plugins: [
+    ...plugins,
+    ...generateEditicsPlugins(env, BUILD_TARGET),
+    {
+      // Serve `dist/custom/*` at `/custom/*` in dev mode.
+      // This folder is optional and may not be present.
+      name: 'serve-dist-custom',
+      configureServer(server) {
+        server.middlewares.use('/custom', async (req, res, _next) => {
+          const filePath = path.join(import.meta.dirname, 'dist/custom', req.url ?? '/');
+          try {
+            res.end(await fs.promises.readFile(filePath));
+          } catch {
+            res.statusCode = 404;
+            res.end();
+          }
+        });
+      },
+    },
+  ],
   build: {
     sourcemap: true,
+    target: BUILD_TARGET,
+    minify: 'esbuild',
+    cssMinify: 'esbuild',
+    cssCodeSplit: false,
+    rolldownOptions: {
+      output: {
+        codeSplitting: false,
+      },
+    },
   },
   resolve: {
     alias: {
-      '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
-      '@': path.resolve(__dirname, './src'),
+      '@libparsec_trampoline': path.resolve(import.meta.dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
+      '@': path.resolve(import.meta.dirname, './src'),
+      // `./editics` is isolated from the main app, expected for  `parent_host_api.ts`
+      // which defines how the two communicate.
+      '@editics_parent_host_api': path.resolve(import.meta.dirname, './editics/parent_host_api.ts'),
     },
   },
   define: {

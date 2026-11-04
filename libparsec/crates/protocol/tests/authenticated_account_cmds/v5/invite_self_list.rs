@@ -67,17 +67,17 @@ pub fn rep_ok() {
                 invitations: vec![
                     (
                         "Org1".parse().unwrap(),
-                        InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                        AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                         InvitationType::User,
                     ),
                     (
                         "Org2".parse().unwrap(),
-                        InvitationToken::from_hex("e4eaf751ba3546a899a9088002e51918").unwrap(),
+                        AccessToken::from_hex("e4eaf751ba3546a899a9088002e51918").unwrap(),
                         InvitationType::Device,
                     ),
                     (
                         "Org3".parse().unwrap(),
-                        InvitationToken::from_hex("5846639483a54f1494b22ce13a64c67a").unwrap(),
+                        AccessToken::from_hex("5846639483a54f1494b22ce13a64c67a").unwrap(),
                         InvitationType::ShamirRecovery,
                     ),
                 ],

@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
-from .addr import ParsecAddr, ParsecInvitationAddr
+from .addr import ParsecAddr, ParsecInvitationAddrAndRedirectionURL
 from .client import ActiveUsersLimit
 from .common import (
+    AccessToken,
     AccountAuthMethodID,
     DateTime,
     DeviceLabel,
@@ -11,7 +11,6 @@ from .common import (
     ErrorVariant,
     Handle,
     HumanHandle,
-    InvitationToken,
     InvitationType,
     KeyDerivation,
     OrganizationID,
@@ -226,7 +225,14 @@ class AccountListInvitationsError(ErrorVariant):
 async def account_list_invitations(
     account: Handle,
 ) -> Result[
-    list[tuple[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]],
+    list[
+        tuple[
+            ParsecInvitationAddrAndRedirectionURL,
+            OrganizationID,
+            AccessToken,
+            InvitationType,
+        ]
+    ],
     AccountListInvitationsError,
 ]:
     raise NotImplementedError
@@ -301,6 +307,15 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
     class LoadDeviceInvalidData:
         pass
 
+    class LoadDeviceBadAccessStrategy:
+        pass
+
+    class LoadDeviceCiphertextKeyGenerationFailed:
+        pass
+
+    class LoadDeviceTOTPDecryptionFailed:
+        pass
+
     class LoadDeviceDecryptionFailed:
         pass
 
@@ -320,6 +335,9 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
         pass
 
     class RemoteOpaqueKeyFetchFailed:
+        pass
+
+    class KeyringError:
         pass
 
 
@@ -346,7 +364,7 @@ class AccountRegisterNewDeviceError(ErrorVariant):
     class Internal:
         pass
 
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:

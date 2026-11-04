@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import importlib.resources
 import json
 import re
-from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Iterable
+from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine, Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -127,6 +128,7 @@ async def _apply_migrations(
 
 async def _apply_migration(conn: AsyncpgConnection, migration: MigrationItem) -> None:
     async with conn.transaction():
+        logger.debug("Applying migration", name=migration.file_name)
         await conn.execute(migration.sql)
         sql = f"INSERT INTO {MIGRATION_TABLE} (_id, name, applied) VALUES ($1, $2, $3)"
         result = await conn.execute(sql, migration.index, migration.name, datetime.now())
@@ -204,7 +206,7 @@ async def handle_json(conn: AsyncpgConnection) -> None:
 @asynccontextmanager
 async def asyncpg_pool_factory(
     url: str, min_connections: int, max_connections: int
-) -> AsyncIterator[AsyncpgPool]:
+) -> AsyncGenerator[AsyncpgPool]:
     # By default AsyncPG only work with Python standard `datetime.DateTime`
     # for timestamp types, here we override this behavior to uses our own custom
     # - DateTime type

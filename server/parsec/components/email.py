@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import smtplib
@@ -9,6 +10,10 @@ from email.message import Message
 from enum import auto
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 
 from parsec._parsec import DateTime, EmailAddress
 from parsec.config import EmailConfig, MockedEmailConfig, MockedSentEmail, SmtpEmailConfig
@@ -26,7 +31,7 @@ class SendEmailBadOutcome(BadOutcomeEnum):
 
 def _smtp_send_email(
     email_config: SmtpEmailConfig, to_addr: EmailAddress, message: Message
-) -> None | SendEmailBadOutcome:
+) -> SendEmailBadOutcome | None:
     try:
         context = ssl.create_default_context()
         logger.debug("SSL Context", context=context)
@@ -48,10 +53,14 @@ def _smtp_send_email(
                 server.login(email_config.host_user, email_config.host_password)
             server.sendmail(email_config.sender.str, to_addr.str, message.as_string())
 
-    except smtplib.SMTPConnectError:
-        return SendEmailBadOutcome.SERVER_UNAVAILABLE
     except smtplib.SMTPRecipientsRefused:
+        # Don't log this error since the email address is controlled by the end-user
         return SendEmailBadOutcome.RECIPIENT_REFUSED
+    except smtplib.SMTPConnectError as exc:
+        logger.warning(
+            "SMTP server unavailable", exc_info=exc, to_addr=to_addr, subject=message["Subject"]
+        )
+        return SendEmailBadOutcome.SERVER_UNAVAILABLE
     except smtplib.SMTPException as exc:
         logger.warning("SMTP error", exc_info=exc, to_addr=to_addr, subject=message["Subject"])
         return SendEmailBadOutcome.BAD_SMTP_CONFIG
@@ -66,7 +75,7 @@ def _smtp_send_email(
 
 def _mocked_send_email(
     email_config: MockedEmailConfig, to_addr: EmailAddress, message: Message
-) -> None | SendEmailBadOutcome:
+) -> SendEmailBadOutcome | None:
     message_body = message.as_string()
     timestamp = DateTime.now()
     email_config.sent_emails.append(
@@ -109,12 +118,16 @@ AT: {timestamp.to_rfc3339()}
     )
 
 
+def _send_email(
+    email_config: EmailConfig, to_addr: EmailAddress, message: Message
+) -> SendEmailBadOutcome | None:
+    if isinstance(email_config, SmtpEmailConfig):
+        _smtp_send_email(email_config, to_addr, message)
+    else:
+        _mocked_send_email(email_config, to_addr, message)
+
+
 async def send_email(
     email_config: EmailConfig, to_addr: EmailAddress, message: Message
-) -> None | SendEmailBadOutcome:
-    if isinstance(email_config, SmtpEmailConfig):
-        _send_email = _smtp_send_email
-    else:
-        _send_email = _mocked_send_email
-
+) -> SendEmailBadOutcome | None:
     return await anyio.to_thread.run_sync(_send_email, email_config, to_addr, message)

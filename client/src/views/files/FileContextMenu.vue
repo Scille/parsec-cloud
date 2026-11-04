@@ -1,10 +1,10 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-content id="file-context-menu">
     <ion-list class="menu-list">
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             <span v-if="isFile">{{ $msTranslate('FoldersPage.fileContextMenu.titleManageFile') }}</span>
             <span v-else>{{ $msTranslate('FoldersPage.fileContextMenu.titleManageFolder') }}</span>
@@ -20,13 +20,13 @@
             class="list-group-item__icon"
             :icon="eye"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionPreview') }}
           </ion-text>
         </ion-item>
         <ion-item
           button
-          v-if="!multipleFiles && isFile && role !== WorkspaceRole.Reader && isEditable"
+          v-if="!multipleFiles && isFile && !isReadOnly && isEditable"
           @click="onClick(FileAction.Edit)"
           class="ion-no-padding list-group-item"
         >
@@ -34,13 +34,13 @@
             class="list-group-item__icon"
             :icon="create"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionEdit') }}
           </ion-text>
         </ion-item>
         <ion-item
           button
-          v-if="!multipleFiles && role !== WorkspaceRole.Reader"
+          v-if="!multipleFiles && !isReadOnly"
           @click="onClick(FileAction.Rename)"
           class="ion-no-padding list-group-item"
         >
@@ -48,13 +48,13 @@
             class="list-group-item__icon"
             :image="RenameIcon"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionRename') }}
           </ion-text>
         </ion-item>
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FileAction.MoveTo)"
           class="ion-no-padding list-group-item"
         >
@@ -62,14 +62,14 @@
             class="list-group-item__icon"
             :icon="arrowRedo"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionMoveTo') }}
           </ion-text>
         </ion-item>
 
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FileAction.MakeACopy)"
           class="ion-no-padding list-group-item"
         >
@@ -77,7 +77,7 @@
             class="list-group-item__icon"
             :icon="duplicate"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionMakeACopy') }}
           </ion-text>
         </ion-item>
@@ -92,8 +92,23 @@
             class="list-group-item__icon"
             :image="EyeOpenIcon"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionOpen') }}
+          </ion-text>
+        </ion-item>
+
+        <ion-item
+          button
+          v-if="!multipleFiles && navigateFromAnywhere"
+          @click="onClick(FileAction.ShowEnclosingFolder)"
+          class="ion-no-padding list-group-item"
+        >
+          <ms-image
+            :image="FolderParentIcon"
+            class="list-group-item__icon"
+          />
+          <ion-text class="list-group-item__label">
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionShowEnclosingFolder') }}
           </ion-text>
         </ion-item>
 
@@ -107,7 +122,7 @@
             class="list-group-item__icon"
             :icon="open"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
           </ion-text>
         </ion-item>
@@ -116,20 +131,20 @@
           button
           @click="onClick(FileAction.ShowHistory)"
           class="ion-no-padding list-group-item"
-          v-show="!multipleFiles && role !== WorkspaceRole.Reader"
+          v-if="!multipleFiles && !isReadOnly"
         >
           <ion-icon
             class="list-group-item__icon"
             :icon="time"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionHistory') }}
           </ion-text>
         </ion-item>
 
         <ion-item
           button
-          v-if="!isDesktop() && isFile"
+          v-if="!isDesktop()"
           @click="onClick(FileAction.Download)"
           class="ion-no-padding list-group-item"
         >
@@ -137,7 +152,7 @@
             class="list-group-item__icon"
             :icon="download"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDownload') }}
           </ion-text>
         </ion-item>
@@ -152,22 +167,22 @@
             class="list-group-item__icon"
             :icon="informationCircle"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDetails') }}
           </ion-text>
         </ion-item>
 
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FileAction.Delete)"
           class="ion-no-padding list-group-item"
         >
           <ion-icon
             class="list-group-item__icon"
-            :icon="trashBin"
+            :icon="trash"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
           </ion-text>
         </ion-item>
@@ -176,7 +191,7 @@
         class="list-group"
         v-if="!multipleFiles"
       >
-        <ion-item class="list-group-title button-small">
+        <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.titleCollaboration') }}
           </ion-text>
@@ -191,7 +206,7 @@
             class="list-group-item__icon"
             :icon="link"
           />
-          <ion-text class="button-medium list-group-item__label">
+          <ion-text class="list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionCopyLink') }}
           </ion-text>
         </ion-item>
@@ -201,17 +216,19 @@
 </template>
 
 <script setup lang="ts">
-import { isDesktop, WorkspaceRole } from '@/parsec';
+import FolderParentIcon from '@/assets/images/folder-parent.svg?raw';
+import { isDesktop } from '@/parsec';
 import { FileAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
-import { arrowRedo, create, download, duplicate, eye, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
+import { arrowRedo, create, download, duplicate, eye, informationCircle, link, open, time, trash } from 'ionicons/icons';
 import { EyeOpenIcon, MsImage, RenameIcon } from 'megashark-lib';
 
 defineProps<{
-  role: WorkspaceRole;
+  isReadOnly: boolean;
   multipleFiles?: boolean;
   isFile: boolean;
   isEditable?: boolean;
+  navigateFromAnywhere?: boolean;
 }>();
 
 async function onClick(action: FileAction): Promise<boolean> {

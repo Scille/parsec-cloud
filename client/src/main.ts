@@ -1,15 +1,17 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { createApp } from 'vue';
 
 import App from '@/App.vue';
 import { getConnectionHandle, getRouter } from '@/router';
-import { Config, StorageManagerKey, ThemeManagerKey, storageManagerInstance } from '@/services/storageManager';
+import { Config, StorageManagerKey, persistStorage, storageManagerInstance } from '@/services/storageManager';
 import { IonicVue, isPlatform, modalController, popoverController } from '@ionic/vue';
 
 /* Theme variables */
 import '@/theme/global.scss';
 
+import { MenuBarActions, ParsecMenuItem, dispatchMenuAction, setupAppMenu, setupWindowTheme } from '@/common/menu';
+import { sanitizeCustomTranslations } from '@/common/utils';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import {
@@ -23,6 +25,7 @@ import {
   ParsecAccount,
   Platform,
   detectBrowser,
+  initPki,
   isElectron,
   listStartedClients,
   logout,
@@ -38,10 +41,11 @@ import { handleParsecLink } from '@/services/linkHandler';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
-import { LogLevel, WebLogger } from '@/services/webLogger';
+import { GUILogger, LogLevel } from '@/services/webLogger';
+import { initFileServiceWorker } from '@/services/worker';
 import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
-import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, ThemeManager, askQuestion } from 'megashark-lib';
+import { Answer, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, Theme, ThemePreference, askQuestion, useTheme } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -62,6 +66,7 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
   }
 
   async function processEvent(distributor: EventDistributor): Promise<void> {
+    const EVENT_DELAY = (window as any).TESTING ? 500 : 3000;
     switch (event.tag) {
       case ClientEventTag.Online:
         distributor.dispatchEvent(Events.Online);
@@ -70,7 +75,7 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         distributor.dispatchEvent(Events.Offline);
         break;
       case ClientEventTag.MustAcceptTos:
-        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
+        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.InvitationChanged:
         distributor.dispatchEvent(Events.InvitationUpdated, {
@@ -97,18 +102,17 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         });
         break;
       case ClientEventTag.IncompatibleServer:
-        window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
         distributor.dispatchEvent(
           Events.IncompatibleServer,
           { version: event.apiVersion, supportedVersions: event.supportedApiVersion },
-          { delay: 5000 },
+          { delay: EVENT_DELAY },
         );
         break;
       case ClientEventTag.RevokedSelfUser:
-        distributor.dispatchEvent(Events.ClientRevoked, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.ClientRevoked, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.ExpiredOrganization:
-        distributor.dispatchEvent(Events.ExpiredOrganization, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.ExpiredOrganization, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.WorkspaceLocallyCreated:
         distributor.dispatchEvent(Events.WorkspaceCreated);
@@ -117,7 +121,7 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         distributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
       case ClientEventTag.WorkspaceWatchedEntryChanged:
-        distributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: 1000 });
+        distributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: EVENT_DELAY });
         break;
       case ClientEventTag.WorkspaceOpsInboundSyncDone:
         distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
@@ -129,7 +133,12 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         distributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
         break;
       case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
-        distributor.dispatchEvent(Events.EntrySyncProgress, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
+        distributor.dispatchEvent(Events.EntrySyncProgress, {
+          workspaceId: event.realmId,
+          entryId: event.entryId,
+          progress: Math.round((Number(event.blockIndex) / Number(event.blocks)) * 100),
+          way: 'outbound',
+        });
         break;
       case ClientEventTag.ClientStarted:
         injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStarted, { handle: handle });
@@ -138,16 +147,25 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStopped, { handle: handle });
         break;
       case ClientEventTag.OrganizationNotFound:
-        distributor.dispatchEvent(Events.OrganizationNotFound, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.OrganizationNotFound, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.FrozenSelfUser:
-        distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: EVENT_DELAY });
+        break;
+      case ClientEventTag.AsyncEnrollmentUpdated:
+        distributor.dispatchEvent(Events.AsyncEnrollmentUpdated);
+        break;
+      case ClientEventTag.TooMuchDriftWithServerClock:
+        distributor.dispatchEvent(Events.ClockDesync);
+        break;
+      case ClientEventTag.WebClientNotAllowedByOrganization:
+        distributor.dispatchEvent(Events.WebClientNotAllowed);
         break;
       // Ignore this for now;
       case ClientEventTag.ServerConfigChanged:
         break;
       default:
-        window.electronAPI.log('info', `Unhandled event ${event.tag}`);
+        window.nativeAPI.log('info', `Unhandled event ${event.tag}`);
         break;
     }
   }
@@ -165,16 +183,22 @@ function preventRightClick(): void {
   });
 }
 
+window.addEventListener('securitypolicyviolation', (e) => {
+  window.nativeAPI.log('error', `'${e.blockedURI}' blocked because if violates '${e.violatedDirective}' (${e.effectiveDirective})`);
+});
+
 const injectionProvider = new InjectionProvider();
 
 async function setupApp(): Promise<void> {
-  await WebLogger.init();
-
   const configDir = await libparsec.getDefaultConfigDir();
-  const dataBaseDir = await libparsec.getDefaultDataBaseDir();
-  const mountpointBaseDir = await libparsec.getDefaultMountpointBaseDir();
+
+  const [dataBaseDir, mountpointBaseDir, platform] = await Promise.all([
+    libparsec.getDefaultDataBaseDir(),
+    libparsec.getDefaultMountpointBaseDir(),
+    libparsec.getPlatform(),
+    GUILogger.init(),
+  ]);
   const isDesktop = !('TESTING' in window) && isPlatform('electron');
-  const platform = await libparsec.getPlatform();
   const isLinux = isDesktop && platform === Platform.Linux;
 
   window.getConfigDir = (): string => configDir;
@@ -187,11 +211,9 @@ async function setupApp(): Promise<void> {
   window.isTesting = (): boolean => 'TESTING' in window && (window.TESTING as boolean);
 
   if (!isElectron()) {
-    setupWebElectronAPI(injectionProvider);
+    setupWebNativeAPI(injectionProvider);
   }
-  await ResourcesManager.instance().loadAll();
-
-  await storageManagerInstance.init();
+  await Promise.all([ResourcesManager.instance().loadAll(), storageManagerInstance.init()]);
   const storageManager = storageManagerInstance.get();
 
   const config = await storageManager.retrieveConfig();
@@ -214,10 +236,10 @@ async function setupApp(): Promise<void> {
   const customEnUs = ResourcesManager.instance().get(Resources.TranslationEnUs);
 
   if (customFrFr) {
-    Obj.mergeDeep(appFrFR, customFrFr);
+    Obj.mergeDeep(appFrFR, sanitizeCustomTranslations(customFrFr));
   }
   if (customEnUs) {
-    Obj.mergeDeep(appEnUS, customEnUs);
+    Obj.mergeDeep(appEnUS, sanitizeCustomTranslations(customEnUs));
   }
 
   const megasharkPlugin = new MegaSharkPlugin({
@@ -234,7 +256,7 @@ async function setupApp(): Promise<void> {
     },
     stripeConfig: stripeConfig,
   });
-  await megasharkPlugin.init();
+  const megasharkInit = megasharkPlugin.init();
 
   if (!Env.isAccountEnabled() || config.skipAccount) {
     ParsecAccount.markSkipped();
@@ -244,8 +266,7 @@ async function setupApp(): Promise<void> {
     .use(IonicVue, {
       rippleEffect: false,
     })
-    .use(router)
-    .use(megasharkPlugin);
+    .use(router);
 
   if (!Env.isSentryDisabled()) {
     await Sentry.init(app, router);
@@ -255,12 +276,22 @@ async function setupApp(): Promise<void> {
   app.provide(InjectionProviderKey, injectionProvider);
   app.provide(HotkeyManagerKey, hotkeyManager);
 
-  await initViewers();
+  // Only needed when opening or downloading a file, no need to wait
+  initViewers(); // Fire-and-forget call
+  initFileServiceWorker(); // Fire-and-forget call
+
+  await megasharkInit;
+  app.use(megasharkPlugin);
 
   // We get the app element
   const appElem = window.document.getElementById('app');
   if (!appElem) {
     throw Error('Cannot retrieve #app');
+  }
+
+  // Used to send fake events in e2e tests
+  if (window.isTesting()) {
+    (window as any).testingEventCallback = parsecEventCallback;
   }
 
   // nextStage() finally mounts the app using the configPath provided
@@ -278,11 +309,17 @@ async function setupApp(): Promise<void> {
       window.usesTestbed = (): boolean => false;
     }
 
-    await ParsecAccount.init();
+    const [, , browser] = await Promise.all([initPki(), ParsecAccount.init(), detectBrowser()]);
 
     await router.isReady();
 
-    if ((await detectBrowser()) === 'Safari') {
+    let logThreshold: LogLevel | 'all' = window.isDev() ? 'debug' : 'info';
+    if ((window as any).TESTING === true && !(window as any).TESTING_ALLOW_LOGS) {
+      logThreshold = 'all';
+    }
+    GUILogger.setThreshold(logThreshold);
+
+    if (browser === 'Safari') {
       const modal = await modalController.create({
         component: IncompatibleEnvironmentModal,
         cssClass: 'incompatible-environment-modal',
@@ -306,11 +343,9 @@ async function setupApp(): Promise<void> {
     if (locale) {
       I18n.changeLocale(locale);
     }
+    useTheme().themePreference.value = config.theme;
     app.mount('#app');
     appElem.setAttribute('app-state', AppState.Ready);
-
-    const themeManager = new ThemeManager(config.theme);
-    app.provide(ThemeManagerKey, themeManager);
 
     if ((await libparsec.getPlatform()) === Platform.Web) {
       window.addEventListener('unload', async (_event: Event) => {
@@ -320,19 +355,23 @@ async function setupApp(): Promise<void> {
     }
 
     if (isElectron()) {
+      setupWindowTheme();
+
       if ((await libparsec.getPlatform()) === Platform.Windows) {
         const mountpoint = await libparsec.getDefaultMountpointBaseDir();
-        window.electronAPI.sendMountpointFolder(mountpoint);
+        window.nativeAPI.sendMountpointFolder(mountpoint);
       }
 
-      window.electronAPI.log('info', `BMS Url: ${Env.getBmsUrl()}`);
-      window.electronAPI.log('info', `Parsec Sign Url: ${Env.getSignUrl()}`);
-      window.electronAPI.log('info', `Stripe API Key: ${Env.getStripeApiKey().key}`);
+      window.nativeAPI.log('info', `BMS Url: ${Env.getBmsUrl()}`);
+      window.nativeAPI.log('info', `Parsec Sign Url: ${Env.getSignUrl()}`);
+      window.nativeAPI.log('info', `Stripe API Key: ${Env.getStripeApiKey().key}`);
 
       let isQuitDialogOpen = false;
 
-      window.electronAPI.receive('parsec-close-request', async (force: boolean = false) => {
+      window.nativeAPI.receive('parsec-close-request', async () => {
         let quit = true;
+        const cfg = await storageManager.retrieveConfig();
+        const force = !cfg.confirmBeforeQuit;
         if (force === false) {
           if (isQuitDialogOpen) {
             return;
@@ -347,13 +386,17 @@ async function setupApp(): Promise<void> {
         }
         if (quit) {
           await cleanBeforeQuitting(injectionProvider, true);
-          window.electronAPI.closeApp();
+          window.nativeAPI.closeApp();
         }
       });
-      window.electronAPI.receive('parsec-open-link', async (link: string) => {
+      window.nativeAPI.receive('parsec-open-link', async (link: string) => {
+        // Don't try to handle empty links
+        if (!link || link === 'parsec3://' || link === 'parsec3:///') {
+          return;
+        }
         await handleParsecLink(link, getCurrentInformationManager(injectionProvider));
       });
-      window.electronAPI.receive('parsec-open-path-failed', async (path: string, _error: string) => {
+      window.nativeAPI.receive('parsec-open-path-failed', async (path: string, _error: string) => {
         getCurrentInformationManager(injectionProvider).present(
           new Information({
             message: { key: 'globalErrors.openFileFailed', data: { path: path } },
@@ -362,7 +405,7 @@ async function setupApp(): Promise<void> {
           PresentationMode.Toast,
         );
       });
-      window.electronAPI.receive('parsec-update-availability', async (updateAvailable: boolean, version?: string) => {
+      window.nativeAPI.receive('parsec-update-availability', async (updateAvailable: boolean, version?: string) => {
         injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: updateAvailable, version: version });
         if (updateAvailable && version) {
           injectionProvider.notifyAll(
@@ -376,11 +419,11 @@ async function setupApp(): Promise<void> {
           );
         }
       });
-      window.electronAPI.receive('parsec-clean-up-before-update', async () => {
+      window.nativeAPI.receive('parsec-clean-up-before-update', async () => {
         await cleanBeforeQuitting(injectionProvider, true);
-        window.electronAPI.updateApp();
+        window.nativeAPI.updateApp();
       });
-      window.electronAPI.receive('parsec-is-dev-mode', async (devMode) => {
+      window.nativeAPI.receive('parsec-is-dev-mode', async (devMode) => {
         window.isDev = (): boolean => devMode;
         if (devMode) {
           Sentry.disable();
@@ -388,19 +431,16 @@ async function setupApp(): Promise<void> {
           config.enableTelemetry ? Sentry.enable() : Sentry.disable();
         }
       });
-      window.electronAPI.receive('parsec-print-to-console', async (level: LogLevel, message: string) => {
+      window.nativeAPI.receive('parsec-print-to-console', async (level: LogLevel, message: string) => {
         console[level](message);
       });
-      window.electronAPI.receive('parsec-long-paths-disabled', async () => {
+      window.nativeAPI.receive('parsec-long-paths-disabled', async () => {
         if (config.skipLongPathsSupportWarning) {
-          window.electronAPI.log('info', 'Support for long paths is disabled but the user chose to ignore the warning.');
+          window.nativeAPI.log('info', 'Support for long paths is disabled but the user chose to ignore the warning.');
           return;
         }
         if ((await modalController.getTop()) !== undefined) {
-          window.electronAPI.log(
-            'warn',
-            "Support for long paths is disabled but we can't warn the user because a modal is already opened.",
-          );
+          window.nativeAPI.log('warn', "Support for long paths is disabled but we can't warn the user because a modal is already opened.");
           return;
         }
         const modal = await modalController.create({
@@ -417,8 +457,13 @@ async function setupApp(): Promise<void> {
           await storageManager.storeConfig(config);
         }
       });
+      window.nativeAPI.receive('parsec-menu-action-clicked', async (action: string) => {
+        await dispatchMenuAction(injectionProvider, action as MenuBarActions);
+      });
+      await setupAppMenu();
     }
-    window.electronAPI.pageIsInitialized();
+    await persistStorage();
+    window.nativeAPI.pageIsInitialized();
     preventRightClick();
   };
 
@@ -436,7 +481,7 @@ async function setupApp(): Promise<void> {
     const msg = `\`TESTBED_SERVER\` environ variable detected, creating a new coolorg testbed organization with server ${
       import.meta.env.PARSEC_APP_TESTBED_SERVER
     }`;
-    window.electronAPI.log('debug', msg);
+    window.nativeAPI.log('debug', msg);
 
     // Dev mode, provide a default testbed
     const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.PARSEC_APP_TESTBED_SERVER);
@@ -446,11 +491,11 @@ async function setupApp(): Promise<void> {
       const message = `Failed to initialize the testbed. TESTBED_SERVER is set to '${import.meta.env.PARSEC_APP_TESTBED_SERVER}': ${
         configResult.error.tag
       } (${configResult.error.error})`;
-      window.electronAPI.initError(message);
+      window.nativeAPI.initError(message);
       setTimeout(() => {
         // eslint-disable-next-line no-alert
         alert(message);
-        window.electronAPI.closeApp();
+        window.nativeAPI.closeApp();
       }, 1500);
     }
   } else {
@@ -469,8 +514,8 @@ async function setupApp(): Promise<void> {
   }
 }
 
-function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
-  window.electronAPI = {
+function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
+  window.nativeAPI = {
     sendConfig: (_config: Config): void => {},
     closeApp: (): void => {},
     receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
@@ -502,14 +547,16 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
       console.log('PrepareUpdate: Not available');
     },
     log: (level: LogLevel, message: string): void => {
-      if ((window as any).TESTING === true && level === 'debug') {
+      // Don't print debug logs when not in dev
+      if (!window.isDev() && level === 'debug' && !(window as any).TESTING_ALLOW_LOGS) {
         return;
       }
-      console[level](`[MOCKED-ELECTRON-LOG] ${message}`);
-      if ((window as any).TESTING === true) {
+      console[level](`[PARSEC-LOG] ${message}`);
+      // No point in saving the logs when testing
+      if ((window as any).TESTING === true && !(window as any).TESTING_ALLOW_LOGS) {
         return;
       }
-      WebLogger.log(level, message);
+      GUILogger.log(level, message);
     },
     pageIsInitialized: (): void => {
       window.isDev = (): boolean => Boolean(import.meta.env.PARSEC_APP_TESTBED_SERVER);
@@ -523,7 +570,7 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
     seeInExplorer: (_path: string): void => {
       console.log('SeeInExplorer: Not available');
     },
-    getLogs: (): void => {
+    getLogs: (_source: 'GUI' | 'libparsec'): void => {
       console.warn('Call WebLogger directly in web mode');
     },
     readCustomFile: (_file: string): Promise<ArrayBuffer | undefined> => {
@@ -537,6 +584,7 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
       const height = 800;
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
+
       const popup = window.open(url, 'Login', `width=${width},height=${height},left=${left},top=${top}`);
 
       if (!popup) {
@@ -544,6 +592,10 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
       }
       return true;
     },
+    setupActionMenu: (_items: ParsecMenuItem[]): void => {
+      console.log('setupActionMenu: Not available');
+    },
+    setWindowTheme: (_themePreference: ThemePreference, _theme: Theme, _overlay: boolean): void => {},
   };
 }
 
@@ -584,7 +636,7 @@ declare global {
     isDev: () => boolean;
     isTesting: () => boolean;
     usesTestbed: () => boolean;
-    electronAPI: {
+    nativeAPI: {
       sendConfig: (config: Config) => void;
       closeApp: () => void;
       receive: (channel: string, f: (...args: any[]) => Promise<void>) => void;
@@ -597,10 +649,12 @@ declare global {
       pageIsInitialized: () => void;
       openConfigDir: () => void;
       seeInExplorer: (path: string) => void;
-      getLogs: () => void;
+      getLogs: (source: 'GUI' | 'libparsec') => void;
       initError: (error?: string) => void;
       readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
       openPopup: (url: string) => boolean;
+      setupActionMenu: (items: ParsecMenuItem[]) => void;
+      setWindowTheme: (themePreference: ThemePreference, theme: Theme, overlay: boolean) => void;
     };
   }
 }

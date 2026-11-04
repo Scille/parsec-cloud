@@ -1,8 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use bytes::Bytes;
 use libparsec_crypto::{HashDigest, SecretKey};
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use thiserror::Error;
@@ -11,10 +11,9 @@ use super::utils::{impl_decrypt_and_load, impl_dump, impl_dump_and_encrypt, impl
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, AccountVaultItemOpaqueKeyID, DataError, OrganizationID, UserID,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    AccountVaultItemOpaqueKeyID, DataError, OrganizationID, UserID,
 };
 
 // The auth method master secret is the root secret from which are derived
@@ -58,7 +57,7 @@ impl Default for ValidationCode {
     fn default() -> Self {
         let mut bytes = [0u8; VALIDATION_CODE_SIZE];
         for c in bytes.iter_mut() {
-            let r = rand::thread_rng().gen_range(0..32);
+            let r = rand::rng().random_range(0..32);
             *c = VALIDATION_CODE_CHARS[r];
         }
         Self(bytes)

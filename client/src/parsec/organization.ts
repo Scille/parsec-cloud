@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import {
   ActiveUsersLimitLimitedTo,
@@ -109,14 +109,6 @@ export async function parseParsecAddr(addr: string): Promise<Result<ParsedParsec
   return await libparsec.parseParsecAddr(addr);
 }
 
-export async function forgeServerAddr(parsedAddr: ParsedParsecAddr): Promise<string> {
-  let addr = `parsec3://${parsedAddr.hostname}:${parsedAddr.port}`;
-  if (!parsedAddr.useSsl) {
-    addr = `${addr}?no_ssl=true`;
-  }
-  return addr;
-}
-
 export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, OrganizationInfoError>> {
   const handle = getConnectionHandle();
 
@@ -133,14 +125,16 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
 
   const orgInfoResult = await libparsec.clientOrganizationInfo(handle);
 
+  if (!orgInfoResult.ok) {
+    return { ok: false, error: { tag: OrganizationInfoErrorTag.Internal } };
+  }
+
   let orgSize: { metadata: number; data: number } | undefined = undefined;
 
-  if (orgInfoResult.ok) {
-    orgSize = {
-      metadata: Number(orgInfoResult.value.totalMetadataBytes),
-      data: Number(orgInfoResult.value.totalBlockBytes),
-    };
-  }
+  orgSize = {
+    metadata: Number(orgInfoResult.value.totalMetadataBytes),
+    data: Number(orgInfoResult.value.totalBlockBytes),
+  };
 
   const creationDateResult = await getOrganizationCreationDate();
 
@@ -157,15 +151,13 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
         frozen: usersResult.value.filter((user) => user.isFrozen() && !user.isRevoked()).length,
       },
       size: orgSize,
-      outsidersAllowed: clientInfoResult.value.serverOrganizationConfig.userProfileOutsiderAllowed,
       userLimit:
         clientInfoResult.value.serverOrganizationConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
           ? Number((clientInfoResult.value.serverOrganizationConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1)
           : undefined,
-      hasUserLimit: clientInfoResult.value.serverOrganizationConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
-      organizationAddr: clientInfoResult.value.organizationAddr,
-      organizationId: clientInfoResult.value.organizationId,
       creationDate: creationDateResult.ok ? creationDateResult.value : undefined,
+      workspaceDeletionDelay: Number(clientInfoResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion),
+      clientInfo: clientInfoResult.value,
     },
   };
 }

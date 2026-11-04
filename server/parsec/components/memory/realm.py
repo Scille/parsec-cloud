@@ -1,12 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
 
 from parsec._parsec import (
+    BlockID,
     DateTime,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
@@ -20,7 +23,9 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryDatamodel,
+    MemoryOrganization,
     MemoryRealm,
+    MemoryRealmArchiving,
     MemoryRealmKeyRotation,
     MemoryRealmRename,
     MemoryRealmUserRole,
@@ -33,6 +38,13 @@ from parsec.components.realm import (
     ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
+    RealmDelete1GetBlocksBatchBadOutcome,
+    RealmDelete2DoDeleteMetadataBadOutcome,
+    RealmDeleteGetBlocksBatch,
+    RealmDeleteGetBlocksBatchOffsetMarker,
+    RealmDeletionCandidate,
+    RealmDeletionCandidateOrphaned,
+    RealmDeletionCandidatePlanned,
     RealmDumpRealmsGrantedRolesBadOutcome,
     RealmExportBatchOffsetMarker,
     RealmExportBlocksMetadataBatch,
@@ -48,23 +60,31 @@ from parsec.components.realm import (
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
+    RealmListDeletionCandidatesBadOutcome,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRole,
     RealmRotateKeyStoreBadOutcome,
     RealmRotateKeyValidateBadOutcome,
+    RealmSelfPromoteToOwnerActiveOwnerAlreadyExists,
+    RealmSelfPromoteToOwnerStoreBadOutcome,
+    RealmSelfPromoteToOwnerValidateBadOutcome,
     RealmShareStoreBadOutcome,
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    RealmUpdateArchivingStoreBadOutcome,
+    RealmUpdateArchivingValidateBadOutcome,
     RejectedBySequesterService,
     SequesterServiceMismatch,
     SequesterServiceUnavailable,
     realm_create_validate,
     realm_rename_validate,
     realm_rotate_key_validate,
+    realm_self_promote_to_owner_validate,
     realm_share_validate,
     realm_unshare_validate,
+    realm_update_archiving_validate,
 )
 from parsec.components.sequester import SequesterServiceType
 from parsec.events import EventRealmCertificate
@@ -124,7 +144,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 author_verify_key=author_verify_key,
                 realm_role_certificate=realm_role_certificate,
             ):
-                case RealmRoleCertificate() as certif:
+                case (new_user_role, certif):
                     pass
                 case error:
                     return error
@@ -163,7 +183,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
-                        role_removed=certif.role is None,
+                        kind=("SHARE", new_user_role),
                     )
                 )
 
@@ -214,10 +234,18 @@ class MemoryRealmComponent(BaseRealmComponent):
                 author_verify_key=author_verify_key,
                 realm_role_certificate=realm_role_certificate,
             ):
-                case RealmRoleCertificate() as certif:
+                case (new_user_role, certif):
                     pass
                 case error:
                     return error
+
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmShareStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmShareStoreBadOutcome.REALM_DELETED
 
             try:
                 user = org.users[certif.user_id]
@@ -227,18 +255,12 @@ class MemoryRealmComponent(BaseRealmComponent):
             if user.is_revoked:
                 return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
 
-            try:
-                realm = org.realms[certif.realm_id]
-            except KeyError:
-                return RealmShareStoreBadOutcome.REALM_NOT_FOUND
-
             realm_topic = ("realm", certif.realm_id)
 
             async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
                 owner_only = (RealmRole.OWNER,)
                 owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
                 existing_user_role = realm.get_current_role_for(certif.user_id)
-                new_user_role = certif.role
                 needed_roles: tuple[RealmRole, ...]
                 if existing_user_role in owner_or_manager or new_user_role in owner_or_manager:
                     needed_roles = owner_only
@@ -302,7 +324,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
-                        role_removed=False,
+                        kind=("SHARE", new_user_role),
                     )
                 )
 
@@ -355,16 +377,19 @@ class MemoryRealmComponent(BaseRealmComponent):
                 case error:
                     return error
 
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmUnshareStoreBadOutcome.REALM_DELETED
+
             # Note we don't check if the recipient is revoked here: it is indeed allowed
             # to unshare with a revoked user. This allows for client to only check for
             # unshare event to detect when key rotation is needed.
             if certif.user_id not in org.users:
                 return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
-
-            try:
-                realm = org.realms[certif.realm_id]
-            except KeyError:
-                return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
 
             realm_topic = ("realm", certif.realm_id)
 
@@ -417,7 +442,122 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
-                        role_removed=True,
+                        kind="UNSHARE",
+                    )
+                )
+
+                return certif
+
+    @override
+    async def self_promote_to_owner(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_role_certificate: bytes,
+    ) -> (
+        RealmRoleCertificate
+        | RealmSelfPromoteToOwnerActiveOwnerAlreadyExists
+        | RealmSelfPromoteToOwnerValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmSelfPromoteToOwnerStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
+
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_REVOKED
+
+            if author_user.current_profile == UserProfile.OUTSIDER:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_IS_OUTSIDER
+
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_self_promote_to_owner_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
+                realm_role_certificate=realm_role_certificate,
+            ):
+                case (new_user_role, certif):
+                    pass
+                case error:
+                    return error
+
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.REALM_DELETED
+
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
+                author_current_role: RealmRole | None = None
+                highest_active_role: RealmRole | None = None
+                for user in org.active_users():
+                    role = realm.get_current_role_for(user.cooked.user_id)
+                    if role is None:
+                        continue
+                    if role == RealmRole.OWNER:
+                        return RealmSelfPromoteToOwnerActiveOwnerAlreadyExists(
+                            last_realm_certificate_timestamp=realm_topic_last_timestamp
+                        )
+                    if highest_active_role is None:
+                        highest_active_role = role
+                    else:
+                        highest_active_role = max(highest_active_role, role)
+                    if user.cooked.user_id == author_user_id:
+                        author_current_role = role
+                if author_current_role is None or author_current_role < highest_active_role:
+                    return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                if realm.last_vlob_timestamp is not None:
+                    last_timestamp = max(
+                        common_topic_last_timestamp,
+                        realm_topic_last_timestamp,
+                        realm.last_vlob_timestamp,
+                    )
+                else:
+                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
+
+                # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
+
+                realm.roles.append(
+                    MemoryRealmUserRole(
+                        cooked=certif, realm_role_certificate=realm_role_certificate
+                    )
+                )
+
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=certif.user_id,
+                        kind=("SHARE", new_user_role),
                     )
                 )
 
@@ -476,6 +616,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             except KeyError:
                 return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
 
+            if realm.is_deleted:
+                return RealmRenameStoreBadOutcome.REALM_DELETED
+
             realm_topic = ("realm", certif.realm_id)
 
             async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
@@ -514,7 +657,103 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=author_user_id,
-                        role_removed=False,
+                        kind="OTHER",
+                    )
+                )
+
+                return certif
+
+    @override
+    async def update_archiving(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_archiving_certificate: bytes,
+    ) -> (
+        RealmArchivingCertificate
+        | RealmUpdateArchivingValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmUpdateArchivingStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
+
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmUpdateArchivingStoreBadOutcome.AUTHOR_REVOKED
+
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_update_archiving_validate(
+                now=now,
+                expected_author=author,
+                author_verify_key=author_verify_key,
+                realm_archiving_certificate=realm_archiving_certificate,
+            ):
+                case RealmArchivingCertificate() as certif:
+                    pass
+                case error:
+                    return error
+
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmUpdateArchivingStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmUpdateArchivingStoreBadOutcome.REALM_DELETED
+
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
+                if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
+                    return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+                # Check minimum archiving period for DeletionPlanned configuration
+                if certif.configuration.deletion_date is not None:
+                    min_deletion_date = certif.timestamp.add(
+                        seconds=org.realm_minimum_archiving_period_before_deletion
+                    )
+                    if certif.configuration.deletion_date < min_deletion_date:
+                        return RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT
+
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                last_certificate = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_certificate >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
+
+                # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
+
+                realm.archivings.append(
+                    MemoryRealmArchiving(
+                        cooked=certif,
+                        realm_archiving_certificate=realm_archiving_certificate,
+                    )
+                )
+
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=author_user_id,
+                        kind="OTHER",
                     )
                 )
 
@@ -578,6 +817,9 @@ class MemoryRealmComponent(BaseRealmComponent):
                 realm = org.realms[certif.realm_id]
             except KeyError:
                 return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmRotateKeyStoreBadOutcome.REALM_DELETED
 
             realm_topic = ("realm", certif.realm_id)
 
@@ -681,7 +923,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=author_user_id,
-                        role_removed=False,
+                        kind="OTHER",
                     )
                 )
 
@@ -716,6 +958,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             realm = org.realms[realm_id]
         except KeyError:
             return RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return RealmGetKeysBundleBadOutcome.REALM_DELETED
 
         if realm.get_current_role_for(author_user_id) is None:
             return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_ALLOWED
@@ -812,8 +1057,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         root_verify_key = org.root_verify_key
         assert root_verify_key is not None
 
-        if realm_id not in org.realms:
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
             return RealmExportDoBaseInfoBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return RealmExportDoBaseInfoBadOutcome.REALM_DELETED
 
         vlob_offset_marker_upper_bound = 0
         vlobs_total_bytes = 0
@@ -1027,3 +1277,136 @@ class MemoryRealmComponent(BaseRealmComponent):
         return RealmExportBlocksMetadataBatch(
             items=items,
         )
+
+    def _is_realm_orphaned(self, org: MemoryOrganization, realm: MemoryRealm) -> DateTime | None:
+        current_roles = {role.cooked.user_id: role.cooked.role for role in realm.roles}
+        orphaned_since = None
+        for user_id, role in current_roles.items():
+            if role is None:
+                continue
+            maybe_revoked_on = org.users[user_id].revoked_on
+            if maybe_revoked_on is not None:
+                orphaned_since = (
+                    max(orphaned_since, maybe_revoked_on) if orphaned_since else maybe_revoked_on
+                )
+        return orphaned_since
+
+    @override
+    async def delete_1_get_blocks_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmDeleteGetBlocksBatch | RealmDelete1GetBlocksBatchBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmDelete1GetBlocksBatchBadOutcome.ORGANIZATION_NOT_FOUND
+
+        try:
+            org.realms[realm_id]
+        except KeyError:
+            return RealmDelete1GetBlocksBatchBadOutcome.REALM_NOT_FOUND
+
+        block_ids: list[BlockID] = []
+        sequential_row_id = 0
+        for sequential_row_id, row in org.simulate_postgresql_block_table():
+            if sequential_row_id <= batch_offset_marker:
+                continue
+            if row.realm_id != realm_id:
+                continue
+            block_ids.append(row.block_id)
+            if len(block_ids) >= batch_size:
+                break
+
+        return RealmDeleteGetBlocksBatch(
+            blocks=block_ids,
+            batch_offset_marker=sequential_row_id,
+        )
+
+    @override
+    async def delete_2_do_delete_metadata(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        now: DateTime,
+    ) -> RealmDelete2DoDeleteMetadataBadOutcome | None:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmDelete2DoDeleteMetadataBadOutcome.ORGANIZATION_NOT_FOUND
+
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
+            return RealmDelete2DoDeleteMetadataBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return RealmDelete2DoDeleteMetadataBadOutcome.REALM_ALREADY_DELETED
+
+        if not self._is_realm_orphaned(org, realm):
+            if not realm.archivings:
+                return (
+                    RealmDelete2DoDeleteMetadataBadOutcome.REALM_NOT_ORPHANED_NOR_DELETION_PLANNED
+                )
+            match realm.archivings[-1].cooked.configuration.deletion_date:
+                case None:
+                    return RealmDelete2DoDeleteMetadataBadOutcome.REALM_NOT_ORPHANED_NOR_DELETION_PLANNED
+                case deletion_date if deletion_date > now:
+                    return RealmDelete2DoDeleteMetadataBadOutcome.REALM_DELETION_DATE_NOT_REACHED
+                case _:
+                    pass
+
+        # All checks are good, now we do the actual deletion
+
+        realm.is_deleted = True
+        realm.vlobs = {}
+        for key_rotation in realm.key_rotations:
+            # Simulate what is done in PostgreSQL: keep the certificate
+            # but remove the keys bundle and keys bundle accesses
+            key_rotation.keys_bundle = b""
+            key_rotation.per_participant_keys_bundle_accesses.clear()
+            if key_rotation.per_sequester_service_keys_bundle_access:
+                key_rotation.per_sequester_service_keys_bundle_access.clear()
+        org.blocks = {k: v for k, v in org.blocks.items() if v.realm_id != realm_id}
+
+    @override
+    async def list_deletion_candidates(
+        self,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> list[RealmDeletionCandidate] | RealmListDeletionCandidatesBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmListDeletionCandidatesBadOutcome.ORGANIZATION_NOT_FOUND
+
+        candidates: list[RealmDeletionCandidate] = []
+
+        for realm in org.realms.values():
+            if realm.is_deleted:
+                continue
+
+            if realm.archivings:
+                match realm.archivings[-1].cooked.configuration.deletion_date:
+                    case DateTime() as deletion_date if deletion_date <= now:
+                        candidates.append(
+                            RealmDeletionCandidatePlanned(
+                                realm_id=realm.realm_id,
+                                deletion_date=deletion_date,
+                            )
+                        )
+                    case _:
+                        pass
+
+            orphaned_since = self._is_realm_orphaned(org, realm)
+            if orphaned_since is not None:
+                candidates.append(
+                    RealmDeletionCandidateOrphaned(
+                        realm_id=realm.realm_id,
+                        orphaned_since=orphaned_since,
+                    )
+                )
+
+        return candidates

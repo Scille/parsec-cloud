@@ -1,6 +1,7 @@
 # cspell:words inotify
 
-FROM python:3.12-slim
+# Using bookworm because it provides the same version of gettext (v0.21) used in the CI.
+FROM python:3.14-slim-bookworm
 
 SHELL [ "/bin/bash", "-c" ]
 
@@ -28,6 +29,7 @@ RUN apt-get update \
     git \
     gettext \
     inotify-tools \
+    pandoc \
     # Remove unnecessary apt cache
     && rm -rf /var/lib/apt/lists/*
 
@@ -35,12 +37,15 @@ USER parsec:parsec
 
 WORKDIR /data/docs
 
-COPY poetry.lock pyproject.toml conf.py /data/docs/
+COPY uv.lock pyproject.toml conf.py /data/docs/
 
-RUN python -m venv /home/parsec/poetry-venv && \
-    source /home/parsec/poetry-venv/bin/activate && \
-    pip install poetry && \
-    poetry install && \
-    echo 'source /home/parsec/poetry-venv/bin/activate' >> /home/parsec/.bashrc
+ENV VIRTUAL_ENV="/home/parsec/venv"
+RUN python -m venv $VIRTUAL_ENV && \
+    source $VIRTUAL_ENV/bin/activate && \
+    pip install uv && \
+    uv sync --active && \
+    echo "source ${VIRTUAL_ENV}/bin/activate" >> /home/parsec/.bashrc
+
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
 CMD [ "/bin/bash" ]

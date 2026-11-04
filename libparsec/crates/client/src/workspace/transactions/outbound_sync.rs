@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -9,16 +9,16 @@ use libparsec_types::prelude::*;
 use super::super::WorkspaceOps;
 use super::WorkspaceSyncError;
 use crate::certif::{
-    CertifBootstrapWorkspaceError, CertifEncryptForRealmError, CertifPollServerError,
+    CertifBootstrapWorkspaceError, CertifGetLatestRealmKeyForEncryptionError, CertifPollServerError,
 };
 use crate::workspace::store::{
     ForUpdateSyncError, ForUpdateSyncLocalOnlyError, PathConfinementPoint, ReadChunkOrBlockError,
     RetrievePathFromIDEntry, WorkspaceStoreOperationError,
 };
 use crate::{
-    greater_timestamp, EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted,
-    EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncProgress,
-    EventWorkspaceOpsOutboundSyncStarted, GreaterTimestampOffset,
+    EncryptionUsage, EventWorkspaceOpsOutboundSyncAborted, EventWorkspaceOpsOutboundSyncDone,
+    EventWorkspaceOpsOutboundSyncProgress, EventWorkspaceOpsOutboundSyncStarted,
+    GreaterTimestampOffset, greater_timestamp,
 };
 
 pub type WorkspaceGetNeedOutboundSyncEntriesError = WorkspaceStoreOperationError;
@@ -108,27 +108,27 @@ async fn outbound_sync_child(
                 return Ok(OutboundSyncOutcome::EntryIsConfined {
                     confinement_point,
                     entry_chain,
-                })
+                });
             }
             Ok((_, RetrievePathFromIDEntry::Unreachable { .. })) => {
-                return Ok(OutboundSyncOutcome::EntryIsUnreachable)
+                return Ok(OutboundSyncOutcome::EntryIsUnreachable);
             }
             Err(ForUpdateSyncError::WouldBlock) => return Ok(OutboundSyncOutcome::EntryIsBusy),
             Err(ForUpdateSyncError::Offline(e)) => return Err(WorkspaceSyncError::Offline(e)),
             Err(ForUpdateSyncError::InvalidKeysBundle(e)) => {
-                return Err(WorkspaceSyncError::InvalidKeysBundle(e))
+                return Err(WorkspaceSyncError::InvalidKeysBundle(e));
             }
             Err(ForUpdateSyncError::InvalidCertificate(e)) => {
-                return Err(WorkspaceSyncError::InvalidCertificate(e))
+                return Err(WorkspaceSyncError::InvalidCertificate(e));
             }
             Err(ForUpdateSyncError::InvalidManifest(e)) => {
-                return Err(WorkspaceSyncError::InvalidManifest(e))
+                return Err(WorkspaceSyncError::InvalidManifest(e));
             }
             Err(ForUpdateSyncError::NoRealmAccess) => return Err(WorkspaceSyncError::NotAllowed),
-
+            Err(ForUpdateSyncError::RealmDeleted) => return Err(WorkspaceSyncError::RealmDeleted),
             Err(ForUpdateSyncError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncError::Internal(err)) => {
-                return Err(err.context("cannot access entry in store").into())
+                return Err(err.context("cannot access entry in store").into());
             }
         }
     };
@@ -184,6 +184,7 @@ async fn outbound_sync_child(
                 CertifBootstrapWorkspaceError::Offline(e) => WorkspaceSyncError::Offline(e),
                 CertifBootstrapWorkspaceError::Stopped => WorkspaceSyncError::Stopped,
                 CertifBootstrapWorkspaceError::AuthorNotAllowed => WorkspaceSyncError::NotAllowed,
+                CertifBootstrapWorkspaceError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
                 CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
@@ -269,7 +270,7 @@ async fn outbound_sync_file(
 
     let remote = match upload_manifest(ops, to_upload).await? {
         UploadManifestOutcome::VersionConflict => {
-            return Ok(OutboundSyncOutcome::InboundSyncNeeded)
+            return Ok(OutboundSyncOutcome::InboundSyncNeeded);
         }
         UploadManifestOutcome::Success(remote) => remote,
     };
@@ -295,11 +296,11 @@ async fn outbound_sync_file(
             // be careful about concurrency implications :/
             Ok(_) => return Ok(OutboundSyncOutcome::EntryIsBusy),
             Err(ForUpdateSyncLocalOnlyError::WouldBlock) => {
-                return Ok(OutboundSyncOutcome::EntryIsBusy)
+                return Ok(OutboundSyncOutcome::EntryIsBusy);
             }
             Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
-                return Err(err.context("cannot access entry in store").into())
+                return Err(err.context("cannot access entry in store").into());
             }
         }
     };
@@ -331,7 +332,7 @@ async fn outbound_sync_folder(
 
     let remote = match upload_manifest(ops, to_upload).await? {
         UploadManifestOutcome::VersionConflict => {
-            return Ok(OutboundSyncOutcome::InboundSyncNeeded)
+            return Ok(OutboundSyncOutcome::InboundSyncNeeded);
         }
         UploadManifestOutcome::Success(remote) => remote,
     };
@@ -350,11 +351,11 @@ async fn outbound_sync_folder(
             }
             Ok(_) => return Ok(OutboundSyncOutcome::EntryIsBusy),
             Err(ForUpdateSyncLocalOnlyError::WouldBlock) => {
-                return Ok(OutboundSyncOutcome::EntryIsBusy)
+                return Ok(OutboundSyncOutcome::EntryIsBusy);
             }
             Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
-                return Err(err.context("cannot access entry in store").into())
+                return Err(err.context("cannot access entry in store").into());
             }
         }
     };
@@ -459,23 +460,31 @@ async fn upload_manifest<M: RemoteManifest>(
         // Build vlob
 
         let signed = to_upload.dump_and_sign(&ops.device.signing_key);
-        let (encrypted, key_index) = ops
+        let (key, key_index) = ops
             .certificates_ops
-            .encrypt_for_realm(EncrytionUsage::Vlob(vlob_id), ops.realm_id(), &signed)
+            .get_latest_realm_key_for_encryption(EncryptionUsage::Vlob(vlob_id), ops.realm_id())
             .await
             .map_err(|e| match e {
-                CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
-                CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
-                CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
-                CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
-                CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Stopped => WorkspaceSyncError::Stopped,
+                CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                    WorkspaceSyncError::Offline(e)
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                    WorkspaceSyncError::NotAllowed
+                }
+                CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
+                    WorkspaceSyncError::RealmDeleted
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NoKey => WorkspaceSyncError::NoKey,
+                CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                     WorkspaceSyncError::InvalidKeysBundle(err)
                 }
-                CertifEncryptForRealmError::Internal(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                     err.context("Cannot encrypt manifest for realm").into()
                 }
             })?;
-        let encrypted = encrypted.into();
+
+        let encrypted = key.encrypt(&signed).into();
 
         // Sync the vlob with server
 
@@ -529,6 +538,9 @@ async fn upload_manifest<M: RemoteManifest>(
                         })?;
                     continue;
                 }
+
+                Rep::RealmArchived => return Err(WorkspaceSyncError::RealmArchived),
+                Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
 
                 // Unexpected errors :(
                 bad_rep @ (
@@ -592,6 +604,9 @@ async fn upload_manifest<M: RemoteManifest>(
                     continue;
                 }
 
+                Rep::RealmArchived => return Err(WorkspaceSyncError::RealmArchived),
+                Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
+
                 // Unexpected errors :(
                 bad_rep @ (
                     // Already checked the realm exists when we called `CertificateOps::encrypt_for_realm`
@@ -640,7 +655,7 @@ async fn reshape_and_upload_blocks(
             }
             DoNextReshapeOperationOutcome::AlreadyReshaped => break,
             DoNextReshapeOperationOutcome::EntryIsBusy => {
-                return Ok(ReshapeAndUploadBlocksOutcome::EntryIsBusy)
+                return Ok(ReshapeAndUploadBlocksOutcome::EntryIsBusy);
             }
         };
     }
@@ -658,7 +673,7 @@ enum DoNextReshapeOperationOutcome {
     EntryIsBusy,
 }
 
-/// A reshape is done everytime the file is closed, hence this function should be a noop
+/// A reshape is done every time the file is closed, hence this function should be a noop
 /// in most case.
 /// However the reshape on file close doesn't download blocks that are missing in local,
 /// hence this function has to handle this corner case.
@@ -704,6 +719,7 @@ async fn do_next_reshape_operation(
                         "manifest seems to contain invalid data (or the server is lying to us)"
                     ),
                     ReadChunkOrBlockError::NoRealmAccess => WorkspaceSyncError::NotAllowed,
+                    ReadChunkOrBlockError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
                     ReadChunkOrBlockError::InvalidBlockAccess(err) => {
                         WorkspaceSyncError::InvalidBlockAccess(err)
                     }
@@ -737,14 +753,14 @@ async fn do_next_reshape_operation(
             }
             // Entry has changed type, hence it has been modified and we should retry later
             Ok((_, None | Some(ArcLocalChildManifest::Folder(_)))) => {
-                return Ok(DoNextReshapeOperationOutcome::EntryIsBusy)
+                return Ok(DoNextReshapeOperationOutcome::EntryIsBusy);
             }
             Err(ForUpdateSyncLocalOnlyError::WouldBlock) => {
-                return Ok(DoNextReshapeOperationOutcome::EntryIsBusy)
+                return Ok(DoNextReshapeOperationOutcome::EntryIsBusy);
             }
             Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
-                return Err(err.context("cannot access entry in store").into())
+                return Err(err.context("cannot access entry in store").into());
             }
         }
     };
@@ -813,22 +829,36 @@ async fn upload_blocks(
         ops.event_bus.send(&event);
 
         loop {
-            let (encrypted, key_index) = ops
+            let (key, key_index) = ops
                 .certificates_ops
-                .encrypt_for_realm(EncrytionUsage::Block(block_id), ops.realm_id(), &data)
+                .get_latest_realm_key_for_encryption(
+                    EncryptionUsage::Block(block_id),
+                    ops.realm_id(),
+                )
                 .await
                 .map_err(|e| match e {
-                    CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
-                    CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
-                    CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
-                    CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
-                    CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                    CertifGetLatestRealmKeyForEncryptionError::Stopped => {
+                        WorkspaceSyncError::Stopped
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                        WorkspaceSyncError::Offline(e)
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                        WorkspaceSyncError::NotAllowed
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
+                        WorkspaceSyncError::RealmDeleted
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::NoKey => WorkspaceSyncError::NoKey,
+                    CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                         WorkspaceSyncError::InvalidKeysBundle(err)
                     }
-                    CertifEncryptForRealmError::Internal(err) => {
+                    CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                         err.context("Cannot encrypt manifest for realm").into()
                     }
                 })?;
+
+            let encrypted = key.encrypt(&data);
 
             use authenticated_cmds::latest::block_create::{Rep, Req};
             let req = Req {
@@ -860,6 +890,9 @@ async fn upload_blocks(
                             })?;
                         continue;
                     }
+
+                Rep::RealmArchived => return Err(WorkspaceSyncError::RealmArchived),
+                Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
 
                 // Unexpected errors :(
                 bad_rep @ (

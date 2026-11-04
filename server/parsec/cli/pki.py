@@ -8,16 +8,16 @@ from typing import Any
 
 import click
 
-from parsec._parsec import TrustAnchor
+from parsec._parsec import X509TrustAnchor
 from parsec.logging import get_logger
 
 logger = get_logger()
 
 
-def _load_x509_trust_anchor(file: Path) -> TrustAnchor:
+def _load_x509_trust_anchor(file: Path) -> X509TrustAnchor:
     logger.debug(f"Loading trust anchor from {file}")
     raw_cert = file.read_bytes()
-    return TrustAnchor.try_from_pem(raw_cert)
+    return X509TrustAnchor.load_pem(raw_cert)
 
 
 def _load_x509_trust_anchor_from_dirs(_ctx, _param, raw_dirs: tuple[Path, ...]) -> list[Any]:

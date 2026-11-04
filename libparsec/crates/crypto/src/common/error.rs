@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use thiserror::Error;
 
@@ -18,12 +18,12 @@ pub enum CryptoError {
     KeySize { expected: usize, got: usize },
     #[error("The nonce must be exactly 24 bytes long")]
     Nonce,
-    #[error("Invalid SequesterPrivateKeyDer {0}")]
-    SequesterPrivateKeyDer(String),
     #[error("Invalid SequesterPublicKeyDer {0}")]
     SequesterPublicKeyDer(String),
     #[error("Invalid shared secret key: {0}")]
     SharedSecretKey(String),
+    #[error("Invalid RSAPrivateKeyDer {0}")]
+    RsaPrivateKeyDER(String),
 }
 
 pub type CryptoResult<T> = Result<T, CryptoError>;

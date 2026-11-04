@@ -62,7 +62,7 @@ async def test_authenticated_device_create_ok(
         minimalorg.alice, t1
     )
 
-    expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
+    expected_dump = await testbed.backend.user.dump_current_users(minimalorg.organization_id)
     expected_dump[minimalorg.alice.user_id].devices.append(NEW_ALICE_DEVICE_ID)
     expected_topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
     expected_topics.common = t1
@@ -81,7 +81,7 @@ async def test_authenticated_device_create_ok(
             )
         )
 
-    dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
+    dump = await testbed.backend.user.dump_current_users(minimalorg.organization_id)
     assert dump == expected_dump
     topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
     assert topics == expected_topics

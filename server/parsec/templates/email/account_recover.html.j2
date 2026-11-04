@@ -1,9 +1,11 @@
 {% extends "email/base.html.j2" %}
-{% block document_title %}Parsec Account: Confirm account recovery{% endblock %}
+{% block document_title %}Parsec Account recovery{% endblock %}
 
 {% block preheader %}You have requested to recover your Parsec Account.{% endblock %}
 
-{% block title %}Your account recovery code{% endblock %}
+{% block title %}Confirm your Parsec Account recovery{% endblock %}
+
+{% block description %}You will find below the code to confirm your Parsec Account recovery.{% endblock %}
 
 {% block main_content %}
 {% from "email/macros.html.j2" import gen_contents, render_code %}

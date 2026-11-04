@@ -6,7 +6,7 @@
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
-    num::{NonZeroU64, NonZeroU8},
+    num::{NonZeroU8, NonZeroU64},
     sync::Arc,
 };
 
@@ -47,6 +47,18 @@ impl CrcHash for bool {
             false => b"0",
         };
         hasher.update(x);
+    }
+}
+
+impl<T: CrcHash> CrcHash for Maybe<T> {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        match self {
+            Maybe::Absent => hasher.update(b"Absent"),
+            Maybe::Present(x) => {
+                hasher.update(b"Present");
+                x.crc_hash(hasher);
+            }
+        }
     }
 }
 
@@ -197,7 +209,7 @@ macro_rules! impl_crc_hash_for_token_based {
     };
 }
 
-impl_crc_hash_for_token_based!(InvitationToken);
+impl_crc_hash_for_token_based!(AccessToken);
 
 impl CrcHash for DateTime {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
@@ -316,6 +328,9 @@ impl CrcHash for LocalUserManifestWorkspaceEntry {
             name_origin,
             role,
             role_origin,
+            archiving_configuration,
+            archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = self;
 
         id.crc_hash(hasher);
@@ -323,6 +338,9 @@ impl CrcHash for LocalUserManifestWorkspaceEntry {
         name_origin.crc_hash(hasher);
         role.crc_hash(hasher);
         role_origin.crc_hash(hasher);
+        archiving_configuration.crc_hash(hasher);
+        archiving_configuration_origin.crc_hash(hasher);
+        can_self_promote_to_owner.crc_hash(hasher);
     }
 }
 
@@ -450,6 +468,7 @@ impl CrcHash for FileManifest {
             size,
             blocksize,
             blocks,
+            origin,
         } = self;
 
         author.crc_hash(hasher);
@@ -462,6 +481,24 @@ impl CrcHash for FileManifest {
         size.crc_hash(hasher);
         blocksize.crc_hash(hasher);
         blocks.crc_hash(hasher);
+        origin.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for FileManifestOrigin {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"FileManifestOrigin");
+        match self {
+            FileManifestOrigin::Default => hasher.update(b"Default"),
+            FileManifestOrigin::Cryptpad {
+                channel_id,
+                timestamp,
+            } => {
+                hasher.update(b"Cryptpad");
+                channel_id.crc_hash(hasher);
+                timestamp.crc_hash(hasher);
+            }
+        }
     }
 }
 
@@ -516,6 +553,7 @@ impl CrcHash for LocalFileManifest {
             size,
             blocksize,
             blocks,
+            origin,
         } = self;
 
         base.crc_hash(hasher);
@@ -525,6 +563,7 @@ impl CrcHash for LocalFileManifest {
         size.crc_hash(hasher);
         blocksize.crc_hash(hasher);
         blocks.crc_hash(hasher);
+        origin.crc_hash(hasher);
     }
 }
 

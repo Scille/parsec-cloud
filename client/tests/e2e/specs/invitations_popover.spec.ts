@@ -3,7 +3,7 @@
 import { answerQuestion, expect, getClipboardText, inviteUsers, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
 msTest('Profile popover default state', async ({ connected }) => {
-  await expect(connected.locator('.topbar').locator('#invitations-button')).toHaveText('One invitation');
+  await expect(connected.locator('.topbar').locator('#invitations-button').locator('.unread-count')).toHaveText('1');
 
   await expect(connected.locator('.invitations-list-popover')).toBeHidden();
   await connected.locator('.topbar').locator('#invitations-button').click();
@@ -32,7 +32,7 @@ msTest('Copy invitation link', async ({ connected }) => {
   await inv.hover();
   await inv.locator('.copy-link').click();
   await expect(connected).toShowToast('Invitation link has been copied to clipboard.', 'Info');
-  expect(await getClipboardText(connected)).toMatch(/^parsec3:\/\/.+$/);
+  expect(await getClipboardText(connected)).toMatch(/^https?:\/\/.+\/redirect\/.+a=claim_user&p=.+$/);
 });
 
 msTest('Resend email', async ({ connected }) => {
@@ -60,7 +60,7 @@ msTest('Cancel invitation - no', async ({ connected }) => {
     expectedTitleText: 'Cancel invitation',
     expectedQuestionText:
       'The invitation sent to zack@example.invalid and the invitation link \
-    will no longer be valid. Are you sure you want to continue?',
+    will no longer be valid.Are you sure you want to continue?',
     expectedPositiveText: 'Delete invitation',
     expectedNegativeText: 'Keep invitation',
   });
@@ -87,7 +87,7 @@ msTest('Invite new user', async ({ connected }) => {
   await expect(connected).toShowToast('An invitation to join the organization has been sent to zana@wraeclast.', 'Success');
   await connected.locator('.topbar .back-button').click();
   await expect(connected).toBeWorkspacePage();
-  await expect(connected.locator('.topbar').locator('#invitations-button')).toHaveText('2 invitations');
+  await expect(connected.locator('.topbar').locator('#invitations-button').locator('.unread-count')).toHaveText('2');
 
   await expect(connected.locator('.invitations-list-popover')).toBeHidden();
   await connected.locator('.topbar').locator('#invitations-button').click();

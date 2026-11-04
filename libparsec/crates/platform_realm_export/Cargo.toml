@@ -7,6 +7,7 @@ homepage.workspace = true
 license.workspace = true
 version.workspace = true
 repository.workspace = true
+exclude = ["tests/", "examples/", "benches/"]
 
 [lints]
 workspace = true

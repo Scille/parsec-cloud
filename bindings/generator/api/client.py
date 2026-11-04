@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from .addr import ParsecOrganizationAddr
 from .common import (
+    U32,
     U64,
-    Bytes,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -17,7 +16,6 @@ from .common import (
     NonZeroU8,
     OrganizationID,
     Path,
-    PKIEnrollmentID,
     RealmRole,
     Ref,
     Result,
@@ -32,17 +30,6 @@ from .common import (
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy
-from .pki import (
-    ParsecPkiEnrollmentAddr,
-    PkiEnrollmentAcceptError,
-    PkiEnrollmentListError,
-    PkiEnrollmentListItem,
-    PkiEnrollmentRejectError,
-    PkiEnrollmentSubmitPayload,
-    PkiGetAddrError,
-    RawPkiEnrollmentListItem,
-    X509CertificateReference,
-)
 
 
 def list_started_clients() -> list[tuple[Handle, DeviceID]]:
@@ -71,7 +58,16 @@ class ClientStartError(ErrorVariant):
     class LoadDeviceInvalidData:
         pass
 
+    class LoadDeviceBadAccessStrategy:
+        pass
+
+    class LoadDeviceCiphertextKeyGenerationFailed:
+        pass
+
     class LoadDeviceDecryptionFailed:
+        pass
+
+    class LoadDeviceTOTPDecryptionFailed:
         pass
 
     class LoadDeviceRemoteOpaqueKeyFetchOffline:
@@ -81,6 +77,9 @@ class ClientStartError(ErrorVariant):
         pass
 
     class Internal:
+        pass
+
+    class KeyringError:
         pass
 
 
@@ -116,6 +115,7 @@ class ActiveUsersLimit(Variant):
 class ServerOrganizationConfig(Structure):
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimit
+    realm_minimum_archiving_period_before_deletion: U64
 
 
 class ClientInfo(Structure):
@@ -335,22 +335,90 @@ async def client_list_workspace_users(
     raise NotImplementedError
 
 
+class WorkspaceUserRoleChange(Structure):
+    granted_by: DeviceID
+    granted_on: DateTime
+    role: RealmRole | None
+
+
+class ClientListWorkspaceUserRoleChangesError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_list_workspace_user_role_changes(
+    client: Handle,
+    realm_id: VlobID,
+    user_id: UserID,
+) -> Result[list[WorkspaceUserRoleChange], ClientListWorkspaceUserRoleChangesError]:
+    raise NotImplementedError
+
+
 class ClientListWorkspacesError(ErrorVariant):
     class Internal:
         pass
 
 
+class RealmArchivingConfiguration(Variant):
+    Available = VariantItemUnit()
+    Archived = VariantItemUnit()
+
+    class DeletionPlanned:
+        deletion_date: DateTime
+
+
+class CertificateBasedInfoOrigin(Variant):
+    Placeholder = VariantItemUnit()
+
+    class Certificate:
+        timestamp: DateTime
+
+
 class WorkspaceInfo(Structure):
     id: VlobID
-    current_name: EntryName
-    current_self_role: RealmRole
     is_started: bool
     is_bootstrapped: bool
+    name: EntryName
+    name_origin: CertificateBasedInfoOrigin
+    self_role: RealmRole
+    self_role_origin: CertificateBasedInfoOrigin
+    archiving_configuration: RealmArchivingConfiguration
+    archiving_configuration_origin: CertificateBasedInfoOrigin
+    can_self_promote_to_owner: bool
 
 
 async def client_list_workspaces(
     client: Handle,
 ) -> Result[list[WorkspaceInfo], ClientListWorkspacesError]:
+    raise NotImplementedError
+
+
+class ClientGetOutboundSyncBacklogError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+
+class ClientGetOutboundSyncBacklogItem(Structure):
+    realm_id: VlobID
+    pending_entries: U64
+    pending_bytes: U64
+
+
+class ClientGetOutboundSyncBacklog(Structure):
+    total_pending_entries_for_started_workspaces: U64
+    total_pending_bytes_for_started_workspaces: U64
+    per_workspace: list[ClientGetOutboundSyncBacklogItem]
+
+
+async def client_get_outbound_sync_backlog(
+    client: Handle,
+) -> Result[ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError]:
     raise NotImplementedError
 
 
@@ -371,6 +439,9 @@ async def client_create_workspace(
 
 class ClientRenameWorkspaceError(ErrorVariant):
     class WorkspaceNotFound:
+        pass
+
+    class RealmDeleted:
         pass
 
     class AuthorNotAllowed:
@@ -425,6 +496,9 @@ class ClientShareWorkspaceError(ErrorVariant):
     class WorkspaceNotFound:
         pass
 
+    class RealmDeleted:
+        pass
+
     class RecipientRevoked:
         pass
 
@@ -470,6 +544,102 @@ class ClientForgetAllCertificatesError(ErrorVariant):
         pass
 
 
+class ClientArchiveWorkspaceError(ErrorVariant):
+    class WorkspaceNotFound:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+    class WorkspaceDeleted:
+        pass
+
+    class ArchivingPeriodTooShort:
+        pass
+
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidEncryptedRealmName:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+class RequestedRealmArchivingConfiguration(Variant):
+    Available = VariantItemUnit()
+    Archived = VariantItemUnit()
+
+    class DeletionPlanned:
+        archiving_period_in_seconds: U32
+
+
+async def client_archive_workspace(
+    client: Handle,
+    realm_id: VlobID,
+    configuration: RequestedRealmArchivingConfiguration,
+) -> Result[None, ClientArchiveWorkspaceError]:
+    raise NotImplementedError
+
+
+class ClientSelfPromoteToWorkspaceOwnerError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class WorkspaceNotFound:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class AuthorIsOutsider:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+    class ActiveOwnerAlreadyExists:
+        pass
+
+    class Offline:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_self_promote_to_workspace_owner(
+    client: Handle,
+    realm_id: VlobID,
+) -> Result[None, ClientSelfPromoteToWorkspaceOwnerError]:
+    raise NotImplementedError
+
+
 async def client_forget_all_certificates(
     client: Handle,
 ) -> Result[None, ClientForgetAllCertificatesError]:
@@ -481,7 +651,7 @@ def is_keyring_available() -> bool:
 
 
 class ImportRecoveryDeviceError(ErrorVariant):
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class Internal:
@@ -821,38 +991,5 @@ async def client_get_organization_bootstrap_date(
     raise NotImplementedError
 
 
-async def client_pki_get_addr(
-    client: Handle,
-) -> Result[ParsecPkiEnrollmentAddr, PkiGetAddrError]:
-    raise NotImplementedError
-
-
-async def client_pki_enrollment_reject(
-    client_handle: Handle, enrollment_id: PKIEnrollmentID
-) -> Result[None, PkiEnrollmentRejectError]:
-    raise NotImplementedError
-
-
-async def client_pki_enrollment_accept(
-    client_handle: Handle,
-    profile: UserProfile,
-    enrollment_id: PKIEnrollmentID,
-    accepter_cert_ref: Ref[X509CertificateReference],
-    submitter_der_cert: Ref[Bytes],
-    submit_payload: PkiEnrollmentSubmitPayload,
-) -> Result[None, PkiEnrollmentAcceptError]:
-    raise NotImplementedError
-
-
-async def client_pki_list_enrollments_untrusted(
-    client_handle: Handle,
-) -> Result[list[RawPkiEnrollmentListItem], PkiEnrollmentListError]:
-    raise NotImplementedError
-
-
-async def client_pki_list_verify_items(
-    client_handle: Handle,
-    cert_ref: X509CertificateReference,
-    untrusted_items: list[RawPkiEnrollmentListItem],
-) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
+def is_path_confined(client: Handle, path: Ref[str]) -> bool:
     raise NotImplementedError

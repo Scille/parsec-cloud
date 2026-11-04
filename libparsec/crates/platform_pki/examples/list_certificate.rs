@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #[cfg(target_os = "linux")]
 mod unix_only {
     use core::panic;
@@ -15,7 +16,7 @@ mod unix_only {
         object::{Attribute, AttributeInfo, AttributeType, ObjectClass},
     };
     use libparsec_types::X509CertificateHash;
-    use percent_encoding::{percent_encode, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+    use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, percent_encode, utf8_percent_encode};
     use sha2::Digest;
 
     /// The unreserved charset from the URI [RFC-3986] (meaning available chars to the user), the ABNF notation is like so:
@@ -210,7 +211,7 @@ mod unix_only {
                         panic!("Invalid attribute `value`");
                     };
                     let digest = sha2::Sha256::digest(value);
-                    let hash = X509CertificateHash::SHA256( Box::new(digest.into()) );
+                    let hash = X509CertificateHash::SHA256(digest.into());
                     println!("    fingerprint-sha256: {hash}")
                 }
             }

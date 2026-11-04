@@ -18,7 +18,7 @@
                 "fields": [
                     {
                         "name": "token",
-                        "type": "InvitationToken"
+                        "type": "AccessToken"
                     },
                     // Field used when the invitation is correctly created but the invitation email cannot be sent
                     {

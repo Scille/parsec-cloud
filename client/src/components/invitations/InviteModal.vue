@@ -1,9 +1,8 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ms-modal
     title="UsersPage.CreateUserInvitationModal.pageTitle"
-    subtitle="UsersPage.CreateUserInvitationModal.subtitle"
     :close-button="{ visible: true }"
     :cancel-button="{
       disabled: false,
@@ -17,25 +16,31 @@
     }"
     :class="emails.length > 5 ? 'has-multiple-emails' : ''"
   >
-    <ms-input
-      @change="onInputChange"
-      v-model="textModel"
-      placeholder="UsersPage.CreateUserInvitationModal.placeholder"
-      label="UsersPage.CreateUserInvitationModal.label"
-      id="email-input"
-    />
+    <div class="email-input-container">
+      <ms-report-text :theme="MsReportTheme.Info">
+        <ms-rich-text text="UsersPage.CreateUserInvitationModal.subtitle" />
+      </ms-report-text>
+      <ms-input
+        @change="onInputChange"
+        v-model="textModel"
+        ref="emailInput"
+        placeholder="UsersPage.CreateUserInvitationModal.placeholder"
+        label="UsersPage.CreateUserInvitationModal.label"
+        id="email-input"
+      />
+    </div>
     <div
       class="email-list-container"
       v-if="emails.length > 1"
     >
-      <ion-text class="email-list__title subtitles-sm">
+      <ion-text class="email-list__title">
         {{ $msTranslate('UsersPage.CreateUserInvitationModal.emailsList') }} ({{ emails.length }})
       </ion-text>
       <div class="email-list">
         <ion-text
           v-for="email in emails"
           :key="email"
-          class="email-list__item button-small"
+          class="email-list__item"
         >
           {{ email }}
         </ion-text>
@@ -47,11 +52,18 @@
 <script setup lang="ts">
 import { emailValidator } from '@/common/validators';
 import { IonText, modalController } from '@ionic/vue';
-import { MsInput, MsModal, MsModalResult, MsReportTheme, Validity } from 'megashark-lib';
-import { ref } from 'vue';
+import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsRichText, Validity } from 'megashark-lib';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const textModel = ref('');
 const emails = ref<Array<string>>([]);
+const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
+
+onMounted(async () => {
+  if (emailInputRef.value) {
+    emailInputRef.value.setFocus();
+  }
+});
 
 async function onInputChange(): Promise<void> {
   const tmp: Array<string> = [];
@@ -82,28 +94,36 @@ async function onConfirmClicked(): Promise<boolean> {
   }
 }
 
+.email-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-3xl');
+}
+
 .email-list-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   margin-top: 1rem;
 
   .email-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     max-height: 10rem;
     overflow-y: auto;
 
     &__title {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
     }
 
     &__item {
-      background-color: var(--parsec-color-light-secondary-premiere);
-      color: var(--parsec-color-light-secondary-text);
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--parsec-radius-6);
+      @include ms.font('label-sm-medium');
+      background-color: ms.color('surface-base-page-secondary');
+      color: ms.color('text-base-body');
+      padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+      border-radius: ms.radius('md');
     }
   }
 }

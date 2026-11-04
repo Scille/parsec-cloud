@@ -11,12 +11,13 @@ pub(crate) use manifest::*;
 pub(crate) use pki::*;
 
 use pyo3::{
+    Bound, PyResult,
     prelude::Python,
     types::{PyModule, PyModuleMethods},
-    wrap_pyfunction, Bound, PyResult,
+    wrap_pyfunction,
 };
 
-pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub(crate) fn add_mod(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Certif
     m.add_class::<PrivateKeyAlgorithm>()?;
     m.add_class::<UserCertificate>()?;
@@ -27,6 +28,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<RealmRoleCertificate>()?;
     m.add_class::<RealmNameCertificate>()?;
     m.add_class::<RealmArchivingCertificate>()?;
+    m.add_class::<RealmArchivingConfiguration>()?;
     m.add_class::<SecretKeyAlgorithm>()?;
     m.add_class::<HashAlgorithm>()?;
     m.add_class::<RealmKeyRotationCertificate>()?;
@@ -41,24 +43,17 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<EntryName>()?;
     m.add_class::<BlockAccess>()?;
     m.add_class::<FolderManifest>()?;
+    m.add_class::<FileManifestOrigin>()?;
     m.add_class::<FileManifest>()?;
     m.add_class::<UserManifest>()?;
     m.add_function(wrap_pyfunction!(child_manifest_decrypt_verify_and_load, m)?)?;
     m.add_function(wrap_pyfunction!(child_manifest_verify_and_load, m)?)?;
 
     // Pki
-    m.add_class::<PkiEnrollmentAnswerPayload>()?;
-    m.add_class::<PkiEnrollmentSubmitPayload>()?;
     m.add_class::<PkiSignatureAlgorithm>()?;
     m.add_class::<X509Certificate>()?;
     m.add_class::<X509CertificateInformation>()?;
-    m.add_class::<TrustAnchor>()?;
-    m.add_class::<SignedMessage>()?;
-    m.add_function(wrap_pyfunction!(load_submit_payload, m)?)?;
-    m.add_function(wrap_pyfunction!(load_accept_payload, m)?)?;
-    crate::binding_utils::export_exception!(m, py, PkiInvalidSignature);
-    crate::binding_utils::export_exception!(m, py, PkiInvalidCertificateDER);
-    crate::binding_utils::export_exception!(m, py, PkiUntrusted);
+    m.add_class::<X509TrustAnchor>()?;
 
     // Async enrollment
     m.add_class::<AsyncEnrollmentSubmitPayload>()?;

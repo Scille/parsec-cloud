@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    Bound, FromPyObject, PyAny, PyResult,
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
-    types::{PyAnyMethods, PyByteArray, PyByteArrayMethods, PyBytes, PyBytesMethods},
-    Bound, FromPyObject, PyAny, PyResult,
+    types::{PyByteArray, PyByteArrayMethods, PyBytes, PyBytesMethods},
 };
 use std::{
     collections::hash_map::DefaultHasher,
@@ -109,19 +109,17 @@ pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
 pub(crate) fn bytes_from_any<'a, 'py>(
     // data: Borrowed<'a, 'py, PyAny>,
     data: &'a Bound<'py, PyAny>,
-) -> Result<&'a [u8], pyo3::DowncastError<'a, 'py>>
+) -> Result<&'a [u8], pyo3::CastError<'a, 'py>>
 where
     'py: 'a,
 {
-    data.downcast::<PyBytes>()
-        .map(|b| b.as_bytes())
-        .or_else(|_| {
-            data.downcast::<PyByteArray>().map(|b|
+    data.cast::<PyBytes>().map(|b| b.as_bytes()).or_else(|_| {
+        data.cast::<PyByteArray>().map(|b|
                 // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
                 // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
                 // python thread modifying the bytearray behind our back.
                 unsafe { b.as_bytes() })
-        })
+    })
 }
 
 macro_rules! parse_kwargs_optional {
@@ -146,7 +144,7 @@ macro_rules! parse_kwargs_optional {
 
 macro_rules! gen_py_wrapper_class {
     ($class: ident, $wrapped_struct: path $(,$magic_meth: ident $($magic_meth_arg: ident)? )* $(,)?) => {
-        #[pyclass]
+        #[pyclass(from_py_object)]
         #[derive(Clone)]
         pub(crate) struct $class(pub $wrapped_struct);
 
@@ -162,7 +160,7 @@ macro_rules! gen_py_wrapper_class {
 
 macro_rules! gen_py_wrapper_class_for_id {
     ($class: ident, $wrapped_struct: path $(,$magic_meth: ident $($magic_meth_arg: ident)? )* $(,)?) => {
-        #[pyclass]
+        #[pyclass(from_py_object)]
         #[derive(Clone, Eq, PartialEq, Hash)]
         pub(crate) struct $class(pub $wrapped_struct);
 
@@ -244,7 +242,7 @@ macro_rules! gen_proto {
     ($class: ident, __deepcopy__) => {
         #[pymethods]
         impl $class {
-            fn __deepcopy__(&self, _memo: ::pyo3::PyObject) -> Self {
+            fn __deepcopy__(&self, _memo: ::pyo3::Py<pyo3::PyAny>) -> Self {
                 Self(self.0.clone())
             }
         }
@@ -253,21 +251,28 @@ macro_rules! gen_proto {
 
 macro_rules! gen_py_wrapper_class_for_enum {
     ($class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+  $(,)?) => {
-        #[pyclass]
+        crate::binding_utils::gen_py_wrapper_class_for_enum!(__internal__, $class, $wrapped_enum, $( [$pyo3_name, $fn_name, $field_value], )+);
+        crate::binding_utils::gen_proto!($class, __richcmp__, eq);
+    };
+    ($class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+, __richcmp__, ord $(,)?) => {
+        crate::binding_utils::gen_py_wrapper_class_for_enum!(__internal__, $class, $wrapped_enum, $( [$pyo3_name, $fn_name, $field_value], )+);
+        crate::binding_utils::gen_proto!($class, __richcmp__, ord);
+    };
+    (__internal__, $class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+  $(,)?) => {
+        #[pyclass(from_py_object)]
         #[derive(Clone, PartialEq, Eq, Hash)]
         // 2nd element is a dummy type to ensure the struct must be constructed
         // using the `convert` method
         pub(crate) struct $class(pub $wrapped_enum);
 
         crate::binding_utils::gen_proto!($class, __repr__);
-        crate::binding_utils::gen_proto!($class, __richcmp__, eq);
         crate::binding_utils::gen_proto!($class, __hash__);
         crate::binding_utils::gen_proto!($class, __copy__);
         crate::binding_utils::gen_proto!($class, __deepcopy__);
 
         impl $class {
             #[allow(dead_code)]
-            pub fn convert(val: $wrapped_enum) -> &'static pyo3::PyObject {
+            pub fn convert(val: $wrapped_enum) -> &'static pyo3::Py<pyo3::PyAny> {
                 match val {
                     $($field_value => Self :: $fn_name ()),*
                 }
@@ -279,12 +284,12 @@ macro_rules! gen_py_wrapper_class_for_enum {
             $(
                 #[classattr]
                 #[pyo3(name = $pyo3_name)]
-                pub(crate) fn $fn_name() -> &'static pyo3::PyObject {
+                pub(crate) fn $fn_name() -> &'static pyo3::Py<pyo3::PyAny> {
                     lazy_static::lazy_static! {
-                        static ref VALUE: pyo3::PyObject = {
+                        static ref VALUE: pyo3::Py<pyo3::PyAny> = {
                             use ::pyo3::conversion::IntoPyObjectExt;
 
-                            Python::with_gil(|py| {
+                            Python::attach(|py| {
                                 $class($field_value)
                                     .into_py_any(py)
                                     .expect(std::concat!(
@@ -301,10 +306,10 @@ macro_rules! gen_py_wrapper_class_for_enum {
 
             #[classattr]
             #[pyo3(name = "VALUES")]
-            fn values() -> &'static pyo3::PyObject {
+            fn values() -> &'static pyo3::Py<pyo3::PyAny> {
                 lazy_static::lazy_static! {
-                    static ref VALUES: ::pyo3::PyObject = {
-                        Python::with_gil(|py| {
+                    static ref VALUES: ::pyo3::Py<pyo3::PyAny> = {
+                        Python::attach(|py| {
                             use ::pyo3::conversion::IntoPyObjectExt;
 
                             ::pyo3::types::PyTuple::new(py, [
@@ -325,19 +330,48 @@ macro_rules! gen_py_wrapper_class_for_enum {
             }
 
             #[classmethod]
-            fn from_str(_cls: &::pyo3::Bound<'_, ::pyo3::types::PyType>, value: &str) -> pyo3::PyResult<&'static ::pyo3::PyObject> {
+            fn from_str(_cls: &::pyo3::Bound<'_, ::pyo3::types::PyType>, value: &str) -> pyo3::PyResult<&'static ::pyo3::Py<pyo3::PyAny>> {
                 Ok(match value {
                         $($pyo3_name => Self:: $fn_name ()),*,
                     _ => return Err(::pyo3::exceptions::PyValueError::new_err(format!("Invalid value `{}`", value))),
                 })
             }
 
-
-            #[getter]
-            fn str(&self) -> &'static str {
+            fn to_str(&self) -> &'static str {
                 match self.0 {
                     $($field_value => $pyo3_name),*
                 }
+            }
+
+            #[getter]
+            fn str(&self) -> &'static str {
+                self.to_str()
+            }
+
+            #[classmethod]
+            #[pyo3(name = "__get_pydantic_core_schema__")]
+            fn get_pydantic_core_schema<'py>(
+                cls: &::pyo3::Bound<'py, ::pyo3::types::PyType>,
+                _source_type: &::pyo3::Bound<'_, ::pyo3::types::PyType>,
+                _handler: &::pyo3::Bound<'py, ::pyo3::PyAny>,
+                py: Python<'py>,
+            ) -> ::pyo3::PyResult<::pyo3::Bound<'py, ::pyo3::PyAny>> {
+                use $crate::pydantic_support::{
+                    inner::CoreSchemaModule, str_like_serializer, str_like_validator,
+                };
+                use ::pyo3::prelude::*;
+
+                let core_schema = CoreSchemaModule::new(py)?;
+
+                let ser_schema = str_like_serializer!(core_schema, cls.getattr("to_str")?, py)?;
+
+                str_like_validator!(
+                    core_schema,
+                    cls,
+                    ser = ser_schema,
+                    der = cls.getattr("from_str")?,
+                    py
+                )
             }
         }
     };

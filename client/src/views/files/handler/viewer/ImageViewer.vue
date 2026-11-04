@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-viewer-wrapper>
@@ -9,7 +9,7 @@
       >
         <div class="image-viewer">
           <ms-draggable
-            v-if="src.length"
+            v-if="src.length && !hasError"
             :disabled="!isZoomedMoreThanViewport"
             :restrict-direction="restrictDirection"
             @dragging="updateDraggingRestrictions"
@@ -19,8 +19,16 @@
               ref="imgElement"
               :src="src"
               @load="updateDraggingRestrictions()"
+              @error="hasError = true"
             />
           </ms-draggable>
+          <ms-report-text
+            class="image-error"
+            v-else
+            :theme="MsReportTheme.Error"
+          >
+            {{ $msTranslate('fileViewers.image.loadImageError') }}
+          </ms-report-text>
         </div>
       </div>
     </template>
@@ -40,12 +48,13 @@
 </template>
 
 <script setup lang="ts">
-import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/files/handler/viewer';
+import { startHistoryAt, stopHistory } from '@/parsec/history';
+import { getStreamUrl } from '@/services/worker';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { scan } from 'ionicons/icons';
-import { MsDraggable } from 'megashark-lib';
+import { MsDraggable, MsReportText, MsReportTheme } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -65,6 +74,7 @@ const restrictDirection = ref({
   right: true,
 });
 const draggableElementRef = useTemplateRef<InstanceType<typeof MsDraggable>>('draggableElement');
+const hasError = ref(false);
 
 function updateDraggingRestrictions(resetPosition = false): void {
   if (resetPosition) {
@@ -102,15 +112,22 @@ function updateDraggingRestrictions(resetPosition = false): void {
   }
 }
 
+let historyHandle: number | undefined;
+
 onMounted(async () => {
-  const mimeType = await getMimeTypeFromBuffer(props.contentInfo.data);
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data.buffer as ArrayBuffer], { type: mimeType }));
+  if (props.contentInfo.timestamp) {
+    historyHandle = await startHistoryAt(props.contentInfo.workspaceHandle, props.contentInfo.timestamp);
+  }
+  src.value = getStreamUrl(props.contentInfo.workspaceHandle, props.contentInfo.path, props.contentInfo.size, historyHandle);
   zoomLevel.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
   window.addEventListener('resize', () => updateDraggingRestrictions(true));
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   window.removeEventListener('resize', () => updateDraggingRestrictions(true));
+  if (historyHandle !== undefined) {
+    await stopHistory(historyHandle);
+  }
 });
 
 watch(zoomLevel, () => {
@@ -137,14 +154,14 @@ async function toggleFullScreen(): Promise<void> {
   align-items: center;
   height: 100%;
   width: 100%;
-  // overflow: auto;
-  background: var(--parsec-color-light-secondary-premiere);
+  background-color: ms.color('surface-base-page');
 }
+
 .image-viewer {
   display: flex;
   width: fit-content;
   height: fit-content;
-  padding: 2rem;
+  padding: ms.spacing('padding-5xl');
 }
 
 img {
@@ -152,7 +169,7 @@ img {
   transition: all ease-in-out;
   max-width: 100%;
   max-height: 100%;
-  box-shadow: var(--parsec-shadow-light);
+  box-shadow: ms.shadow('light');
   transform: scale(v-bind(zoomLevel));
   user-select: none;
 }

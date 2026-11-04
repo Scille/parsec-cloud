@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import asyncio
@@ -19,6 +20,7 @@ from parsec.components.postgresql.handler import (
 
 @pytest.fixture
 def pg_cluster(tmp_path) -> Iterator[Cluster]:
+    print(f"Creating temporary PG cluster at {tmp_path}")
     pg_cluster = TempCluster(data_dir_parent=tmp_path)
     # Make the default superuser name stable.
     pg_cluster.init(username="postgres")
@@ -83,7 +85,9 @@ async def test_migrations(
     pg_dump: str,
 ):
     async def execute_datamodel() -> None:
-        sql = importlib.resources.files(migrations_module).joinpath("datamodel.sql").read_text()
+        datamodel_path = importlib.resources.files(migrations_module).joinpath("datamodel.sql")
+        print(f"Applying datamodel from {datamodel_path}")
+        sql = datamodel_path.read_text()
         conn = await asyncpg.connect(pg_cluster_url)
         try:
             await conn.execute(sql)
@@ -181,6 +185,7 @@ async def test_migrations(
     conn_for_patches = await asyncpg.connect(pg_cluster_url)
     try:
         for migration in migrations:
+            print(f"Applying migration {migration.file_name}")
             if sql := patches_before.get(migration.index):
                 await conn_for_patches.execute(sql)
 
@@ -210,7 +215,12 @@ async def test_migrations(
     # The resulting database schema should be equivalent to what we add after
     # all the migrations
     schema_from_init = await dump_schema()
-    assert schema_from_init == schema_from_migrations
+    assert_long_str_equal(
+        got=schema_from_init,
+        got_name="schema_from_init",
+        expected=schema_from_migrations,
+        expected_name="schema_from_migrations",
+    )
 
     # Final check is to re-import all the data, this requires some cooking first:
 
@@ -223,13 +233,13 @@ async def test_migrations(
     # table is entirely populated before switching to `device`. So the
     # constraint should break as soon as an `user_` row references a device_id.
     data_from_migrations = f"""
-ALTER TABLE public."user_" ALTER CONSTRAINT fk_user_device_user_certifier DEFERRABLE;
-ALTER TABLE public."user_" ALTER CONSTRAINT fk_user_device_revoked_user_certifier DEFERRABLE;
+ALTER TABLE public."user_" ALTER CONSTRAINT user_user_certifier_fkey DEFERRABLE;
+ALTER TABLE public."user_" ALTER CONSTRAINT user_revoked_user_certifier_fkey DEFERRABLE;
 
 BEGIN;
 
-SET CONSTRAINTS fk_user_device_user_certifier DEFERRED;
-SET CONSTRAINTS fk_user_device_revoked_user_certifier DEFERRED;
+SET CONSTRAINTS user_user_certifier_fkey DEFERRED;
+SET CONSTRAINTS user_revoked_user_certifier_fkey DEFERRED;
 
 {data_from_migrations}
 
@@ -238,3 +248,22 @@ COMMIT;
 
     # All the data should be restored without errors (restore_data will fail on first error)
     await restore_data(data_from_migrations)
+
+
+def assert_long_str_equal(
+    got: str, expected: str, got_name: str = "got", expected_name: str = "expected"
+):
+    if got != expected:
+        import difflib
+
+        diff = "\n".join(
+            difflib.unified_diff(
+                expected.splitlines(),
+                got.splitlines(),
+                fromfile=expected_name,
+                tofile=got_name,
+                # cspell: words lineterm
+                lineterm="",
+            )
+        )
+        raise AssertionError(f"Strings differ:\n{diff}")

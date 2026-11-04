@@ -8,9 +8,14 @@ publish.workspace = true
 repository.workspace = true
 version.workspace = true
 autotests = false
+exclude = ["tests/", "examples/", "benches/"]
 
 [[bench]]
 name = "minimal_short_id"
+harness = false
+
+[[bench]]
+name = "upload_speed"
 harness = false
 
 [[test]]
@@ -18,36 +23,47 @@ name = "integration"
 path = "tests/integration/mod.rs"
 
 [features]
+default = ["manpage", "shell-completion"]
 use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 vendored-dbus = ["libparsec/vendored-dbus"]
 testenv = []
+manpage = ["dep:clap_mangen"]
+shell-completion = ["dep:clap_complete"]
 
 [dependencies]
-libparsec = { workspace = true }
-libparsec_crypto = { workspace = true }
-libparsec_client = { workspace = true }
-libparsec_client_connection = { workspace = true }
-libparsec_platform_ipc = { workspace = true }
-libparsec_platform_mountpoint = { workspace = true }
+libparsec_client.workspace = true
+libparsec_client_connection.workspace = true
+libparsec_crypto.workspace = true
+libparsec_platform_ipc.workspace = true
+libparsec_platform_mountpoint.workspace = true
+libparsec_types.workspace = true
+libparsec.workspace = true
 
 anyhow = { workspace = true }
-clap = { workspace = true, features = ["default", "derive", "env"] }
+clap = { workspace = true, features = ["default", "derive", "env", "cargo"] }
 # `termination` feature enable handling of SIGHUP/SIGTERM on top of SIGINT
 ctrlc = { workspace = true, features = ["termination"] }
+data-encoding.workspace = true
 dialoguer = { workspace = true, features = ["fuzzy-select"] }
+futures.workspace = true
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 log = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
 rpassword = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["std"] }
-spinners = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+serde_with.workspace = true
+spinners = { workspace = true, features = ["osc-progress"] }
+textwrap.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-std"] }
 url = { workspace = true, optional = true }
 uuid = { workspace = true }
 itertools = { workspace = true, features = ["use_std"] }
 thiserror = { workspace = true }
+shadow-rs.workspace = true
+clap_mangen = { workspace = true, features = ["env"], optional = true }
+clap_complete = { workspace = true, optional = true }
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
@@ -56,10 +72,15 @@ parsec-cli = { path = ".", features = ["testenv"] }
 
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }
+regex.workspace = true
 rstest = { workspace = true }
 uuid = { workspace = true, features = ["v6", "std", "rng"] }
 
 criterion = { workspace = true }
+rand = { workspace = true, features = ["std"] }
+
+[build-dependencies]
+shadow-rs = { workspace = true, features = ["git2", "build"] }
 
 [target.'cfg(target_family = "unix")'.dev-dependencies]
 # rexpect doesn't support Windows (see https://github.com/rust-cli/rexpect/issues/11)

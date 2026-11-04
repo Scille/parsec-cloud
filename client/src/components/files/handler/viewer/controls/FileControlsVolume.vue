@@ -1,4 +1,5 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
+
 <template>
   <file-controls-group>
     <div class="volume">
@@ -6,6 +7,7 @@
         :icon="getVolumeIcon()"
         @click="toggleVolume"
         class="volume-button"
+        fill="clear"
       />
       <ms-slider
         class="volume-slider"
@@ -101,7 +103,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .volume {
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   .volume-button:hover {
     background-color: transparent;
@@ -109,8 +111,6 @@ onUnmounted(() => {
   }
 
   &-slider {
-    margin-right: 1rem;
-    opacity: 1;
     width: 5rem;
     display: flex;
 

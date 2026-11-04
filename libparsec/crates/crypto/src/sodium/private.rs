@@ -1,8 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libsodium_rs::{
     crypto_box::{
-        self, curve25519xsalsa20poly1305, open_sealed_box, seal_box, PUBLICKEYBYTES, SECRETKEYBYTES,
+        self, PUBLICKEYBYTES, SECRETKEYBYTES, curve25519xsalsa20poly1305, open_sealed_box, seal_box,
     },
     crypto_kx,
     crypto_scalarmult::curve25519,

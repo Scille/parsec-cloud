@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
 
@@ -38,6 +38,31 @@ use libparsec_types::prelude::*;
 //     (we consider this acceptable though since the account APIs is not yet used in
 //     production).
 //   * Add `server_config` to anonymous server commands
+// - v5.4 (Parsec 3.8+)
+//   * Add `transit_mount_path` field to `server_config` response
+//   * Incompatible change to remove `pki_enrollment_submit/pki_enrollment_info/pki_enrollment_reject/pki_enrollment_accept/pki_enrollment_list`
+//     commands (we consider this acceptable though since those APIs have never been
+//     actually used in production).
+//   * Add `async_enrollment_cancel/async_enrollment_info/async_enrollment_submit` to
+//     anonymous commands.
+//   * Add `totp_fetch_opaque_key/totp_setup_confirm/totp_setup_get_secret` to anonymous
+//     commands.
+//   * Add `async_enrollment_accept/async_enrollment_list/async_enrollment_reject` to
+//     authenticated commands.
+//   * Add `totp_create_opaque_key/totp_setup_confirm/totp_setup_get_secret` to authenticated
+//     commands.
+// - v5.5 (Parsec 3.9+)
+//   * Add `cryptpad` field to `server_config` response
+//   * Add `advisory_device_file_protection` field to `server_config` response
+//   * Add `realm_update_archiving` to authenticated commands.
+//   * Add `realm_minimum_archiving_period_before_deletion` field to `OrganizationConfig` event in `events_listen`
+//   * Add `send_email` field to async_enrollment_accept req and `email_sent` status to ok rep
+//   * Add `realm_self_promote_to_owner` to authenticated commands.
+// - v5.6 (Parsec 3.10+)
+//   * Add `cryptpad_register_session` to authenticated commands.
+// - v5.7 (Parsec 3.12+)
+//   * Add `name/help_link/icon` fields to `server_config.openbao.auths` response
+
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,
@@ -56,7 +81,7 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
 };
 pub const API_V5_VERSION: &ApiVersion = &ApiVersion {
     version: 5,
-    revision: 3,
+    revision: 7,
 };
 pub const API_LATEST_VERSION: &ApiVersion = API_V5_VERSION;
 

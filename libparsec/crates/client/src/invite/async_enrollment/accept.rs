@@ -1,13 +1,20 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_async::PinBoxFutureResult;
 use libparsec_types::prelude::*;
 
 use crate::{
-    greater_timestamp, utils::create_user_and_device_certificates, EventBus,
-    EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    EventBus, EventTooMuchDriftWithServerClock, GreaterTimestampOffset, PkiErrorDetail,
+    greater_timestamp, utils::create_user_and_device_certificates,
 };
+
+#[derive(Debug)]
+pub enum EmailSentStatus {
+    Success,
+    ServerUnavailable,
+    RecipientRefused,
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum AcceptAsyncEnrollmentError {
@@ -29,7 +36,9 @@ pub enum AcceptAsyncEnrollmentError {
     ActiveUsersLimitReached,
     #[error("Human handle (i.e. email address) already taken")]
     HumanHandleAlreadyTaken,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -49,9 +58,12 @@ pub enum AcceptAsyncEnrollmentError {
 
     // PKI-related errors
     #[error("Invalid X509 trustchain (server doesn't recognize the root certificate)")]
-    InvalidX509Trustchain,
-    // TODO: add other PKI-related errors
-    // (see https://github.com/Scille/parsec-cloud/issues/12028)
+    PKIServerInvalidX509Trustchain,
+    #[error("Cannot open PKI X509 certificate store: {0}")]
+    PKICannotOpenCertificateStore(anyhow::Error),
+    // Certificate not found, invalid certificate, cannot use to sign etc.
+    #[error("Cannot use the referenced X509 certificate for PKI operation: {0}")]
+    PKIUnusableX509CertificateReference(PkiErrorDetail),
 }
 
 pub trait AcceptAsyncEnrollmentIdentityStrategy: Send + Sync {
@@ -95,7 +107,8 @@ pub(crate) async fn accept_async_enrollment(
     enrollment_id: AsyncEnrollmentID,
     profile: UserProfile,
     identity_strategy: &dyn AcceptAsyncEnrollmentIdentityStrategy,
-) -> Result<(), AcceptAsyncEnrollmentError> {
+    send_email: bool,
+) -> Result<EmailSentStatus, AcceptAsyncEnrollmentError> {
     // 1) Get back the enrollment submit payload from the server
 
     let enrollment = {
@@ -110,7 +123,7 @@ pub(crate) async fn accept_async_enrollment(
                     return Err(AcceptAsyncEnrollmentError::Internal(anyhow::anyhow!(
                         "Unexpected server response: {:?}",
                         bad_rep
-                    )))
+                    )));
                 }
             }
         };
@@ -153,7 +166,7 @@ pub(crate) async fn accept_async_enrollment(
             .await?;
 
         {
-            use libparsec_client_connection::protocol::authenticated_cmds::latest::async_enrollment_accept::{Req, Rep};
+            use libparsec_client_connection::protocol::authenticated_cmds::latest::async_enrollment_accept::{Req, Rep, EmailSentStatus as ApiEmailSentStatus};
 
             let rep = cmds
                 .send(Req {
@@ -164,10 +177,18 @@ pub(crate) async fn accept_async_enrollment(
                     submitter_redacted_device_certificate,
                     accept_payload,
                     accept_payload_signature,
+                    send_email: Maybe::Present(send_email),
                 })
                 .await?;
             return match rep {
-                Rep::Ok => Ok(()),
+                Rep::Ok {email_sent} => {
+                    let status = match email_sent {
+                        Maybe::Present(ApiEmailSentStatus::Success) | Maybe::Absent => EmailSentStatus::Success,
+                        Maybe::Present(ApiEmailSentStatus::ServerUnavailable) => EmailSentStatus::ServerUnavailable,
+                        Maybe::Present(ApiEmailSentStatus::RecipientRefused) => EmailSentStatus::RecipientRefused,
+                    };
+                     Ok(status)
+                },
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {
@@ -183,7 +204,7 @@ pub(crate) async fn accept_async_enrollment(
                 Rep::EnrollmentNoLongerAvailable => Err(AcceptAsyncEnrollmentError::EnrollmentNoLongerAvailable),
                 Rep::ActiveUsersLimitReached => Err(AcceptAsyncEnrollmentError::ActiveUsersLimitReached),
                 Rep::HumanHandleAlreadyTaken => Err(AcceptAsyncEnrollmentError::HumanHandleAlreadyTaken),
-                Rep::InvalidX509Trustchain => Err(AcceptAsyncEnrollmentError::InvalidX509Trustchain),
+                Rep::InvalidX509Trustchain => Err(AcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain),
                 Rep::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,

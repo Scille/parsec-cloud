@@ -22,7 +22,7 @@ if [ "$WRITE_ENV" = "1" ]; then
         echo "UNIQ_TAG=$UNIQ_TAG"
         echo "TAGS=($UNIQ_TAG latest)"
         echo "PREFIX=$PREFIX"
-    ) > parsec-testbed.env
+    ) >parsec-testbed.env
 fi
 
 echo "On top of that the image will use the following prefix \`$PREFIX\`"

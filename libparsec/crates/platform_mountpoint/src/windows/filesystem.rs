@@ -1,15 +1,15 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use once_cell::sync::Lazy;
 use std::sync::{Arc, Mutex};
 use winfsp_wrs::{
-    filetime_from_utc, u16cstr, CleanupFlags, CreateFileInfo, CreateOptions, DirInfo,
-    FileAccessRights, FileAttributes, FileInfo, FileSystemInterface, PSecurityDescriptor,
-    SecurityDescriptor, U16CStr, U16String, VolumeInfo, WriteMode, NTSTATUS, STATUS_ACCESS_DENIED,
+    CleanupFlags, CreateFileInfo, CreateOptions, DirInfo, FileAccessRights, FileAttributes,
+    FileInfo, FileSystemInterface, NTSTATUS, PSecurityDescriptor, STATUS_ACCESS_DENIED,
     STATUS_DEVICE_NOT_READY, STATUS_DIRECTORY_NOT_EMPTY, STATUS_FILE_IS_A_DIRECTORY,
     STATUS_HOST_UNREACHABLE, STATUS_INVALID_HANDLE, STATUS_MEDIA_WRITE_PROTECTED,
-    STATUS_NOT_A_DIRECTORY, STATUS_NO_SUCH_DEVICE, STATUS_OBJECT_NAME_COLLISION,
-    STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND,
+    STATUS_NO_SUCH_DEVICE, STATUS_NOT_A_DIRECTORY, STATUS_OBJECT_NAME_COLLISION,
+    STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND, SecurityDescriptor, U16CStr,
+    U16String, VolumeInfo, WriteMode, filetime_from_utc, u16cstr,
 };
 
 use libparsec_client::workspace::{
@@ -56,7 +56,6 @@ static SECURITY_DESCRIPTOR: Lazy<SecurityDescriptor> = Lazy::new(|| {
 /// virtual file f"{file_path}.{ENTRY_INFO_EXTENSION}".
 const ENTRY_INFO_EXTENSION: &str = "__parsec_entry_info__";
 
-#[allow(dead_code)]
 fn is_entry_info_path(path: &FsPath) -> bool {
     path.parts()
         .last()
@@ -82,9 +81,7 @@ pub(crate) enum OpenedObj {
     },
     File {
         // Keeping file name here is useful for debug logs
-        #[allow(dead_code)]
         parsec_file_name: FsPath,
-        #[allow(dead_code)]
         id: VlobID,
         fd: FileDescriptor,
     },
@@ -180,8 +177,6 @@ fn parsec_entry_stat_to_winfsp_file_info(stat: &EntryStat, is_read_only: bool) -
 
 #[cfg(test)]
 #[allow(clippy::type_complexity)]
-// TODO
-#[allow(dead_code)]
 pub(crate) static LOOKUP_HOOK: Mutex<
     Option<Box<dyn FnMut(&FsPath) -> Option<Result<EntryStat, WorkspaceStatEntryError>> + Send>>,
 > = Mutex::new(None);
@@ -251,6 +246,7 @@ impl ParsecFileSystemInterface {
                         WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceStatEntryError::NoRealmAccess
+                        | WorkspaceStatEntryError::RealmDeleted
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceStatEntryError::InvalidCertificate(_)
                         | WorkspaceStatEntryError::InvalidManifest(_)
@@ -318,6 +314,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceStatEntryError::NoRealmAccess
+                        | WorkspaceStatEntryError::RealmDeleted
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceStatEntryError::InvalidCertificate(_)
                         | WorkspaceStatEntryError::InvalidManifest(_)
@@ -328,7 +325,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             );
                             STATUS_ACCESS_DENIED
                         }
-                    })
+                    });
                 }
             };
 
@@ -386,6 +383,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         // in Windows Explorer, which is obviously not the best user experience :/
                         WorkspaceCreateFolderError::ReadOnlyRealm => STATUS_ACCESS_DENIED,
                         WorkspaceCreateFolderError::NoRealmAccess
+                        | WorkspaceCreateFolderError::RealmDeleted
                         | WorkspaceCreateFolderError::InvalidKeysBundle(_)
                         | WorkspaceCreateFolderError::InvalidCertificate(_)
                         | WorkspaceCreateFolderError::InvalidManifest(_)
@@ -435,6 +433,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             STATUS_OBJECT_NAME_COLLISION
                         }
                         WorkspaceOpenFileError::NoRealmAccess
+                        | WorkspaceOpenFileError::RealmDeleted
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
                         | WorkspaceOpenFileError::InvalidManifest(_)
@@ -534,6 +533,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
                     WorkspaceOpenFileError::ReadOnlyRealm => Err(STATUS_MEDIA_WRITE_PROTECTED),
                     WorkspaceOpenFileError::NoRealmAccess
+                    | WorkspaceOpenFileError::RealmDeleted
                     | WorkspaceOpenFileError::InvalidKeysBundle(_)
                     | WorkspaceOpenFileError::InvalidCertificate(_)
                     | WorkspaceOpenFileError::InvalidManifest(_)
@@ -564,7 +564,11 @@ impl FileSystemInterface for ParsecFileSystemInterface {
         let fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!(
             "[WinFSP] overwrite_ex(file_context: {:?}, file_attributes: {:?}, replace_file_attributes: {:?}, allocation_size: {:?}, buffer_size: {})",
-            fc, file_attributes, replace_file_attributes, allocation_size, buffer.len()
+            fc,
+            file_attributes,
+            replace_file_attributes,
+            allocation_size,
+            buffer.len()
         );
 
         self.tokio_handle.block_on(async move {
@@ -692,7 +696,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceFdReadError::Stopped => STATUS_NO_SUCH_DEVICE,
                         WorkspaceFdReadError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                         WorkspaceFdReadError::NotInReadMode => STATUS_ACCESS_DENIED,
-                        WorkspaceFdReadError::InvalidBlockAccess(_)
+                        WorkspaceFdReadError::RealmDeleted
+                        | WorkspaceFdReadError::InvalidBlockAccess(_)
                         | WorkspaceFdReadError::InvalidKeysBundle(_)
                         | WorkspaceFdReadError::InvalidCertificate(_)
                         | WorkspaceFdReadError::Internal(_) => {
@@ -926,6 +931,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 STATUS_OBJECT_NAME_NOT_FOUND
                             }
                             WorkspaceOpenFolderReaderError::NoRealmAccess
+                            | WorkspaceOpenFolderReaderError::RealmDeleted
                             | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
                             | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                             | WorkspaceOpenFolderReaderError::InvalidManifest(_)
@@ -948,7 +954,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         .await
                         .map_err(|err| match err {
                             FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
-                            FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                            FolderReaderStatEntryError::Stopped
+                            | FolderReaderStatEntryError::RealmDeleted => STATUS_DEVICE_NOT_READY,
                             FolderReaderStatEntryError::NoRealmAccess
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
@@ -964,7 +971,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 match outcome {
                     FolderReaderStatNextOutcome::NoMoreEntries => break Ok(()),
                     FolderReaderStatNextOutcome::Entry { .. } => {
-                        break Err(STATUS_DIRECTORY_NOT_EMPTY)
+                        break Err(STATUS_DIRECTORY_NOT_EMPTY);
                     }
                     // Current entry is invalid, just ignore it
                     FolderReaderStatNextOutcome::InvalidChild => {
@@ -985,7 +992,13 @@ impl FileSystemInterface for ParsecFileSystemInterface {
         replace_if_exists: bool,
     ) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        log::debug!("[WinFSP] rename(file_context: {:?}, file_name: {:?}, new_file_name: {:?}, replace_if_exists: {:?})", fc, file_name, new_file_name, replace_if_exists);
+        log::debug!(
+            "[WinFSP] rename(file_context: {:?}, file_name: {:?}, new_file_name: {:?}, replace_if_exists: {:?})",
+            fc,
+            file_name,
+            new_file_name,
+            replace_if_exists
+        );
 
         // `granted_access` is already handle by WinFSP
 
@@ -1019,6 +1032,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
                     WorkspaceMoveEntryError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
                     WorkspaceMoveEntryError::NoRealmAccess
+                    | WorkspaceMoveEntryError::RealmDeleted
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceMoveEntryError::InvalidCertificate(_)
                     | WorkspaceMoveEntryError::InvalidManifest(_)
@@ -1065,6 +1079,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 STATUS_OBJECT_NAME_NOT_FOUND
                             }
                             WorkspaceOpenFolderReaderError::NoRealmAccess
+                            | WorkspaceOpenFolderReaderError::RealmDeleted
                             | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
                             | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                             | WorkspaceOpenFolderReaderError::InvalidManifest(_)
@@ -1121,6 +1136,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                             WorkspaceStatEntryError::NoRealmAccess
+                            | WorkspaceStatEntryError::RealmDeleted
                             | WorkspaceStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceStatEntryError::InvalidCertificate(_)
                             | WorkspaceStatEntryError::InvalidManifest(_)
@@ -1149,6 +1165,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                                 FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                                 FolderReaderStatEntryError::NoRealmAccess
+                                | FolderReaderStatEntryError::RealmDeleted
                                 | FolderReaderStatEntryError::InvalidKeysBundle(_)
                                 | FolderReaderStatEntryError::InvalidCertificate(_)
                                 | FolderReaderStatEntryError::InvalidManifest(_)
@@ -1176,6 +1193,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             FolderReaderStatEntryError::NoRealmAccess
+                            | FolderReaderStatEntryError::RealmDeleted
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
@@ -1242,6 +1260,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                     WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                     WorkspaceStatEntryError::NoRealmAccess
+                    | WorkspaceStatEntryError::RealmDeleted
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceStatEntryError::InvalidCertificate(_)
                     | WorkspaceStatEntryError::InvalidManifest(_)

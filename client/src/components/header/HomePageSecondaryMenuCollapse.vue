@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <!-- This component should be encapsulated in a parent page within a <ion-menu> -->
@@ -72,6 +72,21 @@
       </ion-button>
     </ion-menu-toggle>
 
+    <!-- report bug button -->
+    <ion-menu-toggle>
+      <ion-button
+        id="report-bug-button"
+        class="menu-secondary-collapse-buttons-item button-large"
+        @click="$emit('reportBugClick')"
+      >
+        <ion-icon
+          :icon="bug"
+          class="menu-secondary-collapse-buttons-item__icon"
+        />
+        <span class="menu-secondary-collapse-buttons-item__text">{{ $msTranslate('MenuPage.reportBug') }}</span>
+      </ion-button>
+    </ion-menu-toggle>
+
     <!-- customer area button -->
     <ion-menu-toggle>
       <ion-button
@@ -91,12 +106,13 @@
 import { Env } from '@/services/environment';
 import { openAboutModal } from '@/views/about';
 import { IonButton, IonIcon, IonMenuToggle } from '@ionic/vue';
-import { chatbubble, close, cog, informationCircle, library, open } from 'ionicons/icons';
+import { bug, chatbubble, close, cog, informationCircle, library, open } from 'ionicons/icons';
 import { LogoIconGradient, MsImage } from 'megashark-lib';
 
 defineEmits<{
   (e: 'settingsClick'): void;
   (e: 'customerAreaClick'): void;
+  (e: 'reportBugClick'): void;
 }>();
 
 defineProps<{
@@ -104,4 +120,8 @@ defineProps<{
 }>();
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.menu-secondary-collapse-buttons-item {
+  @include ms.font('label-lg-medium');
+}
+</style>

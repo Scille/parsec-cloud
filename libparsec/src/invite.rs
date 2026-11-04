@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
 
@@ -17,9 +17,11 @@ pub use libparsec_protocol::invited_cmds::latest::invite_info::{
 };
 use libparsec_types::prelude::*;
 
+use crate::ParsecInvitationAddrAndRedirectionURL;
 use crate::{
-    handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
-    listen_canceller, AvailableDevice, ClientConfig, DeviceSaveStrategy, OnEventCallbackPlugged,
+    AvailableDevice, ClientConfig, DeviceSaveStrategy, OnEventCallbackPlugged,
+    handle::{Handle, HandleItem, borrow_from_handle, register_handle, take_and_close_handle},
+    listen_canceller,
 };
 
 /*
@@ -38,15 +40,17 @@ pub enum BootstrapOrganizationError {
     AlreadyUsedToken,
     #[error("Invalid sequester authority verify key: {0}")]
     InvalidSequesterAuthorityVerifyKey(anyhow::Error),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
-    #[error("Cannot save device: device storage is not available")]
-    SaveDeviceStorageNotAvailable,
+    #[error("Cannot save device: no space is available")]
+    SaveDeviceNoSpaceAvailable,
     #[error("Cannot save device: invalid path: {0}")]
     SaveDeviceInvalidPath(anyhow::Error),
     #[error("Cannot save device: no response from {server} server: {error}")]
@@ -118,7 +122,7 @@ pub async fn bootstrap_organization(
     //   obtained from libparsec).
     sequester_authority_verify_key_pem: Option<&str>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
-    let save_strategy = save_strategy.convert_with_side_effects()?;
+    let save_strategy = save_strategy.convert_with_side_effects().await?;
 
     let sequester_authority_verify_key = match sequester_authority_verify_key_pem {
         None => None,
@@ -173,11 +177,11 @@ pub async fn bootstrap_organization(
             SaveDeviceError::Internal(err) => {
                 BootstrapOrganizationError::Internal(err.context("Cannot save device"))
             }
-            SaveDeviceError::StorageNotAvailable => {
-                BootstrapOrganizationError::SaveDeviceStorageNotAvailable
+            SaveDeviceError::NoSpaceAvailable => {
+                BootstrapOrganizationError::SaveDeviceNoSpaceAvailable
             }
-            SaveDeviceError::InvalidPath => {
-                BootstrapOrganizationError::SaveDeviceInvalidPath(anyhow::anyhow!("invalid path"))
+            SaveDeviceError::InvalidPath(err) => {
+                BootstrapOrganizationError::SaveDeviceInvalidPath(err)
             }
         })?;
 
@@ -1046,6 +1050,7 @@ pub async fn claimer_user_finalize_save_local_device(
 ) -> Result<AvailableDevice, ClaimFinalizeError> {
     let save_strategy = save_strategy
         .convert_with_side_effects()
+        .await
         .map_err(ClaimFinalizeError::Internal)?;
 
     let ctx = take_and_close_handle(handle, |x| match *x {
@@ -1067,6 +1072,7 @@ pub async fn claimer_device_finalize_save_local_device(
 ) -> Result<AvailableDevice, ClaimFinalizeError> {
     let save_strategy = save_strategy
         .convert_with_side_effects()
+        .await
         .map_err(ClaimFinalizeError::Internal)?;
 
     let ctx = take_and_close_handle(handle, |x| match *x {
@@ -1088,6 +1094,7 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
 ) -> Result<AvailableDevice, ClaimFinalizeError> {
     let save_strategy = save_strategy
         .convert_with_side_effects()
+        .await
         .map_err(ClaimFinalizeError::Internal)?;
 
     let ctx = take_and_close_handle(handle, |x| match *x {
@@ -1108,8 +1115,8 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
  */
 
 pub struct NewInvitationInfo {
-    pub addr: ParsecInvitationAddr,
-    pub token: InvitationToken,
+    pub addr: ParsecInvitationAddrAndRedirectionURL,
+    pub token: AccessToken,
     pub email_sent_status: InvitationEmailSentStatus,
 }
 
@@ -1126,14 +1133,14 @@ pub async fn client_new_user_invitation(
     let (token, email_sent_status) = client
         .new_user_invitation(claimer_email, send_email)
         .await?;
-
+    let addr = ParsecInvitationAddr::new(
+        client.organization_addr(),
+        client.organization_id().to_owned(),
+        InvitationType::User,
+        token,
+    );
     Ok(NewInvitationInfo {
-        addr: ParsecInvitationAddr::new(
-            client.organization_addr(),
-            client.organization_id().to_owned(),
-            InvitationType::User,
-            token,
-        ),
+        addr: (addr.clone(), addr.to_http_redirection_url()),
         token,
         email_sent_status,
     })
@@ -1150,13 +1157,14 @@ pub async fn client_new_device_invitation(
 
     let (token, email_sent_status) = client.new_device_invitation(send_email).await?;
 
+    let addr = ParsecInvitationAddr::new(
+        client.organization_addr(),
+        client.organization_id().to_owned(),
+        InvitationType::Device,
+        token,
+    );
     Ok(NewInvitationInfo {
-        addr: ParsecInvitationAddr::new(
-            client.organization_addr(),
-            client.organization_id().to_owned(),
-            InvitationType::Device,
-            token,
-        ),
+        addr: (addr.clone(), addr.to_http_redirection_url()),
         token,
         email_sent_status,
     })
@@ -1176,13 +1184,14 @@ pub async fn client_new_shamir_recovery_invitation(
         .new_shamir_recovery_invitation(claimer_user_id, send_email)
         .await?;
 
+    let addr = ParsecInvitationAddr::new(
+        client.organization_addr(),
+        client.organization_id().to_owned(),
+        InvitationType::ShamirRecovery,
+        token,
+    );
     Ok(NewInvitationInfo {
-        addr: ParsecInvitationAddr::new(
-            client.organization_addr(),
-            client.organization_id().to_owned(),
-            InvitationType::ShamirRecovery,
-            token,
-        ),
+        addr: (addr.clone(), addr.to_http_redirection_url()),
         token,
         email_sent_status,
     })
@@ -1190,7 +1199,7 @@ pub async fn client_new_shamir_recovery_invitation(
 
 pub async fn client_cancel_invitation(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<(), ClientCancelInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
@@ -1204,23 +1213,23 @@ pub async fn client_cancel_invitation(
 
 pub enum InviteListItem {
     User {
-        addr: ParsecInvitationAddr,
-        token: InvitationToken,
+        addr: ParsecInvitationAddrAndRedirectionURL,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
         claimer_email: EmailAddress,
         status: InvitationStatus,
     },
     Device {
-        addr: ParsecInvitationAddr,
-        token: InvitationToken,
+        addr: ParsecInvitationAddrAndRedirectionURL,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
         status: InvitationStatus,
     },
     ShamirRecovery {
-        addr: ParsecInvitationAddr,
-        token: InvitationToken,
+        addr: ParsecInvitationAddrAndRedirectionURL,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
         claimer_user_id: UserID,
@@ -1256,7 +1265,7 @@ pub async fn client_list_invitations(
                     token,
                 );
                 InviteListItem::User {
-                    addr,
+                    addr: (addr.clone(), addr.to_http_redirection_url()),
                     claimer_email,
                     created_on,
                     created_by,
@@ -1277,7 +1286,7 @@ pub async fn client_list_invitations(
                     token,
                 );
                 InviteListItem::Device {
-                    addr,
+                    addr: (addr.clone(), addr.to_http_redirection_url()),
                     created_on,
                     created_by,
                     status,
@@ -1299,7 +1308,7 @@ pub async fn client_list_invitations(
                     token,
                 );
                 InviteListItem::ShamirRecovery {
-                    addr,
+                    addr: (addr.clone(), addr.to_http_redirection_url()),
                     created_on,
                     created_by,
                     status,
@@ -1322,7 +1331,7 @@ pub enum ClientStartInvitationGreetError {
 
 pub async fn client_start_user_invitation_greet(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<UserGreetInitialInfo, ClientStartInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
@@ -1338,7 +1347,7 @@ pub async fn client_start_user_invitation_greet(
 
 pub async fn client_start_device_invitation_greet(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
@@ -1354,7 +1363,7 @@ pub async fn client_start_device_invitation_greet(
 
 pub async fn client_start_shamir_recovery_invitation_greet(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),

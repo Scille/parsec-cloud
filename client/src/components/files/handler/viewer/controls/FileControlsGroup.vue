@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="file-controls-group">
@@ -13,10 +13,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
   @include ms.responsive-breakpoint('sm') {
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 </style>

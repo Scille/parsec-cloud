@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -10,13 +10,13 @@ use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidMani
 use libparsec_platform_storage::workspace::UpdateManifestData;
 
 use super::per_manifest_update_lock::ManifestUpdateLockTakeOutcome;
+use super::{PathConfinementPoint, ResolvePathError};
 use super::{
     cache::{
-        populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+        PopulateCacheFromLocalStorageOrServerError, populate_cache_from_local_storage_or_server,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
 };
-use super::{PathConfinementPoint, ResolvePathError};
 
 pub(super) type UpdateFolderManifestError = super::WorkspaceStoreOperationError;
 
@@ -32,6 +32,8 @@ pub(crate) enum ForUpdateFolderError {
     EntryNotAFolder,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -94,7 +96,7 @@ pub(super) async fn for_update_folder(
         let update_guard = match outcome {
             LockForUpdateOutcome::GoToStep3(update_guard) => update_guard,
             LockForUpdateOutcome::GoToStep4((update_guard, manifest)) => {
-                break (update_guard, manifest)
+                break (update_guard, manifest);
             }
             LockForUpdateOutcome::WaitAndRetryStep1(listener) => {
                 maybe_need_wait = Some(listener);
@@ -114,6 +116,9 @@ pub(super) async fn for_update_folder(
                 }
                 PopulateCacheFromLocalStorageOrServerError::Stopped => {
                     ForUpdateFolderError::Stopped
+                }
+                PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                    ForUpdateFolderError::RealmDeleted
                 }
                 PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                     ForUpdateFolderError::EntryNotFound
@@ -181,6 +186,7 @@ pub async fn resolve_path_for_update_folder<'a>(
                 ResolvePathError::Stopped => ForUpdateFolderError::Stopped,
                 ResolvePathError::EntryNotFound => ForUpdateFolderError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => ForUpdateFolderError::NoRealmAccess,
+                ResolvePathError::RealmDeleted => ForUpdateFolderError::RealmDeleted,
                 ResolvePathError::InvalidKeysBundle(err) => {
                     ForUpdateFolderError::InvalidKeysBundle(err)
                 }

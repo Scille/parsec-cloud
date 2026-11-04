@@ -11,8 +11,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy,
-    ProxyConfig, WorkspaceStorageCacheSize,
+    AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy, ProxyConfig,
+    WorkspaceStorageCacheSize, claimer_retrieve_info,
 };
 
 #[parsec_test(testbed = "minimal")]
@@ -21,7 +21,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         env.server_addr.clone(),
         env.organization_id.clone(),
         libparsec_types::InvitationType::User,
-        InvitationToken::default(),
+        AccessToken::default(),
     );
 
     let config = Arc::new(ClientConfig {
@@ -344,7 +344,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let new_local_device = ctx.new_local_device.clone();
     let key_file = tmp_path.join("device.keys");
     let password: Password = "P@ssw0rd.".to_string().into();
-    let strategy = DeviceSaveStrategy::Password { password };
+    let strategy = DeviceSaveStrategy::new_password(password);
     let available_device = ctx.save_local_device(&strategy, &key_file).await.unwrap();
 
     p_assert_eq!(available_device.key_file_path, tmp_path.join("device.keys"));

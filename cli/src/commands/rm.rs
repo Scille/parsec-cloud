@@ -1,18 +1,21 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 use libparsec::FsPath;
 
 use crate::utils::StartedClient;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = config_dir, device, workspace]
     pub struct Args {
         /// Path to remove
+        #[arg(value_hint = clap::ValueHint::FilePath)]
         path: FsPath,
     }
 );
 
 crate::build_main_with_client!(main, rm);
 
-pub async fn rm(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn rm(_ui: crate::Ui, args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let Args {
         workspace, path, ..
     } = args;

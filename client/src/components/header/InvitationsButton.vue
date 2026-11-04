@@ -1,44 +1,22 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-button
     v-show="invitations.length > 0"
     @click="openInvitationsMenu($event)"
     id="invitations-button"
-    class="button-medium"
-    :class="{
-      unread: invitations,
-      'gradient-button': isGradientButton,
-    }"
+    fill="outline"
+    :class="{ unread: invitations.length > 0 }"
+    slot="icon-only"
   >
-    <span
-      v-if="isLargeDisplay"
-      class="button-text"
-    >
-      {{ $msTranslate({ key: 'HeaderPage.invitations.title', data: { count: invitations.length }, count: invitations.length }) }}
-    </span>
-    <ion-text
-      v-if="isGradientButton"
-      :class="{ 'gradient-button-text': isGradientButton }"
-    >
-      <span class="title-h2">{{ invitations.length }}</span>
-      <span class="button-large">
-        {{ $msTranslate({ key: 'HeaderPage.invitations.smallDisplayTitle', data: { count: invitations.length } }) }}
-      </span>
-    </ion-text>
     <span
       class="unread-count"
       :class="{ 'unread-count--more': invitations.length > 99 }"
-      v-if="invitations.length > 0 && !isGradientButton && windowWidth < WindowSizeBreakpoints.LG"
+      v-if="invitations.length > 0"
     >
       {{ invitations.length > 99 ? '99+' : invitations.length }}
     </span>
     <ion-icon
-      v-if="!isGradientButton"
-      :icon="mail"
-    />
-    <ion-icon
-      v-else
       :icon="mailUnread"
       class="gradient-button-icon"
     />
@@ -54,23 +32,19 @@ import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import { IonButton, IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
-import { mail, mailUnread } from 'ionicons/icons';
-import { Answer, MsModalResult, WindowSizeBreakpoints, askQuestion, useWindowSize } from 'megashark-lib';
+import { IonButton, IonIcon, modalController, popoverController } from '@ionic/vue';
+import { mailUnread } from 'ionicons/icons';
+import { Answer, MsModalResult, askQuestion, useWindowSize } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
-const { isLargeDisplay, windowWidth } = useWindowSize();
-
-defineProps<{
-  isGradientButton?: boolean;
-}>();
+const { isLargeDisplay } = useWindowSize();
 
 onMounted(async () => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
+  eventCbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated], async (event: Events, _data?: EventData) => {
     if (event === Events.InvitationUpdated) {
       await updateInvitations();
     }
@@ -80,7 +54,7 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
+    await eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -103,7 +77,7 @@ async function openInvitationsMenu(event: Event): Promise<void> {
       cssClass: 'invitations-list-popover',
       showBackdrop: false,
       componentProps: {
-        informationManager: informationManager,
+        informationManager: informationManager.value,
       },
     });
     await popover.present();
@@ -120,7 +94,7 @@ async function openInvitationsMenu(event: Event): Promise<void> {
       expandToScroll: false,
       initialBreakpoint: isLargeDisplay.value ? undefined : 0.5,
       componentProps: {
-        informationManager: informationManager,
+        informationManager: informationManager.value,
       },
     });
     await modal.present();
@@ -156,7 +130,7 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
   const result = await cancelInvitation(invitation.token);
 
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'UsersPage.invitation.cancelSuccess',
         level: InformationLevel.Success,
@@ -175,7 +149,7 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
     ) {
       await updateInvitations();
     } else {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: 'UsersPage.invitation.cancelFailed',
           level: InformationLevel.Error,
@@ -199,7 +173,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       invitation: invitation,
-      informationManager: informationManager,
+      informationManager: informationManager.value,
     },
   });
   await modal.present();
@@ -210,31 +184,9 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-#invitations-button:not(.gradient-button) {
+#invitations-button {
+  @include ms.font('label-md-medium');
   overflow: visible;
-  --background: var(--parsec-color-light-primary-50);
-  --color: var(--parsec-color-light-primary-500);
-
-  &::part(native) {
-    --background-hover: none;
-    padding: 0.625rem;
-    transition: all 150ms ease-in-out;
-    border-radius: var(--parsec-radius-12);
-
-    &:hover {
-      --background: var(--parsec-color-light-primary-100);
-      color: var(--parsec-color-light-primary-700);
-    }
-  }
-
-  ion-icon {
-    font-size: 1.375rem;
-    margin-left: 0.5rem;
-
-    @include ms.responsive-breakpoint('lg') {
-      margin-left: 0;
-    }
-  }
 
   .button-text {
     @include ms.responsive-breakpoint('lg') {
@@ -245,76 +197,42 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
   &.unread {
     position: relative;
 
-    &::after {
-      content: '';
-      position: absolute;
-      right: 6px;
-      top: 5px;
-      width: 0.625rem;
-      height: 0.625rem;
-      background: var(--parsec-color-light-danger-500);
-      border: 2px solid var(--parsec-color-light-primary-50);
-      border-radius: var(--parsec-radius-12);
-    }
-
-    @include ms.responsive-breakpoint('lg') {
-      &::after {
-        content: none;
-      }
-    }
-
     .unread-count {
       position: absolute;
-      right: -8px;
+      z-index: 3;
+      right: -5px;
       top: -8px;
-      padding-inline: 2px;
-      min-width: 1.125rem;
+      padding-inline: ms.spacing('padding-xs');
       width: fit-content;
-      height: 1.125rem;
+      min-width: 1rem;
+      height: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
       font-weight: 600;
-      color: var(--parsec-color-light-secondary-white);
-      background: var(--parsec-color-light-danger-500);
-      border: 2px solid var(--parsec-color-light-primary-50);
-      border-radius: var(--parsec-radius-12);
-      z-index: 2;
+      color: ms.color('text-on-color-label');
+      background: ms.color('surface-error-default');
+      border-radius: ms.radius('2xl');
+
+      @include ms.responsive-breakpoint('sm') {
+        left: 12px;
+        right: auto;
+        border-color: ms.color('border-base-on-color');
+      }
 
       &--more {
         font-size: 10px;
         right: -10px;
+        justify-content: end;
       }
     }
   }
-}
 
-.gradient-button {
-  position: relative;
-
-  &::part(native) {
-    --background: var(--parsec-color-light-gradient-background);
-    --background-hover: var(--parsec-color-light-primary-600);
-    --color: var(--parsec-color-light-secondary-white);
-    justify-content: flex-start;
-    text-align: start;
-    padding: 0.75rem 1rem;
-  }
-
-  &-text {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    text-wrap: auto;
-  }
-
-  &-icon {
-    font-size: 3.25rem;
-    color: var(--parsec-color-light-secondary-white);
-    position: absolute;
-    right: -1.5rem;
-    opacity: 0.2;
+  @include ms.responsive-breakpoint('sm') {
+    &::part(native) {
+      overflow: visible;
+    }
   }
 }
 </style>

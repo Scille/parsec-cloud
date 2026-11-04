@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 export async function takeScreenshot(): Promise<Blob | undefined> {
   let track: MediaStreamTrack | undefined;
@@ -28,7 +28,7 @@ export async function takeScreenshot(): Promise<Blob | undefined> {
       );
     });
   } catch (e: any) {
-    window.electronAPI.log('error', `Could not take a screenshot: ${e.toString()}`);
+    window.nativeAPI.log('error', `Could not take a screenshot: ${e.toString()}`);
   } finally {
     if (track) {
       track.stop();

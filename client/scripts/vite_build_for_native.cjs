@@ -12,6 +12,11 @@ if (platform === 'win32') {
 }
 const cmdArgs = ['exec', '--', 'vite', 'build', ...process.argv.slice(2)];
 
+if (process.env.SKIP_VITE_BUILD_FOR_NATIVE !== undefined) {
+  console.log('SKIP_VITE_BUILD_FOR_NATIVE is set, skipping `', cmdPrefix, cmdArgs.join(' '), '`');
+  exit(0);
+}
+
 console.log('>>> ', cmdPrefix, cmdArgs.join(' '));
 const ret = spawnSync(cmdPrefix, cmdArgs, {
   stdio: ['inherit', 'inherit', 'inherit'],

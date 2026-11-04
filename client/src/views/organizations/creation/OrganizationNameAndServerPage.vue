@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="organization-name-and-server-page page-modal-container">
@@ -19,7 +19,7 @@
           ref="organizationNameInput"
           :validator="organizationValidator"
         />
-        <ion-text class="subtitles-sm org-name-criteria">
+        <ion-text class="org-name-criteria">
           {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
         </ion-text>
       </div>
@@ -41,7 +41,7 @@
 
       <!-- error -->
       <ion-text
-        class="form-error body login-button-error"
+        class="form-error login-button-error"
         v-show="error"
       >
         <ion-icon
@@ -53,7 +53,7 @@
     <ion-footer class="organization-name-and-server-page-footer">
       <ion-text
         button
-        class="advanced-settings button-medium"
+        class="advanced-settings"
         @click="advancedSettings = !advancedSettings"
       >
         <ion-icon :icon="advancedSettings ? remove : add" />
@@ -63,32 +63,33 @@
         <ion-button
           fill="clear"
           size="default"
-          class="button-medium"
           id="previous-button"
           @click="$emit('goBackRequested')"
           v-show="!hidePrevious"
         >
-          {{ $msTranslate('CreateOrganization.button.previous') }}
           <ion-icon
-            slot="start"
+            class="button-icon-left"
             :icon="chevronBack"
-            size="small"
           />
+          {{ $msTranslate('CreateOrganization.button.previous') }}
         </ion-button>
         <ion-button
           fill="solid"
           size="default"
-          class="button-medium"
           @click="$emit('organizationNameAndServerChosen', organizationName, serverAddr, sequesterKeyInputRef?.getKey())"
-          :disabled="!valid"
+          :disabled="!valid || querying"
         >
           <span>
             {{ $msTranslate('CreateOrganization.button.next') }}
           </span>
           <ion-icon
-            slot="start"
+            class="button-icon-right"
             :icon="chevronForward"
-            size="small"
+          />
+          <ms-spinner
+            class="confirm-button-spinner"
+            v-show="querying"
+            :size="14"
           />
         </ion-button>
       </div>
@@ -103,7 +104,7 @@ import SequesterKeyInput from '@/components/organizations/SequesterKeyInput.vue'
 import { OrganizationID } from '@/parsec';
 import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { add, chevronBack, chevronForward, remove, warning } from 'ionicons/icons';
-import { MsInput, Translatable, Validity } from 'megashark-lib';
+import { MsInput, MsSpinner, Translatable, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
@@ -113,6 +114,7 @@ const props = defineProps<{
   disableOrganizationNameField?: boolean;
   error?: Translatable;
   hidePrevious?: boolean;
+  querying?: boolean;
 }>();
 
 defineEmits<{
@@ -127,6 +129,7 @@ const sequesterKeyInputRef = useTemplateRef<InstanceType<typeof SequesterKeyInpu
 const organizationName = ref<OrganizationID>(props.organizationName ?? '');
 const serverAddr = ref<string>(props.serverAddr ?? '');
 const advancedSettings = ref<boolean>(false);
+
 const valid = computed(() => {
   return (
     organizationNameInputRef.value &&
@@ -138,8 +141,11 @@ const valid = computed(() => {
 });
 
 onMounted(async () => {
-  if (organizationNameInputRef.value && organizationName.value) {
-    await organizationNameInputRef.value.validate(organizationName.value);
+  if (organizationNameInputRef.value) {
+    if (organizationName.value) {
+      await organizationNameInputRef.value.validate(organizationName.value);
+    }
+    organizationNameInputRef.value.setFocus();
   }
   if (serverAddrInputRef.value && serverAddr.value) {
     await serverAddrInputRef.value.validate(serverAddr.value);
@@ -154,35 +160,41 @@ onMounted(async () => {
   height: 100%;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.5rem 2rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('xs') {
-    padding: 0.5rem 1.5rem;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-4xl');
   }
 }
 
 .organization-name {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   width: 100%;
   margin-bottom: 1.5rem;
 }
 
-#server-addr-input {
-  margin-bottom: 1.5rem;
+.login-button-error {
+  @include ms.font('body-md-regular');
 }
 
 .org-name-criteria {
-  color: var(--parsec-color-light-secondary-hard-grey);
+  @include ms.font('body-md-medium');
+  color: ms.color('text-base-description');
+}
+
+.confirm-button-spinner {
+  margin-left: 0.5rem;
 }
 
 .advanced-settings {
+  @include ms.font('label-md-medium');
   display: flex;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
   margin-right: auto;
-  color: var(--parsec-color-light-secondary-hard-grey);
+  color: ms.color('text-base-description');
   cursor: pointer;
 
   @include ms.responsive-breakpoint('sm') {

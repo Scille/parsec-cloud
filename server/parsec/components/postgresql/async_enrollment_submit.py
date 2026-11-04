@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -191,10 +192,10 @@ async def async_enrollment_submit(
     submit_payload: bytes,
     submit_payload_signature: AsyncEnrollmentPayloadSignature,
 ) -> (
-    None
-    | AsyncEnrollmentSubmitValidateBadOutcome
+    AsyncEnrollmentSubmitValidateBadOutcome
     | AsyncEnrollmentEmailAlreadySubmitted
     | AsyncEnrollmentSubmitBadOutcome
+    | None
 ):
     # 1) Validate payload
 

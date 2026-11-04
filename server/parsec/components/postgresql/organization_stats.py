@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -46,7 +47,7 @@ my_realms AS (
     FROM realm
     INNER JOIN my_org
         ON realm.organization = my_org._id
-    WHERE realm.created_on <= $at
+    WHERE realm.status != 'DELETED' AND realm.created_on <= $at
 )
 
 SELECT

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{
     any::Any,
@@ -7,7 +7,7 @@ use std::{
 };
 
 use libparsec_platform_async::event::{Event, EventListener};
-use libparsec_testbed::{test_get_testbed_component_store, TestbedEnv};
+use libparsec_testbed::{TestbedEnv, test_get_testbed_component_store};
 use libparsec_types::prelude::*;
 
 use crate::TryLockDeviceForUseError;

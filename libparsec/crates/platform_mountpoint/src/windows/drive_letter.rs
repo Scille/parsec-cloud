@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // The drive letters that parsec can use for mounting workspaces, sorted by priority.
 // For instance, if a device has 3 workspaces, they will preferably be mounted on

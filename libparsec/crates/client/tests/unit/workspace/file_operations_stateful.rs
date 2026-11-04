@@ -2,7 +2,7 @@
 
 use proptest::prelude::*;
 use proptest::test_runner::Config;
-use proptest_state_machine::{prop_state_machine, ReferenceStateMachine, StateMachineTest};
+use proptest_state_machine::{ReferenceStateMachine, StateMachineTest, prop_state_machine};
 use std::collections::HashSet;
 use std::io::Seek;
 use std::io::{Cursor, Read, SeekFrom, Write};

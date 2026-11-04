@@ -1,0 +1,496 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
+
+<template>
+  <ion-page class="join-async-modal">
+    <ms-modal
+      :title="{ key: 'HomePage.organizationRequest.asyncEnrollmentModal.title', data: { organization: addr.organizationId } }"
+      :close-button="{ visible: true }"
+      :confirm-button="{
+        disabled: !nextButtonEnabled,
+        label: 'HomePage.organizationRequest.asyncEnrollmentModal.buttons.next',
+        onClick: onNextButtonClicked,
+        queryingSpinner: sendingRequest,
+      }"
+      :cancel-button="{
+        label: previousButton.label,
+        disabled: previousButton.disabled,
+        onClick: onPreviousClicked,
+      }"
+    >
+      <div class="modal-content">
+        <div
+          v-if="state === JoinRequestState.ChooseMethod"
+          class="choose-method"
+        >
+          <ion-text class="choose-method-text">
+            {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.chooseMethod') }}
+          </ion-text>
+          <div class="choose-method-options">
+            <ion-text
+              @click="method = SubmitAsyncEnrollmentIdentityStrategyTag.PKI"
+              v-if="pkiAvailable"
+              class="choose-method-options-item"
+              :class="{ selected: method === SubmitAsyncEnrollmentIdentityStrategyTag.PKI }"
+            >
+              <span class="choose-method-options-item__label">{{
+                $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.label')
+              }}</span>
+              <ion-icon
+                class="choose-method-options-item__icon"
+                v-if="method === SubmitAsyncEnrollmentIdentityStrategyTag.PKI"
+                :icon="checkmarkCircle"
+              />
+            </ion-text>
+            <ion-text
+              @click="method = SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao"
+              v-if="serverConfig && serverConfig.openbao && serverConfig.openbao.auths.length > 0"
+              class="choose-method-options-item"
+              :class="{ selected: method === SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao }"
+            >
+              <span class="choose-method-options-item__label">{{
+                $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.label')
+              }}</span>
+              <ion-icon
+                v-if="method === SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao"
+                :icon="checkmarkCircle"
+              />
+            </ion-text>
+          </div>
+        </div>
+        <div
+          v-if="state === JoinRequestState.MethodPKI"
+          class="modal-info"
+        >
+          <div class="async-authentication-modal-header">
+            <ms-image
+              :image="CertificateIcon"
+              alt="Certificate Icon"
+              class="async-authentication-modal-header__icon"
+            />
+            <div class="async-authentication-modal-header-text">
+              <ion-text class="async-authentication-modal-header-text__title">
+                {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.title') }}
+              </ion-text>
+              <ion-text class="async-authentication-modal-header-text__description">
+                {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.description') }}
+              </ion-text>
+            </div>
+          </div>
+          <certificate-selection
+            :purpose="CertificatePurpose.Both"
+            @certificate-selected="selectedCert = $event"
+          />
+        </div>
+        <div v-if="state === JoinRequestState.MethodSSO && serverConfig?.openbao">
+          <div
+            class="modal-info modal-info-sso"
+            v-if="!openBaoClient"
+          >
+            <div class="async-authentication-modal-header">
+              <ms-image
+                :image="CertificateIcon"
+                alt="Certificate Icon"
+                class="async-authentication-modal-header__icon"
+              />
+              <div class="async-authentication-modal-header-text">
+                <ion-text class="async-authentication-modal-header-text__title">
+                  {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.title') }}
+                </ion-text>
+              </div>
+            </div>
+            <connect-sso
+              class="async-authentication-modal-sso"
+              :server-config="serverConfig"
+              @open-bao-connected="onOpenBaoConnected"
+            />
+          </div>
+          <div
+            class="user-information"
+            v-if="openBaoClient && openBaoEmails?.at(0)"
+          >
+            <div class="user-information-header">
+              <ion-text class="user-information-header__title">
+                {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.join') }}
+              </ion-text>
+              <div class="user-information-header-connected">
+                <ion-icon
+                  :icon="checkmarkCircle"
+                  class="user-information-header-connected__icon"
+                />
+                <ion-text class="user-information-header-connected__label">
+                  {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.connected') }}
+                </ion-text>
+              </div>
+            </div>
+            <ms-input
+              label="CreateOrganization.fullname"
+              placeholder="CreateOrganization.fullnamePlaceholder"
+              name="fullname"
+              v-model="fullName"
+              :validator="userNameValidator"
+            />
+            <ms-dropdown
+              title="CreateOrganization.email"
+              :options="openBaoEmails"
+              :default-option-key="openBaoEmails.at(0)?.key"
+              @change="email = $event.option.key"
+            />
+          </div>
+          <ms-report-text
+            v-if="openBaoClient && !openBaoEmails?.at(0)"
+            :theme="MsReportTheme.Warning"
+          >
+            {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.noEmail') }}
+          </ms-report-text>
+        </div>
+        <ms-report-text
+          v-if="error"
+          :theme="MsReportTheme.Error"
+        >
+          {{ $msTranslate(error) }}
+        </ms-report-text>
+      </div>
+    </ms-modal>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import CertificateIcon from '@/assets/images/certificate-icon.svg?raw';
+import { userNameValidator } from '@/common/validators';
+import ConnectSso from '@/components/devices/ConnectSso.vue';
+import CertificateSelection from '@/components/misc/CertificateSelection.vue';
+import {
+  CertificatePurpose,
+  CertificateWithDetailsValid,
+  closeCertificate,
+  getOpenBaoEmails,
+  makeRequestOpenBaoIdentityStrategy,
+  makeRequestPkiIdentityStrategy,
+  openCertificate,
+  ParsecAsyncEnrollmentAddr,
+  ParsedParsecAddrAsyncEnrollment,
+  requestJoinOrganization,
+  ServerConfig,
+  SubmitAsyncEnrollmentErrorTag,
+  SubmitAsyncEnrollmentIdentityStrategyTag,
+} from '@/parsec';
+import { OpenBaoClient } from '@/services/openBao';
+import { IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
+import {
+  I18n,
+  MsDropdown,
+  MsImage,
+  MsInput,
+  MsModal,
+  MsModalResult,
+  MsOptions,
+  MsReportText,
+  MsReportTheme,
+  Translatable,
+} from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
+
+enum JoinRequestState {
+  ChooseMethod = 'choose-method',
+  MethodPKI = 'method-pki',
+  MethodSSO = 'method-sso',
+}
+
+const props = defineProps<{
+  link: ParsecAsyncEnrollmentAddr;
+  addr: ParsedParsecAddrAsyncEnrollment;
+  serverConfig?: ServerConfig;
+  pkiAvailable?: boolean;
+}>();
+
+const selectedCert = ref<CertificateWithDetailsValid | undefined>(undefined);
+const sendingRequest = ref(false);
+const error = ref('');
+const state = ref<JoinRequestState>(JoinRequestState.ChooseMethod);
+const method = ref<SubmitAsyncEnrollmentIdentityStrategyTag | undefined>(undefined);
+const openBaoClient = ref<OpenBaoClient | undefined>(undefined);
+const openBaoEmails = ref<MsOptions | undefined>(undefined);
+const fullName = ref<string>('');
+const email = ref<string>('');
+
+const nextButtonEnabled = computed(() => {
+  if (state.value === JoinRequestState.ChooseMethod && method.value !== undefined) {
+    return true;
+  }
+  if (state.value === JoinRequestState.MethodPKI && selectedCert.value) {
+    return true;
+  }
+  if (state.value === JoinRequestState.MethodSSO && openBaoClient.value && fullName.value && email.value) {
+    return true;
+  }
+  return false;
+});
+
+const multipleMethodsAvailable = computed((): boolean => {
+  return Boolean(props.pkiAvailable && props.serverConfig?.openbao && props.serverConfig.openbao.auths.length > 0);
+});
+
+const previousButton = computed((): { label: Translatable; disabled: boolean } => {
+  if (state.value === JoinRequestState.ChooseMethod) {
+    return { label: 'HomePage.organizationRequest.asyncEnrollmentModal.buttons.cancel', disabled: false };
+  }
+  if (!multipleMethodsAvailable.value) {
+    return { label: 'HomePage.organizationRequest.asyncEnrollmentModal.buttons.cancel', disabled: false };
+  }
+  return { label: 'HomePage.organizationRequest.asyncEnrollmentModal.buttons.previous', disabled: false };
+});
+
+onMounted(async () => {
+  if ((!props.serverConfig || !props.serverConfig.openbao || !props.serverConfig.openbao.auths.length) && !props.pkiAvailable) {
+    throw new Error('No PKI and no openBao available');
+  }
+  if (!multipleMethodsAvailable.value) {
+    if (props.pkiAvailable) {
+      method.value = SubmitAsyncEnrollmentIdentityStrategyTag.PKI;
+      state.value = JoinRequestState.MethodPKI;
+    } else {
+      method.value = SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao;
+      state.value = JoinRequestState.MethodSSO;
+    }
+  }
+});
+
+async function onOpenBaoConnected(client: OpenBaoClient) {
+  openBaoClient.value = client;
+  const emailsResult = await getOpenBaoEmails(client);
+  if (!emailsResult.ok) {
+    error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.failedToGetEmailsFromOpenBao';
+    return;
+  }
+  openBaoEmails.value = new MsOptions(
+    emailsResult.value.map((email) => {
+      return { key: email, label: I18n.valueAsTranslatable(email) };
+    }),
+  );
+  email.value = emailsResult.value[0] ?? '';
+}
+
+async function onNextButtonClicked(): Promise<boolean> {
+  if (state.value === JoinRequestState.ChooseMethod && method.value) {
+    if (method.value === SubmitAsyncEnrollmentIdentityStrategyTag.PKI) {
+      state.value = JoinRequestState.MethodPKI;
+    } else {
+      state.value = JoinRequestState.MethodSSO;
+    }
+  } else if (state.value === JoinRequestState.MethodPKI) {
+    if (!selectedCert.value?.signCert || !selectedCert.value?.encryptCert) {
+      window.nativeAPI.log('error', 'Invalid state for async enrollment with PKI');
+      return false;
+    }
+    const signCertResult = await openCertificate(selectedCert.value.signCert.reference);
+    if (!signCertResult.ok) {
+      error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.problemWithRequestCertificate';
+      return false;
+    }
+    const encryptCertResult = await openCertificate(selectedCert.value.encryptCert.reference);
+    if (!encryptCertResult.ok) {
+      await closeCertificate(signCertResult.value);
+      error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.problemWithRequestCertificate';
+      return false;
+    }
+    const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(signCertResult.value, encryptCertResult.value));
+    await closeCertificate(signCertResult.value);
+    await closeCertificate(encryptCertResult.value);
+    if (!result.ok) {
+      switch (result.error.tag) {
+        case SubmitAsyncEnrollmentErrorTag.EmailAlreadyEnrolled: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.existingEmail';
+          break;
+        }
+        case SubmitAsyncEnrollmentErrorTag.PKICannotOpenCertificateStore:
+        case SubmitAsyncEnrollmentErrorTag.PKIServerInvalidX509Trustchain:
+        case SubmitAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.problemWithRequestCertificate';
+          break;
+        }
+        case SubmitAsyncEnrollmentErrorTag.Offline: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.offline';
+          break;
+        }
+        default: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.failedToJoinWithPKI';
+          break;
+        }
+      }
+      return false;
+    }
+    return modalController.dismiss(null, MsModalResult.Confirm);
+  } else if (state.value === JoinRequestState.MethodSSO) {
+    if (!fullName.value || !email.value || !openBaoClient.value) {
+      window.nativeAPI.log('error', 'Invalid state for async enrollment with OpenBao');
+      return false;
+    }
+    const result = await requestJoinOrganization(
+      props.link,
+      makeRequestOpenBaoIdentityStrategy(openBaoClient.value, { label: fullName.value, email: email.value }),
+    );
+    if (!result.ok) {
+      switch (result.error.tag) {
+        case SubmitAsyncEnrollmentErrorTag.EmailAlreadyEnrolled: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.existingEmail';
+          break;
+        }
+        case SubmitAsyncEnrollmentErrorTag.OpenBaoBadServerResponse:
+        case SubmitAsyncEnrollmentErrorTag.OpenBaoBadURL:
+        case SubmitAsyncEnrollmentErrorTag.OpenBaoNoServerResponse: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.couldNotContactServer';
+          break;
+        }
+        case SubmitAsyncEnrollmentErrorTag.Offline: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.offline';
+          break;
+        }
+        default: {
+          error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.failedToJoinWithOpenBao';
+          break;
+        }
+      }
+      return false;
+    }
+    return modalController.dismiss(null, MsModalResult.Confirm);
+  } else {
+    window.nativeAPI.log('error', 'Invalid state for async enrollment modal');
+    return false;
+  }
+  return true;
+}
+
+async function onPreviousClicked(): Promise<boolean> {
+  if (state.value === JoinRequestState.ChooseMethod || !multipleMethodsAvailable.value) {
+    return modalController.dismiss(null, MsModalResult.Cancel);
+  } else {
+    state.value = JoinRequestState.ChooseMethod;
+    openBaoClient.value = undefined;
+    selectedCert.value = undefined;
+    return false;
+  }
+}
+</script>
+
+<style scoped lang="scss">
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-4xl');
+}
+
+.choose-method {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-3xl');
+
+  &-text {
+    @include ms.font('body-lg-medium');
+
+    color: ms.color('text-base-description');
+  }
+
+  &-options {
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-3xl');
+
+    &-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: ms.spacing('padding-3xl');
+      color: ms.color('text-base-description');
+      border: ms.border('thin') solid ms.color('border-base-default');
+      border-radius: ms.radius('2xl');
+      cursor: pointer;
+      user-select: none;
+      transition:
+        background-color 0.2s,
+        border-color 0.2s;
+
+      &:hover {
+        background-color: ms.color('surface-neutral-default-subtle-hover');
+        border-color: ms.color('border-base-default-hover');
+      }
+
+      &__label {
+        @include ms.font('heading-h5');
+      }
+
+      &__icon {
+        font-size: 1.125rem;
+        color: ms.color('icon-brand-default');
+      }
+
+      &.selected {
+        background-color: ms.color('surface-brand-default-subtle');
+        border-color: ms.color('border-brand-default');
+        color: ms.color('text-brand-default');
+      }
+    }
+  }
+}
+
+.modal-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  gap: ms.spacing('gap-3xl');
+
+  &-sso {
+    .async-authentication-modal-header {
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+.user-information {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-3xl');
+  width: 100%;
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-lg');
+    width: 100%;
+    padding: ms.spacing('padding-3xl');
+    color: ms.color('text-base-description');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl');
+    background: ms.color('surface-base-page');
+    box-shadow: ms.shadow('input');
+    margin-bottom: 1rem;
+
+    &__title {
+      @include ms.font('heading-h5');
+
+      color: ms.color('text-brand-default');
+    }
+
+    &-connected {
+      @include ms.font('heading-h5');
+
+      display: flex;
+      align-items: center;
+      gap: ms.spacing('gap-lg');
+
+      &__icon {
+        font-size: 1.125rem;
+        color: ms.color('icon-success-default');
+      }
+
+      &__label {
+        @include ms.font('body-lg-medium');
+
+        color: ms.color('text-base-body');
+      }
+    }
+  }
+}
+</style>

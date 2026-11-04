@@ -3,11 +3,11 @@
 from typing import override
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     DateTime,
     DeviceID,
     EmailAddress,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     SecretKey,
@@ -200,7 +200,7 @@ class PGAuthComponent(BaseAuthComponent):
                     id=organization_id,
                     active_users_limit=self._config.organization_initial_active_users_limit,
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
-                    minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
+                    realm_minimum_archiving_period_before_deletion=self._config.organization_initial_realm_deletion_min_archiving_period,
                     tos_per_locale_urls=self._config.organization_initial_tos,
                     bootstrap_token=None,
                 )
@@ -245,7 +245,7 @@ class PGAuthComponent(BaseAuthComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         row = await conn.fetchrow(
             *_q_invited_get_info(organization_id=organization_id.str, token=token.hex)

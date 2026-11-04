@@ -1,62 +1,44 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import * as monaco from 'monaco-editor';
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-import jsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import MonacoEditorWorker from 'monaco-editor/editor/editor.worker?worker';
+import MonacoCssWorker from 'monaco-editor/language/css/css.worker?worker';
+import MonacoHtmlWorker from 'monaco-editor/language/html/html.worker?worker';
+import MonacoJsonWorker from 'monaco-editor/language/json/json.worker?worker';
+import MonacoTsWorker from 'monaco-editor/language/typescript/ts.worker?worker';
 import * as pdfjs from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
 
 async function _initPdf(): Promise<void> {
+  window.nativeAPI.log('info', 'Init PDF worker');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 }
 
-async function _initText(): Promise<void> {
-  /* MsTheme: Monaco editor custom theme */
-  monaco.editor.defineTheme('msEditorTheme', {
-    base: 'vs',
-    inherit: true,
-    rules: [],
-    colors: {
-      'editor.foreground': '#000000',
-      'editor.background': '#ffffff',
-      'editorCursor.foreground': '#0058cc',
-      'editor.lineHighlightBackground': '#f3f3f7',
-      'editorLineNumber.foreground': '#0058cc',
-      'editor.selectionBackground': '#99c5ff',
-      'editor.inactiveSelectionBackground': '#88000015',
-      'scrollbar.shadow': '#f3f3f7',
-      'scrollbarSlider.background': '#cce2ff',
-      'scrollbarSlider.hoverBackground': '#99c5ff',
-      'scrollbarSlider.activeBackground': '#66a8ff',
-    },
-  });
+async function _initMonaco(): Promise<void> {
+  window.nativeAPI.log('info', 'Init Monaco worker');
   self.MonacoEnvironment = {
-    getWorker: function (_workerId, label): Worker {
+    getWorker: function (_workerId: string, label: string) {
       switch (label) {
         case 'json':
-          return new jsonWorker();
+          return new MonacoJsonWorker();
         case 'css':
         case 'scss':
         case 'less':
-          return new cssWorker();
+          return new MonacoCssWorker();
         case 'html':
         case 'handlebars':
         case 'razor':
-          return new htmlWorker();
+          return new MonacoHtmlWorker();
         case 'typescript':
         case 'javascript':
-          return new jsWorker();
+          return new MonacoTsWorker();
         default:
-          return new editorWorker();
+          return new MonacoEditorWorker();
       }
     },
   };
 }
 
 export async function initViewers(): Promise<void> {
-  await _initPdf();
-  await _initText();
+  _initPdf();
+  _initMonaco();
 }

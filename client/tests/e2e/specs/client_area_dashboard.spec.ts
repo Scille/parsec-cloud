@@ -31,7 +31,7 @@ msTest('Test dashboard', async ({ clientArea }) => {
     /^€[\d.,]+$/,
     /^(Paid|In progress|To pay)\s*Download$/,
   ]);
-  const paymentButton = clientArea.locator('.payment-container').locator('.custom-button');
+  const paymentButton = clientArea.locator('.payment-container').locator('.payment-update-button');
   await expect(paymentButton).toHaveText('Update');
   await paymentButton.click();
   await expect(title).toHaveText('Payment methods');
@@ -49,5 +49,5 @@ msTest('Test sidebar goto org', async ({ clientArea }) => {
   await expect(gotoButton).toBeVisible();
   await gotoButton.click();
   await expect(clientArea).toBeHomePage();
-  await expect(clientArea).toHaveURL('/home?bmsOrganizationId=BlackMesa');
+  await expect(clientArea).toShowToast('Could not find the organization BlackMesa on this device.', 'Error');
 });

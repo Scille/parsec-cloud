@@ -1,10 +1,10 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="login-popup">
     <!-- login -->
     <div class="login-header">
-      <ion-text class="login-header__title title-h1">
+      <ion-text class="login-header__title">
         {{ $msTranslate('HomePage.organizationLogin.login') }}
       </ion-text>
     </div>
@@ -33,25 +33,49 @@
             @on-enter-keyup="onLoginClick()"
             id="password-input"
             @change="onPasswordChange"
-            :error-message="errorMessage"
             :password-is-invalid="passwordIsInvalid"
           />
           <ion-button
             fill="clear"
             @click="$emit('forgottenPasswordClick', device)"
             id="forgotten-password-button"
-            class="button-medium"
+            class="link"
           >
             {{ $msTranslate('HomePage.organizationLogin.forgottenPassword') }}
           </ion-button>
         </div>
       </ion-card-content>
       <ion-footer class="login-card-footer">
-        <sso-provider-card
-          v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao"
-          :provider="(device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
-          @sso-selected="onLoginSSOClick"
-        />
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errorMessage"
+          class="error"
+        >
+          {{ $msTranslate(errorMessage) }}
+        </ms-report-text>
+        <div v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao">
+          <div
+            v-if="!loading && serverConfig?.openbao && serverConfig.openbao.auths.length > 0"
+            class="sso-provider-list"
+          >
+            <sso-provider-card
+              v-for="provider of serverConfig.openbao.auths"
+              :key="provider.id"
+              :provider="provider"
+              @sso-selected="onLoginSSOClick"
+            />
+          </div>
+          <div v-else-if="loading">
+            <ms-spinner />
+          </div>
+          <div v-else-if="!loading && !serverConfig">
+            {{ $msTranslate('Authentication.method.sso.serverConfigUnavailable') }}
+            <ion-button @click="refreshServerConfig">{{ $msTranslate('Authentication.method.sso.retry') }}</ion-button>
+          </div>
+          <div v-else>
+            {{ $msTranslate('Authentication.method.sso.unavailable') }}
+          </div>
+        </div>
         <ion-button
           v-else
           @click="onLoginClick"
@@ -76,20 +100,20 @@
 import { SsoProviderCard } from '@/components/devices';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import {
-  AccessStrategy,
   AvailableDevice,
-  AvailableDeviceTypeOpenBao,
   AvailableDeviceTypeTag,
   ClientStartError,
   ClientStartErrorTag,
-  DeviceAccessStrategyOpenBao,
-  DeviceAccessStrategyPassword,
+  constructAccessStrategy,
+  DeviceAccessStrategy,
   getServerConfig,
-  OpenBaoAuthConfigTag,
+  OpenBaoAuthConfig,
+  PrimaryProtectionStrategy,
+  ServerConfig,
 } from '@/parsec';
 import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
-import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
+import { MsInput, MsPasswordInput, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
@@ -98,45 +122,46 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'loginClick', device: AvailableDevice, access: DeviceAccessStrategyPassword | DeviceAccessStrategyOpenBao): void;
+  (e: 'loginClick', device: AvailableDevice, access: DeviceAccessStrategy): void;
   (e: 'forgottenPasswordClick', device: AvailableDevice): void;
 }>();
 
 const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 const password = ref('');
+const loading = ref(true);
 const errorMessage = ref('');
 const passwordIsInvalid = ref(false);
 const email = props.device.humanHandle.email;
 const isConnectWithSSO = ref(false);
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 onMounted(async () => {
   await passwordInputRef.value?.setFocus();
+  if (props.device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    await refreshServerConfig();
+  }
 });
 
-async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
-  if (props.loginInProgress) {
-    return;
+async function refreshServerConfig(): Promise<void> {
+  loading.value = true;
+  const result = await getServerConfig(props.device.serverAddr);
+  if (result.ok) {
+    serverConfig.value = result.value;
   }
-  const serverConfigResult = await getServerConfig(props.device.serverAddr);
+  loading.value = false;
+}
 
-  if (!serverConfigResult.ok || !serverConfigResult.value.openbao) {
-    errorMessage.value = 'Authentication.openBaoUnavailable';
-    window.electronAPI.log('error', 'OpenBao not available on this server');
-    return;
-  }
-  const provInfo = serverConfigResult.value.openbao.auths.find((v) => v.tag === provider);
-  if (!provInfo) {
-    errorMessage.value = 'Authentication.invalidOpenBaoData';
-    window.electronAPI.log('error', `Provider '${provider}' not handled by this server.`);
+async function onLoginSSOClick(provider: OpenBaoAuthConfig): Promise<void> {
+  if (props.loginInProgress || !serverConfig.value?.openbao) {
     return;
   }
 
   const connResult = await openBaoConnect(
-    serverConfigResult.value.openbao.serverUrl,
-    provInfo.tag,
-    provInfo.mountPath,
-    serverConfigResult.value.openbao.secret.mountPath,
-    serverConfigResult.value.openbao.transitMountPath,
+    serverConfig.value.openbao.serverUrl,
+    provider.id,
+    provider.mountPath,
+    serverConfig.value.openbao.secret.mountPath,
+    serverConfig.value.openbao.transitMountPath,
   );
 
   if (!connResult.ok) {
@@ -145,17 +170,21 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
     } else {
       errorMessage.value = 'Authentication.invalidOpenBaoData';
     }
-    window.electronAPI.log('error', `Failed to log in to openbao: ${JSON.stringify(connResult.error)}`);
+    window.nativeAPI.log('error', `Failed to log in to openbao: ${JSON.stringify(connResult.error)}`);
     return;
   } else {
     isConnectWithSSO.value = true;
   }
-  emits('loginClick', props.device, AccessStrategy.useOpenBao(props.device, connResult.value.getConnectionInfo()));
+  emits(
+    'loginClick',
+    props.device,
+    constructAccessStrategy(props.device, PrimaryProtectionStrategy.useOpenBao(connResult.value.getConnectionInfo())),
+  );
 }
 
 async function onLoginClick(): Promise<void> {
   if (!props.loginInProgress) {
-    emits('loginClick', props.device, AccessStrategy.usePassword(props.device, password.value));
+    emits('loginClick', props.device, constructAccessStrategy(props.device, PrimaryProtectionStrategy.usePassword(password.value)));
   }
 }
 
@@ -165,18 +194,18 @@ async function setLoginError(error: ClientStartError): Promise<void> {
       errorMessage.value = 'HomePage.organizationLogin.passwordError';
       break;
     case ClientStartErrorTag.LoadDeviceInvalidPath:
-      window.electronAPI.log('warn', error.error);
+      window.nativeAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.deviceNotFound';
       break;
     case ClientStartErrorTag.LoadDeviceInvalidData:
-      window.electronAPI.log('warn', error.error);
+      window.nativeAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.deviceInvalidData';
       break;
     case ClientStartErrorTag.DeviceUsedByAnotherProcess:
       errorMessage.value = 'HomePage.organizationLogin.deviceAlreadyUsed';
       break;
     case ClientStartErrorTag.Internal:
-      window.electronAPI.log('warn', error.error);
+      window.nativeAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.unknownError';
       break;
   }
@@ -196,13 +225,17 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
+.sso-provider-list {
+  width: 100%;
+}
+
 .login-popup {
   height: auto;
   width: 100%;
   max-width: 28rem;
-  margin: 2rem auto;
+  margin: ms.spacing('padding-5xl') auto;
   display: flex;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   flex-direction: column;
   align-items: center;
   box-shadow: none;
@@ -214,85 +247,84 @@ defineExpose({
   @include ms.responsive-breakpoint('sm') {
     margin: 0 auto;
   }
+}
 
-  .login-header__title {
-    background: var(--parsec-color-light-gradient-background);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.login-header__title {
+  @include ms.font('heading-h2');
+  background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-card {
+  background: ms.color('surface-base-default');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  padding: ms.spacing('padding-5xl');
+  margin: 0;
+  border-radius: ms.radius('4xl');
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-4xl');
+  width: 100%;
+  transition: box-shadow 150ms ease-in-out;
+  overflow-y: auto;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: ms.spacing('padding-4xl');
   }
 
-  .login-card {
-    background: var(--parsec-color-light-secondary-white);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 2em;
-    margin: 0;
-    border-radius: var(--parsec-radius-12);
-    box-shadow: none;
+  &:has(.has-focus) {
+    box-shadow: var(--parsec-shadow-light);
+  }
+
+  &-header {
+    padding: ms.spacing('padding-none');
+  }
+
+  &-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    width: 100%;
-    transition: box-shadow 150ms ease-in-out;
-    overflow-y: auto;
+    gap: ms.spacing('gap-3xl');
+    padding: ms.spacing('padding-none');
 
-    @include ms.responsive-breakpoint('sm') {
-      padding: 1.5rem;
-    }
-
-    &:has(.has-focus) {
-      box-shadow: var(--parsec-shadow-light);
-    }
-
-    &-header {
-      padding: 0;
-    }
-
-    &-content {
+    &__password {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      padding: 0;
-
-      &__password {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin: 0;
-      }
-
-      #password-input {
-        margin: 0;
-      }
-
-      #forgotten-password-button {
-        margin: 0;
-        position: relative;
-        width: fit-content;
-        color: var(--parsec-color-light-secondary-grey);
-
-        &::part(native) {
-          --background-hover: none;
-          padding: 0 0 0 2px;
-        }
-
-        &:hover {
-          color: var(--parsec-color-light-secondary-text);
-        }
-      }
+      gap: ms.spacing('gap-lg');
+      margin: 0;
     }
 
-    &-footer {
-      padding: 0;
+    #password-input {
+      margin: 0;
+    }
+
+    #forgotten-password-button {
+      @include ms.font('label-md-medium');
+      color: ms.color('text-base-description');
+
+      &::part(native) {
+        --background-hover: none;
+      }
+    }
+  }
+
+  &-footer {
+    padding: ms.spacing('padding-none');
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-4xl');
+    align-items: center;
+
+    .login-button {
       width: 100%;
-      display: flex;
-      gap: 1.5rem;
-      align-items: center;
-
-      .login-button {
-        width: 100%;
-      }
     }
+  }
+  .error {
+    width: 100%;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-lg') ms.spacing('padding-xl');
   }
 }
 </style>

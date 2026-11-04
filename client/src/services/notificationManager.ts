@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { Information } from '@/services/informationManager';
 import { DateTime } from 'luxon';
@@ -35,7 +35,7 @@ export class NotificationManager {
     this.notifications = ref([]);
   }
 
-  add(information: Information): void {
+  add = (information: Information): void => {
     // Some notification should only be shown once
     if (information.unique) {
       const existing = this.notifications.value.find((notif) => {
@@ -50,29 +50,29 @@ export class NotificationManager {
     }
     const notification = new Notification(information);
     this.notifications.value.unshift(notification);
-  }
+  };
 
-  markAsRead(id: string, read = true): void {
+  markAsRead = (id: string, read = true): void => {
     const notification = this.notifications.value.find((notif) => notif.information.id === id);
 
     if (notification) {
       notification.read = read;
     }
-  }
+  };
 
-  getNotifications(): Notification[] {
+  getNotifications = (): Notification[] => {
     return this.notifications.value;
-  }
+  };
 
-  hasUnreadNotifications(): boolean {
+  hasUnreadNotifications = (): boolean => {
     return this.unreadCount.value > 0;
-  }
+  };
 
-  getUnreadCount(): Ref<number> {
+  getUnreadCount = (): Ref<number> => {
     return this.unreadCount;
-  }
+  };
 
-  clear(): void {
+  clear = (): void => {
     this.notifications.value = [];
-  }
+  };
 }

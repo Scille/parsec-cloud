@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,13 +12,13 @@ from typing import Literal
 from jinja2 import Environment
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     ActiveUsersLimit,
     DateTime,
     EmailAddress,
     HashDigest,
     HumanHandle,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     SecretKey,
@@ -219,7 +220,7 @@ class BaseAccountComponent:
         self,
         email: EmailAddress,
         validation_code: ValidationCode,
-    ) -> None | SendEmailBadOutcome:
+    ) -> SendEmailBadOutcome | None:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
@@ -242,7 +243,7 @@ class BaseAccountComponent:
         self,
         email: EmailAddress,
         validation_code: ValidationCode,
-    ) -> None | SendEmailBadOutcome:
+    ) -> SendEmailBadOutcome | None:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
@@ -263,7 +264,7 @@ class BaseAccountComponent:
         self,
         email: EmailAddress,
         validation_code: ValidationCode,
-    ) -> None | SendEmailBadOutcome:
+    ) -> SendEmailBadOutcome | None:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
@@ -314,7 +315,7 @@ class BaseAccountComponent:
         now: DateTime,
         email: EmailAddress,
         validation_code: ValidationCode,
-    ) -> None | AccountCreateProceedBadOutcome:
+    ) -> AccountCreateProceedBadOutcome | None:
         raise NotImplementedError
 
     async def create_proceed(
@@ -328,7 +329,7 @@ class BaseAccountComponent:
         auth_method_id: AccountAuthMethodID,
         auth_method_mac_key: SecretKey,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountCreateProceedBadOutcome:
+    ) -> AccountCreateProceedBadOutcome | None:
         raise NotImplementedError
 
     async def delete_send_validation_email(
@@ -343,7 +344,7 @@ class BaseAccountComponent:
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
         validation_code: ValidationCode,
-    ) -> None | AccountDeleteProceedBadOutcome:
+    ) -> AccountDeleteProceedBadOutcome | None:
         raise NotImplementedError
 
     async def recover_send_validation_email(
@@ -362,12 +363,12 @@ class BaseAccountComponent:
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountRecoverProceedBadOutcome:
+    ) -> AccountRecoverProceedBadOutcome | None:
         raise NotImplementedError
 
     async def vault_item_upload(
         self, auth_method_id: AccountAuthMethodID, item_fingerprint: HashDigest, item: bytes
-    ) -> None | AccountVaultItemUploadBadOutcome:
+    ) -> AccountVaultItemUploadBadOutcome | None:
         raise NotImplementedError
 
     async def vault_item_list(
@@ -387,7 +388,7 @@ class BaseAccountComponent:
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
-    ) -> None | AccountVaultKeyRotation:
+    ) -> AccountVaultKeyRotation | None:
         raise NotImplementedError
 
     async def vault_item_recovery_list(
@@ -398,7 +399,7 @@ class BaseAccountComponent:
 
     async def invite_self_list(
         self, auth_method_id: AccountAuthMethodID
-    ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+    ) -> list[tuple[OrganizationID, AccessToken, InvitationType]] | AccountInviteListBadOutcome:
         raise NotImplementedError
 
     async def organization_self_list(
@@ -416,7 +417,7 @@ class BaseAccountComponent:
         new_auth_method_mac_key: SecretKey,
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
-    ) -> None | AccountAuthMethodCreateBadOutcome:
+    ) -> AccountAuthMethodCreateBadOutcome | None:
         raise NotImplementedError
 
     async def auth_method_list(
@@ -430,7 +431,7 @@ class BaseAccountComponent:
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
         to_disable_auth_method_id: AccountAuthMethodID,
-    ) -> None | AccountAuthMethodDisableBadOutcome:
+    ) -> AccountAuthMethodDisableBadOutcome | None:
         raise NotImplementedError
 
     @api

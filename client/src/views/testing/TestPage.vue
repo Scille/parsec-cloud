@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <!-- eslint-disable vue/no-v-html -->
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
@@ -19,7 +19,7 @@
 import {
   BootstrapOrganizationErrorTag,
   ClientConfig,
-  DeviceSaveStrategyTag,
+  DevicePrimaryProtectionStrategyTag,
   MountpointMountStrategyTag,
   WorkspaceStorageCacheSizeTag,
   libparsec,
@@ -116,8 +116,11 @@ async function testBootstrapOrganization(): Promise<void> {
       config,
       bootstrapAddr,
       {
-        tag: DeviceSaveStrategyTag.Password,
-        password: 'P@ssw0rd.',
+        primaryProtection: {
+          tag: DevicePrimaryProtectionStrategyTag.Password,
+          password: 'P@ssw0rd',
+        },
+        totpProtection: null,
       },
       humanHandle,
       'PC1',
@@ -140,8 +143,11 @@ async function testBootstrapOrganization(): Promise<void> {
       config,
       bootstrapAddr,
       {
-        tag: DeviceSaveStrategyTag.Password,
-        password: 'P@ssw0rd.',
+        primaryProtection: {
+          tag: DevicePrimaryProtectionStrategyTag.Password,
+          password: 'P@ssw0rd.',
+        },
+        totpProtection: null,
       },
       availableDevice.humanHandle,
       availableDevice.deviceLabel,

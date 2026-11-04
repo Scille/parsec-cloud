@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 use std::{collections::HashMap, path::PathBuf};
 
 use libparsec::{OrganizationID, ParsecAddr};
@@ -9,15 +11,16 @@ crate::clap_parser_with_shared_opts_builder!(
         #[arg(long)]
         remove: bool,
         /// Read the TOS configuration from a JSON file.
-        #[arg(long)]
+        #[arg(long, value_hint = clap::ValueHint::FilePath)]
         from_json: Option<PathBuf>,
         /// List of locale and url for TOS configuration
         /// Each arguments should be in the form of `{locale}={url}`
+        #[arg(value_hint = clap::ValueHint::Other)]
         raw: Vec<String>,
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,
@@ -28,7 +31,11 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     } = args;
     log::trace!("Configure TOS for organization {organization} (addr={addr})");
 
-    let raw_data = from_json.map(std::fs::read_to_string).transpose()?;
+    let raw_data = if let Some(path) = from_json {
+        Some(tokio::fs::read_to_string(path).await?)
+    } else {
+        None
+    };
 
     let req = if let Some(ref raw_data) = raw_data {
         let localized_tos_url = serde_json::from_str::<HashMap<_, _>>(raw_data)?;

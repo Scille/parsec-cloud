@@ -1,9 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
+import asyncio
 import sys
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Coroutine, Generator, Iterable
 from contextlib import contextmanager
 from functools import wraps
 from itertools import count
@@ -64,10 +66,9 @@ def logging_config_options(
         @click.option(
             "--log-file",
             "-o",
-            default=None,
             envvar="PARSEC_LOG_FILE",
             show_envvar=True,
-            help="[default: stderr]",
+            show_default="stderr",
         )
         @wraps(fn)
         def wrapper(
@@ -81,13 +82,13 @@ def logging_config_options(
             if log_file in (None, "-"):
 
                 @contextmanager
-                def open_log_file() -> Iterator[TextIO]:
+                def open_log_file() -> Generator[TextIO]:
                     yield sys.stderr
 
             else:
 
                 @contextmanager
-                def open_log_file() -> Iterator[TextIO]:
+                def open_log_file() -> Generator[TextIO]:
                     assert log_file is not None
                     yield cast(TextIO, click.open_file(filename=log_file, mode="w"))
 
@@ -109,50 +110,111 @@ def logging_config_options(
     return _logging_config_options
 
 
-def sentry_config_options(
-    configure_sentry: bool,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    def _sentry_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[str, str, P], R]:
-        # Sentry SKD uses 3 environ variables during it configuration phase:
-        # - `SENTRY_DSN`
-        # - `SENTRY_ENVIRONMENT`
-        # - `SENTRY_RELEASE`
-        # Those variables are only used if the corresponding parameter is not
-        # explicitly provided while calling `sentry_init(**config)`.
-        # Hence we make sure we provide the three parameters (note the release
-        # is determined from Parsec's version) so those `PARSEC_*` env vars
-        # are never read and don't clash with the `PARSEC_SENTRY_*` ones.
-        @click.option(
-            "--sentry-dsn",
-            metavar="URL",
-            envvar="PARSEC_SENTRY_DSN",
-            show_envvar=True,
-            help="Sentry Data Source Name for telemetry report",
-        )
-        @click.option(
-            "--sentry-environment",
-            metavar="NAME",
-            envvar="PARSEC_SENTRY_ENVIRONMENT",
-            show_envvar=True,
-            default="production",
-            show_default=True,
-            help="Sentry environment for telemetry report",
-        )
-        @wraps(fn)
-        def wrapper(
-            sentry_dsn: str | None, sentry_environment: str, *args: P.args, **kwargs: P.kwargs
-        ) -> R:
-            if configure_sentry and sentry_dsn:
-                enable_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
+def asyncio_run[**P, R](
+    fn: Callable[P, Coroutine[Any, Any, R]],
+) -> Callable[P, R]:
+    @wraps(fn)
+    def wrapper(
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ):
+        return asyncio.run(fn(*args, **kwargs))
 
-            kwargs["sentry_dsn"] = sentry_dsn
-            kwargs["sentry_environment"] = sentry_environment
+    return wrapper
 
-            return fn(*args, **kwargs)
 
-        return wrapper
+def sentry_config_options[**P, R](
+    fn: Callable[P, R],
+) -> Callable[Concatenate[str, str, float | None, float | None, P], R]:
+    # Sentry SKD uses 3 environ variables during it configuration phase:
+    # - `SENTRY_DSN`
+    # - `SENTRY_ENVIRONMENT`
+    # - `SENTRY_RELEASE`
+    # Those variables are only used if the corresponding parameter is not
+    # explicitly provided while calling `sentry_init(**config)`.
+    # Hence we make sure we provide the three parameters (note the release
+    # is determined from Parsec's version) so those `PARSEC_*` env vars
+    # are never read and don't clash with the `PARSEC_SENTRY_*` ones.
+    @click.option(
+        "--sentry-dsn",
+        metavar="URL",
+        envvar="PARSEC_SENTRY_DSN",
+        show_envvar=True,
+        help="Sentry Data Source Name for telemetry report",
+    )
+    @click.option(
+        "--sentry-environment",
+        metavar="NAME",
+        envvar="PARSEC_SENTRY_ENVIRONMENT",
+        show_envvar=True,
+        default="production",
+        show_default=True,
+        help="Sentry environment for telemetry report",
+    )
+    @click.option(
+        "--sentry-traces-sample-rate",
+        metavar="RATE",
+        envvar="PARSEC_SENTRY_TRACES_SAMPLE_RATE",
+        show_envvar=True,
+        type=click.FloatRange(min=0, max=1),
+        show_default="disabled",
+        help="""Enable traces in Sentry.
 
-    return _sentry_config_options
+`0` represents 0% of the transactions will be sent to Sentry while `1` represents 100%.
+
+See https://docs.sentry.io/platforms/python/tracing/
+""",
+    )
+    @click.option(
+        "--sentry-profiles-sample-rate",
+        metavar="RATE",
+        envvar="PARSEC_SENTRY_PROFILES_SAMPLE_RATE",
+        show_envvar=True,
+        type=click.FloatRange(min=0, max=1),
+        show_default="disabled",
+        help="""Enable profiling in Sentry.
+
+`0` represents 0% of the sampled transaction will be profiled while `1` represents 100%.
+This is relative to the tracing sample rate - e.g. `0.5` means 50% of sampled transactions will be
+profiled.
+
+See https://docs.sentry.io/platforms/python/sampling/
+""",
+    )
+    @wraps(fn)
+    def wrapper(
+        sentry_dsn: str | None,
+        sentry_environment: str,
+        sentry_traces_sample_rate: float | None,
+        sentry_profiles_sample_rate: float | None,
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        # We cannot initialize Sentry right now since we haven't entered the asyncio event loop yet!
+        # (cf. the `There is no running asyncio loop so there is nothing Sentry can patch.` warning
+        # displayed when Sentry is initialized in debug mode).
+        #
+        # So instead it is the command function responsibility to call `configure_sentry` as early
+        # as possible (typically by decorating the command function with `@asyncio_run` so that it
+        # is itself an async function that can call `configure_sentry` right away).
+        async def configure_sentry():
+            if sentry_dsn:
+                enable_sentry_logging(
+                    dsn=sentry_dsn,
+                    environment=sentry_environment,
+                    traces_sample_rate=sentry_traces_sample_rate,
+                    profiles_sample_rate=sentry_profiles_sample_rate,
+                )
+
+        kwargs["configure_sentry"] = configure_sentry
+        kwargs["sentry_dsn"] = sentry_dsn
+        kwargs["sentry_environment"] = sentry_environment
+        kwargs["sentry_traces_sample_rate"] = sentry_traces_sample_rate
+        kwargs["sentry_profiles_sample_rate"] = sentry_profiles_sample_rate
+
+        return fn(*args, **kwargs)
+
+    return wrapper
 
 
 def version_option[**P, R](fn: Callable[P, R]) -> Callable[P, R]:
@@ -166,6 +228,7 @@ def debug_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[boo
             is_flag=True,
             # Don't prefix with `PARSEC_` given devs are lazy
             envvar="DEBUG",
+            show_envvar=True,
         ),
         version_option,
     ):
@@ -410,7 +473,7 @@ def _parse_blockstore_params(raw_params: Iterable[str]) -> BaseBlockStoreConfig:
         raid_configs[raid_mode].append((raid_node, node_param))
 
     if len(raid_configs) != 1:
-        config_types = [k if k else v[0][1] for k, v in raid_configs.items()]
+        config_types = [k or v[0][1] for k, v in raid_configs.items()]
         raise click.BadParameter(
             f"Multiple blockstore config with different types: {'/'.join(config_types)}"
         )

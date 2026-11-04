@@ -37,7 +37,7 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await checkVisible(containers, 0);
   await expect(title).toHaveText('Create an account');
   const inputContainers = userInfoContainer.locator('div.account-login-content__input');
-  await expect(inputContainers.locator('.form-label')).toHaveText([
+  await expect(inputContainers.locator('.input-label')).toHaveText([
     'Server address',
     'Server address',
     'First name',

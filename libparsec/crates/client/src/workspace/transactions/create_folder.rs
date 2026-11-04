@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -6,14 +6,14 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
+    EventWorkspaceOpsOutboundSyncNeeded,
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             EnsureManifestExistsWithParentError, ForUpdateFolderError, UpdateFolderManifestError,
         },
-        WorkspaceOps,
     },
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -26,6 +26,8 @@ pub enum WorkspaceCreateFolderError {
     ReadOnlyRealm,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path doesn't point to an existing parent")]
     ParentNotFound,
     #[error("Path points to parent that is not a folder")]
@@ -46,13 +48,12 @@ pub(crate) async fn create_folder(
     ops: &WorkspaceOps,
     path: FsPath,
 ) -> Result<VlobID, WorkspaceCreateFolderError> {
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceCreateFolderError::ReadOnlyRealm);
     }
@@ -63,7 +64,7 @@ pub(crate) async fn create_folder(
         None => {
             return Err(WorkspaceCreateFolderError::EntryExists {
                 entry_id: ops.realm_id,
-            })
+            });
         }
         Some(name) => name,
     };
@@ -78,6 +79,7 @@ pub(crate) async fn create_folder(
             ForUpdateFolderError::EntryNotFound => WorkspaceCreateFolderError::ParentNotFound,
             ForUpdateFolderError::EntryNotAFolder => WorkspaceCreateFolderError::ParentNotAFolder,
             ForUpdateFolderError::NoRealmAccess => WorkspaceCreateFolderError::NoRealmAccess,
+            ForUpdateFolderError::RealmDeleted => WorkspaceCreateFolderError::RealmDeleted,
             ForUpdateFolderError::InvalidKeysBundle(err) => {
                 WorkspaceCreateFolderError::InvalidKeysBundle(err)
             }
@@ -106,6 +108,9 @@ pub(crate) async fn create_folder(
                 EnsureManifestExistsWithParentError::Stopped => WorkspaceCreateFolderError::Stopped,
                 EnsureManifestExistsWithParentError::NoRealmAccess => {
                     WorkspaceCreateFolderError::NoRealmAccess
+                }
+                EnsureManifestExistsWithParentError::RealmDeleted => {
+                    WorkspaceCreateFolderError::RealmDeleted
                 }
                 EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                     WorkspaceCreateFolderError::InvalidKeysBundle(err)

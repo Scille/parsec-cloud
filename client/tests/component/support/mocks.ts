@@ -37,34 +37,32 @@ function getDefaultProvideConfig(showToast = mockShowToast): any {
   return provide;
 }
 
-function mockLibParsec(): void {
-  vi.mock('@/parsec', async () => {
-    const parsec = await vi.importActual<typeof import('@/parsec')>('@/parsec');
-    const Path = parsec.Path;
-    return {
-      ...parsec,
-      isValidOrganizationName: async (_value: string): Promise<boolean> => {
-        return false;
+vi.mock('@/parsec', async () => {
+  const parsec = await vi.importActual<typeof import('@/parsec')>('@/parsec');
+  const Path = parsec.Path;
+  return {
+    ...parsec,
+    isValidOrganizationName: async (_value: string): Promise<boolean> => {
+      return false;
+    },
+    parseParsecAddr: async (_value: string): Promise<any> => {
+      return { ok: false, error: 'error' };
+    },
+    Path: {
+      ...Path,
+      parent: async (path: string): Promise<string> => {
+        const idx = path.lastIndexOf('/');
+        if (idx === -1 || idx === 0) {
+          return path;
+        }
+        return path.slice(0, idx);
       },
-      parseParsecAddr: async (_value: string): Promise<any> => {
-        return { ok: false, error: 'error' };
+      join: async (path: string, fileName: string): Promise<string> => {
+        return `${path}/${fileName}`;
       },
-      Path: {
-        ...Path,
-        parent: async (path: string): Promise<string> => {
-          const idx = path.lastIndexOf('/');
-          if (idx === -1 || idx === 0) {
-            return path;
-          }
-          return path.slice(0, idx);
-        },
-        join: async (path: string, fileName: string): Promise<string> => {
-          return `${path}/${fileName}`;
-        },
-      },
-    };
-  });
-}
+    },
+  };
+});
 
 function mockI18n(): void {
   config.global.mocks = {
@@ -80,23 +78,21 @@ interface Route {
 
 const ROUTES_CALLED: Array<Route> = [];
 
-function mockRouter(): void {
-  // Mocking the following import:
-  // import { useRouter } from 'vue-router';
-  vi.mock('vue-router', async () => {
-    const router = await vi.importActual<typeof import('vue-router')>('vue-router');
-    return {
-      ...router,
-      useRouter: (): any => {
-        return {
-          push: (options: any): void => {
-            ROUTES_CALLED.push({ route: options.name, params: options.params, query: options.query });
-          },
-        };
-      },
-    };
-  });
-}
+// Mocking the following import:
+// import { useRouter } from 'vue-router';
+vi.mock('vue-router', async () => {
+  const router = await vi.importActual<typeof import('vue-router')>('vue-router');
+  return {
+    ...router,
+    useRouter: (): any => {
+      return {
+        push: (options: any): void => {
+          ROUTES_CALLED.push({ route: options.name, params: options.params, query: options.query });
+        },
+      };
+    },
+  };
+});
 
 function getRoutesCalled(): Array<Route> {
   return ROUTES_CALLED;
@@ -106,4 +102,4 @@ function resetRoutesCalled(): void {
   ROUTES_CALLED.splice(0);
 }
 
-export { getDefaultProvideConfig, getRoutesCalled, mockI18n, mockLibParsec, mockRouter, resetRoutesCalled };
+export { getDefaultProvideConfig, getRoutesCalled, mockI18n, resetRoutesCalled };

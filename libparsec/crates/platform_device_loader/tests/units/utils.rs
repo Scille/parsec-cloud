@@ -1,93 +1,97 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 pub use libparsec_platform_async::PinBoxFutureResult;
 pub use libparsec_types::prelude::*;
-pub use platform::*;
 
 pub use crate::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsUploadOpaqueKeyError, OpenBaoDeviceAccessOperations,
-    OpenBaoDeviceSaveOperations, OpenBaoOperationsFetchOpaqueKeyError,
-    OpenBaoOperationsUploadOpaqueKeyError,
+    AccountVaultOperationsUploadOpaqueKeyError, OpenBaoDeviceOperations,
+    OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
+    PkiDeviceOperations, PkiOperationsDecryptOpaqueKeyError, PkiOperationsEncryptOpaqueKeyError,
 };
 
-#[cfg(not(target_arch = "wasm32"))]
-mod platform {
-    use std::path::Path;
+use libparsec_platform_filesystem::{LoadFileError, load_file, save_content};
 
-    pub async fn create_device_file(path: &Path, content: &[u8]) {
-        tokio::fs::create_dir_all(path.parent().unwrap())
-            .await
-            .unwrap();
-        tokio::fs::write(path, content).await.unwrap();
-    }
+use crate::get_device_archive_path;
+use std::path::Path;
 
-    pub async fn key_present_in_system(path: &Path) -> bool {
-        path.exists()
-    }
+pub async fn create_device_file(path: &Path, content: &[u8]) {
+    save_content(path, content).await.unwrap()
+}
 
-    pub async fn key_is_archived(path: &Path) -> bool {
-        let expected_archive_path = path.with_extension("device.archived");
-        !key_present_in_system(path).await && key_present_in_system(&expected_archive_path).await
+pub async fn key_present_in_system(path: &Path) -> bool {
+    match load_file(path).await {
+        Ok(_) => true,
+        Err(LoadFileError::NotFound) => false,
+        Err(_) => panic!("Cannot get item in storage"),
     }
 }
 
-#[cfg(target_arch = "wasm32")]
-mod platform {
-    use crate::{
-        get_device_archive_path,
-        platform::{
-            error::GetFileHandleError,
-            wrapper::{Directory, OpenOptions},
-        },
-    };
-    use std::{ffi::OsStr, path::Path};
+pub async fn key_is_archived(path: &Path) -> bool {
+    let archived_path = get_device_archive_path(path);
 
-    async fn get_storage() -> Directory {
-        Directory::get_root().await.expect("Cannot get storage")
-    }
+    !key_present_in_system(path).await && key_present_in_system(&archived_path).await
+}
 
-    pub async fn create_device_file(path: &Path, content: &[u8]) {
-        let storage = get_storage().await;
-        let dir = if let Some(parent) = path.parent() {
-            let parent = storage
-                .create_dir_all(parent)
-                .await
-                .expect("Cannot create dir all");
-            Some(parent)
-        } else {
-            None
-        };
-        let filename = path
-            .file_name()
-            .and_then(OsStr::to_str)
-            .expect("Missing filename");
-        let file = dir
-            .as_ref()
-            .unwrap_or(&storage)
-            .get_file(filename, Some(OpenOptions::create()))
-            .await
-            .expect("Cannot get file");
-        file.write_all(content)
-            .await
-            .expect("Cannot add device to storage");
-    }
+/*
+ * MockedPkiOperations
+ */
 
-    pub async fn key_present_in_system(path: &Path) -> bool {
-        let storage = get_storage().await;
-        match storage.get_file_from_path(path, None).await {
-            Ok(_) => true,
-            Err(GetFileHandleError::NotFound { .. }) => false,
-            Err(_) => panic!("Cannot get item in storage"),
+#[derive(Debug)]
+pub(super) struct MockedPkiOperations {
+    certificate: X509CertificateReference,
+    fake_pki_key: SecretKey,
+}
+
+impl MockedPkiOperations {
+    pub fn new(certificate: X509CertificateReference) -> Self {
+        Self {
+            certificate,
+            fake_pki_key: SecretKey::generate(),
         }
     }
+}
 
-    pub async fn key_is_archived(path: &Path) -> bool {
-        let archived_path = get_device_archive_path(path);
+impl PkiDeviceOperations for MockedPkiOperations {
+    fn certificate_ref(&self) -> &X509CertificateReference {
+        &self.certificate
+    }
 
-        !key_present_in_system(path).await && key_present_in_system(&archived_path).await
+    fn encrypt_opaque_key(
+        &self,
+        opaque_key: &[u8],
+    ) -> PinBoxFutureResult<(PKIEncryptionAlgorithm, Bytes), PkiOperationsEncryptOpaqueKeyError>
+    {
+        let encrypted = self.fake_pki_key.encrypt(opaque_key).into();
+        Box::pin(async move { Ok((PKIEncryptionAlgorithm::RsaesOaepSha256, encrypted)) })
+    }
+
+    fn decrypt_opaque_key(
+        &self,
+        algorithm: PKIEncryptionAlgorithm,
+        encrypted_opaque_key: &[u8],
+    ) -> PinBoxFutureResult<SecretKey, PkiOperationsDecryptOpaqueKeyError> {
+        let outcome = {
+            if algorithm != PKIEncryptionAlgorithm::RsaesOaepSha256 {
+                Err(PkiOperationsDecryptOpaqueKeyError::UnsupportedAlgorithm)
+            } else {
+                self.fake_pki_key
+                    .decrypt(encrypted_opaque_key)
+                    .map_err(|e| PkiOperationsDecryptOpaqueKeyError::DecryptionFailed(e.into()))
+                    .and_then(|raw| {
+                        let raw_array: &[u8] = &raw;
+                        SecretKey::try_from(raw_array).map_err(|e| {
+                            PkiOperationsDecryptOpaqueKeyError::Internal(anyhow::anyhow!(
+                                "Decrypted opaque key is invalid: {:?}",
+                                e
+                            ))
+                        })
+                    })
+            }
+        };
+        Box::pin(async move { outcome })
     }
 }
 
@@ -255,7 +259,7 @@ fn openbao_entity_id_from_email(email: &EmailAddress) -> String {
     openbao_entity_id
 }
 
-impl OpenBaoDeviceSaveOperations for MockedOpenBaoOperations {
+impl OpenBaoDeviceOperations for MockedOpenBaoOperations {
     fn openbao_entity_id(&self) -> &str {
         &self.openbao_entity_id
     }
@@ -277,16 +281,6 @@ impl OpenBaoDeviceSaveOperations for MockedOpenBaoOperations {
         Box::pin(async move { Ok((key_path, key)) })
     }
 
-    fn to_access_operations(&self) -> Arc<dyn OpenBaoDeviceAccessOperations> {
-        Arc::new(self.to_owned())
-    }
-}
-
-impl OpenBaoDeviceAccessOperations for MockedOpenBaoOperations {
-    fn openbao_entity_id(&self) -> &str {
-        &self.openbao_entity_id
-    }
-
     fn fetch_opaque_key(
         &self,
         ciphertext_key_path: String,
@@ -301,13 +295,5 @@ impl OpenBaoDeviceAccessOperations for MockedOpenBaoOperations {
         };
 
         Box::pin(async move { outcome })
-    }
-
-    fn to_save_operations(
-        &self,
-        openbao_preferred_auth_id: String,
-    ) -> Arc<dyn OpenBaoDeviceSaveOperations> {
-        assert_eq!(self.openbao_preferred_auth_id(), openbao_preferred_auth_id);
-        Arc::new(self.clone())
     }
 }

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -8,11 +8,11 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        EntryStat, WorkspaceOps, WorkspaceStatEntryError,
         store::{
             EnsureManifestExistsWithParentError, PathConfinementPoint, ResolvePathError,
             RetrievePathFromIDEntry, RetrievePathFromIDError,
         },
-        EntryStat, WorkspaceOps, WorkspaceStatEntryError,
     },
 };
 
@@ -28,6 +28,8 @@ pub enum WorkspaceOpenFolderReaderError {
     EntryIsFile,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -46,6 +48,8 @@ pub enum FolderReaderStatEntryError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -129,12 +133,15 @@ impl FolderReader {
                     // invalid (e.g. the entry has been reparented during a move) and
                     // should just be ignored.
                     WorkspaceStatEntryError::EntryNotFound => {
-                        return Ok(FolderReaderStatNextOutcome::InvalidChild)
+                        return Ok(FolderReaderStatNextOutcome::InvalidChild);
                     }
                     WorkspaceStatEntryError::Offline(e) => FolderReaderStatEntryError::Offline(e),
                     WorkspaceStatEntryError::Stopped => FolderReaderStatEntryError::Stopped,
                     WorkspaceStatEntryError::NoRealmAccess => {
                         FolderReaderStatEntryError::NoRealmAccess
+                    }
+                    WorkspaceStatEntryError::RealmDeleted => {
+                        FolderReaderStatEntryError::RealmDeleted
                     }
                     WorkspaceStatEntryError::InvalidKeysBundle(err) => {
                         FolderReaderStatEntryError::InvalidKeysBundle(err)
@@ -188,6 +195,9 @@ impl FolderReader {
                         EnsureManifestExistsWithParentError::NoRealmAccess => {
                             FolderReaderStatEntryError::NoRealmAccess
                         }
+                        EnsureManifestExistsWithParentError::RealmDeleted => {
+                            FolderReaderStatEntryError::RealmDeleted
+                        }
                         EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                             FolderReaderStatEntryError::InvalidKeysBundle(err)
                         }
@@ -221,6 +231,7 @@ pub async fn open_folder_reader_by_id(
             RetrievePathFromIDError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
             // RetrievePathFromIDError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
             RetrievePathFromIDError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+            RetrievePathFromIDError::RealmDeleted => WorkspaceOpenFolderReaderError::RealmDeleted,
             RetrievePathFromIDError::InvalidKeysBundle(err) => {
                 WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
             }
@@ -234,7 +245,7 @@ pub async fn open_folder_reader_by_id(
         })?;
     let (manifest, confinement_point) = match retrieval {
         RetrievePathFromIDEntry::Missing => {
-            return Err(WorkspaceOpenFolderReaderError::EntryNotFound)
+            return Err(WorkspaceOpenFolderReaderError::EntryNotFound);
         }
         RetrievePathFromIDEntry::Unreachable { manifest } => {
             (manifest, PathConfinementPoint::NotConfined)
@@ -268,6 +279,7 @@ pub async fn open_folder_reader(
                 ResolvePathError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
                 ResolvePathError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+                ResolvePathError::RealmDeleted => WorkspaceOpenFolderReaderError::RealmDeleted,
                 ResolvePathError::InvalidKeysBundle(err) => {
                     WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
                 }
@@ -301,6 +313,8 @@ pub enum WorkspaceStatFolderChildrenError {
     EntryIsFile,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -330,6 +344,9 @@ pub async fn stat_folder_children(
             }
             WorkspaceOpenFolderReaderError::NoRealmAccess => {
                 WorkspaceStatFolderChildrenError::NoRealmAccess
+            }
+            WorkspaceOpenFolderReaderError::RealmDeleted => {
+                WorkspaceStatFolderChildrenError::RealmDeleted
             }
             WorkspaceOpenFolderReaderError::InvalidKeysBundle(err) => {
                 WorkspaceStatFolderChildrenError::InvalidKeysBundle(err)
@@ -368,6 +385,9 @@ pub async fn stat_folder_children_by_id(
             WorkspaceOpenFolderReaderError::NoRealmAccess => {
                 WorkspaceStatFolderChildrenError::NoRealmAccess
             }
+            WorkspaceOpenFolderReaderError::RealmDeleted => {
+                WorkspaceStatFolderChildrenError::RealmDeleted
+            }
             WorkspaceOpenFolderReaderError::InvalidKeysBundle(err) => {
                 WorkspaceStatFolderChildrenError::InvalidKeysBundle(err)
             }
@@ -405,6 +425,9 @@ async fn consume_reader(
                 FolderReaderStatEntryError::Stopped => WorkspaceStatFolderChildrenError::Stopped,
                 FolderReaderStatEntryError::NoRealmAccess => {
                     WorkspaceStatFolderChildrenError::NoRealmAccess
+                }
+                FolderReaderStatEntryError::RealmDeleted => {
+                    WorkspaceStatFolderChildrenError::RealmDeleted
                 }
                 FolderReaderStatEntryError::InvalidKeysBundle(err) => {
                     WorkspaceStatFolderChildrenError::InvalidKeysBundle(err)

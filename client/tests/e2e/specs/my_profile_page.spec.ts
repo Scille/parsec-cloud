@@ -1,19 +1,48 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DisplaySize, expect, fillIonInput, logout, msTest, openExternalLink, selectDropdown } from '@tests/e2e/helpers';
+import {
+  DEFAULT_USER_INFORMATION,
+  DisplaySize,
+  expect,
+  fillIonInput,
+  logout,
+  mockLibParsec,
+  MsPage,
+  msTest,
+  openExternalLink,
+  selectDropdown,
+  setupNewPage,
+  setWriteClipboardPermission,
+} from '@tests/e2e/helpers';
+import { randomUUID } from 'crypto';
 
 msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
   await myProfilePage.locator('.menu-list__item').nth(1).click();
   await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add a new device');
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
-  await expect(devices.locator('.device-name')).toHaveText(['My alice@dev2 machine', 'My alice@dev1 machine']);
+  await expect(devices.locator('.device-name')).toHaveText(['Unknown (My alice@dev2 machine)', 'Unknown (My alice@dev1 machine)']);
   await expect(devices.locator('.join-date')).toHaveText(['Joined: Jan 4, 2000', 'Joined: Jan 2, 2000']);
   await expect(devices.locator('.label-id')).toHaveText([/^Internal ID: [a-f0-9]+$/, /^Internal ID: [a-f0-9]+$/]);
-  await expect(devices.nth(1).locator('.badge')).toBeHidden();
-  await expect(devices.nth(0).locator('.badge')).toBeVisible();
-  await expect(devices.nth(0).locator('.badge')).toHaveText('Current');
+  await expect(devices.nth(1).locator('.badge-active')).toBeHidden();
+  await expect(devices.nth(0).locator('.badge-active')).toBeVisible();
+  await expect(devices.nth(0).locator('.badge-active')).toHaveText('Current');
+});
+
+msTest('Check devices list with error', async ({ myProfilePage }) => {
+  await mockLibParsec(myProfilePage, [
+    {
+      name: 'clientListUserDevices',
+      result: { ok: false, error: { tag: 'ClientListUserDevicesErrorInternal', error: 'Cannot list devices' } },
+    },
+  ]);
+  await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await myProfilePage.locator('.menu-list__item').nth(1).click();
+  const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
+  await expect(devices).toHaveCount(0);
+  await expect(myProfilePage.locator('.no-device')).toBeVisible();
+  await expect(myProfilePage.locator('.no-device')).toHaveText('Failed to retrieve device information.');
 });
 
 async function checkMenuItem(
@@ -41,7 +70,7 @@ msTest('Check if each tab is displayed', async ({ myProfilePage }) => {
   await checkMenuItem(myProfilePage, 0, 'Settings');
   await checkMenuItem(myProfilePage, 1, 'My devices', 'My devices', 'devices');
   await checkMenuItem(myProfilePage, 2, 'Authentication', 'Authentication', 'authentication');
-  await checkMenuItem(myProfilePage, 3, 'Recovery files', 'Organization recovery files', 'recovery');
+  await checkMenuItem(myProfilePage, 3, 'Access recovery', 'Access recovery', 'recovery');
   await expect(myProfilePage.locator('.item-container__text').nth(5)).toHaveText('Feedback');
   await expect(myProfilePage.locator('.item-container__text').nth(6)).toHaveText('About');
   await checkMenuItem(myProfilePage, 6, 'About', 'About', 'about');
@@ -55,23 +84,15 @@ msTest('Open authentication section', async ({ myProfilePage }) => {
 });
 
 msTest('Check if restore-password section is displayed', async ({ myProfilePage }) => {
-  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
   await myProfilePage.locator('.menu-list__item').nth(3).click();
-  const restorePassword = myProfilePage.locator('.recovery');
+  const restorePassword = myProfilePage.locator('.recovery-section--file');
   await expect(restorePassword).toBeVisible();
-  await expect(restorePassword.locator('.item-header__title')).toHaveText('Organization recovery files');
-  await expect(restorePassword.locator('.restore-password__description span').nth(0)).toHaveText(
-    'Recovery files allow you to regain access to this organization if you forgot your password or lose your devices.',
+  await expect(restorePassword.locator('.recovery-method-content-text__title')).toHaveText('Recovery files');
+  await expect(restorePassword.locator('.recovery-method-content-text__description')).toHaveText(
+    'A recovery file combined with a secret key allow you to restore access to your data once assembled.',
   );
-  await expect(restorePassword.locator('.restore-password__description span').nth(1)).toHaveText(
-    `Without recovery files, you will not be able to recover your account in such a case,
-  and you will need to be re-invited to the organization.`,
-  );
-  await expect(restorePassword.locator('.restore-password__description span').nth(2)).toHaveText(
-    `They consist of a recovery file and a recovery key. You need to save both in a secure place,
-    if possible in separate places, as both are needed to recover a device's access to an organization.`,
-  );
-  await expect(restorePassword.locator('.restore-password-button')).toHaveText('Create recovery files');
+  await expect(restorePassword.locator('.action-button')).toHaveText('Create recovery files');
 });
 
 msTest('Change password', async ({ myProfilePage }) => {
@@ -88,8 +109,8 @@ msTest('Change password', async ({ myProfilePage }) => {
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'InvalidP@ssw0rd.');
   await expect(changePasswordModal.locator('#next-button')).toBeTrulyEnabled();
   await changePasswordModal.locator('#next-button').click();
-  await expect(currentPasswordContainer.locator('.form-error')).toBeVisible();
-  await expect(currentPasswordContainer.locator('.form-error')).toHaveText('Invalid authentication.');
+  await expect(changePasswordModal.locator('.ms-error')).toBeVisible();
+  await expect(changePasswordModal.locator('.ms-error')).toHaveText('Invalid authentication.');
 
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
   await changePasswordModal.locator('#next-button').click();
@@ -98,23 +119,19 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
 
   const authRadio = changePasswordModal.locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
 
-  await expect(changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button')).toHaveText('Update');
+  await expect(changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button')).toHaveText('Change method');
   await changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button').click();
   await expect(changePasswordModal.locator('.method-chosen')).toBeHidden();
-  await changePasswordModal.locator('.authentication-card').nth(1).click();
+  await changePasswordModal.locator('.authentication-card').nth(0).click();
   const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');
-  await fillIonInput(passwordInputs.nth(1), newPassword);
-  await fillIonInput(passwordInputs.nth(2), 'no match');
+  await fillIonInput(passwordInputs.nth(2), newPassword);
+  await fillIonInput(passwordInputs.nth(3), 'no match');
   await expect(changePasswordModal.locator('.inputs-container-item').nth(1).getByText('Do not match')).toBeVisible();
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
-  await fillIonInput(passwordInputs.nth(2), newPassword);
+  await fillIonInput(passwordInputs.nth(3), newPassword);
   await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();
   await changePasswordModal.locator('#next-button').click();
   await expect(changePasswordModal).toBeHidden();
@@ -134,7 +151,7 @@ msTest('Change password', async ({ myProfilePage }) => {
   await fillIonInput(input, 'P@ssw0rd.');
   await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
-  const error = home.locator('#password-input').locator('.form-error');
+  const error = home.locator('.login-card-footer').locator('.container-textinfo');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Incorrect password.');
   await expect(home).toBeHomePage();
@@ -150,34 +167,37 @@ msTest('Change password', async ({ myProfilePage }) => {
 });
 
 msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
+  msTest.setTimeout(45_000);
   await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
   await myProfilePage.locator('.menu-list__item').nth(2).click();
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
   await myProfilePage.locator('#change-authentication-button').click();
-  const changePasswordModal = myProfilePage.locator('.change-authentication-modal');
-  await expect(changePasswordModal).toBeVisible();
-  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Enter your current password');
-  await expect(changePasswordModal.locator('ion-footer').locator('#next-button')).toBeTrulyDisabled();
-  const currentPasswordContainer = changePasswordModal.locator('.input-container').nth(0);
+  const changeAuthModal = myProfilePage.locator('.change-authentication-modal');
+  await expect(changeAuthModal).toBeVisible();
+  await expect(changeAuthModal.locator('.modal-header')).toHaveText('Enter your current password');
+  await expect(changeAuthModal.locator('ion-footer').locator('#next-button')).toBeTrulyDisabled();
+  const currentPasswordContainer = changeAuthModal.locator('.input-container').nth(0);
 
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
-  await changePasswordModal.locator('#next-button').click();
+  await changeAuthModal.locator('#next-button').click();
 
-  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Change authentication method');
-  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
+  await expect(changeAuthModal.locator('.modal-header')).toHaveText('Change authentication method');
+  await expect(changeAuthModal.locator('#next-button')).toHaveDisabledAttribute();
 
-  const authRadio = changePasswordModal.locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(2).click();
+  const authRadio = changeAuthModal.locator('.radio-list-item:visible');
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  await authRadio.nth(3).click();
 
-  await expect(changePasswordModal.locator('#next-button')).toHaveText('Update');
-  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
-  await changePasswordModal.locator('.proconnect-button').click();
-  await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();
-  await changePasswordModal.locator('#next-button').click();
-  await expect(changePasswordModal).toBeHidden();
+  await expect(changeAuthModal.locator('#next-button')).toHaveText('Confirm change');
+  await expect(changeAuthModal.locator('#next-button')).toHaveDisabledAttribute();
+  await changeAuthModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+  await expect(changeAuthModal.locator('#next-button')).toNotHaveDisabledAttribute();
+  await changeAuthModal.locator('#next-button').click();
+  await expect(changeAuthModal).toBeHidden();
   await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+  await expect(myProfilePage.locator('.authentication-container').locator('.authentication-item-content__description').nth(0)).toHaveText(
+    'Single Sign-On',
+  );
 
   await logout(myProfilePage);
 
@@ -185,7 +205,7 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   const home = myProfilePage;
 
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-  await home.locator('.login-card').locator('.proconnect-button').click();
+  await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);
   const profile = home.locator('.topbar').locator('.profile-header');
@@ -197,6 +217,23 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
 
   await myProfilePage.locator('#change-authentication-button').click();
+  await expect(changeAuthModal).toBeVisible();
+  await expect(changeAuthModal.locator('.sso-provider-card', { hasText: 'ProConnect' })).toBeVisible();
+  await changeAuthModal.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  // Back to password
+  await authRadio.nth(0).click();
+
+  await expect(changeAuthModal.locator('.choose-password')).toBeVisible();
+  const passwordInputs = changeAuthModal.locator('.choose-password').locator('ion-input');
+  await fillIonInput(passwordInputs.nth(0), 'N3wP@ssw0rd.');
+  await fillIonInput(passwordInputs.nth(1), 'N3wP@ssw0rd.');
+  await changeAuthModal.locator('#next-button').click();
+  await expect(changeAuthModal).toBeHidden();
+  await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+  await expect(myProfilePage.locator('.authentication-container').locator('.authentication-item-content__description').nth(0)).toHaveText(
+    'Password',
+  );
 });
 
 msTest('Check settings section', async ({ myProfilePage }) => {
@@ -225,7 +262,7 @@ msTest('Check settings section', async ({ myProfilePage }) => {
   ]);
   await expect(theme.locator('.settings-option__content').locator('.title')).toHaveText('Thème');
   await expect(theme.locator('.settings-option__content').locator('.description')).toHaveText("Choisir l'apparence de l'application");
-  await expect(theme.locator('.dropdown-container')).toHaveText('Clair');
+  await expect(theme.locator('.dropdown-container')).toHaveText('Système');
 
   const telemetry = options.nth(2);
   await expect(telemetry.locator('.settings-option__content').locator('.title')).toHaveText("Envoyer les rapports d'erreur");
@@ -293,6 +330,75 @@ msTest('Profile page back button', async ({ workspaces }) => {
   await expect(workspaces).toBeWorkspacePage();
 });
 
+msTest('Recovery page file flow', async ({ myProfilePage }) => {
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  const recoveryFileSection = myProfilePage.locator('.recovery-section--file');
+
+  await expect(recoveryFileSection).toBeVisible();
+  await expect(recoveryFileSection.locator('.recovery-method-content-text__title')).toHaveText('Recovery files');
+  await expect(recoveryFileSection.locator('.recovery-method-content-text__description')).toHaveText(
+    'A recovery file combined with a secret key allow you to restore access to your data once assembled.',
+  );
+  await expect(recoveryFileSection.locator('.action-button')).toHaveText('Create recovery files');
+  await expect(recoveryFileSection.locator('.badge-inactive')).toHaveText('Inactive');
+
+  await recoveryFileSection.locator('.action-button').click();
+  const exportRecoveryModal = myProfilePage.locator('.export-recovery-device-modal');
+  await expect(exportRecoveryModal).toBeVisible();
+  await expect(exportRecoveryModal.locator('.ms-modal-header__title')).toHaveText('Recovery files');
+  await expect(exportRecoveryModal.locator('.step-item').nth(0).locator('.step-item__title')).toContainText('Secret Key');
+  await expect(exportRecoveryModal.locator('.step-item').nth(1).locator('.step-item__title')).toContainText('Recovery File');
+
+  await exportRecoveryModal.locator('.recovery-key .input-action-button').first().click();
+
+  const recoveryDownloadPromise = myProfilePage.waitForEvent('download');
+  await exportRecoveryModal.locator('.recovery-file .input-action-button').click();
+  const recoveryDownload = await recoveryDownloadPromise;
+  expect(recoveryDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_TestbedOrg\d+\.psrk$/);
+
+  const confirmationCheckbox = exportRecoveryModal.locator('.confirmation-checkbox');
+  await confirmationCheckbox.click();
+  await expect(exportRecoveryModal.locator('#next-button')).toBeEnabled();
+  await exportRecoveryModal.locator('#next-button').click();
+  await expect(exportRecoveryModal).toBeHidden();
+
+  await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
+  await expect(recoveryFileSection.locator('.badge-active')).toHaveText('Active');
+  await expect(recoveryFileSection.locator('.action-validation')).toContainText('Files downloaded');
+
+  // Reload page to check if the recovery is still marked as active
+  await myProfilePage.locator('.menu-list__item').nth(0).click();
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  await expect(recoveryFileSection.locator('.badge-active')).toHaveText('Active');
+});
+
+msTest('Recovery page device flow', async ({ myProfilePage }) => {
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  const backupDeviceSection = myProfilePage.locator('.recovery-section--device');
+
+  await expect(backupDeviceSection).toBeVisible();
+  await expect(backupDeviceSection.locator('.recovery-method-content-text__title')).toHaveText('Trusted devices or browsers');
+  await expect(backupDeviceSection.locator('.recovery-method-content-text__description')).toHaveText(
+    'Add secondary devices or browsers (Chrome or Firefox) as backup accesses to this organization.',
+  );
+  await expect(backupDeviceSection.locator('.action-button')).toHaveText('Add a device');
+  await expect(backupDeviceSection.locator('.badge-active')).toHaveText('Active');
+
+  const activeDevicesText = backupDeviceSection.locator('.action-validation .has-devices');
+  const initialCountMatch = (await activeDevicesText.textContent())?.match(/^(\d+)/);
+  expect(initialCountMatch).toBeTruthy();
+
+  await setWriteClipboardPermission(myProfilePage.context(), true);
+
+  await backupDeviceSection.locator('.action-button').click();
+  const greetModal = myProfilePage.locator('.greet-organization-modal');
+  await expect(greetModal).toBeVisible();
+  await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
+
+  await greetModal.locator('#copy-link-btn').click();
+  await expect(myProfilePage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
+});
+
 msTest('Open modal to greet user from ProfilePage in small display', async ({ usersPage }) => {
   await usersPage.setDisplaySize(DisplaySize.Small);
 
@@ -301,3 +407,72 @@ msTest('Open modal to greet user from ProfilePage in small display', async ({ us
   await usersPage.locator('.list-group-item').nth(0).click();
   await expect(usersPage.locator('.modal-sheet')).toBeVisible();
 });
+
+for (const platform of ['PlatformWeb', 'PlatformAndroid', 'PlatformWindows', 'PlatformMacOS', 'PlatformLinux']) {
+  msTest(`Check default device name on ${platform}`, async ({ context }) => {
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page);
+    const PLATFORMS = {
+      PlatformWeb: 'Web',
+      PlatformAndroid: 'Android',
+      PlatformWindows: 'Windows',
+      PlatformMacOS: 'MacOS',
+      PlatformLinux: 'Linux',
+    };
+    await page.evaluate((platform) => {
+      (window as any).getPlatform = () => platform;
+    }, platform);
+    const uniqueOrgName = randomUUID().slice(0, 32);
+    await page.locator('#create-organization-button').click();
+    await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+    const modal = page.locator('.create-organization-modal');
+    await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
+
+    const orgServerContainer = modal.locator('.organization-name-and-server-page');
+    await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
+    const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
+    await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
+    await fillIonInput(orgServerContainer.locator('ion-input').nth(1), page.orgInfo.serverAddr);
+    await orgNext.click();
+
+    const userInfoContainer = modal.locator('.user-information-page');
+    const userNext = modal.locator('.user-information-page-footer').locator('ion-button').nth(1);
+    await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
+    await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
+    await userNext.click();
+
+    const authContainer = modal.locator('.authentication-page');
+    const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
+    const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
+    await expect(authRadio).toHaveCount(4);
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+    await authRadio.nth(0).click();
+
+    await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
+    await expect(authNext).toHaveDisabledAttribute();
+    await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+    await expect(authNext).toNotHaveDisabledAttribute();
+    await authNext.click();
+
+    const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+    await summaryNext.click();
+
+    await expect(modal.locator('.creation-page')).toBeVisible();
+    await expect(modal.locator('.creation-page').locator('.closeBtn')).toBeHidden();
+    await page.waitForTimeout(1000);
+
+    await modal.locator('.created-page-footer').locator('ion-button').click();
+    await expect(modal).toBeHidden();
+    await page.waitForTimeout(1000);
+    await expect(page).toBeWorkspacePage();
+
+    await page.locator('.topbar').locator('.profile-header').click();
+    const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(1);
+    await expect(myProfileButton).toHaveText('My devices');
+    await myProfileButton.click();
+    await expect(page).toHavePageTitle('My profile');
+    await expect(page).toBeMyProfilePage();
+    await expect(page.locator('.profile-content-item').locator('.item-header__title')).toHaveText('My devices');
+    await expect(page.locator('.device-list-item').locator('.device-name')).toHaveText((PLATFORMS as any)[platform]);
+  });
+}

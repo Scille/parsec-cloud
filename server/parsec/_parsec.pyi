@@ -13,6 +13,7 @@ from parsec._parsec_pyi.addrs import (
     ParsecOrganizationAddr,
     ParsecOrganizationBootstrapAddr,
     ParsecPkiEnrollmentAddr,
+    ParsecTOTPResetAddr,
     ParsecWorkspacePathAddr,
 )
 from parsec._parsec_pyi.async_enrollment import (
@@ -45,6 +46,7 @@ from parsec._parsec_pyi.crypto import (
     HashDigest,
     PrivateKey,
     PublicKey,
+    RsaPrivateKey,
     SecretKey,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
@@ -62,25 +64,24 @@ from parsec._parsec_pyi.enumerate import (
     GreeterOrClaimer,
     InvitationStatus,
     InvitationType,
-    OpenBaoAuthType,
     RealmRole,
     UserProfile,
 )
 from parsec._parsec_pyi.ids import (
+    AccessToken,
     AccountAuthMethodID,
     AsyncEnrollmentID,
     BlockID,
-    BootstrapToken,
     ChunkID,
     DeviceID,
     DeviceLabel,
     EmailAddress,
     GreetingAttemptID,
     HumanHandle,
-    InvitationToken,
     OrganizationID,
     PKIEnrollmentID,
     SequesterServiceID,
+    TOTPOpaqueKeyID,
     UserID,
     VlobID,
 )
@@ -89,23 +90,26 @@ from parsec._parsec_pyi.manifest import (
     ChildManifest,
     EntryName,
     FileManifest,
+    FileManifestOrigin,
     FolderManifest,
     UserManifest,
     child_manifest_decrypt_verify_and_load,
     child_manifest_verify_and_load,
 )
-from parsec._parsec_pyi.misc import ApiVersion, ValidationCode
+from parsec._parsec_pyi.misc import (
+    AdvisoryDeviceFilePrimaryProtection,
+    AdvisoryDeviceFileProtection,
+    ApiVersion,
+    ValidationCode,
+)
 from parsec._parsec_pyi.pki import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
-    PkiInvalidCertificateDER,
-    PkiInvalidSignature,
     PkiSignatureAlgorithm,
-    PkiUntrusted,
     SignedMessage,
-    TrustAnchor,
     X509Certificate,
     X509CertificateInformation,
+    X509TrustAnchor,
     load_accept_payload,
     load_submit_payload,
 )
@@ -126,6 +130,8 @@ from parsec._parsec_pyi.time import DateTime
 # See: https://docs.astral.sh/ruff/rules/unsorted-dunder-all/
 
 __all__ = [
+    "AdvisoryDeviceFilePrimaryProtection",
+    "AdvisoryDeviceFileProtection",
     "ApiVersion",
     "ValidationCode",
     # Data Error
@@ -167,21 +173,20 @@ __all__ = [
     "VerifyKey",
     "UntrustedPasswordAlgorithm",
     "UntrustedPasswordAlgorithmArgon2id",
+    "RsaPrivateKey",
     # Enumerate
     "CancelledGreetingAttemptReason",
     "DevicePurpose",
     "GreeterOrClaimer",
     "InvitationStatus",
     "InvitationType",
-    "InvitationType",
-    "OpenBaoAuthType",
     "RealmRole",
     "UserProfile",
     # Ids
+    "AccessToken",
     "AccountAuthMethodID",
     "AsyncEnrollmentID",
     "BlockID",
-    "BootstrapToken",
     "ChunkID",
     "DeviceID",
     "DeviceLabel",
@@ -189,12 +194,10 @@ __all__ = [
     "PKIEnrollmentID",
     "GreetingAttemptID",
     "HumanHandle",
-    "InvitationToken",
     "OrganizationID",
     "SequesterServiceID",
+    "TOTPOpaqueKeyID",
     "UserID",
-    "VlobID",
-    "VlobID",
     "VlobID",
     # Addrs
     "ParsecActionAddr",
@@ -204,6 +207,7 @@ __all__ = [
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",
     "ParsecPkiEnrollmentAddr",
+    "ParsecTOTPResetAddr",
     "ParsecWorkspacePathAddr",
     # Manifest
     "BlockAccess",
@@ -212,6 +216,7 @@ __all__ = [
     "ChildManifest",
     "EntryName",
     "FileManifest",
+    "FileManifestOrigin",
     "FolderManifest",
     "UserManifest",
     # Time
@@ -222,12 +227,9 @@ __all__ = [
     "PkiSignatureAlgorithm",
     "X509CertificateInformation",
     "X509Certificate",
-    "TrustAnchor",
+    "X509TrustAnchor",
     "load_submit_payload",
     "load_accept_payload",
-    "PkiUntrusted",
-    "PkiInvalidCertificateDER",
-    "PkiInvalidSignature",
     "SignedMessage",
     # Protocol Cmd
     "ActiveUsersLimit",

@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from .addr import (
     ParsecInvitationAddr,
+    ParsecInvitationAddrAndRedirectionURL,
     ParsecOrganizationBootstrapAddr,
 )
 from .common import (
+    AccessToken,
     DateTime,
     DeviceLabel,
     EmailAddress,
@@ -15,7 +16,6 @@ from .common import (
     Handle,
     HumanHandle,
     InvitationStatus,
-    InvitationToken,
     NonZeroU8,
     Ref,
     Result,
@@ -67,7 +67,7 @@ class BootstrapOrganizationError(ErrorVariant):
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
 
-    class SaveDeviceStorageNotAvailable:
+    class SaveDeviceNoSpaceAvailable:
         pass
 
     class SaveDeviceInvalidPath:
@@ -171,8 +171,9 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
 
+# in libparsec this is a SaveDeviceError type alias
 class ClaimFinalizeError(ErrorVariant):
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:
@@ -590,8 +591,8 @@ class ClientNewUserInvitationError(ErrorVariant):
 
 
 class NewInvitationInfo(Structure):
-    addr: ParsecInvitationAddr
-    token: InvitationToken
+    addr: ParsecInvitationAddrAndRedirectionURL
+    token: AccessToken
     email_sent_status: InvitationEmailSentStatus
 
 
@@ -671,7 +672,7 @@ class ClientCancelInvitationError(ErrorVariant):
 
 async def client_cancel_invitation(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result[None, ClientCancelInvitationError]:
     raise NotImplementedError
 
@@ -687,23 +688,23 @@ class InviteListInvitationCreatedBy(Variant):
 
 class InviteListItem(Variant):
     class User:
-        addr: ParsecInvitationAddr
-        token: InvitationToken
+        addr: ParsecInvitationAddrAndRedirectionURL
+        token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
         claimer_email: EmailAddress
         status: InvitationStatus
 
     class Device:
-        addr: ParsecInvitationAddr
-        token: InvitationToken
+        addr: ParsecInvitationAddrAndRedirectionURL
+        token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
         status: InvitationStatus
 
     class ShamirRecovery:
-        addr: ParsecInvitationAddr
-        token: InvitationToken
+        addr: ParsecInvitationAddrAndRedirectionURL
+        token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
         claimer_user_id: UserID
@@ -772,19 +773,19 @@ class ClientStartShamirRecoveryInvitationGreetError(ErrorVariant):
 
 
 async def client_start_user_invitation_greet(
-    client: Handle, token: InvitationToken
+    client: Handle, token: AccessToken
 ) -> Result[UserGreetInitialInfo, ClientStartInvitationGreetError]:
     raise NotImplementedError
 
 
 async def client_start_device_invitation_greet(
-    client: Handle, token: InvitationToken
+    client: Handle, token: AccessToken
 ) -> Result[DeviceGreetInitialInfo, ClientStartInvitationGreetError]:
     raise NotImplementedError
 
 
 async def client_start_shamir_recovery_invitation_greet(
-    client: Handle, token: InvitationToken
+    client: Handle, token: AccessToken
 ) -> Result[ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError]:
     raise NotImplementedError
 

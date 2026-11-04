@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -24,6 +25,7 @@ _g_get_last_keys_bundle_and_access = Q("""
 WITH my_realm AS (
     SELECT
         realm._id,
+        realm.status,
         realm_user_role.role IS NOT NULL AS user_has_role
     FROM realm
     -- Left join so that we get a line even if user has never been part of the realm
@@ -60,6 +62,7 @@ my_keys_bundle_access AS (
 
 SELECT
     (SELECT _id FROM my_realm) AS realm_internal_id,
+    (SELECT status FROM my_realm) AS realm_status,
     (SELECT user_has_role FROM my_realm) AS user_has_role,
     (SELECT key_index FROM my_keys_bundle) AS key_index,
     (SELECT keys_bundle FROM my_keys_bundle) AS keys_bundle,
@@ -70,6 +73,7 @@ _g_get_keys_bundle_and_access = Q("""
 WITH my_realm AS (
     SELECT
         realm._id,
+        realm.status,
         realm_user_role.role IS NOT NULL AS user_has_role
     FROM realm
     -- Left join so that we get a line even if user has never been part of the realm
@@ -107,6 +111,7 @@ my_keys_bundle_access AS (
 
 SELECT
     (SELECT _id FROM my_realm) AS realm_internal_id,
+    (SELECT status FROM my_realm) AS realm_status,
     (SELECT user_has_role FROM my_realm) AS user_has_role,
     (SELECT key_index FROM my_keys_bundle) AS key_index,
     (SELECT keys_bundle FROM my_keys_bundle) AS keys_bundle,
@@ -157,6 +162,14 @@ async def realm_get_keys_bundle(
             pass
         case None:
             return RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
+        case _:
+            assert False, row
+
+    match row["realm_status"]:
+        case "AVAILABLE" | "ARCHIVED_OR_DELETION_PLANNED":
+            pass
+        case "DELETED":
+            return RealmGetKeysBundleBadOutcome.REALM_DELETED
         case _:
             assert False, row
 

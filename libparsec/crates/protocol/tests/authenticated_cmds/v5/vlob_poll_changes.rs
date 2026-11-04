@@ -117,3 +117,24 @@ pub fn rep_realm_not_found() {
 
     p_assert_eq!(data2, expected);
 }
+
+pub fn rep_realm_deleted() {
+    // Generated from Parsec 3.8.2-a.0+dev
+    // Content:
+    //   status: 'realm_deleted'
+    let raw = hex!("81a6737461747573ad7265616c6d5f64656c65746564");
+
+    let expected = authenticated_cmds::vlob_poll_changes::Rep::RealmDeleted;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = authenticated_cmds::vlob_poll_changes::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_poll_changes::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}

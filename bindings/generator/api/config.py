@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from .addr import ParsecAddr
 from .common import (
     Enum,
@@ -74,6 +73,10 @@ class AccountConfig(Variant):
     EnabledWithoutVault = VariantItemUnit()
 
 
+class CryptPadConfig(Structure):
+    server_url: str
+
+
 class OrganizationBootstrapConfig(Variant):
     WithBootstrapToken = VariantItemUnit()
     Spontaneous = VariantItemUnit()
@@ -84,12 +87,12 @@ class OpenBaoSecretConfig(Variant):
         mount_path: str
 
 
-class OpenBaoAuthConfig(Variant):
-    class OIDCHexagone:
-        mount_path: str
-
-    class OIDCProConnect:
-        mount_path: str
+class OpenBaoAuthConfig(Structure):
+    id: str
+    mount_path: str
+    name: str
+    help_link: str | None
+    icon: str | None
 
 
 class OpenBaoConfig(Structure):
@@ -99,10 +102,26 @@ class OpenBaoConfig(Structure):
     auths: list[OpenBaoAuthConfig]
 
 
+class AdvisoryDeviceFilePrimaryProtection(Enum):
+    Password = EnumItemUnit()
+    Keyring = EnumItemUnit()
+    PKI = EnumItemUnit()
+    OpenBao = EnumItemUnit()
+    AccountVault = EnumItemUnit()
+
+
+class AdvisoryDeviceFileProtection(Structure):
+    primary: AdvisoryDeviceFilePrimaryProtection
+    with_totp: bool
+
+
 class ServerConfig(Structure):
     account: AccountConfig
+    cryptpad: CryptPadConfig | None
     organization_bootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | None
+    advisory_device_file_protection: list[AdvisoryDeviceFileProtection]
+    server_version: str | None
 
 
 class GetServerConfigError(ErrorVariant):

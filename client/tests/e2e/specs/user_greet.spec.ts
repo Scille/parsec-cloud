@@ -51,8 +51,8 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   );
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
-  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+  await expect(joinData.modal.locator('.spinner-container').first()).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container').first()).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -85,8 +85,8 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await expect(greetData.title).toHaveText('User has been added successfully!');
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
-  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
-  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+  await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.info-cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
@@ -102,11 +102,8 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
 
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -173,8 +170,8 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   );
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
-  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+  await expect(joinData.modal.locator('.spinner-container').first()).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container').first()).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -208,8 +205,8 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await expect(greetData.title).toHaveText('User has been added successfully!');
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
-  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
-  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+  await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.info-cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
@@ -225,12 +222,8 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
 
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -249,6 +242,14 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await expect(secondTab).toBeWorkspacePage();
   const profile = secondTab.locator('.topbar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Gordon Freeman');
+
+  // Checking the message for no workspaces here as well since it can only be checked for a new user
+  // and it takes a long time to invite someone.
+  await expect(secondTab.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(0);
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces').locator('span').nth(0)).toHaveText(
+    'You do not have access to any workspaces yet. Workspaces that you create or have been shared with you will be listed here.',
+  );
 });
 
 msTest('Host selects invalid SAS code', async ({ usersPage }) => {
@@ -331,7 +332,7 @@ msTest('Host selects no SAS code', async ({ usersPage }) => {
   const questionModal = usersPage.locator('.question-modal');
   await expect(questionModal).toBeVisible();
   await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
-  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+  await expect(questionModal.locator('.ms-modal-header__subtitle')).toHaveText(
     "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
   );
   await questionModal.locator('#cancel-button').click();
@@ -468,7 +469,7 @@ msTest('Guest selects no SAS code', async ({ usersPage }) => {
   const questionModal = secondTab.locator('.question-modal');
   await expect(questionModal).toBeVisible();
   await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
-  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+  await expect(questionModal.locator('.ms-modal-header__subtitle')).toHaveText(
     "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
   );
   await questionModal.locator('#cancel-button').click();
@@ -600,8 +601,8 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   );
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
-  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+  await expect(joinData.modal.locator('.spinner-container').first()).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container').first()).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -635,8 +636,8 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   await expect(greetData.title).toHaveText('User has been added successfully!');
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
-  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
-  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+  await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.info-cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
@@ -651,16 +652,12 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   ]);
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Smartcard');
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true });
   const certBtn = joinData.content.locator('.choose-certificate-button');
   await expect(certBtn).toBeHidden();
   await authRadio.nth(2).click();
   await expect(certBtn).toBeVisible();
-  await expect(certBtn).toHaveText('Choose a certificate');
+  await expect(certBtn).toHaveText('Add a certificate');
   await expect(joinData.content.locator('.choose-certificate-selected__text')).toBeHidden();
   await certBtn.click();
   await expect(joinData.content.locator('.choose-certificate-selected__text')).toBeVisible();

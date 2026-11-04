@@ -1,19 +1,25 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="list invitations-container-list">
+  <ion-list class="list list-container invitations-list-container">
     <ion-list-header
-      class="invitations-list-header"
+      class="invitations-list-header list-header"
       lines="full"
       v-if="isLargeDisplay"
     >
-      <ion-text class="invitations-list-header__label cell-title label-email">
+      <ion-text class="list-header-label cell-title label-email">
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.email') }}
       </ion-text>
-      <ion-text class="invitations-list-header__label cell-title label-sentOn">
+      <ion-text class="list-header-label cell-title label-sentOn">
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentOn') }}
       </ion-text>
-      <ion-text class="invitations-list-header__label cell-title label-space" />
+      <ion-text
+        v-if="windowWidth > WindowSizeBreakpoints.XL"
+        class="list-header-label cell-title label-sentBy"
+      >
+        {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentBy') }}
+      </ion-text>
+      <ion-text class="list-header-label list-item-end cell-title label-space" />
     </ion-list-header>
     <invitation-item
       v-for="invitation in invitations"
@@ -32,13 +38,13 @@
 import InvitationItem from '@/components/invitations/InvitationItem.vue';
 import { UserInvitation } from '@/parsec';
 import { IonList, IonListHeader, IonText } from '@ionic/vue';
-import { useWindowSize } from 'megashark-lib';
+import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 
 defineProps<{
   invitations: Array<UserInvitation>;
 }>();
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, windowWidth } = useWindowSize();
 
 defineEmits<{
   (e: 'greetClick', invitation: UserInvitation): void;

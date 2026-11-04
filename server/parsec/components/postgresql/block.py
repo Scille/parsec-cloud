@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
@@ -32,6 +33,9 @@ from parsec.components.postgresql.utils import (
     transaction,
 )
 from parsec.components.realm import BadKeyIndex
+from parsec.logging import get_logger
+
+logger = get_logger()
 
 
 class PGBlockComponent(BaseBlockComponent):
@@ -61,7 +65,7 @@ class PGBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         key_index: int,
         block: bytes,
-    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
+    ) -> BadKeyIndex | BlockCreateBadOutcome | None:
         return await block_create(
             self.blockstore,
             self.pool,
@@ -99,6 +103,11 @@ VALUES ($organization_id, $block_id, $data)
 """
 )
 
+_q_delete_block_data_of_org_id = Q("""
+DELETE FROM block_data
+WHERE organization_id = $organization_id
+""")
+
 
 class PGBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, pool: AsyncpgPool):
@@ -118,7 +127,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
 
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         async with self.pool.acquire() as conn:
             try:
                 ret = await conn.execute(
@@ -132,3 +141,16 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
             except UniqueViolationError:
                 # Keep calm and stay idempotent
                 pass
+
+    async def wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        async with self.pool.acquire() as conn:
+            ret = await conn.execute(
+                *_q_delete_block_data_of_org_id(organization_id=organization_id.str)
+            )
+            # Retrieve affected rows from message `DELETE N`
+            count = int(ret.split()[-1])
+            logger.info(
+                "Wiped organization data",
+                organization_id=organization_id,
+                deleted_block_data=count,
+            )

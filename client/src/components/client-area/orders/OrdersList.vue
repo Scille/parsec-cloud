@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <template v-if="orders.length > 0">
@@ -11,7 +11,7 @@
 
   <!-- no orders -->
   <ion-text
-    class="body-lg no-orders"
+    class="no-orders"
     v-else
   >
     {{ $msTranslate('clientArea.orders.noOrders') }}
@@ -28,4 +28,8 @@ defineProps<{
 }>();
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.no-orders {
+  @include ms.font('body-lg-regular');
+}
+</style>

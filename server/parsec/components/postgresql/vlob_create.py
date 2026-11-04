@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -52,7 +53,8 @@ my_locked_common_topic AS (
 my_realm AS (
     SELECT
         realm._id,
-        realm.key_index
+        realm.key_index,
+        realm.status
     FROM realm
     INNER JOIN my_organization ON realm.organization = my_organization._id
     WHERE realm.realm_id = $realm_id
@@ -98,6 +100,7 @@ SELECT
     (SELECT last_timestamp FROM my_locked_realm_topic) AS last_realm_certificate_timestamp,
     (SELECT _id FROM my_realm) AS realm_internal_id,
     (SELECT key_index FROM my_realm) AS realm_key_index,
+    (SELECT status FROM my_realm) AS realm_status,
     COALESCE(
         (
             SELECT role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
@@ -186,13 +189,13 @@ async def vlob_create(
     timestamp: DateTime,
     blob: bytes,
 ) -> (
-    None
-    | BadKeyIndex
+    BadKeyIndex
     | VlobCreateBadOutcome
     | TimestampOutOfBallpark
     | RequireGreaterTimestamp
     | RejectedBySequesterService
     | SequesterServiceUnavailable
+    | None
 ):
     # 1) Query the database to get all info about org/device/user/realm/vlob
     #    and lock the common & realm topics
@@ -267,6 +270,16 @@ async def vlob_create(
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
+        case _:
+            assert False, row
+
+    match row["realm_status"]:
+        case "AVAILABLE":
+            pass
+        case "ARCHIVED_OR_DELETION_PLANNED":
+            return VlobCreateBadOutcome.REALM_ARCHIVED
+        case "DELETED":
+            return VlobCreateBadOutcome.REALM_DELETED
         case _:
             assert False, row
 

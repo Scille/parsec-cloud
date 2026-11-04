@@ -19,6 +19,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     alice_gives_profile,
     generate_realm_role_certificate,
     wksp1_alice_gives_role,
@@ -127,7 +128,7 @@ async def test_authenticated_realm_unshare_ok(
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
                 user_id=certif.user_id,
-                role_removed=True,
+                kind="UNSHARE",
             )
         )
 
@@ -139,6 +140,25 @@ async def test_authenticated_realm_unshare_ok(
 
     topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     assert topics == expected_topics
+
+
+async def test_authenticated_realm_unshare_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    # Bob is not a member of the archived workspace, so we get
+    # `RecipientAlreadyUnshared`. The important thing is the archived status
+    # does not prevent the operation (i.e. no realm-level error).
+    certif = RealmRoleCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_archived_id,
+        user_id=workspace_archived_org.bob_user_id,
+        role=None,
+    )
+    rep = await workspace_archived_org.alice.realm_unshare(
+        realm_role_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+    )
+    assert isinstance(rep, authenticated_cmds.latest.realm_unshare.RepRecipientAlreadyUnshared)
 
 
 @pytest.mark.parametrize(
@@ -448,6 +468,22 @@ async def test_authenticated_realm_unshare_require_greater_timestamp(
     assert rep == authenticated_cmds.latest.realm_unshare.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_realm_unshare_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    certif = RealmRoleCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        user_id=workspace_archived_org.bob_user_id,
+        role=None,
+    )
+    rep = await workspace_archived_org.alice.realm_unshare(
+        realm_role_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+    )
+    assert rep == authenticated_cmds.latest.realm_unshare.RepRealmDeleted()
 
 
 async def test_authenticated_realm_unshare_http_common_errors(

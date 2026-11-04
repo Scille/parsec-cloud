@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
@@ -6,25 +6,29 @@ use libparsec_types::prelude::*;
 
 use super::Client;
 use crate::{
+    ClientRefreshWorkspacesListError,
     certif::{
         CertifBootstrapWorkspaceError, CertifPollServerError, CertifRenameRealmError,
         CertificateBasedActionOutcome, InvalidCertificateError, InvalidEncryptedRealmNameError,
         InvalidKeysBundleError,
     },
-    ClientRefreshWorkspacesListError,
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientRenameWorkspaceError {
     #[error("Workspace not found")]
     WorkspaceNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Not allowed")]
     AuthorNotAllowed,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -74,6 +78,7 @@ pub async fn rename_workspace(
             CertifBootstrapWorkspaceError::AuthorNotAllowed => {
                 ClientRenameWorkspaceError::AuthorNotAllowed
             }
+            CertifBootstrapWorkspaceError::RealmDeleted => ClientRenameWorkspaceError::RealmDeleted,
             CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
@@ -158,6 +163,7 @@ pub async fn rename_workspace(
                 CertifRenameRealmError::UnknownRealm => {
                     ClientRenameWorkspaceError::WorkspaceNotFound
                 }
+                CertifRenameRealmError::RealmDeleted => ClientRenameWorkspaceError::RealmDeleted,
                 CertifRenameRealmError::AuthorNotAllowed => {
                     ClientRenameWorkspaceError::AuthorNotAllowed
                 }

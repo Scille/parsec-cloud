@@ -17,7 +17,9 @@ Requirements:
 from __future__ import annotations
 
 import argparse
+import functools
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -26,6 +28,7 @@ from functools import lru_cache
 from hashlib import sha256
 from http.client import HTTPResponse
 from pathlib import Path
+from typing import Any
 from urllib.request import HTTPRedirectHandler, Request, urlopen
 from zipfile import ZipFile
 
@@ -35,22 +38,34 @@ BASE_URL = f"https://api.github.com/repos/{REPOSITORY}"
 CLI_ARTIFACT_NAME = "Windows-x86_64-pc-windows-msvc-cli-pre-build"
 CLI_EXECUTABLE_PATTERN = r"^parsec-cli_.*_windows-x86_64-msvc.exe$"
 GUI_ARTIFACT_NAME = "windows-exe-X64-electron-pre-built"
-WINDOWS_KITS_BIN_DIR = Path("C:/Program Files (x86)/Windows Kits/10/bin")
+GUI_HARDENED_ARTIFACT_NAME = "windows-exe-hardened-X64-electron-pre-built"
 # Note the signing strategy differs between the CLI and the GUI:
-# - CLI: We just need to call signtool.exe on the executable and call it a day.
+# - CLI: We just need to sign the executable and call it a day.
 # - GUI: We need to sign the main executable, build an installer, and sign it.
 #
 # For this reason, this script takes care of the whole CLI signing process, while
 # relying on another sub-script embedded in the artifact to do the GUI signing.
-CLI_SIGN_CERTIFICATE_SUBJECT_NAME = "Scille"
-CLI_SIGN_CERTIFICATE_SHA1 = "4505A81975EF724601813DF296AB74A07ECFA991"
-CLI_SIGN_TIMESTAMP_SERVER = "http://time.certum.pl"
+#
+# Signing uses Azure Trusted Signing, just like the GUI sub-script does (through
+# electron-builder). Authentication is done through the standard Azure environment
+# variables (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET), and the
+# Trusted Signing resources are configured through the same variables as the GUI
+# (AZURE_TRUSTED_SIGNING_ENDPOINT, AZURE_TRUSTED_SIGNING_ACCOUNT_NAME and
+# AZURE_TRUSTED_SIGNING_PROFILE_NAME).
+# Note this also requires the .NET SDK, PowerShell and the `TrustedSigning`
+# PowerShell module (installed on first use by the GUI signing process).
 GUI_SIGN_SCRIPT_NAME = "sign-windows-package.cmd"
 
 
+@functools.wraps(subprocess.run)
+def run_cmds(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    print(f">> {' '.join(iter(args))}")
+    return subprocess.run(args, **kwargs)
+
+
 def get_github_token() -> str:
-    process = subprocess.run(
-        "gh auth token", capture_output=True, shell=True, check=True, text=True
+    process = run_cmds(
+        ["gh", "auth", "token"], capture_output=True, shell=True, check=True, text=True
     )
     return process.stdout.strip()
 
@@ -115,12 +130,18 @@ def get_artifacts(base_url: str, token: str, name: str) -> Artifacts:
 
 
 def get_artifact(
-    artifact_name: str, base_url: str, token: str, version: None | str = None
+    artifact_name: str,
+    token: str,
+    version: str | None = None,
+    base_url: str = BASE_URL,
 ) -> Artifact:
     artifacts = get_artifacts(base_url, token, artifact_name)
     for artifact in artifacts.items:
         if version is not None and artifact.version != version:
             continue
+        print(
+            f"Found artifact: {artifact.name} version {artifact.version} updated at {artifact.timestamp}"
+        )
         return artifact
 
     # Since we filter the artifact by name and are only interested into signing recent
@@ -173,8 +194,8 @@ def get_release_tag(version: str):
     # - `v[...]` when the release is published
     # Just check which one exists
     for release_tag in (version, f"refs/tags/{version}"):
-        process = subprocess.run(
-            f"gh release view {release_tag} --repo {REPOSITORY}",
+        process = run_cmds(
+            ["gh", "release", "view", release_tag, "--repo", REPOSITORY],
             shell=True,
             text=True,
             capture_output=True,
@@ -187,32 +208,32 @@ def get_release_tag(version: str):
 def upload_assets(path: Path, version: str, expected_files: int) -> None:
     files = list(path.iterdir())
     assert len(files) == expected_files
-    files_str = " ".join(str(p.resolve()) for p in files)
+    files_str = (str(p.resolve()) for p in files)
     print(f"Uploading {expected_files} files to release {version} on repository {REPOSITORY}...")
     release_tag = get_release_tag(version)
-    print(f">> gh release upload {release_tag} {files_str} --repo {REPOSITORY}")
-    subprocess.run(
-        f"gh release upload {release_tag} {files_str} --repo {REPOSITORY}",
+    run_cmds(
+        ["gh", "release", "upload", release_tag, *(files_str), "--repo", REPOSITORY],
         shell=True,
         check=True,
         text=True,
     )
 
 
+def download_and_unzip_artifact(artifact: Artifact, token: str, workdir: Path) -> Path:
+    zip_path = workdir / f"{artifact.name}-{artifact.version}.zip"
+    download_artifact(artifact.url, token, artifact.size, zip_path)
+    return unzip_artifact(zip_path)
+
+
 def sign_cli(version: str | None, workdir: Path) -> None:
     # 1) Get back our artifact of interest
 
     token = get_github_token()
-    artifact = get_artifact(CLI_ARTIFACT_NAME, BASE_URL, token, version)
-    print(
-        f"Found artifact: {artifact.name} version {artifact.version} updated at {artifact.timestamp}"
-    )
+    artifact = get_artifact(CLI_ARTIFACT_NAME, token, version)
 
     # 2) Unzip and check the artifact
 
-    zip_path = workdir / f"{artifact.name}-{artifact.version}.zip"
-    download_artifact(artifact.url, token, artifact.size, zip_path)
-    destination = unzip_artifact(zip_path)
+    destination = download_and_unzip_artifact(artifact, token, workdir)
     target = None
     for item in destination.iterdir():
         if re.match(CLI_EXECUTABLE_PATTERN, item.name):
@@ -225,39 +246,26 @@ def sign_cli(version: str | None, workdir: Path) -> None:
 
     # 3) Sign
 
-    # Sign executable
-    signtool_exe = "signtool.exe"
-    if shutil.which(signtool_exe) is None:
-        print(
-            f"signtool.exe not found in $PATH, looking for it in SDKs in {WINDOWS_KITS_BIN_DIR}..."
-        )
-        signtool_exe = None
-        for sdk in WINDOWS_KITS_BIN_DIR.absolute().iterdir():
-            candidate = sdk / "x64/signtool.exe"
-            if candidate.exists():
-                signtool_exe = str(candidate)
-                print(f"Found {signtool_exe} !")
-                break
-        if signtool_exe is None:
-            raise RuntimeError("signtool.exe not found :(")
-    subprocess.run(
+    # Sign the executable using Azure Trusted Signing, through the very same
+    # PowerShell module used by the GUI signing process.
+    # Note the module requires the .NET SDK to be installed.
+    endpoint = os.environ["AZURE_TRUSTED_SIGNING_ENDPOINT"]
+    account_name = os.environ["AZURE_TRUSTED_SIGNING_ACCOUNT_NAME"]
+    profile_name = os.environ["AZURE_TRUSTED_SIGNING_PROFILE_NAME"]
+
+    run_cmds(
         [
-            # see https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool#sign-command-options
-            signtool_exe,
-            "sign",
-            "/a",
-            "/n",
-            CLI_SIGN_CERTIFICATE_SUBJECT_NAME,
-            "/t",
-            CLI_SIGN_TIMESTAMP_SERVER,
-            "/sha1",
-            CLI_SIGN_CERTIFICATE_SHA1,
-            "/fd",
-            "sha256",
-            "/d",
-            f"Parsec CLI {artifact.version}",
-            "/v",
-            f"{target}",
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            "Invoke-TrustedSigning"
+            f" -Endpoint '{endpoint}'"
+            f" -CodeSigningAccountName '{account_name}'"
+            f" -CertificateProfileName '{profile_name}'"
+            f" -FileDigest 'SHA256'"
+            f" -Description 'Parsec CLI {artifact.version}'"
+            f" -Files '{target}'",
         ],
         check=True,
     )
@@ -271,7 +279,7 @@ def sign_cli(version: str | None, workdir: Path) -> None:
         pass
     assets_directory.mkdir(parents=True, exist_ok=True)
     shutil.copy(target, assets_directory)
-    with (assets_directory / f"{target.name}.sha256").open("w") as f:
+    with (assets_directory / f"{target.name}.sha256").open("w", encoding="utf8") as f:
         f.write(sha256((assets_directory / target.name).read_bytes()).hexdigest())
 
     # 5) Upload assets to Github release
@@ -280,21 +288,20 @@ def sign_cli(version: str | None, workdir: Path) -> None:
     print("Done!")
 
 
-def sign_gui(version: str | None, workdir: Path) -> None:
+def sign_gui(version: str | None, workdir: Path, hardened: bool = False) -> None:
     # 1) Get back our artifact of interest
 
     token = get_github_token()
-    artifact = get_artifact(GUI_ARTIFACT_NAME, BASE_URL, token, version)
-    print(
-        f"Found artifact: {artifact.name} version {artifact.version} updated at {artifact.timestamp}"
+    artifact = get_artifact(
+        GUI_HARDENED_ARTIFACT_NAME if hardened else GUI_ARTIFACT_NAME,
+        token,
+        version,
     )
 
     # 2) Unzip and check the artifact
 
-    zip_path = workdir / f"{artifact.name}-{artifact.version}.zip"
-    download_artifact(artifact.url, token, artifact.size, zip_path)
-    destination = unzip_artifact(zip_path)
-    with (destination / "package.json").open() as f:
+    destination = download_and_unzip_artifact(artifact, token, workdir)
+    with (destination / "package.json").open(encoding="utf8") as f:
         package = json.load(f)
     if f"v{package['version']}" != artifact.version:
         raise RuntimeError(f"Version mismatch: {artifact.version} != v{package['version']}")
@@ -302,7 +309,11 @@ def sign_gui(version: str | None, workdir: Path) -> None:
     # 3) Build & sign using the sub-script embedded in the artifact
 
     script = (destination / GUI_SIGN_SCRIPT_NAME).resolve()
-    subprocess.run([script], check=True, cwd=destination)
+    run_cmds(
+        [str(script)] + (["-Hardened"] if hardened else []),
+        check=True,
+        cwd=destination,
+    )
     assets_directory = destination / "upload"
     assert assets_directory.exists()
 
@@ -318,7 +329,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "what",
-        choices=["cli", "gui"],
+        choices=["cli", "gui", "gui-hardened"],
         nargs="*",
         help="Which artifact to sign (default: cli & gui).",
     )
@@ -338,7 +349,7 @@ if __name__ == "__main__":
     if version is not None and version[:1].isdigit():
         version = f"v{version}"
 
-    workdir = Path(namespace.workdir)
+    workdir = Path(namespace.workdir).resolve()
     workdir.mkdir(parents=True, exist_ok=True)
 
     if not namespace.what or "cli" in namespace.what:
@@ -346,3 +357,6 @@ if __name__ == "__main__":
 
     if not namespace.what or "gui" in namespace.what:
         sign_gui(version, workdir)
+
+    if not namespace.what or "gui-hardened" in namespace.what:
+        sign_gui(version, workdir, hardened=True)

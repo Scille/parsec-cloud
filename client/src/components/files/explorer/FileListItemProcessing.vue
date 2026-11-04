@@ -1,52 +1,52 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-item
     button
     lines="full"
-    class="ion-no-padding file-list-item-processing"
+    class="ion-no-padding list-item file-list-item-processing"
   >
     <div class="list-item-container">
-      <div class="file-loading">
+      <div class="list-item-column file-loading">
         <ms-spinner class="file-loading__spinner" />
       </div>
 
       <!-- file name -->
-      <div class="file-name">
+      <div class="list-item-column file-name">
         <ms-image
           v-if="isLargeDisplay"
           :image="getFileIcon(operation.entryName)"
           class="file-icon"
         />
 
-        <ion-text class="label-name cell">
+        <ion-text class="list-item-label label-name cell">
           {{ operation.entryName }}
         </ion-text>
       </div>
 
       <!-- updated by -->
-      <div class="file-updated-by" />
+      <div class="list-item-column file-updated-by" />
 
       <!-- last update -->
       <div
         v-if="profile !== UserProfile.Outsider"
-        class="file-last-update"
+        class="list-item-column file-last-update"
       >
-        <ion-text class="label-last-update cell" />
+        <ion-text class="list-item-label label-last-update cell" />
       </div>
 
       <!-- creation date -->
-      <div class="file-creation-date">
-        <ion-text class="label-creation-date cell">
+      <div class="list-item-column file-creation-date">
+        <ion-text class="list-item-label label-creation-date cell">
           {{ $msTranslate(operationLabel) }}
         </ion-text>
       </div>
 
       <!-- file size -->
-      <div class="file-size" />
+      <div class="list-item-column file-size" />
 
       <!-- options -->
-      <div class="file-empty ion-item-child-clickable" />
+      <div class="list-item-end file-empty ion-item-child-clickable" />
     </div>
   </ion-item>
 </template>
@@ -91,17 +91,14 @@ const operationLabel: Translatable = (() => {
 }
 
 .file-name {
-  position: relative;
-  display: flex;
-  gap: 1rem;
-
   .file-icon {
     min-width: 2rem;
     height: 2rem;
   }
 
   .label-name {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
   }
 }
 </style>

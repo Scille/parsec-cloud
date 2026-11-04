@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, path::Path, sync::Arc};
 
@@ -13,7 +13,7 @@ use libparsec_types::prelude::*;
 use super::{
     DataAccessFetchBlockError, DataAccessFetchManifestError, WorkspaceHistoryRealmExportDecryptor,
 };
-use crate::{certif::EncrytionUsage, InvalidBlockAccessError, InvalidManifestError};
+use crate::{InvalidBlockAccessError, InvalidManifestError, certif::EncryptionUsage};
 
 pub(super) struct RealmExportDataAccess {
     db: AsyncMutex<RealmExportDB>,
@@ -44,7 +44,7 @@ async fn decrypt_keys_bundle_with_user(
             // We have tried all the access for this user, none are valid :'(
             Err(RealmExportDBFetchKeysBundleAccessError::AccessNotFound) => return Ok(None),
             Err(RealmExportDBFetchKeysBundleAccessError::InvalidDatabase(e)) => {
-                return Err(RealmExportDataAccessStartError::InvalidDatabase(e))
+                return Err(RealmExportDataAccessStartError::InvalidDatabase(e));
             }
         };
 
@@ -89,7 +89,7 @@ async fn decrypt_keys_bundle_with_sequester(
         // This sequester service has no access to this key bundle
         Err(RealmExportDBFetchKeysBundleAccessError::AccessNotFound) => return Ok(None),
         Err(RealmExportDBFetchKeysBundleAccessError::InvalidDatabase(e)) => {
-            return Err(RealmExportDataAccessStartError::InvalidDatabase(e))
+            return Err(RealmExportDataAccessStartError::InvalidDatabase(e));
         }
     };
 
@@ -121,7 +121,7 @@ async fn decrypt_keys_bundle(
         Ok(encrypted_keys_bundle) => encrypted_keys_bundle,
         Err(RealmExportDBFetchKeysBundleError::BundleNotFound) => return Ok(None),
         Err(RealmExportDBFetchKeysBundleError::InvalidDatabase(err)) => {
-            return Err(RealmExportDataAccessStartError::InvalidDatabase(err))
+            return Err(RealmExportDataAccessStartError::InvalidDatabase(err));
         }
     };
 
@@ -489,7 +489,7 @@ impl RealmExportDataAccess {
                 )));
             }
             Some(key) => {
-                let usage = EncrytionUsage::Vlob(entry_id);
+                let usage = EncryptionUsage::Vlob(entry_id);
                 key.derive_secret_key_from_uuid(usage.key_derivation_uuid())
             }
         };
@@ -587,7 +587,7 @@ impl RealmExportDataAccess {
                 )));
             }
             Some(key) => {
-                let usage = EncrytionUsage::Block(access.id);
+                let usage = EncryptionUsage::Block(access.id);
                 key.derive_secret_key_from_uuid(usage.key_derivation_uuid())
             }
         };

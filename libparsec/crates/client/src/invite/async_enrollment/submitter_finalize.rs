@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{path::Path, sync::Arc};
 
@@ -10,14 +10,14 @@ use libparsec_platform_device_loader::{
 };
 use libparsec_types::prelude::*;
 
-use crate::ClientConfig;
+use crate::{ClientConfig, PkiErrorDetail};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SubmitterFinalizeAsyncEnrollmentError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error("Enrollment is not in the accepted state")]
     NotAccepted,
     #[error("Accepter has provided an invalid request payload: {0}")]
@@ -67,10 +67,11 @@ pub enum SubmitterFinalizeAsyncEnrollmentError {
     OpenBaoBadServerResponse(anyhow::Error),
 
     // PKI-related errors
-    #[error("Invalid X509 trustchain (server doesn't recognize the root certificate)")]
-    InvalidX509Trustchain,
-    // TODO: add other PKI-related errors
-    // (see https://github.com/Scille/parsec-cloud/issues/12028)
+    #[error("Cannot open PKI X509 certificate store: {0}")]
+    PKICannotOpenCertificateStore(anyhow::Error),
+    // Certificate not found, invalid certificate, cannot use to sign etc.
+    #[error("Cannot use the referenced X509 certificate for PKI operation: {0}")]
+    PKIUnusableX509CertificateReference(PkiErrorDetail),
 }
 
 pub trait SubmitterFinalizeAsyncEnrollmentIdentityStrategy: Send + Sync {
@@ -104,7 +105,6 @@ pub async fn submitter_finalize_async_enrollment(
     config: Arc<ClientConfig>,
     enrollment_file: &Path,
     new_device_save_strategy: &DeviceSaveStrategy,
-    new_device_key_file: &Path,
     identity_strategy: &dyn SubmitterFinalizeAsyncEnrollmentIdentityStrategy,
 ) -> Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError> {
     // 1) Load the local pending async enrollment file
@@ -117,7 +117,7 @@ pub async fn submitter_finalize_async_enrollment(
         .await
         .map_err(|err| match err {
             LoadPendingAsyncEnrollmentError::StorageNotAvailable => {
-                SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable
+                SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable
             }
             LoadPendingAsyncEnrollmentError::InvalidPath(err) => {
                 SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidPath(err)
@@ -207,7 +207,7 @@ pub async fn submitter_finalize_async_enrollment(
                 return Err(SubmitterFinalizeAsyncEnrollmentError::EnrollmentNotFoundOnServer);
             }
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
             }
         }
     };
@@ -256,6 +256,11 @@ pub async fn submitter_finalize_async_enrollment(
 
     // 4) Remove the pending async enrollment file and save the final local device file \o/
 
+    let new_device_key_file = libparsec_platform_device_loader::get_default_key_file(
+        &config.config_dir,
+        new_local_device.device_id,
+    );
+
     // Note we destroy the pending file, then save the final local device file.
     //
     // This means there is a small chance that we lost the the new device if an
@@ -274,7 +279,7 @@ pub async fn submitter_finalize_async_enrollment(
     .await
     .or_else(|err| match err {
         RemoveDeviceError::StorageNotAvailable => {
-            Err(SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable)
+            Err(SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable)
         }
         // Not found is unexpected... but we can continue nevertheless
         RemoveDeviceError::NotFound => Ok(()),
@@ -287,17 +292,15 @@ pub async fn submitter_finalize_async_enrollment(
         &config.config_dir,
         new_device_save_strategy,
         &new_local_device,
-        new_device_key_file.to_path_buf(),
+        new_device_key_file,
     )
     .await
     .map_err(|err| match err {
-        SaveDeviceError::StorageNotAvailable => {
-            SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable
+        SaveDeviceError::NoSpaceAvailable => {
+            SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable
         }
-        SaveDeviceError::InvalidPath => {
-            SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(anyhow::anyhow!(
-                "invalid path while saving device"
-            ))
+        SaveDeviceError::InvalidPath(error) => {
+            SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(error)
         }
         SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
             SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline {

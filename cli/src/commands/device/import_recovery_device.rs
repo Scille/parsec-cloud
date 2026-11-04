@@ -1,30 +1,33 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+use std::io::Write;
 
 use std::path::PathBuf;
 
 use libparsec::DeviceLabel;
 
-use crate::utils::*;
+use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, password_stdin]
+    #[with = config_dir, auth]
     pub struct Args {
         /// Path where encrypted recovery device data is
-        #[arg(short, long)]
+        #[arg(short, long, value_hint = clap::ValueHint::FilePath)]
         input: PathBuf,
-        /// new device label
-        #[arg(short, long)]
+        /// New device label
+        #[arg(short, long, value_hint = clap::ValueHint::Other)]
         label: String,
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         input,
         config_dir,
-        password_stdin,
         label,
+        auth,
     } = args;
+    // TODO: fail if password std and keyring ?
     log::trace!(
         "Importing recovery device from {} (confdir={})",
         input.display(),
@@ -32,33 +35,21 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     );
     let recovery_device = tokio::fs::read(input).await?;
 
-    let passphrase = read_password(if password_stdin {
-        ReadPasswordFrom::Stdin
-    } else {
-        ReadPasswordFrom::Tty {
-            prompt: "Enter passphrase for the recovery file:",
-        }
-    })?;
-    let password = choose_password(if password_stdin {
-        ReadPasswordFrom::Stdin
-    } else {
-        ReadPasswordFrom::Tty {
-            prompt: "Enter password for the new device:",
-        }
-    })?;
-
+    let passphrase = read_password("Enter passphrase for the recovery file:")?;
+    let strategy = auth.get_client_save_strategy().await?;
     let device_label = DeviceLabel::try_from(label.as_str())?;
     let new_device = libparsec_client::import_recovery_device(
         &config_dir,
         &recovery_device,
         passphrase.to_string(),
         device_label.clone(),
-        libparsec_client::DeviceSaveStrategy::Password { password },
+        strategy,
     )
-    .await?;
+    .await
+    .map(AvailableDeviceDisplay)?;
 
-    println!("New device created:");
-    println!("{}", &format_single_device(&new_device));
+    ui.with_message(|_, out| writeln!(out, "New device created:"))?;
+    ui.data_print(&new_device)?;
 
     Ok(())
 }

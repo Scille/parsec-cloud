@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{future::Future, sync::Arc};
 
@@ -6,10 +6,10 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
+    Client, ClientEnsureWorkspacesBootstrappedError,
     event_bus::{
         EventBus, EventMissedServerEvents, EventMonitorCrashed, EventWorkspaceLocallyCreated,
     },
-    Client, ClientEnsureWorkspacesBootstrappedError,
 };
 
 const WORKSPACES_BOOTSTRAP_MONITOR_NAME: &str = "workspaces_bootstrap";

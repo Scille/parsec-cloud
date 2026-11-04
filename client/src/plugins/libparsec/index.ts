@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { registerPlugin } from '@capacitor/core';
 
@@ -27,8 +27,8 @@ const _libparsec = registerPlugin<LibParsecPlugin>('LibParsec', {
 
 function logError(level: 'warn' | 'error', message: string): void {
   // may not be available right at the start
-  if (window.electronAPI && window.electronAPI.log) {
-    window.electronAPI.log(level, message);
+  if (window.nativeAPI && window.nativeAPI.log) {
+    window.nativeAPI.log(level, message);
   } else {
     console[level](message);
   }
@@ -44,6 +44,31 @@ const FUNCTIONS_TO_SKIP: Array<SkipData> = [
     tag: 'WorkspaceStatEntryErrorEntryNotFound',
     function: 'workspaceStatEntry',
   },
+  {
+    tag: 'ParseParsecAddrErrorInvalidUrl',
+    function: 'parseParsecAddr',
+  },
+  {
+    tag: 'WorkspaceCreateFolderErrorEntryExists',
+    function: 'workspaceCreateFolderAll',
+  },
+  {
+    tag: 'ClientListFrozenUsersErrorAuthorNotAllowed',
+    function: 'clientListFrozenUsers',
+  },
+];
+
+const FUNCTIONS_TO_SLOW_DOWN: Array<string> = [
+  'workspaceStatEntry',
+  'clientListWorkspaces',
+  'workspaceInfo',
+  'clientListUsers',
+  'workspaceStatFolderChildrenById',
+  'clientOrganizationInfo',
+  'bootstrapOrganization',
+  'clientInfo',
+  'clientListInvitations',
+  'clientTotpSetupStatus',
 ];
 
 const MOCKS: Array<{ name: string; funct: (..._args: Array<any>) => Promise<any> }> = [];
@@ -58,6 +83,14 @@ class ParsecProxy {
             console.log(`Using mocked '${name}'`);
             return await mock.funct(...args);
           }
+        }
+        if ((window as any).TESTING_ENABLE_SNAIL_MODE === true && FUNCTIONS_TO_SLOW_DOWN.includes(name)) {
+          console.log(`Slowing down '${name}'`);
+          await new Promise<void>((resolve) => {
+            setTimeout(() => {
+              resolve();
+            }, Math.random() * 1500);
+          });
         }
         // @ts-expect-error Dont know how to fix the `...arg` properly so that the linter doesn't complain
         const result = await target[name as keyof LibParsecPlugin](...args);

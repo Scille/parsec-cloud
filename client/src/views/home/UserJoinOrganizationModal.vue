@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page
@@ -19,7 +19,8 @@
       slot="icon-only"
       @click="cancelModal()"
       v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.Authentication && isLargeDisplay"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
     >
       <ion-icon
         :icon="close"
@@ -37,12 +38,12 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
           v-if="steps[pageStep]?.subtitle"
-          class="modal-header__text body"
+          class="modal-header__text"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
@@ -152,6 +153,7 @@
             @on-enter-keyup="nextStep()"
           />
         </div>
+
         <!-- part 5 (get auth)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.Authentication"
@@ -161,8 +163,11 @@
           <choose-authentication
             ref="authChoice"
             :server-config="serverConfig"
+            :server-addr="serverAddr"
+            @auth-reset="fieldsUpdated = true"
           />
         </div>
+
         <!-- part 6 (finish the process)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.Finish"
@@ -195,7 +200,10 @@
             v-show="waitingForHost || querying"
             class="spinner-container"
           >
-            <ms-spinner :title="getSpinnerTitle()" />
+            <ms-spinner
+              :title="getSpinnerTitle()"
+              :size="20"
+            />
           </div>
         </div>
       </ion-footer>
@@ -212,16 +220,19 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import {
-  AccessStrategy,
   CancelledGreetingAttemptReason,
   ClaimInProgressErrorTag,
   ClaimerRetrieveInfoErrorTag,
   DeviceSaveStrategy,
   OrganizationID,
+  ParsecAddr,
+  ParsecInvitationAddr,
+  ParsecInvitationRedirectionURL,
   ParsedParsecAddrTag,
   ServerConfig,
   UserClaim,
-  forgeServerAddr,
+  buildParsecAddr,
+  constructAccessStrategy,
   getServerConfig,
   parseParsecAddr,
 } from '@/parsec';
@@ -262,9 +273,10 @@ const organizationName: Ref<OrganizationID> = ref('');
 const querying = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
 const claimer = ref(new UserClaim());
+const serverAddr = ref<ParsecAddr>('');
 
 const props = defineProps<{
-  invitationLink: string;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
   informationManager: InformationManager;
 }>();
 
@@ -407,7 +419,7 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === UserJoinOrganizationStep.Authentication) {
-    const strategy = authChoiceRef.value?.getSaveStrategy();
+    const strategy = await authChoiceRef.value?.getSaveStrategy();
     if (!strategy) return;
     const result = await claimer.value.finalize(strategy);
     if (!result.ok) {
@@ -443,9 +455,9 @@ async function nextStep(): Promise<void> {
       level: InformationLevel.Success,
     });
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
-    const saveStrategy: DeviceSaveStrategy | undefined = authChoiceRef.value?.getSaveStrategy();
+    const saveStrategy: DeviceSaveStrategy | undefined = await authChoiceRef.value?.getSaveStrategy();
     if (!saveStrategy) return;
-    const accessStrategy = await AccessStrategy.fromSaveStrategy(claimer.value.device, saveStrategy);
+    const accessStrategy = constructAccessStrategy(claimer.value.device, saveStrategy.primaryProtection, saveStrategy.totpProtection);
     await modalController.dismiss({ device: claimer.value.device, access: accessStrategy }, MsModalResult.Confirm);
     return;
   }
@@ -577,16 +589,17 @@ onMounted(async () => {
   const result = await parseParsecAddr(props.invitationLink);
   if (result.ok) {
     if (result.value.tag !== ParsedParsecAddrTag.InvitationUser) {
-      window.electronAPI.log('error', 'Not a user invitation link');
+      window.nativeAPI.log('error', 'Not a user invitation link');
       return;
     }
     organizationName.value = result.value.organizationId;
-    const configResult = await getServerConfig(await forgeServerAddr(result.value));
+    serverAddr.value = await buildParsecAddr(result.value);
+    const configResult = await getServerConfig(serverAddr.value);
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }
   } else {
-    window.electronAPI.log('error', `Failed to parse invitation link: ${result.error.tag} (${result.error.error})`);
+    window.nativeAPI.log('error', `Failed to parse invitation link: ${result.error.tag} (${result.error.error})`);
     return;
   }
   await startProcess();
@@ -594,10 +607,6 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.modal-stepper {
-  overflow: auto;
-}
-
 .organization-name {
   display: flex;
   flex-direction: column;
@@ -605,7 +614,24 @@ onMounted(async () => {
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: ms.spacing('gap-4xl');
+  }
+}
+
+.modal-header__title {
+  @include ms.font('heading-h4');
+  text-wrap: break-word;
+}
+
+.modal-header__text {
+  @include ms.font('body-md-regular');
+}
+
+.modal-footer-buttons {
+  padding-top: ms.spacing('padding-5xl');
+
+  ion-button {
+    margin-top: 0 !important;
   }
 }
 

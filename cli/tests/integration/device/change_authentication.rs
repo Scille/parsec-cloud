@@ -1,28 +1,34 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use std::io::{BufReader, Write};
 
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 use libparsec_tests_fixtures::prelude::*;
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
     wait_for,
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn ok(tmp_path: TmpPath) {
+#[case("password")]
+#[case("keyring")]
+async fn ok(tmp_path: TmpPath, test_ui: &Ui, #[case] auth: &str) {
     const NEW_DEVICE_PASSWORD: &str = "S3cr3t";
 
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let mut process = crate::std_cmd!(
         "device",
         "change-authentication",
         "--device",
         &alice.device_id.hex(),
-        "--password",
-        "--password-stdin"
+        "--auth",
+        auth
     )
     .stdin(std::process::Stdio::piped())
     .stderr(std::process::Stdio::inherit())
@@ -36,8 +42,10 @@ async fn ok(tmp_path: TmpPath) {
     stdin.write_all(DEFAULT_DEVICE_PASSWORD.as_bytes()).unwrap();
     stdin.write_all(b"\n").unwrap();
 
-    stdin.write_all(NEW_DEVICE_PASSWORD.as_bytes()).unwrap();
-    stdin.write_all(b"\n").unwrap();
+    if auth == "password" {
+        stdin.write_all(NEW_DEVICE_PASSWORD.as_bytes()).unwrap();
+        stdin.write_all(b"\n").unwrap();
+    }
 
     let mut buf = String::new();
     wait_for(

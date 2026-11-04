@@ -7,8 +7,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::CertificateOps, user::UserOps, ClientConfig, EventBus, MountpointMountStrategy,
-    WorkspaceStorageCacheSize,
+    ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
+    certif::CertificateOps, user::UserOps,
 };
 
 pub(crate) async fn user_ops_factory(env: &TestbedEnv, device: &Arc<LocalDevice>) -> UserOps {

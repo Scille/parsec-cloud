@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from asyncpg.exceptions import UniqueViolationError
@@ -65,7 +66,8 @@ my_locked_common_topic AS (
 my_realm AS (
     SELECT
         _id,
-        key_index
+        key_index,
+        status
     FROM realm
     WHERE
         organization = (SELECT my_organization._id FROM my_organization)
@@ -113,6 +115,7 @@ SELECT
     (SELECT last_timestamp FROM my_locked_realm_topic) AS last_realm_certificate_timestamp,
     (SELECT _id FROM my_realm) AS realm_internal_id,
     (SELECT key_index FROM my_realm) AS realm_key_index,
+    (SELECT status FROM my_realm) AS realm_status,
     COALESCE(
         (
             SELECT role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
@@ -147,7 +150,7 @@ async def block_create(
     block_id: BlockID,
     key_index: int,
     block: bytes,
-) -> None | BadKeyIndex | BlockCreateBadOutcome:
+) -> BadKeyIndex | BlockCreateBadOutcome | None:
     # Given block metadata and block data are stored on different storages,
     # being atomic is not easy here :(
     #
@@ -265,6 +268,16 @@ async def block_create(
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
+        case _:
+            assert False, row
+
+    match row["realm_status"]:
+        case "AVAILABLE":
+            pass
+        case "ARCHIVED_OR_DELETION_PLANNED":
+            return BlockCreateBadOutcome.REALM_ARCHIVED
+        case "DELETED":
+            return BlockCreateBadOutcome.REALM_DELETED
         case _:
             assert False, row
 

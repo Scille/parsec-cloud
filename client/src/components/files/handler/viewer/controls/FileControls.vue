@@ -1,27 +1,33 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <div class="toolbar ion-margin-bottom secondary file-controls">
+  <div
+    class="toolbar secondary file-controls"
+    :class="{ 'file-controls-disabled': disabled }"
+    :inert="disabled"
+  >
     <slot />
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineProps<{
+  disabled?: boolean;
+}>();
+</script>
 
 <style scoped lang="scss">
 .file-controls {
-  margin: 0 1rem 1rem 1rem;
-  padding: 0.75rem 1.5rem;
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-4xl') ms.spacing('padding-4xl');
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   width: 100%;
-  background: var(--parsec-color-light-secondary-white);
-  border-radius: var(--parsec-radius-8);
-  box-shadow: var(--parsec-shadow-soft);
-  --inner-padding-end: 0;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  background: ms.color('surface-base-default');
+  box-shadow: ms.shadow('elevation-sm');
+  --inner-padding-end: #{ms.spacing('padding-none')};
+  border-top: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
   position: relative;
   z-index: 200;
   min-height: 3.75rem;
@@ -29,21 +35,25 @@
 
   @include ms.responsive-breakpoint('lg') {
     margin: 0;
-    padding: 0.75rem 1rem 1.5rem;
-    border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
-    gap: 1rem;
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
+    border-radius: ms.radius('lg') ms.radius('lg') 0 0;
+    gap: ms.spacing('gap-3xl');
   }
 
   & > *:not(:last-child)::after {
     content: '';
     display: block;
-    width: 2px;
+    width: ms.border('thick');
     height: 1rem;
-    background: var(--parsec-color-light-secondary-disabled);
+    background: ms.color('surface-disabled-default');
   }
 
   &:hover {
-    box-shadow: var(--parsec-shadow-light);
+    box-shadow: ms.shadow('light');
+  }
+
+  &-disabled {
+    opacity: ms.opacity('5');
   }
 }
 </style>

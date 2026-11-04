@@ -1,99 +1,123 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$msTranslate('WorkspaceSharing.title')"
+      title="WorkspaceSharing.title"
       :close-button="{ visible: true }"
     >
-      <ion-text class="sharing-modal__title body">{{ workspaceName }}</ion-text>
-      <div class="modal-head-content">
-        <ms-search-input
-          class="modal-head-content__search"
-          v-model="search"
-          :placeholder="'WorkspaceSharing.searchPlaceholder'"
-        />
-        <div class="modal-head-content-right">
-          <ion-text
-            class="selected-counter body"
-            v-show="showCheckboxes && selectedUsers.length > 0"
-          >
-            {{ $msTranslate({ key: 'WorkspaceSharing.batchSharing.counter', data: { count: selectedUsers.length } }) }}
-          </ion-text>
-          <ion-text
-            id="batch-activate-button"
-            @click="onBatchSharingActivate()"
-            v-show="batchSharingEnabled"
-            fill="clear"
-            class="button-small"
-            :class="{ 'done-button': showCheckboxes }"
-          >
-            <ion-icon
-              v-if="!showCheckboxes"
-              class="checkbox-icon"
-              :icon="checkmarkCircle"
-            />
-            {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonFinish' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
-          </ion-text>
-          <ms-dropdown
-            v-show="showCheckboxes"
-            ref="dropdown"
-            class="dropdown"
-            :options="options"
-            :disabled="selectedUsers.length === 0"
-            :label="'WorkspaceSharing.batchSharing.chooseRole'"
-            :appearance="MsAppearance.Outline"
-            @change="onBatchRoleChange($event.option)"
-          />
-        </div>
-      </div>
+      <div class="modal-toolbar">
+        <div class="modal-toolbar__actions">
+          <div class="profile-filter">
+            <ion-button
+              size="small"
+              class="profile-filter__item"
+              @click="toggleAllProfiles"
+              :class="{
+                selected: profileFilters.All,
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.all') }}
+            </ion-button>
+            <div class="profile-filter__divider" />
+            <ion-button
+              size="small"
+              class="profile-filter__item"
+              @click="toggleProfile(UserProfile.Admin)"
+              :class="{
+                selected: profileFilters[UserProfile.Admin],
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.admins') }}
+              <ion-icon
+                v-show="profileFilters[UserProfile.Admin]"
+                :icon="checkmark"
+                class="checkbox-icon button-icon-right"
+                slot="end"
+              />
+            </ion-button>
+            <ion-button
+              size="small"
+              class="profile-filter__item"
+              @click="toggleProfile(UserProfile.Standard)"
+              :class="{
+                selected: profileFilters[UserProfile.Standard],
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.standards') }}
+              <ion-icon
+                v-show="profileFilters[UserProfile.Standard]"
+                :icon="checkmark"
+                class="checkbox-icon button-icon-right"
+                slot="end"
+              />
+            </ion-button>
+            <ion-button
+              size="small"
+              class="profile-filter__item"
+              @click="toggleProfile(UserProfile.Outsider)"
+              :class="{
+                selected: profileFilters[UserProfile.Outsider],
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.externals') }}
+              <ion-icon
+                v-show="profileFilters[UserProfile.Outsider]"
+                :icon="checkmark"
+                class="checkbox-icon button-icon-right"
+                slot="end"
+              />
+            </ion-button>
+          </div>
 
-      <div
-        class="report-text-content"
-        v-if="isOnlyOwner() || orgHasExternalUsers"
-      >
-        <ms-report-text
-          :theme="MsReportTheme.Info"
-          id="only-owner-warning"
-          v-if="isOnlyOwner()"
-        >
-          <i18n-t
-            keypath="WorkspaceSharing.onlyOwnerWarning"
-            scope="global"
-          >
-            <template #owner>
-              <strong> {{ $msTranslate('WorkspaceSharing.owner') }} </strong>
-            </template>
-          </i18n-t>
-        </ms-report-text>
-        <ms-report-text
-          :theme="MsReportTheme.Info"
-          id="profile-assign-info"
-          v-if="orgHasExternalUsers"
-        >
-          <i18n-t
-            keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
-            scope="global"
-          >
-            <template #external>
-              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.external') }} </strong>
-            </template>
-            <template #contributor>
-              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.contributor') }} </strong>
-            </template>
-            <template #reader>
-              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.reader') }} </strong>
-            </template>
-          </i18n-t>
-        </ms-report-text>
+          <div class="sharing-modal__workspace">
+            <ion-icon
+              class="sharing-modal__workspace__icon"
+              :icon="business"
+            />
+            <ion-text class="sharing-modal__workspace__title">{{ workspaceName }}</ion-text>
+          </div>
+        </div>
+
+        <ms-search-input
+          class="modal-toolbar__search"
+          v-model="search"
+          placeholder="WorkspaceSharing.searchPlaceholder"
+        />
       </div>
+      <!-- We need at least the owner and someone else (2) -->
+      <ms-report-text
+        :theme="MsReportTheme.Info"
+        id="only-user-warning"
+        v-if="countAllSharedUsers < 2"
+      >
+        <i18n-t
+          keypath="WorkspaceSharing.onlyUserWarning"
+          scope="global"
+        >
+          <template #link>
+            <ion-text
+              button
+              class="see-more-button"
+              fill="clear"
+              @click="openDocumentation"
+            >
+              {{ $msTranslate('WorkspaceSharing.seeMore') }}
+            </ion-text>
+          </template>
+        </i18n-t>
+      </ms-report-text>
 
       <!-- content -->
       <div class="modal-container">
         <ion-list class="user-list">
           <!-- prettier-ignore -->
           <ion-text
-            class="no-match-result body"
+            class="no-match-result"
             v-show="
               userRoles.length > 0 &&
                 filteredUserRoles.length === 0 &&
@@ -108,7 +132,7 @@
             class="user-list-members"
             v-show="currentUserMatchSearch() || filteredSharedUserRoles.length > 0"
           >
-            <ion-text class="user-list-title title-h5">
+            <div class="user-list-title">
               <ms-checkbox
                 class="checkbox"
                 id="all-members-checkbox"
@@ -117,10 +141,28 @@
                 @change="selectAllMembers()"
                 v-show="showCheckboxes && selectableFilteredMembers.length > 0"
               />
-              {{ $msTranslate({ key: 'workspaceRoles.members', data: { count: countSharedUsers }, count: countSharedUsers }) }}
-            </ion-text>
+              <ion-text
+                v-if="countFiltersSharedUsers !== countAllSharedUsers"
+                class="count-filter"
+              >
+                {{
+                  $msTranslate({
+                    key: 'workspaceRoles.haveAccessFiltered',
+                    data: { count: countFiltersSharedUsers, total: countAllSharedUsers },
+                  })
+                }}
+              </ion-text>
+              <ion-text v-else>
+                {{
+                  $msTranslate({
+                    key: 'workspaceRoles.haveAccess',
+                    data: { count: countAllSharedUsers },
+                  })
+                }}
+              </ion-text>
+            </div>
             <workspace-user-role
-              v-if="clientInfo && currentUserMatchSearch()"
+              v-if="clientInfo && currentUserMatchSearch() && (profileFilters.All || profileFilters[clientInfo.currentProfile])"
               :class="{ 'checkbox-space': showCheckboxes }"
               :disabled="true"
               :user="{ id: clientInfo.userId, humanHandle: clientInfo.humanHandle, profile: clientInfo.currentProfile }"
@@ -134,6 +176,11 @@
               v-for="entry in filteredSharedUserRoles"
               :key="`${entry.user.id}-${entry.role}`"
               class="user-list-members-item"
+              :class="{
+                'user-list-members-item--selectable': showCheckboxes,
+                'user-list-members-item--selected': entry.isSelected,
+              }"
+              @click="showCheckboxes ? (entry.isSelected = !entry.isSelected) : null"
             >
               <ms-checkbox
                 class="member-checkbox"
@@ -162,13 +209,18 @@
             class="user-list-suggestions"
             v-if="(ownRole === WorkspaceRole.Manager || ownRole === WorkspaceRole.Owner) && filteredNotSharedUserRoles.length > 0"
           >
-            <ion-text class="user-list-title title-h5">
+            <ion-text class="user-list-title">
               {{ $msTranslate('workspaceRoles.suggestion') }}
             </ion-text>
             <div
               v-for="entry in filteredNotSharedUserRoles"
               :key="`${entry.user.id}-${entry.role}`"
               class="user-list-suggestions-item"
+              :class="{
+                'user-list-suggestions-item--selectable': showCheckboxes,
+                'user-list-suggestions-item--selected': entry.isSelected,
+              }"
+              @click="showCheckboxes ? (entry.isSelected = !entry.isSelected) : null"
             >
               <ms-checkbox
                 class="suggested-checkbox"
@@ -178,7 +230,6 @@
               />
               <workspace-user-role
                 class="workspace-user-role"
-                :class="showCheckboxes ? 'current-user' : ''"
                 :disabled="isSelectDisabled(entry.role) || showCheckboxes"
                 :user="entry.user"
                 :role="entry.role"
@@ -191,6 +242,35 @@
             </div>
           </div>
         </ion-list>
+      </div>
+
+      <div class="modal-footer">
+        <ion-button
+          id="batch-activate-button"
+          class="color-secondary"
+          @click="onBatchSharingActivate()"
+          v-show="batchSharingEnabled"
+          :fill="showCheckboxes ? 'clear' : 'outline'"
+          :class="{ 'done-button': showCheckboxes }"
+        >
+          {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonCancel' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
+        </ion-button>
+        <ion-text
+          class="modal-footer__counter"
+          v-show="showCheckboxes && selectedUsers.length > 0 && isLargeDisplay"
+        >
+          {{ $msTranslate({ key: 'WorkspaceSharing.batchSharing.counter', data: { count: selectedUsers.length } }) }}
+        </ion-text>
+        <ms-dropdown
+          v-show="showCheckboxes"
+          ref="dropdown"
+          class="dropdown"
+          :options="options"
+          :disabled="selectedUsers.length === 0"
+          :label="'WorkspaceSharing.batchSharing.chooseRole'"
+          :appearance="MsAppearance.Outline"
+          @change="onBatchRoleChange($event.option)"
+        />
       </div>
     </ms-modal>
   </ion-page>
@@ -212,11 +292,12 @@ import {
   getWorkspaceSharing,
   shareWorkspace,
 } from '@/parsec';
+import { Env } from '@/services/environment';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
-import { checkmarkCircle } from 'ionicons/icons';
+import { IonButton, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
+import { business, checkmark } from 'ionicons/icons';
 import {
   I18n,
   MsAppearance,
@@ -234,7 +315,7 @@ import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
-const { isSmallDisplay } = useWindowSize();
+const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
@@ -256,13 +337,20 @@ const showCheckboxes = ref<boolean>(false);
 const dropdownRef = useTemplateRef<InstanceType<typeof MsDropdown>>('dropdown');
 
 const userRoles: Ref<Array<UserRole>> = ref([]);
+const profileFilters = ref<Record<UserProfile | 'All', boolean>>({
+  All: true,
+  [UserProfile.Admin]: false,
+  [UserProfile.Standard]: false,
+  [UserProfile.Outsider]: false,
+});
 
 const filteredUserRoles = computed(() => {
   const searchString = search.value.toLocaleLowerCase();
   return userRoles.value.filter((userRole: UserRole) => {
     return (
-      userRole.user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
-      userRole.user.humanHandle.label.toLocaleLowerCase().includes(searchString)
+      (userRole.user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
+        userRole.user.humanHandle.label.toLocaleLowerCase().includes(searchString)) &&
+      (profileFilters.value.All || profileFilters.value[userRole.user.profile])
     );
   });
 });
@@ -289,18 +377,21 @@ const filteredNotSharedUserRoles = computed(() => {
 });
 
 const selectedUsers = computed(() => userRoles.value.filter((user) => user.isSelected === true));
-const countSharedUsers = computed(() => filteredSharedUserRoles.value.length + (clientInfo.value ? 1 : 0));
+const countFiltersSharedUsers = computed(() => {
+  const currentUserCounted =
+    currentUserMatchSearch() && (profileFilters.value.All || profileFilters.value[clientInfo.value!.currentProfile]) ? 1 : 0;
+  return filteredSharedUserRoles.value.length + currentUserCounted;
+});
+const countAllSharedUsers = computed(
+  () => userRoles.value.filter((userRole) => userRole.role !== null).length + (clientInfo.value ? 1 : 0),
+);
 const selectableFilteredMembers = computed(() => {
   return filteredSharedUserRoles.value.filter((user) => user.role && canSelectUser(user.user.profile, user.role));
 });
 const someMembersSelected = computed(() => selectableFilteredMembers.value.some((user) => user.isSelected === true));
 const allMembersSelected = computed(() => selectableFilteredMembers.value.every((user) => user.isSelected === true));
-const orgHasExternalUsers = computed(() => userRoles.value.some((user) => user.user.profile === UserProfile.Outsider));
 const batchSharingEnabled = computed(() => {
-  return (
-    (props.ownRole === WorkspaceRole.Owner || props.ownRole === WorkspaceRole.Manager) &&
-    filteredNotSharedUserRoles.value.length + selectableFilteredMembers.value.length > 1
-  );
+  return props.ownRole === WorkspaceRole.Owner || props.ownRole === WorkspaceRole.Manager;
 });
 
 function currentUserMatchSearch(): boolean {
@@ -338,6 +429,24 @@ async function onBatchSharingActivate(): Promise<void> {
     }
   }
   showCheckboxes.value = !showCheckboxes.value;
+}
+
+function toggleProfile(profile: UserProfile): void {
+  profileFilters.value.All = false;
+  profileFilters.value[profile] = !profileFilters.value[profile];
+  if (
+    (profileFilters.value[UserProfile.Admin] && profileFilters.value[UserProfile.Outsider] && profileFilters.value[UserProfile.Standard]) ||
+    (!profileFilters.value[UserProfile.Admin] && !profileFilters.value[UserProfile.Outsider] && !profileFilters.value[UserProfile.Standard])
+  ) {
+    toggleAllProfiles();
+  }
+}
+
+function toggleAllProfiles(): void {
+  profileFilters.value.All = true;
+  profileFilters.value[UserProfile.Admin] = false;
+  profileFilters.value[UserProfile.Standard] = false;
+  profileFilters.value[UserProfile.Outsider] = false;
 }
 
 function getLowestSelectedProfile(): UserProfile {
@@ -424,18 +533,6 @@ onMounted(async () => {
   ownProfile = await getClientProfile();
   await refreshSharingInfo();
 });
-
-function isOnlyOwner(): boolean {
-  if (props.ownRole !== WorkspaceRole.Owner) {
-    return false;
-  }
-  for (const user of userRoles.value) {
-    if (user.role === WorkspaceRole.Owner) {
-      return false;
-    }
-  }
-  return true;
-}
 
 async function updateUserRole(
   user: UserTuple,
@@ -593,130 +690,160 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   showCheckboxes.value = false;
   await refreshSharingInfo();
 }
+
+async function openDocumentation(): Promise<void> {
+  await Env.Links.openDocumentationUserGuideLink('parsec_workspaces', 'share-a-workspace');
+}
 </script>
 
 <style scoped lang="scss">
-.sharing-modal__title {
-  position: relative;
-  margin-inline: 2rem;
-  z-index: 10;
-  display: block;
-  color: var(--parsec-color-light-secondary-hard-grey);
-}
-
-.report-text-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  position: relative;
-  padding-inline: 2rem;
+#only-user-warning {
   margin-top: 1rem;
+  margin-inline: 2rem;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
+    margin-inline: 1.5rem;
+  }
+
+  .see-more-button {
+    @include ms.font('label-md-medium');
+
+    text-decoration: underline;
+    color: ms.color('text-brand-default');
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      color: ms.color('text-brand-default-hover');
+    }
   }
 }
 
-.modal-head-content {
+.modal-toolbar {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-top: 1rem;
   overflow: hidden !important;
   flex-shrink: 0;
-  padding: 0.25rem 2rem;
+  padding: ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-4xl');
+  border-bottom: ms.border('thin') solid ms.color('border-base-default');
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
+    padding-inline: ms.spacing('padding-4xl');
     margin-top: 0.5rem;
   }
 
   &__search {
     max-height: 2.5rem;
-    max-width: 20rem;
     margin: 0;
+    background: ms.color('surface-base-page');
 
     @include ms.responsive-breakpoint('sm') {
       max-width: 100%;
     }
   }
 
-  &-right {
+  &__actions {
     display: flex;
-    align-items: stretch;
+    align-items: center;
+    justify-content: space-between;
     flex-shrink: 0;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
+  }
+
+  .profile-filter {
+    display: flex;
+    align-items: center;
+    gap: ms.spacing('gap-md');
+    flex-wrap: wrap;
+    position: relative;
 
     @include ms.responsive-breakpoint('sm') {
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      padding: 1rem 1.5rem 2rem;
-      justify-content: space-between;
-      background: var(--parsec-color-light-secondary-white);
-      border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
-      box-shadow: var(--parsec-shadow-strong);
-      z-index: 2;
+      padding-inline: ms.spacing('padding-none');
     }
 
-    .dropdown {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-8);
+    &__divider {
+      width: 1px;
+      height: 1rem;
+      background: ms.color('surface-disabled-default');
+      margin-inline: 0.25rem;
     }
 
-    #batch-activate-button {
-      font-size: 0.875rem;
-      padding: 0.625rem 1rem;
-      color: var(--parsec-color-light-secondary-text);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-8);
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      margin-left: auto;
-      gap: 0.375rem;
+    &__item {
+      --padding-top: #{ms.spacing('padding-lg')};
+      --padding-bottom: #{ms.spacing('padding-lg')};
+      --padding-start: 0.8rem;
+      --padding-end: 0.8rem;
+      position: relative;
+      --background: #{ms.color('surface-base-default')};
+      --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+      --background-activated: #{ms.color('surface-neutral-default-subtle-pressed')};
+      --background-focused: #{ms.color('surface-neutral-default-subtle-pressed')};
+      --background-focused-opacity: #{ms.opacity('10')};
+      --background-activated-opacity: #{ms.opacity('10')};
 
-      @include ms.responsive-breakpoint('sm') {
-        order: 3;
+      &::part(native) {
+        border-radius: ms.radius('5xl');
+        border: ms.border('thin') solid ms.color('border-base-default');
+        color: ms.color('text-base-description');
+      }
+
+      &:hover::part(native) {
+        border: ms.border('thin') solid ms.color('border-base-default');
+        color: ms.color('text-neutral-default-hover');
+      }
+
+      &.selected::part(native) {
+        border: ms.border('thin') solid ms.color('border-base-default-hover');
+        color: ms.color('text-base-body');
+      }
+
+      &.selected:first-child::part(native) {
+        --background: #{ms.color('surface-neutral-default')};
+        --background-hover: #{ms.color('surface-neutral-default')};
+        --background-activated: #{ms.color('surface-neutral-default')};
+        --background-focused: #{ms.color('surface-neutral-default')};
+        color: ms.color('text-on-color-heading');
+        border: ms.border('thin') solid ms.color('border-neutral-default');
       }
 
       .checkbox-icon {
-        color: var(--parsec-color-light-secondary-text);
-        font-size: 1rem;
-      }
-
-      &:hover {
-        background: var(--parsec-color-light-secondary-medium);
-      }
-
-      &:active {
-        box-shadow: none;
-      }
-
-      &.done-button {
-        background: var(--parsec-color-light-secondary-text);
-        color: var(--parsec-color-light-secondary-white);
-        border: none;
-
-        &:hover {
-          background: var(--parsec-color-light-secondary-contrast);
-        }
+        color: ms.color('text-base-body');
+        font-size: 0.875rem;
       }
     }
   }
 
-  .selected-counter {
-    color: var(--parsec-color-light-secondary-grey);
-    margin-right: auto;
-    text-align: center;
-    align-self: center;
+  .sharing-modal__workspace {
+    display: flex;
+    width: fit-content;
+    max-width: 35%;
+    align-items: center;
+    gap: ms.spacing('gap-sm');
+    color: ms.color('text-brand-default');
+    background: ms.color('surface-brand-default-subtle');
+    padding: ms.spacing('padding-lg');
+    border-radius: ms.radius('lg');
 
     @include ms.responsive-breakpoint('sm') {
-      margin: auto;
-      order: 2;
+      margin-top: 0.5rem;
+    }
+
+    &__title {
+      @include ms.font('label-lg-medium');
+
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    &__icon {
+      color: ms.color('icon-brand-default');
+      font-size: 1rem;
+      min-width: 1rem;
     }
   }
 }
@@ -726,81 +853,172 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-inline: 2rem;
+  padding-inline: ms.spacing('padding-4xl');
   position: relative;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
+    padding-inline: ms.spacing('padding-3xl');
 
     &::after {
       content: '';
       position: relative;
       width: 100%;
-      height: 8rem;
+      height: 0.5rem;
+    }
+  }
+
+  .user-list {
+    .no-match-result {
+      @include ms.font('body-md-regular');
+    }
+
+    padding: ms.spacing('padding-none');
+    margin-top: 1rem;
+    overflow-y: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-3xl');
+
+    &-title {
+      height: 1.875rem;
+      color: ms.color('text-base-description');
+      background: ms.color('surface-base-default');
+      @include ms.font('heading-h6');
+
+      text-transform: uppercase;
+      padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
+      display: flex;
+      position: sticky;
+      align-items: center;
+      gap: ms.spacing('gap-lg');
+      top: 0;
+      z-index: 3;
+
+      .checkbox {
+        margin-left: 0.25rem;
+      }
+
+      .count-filter {
+        display: flex;
+        align-items: center;
+        gap: ms.spacing('gap-xs');
+      }
+    }
+
+    &-members,
+    &-suggestions {
+      display: flex;
+      flex-direction: column;
+
+      .member-checkbox,
+      .suggested-checkbox {
+        padding-left: ms.spacing('padding-2xl');
+
+        @include ms.responsive-breakpoint('sm') {
+          padding-left: ms.spacing('padding-xl');
+          justify-content: center;
+        }
+      }
+
+      &-item {
+        display: flex;
+        align-items: center;
+        gap: ms.spacing('gap-lg');
+
+        &:last-child .workspace-user-role::after {
+          border-bottom: none;
+        }
+      }
+
+      &-item--selectable {
+        cursor: pointer;
+
+        &:hover {
+          background: ms.color('surface-base-page');
+        }
+      }
+
+      &-item--selected {
+        cursor: pointer;
+        background: ms.color('surface-brand-default-subtle');
+
+        &:hover {
+          background: ms.color('surface-brand-default-subtle-hover');
+        }
+      }
+
+      .workspace-user-role {
+        flex: 1;
+      }
+    }
+
+    .checkbox-space {
+      padding-left: ms.spacing('padding-7xl');
+
+      &.current-user {
+        @include ms.responsive-breakpoint('sm') {
+          padding-left: 2.8125rem;
+        }
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        padding-left: ms.spacing('padding-lg');
+      }
     }
   }
 }
 
-.user-list {
-  padding: 0;
-  margin-top: 1rem;
-  overflow-y: auto;
-  height: 100%;
+.modal-footer {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-4xl') ms.spacing('padding-3xl');
+  border-top: ms.border('thin') solid ms.color('border-base-default');
+  box-shadow: ms.shadow('strong');
+  background: ms.color('surface-base-page');
 
-  &-title {
-    color: var(--parsec-color-light-secondary-grey);
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-6);
-    padding: 0.375rem 0.75rem;
-    display: flex;
-    position: sticky;
-    align-items: center;
-    gap: 0.5rem;
-    top: 0;
-    z-index: 3;
-  }
-
-  &-members,
-  &-suggestions {
-    display: flex;
-    flex-direction: column;
-
-    .member-checkbox,
-    .suggested-checkbox {
-      padding-left: 0.75rem;
-
-      @include ms.responsive-breakpoint('sm') {
-        padding-left: 0.625rem;
-        position: absolute;
-        justify-content: center;
-      }
+  #batch-activate-button {
+    @include ms.responsive-breakpoint('sm') {
+      order: 3;
     }
 
-    &-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-
-      &:last-child .workspace-user-role::after {
-        border-bottom: none;
-      }
+    .checkbox-icon {
+      color: ms.color('text-base-body');
+      font-size: 1rem;
     }
 
-    .workspace-user-role,
-    .current-user {
-      flex: 1;
+    &:active {
+      box-shadow: none;
+    }
+
+    &.done-button {
+      margin-left: 0;
     }
   }
 
-  .checkbox-space {
-    padding-left: 3rem;
+  &__counter {
+    @include ms.font('label-md-medium');
+
+    color: ms.color('text-base-description');
+    margin-left: auto;
+    text-align: center;
+    align-self: center;
 
     @include ms.responsive-breakpoint('sm') {
-      padding-left: 0.5rem;
+      order: 2;
+      margin: auto;
     }
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-inline: ms.spacing('padding-4xl');
+    position: sticky;
+    bottom: 0;
+    border-radius: 0 0 ms.radius('lg') ms.radius('lg');
+    box-shadow: ms.shadow('strong');
+    z-index: 2;
   }
 }
 </style>

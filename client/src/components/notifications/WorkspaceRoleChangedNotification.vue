@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <notification-item :notification="notification">
@@ -11,19 +11,16 @@
       />
     </div>
     <div class="notification-details">
-      <ion-text class="notification-details__message body">
-        <i18n-t
-          keypath="notification.changeRole"
-          scope="global"
-        >
-          <template #role>
-            <strong>{{ $msTranslate(getWorkspaceRoleTranslationKey(notificationData.newRole).label) }}</strong>
-          </template>
-          <template #workspace>
-            <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
-          </template>
-        </i18n-t>
-      </ion-text>
+      <ms-rich-text
+        class="notification-details__message body"
+        :text="{
+          key: 'notification.changeRole',
+          data: {
+            role: $msTranslate(getWorkspaceRoleTranslationKey(notificationData.newRole).label),
+            workspace: workspaceInfo ? workspaceInfo.name : '',
+          },
+        }"
+      />
       <ion-text class="notification-details__time body-sm">
         <span>{{ $msTranslate(formatTimeSince(notification.time, '', 'short')) }}</span>
       </ion-text>
@@ -33,17 +30,17 @@
 
 <script setup lang="ts">
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
+import { WorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { EventDistributor } from '@/services/eventDistributor';
 import { WorkspaceRoleChangedData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { IonText } from '@ionic/vue';
-import { LogoIconGradient, MsImage, formatTimeSince } from 'megashark-lib';
+import { LogoIconGradient, MsImage, MsRichText, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 
 const props = defineProps<{
   notification: Notification;

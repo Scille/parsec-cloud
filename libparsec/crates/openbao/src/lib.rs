@@ -1,7 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
 
+mod identity;
 mod opaque_key;
 mod sign;
 
@@ -32,13 +33,18 @@ pub enum OpenBaoOperationError {
 pub type OpenBaoFetchOpaqueKeyError = OpenBaoOperationError;
 pub type OpenBaoUploadOpaqueKeyError = OpenBaoOperationError;
 pub type OpenBaoSignError = OpenBaoOperationError;
+pub type OpenBaoListEntityEmailsError = OpenBaoOperationError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum OpenBaoVerifyError {
     #[error("Bad signature")]
     BadSignature,
-    #[error("Signature is valid, but doesn't come from the expected author!")]
-    UnexpectedAuthor,
+    #[error("Author (OpenBao entity ID `{openbao_entity_id}`) has no email address defined")]
+    AuthorOpenBaoEntityHasNoEmail { openbao_entity_id: String },
+    #[error(
+        "Signature is valid, but doesn't come from the expected author (expected `{expected}` according to OpenBao, got `{got}`)"
+    )]
+    UnexpectedAuthor { expected: String, got: String },
     #[error("Invalid OpenBao server URL: {0}")]
     BadURL(anyhow::Error),
     #[error("No response from the OpenBao server: {0}")]
@@ -84,7 +90,7 @@ impl OpenBaoCmds {
     }
 
     /// This signing system relies on the fact OpenBao is configured to only
-    /// allow POST `/transit/sign/user-{entity_id}` (i.e. the signing API) to
+    /// allow POST `/transit/sign/entity-{entity_id}` (i.e. the signing API) to
     /// the user referenced in OpenBao by this entity ID.
     ///
     /// This way the verify operation knows the entity ID of the author, and can
@@ -108,6 +114,14 @@ impl OpenBaoCmds {
             expected_author,
         )
         .await
+    }
+
+    /// Note we return the emails as `String` and not as `EmailAddress`!
+    /// This is because `EmailADdress` only allow a subset of all the valid emails
+    /// (typically emails containing unicode are not allowed), while OpenBAO has
+    /// no such limitation.
+    pub async fn list_self_emails(&self) -> Result<Vec<String>, OpenBaoListEntityEmailsError> {
+        identity::list_emails(self, &self.openbao_entity_id).await
     }
 }
 

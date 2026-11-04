@@ -1,16 +1,27 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-viewer-wrapper :error="error">
     <template #viewer>
       <div class="video-container">
+        <div
+          v-show="loading && !error"
+          class="video-spinner"
+        >
+          <ms-spinner />
+        </div>
         <video
           v-if="src.length"
           ref="videoElement"
           class="video"
+          :src="src"
+          @click="togglePlayback"
           @play="updateMediaData"
           @playing="updateMediaData"
-          @canplay="updateMediaData"
+          @canplay="
+            loading = false;
+            updateMediaData($event);
+          "
           @pause="updateMediaData"
           @volumechange="updateMediaData"
           @muted="updateMediaData"
@@ -19,16 +30,13 @@
           @error="onError"
           @enterpictureinpicture="onTogglePictureInPicture(true)"
           @leavepictureinpicture="onTogglePictureInPicture(false)"
-        >
-          <source
-            :src="src"
-            :type="mimeType"
-          />
-        </video>
+          @loadstart="loading = true"
+          @waiting="loading = true"
+        />
       </div>
     </template>
     <template #controls>
-      <file-controls>
+      <file-controls :disabled="Boolean(loading || error)">
         <file-controls-playback
           :paused="fluxProgress.paused"
           :ended="ended"
@@ -61,7 +69,6 @@
 </template>
 
 <script setup lang="ts">
-import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import {
   FileControls,
   FileControlsButton,
@@ -72,10 +79,12 @@ import {
   FileControlsPlayback,
   FileControlsVolume,
 } from '@/components/files/handler/viewer';
+import { startHistoryAt, stopHistory } from '@/parsec/history';
+import { getStreamUrl } from '@/services/worker';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
 import { cog, infinite, scan, timer } from 'ionicons/icons';
-import { PipIcon, SliderState } from 'megashark-lib';
+import { MsSpinner, PipIcon, SliderState } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -90,7 +99,7 @@ const muted = ref(false);
 const fluxProgress = ref<SliderState>({ progress: 0, paused: true });
 const volume = ref<number>(1);
 const error = ref('');
-const mimeType = ref<undefined | string>(undefined);
+const loading = ref(true);
 
 const cancelFluxProgressWatch = watch(
   () => fluxProgress.value,
@@ -145,14 +154,22 @@ const dropdownItems = ref<FileControlsDropdownItemContent[]>([
   },
 ]);
 
+let historyHandle: number | undefined;
+
 onMounted(async () => {
-  mimeType.value = await getMimeTypeFromBuffer(props.contentInfo.data);
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data.buffer as ArrayBuffer], { type: mimeType.value }));
+  loading.value = true;
+  if (props.contentInfo.timestamp) {
+    historyHandle = await startHistoryAt(props.contentInfo.workspaceHandle, props.contentInfo.timestamp);
+  }
+  src.value = getStreamUrl(props.contentInfo.workspaceHandle, props.contentInfo.path, props.contentInfo.size, historyHandle);
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   cancelFluxProgressWatch();
   cancelVolumeWatch();
+  if (historyHandle !== undefined) {
+    await stopHistory(historyHandle);
+  }
 });
 
 async function onError(): Promise<void> {
@@ -166,7 +183,7 @@ function onTimeUpdate(): void {
 }
 
 function togglePlayback(): void {
-  if (videoElementRef.value) {
+  if (videoElementRef.value && !loading.value && !error.value) {
     videoElementRef.value.paused ? videoElementRef.value.play() : videoElementRef.value.pause();
   }
 }
@@ -210,39 +227,39 @@ async function toggleLoop(): Promise<void> {
 }
 
 function updateMediaData(event: Event): void {
-  // in some cases, the `error` event is not emitted, probably
-  // because the video element waits for more data to make up
-  // its mind, even if there's no more data. So instead, when
-  // trying to update the media data, we check if the `duration`
-  // is set or not.
-  if (Number.isNaN((event.target as HTMLVideoElement).duration)) {
-    error.value = 'fileViewers.errors.mediaNotSupported';
-  } else {
-    volume.value = Math.floor((event.target as HTMLAudioElement).volume * 100);
-    muted.value = (event.target as HTMLAudioElement).muted;
-    ended.value = (event.target as HTMLVideoElement).ended;
-    length.value = Math.floor((event.target as HTMLVideoElement).duration * 100);
-    fluxProgress.value.progress = Math.floor((event.target as HTMLVideoElement).currentTime * 100);
-    fluxProgress.value.paused = (event.target as HTMLVideoElement).paused;
-  }
+  volume.value = Math.floor((event.target as HTMLAudioElement).volume * 100);
+  muted.value = (event.target as HTMLAudioElement).muted;
+  ended.value = (event.target as HTMLVideoElement).ended;
+  length.value = Math.floor((event.target as HTMLVideoElement).duration * 100);
+  fluxProgress.value.progress = Math.floor((event.target as HTMLVideoElement).currentTime * 100);
+  fluxProgress.value.paused = (event.target as HTMLVideoElement).paused;
 }
 </script>
 
 <style scoped lang="scss">
 .video-container {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1rem;
+  padding: ms.spacing('padding-3xl');
+}
+
+.video-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .video {
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   overflow: hidden;
   height: fit-content;
   max-height: 100%;
-  box-shadow: var(--parsec-shadow-light);
+  box-shadow: ms.shadow('light');
 }
 </style>

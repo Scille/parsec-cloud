@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::path::PathBuf;
 
@@ -60,6 +60,8 @@ pub struct ClientConfig {
 pub struct ServerOrganizationConfig {
     pub user_profile_outsider_allowed: bool,
     pub active_users_limit: ActiveUsersLimit,
+    /// In seconds
+    pub realm_minimum_archiving_period_before_deletion: u64,
 }
 
 // It's easy to provide "good enough" default value so that the config is guaranteed
@@ -71,6 +73,7 @@ impl Default for ServerOrganizationConfig {
         Self {
             user_profile_outsider_allowed: false,
             active_users_limit: ActiveUsersLimit::NoLimit,
+            realm_minimum_archiving_period_before_deletion: 0,
         }
     }
 }

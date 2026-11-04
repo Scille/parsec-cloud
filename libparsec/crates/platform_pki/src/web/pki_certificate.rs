@@ -1,0 +1,118 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+use std::collections::VecDeque;
+
+use libparsec_types::prelude::*;
+use rustls_pki_types::CertificateDer;
+
+use crate::{
+    PkiCertificateGetDerError, PkiCertificateGetValidationPathError,
+    PkiCertificateRequestPrivateKeyError, PkiCertificateToReferenceError, PkiPrivateKey,
+    X509ValidationPathOwned, platform::PlatformPkiPrivateKey,
+};
+
+#[derive(Debug, Clone)]
+pub struct PlatformPkiCertificate(pub(super) scwsapi::Certificate);
+
+impl PlatformPkiCertificate {
+    pub async fn get_der(&self) -> Result<CertificateDer<'static>, PkiCertificateGetDerError> {
+        self.0
+            .get_der()
+            .await
+            .map_err(|e| PkiCertificateGetDerError::Internal(e.into()))
+    }
+
+    pub async fn request_private_key(
+        &self,
+    ) -> Result<PkiPrivateKey, PkiCertificateRequestPrivateKeyError> {
+        self.0
+            .request_private_key()
+            .await
+            .map_err(|e| PkiCertificateRequestPrivateKeyError::Internal(e.into()))?
+            .ok_or(PkiCertificateRequestPrivateKeyError::NotFound)
+            .map(PlatformPkiPrivateKey)
+            .map(|private_key| PkiPrivateKey {
+                #[cfg(not(feature = "test-with-testbed"))]
+                platform: private_key,
+                #[cfg(feature = "test-with-testbed")]
+                platform: crate::testbed::MaybeWithTestbed::WithPlatform(private_key),
+            })
+    }
+
+    pub async fn to_reference(
+        &self,
+    ) -> Result<X509CertificateReference, PkiCertificateToReferenceError> {
+        let der = self.0.get_der().await.map_err(|_| {
+            PkiCertificateToReferenceError::Internal(anyhow::anyhow!("unable to get der"))
+        })?;
+
+        let id = self.0.ck_id().ok();
+        let label = Some(self.0.ck_label().as_bytes().into());
+
+        crate::shared::uri::get_certificate_ref(id, label, &der)
+            .map_err(|(_, e)| {
+                PkiCertificateToReferenceError::Internal(anyhow::anyhow!(
+                    "Cannot get certificate reference: {e}"
+                ))
+            })
+            .map(|(cert_ref, _)| cert_ref)
+    }
+
+    pub async fn get_validation_path(
+        &self,
+    ) -> Result<X509ValidationPathOwned, PkiCertificateGetValidationPathError> {
+        let trust = self.0.get_trust().await.map_err(|_| {
+            PkiCertificateGetValidationPathError::Internal(anyhow::anyhow!("unable to get trust"))
+        })?;
+        if trust.status().is_err() {
+            return Err(PkiCertificateGetValidationPathError::Untrusted);
+        }
+        let mut certs: VecDeque<_> = trust.cert_path().collect();
+
+        // Current cert
+        let leaf = certs
+            .pop_front()
+            .ok_or(PkiCertificateGetValidationPathError::Internal(
+                anyhow::anyhow!("no leaf cert"),
+            ))?;
+        let leaf = leaf
+            .get_der()
+            .await
+            .map_err(|e| PkiCertificateGetValidationPathError::Internal(e.into()))?;
+        // root cert
+        let root = certs
+            .pop_back()
+            .ok_or(PkiCertificateGetValidationPathError::Internal(
+                anyhow::anyhow!("no root cert"),
+            ))?;
+        let root = root
+            .get_der()
+            .await
+            .map_err(|e| PkiCertificateGetValidationPathError::Internal(e.into()))?;
+        let root = webpki::anchor_from_trusted_cert(&root)
+            .map(|anchor| anchor.to_owned())
+            .map_err(|e| PkiCertificateGetValidationPathError::Internal(e.into()))?;
+
+        // Intermediates certs
+        let mut intermediates = Vec::with_capacity(certs.len());
+        for c in certs {
+            intermediates.push(
+                c.get_der()
+                    .await
+                    .map_err(|e| PkiCertificateGetValidationPathError::Internal(e.into()))?,
+            )
+        }
+
+        Ok(X509ValidationPathOwned {
+            leaf,
+            root,
+            intermediates,
+        })
+    }
+}
+
+impl From<scwsapi::Certificate> for PlatformPkiCertificate {
+    fn from(value: scwsapi::Certificate) -> Self {
+        Self(value)
+    }
+}

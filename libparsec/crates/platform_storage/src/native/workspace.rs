@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Certificate storage relies on the upper layer to do the actual certification
 // validation work and takes care of handling concurrency issues.
@@ -6,8 +6,8 @@
 
 use libparsec_platform_async::future::TryFutureExt;
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, SqliteConnection,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
 };
 use std::{ops::DerefMut, path::Path};
 
@@ -17,12 +17,50 @@ use libparsec_types::prelude::*;
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::workspace::{
     MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
-    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
+    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData, WorkspaceOutboundSyncBacklog,
 };
 
 use super::model::{
-    get_workspace_cache_storage_db_relative_path, get_workspace_storage_db_relative_path,
+    get_workspace_cache_storage_db_relative_path, get_workspace_folder_relative_path,
+    get_workspace_storage_db_relative_path,
 };
+
+pub(crate) async fn workspace_storage_remove_data(
+    data_base_dir: &Path,
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> anyhow::Result<()> {
+    let path = data_base_dir.join(get_workspace_folder_relative_path(device, realm_id));
+    log::debug!("Removing workspace data at {}", path.display());
+
+    #[cfg(feature = "test-with-testbed")]
+    {
+        let mut path_info = super::testbed::DBPathInfo {
+            data_base_dir: data_base_dir.to_owned(),
+            db_relative_path: get_workspace_storage_db_relative_path(device, realm_id),
+        };
+        if super::testbed::maybe_destroy_sqlite_in_memory(&path_info)
+            .await
+            .is_some()
+        {
+            path_info.db_relative_path =
+                get_workspace_cache_storage_db_relative_path(device, realm_id);
+            assert!(
+                super::testbed::maybe_destroy_sqlite_in_memory(&path_info)
+                    .await
+                    .is_some()
+            );
+
+            return Ok(());
+        }
+    }
+
+    match tokio::fs::remove_dir_all(&path).await {
+        Ok(()) => Ok(()),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(err) => Err(err.into()),
+    }
+}
 
 async fn create_connection(db_path: &Path) -> anyhow::Result<SqliteConnection> {
     // Create parent directories if needed
@@ -85,7 +123,9 @@ impl PlatformWorkspaceStorage {
         };
 
         #[cfg(feature = "test-with-testbed")]
-        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info).await;
+        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info)
+            .await
+            .map(|(conn, _)| conn);
 
         #[cfg(not(feature = "test-with-testbed"))]
         let conn: Option<SqliteConnection> = None;
@@ -109,7 +149,9 @@ impl PlatformWorkspaceStorage {
         };
 
         #[cfg(feature = "test-with-testbed")]
-        let cache_conn = super::testbed::maybe_open_sqlite_in_memory(&cache_path_info).await;
+        let cache_conn = super::testbed::maybe_open_sqlite_in_memory(&cache_path_info)
+            .await
+            .map(|(conn, _)| conn);
 
         #[cfg(not(feature = "test-with-testbed"))]
         let cache_conn: Option<SqliteConnection> = None;
@@ -200,6 +242,12 @@ impl PlatformWorkspaceStorage {
 
     pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
         db_get_outbound_need_sync(&mut self.conn, limit).await
+    }
+
+    pub async fn get_outbound_sync_backlog(
+        &mut self,
+    ) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+        db_get_outbound_sync_backlog(&mut self.conn).await
     }
 
     pub async fn get_manifest(
@@ -915,6 +963,28 @@ async fn db_get_outbound_need_sync(
     rows.into_iter()
         .map(|row| VlobID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e)))
         .collect()
+}
+
+async fn db_get_outbound_sync_backlog(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+    let row = sqlx::query(
+        " \
+        SELECT \
+            (SELECT COUNT(*) FROM vlobs WHERE need_sync = TRUE), \
+            (SELECT COALESCE(SUM(size), 0) FROM chunks) \
+        ",
+    )
+    .fetch_one(executor)
+    .await?;
+
+    let pending_entries = row.try_get::<i64, _>(0)? as u64;
+    let pending_bytes = row.try_get::<i64, _>(1)? as u64;
+
+    Ok(WorkspaceOutboundSyncBacklog {
+        pending_entries,
+        pending_bytes,
+    })
 }
 
 async fn db_get_inbound_need_sync(

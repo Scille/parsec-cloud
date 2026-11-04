@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{convert::Infallible, path::Path};
 
@@ -6,7 +6,7 @@ use indexed_db::{Factory, ObjectStore, OwnedDatabase, Transaction};
 use libparsec_types::prelude::*;
 use wasm_bindgen::JsCast;
 
-use super::utils::{js_to_rs_bytes, js_to_rs_u64, rs_to_js_u64, with_transaction, CustomErrMarker};
+use super::utils::{CustomErrMarker, js_to_rs_bytes, js_to_rs_u64, rs_to_js_u64, with_transaction};
 
 pub(super) fn get_user_storage_db_name(data_base_dir: &Path, device_id: DeviceID) -> String {
     format!("{}-{}-user", data_base_dir.display(), device_id.hex())

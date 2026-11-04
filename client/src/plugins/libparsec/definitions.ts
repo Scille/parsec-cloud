@@ -1,12 +1,22 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 /*
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
 
+/* eslint-disable max-len */
+
 export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
+
+export enum AdvisoryDeviceFilePrimaryProtection {
+    AccountVault = 'AdvisoryDeviceFilePrimaryProtectionAccountVault',
+    Keyring = 'AdvisoryDeviceFilePrimaryProtectionKeyring',
+    OpenBao = 'AdvisoryDeviceFilePrimaryProtectionOpenBao',
+    PKI = 'AdvisoryDeviceFilePrimaryProtectionPKI',
+    Password = 'AdvisoryDeviceFilePrimaryProtectionPassword',
+}
 
 export enum CancelledGreetingAttemptReason {
     AutomaticallyCancelled = 'CancelledGreetingAttemptReasonAutomaticallyCancelled',
@@ -82,6 +92,36 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type ParsecAsyncEnrollmentAddrAndRedirectionURL = [
+    ParsecAsyncEnrollmentAddr,
+    ParsecAsyncEnrollmentRedirectionURL,
+]
+
+export type ParsecInvitationAddrAndRedirectionURL = [
+    ParsecInvitationAddr,
+    ParsecInvitationRedirectionURL,
+]
+
+export type ParsecOrganizationBootstrapAddrAndRedirectionURL = [
+    ParsecOrganizationBootstrapAddr,
+    ParsecOrganizationBootstrapRedirectionURL,
+]
+
+export type ParsecPkiEnrollmentAddrAndRedirectionURL = [
+    ParsecPkiEnrollmentAddr,
+    ParsecPkiEnrollmentRedirectionURL,
+]
+
+export type ParsecTOTPResetAddrAndRedirectionURL = [
+    ParsecTOTPResetAddr,
+    ParsecTOTPResetRedirectionURL,
+]
+
+export type ParsecWorkspacePathAddrAndRedirectionURL = [
+    ParsecWorkspacePathAddr,
+    ParsecWorkspacePathRedirectionURL,
+]
+export type AccessToken = string
 export type AccountAuthMethodID = string
 export type AccountVaultItemOpaqueKeyID = string
 export type AnyhowError = string
@@ -93,44 +133,47 @@ export type EmailAddress = string
 export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
-export type InvitationToken = string
 export type OrganizationID = string
-export type PKIEncryptionAlgorithm = string
 export type PKIEnrollmentID = string
 export type ParsecAddr = string
 export type ParsecAsyncEnrollmentAddr = string
+export type ParsecAsyncEnrollmentRedirectionURL = string
 export type ParsecInvitationAddr = string
+export type ParsecInvitationRedirectionURL = string
 export type ParsecOrganizationAddr = string
 export type ParsecOrganizationBootstrapAddr = string
+export type ParsecOrganizationBootstrapRedirectionURL = string
 export type ParsecPkiEnrollmentAddr = string
+export type ParsecPkiEnrollmentRedirectionURL = string
+export type ParsecTOTPResetAddr = string
+export type ParsecTOTPResetRedirectionURL = string
 export type ParsecWorkspacePathAddr = string
+export type ParsecWorkspacePathRedirectionURL = string
 export type Password = string
 export type Path = string
-export type PkiSignatureAlgorithm = string
 export type SASCode = string
 export type SequesterServiceID = string
+export type TOTPOpaqueKeyID = string
 export type UserID = string
 export type VlobID = string
 export type X509CertificateHash = string
 export type Bytes = Uint8Array
 export type BytesVec = Uint8Array
 export type KeyDerivation = Uint8Array
-export type PublicKey = Uint8Array
 export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type Sha256BoxData = Uint8Array
-export type VerifyKey = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
 export type U16 = number
 export type I32 = number
 export type CacheSize = number
-export type FileDescriptor = number
 export type Handle = number
 export type U32 = number
 export type VersionInt = number
 export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
 export type I64 = bigint
+export type FileDescriptor = bigint
 export type IndexInt = bigint
 export type SizeInt = bigint
 export type U64 = bigint
@@ -169,6 +212,11 @@ export interface AccountOrganizationsRevokedUser {
     currentProfile: UserProfile
 }
 
+export interface AdvisoryDeviceFileProtection {
+    primary: AdvisoryDeviceFilePrimaryProtection
+    withTotp: boolean
+}
+
 export interface AsyncEnrollmentUntrusted {
     enrollmentId: AsyncEnrollmentID
     submittedOn: DateTime
@@ -195,14 +243,14 @@ export interface AvailableDevice {
     deviceId: DeviceID
     humanHandle: HumanHandle
     deviceLabel: DeviceLabel
+    totpOpaqueKeyId: TOTPOpaqueKeyID | null
     ty: AvailableDeviceType
 }
 
 export interface AvailablePendingAsyncEnrollment {
     filePath: Path
     submittedOn: DateTime
-    serverAddr: ParsecAddr
-    organizationId: OrganizationID
+    addr: ParsecAsyncEnrollmentAddr
     enrollmentId: AsyncEnrollmentID
     requestedDeviceLabel: DeviceLabel
     requestedHumanHandle: HumanHandle
@@ -219,6 +267,18 @@ export interface ClientConfig {
     logLevel: LogLevel | null
 }
 
+export interface ClientGetOutboundSyncBacklog {
+    totalPendingEntriesForStartedWorkspaces: U64
+    totalPendingBytesForStartedWorkspaces: U64
+    perWorkspace: Array<ClientGetOutboundSyncBacklogItem>
+}
+
+export interface ClientGetOutboundSyncBacklogItem {
+    realmId: VlobID
+    pendingEntries: U64
+    pendingBytes: U64
+}
+
 export interface ClientInfo {
     organizationAddr: ParsecOrganizationAddr
     organizationId: OrganizationID
@@ -231,6 +291,21 @@ export interface ClientInfo {
     isServerOnline: boolean
     isOrganizationExpired: boolean
     mustAcceptTos: boolean
+}
+
+export interface CryptPadConfig {
+    serverUrl: string
+}
+
+export interface CryptpadSessionKeys {
+    viewKey: string
+    editKey: string | null
+}
+
+export interface DeviceAccessStrategy {
+    keyFile: Path
+    totpProtection: [TOTPOpaqueKeyID, SecretKey] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
 }
 
 export interface DeviceClaimFinalizeInfo {
@@ -286,6 +361,11 @@ export interface DeviceInfo {
     createdBy: DeviceID | null
 }
 
+export interface DeviceSaveStrategy {
+    totpProtection: [TOTPOpaqueKeyID, SecretKey] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
+}
+
 export interface FileStat {
     id: VlobID
     created: DateTime
@@ -302,9 +382,17 @@ export interface HumanHandle {
 }
 
 export interface NewInvitationInfo {
-    addr: ParsecInvitationAddr
-    token: InvitationToken
+    addr: ParsecInvitationAddrAndRedirectionURL
+    token: AccessToken
     emailSentStatus: InvitationEmailSentStatus
+}
+
+export interface OpenBaoAuthConfig {
+    id: string
+    mountPath: string
+    name: string
+    helpLink: string | null
+    icon: string | null
 }
 
 export interface OpenBaoConfig {
@@ -327,50 +415,19 @@ export interface OrganizationInfo {
     totalMetadataBytes: SizeInt
 }
 
-export interface PKILocalPendingEnrollment {
-    certRef: X509CertificateReference
-    addr: ParsecPkiEnrollmentAddr
-    submittedOn: DateTime
-    enrollmentId: PKIEnrollmentID
-    payload: PkiEnrollmentSubmitPayload
-    encryptedKey: Bytes
-    encryptedKeyAlgo: PKIEncryptionAlgorithm
-    ciphertext: Bytes
-}
-
-export interface PkiEnrollmentAnswerPayload {
-    userId: UserID
-    deviceId: DeviceID
-    deviceLabel: DeviceLabel
-    profile: UserProfile
-    rootVerifyKey: VerifyKey
-}
-
-export interface PkiEnrollmentSubmitPayload {
-    verifyKey: VerifyKey
-    publicKey: PublicKey
-    deviceLabel: DeviceLabel
-}
-
-export interface RawPkiEnrollmentListItem {
-    enrollmentId: PKIEnrollmentID
-    submittedOn: DateTime
-    derX509Certificate: Bytes
-    intermediateDerX509Certificates: Array<Bytes>
-    payloadSignature: Bytes
-    payloadSignatureAlgorithm: PkiSignatureAlgorithm
-    payload: Bytes
-}
-
 export interface ServerConfig {
     account: AccountConfig
+    cryptpad: CryptPadConfig | null
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
+    advisoryDeviceFileProtection: Array<AdvisoryDeviceFileProtection>
+    serverVersion: string | null
 }
 
 export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
+    realmMinimumArchivingPeriodBeforeDeletion: U64
 }
 
 export interface ShamirRecoveryClaimInProgress1Info {
@@ -430,8 +487,12 @@ export interface ShamirRecoveryRecipient {
 export interface StartedWorkspaceInfo {
     client: Handle
     id: VlobID
-    currentName: EntryName
-    currentSelfRole: RealmRole
+    name: EntryName
+    nameOrigin: CertificateBasedInfoOrigin
+    selfRole: RealmRole
+    selfRoleOrigin: CertificateBasedInfoOrigin
+    archivingConfiguration: RealmArchivingConfiguration
+    archivingConfigurationOrigin: CertificateBasedInfoOrigin
     mountpoints: Array<[Handle, Path]>
 }
 
@@ -511,6 +572,18 @@ export interface UserInfo {
     revokedBy: DeviceID | null
 }
 
+export interface UserX509CertificateDetails {
+    commonName: string
+    subject: Array<DistinguishedNameValue>
+    issuer: Array<DistinguishedNameValue>
+    notBefore: DateTime
+    notAfter: DateTime
+    serial: Uint8Array
+    emails: Array<EmailAddress>
+    canSign: boolean
+    canEncrypt: boolean
+}
+
 export interface WorkspaceHistoryFileStat {
     id: VlobID
     created: DateTime
@@ -521,10 +594,15 @@ export interface WorkspaceHistoryFileStat {
 
 export interface WorkspaceInfo {
     id: VlobID
-    currentName: EntryName
-    currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
+    name: EntryName
+    nameOrigin: CertificateBasedInfoOrigin
+    selfRole: RealmRole
+    selfRoleOrigin: CertificateBasedInfoOrigin
+    archivingConfiguration: RealmArchivingConfiguration
+    archivingConfigurationOrigin: CertificateBasedInfoOrigin
+    canSelfPromoteToOwner: boolean
 }
 
 export interface WorkspaceUserAccessInfo {
@@ -534,17 +612,23 @@ export interface WorkspaceUserAccessInfo {
     currentRole: RealmRole
 }
 
+export interface WorkspaceUserRoleChange {
+    grantedBy: DeviceID
+    grantedOn: DateTime
+    role: RealmRole | null
+}
+
 export interface X509CertificateReference {
-    uris: Array<X509URIFlavorValue>
+    uri: X509Pkcs11URI | null
     hash: X509CertificateHash
 }
 
 export interface X509Pkcs11URI {
-}
-
-export interface X509WindowsCngURI {
-    issuer: BytesVec
-    serialNumber: BytesVec
+    id: BytesVec | null
+    label: BytesVec | null
+    derIssuer: BytesVec
+    derSubject: BytesVec
+    serial: BytesVec
 }
 
 // AcceptFinalizeAsyncEnrollmentIdentityStrategy
@@ -563,7 +647,8 @@ export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
     tag: AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI
-    certificateReference: X509CertificateReference
+    pkiSignPrivateKeyHandle: Handle
+    pkiEncryptPrivateKeyHandle: Handle
 }
 export type AcceptFinalizeAsyncEnrollmentIdentityStrategy =
   | AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao
@@ -666,9 +751,13 @@ export type AccountCreateError =
 export enum AccountCreateRegistrationDeviceErrorTag {
     BadVaultKeyAccess = 'AccountCreateRegistrationDeviceErrorBadVaultKeyAccess',
     Internal = 'AccountCreateRegistrationDeviceErrorInternal',
+    KeyringError = 'AccountCreateRegistrationDeviceErrorKeyringError',
+    LoadDeviceBadAccessStrategy = 'AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy',
+    LoadDeviceCiphertextKeyGenerationFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed',
     LoadDeviceDecryptionFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed',
     LoadDeviceInvalidData = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData',
     LoadDeviceInvalidPath = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath',
+    LoadDeviceTOTPDecryptionFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed',
     Offline = 'AccountCreateRegistrationDeviceErrorOffline',
     RemoteOpaqueKeyFetchFailed = 'AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed',
     RemoteOpaqueKeyFetchOffline = 'AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline',
@@ -683,6 +772,18 @@ export interface AccountCreateRegistrationDeviceErrorInternal {
     tag: AccountCreateRegistrationDeviceErrorTag.Internal
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorKeyringError {
+    tag: AccountCreateRegistrationDeviceErrorTag.KeyringError
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy {
+    tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceBadAccessStrategy
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed {
+    tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceCiphertextKeyGenerationFailed
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed {
     tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceDecryptionFailed
     error: string
@@ -693,6 +794,10 @@ export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData {
 }
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
     tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceInvalidPath
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed {
+    tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceTOTPDecryptionFailed
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorOffline {
@@ -714,9 +819,13 @@ export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
 export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
   | AccountCreateRegistrationDeviceErrorInternal
+  | AccountCreateRegistrationDeviceErrorKeyringError
+  | AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy
+  | AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
+  | AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed
   | AccountCreateRegistrationDeviceErrorOffline
   | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed
   | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline
@@ -1080,10 +1189,10 @@ export enum AccountRegisterNewDeviceErrorTag {
     CorruptedRegistrationDevice = 'AccountRegisterNewDeviceErrorCorruptedRegistrationDevice',
     Internal = 'AccountRegisterNewDeviceErrorInternal',
     InvalidPath = 'AccountRegisterNewDeviceErrorInvalidPath',
+    NoSpaceAvailable = 'AccountRegisterNewDeviceErrorNoSpaceAvailable',
     Offline = 'AccountRegisterNewDeviceErrorOffline',
     RemoteOpaqueKeyUploadFailed = 'AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'AccountRegisterNewDeviceErrorStorageNotAvailable',
     TimestampOutOfBallpark = 'AccountRegisterNewDeviceErrorTimestampOutOfBallpark',
     UnknownRegistrationDevice = 'AccountRegisterNewDeviceErrorUnknownRegistrationDevice',
 }
@@ -1104,6 +1213,10 @@ export interface AccountRegisterNewDeviceErrorInvalidPath {
     tag: AccountRegisterNewDeviceErrorTag.InvalidPath
     error: string
 }
+export interface AccountRegisterNewDeviceErrorNoSpaceAvailable {
+    tag: AccountRegisterNewDeviceErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorOffline {
     tag: AccountRegisterNewDeviceErrorTag.Offline
     error: string
@@ -1114,10 +1227,6 @@ export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed {
 }
 export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline {
     tag: AccountRegisterNewDeviceErrorTag.RemoteOpaqueKeyUploadOffline
-    error: string
-}
-export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
-    tag: AccountRegisterNewDeviceErrorTag.StorageNotAvailable
     error: string
 }
 export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
@@ -1133,10 +1242,10 @@ export type AccountRegisterNewDeviceError =
   | AccountRegisterNewDeviceErrorCorruptedRegistrationDevice
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
+  | AccountRegisterNewDeviceErrorNoSpaceAvailable
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline
-  | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
 
@@ -1156,6 +1265,65 @@ export interface ActiveUsersLimitNoLimit {
 export type ActiveUsersLimit =
   | ActiveUsersLimitLimitedTo
   | ActiveUsersLimitNoLimit
+
+// AddrError
+export enum AddrErrorTag {
+    DuplicateParam = 'AddrErrorDuplicateParam',
+    InvalidOrganizationID = 'AddrErrorInvalidOrganizationID',
+    InvalidParamValue = 'AddrErrorInvalidParamValue',
+    InvalidUrl = 'AddrErrorInvalidUrl',
+    InvalidUrlScheme = 'AddrErrorInvalidUrlScheme',
+    MissingParam = 'AddrErrorMissingParam',
+    NotARedirection = 'AddrErrorNotARedirection',
+    ShouldNotHaveAPath = 'AddrErrorShouldNotHaveAPath',
+}
+
+export interface AddrErrorDuplicateParam {
+    tag: AddrErrorTag.DuplicateParam
+    error: string
+    x1: string
+}
+export interface AddrErrorInvalidOrganizationID {
+    tag: AddrErrorTag.InvalidOrganizationID
+    error: string
+}
+export interface AddrErrorInvalidParamValue {
+    tag: AddrErrorTag.InvalidParamValue
+    error: string
+    param: string
+    help: string
+}
+export interface AddrErrorInvalidUrl {
+    tag: AddrErrorTag.InvalidUrl
+    error: string
+}
+export interface AddrErrorInvalidUrlScheme {
+    tag: AddrErrorTag.InvalidUrlScheme
+    error: string
+    expected: string
+}
+export interface AddrErrorMissingParam {
+    tag: AddrErrorTag.MissingParam
+    error: string
+    x1: string
+}
+export interface AddrErrorNotARedirection {
+    tag: AddrErrorTag.NotARedirection
+    error: string
+}
+export interface AddrErrorShouldNotHaveAPath {
+    tag: AddrErrorTag.ShouldNotHaveAPath
+    error: string
+}
+export type AddrError =
+  | AddrErrorDuplicateParam
+  | AddrErrorInvalidOrganizationID
+  | AddrErrorInvalidParamValue
+  | AddrErrorInvalidUrl
+  | AddrErrorInvalidUrlScheme
+  | AddrErrorMissingParam
+  | AddrErrorNotARedirection
+  | AddrErrorShouldNotHaveAPath
 
 // AnyClaimRetrievedInfo
 export enum AnyClaimRetrievedInfoTag {
@@ -1197,25 +1365,26 @@ export type AnyClaimRetrievedInfo =
 // ArchiveDeviceError
 export enum ArchiveDeviceErrorTag {
     Internal = 'ArchiveDeviceErrorInternal',
-    StorageNotAvailable = 'ArchiveDeviceErrorStorageNotAvailable',
+    NoSpaceAvailable = 'ArchiveDeviceErrorNoSpaceAvailable',
 }
 
 export interface ArchiveDeviceErrorInternal {
     tag: ArchiveDeviceErrorTag.Internal
     error: string
 }
-export interface ArchiveDeviceErrorStorageNotAvailable {
-    tag: ArchiveDeviceErrorTag.StorageNotAvailable
+export interface ArchiveDeviceErrorNoSpaceAvailable {
+    tag: ArchiveDeviceErrorTag.NoSpaceAvailable
     error: string
 }
 export type ArchiveDeviceError =
   | ArchiveDeviceErrorInternal
-  | ArchiveDeviceErrorStorageNotAvailable
+  | ArchiveDeviceErrorNoSpaceAvailable
 
 // AsyncEnrollmentIdentitySystem
 export enum AsyncEnrollmentIdentitySystemTag {
     OpenBao = 'AsyncEnrollmentIdentitySystemOpenBao',
     PKI = 'AsyncEnrollmentIdentitySystemPKI',
+    PKICorrupted = 'AsyncEnrollmentIdentitySystemPKICorrupted',
 }
 
 export interface AsyncEnrollmentIdentitySystemOpenBao {
@@ -1226,9 +1395,14 @@ export interface AsyncEnrollmentIdentitySystemPKI {
     x509RootCertificateCommonName: string
     x509RootCertificateSubject: Uint8Array
 }
+export interface AsyncEnrollmentIdentitySystemPKICorrupted {
+    tag: AsyncEnrollmentIdentitySystemTag.PKICorrupted
+    reason: string
+}
 export type AsyncEnrollmentIdentitySystem =
   | AsyncEnrollmentIdentitySystemOpenBao
   | AsyncEnrollmentIdentitySystemPKI
+  | AsyncEnrollmentIdentitySystemPKICorrupted
 
 // AvailableDeviceType
 export enum AvailableDeviceTypeTag {
@@ -1288,6 +1462,27 @@ export type AvailablePendingAsyncEnrollmentIdentitySystem =
   | AvailablePendingAsyncEnrollmentIdentitySystemOpenBao
   | AvailablePendingAsyncEnrollmentIdentitySystemPKI
 
+// AvailablePkiCertificate
+export enum AvailablePkiCertificateTag {
+    Invalid = 'AvailablePkiCertificateInvalid',
+    Valid = 'AvailablePkiCertificateValid',
+}
+
+export interface AvailablePkiCertificateInvalid {
+    tag: AvailablePkiCertificateTag.Invalid
+    reference: X509CertificateReference
+    invalidReason: UserX509CertificateLoadError
+}
+export interface AvailablePkiCertificateValid {
+    tag: AvailablePkiCertificateTag.Valid
+    reference: X509CertificateReference
+    friendlyName: string
+    details: UserX509CertificateDetails
+}
+export type AvailablePkiCertificate =
+  | AvailablePkiCertificateInvalid
+  | AvailablePkiCertificateValid
+
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
     AlreadyUsedToken = 'BootstrapOrganizationErrorAlreadyUsedToken',
@@ -1297,9 +1492,9 @@ export enum BootstrapOrganizationErrorTag {
     Offline = 'BootstrapOrganizationErrorOffline',
     OrganizationExpired = 'BootstrapOrganizationErrorOrganizationExpired',
     SaveDeviceInvalidPath = 'BootstrapOrganizationErrorSaveDeviceInvalidPath',
+    SaveDeviceNoSpaceAvailable = 'BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable',
     SaveDeviceRemoteOpaqueKeyUploadFailed = 'BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed',
     SaveDeviceRemoteOpaqueKeyUploadOffline = 'BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline',
-    SaveDeviceStorageNotAvailable = 'BootstrapOrganizationErrorSaveDeviceStorageNotAvailable',
     TimestampOutOfBallpark = 'BootstrapOrganizationErrorTimestampOutOfBallpark',
 }
 
@@ -1331,16 +1526,16 @@ export interface BootstrapOrganizationErrorSaveDeviceInvalidPath {
     tag: BootstrapOrganizationErrorTag.SaveDeviceInvalidPath
     error: string
 }
+export interface BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable {
+    tag: BootstrapOrganizationErrorTag.SaveDeviceNoSpaceAvailable
+    error: string
+}
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed {
     tag: BootstrapOrganizationErrorTag.SaveDeviceRemoteOpaqueKeyUploadFailed
     error: string
 }
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline {
     tag: BootstrapOrganizationErrorTag.SaveDeviceRemoteOpaqueKeyUploadOffline
-    error: string
-}
-export interface BootstrapOrganizationErrorSaveDeviceStorageNotAvailable {
-    tag: BootstrapOrganizationErrorTag.SaveDeviceStorageNotAvailable
     error: string
 }
 export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
@@ -1359,9 +1554,9 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceInvalidPath
+  | BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | BootstrapOrganizationErrorSaveDeviceStorageNotAvailable
   | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 // CancelError
@@ -1382,13 +1577,30 @@ export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
 
+// CertificateBasedInfoOrigin
+export enum CertificateBasedInfoOriginTag {
+    Certificate = 'CertificateBasedInfoOriginCertificate',
+    Placeholder = 'CertificateBasedInfoOriginPlaceholder',
+}
+
+export interface CertificateBasedInfoOriginCertificate {
+    tag: CertificateBasedInfoOriginTag.Certificate
+    timestamp: DateTime
+}
+export interface CertificateBasedInfoOriginPlaceholder {
+    tag: CertificateBasedInfoOriginTag.Placeholder
+}
+export type CertificateBasedInfoOrigin =
+  | CertificateBasedInfoOriginCertificate
+  | CertificateBasedInfoOriginPlaceholder
+
 // ClaimFinalizeError
 export enum ClaimFinalizeErrorTag {
     Internal = 'ClaimFinalizeErrorInternal',
     InvalidPath = 'ClaimFinalizeErrorInvalidPath',
+    NoSpaceAvailable = 'ClaimFinalizeErrorNoSpaceAvailable',
     RemoteOpaqueKeyUploadFailed = 'ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'ClaimFinalizeErrorStorageNotAvailable',
 }
 
 export interface ClaimFinalizeErrorInternal {
@@ -1399,6 +1611,10 @@ export interface ClaimFinalizeErrorInvalidPath {
     tag: ClaimFinalizeErrorTag.InvalidPath
     error: string
 }
+export interface ClaimFinalizeErrorNoSpaceAvailable {
+    tag: ClaimFinalizeErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed {
     tag: ClaimFinalizeErrorTag.RemoteOpaqueKeyUploadFailed
     error: string
@@ -1407,16 +1623,12 @@ export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline {
     tag: ClaimFinalizeErrorTag.RemoteOpaqueKeyUploadOffline
     error: string
 }
-export interface ClaimFinalizeErrorStorageNotAvailable {
-    tag: ClaimFinalizeErrorTag.StorageNotAvailable
-    error: string
-}
 export type ClaimFinalizeError =
   | ClaimFinalizeErrorInternal
   | ClaimFinalizeErrorInvalidPath
+  | ClaimFinalizeErrorNoSpaceAvailable
   | ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed
   | ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline
-  | ClaimFinalizeErrorStorageNotAvailable
 
 // ClaimInProgressError
 export enum ClaimInProgressErrorTag {
@@ -1557,11 +1769,13 @@ export enum ClientAcceptAsyncEnrollmentErrorTag {
     HumanHandleAlreadyTaken = 'ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken',
     IdentityStrategyMismatch = 'ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch',
     Internal = 'ClientAcceptAsyncEnrollmentErrorInternal',
-    InvalidX509Trustchain = 'ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain',
     Offline = 'ClientAcceptAsyncEnrollmentErrorOffline',
     OpenBaoBadServerResponse = 'ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse',
     OpenBaoBadURL = 'ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL',
     OpenBaoNoServerResponse = 'ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse',
+    PKICannotOpenCertificateStore = 'ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore',
+    PKIServerInvalidX509Trustchain = 'ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain',
+    PKIUnusableX509CertificateReference = 'ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference',
     TimestampOutOfBallpark = 'ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark',
 }
 
@@ -1597,10 +1811,6 @@ export interface ClientAcceptAsyncEnrollmentErrorInternal {
     tag: ClientAcceptAsyncEnrollmentErrorTag.Internal
     error: string
 }
-export interface ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain {
-    tag: ClientAcceptAsyncEnrollmentErrorTag.InvalidX509Trustchain
-    error: string
-}
 export interface ClientAcceptAsyncEnrollmentErrorOffline {
     tag: ClientAcceptAsyncEnrollmentErrorTag.Offline
     error: string
@@ -1617,6 +1827,19 @@ export interface ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse {
     tag: ClientAcceptAsyncEnrollmentErrorTag.OpenBaoNoServerResponse
     error: string
 }
+export interface ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore {
+    tag: ClientAcceptAsyncEnrollmentErrorTag.PKICannotOpenCertificateStore
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain {
+    tag: ClientAcceptAsyncEnrollmentErrorTag.PKIServerInvalidX509Trustchain
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
+    tag: ClientAcceptAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
+    error: string
+    x1: PkiErrorDetail
+}
 export interface ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark {
     tag: ClientAcceptAsyncEnrollmentErrorTag.TimestampOutOfBallpark
     error: string
@@ -1630,11 +1853,13 @@ export type ClientAcceptAsyncEnrollmentError =
   | ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken
   | ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch
   | ClientAcceptAsyncEnrollmentErrorInternal
-  | ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain
   | ClientAcceptAsyncEnrollmentErrorOffline
   | ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse
   | ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL
   | ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore
+  | ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain
+  | ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference
   | ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark
 
 // ClientAcceptTosError
@@ -1666,6 +1891,82 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
+
+// ClientArchiveWorkspaceError
+export enum ClientArchiveWorkspaceErrorTag {
+    ArchivingPeriodTooShort = 'ClientArchiveWorkspaceErrorArchivingPeriodTooShort',
+    AuthorNotAllowed = 'ClientArchiveWorkspaceErrorAuthorNotAllowed',
+    Internal = 'ClientArchiveWorkspaceErrorInternal',
+    InvalidCertificate = 'ClientArchiveWorkspaceErrorInvalidCertificate',
+    InvalidEncryptedRealmName = 'ClientArchiveWorkspaceErrorInvalidEncryptedRealmName',
+    InvalidKeysBundle = 'ClientArchiveWorkspaceErrorInvalidKeysBundle',
+    Offline = 'ClientArchiveWorkspaceErrorOffline',
+    Stopped = 'ClientArchiveWorkspaceErrorStopped',
+    TimestampOutOfBallpark = 'ClientArchiveWorkspaceErrorTimestampOutOfBallpark',
+    WorkspaceDeleted = 'ClientArchiveWorkspaceErrorWorkspaceDeleted',
+    WorkspaceNotFound = 'ClientArchiveWorkspaceErrorWorkspaceNotFound',
+}
+
+export interface ClientArchiveWorkspaceErrorArchivingPeriodTooShort {
+    tag: ClientArchiveWorkspaceErrorTag.ArchivingPeriodTooShort
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorAuthorNotAllowed {
+    tag: ClientArchiveWorkspaceErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInternal {
+    tag: ClientArchiveWorkspaceErrorTag.Internal
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidCertificate {
+    tag: ClientArchiveWorkspaceErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidEncryptedRealmName {
+    tag: ClientArchiveWorkspaceErrorTag.InvalidEncryptedRealmName
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidKeysBundle {
+    tag: ClientArchiveWorkspaceErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorOffline {
+    tag: ClientArchiveWorkspaceErrorTag.Offline
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorStopped {
+    tag: ClientArchiveWorkspaceErrorTag.Stopped
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorTimestampOutOfBallpark {
+    tag: ClientArchiveWorkspaceErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface ClientArchiveWorkspaceErrorWorkspaceDeleted {
+    tag: ClientArchiveWorkspaceErrorTag.WorkspaceDeleted
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorWorkspaceNotFound {
+    tag: ClientArchiveWorkspaceErrorTag.WorkspaceNotFound
+    error: string
+}
+export type ClientArchiveWorkspaceError =
+  | ClientArchiveWorkspaceErrorArchivingPeriodTooShort
+  | ClientArchiveWorkspaceErrorAuthorNotAllowed
+  | ClientArchiveWorkspaceErrorInternal
+  | ClientArchiveWorkspaceErrorInvalidCertificate
+  | ClientArchiveWorkspaceErrorInvalidEncryptedRealmName
+  | ClientArchiveWorkspaceErrorInvalidKeysBundle
+  | ClientArchiveWorkspaceErrorOffline
+  | ClientArchiveWorkspaceErrorStopped
+  | ClientArchiveWorkspaceErrorTimestampOutOfBallpark
+  | ClientArchiveWorkspaceErrorWorkspaceDeleted
+  | ClientArchiveWorkspaceErrorWorkspaceNotFound
 
 // ClientCancelInvitationError
 export enum ClientCancelInvitationErrorTag {
@@ -1769,6 +2070,7 @@ export type ClientDeleteShamirRecoveryError =
 
 // ClientEvent
 export enum ClientEventTag {
+    AsyncEnrollmentUpdated = 'ClientEventAsyncEnrollmentUpdated',
     ClientErrorResponse = 'ClientEventClientErrorResponse',
     ClientStarted = 'ClientEventClientStarted',
     ClientStopped = 'ClientEventClientStopped',
@@ -1802,6 +2104,9 @@ export enum ClientEventTag {
     WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
 
+export interface ClientEventAsyncEnrollmentUpdated {
+    tag: ClientEventTag.AsyncEnrollmentUpdated
+}
 export interface ClientEventClientErrorResponse {
     tag: ClientEventTag.ClientErrorResponse
     errorType: string
@@ -1822,17 +2127,17 @@ export interface ClientEventFrozenSelfUser {
 }
 export interface ClientEventGreetingAttemptCancelled {
     tag: ClientEventTag.GreetingAttemptCancelled
-    token: InvitationToken
+    token: AccessToken
     greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventGreetingAttemptJoined {
     tag: ClientEventTag.GreetingAttemptJoined
-    token: InvitationToken
+    token: AccessToken
     greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventGreetingAttemptReady {
     tag: ClientEventTag.GreetingAttemptReady
-    token: InvitationToken
+    token: AccessToken
     greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventIncompatibleServer {
@@ -1849,7 +2154,7 @@ export interface ClientEventInvitationAlreadyUsedOrDeleted {
 }
 export interface ClientEventInvitationChanged {
     tag: ClientEventTag.InvitationChanged
-    token: InvitationToken
+    token: AccessToken
     status: InvitationStatus
 }
 export interface ClientEventMustAcceptTos {
@@ -1932,6 +2237,7 @@ export interface ClientEventWorkspacesSelfListChanged {
     tag: ClientEventTag.WorkspacesSelfListChanged
 }
 export type ClientEvent =
+  | ClientEventAsyncEnrollmentUpdated
   | ClientEventClientErrorResponse
   | ClientEventClientStarted
   | ClientEventClientStopped
@@ -2022,6 +2328,18 @@ export type ClientForgetAllCertificatesError =
   | ClientForgetAllCertificatesErrorInternal
   | ClientForgetAllCertificatesErrorStopped
 
+// ClientGetAsyncEnrollmentAddrError
+export enum ClientGetAsyncEnrollmentAddrErrorTag {
+    Internal = 'ClientGetAsyncEnrollmentAddrErrorInternal',
+}
+
+export interface ClientGetAsyncEnrollmentAddrErrorInternal {
+    tag: ClientGetAsyncEnrollmentAddrErrorTag.Internal
+    error: string
+}
+export type ClientGetAsyncEnrollmentAddrError =
+  | ClientGetAsyncEnrollmentAddrErrorInternal
+
 // ClientGetOrganizationBootstrapDateError
 export enum ClientGetOrganizationBootstrapDateErrorTag {
     BootstrapDateNotFound = 'ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound',
@@ -2057,6 +2375,24 @@ export type ClientGetOrganizationBootstrapDateError =
   | ClientGetOrganizationBootstrapDateErrorInvalidCertificate
   | ClientGetOrganizationBootstrapDateErrorOffline
   | ClientGetOrganizationBootstrapDateErrorStopped
+
+// ClientGetOutboundSyncBacklogError
+export enum ClientGetOutboundSyncBacklogErrorTag {
+    Internal = 'ClientGetOutboundSyncBacklogErrorInternal',
+    Stopped = 'ClientGetOutboundSyncBacklogErrorStopped',
+}
+
+export interface ClientGetOutboundSyncBacklogErrorInternal {
+    tag: ClientGetOutboundSyncBacklogErrorTag.Internal
+    error: string
+}
+export interface ClientGetOutboundSyncBacklogErrorStopped {
+    tag: ClientGetOutboundSyncBacklogErrorTag.Stopped
+    error: string
+}
+export type ClientGetOutboundSyncBacklogError =
+  | ClientGetOutboundSyncBacklogErrorInternal
+  | ClientGetOutboundSyncBacklogErrorStopped
 
 // ClientGetSelfShamirRecoveryError
 export enum ClientGetSelfShamirRecoveryErrorTag {
@@ -2268,6 +2604,24 @@ export type ClientListUsersError =
   | ClientListUsersErrorInternal
   | ClientListUsersErrorStopped
 
+// ClientListWorkspaceUserRoleChangesError
+export enum ClientListWorkspaceUserRoleChangesErrorTag {
+    Internal = 'ClientListWorkspaceUserRoleChangesErrorInternal',
+    Stopped = 'ClientListWorkspaceUserRoleChangesErrorStopped',
+}
+
+export interface ClientListWorkspaceUserRoleChangesErrorInternal {
+    tag: ClientListWorkspaceUserRoleChangesErrorTag.Internal
+    error: string
+}
+export interface ClientListWorkspaceUserRoleChangesErrorStopped {
+    tag: ClientListWorkspaceUserRoleChangesErrorTag.Stopped
+    error: string
+}
+export type ClientListWorkspaceUserRoleChangesError =
+  | ClientListWorkspaceUserRoleChangesErrorInternal
+  | ClientListWorkspaceUserRoleChangesErrorStopped
+
 // ClientListWorkspaceUsersError
 export enum ClientListWorkspaceUsersErrorTag {
     Internal = 'ClientListWorkspaceUsersErrorInternal',
@@ -2439,6 +2793,7 @@ export enum ClientRenameWorkspaceErrorTag {
     InvalidKeysBundle = 'ClientRenameWorkspaceErrorInvalidKeysBundle',
     NoKey = 'ClientRenameWorkspaceErrorNoKey',
     Offline = 'ClientRenameWorkspaceErrorOffline',
+    RealmDeleted = 'ClientRenameWorkspaceErrorRealmDeleted',
     Stopped = 'ClientRenameWorkspaceErrorStopped',
     TimestampOutOfBallpark = 'ClientRenameWorkspaceErrorTimestampOutOfBallpark',
     WorkspaceNotFound = 'ClientRenameWorkspaceErrorWorkspaceNotFound',
@@ -2472,6 +2827,10 @@ export interface ClientRenameWorkspaceErrorOffline {
     tag: ClientRenameWorkspaceErrorTag.Offline
     error: string
 }
+export interface ClientRenameWorkspaceErrorRealmDeleted {
+    tag: ClientRenameWorkspaceErrorTag.RealmDeleted
+    error: string
+}
 export interface ClientRenameWorkspaceErrorStopped {
     tag: ClientRenameWorkspaceErrorTag.Stopped
     error: string
@@ -2496,6 +2855,7 @@ export type ClientRenameWorkspaceError =
   | ClientRenameWorkspaceErrorInvalidKeysBundle
   | ClientRenameWorkspaceErrorNoKey
   | ClientRenameWorkspaceErrorOffline
+  | ClientRenameWorkspaceErrorRealmDeleted
   | ClientRenameWorkspaceErrorStopped
   | ClientRenameWorkspaceErrorTimestampOutOfBallpark
   | ClientRenameWorkspaceErrorWorkspaceNotFound
@@ -2565,6 +2925,76 @@ export type ClientRevokeUserError =
   | ClientRevokeUserErrorTimestampOutOfBallpark
   | ClientRevokeUserErrorUserIsSelf
   | ClientRevokeUserErrorUserNotFound
+
+// ClientSelfPromoteToWorkspaceOwnerError
+export enum ClientSelfPromoteToWorkspaceOwnerErrorTag {
+    ActiveOwnerAlreadyExists = 'ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists',
+    AuthorIsOutsider = 'ClientSelfPromoteToWorkspaceOwnerErrorAuthorIsOutsider',
+    AuthorNotAllowed = 'ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed',
+    Internal = 'ClientSelfPromoteToWorkspaceOwnerErrorInternal',
+    InvalidCertificate = 'ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate',
+    Offline = 'ClientSelfPromoteToWorkspaceOwnerErrorOffline',
+    RealmDeleted = 'ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted',
+    Stopped = 'ClientSelfPromoteToWorkspaceOwnerErrorStopped',
+    TimestampOutOfBallpark = 'ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark',
+    WorkspaceNotFound = 'ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound',
+}
+
+export interface ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.ActiveOwnerAlreadyExists
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorAuthorIsOutsider {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.AuthorIsOutsider
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorInternal {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.Internal
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorOffline {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.Offline
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.RealmDeleted
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorStopped {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.Stopped
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.WorkspaceNotFound
+    error: string
+}
+export type ClientSelfPromoteToWorkspaceOwnerError =
+  | ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists
+  | ClientSelfPromoteToWorkspaceOwnerErrorAuthorIsOutsider
+  | ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed
+  | ClientSelfPromoteToWorkspaceOwnerErrorInternal
+  | ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate
+  | ClientSelfPromoteToWorkspaceOwnerErrorOffline
+  | ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted
+  | ClientSelfPromoteToWorkspaceOwnerErrorStopped
+  | ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark
+  | ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound
 
 // ClientSetupShamirRecoveryError
 export enum ClientSetupShamirRecoveryErrorTag {
@@ -2649,6 +3079,7 @@ export enum ClientShareWorkspaceErrorTag {
     InvalidCertificate = 'ClientShareWorkspaceErrorInvalidCertificate',
     InvalidKeysBundle = 'ClientShareWorkspaceErrorInvalidKeysBundle',
     Offline = 'ClientShareWorkspaceErrorOffline',
+    RealmDeleted = 'ClientShareWorkspaceErrorRealmDeleted',
     RecipientIsSelf = 'ClientShareWorkspaceErrorRecipientIsSelf',
     RecipientNotFound = 'ClientShareWorkspaceErrorRecipientNotFound',
     RecipientRevoked = 'ClientShareWorkspaceErrorRecipientRevoked',
@@ -2676,6 +3107,10 @@ export interface ClientShareWorkspaceErrorInvalidKeysBundle {
 }
 export interface ClientShareWorkspaceErrorOffline {
     tag: ClientShareWorkspaceErrorTag.Offline
+    error: string
+}
+export interface ClientShareWorkspaceErrorRealmDeleted {
+    tag: ClientShareWorkspaceErrorTag.RealmDeleted
     error: string
 }
 export interface ClientShareWorkspaceErrorRecipientIsSelf {
@@ -2716,6 +3151,7 @@ export type ClientShareWorkspaceError =
   | ClientShareWorkspaceErrorInvalidCertificate
   | ClientShareWorkspaceErrorInvalidKeysBundle
   | ClientShareWorkspaceErrorOffline
+  | ClientShareWorkspaceErrorRealmDeleted
   | ClientShareWorkspaceErrorRecipientIsSelf
   | ClientShareWorkspaceErrorRecipientNotFound
   | ClientShareWorkspaceErrorRecipientRevoked
@@ -2728,11 +3164,15 @@ export type ClientShareWorkspaceError =
 export enum ClientStartErrorTag {
     DeviceUsedByAnotherProcess = 'ClientStartErrorDeviceUsedByAnotherProcess',
     Internal = 'ClientStartErrorInternal',
+    KeyringError = 'ClientStartErrorKeyringError',
+    LoadDeviceBadAccessStrategy = 'ClientStartErrorLoadDeviceBadAccessStrategy',
+    LoadDeviceCiphertextKeyGenerationFailed = 'ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed',
     LoadDeviceDecryptionFailed = 'ClientStartErrorLoadDeviceDecryptionFailed',
     LoadDeviceInvalidData = 'ClientStartErrorLoadDeviceInvalidData',
     LoadDeviceInvalidPath = 'ClientStartErrorLoadDeviceInvalidPath',
     LoadDeviceRemoteOpaqueKeyFetchFailed = 'ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed',
     LoadDeviceRemoteOpaqueKeyFetchOffline = 'ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline',
+    LoadDeviceTOTPDecryptionFailed = 'ClientStartErrorLoadDeviceTOTPDecryptionFailed',
 }
 
 export interface ClientStartErrorDeviceUsedByAnotherProcess {
@@ -2741,6 +3181,18 @@ export interface ClientStartErrorDeviceUsedByAnotherProcess {
 }
 export interface ClientStartErrorInternal {
     tag: ClientStartErrorTag.Internal
+    error: string
+}
+export interface ClientStartErrorKeyringError {
+    tag: ClientStartErrorTag.KeyringError
+    error: string
+}
+export interface ClientStartErrorLoadDeviceBadAccessStrategy {
+    tag: ClientStartErrorTag.LoadDeviceBadAccessStrategy
+    error: string
+}
+export interface ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed {
+    tag: ClientStartErrorTag.LoadDeviceCiphertextKeyGenerationFailed
     error: string
 }
 export interface ClientStartErrorLoadDeviceDecryptionFailed {
@@ -2763,14 +3215,22 @@ export interface ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline {
     tag: ClientStartErrorTag.LoadDeviceRemoteOpaqueKeyFetchOffline
     error: string
 }
+export interface ClientStartErrorLoadDeviceTOTPDecryptionFailed {
+    tag: ClientStartErrorTag.LoadDeviceTOTPDecryptionFailed
+    error: string
+}
 export type ClientStartError =
   | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
+  | ClientStartErrorKeyringError
+  | ClientStartErrorLoadDeviceBadAccessStrategy
+  | ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed
   | ClientStartErrorLoadDeviceDecryptionFailed
   | ClientStartErrorLoadDeviceInvalidData
   | ClientStartErrorLoadDeviceInvalidPath
   | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed
   | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline
+  | ClientStartErrorLoadDeviceTOTPDecryptionFailed
 
 // ClientStartInvitationGreetError
 export enum ClientStartInvitationGreetErrorTag {
@@ -2874,6 +3334,72 @@ export interface ClientStopErrorInternal {
 export type ClientStopError =
   | ClientStopErrorInternal
 
+// ClientTOTPSetupConfirmError
+export enum ClientTOTPSetupConfirmErrorTag {
+    AlreadySetup = 'ClientTOTPSetupConfirmErrorAlreadySetup',
+    Internal = 'ClientTOTPSetupConfirmErrorInternal',
+    InvalidOneTimePassword = 'ClientTOTPSetupConfirmErrorInvalidOneTimePassword',
+    Offline = 'ClientTOTPSetupConfirmErrorOffline',
+}
+
+export interface ClientTOTPSetupConfirmErrorAlreadySetup {
+    tag: ClientTOTPSetupConfirmErrorTag.AlreadySetup
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorInternal {
+    tag: ClientTOTPSetupConfirmErrorTag.Internal
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorInvalidOneTimePassword {
+    tag: ClientTOTPSetupConfirmErrorTag.InvalidOneTimePassword
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorOffline {
+    tag: ClientTOTPSetupConfirmErrorTag.Offline
+    error: string
+}
+export type ClientTOTPSetupConfirmError =
+  | ClientTOTPSetupConfirmErrorAlreadySetup
+  | ClientTOTPSetupConfirmErrorInternal
+  | ClientTOTPSetupConfirmErrorInvalidOneTimePassword
+  | ClientTOTPSetupConfirmErrorOffline
+
+// ClientTotpCreateOpaqueKeyError
+export enum ClientTotpCreateOpaqueKeyErrorTag {
+    Internal = 'ClientTotpCreateOpaqueKeyErrorInternal',
+    Offline = 'ClientTotpCreateOpaqueKeyErrorOffline',
+}
+
+export interface ClientTotpCreateOpaqueKeyErrorInternal {
+    tag: ClientTotpCreateOpaqueKeyErrorTag.Internal
+    error: string
+}
+export interface ClientTotpCreateOpaqueKeyErrorOffline {
+    tag: ClientTotpCreateOpaqueKeyErrorTag.Offline
+    error: string
+}
+export type ClientTotpCreateOpaqueKeyError =
+  | ClientTotpCreateOpaqueKeyErrorInternal
+  | ClientTotpCreateOpaqueKeyErrorOffline
+
+// ClientTotpSetupStatusError
+export enum ClientTotpSetupStatusErrorTag {
+    Internal = 'ClientTotpSetupStatusErrorInternal',
+    Offline = 'ClientTotpSetupStatusErrorOffline',
+}
+
+export interface ClientTotpSetupStatusErrorInternal {
+    tag: ClientTotpSetupStatusErrorTag.Internal
+    error: string
+}
+export interface ClientTotpSetupStatusErrorOffline {
+    tag: ClientTotpSetupStatusErrorTag.Offline
+    error: string
+}
+export type ClientTotpSetupStatusError =
+  | ClientTotpSetupStatusErrorInternal
+  | ClientTotpSetupStatusErrorOffline
+
 // ClientUserUpdateProfileError
 export enum ClientUserUpdateProfileErrorTag {
     AuthorNotAllowed = 'ClientUserUpdateProfileErrorAuthorNotAllowed',
@@ -2934,67 +3460,24 @@ export type ClientUserUpdateProfileError =
   | ClientUserUpdateProfileErrorUserNotFound
   | ClientUserUpdateProfileErrorUserRevoked
 
-// DeviceAccessStrategy
-export enum DeviceAccessStrategyTag {
-    AccountVault = 'DeviceAccessStrategyAccountVault',
-    Keyring = 'DeviceAccessStrategyKeyring',
-    OpenBao = 'DeviceAccessStrategyOpenBao',
-    PKI = 'DeviceAccessStrategyPKI',
-    Password = 'DeviceAccessStrategyPassword',
+// DevicePrimaryProtectionStrategy
+export enum DevicePrimaryProtectionStrategyTag {
+    AccountVault = 'DevicePrimaryProtectionStrategyAccountVault',
+    Keyring = 'DevicePrimaryProtectionStrategyKeyring',
+    OpenBao = 'DevicePrimaryProtectionStrategyOpenBao',
+    PKI = 'DevicePrimaryProtectionStrategyPKI',
+    Password = 'DevicePrimaryProtectionStrategyPassword',
 }
 
-export interface DeviceAccessStrategyAccountVault {
-    tag: DeviceAccessStrategyTag.AccountVault
-    keyFile: Path
+export interface DevicePrimaryProtectionStrategyAccountVault {
+    tag: DevicePrimaryProtectionStrategyTag.AccountVault
     accountHandle: Handle
 }
-export interface DeviceAccessStrategyKeyring {
-    tag: DeviceAccessStrategyTag.Keyring
-    keyFile: Path
+export interface DevicePrimaryProtectionStrategyKeyring {
+    tag: DevicePrimaryProtectionStrategyTag.Keyring
 }
-export interface DeviceAccessStrategyOpenBao {
-    tag: DeviceAccessStrategyTag.OpenBao
-    keyFile: Path
-    openbaoServerUrl: string
-    openbaoSecretMountPath: string
-    openbaoTransitMountPath: string
-    openbaoEntityId: string
-    openbaoAuthToken: string
-}
-export interface DeviceAccessStrategyPKI {
-    tag: DeviceAccessStrategyTag.PKI
-    keyFile: Path
-}
-export interface DeviceAccessStrategyPassword {
-    tag: DeviceAccessStrategyTag.Password
-    password: Password
-    keyFile: Path
-}
-export type DeviceAccessStrategy =
-  | DeviceAccessStrategyAccountVault
-  | DeviceAccessStrategyKeyring
-  | DeviceAccessStrategyOpenBao
-  | DeviceAccessStrategyPKI
-  | DeviceAccessStrategyPassword
-
-// DeviceSaveStrategy
-export enum DeviceSaveStrategyTag {
-    AccountVault = 'DeviceSaveStrategyAccountVault',
-    Keyring = 'DeviceSaveStrategyKeyring',
-    OpenBao = 'DeviceSaveStrategyOpenBao',
-    PKI = 'DeviceSaveStrategyPKI',
-    Password = 'DeviceSaveStrategyPassword',
-}
-
-export interface DeviceSaveStrategyAccountVault {
-    tag: DeviceSaveStrategyTag.AccountVault
-    accountHandle: Handle
-}
-export interface DeviceSaveStrategyKeyring {
-    tag: DeviceSaveStrategyTag.Keyring
-}
-export interface DeviceSaveStrategyOpenBao {
-    tag: DeviceSaveStrategyTag.OpenBao
+export interface DevicePrimaryProtectionStrategyOpenBao {
+    tag: DevicePrimaryProtectionStrategyTag.OpenBao
     openbaoServerUrl: string
     openbaoSecretMountPath: string
     openbaoTransitMountPath: string
@@ -3002,20 +3485,59 @@ export interface DeviceSaveStrategyOpenBao {
     openbaoAuthToken: string
     openbaoPreferredAuthId: string
 }
-export interface DeviceSaveStrategyPKI {
-    tag: DeviceSaveStrategyTag.PKI
-    certificateRef: X509CertificateReference
+export interface DevicePrimaryProtectionStrategyPKI {
+    tag: DevicePrimaryProtectionStrategyTag.PKI
+    pkiEncryptPrivateKeyHandle: Handle
 }
-export interface DeviceSaveStrategyPassword {
-    tag: DeviceSaveStrategyTag.Password
+export interface DevicePrimaryProtectionStrategyPassword {
+    tag: DevicePrimaryProtectionStrategyTag.Password
     password: Password
 }
-export type DeviceSaveStrategy =
-  | DeviceSaveStrategyAccountVault
-  | DeviceSaveStrategyKeyring
-  | DeviceSaveStrategyOpenBao
-  | DeviceSaveStrategyPKI
-  | DeviceSaveStrategyPassword
+export type DevicePrimaryProtectionStrategy =
+  | DevicePrimaryProtectionStrategyAccountVault
+  | DevicePrimaryProtectionStrategyKeyring
+  | DevicePrimaryProtectionStrategyOpenBao
+  | DevicePrimaryProtectionStrategyPKI
+  | DevicePrimaryProtectionStrategyPassword
+
+// DistinguishedNameValue
+export enum DistinguishedNameValueTag {
+    CommonName = 'DistinguishedNameValueCommonName',
+    EmailAddress = 'DistinguishedNameValueEmailAddress',
+}
+
+export interface DistinguishedNameValueCommonName {
+    tag: DistinguishedNameValueTag.CommonName
+    x1: string
+}
+export interface DistinguishedNameValueEmailAddress {
+    tag: DistinguishedNameValueTag.EmailAddress
+    x1: string
+}
+export type DistinguishedNameValue =
+  | DistinguishedNameValueCommonName
+  | DistinguishedNameValueEmailAddress
+
+// EmailSentStatus
+export enum EmailSentStatusTag {
+    RecipientRefused = 'EmailSentStatusRecipientRefused',
+    ServerUnavailable = 'EmailSentStatusServerUnavailable',
+    Success = 'EmailSentStatusSuccess',
+}
+
+export interface EmailSentStatusRecipientRefused {
+    tag: EmailSentStatusTag.RecipientRefused
+}
+export interface EmailSentStatusServerUnavailable {
+    tag: EmailSentStatusTag.ServerUnavailable
+}
+export interface EmailSentStatusSuccess {
+    tag: EmailSentStatusTag.Success
+}
+export type EmailSentStatus =
+  | EmailSentStatusRecipientRefused
+  | EmailSentStatusServerUnavailable
+  | EmailSentStatusSuccess
 
 // EntryStat
 export enum EntryStatTag {
@@ -3193,11 +3715,11 @@ export enum ImportRecoveryDeviceErrorTag {
     InvalidData = 'ImportRecoveryDeviceErrorInvalidData',
     InvalidPassphrase = 'ImportRecoveryDeviceErrorInvalidPassphrase',
     InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
+    NoSpaceAvailable = 'ImportRecoveryDeviceErrorNoSpaceAvailable',
     Offline = 'ImportRecoveryDeviceErrorOffline',
     RemoteOpaqueKeyUploadFailed = 'ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline',
     Stopped = 'ImportRecoveryDeviceErrorStopped',
-    StorageNotAvailable = 'ImportRecoveryDeviceErrorStorageNotAvailable',
     TimestampOutOfBallpark = 'ImportRecoveryDeviceErrorTimestampOutOfBallpark',
 }
 
@@ -3225,6 +3747,10 @@ export interface ImportRecoveryDeviceErrorInvalidPath {
     tag: ImportRecoveryDeviceErrorTag.InvalidPath
     error: string
 }
+export interface ImportRecoveryDeviceErrorNoSpaceAvailable {
+    tag: ImportRecoveryDeviceErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface ImportRecoveryDeviceErrorOffline {
     tag: ImportRecoveryDeviceErrorTag.Offline
     error: string
@@ -3239,10 +3765,6 @@ export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline {
 }
 export interface ImportRecoveryDeviceErrorStopped {
     tag: ImportRecoveryDeviceErrorTag.Stopped
-    error: string
-}
-export interface ImportRecoveryDeviceErrorStorageNotAvailable {
-    tag: ImportRecoveryDeviceErrorTag.StorageNotAvailable
     error: string
 }
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
@@ -3260,63 +3782,12 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidData
   | ImportRecoveryDeviceErrorInvalidPassphrase
   | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorNoSpaceAvailable
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline
   | ImportRecoveryDeviceErrorStopped
-  | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
-
-// InvalidityReason
-export enum InvalidityReasonTag {
-    CannotGetCertificateInfo = 'InvalidityReasonCannotGetCertificateInfo',
-    CannotOpenStore = 'InvalidityReasonCannotOpenStore',
-    DataError = 'InvalidityReasonDataError',
-    InvalidCertificateDer = 'InvalidityReasonInvalidCertificateDer',
-    InvalidRootCertificate = 'InvalidityReasonInvalidRootCertificate',
-    InvalidSignature = 'InvalidityReasonInvalidSignature',
-    InvalidUserInformation = 'InvalidityReasonInvalidUserInformation',
-    NotFound = 'InvalidityReasonNotFound',
-    Untrusted = 'InvalidityReasonUntrusted',
-}
-
-export interface InvalidityReasonCannotGetCertificateInfo {
-    tag: InvalidityReasonTag.CannotGetCertificateInfo
-}
-export interface InvalidityReasonCannotOpenStore {
-    tag: InvalidityReasonTag.CannotOpenStore
-}
-export interface InvalidityReasonDataError {
-    tag: InvalidityReasonTag.DataError
-}
-export interface InvalidityReasonInvalidCertificateDer {
-    tag: InvalidityReasonTag.InvalidCertificateDer
-}
-export interface InvalidityReasonInvalidRootCertificate {
-    tag: InvalidityReasonTag.InvalidRootCertificate
-}
-export interface InvalidityReasonInvalidSignature {
-    tag: InvalidityReasonTag.InvalidSignature
-}
-export interface InvalidityReasonInvalidUserInformation {
-    tag: InvalidityReasonTag.InvalidUserInformation
-}
-export interface InvalidityReasonNotFound {
-    tag: InvalidityReasonTag.NotFound
-}
-export interface InvalidityReasonUntrusted {
-    tag: InvalidityReasonTag.Untrusted
-}
-export type InvalidityReason =
-  | InvalidityReasonCannotGetCertificateInfo
-  | InvalidityReasonCannotOpenStore
-  | InvalidityReasonDataError
-  | InvalidityReasonInvalidCertificateDer
-  | InvalidityReasonInvalidRootCertificate
-  | InvalidityReasonInvalidSignature
-  | InvalidityReasonInvalidUserInformation
-  | InvalidityReasonNotFound
-  | InvalidityReasonUntrusted
 
 // InviteInfoInvitationCreatedBy
 export enum InviteInfoInvitationCreatedByTag {
@@ -3365,16 +3836,16 @@ export enum InviteListItemTag {
 
 export interface InviteListItemDevice {
     tag: InviteListItemTag.Device
-    addr: ParsecInvitationAddr
-    token: InvitationToken
+    addr: ParsecInvitationAddrAndRedirectionURL
+    token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
     status: InvitationStatus
 }
 export interface InviteListItemShamirRecovery {
     tag: InviteListItemTag.ShamirRecovery
-    addr: ParsecInvitationAddr
-    token: InvitationToken
+    addr: ParsecInvitationAddrAndRedirectionURL
+    token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
     claimerUserId: UserID
@@ -3383,8 +3854,8 @@ export interface InviteListItemShamirRecovery {
 }
 export interface InviteListItemUser {
     tag: InviteListItemTag.User
-    addr: ParsecInvitationAddr
-    token: InvitationToken
+    addr: ParsecInvitationAddrAndRedirectionURL
+    token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
     claimerEmail: EmailAddress
@@ -3430,24 +3901,6 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
-
-// ListPkiLocalPendingError
-export enum ListPkiLocalPendingErrorTag {
-    Internal = 'ListPkiLocalPendingErrorInternal',
-    StorageNotAvailable = 'ListPkiLocalPendingErrorStorageNotAvailable',
-}
-
-export interface ListPkiLocalPendingErrorInternal {
-    tag: ListPkiLocalPendingErrorTag.Internal
-    error: string
-}
-export interface ListPkiLocalPendingErrorStorageNotAvailable {
-    tag: ListPkiLocalPendingErrorTag.StorageNotAvailable
-    error: string
-}
-export type ListPkiLocalPendingError =
-  | ListPkiLocalPendingErrorInternal
-  | ListPkiLocalPendingErrorStorageNotAvailable
 
 // MountpointMountStrategy
 export enum MountpointMountStrategyTag {
@@ -3521,23 +3974,35 @@ export type MoveEntryMode =
   | MoveEntryModeExchange
   | MoveEntryModeNoReplace
 
-// OpenBaoAuthConfig
-export enum OpenBaoAuthConfigTag {
-    OIDCHexagone = 'OpenBaoAuthConfigOIDCHexagone',
-    OIDCProConnect = 'OpenBaoAuthConfigOIDCProConnect',
+// OpenBaoListSelfEmailsError
+export enum OpenBaoListSelfEmailsErrorTag {
+    BadServerResponse = 'OpenBaoListSelfEmailsErrorBadServerResponse',
+    BadURL = 'OpenBaoListSelfEmailsErrorBadURL',
+    Internal = 'OpenBaoListSelfEmailsErrorInternal',
+    NoServerResponse = 'OpenBaoListSelfEmailsErrorNoServerResponse',
 }
 
-export interface OpenBaoAuthConfigOIDCHexagone {
-    tag: OpenBaoAuthConfigTag.OIDCHexagone
-    mountPath: string
+export interface OpenBaoListSelfEmailsErrorBadServerResponse {
+    tag: OpenBaoListSelfEmailsErrorTag.BadServerResponse
+    error: string
 }
-export interface OpenBaoAuthConfigOIDCProConnect {
-    tag: OpenBaoAuthConfigTag.OIDCProConnect
-    mountPath: string
+export interface OpenBaoListSelfEmailsErrorBadURL {
+    tag: OpenBaoListSelfEmailsErrorTag.BadURL
+    error: string
 }
-export type OpenBaoAuthConfig =
-  | OpenBaoAuthConfigOIDCHexagone
-  | OpenBaoAuthConfigOIDCProConnect
+export interface OpenBaoListSelfEmailsErrorInternal {
+    tag: OpenBaoListSelfEmailsErrorTag.Internal
+    error: string
+}
+export interface OpenBaoListSelfEmailsErrorNoServerResponse {
+    tag: OpenBaoListSelfEmailsErrorTag.NoServerResponse
+    error: string
+}
+export type OpenBaoListSelfEmailsError =
+  | OpenBaoListSelfEmailsErrorBadServerResponse
+  | OpenBaoListSelfEmailsErrorBadURL
+  | OpenBaoListSelfEmailsErrorInternal
+  | OpenBaoListSelfEmailsErrorNoServerResponse
 
 // OpenBaoSecretConfig
 export enum OpenBaoSecretConfigTag {
@@ -3617,40 +4082,6 @@ export type OtherShamirRecoveryInfo =
   | OtherShamirRecoveryInfoSetupButUnusable
   | OtherShamirRecoveryInfoSetupWithRevokedRecipients
 
-// PKIInfoItem
-export enum PKIInfoItemTag {
-    Accepted = 'PKIInfoItemAccepted',
-    Cancelled = 'PKIInfoItemCancelled',
-    Rejected = 'PKIInfoItemRejected',
-    Submitted = 'PKIInfoItemSubmitted',
-}
-
-export interface PKIInfoItemAccepted {
-    tag: PKIInfoItemTag.Accepted
-    answer: PkiEnrollmentAnswerPayload
-    submittedOn: DateTime
-    acceptedOn: DateTime
-}
-export interface PKIInfoItemCancelled {
-    tag: PKIInfoItemTag.Cancelled
-    submittedOn: DateTime
-    cancelledOn: DateTime
-}
-export interface PKIInfoItemRejected {
-    tag: PKIInfoItemTag.Rejected
-    submittedOn: DateTime
-    rejectedOn: DateTime
-}
-export interface PKIInfoItemSubmitted {
-    tag: PKIInfoItemTag.Submitted
-    submittedOn: DateTime
-}
-export type PKIInfoItem =
-  | PKIInfoItemAccepted
-  | PKIInfoItemCancelled
-  | PKIInfoItemRejected
-  | PKIInfoItemSubmitted
-
 // ParseParsecAddrError
 export enum ParseParsecAddrErrorTag {
     InvalidUrl = 'ParseParsecAddrErrorInvalidUrl',
@@ -3673,6 +4104,7 @@ export enum ParsedParsecAddrTag {
     OrganizationBootstrap = 'ParsedParsecAddrOrganizationBootstrap',
     PkiEnrollment = 'ParsedParsecAddrPkiEnrollment',
     Server = 'ParsedParsecAddrServer',
+    TOTPReset = 'ParsedParsecAddrTOTPReset',
     WorkspacePath = 'ParsedParsecAddrWorkspacePath',
 }
 
@@ -3691,7 +4123,7 @@ export interface ParsedParsecAddrInvitationDevice {
     isDefaultPort: boolean
     useSsl: boolean
     organizationId: OrganizationID
-    token: InvitationToken
+    token: AccessToken
 }
 export interface ParsedParsecAddrInvitationShamirRecovery {
     tag: ParsedParsecAddrTag.InvitationShamirRecovery
@@ -3700,7 +4132,7 @@ export interface ParsedParsecAddrInvitationShamirRecovery {
     isDefaultPort: boolean
     useSsl: boolean
     organizationId: OrganizationID
-    token: InvitationToken
+    token: AccessToken
 }
 export interface ParsedParsecAddrInvitationUser {
     tag: ParsedParsecAddrTag.InvitationUser
@@ -3709,7 +4141,7 @@ export interface ParsedParsecAddrInvitationUser {
     isDefaultPort: boolean
     useSsl: boolean
     organizationId: OrganizationID
-    token: InvitationToken
+    token: AccessToken
 }
 export interface ParsedParsecAddrOrganization {
     tag: ParsedParsecAddrTag.Organization
@@ -3743,6 +4175,16 @@ export interface ParsedParsecAddrServer {
     isDefaultPort: boolean
     useSsl: boolean
 }
+export interface ParsedParsecAddrTOTPReset {
+    tag: ParsedParsecAddrTag.TOTPReset
+    hostname: string
+    port: U16
+    isDefaultPort: boolean
+    useSsl: boolean
+    organizationId: OrganizationID
+    userId: UserID
+    token: AccessToken
+}
 export interface ParsedParsecAddrWorkspacePath {
     tag: ParsedParsecAddrTag.WorkspacePath
     hostname: string
@@ -3763,6 +4205,7 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrOrganizationBootstrap
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
+  | ParsedParsecAddrTOTPReset
   | ParsedParsecAddrWorkspacePath
 
 // PendingAsyncEnrollmentInfo
@@ -3798,259 +4241,141 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoRejected
   | PendingAsyncEnrollmentInfoSubmitted
 
-// PkiEnrollmentAcceptError
-export enum PkiEnrollmentAcceptErrorTag {
-    ActiveUsersLimitReached = 'PkiEnrollmentAcceptErrorActiveUsersLimitReached',
-    AuthorNotAllowed = 'PkiEnrollmentAcceptErrorAuthorNotAllowed',
-    EnrollmentNoLongerAvailable = 'PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable',
-    EnrollmentNotFound = 'PkiEnrollmentAcceptErrorEnrollmentNotFound',
-    HumanHandleAlreadyTaken = 'PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken',
-    Internal = 'PkiEnrollmentAcceptErrorInternal',
-    Offline = 'PkiEnrollmentAcceptErrorOffline',
-    PkiOperationError = 'PkiEnrollmentAcceptErrorPkiOperationError',
+// PkiErrorDetail
+export enum PkiErrorDetailTag {
+    CannotAcquirePubkey = 'PkiErrorDetailCannotAcquirePubkey',
+    CannotEncrypt = 'PkiErrorDetailCannotEncrypt',
+    Decrypt = 'PkiErrorDetailDecrypt',
+    Internal = 'PkiErrorDetailInternal',
+    Sign = 'PkiErrorDetailSign',
+    UnsupportedAlgorithm = 'PkiErrorDetailUnsupportedAlgorithm',
+    Untrusted = 'PkiErrorDetailUntrusted',
 }
 
-export interface PkiEnrollmentAcceptErrorActiveUsersLimitReached {
-    tag: PkiEnrollmentAcceptErrorTag.ActiveUsersLimitReached
+export interface PkiErrorDetailCannotAcquirePubkey {
+    tag: PkiErrorDetailTag.CannotAcquirePubkey
     error: string
 }
-export interface PkiEnrollmentAcceptErrorAuthorNotAllowed {
-    tag: PkiEnrollmentAcceptErrorTag.AuthorNotAllowed
+export interface PkiErrorDetailCannotEncrypt {
+    tag: PkiErrorDetailTag.CannotEncrypt
     error: string
 }
-export interface PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable {
-    tag: PkiEnrollmentAcceptErrorTag.EnrollmentNoLongerAvailable
+export interface PkiErrorDetailDecrypt {
+    tag: PkiErrorDetailTag.Decrypt
     error: string
 }
-export interface PkiEnrollmentAcceptErrorEnrollmentNotFound {
-    tag: PkiEnrollmentAcceptErrorTag.EnrollmentNotFound
+export interface PkiErrorDetailInternal {
+    tag: PkiErrorDetailTag.Internal
     error: string
 }
-export interface PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken {
-    tag: PkiEnrollmentAcceptErrorTag.HumanHandleAlreadyTaken
+export interface PkiErrorDetailSign {
+    tag: PkiErrorDetailTag.Sign
     error: string
 }
-export interface PkiEnrollmentAcceptErrorInternal {
-    tag: PkiEnrollmentAcceptErrorTag.Internal
+export interface PkiErrorDetailUnsupportedAlgorithm {
+    tag: PkiErrorDetailTag.UnsupportedAlgorithm
     error: string
 }
-export interface PkiEnrollmentAcceptErrorOffline {
-    tag: PkiEnrollmentAcceptErrorTag.Offline
+export interface PkiErrorDetailUntrusted {
+    tag: PkiErrorDetailTag.Untrusted
     error: string
 }
-export interface PkiEnrollmentAcceptErrorPkiOperationError {
-    tag: PkiEnrollmentAcceptErrorTag.PkiOperationError
-    error: string
-}
-export type PkiEnrollmentAcceptError =
-  | PkiEnrollmentAcceptErrorActiveUsersLimitReached
-  | PkiEnrollmentAcceptErrorAuthorNotAllowed
-  | PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable
-  | PkiEnrollmentAcceptErrorEnrollmentNotFound
-  | PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken
-  | PkiEnrollmentAcceptErrorInternal
-  | PkiEnrollmentAcceptErrorOffline
-  | PkiEnrollmentAcceptErrorPkiOperationError
+export type PkiErrorDetail =
+  | PkiErrorDetailCannotAcquirePubkey
+  | PkiErrorDetailCannotEncrypt
+  | PkiErrorDetailDecrypt
+  | PkiErrorDetailInternal
+  | PkiErrorDetailSign
+  | PkiErrorDetailUnsupportedAlgorithm
+  | PkiErrorDetailUntrusted
 
-// PkiEnrollmentFinalizeError
-export enum PkiEnrollmentFinalizeErrorTag {
-    Internal = 'PkiEnrollmentFinalizeErrorInternal',
-    SaveError = 'PkiEnrollmentFinalizeErrorSaveError',
+// PkiOpenUserCertificatePrivateKeyError
+export enum PkiOpenUserCertificatePrivateKeyErrorTag {
+    CertificateNotFound = 'PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound',
+    Internal = 'PkiOpenUserCertificatePrivateKeyErrorInternal',
+    PrivateKeyNotFound = 'PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound',
 }
 
-export interface PkiEnrollmentFinalizeErrorInternal {
-    tag: PkiEnrollmentFinalizeErrorTag.Internal
+export interface PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound {
+    tag: PkiOpenUserCertificatePrivateKeyErrorTag.CertificateNotFound
     error: string
 }
-export interface PkiEnrollmentFinalizeErrorSaveError {
-    tag: PkiEnrollmentFinalizeErrorTag.SaveError
+export interface PkiOpenUserCertificatePrivateKeyErrorInternal {
+    tag: PkiOpenUserCertificatePrivateKeyErrorTag.Internal
     error: string
 }
-export type PkiEnrollmentFinalizeError =
-  | PkiEnrollmentFinalizeErrorInternal
-  | PkiEnrollmentFinalizeErrorSaveError
+export interface PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound {
+    tag: PkiOpenUserCertificatePrivateKeyErrorTag.PrivateKeyNotFound
+    error: string
+}
+export type PkiOpenUserCertificatePrivateKeyError =
+  | PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound
+  | PkiOpenUserCertificatePrivateKeyErrorInternal
+  | PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound
 
-// PkiEnrollmentInfoError
-export enum PkiEnrollmentInfoErrorTag {
-    EnrollmentNotFound = 'PkiEnrollmentInfoErrorEnrollmentNotFound',
-    Internal = 'PkiEnrollmentInfoErrorInternal',
-    InvalidAcceptPayload = 'PkiEnrollmentInfoErrorInvalidAcceptPayload',
-    Offline = 'PkiEnrollmentInfoErrorOffline',
-}
-
-export interface PkiEnrollmentInfoErrorEnrollmentNotFound {
-    tag: PkiEnrollmentInfoErrorTag.EnrollmentNotFound
-    error: string
-}
-export interface PkiEnrollmentInfoErrorInternal {
-    tag: PkiEnrollmentInfoErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentInfoErrorInvalidAcceptPayload {
-    tag: PkiEnrollmentInfoErrorTag.InvalidAcceptPayload
-    error: string
-}
-export interface PkiEnrollmentInfoErrorOffline {
-    tag: PkiEnrollmentInfoErrorTag.Offline
-    error: string
-}
-export type PkiEnrollmentInfoError =
-  | PkiEnrollmentInfoErrorEnrollmentNotFound
-  | PkiEnrollmentInfoErrorInternal
-  | PkiEnrollmentInfoErrorInvalidAcceptPayload
-  | PkiEnrollmentInfoErrorOffline
-
-// PkiEnrollmentListError
-export enum PkiEnrollmentListErrorTag {
-    AuthorNotAllowed = 'PkiEnrollmentListErrorAuthorNotAllowed',
-    Internal = 'PkiEnrollmentListErrorInternal',
-    Offline = 'PkiEnrollmentListErrorOffline',
+// PkiPrivateKeyCloseError
+export enum PkiPrivateKeyCloseErrorTag {
+    Internal = 'PkiPrivateKeyCloseErrorInternal',
 }
 
-export interface PkiEnrollmentListErrorAuthorNotAllowed {
-    tag: PkiEnrollmentListErrorTag.AuthorNotAllowed
+export interface PkiPrivateKeyCloseErrorInternal {
+    tag: PkiPrivateKeyCloseErrorTag.Internal
     error: string
 }
-export interface PkiEnrollmentListErrorInternal {
-    tag: PkiEnrollmentListErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentListErrorOffline {
-    tag: PkiEnrollmentListErrorTag.Offline
-    error: string
-}
-export type PkiEnrollmentListError =
-  | PkiEnrollmentListErrorAuthorNotAllowed
-  | PkiEnrollmentListErrorInternal
-  | PkiEnrollmentListErrorOffline
+export type PkiPrivateKeyCloseError =
+  | PkiPrivateKeyCloseErrorInternal
 
-// PkiEnrollmentListItem
-export enum PkiEnrollmentListItemTag {
-    Invalid = 'PkiEnrollmentListItemInvalid',
-    Valid = 'PkiEnrollmentListItemValid',
+// PkiSystemInitError
+export enum PkiSystemInitErrorTag {
+    Internal = 'PkiSystemInitErrorInternal',
+    NotAvailable = 'PkiSystemInitErrorNotAvailable',
 }
 
-export interface PkiEnrollmentListItemInvalid {
-    tag: PkiEnrollmentListItemTag.Invalid
-    humanHandle: HumanHandle | null
-    enrollmentId: PKIEnrollmentID
-    submittedOn: DateTime
-    reason: InvalidityReason
-    details: string
+export interface PkiSystemInitErrorInternal {
+    tag: PkiSystemInitErrorTag.Internal
+    error: string
 }
-export interface PkiEnrollmentListItemValid {
-    tag: PkiEnrollmentListItemTag.Valid
-    humanHandle: HumanHandle
-    enrollmentId: PKIEnrollmentID
-    submittedOn: DateTime
-    submitterDerCert: Bytes
-    payload: PkiEnrollmentSubmitPayload
+export interface PkiSystemInitErrorNotAvailable {
+    tag: PkiSystemInitErrorTag.NotAvailable
+    error: string
 }
-export type PkiEnrollmentListItem =
-  | PkiEnrollmentListItemInvalid
-  | PkiEnrollmentListItemValid
+export type PkiSystemInitError =
+  | PkiSystemInitErrorInternal
+  | PkiSystemInitErrorNotAvailable
 
-// PkiEnrollmentRejectError
-export enum PkiEnrollmentRejectErrorTag {
-    AuthorNotAllowed = 'PkiEnrollmentRejectErrorAuthorNotAllowed',
-    EnrollmentNoLongerAvailable = 'PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable',
-    EnrollmentNotFound = 'PkiEnrollmentRejectErrorEnrollmentNotFound',
-    Internal = 'PkiEnrollmentRejectErrorInternal',
-    Offline = 'PkiEnrollmentRejectErrorOffline',
+// PkiSystemListUserCertificateError
+export enum PkiSystemListUserCertificateErrorTag {
+    Internal = 'PkiSystemListUserCertificateErrorInternal',
 }
 
-export interface PkiEnrollmentRejectErrorAuthorNotAllowed {
-    tag: PkiEnrollmentRejectErrorTag.AuthorNotAllowed
+export interface PkiSystemListUserCertificateErrorInternal {
+    tag: PkiSystemListUserCertificateErrorTag.Internal
     error: string
 }
-export interface PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable {
-    tag: PkiEnrollmentRejectErrorTag.EnrollmentNoLongerAvailable
-    error: string
-}
-export interface PkiEnrollmentRejectErrorEnrollmentNotFound {
-    tag: PkiEnrollmentRejectErrorTag.EnrollmentNotFound
-    error: string
-}
-export interface PkiEnrollmentRejectErrorInternal {
-    tag: PkiEnrollmentRejectErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentRejectErrorOffline {
-    tag: PkiEnrollmentRejectErrorTag.Offline
-    error: string
-}
-export type PkiEnrollmentRejectError =
-  | PkiEnrollmentRejectErrorAuthorNotAllowed
-  | PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable
-  | PkiEnrollmentRejectErrorEnrollmentNotFound
-  | PkiEnrollmentRejectErrorInternal
-  | PkiEnrollmentRejectErrorOffline
+export type PkiSystemListUserCertificateError =
+  | PkiSystemListUserCertificateErrorInternal
 
-// PkiEnrollmentSubmitError
-export enum PkiEnrollmentSubmitErrorTag {
-    AlreadyEnrolled = 'PkiEnrollmentSubmitErrorAlreadyEnrolled',
-    AlreadySubmitted = 'PkiEnrollmentSubmitErrorAlreadySubmitted',
-    EmailAlreadyUsed = 'PkiEnrollmentSubmitErrorEmailAlreadyUsed',
-    IdAlreadyUsed = 'PkiEnrollmentSubmitErrorIdAlreadyUsed',
-    Internal = 'PkiEnrollmentSubmitErrorInternal',
-    InvalidPayload = 'PkiEnrollmentSubmitErrorInvalidPayload',
-    Offline = 'PkiEnrollmentSubmitErrorOffline',
-    PkiOperationError = 'PkiEnrollmentSubmitErrorPkiOperationError',
+// RealmArchivingConfiguration
+export enum RealmArchivingConfigurationTag {
+    Archived = 'RealmArchivingConfigurationArchived',
+    Available = 'RealmArchivingConfigurationAvailable',
+    DeletionPlanned = 'RealmArchivingConfigurationDeletionPlanned',
 }
 
-export interface PkiEnrollmentSubmitErrorAlreadyEnrolled {
-    tag: PkiEnrollmentSubmitErrorTag.AlreadyEnrolled
-    error: string
+export interface RealmArchivingConfigurationArchived {
+    tag: RealmArchivingConfigurationTag.Archived
 }
-export interface PkiEnrollmentSubmitErrorAlreadySubmitted {
-    tag: PkiEnrollmentSubmitErrorTag.AlreadySubmitted
-    error: string
+export interface RealmArchivingConfigurationAvailable {
+    tag: RealmArchivingConfigurationTag.Available
 }
-export interface PkiEnrollmentSubmitErrorEmailAlreadyUsed {
-    tag: PkiEnrollmentSubmitErrorTag.EmailAlreadyUsed
-    error: string
+export interface RealmArchivingConfigurationDeletionPlanned {
+    tag: RealmArchivingConfigurationTag.DeletionPlanned
+    deletionDate: DateTime
 }
-export interface PkiEnrollmentSubmitErrorIdAlreadyUsed {
-    tag: PkiEnrollmentSubmitErrorTag.IdAlreadyUsed
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorInternal {
-    tag: PkiEnrollmentSubmitErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorInvalidPayload {
-    tag: PkiEnrollmentSubmitErrorTag.InvalidPayload
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorOffline {
-    tag: PkiEnrollmentSubmitErrorTag.Offline
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorPkiOperationError {
-    tag: PkiEnrollmentSubmitErrorTag.PkiOperationError
-    error: string
-}
-export type PkiEnrollmentSubmitError =
-  | PkiEnrollmentSubmitErrorAlreadyEnrolled
-  | PkiEnrollmentSubmitErrorAlreadySubmitted
-  | PkiEnrollmentSubmitErrorEmailAlreadyUsed
-  | PkiEnrollmentSubmitErrorIdAlreadyUsed
-  | PkiEnrollmentSubmitErrorInternal
-  | PkiEnrollmentSubmitErrorInvalidPayload
-  | PkiEnrollmentSubmitErrorOffline
-  | PkiEnrollmentSubmitErrorPkiOperationError
-
-// PkiGetAddrError
-export enum PkiGetAddrErrorTag {
-    Internal = 'PkiGetAddrErrorInternal',
-}
-
-export interface PkiGetAddrErrorInternal {
-    tag: PkiGetAddrErrorTag.Internal
-    error: string
-}
-export type PkiGetAddrError =
-  | PkiGetAddrErrorInternal
+export type RealmArchivingConfiguration =
+  | RealmArchivingConfigurationArchived
+  | RealmArchivingConfigurationAvailable
+  | RealmArchivingConfigurationDeletionPlanned
 
 // RemoveDeviceDataError
 export enum RemoveDeviceDataErrorTag {
@@ -4064,29 +4389,27 @@ export interface RemoveDeviceDataErrorFailedToRemoveData {
 export type RemoveDeviceDataError =
   | RemoveDeviceDataErrorFailedToRemoveData
 
-// RemoveDeviceError
-export enum RemoveDeviceErrorTag {
-    Internal = 'RemoveDeviceErrorInternal',
-    NotFound = 'RemoveDeviceErrorNotFound',
-    StorageNotAvailable = 'RemoveDeviceErrorStorageNotAvailable',
+// RequestedRealmArchivingConfiguration
+export enum RequestedRealmArchivingConfigurationTag {
+    Archived = 'RequestedRealmArchivingConfigurationArchived',
+    Available = 'RequestedRealmArchivingConfigurationAvailable',
+    DeletionPlanned = 'RequestedRealmArchivingConfigurationDeletionPlanned',
 }
 
-export interface RemoveDeviceErrorInternal {
-    tag: RemoveDeviceErrorTag.Internal
-    error: string
+export interface RequestedRealmArchivingConfigurationArchived {
+    tag: RequestedRealmArchivingConfigurationTag.Archived
 }
-export interface RemoveDeviceErrorNotFound {
-    tag: RemoveDeviceErrorTag.NotFound
-    error: string
+export interface RequestedRealmArchivingConfigurationAvailable {
+    tag: RequestedRealmArchivingConfigurationTag.Available
 }
-export interface RemoveDeviceErrorStorageNotAvailable {
-    tag: RemoveDeviceErrorTag.StorageNotAvailable
-    error: string
+export interface RequestedRealmArchivingConfigurationDeletionPlanned {
+    tag: RequestedRealmArchivingConfigurationTag.DeletionPlanned
+    archivingPeriodInSeconds: U32
 }
-export type RemoveDeviceError =
-  | RemoveDeviceErrorInternal
-  | RemoveDeviceErrorNotFound
-  | RemoveDeviceErrorStorageNotAvailable
+export type RequestedRealmArchivingConfiguration =
+  | RequestedRealmArchivingConfigurationArchived
+  | RequestedRealmArchivingConfigurationAvailable
+  | RequestedRealmArchivingConfigurationDeletionPlanned
 
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
@@ -4310,12 +4633,14 @@ export enum SubmitAsyncEnrollmentErrorTag {
     EmailAlreadySubmitted = 'SubmitAsyncEnrollmentErrorEmailAlreadySubmitted',
     Internal = 'SubmitAsyncEnrollmentErrorInternal',
     InvalidPath = 'SubmitAsyncEnrollmentErrorInvalidPath',
-    InvalidX509Trustchain = 'SubmitAsyncEnrollmentErrorInvalidX509Trustchain',
+    NoSpaceAvailable = 'SubmitAsyncEnrollmentErrorNoSpaceAvailable',
     Offline = 'SubmitAsyncEnrollmentErrorOffline',
     OpenBaoBadServerResponse = 'SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse',
     OpenBaoBadURL = 'SubmitAsyncEnrollmentErrorOpenBaoBadURL',
     OpenBaoNoServerResponse = 'SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse',
-    StorageNotAvailable = 'SubmitAsyncEnrollmentErrorStorageNotAvailable',
+    PKICannotOpenCertificateStore = 'SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore',
+    PKIServerInvalidX509Trustchain = 'SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain',
+    PKIUnusableX509CertificateReference = 'SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference',
 }
 
 export interface SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled {
@@ -4334,8 +4659,8 @@ export interface SubmitAsyncEnrollmentErrorInvalidPath {
     tag: SubmitAsyncEnrollmentErrorTag.InvalidPath
     error: string
 }
-export interface SubmitAsyncEnrollmentErrorInvalidX509Trustchain {
-    tag: SubmitAsyncEnrollmentErrorTag.InvalidX509Trustchain
+export interface SubmitAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: SubmitAsyncEnrollmentErrorTag.NoSpaceAvailable
     error: string
 }
 export interface SubmitAsyncEnrollmentErrorOffline {
@@ -4354,21 +4679,32 @@ export interface SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse {
     tag: SubmitAsyncEnrollmentErrorTag.OpenBaoNoServerResponse
     error: string
 }
-export interface SubmitAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitAsyncEnrollmentErrorTag.StorageNotAvailable
+export interface SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore {
+    tag: SubmitAsyncEnrollmentErrorTag.PKICannotOpenCertificateStore
     error: string
+}
+export interface SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain {
+    tag: SubmitAsyncEnrollmentErrorTag.PKIServerInvalidX509Trustchain
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
+    tag: SubmitAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
+    error: string
+    x1: PkiErrorDetail
 }
 export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled
   | SubmitAsyncEnrollmentErrorEmailAlreadySubmitted
   | SubmitAsyncEnrollmentErrorInternal
   | SubmitAsyncEnrollmentErrorInvalidPath
-  | SubmitAsyncEnrollmentErrorInvalidX509Trustchain
+  | SubmitAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitAsyncEnrollmentErrorOffline
   | SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse
   | SubmitAsyncEnrollmentErrorOpenBaoBadURL
   | SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse
-  | SubmitAsyncEnrollmentErrorStorageNotAvailable
+  | SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore
+  | SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain
+  | SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference
 
 // SubmitAsyncEnrollmentIdentityStrategy
 export enum SubmitAsyncEnrollmentIdentityStrategyTag {
@@ -4388,11 +4724,42 @@ export interface SubmitAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface SubmitAsyncEnrollmentIdentityStrategyPKI {
     tag: SubmitAsyncEnrollmentIdentityStrategyTag.PKI
-    certificateReference: X509CertificateReference
+    pkiSignPrivateKeyHandle: Handle
+    pkiEncryptPrivateKeyHandle: Handle
 }
 export type SubmitAsyncEnrollmentIdentityStrategy =
   | SubmitAsyncEnrollmentIdentityStrategyOpenBao
   | SubmitAsyncEnrollmentIdentityStrategyPKI
+
+// SubmitterCancelAsyncEnrollmentError
+export enum SubmitterCancelAsyncEnrollmentErrorTag {
+    Internal = 'SubmitterCancelAsyncEnrollmentErrorInternal',
+    NotFound = 'SubmitterCancelAsyncEnrollmentErrorNotFound',
+    Offline = 'SubmitterCancelAsyncEnrollmentErrorOffline',
+    StorageNotAvailable = 'SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable',
+}
+
+export interface SubmitterCancelAsyncEnrollmentErrorInternal {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.Internal
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorNotFound {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.NotFound
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorOffline {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.Offline
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.StorageNotAvailable
+    error: string
+}
+export type SubmitterCancelAsyncEnrollmentError =
+  | SubmitterCancelAsyncEnrollmentErrorInternal
+  | SubmitterCancelAsyncEnrollmentErrorNotFound
+  | SubmitterCancelAsyncEnrollmentErrorOffline
+  | SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable
 
 // SubmitterFinalizeAsyncEnrollmentError
 export enum SubmitterFinalizeAsyncEnrollmentErrorTag {
@@ -4403,16 +4770,17 @@ export enum SubmitterFinalizeAsyncEnrollmentErrorTag {
     EnrollmentNotFoundOnServer = 'SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer',
     IdentityStrategyMismatch = 'SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch',
     Internal = 'SubmitterFinalizeAsyncEnrollmentErrorInternal',
-    InvalidX509Trustchain = 'SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain',
+    NoSpaceAvailable = 'SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable',
     NotAccepted = 'SubmitterFinalizeAsyncEnrollmentErrorNotAccepted',
     Offline = 'SubmitterFinalizeAsyncEnrollmentErrorOffline',
     OpenBaoBadServerResponse = 'SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse',
     OpenBaoBadURL = 'SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL',
     OpenBaoNoServerResponse = 'SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse',
+    PKICannotOpenCertificateStore = 'SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore',
+    PKIUnusableX509CertificateReference = 'SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference',
     SaveDeviceInvalidPath = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath',
     SaveDeviceRemoteOpaqueKeyUploadFailed = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed',
     SaveDeviceRemoteOpaqueKeyUploadOffline = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable',
 }
 
 export interface SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload {
@@ -4443,8 +4811,8 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorInternal {
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.Internal
     error: string
 }
-export interface SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain {
-    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.InvalidX509Trustchain
+export interface SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.NoSpaceAvailable
     error: string
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorNotAccepted {
@@ -4467,6 +4835,15 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse {
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.OpenBaoNoServerResponse
     error: string
 }
+export interface SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore {
+    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.PKICannotOpenCertificateStore
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
+    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
+    error: string
+    x1: PkiErrorDetail
+}
 export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath {
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.SaveDeviceInvalidPath
     error: string
@@ -4479,10 +4856,6 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyU
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.SaveDeviceRemoteOpaqueKeyUploadOffline
     error: string
 }
-export interface SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.StorageNotAvailable
-    error: string
-}
 export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey
@@ -4491,40 +4864,17 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer
   | SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch
   | SubmitterFinalizeAsyncEnrollmentErrorInternal
-  | SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain
+  | SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitterFinalizeAsyncEnrollmentErrorNotAccepted
   | SubmitterFinalizeAsyncEnrollmentErrorOffline
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore
+  | SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
-
-// SubmitterForgetAsyncEnrollmentError
-export enum SubmitterForgetAsyncEnrollmentErrorTag {
-    Internal = 'SubmitterForgetAsyncEnrollmentErrorInternal',
-    NotFound = 'SubmitterForgetAsyncEnrollmentErrorNotFound',
-    StorageNotAvailable = 'SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable',
-}
-
-export interface SubmitterForgetAsyncEnrollmentErrorInternal {
-    tag: SubmitterForgetAsyncEnrollmentErrorTag.Internal
-    error: string
-}
-export interface SubmitterForgetAsyncEnrollmentErrorNotFound {
-    tag: SubmitterForgetAsyncEnrollmentErrorTag.NotFound
-    error: string
-}
-export interface SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitterForgetAsyncEnrollmentErrorTag.StorageNotAvailable
-    error: string
-}
-export type SubmitterForgetAsyncEnrollmentError =
-  | SubmitterForgetAsyncEnrollmentErrorInternal
-  | SubmitterForgetAsyncEnrollmentErrorNotFound
-  | SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable
 
 // SubmitterGetAsyncEnrollmentInfoError
 export enum SubmitterGetAsyncEnrollmentInfoErrorTag {
@@ -4568,6 +4918,23 @@ export type SubmitterListLocalAsyncEnrollmentsError =
   | SubmitterListLocalAsyncEnrollmentsErrorInternal
   | SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable
 
+// TOTPSetupStatus
+export enum TOTPSetupStatusTag {
+    Confirmed = 'TOTPSetupStatusConfirmed',
+    Unconfirmed = 'TOTPSetupStatusUnconfirmed',
+}
+
+export interface TOTPSetupStatusConfirmed {
+    tag: TOTPSetupStatusTag.Confirmed
+}
+export interface TOTPSetupStatusUnconfirmed {
+    tag: TOTPSetupStatusTag.Unconfirmed
+    base32TotpSecret: string
+}
+export type TOTPSetupStatus =
+  | TOTPSetupStatusConfirmed
+  | TOTPSetupStatusUnconfirmed
+
 // TestbedError
 export enum TestbedErrorTag {
     Disabled = 'TestbedErrorDisabled',
@@ -4586,17 +4953,113 @@ export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
 
+// TotpFetchOpaqueKeyError
+export enum TotpFetchOpaqueKeyErrorTag {
+    Internal = 'TotpFetchOpaqueKeyErrorInternal',
+    InvalidOneTimePassword = 'TotpFetchOpaqueKeyErrorInvalidOneTimePassword',
+    Offline = 'TotpFetchOpaqueKeyErrorOffline',
+    Throttled = 'TotpFetchOpaqueKeyErrorThrottled',
+}
+
+export interface TotpFetchOpaqueKeyErrorInternal {
+    tag: TotpFetchOpaqueKeyErrorTag.Internal
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorInvalidOneTimePassword {
+    tag: TotpFetchOpaqueKeyErrorTag.InvalidOneTimePassword
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorOffline {
+    tag: TotpFetchOpaqueKeyErrorTag.Offline
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorThrottled {
+    tag: TotpFetchOpaqueKeyErrorTag.Throttled
+    error: string
+}
+export type TotpFetchOpaqueKeyError =
+  | TotpFetchOpaqueKeyErrorInternal
+  | TotpFetchOpaqueKeyErrorInvalidOneTimePassword
+  | TotpFetchOpaqueKeyErrorOffline
+  | TotpFetchOpaqueKeyErrorThrottled
+
+// TotpSetupConfirmAnonymousError
+export enum TotpSetupConfirmAnonymousErrorTag {
+    BadToken = 'TotpSetupConfirmAnonymousErrorBadToken',
+    Internal = 'TotpSetupConfirmAnonymousErrorInternal',
+    InvalidOneTimePassword = 'TotpSetupConfirmAnonymousErrorInvalidOneTimePassword',
+    Offline = 'TotpSetupConfirmAnonymousErrorOffline',
+}
+
+export interface TotpSetupConfirmAnonymousErrorBadToken {
+    tag: TotpSetupConfirmAnonymousErrorTag.BadToken
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorInternal {
+    tag: TotpSetupConfirmAnonymousErrorTag.Internal
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorInvalidOneTimePassword {
+    tag: TotpSetupConfirmAnonymousErrorTag.InvalidOneTimePassword
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorOffline {
+    tag: TotpSetupConfirmAnonymousErrorTag.Offline
+    error: string
+}
+export type TotpSetupConfirmAnonymousError =
+  | TotpSetupConfirmAnonymousErrorBadToken
+  | TotpSetupConfirmAnonymousErrorInternal
+  | TotpSetupConfirmAnonymousErrorInvalidOneTimePassword
+  | TotpSetupConfirmAnonymousErrorOffline
+
+// TotpSetupStatusAnonymousError
+export enum TotpSetupStatusAnonymousErrorTag {
+    BadToken = 'TotpSetupStatusAnonymousErrorBadToken',
+    Internal = 'TotpSetupStatusAnonymousErrorInternal',
+    Offline = 'TotpSetupStatusAnonymousErrorOffline',
+}
+
+export interface TotpSetupStatusAnonymousErrorBadToken {
+    tag: TotpSetupStatusAnonymousErrorTag.BadToken
+    error: string
+}
+export interface TotpSetupStatusAnonymousErrorInternal {
+    tag: TotpSetupStatusAnonymousErrorTag.Internal
+    error: string
+}
+export interface TotpSetupStatusAnonymousErrorOffline {
+    tag: TotpSetupStatusAnonymousErrorTag.Offline
+    error: string
+}
+export type TotpSetupStatusAnonymousError =
+  | TotpSetupStatusAnonymousErrorBadToken
+  | TotpSetupStatusAnonymousErrorInternal
+  | TotpSetupStatusAnonymousErrorOffline
+
 // UpdateDeviceError
 export enum UpdateDeviceErrorTag {
+    BadAccessStrategy = 'UpdateDeviceErrorBadAccessStrategy',
+    CiphertextKeyGenerationFailed = 'UpdateDeviceErrorCiphertextKeyGenerationFailed',
     DecryptionFailed = 'UpdateDeviceErrorDecryptionFailed',
     Internal = 'UpdateDeviceErrorInternal',
     InvalidData = 'UpdateDeviceErrorInvalidData',
     InvalidPath = 'UpdateDeviceErrorInvalidPath',
+    KeyringError = 'UpdateDeviceErrorKeyringError',
+    NoSpaceAvailable = 'UpdateDeviceErrorNoSpaceAvailable',
     RemoteOpaqueKeyOperationFailed = 'UpdateDeviceErrorRemoteOpaqueKeyOperationFailed',
     RemoteOpaqueKeyOperationOffline = 'UpdateDeviceErrorRemoteOpaqueKeyOperationOffline',
-    StorageNotAvailable = 'UpdateDeviceErrorStorageNotAvailable',
+    TOTPDecryptionFailed = 'UpdateDeviceErrorTOTPDecryptionFailed',
 }
 
+export interface UpdateDeviceErrorBadAccessStrategy {
+    tag: UpdateDeviceErrorTag.BadAccessStrategy
+    error: string
+}
+export interface UpdateDeviceErrorCiphertextKeyGenerationFailed {
+    tag: UpdateDeviceErrorTag.CiphertextKeyGenerationFailed
+    error: string
+}
 export interface UpdateDeviceErrorDecryptionFailed {
     tag: UpdateDeviceErrorTag.DecryptionFailed
     error: string
@@ -4613,6 +5076,14 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: UpdateDeviceErrorTag.InvalidPath
     error: string
 }
+export interface UpdateDeviceErrorKeyringError {
+    tag: UpdateDeviceErrorTag.KeyringError
+    error: string
+}
+export interface UpdateDeviceErrorNoSpaceAvailable {
+    tag: UpdateDeviceErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface UpdateDeviceErrorRemoteOpaqueKeyOperationFailed {
     tag: UpdateDeviceErrorTag.RemoteOpaqueKeyOperationFailed
     error: string
@@ -4621,18 +5092,22 @@ export interface UpdateDeviceErrorRemoteOpaqueKeyOperationOffline {
     tag: UpdateDeviceErrorTag.RemoteOpaqueKeyOperationOffline
     error: string
 }
-export interface UpdateDeviceErrorStorageNotAvailable {
-    tag: UpdateDeviceErrorTag.StorageNotAvailable
+export interface UpdateDeviceErrorTOTPDecryptionFailed {
+    tag: UpdateDeviceErrorTag.TOTPDecryptionFailed
     error: string
 }
 export type UpdateDeviceError =
+  | UpdateDeviceErrorBadAccessStrategy
+  | UpdateDeviceErrorCiphertextKeyGenerationFailed
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorKeyringError
+  | UpdateDeviceErrorNoSpaceAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
-  | UpdateDeviceErrorStorageNotAvailable
+  | UpdateDeviceErrorTOTPDecryptionFailed
 
 // UserClaimListInitialInfosError
 export enum UserClaimListInitialInfosErrorTag {
@@ -4645,6 +5120,32 @@ export interface UserClaimListInitialInfosErrorInternal {
 }
 export type UserClaimListInitialInfosError =
   | UserClaimListInitialInfosErrorInternal
+
+// UserX509CertificateLoadError
+export enum UserX509CertificateLoadErrorTag {
+    InvalidCertificateDer = 'UserX509CertificateLoadErrorInvalidCertificateDer',
+    InvalidEmail = 'UserX509CertificateLoadErrorInvalidEmail',
+    InvalidTime = 'UserX509CertificateLoadErrorInvalidTime',
+    NoCommonName = 'UserX509CertificateLoadErrorNoCommonName',
+}
+
+export interface UserX509CertificateLoadErrorInvalidCertificateDer {
+    tag: UserX509CertificateLoadErrorTag.InvalidCertificateDer
+}
+export interface UserX509CertificateLoadErrorInvalidEmail {
+    tag: UserX509CertificateLoadErrorTag.InvalidEmail
+}
+export interface UserX509CertificateLoadErrorInvalidTime {
+    tag: UserX509CertificateLoadErrorTag.InvalidTime
+}
+export interface UserX509CertificateLoadErrorNoCommonName {
+    tag: UserX509CertificateLoadErrorTag.NoCommonName
+}
+export type UserX509CertificateLoadError =
+  | UserX509CertificateLoadErrorInvalidCertificateDer
+  | UserX509CertificateLoadErrorInvalidEmail
+  | UserX509CertificateLoadErrorInvalidTime
+  | UserX509CertificateLoadErrorNoCommonName
 
 // WaitForDeviceAvailableError
 export enum WaitForDeviceAvailableErrorTag {
@@ -4670,6 +5171,7 @@ export enum WorkspaceCreateFileErrorTag {
     ParentNotAFolder = 'WorkspaceCreateFileErrorParentNotAFolder',
     ParentNotFound = 'WorkspaceCreateFileErrorParentNotFound',
     ReadOnlyRealm = 'WorkspaceCreateFileErrorReadOnlyRealm',
+    RealmDeleted = 'WorkspaceCreateFileErrorRealmDeleted',
     Stopped = 'WorkspaceCreateFileErrorStopped',
 }
 
@@ -4713,6 +5215,10 @@ export interface WorkspaceCreateFileErrorReadOnlyRealm {
     tag: WorkspaceCreateFileErrorTag.ReadOnlyRealm
     error: string
 }
+export interface WorkspaceCreateFileErrorRealmDeleted {
+    tag: WorkspaceCreateFileErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceCreateFileErrorStopped {
     tag: WorkspaceCreateFileErrorTag.Stopped
     error: string
@@ -4728,6 +5234,7 @@ export type WorkspaceCreateFileError =
   | WorkspaceCreateFileErrorParentNotAFolder
   | WorkspaceCreateFileErrorParentNotFound
   | WorkspaceCreateFileErrorReadOnlyRealm
+  | WorkspaceCreateFileErrorRealmDeleted
   | WorkspaceCreateFileErrorStopped
 
 // WorkspaceCreateFolderError
@@ -4742,6 +5249,7 @@ export enum WorkspaceCreateFolderErrorTag {
     ParentNotAFolder = 'WorkspaceCreateFolderErrorParentNotAFolder',
     ParentNotFound = 'WorkspaceCreateFolderErrorParentNotFound',
     ReadOnlyRealm = 'WorkspaceCreateFolderErrorReadOnlyRealm',
+    RealmDeleted = 'WorkspaceCreateFolderErrorRealmDeleted',
     Stopped = 'WorkspaceCreateFolderErrorStopped',
 }
 
@@ -4785,6 +5293,10 @@ export interface WorkspaceCreateFolderErrorReadOnlyRealm {
     tag: WorkspaceCreateFolderErrorTag.ReadOnlyRealm
     error: string
 }
+export interface WorkspaceCreateFolderErrorRealmDeleted {
+    tag: WorkspaceCreateFolderErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceCreateFolderErrorStopped {
     tag: WorkspaceCreateFolderErrorTag.Stopped
     error: string
@@ -4800,6 +5312,7 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorParentNotAFolder
   | WorkspaceCreateFolderErrorParentNotFound
   | WorkspaceCreateFolderErrorReadOnlyRealm
+  | WorkspaceCreateFolderErrorRealmDeleted
   | WorkspaceCreateFolderErrorStopped
 
 // WorkspaceDecryptPathAddrError
@@ -4812,6 +5325,7 @@ export enum WorkspaceDecryptPathAddrErrorTag {
     KeyNotFound = 'WorkspaceDecryptPathAddrErrorKeyNotFound',
     NotAllowed = 'WorkspaceDecryptPathAddrErrorNotAllowed',
     Offline = 'WorkspaceDecryptPathAddrErrorOffline',
+    RealmDeleted = 'WorkspaceDecryptPathAddrErrorRealmDeleted',
     Stopped = 'WorkspaceDecryptPathAddrErrorStopped',
 }
 
@@ -4847,6 +5361,10 @@ export interface WorkspaceDecryptPathAddrErrorOffline {
     tag: WorkspaceDecryptPathAddrErrorTag.Offline
     error: string
 }
+export interface WorkspaceDecryptPathAddrErrorRealmDeleted {
+    tag: WorkspaceDecryptPathAddrErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceDecryptPathAddrErrorStopped {
     tag: WorkspaceDecryptPathAddrErrorTag.Stopped
     error: string
@@ -4860,6 +5378,7 @@ export type WorkspaceDecryptPathAddrError =
   | WorkspaceDecryptPathAddrErrorKeyNotFound
   | WorkspaceDecryptPathAddrErrorNotAllowed
   | WorkspaceDecryptPathAddrErrorOffline
+  | WorkspaceDecryptPathAddrErrorRealmDeleted
   | WorkspaceDecryptPathAddrErrorStopped
 
 // WorkspaceFdCloseError
@@ -4926,6 +5445,7 @@ export enum WorkspaceFdReadErrorTag {
     NoRealmAccess = 'WorkspaceFdReadErrorNoRealmAccess',
     NotInReadMode = 'WorkspaceFdReadErrorNotInReadMode',
     Offline = 'WorkspaceFdReadErrorOffline',
+    RealmDeleted = 'WorkspaceFdReadErrorRealmDeleted',
     ServerBlockstoreUnavailable = 'WorkspaceFdReadErrorServerBlockstoreUnavailable',
     Stopped = 'WorkspaceFdReadErrorStopped',
 }
@@ -4962,6 +5482,10 @@ export interface WorkspaceFdReadErrorOffline {
     tag: WorkspaceFdReadErrorTag.Offline
     error: string
 }
+export interface WorkspaceFdReadErrorRealmDeleted {
+    tag: WorkspaceFdReadErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceFdReadErrorServerBlockstoreUnavailable {
     tag: WorkspaceFdReadErrorTag.ServerBlockstoreUnavailable
     error: string
@@ -4979,6 +5503,7 @@ export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorNoRealmAccess
   | WorkspaceFdReadErrorNotInReadMode
   | WorkspaceFdReadErrorOffline
+  | WorkspaceFdReadErrorRealmDeleted
   | WorkspaceFdReadErrorServerBlockstoreUnavailable
   | WorkspaceFdReadErrorStopped
 
@@ -5055,6 +5580,7 @@ export enum WorkspaceGeneratePathAddrErrorTag {
     NoKey = 'WorkspaceGeneratePathAddrErrorNoKey',
     NotAllowed = 'WorkspaceGeneratePathAddrErrorNotAllowed',
     Offline = 'WorkspaceGeneratePathAddrErrorOffline',
+    RealmDeleted = 'WorkspaceGeneratePathAddrErrorRealmDeleted',
     Stopped = 'WorkspaceGeneratePathAddrErrorStopped',
 }
 
@@ -5078,6 +5604,10 @@ export interface WorkspaceGeneratePathAddrErrorOffline {
     tag: WorkspaceGeneratePathAddrErrorTag.Offline
     error: string
 }
+export interface WorkspaceGeneratePathAddrErrorRealmDeleted {
+    tag: WorkspaceGeneratePathAddrErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceGeneratePathAddrErrorStopped {
     tag: WorkspaceGeneratePathAddrErrorTag.Stopped
     error: string
@@ -5088,6 +5618,7 @@ export type WorkspaceGeneratePathAddrError =
   | WorkspaceGeneratePathAddrErrorNoKey
   | WorkspaceGeneratePathAddrErrorNotAllowed
   | WorkspaceGeneratePathAddrErrorOffline
+  | WorkspaceGeneratePathAddrErrorRealmDeleted
   | WorkspaceGeneratePathAddrErrorStopped
 
 // WorkspaceHistoryEntryStat
@@ -5146,6 +5677,7 @@ export enum WorkspaceHistoryFdReadErrorTag {
     InvalidKeysBundle = 'WorkspaceHistoryFdReadErrorInvalidKeysBundle',
     NoRealmAccess = 'WorkspaceHistoryFdReadErrorNoRealmAccess',
     Offline = 'WorkspaceHistoryFdReadErrorOffline',
+    RealmDeleted = 'WorkspaceHistoryFdReadErrorRealmDeleted',
     ServerBlockstoreUnavailable = 'WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable',
     Stopped = 'WorkspaceHistoryFdReadErrorStopped',
 }
@@ -5178,6 +5710,10 @@ export interface WorkspaceHistoryFdReadErrorOffline {
     tag: WorkspaceHistoryFdReadErrorTag.Offline
     error: string
 }
+export interface WorkspaceHistoryFdReadErrorRealmDeleted {
+    tag: WorkspaceHistoryFdReadErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable {
     tag: WorkspaceHistoryFdReadErrorTag.ServerBlockstoreUnavailable
     error: string
@@ -5194,6 +5730,7 @@ export type WorkspaceHistoryFdReadError =
   | WorkspaceHistoryFdReadErrorInvalidKeysBundle
   | WorkspaceHistoryFdReadErrorNoRealmAccess
   | WorkspaceHistoryFdReadErrorOffline
+  | WorkspaceHistoryFdReadErrorRealmDeleted
   | WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable
   | WorkspaceHistoryFdReadErrorStopped
 
@@ -5238,6 +5775,7 @@ export enum WorkspaceHistoryOpenFileErrorTag {
     InvalidManifest = 'WorkspaceHistoryOpenFileErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceHistoryOpenFileErrorNoRealmAccess',
     Offline = 'WorkspaceHistoryOpenFileErrorOffline',
+    RealmDeleted = 'WorkspaceHistoryOpenFileErrorRealmDeleted',
     Stopped = 'WorkspaceHistoryOpenFileErrorStopped',
 }
 
@@ -5277,6 +5815,10 @@ export interface WorkspaceHistoryOpenFileErrorOffline {
     tag: WorkspaceHistoryOpenFileErrorTag.Offline
     error: string
 }
+export interface WorkspaceHistoryOpenFileErrorRealmDeleted {
+    tag: WorkspaceHistoryOpenFileErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceHistoryOpenFileErrorStopped {
     tag: WorkspaceHistoryOpenFileErrorTag.Stopped
     error: string
@@ -5291,6 +5833,7 @@ export type WorkspaceHistoryOpenFileError =
   | WorkspaceHistoryOpenFileErrorInvalidManifest
   | WorkspaceHistoryOpenFileErrorNoRealmAccess
   | WorkspaceHistoryOpenFileErrorOffline
+  | WorkspaceHistoryOpenFileErrorRealmDeleted
   | WorkspaceHistoryOpenFileErrorStopped
 
 // WorkspaceHistoryRealmExportDecryptor
@@ -5324,6 +5867,7 @@ export enum WorkspaceHistorySetTimestampOfInterestErrorTag {
     NoRealmAccess = 'WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess',
     Offline = 'WorkspaceHistorySetTimestampOfInterestErrorOffline',
     OlderThanLowerBound = 'WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound',
+    RealmDeleted = 'WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted',
     Stopped = 'WorkspaceHistorySetTimestampOfInterestErrorStopped',
 }
 
@@ -5367,6 +5911,10 @@ export interface WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound 
     tag: WorkspaceHistorySetTimestampOfInterestErrorTag.OlderThanLowerBound
     error: string
 }
+export interface WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted {
+    tag: WorkspaceHistorySetTimestampOfInterestErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceHistorySetTimestampOfInterestErrorStopped {
     tag: WorkspaceHistorySetTimestampOfInterestErrorTag.Stopped
     error: string
@@ -5382,6 +5930,7 @@ export type WorkspaceHistorySetTimestampOfInterestError =
   | WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess
   | WorkspaceHistorySetTimestampOfInterestErrorOffline
   | WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound
+  | WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted
   | WorkspaceHistorySetTimestampOfInterestErrorStopped
 
 // WorkspaceHistoryStartError
@@ -5396,6 +5945,7 @@ export enum WorkspaceHistoryStartErrorTag {
     NoHistory = 'WorkspaceHistoryStartErrorNoHistory',
     NoRealmAccess = 'WorkspaceHistoryStartErrorNoRealmAccess',
     Offline = 'WorkspaceHistoryStartErrorOffline',
+    RealmDeleted = 'WorkspaceHistoryStartErrorRealmDeleted',
     Stopped = 'WorkspaceHistoryStartErrorStopped',
     UnsupportedRealmExportDatabaseVersion = 'WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion',
 }
@@ -5440,6 +5990,10 @@ export interface WorkspaceHistoryStartErrorOffline {
     tag: WorkspaceHistoryStartErrorTag.Offline
     error: string
 }
+export interface WorkspaceHistoryStartErrorRealmDeleted {
+    tag: WorkspaceHistoryStartErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceHistoryStartErrorStopped {
     tag: WorkspaceHistoryStartErrorTag.Stopped
     error: string
@@ -5459,6 +6013,7 @@ export type WorkspaceHistoryStartError =
   | WorkspaceHistoryStartErrorNoHistory
   | WorkspaceHistoryStartErrorNoRealmAccess
   | WorkspaceHistoryStartErrorOffline
+  | WorkspaceHistoryStartErrorRealmDeleted
   | WorkspaceHistoryStartErrorStopped
   | WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion
 
@@ -5472,6 +6027,7 @@ export enum WorkspaceHistoryStatEntryErrorTag {
     InvalidManifest = 'WorkspaceHistoryStatEntryErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceHistoryStatEntryErrorNoRealmAccess',
     Offline = 'WorkspaceHistoryStatEntryErrorOffline',
+    RealmDeleted = 'WorkspaceHistoryStatEntryErrorRealmDeleted',
     Stopped = 'WorkspaceHistoryStatEntryErrorStopped',
 }
 
@@ -5507,6 +6063,10 @@ export interface WorkspaceHistoryStatEntryErrorOffline {
     tag: WorkspaceHistoryStatEntryErrorTag.Offline
     error: string
 }
+export interface WorkspaceHistoryStatEntryErrorRealmDeleted {
+    tag: WorkspaceHistoryStatEntryErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceHistoryStatEntryErrorStopped {
     tag: WorkspaceHistoryStatEntryErrorTag.Stopped
     error: string
@@ -5520,6 +6080,7 @@ export type WorkspaceHistoryStatEntryError =
   | WorkspaceHistoryStatEntryErrorInvalidManifest
   | WorkspaceHistoryStatEntryErrorNoRealmAccess
   | WorkspaceHistoryStatEntryErrorOffline
+  | WorkspaceHistoryStatEntryErrorRealmDeleted
   | WorkspaceHistoryStatEntryErrorStopped
 
 // WorkspaceHistoryStatFolderChildrenError
@@ -5533,6 +6094,7 @@ export enum WorkspaceHistoryStatFolderChildrenErrorTag {
     InvalidManifest = 'WorkspaceHistoryStatFolderChildrenErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess',
     Offline = 'WorkspaceHistoryStatFolderChildrenErrorOffline',
+    RealmDeleted = 'WorkspaceHistoryStatFolderChildrenErrorRealmDeleted',
     Stopped = 'WorkspaceHistoryStatFolderChildrenErrorStopped',
 }
 
@@ -5572,6 +6134,10 @@ export interface WorkspaceHistoryStatFolderChildrenErrorOffline {
     tag: WorkspaceHistoryStatFolderChildrenErrorTag.Offline
     error: string
 }
+export interface WorkspaceHistoryStatFolderChildrenErrorRealmDeleted {
+    tag: WorkspaceHistoryStatFolderChildrenErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceHistoryStatFolderChildrenErrorStopped {
     tag: WorkspaceHistoryStatFolderChildrenErrorTag.Stopped
     error: string
@@ -5586,6 +6152,7 @@ export type WorkspaceHistoryStatFolderChildrenError =
   | WorkspaceHistoryStatFolderChildrenErrorInvalidManifest
   | WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess
   | WorkspaceHistoryStatFolderChildrenErrorOffline
+  | WorkspaceHistoryStatFolderChildrenErrorRealmDeleted
   | WorkspaceHistoryStatFolderChildrenErrorStopped
 
 // WorkspaceInfoError
@@ -5610,6 +6177,7 @@ export enum WorkspaceIsFileContentLocalErrorTag {
     NoRealmAccess = 'WorkspaceIsFileContentLocalErrorNoRealmAccess',
     NotAFile = 'WorkspaceIsFileContentLocalErrorNotAFile',
     Offline = 'WorkspaceIsFileContentLocalErrorOffline',
+    RealmDeleted = 'WorkspaceIsFileContentLocalErrorRealmDeleted',
     Stopped = 'WorkspaceIsFileContentLocalErrorStopped',
 }
 
@@ -5645,6 +6213,10 @@ export interface WorkspaceIsFileContentLocalErrorOffline {
     tag: WorkspaceIsFileContentLocalErrorTag.Offline
     error: string
 }
+export interface WorkspaceIsFileContentLocalErrorRealmDeleted {
+    tag: WorkspaceIsFileContentLocalErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceIsFileContentLocalErrorStopped {
     tag: WorkspaceIsFileContentLocalErrorTag.Stopped
     error: string
@@ -5658,6 +6230,7 @@ export type WorkspaceIsFileContentLocalError =
   | WorkspaceIsFileContentLocalErrorNoRealmAccess
   | WorkspaceIsFileContentLocalErrorNotAFile
   | WorkspaceIsFileContentLocalErrorOffline
+  | WorkspaceIsFileContentLocalErrorRealmDeleted
   | WorkspaceIsFileContentLocalErrorStopped
 
 // WorkspaceMountError
@@ -5690,6 +6263,7 @@ export enum WorkspaceMoveEntryErrorTag {
     NoRealmAccess = 'WorkspaceMoveEntryErrorNoRealmAccess',
     Offline = 'WorkspaceMoveEntryErrorOffline',
     ReadOnlyRealm = 'WorkspaceMoveEntryErrorReadOnlyRealm',
+    RealmDeleted = 'WorkspaceMoveEntryErrorRealmDeleted',
     SourceNotFound = 'WorkspaceMoveEntryErrorSourceNotFound',
     Stopped = 'WorkspaceMoveEntryErrorStopped',
 }
@@ -5734,6 +6308,10 @@ export interface WorkspaceMoveEntryErrorReadOnlyRealm {
     tag: WorkspaceMoveEntryErrorTag.ReadOnlyRealm
     error: string
 }
+export interface WorkspaceMoveEntryErrorRealmDeleted {
+    tag: WorkspaceMoveEntryErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceMoveEntryErrorSourceNotFound {
     tag: WorkspaceMoveEntryErrorTag.SourceNotFound
     error: string
@@ -5753,6 +6331,7 @@ export type WorkspaceMoveEntryError =
   | WorkspaceMoveEntryErrorNoRealmAccess
   | WorkspaceMoveEntryErrorOffline
   | WorkspaceMoveEntryErrorReadOnlyRealm
+  | WorkspaceMoveEntryErrorRealmDeleted
   | WorkspaceMoveEntryErrorSourceNotFound
   | WorkspaceMoveEntryErrorStopped
 
@@ -5768,6 +6347,7 @@ export enum WorkspaceOpenFileErrorTag {
     NoRealmAccess = 'WorkspaceOpenFileErrorNoRealmAccess',
     Offline = 'WorkspaceOpenFileErrorOffline',
     ReadOnlyRealm = 'WorkspaceOpenFileErrorReadOnlyRealm',
+    RealmDeleted = 'WorkspaceOpenFileErrorRealmDeleted',
     Stopped = 'WorkspaceOpenFileErrorStopped',
 }
 
@@ -5811,6 +6391,10 @@ export interface WorkspaceOpenFileErrorReadOnlyRealm {
     tag: WorkspaceOpenFileErrorTag.ReadOnlyRealm
     error: string
 }
+export interface WorkspaceOpenFileErrorRealmDeleted {
+    tag: WorkspaceOpenFileErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceOpenFileErrorStopped {
     tag: WorkspaceOpenFileErrorTag.Stopped
     error: string
@@ -5826,7 +6410,80 @@ export type WorkspaceOpenFileError =
   | WorkspaceOpenFileErrorNoRealmAccess
   | WorkspaceOpenFileErrorOffline
   | WorkspaceOpenFileErrorReadOnlyRealm
+  | WorkspaceOpenFileErrorRealmDeleted
   | WorkspaceOpenFileErrorStopped
+
+// WorkspaceRegisterCryptpadSessionError
+export enum WorkspaceRegisterCryptpadSessionErrorTag {
+    CryptpadUnavailable = 'WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable',
+    Internal = 'WorkspaceRegisterCryptpadSessionErrorInternal',
+    InvalidCertificate = 'WorkspaceRegisterCryptpadSessionErrorInvalidCertificate',
+    InvalidCryptpadSessionKeys = 'WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys',
+    InvalidKeysBundle = 'WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle',
+    NoKey = 'WorkspaceRegisterCryptpadSessionErrorNoKey',
+    NoRealmAccess = 'WorkspaceRegisterCryptpadSessionErrorNoRealmAccess',
+    Offline = 'WorkspaceRegisterCryptpadSessionErrorOffline',
+    RealmDeleted = 'WorkspaceRegisterCryptpadSessionErrorRealmDeleted',
+    Stopped = 'WorkspaceRegisterCryptpadSessionErrorStopped',
+    TimestampOutOfBallpark = 'WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark',
+}
+
+export interface WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.CryptpadUnavailable
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInternal {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.Internal
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidCertificate {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.InvalidCryptpadSessionKeys
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorNoKey {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.NoKey
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorNoRealmAccess {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorOffline {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.Offline
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorRealmDeleted {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.RealmDeleted
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorStopped {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.Stopped
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export type WorkspaceRegisterCryptpadSessionError =
+  | WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable
+  | WorkspaceRegisterCryptpadSessionErrorInternal
+  | WorkspaceRegisterCryptpadSessionErrorInvalidCertificate
+  | WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys
+  | WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle
+  | WorkspaceRegisterCryptpadSessionErrorNoKey
+  | WorkspaceRegisterCryptpadSessionErrorNoRealmAccess
+  | WorkspaceRegisterCryptpadSessionErrorOffline
+  | WorkspaceRegisterCryptpadSessionErrorRealmDeleted
+  | WorkspaceRegisterCryptpadSessionErrorStopped
+  | WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark
 
 // WorkspaceRemoveEntryError
 export enum WorkspaceRemoveEntryErrorTag {
@@ -5842,6 +6499,7 @@ export enum WorkspaceRemoveEntryErrorTag {
     NoRealmAccess = 'WorkspaceRemoveEntryErrorNoRealmAccess',
     Offline = 'WorkspaceRemoveEntryErrorOffline',
     ReadOnlyRealm = 'WorkspaceRemoveEntryErrorReadOnlyRealm',
+    RealmDeleted = 'WorkspaceRemoveEntryErrorRealmDeleted',
     Stopped = 'WorkspaceRemoveEntryErrorStopped',
 }
 
@@ -5893,6 +6551,10 @@ export interface WorkspaceRemoveEntryErrorReadOnlyRealm {
     tag: WorkspaceRemoveEntryErrorTag.ReadOnlyRealm
     error: string
 }
+export interface WorkspaceRemoveEntryErrorRealmDeleted {
+    tag: WorkspaceRemoveEntryErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceRemoveEntryErrorStopped {
     tag: WorkspaceRemoveEntryErrorTag.Stopped
     error: string
@@ -5910,7 +6572,116 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorNoRealmAccess
   | WorkspaceRemoveEntryErrorOffline
   | WorkspaceRemoveEntryErrorReadOnlyRealm
+  | WorkspaceRemoveEntryErrorRealmDeleted
   | WorkspaceRemoveEntryErrorStopped
+
+// WorkspaceSaveAndSyncFileWithCryptpadError
+export enum WorkspaceSaveAndSyncFileWithCryptpadErrorTag {
+    EntryNotAFile = 'WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile',
+    EntryNotFound = 'WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound',
+    Internal = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInternal',
+    InvalidBlockAccess = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess',
+    InvalidCertificate = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest',
+    NoKey = 'WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey',
+    NoRealm = 'WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm',
+    NoRealmAccess = 'WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess',
+    Offline = 'WorkspaceSaveAndSyncFileWithCryptpadErrorOffline',
+    ReadOnlyRealm = 'WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm',
+    RealmArchived = 'WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived',
+    RealmDeleted = 'WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted',
+    ServerBlockstoreUnavailable = 'WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable',
+    Stopped = 'WorkspaceSaveAndSyncFileWithCryptpadErrorStopped',
+    TimestampOutOfBallpark = 'WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark',
+}
+
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.EntryNotAFile
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.EntryNotFound
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInternal {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.Internal
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidBlockAccess
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.NoKey
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.NoRealm
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorOffline {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.Offline
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.ReadOnlyRealm
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.RealmArchived
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.RealmDeleted
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.ServerBlockstoreUnavailable
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorStopped {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.Stopped
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export type WorkspaceSaveAndSyncFileWithCryptpadError =
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInternal
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorOffline
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorStopped
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark
 
 // WorkspaceStatEntryError
 export enum WorkspaceStatEntryErrorTag {
@@ -5921,6 +6692,7 @@ export enum WorkspaceStatEntryErrorTag {
     InvalidManifest = 'WorkspaceStatEntryErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceStatEntryErrorNoRealmAccess',
     Offline = 'WorkspaceStatEntryErrorOffline',
+    RealmDeleted = 'WorkspaceStatEntryErrorRealmDeleted',
     Stopped = 'WorkspaceStatEntryErrorStopped',
 }
 
@@ -5952,6 +6724,10 @@ export interface WorkspaceStatEntryErrorOffline {
     tag: WorkspaceStatEntryErrorTag.Offline
     error: string
 }
+export interface WorkspaceStatEntryErrorRealmDeleted {
+    tag: WorkspaceStatEntryErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceStatEntryErrorStopped {
     tag: WorkspaceStatEntryErrorTag.Stopped
     error: string
@@ -5964,6 +6740,7 @@ export type WorkspaceStatEntryError =
   | WorkspaceStatEntryErrorInvalidManifest
   | WorkspaceStatEntryErrorNoRealmAccess
   | WorkspaceStatEntryErrorOffline
+  | WorkspaceStatEntryErrorRealmDeleted
   | WorkspaceStatEntryErrorStopped
 
 // WorkspaceStatFolderChildrenError
@@ -5976,6 +6753,7 @@ export enum WorkspaceStatFolderChildrenErrorTag {
     InvalidManifest = 'WorkspaceStatFolderChildrenErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceStatFolderChildrenErrorNoRealmAccess',
     Offline = 'WorkspaceStatFolderChildrenErrorOffline',
+    RealmDeleted = 'WorkspaceStatFolderChildrenErrorRealmDeleted',
     Stopped = 'WorkspaceStatFolderChildrenErrorStopped',
 }
 
@@ -6011,6 +6789,10 @@ export interface WorkspaceStatFolderChildrenErrorOffline {
     tag: WorkspaceStatFolderChildrenErrorTag.Offline
     error: string
 }
+export interface WorkspaceStatFolderChildrenErrorRealmDeleted {
+    tag: WorkspaceStatFolderChildrenErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceStatFolderChildrenErrorStopped {
     tag: WorkspaceStatFolderChildrenErrorTag.Stopped
     error: string
@@ -6024,6 +6806,7 @@ export type WorkspaceStatFolderChildrenError =
   | WorkspaceStatFolderChildrenErrorInvalidManifest
   | WorkspaceStatFolderChildrenErrorNoRealmAccess
   | WorkspaceStatFolderChildrenErrorOffline
+  | WorkspaceStatFolderChildrenErrorRealmDeleted
   | WorkspaceStatFolderChildrenErrorStopped
 
 // WorkspaceStopError
@@ -6064,6 +6847,7 @@ export enum WorkspaceWatchEntryOneShotErrorTag {
     InvalidManifest = 'WorkspaceWatchEntryOneShotErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceWatchEntryOneShotErrorNoRealmAccess',
     Offline = 'WorkspaceWatchEntryOneShotErrorOffline',
+    RealmDeleted = 'WorkspaceWatchEntryOneShotErrorRealmDeleted',
     Stopped = 'WorkspaceWatchEntryOneShotErrorStopped',
 }
 
@@ -6095,6 +6879,10 @@ export interface WorkspaceWatchEntryOneShotErrorOffline {
     tag: WorkspaceWatchEntryOneShotErrorTag.Offline
     error: string
 }
+export interface WorkspaceWatchEntryOneShotErrorRealmDeleted {
+    tag: WorkspaceWatchEntryOneShotErrorTag.RealmDeleted
+    error: string
+}
 export interface WorkspaceWatchEntryOneShotErrorStopped {
     tag: WorkspaceWatchEntryOneShotErrorTag.Stopped
     error: string
@@ -6107,25 +6895,8 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorInvalidManifest
   | WorkspaceWatchEntryOneShotErrorNoRealmAccess
   | WorkspaceWatchEntryOneShotErrorOffline
+  | WorkspaceWatchEntryOneShotErrorRealmDeleted
   | WorkspaceWatchEntryOneShotErrorStopped
-
-// X509URIFlavorValue
-export enum X509URIFlavorValueTag {
-    PKCS11 = 'X509URIFlavorValuePKCS11',
-    WindowsCNG = 'X509URIFlavorValueWindowsCNG',
-}
-
-export interface X509URIFlavorValuePKCS11 {
-    tag: X509URIFlavorValueTag.PKCS11
-    x1: X509Pkcs11URI
-}
-export interface X509URIFlavorValueWindowsCNG {
-    tag: X509URIFlavorValueTag.WindowsCNG
-    x1: X509WindowsCngURI
-}
-export type X509URIFlavorValue =
-  | X509URIFlavorValuePKCS11
-  | X509URIFlavorValueWindowsCNG
 
 export interface LibParsecPlugin {
     accountCreate1SendValidationEmail(
@@ -6173,7 +6944,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
     accountListInvitations(
         account: Handle
-    ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]>, AccountListInvitationsError>>
+    ): Promise<Result<Array<[ParsecInvitationAddrAndRedirectionURL, OrganizationID, AccessToken, InvitationType]>, AccountListInvitationsError>>
     accountListOrganizations(
         account: Handle
     ): Promise<Result<AccountOrganizations, AccountListOrganizationsError>>
@@ -6336,15 +7107,21 @@ export interface LibParsecPlugin {
         client: Handle,
         profile: UserProfile,
         enrollment_id: AsyncEnrollmentID,
-        identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
-    ): Promise<Result<null, ClientAcceptAsyncEnrollmentError>>
+        identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+        send_email: boolean
+    ): Promise<Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError>>
     clientAcceptTos(
         client: Handle,
         tos_updated_on: DateTime
     ): Promise<Result<null, ClientAcceptTosError>>
+    clientArchiveWorkspace(
+        client: Handle,
+        realm_id: VlobID,
+        configuration: RequestedRealmArchivingConfiguration
+    ): Promise<Result<null, ClientArchiveWorkspaceError>>
     clientCancelInvitation(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<null, ClientCancelInvitationError>>
     clientCreateWorkspace(
         client: Handle,
@@ -6360,9 +7137,15 @@ export interface LibParsecPlugin {
     clientForgetAllCertificates(
         client: Handle
     ): Promise<Result<null, ClientForgetAllCertificatesError>>
+    clientGetAsyncEnrollmentAddr(
+        client: Handle
+    ): Promise<Result<ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError>>
     clientGetOrganizationBootstrapDate(
         client_handle: Handle
     ): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>>
+    clientGetOutboundSyncBacklog(
+        client: Handle
+    ): Promise<Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError>>
     clientGetSelfShamirRecovery(
         client_handle: Handle
     ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
@@ -6400,6 +7183,11 @@ export interface LibParsecPlugin {
         client: Handle,
         skip_revoked: boolean
     ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+    clientListWorkspaceUserRoleChanges(
+        client: Handle,
+        realm_id: VlobID,
+        user_id: UserID
+    ): Promise<Result<Array<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError>>
     clientListWorkspaceUsers(
         client: Handle,
         realm_id: VlobID
@@ -6424,29 +7212,6 @@ export interface LibParsecPlugin {
     clientOrganizationInfo(
         client_handle: Handle
     ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
-    clientPkiEnrollmentAccept(
-        client_handle: Handle,
-        profile: UserProfile,
-        enrollment_id: PKIEnrollmentID,
-        accepter_cert_ref: X509CertificateReference,
-        submitter_der_cert: Bytes,
-        submit_payload: PkiEnrollmentSubmitPayload
-    ): Promise<Result<null, PkiEnrollmentAcceptError>>
-    clientPkiEnrollmentReject(
-        client_handle: Handle,
-        enrollment_id: PKIEnrollmentID
-    ): Promise<Result<null, PkiEnrollmentRejectError>>
-    clientPkiGetAddr(
-        client: Handle
-    ): Promise<Result<ParsecPkiEnrollmentAddr, PkiGetAddrError>>
-    clientPkiListEnrollmentsUntrusted(
-        client_handle: Handle
-    ): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
-    clientPkiListVerifyItems(
-        client_handle: Handle,
-        cert_ref: X509CertificateReference,
-        untrusted_items: Array<RawPkiEnrollmentListItem>
-    ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
     clientRejectAsyncEnrollment(
         client: Handle,
         enrollment_id: AsyncEnrollmentID
@@ -6460,6 +7225,10 @@ export interface LibParsecPlugin {
         client: Handle,
         user: UserID
     ): Promise<Result<null, ClientRevokeUserError>>
+    clientSelfPromoteToWorkspaceOwner(
+        client: Handle,
+        realm_id: VlobID
+    ): Promise<Result<null, ClientSelfPromoteToWorkspaceOwnerError>>
     clientSetupShamirRecovery(
         client_handle: Handle,
         per_recipient_shares: Map<UserID, NonZeroU8>,
@@ -6477,15 +7246,15 @@ export interface LibParsecPlugin {
     ): Promise<Result<Handle, ClientStartError>>
     clientStartDeviceInvitationGreet(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
     clientStartShamirRecoveryInvitationGreet(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError>>
     clientStartUserInvitationGreet(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
     clientStartWorkspace(
         client: Handle,
@@ -6498,6 +7267,16 @@ export interface LibParsecPlugin {
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
+    clientTotpCreateOpaqueKey(
+        client: Handle
+    ): Promise<Result<[TOTPOpaqueKeyID, SecretKey], ClientTotpCreateOpaqueKeyError>>
+    clientTotpSetupConfirm(
+        client: Handle,
+        one_time_password: string
+    ): Promise<Result<null, ClientTOTPSetupConfirmError>>
+    clientTotpSetupStatus(
+        client: Handle
+    ): Promise<Result<TOTPSetupStatus, ClientTotpSetupStatusError>>
     clientUpdateUserProfile(
         client_handle: Handle,
         user: UserID,
@@ -6596,7 +7375,9 @@ export interface LibParsecPlugin {
     ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
     isKeyringAvailable(
     ): Promise<boolean>
-    isPkiAvailable(
+    isPathConfined(
+        client: Handle,
+        path: string
     ): Promise<boolean>
     libparsecInitNativeOnlyInit(
         config: ClientConfig
@@ -6607,9 +7388,6 @@ export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
     ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
-    listPkiLocalPendingEnrollments(
-        config_dir: Path
-    ): Promise<Result<Array<PKILocalPendingEnrollment>, ListPkiLocalPendingError>>
     listStartedAccounts(
     ): Promise<Array<Handle>>
     listStartedClients(
@@ -6623,6 +7401,13 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, MountpointUnmountError>>
     newCanceller(
     ): Promise<Handle>
+    openbaoListSelfEmails(
+        openbao_server_url: string,
+        openbao_secret_mount_path: string,
+        openbao_transit_mount_path: string,
+        openbao_entity_id: string,
+        openbao_auth_token: string
+    ): Promise<Result<Array<string>, OpenBaoListSelfEmailsError>>
     parseParsecAddr(
         url: string
     ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
@@ -6642,29 +7427,21 @@ export interface LibParsecPlugin {
     pathSplit(
         path: FsPath
     ): Promise<Array<EntryName>>
-    pkiEnrollmentFinalize(
-        config: ClientConfig,
-        save_strategy: DeviceSaveStrategy,
-        accepted: PkiEnrollmentAnswerPayload,
-        local_pending: PKILocalPendingEnrollment
-    ): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>>
-    pkiEnrollmentInfo(
-        config: ClientConfig,
-        addr: ParsecPkiEnrollmentAddr,
-        cert_ref: X509CertificateReference,
-        enrollment_id: PKIEnrollmentID
-    ): Promise<Result<PKIInfoItem, PkiEnrollmentInfoError>>
-    pkiEnrollmentSubmit(
-        config: ClientConfig,
-        addr: ParsecPkiEnrollmentAddr,
-        cert_ref: X509CertificateReference,
-        device_label: DeviceLabel,
-        force: boolean
-    ): Promise<Result<DateTime, PkiEnrollmentSubmitError>>
-    pkiRemoveLocalPending(
-        config: ClientConfig,
-        id: PKIEnrollmentID
-    ): Promise<Result<null, RemoveDeviceError>>
+    pkiInitForNative(
+        config_dir: Path
+    ): Promise<Result<null, PkiSystemInitError>>
+    pkiInitForScws(
+        config_dir: Path,
+        parsec_addr: ParsecAddr
+    ): Promise<Result<null, PkiSystemInitError>>
+    pkiListUserCertificates(
+    ): Promise<Result<Array<AvailablePkiCertificate>, PkiSystemListUserCertificateError>>
+    pkiOpenUserCertificatePrivateKey(
+        cert_ref: X509CertificateReference
+    ): Promise<Result<Handle, PkiOpenUserCertificatePrivateKeyError>>
+    pkiPrivateKeyClose(
+        handle: Handle
+    ): Promise<Result<null, PkiPrivateKeyCloseError>>
     removeDeviceData(
         config: ClientConfig,
         device_id: DeviceID
@@ -6678,17 +7455,17 @@ export interface LibParsecPlugin {
         requested_device_label: DeviceLabel,
         identity_strategy: SubmitAsyncEnrollmentIdentityStrategy
     ): Promise<Result<AvailablePendingAsyncEnrollment, SubmitAsyncEnrollmentError>>
+    submitterCancelAsyncEnrollment(
+        config: ClientConfig,
+        addr: ParsecAsyncEnrollmentAddr,
+        enrollment_id: AsyncEnrollmentID
+    ): Promise<Result<null, SubmitterCancelAsyncEnrollmentError>>
     submitterFinalizeAsyncEnrollment(
         config: ClientConfig,
         enrollment_file: Path,
         new_device_save_strategy: DeviceSaveStrategy,
-        new_device_key_file: Path,
         identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
     ): Promise<Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError>>
-    submitterForgetAsyncEnrollment(
-        config_dir: Path,
-        enrollment_id: AsyncEnrollmentID
-    ): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>>
     submitterGetAsyncEnrollmentInfo(
         config: ClientConfig,
         addr: ParsecAsyncEnrollmentAddr,
@@ -6717,6 +7494,26 @@ export interface LibParsecPlugin {
         template: string,
         test_server: ParsecAddr | null
     ): Promise<Result<Path, TestbedError>>
+    totpFetchOpaqueKey(
+        config: ClientConfig,
+        server_addr: ParsecAddr,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        opaque_key_id: TOTPOpaqueKeyID,
+        one_time_password: string
+    ): Promise<Result<SecretKey, TotpFetchOpaqueKeyError>>
+    totpSetupConfirmAnonymous(
+        config: ClientConfig,
+        addr: ParsecTOTPResetAddr,
+        one_time_password: string
+    ): Promise<Result<null, TotpSetupConfirmAnonymousError>>
+    totpSetupStatusAnonymous(
+        config: ClientConfig,
+        addr: ParsecTOTPResetAddr
+    ): Promise<Result<TOTPSetupStatus, TotpSetupStatusAnonymousError>>
+    tryConvertHttpToParsecAddr(
+        http_url: string
+    ): Promise<Result<ParsecAddr, AddrError>>
     updateDeviceChangeAuthentication(
         config_dir: Path,
         current_auth: DeviceAccessStrategy,
@@ -6812,7 +7609,7 @@ export interface LibParsecPlugin {
     workspaceGeneratePathAddr(
         workspace: Handle,
         path: FsPath
-    ): Promise<Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError>>
+    ): Promise<Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError>>
     workspaceHistoryFdClose(
         workspace_history: Handle,
         fd: FileDescriptor
@@ -6907,6 +7704,12 @@ export interface LibParsecPlugin {
         entry_id: VlobID,
         mode: OpenOptions
     ): Promise<Result<FileDescriptor, WorkspaceOpenFileError>>
+    workspaceRegisterCryptpadSession(
+        workspace: Handle,
+        vlob_id: VlobID,
+        candidate_view_key: string,
+        candidate_edit_key: string
+    ): Promise<Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError>>
     workspaceRemoveEntry(
         workspace: Handle,
         path: FsPath
@@ -6930,6 +7733,13 @@ export interface LibParsecPlugin {
         dst_name: EntryName,
         mode: MoveEntryMode
     ): Promise<Result<null, WorkspaceMoveEntryError>>
+    workspaceSaveAndSyncFileWithCryptpad(
+        workspace: Handle,
+        entry_id: VlobID,
+        cryptpad_session_channel_id: string,
+        cryptpad_session_timestamp: DateTime,
+        content: Uint8Array
+    ): Promise<Result<null, WorkspaceSaveAndSyncFileWithCryptpadError>>
     workspaceStatEntry(
         workspace: Handle,
         path: FsPath

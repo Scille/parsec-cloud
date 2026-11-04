@@ -4,7 +4,6 @@ name: Releaser
 on:
   pull_request:
     paths:
-      - .github/workflows/package-server.yml
       - .github/workflows/releaser.yml
   push:
     tags:
@@ -85,6 +84,12 @@ jobs:
       MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
       MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
       MACOS_NOTARIZATION_PASSWD: ${{ secrets.MACOS_NOTARIZATION_PASSWD }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+      AZURE_TRUSTED_SIGNING_PROFILE_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE_NAME }}
 
   package-parsec-cli:
     needs: version
@@ -94,6 +99,13 @@ jobs:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
       commit_sha: ${{ needs.version.outputs.commit_sha }}
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+      AZURE_TRUSTED_SIGNING_PROFILE_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE_NAME }}
 
   releaser:
     needs:
@@ -112,12 +124,13 @@ jobs:
       && needs.package-parsec-server.result == 'success'
       && needs.package-parsec-cli.result == 'success'
       && always()
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Download every artifact generated (and uploaded)
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # pin v8.0.2
         with:
           path: artifacts
+          digest-mismatch: error
         timeout-minutes: 5
 
       - name: List downloaded artifacts
@@ -130,38 +143,18 @@ jobs:
         run: |
           set -ex
           # Python Files
-          cp ${CP_ARGS} artifacts/Linux-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp ${CP_ARGS} artifacts/*-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+
           cp ${CP_ARGS} artifacts/Linux-X64-wheel/requirements.txt release-files/python-linux-requirements.txt
-          cp ${CP_ARGS} artifacts/macOS-ARM64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/macOS-ARM64-wheel/requirements.txt release-files/python-macos-requirements.txt
-          cp ${CP_ARGS} artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/Windows-X64-wheel/requirements.txt release-files/python-win-requirements.txt
 
-          # Snapcraft
-          cp ${CP_ARGS} artifacts/linux-snap-X64-electron/Parsec_${{ needs.version.outputs.full }}_linux_*.snap release-files
+          # Copy electron apps & latest files
+          cp ${CP_ARGS} artifacts/*-electron/Parsec_${{ needs.version.outputs.full }}_* release-files
+          cp ${CP_ARGS} artifacts/*-electron/latest-*.yml release-files
 
-          # AppImage
-          cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/Parsec_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
-          cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/latest-linux-*.yml release-files
-
-          # macos DMG & ZIP for x86 architecture
-          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.{dmg,zip}{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/latest-mac-*.yml release-files
-
-          # macos DMG & ZIP for arm architecture
-          cp ${CP_ARGS} artifacts/macos-dmg-ARM64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.{dmg,zip}{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/macos-dmg-ARM64-electron/latest-mac-*.yml release-files
-
-          # TODO: Currently, Windows electron client is not signed by the CI, thus
-          # it should not be uploaded when creating the draft release.
-          # These artifacts are uploaded manually by someone who is able to sign them.
-          # # EXE
-          # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
-          # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
-
-          # CLI
-          cp ${CP_ARGS} artifacts/cli-x86_64-unknown-linux-gnu/parsec-cli-${{ needs.version.outputs.full }}-x86_64-unknown-linux-gnu release-files
-          cp ${CP_ARGS} artifacts/cli-x86_64-unknown-linux-musl/parsec-cli-${{ needs.version.outputs.full }}-x86_64-unknown-linux-musl release-files
+          # Copy client CLI
+          cp ${CP_ARGS} artifacts/cli-*/parsec-cli-${{ needs.version.outputs.full }}-* release-files
 
           # Webapp
           cp ${CP_ARGS} artifacts/webapp/parsec-web-${{ needs.version.outputs.full }}.zip release-files
@@ -185,22 +178,33 @@ jobs:
             # Get the leaf values of the artifacts.yml file.
             # This correspond to filename that need to be uploaded.
             # But we need to add the prefix `release-files`
-            yq . artifacts.yml -o json | jq -r '"release-files/" + (.. | scalars)' | grep -v 'Parsec_.*_win_.*.unsigned.exe'
+            yq . artifacts.yml -o json | jq -r '"release-files/" + (.. | scalars)'
             echo 'EOF_files_to_upload'
           ) | tee -a $GITHUB_OUTPUT
 
+      - name: Verify listed artifacts files
+        run: |
+          while read -r filepath; do
+            if [ -f "$filepath" ]; then
+              echo "[OK] $filepath"
+            else
+              echo "[NOK] $filepath" >&2
+              exit 1
+            fi
+          done << EOF
+          ${{ steps.artifacts.outputs.files_to_upload }}
+          EOF
 
       - name: Generate version file
-        run:
-          (
-            echo "full=${{ needs.version.outputs.full }}";
-            echo "pep440=${{ needs.version.outputs.pep440 }}";
-            echo "major=${{ needs.version.outputs.major }}";
-            echo "minor=${{ needs.version.outputs.minor }}";
-            echo "patch=${{ needs.version.outputs.patch }}";
-            echo "pre=${{ needs.version.outputs.pre }}";
-            echo "dev=${{ needs.version.outputs.dev }}";
-            echo "local=${{ needs.version.outputs.local }}";
+        run: (
+          echo "full=${{ needs.version.outputs.full }}";
+          echo "pep440=${{ needs.version.outputs.pep440 }}";
+          echo "major=${{ needs.version.outputs.major }}";
+          echo "minor=${{ needs.version.outputs.minor }}";
+          echo "patch=${{ needs.version.outputs.patch }}";
+          echo "pre=${{ needs.version.outputs.pre }}";
+          echo "dev=${{ needs.version.outputs.dev }}";
+          echo "local=${{ needs.version.outputs.local }}";
           ) | tee release-files/version
 
       - name: List files in 'release-files'.
@@ -243,6 +247,9 @@ jobs:
             echo "| Linux (Snap)     | $(gen_mk_dl_link ".linux-gnu.x86_64.client.snap") |"
             echo "| WebApp           | $(gen_mk_dl_link ".webapp") |"
             echo
+            echo '> AppImage support is currently in alpha, you are likely to encounter crashes'
+            echo '> if your Linux distribution differs too much from Ubuntu 24.04.'
+            echo
             echo '## Server'
             echo
             echo '| Platform         | Download link |'
@@ -269,7 +276,6 @@ jobs:
             echo 'sha256sum -c checksums.sha256 --ignore-missing'
             echo '```'
             echo
-            echo '> The Windows files does not have a checksum because they are signed manually'
             echo
             echo "You can [download \`checksums.sha256\`]($ASSET_DL_PATH/checksums.sha256) or copy the following content into \`checksums.sha256\`:"
             echo
@@ -299,7 +305,7 @@ jobs:
 
       - name: Checkout the repository to update the nightly tag
         if: env.NIGHTLY_RELEASE == 'true'
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           ref: ${{ needs.version.outputs.commit_sha }}
           path: parsec-cloud
@@ -314,9 +320,8 @@ jobs:
 
       - name: Create release
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # pin v2.5.0
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # pin v3.0.3
         with:
-          draft: ${{ env.NIGHTLY_RELEASE != 'true' }}
           tag_name: ${{ steps.info.outputs.tag_name }}
           body: ${{ steps.summary.outputs.output }}
           prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
@@ -334,11 +339,8 @@ jobs:
 
   publish:
     needs: releaser
-    # Only publish after release if the release is for a nightly build.
-    # We only do that for nightly because we do not create the github release as draft for nightlies to limit the need to human interventions.
     if: >-
-      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/tags/nightly'))
-      && needs.releaser.result == 'success'
+      needs.releaser.result == 'success'
       && always()
     uses: ./.github/workflows/publish.yml
     permissions:

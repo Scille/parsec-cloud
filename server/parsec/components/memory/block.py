@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from collections.abc import Buffer
@@ -18,6 +19,9 @@ from parsec.components.blockstore import (
     BlockStoreReadBadOutcome,
 )
 from parsec.components.memory.datamodel import MemoryBlock, MemoryDatamodel
+from parsec.logging import get_logger
+
+logger = get_logger()
 
 
 class MemoryBlockComponent(BaseBlockComponent):
@@ -44,6 +48,9 @@ class MemoryBlockComponent(BaseBlockComponent):
             realm = org.realms[realm_id]
         except KeyError:
             return BlockReadBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return BlockReadBadOutcome.REALM_DELETED
 
         try:
             block_info = org.blocks[block_id]
@@ -83,7 +90,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         key_index: int,
         block: bytes,
-    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
+    ) -> BadKeyIndex | BlockCreateBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -103,6 +110,12 @@ class MemoryBlockComponent(BaseBlockComponent):
                 realm = org.realms[realm_id]
             except KeyError:
                 return BlockCreateBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return BlockCreateBadOutcome.REALM_DELETED
+
+            if realm.is_archived_or_deletion_planned:
+                return BlockCreateBadOutcome.REALM_ARCHIVED
 
             match realm.get_current_role_for(author_user_id):
                 case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
@@ -167,7 +180,7 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -177,3 +190,10 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
             return
 
         org.block_store[block_id] = block
+
+    async def wipe_organization_data(self, organization_id: OrganizationID) -> None:
+        try:
+            del self._data.organizations[organization_id]
+        except KeyError:
+            logger.warn("Organization not found", organization_id=organization_id.str)
+            # Data already deleted, nothing to do.

@@ -1,5 +1,6 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+import { fixupPluginRules } from '@eslint/compat';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import pluginVue from 'eslint-plugin-vue';
 import { defineConfig } from 'eslint/config';
@@ -16,16 +17,18 @@ export default defineConfig([
       'node_modules/**',
       'electron/build/**',
       'electron/app/**',
+      'electron/app-editics/**',
       'electron/src/**',
       'electron/dist/**',
       'electron/live-runner.js',
       'electron/node_modules/**',
+      'public/vendor/**',
+      'test-results/**',
       'src/views/testing/**',
       'bindings/**',
       'playwright.config.ts',
       'merge-playwright.ts',
       'src/parsec/mock_files/**',
-      'scripts/vite_plugin_wasm_pack.ts',
       'src/vite-env.d.ts',
     ],
   },
@@ -44,7 +47,12 @@ export default defineConfig([
     },
     plugins: {
       '@typescript-eslint': tseslint.plugin,
-      'no-relative-import-paths': noRelativeImportPaths,
+      // Using fixupPluginRules wrapper because the 'eslint-plugin-no-relative-import-paths' plugin v1.6.1
+      // is not compatible with ESLint v10.
+      // Remove the wrapper once this is fixed:
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/issues/48
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/pull/47
+      'no-relative-import-paths': fixupPluginRules(noRelativeImportPaths),
     },
   },
   {
@@ -65,7 +73,12 @@ export default defineConfig([
   {
     plugins: {
       '@typescript-eslint': tseslint.plugin,
-      'no-relative-import-paths': noRelativeImportPaths,
+      // Using fixupPluginRules wrapper because the 'eslint-plugin-no-relative-import-paths' plugin v1.6.1
+      // is not compatible with ESLint v10.
+      // Remove the wrapper once this is fixed:
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/issues/48
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/pull/47
+      'no-relative-import-paths': fixupPluginRules(noRelativeImportPaths),
     },
   },
   {
@@ -88,7 +101,7 @@ export default defineConfig([
           functions: 'always-multiline',
         },
       ],
-      indent: ['error', 2, { SwitchCase: 1 }],
+      indent: ['error', 2, { SwitchCase: 1, offsetTernaryExpressions: true }],
       camelcase: 'error',
       'max-len': ['error', 140],
       quotes: ['error', 'single', { avoidEscape: true }],
@@ -157,6 +170,19 @@ export default defineConfig([
         },
       ],
       'vue/singleline-html-element-content-newline': 'off',
+    },
+  },
+  {
+    // typescript-eslint rules rely on its own parser; plain JS files use espree.
+    files: ['**/*.{js,cjs,mjs}'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    files: ['src/**'],
+    rules: {
       'no-relative-import-paths/no-relative-import-paths': [
         'error',
         {
@@ -164,6 +190,13 @@ export default defineConfig([
           prefix: '@',
         },
       ],
+    },
+  },
+  {
+    // Editics host page is not part of the app's import graph since it is loaded in an iframe.
+    files: ['editics/**'],
+    rules: {
+      'no-relative-import-paths/no-relative-import-paths': 'off',
     },
   },
 ]);

@@ -1,12 +1,12 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { getClientInfo } from '@/parsec/login';
 import {
+  AccessToken,
   ClientCancelInvitationError,
   ClientInfo,
   ClientNewUserInvitationError,
   InvitationStatus,
-  InvitationToken,
   InviteListInvitationCreatedByTag,
   InviteListItem,
   InviteListItemTag,
@@ -82,7 +82,7 @@ export async function listUserInvitations(options?: {
   return generateNoHandleError<ListInvitationsError>();
 }
 
-export async function cancelInvitation(token: InvitationToken): Promise<Result<null, ClientCancelInvitationError>> {
+export async function cancelInvitation(token: AccessToken): Promise<Result<null, ClientCancelInvitationError>> {
   const handle = getConnectionHandle();
 
   if (handle !== null) {

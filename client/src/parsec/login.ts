@@ -1,11 +1,12 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import { libparsec, X509CertificateReference } from '@/plugins/libparsec';
+import { DevicePrimaryProtectionStrategyTag, libparsec, TOTPOpaqueKeyID } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
 import { parseParsecAddr } from '@/parsec/organization';
 import {
+  AccountHandle,
   AvailableDevice,
   AvailableDeviceTypeTag,
   ClientInfo,
@@ -14,23 +15,19 @@ import {
   ClientStopError,
   ConnectionHandle,
   DeviceAccessStrategy,
-  DeviceAccessStrategyAccountVault,
-  DeviceAccessStrategyKeyring,
-  DeviceAccessStrategyOpenBao,
-  DeviceAccessStrategyPassword,
-  DeviceAccessStrategyPKI,
-  DeviceAccessStrategyTag,
   DeviceID,
+  DevicePrimaryProtectionStrategy,
+  DevicePrimaryProtectionStrategyAccountVault,
+  DevicePrimaryProtectionStrategyKeyring,
+  DevicePrimaryProtectionStrategyOpenBao,
+  DevicePrimaryProtectionStrategyPassword,
+  DevicePrimaryProtectionStrategyPKI,
   DeviceSaveStrategy,
-  DeviceSaveStrategyAccountVault,
-  DeviceSaveStrategyKeyring,
-  DeviceSaveStrategyOpenBao,
-  DeviceSaveStrategyPassword,
-  DeviceSaveStrategyPKI,
-  DeviceSaveStrategyTag,
   ListAvailableDeviceError,
   OrganizationID,
+  PkiHandle,
   Result,
+  SecretKey,
   UpdateDeviceError,
   UserProfile,
 } from '@/parsec/types';
@@ -72,10 +69,10 @@ export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
   return loggedInDevices;
 }
 
-export async function isDeviceLoggedIn(device: AvailableDevice): Promise<boolean> {
+export async function isDeviceLoggedIn(deviceId: DeviceID): Promise<boolean> {
   const startedDevices = await libparsec.listStartedClients();
 
-  return startedDevices.find(([_handle, deviceId]) => deviceId === device.deviceId) !== undefined;
+  return startedDevices.find(([_handle, dId]) => dId === deviceId) !== undefined;
 }
 
 export async function getDeviceHandle(device: AvailableDevice): Promise<ConnectionHandle | undefined> {
@@ -248,105 +245,27 @@ export async function isKeyringAvailable(): Promise<boolean> {
   return await libparsec.isKeyringAvailable();
 }
 
-export const AccessStrategy = {
-  usePassword(device: AvailableDevice, password: string): DeviceAccessStrategyPassword {
+export const PrimaryProtectionStrategy = {
+  usePassword(password: string): DevicePrimaryProtectionStrategyPassword {
     return {
-      tag: DeviceAccessStrategyTag.Password,
-      password: password,
-      keyFile: device.keyFilePath,
-    };
-  },
-  useKeyring(device: AvailableDevice): DeviceAccessStrategyKeyring {
-    return {
-      tag: DeviceAccessStrategyTag.Keyring,
-      keyFile: device.keyFilePath,
-    };
-  },
-  useSmartcard(device: AvailableDevice): DeviceAccessStrategyPKI {
-    return {
-      tag: DeviceAccessStrategyTag.PKI,
-      keyFile: device.keyFilePath,
-    };
-  },
-  useOpenBao(device: AvailableDevice, connInfo: OpenBaoConnectionInfo): DeviceAccessStrategyOpenBao {
-    if (device.ty.tag !== AvailableDeviceTypeTag.OpenBao) {
-      throw new Error('Invalid device type, expected openbao');
-    }
-    return {
-      tag: DeviceAccessStrategyTag.OpenBao,
-      keyFile: device.keyFilePath,
-      openbaoServerUrl: connInfo.server,
-      openbaoSecretMountPath: connInfo.secretMountpoint,
-      openbaoTransitMountPath: connInfo.transitMountpoint,
-      openbaoEntityId: connInfo.userId,
-      openbaoAuthToken: connInfo.token,
-    };
-  },
-  useAccountVault(device: AvailableDevice): DeviceAccessStrategyAccountVault {
-    if (device.ty.tag !== AvailableDeviceTypeTag.AccountVault) {
-      throw new Error('Invalid device type, expected account vault');
-    }
-    const accountHandle = ParsecAccount.getHandle();
-    if (!accountHandle) {
-      throw new Error('Account handle is null');
-    }
-    return {
-      tag: DeviceAccessStrategyTag.AccountVault,
-      keyFile: device.keyFilePath,
-      accountHandle,
-    };
-  },
-  async fromSaveStrategy(device: AvailableDevice, saveStrategy: DeviceSaveStrategy): Promise<DeviceAccessStrategy> {
-    if (saveStrategy.tag === DeviceSaveStrategyTag.Keyring) {
-      return AccessStrategy.useKeyring(device);
-    } else if (saveStrategy.tag === DeviceSaveStrategyTag.AccountVault) {
-      return await AccessStrategy.useAccountVault(device);
-    } else if (saveStrategy.tag === DeviceSaveStrategyTag.Password) {
-      return AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
-    } else if (saveStrategy.tag === DeviceSaveStrategyTag.PKI) {
-      return AccessStrategy.useSmartcard(device);
-    } else if (saveStrategy.tag === DeviceSaveStrategyTag.OpenBao) {
-      return {
-        tag: DeviceAccessStrategyTag.OpenBao,
-        keyFile: device.keyFilePath,
-        openbaoServerUrl: saveStrategy.openbaoServerUrl,
-        openbaoSecretMountPath: saveStrategy.openbaoSecretMountPath,
-        openbaoTransitMountPath: saveStrategy.openbaoTransitMountPath,
-        openbaoEntityId: saveStrategy.openbaoEntityId,
-        openbaoAuthToken: saveStrategy.openbaoAuthToken,
-      };
-    } else {
-      window.electronAPI.log('error', `Unhandled save strategy '${(saveStrategy as any).tag}'`);
-      throw new Error('Unhandled save strategy');
-    }
-  },
-};
-
-export const SaveStrategy = {
-  usePassword(password: string): DeviceSaveStrategyPassword {
-    return {
-      tag: DeviceSaveStrategyTag.Password,
+      tag: DevicePrimaryProtectionStrategyTag.Password,
       password: password,
     };
   },
-  useKeyring(): DeviceSaveStrategyKeyring {
+  useKeyring(): DevicePrimaryProtectionStrategyKeyring {
     return {
-      tag: DeviceSaveStrategyTag.Keyring,
+      tag: DevicePrimaryProtectionStrategyTag.Keyring,
     };
   },
-  useAccountVault(): DeviceSaveStrategyAccountVault {
-    const accountHandle = ParsecAccount.getHandle();
-    if (!accountHandle) {
-      throw new Error('Account handle is null');
-    }
+  useSmartcard(pkiHandle: PkiHandle): DevicePrimaryProtectionStrategyPKI {
     return {
-      tag: DeviceSaveStrategyTag.AccountVault,
-      accountHandle,
+      tag: DevicePrimaryProtectionStrategyTag.PKI,
+      pkiEncryptPrivateKeyHandle: pkiHandle,
     };
   },
-  useOpenBao(connInfo: OpenBaoConnectionInfo): DeviceSaveStrategyOpenBao {
+  useOpenBao(connInfo: OpenBaoConnectionInfo): DevicePrimaryProtectionStrategyOpenBao {
     return {
-      tag: DeviceSaveStrategyTag.OpenBao,
+      tag: DevicePrimaryProtectionStrategyTag.OpenBao,
       openbaoServerUrl: connInfo.server,
       openbaoSecretMountPath: connInfo.secretMountpoint,
       openbaoTransitMountPath: connInfo.transitMountpoint,
@@ -355,13 +274,35 @@ export const SaveStrategy = {
       openbaoPreferredAuthId: connInfo.provider,
     };
   },
-  useSmartCard(certificate: X509CertificateReference): DeviceSaveStrategyPKI {
+  useAccountVault(accountHandle: AccountHandle): DevicePrimaryProtectionStrategyAccountVault {
     return {
-      tag: DeviceSaveStrategyTag.PKI,
-      certificateRef: certificate,
+      tag: DevicePrimaryProtectionStrategyTag.AccountVault,
+      accountHandle: accountHandle,
     };
   },
 };
+
+export function constructSaveStrategy(
+  primaryProtection: DevicePrimaryProtectionStrategy,
+  totp: [TOTPOpaqueKeyID, SecretKey] | null = null,
+): DeviceSaveStrategy {
+  return {
+    totpProtection: totp,
+    primaryProtection: primaryProtection,
+  };
+}
+
+export function constructAccessStrategy(
+  device: AvailableDevice,
+  primaryProtection: DevicePrimaryProtectionStrategy,
+  totp: [TOTPOpaqueKeyID, SecretKey] | null = null,
+): DeviceAccessStrategy {
+  return {
+    keyFile: device.keyFilePath,
+    totpProtection: totp,
+    primaryProtection: primaryProtection,
+  };
+}
 
 export async function isAuthenticationValid(_device: AvailableDevice, accessStrategy: DeviceAccessStrategy): Promise<boolean> {
   const clientConfig = getClientConfig();

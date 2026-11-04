@@ -28,6 +28,7 @@ mod read_folder;
 mod remove_entry;
 mod resolve_path;
 mod retrieve_path_from_id;
+mod save_and_sync_file_with_origin;
 mod stat_entry;
 mod store;
 mod utils;
@@ -101,6 +102,8 @@ pub trait AsyncStateMachineTest {
         let _ = state;
     }
 }
+
+mod cryptpad;
 
 #[cfg(all(
     // So far only UNIX-specific tests use async stateful

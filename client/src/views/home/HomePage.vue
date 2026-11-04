@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -12,6 +12,7 @@
             class="homepage-content"
             :class="{ 'login-fullscreen': state === HomePageState.Login }"
           >
+            <app-updated-banner class="homepage-banner" />
             <!-- topbar -->
             <home-page-header
               class="homepage-header"
@@ -20,6 +21,7 @@
               @settings-click="goToAccountSettings"
               @create-or-join-organization-click="openCreateOrJoin"
               @change-tab="onChangeTab"
+              @recover-click="openChooseRecoveryModal"
               :display-create-join="deviceList.length > 0"
               :back-button-title="getBackButtonTitle()"
               :show-secondary-menu="state !== HomePageState.AccountSettings"
@@ -36,13 +38,13 @@
                   @join-organization-click="onJoinOrganizationClicked"
                   @join-organization-with-link-click="openJoinByLinkModal"
                   @bootstrap-organization-with-link-click="openCreateOrganizationModal"
-                  @recover-click="onForgottenPasswordClicked"
+                  @recover-click="openChooseRecoveryModal"
                   @create-or-join-organization-click="openCreateOrJoin"
                   @invitation-click="onInvitationClicked"
-                  @pki-request-click="onPkiRequestClicked"
+                  @join-request-click="onJoinRequestClicked"
                   :device-list="deviceList"
                   :invitation-list="invitationList"
-                  :pki-request-list="pkiRequestList"
+                  :join-request-list="joinRequests"
                   :querying="querying"
                 />
               </template>
@@ -54,15 +56,9 @@
                   v-if="selectedDevice"
                   :device="selectedDevice"
                   @login-click="login"
-                  @forgotten-password-click="onForgottenPasswordClicked"
+                  @forgotten-password-click="openChooseRecoveryModal"
                   :login-in-progress="loginInProgress"
                   ref="loginPage"
-                />
-              </template>
-              <template v-else-if="state === HomePageState.ForgottenPassword">
-                <import-recovery-device-page
-                  :device="selectedDevice"
-                  @organization-selected="login"
                 />
               </template>
               <template v-else-if="state === HomePageState.AccountSettings">
@@ -83,51 +79,71 @@
 <script setup lang="ts">
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import {
+  asyncEnrollmentLinkValidator,
   bootstrapLinkValidator,
   claimAndBootstrapLinkValidator,
   claimDeviceLinkValidator,
   claimUserLinkValidator,
-  pkiLinkValidator,
+  totpResetLinkValidator,
 } from '@/common/validators';
+import AppUpdatedBanner from '@/components/misc/AppUpdatedBanner.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
-  AccessStrategy,
+  AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   AccountInvitation,
+  AsyncEnrollmentRequest,
   AvailableDevice,
   AvailableDeviceTypeTag,
+  AvailablePendingAsyncEnrollmentIdentitySystemPKI,
+  AvailablePendingAsyncEnrollmentIdentitySystemTag,
   ClientStartError,
   ClientStartErrorTag,
   DeviceAccessStrategy,
-  DeviceAccessStrategyTag,
-  JoinRequestStatus,
+  DevicePrimaryProtectionStrategy,
+  DevicePrimaryProtectionStrategyTag,
   ListAvailableDeviceErrorTag,
-  LocalJoinRequest,
   ParsecAccount,
+  ParsedParsecAddrTag,
+  PendingAsyncEnrollmentInfoTag,
+  PrimaryProtectionStrategy,
   archiveDevice,
-  cancelLocalJoinRequest,
-  confirmLocalJoinRequest,
+  buildParsecAddr,
+  closeCertificate,
+  confirmJoinRequest,
+  constructAccessStrategy,
+  constructSaveStrategy,
+  deleteJoinRequest,
+  fetchTotpOpaqueKey,
   getDeviceHandle,
   getOrganizationCreationDate,
+  getServerConfig,
   isDeviceLoggedIn,
+  isSmartcardAvailable,
   isWeb,
   listAvailableDevices,
   listAvailableDevicesWithError,
-  listLocalJoinRequests,
+  listJoinRequests,
+  makeAcceptOpenBaoIdentityStrategy,
+  makeAcceptPkiIdentityStrategy,
+  openCertificate,
   parseParsecAddr,
   login as parsecLogin,
-  requestJoinOrganization,
 } from '@/parsec';
+import { AvailableDeviceTypePKI, TotpFetchOpaqueKeyErrorTag } from '@/plugins/libparsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { OpenBaoClient } from '@/services/openBao';
 import { ServerType, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
 import { AccountSettingsTabs } from '@/views/account/types';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
-import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
+import ChooseRecoveryMethodModal from '@/views/devices/ChooseRecoveryMethodModal.vue';
+import ImportRecoveryDevice from '@/views/devices/ImportRecoveryDevice.vue';
+import { RecoveryMethod } from '@/views/devices/types';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
@@ -136,6 +152,9 @@ import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
+import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
+import AsyncEnrollmentModal from '@/views/users/AsyncEnrollmentModal.vue';
+import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBaoAuthModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
@@ -154,7 +173,6 @@ import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, toRaw, us
 enum HomePageState {
   OrganizationList = 'organization-list',
   Login = 'login',
-  ForgottenPassword = 'forgotten-password',
   CustomerArea = 'customer-area',
   AccountSettings = 'account-settings',
 }
@@ -174,16 +192,15 @@ const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
-const pkiRequestList: Ref<LocalJoinRequest[]> = ref([]);
+const joinRequests = ref<Array<AsyncEnrollmentRequest>>([]);
 const invitationList = ref<Array<AccountInvitation>>([]);
 const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
+let intervalId: any = null;
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 const showBackButton = computed(() => {
-  return [HomePageState.Login, HomePageState.ForgottenPassword, HomePageState.CustomerArea, HomePageState.AccountSettings].includes(
-    state.value,
-  );
+  return [HomePageState.Login, HomePageState.CustomerArea, HomePageState.AccountSettings].includes(state.value);
 });
 
 let hotkeys: HotkeyGroup | null = null;
@@ -228,7 +245,7 @@ onMounted(async () => {
   eventCallbackId = await injectionProvider
     .getDefault()
     .eventDistributor.registerCallback(
-      Events.ClientStarted | Events.ClientStopped | Events.InvitationUpdated,
+      [Events.ClientStarted, Events.ClientStopped, Events.InvitationUpdated],
       async (event: Events, _data?: EventData): Promise<void> => {
         if (event === Events.InvitationUpdated) {
           refreshInvitationList();
@@ -241,7 +258,7 @@ onMounted(async () => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 
   await handleQuery();
-  await Promise.allSettled([refreshDeviceList(), refreshInvitationList(), refreshPkiRequestsList()]);
+  await Promise.allSettled([refreshDeviceList(), refreshInvitationList(), refreshJoinRequestsList()]);
 });
 
 onUnmounted(() => {
@@ -251,6 +268,10 @@ onUnmounted(() => {
   routeWatchCancel();
   stateWatchCancel();
   injectionProvider.getDefault().eventDistributor.removeCallback(eventCallbackId);
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
 });
 
 async function openCreateOrJoin(event: Event): Promise<void> {
@@ -330,15 +351,29 @@ async function refreshDeviceList(): Promise<void> {
   querying.value = false;
 }
 
-async function refreshPkiRequestsList(): Promise<void> {
+async function refreshJoinRequestsList(): Promise<void> {
   queryInProgress.value = true;
-  const result = await listLocalJoinRequests();
+  const result = await listJoinRequests();
   if (result.ok) {
-    pkiRequestList.value = result.value;
+    joinRequests.value = result.value;
   } else {
-    pkiRequestList.value = [];
+    joinRequests.value = [];
   }
   queryInProgress.value = false;
+  // If we haven't set the interval yet and there's at least one join request or if
+  // the function returned an error, we set the interval to try again in a minute.
+  if (intervalId === null && (joinRequests.value.length > 0 || !result.ok)) {
+    window.nativeAPI.log('info', 'Polling the join request list');
+    intervalId = setInterval(() => {
+      refreshJoinRequestsList();
+    }, 30000);
+  }
+  // If there's no requests, no point in polling
+  if (intervalId !== null && joinRequests.value.length === 0 && result.ok) {
+    window.nativeAPI.log('info', 'Stopping the poll for the join request list');
+    clearInterval(intervalId);
+    intervalId = null;
+  }
 }
 
 async function handleQuery(): Promise<void> {
@@ -348,9 +383,21 @@ async function handleQuery(): Promise<void> {
   queryInProgress.value = true;
   const query = getCurrentRouteQuery();
   if (query.claimLink) {
-    await openJoinByLinkModal(query.claimLink);
+    const link = query.claimLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    openJoinByLinkModal(link);
   } else if (query.bootstrapLink) {
-    await openCreateOrganizationModal(query.bootstrapLink);
+    const link = query.bootstrapLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    openCreateOrganizationModal(link);
+  } else if (query.asyncEnrollmentLink) {
+    const link = query.asyncEnrollmentLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    handleAsyncEnrollment(link);
+  } else if (query.totpResetLink) {
+    const link = query.totpResetLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    handleTotpReset(link);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
@@ -358,6 +405,7 @@ async function handleQuery(): Promise<void> {
       await onOrganizationSelected(device);
     } else {
       console.error('Could not find the corresponding device');
+      await navigateTo(Routes.Home, { skipHandle: true });
     }
   } else if (query.bmsOrganizationId) {
     const availableDevices = await listAvailableDevices();
@@ -385,9 +433,12 @@ async function handleQuery(): Promise<void> {
         }),
         PresentationMode.Toast,
       );
+      await navigateTo(Routes.Home, { skipHandle: true });
     }
   } else if (query.createOrg) {
-    openCreateOrganizationModal(undefined, query.createOrg);
+    const serverType = query.createOrg;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    openCreateOrganizationModal(undefined, serverType);
   } else if (query.bmsLogin) {
     state.value = HomePageState.CustomerArea;
     // Should just reset the query in the URL without reloading the page
@@ -397,102 +448,214 @@ async function handleQuery(): Promise<void> {
 }
 
 async function onInvitationClicked(invitation: AccountInvitation): Promise<void> {
-  await openJoinByLinkModal(invitation.addr);
+  const [invitationAddr, _] = invitation.addr;
+  await openJoinByLinkModal(invitationAddr);
 }
 
-async function onJoinOrganizationClicked(): Promise<void> {
+async function onJoinOrganizationClicked(showRecoveryText?: boolean): Promise<void> {
   const link = await getTextFromUser(
     {
-      title: 'JoinByLinkModal.pageTitle',
-      subtitle: 'JoinByLinkModal.pleaseEnterUrl',
+      title: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.title' : 'JoinByLinkModal.pageTitle',
+      subtitle: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.joinLinkSubtitle' : 'JoinByLinkModal.pleaseEnterUrl',
       trim: true,
       validator: claimAndBootstrapLinkValidator,
-      inputLabel: 'JoinOrganization.linkFormLabel',
+      inputLabel: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.joinLinkInputLabel' : 'JoinOrganization.linkFormLabel',
       placeholder: 'JoinOrganization.linkFormPlaceholder',
-      okButtonText: 'JoinByLinkModal.join',
+      okButtonText: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.joinLinkConfirmLink' : 'JoinByLinkModal.join',
     },
     isLargeDisplay.value,
   );
 
   if (link) {
+    const result = await parseParsecAddr(link);
+
+    if (!result.ok) {
+    }
     if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
       await openCreateOrganizationModal(link);
-    } else if ((await pkiLinkValidator(link)).validity === Validity.Valid) {
-      await handleJoinByPki(link);
+    } else if ((await asyncEnrollmentLinkValidator(link)).validity === Validity.Valid) {
+      await handleAsyncEnrollment(link);
+    } else if ((await totpResetLinkValidator(link)).validity === Validity.Valid) {
+      await handleTotpReset(link);
     } else {
       await openJoinByLinkModal(link);
     }
   }
 }
 
-async function handleJoinByPki(link: string): Promise<void> {
-  const result = await requestJoinOrganization(link);
+async function handleTotpReset(link: string): Promise<void> {
+  const addrResult = await parseParsecAddr(link);
 
-  if (result.ok) {
-    await refreshPkiRequestsList();
+  if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.TOTPReset) {
     informationManager.present(
       new Information({
-        message: 'HomePage.organizationRequest.requestSent.success',
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.present(
-      new Information({
-        message: 'HomePage.organizationRequest.requestSent.failure',
+        message: 'HomePage.organizationRequest.totp.invalidLink',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
     );
+    return;
   }
+  const modal = await modalController.create({
+    component: ActivateTotpModal,
+    cssClass: 'activate-totp-modal',
+    componentProps: {
+      params: {
+        mode: 'reset',
+        link: link,
+      },
+    },
+    canDismiss: true,
+    backdropDismiss: true,
+    showBackdrop: true,
+  });
+  await modal.present();
+  const { role } = await modal.onDidDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm) {
+    return;
+  }
+  informationManager.present(
+    new Information({
+      message: 'Authentication.mfa.mfaSuccess.description',
+      level: InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
 }
 
-async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> {
-  if (pkiRequest.status === JoinRequestStatus.Pending) {
+async function handleAsyncEnrollment(link: string): Promise<void> {
+  const addrResult = await parseParsecAddr(link);
+
+  if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.AsyncEnrollment) {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.asyncEnrollmentModal.errors.invalidLink',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+
+  const addr = await buildParsecAddr(addrResult.value);
+  const pkiAvailable = await isSmartcardAvailable();
+  const serverConfigResult = await getServerConfig(addr);
+
+  // We don't have PKI and openbao is not configured on the server, can't do anything
+  if (
+    !pkiAvailable &&
+    (!serverConfigResult.ok || !serverConfigResult.value.openbao || serverConfigResult.value.openbao.auths.length === 0)
+  ) {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.asyncEnrollmentModal.errors.pkiSsoNotAvailable',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: AsyncEnrollmentModal,
+    showBackdrop: true,
+    backdropDismiss: false,
+    componentProps: {
+      link: link,
+      addr: addrResult.value,
+      serverConfig: serverConfigResult.ok ? serverConfigResult.value : undefined,
+      pkiAvailable: pkiAvailable,
+    },
+    cssClass: 'async-enrollment-modal',
+  });
+  await modal.present();
+  const { role } = await modal.onDidDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm) {
+    return;
+  }
+
+  informationManager.present(
+    new Information({
+      message: 'HomePage.organizationRequest.requestSent.success',
+      level: InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
+
+  await refreshJoinRequestsList();
+}
+
+async function onJoinRequestClicked(request: AsyncEnrollmentRequest): Promise<void> {
+  if (request.info.tag === PendingAsyncEnrollmentInfoTag.Submitted) {
     const answer = await askQuestion('HomePage.organizationRequest.pending.title', 'HomePage.organizationRequest.pending.message', {
       yesText: 'HomePage.organizationRequest.pending.yes',
       noText: 'HomePage.organizationRequest.pending.no',
     });
     if (answer === Answer.Yes) {
-      await cancelLocalJoinRequest(pkiRequest);
-      informationManager.present(
-        new Information({
-          message: 'HomePage.organizationRequest.requestCancelled',
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
+      const result = await deleteJoinRequest(request);
+      if (result.ok) {
+        informationManager.present(
+          new Information({
+            message: 'HomePage.organizationRequest.requestCancelled',
+            level: InformationLevel.Info,
+          }),
+          PresentationMode.Toast,
+        );
+      } else {
+        window.nativeAPI.log('error', `Failed to cancel async join request: ${result.error.tag} (${result.error.error})`);
+        informationManager.present(
+          new Information({
+            message: 'HomePage.organizationRequest.requestCancelError',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      }
     }
-  } else if (pkiRequest.status === JoinRequestStatus.Rejected) {
-    const answer = await askQuestion('HomePage.organizationRequest.rejected.title', 'HomePage.organizationRequest.rejected.message', {
-      yesText: 'HomePage.organizationRequest.rejected.yes',
-      noText: 'HomePage.organizationRequest.rejected.no',
-    });
-    if (answer === Answer.Yes) {
-      await cancelLocalJoinRequest(pkiRequest);
-      informationManager.present(
-        new Information({
-          message: 'HomePage.organizationRequest.requestDeleted',
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
+  } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Rejected) {
+    await deleteJoinRequest(request);
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.requestDeleted',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+  } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Cancelled) {
+    await deleteJoinRequest(request);
+  } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Accepted) {
+    await finalizeRequest(request);
+  }
+  await refreshJoinRequestsList();
+}
+
+async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
+  if (request.info.tag !== PendingAsyncEnrollmentInfoTag.Accepted) {
+    return;
+  }
+
+  let identityStrategy!: AcceptFinalizeAsyncEnrollmentIdentityStrategy;
+  let primaryProtection!: DevicePrimaryProtectionStrategy;
+  const parsedAddrResult = await parseParsecAddr(request.enrollment.addr);
+  if (!parsedAddrResult.ok) {
+    window.nativeAPI.log('error', 'Failed to parse request enrollment address');
+    return;
+  }
+  const serverAddr = await buildParsecAddr(parsedAddrResult.value);
+
+  if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI) {
+    const addrResult = await parseParsecAddr(request.enrollment.addr);
+
+    if (!addrResult.ok) {
+      return;
     }
-  } else if (pkiRequest.status === JoinRequestStatus.Accepted) {
-    const result = await confirmLocalJoinRequest(pkiRequest);
-    if (result.ok) {
-      informationManager.present(
-        new Information({
-          message: 'HomePage.organizationRequest.accepted.joinSuccess',
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-      await refreshDeviceList();
-      // TODO: automatically login with the new device
-      // await login(result.value, AccessStrategy.useSmartcard(result.value));
-    } else {
+
+    if (!(await isSmartcardAvailable())) {
+      // Should never happen.
       informationManager.present(
         new Information({
           message: 'HomePage.organizationRequest.accepted.joinFailure',
@@ -500,9 +663,92 @@ async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> 
         }),
         PresentationMode.Toast,
       );
+      window.nativeAPI.log('error', 'Weird case of PKI not being available when creating the device from the async request');
+      return;
     }
+    const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
+    const certResult = await openCertificate(identitySystem.certificateRef);
+    if (!certResult.ok) {
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.confirmMissingCertificate',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      return;
+    }
+    identityStrategy = makeAcceptPkiIdentityStrategy(certResult.value, certResult.value);
+    primaryProtection = PrimaryProtectionStrategy.useSmartcard(certResult.value);
+  } else if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao) {
+    const serverConfigResult = await getServerConfig(serverAddr);
+
+    if (!serverConfigResult.ok) {
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.accepted.joinFailure',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      window.nativeAPI.log('error', 'Failed to get server config when creating the device from the async request');
+      return;
+    }
+    if (!serverConfigResult.value?.openbao || serverConfigResult.value.openbao.auths.length === 0) {
+      // Should never happen.
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.accepted.joinFailure',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      window.nativeAPI.log('error', 'No openbao auths available when creating the device from the async request');
+      return;
+    }
+    const ssoModal = await modalController.create({
+      component: AsyncEnrollmentOpenBaoAuthModal,
+      cssClass: 'async-enrollment-openbao-modal',
+      componentProps: {
+        serverConfig: serverConfigResult.value,
+        action: 'finalize',
+      },
+    });
+    await ssoModal.present();
+    const { role, data } = await ssoModal.onWillDismiss();
+    await ssoModal.dismiss();
+    if (role !== MsModalResult.Confirm || !data.openBaoClient) {
+      return;
+    }
+    identityStrategy = makeAcceptOpenBaoIdentityStrategy(data.openBaoClient as OpenBaoClient);
+    primaryProtection = PrimaryProtectionStrategy.useOpenBao((data.openBaoClient as OpenBaoClient).getConnectionInfo());
+  } else {
+    window.nativeAPI.log('error', 'Unknown identity system');
+    return;
   }
-  await refreshPkiRequestsList();
+
+  const confirmResult = await confirmJoinRequest(request, constructSaveStrategy(primaryProtection), identityStrategy);
+
+  if (confirmResult.ok) {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.accepted.joinSuccess',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+
+    await Promise.allSettled([refreshDeviceList(), refreshJoinRequestsList()]);
+    await login(confirmResult.value, constructAccessStrategy(confirmResult.value, primaryProtection));
+  } else {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.accepted.joinFailure',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 async function openCreateOrganizationModal(bootstrapLink?: string, defaultServerChoice?: ServerType): Promise<void> {
@@ -526,7 +772,7 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
 
   if (role === MsModalResult.Confirm) {
     const creationData = data as { device: AvailableDevice; access: DeviceAccessStrategy };
-    if (creationData.access.tag === DeviceAccessStrategyTag.AccountVault && ParsecAccount.isLoggedIn()) {
+    if (creationData.access.primaryProtection.tag === DevicePrimaryProtectionStrategyTag.AccountVault && ParsecAccount.isLoggedIn()) {
       await ParsecAccount.createRegistrationDevice(data.access);
     }
     await login(creationData.device, creationData.access);
@@ -543,7 +789,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   }
 
   if (!component) {
-    window.electronAPI.log('error', 'Trying to open join link modal with invalid link');
+    window.nativeAPI.log('error', 'Trying to open join link modal with invalid link');
     return;
   }
   const modal = await modalController.create({
@@ -572,8 +818,8 @@ async function openJoinByLinkModal(link: string): Promise<void> {
 }
 
 async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
-  if (await isDeviceLoggedIn(device)) {
-    window.electronAPI.log('debug', 'Selected organization is already logged in, switching to it');
+  if (await isDeviceLoggedIn(device.deviceId)) {
+    window.nativeAPI.log('debug', 'Selected organization is already logged in, switching to it');
     const handle = await getDeviceHandle(device);
     switchOrganization(handle ?? null, false);
   } else {
@@ -582,7 +828,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       storedDeviceDataDict.value[device.deviceId]?.orgCreationDate &&
       isExpired(getDurationBeforeExpiration(storedDeviceDataDict.value[device.deviceId].orgCreationDate as DateTime))
     ) {
-      window.electronAPI.log('debug', 'Selected expired trial organization');
+      window.nativeAPI.log('debug', 'Selected expired trial organization');
       const answer = await askQuestion('HomePage.expiredDevice.questionTitle', 'HomePage.expiredDevice.questionMessage', {
         yesIsDangerous: true,
         yesText: 'HomePage.expiredDevice.questionYes',
@@ -590,7 +836,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         backdropDismiss: true,
       });
       if (answer === Answer.Yes) {
-        window.electronAPI.log('debug', 'Archiving expired trial organization');
+        window.nativeAPI.log('debug', 'Archiving expired trial organization');
         const result = await archiveDevice(device);
         if (result.ok) {
           informationManager.present(
@@ -603,7 +849,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
           await refreshDeviceList();
           return;
         } else {
-          window.electronAPI.log('error', 'Could not archive expired trial organization');
+          window.nativeAPI.log('error', 'Could not archive expired trial organization');
           informationManager.present(
             new Information({
               message: 'HomePage.expiredDevice.archiveFailure',
@@ -615,17 +861,25 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       }
     }
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
-      window.electronAPI.log('debug', 'Logging in with Keyring');
-      await login(device, AccessStrategy.useKeyring(device));
+      window.nativeAPI.log('debug', 'Logging in with Keyring');
+      await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useKeyring()));
     } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
-      window.electronAPI.log('debug', 'Logging in with Smartcard');
-      await login(device, AccessStrategy.useSmartcard(device));
+      window.nativeAPI.log('debug', 'Logging in with Smartcard');
+      const certResult = await openCertificate((device.ty as AvailableDeviceTypePKI).certificateRef);
+      if (!certResult.ok) {
+        await handleLoginError(device, { tag: ClientStartErrorTag.Internal, error: `${certResult.error.tag} (${certResult.error.error})` });
+        return;
+      }
+      await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard(certResult.value)));
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
       try {
-        const strategy = await AccessStrategy.useAccountVault(device);
-        await login(device, strategy);
+        const handle = ParsecAccount.getHandle();
+        if (!handle) {
+          throw new Error('Not connected');
+        }
+        await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useAccountVault(handle)));
       } catch (e: any) {
-        window.electronAPI.log('error', `Failed to log in with vault: ${e.toString()}`);
+        window.nativeAPI.log('error', `Failed to log in with vault: ${e.toString()}`);
         informationManager.present(
           new Information({
             message: 'HomePage.loginErrors.vaultFailed',
@@ -635,7 +889,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         );
       }
     } else {
-      window.electronAPI.log('debug', 'Logging in with Password');
+      window.nativeAPI.log('debug', 'Logging in with Password');
       selectedDevice.value = device;
       state.value = HomePageState.Login;
     }
@@ -644,7 +898,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
 
 async function handleLoginError(device: AvailableDevice, error: ClientStartError): Promise<void> {
   if (device.ty.tag === AvailableDeviceTypeTag.Password) {
-    window.electronAPI.log('debug', 'Handling Password login error');
+    window.nativeAPI.log('debug', 'Handling Password login error');
     selectedDevice.value = device;
     state.value = HomePageState.Login;
     await nextTick();
@@ -652,16 +906,15 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       loginPageRef.value.setLoginError(error);
     }
   } else if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
-    window.electronAPI.log('debug', 'Handling Keyring login error');
-    if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed) {
+    window.nativeAPI.log('debug', 'Handling Keyring login error');
+    if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed || error.tag === ClientStartErrorTag.KeyringError) {
       const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
-        yesIsDangerous: false,
         yesText: 'HomePage.loginErrors.keyringFailedUsedRecovery',
         noText: 'HomePage.loginErrors.keyringFailedAbort',
       });
       if (answer === Answer.Yes) {
         selectedDevice.value = device;
-        state.value = HomePageState.ForgottenPassword;
+        await openChooseRecoveryModal(device);
       }
     } else {
       informationManager.present(
@@ -673,7 +926,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       );
     }
   } else if (device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
-    window.electronAPI.log('error', `Failed to login with OpenBAO: ${error.tag} (${error.error})`);
+    window.nativeAPI.log('error', `Failed to login with OpenBAO: ${error.tag} (${error.error})`);
     informationManager.present(
       new Information({
         message: 'HomePage.loginErrors.openBaoFailed',
@@ -681,8 +934,17 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       }),
       PresentationMode.Toast,
     );
+  } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
+    window.nativeAPI.log('error', `Failed to login with PKI: ${error.tag} (${error.error})`);
+    informationManager.present(
+      new Information({
+        message: 'HomePage.loginErrors.pkiFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
   } else {
-    window.electronAPI.log('error', `Unhandled error for device authentication type ${device.ty.tag}`);
+    window.nativeAPI.log('error', `Unhandled error for device authentication type ${device.ty.tag}`);
   }
 }
 
@@ -710,11 +972,11 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
           if (isWeb() && device.ty.tag === AvailableDeviceTypeTag.Password) {
             const regResult = await ParsecAccount.registerNewDevice({ organizationId: device.organizationId, userId: device.userId });
             if (!regResult.ok) {
-              window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
+              window.nativeAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
             }
           }
         } else {
-          window.electronAPI.log(
+          window.nativeAPI.log(
             'error',
             `Failed to create the registration device: ${createRegResult.error.tag} (${createRegResult.error.error})`,
           );
@@ -732,12 +994,48 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 }
 
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
-  const eventDistributor = new EventDistributor();
   loginInProgress.value = true;
-  window.electronAPI.log('debug', 'Starting Parsec login');
+  window.nativeAPI.log('debug', 'Starting Parsec login');
+
+  if (device.totpOpaqueKeyId !== null) {
+    const code = await getTextFromUser(
+      {
+        title: 'Authentication.mfa.totpRequired',
+        subtitle: 'Authentication.mfa.totpRequiredSubtitle',
+        trim: true,
+      },
+      true,
+    );
+    if (!code) {
+      loginInProgress.value = false;
+      return;
+    }
+    const fetchTotpResult = await fetchTotpOpaqueKey(device.serverAddr, device.organizationId, device.userId, device.totpOpaqueKeyId, code);
+    if (!fetchTotpResult.ok) {
+      window.nativeAPI.log('warn', `Failed to retrieve totp opaque key: '${fetchTotpResult.error.tag}'`);
+      let message = 'Authentication.mfa.error.failedToRetrieveKey';
+      if (fetchTotpResult.error.tag === TotpFetchOpaqueKeyErrorTag.InvalidOneTimePassword) {
+        message = 'Authentication.mfa.error.invalidCode';
+      }
+      informationManager.present(
+        new Information({
+          message: message,
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      loginInProgress.value = false;
+      return;
+    }
+    access.totpProtection = [device.totpOpaqueKeyId, fetchTotpResult.value];
+  }
+
   const result = await parsecLogin(device, access);
+  if (access.primaryProtection.tag === DevicePrimaryProtectionStrategyTag.PKI) {
+    await closeCertificate(access.primaryProtection.pkiEncryptPrivateKeyHandle);
+  }
   if (result.ok) {
-    window.electronAPI.log('debug', 'getOrganizationCreationDate');
+    window.nativeAPI.log('debug', 'getOrganizationCreationDate');
     const creationDateResult = await getOrganizationCreationDate(result.value);
     storedDeviceDataDict.value[device.deviceId] = {
       lastLogin: DateTime.now(),
@@ -759,6 +1057,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
       },
     };
     if (!injectionProvider.hasInjections(result.value)) {
+      const eventDistributor = new EventDistributor();
       injectionProvider.createNewInjections(result.value, eventDistributor);
     }
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
@@ -771,22 +1070,43 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
 }
 
 async function backToPreviousPage(): Promise<void> {
-  if (state.value === HomePageState.ForgottenPassword && selectedDevice.value) {
-    state.value = HomePageState.Login;
-  } else if (
-    state.value === HomePageState.Login ||
-    state.value === HomePageState.ForgottenPassword ||
-    state.value === HomePageState.CustomerArea ||
-    state.value === HomePageState.AccountSettings
-  ) {
-    state.value = HomePageState.OrganizationList;
-    selectedDevice.value = undefined;
-  }
+  state.value = HomePageState.OrganizationList;
 }
 
-function onForgottenPasswordClicked(device?: AvailableDevice): void {
-  selectedDevice.value = device;
-  state.value = HomePageState.ForgottenPassword;
+async function openChooseRecoveryModal(device?: AvailableDevice): Promise<void> {
+  const modal = await modalController.create({
+    component: ChooseRecoveryMethodModal,
+    cssClass: 'choose-recovery-device-modal',
+    canDismiss: true,
+    backdropDismiss: true,
+    showBackdrop: true,
+  });
+  await modal.present();
+  const { role, data } = await modal.onWillDismiss();
+
+  if (role === MsModalResult.Confirm && data?.recoveryMethod === RecoveryMethod.ConnectedDevice) {
+    await onJoinOrganizationClicked(true);
+    return;
+  }
+
+  if (role === MsModalResult.Confirm && data?.recoveryMethod === RecoveryMethod.RecoveryFile) {
+    const recoveryModal = await modalController.create({
+      component: ImportRecoveryDevice,
+      cssClass: 'import-recovery-device-modal',
+      canDismiss: true,
+      backdropDismiss: true,
+      showBackdrop: true,
+      componentProps: {
+        device: device,
+        informationManager,
+      },
+    });
+    await recoveryModal.present();
+    const { role: recoveryRole, data: recoveryData } = await recoveryModal.onWillDismiss();
+    if (recoveryRole === MsModalResult.Confirm && recoveryData?.device && recoveryData?.access) {
+      await login(recoveryData.device, recoveryData.access);
+    }
+  }
 }
 
 async function goToCustomerAreaLogin(): Promise<void> {
@@ -803,8 +1123,6 @@ function getBackButtonTitle(): string {
   }
   if (state.value === HomePageState.Login) {
     return 'HomePage.topbar.backToList';
-  } else if (state.value === HomePageState.ForgottenPassword) {
-    return 'HomePage.topbar.backToLogin';
   } else if (state.value === HomePageState.CustomerArea) {
     return 'HomePage.topbar.backToList';
   } else if (state.value === HomePageState.AccountSettings) {
@@ -821,14 +1139,14 @@ function getBackButtonTitle(): string {
   display: flex;
   overflow: hidden;
   align-items: self-start;
-  background: var(--parsec-color-light-secondary-background);
+  background: ms.color('surface-base-page');
   z-index: -10;
 
   .homepage-content {
     position: relative;
     display: flex;
     flex-direction: column;
-    --background: var(--parsec-color-light-secondary-background);
+    --background: #{ms.color('surface-base-default-secondary')};
 
     &::part(scroll) {
       --keyboard-offset: 0;
@@ -840,22 +1158,35 @@ function getBackButtonTitle(): string {
     }
   }
 
-  // Should be edited later with responsive
-  .homepage-header {
-    padding: 1.5rem 4rem 0 4rem;
-
-    @include ms.responsive-breakpoint('lg') {
-      flex-direction: column-reverse;
-      gap: 1rem;
-    }
+  .homepage-banner {
+    margin: 2.6rem 4rem 0;
 
     @include ms.responsive-breakpoint('md') {
-      padding: 2rem 3rem 0;
+      margin: 1.5rem 3rem 0;
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 2rem 1.5rem 0;
-      margin-bottom: 1rem;
+      align-self: center;
+      margin: 1rem 1.5rem 0;
+    }
+  }
+
+  // Should be edited later with responsive
+  .homepage-header {
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-8xl') ms.spacing('padding-none') ms.spacing('padding-8xl');
+
+    @include ms.responsive-breakpoint('lg') {
+      flex-direction: column-reverse;
+      gap: ms.spacing('gap-3xl');
+    }
+
+    @include ms.responsive-breakpoint('md') {
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-7xl') ms.spacing('padding-none');
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl') ms.spacing('padding-none');
+      margin-bottom: ms.spacing('padding-3xl');
     }
   }
 
@@ -872,7 +1203,7 @@ function getBackButtonTitle(): string {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: top center;
-    opacity: 0.1;
+    opacity: ms.opacity('1');
     filter: blur(600px);
   }
 }

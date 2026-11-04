@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page
@@ -15,6 +15,7 @@
       content-id="main"
       menu-id="main-menu"
       class="large-display-menu-container"
+      :class="{ 'menu-collapse': sidebarWidth === 0 }"
     >
       <ion-menu
         content-id="main"
@@ -62,7 +63,7 @@
       >
         <client-area-header
           v-if="loggedIn && !querying"
-          :title="getTitleByPage()"
+          :title="pageTitle"
           :organizations="organizations"
           :current-organization="currentOrganization"
           @page-selected="switchPage"
@@ -162,7 +163,7 @@ import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
 import { ClientAreaPages, DefaultBmsOrganization, isDefaultOrganization } from '@/views/client-area/types';
 import { createGesture, GestureDetail, IonContent, IonMenu, IonPage, IonSkeletonText, IonSplitPane } from '@ionic/vue';
 import { Translatable, useWindowSize } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
@@ -181,6 +182,34 @@ const watchSidebarWidthCancel = watch(sidebarWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
   // set toast offset
   setToastOffset(value);
+});
+
+const pageTitle = computed((): Translatable => {
+  switch (currentPage.value) {
+    case ClientAreaPages.BillingDetails:
+      return 'clientArea.header.titles.billingDetails';
+    case ClientAreaPages.Contracts:
+      return 'clientArea.header.titles.contract';
+    case ClientAreaPages.Dashboard:
+      return 'clientArea.header.titles.dashboard';
+    case ClientAreaPages.Invoices:
+    case ClientAreaPages.CustomOrderInvoices:
+      return 'clientArea.header.titles.invoices';
+    case ClientAreaPages.PaymentMethods:
+      return 'clientArea.header.titles.paymentMethods';
+    case ClientAreaPages.PersonalData:
+      return 'clientArea.header.titles.personalData';
+    case ClientAreaPages.Statistics:
+      return 'clientArea.header.titles.statistics';
+    case ClientAreaPages.Orders:
+      return 'clientArea.header.titles.orders';
+    case ClientAreaPages.CustomOrderStatistics:
+      return 'clientArea.header.titles.customOrderStatistics';
+    case ClientAreaPages.CustomOrderBillingDetails:
+      return 'clientArea.header.titles.customOrderBillingDetails';
+    default:
+      return '';
+  }
 });
 
 function setToastOffset(width: number): void {
@@ -311,34 +340,6 @@ async function onOrganizationSelected(organization: BmsOrganization): Promise<vo
   currentOrganization.value = organization;
   refresh.value += 1;
 }
-
-function getTitleByPage(): Translatable {
-  switch (currentPage.value) {
-    case ClientAreaPages.BillingDetails:
-      return 'clientArea.header.titles.billingDetails';
-    case ClientAreaPages.Contracts:
-      return 'clientArea.header.titles.contract';
-    case ClientAreaPages.Dashboard:
-      return 'clientArea.header.titles.dashboard';
-    case ClientAreaPages.Invoices:
-    case ClientAreaPages.CustomOrderInvoices:
-      return 'clientArea.header.titles.invoices';
-    case ClientAreaPages.PaymentMethods:
-      return 'clientArea.header.titles.paymentMethods';
-    case ClientAreaPages.PersonalData:
-      return 'clientArea.header.titles.personalData';
-    case ClientAreaPages.Statistics:
-      return 'clientArea.header.titles.statistics';
-    case ClientAreaPages.Orders:
-      return 'clientArea.header.titles.orders';
-    case ClientAreaPages.CustomOrderStatistics:
-      return 'clientArea.header.titles.customOrderStatistics';
-    case ClientAreaPages.CustomOrderBillingDetails:
-      return 'clientArea.header.titles.customOrderBillingDetails';
-    default:
-      return '';
-  }
-}
 </script>
 
 <style scoped lang="scss">
@@ -363,12 +364,12 @@ function getTitleByPage(): Translatable {
     content: '';
     width: 0.125rem;
     height: 100%;
-    padding: 20rem 0;
+    padding: 20rem ms.spacing('padding-none');
   }
 
   &:hover::after,
   &:active::after {
-    background: var(--parsec-color-light-secondary-soft-grey);
+    background: ms.color('surface-neutral-default-subtle-pressed');
   }
 }
 
@@ -376,18 +377,18 @@ function getTitleByPage(): Translatable {
   --side-min-width: var(--parsec-sidebar-menu-min-width);
   --side-max-width: var(--parsec-sidebar-menu-max-width);
   --side-width: v-bind(sidebarWidthProperty);
-  --background: var(--parsec-color-light-secondary-background);
-  border-right: 1px solid var(--parsec-color-light-secondary-disabled);
+  --background: #{ms.color('surface-base-page')};
+  border-right: ms.border('thin') solid ms.color('border-base-default');
   user-select: none;
 
   &::part(container) {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: ms.spacing('gap-5xl');
   }
 
   .skeleton {
-    padding: 2rem 1.5rem 0;
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl') ms.spacing('padding-none');
 
     &-header {
       display: flex;
@@ -410,7 +411,7 @@ function getTitleByPage(): Translatable {
       display: flex;
       flex-direction: column;
 
-      gap: 0.625rem;
+      gap: ms.spacing('gap-xl');
 
       &-item {
         width: 100%;

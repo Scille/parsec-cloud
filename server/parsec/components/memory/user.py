@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import Any, Literal, assert_never, override
@@ -582,7 +583,10 @@ class MemoryUserComponent(BaseUserComponent):
             realm_certificates_unordered += [
                 (role.cooked.timestamp, role.realm_name_certificate) for role in realm.renames
             ]
-            # TODO #6092: support archiving here !
+            realm_certificates_unordered += [
+                (archiving.cooked.timestamp, archiving.realm_archiving_certificate)
+                for archiving in realm.archivings
+            ]
 
             if last_role.role is None:
                 # User used to have access to the realm, only provide the certificate that
@@ -690,9 +694,7 @@ class MemoryUserComponent(BaseUserComponent):
         return device.cooked.verify_key
 
     @override
-    async def test_dump_current_users(
-        self, organization_id: OrganizationID
-    ) -> dict[UserID, UserDump]:
+    async def dump_current_users(self, organization_id: OrganizationID) -> dict[UserID, UserDump]:
         org = self._data.organizations[organization_id]
         items = {}
         for user in org.users.values():
@@ -781,7 +783,8 @@ class MemoryUserComponent(BaseUserComponent):
                 except KeyError:
                     return UserFreezeUserBadOutcome.USER_NOT_FOUND
             case (None, EmailAddress() as user_email):
-                for user in org.users.values():
+                # Multiple user can have the same email, but at most one of them is active
+                for user in org.active_users():
                     if user.cooked.human_handle.email == user_email:
                         break
                 else:
@@ -790,6 +793,9 @@ class MemoryUserComponent(BaseUserComponent):
                 return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
             case never:  # pyright: ignore [reportUnnecessaryComparison]
                 assert_never(never)
+
+        if user.revoked_on:
+            return UserFreezeUserBadOutcome.USER_REVOKED
 
         user.is_frozen = frozen
         if user.is_frozen:
@@ -819,7 +825,7 @@ class MemoryUserComponent(BaseUserComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         tos_updated_on: DateTime,
-    ) -> None | UserAcceptTosBadOutcome:
+    ) -> UserAcceptTosBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:

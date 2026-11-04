@@ -1,13 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::Client;
 use crate::{
-    certif::InvalidCertificateError, CertifGetRealmNeedsError, CertifPollServerError,
-    CertifRotateRealmKeyError, CertifShareRealmError, ClientGetCurrentSelfProfileError,
-    EventTooMuchDriftWithServerClock, RealmNeeds,
+    CertifGetRealmNeedsError, CertifPollServerError, CertifRotateRealmKeyError,
+    CertifShareRealmError, ClientGetCurrentSelfProfileError, EventTooMuchDriftWithServerClock,
+    RealmNeeds, certif::InvalidCertificateError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -16,7 +16,9 @@ pub enum ClientProcessWorkspacesNeedsError {
     Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -98,6 +100,8 @@ async fn process_workspace_needs(
                     // A concurrent operation has changed our rights to the workspace,
                     // hence we can no longer process its needs !
                     CertifShareRealmError::AuthorNotAllowed => return Ok(()),
+                    // Workspace has been deleted, nothing to process
+                    CertifShareRealmError::RealmDeleted => return Ok(()),
                     CertifShareRealmError::TimestampOutOfBallpark {
                         server_timestamp,
                         client_timestamp,
@@ -177,14 +181,16 @@ async fn process_workspace_needs(
             Err(err) => match err {
                 // Valid errors
                 CertifRotateRealmKeyError::Offline(e) => {
-                    return Err(ClientProcessWorkspacesNeedsError::Offline(e))
+                    return Err(ClientProcessWorkspacesNeedsError::Offline(e));
                 }
                 CertifRotateRealmKeyError::Stopped => {
-                    return Err(ClientProcessWorkspacesNeedsError::Stopped)
+                    return Err(ClientProcessWorkspacesNeedsError::Stopped);
                 }
                 // A concurrent operation has changed our rights to the workspace,
                 // hence we can no longer process its needs !
                 CertifRotateRealmKeyError::AuthorNotAllowed => return Ok(()),
+                // Workspace has been deleted, nothing to process
+                CertifRotateRealmKeyError::RealmDeleted => return Ok(()),
                 CertifRotateRealmKeyError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
@@ -207,7 +213,7 @@ async fn process_workspace_needs(
                     });
                 }
                 CertifRotateRealmKeyError::InvalidCertificate(err) => {
-                    return Err(ClientProcessWorkspacesNeedsError::InvalidCertificate(err))
+                    return Err(ClientProcessWorkspacesNeedsError::InvalidCertificate(err));
                 }
                 CertifRotateRealmKeyError::CurrentKeysBundleCorrupted(_) => {
                     // TODO: handle self-healing here !
@@ -219,7 +225,7 @@ async fn process_workspace_needs(
 
                 // We got the realm ID from the certificates !
                 bad_rep @ CertifRotateRealmKeyError::UnknownRealm => {
-                    return Err(anyhow::anyhow!("Unexpected server response: {}", bad_rep).into())
+                    return Err(anyhow::anyhow!("Unexpected server response: {}", bad_rep).into());
                 }
             },
         }

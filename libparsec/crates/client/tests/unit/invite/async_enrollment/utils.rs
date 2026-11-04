@@ -99,7 +99,9 @@ impl AcceptAsyncEnrollmentIdentityStrategy for MockedAsyncEnrollmentIdentityStra
 
             if !expected_author_is_ok {
                 return Err(AcceptAsyncEnrollmentError::BadSubmitPayload(
-                    anyhow::anyhow!("Requested email in the payload doesn't match the signature author's identity")
+                    anyhow::anyhow!(
+                        "Requested email in the payload doesn't match the signature author's identity"
+                    ),
                 ));
             }
 

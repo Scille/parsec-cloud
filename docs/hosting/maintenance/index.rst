@@ -2,17 +2,17 @@
 
 .. _doc_hosting_maintenance:
 
-
 ==================
 Server Maintenance
 ==================
 
-This section covers how to maintain the Parsec server up to date, and how to
-backup and restore the SQL database and the S3 object storage.
+This section covers how to maintain Parsec Server up to date,
+and how to backup and restore the PostgreSQL database and the Object Storage.
 
 .. toctree::
     :maxdepth: 1
     :name: section-hosting-maintenance-guide
 
-    backup_restore
-    upgrade_downgrade
+    backup-restore
+    upgrade
+    downgrade

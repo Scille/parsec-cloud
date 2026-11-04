@@ -9,31 +9,55 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
-use crate::{ClientRefreshWorkspacesListError, EventWorkspacesSelfListChanged, WorkspaceInfo};
+use crate::{
+    ClientRefreshWorkspacesListError, EventWorkspacesSelfListChanged, WorkspaceInfo,
+    workspace::{EntryStat, WorkspaceStatEntryError},
+};
 
 #[parsec_test(testbed = "coolorg")]
 async fn ok_with_changes(
-    #[values("new_sharing", "unsharing", "self_role_change", "renamed")] kind: &str,
+    #[values(
+        "new_sharing",
+        "unsharing",
+        "self_role_change",
+        "renamed",
+        "archived",
+        "deletion_planned",
+        "deletion_date_reached",
+        "can_self_promote_to_owner",
+        "cannot_self_promote_to_owner_when_outsider"
+    )]
+    kind: &str,
     env: &TestbedEnv,
 ) {
     use std::{collections::HashMap, sync::Mutex};
 
     use libparsec_protocol::authenticated_cmds;
 
-    let expected_workspaces = env
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let (expected_workspaces, expected_wksp1_local_storage_removed) = env
         .customize(|builder| {
             let mut expected_workspaces = vec![];
+            let mut expected_wksp1_local_storage_removed = false;
 
             // The testbed env is coolorg, hence Alice already has access to workspace wksp1...
 
-            let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
-
             expected_workspaces.push(WorkspaceInfo {
                 id: wksp1_id,
-                current_name: "wksp1".parse().unwrap(),
-                current_self_role: RealmRole::Owner,
-                is_started: false,
+                is_started: true,
                 is_bootstrapped: true,
+                name: "wksp1".parse().unwrap(),
+                name_origin: CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2000-01-11T00:00:00Z".parse().unwrap(),
+                },
+                self_role: RealmRole::Owner,
+                self_role_origin: CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2000-01-09T00:00:00Z".parse().unwrap(),
+                },
+                archiving_configuration: RealmArchivingConfiguration::Available,
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
+                can_self_promote_to_owner: false,
             });
 
             // ...provide Alice's client with an additional local-only workspace.
@@ -51,15 +75,24 @@ async fn ok_with_changes(
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
+                            archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                            archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder
+                                .into(),
+                            can_self_promote_to_owner: false.into(),
                         });
                 });
 
             expected_workspaces.push(WorkspaceInfo {
                 id: wksp2_id,
-                current_name: "wksp2".parse().unwrap(),
-                current_self_role: RealmRole::Owner,
                 is_started: false,
                 is_bootstrapped: false,
+                name: "wksp2".parse().unwrap(),
+                name_origin: CertificateBasedInfoOrigin::Placeholder,
+                self_role: RealmRole::Owner,
+                self_role_origin: CertificateBasedInfoOrigin::Placeholder,
+                archiving_configuration: RealmArchivingConfiguration::Available,
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
+                can_self_promote_to_owner: false,
             });
 
             builder.certificates_storage_fetch_certificates("alice@dev1");
@@ -73,10 +106,19 @@ async fn ok_with_changes(
 
                     expected_workspaces.push(WorkspaceInfo {
                         id: wksp3_id,
-                        current_name: "wksp3".parse().unwrap(),
-                        current_self_role: RealmRole::Manager,
                         is_started: false,
                         is_bootstrapped: true,
+                        name: "wksp3".parse().unwrap(),
+                        name_origin: CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-23T00:00:00Z".parse().unwrap(),
+                        },
+                        self_role: RealmRole::Manager,
+                        self_role_origin: CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-24T00:00:00Z".parse().unwrap(),
+                        },
+                        archiving_configuration: RealmArchivingConfiguration::Available,
+                        archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
+                        can_self_promote_to_owner: false,
                     });
                 }
                 "unsharing" => {
@@ -85,24 +127,95 @@ async fn ok_with_changes(
                     builder.share_realm(wksp1_id, "alice", None);
 
                     expected_workspaces.remove(0);
+                    expected_wksp1_local_storage_removed = true;
                 }
                 "self_role_change" => {
                     // Must promote Bob first so that he can change Alice's role
                     builder.share_realm(wksp1_id, "bob", RealmRole::Owner);
                     builder.share_realm(wksp1_id, "alice", RealmRole::Reader);
 
-                    expected_workspaces[0].current_self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-22T00:00:00Z".parse().unwrap(),
+                        };
                 }
                 "renamed" => {
                     builder.rename_realm(wksp1_id, "wksp1-renamed");
 
-                    expected_workspaces[0].current_name = "wksp1-renamed".parse().unwrap();
+                    expected_workspaces[0].name = "wksp1-renamed".parse().unwrap();
+                    expected_workspaces[0].name_origin = CertificateBasedInfoOrigin::Certificate {
+                        timestamp: "2000-01-21T00:00:00Z".parse().unwrap(),
+                    };
+                }
+                "archived" => {
+                    builder.archive_realm(wksp1_id, RealmArchivingConfiguration::Archived);
+
+                    expected_workspaces[0].archiving_configuration =
+                        RealmArchivingConfiguration::Archived;
+                    expected_workspaces[0].archiving_configuration_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-21T00:00:00Z".parse().unwrap(),
+                        };
+                }
+                "deletion_planned" => {
+                    let archiving_configuration = RealmArchivingConfiguration::DeletionPlanned {
+                        deletion_date: "2999-01-01T00:00:00Z".parse().unwrap(),
+                    };
+                    builder.archive_realm(wksp1_id, archiving_configuration);
+
+                    expected_workspaces[0].archiving_configuration = archiving_configuration;
+                    expected_workspaces[0].archiving_configuration_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-21T00:00:00Z".parse().unwrap(),
+                        };
+                }
+                "deletion_date_reached" => {
+                    builder.archive_realm(
+                        wksp1_id,
+                        RealmArchivingConfiguration::DeletionPlanned {
+                            deletion_date: "2025-01-01T00:00:00Z".parse().unwrap(),
+                        },
+                    );
+
+                    expected_workspaces.remove(0);
+                    expected_wksp1_local_storage_removed = true;
+                }
+                "can_self_promote_to_owner" => {
+                    // Alice is already OWNER, so we must transfer ownership to Bob...
+                    builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
+                    builder.share_realm(wksp1_id, "alice", Some(RealmRole::Reader));
+                    // ..and Bob gets revoked, so now there is no more OWNER!
+                    builder.revoke_user("bob");
+
+                    expected_workspaces[0].self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-22T00:00:00Z".parse().unwrap(),
+                        };
+                    expected_workspaces[0].can_self_promote_to_owner = true;
+                }
+                "cannot_self_promote_to_owner_when_outsider" => {
+                    // Alice is already OWNER, so we must transfer ownership to Bob...
+                    builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
+                    builder.share_realm(wksp1_id, "alice", Some(RealmRole::Reader));
+                    // ..and Bob gets revoked, so now there is no more OWNER!
+                    builder.revoke_user("bob");
+                    // However Alice also becomes OUTSIDER, so she cannot self-promote!
+                    builder.update_user_profile("mallory", UserProfile::Admin);
+                    builder.update_user_profile("alice", UserProfile::Outsider);
+
+                    expected_workspaces[0].self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-22T00:00:00Z".parse().unwrap(),
+                        };
                 }
                 unknown => panic!("Unknown kind: {unknown}"),
             }
             builder.certificates_storage_fetch_certificates("alice@dev1");
 
-            expected_workspaces
+            (expected_workspaces, expected_wksp1_local_storage_removed)
         })
         .await;
 
@@ -197,9 +310,11 @@ async fn ok_with_changes(
     }
 
     let alice = env.local_device("alice@dev1");
-    let client = client_factory(&env.discriminant_dir, alice).await;
+    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
 
     let mut spy = client.event_bus.spy.start_expecting();
+
+    let wksp1 = client.start_workspace(wksp1_id).await.unwrap();
 
     client.refresh_workspaces_list().await.unwrap();
 
@@ -207,6 +322,35 @@ async fn ok_with_changes(
 
     let workspaces = client.list_workspaces().await;
     p_assert_eq!(workspaces, expected_workspaces);
+
+    if expected_wksp1_local_storage_removed {
+        // Workspace has bee stopped and its local storage removed
+        p_assert_matches!(
+            // A dummy ID ensures we will bypass the cache (that still works for
+            // the workspace manifest even when the workspace is stopped) and
+            // attempt to use the local storage (hence hitting the `Stopped` error).
+            wksp1.stat_entry_by_id(VlobID::default()).await,
+            Err(WorkspaceStatEntryError::Stopped)
+        );
+        // Re-opening it shows an empty local storage
+        let mut storage = libparsec_platform_storage::workspace::WorkspaceStorage::start(
+            &env.discriminant_dir,
+            &alice,
+            wksp1_id,
+            0,
+        )
+        .await
+        .unwrap();
+        let realm_checkpoint = storage.get_realm_checkpoint().await.unwrap();
+        p_assert_eq!(realm_checkpoint, 0);
+    } else {
+        // Workspace still started, database not removed so root is not placeholder
+        p_assert_matches!(
+            wksp1.stat_entry(&"/".parse().unwrap()).await,
+            Ok(EntryStat::Folder{ is_placeholder, .. })
+            if !is_placeholder
+        );
+    }
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

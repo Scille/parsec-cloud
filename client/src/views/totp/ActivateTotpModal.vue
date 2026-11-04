@@ -1,0 +1,595 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
+
+<template>
+  <ion-page class="mfa-activation-modal">
+    <ms-modal
+      :title="currentStep === Steps.PromptAuthentication ? promptAuthTitle : 'Authentication.mfa.title'"
+      :close-button="{ visible: currentStep !== Steps.Finalization }"
+      :confirm-button="{
+        disabled: !nextButton.enabled || querying,
+        label: nextButton.label,
+        onClick: onNextButtonClicked,
+        queryingSpinner: querying,
+      }"
+      :cancel-button="cancelButton"
+      :class="currentStep"
+    >
+      <div class="modal-content">
+        <div
+          v-if="currentStep === Steps.PromptAuthentication && (params.mode === 'setup' || params.mode === 'activate')"
+          class="modal-current-authentication"
+        >
+          <prompt-current-authentication
+            :device="params.device"
+            :server-config="serverConfig"
+            @authentication-selected="onAuthenticationSelected"
+            @enter-pressed="onNextButtonClicked"
+          />
+        </div>
+        <div
+          v-if="currentStep === Steps.Information"
+          class="modal-content-information"
+        >
+          <ms-spinner v-if="!url && !error" />
+          <div
+            v-if="url"
+            class="step-container"
+          >
+            <div class="step-info">
+              <ion-text class="step-info__title step-info__title--heading">{{ $msTranslate('Authentication.mfa.step1.title') }}</ion-text>
+              <ion-text class="step-info__title step-info__title--description">
+                {{ $msTranslate('Authentication.mfa.step1.description') }}
+              </ion-text>
+            </div>
+
+            <div class="step-info">
+              <ion-text class="step-info__title step-info__title--heading">{{ $msTranslate('Authentication.mfa.step2.title') }}</ion-text>
+              <ion-text class="step-info__title step-info__title--description">
+                {{ $msTranslate('Authentication.mfa.step2.description') }}
+              </ion-text>
+            </div>
+
+            <div class="step-code">
+              <figure class="step-code-qrcode">
+                <q-r-code-vue3
+                  :value="url"
+                  :image="ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string"
+                  :image-options="{ hideBackgroundDots: true, imageSize: 1, margin: 4 }"
+                  :qr-options="{ errorCorrectionLevel: 'L' }"
+                  :dots-options="{
+                    type: 'dots',
+                    color: '#0058CC',
+                  }"
+                  :background-options="{ color: qrCodeBackgroundColor }"
+                  :corners-square-options="{ type: 'extra-rounded', color: '#0058CC' }"
+                  :corners-dot-options="{ type: 'dot', color: '#0058CC' }"
+                />
+              </figure>
+              <div class="divider">
+                <ion-text class="divider__text">
+                  {{ $msTranslate('Authentication.mfa.or') }}
+                </ion-text>
+              </div>
+              <div class="input-action">
+                <div class="input-action-text-container">
+                  <ion-text class="input-action-text">{{ code }}</ion-text>
+                </div>
+                <div class="input-action-buttons">
+                  <ion-button
+                    @click="copyCode"
+                    :disabled="codeCopied !== undefined"
+                    class="input-action-button color-secondary"
+                    fill="clear"
+                  >
+                    <ion-icon
+                      class="button-icon button-icon-left"
+                      :icon="codeCopied ? checkmarkCircle : copy"
+                    />
+                    <span
+                      v-show="codeCopied === undefined"
+                      v-if="isLargeDisplay"
+                    >
+                      {{ $msTranslate('Authentication.mfa.step2.buttonCopy') }}
+                    </span>
+                    <span
+                      v-show="codeCopied === true"
+                      v-if="isLargeDisplay"
+                    >
+                      {{ $msTranslate('Authentication.mfa.step2.buttonCopied') }}
+                    </span>
+                  </ion-button>
+                </div>
+                <ion-text
+                  v-if="codeCopied === false"
+                  class="input-action-error"
+                >
+                  {{ $msTranslate('Authentication.mfa.step2.copyError') }}
+                </ion-text>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="currentStep === Steps.EnterCode"
+          class="modal-content-enter-code"
+        >
+          <div class="authentication-code">
+            <ion-text class="authentication-code__title">
+              {{ $msTranslate('Authentication.mfa.digitCode.label') }}
+            </ion-text>
+          </div>
+          <ms-input
+            v-model="verifyCode"
+            @change="error = ''"
+            placeholder="Authentication.mfa.digitCode.placeholder"
+          />
+        </div>
+        <div
+          v-if="currentStep === Steps.Finalization"
+          class="modal-content-finalization"
+        >
+          <ms-report-text :theme="MsReportTheme.Success">
+            {{ $msTranslate('Authentication.mfa.mfaSuccess.info') }}
+          </ms-report-text>
+          <ion-text class="finalization-title">{{ $msTranslate('Authentication.mfa.mfaSuccess.description') }}</ion-text>
+        </div>
+        <ms-report-text
+          v-if="error"
+          :theme="MsReportTheme.Error"
+        >
+          {{ $msTranslate(error) }}
+        </ms-report-text>
+      </div>
+    </ms-modal>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
+import {
+  AvailableDevice,
+  AvailableDeviceTypeTag,
+  constructAccessStrategy,
+  constructSaveStrategy,
+  createTotpOpaqueKey,
+  DevicePrimaryProtectionStrategy,
+  DevicePrimaryProtectionStrategyTag,
+  generateTotpUrl,
+  getServerConfig,
+  getTotpStatus,
+  isAuthenticationValid,
+  ParsecTOTPResetAddr,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
+  ServerConfig,
+  totpConfirmReset,
+  totpResetStatus,
+  TOTPSetupStatusTag,
+  updateDeviceChangeAuthentication,
+  verifyTotpSetup,
+} from '@/parsec';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
+import { IonButton, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
+import { checkmarkCircle, copy } from 'ionicons/icons';
+import { Clipboard, MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
+import QRCodeVue3 from 'qrcode-vue3';
+import { computed, onMounted, ref, toRaw } from 'vue';
+
+enum Steps {
+  PromptAuthentication = 'prompt-authentication',
+  Information = 'information',
+  EnterCode = 'enter-code',
+  Finalization = 'finalization',
+}
+
+const props = defineProps<{
+  params:
+    | { mode: 'setup'; device: AvailableDevice; currentAuth?: DevicePrimaryProtectionStrategy }
+    | { mode: 'reset'; link: ParsecTOTPResetAddr }
+    | { mode: 'activate'; device: AvailableDevice; currentAuth?: DevicePrimaryProtectionStrategy };
+}>();
+
+const { isLargeDisplay } = useWindowSize();
+// QR code is drawn on a canvas, so the theme token has to be resolved to a concrete color
+const qrCodeBackgroundColor = getComputedStyle(document.body).getPropertyValue('--parsec-color-surface-base-default').trim();
+const url = ref('');
+const code = ref('');
+const verifyCode = ref('');
+const codeCopied = ref<boolean | undefined>(undefined);
+const currentStep = ref<Steps>(
+  props.params.mode === 'setup' || props.params.mode === 'activate' ? Steps.PromptAuthentication : Steps.Information,
+);
+const error = ref('');
+const serverConfig = ref<ServerConfig | undefined>(undefined);
+const primaryProtection = ref<DevicePrimaryProtectionStrategy | undefined>(undefined);
+const querying = ref(false);
+
+const nextButton = computed(() => {
+  if (currentStep.value === Steps.PromptAuthentication) {
+    return { enabled: primaryProtection.value !== undefined, label: 'MyProfilePage.nextButton' };
+  } else if (currentStep.value === Steps.Information) {
+    return { enabled: true, label: 'Authentication.mfa.buttons.next' };
+  } else if (currentStep.value === Steps.EnterCode) {
+    return { enabled: verifyCode.value.length > 0, label: 'Authentication.mfa.buttons.next' };
+  } else {
+    return { enabled: true, label: 'Authentication.mfa.buttons.done' };
+  }
+});
+
+const promptAuthTitle = computed(() => {
+  if (props.params.mode !== 'setup' && props.params.mode !== 'activate') {
+    return '';
+  }
+  if (props.params.device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    return 'MyProfilePage.titleCurrentOpenBao';
+  } else if (props.params.device.ty.tag === AvailableDeviceTypeTag.PKI) {
+    return 'MyProfilePage.titleCurrentCertificate';
+  } else {
+    return 'MyProfilePage.titleCurrentPassword';
+  }
+});
+
+const cancelButton = computed(() => {
+  if (currentStep.value === Steps.PromptAuthentication) {
+    return {
+      label: 'MyProfilePage.cancelButton',
+      disabled: false,
+      onClick: cancel,
+    };
+  } else if (currentStep.value === Steps.EnterCode) {
+    return {
+      label: 'Authentication.mfa.buttons.back',
+      disabled: false,
+      onClick: onPreviousClicked,
+    };
+  }
+  return undefined;
+});
+
+onMounted(async () => {
+  if (props.params.mode === 'setup') {
+    const statusResult = await getTotpStatus();
+
+    if (!statusResult.ok || statusResult.value.tag !== TOTPSetupStatusTag.Unconfirmed) {
+      error.value = 'Authentication.mfa.error.failedToConfigure';
+      return;
+    }
+
+    const serverConfigResult = await getServerConfig(props.params.device.serverAddr);
+
+    if (serverConfigResult.ok) {
+      serverConfig.value = serverConfigResult.value;
+    }
+    code.value = statusResult.value.base32TotpSecret;
+    url.value = await generateTotpUrl(code.value, props.params.device.organizationId);
+    if (props.params.currentAuth) {
+      primaryProtection.value = props.params.currentAuth;
+      await onNextButtonClicked();
+    }
+  } else if (props.params.mode === 'activate') {
+    const serverConfigResult = await getServerConfig(props.params.device.serverAddr);
+
+    if (serverConfigResult.ok) {
+      serverConfig.value = serverConfigResult.value;
+    }
+    if (props.params.currentAuth) {
+      primaryProtection.value = props.params.currentAuth;
+      await onNextButtonClicked();
+    }
+  } else {
+    const parseResult = await parseParsecAddr(props.params.link);
+    if (!parseResult.ok || parseResult.value.tag !== ParsedParsecAddrTag.TOTPReset) {
+      window.nativeAPI.log('warn', 'Invalid totp reset link');
+      return;
+    }
+    const statusResult = await totpResetStatus(props.params.link);
+    if (!statusResult.ok || statusResult.value.tag !== TOTPSetupStatusTag.Unconfirmed) {
+      error.value = 'Authentication.mfa.error.failedToConfigure';
+      return;
+    }
+
+    code.value = statusResult.value.base32TotpSecret;
+    url.value = await generateTotpUrl(code.value, parseResult.value.organizationId);
+  }
+});
+
+async function copyCode(): Promise<void> {
+  codeCopied.value = await Clipboard.writeText(code.value);
+  setTimeout(() => {
+    codeCopied.value = undefined;
+  }, 2000);
+}
+
+async function setupTotp(): Promise<void> {
+  if (props.params.mode !== 'setup') {
+    window.nativeAPI.log('warn', 'Mode is not setup.');
+    return;
+  }
+  if (!primaryProtection.value) {
+    window.nativeAPI.log('warn', 'Primary protection not provided.');
+    return;
+  }
+  const result = await verifyTotpSetup(verifyCode.value.trim());
+  if (!result.ok) {
+    error.value = 'Authentication.mfa.error.invalidCode';
+    return;
+  }
+  const totpOpaqueKeyResult = await createTotpOpaqueKey();
+  if (!totpOpaqueKeyResult.ok) {
+    error.value = 'Authentication.mfa.error.failedToRetrieveKey';
+    return;
+  }
+  const saveStrategy = constructSaveStrategy(toRaw(primaryProtection.value), [totpOpaqueKeyResult.value[0], totpOpaqueKeyResult.value[1]]);
+  const accessStrategy = constructAccessStrategy(props.params.device, toRaw(primaryProtection.value));
+  const updateAuthResult = await updateDeviceChangeAuthentication(accessStrategy, saveStrategy);
+  if (!updateAuthResult.ok) {
+    error.value = 'Authentication.mfa.error.failedToConfigure';
+    return;
+  }
+  currentStep.value = Steps.Finalization;
+}
+
+async function activateTotp(): Promise<void> {
+  if (props.params.mode !== 'activate') {
+    window.nativeAPI.log('warn', 'Mode is not activate.');
+    return;
+  }
+  if (!primaryProtection.value) {
+    window.nativeAPI.log('warn', 'Primary protection not provided.');
+    return;
+  }
+
+  const totpOpaqueKeyResult = await createTotpOpaqueKey();
+  if (!totpOpaqueKeyResult.ok) {
+    error.value = 'Authentication.mfa.error.failedToRetrieveKey';
+    return;
+  }
+  const saveStrategy = constructSaveStrategy(toRaw(primaryProtection.value), [totpOpaqueKeyResult.value[0], totpOpaqueKeyResult.value[1]]);
+  const accessStrategy = constructAccessStrategy(props.params.device, toRaw(primaryProtection.value));
+  const updateAuthResult = await updateDeviceChangeAuthentication(accessStrategy, saveStrategy);
+  if (!updateAuthResult.ok) {
+    error.value = 'Authentication.mfa.error.failedToActivate';
+    return;
+  }
+  currentStep.value = Steps.Finalization;
+}
+
+async function resetTotp(): Promise<void> {
+  if (props.params.mode !== 'reset') {
+    window.nativeAPI.log('warn', 'Mode is not reset.');
+    return;
+  }
+  if (!verifyCode.value.length) {
+    error.value = 'Authentication.mfa.error.emptyCode';
+    return;
+  }
+  const result = await totpConfirmReset(props.params.link, verifyCode.value.trim());
+  if (!result.ok) {
+    error.value = 'Authentication.mfa.error.failedToReset';
+    return;
+  }
+  currentStep.value = Steps.Finalization;
+}
+
+async function onAuthenticationSelected(authentication?: DevicePrimaryProtectionStrategy): Promise<void> {
+  primaryProtection.value = authentication;
+
+  if (
+    primaryProtection.value &&
+    (primaryProtection.value.tag === DevicePrimaryProtectionStrategyTag.Keyring ||
+      primaryProtection.value.tag === DevicePrimaryProtectionStrategyTag.PKI)
+  ) {
+    await onNextButtonClicked();
+  }
+}
+
+async function onNextButtonClicked(): Promise<boolean> {
+  error.value = '';
+  if (currentStep.value === Steps.PromptAuthentication && primaryProtection.value && props.params.mode === 'setup') {
+    const access = constructAccessStrategy(props.params.device, toRaw(primaryProtection.value));
+    const result = await isAuthenticationValid(props.params.device, access);
+
+    if (result) {
+      error.value = '';
+      currentStep.value = Steps.Information;
+    } else {
+      error.value = 'MyProfilePage.errors.wrongAuthentication';
+      return false;
+    }
+  } else if (currentStep.value === Steps.PromptAuthentication && primaryProtection.value && props.params.mode === 'activate') {
+    const access = constructAccessStrategy(props.params.device, toRaw(primaryProtection.value));
+    const result = await isAuthenticationValid(props.params.device, access);
+
+    if (result) {
+      error.value = '';
+      currentStep.value = Steps.EnterCode;
+    } else {
+      error.value = 'MyProfilePage.errors.wrongAuthentication';
+      return false;
+    }
+  } else if (currentStep.value === Steps.Information) {
+    currentStep.value = Steps.EnterCode;
+  } else if (currentStep.value === Steps.EnterCode) {
+    try {
+      querying.value = true;
+      if (props.params.mode === 'setup') {
+        await setupTotp();
+      } else if (props.params.mode === 'activate') {
+        await activateTotp();
+      } else {
+        await resetTotp();
+      }
+    } finally {
+      querying.value = false;
+    }
+  } else if (currentStep.value === Steps.Finalization) {
+    await modalController.dismiss(undefined, MsModalResult.Confirm);
+  }
+  return true;
+}
+
+async function cancel(): Promise<boolean> {
+  return modalController.dismiss(null, MsModalResult.Cancel);
+}
+
+async function onPreviousClicked(): Promise<boolean> {
+  if (currentStep.value === Steps.EnterCode) {
+    currentStep.value = Steps.Information;
+    return true;
+  }
+  return false;
+}
+</script>
+
+<style scoped lang="scss">
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-3xl');
+}
+
+.step-container {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-3xl');
+
+  .step-info {
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-base-body');
+
+    &__title--heading {
+      @include ms.font('heading-h5');
+    }
+
+    &__title--description {
+      @include ms.font('body-lg-regular');
+    }
+  }
+
+  .step-code {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: ms.spacing('gap-3xl');
+    background: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    padding: ms.spacing('padding-3xl');
+    border-radius: ms.radius('2xl');
+    box-shadow: ms.shadow('elevation-xs');
+
+    .input-action {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+
+      &-text-container {
+        background-color: ms.color('surface-neutral-default-subtle');
+        padding: ms.spacing('padding-xl');
+        border-radius: ms.radius('lg');
+        border: ms.border('thin') solid ms.color('border-base-default');
+      }
+
+      &-text {
+        @include ms.font('label-md-medium');
+        color: ms.color('text-base-label');
+        word-break: break-all;
+      }
+
+      &-buttons {
+        display: flex;
+        gap: ms.spacing('gap-2xl');
+        justify-content: flex-end;
+        margin-top: 1rem;
+      }
+
+      &-error {
+        @include ms.font('body-sm-regular');
+        color: ms.color('text-error-default');
+        margin-top: 0.5rem;
+      }
+
+      .button-icon {
+        width: 1rem;
+        --fill-color: #{ms.color('icon-neutral-default')};
+      }
+    }
+
+    &-qrcode {
+      margin: 0;
+      width: 11rem;
+      height: 11rem;
+    }
+
+    .divider {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: ms.spacing('gap-lg');
+
+      ion-text {
+        @include ms.font('heading-h5');
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: ms.spacing('gap-lg');
+        color: ms.color('text-base-placeholder');
+        text-transform: uppercase;
+
+        &::before,
+        &::after {
+          content: '';
+          margin: auto;
+          display: flex;
+          background: ms.color('border-base-default-hover');
+        }
+
+        &::before {
+          height: 1px;
+          width: 3rem;
+        }
+
+        &::after {
+          height: 1px;
+          width: 3rem;
+        }
+      }
+    }
+  }
+}
+
+.modal-content-enter-code {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-3xl');
+}
+
+.authentication-code {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-lg');
+  color: ms.color('text-base-body');
+
+  &__title {
+    @include ms.font('heading-h5');
+    color: ms.color('text-base-body');
+  }
+
+  &__description {
+    color: ms.color('text-base-body');
+  }
+}
+
+.modal-content-finalization {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-lg');
+  color: ms.color('text-base-body');
+
+  .finalization-title {
+    @include ms.font('body-md-regular');
+  }
+}
+</style>

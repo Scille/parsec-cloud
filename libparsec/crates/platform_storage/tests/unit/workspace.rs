@@ -10,14 +10,16 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
+    PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
     workspace::{
         DebugBlock, DebugChunk, DebugDump, DebugVlob, MarkPreventSyncPatternFullyAppliedError,
-        UpdateManifestData,
+        UpdateManifestData, WorkspaceOutboundSyncBacklog,
     },
-    PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
 };
 
-use super::{workspace_storage_non_speculative_init, WorkspaceStorage};
+use super::{
+    WorkspaceStorage, workspace_storage_non_speculative_init, workspace_storage_remove_data,
+};
 
 #[cfg(target_arch = "wasm32")]
 libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser);
@@ -224,6 +226,69 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         };
         p_assert_eq!(folder_manifest.need_sync, expected_need_sync);
     }
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn remove_workspace_data_testbed_support(env: &TestbedEnv) {
+    let (realm_id1, realm_id2) = env
+        .customize(|builder| {
+            let realm_id1 = builder.new_realm("alice").map(|e| e.realm_id);
+            let realm_id2 = builder.new_realm("alice").map(|e| e.realm_id);
+            for realm_id in [realm_id1, realm_id2] {
+                builder.rotate_key_realm(realm_id);
+                let block_id = builder
+                    .create_block("alice@dev1", realm_id, b"<block1>".as_ref())
+                    .map(|e| e.block_id);
+                builder.create_or_update_workspace_manifest_vlob("alice@dev1", realm_id);
+                builder
+                    .workspace_data_storage_chunk_create(
+                        "alice@dev1",
+                        realm_id,
+                        b"<chunk1>".as_ref(),
+                    )
+                    .map(|e| e.chunk_id);
+                builder
+                    .workspace_data_storage_local_file_manifest_create_or_update(
+                        "alice@dev1",
+                        realm_id,
+                        None,
+                        Some(realm_id),
+                    )
+                    .map(|e| e.local_manifest.base.id);
+
+                builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", realm_id);
+                builder.workspace_data_storage_fetch_workspace_vlob(
+                    "alice@dev1",
+                    realm_id,
+                    libparsec_types::PreventSyncPattern::empty(),
+                );
+                builder.workspace_cache_storage_fetch_block("alice@dev1", realm_id, block_id);
+            }
+            (realm_id1, realm_id2)
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+
+    workspace_storage_remove_data(&env.discriminant_dir, &alice, realm_id1)
+        .await
+        .unwrap();
+
+    let dump1 = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id1, u64::MAX)
+        .await
+        .unwrap()
+        .debug_dump()
+        .await
+        .unwrap();
+    let dump2 = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id2, u64::MAX)
+        .await
+        .unwrap()
+        .debug_dump()
+        .await
+        .unwrap();
+
+    assert_eq!(dump1, DebugDump::default());
+    assert_ne!(dump2, DebugDump::default());
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -1360,4 +1425,200 @@ async fn get_inbound_outbound_need_sync(env: &TestbedEnv) {
 
     assert_outbound_need_sync!(vec![vlob1_id, vlob2_id]).await;
     assert_inbound_need_sync!(vec![vlob3_id, vlob4_id]).await;
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn get_outbound_sync_backlog(env: &TestbedEnv) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000b1").unwrap();
+    let alice = env.local_device("alice@dev1");
+
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
+
+    // 1) Empty
+
+    p_assert_eq!(
+        workspace_storage.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 0,
+            pending_bytes: 0,
+        }
+    );
+
+    // 2) Add content
+
+    let folder_need_sync_id = VlobID::from_hex("aa0000000000000000000000000000e1").unwrap();
+    let folder_eventually_synced_id = VlobID::from_hex("aa0000000000000000000000000000e2").unwrap();
+    let file_need_sync_id = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
+    let file_eventually_synced_id = VlobID::from_hex("aa0000000000000000000000000000f2").unwrap();
+    let chunk1 = ChunkID::from_hex("aa0000000000000000000000000000c1").unwrap();
+    let chunk2 = ChunkID::from_hex("aa0000000000000000000000000000c2").unwrap();
+    let chunk3 = ChunkID::from_hex("aa0000000000000000000000000000c3").unwrap();
+    let chunk4 = ChunkID::from_hex("aa0000000000000000000000000000c4").unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: folder_need_sync_id,
+            encrypted: b"<dummy>".to_vec(),
+            need_sync: true,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: folder_eventually_synced_id,
+            encrypted: b"<dummy>".to_vec(),
+            need_sync: true,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest_and_chunks(
+            &UpdateManifestData {
+                entry_id: file_need_sync_id,
+                encrypted: b"<dummy>".to_vec(),
+                need_sync: true,
+                base_version: 1,
+            },
+            [
+                (chunk1, b"<chunk1>".to_vec()),
+                (chunk2, b"<chunk-two>".to_vec()),
+            ]
+            .into_iter(),
+            [].into_iter(),
+        )
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest_and_chunks(
+            &UpdateManifestData {
+                entry_id: file_eventually_synced_id,
+                encrypted: b"<dummy>".to_vec(),
+                need_sync: true,
+                base_version: 1,
+            },
+            [
+                (chunk3, b"<chunk3>".to_vec()),
+                (chunk4, b"<chunk-four>".to_vec()),
+            ]
+            .into_iter(),
+            [].into_iter(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        workspace_storage.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 4,
+            pending_bytes: (b"<chunk1>".len()
+                + b"<chunk-two>".len()
+                + b"<chunk3>".len()
+                + b"<chunk-four>".len()) as u64
+        }
+    );
+
+    // 3) Mark some data as synchronized
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: folder_eventually_synced_id,
+            encrypted: b"<dummy>".to_vec(),
+            need_sync: false,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest_and_chunks(
+            &UpdateManifestData {
+                entry_id: file_eventually_synced_id,
+                encrypted: b"<dummy>".to_vec(),
+                need_sync: false,
+                base_version: 2,
+            },
+            // Chunk 3 & 4 gets removed since they are synchronized
+            [].into_iter(),
+            [chunk3, chunk4].into_iter(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        workspace_storage.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 2,
+            pending_bytes: (b"<chunk1>".len() + b"<chunk-two>".len()) as u64,
+        }
+    );
+}
+
+#[parsec_test]
+async fn remove_data(tmp_path: TmpPath, alice: &Device) {
+    let realm_id1 = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
+    let realm_id2 = VlobID::from_hex("aa0000000000000000000000000000f2").unwrap();
+    let alice = alice.local_device();
+
+    workspace_storage_non_speculative_init(&tmp_path, &alice, realm_id1)
+        .await
+        .unwrap();
+    workspace_storage_non_speculative_init(&tmp_path, &alice, realm_id2)
+        .await
+        .unwrap();
+
+    let assert_workspace_db_exists = async |realm_id: VlobID, expect_exist: bool| {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let realm_dir = tmp_path.join(alice.device_id.hex()).join(realm_id.hex());
+            let cache_db = realm_dir.join("workspace_cache-v1.sqlite");
+            let data_db = realm_dir.join("workspace_data-v1.sqlite");
+            if expect_exist {
+                assert!(realm_dir.exists());
+                assert!(cache_db.exists());
+                assert!(data_db.exists());
+            } else {
+                assert!(!cache_db.exists());
+                assert!(!data_db.exists());
+                assert!(!realm_dir.exists());
+            }
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let mut workspace_storage =
+                WorkspaceStorage::start(&tmp_path, &alice, realm_id, u64::MAX)
+                    .await
+                    .unwrap();
+            let dump = workspace_storage.debug_dump().await.unwrap();
+            workspace_storage.stop().await.unwrap();
+            if expect_exist {
+                assert_ne!(dump, DebugDump::default());
+            } else {
+                assert_eq!(dump, DebugDump::default());
+            }
+        }
+    };
+
+    // Sanity check to ensure the workspace has some data
+    assert_workspace_db_exists(realm_id1, true).await;
+    assert_workspace_db_exists(realm_id2, true).await;
+
+    // Remove workspace data
+    workspace_storage_remove_data(&tmp_path, &alice, realm_id1)
+        .await
+        .unwrap();
+    assert_workspace_db_exists(realm_id1, false).await;
+    assert_workspace_db_exists(realm_id2, true).await;
+
+    // Removing should be idempotent
+    workspace_storage_remove_data(&tmp_path, &alice, realm_id1)
+        .await
+        .unwrap();
 }

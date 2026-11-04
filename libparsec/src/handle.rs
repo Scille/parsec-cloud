@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 
@@ -72,6 +72,11 @@ pub(crate) enum HandleItem {
     },
 
     Account(Arc<libparsec_account::Account>),
+
+    PkiPrivateKey {
+        certificate: Arc<libparsec_platform_pki::PkiCertificate>,
+        private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
+    },
 
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
     DeviceGreetInitial(libparsec_client::DeviceGreetInitialCtx),
@@ -219,10 +224,10 @@ pub(crate) fn filter_close_handles(
     let mut guard = get_handles();
 
     for maybe_running in guard.iter_mut().skip(start_at as usize) {
-        if let RegisteredHandleItem::Open(item) = maybe_running {
-            if let FilterCloseHandle::Close = filter(item) {
-                *maybe_running = RegisteredHandleItem::Closed;
-            }
+        if let RegisteredHandleItem::Open(item) = maybe_running
+            && let FilterCloseHandle::Close = filter(item)
+        {
+            *maybe_running = RegisteredHandleItem::Closed;
         }
     }
 }

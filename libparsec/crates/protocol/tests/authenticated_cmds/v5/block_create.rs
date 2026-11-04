@@ -80,6 +80,28 @@ pub fn rep_realm_not_found() {
     rep_helper(&raw, expected);
 }
 
+pub fn rep_realm_archived() {
+    // Generated from Parsec 3.8.2-a.0+dev
+    // Content:
+    //   status: 'realm_archived'
+    let raw = hex!("81a6737461747573ae7265616c6d5f6172636869766564");
+    let expected = authenticated_cmds::block_create::Rep::RealmArchived;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    rep_helper(&raw, expected);
+}
+
+pub fn rep_realm_deleted() {
+    // Generated from Parsec 3.8.2-a.0+dev
+    // Content:
+    //   status: 'realm_deleted'
+    let raw = hex!("81a6737461747573ad7265616c6d5f64656c65746564");
+    let expected = authenticated_cmds::block_create::Rep::RealmDeleted;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    rep_helper(&raw, expected);
+}
+
 pub fn rep_author_not_allowed() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:

@@ -1,35 +1,36 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-drop-zone
     ref="fileDropZone"
     :show-drop-message="true"
     @files-added="$emit('filesAdded', $event)"
-    :is-reader="ownRole === WorkspaceRole.Reader"
+    :is-reader="isReader"
     @drop-as-reader="$emit('dropAsReader')"
   >
     <div
       ref="containerScroll"
       @contextmenu="onContextMenu"
     >
-      <div class="folders-container-grid">
+      <div class="grid-container files-grid-container">
         <file-card
           class="folder-grid-item"
           ref="folderItems"
           v-for="folder in folders.getEntries()"
+          v-model:selected="folder.isSelected"
           :key="folder.id"
           :entry="folder"
           :show-checkbox="hasSelected() || selectionEnabled === true"
           @open-item.stop="$emit('openItem', folder, $event)"
           @menu-click="onMenuClick"
           @files-added="onFilesAdded"
-          :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+          :is-workspace-reader="isReader"
           @drop-as-reader="$emit('dropAsReader')"
-          v-model="folder.isSelected"
         />
         <file-card
           class="folder-grid-item"
           ref="fileItems"
+          v-model:selected="file.isSelected"
           v-for="file in files.getEntries()"
           :key="file.id"
           :entry="file"
@@ -38,7 +39,6 @@
           @menu-click="onMenuClick"
           @files-added="onFilesAdded"
           @drop-as-reader="$emit('dropAsReader')"
-          v-model="file.isSelected"
         />
         <file-card-processing
           v-for="op in fileOperations"
@@ -55,13 +55,13 @@ import FileCard from '@/components/files/explorer/FileCard.vue';
 import FileCardProcessing from '@/components/files/explorer/FileCardProcessing.vue';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryCollection, EntryModel, FileModel, FileOperationCurrentFolder, FolderModel } from '@/components/files/types';
-import { EntryName, WorkspaceRole } from '@/parsec';
+import { EntryName } from '@/parsec';
 import { useTemplateRef } from 'vue';
 
 const props = defineProps<{
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
-  ownRole: WorkspaceRole;
+  isReader: boolean;
   selectionEnabled?: boolean;
   fileOperations: Array<FileOperationCurrentFolder>;
 }>();
@@ -75,7 +75,7 @@ const emits = defineEmits<{
   (e: 'openItem', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
-  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
+  (e: 'filesAdded', gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
 }>();
 
@@ -92,9 +92,9 @@ defineExpose({
   scrollToSelected,
 });
 
-function onFilesAdded(files: Array<File>, destinationFolder?: EntryName): void {
+function onFilesAdded(gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void {
   fileDropZoneRef.value?.reset();
-  emits('filesAdded', files, destinationFolder);
+  emits('filesAdded', gen, destinationFolder);
 }
 
 function hasSelected(): boolean {
@@ -130,19 +130,19 @@ async function scrollToSelected(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.folders-container-grid {
+.files-grid-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   overflow-y: auto;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem 1rem 0;
-    gap: 1.5rem;
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl') ms.spacing('padding-none');
+    gap: ms.spacing('gap-4xl');
   }
 
   @include ms.responsive-breakpoint('xs') {
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 </style>

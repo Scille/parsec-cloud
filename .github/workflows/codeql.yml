@@ -22,22 +22,24 @@ concurrency:
   group: codeql-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  node-version: 24.22.1
+
 permissions:
   contents: read
   security-events: write
+  pull-requests: read # Needed by `dorny/paths-filter` action
 
 jobs:
   python-analyze:
     name: 🐍 Python static code Analysis
-    runs-on: ubuntu-22.04
-    env:
-      poetry-version: 2.2.1
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin v4.0.3
         id: changes
         with:
           filters: .github/filters/codeql.yml
@@ -58,7 +60,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # pin v4.39.1
         with:
           languages: python
           setup-python-dependencies: false
@@ -69,112 +71,33 @@ jobs:
           # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
           # queries: security-extended,security-and-quality
 
-      - uses: ./.github/actions/setup-python-poetry
-        if: steps.should-run-python-analysis.outputs.run == 'true'
-        id: setup-python
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
+          working-directory: server
+          version: 0.13.4 # marker:uv-version
+        timeout-minutes: 5
 
       - name: Install python deps
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        run: |
-          poetry install
-          poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
+        run: uv run --locked sh -c 'echo "CODEQL_PYTHON=$(which python)"' | tee -a $GITHUB_ENV
         working-directory: server
-        env:
-          POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # pin v4.39.1
         with:
           category: /language:python
 
-  # Disabled till we fix Android with Vite
-  # see issue: #4395
-  # java-analyze:
-  #   name: ☕ Java static code Analysis
-  #   runs-on: ubuntu-22.04
-  #   env:
-  #     NDK_VERSION: 23.2.8568313
-  #     SDK_VERSION: 30.0.3
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
-  #       timeout-minutes: 5
-
-  #     - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
-  #       id: changes
-  #       with:
-  #         filters: .github/filters/codeql.yml
-
-  #     - name: Check modified path that require `java-analysis` to run
-  #       id: should-run-java-analysis
-  #       if: >-
-  #         steps.changes.outputs.java-analyze == 'true'
-  #         || contains(github.ref, 'gh-readonly-queue')
-  #         || github.ref == 'refs/heads/master'
-  #       run: echo "run=true" >> $GITHUB_OUTPUT
-  #       shell: bash
-
-  #     - name: Add android cmdline tools to path
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
-
-  #     - name: Install dependencies for Android
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "build-tools;${{ env.SDK_VERSION }}"
-
-  #     - name: Install dependencies for ionic project
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: npm clean-install
-  #       working-directory: client
-
-  #     - name: Build ionic for Android
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: |
-  #         npm run android:copy:release
-  #       working-directory: client
-  #       env:
-  #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
-
-  #     # Initializes the CodeQL tools for scanning.
-  #     - name: Initialize CodeQL
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/init@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
-  #       with:
-  #         languages: java
-  #         # If you wish to specify custom queries, you can do so here or in a config file.
-  #         # By default, queries listed here will override any specified in a config file.
-  #         # Prefix the list here with "+" to use these queries and those in the config file.
-
-  #         # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
-  #         # queries: security-extended,security-and-quality
-
-  #     - name: Autobuild android
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/autobuild@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
-  #       with:
-  #         working-directory: client/android
-  #       env:
-  #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
-
-  #     - name: Perform CodeQL Analysis
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/analyze@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
-  #       with:
-  #         category: /language:java
-
   javascript-analyze:
     name: 🌐 Javascript static code Analysis
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin v4.0.3
         id: changes
         with:
           filters: .github/filters/codeql.yml
@@ -191,9 +114,15 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # pin v4.39.1
         with:
           languages: typescript
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # pin v7.1.0
+        if: steps.should-run-js-analysis.outputs.run == 'true'
+        with:
+          node-version: ${{ env.node-version }}
+        timeout-minutes: 2
 
       - name: Install dependencies for ionic project
         if: steps.should-run-js-analysis.outputs.run == 'true'
@@ -202,12 +131,12 @@ jobs:
 
       - name: Autobuild for typescript
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/autobuild@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
+        uses: github/codeql-action/autobuild@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # pin v4.39.1
         with:
           working-directory: client
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # pin v4.31.9
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # pin v4.39.1
         with:
           category: /language:typescript

@@ -1,12 +1,12 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Certificate storage relies on the upper layer to do the actual certification
 // validation work and takes care of handling concurrency issues.
 // Hence no unique violation should occur under normal circumstances here.
 
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, SqliteConnection,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
 };
 use std::path::Path;
 
@@ -39,7 +39,9 @@ impl PlatformUserStorage {
         };
 
         #[cfg(feature = "test-with-testbed")]
-        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info).await;
+        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info)
+            .await
+            .map(|(conn, _)| conn);
 
         #[cfg(not(feature = "test-with-testbed"))]
         let conn: Option<SqliteConnection> = None;

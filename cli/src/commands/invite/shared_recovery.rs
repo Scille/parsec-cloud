@@ -1,13 +1,19 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+use std::{fmt::Write as _, io::Write as _};
 
 use libparsec::{EmailAddress, InvitationEmailSentStatus, InvitationType, ParsecInvitationAddr};
 
-use crate::utils::*;
+use crate::{
+    ui::compat::InvitationLink,
+    utils::{StartedClient, poll_server_for_new_certificates},
+};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device]
     pub struct Args {
         /// Claimer email (i.e.: The invitee)
+        #[arg(value_hint = clap::ValueHint::EmailAddress)]
         email: EmailAddress,
         /// Send email to the invitee
         #[arg(long, default_value_t)]
@@ -17,13 +23,17 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, invite_shared_recovery);
 
-pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn invite_shared_recovery(
+    ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args {
         email, send_email, ..
     } = args;
     log::trace!("Inviting an user to perform a shared recovery");
 
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&ui, client).await?;
 
     let users = client.list_users(true, None, None).await?;
     let user_info = users
@@ -31,7 +41,7 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
         .find(|u| u.human_handle.email() == &email)
         .ok_or_else(|| anyhow::anyhow!("User with email {} not found", email))?;
 
-    let mut handle = start_spinner("Creating a shared recovery invitation".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating a shared recovery invitation"))?;
     let (url, email_sent_status, token) = match client
         .new_shamir_recovery_invitation(user_info.id, send_email)
         .await
@@ -43,7 +53,7 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
                 InvitationType::ShamirRecovery,
                 token,
             )
-            .to_url(),
+            .to_http_redirection_url(),
             email_sent_status,
             token,
         ),
@@ -54,23 +64,33 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
         }
     };
 
-    handle.stop_with_message(format!(
-        "Invitation token: {YELLOW}{token}{RESET}\nInvitation URL: {YELLOW}{url}{RESET}"
-    ));
+    handle.stop();
 
     if send_email {
         match email_sent_status {
             InvitationEmailSentStatus::Success => {
-                println!("Invitation email sent to {email}");
+                ui.with_message(|_, out| writeln!(out, "Invitation email sent to {email}"))?;
             }
             InvitationEmailSentStatus::RecipientRefused => {
-                println!("Invitation email not sent to {email} because the recipient was refused");
+                ui.with_message(|_, out| {
+                    writeln!(
+                        out,
+                        "Invitation email not sent to {email} because the recipient was refused"
+                    )
+                })?;
             }
             InvitationEmailSentStatus::ServerUnavailable => {
-                println!("Invitation email not sent to {email} because the server is unavailable");
+                ui.with_message(|_, out| {
+                    writeln!(
+                        out,
+                        "Invitation email not sent to {email} because the server is unavailable"
+                    )
+                })?;
             }
         }
     }
+
+    ui.data_print(&InvitationLink { token, url })?;
 
     Ok(())
 }

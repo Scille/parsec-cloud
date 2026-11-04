@@ -1,4 +1,5 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 {# Macros -#}
 
 {#-
@@ -8,6 +9,8 @@
 
 {%- macro function_param_type(type) -%}
 {%- if type.kind == "ref" -%}
+{{ function_param_type(type.elem) }}
+{%- elif type.kind == "box" -%}
 {{ function_param_type(type.elem) }}
 {%- elif type.kind == "dict" -%}
 Object
@@ -63,7 +66,10 @@ String
 {%- macro render_function_param_cooking(param_name, type) -%}
 {% if type.kind == "ref" %}
 {{ render_function_param_cooking(param_name, type.elem) }}
+{% elif type.kind == "box" %}
+{{ render_function_param_cooking("*" + param_name, type.elem) }}
 {% elif type.kind == "optional" %}
+#[allow(clippy::manual_map, clippy::needless_match)]
 let {{ param_name }} = match {{ param_name }} {
     Some({{ param_name }}) => {
         {{ render_function_param_cooking(param_name, type.elem) }}
@@ -77,7 +83,10 @@ let {{ param_name }} =
 {
     let custom_from_rs_string = {{ type.custom_from_rs_string }};
     custom_from_rs_string({{ param_name }})
-        .map_err(|e| TypeError::new(e.as_ref()))
+        .map_err(|e| {
+            #[allow(clippy::useless_asref)]
+            TypeError::new(e.as_ref())
+        })
 }?;
 {%- else -%}
 {{ param_name }}.parse().map_err(|_| {
@@ -138,49 +147,35 @@ let {{ param_name }} = {
 {% elif type.kind == "f64_based" and type.custom_from_rs_f64 %}
 let {{ param_name }} = {
     let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
-    custom_from_rs_f64({{ param_name }})
-        .map_err(|e| TypeError::new(e.as_ref()))
+    custom_from_rs_f64({{ param_name }}).map_err(TypeError::new)
 }?;
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
 let {{ param_name }} = {{ render_js_value_to_rs(param_name, type) }};
 {% elif type.kind == "dict" %}
 let {{ param_name }} = {
-    let js_map = {{ param_name }};
-    let mut d = std::collections::HashMap::with_capacity(
-        Reflect::get(&js_map, &"size".into())?.dyn_into::<Number>()?.value_of() as usize
-    );
-
-    let js_keys = Reflect::get(&js_map, &"keys".into())?.dyn_into::<Function>()?.call0(&js_map)?;
-    let js_values = Reflect::get(&js_map, &"values".into())?.dyn_into::<Function>()?.call0(&js_map)?;
-
-    let js_literal_next = "next".into();
-    let js_keys_next_cb = Reflect::get(&js_keys, &js_literal_next)?.dyn_into::<Function>()?;
-    let js_values_next_cb = Reflect::get(&js_values, &js_literal_next)?.dyn_into::<Function>()?;
-
-    let js_literal_done = "done".into();
-    let js_literal_value = "value".into();
+    let js_val = {{ param_name }}.dyn_into::<Map>()
+        .map_err(|_| TypeError::new("Not a Map"))?;
+    let mut converted = std::collections::HashMap::with_capacity(js_val.size() as usize);
+    let js_keys = js_val.keys();
+    let js_values = js_val.values();
     loop {
-        let next_js_key = js_keys_next_cb.call0(&js_keys)?;
-        let next_js_value = js_values_next_cb.call0(&js_values)?;
-
-        let keys_done = Reflect::get(&next_js_key, &js_literal_done)?.dyn_into::<Boolean>()?.value_of();
-        let values_done = Reflect::get(&next_js_value, &js_literal_done)?.dyn_into::<Boolean>()?.value_of();
-        match (keys_done, values_done) {
-            (true, true) => break,
-            (false, false) => (),
-            _ => unreachable!(),
+        let next_js_key = js_keys.next()?;
+        let next_js_value = js_values.next()?;
+        if next_js_key.done() {
+            assert!(next_js_value.done());
+            break;
         }
+        assert!(!next_js_value.done());
 
-        let js_key = Reflect::get(&next_js_key, &js_literal_value)?.dyn_into::<JsString>()?;
-        let js_value = Reflect::get(&next_js_value, &js_literal_value)?.dyn_into::<JsString>()?;
+        let js_key = next_js_key.value();
+        let js_value = next_js_value.value();
 
-        let rs_key = {{ render_js_value_to_rs("js_key", type.key) }};
-        let rs_value = {{ render_js_value_to_rs("js_value", type.value) }};
-
-        d.insert(rs_key, rs_value);
+        let key = {{ render_js_value_to_rs("js_key", type.key) }};
+        let value = {{ render_js_value_to_rs("js_value", type.value) }};
+        converted.insert(key, value);
     }
-    d
+    converted
 };
 {% elif type.kind == "list" %}
 let mut {{ param_name }}_converted = Vec::with_capacity({{ param_name }}.len());
@@ -230,6 +225,8 @@ let {{ param_name }} = {{ enum_js_to_rs_function_name(type) }}(&{{ param_name }}
 {%- macro render_js_value_to_rs(js_val, type) -%}
 {%- if type.kind == "ref" -%}
 {{ render_js_value_to_rs(js_val, type.elem) }}
+{%- elif type.kind == "box" -%}
+Box::new({{ render_js_value_to_rs(js_val, type.elem) }})
 {%- elif type.kind == "optional" -%}
 if {{ js_val }}.is_null() {
     None
@@ -274,6 +271,7 @@ if {{ js_val }}.is_null() {
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
     }
     {%- else -%}
+    #[allow(clippy::let_and_return)]
     v
     {%- endif %}
 }
@@ -300,15 +298,15 @@ if {{ js_val }}.is_null() {
     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
         return Err(JsValue::from(TypeError::new("Not an u32 number")));
     }
-    let v = v as u32;
     {% if type.custom_from_rs_u32 -%}
+    let v = v as u32;
     let custom_from_rs_u32 = {{ type.custom_from_rs_u32 }};
     match custom_from_rs_u32(v) {
         Ok(val) => val,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
     }
     {%- else -%}
-    v
+    v as u32
     {%- endif %}
 }
 {%- elif type.kind == "i64_based" -%}
@@ -334,6 +332,7 @@ if {{ js_val }}.is_null() {
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
     }
     {%- else -%}
+    #[allow(clippy::let_and_return)]
     v
     {%- endif %}
 }
@@ -342,8 +341,9 @@ if {{ js_val }}.is_null() {
     let v = {{ js_val }}.dyn_into::<Number>()?.value_of();
 {% if type.custom_from_rs_f64 %}
     let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
-    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
 {% endif %}
+    #[allow(clippy::let_and_return)]
     v
 }
 {%- elif type.kind == "float" -%}
@@ -355,7 +355,10 @@ if {{ js_val }}.is_null() {
 {%- if type.custom_from_rs_string -%}
 .and_then(|x| {
     let custom_from_rs_string = {{ type.custom_from_rs_string }};
-    custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+    custom_from_rs_string(x).map_err(|e| {
+        #[allow(clippy::useless_asref)]
+        TypeError::new(e.as_ref())
+    })
 })
 {%- else -%}
 ?.parse()
@@ -430,7 +433,7 @@ if {{ js_val }}.is_null() {
 {%- for value in type.values -%}
     {
         {% set value_var_name = "js_x" ~ loop.index %}
-        let {{ value_var_name }} = Reflect::get_u32(&{{ js_val }}, {{ loop.index }})?;
+        let {{ value_var_name }} = Reflect::get_u32(&{{ js_val }}, {{ loop.index0 }})?;
         {{ render_js_value_to_rs(value_var_name, value) }}
     }
     {{ ", " if not loop.last else "" -}}
@@ -484,6 +487,7 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "none" -%}
 {
+    #[allow(clippy::let_unit_value)]
     let _ = {{ rs_value }};
     JsValue::null()
 }
@@ -493,7 +497,7 @@ match {{ rs_value }} {
     let custom_to_rs_u8 = {{ type.custom_to_rs_u8 }};
     let v = match custom_to_rs_u8({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
     };
     JsValue::from(v)
 }
@@ -506,7 +510,7 @@ JsValue::from({{ rs_value }})
     let custom_to_rs_u16 = {{ type.custom_to_rs_u16 }};
     let v = match custom_to_rs_u16({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
     };
     JsValue::from(v)
 }
@@ -532,7 +536,7 @@ JsValue::from({{ rs_value }})
     let custom_to_rs_u32 = {{ type.custom_to_rs_u32 }};
     let v = match custom_to_rs_u32({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
     };
     JsValue::from(v)
 }
@@ -558,7 +562,7 @@ JsValue::from({{ rs_value }})
     let custom_to_rs_u64 = {{ type.custom_to_rs_u64 }};
     let v = match custom_to_rs_u64({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
     };
     JsValue::from(v)
 }
@@ -571,22 +575,28 @@ JsValue::from({{ rs_value }})
     let custom_to_rs_f64 = {{ type.custom_to_rs_f64 }};
     let v = match custom_to_rs_f64({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
     };
     JsValue::from(v)
 }
 {% else -%}
 JsValue::from({{ rs_value }})
 {%- endif -%}
+{%- elif type.kind == "str" -%}
+{
+    #[allow(clippy::useless_asref)]
+    JsValue::from_str({{ rs_value }}.as_ref())
+}
 {%- elif type.kind == "str_based" -%}
 JsValue::from_str({%- if type.custom_to_rs_string -%}
 {
     let custom_to_rs_string = {{ type.custom_to_rs_string }};
     match custom_to_rs_string({{ rs_value }}) {
         Ok(ok) => ok,
+        #[allow(clippy::unnecessary_to_owned)]
         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-    }.as_ref()
-}
+    }
+}.as_ref()
 {%- else -%}
 {{ rs_value }}.as_ref()
 {%- endif -%}
@@ -681,6 +691,8 @@ match {{ rs_value }} {
 {{ variant_rs_to_js_function_name(type) }}({{ rs_value }})?
 {%- elif type.kind == "enum" -%}
 JsValue::from_str({{ enum_rs_to_js_function_name(type) }}({{ rs_value }}))
+{%- elif type.kind == "box" -%}
+{{ variant_rs_to_js_function_name(type.elem) }}({{ "*" + rs_value }})?
 {%- else -%}
 {{ rs_value }}.into()
 {%- endif -%}
@@ -803,6 +815,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
     match rs_obj {
 {% for value in variant.values %}
 {% if value.is_struct %}
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.attributes.keys() |join(',') }} {{ "," if value.struct.attributes else "" }} .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"{{ variant_tag_name(variant, value) }}".into())?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
@@ -815,7 +828,12 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
             Reflect::set(&js_obj, &"tag".into(), &"{{ variant_tag_name(variant, value) }}".into())?;
 {% for attr_type in value.tuple %}
             let js_x{{ loop.index }} = {{ render_rs_to_js_value("x%s" % loop.index, attr_type) }};
-            Reflect::set(&js_obj, &"x{{ loop.index }}".into(), &js_x{{ loop.index }}.into())?;
+            Reflect::set(
+                &js_obj,
+                &"x{{ loop.index }}".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x{{ loop.index }}.into()
+            )?;
 {% endfor %}
         }
 {% else %}
@@ -937,6 +955,8 @@ fn {{ enum_rs_to_js_function_name(enum) }}(value: libparsec::{{ enum.name }}) ->
 /*
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
+
+// cspell: words useless_asref
 {% if api.rust_code_to_inject is not none %}
 {{ api.rust_code_to_inject }}
 {% endif %}

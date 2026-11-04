@@ -1,19 +1,39 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use bytes::Bytes;
 use paste::paste;
 use serde::{Deserialize, Serialize};
-use serde_with::*;
 
 use libparsec_crypto::{KeyDerivation, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, DataError, DataResult, DateTime, DeviceID, IndexInt,
+    UnsecureSkipValidationReason, VlobID,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DataResult, DateTime, DeviceID, IndexInt, UnsecureSkipValidationReason, VlobID,
 };
+
+/*
+ * RealmArchivingConfiguration
+ */
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "type")]
+pub enum RealmArchivingConfiguration {
+    /// The realm can be read/written, this is the default status if no
+    /// realm archiving certificate has been issued.
+    Available,
+    /// The realm is now in read-only.
+    /// This has precedence over workspace roles, so users with write-access
+    /// (e.g. CONTRIBUTOR) would not be able to make changes on an archived realm.
+    Archived,
+    /// The realm is now in read-only, on top of that the server is expected
+    /// to delete the workspace data (i.e. vlob and blocks) once the deletion
+    /// date has been reached.
+    DeletionPlanned { deletion_date: DateTime },
+}
 
 /*
  * RealmKeysBundle

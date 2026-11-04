@@ -4,14 +4,14 @@ use hex_literal::hex;
 use paste::paste;
 use std::{
     collections::{HashMap, HashSet},
-    num::{NonZeroU64, NonZeroU8},
+    num::{NonZeroU8, NonZeroU64},
     sync::Arc,
 };
 
 use libparsec_types::prelude::*;
 
-use super::events::*;
 use super::TestbedTemplate;
+use super::events::*;
 
 // The size must be greater than `512` bits, because it's not enough to
 // encrypt the secret key size of `32` bytes long in our algorithm.
@@ -201,7 +201,7 @@ impl TestbedTemplateBuilderCounters {
         self.current_entry_id += 1;
         self.current_entry_id.to_be_bytes().into()
     }
-    pub fn next_invitation_token(&mut self) -> InvitationToken {
+    pub fn next_invitation_token(&mut self) -> AccessToken {
         self.current_invitation_token += 1;
         self.current_invitation_token.to_be_bytes().into()
     }
@@ -569,7 +569,7 @@ impl_event_builder!(NewDeviceInvitation, [created_by: DeviceID]);
 impl TestbedEventNewDeviceInvitationBuilder<'_> {
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
-    impl_customize_field_meth!(token, InvitationToken);
+    impl_customize_field_meth!(token, AccessToken);
 }
 
 /*
@@ -582,7 +582,7 @@ impl TestbedEventNewUserInvitationBuilder<'_> {
     impl_customize_field_meth!(claimer_email, EmailAddress);
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
-    impl_customize_field_meth!(token, InvitationToken);
+    impl_customize_field_meth!(token, AccessToken);
 }
 
 /*
@@ -595,7 +595,7 @@ impl TestbedEventNewShamirRecoveryInvitationBuilder<'_> {
     impl_customize_field_meth!(claimer, UserID);
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
-    impl_customize_field_meth!(token, InvitationToken);
+    impl_customize_field_meth!(token, AccessToken);
 }
 
 /*
@@ -806,6 +806,17 @@ impl TestbedEventArchiveRealmBuilder<'_> {
 }
 
 /*
+ * TestbedEventDeleteRealmBuilder
+ */
+
+impl_event_builder!(
+    DeleteRealm,
+    [
+        realm: VlobID,
+    ]
+);
+
+/*
  * TestbedEventNewShamirRecoveryBuilder
  */
 
@@ -956,7 +967,7 @@ impl_event_builder!(
         is_expired: Option<bool>,
         active_users_limit: Option<ActiveUsersLimit>,
         user_profile_outsider_allowed: Option<bool>,
-        minimum_archiving_period: Option<u64>,
+        realm_minimum_archiving_period_before_deletion: Option<u64>,
         tos: Option<HashMap<String, String>>,
     ]
 );
@@ -1012,6 +1023,10 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
+                            archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                            archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder
+                                .into(),
+                            can_self_promote_to_owner: false.into(),
                         });
                 }
             }
@@ -1057,7 +1072,7 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
 
         let mut local_workspaces: Vec<LocalUserManifestWorkspaceEntry> = vec![];
         let placeholder_name: EntryName = "<placeholder>".parse().unwrap();
-        let mut rename_events = vec![];
+        let mut rename_and_archive_events = vec![];
         for event in fetched_certifs {
             match event {
                 TestbedEvent::NewRealm(event) => {
@@ -1083,6 +1098,10 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                         role_origin: CertificateBasedInfoOrigin::Certificate {
                             timestamp: event.timestamp,
                         },
+                        archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                        archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder
+                            .into(),
+                        can_self_promote_to_owner: false.into(),
                     });
                 }
                 TestbedEvent::ShareRealm(event) if event.user == user_id => match event.role {
@@ -1104,6 +1123,11 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                                     role_origin: CertificateBasedInfoOrigin::Certificate {
                                         timestamp: event.timestamp,
                                     },
+                                    archiving_configuration: RealmArchivingConfiguration::Available
+                                        .into(),
+                                    archiving_configuration_origin:
+                                        CertificateBasedInfoOrigin::Placeholder.into(),
+                                    can_self_promote_to_owner: false.into(),
                                 });
                             }
                             Some(entry) => {
@@ -1115,22 +1139,39 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                         }
                     }
                 },
-                TestbedEvent::RenameRealm(event) => {
-                    rename_events.push(event);
+                event @ (TestbedEvent::RenameRealm(_) | TestbedEvent::ArchiveRealm(_)) => {
+                    rename_and_archive_events.push(event);
                 }
                 _ => (),
             }
         }
         // Cannot set the workspace name in the previous loop as this would hide
         // the rename events that occurred before the workspace was shared with us!
-        for event in rename_events {
-            let found: Option<&mut LocalUserManifestWorkspaceEntry> =
-                local_workspaces.iter_mut().find(|w| w.id == event.realm);
-            if let Some(entry) = found {
-                entry.name = event.name.clone();
-                entry.name_origin = CertificateBasedInfoOrigin::Certificate {
-                    timestamp: event.timestamp,
-                };
+        for event in rename_and_archive_events {
+            match event {
+                TestbedEvent::RenameRealm(event) => {
+                    let found: Option<&mut LocalUserManifestWorkspaceEntry> =
+                        local_workspaces.iter_mut().find(|w| w.id == event.realm);
+                    if let Some(entry) = found {
+                        entry.name = event.name.clone();
+                        entry.name_origin = CertificateBasedInfoOrigin::Certificate {
+                            timestamp: event.timestamp,
+                        };
+                    }
+                }
+                TestbedEvent::ArchiveRealm(event) => {
+                    let found: Option<&mut LocalUserManifestWorkspaceEntry> =
+                        local_workspaces.iter_mut().find(|w| w.id == event.realm);
+                    if let Some(entry) = found {
+                        entry.archiving_configuration = event.configuration.into();
+                        entry.archiving_configuration_origin =
+                            CertificateBasedInfoOrigin::Certificate {
+                                timestamp: event.timestamp,
+                            }
+                            .into();
+                    }
+                }
+                _ => unreachable!(),
             }
         }
 

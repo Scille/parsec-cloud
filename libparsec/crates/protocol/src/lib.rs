@@ -1,12 +1,11 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 #![doc = include_str!("../README.md")]
 
-mod error;
 mod version;
 
 use libparsec_serialization_format::parsec_protocol_cmds_family;
 
-pub use error::*;
 pub use version::*;
 
 // `libparsec_types` must be in the scope given the macro access it from submodule

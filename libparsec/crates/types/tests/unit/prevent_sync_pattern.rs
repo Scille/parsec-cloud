@@ -2,7 +2,7 @@
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::{prevent_sync_pattern::PreventSyncPattern, PreventSyncPatternError};
+use crate::{PreventSyncPatternError, prevent_sync_pattern::PreventSyncPattern};
 
 #[rstest]
 #[case::base("*.rs\n*.py")]

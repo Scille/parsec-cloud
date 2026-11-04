@@ -5,7 +5,7 @@ use std::path::Path;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::{lock_device_for_use, try_lock_device_for_use, TryLockDeviceForUseError};
+use super::{TryLockDeviceForUseError, lock_device_for_use, try_lock_device_for_use};
 
 fn assert_lock_in_use(config_dir: &Path, device_id: DeviceID) {
     let outcome = try_lock_device_for_use(config_dir, device_id);

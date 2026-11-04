@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
 
 import anyio
-from anyio.abc import CancelScope, TaskGroup
+from anyio.abc import TaskGroup
 
 from parsec._parsec import BlockID, OrganizationID
 from parsec.components.blockstore import (
@@ -59,12 +60,12 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         at_least_one_success = False
         at_least_one_error = False
 
         async def _single_blockstore_create(
-            cancel_scope: CancelScope, blockstore: BaseBlockStoreComponent
+            cancel_scope: anyio.CancelScope, blockstore: BaseBlockStoreComponent
         ) -> None:
             nonlocal at_least_one_success
             nonlocal at_least_one_error

@@ -1,18 +1,17 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, num::NonZeroU64, ops::Deref, sync::Arc};
 
 use serde::{Deserialize, Serialize};
-use serde_with::*;
 
 use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, BlockID, DataError, DataResult, DateTime, DeviceID, EntryName, Maybe,
+    SizeInt, VersionInt, VlobID,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    BlockID, DataError, DataResult, DateTime, DeviceID, EntryName, SizeInt, VersionInt, VlobID,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -192,6 +191,24 @@ pub enum RealmRole {
     Reader,
 }
 
+impl std::cmp::Ord for RealmRole {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let priority = |x| match x {
+            RealmRole::Owner => 4,
+            RealmRole::Manager => 3,
+            RealmRole::Contributor => 2,
+            RealmRole::Reader => 1,
+        };
+        priority(*self).cmp(&priority(*other))
+    }
+}
+
+impl PartialOrd for RealmRole {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl RealmRole {
     pub fn can_read(&self) -> bool {
         true
@@ -289,6 +306,26 @@ impl Deref for Blocksize {
 }
 
 /*
+ * FileManifestOrigin
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "type")]
+pub enum FileManifestOrigin {
+    /// The file manifest has been created with regular Parsec APIs (default value
+    /// if the field is not present).
+    Default,
+    /// This file manifest has been created from a Cryptpad collaborative session, this means
+    /// a single source of truth has existed and a conflict on this file can be resolved by
+    /// simply keeping the latest one.
+    Cryptpad {
+        channel_id: String,
+        timestamp: DateTime,
+    },
+}
+
+/*
  * FileManifest
  */
 
@@ -317,6 +354,8 @@ pub struct FileManifest {
     ///   implemented at the moment), all blocks must be reshaped to match the new blocksize.
     pub blocksize: Blocksize,
     pub blocks: Vec<BlockAccess>,
+    /// The origin of this file manifest version, see `FileManifestOrigin`.
+    pub origin: FileManifestOrigin,
 }
 
 impl_manifest_dump!(FileManifest);
@@ -337,6 +376,7 @@ impl FileManifest {
         size: SizeInt,
         blocksize: Blocksize,
         blocks: Vec<BlockAccess>,
+        origin: FileManifestOrigin,
     ) -> Self {
         let manifest = Self {
             author,
@@ -349,6 +389,7 @@ impl FileManifest {
             size,
             blocksize,
             blocks,
+            origin,
         };
         manifest.check_data_integrity().expect("Invalid manifest");
         manifest
@@ -436,6 +477,7 @@ impl TryFrom<FileManifestData> for FileManifest {
             size: data.size,
             blocksize: data.blocksize.try_into()?,
             blocks: data.blocks,
+            origin: data.origin.unwrap_or(FileManifestOrigin::Default),
         })
     }
 }
@@ -454,6 +496,10 @@ impl From<FileManifest> for FileManifestData {
             size: obj.size,
             blocksize: obj.blocksize.into(),
             blocks: obj.blocks,
+            origin: match obj.origin {
+                FileManifestOrigin::Default => Maybe::Absent,
+                origin @ FileManifestOrigin::Cryptpad { .. } => origin.into(),
+            },
         }
     }
 }

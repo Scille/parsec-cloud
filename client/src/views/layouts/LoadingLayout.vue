@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -36,14 +36,14 @@ onMounted(async () => {
   // If we do it too fast, it causes a blink, so we masquerade this as a feature,
   // showing the user a "please wait" message.
 
-  window.electronAPI.log('debug', 'Mounted LoadingLayout');
+  window.nativeAPI.log('debug', 'Mounted LoadingLayout');
   const query = getCurrentRouteQuery();
   if (query.loginInfo) {
     try {
       const loginInfo = Base64.toObject(query.loginInfo) as RouteBackup;
       setTimeout(
         async () => {
-          window.electronAPI.log('debug', `navigateTo: ${query.loginInfo}`);
+          window.nativeAPI.log('debug', `navigateTo: ${query.loginInfo}`);
           await navigateTo(loginInfo.data.route, {
             params: loginInfo.data.params,
             query: loginInfo.data.query,
@@ -55,11 +55,11 @@ onMounted(async () => {
         import.meta.env.PARSEC_APP_TESTBED_SERVER ? 0 : 1500,
       );
     } catch (e: any) {
-      window.electronAPI.log('error', `Invalid login info provided: ${e}`);
+      window.nativeAPI.log('error', `Invalid login info provided: ${e}`);
       await navigateTo(Routes.Home, { skipHandle: true, replace: true });
     }
   } else {
-    window.electronAPI.log('error', 'Trying to login with no login info provided');
+    window.nativeAPI.log('error', 'Trying to login with no login info provided');
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
   }
 });
@@ -81,7 +81,7 @@ onMounted(async () => {
     opacity: 0;
   }
   100% {
-    opacity: 1;
+    opacity: ms.opacity('10');
   }
 }
 
@@ -91,7 +91,7 @@ onMounted(async () => {
   align-items: center;
   flex-direction: column;
   width: fit-content;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   .logo-img {
     animation: LogoFadeIn 0.8s ease-in-out;

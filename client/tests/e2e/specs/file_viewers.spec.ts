@@ -5,13 +5,16 @@ import {
   DisplaySize,
   expect,
   expectMedia,
-  getDownloadedFile,
+  expectSameContent,
   importDefaultFiles,
   ImportDocuments,
   Media,
   msTest,
   openFileType,
+  readDownload,
+  readImportedFile,
   sliderClick,
+  waitForDownload,
 } from '@tests/e2e/helpers';
 
 msTest.describe(() => {
@@ -35,12 +38,13 @@ msTest.describe(() => {
 
   msTest('Open viewer with header option', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+    await documents.waitForTimeout(300);
 
     const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
     await expect(entry.locator('.label-name')).toHaveText('image.png');
     await entry.hover();
     await expect(entry).toBeVisible();
-    await entry.locator('ion-checkbox').click();
+    await entry.locator('.ms-checkbox').click();
     await expect(entry).toContainClass('selected');
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('ion-button').nth(0)).toHaveText('Preview');
@@ -150,7 +154,7 @@ msTest.describe(() => {
         await documents.setDisplaySize(DisplaySize.Small);
       }
 
-      await entries.nth(0).dblclick();
+      await entries.nth(0).locator('.label-name').click();
       await expect(documents).toBeViewerPage();
       const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
@@ -198,40 +202,29 @@ msTest.describe(() => {
 
       const modal = documents.locator('.download-warning-modal');
 
-      // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
-      if (displaySize === 'small') {
-        const actionMenuButton = documents.locator('.file-handler-topbar-buttons__item.action-menu');
-        const actionMenuModal = documents.locator('.viewer-action-menu-modal');
-        await expect(actionMenuModal).toBeHidden();
-        await expect(actionMenuButton).toBeVisible();
-        await expect(documents.locator('.file-handler-topbar-buttons')).toBeHidden();
-        await actionMenuButton.click();
+      const download = await waitForDownload(documents, async () => {
+        if (displaySize === 'small') {
+          const actionMenuButton = documents.locator('.file-handler-topbar-buttons__item.action-menu');
+          const actionMenuModal = documents.locator('.viewer-action-menu-modal');
+          await expect(actionMenuModal).toBeHidden();
+          await expect(actionMenuButton).toBeVisible();
+          await expect(documents.locator('.file-handler-topbar-buttons')).toBeHidden();
+          await actionMenuButton.click();
 
-        await expect(documents.locator('.list-group-item__label-small').nth(2)).toBeVisible();
-        await documents.locator('.list-group-item__label-small').nth(2).click();
+          await expect(documents.locator('.list-group-item__label-small').nth(2)).toBeVisible();
+          await documents.locator('.list-group-item__label-small').nth(2).click();
 
-        await expect(actionMenuModal).toBeVisible();
-        await modal.locator('#next-button').click();
-      } else {
-        await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
-        await modal.locator('#next-button').click();
-      }
+          await expect(actionMenuModal).toBeVisible();
+          await modal.locator('#next-button').click();
+        } else {
+          await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
+          await modal.locator('#next-button').click();
+        }
+      });
 
       await expect(modal).toBeHidden();
-      await documents.waitForTimeout(1000);
-
-      const uploadMenu = documents.locator('.upload-menu');
-      await expect(uploadMenu).toBeVisible();
-      const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
-      await expect(opItems).toHaveCount(2);
-      await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading pdfDocument.pdf');
-      await expect(opItems.nth(0).locator('.element-details-info').locator('ion-text').nth(0)).toHaveText(' wksp1');
-
-      const content = await getDownloadedFile(documents);
-      expect(content).toBeTruthy();
-      if (content) {
-        expect(content.length).toEqual(78731);
-      }
+      expect(download.suggestedFilename()).toBe('pdfDocument.pdf');
+      expectSameContent(await readDownload(download), readImportedFile(testInfo, 'pdfDocument.pdf'));
     });
   }
 
@@ -351,6 +344,7 @@ msTest.describe(() => {
     const volumeSlider = bottomBar.locator('.slider').nth(1);
 
     await expect(buttons).toHaveCount(5);
+    await documents.waitForTimeout(1000);
 
     const readyState = await video.evaluate((videoEl) => {
       return (videoEl as HTMLMediaElement).readyState;
@@ -366,7 +360,7 @@ msTest.describe(() => {
     expect(videoWidth).toBe(870);
     expect(videoHeight).toBe(692);
 
-    expect(await Media.getDuration(video)).toBe(3.562646);
+    expect(await Media.getDuration(video)).toBeGreaterThan(3.5);
     expect(await Media.getCurrentTime(video)).toBe(0.0);
     await expectMedia(video).toHaveVolume(1);
 
@@ -378,7 +372,7 @@ msTest.describe(() => {
     await buttons.nth(0).click();
     expect(await Media.getPausedState(video)).toBe(false);
     await documents.waitForTimeout(4000);
-    expect(await Media.getCurrentTime(video)).toBe(3.562646);
+    expect(await Media.getCurrentTime(video)).toBeGreaterThan(3.5);
     expect(await Media.getPausedState(video)).toBe(true);
 
     // Volume control
@@ -447,7 +441,7 @@ msTest.describe(() => {
     await backdrop.click();
     await buttons.nth(0).click();
     await documents.waitForTimeout(2000);
-    expect(await Media.getCurrentTime(video)).toBe(3.562646);
+    expect(await Media.getCurrentTime(video)).toBeGreaterThan(3.5);
     expect(await Media.getPausedState(video)).toBe(true);
   });
 
@@ -503,10 +497,9 @@ msTest.describe(() => {
     const header = documents.locator('#connected-header');
     await expect(sidebar).toBeVisible();
     await expect(header).toBeVisible();
-    await documents.locator('.header-label-name').click();
 
     // Open first file and ensure it's loaded
-    await entries.nth(0).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(0).locator('.file-name .label-name').click();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('audio.mp3');
 
@@ -541,7 +534,7 @@ msTest.describe(() => {
     await expect(sidebar).toBeHidden();
 
     // Open second file
-    await entries.nth(1).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(1).locator('.file-name .label-name').click();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
     await expect(documents).toBeViewerPage();
 
@@ -573,14 +566,13 @@ msTest.describe(() => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Png, false);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     const toggleButton = documents.locator('#trigger-toggle-menu-button');
-    await documents.locator('.header-label-name').click();
 
     // Sidebar starts visible (default state)
     await expect(documents.locator('.sidebar')).toBeVisible();
     await expect(documents.locator('#connected-header .topbar')).toBeVisible();
 
     // Open file viewer
-    await entries.nth(0).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(0).locator('.file-name .label-name').click();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('audio.mp3');
 
@@ -605,7 +597,7 @@ msTest.describe(() => {
     await expect(documents.locator('.sidebar')).toBeHidden();
 
     // Open file viewer again
-    await entries.nth(1).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(1).locator('.file-name .label-name').click();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
 
@@ -627,7 +619,7 @@ msTest.describe(() => {
     await documents.setDisplaySize(DisplaySize.Small);
 
     const entries = documents.locator('.folder-container').locator('.file-list-item');
-    await entries.nth(0).dblclick();
+    await entries.nth(0).locator('.label-name').click();
     await expect(documents).toBeViewerPage();
 
     await expect(documents.locator('.sidebar')).toBeHidden();

@@ -35,10 +35,7 @@ async fn sequestered_ok(env: &TestbedEnv) {
 async fn noop(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let key_index_2_timestamp = env
-        .customize(|builder| {
-            let key_index_2_timestamp = builder.rotate_key_realm(wksp1_id).map(|e| e.timestamp);
-            key_index_2_timestamp
-        })
+        .customize(|builder| builder.rotate_key_realm(wksp1_id).map(|e| e.timestamp))
         .await;
 
     let alice = env.local_device("alice@dev1");

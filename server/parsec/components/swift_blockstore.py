@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from functools import partial
@@ -6,6 +7,10 @@ from typing import override
 from unittest.mock import Mock
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 import pbr.version
 
 # TODO: is this still needed ? for what purpose ?
@@ -79,7 +84,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         slug = build_swift_slug(organization_id=organization_id, id=block_id)
         try:
             await anyio.to_thread.run_sync(

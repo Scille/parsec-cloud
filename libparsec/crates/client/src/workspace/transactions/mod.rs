@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod create_file;
 mod create_folder;
@@ -14,7 +14,9 @@ mod move_entry;
 mod open_file;
 mod outbound_sync;
 mod read_folder;
+mod register_cryptpad_session;
 mod remove_entry;
+mod save_and_sync_file_with_origin;
 mod stat_entry;
 mod watch_entry;
 
@@ -32,6 +34,8 @@ pub use move_entry::*;
 pub use open_file::*;
 pub use outbound_sync::*;
 pub use read_folder::*;
+pub use register_cryptpad_session::*;
 pub use remove_entry::*;
+pub use save_and_sync_file_with_origin::*;
 pub use stat_entry::*;
 pub use watch_entry::*;

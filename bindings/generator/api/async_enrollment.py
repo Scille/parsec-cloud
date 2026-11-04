@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
-from .addr import ParsecAddr, ParsecAsyncEnrollmentAddr
+from .addr import ParsecAsyncEnrollmentAddr, ParsecAsyncEnrollmentAddrAndRedirectionURL
 from .common import (
     AsyncEnrollmentID,
     DateTime,
@@ -9,18 +8,52 @@ from .common import (
     ErrorVariant,
     Handle,
     HumanHandle,
-    OrganizationID,
     Path,
     Ref,
     Result,
     Structure,
     UserProfile,
     Variant,
+    VariantItemTuple,
     VariantItemUnit,
     X509CertificateReference,
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceSaveStrategy
+
+
+class PkiErrorDetail(ErrorVariant):
+    class UnsupportedAlgorithm:
+        pass
+
+    class Decrypt:
+        pass
+
+    class Untrusted:
+        pass
+
+    class Sign:
+        pass
+
+    class CannotAcquirePubkey:
+        pass
+
+    class CannotEncrypt:
+        pass
+
+    class Internal:
+        pass
+
+
+class ClientGetAsyncEnrollmentAddrError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def client_get_async_enrollment_addr(
+    client: Handle,
+) -> Result[ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError]:
+    raise NotImplementedError
 
 
 class SubmitAsyncEnrollmentIdentityStrategy(Variant):
@@ -34,7 +67,8 @@ class SubmitAsyncEnrollmentIdentityStrategy(Variant):
         openbao_preferred_auth_id: str
 
     class PKI:
-        certificate_reference: X509CertificateReference
+        pki_sign_private_key_handle: Handle
+        pki_encrypt_private_key_handle: Handle
 
 
 class AcceptFinalizeAsyncEnrollmentIdentityStrategy(Variant):
@@ -46,7 +80,8 @@ class AcceptFinalizeAsyncEnrollmentIdentityStrategy(Variant):
         openbao_auth_token: str
 
     class PKI:
-        certificate_reference: X509CertificateReference
+        pki_sign_private_key_handle: Handle
+        pki_encrypt_private_key_handle: Handle
 
 
 class ClientListAsyncEnrollmentsError(ErrorVariant):
@@ -64,6 +99,9 @@ class AsyncEnrollmentIdentitySystem(Variant):
     class PKI:
         x509_root_certificate_common_name: str
         x509_root_certificate_subject: bytes
+
+    class PKICorrupted:
+        reason: str
 
     OpenBao = VariantItemUnit()
 
@@ -146,7 +184,23 @@ class ClientAcceptAsyncEnrollmentError(ErrorVariant):
     class OpenBaoBadServerResponse:
         pass
 
-    class InvalidX509Trustchain:
+    class PKIServerInvalidX509Trustchain:
+        pass
+
+    class PKICannotOpenCertificateStore:
+        pass
+
+    PKIUnusableX509CertificateReference = VariantItemTuple(PkiErrorDetail)
+
+
+class EmailSentStatus(Variant):
+    class Success:
+        pass
+
+    class ServerUnavailable:
+        pass
+
+    class RecipientRefused:
         pass
 
 
@@ -155,7 +209,8 @@ async def client_accept_async_enrollment(
     profile: UserProfile,
     enrollment_id: AsyncEnrollmentID,
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-) -> Result[None, ClientAcceptAsyncEnrollmentError]:
+    send_email: bool,
+) -> Result[EmailSentStatus, ClientAcceptAsyncEnrollmentError]:
     raise NotImplementedError
 
 
@@ -169,7 +224,7 @@ class SubmitAsyncEnrollmentError(ErrorVariant):
     class EmailAlreadyEnrolled:
         pass
 
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:
@@ -187,8 +242,13 @@ class SubmitAsyncEnrollmentError(ErrorVariant):
     class OpenBaoBadServerResponse:
         pass
 
-    class InvalidX509Trustchain:
+    class PKIServerInvalidX509Trustchain:
         pass
+
+    class PKICannotOpenCertificateStore:
+        pass
+
+    PKIUnusableX509CertificateReference = VariantItemTuple(PkiErrorDetail)
 
 
 class AvailablePendingAsyncEnrollmentIdentitySystem(Variant):
@@ -203,8 +263,7 @@ class AvailablePendingAsyncEnrollmentIdentitySystem(Variant):
 class AvailablePendingAsyncEnrollment(Structure):
     file_path: Path
     submitted_on: DateTime
-    server_addr: ParsecAddr
-    organization_id: OrganizationID
+    addr: ParsecAsyncEnrollmentAddr
     enrollment_id: AsyncEnrollmentID
     requested_device_label: DeviceLabel
     requested_human_handle: HumanHandle
@@ -275,7 +334,7 @@ class SubmitterFinalizeAsyncEnrollmentError(ErrorVariant):
     class Offline:
         pass
 
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class NotAccepted:
@@ -320,33 +379,38 @@ class SubmitterFinalizeAsyncEnrollmentError(ErrorVariant):
     class OpenBaoBadServerResponse:
         pass
 
-    class InvalidX509Trustchain:
+    class PKICannotOpenCertificateStore:
         pass
+
+    PKIUnusableX509CertificateReference = VariantItemTuple(PkiErrorDetail)
 
 
 async def submitter_finalize_async_enrollment(
     config: ClientConfig,
     enrollment_file: Ref[Path],
     new_device_save_strategy: DeviceSaveStrategy,
-    new_device_key_file: Ref[Path],
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
 ) -> Result[AvailableDevice, SubmitterFinalizeAsyncEnrollmentError]:
     raise NotImplementedError
 
 
-class SubmitterForgetAsyncEnrollmentError(ErrorVariant):
-    class StorageNotAvailable:
+class SubmitterCancelAsyncEnrollmentError(ErrorVariant):
+    class Offline:
         pass
 
     class NotFound:
+        pass
+
+    class StorageNotAvailable:
         pass
 
     class Internal:
         pass
 
 
-async def submitter_forget_async_enrollment(
-    config_dir: Ref[Path],
+async def submitter_cancel_async_enrollment(
+    config: ClientConfig,
+    addr: ParsecAsyncEnrollmentAddr,
     enrollment_id: AsyncEnrollmentID,
-) -> Result[None, SubmitterForgetAsyncEnrollmentError]:
+) -> Result[None, SubmitterCancelAsyncEnrollmentError]:
     raise NotImplementedError

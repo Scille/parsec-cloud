@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-viewer-wrapper>
@@ -50,8 +50,10 @@
 </template>
 
 <script setup lang="ts">
+import { getFileContent } from '@/common/file';
 import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
 import { isWeb } from '@/parsec';
+import { BASE } from '@/services/worker';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { scan } from 'ionicons/icons';
@@ -80,17 +82,23 @@ const CanvasStateAttribute = 'data-canvas-state';
 
 onMounted(async () => {
   loading.value = true;
-  scale.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
 
   try {
+    const content = await getFileContent(props.contentInfo.workspaceHandle, props.contentInfo.path, props.contentInfo.timestamp);
+    if (!content) {
+      throw new Error('failed to load content');
+    }
+
+    scale.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
+
     pdf.value = await pdfjs.getDocument({
-      data: props.contentInfo.data,
-      wasmUrl: import.meta.env.BASE_URL !== '/' ? `${import.meta.env.BASE_URL}/pdfjs/` : 'pdfjs/',
+      data: content,
+      wasmUrl: `${BASE}pdfjs/${pdfjs.version}/`,
     }).promise;
     await loadPages();
     await renderPage(1);
   } catch (e: any) {
-    window.electronAPI.log('error', `Failed to parse PDF: ${e}`);
+    window.nativeAPI.log('error', `Failed to parse PDF: ${e}`);
     error.value = 'fileViewers.pdf.loadDocumentError';
   } finally {
     loading.value = false;
@@ -137,7 +145,7 @@ async function loadPage(pageIndex: number): Promise<void> {
       return;
     }
     drawErrorCanvas(canvasElement);
-    window.electronAPI.log('error', `Failed to load PDF page: ${e}`);
+    window.nativeAPI.log('error', `Failed to load PDF page: ${e}`);
   } finally {
     loading.value = false;
   }
@@ -223,7 +231,7 @@ async function renderPage(pageNumber: number): Promise<void> {
       return;
     }
     drawErrorCanvas(canvasElement);
-    window.electronAPI.log('error', `Failed to render PDF page: ${e}`);
+    window.nativeAPI.log('error', `Failed to render PDF page: ${e}`);
   } finally {
     isRendering.value = false;
   }
@@ -290,7 +298,7 @@ async function toggleFullScreen(): Promise<void> {
 
 <style scoped lang="scss">
 .pdf-container {
-  background-color: var(--parsec-color-light-secondary-premiere);
+  background-color: ms.color('surface-base-page');
   width: 100%;
   height: 100%;
   display: flex;
@@ -298,8 +306,8 @@ async function toggleFullScreen(): Promise<void> {
   justify-content: start;
   align-items: center;
   overflow-y: auto;
-  gap: 2em;
-  padding: 3em 0;
+  gap: ms.spacing('gap-5xl');
+  padding: ms.spacing('padding-7xl') ms.spacing('padding-none');
 
   & * {
     transition: all 0.3s ease-in-out;
@@ -314,13 +322,13 @@ async function toggleFullScreen(): Promise<void> {
 .canvas {
   display: block;
   margin: 0 auto;
-  background: var(--parsec-color-light-secondary-white);
-  box-shadow: var(--parsec-shadow-light);
+  background: ms.color('surface-base-default');
+  box-shadow: ms.shadow('light');
 
   &.error {
-    border-left: 3px solid var(--parsec-color-light-danger-700);
-    background: var(--parsec-color-light-danger-50);
-    color: var(--parsec-color-light-secondary-text);
+    border-left: 3px solid ms.color('border-error-default');
+    background: ms.color('surface-error-default-subtle');
+    color: ms.color('text-base-body');
     text-align: center;
   }
 }

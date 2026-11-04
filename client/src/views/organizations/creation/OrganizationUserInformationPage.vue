@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="user-information-page page-modal-container">
@@ -27,7 +27,7 @@
         v-model="tosAccepted"
         label-placement="end"
       >
-        <ion-text class="body-sm item-radio__text ion-text-wrap">
+        <ion-text class="item-radio__text ion-text-wrap">
           {{ $msTranslate('CreateOrganization.acceptTOS.label') }}
           <a
             class="link"
@@ -59,12 +59,11 @@
           @click="$emit('goBackRequested')"
           v-show="!hidePrevious"
         >
-          {{ $msTranslate('CreateOrganization.button.previous') }}
           <ion-icon
-            slot="start"
+            class="button-icon-left"
             :icon="chevronBack"
-            size="small"
           />
+          {{ $msTranslate('CreateOrganization.button.previous') }}
         </ion-button>
 
         <ion-button
@@ -77,9 +76,8 @@
             {{ $msTranslate('CreateOrganization.button.next') }}
           </span>
           <ion-icon
-            slot="start"
+            class="button-icon-right"
             :icon="chevronForward"
-            size="small"
           />
         </ion-button>
       </div>
@@ -108,13 +106,26 @@ const emits = defineEmits<{
   (e: 'goBackRequested'): void;
 }>();
 
+defineExpose({
+  setFocus,
+});
+
 const userInformationRef = useTemplateRef<InstanceType<typeof UserInformation>>('userInformation');
 const valid = ref(false);
 const tosAccepted = ref(false);
 
 onMounted(async () => {
+  if (userInformationRef.value) {
+    await userInformationRef.value.setFocus();
+  }
   await onFieldUpdated();
 });
+
+async function setFocus(): Promise<void> {
+  if (userInformationRef.value) {
+    await userInformationRef.value.setFocus();
+  }
+}
 
 async function onButtonClicked(): Promise<void> {
   if (!userInformationRef.value) {
@@ -140,20 +151,24 @@ async function onFieldUpdated(): Promise<void> {
 .user-information-content,
 .tos-checkbox {
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 2rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 1.5rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-4xl');
   }
 }
 
 .tos-checkbox {
-  padding-top: 1em;
-  color: var(--parsec-color-light-secondary-soft-text);
+  padding-top: ms.spacing('padding-3xl');
+
+  .item-radio__text {
+    @include ms.font('body-sm-regular');
+  }
+  color: ms.color('text-base-label');
 
   a {
-    color: var(--parsec-color-light-primary-500);
+    color: ms.color('text-brand-default');
 
     &:hover {
       text-decoration: underline;

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{
     collections::{HashMap, HashSet},
@@ -11,8 +11,8 @@ use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLast
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertifForReadWithRequirementsError, CertifStoreError, LastShamirRecovery},
     CertificateOps, InvalidCertificateError,
+    store::{CertifForReadWithRequirementsError, CertifStoreError, LastShamirRecovery},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -89,7 +89,7 @@ pub async fn get_self_shamir_recovery(
                         per_recipient_shares: brief.per_recipient_shares.clone(),
                         deleted_on: deletion.timestamp,
                         deleted_by: deletion.author,
-                    })
+                    });
                 }
             };
 

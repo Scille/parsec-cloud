@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::collections::HashMap;
 
@@ -8,22 +8,25 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    encrypt::encrypt_for_sequester_services, store::CertifStoreError,
     CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError,
+    encrypt::encrypt_for_sequester_services, store::CertifStoreError,
 };
 use crate::{
-    certif::{
-        realm_keys_bundle::{self, GenerateNextKeyBundleForRealmError},
-        CertifPollServerError,
-    },
-    greater_timestamp, CertifEncryptForSequesterServicesError, EventTooMuchDriftWithServerClock,
+    CertifEncryptForSequesterServicesError, EventTooMuchDriftWithServerClock,
     GreaterTimestampOffset, InvalidKeysBundleError,
+    certif::{
+        CertifPollServerError,
+        realm_keys_bundle::{self, GenerateNextKeyBundleForRealmError},
+    },
+    greater_timestamp,
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifRotateRealmKeyError {
     #[error("Unknown realm ID")]
     UnknownRealm,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Not allowed")]
     AuthorNotAllowed,
     #[error("Cannot communicate with the server: {0}")]
@@ -36,7 +39,9 @@ pub enum CertifRotateRealmKeyError {
     //       he has access to without a single one being valid.
     #[error("Cannot achieve a key rotation if the current keys bundle is corrupted: {0}")]
     CurrentKeysBundleCorrupted(Box<InvalidKeysBundleError>),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -98,6 +103,7 @@ pub(super) async fn rotate_realm_key_idempotent(
                 certificate_timestamp: last_realm_certificate_timestamp,
             }),
             Rep::RealmNotFound => Err(CertifRotateRealmKeyError::UnknownRealm),
+            Rep::RealmDeleted => Err(CertifRotateRealmKeyError::RealmDeleted),
             Rep::AuthorNotAllowed => Err(CertifRotateRealmKeyError::AuthorNotAllowed),
             Rep::ParticipantMismatch { last_realm_certificate_timestamp } => {
                 // List of participants got updated in our back, refresh and retry
@@ -207,6 +213,9 @@ async fn generate_realm_rotate_key_req(
                         GenerateNextKeyBundleForRealmError::NotAllowed => {
                             CertifRotateRealmKeyError::AuthorNotAllowed
                         }
+                        GenerateNextKeyBundleForRealmError::RealmDeleted => {
+                            CertifRotateRealmKeyError::RealmDeleted
+                        }
                         GenerateNextKeyBundleForRealmError::Internal(err) => {
                             CertifRotateRealmKeyError::Internal(err)
                         }
@@ -315,7 +324,7 @@ async fn generate_realm_rotate_key_req(
                                 .into(),
                         })?;
 
-                sequester_blob.map(|sequester_blob| HashMap::from_iter(sequester_blob.into_iter()))
+                sequester_blob.map(HashMap::from_iter)
             };
 
             // 5) Now we have everything we need to build the request object !

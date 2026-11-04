@@ -1,16 +1,19 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 use std::{
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Write as _},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::Arc,
 };
 
 use libparsec::{
-    authenticated_cmds::latest::{device_create, user_create},
     AuthenticatedCmds, Bytes, CertificateSigner, ClientConfig, DateTime, DeviceCertificate,
     DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice, MaybeRedacted, OrganizationID,
-    ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
-    UserProfile, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
+    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME, ParsecAddr,
+    PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
+    UserProfile,
+    authenticated_cmds::latest::{device_create, user_create},
 };
 use libparsec_client::{DeviceAccessStrategy, DeviceSaveStrategy};
 
@@ -18,7 +21,7 @@ use crate::{
     commands::organization::{
         bootstrap::bootstrap_organization_req, create::create_organization_req,
     },
-    utils::{RESET, YELLOW},
+    ui::Color,
 };
 
 pub const DEFAULT_ADMINISTRATION_TOKEN: &str = "s3cr3t";
@@ -50,18 +53,20 @@ pub async fn initialize_test_organization(
         organization_addr,
         "laptop".parse().expect("Unreachable"),
         HumanHandle::from_raw("alice@example.com", "Alice").expect("Unreachable"),
-        DEFAULT_DEVICE_PASSWORD.to_string().into(),
+        libparsec::DeviceSaveStrategy {
+            totp_protection: None,
+            primary_protection: libparsec::DevicePrimaryProtectionStrategy::Password {
+                password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
+            },
+        },
         None,
     )
     .await?;
 
-    let access = DeviceAccessStrategy::Password {
-        key_file: libparsec::get_default_key_file(
-            &client_config.config_dir,
-            alice_device.device_id,
-        ),
-        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
-    };
+    let key_file =
+        libparsec::get_default_key_file(&client_config.config_dir, alice_device.device_id);
+    let access =
+        DeviceAccessStrategy::new_password(key_file, DEFAULT_DEVICE_PASSWORD.to_string().into());
 
     let alice_device = libparsec::load_device(&client_config.config_dir, &access).await?;
 
@@ -151,9 +156,8 @@ async fn register_new_device(
 
     let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
-    };
+    let save_strategy =
+        DeviceSaveStrategy::new_password(DEFAULT_DEVICE_PASSWORD.to_string().into());
 
     libparsec::save_device(Path::new(""), &save_strategy, &new_device, key_file).await?;
 
@@ -212,9 +216,8 @@ async fn register_new_user(
 
     let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
-    };
+    let save_strategy =
+        DeviceSaveStrategy::new_password(DEFAULT_DEVICE_PASSWORD.to_string().into());
 
     libparsec::save_device(Path::new(""), &save_strategy, &new_device, key_file).await?;
 
@@ -281,6 +284,7 @@ pub enum TestenvConfig {
 /// Setup the environment variables
 /// Set stop_after_process to kill the server once the process will run down
 pub async fn new_environment(
+    ui: &crate::Ui,
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     config: TestenvConfig,
@@ -292,12 +296,18 @@ pub async fn new_environment(
 
     let url = match config {
         TestenvConfig::ConnectToServer(url) => {
-            println!("Using testbed server: {YELLOW}{url}{RESET}");
+            ui.with_message(|fmt, out| {
+                writeln!(
+                    out,
+                    "Using testbed server: {}",
+                    fmt.wrap_in_color(Color::Yellow, &url)
+                )
+            })?;
             env.push((TESTBED_SERVER, url.to_string()));
             Some(url)
         }
         TestenvConfig::StartNewServer { stop_after_process } if !empty => {
-            println!("Start a new server");
+            ui.with_message(|_, out| writeln!(out, "Start a new server"))?;
             if let Ok(last_server_id) = std::env::var(LAST_SERVER_PID) {
                 kill_last_testbed_server(last_server_id)?;
             }
@@ -309,9 +319,14 @@ pub async fn new_environment(
 
             let id = child.id();
 
-            println!(
-                "Running server with the process id {YELLOW}{id}{RESET} on port {YELLOW}{port_from_pid}{RESET}"
-            );
+            ui.with_message(|fmt, out| {
+                writeln!(
+                    out,
+                    "Running server with the process id {} on port {}",
+                    fmt.wrap_in_color(Color::Yellow, id),
+                    fmt.wrap_in_color(Color::Yellow, port_from_pid)
+                )
+            })?;
 
             let server_addr = ParsecAddr::new("127.0.0.1".into(), Some(port_from_pid), false);
             env.push((TESTBED_SERVER, server_addr.to_url().to_string()));
@@ -322,7 +337,12 @@ pub async fn new_environment(
     };
 
     if let Some(source_file) = source_file {
-        println!("Your environment will be configured with the following commands:");
+        ui.with_message(|_, out| {
+            writeln!(
+                out,
+                "Your environment will be configured with the following commands:"
+            )
+        })?;
         let mut buf = String::new();
 
         for (key, value) in &env {
@@ -332,15 +352,22 @@ pub async fn new_environment(
 
         std::fs::write(source_file, buf)?;
     } else {
-        println!("[Warning] This code has not been sourced.");
-        println!("Please configure your environment with the following commands:");
+        ui.with_message(|_, out| writeln!(out, "[Warning] This code has not been sourced."))?;
+        ui.with_message(|_, out| {
+            writeln!(
+                out,
+                "Please configure your environment with the following commands:"
+            )
+        })?;
     }
 
     for (key, value) in env {
+        // SAFETY: It's the only place where we set own env variables, and the function is expected
+        // to be called only once
         // We set var for the current process
-        std::env::set_var(key, &value);
+        unsafe { std::env::set_var(key, &value) };
 
-        println!("   {export_keyword} {key}={value}");
+        ui.with_message(|_, out| writeln!(out, "   {export_keyword} {key}={value}"))?;
     }
 
     Ok(url)
@@ -410,7 +437,7 @@ fn start_testbed_server(stop_after_process: u32, port: u16) -> anyhow::Result<st
         std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
     let manifest_dir_path = Path::new(&cargo_manifest_dir);
 
-    let mut child = Command::new("poetry")
+    let mut child = Command::new("uv")
         .args([
             "run",
             "python",

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -17,7 +17,9 @@ pub enum ClientEnsureWorkspacesBootstrappedError {
     Stopped,
     // Note the is no `InvalidManifest` here, this is because we self-repair in case of
     // invalid user manifest (given otherwise the client would be stuck for good !)
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -66,6 +68,8 @@ pub(crate) async fn ensure_workspaces_bootstrapped(
                 //
                 // In any case, we can just ignore the error.
                 CertifBootstrapWorkspaceError::AuthorNotAllowed => Ok(()),
+                // The realm has been deleted, nothing to bootstrap
+                CertifBootstrapWorkspaceError::RealmDeleted => Ok(()),
                 // Propagate the other errors
                 CertifBootstrapWorkspaceError::Offline(e) => {
                     Err(ClientEnsureWorkspacesBootstrappedError::Offline(e))

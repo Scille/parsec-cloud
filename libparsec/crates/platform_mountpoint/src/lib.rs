@@ -1,4 +1,5 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 #![cfg(not(target_arch = "wasm32"))]
 
 #[cfg(target_family = "unix")]
@@ -16,10 +17,16 @@ pub(crate) use windows as platform;
 #[cfg(test)]
 pub(crate) use platform::LOOKUP_HOOK;
 
-pub use platform::clean_base_mountpoint_dir;
 pub use platform::Mountpoint;
+pub use platform::clean_base_mountpoint_dir;
 
 #[cfg(test)]
 #[path = "../tests/unit/operations/mod.rs"]
 #[allow(clippy::unwrap_used)]
 mod operations;
+
+#[derive(Default)]
+#[non_exhaustive]
+pub struct UnmountOptions {
+    pub remove_dir: bool,
+}

@@ -1,0 +1,144 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+from __future__ import annotations
+
+from parsec._parsec import (
+    AccessToken,
+    ActiveUsersLimit,
+    DateTime,
+    OrganizationID,
+)
+from parsec.components.organization import (
+    OrganizationDump,
+    TermsOfService,
+)
+from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.utils import (
+    Q,
+)
+
+_q_get_organizations = Q("""
+SELECT
+    organization_id,
+    _created_on AS created_on,
+    bootstrap_token,
+    _bootstrapped_on AS bootstrapped_on,
+    is_expired,
+    _expired_on AS expired_on,
+    active_users_limit,
+    user_profile_outsider_allowed,
+    realm_minimum_archiving_period_before_deletion,
+    tos_updated_on,
+    tos_per_locale_urls,
+    (root_verify_key IS NOT NULL) AS is_bootstrapped
+FROM organization
+ORDER BY organization_id
+""")
+
+
+async def organization_list_organizations(
+    conn: AsyncpgConnection, skip_templates: bool = True
+) -> dict[OrganizationID, OrganizationDump]:
+    items = {}
+    rows = await conn.fetch(*_q_get_organizations())
+
+    for row in rows:
+        match row["organization_id"]:
+            case str() as raw_organization_id:
+                organization_id = OrganizationID(raw_organization_id)
+            case _:
+                assert False, row
+
+        if skip_templates and organization_id.str.endswith("Template"):
+            continue
+
+        match row["created_on"]:
+            case DateTime() as created_on:
+                pass
+            case _:
+                assert False, row
+
+        match row["bootstrap_token"]:
+            case str() as raw_bootstrap_token:
+                bootstrap_token = AccessToken.from_hex(raw_bootstrap_token)
+            case None as bootstrap_token:
+                pass
+            case _:
+                assert False, row
+
+        match row["is_bootstrapped"]:
+            case bool() as is_bootstrapped:
+                pass
+            case _:
+                assert False, row
+
+        match row["bootstrapped_on"]:
+            case DateTime() as bootstrapped_on:
+                pass
+            case None:
+                bootstrapped_on = None
+            case _:
+                assert False, row
+
+        match row["is_expired"]:
+            case bool() as is_expired:
+                pass
+            case _:
+                assert False, row
+
+        match row["expired_on"]:
+            case DateTime() as expired_on:
+                pass
+            case None:
+                expired_on = None
+            case _:
+                assert False, row
+
+        match row["active_users_limit"]:
+            case None:
+                active_users_limit = ActiveUsersLimit.NO_LIMIT
+            case int() as raw_active_users_limit:
+                active_users_limit = ActiveUsersLimit.limited_to(raw_active_users_limit)
+            case _:
+                assert False, row
+
+        match row["user_profile_outsider_allowed"]:
+            case bool() as user_profile_outsider_allowed:
+                pass
+            case _:
+                assert False, row
+
+        match row["realm_minimum_archiving_period_before_deletion"]:
+            case int() as realm_minimum_archiving_period_before_deletion if (
+                realm_minimum_archiving_period_before_deletion >= 0
+            ):
+                pass
+            case _:
+                assert False, row
+
+        match (row["tos_updated_on"], row["tos_per_locale_urls"]):
+            case (None, None):
+                tos = None
+            case (DateTime() as tos_updated_on, dict() as tos_per_locale_urls):
+                for k, v in tos_per_locale_urls.items():
+                    assert isinstance(k, str), tos_per_locale_urls
+                    assert isinstance(v, str), tos_per_locale_urls
+                tos = TermsOfService(updated_on=tos_updated_on, per_locale_urls=tos_per_locale_urls)
+            case _:
+                assert False, row
+
+        items[organization_id] = OrganizationDump(
+            organization_id=organization_id,
+            created_on=created_on,
+            bootstrap_token=bootstrap_token,
+            is_bootstrapped=is_bootstrapped,
+            bootstrapped_on=bootstrapped_on,
+            is_expired=is_expired,
+            expired_on=expired_on,
+            active_users_limit=active_users_limit,
+            user_profile_outsider_allowed=user_profile_outsider_allowed,
+            realm_minimum_archiving_period_before_deletion=realm_minimum_archiving_period_before_deletion,
+            tos=tos,
+        )
+
+    return items

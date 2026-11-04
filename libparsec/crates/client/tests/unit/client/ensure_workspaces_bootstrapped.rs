@@ -158,16 +158,32 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            current_name,
-            current_self_role,
             is_started,
             is_bootstrapped,
+            name,
+            name_origin,
+            self_role,
+            self_role_origin,
+            archiving_configuration,
+            archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp1_info;
         p_assert_eq!(*id, wksp1_id);
-        p_assert_eq!(*current_name, "wksp1".parse().unwrap());
-        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, false); // Weird but expected !
         p_assert_eq!(*is_started, false);
+        p_assert_eq!(*name, "wksp1".parse().unwrap());
+        p_assert_eq!(*name_origin, CertificateBasedInfoOrigin::Placeholder);
+        p_assert_eq!(*self_role, RealmRole::Owner);
+        p_assert_eq!(*self_role_origin, CertificateBasedInfoOrigin::Placeholder);
+        p_assert_eq!(
+            *archiving_configuration,
+            RealmArchivingConfiguration::Available
+        );
+        p_assert_eq!(
+            *archiving_configuration_origin,
+            CertificateBasedInfoOrigin::Placeholder
+        );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 }
 
@@ -219,12 +235,14 @@ async fn legacy_shared_before_bootstrapped(env: &TestbedEnv) {
                     "{:?}",
                     req.per_participant_keys_bundle_access
                 );
-                assert!(req
-                    .per_participant_keys_bundle_access
-                    .contains_key(&"alice".parse().unwrap()));
-                assert!(req
-                    .per_participant_keys_bundle_access
-                    .contains_key(&"mallory".parse().unwrap()));
+                assert!(
+                    req.per_participant_keys_bundle_access
+                        .contains_key(&"alice".parse().unwrap())
+                );
+                assert!(
+                    req.per_participant_keys_bundle_access
+                        .contains_key(&"mallory".parse().unwrap())
+                );
                 new_realm_certificates
                     .lock()
                     .unwrap()
@@ -404,12 +422,14 @@ async fn legacy_no_longer_access(env: &TestbedEnv) {
                 "{:?}",
                 req.per_participant_keys_bundle_access
             );
-            assert!(req
-                .per_participant_keys_bundle_access
-                .contains_key(&"alice".parse().unwrap()));
-            assert!(req
-                .per_participant_keys_bundle_access
-                .contains_key(&"bob".parse().unwrap()));
+            assert!(
+                req.per_participant_keys_bundle_access
+                    .contains_key(&"alice".parse().unwrap())
+            );
+            assert!(
+                req.per_participant_keys_bundle_access
+                    .contains_key(&"bob".parse().unwrap())
+            );
             authenticated_cmds::latest::realm_rotate_key::Rep::AuthorNotAllowed
         },
         // No more steps

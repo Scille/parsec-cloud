@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div
@@ -29,16 +29,10 @@
             v-if="singleEntry"
             class="element-details-title"
           >
-            <ion-text class="element-details-title__name form-input">
-              <i18n-t
-                :keypath="info.translation"
-                scope="global"
-              >
-                <template #name>
-                  <strong> {{ singleEntry.name }} </strong>
-                </template>
-              </i18n-t>
-            </ion-text>
+            <ms-rich-text
+              class="element-details-title__name"
+              :text="{ key: info.translation, data: { name: singleEntry.name } }"
+            />
           </div>
           <div
             v-else
@@ -46,22 +40,16 @@
             :class="{ open: showFileList }"
             @click="toggleFileList"
           >
-            <ion-text class="element-details-title__name form-input">
-              <i18n-t
-                :keypath="info.translationMultiple"
-                scope="global"
-              >
-                <template #count>
-                  <strong>{{ info.entries.length }} {{ $msTranslate('FoldersPage.FileOperations.files') }}</strong>
-                </template>
-              </i18n-t>
-            </ion-text>
+            <ms-rich-text
+              class="element-details-title__name"
+              :text="{ key: info.translationMultiple, data: { count: info.entries.length } }"
+            />
             <ion-icon
               class="name-icon"
               :icon="chevronDown"
             />
           </div>
-          <div class="element-details-info body-sm">
+          <div class="element-details-info">
             <ion-text v-if="props.status === FileOperationEvents.Cancelled">
               {{ $msTranslate('FoldersPage.FileOperations.cancelled') }}
             </ion-text>
@@ -77,9 +65,7 @@
             </ion-text>
             <ion-text
               class="hover-state"
-              v-if="
-                props.status === FileOperationEvents.Finished && isHovered && props.operationData.type !== FileOperationDataType.Download
-              "
+              v-if="props.status === FileOperationEvents.Finished && isHovered"
             >
               {{ $msTranslate('FoldersPage.ImportFile.browse') }}
             </ion-text>
@@ -91,7 +77,7 @@
           class="waiting-info"
           v-if="props.status === FileOperationEvents.Added"
         >
-          <ion-text class="waiting-text body">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.waiting') }}
           </ion-text>
         </div>
@@ -101,7 +87,7 @@
           class="finalizing-info"
           v-if="props.status === FileOperationEvents.Finalizing"
         >
-          <ion-text class="waiting-text body">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.finalizing') }}
           </ion-text>
         </div>
@@ -111,7 +97,7 @@
           class="progress-info"
           v-if="props.status === FileOperationEvents.Progress && props.eventData"
         >
-          <ion-text class="progress-percentage button-small default-state">
+          <ion-text class="progress-percentage default-state">
             {{ (props.eventData as OperationProgressEventData).global.progress }}%
           </ion-text>
           <ms-spinner class="progress-spinner default-state" />
@@ -156,21 +142,18 @@
         />
       </div>
     </ion-item>
-    <template v-if="props.operationData.type !== FileOperationDataType.Download">
-      <transition name="file-list">
-        <file-operation-file-list
-          v-if="info.entries.length > 1 && showFileList"
-          :files="info.entries"
-          :status="props.status"
-        />
-      </transition>
-    </template>
+    <transition name="file-list">
+      <file-operation-file-list
+        v-if="info.entries.length > 1 && showFileList"
+        :files="info.entries"
+        :status="props.status"
+      />
+    </transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import CopyFile from '@/assets/images/copy-file.svg?raw';
-import DownloadFile from '@/assets/images/download-file.svg?raw';
 import MoveFile from '@/assets/images/move-file.svg?raw';
 import RestoreFile from '@/assets/images/restore-file.svg?raw';
 import FileOperationFileList from '@/components/files/operations/FileOperationFileList.vue';
@@ -178,7 +161,6 @@ import {
   FileOperationCopyData,
   FileOperationData,
   FileOperationDataType,
-  FileOperationDownloadData,
   FileOperationEventData,
   FileOperationEvents,
   FileOperationMoveData,
@@ -187,11 +169,11 @@ import {
 } from '@/services/fileOperation';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { alert, checkmarkCircle, chevronDown, folder, warning } from 'ionicons/icons';
-import { MsImage, MsSpinner } from 'megashark-lib';
+import { MsImage, MsRichText, MsSpinner } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{
-  operationData: FileOperationCopyData | FileOperationMoveData | FileOperationRestoreData | FileOperationDownloadData;
+  operationData: FileOperationCopyData | FileOperationMoveData | FileOperationRestoreData;
   status: FileOperationEvents;
   eventData?: FileOperationEventData;
 }>();
@@ -207,28 +189,21 @@ const info = computed(() => {
         entries: (props.operationData as FileOperationCopyData).sources,
         icon: CopyFile,
         translation: 'FoldersPage.CopyFile.copy',
-        translationMultiple: 'FoldersPage.CopyFile.copyMultiplesFiles',
+        translationMultiple: 'FoldersPage.CopyFile.copyMultipleFiles',
       };
     case FileOperationDataType.Move:
       return {
         entries: (props.operationData as FileOperationMoveData).sources,
         icon: MoveFile,
         translation: 'FoldersPage.MoveFile.move',
-        translationMultiple: 'FoldersPage.MoveFile.moveMultiplesFiles',
+        translationMultiple: 'FoldersPage.MoveFile.moveMultipleFiles',
       };
     case FileOperationDataType.Restore:
       return {
         entries: (props.operationData as FileOperationRestoreData).entries,
         icon: RestoreFile,
         translation: 'FoldersPage.RestoreFile.restore',
-        translationMultiple: 'FoldersPage.RestoreFile.restoreMultiplesFiles',
-      };
-    case FileOperationDataType.Download:
-      return {
-        entries: [(props.operationData as FileOperationDownloadData).entry],
-        icon: DownloadFile,
-        translation: 'FoldersPage.DownloadFile.download',
-        translationMultiple: '',
+        translationMultiple: 'FoldersPage.RestoreFile.restoreMultipleFiles',
       };
     default:
       return undefined;
@@ -248,16 +223,13 @@ const singleEntry = computed(() => {
     (props.operationData as FileOperationRestoreData).entries.length === 1
   ) {
     return (props.operationData as FileOperationRestoreData).entries.at(0);
-  } else if (props.operationData.type === FileOperationDataType.Download) {
-    return (props.operationData as FileOperationDownloadData).entry;
   }
   return undefined;
 });
 
 const showDestinationFolderIcon = computed(() => {
-  return (
-    props.operationData.type !== FileOperationDataType.Download &&
-    !(props.operationData.type === FileOperationDataType.Restore && (props.operationData as FileOperationRestoreData).entries.length > 1)
+  return !(
+    props.operationData.type === FileOperationDataType.Restore && (props.operationData as FileOperationRestoreData).entries.length > 1
   );
 });
 
@@ -276,6 +248,22 @@ function toggleFileList() {
 </script>
 
 <style scoped lang="scss">
+.file-operation-item .element-details-title__name {
+  @include ms.font('label-md-medium');
+}
+
+.file-operation-item .element-details-info {
+  @include ms.font('label-sm-medium');
+}
+
+.waiting-text {
+  @include ms.font('body-md-regular');
+}
+
+.progress-percentage {
+  @include ms.font('label-sm-medium');
+}
+
 .element {
   .file-icon {
     min-width: 2rem;
@@ -286,22 +274,22 @@ function toggleFileList() {
 }
 
 .failed {
-  border: 1px solid var(--parsec-color-light-danger-500);
+  border: ms.border('thin') solid ms.color('border-error-default');
 
   .element {
-    --background: var(--parsec-color-light-danger-50);
+    --background: #{ms.color('surface-error-default-subtle-hover')};
   }
 
   &-content {
-    color: var(--parsec-color-light-danger-500);
+    color: ms.color('text-error-default');
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: ms.spacing('gap-md');
   }
 
   .failed-icon {
     font-size: 1.25rem;
-    color: var(--parsec-color-light-danger-500);
+    color: ms.color('icon-error-default');
   }
 }
 </style>

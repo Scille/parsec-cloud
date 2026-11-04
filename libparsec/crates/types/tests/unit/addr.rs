@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 // cspell:ignore xBCgAAAAAAAAAAAAAAAAAAAB
 
 use rstest_reuse::{self, apply, template};
@@ -6,7 +7,10 @@ use std::str::FromStr;
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::prelude::*;
+use crate::{
+    addr::{PARSEC_SAAS_SERVER_HOSTNAME_CURRENT, PARSEC_SAAS_SERVER_HOSTNAME_LEGACY},
+    prelude::*,
+};
 
 const ORG: &str = "MyOrg";
 const TOKEN: &str = "a0000000000000000000000000000001";
@@ -23,13 +27,19 @@ const INVITATION_PARAM: &str = "xBCgAAAAAAAAAAAAAAAAAAAB";
 const WORKSPACE_PATH_PARAM: &str = "k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A";
 // `/foo/bar.txt` encrypted with key `2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1`
 // cspell:disable-next-line
-const WORKSPACE_PATH_PARAM_ENCRYPTED_PATH: &[u8] = &hex!("e167d4e1d9bd33abbe067afba20daf765bbf6c238b2407d95a2e3217046dcc4080d2239d7f1ca63b3e6de6e838377e36223c5370");
+const WORKSPACE_PATH_PARAM_ENCRYPTED_PATH: &[u8] = &hex!(
+    "e167d4e1d9bd33abbe067afba20daf765bbf6c238b2407d95a2e3217046dcc4080d2239d7f1ca63b3e6de6e838377e36223c5370"
+);
 const WORKSPACE_PATH_PARAM_KEY_INDEX: IndexInt = 1;
 // cspell:disable-next-line
 const WORKSPACE_PATH_PARAM_WORKSPACE_ID: &[u8] = &hex!("2d4ded1274064608833b7f57f01156e2");
 const INVITATION_TYPE: &str = "claim_user";
 const PKI_ENROLLMENT_TYPE: &str = "pki_enrollment";
 const ASYNC_ENROLLMENT_TYPE: &str = "async_enrollment";
+const TOTP_RESET_TYPE: &str = "totp_reset";
+const TOTP_RESET_PARAM_USER_ID: &[u8] = &hex!("e6e0650b63ed491384471e51423de098");
+const TOTP_RESET_PARAM_TOKEN: &[u8] = &hex!("33472c574a1bb42077ed5b95e8edd7fb");
+const TOTP_RESET_PARAM: &str = "ktgC5uBlC2PtSROERx5RQj3gmMQQM0csV0obtCB37VuV6O3X-w";
 
 /*
  * Helpers to parametrize the tests on different addr types
@@ -98,6 +108,20 @@ macro_rules! impl_testbed_with_org {
     };
 }
 
+trait TestbedActionAddr: Testbed {
+    fn assert_action_addr_subtype_ok(&self, addr: &ParsecActionAddr);
+}
+
+macro_rules! impl_testbed_action_addr_trait {
+    ($addr_type:ty, $action_addr_subtype:ident) => {
+        impl TestbedActionAddr for $addr_type {
+            fn assert_action_addr_subtype_ok(&self, addr: &ParsecActionAddr) {
+                p_assert_matches!(addr, ParsecActionAddr::$action_addr_subtype(_))
+            }
+        }
+    };
+}
+
 struct AddrTestbed {}
 impl Testbed for AddrTestbed {
     impl_testbed_common!(ParsecAddr);
@@ -120,9 +144,12 @@ impl Testbed for OrganizationBootstrapAddrTestbed {
     impl_testbed_common!(ParsecOrganizationBootstrapAddr);
     impl_testbed_with_org!(ParsecOrganizationBootstrapAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=bootstrap_organization&p={ORGANIZATION_BOOTSTRAP_ADDR_PARAM}",)
+        format!(
+            "{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=bootstrap_organization&p={ORGANIZATION_BOOTSTRAP_ADDR_PARAM}",
+        )
     }
 }
+impl_testbed_action_addr_trait!(OrganizationBootstrapAddrTestbed, OrganizationBootstrap);
 
 struct WorkspacePathAddrTestbed {}
 impl Testbed for WorkspacePathAddrTestbed {
@@ -132,6 +159,7 @@ impl Testbed for WorkspacePathAddrTestbed {
         format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=path&p={WORKSPACE_PATH_PARAM}",)
     }
 }
+impl_testbed_action_addr_trait!(WorkspacePathAddrTestbed, WorkspacePath);
 
 struct InvitationAddrTestbed {}
 impl Testbed for InvitationAddrTestbed {
@@ -141,6 +169,7 @@ impl Testbed for InvitationAddrTestbed {
         format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={INVITATION_TYPE}&p={INVITATION_PARAM}",)
     }
 }
+impl_testbed_action_addr_trait!(InvitationAddrTestbed, Invitation);
 
 struct PKIEnrollmentAddrTestbed {}
 impl Testbed for PKIEnrollmentAddrTestbed {
@@ -150,6 +179,7 @@ impl Testbed for PKIEnrollmentAddrTestbed {
         format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={PKI_ENROLLMENT_TYPE}",)
     }
 }
+impl_testbed_action_addr_trait!(PKIEnrollmentAddrTestbed, PkiEnrollment);
 
 struct AsyncEnrollmentAddrTestbed {}
 impl Testbed for AsyncEnrollmentAddrTestbed {
@@ -159,6 +189,17 @@ impl Testbed for AsyncEnrollmentAddrTestbed {
         format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={ASYNC_ENROLLMENT_TYPE}",)
     }
 }
+impl_testbed_action_addr_trait!(AsyncEnrollmentAddrTestbed, AsyncEnrollment);
+
+struct TOTPResetAddrTestbed {}
+impl Testbed for TOTPResetAddrTestbed {
+    impl_testbed_common!(ParsecTOTPResetAddr);
+    impl_testbed_with_org!(ParsecTOTPResetAddr);
+    fn url(&self) -> String {
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={TOTP_RESET_TYPE}&p={TOTP_RESET_PARAM}",)
+    }
+}
+impl_testbed_action_addr_trait!(TOTPResetAddrTestbed, TOTPReset);
 
 #[template]
 #[rstest(
@@ -170,6 +211,7 @@ impl Testbed for AsyncEnrollmentAddrTestbed {
     case::invitation_addr(&InvitationAddrTestbed{}),
     case::pki_enrollment_addr(&PKIEnrollmentAddrTestbed{}),
     case::async_enrollment_addr(&AsyncEnrollmentAddrTestbed{}),
+    case::totp_reset_addr(&TOTPResetAddrTestbed{}),
 )]
 fn all_addr(testbed: &dyn Testbed) {}
 
@@ -182,8 +224,21 @@ fn all_addr(testbed: &dyn Testbed) {}
     case::invitation_addr(&InvitationAddrTestbed{}),
     case::pki_enrollment_addr(&PKIEnrollmentAddrTestbed{}),
     case::async_enrollment_addr(&AsyncEnrollmentAddrTestbed{}),
+    case::totp_reset_addr(&TOTPResetAddrTestbed{}),
 )]
 fn addr_with_org(testbed: &dyn Testbed) {}
+
+#[template]
+#[rstest(
+    testbed,
+    case::organization_bootstrap_addr(&OrganizationBootstrapAddrTestbed{}),
+    case::workspace_path_addr(&WorkspacePathAddrTestbed{}),
+    case::invitation_addr(&InvitationAddrTestbed{}),
+    case::pki_enrollment_addr(&PKIEnrollmentAddrTestbed{}),
+    case::async_enrollment_addr(&AsyncEnrollmentAddrTestbed{}),
+    case::totp_reset_addr(&TOTPResetAddrTestbed{}),
+)]
+fn action_addr(testbed: &dyn TestbedActionAddr) {}
 
 /*
  * Actual tests
@@ -192,6 +247,22 @@ fn addr_with_org(testbed: &dyn Testbed) {}
 #[rstest_reuse::apply(all_addr)]
 fn good_addr_base(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
+}
+
+// See: https://github.com/Scille/parsec-cloud/issues/12377
+#[rstest_reuse::apply(all_addr)]
+fn patch_addr_saas_legacy(testbed: &dyn Testbed) {
+    let url = testbed
+        .url()
+        .replace(DOMAIN, PARSEC_SAAS_SERVER_HOSTNAME_LEGACY);
+
+    testbed.assert_addr_ok_with_expected(
+        url.as_str(),
+        testbed
+            .url()
+            .replace(DOMAIN, PARSEC_SAAS_SERVER_HOSTNAME_CURRENT)
+            .as_str(),
+    );
 }
 
 #[rstest(value, assert_outcome)]
@@ -430,7 +501,7 @@ fn bootstrap_addr_token() {
 
     // Url with token
     let addr: ParsecOrganizationBootstrapAddr = testbed.url().parse().unwrap();
-    let expected_token = BootstrapToken::from_hex(TOKEN).unwrap();
+    let expected_token = AccessToken::from_hex(TOKEN).unwrap();
     p_assert_eq!(addr.token(), Some(&expected_token));
 
     // Url without token (for spontaneous bootstrap)
@@ -556,7 +627,7 @@ fn invitation_addr_bad_type(
 fn invitation_addr_token() {
     let testbed = InvitationAddrTestbed {};
     let addr: ParsecInvitationAddr = testbed.url().parse().unwrap();
-    let expected_token = InvitationToken::from_hex(TOKEN).unwrap();
+    let expected_token = AccessToken::from_hex(TOKEN).unwrap();
     p_assert_eq!(addr.token(), expected_token);
 }
 
@@ -594,6 +665,65 @@ fn invitation_addr_types() {
     let url = testbed.url().replace(INVITATION_TYPE, "claim_device");
     let addr: ParsecInvitationAddr = url.parse().unwrap();
     p_assert_eq!(addr.invitation_type(), InvitationType::Device);
+}
+
+#[rstest]
+fn totp_reset_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+    let testbed = TOTPResetAddrTestbed {};
+
+    match bad_type {
+        Some(bad_type) => {
+            let url = testbed.url().replace("totp_reset", bad_type);
+            testbed.assert_addr_err(
+                &url,
+                AddrError::InvalidParamValue {
+                    param: "a",
+                    help: "Expected `a=totp_reset`".to_owned(),
+                },
+            );
+        }
+        None => {
+            // Type param not present in the url
+            let url = testbed.url().replace("a=totp_reset&", "");
+            testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
+        }
+    }
+}
+
+#[rstest]
+fn totp_reset_addr_fields() {
+    let testbed = TOTPResetAddrTestbed {};
+    let addr: ParsecTOTPResetAddr = testbed.url().parse().unwrap();
+    p_assert_eq!(addr.token().as_bytes(), TOTP_RESET_PARAM_TOKEN);
+    p_assert_eq!(addr.user_id().as_bytes(), TOTP_RESET_PARAM_USER_ID);
+}
+
+#[rstest]
+#[case::empty("")]
+#[case::not_base64("<dummy>")]
+// cspell:disable-next-line
+#[case::base64_over_not_msgpack("ZHVtbXk")] // Base64("dummy")
+// cspell:disable-next-line
+#[case::empty_token("xAA")] // Base64(Msgpack(b""))
+// cspell:disable-next-line
+#[case::token_too_short("xAEA")] // Base64(Msgpack(b"\x00"))
+// cspell:disable-next-line
+#[case::token_too_long("xBEAAAAAAAAAAAAAAAAAAAAAAA")] // Base64(Msgpack(b"\x00" * 17))
+#[case::token_too_good("ksQQ5uBlC2PtSROERx5RQj3gmMQQM0csV0obtCB37VuV6O3X+w==")]
+fn totp_reset_addr_bad_payload(#[case] bad_payload: &str) {
+    let testbed = TOTPResetAddrTestbed {};
+    let url = testbed.url();
+    // Extract the payload param value from the URL to replace it
+    let payload_start = url.find("p=").unwrap() + 2;
+    let good_payload = &url[payload_start..];
+    let url = url.replace(good_payload, bad_payload);
+    testbed.assert_addr_err(
+        &url,
+        AddrError::InvalidParamValue {
+            param: "p",
+            help: "Invalid `p` parameter".into(),
+        },
+    );
 }
 
 #[rstest]
@@ -721,18 +851,18 @@ fn parsec_addr_redirection() {
     test_redirection!(
         ParsecWorkspacePathAddr,
         // cspell:disable-next-line
-        "parsec3://parsec.example.com/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A", // cspell:disable-line
         // cspell:disable-next-line
-        "https://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "https://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A", // cspell:disable-line
     );
     test_redirection!(
         ParsecWorkspacePathAddr,
         // cspell:disable-next-line
-        "parsec3://parsec.example.com/my_org?a=path&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?a=path&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A", // cspell:disable-line
         // cspell:disable-next-line
-        "parsec3://parsec.example.com/my_org?no_ssl=true&a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?no_ssl=true&a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A", // cspell:disable-line
         // cspell:disable-next-line
-        "http://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "http://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A", // cspell:disable-line
     );
 }
 
@@ -900,7 +1030,7 @@ fn organization_bootstrap_addr_good(
     let verify_key = SigningKey::generate().verify_key();
     let org = OrganizationID::from_str("org").unwrap();
     let server_addr = ParsecAddr::from_str(base_url).unwrap();
-    let token = BootstrapToken::from_hex(TOKEN).unwrap();
+    let token = AccessToken::from_hex(TOKEN).unwrap();
     let addr = ParsecOrganizationBootstrapAddr::new(server_addr, org.clone(), Some(token));
 
     p_assert_eq!(addr.hostname(), "foo");
@@ -999,44 +1129,42 @@ fn organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrErr
     );
 }
 
-#[rstest]
-#[case::bootstrap_organization(
-    // cspell:disable-next-line
-    "parsec3://parsec.example.com/my_org?a=bootstrap_organization&p=xBCgAAAAAAAAAAAAAAAAAAAB",
-    // cspell:disable-next-line
-    "https://parsec.example.com/redirect/my_org?a=bootstrap_organization&p=xBCgAAAAAAAAAAAAAAAAAAAB",
-)]
-#[case::path(
-    // cspell:disable-next-line
-    "parsec3://parsec.example.com/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",
-    // cspell:disable-next-line
-    "https://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",
-)]
-#[case::claim_user(
-    // cspell:disable-next-line
-    "parsec3://parsec.example.com/my_org?a=claim_user&p=xBCgAAAAAAAAAAAAAAAAAAAB",
-    // cspell:disable-next-line
-    "https://parsec.example.com/redirect/my_org?a=claim_user&p=xBCgAAAAAAAAAAAAAAAAAAAB"
-)]
-#[case::pki_enrollment(
-    "parsec3://parsec.example.com/my_org?a=pki_enrollment",
-    "https://parsec.example.com/redirect/my_org?a=pki_enrollment"
-)]
-#[case::async_enrollment(
-    "parsec3://parsec.example.com/my_org?a=async_enrollment",
-    "https://parsec.example.com/redirect/my_org?a=async_enrollment"
-)]
-fn action_addr_good(#[case] url: &str, #[case] redirect_url: &str) {
-    let addr: ParsecActionAddr = url.parse().unwrap();
+#[rstest_reuse::apply(action_addr)]
+fn action_addr_good(testbed: &dyn TestbedActionAddr) {
+    let url = testbed.url();
+    let redirection_url = testbed.to_redirection_url(&url);
 
-    let addr2 = ParsecActionAddr::from_http_redirection(redirect_url).unwrap();
+    let addr: ParsecActionAddr = url.parse().unwrap();
+    testbed.assert_action_addr_subtype_ok(&addr);
+
+    let addr2 = ParsecActionAddr::from_http_redirection(&redirection_url).unwrap();
+    testbed.assert_action_addr_subtype_ok(&addr2);
     p_assert_eq!(addr2, addr);
 
-    let addr3 = ParsecActionAddr::from_any(url).unwrap();
+    let addr3 = ParsecActionAddr::from_any(&url).unwrap();
+    testbed.assert_action_addr_subtype_ok(&addr3);
     p_assert_eq!(addr3, addr);
 
-    let addr4 = ParsecActionAddr::from_any(redirect_url).unwrap();
+    let addr4 = ParsecActionAddr::from_any(&redirection_url).unwrap();
+    testbed.assert_action_addr_subtype_ok(&addr4);
     p_assert_eq!(addr4, addr);
+}
+
+#[rstest_reuse::apply(action_addr)]
+fn action_addr_bad_p_param_help_text(testbed: &dyn TestbedActionAddr) {
+    let good_url = testbed.url();
+    let expected_action = {
+        let index = good_url.find("a=").unwrap();
+        good_url[index + 2..].split("&").next().unwrap()
+    };
+    let bad_url = "parsec3://parsec.example.com/my_org?a=dummy&p=123";
+
+    let err = bad_url.parse::<ParsecActionAddr>().unwrap_err();
+    p_assert_matches!(
+        err,
+        AddrError::InvalidParamValue { param, help }
+        if param == "a" && help.contains(expected_action)
+    )
 }
 
 #[rstest]
@@ -1186,10 +1314,21 @@ macro_rules! test_anonymous_addr {
 
 #[rstest]
 fn anonymous_addr() {
+    test_anonymous_addr!(OrganizationAddrTestbed {}, ParsecOrganizationAddr);
     test_anonymous_addr!(
         OrganizationBootstrapAddrTestbed {},
         ParsecOrganizationBootstrapAddr
     );
     test_anonymous_addr!(PKIEnrollmentAddrTestbed {}, ParsecPkiEnrollmentAddr);
     test_anonymous_addr!(AsyncEnrollmentAddrTestbed {}, ParsecAsyncEnrollmentAddr);
+    test_anonymous_addr!(TOTPResetAddrTestbed {}, ParsecTOTPResetAddr);
+
+    let server_addr: ParsecAddr = AddrTestbed {}.url().parse().unwrap();
+    let organization_id: OrganizationID = ORG.parse().unwrap();
+    let addr = ParsecAnonymousAddr::new(server_addr, organization_id.clone());
+    p_assert_eq!(addr.organization_id(), &organization_id);
+    p_assert_eq!(
+        addr.to_anonymous_http_url(),
+        format!("https://{DOMAIN}/anonymous/{ORG}").parse().unwrap()
+    );
 }

@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page
@@ -13,7 +13,8 @@
     <ion-button
       slot="icon-only"
       @click="cancelModal()"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
       v-if="pageStep !== GreetUserStep.Summary && isLargeDisplay"
     >
       <ion-icon
@@ -26,11 +27,11 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
-          class="modal-header__text body"
+          class="modal-header__text"
           v-if="steps[pageStep]?.subtitle"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
@@ -130,18 +131,14 @@
           v-if="guestInfoPageRef"
           class="final-step"
         >
-          <user-avatar-name
-            class="avatar"
-            :user-name="guestInfoPageRef.fullName"
-            :user-avatar="guestInfoPageRef.fullName"
-          />
+          <ion-text class="user-name">{{ guestInfoPageRef.fullName }}</ion-text>
           <div class="user-info">
             <div class="user-info__email">
-              <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
-              <ion-text class="info-cell cell">{{ guestInfoPageRef.email }}</ion-text>
+              <ion-text class="info-label">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
+              <ion-text class="info-cell">{{ guestInfoPageRef.email }}</ion-text>
             </div>
             <div class="user-info__role">
-              <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
+              <ion-text class="info-label">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
               <user-profile-tag :profile="profile ? profile : UserProfile.Outsider" />
             </div>
           </div>
@@ -165,13 +162,10 @@
             v-show="waitingForGuest || querying"
             class="spinner-container"
           >
-            <ion-text
-              class="subtitles-normal"
-              v-show="!querying"
-            >
-              {{ $msTranslate('UsersPage.greet.waiting') }}
-            </ion-text>
-            <ms-spinner class="spinner" />
+            <ms-spinner
+              title="UsersPage.greet.waiting"
+              :size="20"
+            />
           </div>
         </div>
       </ion-footer>
@@ -184,7 +178,6 @@ import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import { CancelledGreetingAttemptReason, GreetInProgressErrorTag, UserGreet, UserInvitation, UserProfile } from '@/parsec';
@@ -531,43 +524,64 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.modal-header__title {
+  @include ms.font('heading-h4');
+}
+
+.modal-header__text {
+  @include ms.font('body-md-regular');
+}
+
 .final-step {
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  color: var(--parsec-color-light-secondary-text);
-  gap: 1rem;
+  color: ms.color('text-base-body');
+  background-color: ms.color('surface-base-default');
+  box-shadow: ms.shadow('card');
+  border-radius: ms.radius('lg');
+  overflow: hidden;
 
-  @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
-  }
+  // @include ms.responsive-breakpoint('sm') {
+  //   margin-inline: 1.5rem;
+  // }
 
-  .avatar {
-    padding-left: 0.725rem;
-    border-left: 2px solid var(--parsec-color-light-secondary-disabled);
+  .user-name {
+    @include ms.font('heading-h5');
+
+    padding: ms.spacing('padding-3xl');
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
+    background-color: ms.color('surface-neutral-default-subtle');
   }
 
   .user-info {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    background: var(--parsec-color-light-secondary-background);
-    padding: 1rem;
-    border-radius: var(--parsec-radius-6);
+    border-radius: ms.radius('md');
 
     & > [class^='user-info'] {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: ms.spacing('gap-2xl');
+      padding: ms.spacing('padding-2xl');
+
+      &:not(:last-child) {
+        border-bottom: ms.border('thin') solid ms.color('border-base-default');
+      }
     }
 
     .info-label {
-      color: var(--parsec-color-light-secondary-grey);
+      @include ms.font('body-md-regular');
+
+      color: ms.color('text-base-description');
       flex-shrink: 0;
     }
 
     .info-cell {
+      @include ms.font('body-md-medium');
+
+      font-weight: 600;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;

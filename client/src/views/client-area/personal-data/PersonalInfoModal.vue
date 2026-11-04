@@ -1,9 +1,9 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="`${translationPrefix}.title`"
+      title="clientArea.personalDataPage.modals.personalInfo.title"
       :close-button="{ visible: true }"
       :cancel-button="{
         label: 'lib.components.msTextInputModal.cancelButtonLabel',
@@ -11,7 +11,7 @@
         onClick: dismissModal,
       }"
       :confirm-button="{
-        label: `${translationPrefix}.nextButton`,
+        label: 'clientArea.personalDataPage.modals.personalInfo.nextButton',
         disabled: !isFormValid() || querying,
         onClick: submit,
       }"
@@ -20,28 +20,28 @@
         <ms-input
           v-model="firstnameRef"
           :maxlength="128"
-          :label="`${translationPrefix}.firstname`"
+          label="clientArea.personalDataPage.modals.personalInfo.firstname"
           @on-enter-keyup="submit"
           ref="firstnameInput"
         />
         <ms-input
           v-model="lastnameRef"
           :maxlength="128"
-          :label="`${translationPrefix}.lastname`"
+          label="clientArea.personalDataPage.modals.personalInfo.lastname"
           @on-enter-keyup="submit"
         />
         <div class="input-container">
           <ms-phone-number-input
             class="form-item-input"
-            :label="`${translationPrefix}.phone`"
+            label="clientArea.personalDataPage.modals.personalInfo.phone"
             v-model="phoneRef"
             @on-enter-keyup="submit"
           />
           <div
-            class="form-error form-helperText body"
+            class="form-error"
             v-if="fieldHasError(Fields.Phone)"
           >
-            {{ $msTranslate(`${translationPrefix}.errors.phone`) }}
+            {{ $msTranslate('clientArea.personalDataPage.modals.personalInfo.errors.phone') }}
           </div>
         </div>
         <ms-report-text
@@ -68,7 +68,6 @@ const props = defineProps<{
   phone?: string;
 }>();
 
-const translationPrefix = 'clientArea.personalDataPage.modals.personalInfo';
 const firstnameRef = ref(props.firstname);
 const lastnameRef = ref(props.lastname);
 const phoneRef = ref(props.phone ?? '');

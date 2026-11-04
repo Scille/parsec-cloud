@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-item
@@ -6,50 +6,54 @@
     lines="full"
     :detail="false"
     :class="{
-      selected: entry.isSelected,
-      'file-hovered': !entry.isSelected && (menuOpened || isHovered),
+      selected: selected,
+      'file-list-item--hovered': !selected && isHovered,
+      'is-folder': !entry.isFile(),
     }"
-    class="file-list-item"
+    class="list-item file-list-item history-file-list-item"
+    @click.stop="toggleSelected()"
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
     <div class="list-item-container">
-      <div class="file-selected">
-        <!-- eslint-disable vue/no-mutating-props -->
+      <div class="list-item-column file-selected">
         <ms-checkbox
-          v-model="entry.isSelected"
-          v-show="entry.isSelected || isHovered || showCheckbox"
-          @change="$emit('selectedChange', entry, $event)"
+          :checked="selected"
+          v-show="(selected || isHovered || showCheckbox) && !readOnly"
+          @change="toggleSelected()"
           @click.stop
           @dblclick.stop
         />
-        <!-- eslint-enable vue/no-mutating-props -->
       </div>
 
       <!-- file name -->
-      <div class="file-name">
+      <div class="list-item-column file-name">
         <ms-image
           :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
           class="file-icon"
         />
-        <ion-label class="label-name cell">
+        <ion-label
+          class="list-item-label label-name cell"
+          :class="{ selection: showCheckbox }"
+          @click.stop="showCheckbox ? toggleSelected() : $emit('click', $event, entry)"
+        >
           {{ entry.name }}
         </ion-label>
       </div>
 
       <!-- last update -->
-      <div class="file-last-update">
-        <ion-label class="label-last-update cell">
+      <div class="list-item-column file-last-update">
+        <ion-label class="list-item-label label-last-update cell">
           {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
         </ion-label>
       </div>
 
       <!-- file size -->
-      <div class="file-size">
+      <div class="list-item-column file-size">
         <ion-label
           v-if="entry.isFile()"
-          class="label-size cell"
+          class="list-item-label label-size cell"
         >
           {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).size)) }}
         </ion-label>
@@ -63,22 +67,22 @@
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
 import { WorkspaceHistoryEntryModel, WorkspaceHistoryFileModel } from '@/components/files/types';
-import { FsPath, Path } from '@/parsec';
 import { IonItem, IonLabel } from '@ionic/vue';
 import { Folder, MsCheckbox, MsImage, formatTimeSince } from 'megashark-lib';
-import { Ref, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 const isHovered = ref(false);
-const menuOpened = ref(false);
 
 const props = defineProps<{
   entry: WorkspaceHistoryEntryModel;
   showCheckbox: boolean;
+  readOnly: boolean;
+  selected: boolean;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'click', event: Event, entry: WorkspaceHistoryEntryModel): void;
-  (e: 'selectedChange', entry: WorkspaceHistoryEntryModel, checked: boolean): void;
+  (e: 'update:selected', value: boolean): void;
 }>();
 
 defineExpose({
@@ -86,20 +90,23 @@ defineExpose({
   props,
 });
 
-const currentPath: Ref<FsPath> = ref('/');
-
-onMounted(async () => {
-  if (props.entry.isFile()) {
-    currentPath.value = await Path.parent(props.entry.path);
-  } else {
-    currentPath.value = props.entry.path;
+function toggleSelected(): void {
+  if (props.readOnly) {
+    return;
   }
-});
+  emits('update:selected', !props.selected);
+}
 </script>
 
 <style lang="scss" scoped>
+.history-file-list-item {
+  .list-item-container:has(.label-name:not(.selection):hover) .ms-checkbox {
+    outline: none !important;
+  }
+}
+
 .file-selected {
-  flex-shrink: 0;
+  overflow: visible;
   width: 2.5rem;
 
   @include ms.responsive-breakpoint('sm') {
@@ -108,10 +115,6 @@ onMounted(async () => {
 }
 
 .file-name {
-  position: relative;
-  display: flex;
-  gap: 1rem;
-
   .file-icon {
     width: 2rem;
     height: 2rem;
@@ -124,11 +127,12 @@ onMounted(async () => {
   }
 
   .label-name {
-    color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
 
-    @include ms.responsive-breakpoint('sm') {
-      margin-left: 0;
+    &:not(.selection):hover {
+      cursor: pointer;
+      text-decoration: underline;
     }
   }
 }

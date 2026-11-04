@@ -54,6 +54,16 @@ class RepRealmNotFound(Rep):
         self,
     ) -> None: ...
 
+class RepRealmArchived(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepRealmDeleted(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepVlobAlreadyExists(Rep):
     def __init__(
         self,

@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div
@@ -34,7 +34,7 @@
             v-if="singleEntry"
             class="element-details-title"
           >
-            <ion-text class="element-details-title__name form-input">
+            <ion-text class="element-details-title__name">
               <strong> {{ singleEntry.name }} </strong>
             </ion-text>
           </div>
@@ -44,22 +44,22 @@
             :class="{ open: showFileList }"
             @click="toggleFileList"
           >
-            <ion-text class="element-details-title__name form-input">
-              <i18n-t
-                keypath="FoldersPage.ImportFile.importMultiplesFiles"
-                scope="global"
-              >
-                <template #count>
-                  <strong>{{ operationData.files.length }} {{ $msTranslate('FoldersPage.FileOperations.files') }}</strong>
-                </template>
-              </i18n-t>
-            </ion-text>
+            <ms-rich-text
+              class="element-details-title__name"
+              :text="{
+                key:
+                  props.status === FileOperationEvents.Added
+                    ? 'FoldersPage.ImportFile.gatherMultipleFiles'
+                    : 'FoldersPage.ImportFile.importMultipleFiles',
+                data: { count: operationData.files.length },
+              }"
+            />
             <ion-icon
               class="name-icon"
               :icon="chevronDown"
             />
           </div>
-          <div class="element-details-info body-sm">
+          <div class="element-details-info">
             <ion-text
               v-if="singleEntry"
               v-show="props.status === FileOperationEvents.Progress || (props.status === FileOperationEvents.Finished && !isHovered)"
@@ -99,17 +99,9 @@
           class="waiting-info"
           v-if="props.status === FileOperationEvents.Added"
         >
-          <ion-text class="waiting-text form-input">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.waiting') }}
           </ion-text>
-          <ion-button
-            fill="clear"
-            size="small"
-            class="cancel-button"
-            @click="$emit('cancel', operationData)"
-          >
-            {{ $msTranslate('FoldersPage.FileOperations.cancel') }}
-          </ion-button>
         </div>
 
         <!-- finalizing -->
@@ -117,7 +109,7 @@
           class="finalizing-info"
           v-if="props.status === FileOperationEvents.Finalizing"
         >
-          <ion-text class="waiting-text form-input">
+          <ion-text class="waiting-text">
             {{ $msTranslate('FoldersPage.FileOperations.finalizing') }}
           </ion-text>
         </div>
@@ -127,9 +119,7 @@
           class="progress-info"
           v-if="props.status === FileOperationEvents.Progress && props.eventData"
         >
-          <ion-text class="progress-percentage button-small default-state">
-            {{ (eventData as OperationProgressEventData).global.progress }}%
-          </ion-text>
+          <ion-text class="progress-percentage default-state"> {{ (eventData as OperationProgressEventData).global.progress }}% </ion-text>
           <ms-spinner class="progress-spinner default-state" />
           <ion-button
             fill="clear"
@@ -191,7 +181,7 @@ import {
 } from '@/services/fileOperation';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { alert, chevronDown, folder, warning } from 'ionicons/icons';
-import { MsImage, MsSpinner } from 'megashark-lib';
+import { MsImage, MsRichText, MsSpinner } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{
@@ -230,6 +220,22 @@ const singleEntry = computed(() => {
 </script>
 
 <style scoped lang="scss">
+.file-operation-item .element-details-title__name {
+  @include ms.font('label-md-medium');
+}
+
+.file-operation-item .element-details-info {
+  @include ms.font('label-sm-medium');
+}
+
+.waiting-text {
+  @include ms.font('label-md-medium');
+}
+
+.progress-percentage {
+  @include ms.font('label-sm-medium');
+}
+
 .element {
   .file-icon {
     min-width: 1.825rem;
@@ -244,16 +250,16 @@ const singleEntry = computed(() => {
 }
 
 .failed-content {
-  color: var(--parsec-color-light-danger-500);
+  color: ms.color('text-error-default');
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: ms.spacing('gap-md');
 
   .information-icon {
     font-size: 1.375rem;
 
     &:hover {
-      color: var(--parsec-color-light-danger-700);
+      color: ms.color('icon-error-default-hover');
     }
   }
 }

@@ -1,17 +1,22 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use std::sync::Arc;
 
-use libparsec::{tmp_path, HumanHandle, LocalDevice, ParsecAddr, TmpPath};
+use libparsec::{HumanHandle, LocalDevice, ParsecAddr, TmpPath, tmp_path};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::{
-    bootstrap_cli_test,
-    testenv_utils::{create_new_device, create_new_user, TestOrganization},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{TestOrganization, create_new_device, create_new_user},
 };
-use parsec_cli::utils::{get_minimal_short_id_size, RESET, YELLOW};
+use parsec_cli::{
+    ui::Ui,
+    utils::{RESET, YELLOW, get_minimal_short_id_size},
+};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn device_not_found(tmp_path: TmpPath) {
+async fn device_not_found(tmp_path: TmpPath, test_ui: &Ui) {
     const A_DEVICE_THAT_DOES_NOT_EXIST: &str = "0000";
     let (
         _,
@@ -22,17 +27,18 @@ async fn device_not_found(tmp_path: TmpPath) {
             toto,
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let mut devices = [alice, other_alice, bob, toto];
     devices.sort_by_cached_key(|d| d.device_id.hex());
 
     // Ensure that A_DEVICE_THAT_DOES_NOT_EXIST is not the prefix of one of the known devices.
     devices.iter().for_each(|dev| {
-        assert!(!dev
-            .device_id
-            .hex()
-            .starts_with(A_DEVICE_THAT_DOES_NOT_EXIST));
+        assert!(
+            !dev.device_id
+                .hex()
+                .starts_with(A_DEVICE_THAT_DOES_NOT_EXIST)
+        );
     });
 
     let mut available_devices_string_list = String::new();
@@ -74,7 +80,7 @@ fn format_devices(
 
 #[rstest::rstest]
 #[tokio::test]
-async fn missing_option(tmp_path: TmpPath) {
+async fn missing_option(tmp_path: TmpPath, test_ui: &Ui) {
     let (
         _,
         TestOrganization {
@@ -84,7 +90,7 @@ async fn missing_option(tmp_path: TmpPath) {
             toto,
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let mut devices = [alice, other_alice, bob, toto];
     devices.sort_by_cached_key(|d| d.device_id.hex());
@@ -101,9 +107,9 @@ async fn missing_option(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn multiple_device_found(tmp_path: TmpPath) {
+async fn multiple_device_found(tmp_path: TmpPath, test_ui: &Ui) {
     let config = super::get_testenv_config();
-    let url = super::new_environment(&tmp_path, None, config, false)
+    let url = super::new_environment(test_ui, &tmp_path, None, config, false)
         .await
         .unwrap()
         .unwrap();
@@ -124,9 +130,14 @@ async fn multiple_device_found(tmp_path: TmpPath) {
             org_addr,
             "dev1".parse().unwrap(),
             libparsec::HumanHandle::from_raw("first@dev1.com", "First").unwrap(),
-            crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
-                .to_string()
-                .into(),
+            libparsec::DeviceSaveStrategy {
+                totp_protection: None,
+                primary_protection: libparsec::DevicePrimaryProtectionStrategy::Password {
+                    password: crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
+                        .to_string()
+                        .into(),
+                },
+            },
             None,
         )
         .await
@@ -134,15 +145,15 @@ async fn multiple_device_found(tmp_path: TmpPath) {
 
     let first_device = libparsec::load_device(
         &client_config.config_dir,
-        &libparsec_client::DeviceAccessStrategy::Password {
-            key_file: libparsec::get_default_key_file(
+        &libparsec_client::DeviceAccessStrategy::new_password(
+            libparsec::get_default_key_file(
                 &client_config.config_dir,
                 first_available_device.device_id,
             ),
-            password: crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
+            crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
                 .to_string()
                 .into(),
-        },
+        ),
     )
     .await
     .unwrap();
@@ -236,11 +247,11 @@ async fn create_second_device(
     let key_file =
         libparsec::get_default_key_file(&client_config.config_dir, second_device.device_id);
 
-    let second_dev_access = libparsec_client::DeviceSaveStrategy::Password {
-        password: crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
+    let second_dev_access = libparsec_client::DeviceSaveStrategy::new_password(
+        crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
             .to_string()
             .into(),
-    };
+    );
 
     libparsec::save_device(
         std::path::Path::new(""),

@@ -1,8 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::future::Future;
 
-use libparsec_platform_async::{spawn, JoinHandle};
+use libparsec_platform_async::{JoinHandle, spawn};
 use libparsec_types::prelude::*;
 
 use crate::event_bus::EventBus;
@@ -24,7 +24,6 @@ pub(crate) struct Monitor {
 }
 
 impl Monitor {
-    #[allow(unused)]
     pub async fn start<Fut>(
         _event_bus: EventBus,
         name: &'static str,
@@ -47,7 +46,6 @@ impl Monitor {
     }
 
     /// Abort the monitor task and wait until the task has actually finished
-    #[allow(unused)]
     pub async fn stop(mut self) -> anyhow::Result<()> {
         if let Some(stop_cb) = self.stop_cb.take() {
             stop_cb();

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from collections.abc import Buffer
@@ -9,6 +10,7 @@ from typing import override
 from asyncpg import Record
 
 from parsec._parsec import (
+    AccessToken,
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
@@ -17,7 +19,6 @@ from parsec._parsec import (
     GreetingAttemptID,
     HumanHandle,
     InvitationStatus,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     UserID,
@@ -81,7 +82,7 @@ ShamirRecoveryRecipient = invited_cmds.latest.invite_info.ShamirRecoveryRecipien
 @dataclass(frozen=True)
 class BaseInvitationInfo:
     internal_id: int
-    token: InvitationToken
+    token: AccessToken
     type: InvitationType
     created_by: InvitationCreatedBy
     created_on: DateTime
@@ -128,7 +129,7 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
 
     match record["token"]:
         case str() as raw_token:
-            token = InvitationToken.from_hex(raw_token)
+            token = AccessToken.from_hex(raw_token)
         case _:
             assert False, record
 
@@ -1053,7 +1054,7 @@ async def _send_invitation_event(
 async def _send_invitation_event_for_user(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
-    token: InvitationToken,
+    token: AccessToken,
     status: InvitationStatus,
 ) -> None:
     rows = await conn.fetch(
@@ -1084,7 +1085,7 @@ async def _send_invitation_event_for_user(
 async def _send_invitation_event_for_device(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
-    token: InvitationToken,
+    token: AccessToken,
     claimer_user_id: UserID,
     status: InvitationStatus,
 ) -> None:
@@ -1104,7 +1105,7 @@ async def _send_invitation_event_for_device(
 async def _send_invitation_event_for_shamir_recovery(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
-    token: InvitationToken,
+    token: AccessToken,
     shamir_recovery_setup_internal_id: int,
     status: InvitationStatus,
 ) -> None:
@@ -1145,8 +1146,8 @@ async def _do_new_invitation(
     shamir_recovery_setup: int | None,
     created_on: DateTime,
     invitation_type: InvitationType,
-    suggested_token: InvitationToken,
-) -> InvitationToken:
+    suggested_token: AccessToken,
+) -> AccessToken:
     raw_user_invitation_email = (
         str(user_invitation_claimer_email) if user_invitation_claimer_email else None
     )
@@ -1177,7 +1178,7 @@ async def _do_new_invitation(
     # Check if no compatible invitations already exists
     row = await conn.fetchrow(*q)
     if row:
-        token = InvitationToken.from_hex(row["token"])
+        token = AccessToken.from_hex(row["token"])
     else:
         token = suggested_token
         await conn.execute(
@@ -1264,14 +1265,14 @@ class PGInviteComponent(BaseInviteComponent):
         claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForUserBadOutcome:
         # Perform operation inside a PostgreSQL transaction
         outcome = await self._new_for_user(
             now, organization_id, author, claimer_email, send_email, force_token
         )
         match outcome:
-            case (InvitationToken() as token, greeter_human_handle):
+            case (AccessToken() as token, greeter_human_handle):
                 pass
             case err:
                 return err
@@ -1301,8 +1302,8 @@ class PGInviteComponent(BaseInviteComponent):
         claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | HumanHandle] | InviteNewForUserBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, HumanHandle | None] | InviteNewForUserBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1327,7 +1328,7 @@ class PGInviteComponent(BaseInviteComponent):
         if user_id:
             return InviteNewForUserBadOutcome.CLAIMER_EMAIL_ALREADY_ENROLLED
 
-        suggested_token = force_token or InvitationToken.new()
+        suggested_token = force_token or AccessToken.new()
         token = await _do_new_invitation(
             conn,
             organization_id=organization_id,
@@ -1363,12 +1364,12 @@ class PGInviteComponent(BaseInviteComponent):
         author: DeviceID,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForDeviceBadOutcome:
         # Perform operation inside a PostgreSQL transaction
         outcome = await self._new_for_device(now, organization_id, author, send_email, force_token)
         match outcome:
-            case (InvitationToken() as token, author_human_handle):
+            case (AccessToken() as token, author_human_handle):
                 pass
             case err:
                 return err
@@ -1396,8 +1397,8 @@ class PGInviteComponent(BaseInviteComponent):
         author: DeviceID,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | HumanHandle] | InviteNewForDeviceBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, HumanHandle | None] | InviteNewForDeviceBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1416,7 +1417,7 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
 
-        suggested_token = force_token or InvitationToken.new()
+        suggested_token = force_token or AccessToken.new()
         token = await _do_new_invitation(
             conn,
             organization_id=organization_id,
@@ -1453,14 +1454,14 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         claimer_user_id: UserID,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForShamirRecoveryBadOutcome:
         # Perform operation inside a PostgreSQL transaction
         outcome = await self._new_for_shamir_recovery(
             now, organization_id, author, send_email, claimer_user_id, force_token
         )
         match outcome:
-            case (InvitationToken() as token, author_human_handle):
+            case (AccessToken() as token, author_human_handle):
                 pass
             case err:
                 return err
@@ -1490,8 +1491,8 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         claimer_user_id: UserID,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | HumanHandle] | InviteNewForShamirRecoveryBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, HumanHandle | None] | InviteNewForShamirRecoveryBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1537,7 +1538,7 @@ class PGInviteComponent(BaseInviteComponent):
         if not any(author_user_id == recipient.user_id for recipient in shamir_recovery_recipients):
             return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_ALLOWED
 
-        suggested_token = force_token or InvitationToken.new()
+        suggested_token = force_token or AccessToken.new()
         token = await _do_new_invitation(
             conn,
             organization_id=organization_id,
@@ -1586,7 +1587,7 @@ class PGInviteComponent(BaseInviteComponent):
         return recipients
 
     async def _get_user_greeting_administrators(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: AccessToken
     ) -> list[UserGreetingAdministrator]:
         administrators = []
         rows = await conn.fetch(
@@ -1633,8 +1634,8 @@ class PGInviteComponent(BaseInviteComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        token: InvitationToken,
-    ) -> None | InviteCancelBadOutcome:
+        token: AccessToken,
+    ) -> InviteCancelBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass
@@ -1786,7 +1787,7 @@ class PGInviteComponent(BaseInviteComponent):
         return invitations
 
     async def _info_as_invited(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: AccessToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
@@ -1846,7 +1847,7 @@ class PGInviteComponent(BaseInviteComponent):
     @override
     @transaction
     async def info_as_invited(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: AccessToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         return await self._info_as_invited(conn, organization_id, token)
 
@@ -1856,8 +1857,8 @@ class PGInviteComponent(BaseInviteComponent):
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        token: InvitationToken,
-        reveal_token: InvitationToken,
+        token: AccessToken,
+        reveal_token: AccessToken,
     ) -> bytes | InviteShamirRecoveryRevealBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
@@ -1888,7 +1889,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         match row["reveal_token"]:
             case str() as reveal_token_str:
-                expected_reveal_token = InvitationToken.from_hex(reveal_token_str)
+                expected_reveal_token = AccessToken.from_hex(reveal_token_str)
             case _:
                 assert False, row
 
@@ -2112,7 +2113,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return row is not None
 
     async def get_invitation(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: AccessToken
     ) -> InvitationInfo | None:
         row = await conn.fetchrow(
             *_q_info_invitation_for_share(organization_id=organization_id.str, token=token.hex)
@@ -2123,7 +2124,7 @@ class PGInviteComponent(BaseInviteComponent):
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        identifier: InvitationToken,
+        identifier: AccessToken,
     ) -> InvitationInfo | None:
         row = await conn.fetchrow(
             *_q_info_invitation_for_update(
@@ -2150,7 +2151,7 @@ class PGInviteComponent(BaseInviteComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         greeting_attempt: GreetingAttemptID,
-        invitation_token: InvitationToken,
+        invitation_token: AccessToken,
     ) -> GreetingAttemptInfo | None:
         row = await conn.fetchrow(
             *_q_greeting_attempt_info(
@@ -2275,7 +2276,7 @@ class PGInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         greeter: UserID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> GreetingAttemptID | InviteGreeterStartGreetingAttemptBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
@@ -2324,7 +2325,7 @@ class PGInviteComponent(BaseInviteComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeter: UserID,
     ) -> GreetingAttemptID | InviteClaimerStartGreetingAttemptBadOutcome:
         match await self.organization._get(conn, organization_id):
@@ -2375,7 +2376,7 @@ class PGInviteComponent(BaseInviteComponent):
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass
@@ -2439,10 +2440,10 @@ class PGInviteComponent(BaseInviteComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass
@@ -2588,7 +2589,7 @@ class PGInviteComponent(BaseInviteComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         step_index: int,
         claimer_data: bytes,
@@ -2670,8 +2671,8 @@ class PGInviteComponent(BaseInviteComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        token: InvitationToken,
-    ) -> None | InviteCompleteBadOutcome:
+        token: AccessToken,
+    ) -> InviteCompleteBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass

@@ -1,13 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::{store::ResolvePathError, WorkspaceOps},
     EventBusConnectionLifetime, EventWorkspaceOpsInboundSyncDone,
     EventWorkspaceOpsOutboundSyncNeeded, EventWorkspaceWatchedEntryChanged,
     InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
+    workspace::{WorkspaceOps, store::ResolvePathError},
 };
 
 pub(crate) struct EntryWatcher {
@@ -46,6 +46,8 @@ pub enum WorkspaceWatchEntryOneShotError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -72,6 +74,7 @@ pub async fn watch_entry_oneshot(
             ResolvePathError::Stopped => WorkspaceWatchEntryOneShotError::Stopped,
             ResolvePathError::EntryNotFound => WorkspaceWatchEntryOneShotError::EntryNotFound,
             ResolvePathError::NoRealmAccess => WorkspaceWatchEntryOneShotError::NoRealmAccess,
+            ResolvePathError::RealmDeleted => WorkspaceWatchEntryOneShotError::RealmDeleted,
             ResolvePathError::InvalidKeysBundle(err) => {
                 WorkspaceWatchEntryOneShotError::InvalidKeysBundle(err)
             }

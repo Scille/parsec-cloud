@@ -1,0 +1,39 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "totp_create_opaque_key",
+        "req": {
+            "fields": []
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "opaque_key_id",
+                        "type": "TOTPOpaqueKeyID"
+                    },
+                    {
+                        // Note the server knows about this key as it is not encrypted!
+                        //
+                        // This is because TOTP's goal is to protect against unauthorized
+                        // access *from the client*.
+                        //
+                        // Obviously this means this opaque key should always be used in
+                        // conjunction with another key only known by the end-user.
+                        //
+                        // Similarly, it is no big deal to transmit the key to the client
+                        // (instead of doing all the encryption/decryption operations on
+                        // the server). The only risk is for a malicious client to remember
+                        // the key, however the client can also just remember the decrypted
+                        // data!
+                        "name": "opaque_key",
+                        "type": "SecretKey"
+                    }
+                ]
+            }
+        ]
+    }
+]

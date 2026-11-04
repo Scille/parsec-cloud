@@ -7,6 +7,7 @@ homepage.workspace = true
 license.workspace = true
 version.workspace = true
 repository.workspace = true
+exclude = ["tests/", "examples/", "benches/"]
 
 [lints]
 workspace = true
@@ -25,7 +26,6 @@ use-libsodium = ["dep:libsodium-rs", "dep:openssl"]
 #     "dep:generic-array",
 #     "dep:getrandom_01",
 #     "dep:getrandom_02",
-#     "dep:lazy_static",
 #     "dep:rand_08",
 #     "dep:rsa",
 #     "dep:sha2",
@@ -50,8 +50,7 @@ zeroize = { workspace = true, features = ["alloc"] }
 libsodium-rs = { workspace = true, optional = true, features = [
     # Features inherited from `libsodium-sys-stable`
     # https://docs.rs/crate/libsodium-sys-stable/1.22.3
-    "optimized", # Build a version optimized for the current platform.
-    "minimal",   # Do not build deprecated APIs
+    "minimal", # Do not build deprecated APIs
 ] }
 # A word about vendoring. In Parsec, OpenSSL is used for two different things:
 # - Provide X509 support when Rust-Crypto is not used (aka "openssl-for-parsec")
@@ -124,11 +123,8 @@ ed25519-dalek = { workspace = true, features = [
     "rand_core",
 ] } # Optional rustcrypto dep
 generic-array = { workspace = true, features = ["serde"] } # Optional rustcrypto dep
-lazy_static = { workspace = true } # Optional rustcrypto dep
-rsa = { workspace = true, features = ["std", "pem"] } # Optional rustcrypto dep
+rsa = { workspace = true, features = ["std", "encoding", "sha2"] } # Optional rustcrypto dep
 sha2 = { workspace = true, features = ["std"] } # Optional rustcrypto dep
-# This is exceptionally allowed since no significant changes
-# were made from the last stable version to this major pre-release version.
 x25519-dalek = { workspace = true, features = [
     "alloc",
     "zeroize",
@@ -140,12 +136,8 @@ crypto_secretbox = { workspace = true, features = [
     "getrandom",
     "salsa20",
 ] } # Optional rustcrypto dep
-# Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
-# `getrandom` is a dependency of `rand`, we specify it here in order  to configure its `wasm-unknown-unknown` web support (see [target] part).
-getrandom = { workspace = true }                           # Optional rustcrypto dep
-rand = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
-# Need to list previous version of `getrandom@0.2` to be able to enable the `js` feature
-_getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+rand = { workspace = true, features = ["std", "sys_rng"] } # Optional rustcrypto dep
+rand8 = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
 
 [dev-dependencies]
 pretty_assertions = { workspace = true, features = ["std", "unstable"] }
@@ -165,7 +157,11 @@ uuid = { workspace = true, features = ["js"] }
 # RustCrypto stuff
 #
 
+# Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
+# `getrandom` is a dependency of `rand`, we specify it here in order  to configure its `wasm-unknown-unknown` web support (see [target] part).
 getrandom = { workspace = true, features = ["wasm_js"] } # Optional rustcrypto dep
+# Need to list previous version of `getrandom@0.2` to be able to enable the `js` feature
+_getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 openssl = { workspace = true, optional = true, features = ["vendored"] }

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
@@ -71,7 +72,7 @@ class PGSequesterComponent(BaseSequesterComponent):
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
         config: SequesterServiceConfig,
-    ) -> None | SequesterUpdateConfigForServiceStoreBadOutcome:
+    ) -> SequesterUpdateConfigForServiceStoreBadOutcome | None:
         return await sequester_update_config_for_service(
             conn,
             organization_id,

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import enum
@@ -7,16 +8,18 @@ from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from jinja2.environment import Environment
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    AdvisoryDeviceFileProtection,
     DateTime,
     EmailAddress,
-    OpenBaoAuthType,
     ParsecAddr,
+    RsaPrivateKey,
     SecretKey,
-    TrustAnchor,
+    X509TrustAnchor,
 )
 from parsec.email_rate_limit import EmailRateLimit
 from parsec.templates import get_environment
@@ -240,8 +243,11 @@ class AccountConfig(enum.Enum):
 
 @dataclass(slots=True)
 class OpenBaoAuthConfig:
-    id: OpenBaoAuthType
+    id: str
     mount_path: str
+    name: str
+    help_link: str | None
+    icon: str | None
 
 
 @dataclass(slots=True)
@@ -250,6 +256,42 @@ class OpenBaoConfig:
     secret_mount_path: str
     transit_mount_path: str
     auths: list[OpenBaoAuthConfig]
+
+
+@dataclass(slots=True)
+class ScwsConfig:
+    # Order of the keys in the file is meaningful as it correspond to the key ID.
+    # For this reasons, we represent the revoked keys in the list as `None`.
+    idopte_public_keys: list[RSAPublicKey | None]
+    web_application_private_key: RsaPrivateKey
+
+    @staticmethod
+    def new(
+        idopte_public_keys_pem: bytes,
+        web_application_private_key_pem: str,
+    ) -> ScwsConfig:
+        from parsec.components.scws import parse_idopte_public_keys
+
+        try:
+            idopte_public_keys = parse_idopte_public_keys(idopte_public_keys_pem)
+        except ValueError as exc:
+            raise ValueError(f"Invalid Idopte public keys: {exc}") from exc
+
+        try:
+            private_key = RsaPrivateKey.load_pkcs8_pem(web_application_private_key_pem)
+        except ValueError as exc:
+            raise ValueError(f"Invalid web application private key: {exc}") from exc
+
+        assert isinstance(private_key, RsaPrivateKey)
+        return ScwsConfig(
+            idopte_public_keys=idopte_public_keys,
+            web_application_private_key=private_key,
+        )
+
+
+@dataclass(slots=True)
+class CryptpadConfig:
+    server_url: str
 
 
 @dataclass(slots=True, kw_only=True)
@@ -265,6 +307,9 @@ class BackendConfig:
     # - For invitation URL in emails
     # - In the redirect API (e.g. `GET /redirect/FOO` -> `302 <server_addr>/FOO`)
     server_addr: ParsecAddr
+    # URL to reach this server from the editics domain
+    # This is typically used to serve the editics pages in an isolated iframe.
+    editics_server_addr: ParsecAddr | None = None
 
     # Bearer token used to authenticate the administration API
     administration_token: str
@@ -288,7 +333,7 @@ class BackendConfig:
     # connection. Set to `None` to disable keep alive messages.
     sse_keepalive: int | None = None
 
-    x509_trust_anchor: list[TrustAnchor] = field(default_factory=list)
+    x509_trust_anchor: list[X509TrustAnchor] = field(default_factory=list)
 
     # Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers
     # Use "*" to trust all proxies. If not provided, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS`
@@ -297,7 +342,11 @@ class BackendConfig:
 
     account_config: AccountConfig = AccountConfig.DISABLED
 
+    cryptpad_config: CryptpadConfig | None = None
+
     openbao_config: OpenBaoConfig | None = None
+
+    advisory_device_file_protection: tuple[AdvisoryDeviceFileProtection, ...] = ()
 
     organization_bootstrap_webhook_url: str | None = None
     organization_spontaneous_bootstrap: bool = False
@@ -306,12 +355,14 @@ class BackendConfig:
     )
     organization_initial_user_profile_outsider_allowed: bool = True
     # Note minimum archiving period must be a positive value !
-    organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
+    organization_initial_realm_deletion_min_archiving_period: int = 2592000  # seconds (i.e 30 days)
     organization_initial_tos: dict[TosLocale, TosUrl] | None = None
 
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024
     backend_mocked_data: dict[OrganizationID, MemoryOrganization] | None = None
+
+    scws_config: ScwsConfig | None = None
 
     def logging_kwargs(self) -> dict[str, str]:
         """
@@ -325,8 +376,8 @@ class BackendConfig:
     def __post_init__(self):
         # Sanity checks
         assert self.sse_keepalive is None or self.sse_keepalive >= 0, self.sse_keepalive
-        assert self.organization_initial_minimum_archiving_period >= 0, (
-            self.organization_initial_minimum_archiving_period
+        assert self.organization_initial_realm_deletion_min_archiving_period >= 0, (
+            self.organization_initial_realm_deletion_min_archiving_period
         )
         assert self.email_rate_limit_cooldown_delay >= 0, self.email_rate_limit_cooldown_delay
         assert self.email_rate_limit_max_per_hour >= 0, self.email_rate_limit_max_per_hour

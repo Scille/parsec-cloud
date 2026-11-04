@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -156,6 +157,8 @@ async def realm_unshare(
             pass
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmUnshareStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -253,7 +256,7 @@ async def realm_unshare(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=certif.user_id,
-            role_removed=True,
+            kind="UNSHARE",
         ),
     )
 

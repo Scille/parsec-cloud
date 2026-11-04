@@ -1,8 +1,14 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import { availableDeviceMatchesServer } from '@/common/device';
-import { bootstrapLinkValidator, claimLinkValidator, fileLinkValidator } from '@/common/validators';
-import { AvailableDevice, getOrganizationHandle, listAvailableDevices, parseFileLink } from '@/parsec';
+import {
+  AvailableDevice,
+  getOrganizationHandle,
+  listAvailableDevices,
+  ParsedParsecAddrTag,
+  parseFileLink,
+  parseParsecAddr,
+} from '@/parsec';
 import {
   backupCurrentOrganization,
   currentRouteIs,
@@ -14,23 +20,37 @@ import {
 } from '@/router';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { modalController, popoverController } from '@ionic/vue';
-import { Base64, Validity } from 'megashark-lib';
+import { Base64 } from 'megashark-lib';
 
 async function handleJoinLink(link: string): Promise<void> {
-  if (!currentRouteIs(Routes.Home)) {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
     await switchOrganization(null, true);
   }
   await navigateTo(Routes.Home, { query: { claimLink: link } });
 }
 
 async function handleBootstrapLink(link: string): Promise<void> {
-  if (!currentRouteIs(Routes.Home)) {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
     await switchOrganization(null, true);
   }
   await navigateTo(Routes.Home, { query: { bootstrapLink: link } });
 }
 
-async function handleFileLink(link: string, informationManager: InformationManager): Promise<void> {
+async function handleAsyncEnrollmentLink(link: string): Promise<void> {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
+    await switchOrganization(null, true);
+  }
+  await navigateTo(Routes.Home, { query: { asyncEnrollmentLink: link } });
+}
+
+async function handleTotpReset(link: string): Promise<void> {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
+    await switchOrganization(null, true);
+  }
+  await navigateTo(Routes.Home, { query: { totpResetLink: link } });
+}
+
+export async function handleFileLink(link: string, informationManager: InformationManager): Promise<boolean> {
   const result = await parseFileLink(link);
   if (!result.ok) {
     informationManager.present(
@@ -40,7 +60,7 @@ async function handleFileLink(link: string, informationManager: InformationManag
       }),
       PresentationMode.Toast,
     );
-    return;
+    return false;
   }
   const linkData = result.value;
   // Check if the org we want is already logged in
@@ -88,13 +108,14 @@ async function handleFileLink(link: string, informationManager: InformationManag
         }),
         PresentationMode.Modal,
       );
-      return;
+      return false;
     }
     if (!currentRouteIs(Routes.Home)) {
       await backupCurrentOrganization();
     }
     await navigateTo(Routes.Home, { replace: true, skipHandle: true, query: { deviceId: matchingDevice.deviceId, fileLink: link } });
   }
+  return true;
 }
 
 export async function handleParsecLink(link: string, informationManager: InformationManager): Promise<void> {
@@ -111,13 +132,9 @@ export async function handleParsecLink(link: string, informationManager: Informa
   if (await popoverController.getTop()) {
     await popoverController.dismiss();
   }
-  if ((await claimLinkValidator(link)).validity === Validity.Valid) {
-    await handleJoinLink(link);
-  } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
-    await handleFileLink(link, informationManager);
-  } else if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
-    await handleBootstrapLink(link);
-  } else {
+  const result = await parseParsecAddr(link);
+
+  if (!result.ok) {
     await informationManager.present(
       new Information({
         message: 'link.invalid',
@@ -125,5 +142,19 @@ export async function handleParsecLink(link: string, informationManager: Informa
       }),
       PresentationMode.Modal,
     );
+    return;
+  }
+  if (result.value.tag === ParsedParsecAddrTag.InvitationUser || result.value.tag === ParsedParsecAddrTag.InvitationDevice) {
+    await handleJoinLink(link);
+  } else if (result.value.tag === ParsedParsecAddrTag.WorkspacePath) {
+    await handleFileLink(link, informationManager);
+  } else if (result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+    await handleBootstrapLink(link);
+  } else if (result.value.tag === ParsedParsecAddrTag.AsyncEnrollment) {
+    await handleAsyncEnrollmentLink(link);
+  } else if (result.value.tag === ParsedParsecAddrTag.TOTPReset) {
+    await handleTotpReset(link);
+  } else {
+    window.nativeAPI.log('warn', `Unhandled link type '${result.value.tag}'`);
   }
 }

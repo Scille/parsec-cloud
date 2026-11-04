@@ -20,6 +20,24 @@
                     {
                         "name": "openbao",
                         "type": "OpenBaoConfig"
+                    },
+                    {
+                        "introduced_in": "5.5",
+                        "name": "cryptpad",
+                        "type": "CryptPadConfig"
+                    },
+                    {
+                        // Advisory configuration for local device protection (e.g.
+                        // `["PASSWORD+TOTP", "PKI"]`).
+                        //
+                        // Each entry is a serialized `AdvisoryDeviceFileProtection`
+                        // (this way forward-compatibility is achieved by having the
+                        // client simply ignoring unknown values).
+                        //
+                        // Missing field or empty list means no recommendation.
+                        "introduced_in": "5.5",
+                        "name": "advisory_device_file_protection",
+                        "type": "List<String>"
                     }
                 ]
             }
@@ -120,9 +138,9 @@
                             {
                                 // Transit is used for signing/verification
                                 // see https://openbao.org/api-docs/secret/transit
-                                "introduced_in": "3.8",
+                                "introduced_in": "5.4",
                                 "name": "transit_mount_path",
-                                "type": "NonRequiredOption<String>"
+                                "type": "String"
                             },
                             {
                                 "name": "auths",
@@ -164,6 +182,44 @@
                         // see https://openbao.org/api-docs/auth/jwt/#oidc-authorization-url-request
                         "name": "mount_path",
                         "type": "String"
+                    },
+                    {
+                        // Display name
+                        "introduced_in": "5.7",
+                        "name": "name",
+                        "type": "String"
+                    },
+                    {
+                        // Documentation link, opened in the browser
+                        "introduced_in": "5.7",
+                        "name": "help_link",
+                        "type": "RequiredOption<String>"
+                    },
+                    {
+                        // Image URL
+                        "introduced_in": "5.7",
+                        "name": "icon",
+                        "type": "RequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "name": "CryptPadConfig",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "Disabled",
+                        "discriminant_value": "DISABLED"
+                    },
+                    {
+                        "name": "Enabled",
+                        "discriminant_value": "ENABLED",
+                        "fields": [
+                            {
+                                "name": "server_url",
+                                "type": "String"
+                            }
+                        ]
                     }
                 ]
             }

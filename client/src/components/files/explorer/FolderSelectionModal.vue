@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ms-modal
@@ -20,14 +20,15 @@
       class="navigation"
       ref="navigation"
     >
-      <div ref="buttons">
-        <div
-          class="navigation-buttons"
-          v-if="isLargeDisplay"
-        >
+      <div
+        v-if="isLargeDisplay"
+        ref="buttons"
+      >
+        <div class="navigation-buttons">
           <ion-button
             fill="clear"
             @click="back()"
+            slot="icon-only"
             class="navigation-back-button"
             :disabled="backStack.length === 0"
             :class="{ disabled: backStack.length === 0 }"
@@ -39,6 +40,7 @@
             @click="forward()"
             :disabled="forwardStack.length === 0"
             :class="{ disabled: forwardStack.length === 0 }"
+            slot="icon-only"
             class="navigation-forward-button"
           >
             <ion-icon :icon="chevronForward" />
@@ -46,17 +48,30 @@
         </div>
       </div>
       <header-breadcrumbs
+        v-if="workspaceInfo"
         :path-nodes="headerPath"
         @change="onPathChange"
         class="navigation-breadcrumb"
         :items-before-collapse="1"
         :items-after-collapse="2"
         :available-width="breadcrumbsWidth"
+        :workspace-name="workspaceInfo.name"
       />
+      <div
+        v-if="isSmallDisplay"
+        @click="createNewFolder()"
+        class="create-folder-button-small"
+        :disabled="isCreatingFolder"
+      >
+        <ms-image
+          :image="NewFolder"
+          class="button-icon"
+        />
+      </div>
     </div>
     <ion-list class="folder-list">
       <ion-text
-        class="current-folder button-medium"
+        class="current-folder"
         v-if="headerPath.length > 0 && pathLength > 1"
       >
         <ms-image
@@ -67,15 +82,45 @@
       </ion-text>
 
       <ion-text
-        class="folder-list__empty body"
-        v-if="currentEntries.length === 0"
+        class="folder-list__empty"
+        v-if="currentEntries.length === 0 && !isCreatingFolder"
       >
         {{ $msTranslate('FoldersPage.copyMoveFolderNoElement') }}
       </ion-text>
       <div
         class="folder-container"
-        v-if="currentEntries.length > 0"
+        ref="folder-list"
+        v-if="currentEntries.length > 0 || isCreatingFolder"
       >
+        <div
+          class="new-folder"
+          v-if="isCreatingFolder"
+        >
+          <ms-image
+            :image="Folder"
+            class="new-folder-image"
+          />
+          <ms-input
+            v-model="newFolderName"
+            @update:model-value="onNewFolderNameChange"
+            ref="newFolderInput"
+            placeholder="FoldersPage.createFolder"
+            @keydown.enter.prevent.stop="confirmNewFolder()"
+            class="new-folder__input"
+            autofocus
+          />
+          <ion-button
+            fill="clear"
+            @click="confirmNewFolder()"
+            class="new-folder-confirm"
+          >
+            <ion-icon
+              :icon="checkmark"
+              class="button-icon"
+              slot="icon-only"
+            />
+          </ion-button>
+        </div>
         <ion-item
           class="file-item"
           v-for="entry in currentEntries"
@@ -89,7 +134,7 @@
               class="file-item-image__icon"
             />
           </div>
-          <ion-label class="file-item__name cell">
+          <ion-label class="file-item__name">
             {{ entry[0].name }}
           </ion-label>
           <!-- last update -->
@@ -97,7 +142,7 @@
             class="file-last-update"
             v-if="isLargeDisplay"
           >
-            <ion-label class="label-last-update cell">
+            <ion-label class="list-item-label label-last-update">
               {{ $msTranslate(formatTimeSince(entry[0].updated, '--', 'short')) }}
             </ion-label>
           </div>
@@ -115,7 +160,10 @@
         :disabled="backStack.length === 0"
         :class="{ disabled: backStack.length === 0 }"
       >
-        <ion-icon :icon="chevronBack" />
+        <ion-icon
+          :icon="chevronBack"
+          slot="icon-only"
+        />
       </ion-button>
       <ion-button
         fill="clear"
@@ -124,35 +172,80 @@
         :class="{ disabled: forwardStack.length === 0 }"
         class="navigation-forward-button"
       >
-        <ion-icon :icon="chevronForward" />
+        <ion-icon
+          :icon="chevronForward"
+          slot="icon-only"
+        />
       </ion-button>
+    </div>
+    <ion-button
+      slot="footer"
+      class="create-folder-button button-default"
+      @click="createNewFolder()"
+      :disabled="isCreatingFolder"
+      v-if="isLargeDisplay"
+    >
+      <ms-image
+        :image="NewFolder"
+        class="button-icon"
+      />
+      {{ $msTranslate('FoldersPage.createFolder') }}
+    </ion-button>
+    <div
+      v-if="error"
+      class="folder-selection-modal-error"
+    >
+      <ion-icon
+        class="folder-selection-modal-error__icon"
+        :icon="warning"
+      />
+
+      <ion-text class="folder-selection-modal-error__text">
+        {{ $msTranslate(error) }}
+      </ion-text>
     </div>
   </ms-modal>
 </template>
 
 <script setup lang="ts">
+import NewFolder from '@/assets/images/folder-new.svg?raw';
 import { getFileIcon } from '@/common/file';
 import { pxToRem } from '@/common/utils';
 import { FolderSelectionOptions } from '@/components/files';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
+import {
+  EntryStat,
+  FsPath,
+  Path,
+  WorkspaceCreateFolderErrorTag,
+  WorkspaceInfo,
+  createFolder,
+  getWorkspaceInfo,
+  statFolderChildren,
+} from '@/parsec';
 import { Routes } from '@/router';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, modalController } from '@ionic/vue';
-import { chevronBack, chevronForward, home } from 'ionicons/icons';
-import { Folder, MsImage, MsModal, MsModalResult, formatTimeSince, useWindowSize } from 'megashark-lib';
-import { Ref, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { checkmark, chevronBack, chevronForward, home, warning } from 'ionicons/icons';
+import { Folder, I18n, MsImage, MsInput, MsModal, MsModalResult, Translatable, formatTimeSince, useWindowSize } from 'megashark-lib';
+import { Ref, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath: Ref<FsPath> = ref(props.startingPath);
+const error = ref<Translatable>('');
 const headerPath: Ref<RouterPathNode[]> = ref([]);
 const pathLength = ref(0);
+const isCreatingFolder = ref(false);
+const newFolderName = ref('');
 const currentEntries: Ref<[EntryStat, boolean][]> = ref([]);
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const breadcrumbsWidth = ref(0);
 const navigationRef = useTemplateRef<HTMLDivElement>('navigation');
 const buttonsRef = useTemplateRef<HTMLDivElement>('buttons');
+const folderListRef = useTemplateRef<HTMLElement>('folder-list');
+const newFolderInput = useTemplateRef<InstanceType<typeof MsInput>>('newFolderInput');
+
 const { windowWidth, isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
@@ -163,6 +256,61 @@ const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
     }
   }
 });
+
+async function createNewFolder(): Promise<void> {
+  isCreatingFolder.value = true;
+  newFolderName.value = '';
+  await nextTick();
+  newFolderInput.value?.setFocus();
+
+  if (folderListRef.value) {
+    await nextTick();
+    folderListRef.value.scrollTop = 0;
+  }
+}
+
+async function confirmNewFolder(): Promise<void> {
+  let trimmedName = newFolderName.value.trim();
+
+  if (!workspaceInfo.value) {
+    cancelNewFolder();
+    return;
+  }
+
+  if (trimmedName.length === 0) {
+    trimmedName = I18n.translate('FoldersPage.createFolder');
+  }
+
+  const path = await Path.join(selectedPath.value, trimmedName);
+  const result = await createFolder(workspaceInfo.value.handle, path);
+
+  if (!result.ok) {
+    switch (result.error.tag) {
+      case WorkspaceCreateFolderErrorTag.EntryExists: {
+        error.value = { key: 'FoldersPage.errors.createFolderAlreadyExists', data: { name: trimmedName } };
+        break;
+      }
+      default:
+        error.value = { key: 'FoldersPage.errors.createFolderFailed', data: { name: trimmedName } };
+        cancelNewFolder();
+    }
+  } else {
+    await update();
+    const entry = currentEntries.value.find((e) => e[0]?.name === trimmedName)?.[0] as EntryStat;
+    await enterFolder(entry);
+    isCreatingFolder.value = false;
+  }
+}
+
+async function onNewFolderNameChange(): Promise<void> {
+  newFolderName.value.trim();
+  error.value = '';
+}
+
+async function cancelNewFolder(): Promise<void> {
+  isCreatingFolder.value = false;
+  newFolderName.value = '';
+}
 
 onMounted(async () => {
   const result = await getWorkspaceInfo(props.workspaceHandle);
@@ -184,9 +332,15 @@ async function update(): Promise<void> {
   const result = await statFolderChildren(workspaceHandle, selectedPath.value);
   if (result.ok) {
     const newEntries: [EntryStat, boolean][] = [];
-    for (const entry of result.value
+    const filteredEntries = result.value
       .filter((entry) => !entry.isConfined())
-      .sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()))) {
+      .sort((item1, item2) => {
+        if (item1.isFile() !== item2.isFile()) {
+          return Number(item1.isFile()) - Number(item2.isFile());
+        }
+        return item1.name.localeCompare(item2.name);
+      });
+    for (const entry of filteredEntries) {
       const isDisabled = await isEntryDisabled(entry);
       newEntries.push([entry, isDisabled]);
     }
@@ -197,7 +351,7 @@ async function update(): Promise<void> {
   headerPath.value = [];
   headerPath.value.push({
     id: 0,
-    display: workspaceInfo.value ? workspaceInfo.value.currentName : '',
+    display: workspaceInfo.value ? workspaceInfo.value.name : '',
     route: Routes.Documents,
     popoverIcon: home,
     query: { documentPath: path },
@@ -252,6 +406,7 @@ async function back(): Promise<void> {
 
 async function onPathChange(node: RouterPathNode): Promise<void> {
   forwardStack.splice(0, forwardStack.length);
+  await cancelNewFolder();
   if (node.query && node.query.documentPath) {
     selectedPath.value = node.query.documentPath;
     await update();
@@ -259,9 +414,7 @@ async function onPathChange(node: RouterPathNode): Promise<void> {
 }
 
 async function enterFolder(entry: EntryStat): Promise<void> {
-  if (entry.isFile()) {
-    return;
-  }
+  cancelNewFolder();
   backStack.push(selectedPath.value);
   selectedPath.value = await Path.join(selectedPath.value, entry.name);
   await update();
@@ -288,8 +441,8 @@ async function cancel(): Promise<boolean> {
 
   .disabled {
     pointer-events: none;
-    color: var(--parsec-color-light-secondary-light);
-    opacity: 1;
+    color: ms.color('text-disabled-default');
+    opacity: ms.opacity('10');
   }
 
   &-buttons {
@@ -299,7 +452,7 @@ async function cancel(): Promise<boolean> {
 
     @include ms.responsive-breakpoint('sm') {
       position: absolute;
-      bottom: 3.25rem;
+      bottom: 3rem;
       z-index: 10;
 
       ion-icon {
@@ -313,30 +466,33 @@ async function cancel(): Promise<boolean> {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  background: ms.color('surface-base-default-secondary');
+  box-shadow: ms.shadow('input');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
   height: -webkit-fill-available;
-  border-radius: var(--parsec-radius-8);
+  border-radius: ms.radius('lg');
   height: 100%;
-  padding: 0;
+  padding: ms.spacing('padding-none');
 
   &__empty {
+    @include ms.font('body-md-regular');
     align-self: center;
     text-align: center;
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-neutral-default');
     display: flex;
     align-items: center;
     height: 100%;
   }
 
   .current-folder {
-    color: var(--parsec-color-light-secondary-text);
-    background: var(--parsec-color-light-secondary-white);
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 0.5rem 1rem;
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
+    background: ms.color('surface-base-default');
+    border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     overflow: hidden;
 
     &__text {
@@ -357,55 +513,162 @@ async function cancel(): Promise<boolean> {
 .folder-container {
   overflow-y: auto;
   width: 100%;
-  padding: 0.5rem;
+  padding: ms.spacing('padding-lg');
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-lg');
+  scroll-behavior: smooth;
 }
 
 .file-item {
-  border-radius: var(--parsec-radius-6);
+  flex-shrink: 0;
   --show-full-highlight: 0;
-  --background: var(--parsec-color-light-secondary-background);
-  --background-hover: var(--parsec-color-light-secondary-white);
+  --background: #{ms.color('surface-base-default')};
   cursor: pointer;
   position: relative;
-  overflow: visible;
 
   &::part(native) {
-    --padding-start: 0px;
-    padding: 0.125rem 0.75rem;
-    border-radius: var(--parsec-radius-6);
-  }
-
-  &:not(:last-child):after {
-    content: '';
-    position: absolute;
-    left: 3rem;
-    width: calc(100% - 3rem);
-    height: 1px;
-    z-index: 10;
-    background-color: var(--parsec-color-light-secondary-medium);
+    --padding-start: #{ms.spacing('padding-none')};
+    padding: ms.spacing('padding-xs') ms.spacing('padding-2xl');
+    border-radius: ms.radius('lg');
   }
 
   &:hover {
-    color: var(--parsec-color-light-secondary-text);
-    --background: var(--parsec-color-light-secondary-white);
+    --background: #{ms.color('surface-neutral-default-subtle-pressed')};
+    box-shadow: ms.shadow('input');
   }
 
   &:focus,
   &:active {
-    --background-focused: var(--parsec-color-light-primary-100);
-    --background: var(--parsec-color-light-primary-100);
+    --background: #{ms.color('surface-neutral-default-subtle-pressed')};
+    --background-focused: #{ms.color('surface-neutral-default-subtle-pressed')};
     --background-focused-opacity: 1;
-    --border-width: 0;
+    --border-width: #{ms.border('none')};
   }
 
   &__name {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
     margin-left: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   &-image {
     width: 1.75rem;
     height: 1.75rem;
+  }
+}
+
+.file-last-update .label-last-update {
+  @include ms.font('label-md-medium');
+}
+
+.new-folder {
+  display: flex;
+  align-items: center;
+  padding: ms.spacing('padding-sm') ms.spacing('padding-2xl');
+  box-shadow: ms.shadow('input');
+  border-radius: ms.radius('lg');
+  gap: ms.spacing('gap-lg');
+  background: ms.color('surface-base-default');
+  height: fit-content;
+
+  &-image {
+    width: 1.75rem;
+    min-width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  &__name {
+    margin: 0.75rem 1rem;
+    font-weight: 500;
+  }
+
+  &__input {
+    flex-grow: 1;
+  }
+}
+
+.create-folder-button {
+  position: absolute;
+  left: 1.5rem;
+  bottom: 1.5rem;
+  background: ms.color('surface-base-page-secondary');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
+  color: ms.color('text-base-body');
+  cursor: pointer;
+  border-radius: ms.radius('lg');
+  z-index: 20;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+
+  .button-icon {
+    width: 1.125rem;
+    margin-right: 0.5rem;
+    --fill-color: #{ms.color('text-base-body')};
+  }
+
+  &::part(native) {
+    background: none;
+    --background-hover: none;
+    padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
+    border-color: ms.color('border-elevated-subtle');
+  }
+
+  &:hover {
+    background: ms.color('surface-disabled-default');
+    box-shadow: ms.shadow('input');
+  }
+}
+
+.create-folder-button-small {
+  background: ms.color('surface-neutral-default-subtle-pressed');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  border-radius: ms.radius('full');
+  box-shadow: ms.shadow('elevation-sm');
+  padding: ms.spacing('padding-lg');
+  cursor: pointer;
+
+  .button-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    --fill-color: #{ms.color('text-base-body')};
+  }
+
+  &:hover {
+    background: ms.color('surface-disabled-default');
+    box-shadow: ms.shadow('input');
+  }
+
+  &[disabled='true'] {
+    --fill-color: #{ms.color('text-base-body')};
+    opacity: ms.opacity('3');
+    cursor: not-allowed;
+  }
+}
+
+.folder-selection-modal-error {
+  display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-sm');
+  margin-top: 1rem;
+
+  &__icon {
+    color: ms.color('text-error-default');
+    font-size: 1.25rem;
+    flex-shrink: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      font-size: 1rem;
+    }
+  }
+
+  &__text {
+    @include ms.font('label-md-medium');
+    color: ms.color('text-error-default');
   }
 }
 </style>

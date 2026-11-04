@@ -29,7 +29,7 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
         new_profile=UserProfile.ADMIN,
     )
 
-    expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
+    expected_dump = await backend.user.dump_current_users(coolorg.organization_id)
     expected_dump[coolorg.bob.user_id].profile_history.append((now, UserProfile.ADMIN))
 
     expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
@@ -49,7 +49,7 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
             )
         )
 
-    dump = await backend.user.test_dump_current_users(coolorg.organization_id)
+    dump = await backend.user.dump_current_users(coolorg.organization_id)
     assert dump == expected_dump
     topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     assert topics == expected_topics

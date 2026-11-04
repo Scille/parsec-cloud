@@ -33,26 +33,32 @@ CREATE TABLE account (
 
 CREATE TABLE vault (
     _id SERIAL PRIMARY KEY,
-    account INTEGER REFERENCES account (_id) NOT NULL
+    account INTEGER
+    CONSTRAINT vault_account_fkey REFERENCES account (_id) ON DELETE CASCADE
+    NOT NULL
 );
 
 
 CREATE TABLE vault_item (
     _id SERIAL PRIMARY KEY,
-    vault INTEGER REFERENCES vault (_id) NOT NULL,
+    vault INTEGER
+    CONSTRAINT vault_item_vault_fkey REFERENCES vault (_id) ON DELETE CASCADE
+    NOT NULL,
     fingerprint BYTEA NOT NULL,
     data BYTEA NOT NULL,
     UNIQUE (vault, fingerprint)
 );
 
 
-CREATE TYPE password_algorithm AS ENUM ('ARGON2ID');
+CREATE TYPE PASSWORD_ALGORITHM AS ENUM ('ARGON2ID');
 
 
 CREATE TABLE vault_authentication_method (
     _id SERIAL PRIMARY KEY,
     auth_method_id UUID UNIQUE NOT NULL,
-    vault INTEGER REFERENCES vault (_id) NOT NULL,
+    vault INTEGER
+    CONSTRAINT vault_authentication_method_vault_fkey REFERENCES vault (_id) ON DELETE CASCADE
+    NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     -- IP address of the HTTP request that created the authentication method
     -- (either by account creation, vault key rotation or account recovery)
@@ -95,7 +101,10 @@ CREATE TABLE account_create_validation_code (
 
 
 CREATE TABLE account_delete_validation_code (
-    account INTEGER REFERENCES account (_id) NOT NULL PRIMARY KEY,
+    account INTEGER
+    CONSTRAINT account_delete_validation_code_pkey PRIMARY KEY
+    CONSTRAINT account_delete_validation_code_account_fkey REFERENCES account (_id) ON DELETE CASCADE
+    NOT NULL,
     validation_code VARCHAR(6) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     failed_attempts INTEGER DEFAULT 0
@@ -103,7 +112,10 @@ CREATE TABLE account_delete_validation_code (
 
 
 CREATE TABLE account_recover_validation_code (
-    account INTEGER REFERENCES account (_id) NOT NULL PRIMARY KEY,
+    account INTEGER
+    CONSTRAINT account_recover_validation_code_pkey PRIMARY KEY
+    CONSTRAINT account_recover_validation_code_account_fkey REFERENCES account (_id) ON DELETE CASCADE
+    NOT NULL,
     validation_code VARCHAR(6) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     failed_attempts INTEGER DEFAULT 0
@@ -135,7 +147,7 @@ CREATE TABLE organization (
     sequester_authority_certificate BYTEA,
     -- NULL for non-sequestered organization
     sequester_authority_verify_key_der BYTEA,
-    minimum_archiving_period INTEGER NOT NULL,
+    realm_minimum_archiving_period_before_deletion INTEGER NOT NULL,
     -- NULL if no Term Of Service (TOS) is set
     tos_updated_on TIMESTAMPTZ,
     -- NULL if no Term Of Service (TOS) is set
@@ -147,12 +159,14 @@ CREATE TABLE organization (
 -------------------------------------------------------
 -- Sequester
 -------------------------------------------------------
-CREATE TYPE sequester_service_type AS ENUM ('STORAGE', 'WEBHOOK');
+CREATE TYPE SEQUESTER_SERVICE_TYPE AS ENUM ('STORAGE', 'WEBHOOK');
 
 CREATE TABLE sequester_service (
     _id SERIAL PRIMARY KEY,
     service_id UUID NOT NULL,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT sequester_service_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     service_certificate BYTEA NOT NULL,
     service_label VARCHAR(254) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
@@ -173,7 +187,9 @@ CREATE TABLE sequester_service (
 
 CREATE TABLE human (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT human_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     email VARCHAR(254) NOT NULL,
     label VARCHAR(254) NOT NULL,
 
@@ -181,12 +197,14 @@ CREATE TABLE human (
 );
 
 
-CREATE TYPE user_profile AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
+CREATE TYPE USER_PROFILE AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
 
 
 CREATE TABLE user_ (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT user_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     user_id UUID NOT NULL,
     user_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
@@ -198,7 +216,9 @@ CREATE TABLE user_ (
     revoked_user_certificate BYTEA,
     -- NULL if not yet revoked
     revoked_user_certifier INTEGER,
-    human INTEGER REFERENCES human (_id) NOT NULL,
+    human INTEGER
+    CONSTRAINT user_human_fkey REFERENCES human (_id) ON DELETE CASCADE
+    NOT NULL,
     redacted_user_certificate BYTEA NOT NULL,
     initial_profile USER_PROFILE NOT NULL,
     -- This field is altered in an `ALTER TABLE` statement below
@@ -214,13 +234,25 @@ CREATE TABLE user_ (
     current_profile USER_PROFILE NOT NULL,
     -- NULL if no End User License Agreement has been accepted
     tos_accepted_on TIMESTAMPTZ,
+    totp_setup_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Cannot be NULL if `totp_setup_completed` is TRUE
+    totp_secret BYTEA,
+    -- NULL if no reset token is active
+    -- Must be NULL if `totp_setup_completed` is TRUE
+    totp_reset_token VARCHAR(32),
+    CONSTRAINT check_totp_secret_when_setup_completed CHECK (totp_setup_completed = FALSE OR totp_secret IS NOT NULL),
+    CONSTRAINT check_totp_reset_token_when_setup_completed CHECK (
+        totp_setup_completed = FALSE OR totp_reset_token IS NULL
+    ),
 
     UNIQUE (organization, user_id)
 );
 
 CREATE TABLE profile (
     _id SERIAL PRIMARY KEY,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    user_ INTEGER
+    CONSTRAINT profile_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     profile USER_PROFILE NOT NULL,
     profile_certificate BYTEA NOT NULL,
     certified_by INTEGER NOT NULL,
@@ -230,31 +262,42 @@ CREATE TABLE profile (
 
 CREATE TABLE device (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT device_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
+    user_ INTEGER
+    CONSTRAINT device_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     device_id UUID NOT NULL,
     device_label VARCHAR(254) NOT NULL,
     verify_key BYTEA NOT NULL,
     device_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
-    device_certifier INTEGER REFERENCES device (_id),
+    device_certifier INTEGER
+    CONSTRAINT device_device_certifier_fkey REFERENCES device (_id) ON DELETE CASCADE,
     created_on TIMESTAMPTZ NOT NULL,
     redacted_device_certificate BYTEA NOT NULL,
 
     UNIQUE (organization, device_id)
 );
 
+ALTER TABLE user_
+ADD CONSTRAINT user_user_certifier_fkey
+FOREIGN KEY (user_certifier)
+REFERENCES device (_id)
+ON DELETE CASCADE;
 
 ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_user_certifier FOREIGN KEY (
-    user_certifier
-) REFERENCES device (_id);
-ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_revoked_user_certifier FOREIGN KEY (
-    revoked_user_certifier
-) REFERENCES device (_id);
+ADD CONSTRAINT user_revoked_user_certifier_fkey
+FOREIGN KEY (revoked_user_certifier)
+REFERENCES device (_id)
+ON DELETE CASCADE;
 
-ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
+ALTER TABLE profile
+ADD CONSTRAINT profile_certified_by_fkey
+FOREIGN KEY (certified_by)
+REFERENCES device (_id)
+ON DELETE CASCADE;
 
 -------------------------------------------------------
 --  Shamir recovery
@@ -263,8 +306,12 @@ ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
 
 CREATE TABLE shamir_recovery_setup (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT shamir_recovery_setup_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
+    user_ INTEGER
+    CONSTRAINT shamir_recovery_setup_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
 
     brief_certificate BYTEA NOT NULL,
     reveal_token VARCHAR(32) NOT NULL,
@@ -288,10 +335,16 @@ WHERE deleted_on IS NULL;
 
 CREATE TABLE shamir_recovery_share (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT shamir_recovery_share_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
 
-    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id) NOT NULL,
-    recipient INTEGER REFERENCES user_ (_id) NOT NULL,
+    shamir_recovery INTEGER
+    CONSTRAINT shamir_recovery_share_shamir_recovery_fkey REFERENCES shamir_recovery_setup (_id) ON DELETE CASCADE
+    NOT NULL,
+    recipient INTEGER
+    CONSTRAINT shamir_recovery_share_recipient_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
 
     share_certificate BYTEA NOT NULL,
     shares INTEGER NOT NULL,
@@ -301,21 +354,21 @@ CREATE TABLE shamir_recovery_share (
 
 
 -- Alter user table to introduce a cross-reference between user id and shamir id
-ALTER TABLE user_ ADD FOREIGN KEY (
-    shamir_recovery
-) REFERENCES shamir_recovery_setup (_id);
+ALTER TABLE user_
+ADD CONSTRAINT user_shamir_recovery_fkey FOREIGN KEY (shamir_recovery)
+REFERENCES shamir_recovery_setup (_id) ON DELETE CASCADE;
 
 
 -------------------------------------------------------
 --  Invitation
 -------------------------------------------------------
 
-CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
-CREATE TYPE invitation_deleted_reason AS ENUM (
+CREATE TYPE INVITATION_TYPE AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
+CREATE TYPE INVITATION_DELETED_REASON AS ENUM (
     'FINISHED', 'CANCELLED', 'ROTTEN'
 );
 
-CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
+CREATE TYPE CANCELLED_GREETING_ATTEMPT_REASON AS ENUM (
     'MANUALLY_CANCELLED',
     'INVALID_NONCE_HASH',
     'INVALID_SAS_CODE',
@@ -325,7 +378,7 @@ CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
     'AUTOMATICALLY_CANCELLED'
 );
 
-CREATE TYPE greeter_or_claimer AS ENUM (
+CREATE TYPE GREETER_OR_CLAIMER AS ENUM (
     'GREETER',
     'CLAIMER'
 );
@@ -333,7 +386,9 @@ CREATE TYPE greeter_or_claimer AS ENUM (
 
 CREATE TABLE invitation (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT invitation_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     token VARCHAR(32) NOT NULL,
     type INVITATION_TYPE NOT NULL,
 
@@ -357,7 +412,8 @@ CREATE TABLE invitation (
     --     deleted_reason INVITATION_DELETED_REASON,
 
     -- Updated in migration 0009
-    created_by_device INTEGER REFERENCES device (_id),
+    created_by_device INTEGER
+    CONSTRAINT invitation_created_by_device_fkey REFERENCES device (_id) ON DELETE CASCADE,
 
     -- Required when type=USER
     user_invitation_claimer_email VARCHAR(255),
@@ -367,29 +423,39 @@ CREATE TABLE invitation (
     deleted_reason INVITATION_DELETED_REASON,
 
     -- Required when type=SHAMIR_RECOVERY
-    shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
+    shamir_recovery INTEGER
+    CONSTRAINT invitation_shamir_recovery_fkey REFERENCES shamir_recovery_setup (_id) ON DELETE CASCADE,
 
     -- Added in migration 0009
     created_by_service_label VARCHAR(254),
     -- Required when type=DEVICE
-    device_invitation_claimer INTEGER REFERENCES user_ (_id),
+    device_invitation_claimer INTEGER
+    CONSTRAINT invitation_device_invitation_claimer_fkey REFERENCES user_ (_id) ON DELETE CASCADE,
 
     UNIQUE (organization, token)
 );
 
 CREATE TABLE greeting_session (
     _id SERIAL PRIMARY KEY,
-    invitation INTEGER REFERENCES invitation (_id) NOT NULL,
-    greeter INTEGER REFERENCES user_ (_id) NOT NULL,
+    invitation INTEGER
+    CONSTRAINT greeting_session_invitation_fkey REFERENCES invitation (_id) ON DELETE CASCADE
+    NOT NULL,
+    greeter INTEGER
+    CONSTRAINT greeting_session_greeter_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
 
     UNIQUE (invitation, greeter)
 );
 
 CREATE TABLE greeting_attempt (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT greeting_attempt_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     greeting_attempt_id UUID NOT NULL,
-    greeting_session INTEGER REFERENCES greeting_session (_id) NOT NULL,
+    greeting_session INTEGER
+    CONSTRAINT greeting_attempt_greeting_session_fkey REFERENCES greeting_session (_id) ON DELETE CASCADE
+    NOT NULL,
 
     claimer_joined TIMESTAMPTZ DEFAULT NULL,
     greeter_joined TIMESTAMPTZ DEFAULT NULL,
@@ -407,7 +473,9 @@ WHERE cancelled_on IS NULL;
 
 CREATE TABLE greeting_step (
     _id SERIAL PRIMARY KEY,
-    greeting_attempt INTEGER REFERENCES greeting_attempt (_id) NOT NULL,
+    greeting_attempt INTEGER
+    CONSTRAINT greeting_step_greeting_attempt_fkey REFERENCES greeting_attempt (_id) ON DELETE CASCADE
+    NOT NULL,
     step INTEGER NOT NULL,
     greeter_data BYTEA,
     claimer_data BYTEA,
@@ -415,76 +483,12 @@ CREATE TABLE greeting_step (
     UNIQUE (greeting_attempt, step)
 );
 
--------------------------------------------------------
---  PKI enrollment
--------------------------------------------------------
-
-CREATE TABLE pki_certificate (
-    sha256_fingerprint BYTEA PRIMARY KEY,
-    -- Fingerprint of a certificate that signed this certificate
-    -- Maybe null if not signed by an other known certificate or self-signed.
-    signed_by BYTEA REFERENCES pki_certificate (sha256_fingerprint),
-    -- The DER content of the certificate
-    der_content BYTEA NOT NULL
-);
-
-CREATE TYPE enrollment_state AS ENUM (
-    'SUBMITTED',
-    'ACCEPTED',
-    'REJECTED',
-    'CANCELLED'
-);
-
-CREATE TYPE pki_signature_algorithm AS ENUM ('RSASSA_PSS_SHA256');
-
-CREATE TYPE pki_enrollment_info_accepted AS (
-    accepted_on TIMESTAMPTZ,
-    accept_payload_signature BYTEA,
-    accept_payload BYTEA,
-
-    -- Added in migration 0016
-    accept_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM,
-    -- Added in migration 0019
-    accepter_x509_cert_sha256_fingerprint BYTEA
-);
-
-CREATE TYPE pki_enrollment_info_rejected AS (
-    rejected_on TIMESTAMPTZ
-);
-
-CREATE TYPE pki_enrollment_info_cancelled AS (
-    cancelled_on TIMESTAMPTZ
-);
-
-CREATE TABLE pki_enrollment (
-    _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-
-    enrollment_id UUID NOT NULL,
-
-    submit_payload_signature BYTEA NOT NULL,
-    submit_payload BYTEA NOT NULL,
-    submitted_on TIMESTAMPTZ NOT NULL,
-
-    accepter INTEGER REFERENCES device (_id),
-    submitter_accepted_device INTEGER REFERENCES device (_id),
-
-    enrollment_state ENROLLMENT_STATE NOT NULL DEFAULT 'SUBMITTED',
-    info_accepted PKI_ENROLLMENT_INFO_ACCEPTED,
-    info_rejected PKI_ENROLLMENT_INFO_REJECTED,
-    info_cancelled PKI_ENROLLMENT_INFO_CANCELLED,
-
-    -- Added in migration 0016
-    submit_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM NOT NULL,
-    -- Added in migration 0019
-    submitter_x509_cert_sha256_fingerprint BYTEA REFERENCES pki_certificate (sha256_fingerprint) NOT NULL,
-
-    UNIQUE (organization, enrollment_id)
-);
 
 -------------------------------------------------------
 --  Async Enrollment
 -------------------------------------------------------
+
+CREATE TYPE PKI_SIGNATURE_ALGORITHM AS ENUM ('RSASSA_PSS_SHA256');
 
 -- Note this table only store leaf and intermediate certificates, since the
 -- root certificates are supposed to be already known (and trusted!) by the
@@ -501,13 +505,15 @@ CREATE TABLE pki_x509_certificate (
     der_content BYTEA NOT NULL
 );
 
-CREATE TYPE async_enrollment_signature_type AS ENUM ('PKI', 'OPENBAO');
+CREATE TYPE ASYNC_ENROLLMENT_SIGNATURE_TYPE AS ENUM ('PKI', 'OPENBAO');
 
-CREATE TYPE async_enrollment_state AS ENUM ('SUBMITTED', 'ACCEPTED', 'REJECTED', 'CANCELLED');
+CREATE TYPE ASYNC_ENROLLMENT_STATE AS ENUM ('SUBMITTED', 'ACCEPTED', 'REJECTED', 'CANCELLED');
 
 CREATE TABLE async_enrollment (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT async_enrollment_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     enrollment_id UUID NOT NULL,
 
     submitted_on TIMESTAMPTZ NOT NULL,
@@ -548,75 +554,95 @@ CREATE TABLE async_enrollment (
 -------------------------------------------------------
 
 
-CREATE TYPE maintenance_type AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
+CREATE TYPE MAINTENANCE_TYPE AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
 
+CREATE TYPE REALM_STATUS AS ENUM ('AVAILABLE', 'ARCHIVED_OR_DELETION_PLANNED', 'DELETED');
 
 CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT realm_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     realm_id UUID NOT NULL,
     key_index INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
+    -- AVAILABLE: the realm is active and usable (default).
+    -- ARCHIVED_OR_DELETION_PLANNED: the latest RealmArchivingCertificate is ARCHIVED or DELETION_PLANNED.
+    -- DELETED: the realm data has been manually deleted by a server admin.
+    --
+    -- Two situations in which realms can be deleted:
+    -- - Realms planned for deletion by their last archiving certificate, and
+    --   whose deletion date has been reached.
+    -- - Orphaned realms, i.e. realms shared with users who have all been revoked.
+    --
+    -- Note realm deletion doesn't impact the realm's certificates as members of
+    -- the realm need to fetch them to determine if the deletion is legit.
+    -- Instead only encrypted data are removed from the database:
+    -- - vlobs
+    -- - keys bundles
+    -- - keys bundle accesses (for both users and sequester services)
+    status REALM_STATUS NOT NULL DEFAULT 'AVAILABLE',
 
     UNIQUE (organization, realm_id)
 );
 
 
-CREATE TYPE realm_role AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
+CREATE TYPE REALM_ROLE AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
 
 
 CREATE TABLE realm_user_role (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_user_role_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
+    user_ INTEGER
+    CONSTRAINT realm_user_role_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
     -- NULL if access revocation
     role REALM_ROLE,
     certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_user_role_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
-CREATE TYPE realm_archiving_configuration AS ENUM (
+CREATE TYPE REALM_ARCHIVING_CONFIGURATION AS ENUM (
     'AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED'
 );
 
 CREATE TABLE realm_archiving (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_archiving_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     configuration REALM_ARCHIVING_CONFIGURATION NOT NULL,
     -- NULL if not DELETION_PLANNED
     deletion_date TIMESTAMPTZ,
     certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_archiving_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
-);
-
-
--- TODO: Investigate which of those timestamp is really needed
-CREATE TABLE realm_user_change (
-    _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    -- The last time this user changed the role of another user
-    last_role_change TIMESTAMPTZ,
-    -- The last time this user updated a vlob
-    last_vlob_update TIMESTAMPTZ,
-    -- The last time this user changed the archiving configuration
-    last_archiving_change TIMESTAMPTZ,
-
-    UNIQUE (realm, user_)
 );
 
 
 CREATE TABLE realm_keys_bundle (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_keys_bundle_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     key_index INTEGER NOT NULL,
 
     realm_key_rotation_certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_keys_bundle_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL,
     key_canary BYTEA NOT NULL,
+    -- Note `keys_bundle` is set to an empty buffer if the realm has been deleted
+    -- This is because this info is not part of the ream key rotation certificate
+    -- (realm deletion doesn't impact certificates).
     keys_bundle BYTEA NOT NULL,
 
     UNIQUE (realm, key_index)
@@ -625,9 +651,15 @@ CREATE TABLE realm_keys_bundle (
 
 CREATE TABLE realm_keys_bundle_access (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_keys_bundle_access_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
+    user_ INTEGER
+    CONSTRAINT realm_keys_bundle_access_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
+    realm_keys_bundle INTEGER
+    CONSTRAINT realm_keys_bundle_access_realm_keys_bundle_fkey REFERENCES realm_keys_bundle (_id) ON DELETE CASCADE
+    NOT NULL,
 
     access BYTEA NOT NULL,
 
@@ -664,12 +696,22 @@ ON realm_keys_bundle_access (
 
 CREATE TABLE realm_sequester_keys_bundle_access (
     _id SERIAL PRIMARY KEY,
-    sequester_service INTEGER REFERENCES sequester_service (_id) NOT NULL,
-    realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
+    sequester_service INTEGER
+    CONSTRAINT realm_sequester_keys_bundle_access_sequester_service_fkey REFERENCES sequester_service (
+        _id
+    ) ON DELETE CASCADE
+    NOT NULL,
+    realm_keys_bundle INTEGER
+    CONSTRAINT realm_sequester_keys_bundle_access_realm_keys_bundle_fkey REFERENCES realm_keys_bundle (
+        _id
+    ) ON DELETE CASCADE
+    NOT NULL,
 
     access BYTEA NOT NULL,
 
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_sequester_keys_bundle_access_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
 
     UNIQUE (sequester_service, realm_keys_bundle)
 );
@@ -677,9 +719,13 @@ CREATE TABLE realm_sequester_keys_bundle_access (
 
 CREATE TABLE realm_name (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_name_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     realm_name_certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_by INTEGER
+    CONSTRAINT realm_name_certified_by_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
@@ -690,13 +736,17 @@ CREATE TABLE realm_name (
 
 CREATE TABLE vlob_atom (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT vlob_atom_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     key_index INTEGER NOT NULL,
     vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,
     size INTEGER NOT NULL,
-    author INTEGER REFERENCES device (_id) NOT NULL,
+    author INTEGER
+    CONSTRAINT vlob_atom_author_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
@@ -707,9 +757,13 @@ CREATE TABLE vlob_atom (
 
 CREATE TABLE realm_vlob_update (
     _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_vlob_update_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     index INTEGER NOT NULL,
-    vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
+    vlob_atom INTEGER
+    CONSTRAINT realm_vlob_update_vlob_atom_fkey REFERENCES vlob_atom (_id) ON DELETE CASCADE
+    NOT NULL,
 
     UNIQUE (realm, index)
 );
@@ -723,8 +777,12 @@ CREATE TABLE realm_vlob_update (
 CREATE TABLE block (
     _id SERIAL PRIMARY KEY,
     block_id UUID NOT NULL,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
-    author INTEGER REFERENCES device (_id) NOT NULL,
+    realm INTEGER
+    CONSTRAINT block_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
+    author INTEGER
+    CONSTRAINT block_author_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
     size INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted
@@ -754,7 +812,9 @@ CREATE TABLE block_data (
 
 CREATE TABLE common_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT common_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization)
 
@@ -762,31 +822,79 @@ CREATE TABLE common_topic (
 
 CREATE TABLE sequester_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT sequester_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization)
 );
 
 CREATE TABLE shamir_recovery_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT shamir_recovery_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization)
 );
 
 CREATE TABLE realm_topic (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    organization INTEGER
+    CONSTRAINT realm_topic_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
+    realm INTEGER
+    CONSTRAINT realm_topic_realm_fkey REFERENCES realm (_id) ON DELETE CASCADE
+    NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization, realm)
 );
 
 
 -------------------------------------------------------
---  Migration
+--  TOTP
 -------------------------------------------------------
 
+
+CREATE TABLE totp_opaque_key (
+    _id SERIAL PRIMARY KEY,
+    user_ INTEGER
+    CONSTRAINT totp_opaque_key_user_fkey REFERENCES user_ (_id) ON DELETE CASCADE
+    NOT NULL,
+    opaque_key_id UUID NOT NULL UNIQUE,
+    opaque_key BYTEA NOT NULL,
+    -- Throttle fields for rate-limiting OTP attempts
+    last_failed_attempt TIMESTAMPTZ,
+    failed_attempts INTEGER NOT NULL DEFAULT 0
+);
+
+
+-------------------------------------------------------
+--  Cryptpad
+-------------------------------------------------------
+
+CREATE TABLE cryptpad_session (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER
+    CONSTRAINT cryptpad_session_organization_fkey REFERENCES organization (_id) ON DELETE CASCADE
+    NOT NULL,
+    document_id UUID NOT NULL,
+    author INTEGER
+    CONSTRAINT cryptpad_session_author_fkey REFERENCES device (_id) ON DELETE CASCADE
+    NOT NULL,
+    created_on TIMESTAMPTZ NOT NULL,
+    key_index INTEGER NOT NULL,
+    encrypted_view_key BYTEA NOT NULL,
+    -- NULL if the session has been created by a user without write
+    -- access on the realm (hence making the session read-only).
+    encrypted_edit_key BYTEA,
+    UNIQUE (organization, document_id)
+);
+
+
+-------------------------------------------------------
+--  Migration
+-------------------------------------------------------
 
 CREATE TABLE migration (
     _id INTEGER PRIMARY KEY,

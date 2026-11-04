@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
 
@@ -6,7 +6,7 @@ use std::fs::{File, OpenOptions};
 use std::os::unix::io::AsRawFd;
 use std::path::Path;
 
-use super::{get_lock_file_path, TryLockDeviceForUseError};
+use super::{TryLockDeviceForUseError, get_lock_file_path};
 
 // Note exclusive lock gets automatically released on file close (i.e. on drop).
 #[derive(Debug)]

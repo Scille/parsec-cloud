@@ -6,9 +6,9 @@ use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_types::prelude::*;
 
 use crate::{
+    ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
     certif::CertificateOps,
     workspace::{LocalUserManifestWorkspaceEntry, WorkspaceExternalInfo, WorkspaceOps},
-    ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
 };
 
 pub(crate) async fn workspace_ops_factory(
@@ -68,6 +68,9 @@ pub(crate) async fn workspace_ops_with_prevent_sync_pattern_factory(
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
+                archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                can_self_promote_to_owner: false.into(),
             },
             workspace_index: 0,
             total_workspaces: 1,
@@ -101,6 +104,9 @@ pub(crate) async fn restart_workspace_ops(ops: WorkspaceOps) -> WorkspaceOps {
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
+                archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                can_self_promote_to_owner: false.into(),
             },
             workspace_index: 0,
             total_workspaces: 1,

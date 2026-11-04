@@ -1,9 +1,12 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-item class="file-card-item ion-no-padding">
     <div class="card-content">
-      <ms-spinner class="card-content__spinner" />
+      <ms-spinner
+        class="card-content__spinner"
+        :size="20"
+      />
       <ion-avatar class="card-content-icons">
         <ion-icon
           class="icon-item"
@@ -11,11 +14,11 @@
         />
       </ion-avatar>
 
-      <ion-title class="card-content__title body">
+      <ion-title class="card-content__title">
         {{ operation.entryName }}
       </ion-title>
 
-      <ion-text class="card-content-last-update body-sm">
+      <ion-text class="card-content-last-update">
         <span>{{ $msTranslate(operationLabel) }}</span>
       </ion-text>
     </div>
@@ -47,30 +50,19 @@ const operationLabel: Translatable = (() => {
 
 <style lang="scss" scoped>
 .file-card-item {
-  position: relative;
-  cursor: pointer;
+  --background: #{ms.color('surface-base-default-secondary')};
+  cursor: default;
   text-align: center;
-  --background: var(--parsec-color-light-secondary-background);
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
   user-select: none;
-  border-radius: var(--parsec-radius-12);
   width: 10.5rem;
+  transition: width 0.2s ease-in-out;
 
-  &::part(native) {
-    --inner-padding-end: 0px;
+  @include ms.responsive-breakpoint('xs') {
+    width: 9rem;
   }
 
-  &:hover {
-    --background: var(--parsec-color-light-primary-30);
-    --background-hover: var(--parsec-color-light-primary-30);
-    --background-hover-opacity: 1;
-  }
-
-  &.selected {
-    --background: var(--parsec-color-light-primary-100);
-    --background-hover: var(--parsec-color-light-primary-100);
-    border: 1px solid var(--parsec-color-light-primary-100);
+  @include ms.responsive-breakpoint('xs') {
+    width: 8rem;
   }
 }
 
@@ -79,9 +71,8 @@ const operationLabel: Translatable = (() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 0.5rem;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-lg');
   width: 100%;
-  margin: auto;
 
   &__spinner {
     position: absolute;
@@ -91,7 +82,7 @@ const operationLabel: Translatable = (() => {
 
   &-icons {
     position: relative;
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('icon-brand-default-hover');
     height: fit-content;
     width: fit-content;
     margin: 0 auto 0.875rem;
@@ -102,9 +93,10 @@ const operationLabel: Translatable = (() => {
   }
 
   &__title {
-    color: var(--parsec-color-light-primary-900);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-base-body');
     text-align: center;
-    padding: 0 0 0.25rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-sm');
     text-overflow: ellipsis;
     white-space: nowrap;
     width: inherit;
@@ -117,7 +109,8 @@ const operationLabel: Translatable = (() => {
 }
 
 .card-content-last-update {
-  color: var(--parsec-color-light-secondary-grey);
+  @include ms.font('body-sm-regular');
+  color: ms.color('text-base-description');
   text-align: center;
   display: flex;
   justify-content: center;
@@ -128,6 +121,6 @@ const operationLabel: Translatable = (() => {
 /* No idea how to change the color of the ion-item */
 .card-content__title::part(native),
 .card-content-last-update::part(native) {
-  background-color: var(--parsec-color-light-secondary-background);
+  background-color: ms.color('surface-base-default-secondary');
 }
 </style>

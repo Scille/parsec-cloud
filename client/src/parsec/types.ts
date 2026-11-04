@@ -1,6 +1,7 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 export {
+  AcceptFinalizeAsyncEnrollmentIdentityStrategyTag,
   AccountAuthMethodStrategyTag,
   AccountCreateErrorTag,
   AccountCreateRegistrationDeviceErrorTag,
@@ -17,38 +18,47 @@ export {
   AccountRecoverProceedErrorTag,
   AccountRecoverSendValidationEmailErrorTag,
   AccountRegisterNewDeviceErrorTag,
+  AdvisoryDeviceFilePrimaryProtection,
   AnyClaimRetrievedInfoTag,
+  AsyncEnrollmentIdentitySystemTag,
   AvailableDeviceTypeTag,
+  AvailablePendingAsyncEnrollmentIdentitySystemTag,
+  AvailablePkiCertificateTag,
   BootstrapOrganizationErrorTag,
   CancelledGreetingAttemptReason,
   ClaimerRetrieveInfoErrorTag,
   ClaimFinalizeErrorTag,
   ClaimInProgressErrorTag,
+  ClientAcceptAsyncEnrollmentErrorTag,
   ClientCancelInvitationErrorTag,
   ClientCreateWorkspaceErrorTag,
   ClientEventTag,
   ClientExportRecoveryDeviceErrorTag,
   ClientGetOrganizationBootstrapDateErrorTag,
+  ClientGetSelfShamirRecoveryErrorTag,
   ClientGetUserDeviceErrorTag,
   ClientGetUserInfoErrorTag,
   ClientInfoErrorTag,
+  ClientListShamirRecoveriesForOthersErrorTag,
   ClientListUserDevicesErrorTag,
   ClientListUsersErrorTag,
   ClientListWorkspacesErrorTag,
   ClientListWorkspaceUsersErrorTag,
   ClientNewDeviceInvitationErrorTag,
   ClientNewUserInvitationErrorTag,
+  ClientRejectAsyncEnrollmentErrorTag,
   ClientRenameWorkspaceErrorTag,
   ClientRevokeUserErrorTag,
+  ClientSelfPromoteToWorkspaceOwnerErrorTag,
   ClientShareWorkspaceErrorTag,
   ClientStartErrorTag,
   ClientStartInvitationGreetErrorTag,
   ClientStartWorkspaceErrorTag,
   ClientStopErrorTag,
   ClientUserUpdateProfileErrorTag,
-  DeviceAccessStrategyTag,
   DevicePurpose,
-  DeviceSaveStrategyTag,
+  EmailSentStatusTag,
+  EntryStatTag,
   EntryStatTag as FileType,
   GetServerConfigErrorTag,
   GreetInProgressErrorTag,
@@ -60,11 +70,20 @@ export {
   ListAvailableDeviceErrorTag,
   ListInvitationsErrorTag,
   MountpointToOsPathErrorTag,
-  OpenBaoAuthConfigTag,
   ParsedParsecAddrTag,
   ParseParsecAddrErrorTag,
+  PendingAsyncEnrollmentInfoTag,
+  PkiSystemInitErrorTag,
   Platform,
+  RealmArchivingConfigurationTag,
+  RequestedRealmArchivingConfigurationTag,
+  SelfShamirRecoveryInfoTag,
   ShowCertificateSelectionDialogErrorTag,
+  SubmitAsyncEnrollmentErrorTag,
+  SubmitAsyncEnrollmentIdentityStrategyTag,
+  SubmitterCancelAsyncEnrollmentErrorTag,
+  SubmitterFinalizeAsyncEnrollmentErrorTag,
+  TOTPSetupStatusTag,
   UpdateDeviceErrorTag,
   UserOnlineStatus,
   UserProfile,
@@ -94,6 +113,9 @@ export {
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
+  AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+  AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao,
+  AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI,
   AccountAuthMethodStrategy,
   AccountCreateAuthMethodError,
   AccountCreateError,
@@ -117,17 +139,28 @@ export type {
   AnyClaimRetrievedInfoUser,
   ApiVersion,
   ArchiveDeviceError,
+  AsyncEnrollmentIdentitySystem,
+  AsyncEnrollmentUntrusted,
   AvailableDevice,
   AvailableDeviceType,
   AvailableDeviceTypeOpenBao,
+  AvailableDeviceTypePKI,
+  AvailablePendingAsyncEnrollmentIdentitySystem,
+  AvailablePendingAsyncEnrollmentIdentitySystemPKI,
+  AvailablePkiCertificate,
+  AvailablePkiCertificateInvalid,
   BootstrapOrganizationError,
+  CertificateBasedInfoOrigin,
   ClaimerRetrieveInfoError,
   ClaimFinalizeError,
   ClaimInProgressError,
+  ClientAcceptAsyncEnrollmentError,
   ClientAcceptTosError,
+  ClientArchiveWorkspaceError,
   ClientCancelInvitationError,
   ClientConfig,
   ClientCreateWorkspaceError,
+  ClientDeleteShamirRecoveryError,
   ClientEvent,
   ClientEventGreetingAttemptCancelled,
   ClientEventGreetingAttemptJoined,
@@ -135,32 +168,38 @@ export type {
   ClientEventInvitationChanged,
   ClientEventPing,
   ClientExportRecoveryDeviceError,
+  ClientGetAsyncEnrollmentAddrError,
   ClientGetOrganizationBootstrapDateError,
+  ClientGetSelfShamirRecoveryError,
   ClientGetTosError,
   ClientGetUserDeviceError,
   ClientGetUserInfoError,
-  ClientInfo,
   ClientInfoError,
+  ClientListAsyncEnrollmentsError,
+  ClientListShamirRecoveriesForOthersError,
   ClientListUserDevicesError,
   ClientListUsersError,
   ClientListWorkspacesError,
+  ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
   ClientNewDeviceInvitationError,
+  ClientNewShamirRecoveryInvitationError,
   ClientNewUserInvitationError,
+  ClientRejectAsyncEnrollmentError,
   ClientRenameWorkspaceError,
   ClientRevokeUserError,
+  ClientSelfPromoteToWorkspaceOwnerError,
+  ClientSetupShamirRecoveryError,
   ClientShareWorkspaceError,
   ClientStartError,
   ClientStartInvitationGreetError,
   ClientStartWorkspaceError,
   ClientStopError,
+  ClientTotpCreateOpaqueKeyError,
+  ClientTOTPSetupConfirmError,
+  ClientTotpSetupStatusError,
   ClientUserUpdateProfileError,
   DeviceAccessStrategy,
-  DeviceAccessStrategyAccountVault,
-  DeviceAccessStrategyKeyring,
-  DeviceAccessStrategyOpenBao,
-  DeviceAccessStrategyPassword,
-  DeviceAccessStrategyPKI,
   DeviceClaimFinalizeInfo,
   DeviceClaimInProgress1Info,
   DeviceClaimInProgress2Info,
@@ -174,12 +213,14 @@ export type {
   DeviceInfo,
   InviteListItemDevice as DeviceInvitation,
   DeviceLabel,
+  DevicePrimaryProtectionStrategy,
+  DevicePrimaryProtectionStrategyAccountVault,
+  DevicePrimaryProtectionStrategyKeyring,
+  DevicePrimaryProtectionStrategyOpenBao,
+  DevicePrimaryProtectionStrategyPassword,
+  DevicePrimaryProtectionStrategyPKI,
   DeviceSaveStrategy,
-  DeviceSaveStrategyAccountVault,
-  DeviceSaveStrategyKeyring,
-  DeviceSaveStrategyOpenBao,
-  DeviceSaveStrategyPassword,
-  DeviceSaveStrategyPKI,
+  EmailSentStatus,
   EntryName,
   FileDescriptor,
   VlobID as FileID,
@@ -191,26 +232,48 @@ export type {
   ListAvailableDeviceError,
   ListInvitationsError,
   MountpointToOsPathError,
+  MountpointUnmountError,
   NewInvitationInfo,
   OpenBaoAuthConfig,
+  OpenBaoListSelfEmailsError,
   ParsecAddr,
+  ParsecAsyncEnrollmentAddr,
+  ParsecAsyncEnrollmentAddrAndRedirectionURL,
+  EntryStat as ParsecEntryStat,
+  ParsecInvitationAddr,
+  ParsecInvitationRedirectionURL,
+  ParsecTOTPResetAddr,
   ParsecWorkspacePathAddr,
+  ParsecWorkspacePathAddrAndRedirectionURL,
   ParsedParsecAddr,
+  ParsedParsecAddrAsyncEnrollment,
   ParsedParsecAddrInvitationDevice,
   ParsedParsecAddrInvitationUser,
   ParsedParsecAddrOrganization,
   ParsedParsecAddrOrganizationBootstrap,
-  ParsedParsecAddrPkiEnrollment,
   ParsedParsecAddrServer,
   ParsedParsecAddrWorkspacePath,
   ParseParsecAddrError,
+  PkiSystemInitError,
+  PkiSystemListUserCertificateError,
   Result,
   SASCode,
   SecretKey,
-  ServerConfig,
   ShowCertificateSelectionDialogError,
   SizeInt,
+  SubmitAsyncEnrollmentError,
+  SubmitAsyncEnrollmentIdentityStrategy,
+  SubmitAsyncEnrollmentIdentityStrategyOpenBao,
+  SubmitAsyncEnrollmentIdentityStrategyPKI,
+  SubmitterCancelAsyncEnrollmentError,
+  SubmitterFinalizeAsyncEnrollmentError,
+  SubmitterListLocalAsyncEnrollmentsError,
   Tos,
+  TotpFetchOpaqueKeyError,
+  TOTPOpaqueKeyID,
+  TotpSetupConfirmAnonymousError,
+  TOTPSetupStatus,
+  TotpSetupStatusAnonymousError,
   UpdateDeviceError,
   UserClaimFinalizeInfo,
   UserClaimInProgress1Info,
@@ -222,6 +285,7 @@ export type {
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
   InviteListItemUser as UserInvitation,
+  UserX509CertificateDetails,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
   WorkspaceDecryptPathAddrError,
@@ -248,35 +312,50 @@ export type {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
+  WorkspaceUserRoleChange,
   X509CertificateReference,
 } from '@/plugins/libparsec';
 
 import type {
+  AccessToken,
+  AvailablePendingAsyncEnrollment,
+  ClientInfo,
   DateTime,
   DeviceInfo,
   EntryName,
   FsPath,
   Handle,
   HumanHandle,
-  InvitationToken,
   OrganizationID,
   AuthMethodInfo as ParsecAuthMethodInfo,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
-  ParsecInvitationAddr,
+  ParsecInvitationAddrAndRedirectionURL,
   ParsecOrganizationAddr,
-  StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
+  OtherShamirRecoveryInfoDeleted as ParsecOtherShamirRecoveryInfoDeleted,
+  OtherShamirRecoveryInfoSetupAllValid as ParsecOtherShamirRecoveryInfoSetupAllValid,
+  OtherShamirRecoveryInfoSetupButUnusable as ParsecOtherShamirRecoveryInfoSetupButUnusable,
+  OtherShamirRecoveryInfoSetupWithRevokedRecipients as ParsecOtherShamirRecoveryInfoSetupWithRevokedRecipients,
+  SelfShamirRecoveryInfoDeleted as ParsecSelfShamirRecoveryInfoDeleted,
+  SelfShamirRecoveryInfoNeverSetup as ParsecSelfShamirRecoveryInfoNeverSetup,
+  SelfShamirRecoveryInfoSetupAllValid as ParsecSelfShamirRecoveryInfoSetupAllValid,
+  SelfShamirRecoveryInfoSetupButUnusable as ParsecSelfShamirRecoveryInfoSetupButUnusable,
+  SelfShamirRecoveryInfoSetupWithRevokedRecipients as ParsecSelfShamirRecoveryInfoSetupWithRevokedRecipients,
+  ServerConfig as ParsecServerConfig,
   UserInfo as ParsecUserInfo,
   WorkspaceHistoryEntryStatFile as ParsecWorkspaceHistoryEntryStatFile,
   WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
   WorkspaceInfo as ParsecWorkspaceInfo,
   Path,
+  PendingAsyncEnrollmentInfo,
   UserID,
   UserProfile,
+  UserX509CertificateDetails,
   VlobID,
+  X509CertificateReference as X509CertificateReferenceType,
 } from '@/plugins/libparsec';
 
-import { InvitationType, RealmRole as WorkspaceRole } from '@/plugins/libparsec';
+import { DevicePrimaryProtectionStrategyTag, InvitationType, RealmRole as WorkspaceRole } from '@/plugins/libparsec';
 
 type WorkspaceHistoryHandle = Handle;
 type WorkspaceHandle = Handle;
@@ -286,11 +365,13 @@ type ConnectionHandle = Handle;
 type MountpointHandle = Handle;
 type SystemPath = Path;
 type AccountHandle = Handle;
+type PkiHandle = Handle;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean;
   isFrozen: () => boolean;
   isActive: () => boolean;
+  isAnonymous: () => boolean;
 }
 
 interface OwnDeviceInfo extends DeviceInfo {
@@ -375,10 +456,10 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   availableOffline: boolean;
   handle: WorkspaceHandle;
   mountpoints: [MountpointHandle, SystemPath][];
-}
-
-interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
-  handle: WorkspaceHandle;
+  isArchived: boolean;
+  archivedOn?: DateTime;
+  isTrashed: boolean;
+  deletionDate?: DateTime;
 }
 
 enum OrganizationInfoErrorTag {
@@ -405,18 +486,16 @@ interface OrganizationInfo {
     metadata: number;
     data: number;
   };
-  outsidersAllowed: boolean;
   userLimit?: number;
-  hasUserLimit: boolean;
-  organizationAddr: ParsecOrganizationAddr;
-  organizationId: OrganizationID;
   creationDate?: DateTime;
+  workspaceDeletionDelay: number;
+  clientInfo: ClientInfo;
 }
 
 interface AccountInvitation {
-  addr: ParsecInvitationAddr;
+  addr: ParsecInvitationAddrAndRedirectionURL;
   organizationId: OrganizationID;
-  token: InvitationToken;
+  token: AccessToken;
   type: InvitationType;
 }
 
@@ -429,12 +508,101 @@ interface AuthMethodInfo extends ParsecAuthMethodInfo {
   current: boolean;
 }
 
+interface AsyncEnrollmentRequest {
+  info: PendingAsyncEnrollmentInfo;
+  enrollment: AvailablePendingAsyncEnrollment;
+  organizationId: OrganizationID;
+}
+
+interface CertificatePart {
+  reference: X509CertificateReferenceType;
+  friendlyName: string;
+  details: UserX509CertificateDetails;
+}
+
+interface CertificateWithDetailsValid {
+  signCert?: CertificatePart;
+  encryptCert?: CertificatePart;
+  getName: () => string;
+  isExpired: () => boolean;
+  getSerial: () => string;
+}
+
+enum CertificatePurpose {
+  Sign = 'certificate-sign',
+  Encrypt = 'certificate-encrypt',
+  Both = 'certificate-sign-encrypt',
+}
+
+interface ServerConfig extends ParsecServerConfig {
+  isAuthMethodAllowed: (strategy: DevicePrimaryProtectionStrategyTag) => boolean;
+  doesAuthMethodRequireTotp: (strategy: DevicePrimaryProtectionStrategyTag) => boolean;
+}
+
+interface SelfShamirRecoveryInfoSetupAllValid extends ParsecSelfShamirRecoveryInfoSetupAllValid {
+  isUsable: () => boolean;
+  recipients: Array<UserInfo>;
+}
+
+interface SelfShamirRecoveryInfoSetupWithRevokedRecipients extends ParsecSelfShamirRecoveryInfoSetupWithRevokedRecipients {
+  isUsable: () => boolean;
+  recipients: Array<UserInfo>;
+}
+
+interface SelfShamirRecoveryInfoSetupButUnusable extends ParsecSelfShamirRecoveryInfoSetupButUnusable {
+  isUsable: () => boolean;
+}
+
+interface SelfShamirRecoveryInfoNeverSetup extends ParsecSelfShamirRecoveryInfoNeverSetup {
+  isUsable: () => boolean;
+}
+
+interface SelfShamirRecoveryInfoDeleted extends ParsecSelfShamirRecoveryInfoDeleted {
+  isUsable: () => boolean;
+}
+
+type SelfShamirRecoveryInfo =
+  | SelfShamirRecoveryInfoSetupAllValid
+  | SelfShamirRecoveryInfoSetupWithRevokedRecipients
+  | SelfShamirRecoveryInfoSetupButUnusable
+  | SelfShamirRecoveryInfoNeverSetup
+  | SelfShamirRecoveryInfoDeleted;
+
+interface OtherShamirRecoveryInfoDeleted extends ParsecOtherShamirRecoveryInfoDeleted {
+  owner: UserInfo;
+}
+
+interface OtherShamirRecoveryInfoSetupAllValid extends ParsecOtherShamirRecoveryInfoSetupAllValid {
+  owner: UserInfo;
+}
+
+interface OtherShamirRecoveryInfoSetupButUnusable extends ParsecOtherShamirRecoveryInfoSetupButUnusable {
+  owner: UserInfo;
+}
+
+interface OtherShamirRecoveryInfoSetupWithRevokedRecipients extends ParsecOtherShamirRecoveryInfoSetupWithRevokedRecipients {
+  owner: UserInfo;
+}
+
+type OtherShamirRecoveryInfo =
+  | OtherShamirRecoveryInfoDeleted
+  | OtherShamirRecoveryInfoSetupAllValid
+  | OtherShamirRecoveryInfoSetupButUnusable
+  | OtherShamirRecoveryInfoSetupWithRevokedRecipients;
+
 export {
+  AccessToken,
   AccountHandle,
   AccountInvitation,
+  AsyncEnrollmentRequest,
   AuthMethodInfo,
+  CertificatePart,
+  CertificatePurpose,
+  CertificateWithDetailsValid,
+  ClientInfo,
   ConnectionHandle,
   DateTime,
+  DevicePrimaryProtectionStrategyTag,
   EntryID,
   EntryStat,
   EntryStatFile,
@@ -445,7 +613,6 @@ export {
   GetWorkspaceNameError,
   GetWorkspaceNameErrorTag,
   HumanHandle,
-  InvitationToken,
   InvitationType,
   MountpointHandle,
   OpenOptions,
@@ -453,10 +620,19 @@ export {
   OrganizationInfo,
   OrganizationInfoError,
   OrganizationInfoErrorTag,
+  OtherShamirRecoveryInfo,
+  OtherShamirRecoveryInfoDeleted,
+  OtherShamirRecoveryInfoSetupAllValid,
+  OtherShamirRecoveryInfoSetupButUnusable,
+  OtherShamirRecoveryInfoSetupWithRevokedRecipients,
   OwnDeviceInfo,
   ParsecOrganizationAddr,
+  PkiHandle,
   RegistrationDevice,
-  StartedWorkspaceInfo,
+  SelfShamirRecoveryInfo,
+  SelfShamirRecoveryInfoSetupAllValid,
+  SelfShamirRecoveryInfoSetupWithRevokedRecipients,
+  ServerConfig,
   SystemPath,
   UserID,
   UserInfo,

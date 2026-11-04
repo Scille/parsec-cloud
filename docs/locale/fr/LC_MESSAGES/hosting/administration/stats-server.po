@@ -1,0 +1,55 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-17 12:16+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../hosting/administration/stats-server.rst:7
+msgid "Server usage statistics"
+msgstr "Statistiques d'utilisation du serveur"
+
+#: ../../hosting/administration/stats-server.rst:9
+msgid ""
+"In order to extract server usage statistics, the administrator needs to "
+"provide:"
+msgstr ""
+"Afin d'extraire les statistiques d'utilisation du serveur, l'administrateur "
+"doit fournir :"
+
+#: ../../hosting/administration/stats-server.rst:11
+msgid "The Parsec Server address as a Parsec URL ``parsec3://hostname:port``"
+msgstr ""
+"L'adresse du serveur Parsec, par une url Parsec ``parsec3://hostname:port``"
+
+#: ../../hosting/administration/stats-server.rst:12
+msgid "The ``administration_token`` configured in the Parsec Server"
+msgstr "Le ``administration_token`` configuré dans le serveur Parsec"
+
+#: ../../hosting/administration/stats-server.rst:13
+msgid "The extraction date (ignores everything after the date provided)"
+msgstr "La date d'extraction (ignore toutes les informations après cette date)"
+
+#: ../../hosting/administration/stats-server.rst:14
+msgid "The output filename"
+msgstr "Le nom du fichier de sortie"
+
+#: ../../hosting/administration/stats-server.rst:15
+msgid "The output file format which can be CSV or JSON"
+msgstr "Le format du fichier de sortie, peut être en CSV ou JSON"
+
+#: ../../hosting/administration/stats-server.rst:21
+msgid "Example of output:"
+msgstr "Exemple de sortie :"

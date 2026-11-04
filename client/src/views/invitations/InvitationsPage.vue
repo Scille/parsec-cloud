@@ -1,42 +1,54 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="invitations-page">
     <div
-      v-if="isSmallDisplay && false"
+      v-if="isSmallDisplay"
       class="switch-view"
     >
       <ion-button
         v-if="view === InvitationView.EmailInvitation"
         class="switch-view-button email-button"
+        size="large"
         @click="openInvitationSwitchModal"
       >
         <ion-icon
-          :icon="mailUnread"
-          class="switch-view-button__icon"
+          :icon="invitations.length > 0 ? mailUnread : mail"
+          class="switch-view-button__icon button-icon-left"
         />
         {{ $msTranslate('InvitationsPage.emailInvitation.tab') }}
-        <span class="switch-view-button__count">{{ invitations.length }}</span>
+        <span
+          class="switch-view-button__count"
+          :class="{ empty: invitations.length === 0 }"
+        >
+          {{ invitations.length }}
+        </span>
         <ion-icon
           :icon="caretDown"
-          class="switch-view-button__toggle"
+          class="switch-view-button__toggle button-icon-right"
         />
       </ion-button>
 
       <ion-button
         v-else
         class="switch-view-button pki-button"
+        size="large"
         @click="openInvitationSwitchModal"
       >
         <ion-icon
-          :icon="idCard"
-          class="switch-view-button__icon"
+          :icon="link"
+          class="switch-view-button__icon button-icon-left"
         />
-        {{ $msTranslate('InvitationsPage.pkiRequests.tab') }}
-        <span class="switch-view-button__count button-small">{{ pkiRequests.length }}</span>
+        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tab') }}
+        <span
+          class="switch-view-button__count"
+          :class="{ empty: asyncEnrollmentRequests.length === 0 }"
+        >
+          {{ asyncEnrollmentRequests.length }}
+        </span>
         <ion-icon
           :icon="caretDown"
-          class="switch-view-button__toggle"
+          class="switch-view-button__toggle button-icon-right"
         />
       </ion-button>
     </div>
@@ -47,177 +59,161 @@
           class="toggle-view"
           role="tablist"
           aria-label="Invitation view toggle"
-          v-if="isLargeDisplay && false"
+          aria-orientation="horizontal"
+          v-if="isLargeDisplay"
+          @keydown="onTabKeydown"
         >
           <ion-button
+            role="tab"
+            id="invitation-tab-email"
             class="toggle-view-button email-button"
             :class="{ active: view === InvitationView.EmailInvitation }"
+            :aria-selected="view === InvitationView.EmailInvitation"
+            aria-controls="invitation-panel"
+            :tabindex="view === InvitationView.EmailInvitation ? 0 : -1"
             @click="switchView(InvitationView.EmailInvitation)"
-            :disabled="view === InvitationView.EmailInvitation"
           >
             <ion-icon
-              :icon="mailUnread"
-              class="toggle-view-button__icon"
+              :icon="invitations.length > 0 ? mailUnread : mail"
+              class="toggle-view-button__icon button-icon-left"
+              aria-hidden="true"
             />
             <ion-text class="toggle-view-button__label">
-              <span v-if="windowWidth > WindowSizeBreakpoints.MD">{{ $msTranslate('InvitationsPage.emailInvitation.tab') }}</span>
+              <span v-if="windowWidth > WindowSizeBreakpoints.MD">{{ $msTranslate('InvitationsPage.emailInvitation.tabLabel') }}</span>
               <span v-else>{{ $msTranslate('InvitationsPage.emailInvitation.tabShort') }}</span>
             </ion-text>
-            <span class="toggle-view-button__count">{{ invitations.length }}</span>
+            <span
+              class="toggle-view-button__count"
+              :class="{ empty: invitations.length === 0 }"
+            >
+              {{ invitations.length }}
+            </span>
           </ion-button>
           <ion-button
+            role="tab"
+            id="invitation-tab-pki"
             class="toggle-view-button pki-button"
-            :class="{ active: view === InvitationView.PkiRequest }"
-            @click="switchView(InvitationView.PkiRequest)"
-            :disabled="view === InvitationView.PkiRequest"
+            :class="{ active: view === InvitationView.AsyncEnrollmentRequest }"
+            :aria-selected="view === InvitationView.AsyncEnrollmentRequest"
+            aria-controls="invitation-panel"
+            :tabindex="view === InvitationView.AsyncEnrollmentRequest ? 0 : -1"
+            @click="switchView(InvitationView.AsyncEnrollmentRequest)"
           >
             <ion-icon
-              :icon="idCard"
-              class="toggle-view-button__icon"
+              :icon="link"
+              class="toggle-view-button__icon button-icon-left"
+              aria-hidden="true"
             />
             <ion-text class="toggle-view-button__label">
-              <span v-if="windowWidth > WindowSizeBreakpoints.MD">{{ $msTranslate('InvitationsPage.pkiRequests.tab') }}</span>
-              <span v-else>{{ $msTranslate('InvitationsPage.pkiRequests.tabShort') }}</span>
+              <span>{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tabLabel') }}</span>
             </ion-text>
-            <span class="toggle-view-button__count">{{ pkiRequests.length }}</span>
+            <span
+              class="toggle-view-button__count"
+              :class="{ empty: asyncEnrollmentRequests.length === 0 }"
+            >
+              {{ asyncEnrollmentRequests.length }}
+            </span>
           </ion-button>
         </div>
 
-        <ion-button
-          v-if="view === InvitationView.PkiRequest && rootCertificate"
-          @click="selectRootCertificate"
-          id="update-root-certificate-button"
-          class="button-medium button-default certificate-button"
-          fill="clear"
-          ref="updateRootCertificateButton"
-        >
-          <ion-icon
-            :icon="document"
-            class="certificate-button__icon"
-          />
-          <ms-image
-            :image="CertificateIcon"
-            class="certificate-button__badge"
-          />
-        </ion-button>
-
-        <ion-button
-          v-if="view === InvitationView.PkiRequest"
-          @click="onCopyJoinLinkClicked"
-          id="copy-link-pki-request-button"
-          class="button-medium button-default"
-        >
-          <ion-icon
-            :icon="link"
-            class="button-icon"
-          />
-          <span>{{ $msTranslate('InvitationsPage.pkiRequests.copyLink') }}</span>
-        </ion-button>
-
-        <ion-button
-          v-if="view === InvitationView.EmailInvitation"
-          @click="inviteUser"
-          id="invite-user-button"
-          class="button-medium button-default"
-        >
-          <ion-icon
-            :icon="personAdd"
-            class="button-icon"
-          />
-          <span>{{ $msTranslate('InvitationsPage.emailInvitation.inviteUser') }}</span>
-        </ion-button>
-      </div>
-
-      <div
-        class="invitations-container scroll"
-        v-if="view === InvitationView.EmailInvitation"
-      >
-        <div
-          v-show="invitations.length === 0"
-          class="no-active body-lg"
-        >
-          <div class="no-active-content">
-            <ms-image
-              :image="NoInvitation"
-              class="no-active__image"
-            />
-            <ion-text>
-              {{ $msTranslate('InvitationsPage.emailInvitation.emptyState') }}
+        <div class="toggle-view-header">
+          <div class="toggle-view-header-text">
+            <ion-text class="toggle-view-header__title">
+              {{
+                view === InvitationView.EmailInvitation
+                  ? $msTranslate('InvitationsPage.emailInvitation.tabLabel')
+                  : $msTranslate('InvitationsPage.asyncEnrollmentRequest.tabLabel')
+              }}
             </ion-text>
           </div>
-        </div>
-        <div v-show="invitations.length > 0">
-          <invitation-list
-            :invitations="invitations"
-            @greet-click="onInvitationGreetClicked"
-            @send-email-click="onSendInvitationEmailClicked"
-            @copy-link-click="onCopyInvitationLinkClicked"
-            @delete-click="onDeleteInvitationClicked"
-          />
-        </div>
-      </div>
-      <div
-        class="invitations-container scroll"
-        v-if="view === InvitationView.PkiRequest"
-      >
-        <input
-          type="file"
-          ref="input"
-          hidden
-          @change="onInputChange"
-        />
-        <div
-          class="root-certificate"
-          v-if="!rootCertificate"
-        >
-          <div class="root-certificate-content">
-            <ms-image
-              :image="CertificateIcon"
-              class="root-certificate__icon"
+          <ion-button
+            v-if="view === InvitationView.AsyncEnrollmentRequest"
+            @click="onCopyJoinLinkClicked"
+            id="copy-link-pki-request-button"
+            ref="copyJoinRequestLink"
+          >
+            <ion-icon
+              :icon="copy"
+              class="button-icon button-icon-left"
             />
-            <div class="root-certificate-text">
-              <ion-text class="root-certificate-text__title title-h3">
-                {{ $msTranslate('InvitationsPage.pkiRequests.rootCertificate.missingCertificateTitle') }}
-              </ion-text>
-              <ion-text class="root-certificate-text__description body-lg">
-                {{ $msTranslate('InvitationsPage.pkiRequests.rootCertificate.missingCertificateDescription') }}
+            <span>{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.copyLink') }}</span>
+          </ion-button>
+
+          <ion-button
+            v-if="view === InvitationView.EmailInvitation"
+            @click="inviteUser"
+            id="invite-user-button"
+          >
+            <ion-icon
+              :icon="personAdd"
+              class="button-icon button-icon-left"
+            />
+            <span>{{ $msTranslate('InvitationsPage.emailInvitation.inviteUser') }}</span>
+          </ion-button>
+        </div>
+
+        <div
+          class="invitations-container scroll"
+          v-if="view === InvitationView.EmailInvitation"
+          id="invitation-panel"
+          role="tabpanel"
+          aria-labelledby="invitation-tab-email"
+        >
+          <div
+            v-show="invitations.length === 0"
+            class="no-active"
+          >
+            <div class="no-active-content">
+              <ms-image :image="theme === Theme.Dark ? NoInvitationDark : NoInvitation" />
+              <ion-text>
+                {{ $msTranslate('InvitationsPage.emailInvitation.emptyState') }}
               </ion-text>
             </div>
-            <ms-report-text
-              class="root-certificate-text__report"
-              :theme="MsReportTheme.Warning"
-            >
-              {{ $msTranslate('InvitationsPage.pkiRequests.pkiFeature') }}
-            </ms-report-text>
-            <ion-button
-              class="button-large button-default"
-              @click="selectRootCertificate"
-            >
-              <ms-image
-                :image="DocumentImport"
-                class="button-icon"
-              />
-              {{ $msTranslate('InvitationsPage.pkiRequests.rootCertificate.setRootCertificate') }}
-            </ion-button>
+          </div>
+          <div v-show="invitations.length > 0">
+            <invitation-list
+              :invitations="invitations"
+              @greet-click="onInvitationGreetClicked"
+              @send-email-click="onSendInvitationEmailClicked"
+              @copy-link-click="onCopyInvitationLinkClicked"
+              @delete-click="onDeleteInvitationClicked"
+            />
           </div>
         </div>
         <div
-          v-show="invitations.length === 0"
-          class="no-active body-lg"
+          class="invitations-container scroll"
+          v-if="view === InvitationView.AsyncEnrollmentRequest"
+          id="invitation-panel"
+          role="tabpanel"
+          aria-labelledby="invitation-tab-pki"
         >
-          <div class="no-active-content">
-            <ms-image :image="NoInvitation" />
-            <ion-text>
-              {{ $msTranslate('InvitationsPage.pkiRequests.emptyState') }}
-            </ion-text>
+          <div
+            v-show="asyncEnrollmentRequests.length === 0 && !asyncListError"
+            class="no-active"
+          >
+            <div class="no-active-content">
+              <ms-image :image="theme === Theme.Dark ? NoInvitationDark : NoInvitation" />
+              <ion-text>
+                {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.emptyState') }}
+              </ion-text>
+            </div>
           </div>
-        </div>
-        <div v-show="(invitations.length > 0 && isLargeDisplay) || (rootCertificate && pkiRequests.length > 0)">
-          <pki-request-list
-            :requests="pkiRequests"
-            @accept-click="onAcceptPkiRequestClicked"
-            @reject-click="onRejectPkiRequestClicked"
-          />
+          <ms-report-text
+            class="invitations-error-message"
+            v-show="asyncEnrollmentRequests.length === 0 && asyncListError"
+            :theme="MsReportTheme.Error"
+          >
+            {{ $msTranslate(asyncListError) }}
+          </ms-report-text>
+          <div v-show="asyncEnrollmentRequests.length > 0">
+            <async-enrollment-request-list
+              :requests="asyncEnrollmentRequests"
+              :pki-available="pkiAvailable"
+              :server-config="serverConfig"
+              @accept-click="onAcceptAsyncEnrollmentRequestClicked"
+              @reject-click="onRejectAsyncEnrollmentRequestClicked"
+            />
+          </div>
         </div>
       </div>
     </ion-content>
@@ -225,62 +221,84 @@
 </template>
 
 <script setup lang="ts">
-import CertificateIcon from '@/assets/images/certificate-icon.svg?raw';
 import { copyToClipboard } from '@/common/clipboard';
 import InviteModal from '@/components/invitations/InviteModal.vue';
 import {
-  acceptOrganizationJoinRequest,
+  acceptAsyncEnrollment,
+  AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+  AcceptFinalizeAsyncEnrollmentIdentityStrategyTag,
+  AsyncEnrollmentIdentitySystemTag,
+  AsyncEnrollmentUntrusted,
   cancelInvitation,
+  ClientAcceptAsyncEnrollmentErrorTag,
   ClientCancelInvitationErrorTag,
   ClientNewUserInvitationError,
   ClientNewUserInvitationErrorTag,
-  getPkiJoinOrganizationLink,
+  closeCertificate,
+  getAsyncEnrollmentAddr,
+  getCurrentAvailableDevice,
+  getServerConfig,
   InvitationEmailSentStatus,
-  JoinRequestValidity,
-  listOrganizationJoinRequests,
+  isSmartcardAvailable,
+  listAsyncEnrollments,
   listUserInvitations,
-  OrganizationJoinRequest,
+  makeAcceptOpenBaoIdentityStrategy,
+  makeAcceptPkiIdentityStrategy,
+  openCertificate,
+  ParsecAddr,
   inviteUser as parsecInviteUser,
-  rejectOrganizationJoinRequest,
+  rejectAsyncEnrollment,
+  ServerConfig,
   UserInvitation,
+  X509CertificateReference,
 } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { OpenBaoClient } from '@/services/openBao';
+import AsyncEnrollmentRequestList from '@/views/invitations/AsyncEnrollmentRequestList.vue';
 import InvitationList from '@/views/invitations/InvitationList.vue';
 import InvitationSwitchModal from '@/views/invitations/InvitationSwitchModal.vue';
-import PkiRequestList from '@/views/invitations/PkiRequestList.vue';
 import SelectProfileModal from '@/views/invitations/SelectProfileModal.vue';
 import { InvitationView } from '@/views/invitations/types';
+import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBaoAuthModal.vue';
+import AsyncEnrollmentPkiAuthModal from '@/views/users/AsyncEnrollmentPkiAuthModal.vue';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import { caretDown, document, idCard, link, mailUnread, personAdd } from 'ionicons/icons';
+import { caretDown, copy, link, mail, mailUnread, personAdd } from 'ionicons/icons';
 import {
   Answer,
   askQuestion,
   attachMouseOverTooltip,
-  DocumentImport,
   MsImage,
   MsModalResult,
   MsReportText,
   MsReportTheme,
   NoInvitation,
+  NoInvitationDark,
+  Theme,
   Translatable,
+  useTheme,
   useWindowSize,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
+const { theme } = useTheme();
 const view = ref(InvitationView.EmailInvitation);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
-
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const invitations = ref<Array<UserInvitation>>([]);
-const pkiRequests = ref<Array<OrganizationJoinRequest>>([]);
-const rootCertificate = ref<string | undefined>(undefined);
-const inputRef = useTemplateRef<HTMLInputElement>('input');
-const updateRootCertificateButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('updateRootCertificateButton');
+const asyncEnrollmentRequests = ref<Array<AsyncEnrollmentUntrusted>>([]);
+const serverAddr = ref<ParsecAddr | undefined>(undefined);
+const serverConfig = ref<ServerConfig | undefined>(undefined);
+const pkiAvailable = ref(false);
+const openBaoClient = ref<OpenBaoClient | undefined>(undefined);
+const certificate = ref<X509CertificateReference | undefined>(undefined);
+const asyncListError = ref('');
+
+const copyJoinRequestLinkRef = useTemplateRef<InstanceType<typeof IonButton>>('copyJoinRequestLink');
 
 let eventCbId: string | null = null;
 
@@ -303,11 +321,26 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
-    if (event === Events.InvitationUpdated && data) {
-      await refreshInvitationList();
+  eventCbId = await eventDistributor.value.registerCallback(
+    [Events.InvitationUpdated, Events.AsyncEnrollmentUpdated],
+    async (event: Events, data?: EventData) => {
+      if (event === Events.InvitationUpdated && data) {
+        await refreshInvitationList();
+      } else if (event === Events.AsyncEnrollmentUpdated) {
+        await refreshAsyncEnrollmentRequestList();
+      }
+    },
+  );
+  const deviceResult = await getCurrentAvailableDevice();
+  if (deviceResult.ok) {
+    serverAddr.value = deviceResult.value.serverAddr;
+    const configResult = await getServerConfig(serverAddr.value);
+    if (configResult.ok) {
+      serverConfig.value = configResult.value;
     }
-  });
+    pkiAvailable.value = await isSmartcardAvailable();
+  }
+
   await refreshAll();
   const query = getCurrentRouteQuery();
 
@@ -320,20 +353,50 @@ onMounted(async (): Promise<void> => {
     await inviteUser();
     await navigateTo(Routes.Invitations, { replace: true, query: { invitationView: InvitationView.EmailInvitation } });
   }
-});
 
-watch(updateRootCertificateButtonRef, (el) => {
-  if (el && el.$el) {
-    attachMouseOverTooltip(el.$el, 'InvitationsPage.pkiRequests.rootCertificate.updateRootCertificate');
-  }
+  watch(copyJoinRequestLinkRef, (button) => {
+    if (button?.$el) {
+      setTimeout(() => {
+        attachMouseOverTooltip(button.$el, 'InvitationsPage.asyncEnrollmentRequest.tooltips.copyLinkInfo');
+      }, 500);
+    }
+  });
 });
 
 onUnmounted(async () => {
   if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
+    await eventDistributor.value.removeCallback(eventCbId);
   }
   routeWatchCancel();
 });
+
+async function onTabKeydown(event: KeyboardEvent): Promise<void> {
+  const tabs = [
+    { id: 'invitation-tab-email', view: InvitationView.EmailInvitation },
+    { id: 'invitation-tab-pki', view: InvitationView.AsyncEnrollmentRequest },
+  ];
+  const current = tabs.findIndex((tab) => tab.view === view.value);
+  let next: number;
+  switch (event.key) {
+    case 'ArrowRight':
+      next = (current + 1) % tabs.length;
+      break;
+    case 'ArrowLeft':
+      next = (current - 1 + tabs.length) % tabs.length;
+      break;
+    case 'Home':
+      next = 0;
+      break;
+    case 'End':
+      next = tabs.length - 1;
+      break;
+    default:
+      return;
+  }
+  event.preventDefault();
+  await switchView(tabs[next].view);
+  document.getElementById(tabs[next].id)?.focus();
+}
 
 async function switchView(newView: InvitationView): Promise<void> {
   if (newView === view.value) {
@@ -372,7 +435,7 @@ async function inviteUser(): Promise<void> {
   if (!lastError) {
     // All emails were sent
     if (noEmailCount === 0) {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: {
             key: 'UsersPage.invitation.inviteSuccessMailSent',
@@ -388,7 +451,7 @@ async function inviteUser(): Promise<void> {
       );
     } else {
       // All invitations were successful but not all emails were sent
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: {
             key: 'UsersPage.invitation.inviteSuccessNoMail',
@@ -420,8 +483,8 @@ async function inviteUser(): Promise<void> {
     } else {
       message = 'UsersPage.invitation.inviteFailedSome';
     }
-    window.electronAPI.log('error', `Failed to create invitations: ${lastError.tag} (${lastError.error})`);
-    informationManager.present(
+    window.nativeAPI.log('error', `Failed to create invitations: ${lastError.tag} (${lastError.error})`);
+    informationManager.value.present(
       new Information({
         message,
         level: lastError.tag === ClientNewUserInvitationErrorTag.AlreadyMember ? InformationLevel.Warning : InformationLevel.Error,
@@ -443,7 +506,7 @@ async function openInvitationSwitchModal(): Promise<void> {
     expandToScroll: false,
     componentProps: {
       invitationsCount: invitations.value.length,
-      pkiRequestsCount: pkiRequests.value.length,
+      asyncEnrollmentRequestsCount: asyncEnrollmentRequests.value.length,
       defaultView: view.value,
     },
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
@@ -470,7 +533,7 @@ async function onInvitationGreetClicked(inv: UserInvitation): Promise<void> {
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       invitation: inv,
-      informationManager: informationManager,
+      informationManager: informationManager.value,
     },
   });
   await modal.present();
@@ -489,7 +552,7 @@ async function onSendInvitationEmailClicked(inv: UserInvitation): Promise<void> 
   }
   const result = await parsecInviteUser(inv.claimerEmail);
   if (result.ok && result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: {
           key: 'UsersPage.invitation.inviteSuccessMailSent',
@@ -523,7 +586,7 @@ async function onSendInvitationEmailClicked(inv: UserInvitation): Promise<void> 
           break;
       }
     }
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message,
         level: InformationLevel.Error,
@@ -534,9 +597,10 @@ async function onSendInvitationEmailClicked(inv: UserInvitation): Promise<void> 
 }
 
 async function onCopyInvitationLinkClicked(inv: UserInvitation): Promise<void> {
+  const [_, invitationAddrAsHttpRedirection] = inv.addr;
   await copyToClipboard(
-    inv.addr,
-    informationManager,
+    invitationAddrAsHttpRedirection,
+    informationManager.value,
     'UsersPage.invitation.linkCopiedToClipboard',
     'UsersPage.invitation.linkNotCopiedToClipboard',
   );
@@ -560,7 +624,7 @@ async function onDeleteInvitationClicked(inv: UserInvitation): Promise<void> {
   const result = await cancelInvitation(inv.token);
 
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'UsersPage.invitation.cancelSuccess',
         level: InformationLevel.Success,
@@ -579,7 +643,7 @@ async function onDeleteInvitationClicked(inv: UserInvitation): Promise<void> {
     ) {
       await refreshInvitationList();
     } else {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: 'UsersPage.invitation.cancelFailed',
           level: InformationLevel.Error,
@@ -591,49 +655,83 @@ async function onDeleteInvitationClicked(inv: UserInvitation): Promise<void> {
 }
 
 async function onCopyJoinLinkClicked(): Promise<void> {
-  const result = await getPkiJoinOrganizationLink();
+  const result = await getAsyncEnrollmentAddr();
   if (result.ok) {
+    const [_, invitationAddrAsHttpRedirection] = result.value;
     await copyToClipboard(
-      result.value,
-      informationManager,
-      'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
-      'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
+      invitationAddrAsHttpRedirection,
+      informationManager.value,
+      'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
+      'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
+    );
+  } else {
+    informationManager.value.present(
+      new Information({
+        message: 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
     );
   }
 }
 
-async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<void> {
-  if (req.validity === JoinRequestValidity.Unknown) {
-    const answer = await askQuestion(
-      'InvitationsPage.pkiRequests.validationModal.error.unknown.title',
-      'InvitationsPage.pkiRequests.validationModal.error.unknown.description',
-      {
-        yesText: 'InvitationsPage.pkiRequests.validationModal.button.confirm',
-        noText: 'InvitationsPage.pkiRequests.validationModal.button.cancel',
-      },
-    );
-    if (answer !== Answer.Yes) {
+async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUntrusted): Promise<void> {
+  let strategy!: AcceptFinalizeAsyncEnrollmentIdentityStrategy;
+
+  if (request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKI && !certificate.value) {
+    if (!pkiAvailable.value) {
+      window.nativeAPI.log('error', 'PKI not available');
       return;
     }
-  } else if (req.validity === JoinRequestValidity.Invalid) {
-    const answer = await askQuestion(
-      'InvitationsPage.pkiRequests.validationModal.error.notValid.title',
-      'InvitationsPage.pkiRequests.validationModal.error.notValid.description',
-      {
-        yesText: 'InvitationsPage.pkiRequests.validationModal.button.confirm',
-        noText: 'InvitationsPage.pkiRequests.validationModal.button.cancel',
-      },
-    );
-    if (answer !== Answer.Yes) {
+    const pkiModal = await modalController.create({
+      component: AsyncEnrollmentPkiAuthModal,
+      cssClass: 'async-enrollment-pki-modal',
+    });
+    await pkiModal.present();
+    const { role, data } = await pkiModal.onWillDismiss();
+    await pkiModal.dismiss();
+    if (role !== MsModalResult.Confirm || !data.signCertificate || !data.encryptCertificate || !serverAddr.value) {
       return;
     }
+    const signCertResult = await openCertificate(data.signCertificate);
+    if (!signCertResult.ok) {
+      return;
+    }
+    const encryptCertResult = await openCertificate(data.encryptCertificate);
+    if (!encryptCertResult.ok) {
+      await closeCertificate(signCertResult.value);
+      return;
+    }
+    strategy = makeAcceptPkiIdentityStrategy(signCertResult.value, encryptCertResult.value);
+  } else if (request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao && !openBaoClient.value) {
+    if (!serverConfig.value?.openbao || serverConfig.value.openbao.auths.length === 0) {
+      return;
+    }
+    const ssoModal = await modalController.create({
+      component: AsyncEnrollmentOpenBaoAuthModal,
+      cssClass: 'async-enrollment-openbao-modal',
+      componentProps: {
+        serverConfig: serverConfig.value,
+        action: 'accept',
+      },
+    });
+    await ssoModal.present();
+    const { role, data } = await ssoModal.onWillDismiss();
+    await ssoModal.dismiss();
+    if (role !== MsModalResult.Confirm || !data.openBaoClient) {
+      return;
+    }
+    strategy = makeAcceptOpenBaoIdentityStrategy(data.openBaoClient as OpenBaoClient);
+  } else {
+    window.nativeAPI.log('error', `Unknown identity system ${request.identitySystem.tag}`);
+    return;
   }
 
   const modal = await modalController.create({
     component: SelectProfileModal,
     componentProps: {
-      email: req.humanHandle.email,
-      name: req.humanHandle.label,
+      email: request.untrustedRequestedHumanHandle.email,
+      name: request.untrustedRequestedHumanHandle.label,
     },
     cssClass: 'select-profile-modal',
   });
@@ -645,19 +743,46 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
     return;
   }
 
-  const result = await acceptOrganizationJoinRequest(req, data.profile);
+  const result = await acceptAsyncEnrollment(request, data.profile, strategy);
+  if (strategy.tag === AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI) {
+    await closeCertificate(strategy.pkiSignPrivateKeyHandle);
+    await closeCertificate(strategy.pkiEncryptPrivateKeyHandle);
+  }
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
-        message: 'InvitationsPage.pkiRequests.validationModal.acceptedSuccess',
+        message: 'InvitationsPage.asyncEnrollmentRequest.validationModal.acceptedSuccess',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
     );
+    await refreshAsyncEnrollmentRequestList();
   } else {
-    informationManager.present(
+    let message!: Translatable;
+    switch (result.error.tag) {
+      case ClientAcceptAsyncEnrollmentErrorTag.Offline: {
+        message = 'InvitationsPage.asyncEnrollmentRequest.errors.offline';
+        break;
+      }
+      case ClientAcceptAsyncEnrollmentErrorTag.OpenBaoBadServerResponse:
+      case ClientAcceptAsyncEnrollmentErrorTag.OpenBaoNoServerResponse:
+      case ClientAcceptAsyncEnrollmentErrorTag.OpenBaoBadURL: {
+        message = 'InvitationsPage.asyncEnrollmentRequest.errors.couldNotContactServer';
+        break;
+      }
+      case ClientAcceptAsyncEnrollmentErrorTag.PKICannotOpenCertificateStore:
+      case ClientAcceptAsyncEnrollmentErrorTag.PKIServerInvalidX509Trustchain:
+      case ClientAcceptAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference: {
+        message = 'InvitationsPage.asyncEnrollmentRequest.errors.problemWithRequestCertificate';
+        break;
+      }
+      default: {
+        message = 'InvitationsPage.asyncEnrollmentRequest.validationModal.acceptedFailed';
+      }
+    }
+    informationManager.value.present(
       new Information({
-        message: 'InvitationsPage.pkiRequests.validationModal.acceptedFailed',
+        message: message,
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -665,38 +790,26 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
   }
 }
 
-async function onRejectPkiRequestClicked(req: OrganizationJoinRequest): Promise<void> {
-  const result = await rejectOrganizationJoinRequest(req);
+async function onRejectAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUntrusted): Promise<void> {
+  const result = await rejectAsyncEnrollment(request);
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
-        message: 'InvitationsPage.pkiRequests.validationModal.rejectedSuccess',
+        message: 'InvitationsPage.asyncEnrollmentRequest.validationModal.rejectedSuccess',
         level: InformationLevel.Info,
       }),
       PresentationMode.Toast,
     );
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
-        message: 'InvitationsPage.pkiRequests.validationModal.rejectedFailed',
+        message: 'InvitationsPage.asyncEnrollmentRequest.validationModal.rejectedFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
     );
   }
-}
-
-async function selectRootCertificate(): Promise<void> {
-  inputRef.value?.click();
-}
-
-async function onInputChange(): Promise<void> {
-  if (!inputRef.value?.files) {
-    return;
-  }
-  const file = inputRef.value.files.item(0) as File;
-  rootCertificate.value = await file.text();
-  await refreshPkiRequestList();
+  await refreshAsyncEnrollmentRequestList();
 }
 
 async function refreshInvitationList(): Promise<void> {
@@ -704,187 +817,179 @@ async function refreshInvitationList(): Promise<void> {
   if (result.ok) {
     invitations.value = result.value;
   } else {
-    window.electronAPI.log('error', `Failed to list invitations: ${result.error.tag} (${result.error.error})`);
+    window.nativeAPI.log('error', `Failed to list invitations: ${result.error.tag} (${result.error.error})`);
   }
 }
 
-async function refreshPkiRequestList(): Promise<void> {
-  const result = await listOrganizationJoinRequests(rootCertificate.value);
+async function refreshAsyncEnrollmentRequestList(): Promise<void> {
+  const result = await listAsyncEnrollments();
   if (result.ok) {
-    pkiRequests.value = result.value;
+    asyncEnrollmentRequests.value = result.value;
+    asyncListError.value = '';
   } else {
-    window.electronAPI.log('error', `Failed to list pki join requests: ${result.error.tag} (${result.error.error})`);
+    asyncListError.value = 'InvitationsPage.asyncEnrollmentRequest.errors.failToListRequests';
+    window.nativeAPI.log('error', `Failed to list pki join requests: ${result.error.tag} (${result.error.error})`);
   }
 }
 
 async function refreshAll(): Promise<void> {
-  await Promise.allSettled([refreshInvitationList(), refreshPkiRequestList()]);
+  await Promise.allSettled([refreshInvitationList(), refreshAsyncEnrollmentRequestList()]);
 }
 </script>
 
 <style scoped lang="scss">
 .invitations-page {
-  padding: 1.5rem;
-  background: var(--parsec-color-light-secondary-background);
+  padding: ms.spacing('padding-4xl');
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0;
+    padding: ms.spacing('padding-none');
   }
 
   .content-scroll {
+    --background: transparent;
     display: flex;
-    border-radius: var(--parsec-radius-12);
-    overflow: hidden;
-    box-shadow: var(--parsec-shadow-soft);
-
-    @include ms.responsive-breakpoint('sm') {
-      box-shadow: var(--parsec-shadow-strong);
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-    }
   }
 }
 
 .toggle-view-container {
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-  padding: 0.75rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: ms.color('surface-base-default');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  border-radius: ms.radius('2xl');
+  overflow: hidden;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
+    box-shadow: ms.shadow('strong');
   }
 
   .toggle-view {
     display: flex;
-    width: fit-content;
-    background: var(--parsec-color-light-secondary-medium);
-    border: 2px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-8);
-    overflow: hidden;
-    box-shadow: 0 0 11px 0 rgba(0, 0, 0, 0.05) inset;
+    flex-shrink: 0;
+    gap: ms.spacing('gap-2xl');
+    padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
+    box-shadow: inset 0 calc(-1 * ms.border('thin')) 0 0 ms.color('border-base-default');
+    overflow-x: auto;
+    overflow-y: hidden;
 
-    @include ms.responsive-breakpoint('lg') {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      box-shadow: var(--parsec-shadow-input);
-      cursor: pointer;
+    @include ms.responsive-breakpoint('sm') {
+      padding: ms.spacing('padding-md') ms.spacing('padding-2xl') ms.spacing('padding-none');
     }
 
     &-button {
-      --color: var(--parsec-color-light-secondary-hard-grey);
-      --background: none;
-      --background-hover: var(--parsec-color-light-secondary-disabled);
-      --border-radius: 0;
-      display: contents;
-
-      &:hover {
-        --color: var(--parsec-color-light-secondary-soft-text);
-      }
+      --background: transparent;
+      --background-hover: transparent;
+      --color: #{ms.color('text-base-description')};
+      --color-hover: #{ms.color('text-base-body')};
+      position: relative;
+      transition: opacity 150ms ease;
 
       &::part(native) {
-        display: flex;
-        width: fit-content;
+        padding: ms.spacing('padding-3xl') ms.spacing('padding-sm');
+        gap: ms.spacing('gap-md');
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+        height: ms.border('thick');
+        border-radius: ms.radius('full') ms.radius('full') 0 0;
       }
 
       &__icon {
+        flex-shrink: 0;
         font-size: 1.125rem;
-        margin-right: 0.5rem;
       }
 
       &__label {
-        overflow: hidden;
-        text-overflow: ellipsis;
         white-space: nowrap;
       }
 
       &__count {
-        background: var(--parsec-color-light-primary-50);
-        color: var(--parsec-color-light-primary-500);
-        border-radius: var(--parsec-radius-8);
-        padding: 0.1rem 0.35rem;
+        @include ms.font('label-xs-medium');
+        flex-shrink: 0;
+        min-width: 1rem;
+        min-height: 1rem;
+        width: fit-content;
         margin-left: 0.5rem;
+        padding: ms.spacing('padding-none') ms.spacing('padding-sm');
+        border: ms.border('thin') solid transparent;
+        background: ms.color('surface-error-default');
+        border-radius: ms.radius('full');
+        color: ms.color('text-on-color-label');
+        text-align: center;
+
+        &.empty {
+          background: ms.color('surface-neutral-default-subtle');
+          color: ms.color('text-base-description');
+        }
       }
 
       &.active {
-        --background: var(--parsec-color-light-secondary-white);
-        --border-radius: var(--parsec-radius-6);
-        --color: var(--parsec-color-light-primary-700);
+        --color: #{ms.color('text-brand-default')};
+        --color-hover: #{ms.color('text-brand-default')};
+        opacity: ms.opacity('10');
         cursor: default;
-        opacity: 1;
-      }
 
-      &:not(.active) {
+        &::after {
+          background: ms.color('border-brand-default');
+        }
+
         .toggle-view-button__count {
-          background: var(--parsec-color-light-secondary-background);
-          color: var(--parsec-color-light-secondary-grey);
-        }
-      }
-
-      &:hover {
-        @include ms.responsive-breakpoint('lg') {
-          --background-hover: var(--parsec-color-light-secondary-medium);
+          border-color: transparent;
         }
       }
     }
   }
 
-  #copy-link-pki-request-button,
-  #invite-user-button {
-    --background: var(--parsec-color-light-secondary-inversed-contrast);
-    --background-hover: var(--parsec-color-light-secondary-medium);
-    color: var(--parsec-color-light-primary-700);
-    box-shadow: var(--parsec-shadow-input);
-
-    &::part(native) {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      padding: 0.5rem 1rem;
-
-      @include ms.responsive-breakpoint('sm') {
-        padding: 0.5rem;
-      }
-    }
-
-    .button-icon {
-      font-size: 1.125rem;
-      margin-right: 0.5rem;
-    }
-  }
-
-  .certificate-button {
+  .toggle-view-header {
     display: flex;
-    margin-left: auto;
-    --background-hover: var(--parsec-color-light-secondary-medium);
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: ms.spacing('gap-lg');
+    flex-shrink: 0;
+    padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+    background: ms.color('surface-base-page');
 
-    &::part(native) {
-      padding: 0.5rem 0.5rem;
-      position: relative;
+    @include ms.responsive-breakpoint('sm') {
+      padding: ms.spacing('padding-xl') ms.spacing('padding-2xl') ms.spacing('padding-md');
     }
 
-    &__badge {
-      position: absolute;
-      bottom: -0.375rem;
-      right: -0.125rem;
-      width: 1.25rem;
-      height: 1.25rem;
-      color: var(--parsec-color-light-secondary-white);
-      background: var(--parsec-color-light-secondary-white);
-      padding: 0.125rem;
-      border-radius: var(--parsec-radius-circle);
+    &__title {
+      @include ms.font('heading-h4');
+      color: ms.color('text-base-heading');
     }
 
-    &__icon {
-      color: var(--parsec-color-light-primary-600);
-      font-size: 1.375rem;
-      margin-right: 0.5rem;
+    #copy-link-pki-request-button,
+    #invite-user-button {
+      margin: 0 0 0 auto;
+      flex-shrink: 0;
     }
+  }
+
+  .invitations-container {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+    padding: ms.spacing('padding-none');
   }
 }
 
 .no-active {
+  @include ms.font('body-lg-regular');
   width: 100%;
   height: 100%;
-  color: var(--parsec-color-light-secondary-grey);
+  max-width: 50rem;
+  color: ms.color('text-base-description');
   display: flex;
   margin: auto;
   align-items: center;
@@ -896,117 +1001,33 @@ async function refreshAll(): Promise<void> {
   }
 
   &-content {
-    border-radius: var(--parsec-radius-8);
     display: flex;
     height: fit-content;
     width: 100%;
     text-align: center;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     align-items: center;
-    padding: 2rem 1rem;
-  }
-}
-
-.invitations-container {
-  padding: 0;
-  position: relative;
-}
-
-.root-certificate {
-  position: absolute;
-  z-index: 100;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: #00000058;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  @include ms.responsive-breakpoint('sm') {
-    padding: 0;
-    background: var(--parsec-color-light-secondary-white);
-    align-items: flex-start;
-    height: -webkit-fill-available;
-  }
-
-  &-content {
-    background: var(--parsec-color-light-secondary-white);
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    max-width: 30rem;
-    border-radius: var(--parsec-radius-12);
-    box-shadow: var(--parsec-shadow-soft);
-
-    @include ms.responsive-breakpoint('sm') {
-      border-radius: 0;
-      padding: 2rem 1.5rem;
-      box-shadow: none;
-    }
-
-    .root-certificate__icon {
-      width: 2.5rem;
-      margin: 0 auto;
-
-      @include ms.responsive-breakpoint('sm') {
-        margin: 0;
-        width: 1.5rem;
-        position: absolute;
-        top: 1.875rem;
-      }
-    }
-
-    .root-certificate-text {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      text-align: center;
-
-      @include ms.responsive-breakpoint('sm') {
-        text-align: left;
-      }
-
-      &__title {
-        color: var(--parsec-color-light-secondary-text);
-
-        @include ms.responsive-breakpoint('sm') {
-          margin-left: 2rem;
-        }
-      }
-
-      &__description {
-        color: var(--parsec-color-light-secondary-hard-grey);
-      }
-    }
-
-    .button-icon {
-      --fill-color: var(--parsec-color-light-secondary-white);
-      width: 1.125rem;
-      margin-right: 0.5rem;
-    }
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   }
 }
 
 .switch-view {
   display: flex;
   justify-content: center;
-  padding: 0.5rem 1rem 1.5rem;
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl') ms.spacing('padding-4xl');
 
   .switch-view-button {
     width: 100%;
-    --background: var(--parsec-color-light-secondary-white);
-    --background-hover: var(--parsec-color-light-secondary-medium);
-    --color: var(--parsec-color-light-primary-700);
-    box-shadow: var(--parsec-shadow-input);
-    border-radius: var(--parsec-radius-8);
+    --background: #{ms.color('surface-base-default')};
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+    --color: #{ms.color('text-brand-default')};
+    box-shadow: ms.shadow('input');
+    border-radius: ms.radius('lg');
 
     &::part(native) {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      padding: 0.625rem 1rem;
+      border: ms.border('thin') solid ms.color('border-base-default');
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
     }
 
     &__icon {
@@ -1015,18 +1036,34 @@ async function refreshAll(): Promise<void> {
     }
 
     &__count {
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-500);
-      border-radius: var(--parsec-radius-8);
+      @include ms.font('label-sm-medium');
+      background: ms.color('surface-error-default');
+      color: ms.color('text-on-color-label');
+      border-radius: ms.radius('lg');
       padding: 0.1rem 0.35rem;
       margin-left: 0.5rem;
+
+      &.empty {
+        background: ms.color('surface-neutral-default-subtle');
+        color: ms.color('text-base-description');
+      }
     }
 
     &__toggle {
       font-size: 1rem;
       margin-left: auto;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-base-description');
     }
+  }
+}
+
+.invitations-error-message {
+  max-width: 30rem;
+  width: 100%;
+  margin: 1rem;
+
+  @include ms.responsive-breakpoint('md') {
+    max-width: 100%;
   }
 }
 </style>

@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
@@ -39,24 +39,28 @@
               class="file-icon"
             />
             <div class="file-handler-topbar__title">
-              <ion-text class="subtitles-normal">
+              <ion-text class="file-title">
                 {{ contentInfo.fileName }}
               </ion-text>
               <ion-text
-                class="subtitles-sm"
-                v-if="atDateTime"
+                class="file-date"
+                v-if="contentInfo.timestamp"
               >
-                {{ $msTranslate(I18n.formatDate(atDateTime)) }}
+                {{ $msTranslate(I18n.formatDate(contentInfo.timestamp)) }}
               </ion-text>
             </div>
             <div
               v-if="isComponentEditor() && readOnly"
-              class="save-info"
+              class="save-info read-only"
             >
+              <ion-icon
+                :icon="eye"
+                class="read-only-icon"
+              />
               {{ $msTranslate('fileEditors.saving.readOnly') }}
             </div>
             <div
-              v-if="isComponentEditor() && !readOnly"
+              v-if="!readOnly && saveState !== SaveState.None"
               class="save-info"
             >
               <ion-icon
@@ -90,8 +94,8 @@
                 :icon="warning"
               />
               <ion-text
-                v-show="saveState !== SaveState.None && showSaveStateText && isLargeDisplay"
-                class="save-info-text button-small"
+                v-show="showSaveStateText && isLargeDisplay"
+                class="save-info-text"
                 :class="{
                   'save-info-text-fade-out': saveState === SaveState.Saved || saveState === SaveState.Error,
                   'save-info-text-fade-in': saveState !== SaveState.Saved && saveState !== SaveState.Error,
@@ -108,73 +112,81 @@
               v-if="isLargeDisplay"
             >
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-details"
                 @click="showDetails"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ion-icon
                   :icon="informationCircle"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.details') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-copy-link"
                 @click="copyLink(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ion-icon
                   :icon="link"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.copyLink') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
-                v-if="!atDateTime && readOnly && isCryptpadEnabledForDocumentType(contentInfo.contentType) && !isReader"
+                fill="clear"
+                v-if="!contentInfo.timestamp && readOnly && isEditicsEnabledForDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.openInEditor') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 @click="downloadFile"
                 v-if="isWeb()"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ms-image
                   :image="DownloadIcon"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.download') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-open-with-system"
                 @click="openWithSystem(contentInfo.path)"
-                v-show="isDesktop() && !atDateTime"
+                v-show="isDesktop() && !contentInfo.timestamp"
                 :disabled="pathOpener.currentlyOpening.value"
+                fill="clear"
               >
                 <ion-icon
                   :icon="open"
-                  class="item-icon"
+                  class="item-icon button-icon-left"
                 />
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
-                class="file-handler-topbar-buttons__item toggle-menu"
+                class="file-handler-topbar-buttons__item toggle-menu color-secondary"
                 @click="toggleMainHeader"
                 :class="{ 'header-visible': isHeaderVisible() }"
               >
-                <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
+                <ion-icon
+                  :icon="isHeaderVisible() ? chevronUp : chevronDown"
+                  class="button-icon-left"
+                />
                 <span v-if="windowWidth > WindowSizeBreakpoints.MD">
                   {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
                 </span>
@@ -182,6 +194,7 @@
             </div>
             <ion-button
               class="file-handler-topbar-buttons__item action-menu"
+              slot="icon-only"
               @click="openSmallDisplayActionMenu"
               v-else
             >
@@ -191,14 +204,15 @@
 
           <!-- file-handler sub-component -->
           <component
-            v-if="detectedFileType"
+            ref="handlerRef"
+            v-if="contentInfo"
             :is="handlerComponent"
             :content-info="contentInfo"
-            :file-info="detectedFileType"
             @file-loaded="pathOpener.pathOpened()"
             @file-error="pathOpener.pathOpened()"
-            v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
-            v-bind="isComponentEditor() ? { userInfo: userInfo, readOnly: readOnly } : {}"
+            @on-save-state-change="onSaveStateChange"
+            :read-only="readOnly"
+            v-bind="isComponentEditor() ? { userInfo: userInfo } : {}"
           />
         </div>
       </div>
@@ -207,15 +221,12 @@
 </template>
 
 <script setup lang="ts">
-import { getFileIcon } from '@/common/file';
+import { getFileIcon, getFileStats } from '@/common/file';
 import { DetectedFileType } from '@/common/fileTypes';
 import { copyPathLinkToClipboard } from '@/components/files';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import {
   ClientInfo,
-  closeFile,
-  DEFAULT_READ_SIZE,
-  EntryName,
   entryStat,
   EntryStatFile,
   FsPath,
@@ -225,12 +236,7 @@ import {
   isDesktop,
   isMobile,
   isWeb,
-  openFile,
   Path,
-  readFile,
-  WorkspaceHandle,
-  WorkspaceHistory,
-  WorkspaceHistoryEntryStatFile,
   WorkspaceRole,
 } from '@/parsec';
 import {
@@ -239,26 +245,37 @@ import {
   getDocumentPath,
   getFileHandlerMode,
   getWorkspaceHandle,
-  navigateTo,
+  routerGoBack,
   Routes,
   watchRoute,
 } from '@/router';
-import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
+import { isEditicsEnabledForDocumentType } from '@/services/editics';
 import { Env } from '@/services/environment';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { downloadEntry, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
-import { FileHandlerMode } from '@/views/files/handler';
-import { FileEditor, SaveState } from '@/views/files/handler/editor';
+import { downloadFiles, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
+import { FileHandlerMode, SaveState } from '@/views/files/handler';
+import { FileEditor } from '@/views/files/handler/editor';
 import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
 import { FileViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import { alert, chevronDown, chevronUp, create, ellipsisHorizontal, informationCircle, link, open, save, warning } from 'ionicons/icons';
+import {
+  alert,
+  chevronDown,
+  chevronUp,
+  create,
+  ellipsisHorizontal,
+  eye,
+  informationCircle,
+  link,
+  open,
+  save,
+  warning,
+} from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import {
   Answer,
@@ -280,15 +297,13 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 
 const { isLargeDisplay, windowWidth } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
-const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
-const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shallowRef(null);
+const handlerRef = useTemplateRef<InstanceType<typeof FileEditor>>('handlerRef');
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
 const userInfo: Ref<ClientInfo | undefined> = ref(undefined);
@@ -308,7 +323,6 @@ const cancelRouteWatch = watchRoute(async () => {
   }
 
   const query = getCurrentRouteQuery();
-
   const timestamp = Number.isNaN(Number(query.timestamp)) ? undefined : Number(query.timestamp);
   const fileHandlerMode = getFileHandlerMode();
 
@@ -316,7 +330,8 @@ const cancelRouteWatch = watchRoute(async () => {
   if (
     contentInfo.value &&
     contentInfo.value.path === getDocumentPath() &&
-    atDateTime.value?.toMillis() === timestamp &&
+    contentInfo.value.workspaceHandle === getWorkspaceHandle() &&
+    contentInfo.value.timestamp?.toMillis() === timestamp &&
     fileHandlerMode === handlerMode.value &&
     Boolean(query.readOnly) === readOnly.value
   ) {
@@ -349,178 +364,64 @@ function isComponentEditor(): boolean {
   return handlerComponent.value === FileEditor;
 }
 
-async function _getFileInfoAt(
-  workspaceHandle: WorkspaceHandle,
-  path: FsPath,
-  at: DateTime,
-  fileInfo: DetectedFileType,
-  fileName: EntryName,
-): Promise<FileContentInfo | undefined> {
-  const infoResult = await getWorkspaceInfo(workspaceHandle);
-  if (!infoResult.ok) {
-    return;
-  }
-  const history = new WorkspaceHistory(infoResult.value.id);
-  try {
-    await history.start(at);
-    const statsResult = await history.entryStat(path);
-
-    if (!statsResult.ok || !statsResult.value.isFile()) {
-      return;
-    }
-    const openResult = await history.openFile(path);
-    if (!openResult.ok) {
-      return;
-    }
-    const info: FileContentInfo = {
-      data: new Uint8Array(Number((statsResult.value as WorkspaceHistoryEntryStatFile).size)),
-      extension: fileInfo.extension,
-      contentType: fileInfo.type,
-      fileName: fileName,
-      path: path,
-      fileId: statsResult.value.id,
-    };
-    const fd = openResult.value;
-    try {
-      let loop = true;
-      let offset = 0;
-      while (loop) {
-        const readResult = await history.readFile(openResult.value, offset, DEFAULT_READ_SIZE);
-        if (!readResult.ok) {
-          throw Error(JSON.stringify(readResult.error));
-        }
-        const buffer = new Uint8Array(readResult.value);
-        info.data.set(buffer, offset);
-        if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
-          loop = false;
-        }
-        offset += readResult.value.byteLength;
-      }
-      return info;
-    } catch (e: any) {
-      window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
-    } finally {
-      await history.closeFile(fd);
-    }
-  } catch (e: any) {
-    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
-  } finally {
-    await history.stop();
-  }
-}
-
-async function _getFileInfo(
-  workspaceHandle: WorkspaceHandle,
-  path: FsPath,
-  fileInfo: DetectedFileType,
-  fileName: EntryName,
-): Promise<FileContentInfo | undefined> {
-  const statsResult = await entryStat(workspaceHandle, path);
-  if (!statsResult.ok || !statsResult.value.isFile()) {
-    return;
-  }
-
-  const openResult = await openFile(workspaceHandle, path, { read: true });
-  if (!openResult.ok) {
-    return;
-  }
-  const info: FileContentInfo = {
-    data: new Uint8Array(Number((statsResult.value as EntryStatFile).size)),
-    extension: fileInfo.extension,
-    contentType: fileInfo.type,
-    fileName: fileName,
-    path: path,
-    fileId: statsResult.value.id,
-  };
-
-  const fd = openResult.value;
-  try {
-    let loop = true;
-    let offset = 0;
-    while (loop) {
-      const readResult = await readFile(workspaceHandle, openResult.value, offset, DEFAULT_READ_SIZE);
-      if (!readResult.ok) {
-        throw Error(JSON.stringify(readResult.error));
-      }
-      const buffer = new Uint8Array(readResult.value);
-      info.data.set(buffer, offset);
-      if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
-        loop = false;
-      }
-      offset += readResult.value.byteLength;
-    }
-    return info;
-  } catch (e: any) {
-    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
-  } finally {
-    await closeFile(workspaceHandle, fd);
-  }
-}
-
-async function loadFile(): Promise<void> {
+async function loadFile(): Promise<boolean> {
   loaded.value = false;
   contentInfo.value = undefined;
-  detectedFileType.value = null;
-  atDateTime.value = undefined;
   handlerComponent.value = null;
   const workspaceHandle = getWorkspaceHandle();
+  let atTime: DateTime | undefined = undefined;
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
-    return;
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
+    return false;
   }
   const path = getDocumentPath();
   if (!path) {
-    window.electronAPI.log('error', 'Failed to retrieve document path');
+    window.nativeAPI.log('error', 'Failed to retrieve document path');
   }
   const fileName = await Path.filename(path);
   if (!fileName) {
-    window.electronAPI.log('error', 'Failed to retrieve the file name');
-    return;
+    window.nativeAPI.log('error', 'Failed to retrieve the file name');
+    return false;
   }
 
   const timestamp = Number(getCurrentRouteQuery().timestamp);
   if (!Number.isNaN(timestamp)) {
-    atDateTime.value = DateTime.fromMillis(timestamp);
+    atTime = DateTime.fromMillis(timestamp);
+  }
+
+  const stats = await getFileStats(workspaceHandle, path, atTime);
+  if (!stats) {
+    window.nativeAPI.log('error', 'Failed to get file stats');
+    return false;
   }
 
   const fileInfoSerialized = getCurrentRouteQuery().fileTypeInfo;
   if (!fileInfoSerialized) {
-    window.electronAPI.log('error', 'Failed to retrieve file type info');
-    return;
+    window.nativeAPI.log('error', 'Failed to retrieve file type info');
+    return false;
   }
   const fileInfo: DetectedFileType = Base64.toObject(fileInfoSerialized) as DetectedFileType;
-  detectedFileType.value = fileInfo;
 
-  const info = timestamp
-    ? await _getFileInfoAt(workspaceHandle, path, DateTime.fromMillis(timestamp), fileInfo, fileName)
-    : await _getFileInfo(workspaceHandle, path, fileInfo, fileName);
-
-  if (!info) {
-    contentInfo.value = undefined;
-    handlerComponent.value = null;
-    informationManager.present(
-      new Information({
-        message: 'fileViewers.errors.titles.genericError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    if (!timestamp) {
-      await openWithSystem(path);
-    }
-    await navigateTo(Routes.Documents, { query: { workspaceHandle: workspaceHandle, documentPath: await Path.parent(path) } });
-    return;
+  if (!fileInfo) {
+    window.nativeAPI.log('error', 'Failed to deserialize file type info');
+    return false;
   }
 
-  contentInfo.value = info;
-  if (timestamp) {
-    atDateTime.value = DateTime.fromMillis(timestamp);
-  }
+  contentInfo.value = {
+    extension: fileInfo.extension,
+    contentType: fileInfo.type,
+    fileName: fileName,
+    path: path,
+    workspaceHandle: workspaceHandle,
+    timestamp: atTime,
+    size: stats.size,
+  };
 
   // Load the appropriate component after file content is ready
   loadComponent();
 
   loaded.value = true;
+  return true;
 }
 
 function loadComponent(): void {
@@ -536,12 +437,24 @@ function loadComponent(): void {
       handlerComponent.value = null;
   }
   if (!handlerComponent.value) {
-    throw new Error(`No component for file with extension '${detectedFileType.value!.extension}'`);
+    throw new Error(`No component for file with extension '${contentInfo.value?.extension}'`);
   }
 }
 
 async function checkSaved(): Promise<boolean> {
-  if (saveState.value !== SaveState.Saved && saveState.value !== SaveState.None) {
+  // Only attempt to save if the editor is active and the document was loaded
+  if (saveState.value === SaveState.None) {
+    return true;
+  }
+  // Always try to save when leaving the editor, since the editor/viewer may have
+  // unsaved changes not yet reported via `onSaveStateChange` (and saving a document
+  // with no modification is a noop).
+  if (handlerRef.value?.save) {
+    const saved = await handlerRef.value.save();
+    if (saved) {
+      return true;
+    }
+    // Save failed, ask the user
     const answer = await askQuestion('fileEditors.saving.notSavedTitle', 'fileEditors.saving.notSavedQuestion', {
       yesText: 'fileEditors.saving.notSavedDiscard',
       noText: 'fileEditors.saving.notSavedStay',
@@ -570,7 +483,7 @@ onMounted(async () => {
   if (workspaceHandle) {
     const infoResult = await getWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
-      isReader.value = infoResult.value.currentSelfRole === WorkspaceRole.Reader;
+      isReader.value = infoResult.value.selfRole === WorkspaceRole.Reader;
     }
   }
 
@@ -578,10 +491,22 @@ onMounted(async () => {
   if (clientInfoResult.ok) {
     userInfo.value = clientInfoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
 
-  await loadFile();
+  if (!(await loadFile())) {
+    informationManager.value.present(
+      new Information({
+        message: 'fileViewers.errors.titles.genericError',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    loaded.value = true;
+    pathOpener.pathOpened();
+    await routerGoBack();
+    return;
+  }
 
   hideHeader();
 
@@ -626,7 +551,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
 
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return false;
   }
 
@@ -634,7 +559,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
   const result = await getSystemPath(workspaceHandle, path);
 
   if (!result.ok) {
-    await informationManager.present(
+    await informationManager.value.present(
       new Information({
         message: fileName ? { key: 'FoldersPage.open.fileFailed', data: { name: fileName } } : 'FoldersPage.open.fileFailedGeneric',
         level: InformationLevel.Error,
@@ -643,7 +568,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
     );
     return false;
   } else {
-    window.electronAPI.openFile(result.value);
+    window.nativeAPI.openFile(result.value);
     return true;
   }
 }
@@ -651,10 +576,10 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
 async function copyLink(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
-  copyPathLinkToClipboard(path, workspaceHandle, informationManager);
+  copyPathLinkToClipboard(path, workspaceHandle, informationManager.value);
 }
 
 async function showDetails(): Promise<void> {
@@ -662,7 +587,7 @@ async function showDetails(): Promise<void> {
   if (workspaceHandle) {
     const entry = await entryStat(workspaceHandle, getDocumentPath());
     if (!entry.ok) {
-      await informationManager.present(
+      await informationManager.value.present(
         new Information({
           message: 'fileViewers.errors.statsFailed',
           level: InformationLevel.Error,
@@ -688,7 +613,7 @@ async function showDetails(): Promise<void> {
 async function openEditor(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
-    await pathOpener.openPath(workspaceHandle, path, informationManager, { readOnly: false });
+    await pathOpener.openPath(workspaceHandle, path, { readOnly: false });
   }
 }
 
@@ -697,25 +622,39 @@ async function onClick(event: MouseEvent): Promise<void> {
   if (!event.target) {
     return;
   }
-  const target = event.target as Element;
-  let linkTag!: HTMLAnchorElement;
-  if (target.tagName === 'A') {
-    linkTag = target as HTMLAnchorElement;
-  } else if (target.tagName === 'SPAN' && target.parentElement && target.parentElement.tagName === 'A') {
-    linkTag = target.parentElement as HTMLAnchorElement;
-  } else {
+  // Links can contain other elements (`<strong>`, `<code>`, `<img>`, ...)
+  const linkTag = (event.target as Element).closest('a');
+  if (!linkTag) {
     return;
   }
-  // `.href` get resolved, `getAttribute('href') is what actually in the href`
-  const link = linkTag.href;
+  // Use the raw attribute rather than `.href`, which gets resolved against the app URL.
+  // Parsing it without a base rejects relative links and anchors, which would otherwise
+  // open the app itself (a new window on Electron).
   const href = linkTag.getAttribute('href') ?? '';
-  // We exclude invalid links or anchors
-  if (!link || href.startsWith('#') || !URL.canParse(link)) {
+  if (!URL.canParse(href)) {
+    informationManager.value.present(
+      new Information({
+        message: 'fileViewers.openLink.invalid',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+  const url = new URL(href);
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    informationManager.value.present(
+      new Information({
+        message: 'fileViewers.openLink.invalid',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
     return;
   }
   const answer = await askQuestion('fileViewers.openLink.title', 'fileViewers.openLink.question', { yesText: 'fileViewers.openLink.yes' });
   if (answer === Answer.Yes) {
-    Env.Links.openUrl(link);
+    Env.Links.openUrl(url.href);
   }
 }
 
@@ -727,39 +666,28 @@ async function downloadFile(): Promise<void> {
 
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
-  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
-  if (!workspaceInfoResult.ok) {
-    window.electronAPI.log(
-      'error',
-      `Failed to retrieve workspace info: ${workspaceInfoResult.error.tag} (${workspaceInfoResult.error.error})`,
-    );
-    return;
-  }
-
   if (!contentInfo.value) {
-    window.electronAPI.log('error', 'No content info when trying to download a file');
+    window.nativeAPI.log('error', 'No content info when trying to download a file');
     return;
   }
   const entryResult = await entryStat(workspaceHandle, contentInfo.value.path);
 
   if (!entryResult.ok) {
-    window.electronAPI.log('error', 'Failed to stat entry when trying to download a file');
+    window.nativeAPI.log('error', 'Failed to stat entry when trying to download a file');
     return;
   }
   if (!entryResult.value.isFile()) {
-    window.electronAPI.log('error', 'Entry is not a file');
+    window.nativeAPI.log('error', 'Entry is not a file');
     return;
   }
 
-  await downloadEntry({
-    entry: entryResult.value as EntryStatFile,
+  await downloadFiles({
+    entries: [entryResult.value as EntryStatFile],
     workspaceHandle: workspaceHandle,
-    workspaceId: workspaceInfoResult.value.id,
-    informationManager: informationManager,
-    fileOperationManager: fileOperationManager,
+    informationManager: informationManager.value,
   });
 }
 
@@ -788,8 +716,9 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     expandToScroll: false,
     initialBreakpoint: 0.5,
     componentProps: {
-      canOpenWithSystem: !atDateTime.value && isDesktop(),
-      canEdit: !atDateTime.value && readOnly.value && isCryptpadEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value,
+      canOpenWithSystem: !contentInfo.value.timestamp && isDesktop(),
+      canEdit:
+        !contentInfo.value.timestamp && readOnly.value && isEditicsEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value,
     },
   });
   await modal.present();
@@ -814,7 +743,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
         break;
       default:
-        window.electronAPI.log('warn', `No match for selected viewer action '${data.action}'`);
+        window.nativeAPI.log('warn', `No match for selected viewer action '${data.action}'`);
         break;
     }
   }
@@ -824,7 +753,6 @@ async function openSmallDisplayActionMenu(): Promise<void> {
 <style scoped lang="scss">
 .container {
   height: 100%;
-  background-color: var(--parsec-color-light-secondary-premiere);
 
   .file-handler {
     display: flex;
@@ -839,25 +767,26 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     &-topbar {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
-      background: var(--parsec-color-light-secondary-white);
+      gap: ms.spacing('gap-3xl');
+      padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
+      border-bottom: ms.border('thin') solid ms.color('border-base-default');
+      background: ms.color('surface-base-page');
 
       #trigger-toggle-menu-button {
         flex-shrink: 0;
-        --fill-color: var(--parsec-color-light-secondary-grey);
-        padding: 0.625rem;
-        border-radius: var(--parsec-radius-12);
+        --fill-color: #{ms.color('icon-neutral-default')};
+        padding: ms.spacing('padding-xl');
+        border-radius: ms.radius('2xl');
         cursor: pointer;
+
         &:hover {
-          background: var(--parsec-color-light-secondary-premiere);
-          --fill-color: var(--parsec-color-light-secondary-hard-grey);
+          background: ms.color('surface-base-page');
+          --fill-color: #{ms.color('icon-neutral-default-hover')};
         }
       }
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 0.75rem 1rem;
+        padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       }
 
       .file-icon {
@@ -865,7 +794,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         height: 2rem;
         min-width: 2rem;
         min-height: 2rem;
-        margin-left: 0.5rem;
+        margin-left: ms.spacing('padding-lg');
 
         @include ms.responsive-breakpoint('sm') {
           width: 1.75rem;
@@ -878,64 +807,39 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       &__title {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: ms.spacing('gap-sm');
         overflow: hidden;
 
         ion-text {
-          color: var(--parsec-color-light-secondary-text);
+          color: ms.color('text-base-heading');
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        .subtitles-sm {
-          color: var(--parsec-color-light-secondary-grey);
+        .file-title {
+          @include ms.font('body-lg-medium');
+        }
+
+        .file-date {
+          @include ms.font('body-md-medium');
+          color: ms.color('text-base-description');
         }
       }
 
       &-buttons {
         margin-left: auto;
         display: flex;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
         flex-shrink: 0;
 
         &:hover {
-          border-color: var(--parsec-color-light-primary-100);
+          border-color: ms.color('border-brand-default-subtle');
         }
 
-        &__item:not(.toggle-menu) {
-          color: var(--parsec-color-light-secondary-text);
-          border-radius: var(--parsec-radius-8);
-          transition: all 150ms linear;
-
-          &::part(native) {
-            --background: none;
-            --background-hover: none;
-            padding: 0.625rem 1rem;
-
-            @include ms.responsive-breakpoint('sm') {
-              padding: 0.5rem;
-            }
-          }
-
-          &:hover {
-            background: var(--parsec-color-light-secondary-medium);
-            color: var(--parsec-color-light-secondary-text);
-          }
-
-          .item-icon {
-            width: 1rem;
-            font-size: 1rem;
-            margin-right: 0.5rem;
-            --fill-color: var(--parsec-color-light-secondary-text);
-
-            @include ms.responsive-breakpoint('sm') {
-              min-width: 1.125rem;
-              width: 1.125rem;
-              font-size: 1.125rem;
-              margin-right: 0;
-            }
-          }
+        .item-icon {
+          --fill-color: #{ms.color('icon-neutral-default')};
+          max-width: 1rem;
         }
 
         .action-menu {
@@ -948,11 +852,12 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
 
         .toggle-menu {
-          margin-right: 0.5rem;
+          margin-right: ms.spacing('padding-lg');
           position: relative;
-          margin-left: 0.5rem;
+          margin-left: ms.spacing('padding-lg');
           --background: none;
-          color: var(--parsec-color-light-secondary-hard-grey);
+          color: ms.color('text-base-label');
+          opacity: ms.opacity('7');
 
           &::part(native) {
             --background: none;
@@ -961,8 +866,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
 
           ion-icon {
             font-size: 1rem;
-            margin-right: 0.5rem;
-            color: var(--parsec-color-light-secondary-hard-grey);
+            margin-right: ms.spacing('padding-lg');
 
             @include ms.responsive-breakpoint('md') {
               margin-right: 0;
@@ -975,22 +879,18 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           }
 
           &:hover {
-            color: var(--parsec-color-light-secondary-soft-text);
-
-            ion-icon {
-              color: var(--parsec-color-light-secondary-soft-text);
-            }
+            opacity: ms.opacity('10');
           }
 
           &::before {
             content: '';
             position: absolute;
             top: 50%;
-            left: -0.5rem;
+            left: calc(-1 * ms.spacing('padding-lg'));
             transform: translateY(-50%);
             width: 1px;
             height: 1.5rem;
-            background: var(--parsec-color-light-secondary-disabled);
+            background: ms.color('border-base-default');
           }
         }
       }
@@ -999,7 +899,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         display: flex;
         flex-shrink: 0;
         align-items: center;
-        gap: 0.5rem;
+        gap: ms.spacing('gap-lg');
 
         @include ms.responsive-breakpoint('sm') {
           min-width: 1.125rem;
@@ -1008,7 +908,23 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           margin-right: 0;
         }
 
+        &.read-only {
+          @include ms.font('body-md-medium');
+          background: ms.color('surface-neutral-default-subtle');
+          color: ms.color('text-base-heading');
+          padding: ms.spacing('padding-sm') ms.spacing('padding-2xl');
+          border-radius: ms.radius('2xl');
+          display: flex;
+          align-items: center;
+          gap: ms.spacing('gap-lg');
+
+          &-icon {
+            font-size: 1rem;
+          }
+        }
+
         &-text {
+          @include ms.font('label-sm-medium');
           text-overflow: ellipsis;
 
           &-fade-in {
@@ -1026,11 +942,11 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           }
 
           &-ok {
-            color: var(--parsec-color-light-secondary-hard-grey);
+            color: ms.color('text-base-description');
           }
 
           &-ko {
-            color: var(--parsec-color-light-danger-500);
+            color: ms.color('text-error-default');
           }
         }
 
@@ -1045,11 +961,11 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           width: 1.125rem;
 
           &-ok {
-            color: var(--parsec-color-light-primary-600);
+            color: ms.color('icon-brand-default');
           }
           &-ko {
-            color: var(--parsec-color-light-secondary-grey);
-            --fill-color: var(--parsec-color-light-secondary-grey);
+            color: ms.color('icon-neutral-default');
+            --fill-color: #{ms.color('icon-neutral-default')};
           }
         }
       }

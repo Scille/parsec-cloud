@@ -5,20 +5,18 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     AsyncEnrollmentID,
     BlockID,
-    BootstrapToken,
     CancelledGreetingAttemptReason,
     DateTime,
     EmailAddress,
     GreetingAttemptID,
     HashDigest,
-    InvitationToken,
-    PKIEnrollmentID,
-    PkiSignatureAlgorithm,
     SecretKey,
     SequesterServiceID,
+    TOTPOpaqueKeyID,
     UntrustedPasswordAlgorithm,
     UserID,
     ValidationCode,
@@ -36,6 +34,13 @@ from parsec._parsec import (
 class BaseAnonymousRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
+
+    async def async_enrollment_cancel(
+        self, enrollment_id: AsyncEnrollmentID
+    ) -> anonymous_cmds.latest.async_enrollment_cancel.Rep:
+        req = anonymous_cmds.latest.async_enrollment_cancel.Req(enrollment_id=enrollment_id)
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.async_enrollment_cancel.Rep.load(raw_rep)
 
     async def async_enrollment_info(
         self, enrollment_id: AsyncEnrollmentID
@@ -62,7 +67,7 @@ class BaseAnonymousRpcClient:
 
     async def organization_bootstrap(
         self,
-        bootstrap_token: BootstrapToken | None,
+        bootstrap_token: AccessToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
         device_certificate: bytes,
@@ -87,34 +92,30 @@ class BaseAnonymousRpcClient:
         raw_rep = await self._do_request(req.dump(), "anonymous")
         return anonymous_cmds.latest.ping.Rep.load(raw_rep)
 
-    async def pki_enrollment_info(
-        self, enrollment_id: PKIEnrollmentID
-    ) -> anonymous_cmds.latest.pki_enrollment_info.Rep:
-        req = anonymous_cmds.latest.pki_enrollment_info.Req(enrollment_id=enrollment_id)
-        raw_rep = await self._do_request(req.dump(), "anonymous")
-        return anonymous_cmds.latest.pki_enrollment_info.Rep.load(raw_rep)
-
-    async def pki_enrollment_submit(
-        self,
-        enrollment_id: PKIEnrollmentID,
-        force: bool,
-        der_x509_certificate: bytes,
-        intermediate_der_x509_certificates: list[bytes],
-        payload_signature: bytes,
-        payload_signature_algorithm: PkiSignatureAlgorithm,
-        payload: bytes,
-    ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
-        req = anonymous_cmds.latest.pki_enrollment_submit.Req(
-            enrollment_id=enrollment_id,
-            force=force,
-            der_x509_certificate=der_x509_certificate,
-            intermediate_der_x509_certificates=intermediate_der_x509_certificates,
-            payload_signature=payload_signature,
-            payload_signature_algorithm=payload_signature_algorithm,
-            payload=payload,
+    async def totp_fetch_opaque_key(
+        self, user_id: UserID, opaque_key_id: TOTPOpaqueKeyID, one_time_password: str
+    ) -> anonymous_cmds.latest.totp_fetch_opaque_key.Rep:
+        req = anonymous_cmds.latest.totp_fetch_opaque_key.Req(
+            user_id=user_id, opaque_key_id=opaque_key_id, one_time_password=one_time_password
         )
         raw_rep = await self._do_request(req.dump(), "anonymous")
-        return anonymous_cmds.latest.pki_enrollment_submit.Rep.load(raw_rep)
+        return anonymous_cmds.latest.totp_fetch_opaque_key.Rep.load(raw_rep)
+
+    async def totp_setup_confirm(
+        self, user_id: UserID, token: AccessToken, one_time_password: str
+    ) -> anonymous_cmds.latest.totp_setup_confirm.Rep:
+        req = anonymous_cmds.latest.totp_setup_confirm.Req(
+            user_id=user_id, token=token, one_time_password=one_time_password
+        )
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.totp_setup_confirm.Rep.load(raw_rep)
+
+    async def totp_setup_get_secret(
+        self, user_id: UserID, token: AccessToken
+    ) -> anonymous_cmds.latest.totp_setup_get_secret.Rep:
+        req = anonymous_cmds.latest.totp_setup_get_secret.Req(user_id=user_id, token=token)
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.totp_setup_get_secret.Rep.load(raw_rep)
 
 
 class BaseAnonymousServerRpcClient:
@@ -177,6 +178,22 @@ class BaseAnonymousServerRpcClient:
         raw_rep = await self._do_request(req.dump(), "anonymous_server")
         return anonymous_server_cmds.latest.ping.Rep.load(raw_rep)
 
+    async def scws_service_mutual_challenges(
+        self,
+        scws_service_challenge_payload: bytes,
+        scws_service_challenge_signature: bytes,
+        scws_service_challenge_key_id: int,
+        web_application_challenge_payload: bytes,
+    ) -> anonymous_server_cmds.latest.scws_service_mutual_challenges.Rep:
+        req = anonymous_server_cmds.latest.scws_service_mutual_challenges.Req(
+            scws_service_challenge_payload=scws_service_challenge_payload,
+            scws_service_challenge_signature=scws_service_challenge_signature,
+            scws_service_challenge_key_id=scws_service_challenge_key_id,
+            web_application_challenge_payload=web_application_challenge_payload,
+        )
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.scws_service_mutual_challenges.Rep.load(raw_rep)
+
     async def server_config(
         self,
     ) -> anonymous_server_cmds.latest.server_config.Rep:
@@ -198,6 +215,7 @@ class BaseAuthenticatedRpcClient:
         submitter_redacted_device_certificate: bytes,
         accept_payload: bytes,
         accept_payload_signature: authenticated_cmds.latest.async_enrollment_accept.AcceptPayloadSignature,
+        send_email: bool,
     ) -> authenticated_cmds.latest.async_enrollment_accept.Rep:
         req = authenticated_cmds.latest.async_enrollment_accept.Req(
             enrollment_id=enrollment_id,
@@ -207,6 +225,7 @@ class BaseAuthenticatedRpcClient:
             submitter_redacted_device_certificate=submitter_redacted_device_certificate,
             accept_payload=accept_payload,
             accept_payload_signature=accept_payload_signature,
+            send_email=send_email,
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.async_enrollment_accept.Rep.load(raw_rep)
@@ -257,6 +276,26 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.certificate_get.Rep.load(raw_rep)
 
+    async def cryptpad_register_session(
+        self,
+        realm_id: VlobID,
+        document_id: VlobID,
+        key_index: int,
+        timestamp: DateTime,
+        encrypted_candidate_view_key: bytes,
+        encrypted_candidate_edit_key: bytes | None,
+    ) -> authenticated_cmds.latest.cryptpad_register_session.Rep:
+        req = authenticated_cmds.latest.cryptpad_register_session.Req(
+            realm_id=realm_id,
+            document_id=document_id,
+            key_index=key_index,
+            timestamp=timestamp,
+            encrypted_candidate_view_key=encrypted_candidate_view_key,
+            encrypted_candidate_edit_key=encrypted_candidate_edit_key,
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.cryptpad_register_session.Rep.load(raw_rep)
+
     async def device_create(
         self, device_certificate: bytes, redacted_device_certificate: bytes
     ) -> authenticated_cmds.latest.device_create.Rep:
@@ -275,14 +314,14 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.events_listen.Rep.load(raw_rep)
 
     async def invite_cancel(
-        self, token: InvitationToken
+        self, token: AccessToken
     ) -> authenticated_cmds.latest.invite_cancel.Rep:
         req = authenticated_cmds.latest.invite_cancel.Req(token=token)
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
 
     async def invite_complete(
-        self, token: InvitationToken
+        self, token: AccessToken
     ) -> authenticated_cmds.latest.invite_complete.Rep:
         req = authenticated_cmds.latest.invite_complete.Req(token=token)
         raw_rep = await self._do_request(req.dump(), "authenticated")
@@ -298,7 +337,7 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep.load(raw_rep)
 
     async def invite_greeter_start_greeting_attempt(
-        self, token: InvitationToken
+        self, token: AccessToken
     ) -> authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep:
         req = authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Req(token=token)
         raw_rep = await self._do_request(req.dump(), "authenticated")
@@ -366,48 +405,6 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.ping.Rep.load(raw_rep)
 
-    async def pki_enrollment_accept(
-        self,
-        enrollment_id: PKIEnrollmentID,
-        payload: bytes,
-        payload_signature: bytes,
-        payload_signature_algorithm: PkiSignatureAlgorithm,
-        accepter_der_x509_certificate: bytes,
-        accepter_intermediate_der_x509_certificates: list[bytes],
-        submitter_user_certificate: bytes,
-        submitter_device_certificate: bytes,
-        submitter_redacted_user_certificate: bytes,
-        submitter_redacted_device_certificate: bytes,
-    ) -> authenticated_cmds.latest.pki_enrollment_accept.Rep:
-        req = authenticated_cmds.latest.pki_enrollment_accept.Req(
-            enrollment_id=enrollment_id,
-            payload=payload,
-            payload_signature=payload_signature,
-            payload_signature_algorithm=payload_signature_algorithm,
-            accepter_der_x509_certificate=accepter_der_x509_certificate,
-            accepter_intermediate_der_x509_certificates=accepter_intermediate_der_x509_certificates,
-            submitter_user_certificate=submitter_user_certificate,
-            submitter_device_certificate=submitter_device_certificate,
-            submitter_redacted_user_certificate=submitter_redacted_user_certificate,
-            submitter_redacted_device_certificate=submitter_redacted_device_certificate,
-        )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
-        return authenticated_cmds.latest.pki_enrollment_accept.Rep.load(raw_rep)
-
-    async def pki_enrollment_list(
-        self,
-    ) -> authenticated_cmds.latest.pki_enrollment_list.Rep:
-        req = authenticated_cmds.latest.pki_enrollment_list.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated")
-        return authenticated_cmds.latest.pki_enrollment_list.Rep.load(raw_rep)
-
-    async def pki_enrollment_reject(
-        self, enrollment_id: PKIEnrollmentID
-    ) -> authenticated_cmds.latest.pki_enrollment_reject.Rep:
-        req = authenticated_cmds.latest.pki_enrollment_reject.Req(enrollment_id=enrollment_id)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
-        return authenticated_cmds.latest.pki_enrollment_reject.Rep.load(raw_rep)
-
     async def realm_create(
         self, realm_role_certificate: bytes
     ) -> authenticated_cmds.latest.realm_create.Rep:
@@ -451,6 +448,15 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.realm_rotate_key.Rep.load(raw_rep)
 
+    async def realm_self_promote_to_owner(
+        self, realm_role_certificate: bytes
+    ) -> authenticated_cmds.latest.realm_self_promote_to_owner.Rep:
+        req = authenticated_cmds.latest.realm_self_promote_to_owner.Req(
+            realm_role_certificate=realm_role_certificate
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.realm_self_promote_to_owner.Rep.load(raw_rep)
+
     async def realm_share(
         self, realm_role_certificate: bytes, recipient_keys_bundle_access: bytes, key_index: int
     ) -> authenticated_cmds.latest.realm_share.Rep:
@@ -471,6 +477,15 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.realm_unshare.Rep.load(raw_rep)
 
+    async def realm_update_archiving(
+        self, archiving_certificate: bytes
+    ) -> authenticated_cmds.latest.realm_update_archiving.Rep:
+        req = authenticated_cmds.latest.realm_update_archiving.Req(
+            archiving_certificate=archiving_certificate
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.realm_update_archiving.Rep.load(raw_rep)
+
     async def shamir_recovery_delete(
         self, shamir_recovery_deletion_certificate: bytes
     ) -> authenticated_cmds.latest.shamir_recovery_delete.Rep:
@@ -483,7 +498,7 @@ class BaseAuthenticatedRpcClient:
     async def shamir_recovery_setup(
         self,
         ciphered_data: bytes,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
         shamir_recovery_brief_certificate: bytes,
         shamir_recovery_share_certificates: list[bytes],
     ) -> authenticated_cmds.latest.shamir_recovery_setup.Rep:
@@ -495,6 +510,27 @@ class BaseAuthenticatedRpcClient:
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.shamir_recovery_setup.Rep.load(raw_rep)
+
+    async def totp_create_opaque_key(
+        self,
+    ) -> authenticated_cmds.latest.totp_create_opaque_key.Rep:
+        req = authenticated_cmds.latest.totp_create_opaque_key.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.totp_create_opaque_key.Rep.load(raw_rep)
+
+    async def totp_setup_confirm(
+        self, one_time_password: str
+    ) -> authenticated_cmds.latest.totp_setup_confirm.Rep:
+        req = authenticated_cmds.latest.totp_setup_confirm.Req(one_time_password=one_time_password)
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.totp_setup_confirm.Rep.load(raw_rep)
+
+    async def totp_setup_get_secret(
+        self,
+    ) -> authenticated_cmds.latest.totp_setup_get_secret.Rep:
+        req = authenticated_cmds.latest.totp_setup_get_secret.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.totp_setup_get_secret.Rep.load(raw_rep)
 
     async def user_create(
         self,
@@ -744,7 +780,7 @@ class BaseInvitedRpcClient:
         return invited_cmds.latest.invite_info.Rep.load(raw_rep)
 
     async def invite_shamir_recovery_reveal(
-        self, reveal_token: InvitationToken
+        self, reveal_token: AccessToken
     ) -> invited_cmds.latest.invite_shamir_recovery_reveal.Rep:
         req = invited_cmds.latest.invite_shamir_recovery_reveal.Req(reveal_token=reveal_token)
         raw_rep = await self._do_request(req.dump(), "invited")

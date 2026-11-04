@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ms-modal
@@ -19,11 +19,11 @@
     <div class="modal-tos-content">
       <ion-button
         @click="openTOS"
-        class="tos-button button-small"
+        class="tos-button"
       >
         <ion-icon
           slot="start"
-          class="tos-icon"
+          class="tos-icon button-icon-left"
           :icon="documentText"
         />
         {{ $msTranslate('CreateOrganization.acceptTOS.update.tosButton') }}
@@ -32,7 +32,7 @@
         v-model="checked"
         label-placement="end"
         justify="start"
-        class="tos-checkbox body"
+        class="tos-checkbox"
       >
         {{ $msTranslate('CreateOrganization.acceptTOS.update.checkbox') }}
       </ms-checkbox>
@@ -83,7 +83,7 @@ function getLinkForLocale(): string {
   }
 
   const link = links.values().next().value ?? '';
-  window.electronAPI.log(
+  window.nativeAPI.log(
     'info',
     `No terms of service link was found matching the locale \
 '${currentLocale}' in ${JSON.stringify(props.tosLinks.entries())}, \
@@ -104,29 +104,23 @@ async function openTOS(): Promise<void> {
 
 <style scoped lang="scss">
 .modal-tos-content {
-  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 
-  .tos-button::part(native) {
-    font-size: 1rem;
-    font-weight: 500;
-    text-transform: none;
-    padding: 0.75rem 1.25rem;
-    width: auto;
-    background: var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-secondary-text);
-    --background-hover: var(--parsec-color-light-secondary-medium);
-  }
+  .tos-button {
+    --background: #{ms.color('surface-neutral-default-subtle')};
+    --background-hover: #{ms.color('surface-neutral-default-subtle-hover')};
+    --color: #{ms.color('text-base-body')};
 
-  .tos-icon {
-    font-size: 1.125rem;
-    margin-right: 0.5rem;
+    &::part(native) {
+      text-transform: none;
+      width: auto;
+    }
   }
 
   .tos-checkbox {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('text-base-body');
   }
 }
 </style>

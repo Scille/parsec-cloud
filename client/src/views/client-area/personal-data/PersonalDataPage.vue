@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div
@@ -72,7 +72,7 @@ function createItem(
   secondLineError?: Translatable,
 ): MsSummaryCardItemData | undefined {
   return createSummaryCardItem(
-    `clientArea.personalDataPage.${label}`,
+    label,
     I18n.valueAsTranslatable(text),
     error,
     secondLineText ? I18n.valueAsTranslatable(secondLineText) : undefined,
@@ -87,13 +87,7 @@ function createItemWithTranslatable(
   secondLineText?: Translatable,
   secondLineError?: Translatable,
 ): MsSummaryCardItemData | undefined {
-  return createSummaryCardItem(
-    `clientArea.personalDataPage.${label}`,
-    `clientArea.personalDataPage.${text}`,
-    error,
-    secondLineText ? `clientArea.personalDataPage.${secondLineText}` : undefined,
-    secondLineError,
-  );
+  return createSummaryCardItem(label, text, error, secondLineText ? secondLineText : undefined, secondLineError);
 }
 
 onMounted(async () => {
@@ -107,14 +101,17 @@ async function getPersonalData(): Promise<void> {
 function getPersonalInfoRows(): MsSummaryCardRowData[] {
   return [
     {
-      item: createItem('personalInfo.firstname', personalData.value?.firstName) as MsSummaryCardItemData,
-      secondItem: createItem('personalInfo.lastname', personalData.value?.lastName),
+      item: createItem('clientArea.personalDataPage.personalInfo.firstname', personalData.value?.firstName) as MsSummaryCardItemData,
+      secondItem: createItem('clientArea.personalDataPage.personalInfo.lastname', personalData.value?.lastName),
     },
     {
       item:
         personalData.value?.phone === undefined || personalData.value?.phone === null
-          ? (createItemWithTranslatable('personalInfo.phone', 'personalInfo.notDefined') as MsSummaryCardItemData)
-          : (createItem('personalInfo.phone', personalData.value?.phone) as MsSummaryCardItemData),
+          ? (createItemWithTranslatable(
+              'clientArea.personalDataPage.personalInfo.phone',
+              'clientArea.personalDataPage.personalInfo.notDefined',
+            ) as MsSummaryCardItemData)
+          : (createItem('clientArea.personalDataPage.personalInfo.phone', personalData.value?.phone) as MsSummaryCardItemData),
     },
   ];
 }
@@ -123,15 +120,17 @@ function getProfessionalInfoRows(): MsSummaryCardRowData[] {
   const rows = [
     {
       item: createItemWithTranslatable(
-        'professionalInfo.representCompany.title',
-        isRepresentingCompany.value ? 'professionalInfo.representCompany.yes' : 'professionalInfo.representCompany.no',
+        'clientArea.personalDataPage.professionalInfo.representCompany.title',
+        isRepresentingCompany.value
+          ? 'clientArea.personalDataPage.professionalInfo.representCompany.yes'
+          : 'clientArea.personalDataPage.professionalInfo.representCompany.no',
       ) as MsSummaryCardItemData,
     },
   ];
   if (isRepresentingCompany.value) {
     rows.push({
-      item: createItem('professionalInfo.company', personalData.value?.company) as MsSummaryCardItemData,
-      secondItem: createItem('professionalInfo.job', personalData.value?.job),
+      item: createItem('clientArea.personalDataPage.professionalInfo.company', personalData.value?.company) as MsSummaryCardItemData,
+      secondItem: createItem('clientArea.personalDataPage.professionalInfo.job', personalData.value?.job),
     } as MsSummaryCardRowData);
   }
   return rows;
@@ -140,7 +139,7 @@ function getProfessionalInfoRows(): MsSummaryCardRowData[] {
 function getAuthenticationRows(): MsSummaryCardRowData[] {
   return [
     {
-      item: createItem('authentication.email', personalData.value?.email) as MsSummaryCardItemData,
+      item: createItem('clientArea.personalDataPage.authentication.email', personalData.value?.email) as MsSummaryCardItemData,
     },
   ];
 }
@@ -148,7 +147,7 @@ function getAuthenticationRows(): MsSummaryCardRowData[] {
 function getSecurityRows(): MsSummaryCardRowData[] {
   return [
     {
-      item: createItem('security.password', '*********') as MsSummaryCardItemData,
+      item: createItem('clientArea.personalDataPage.security.password', '*********') as MsSummaryCardItemData,
     },
   ];
 }
@@ -244,22 +243,22 @@ async function onDataUpdated(message: Translatable): Promise<void> {
 <style scoped lang="scss">
 .personal-data-page {
   display: flex;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   flex-wrap: wrap;
 }
 
 .personal-data-content {
   display: flex;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
   flex: 1;
   flex-direction: column;
   max-width: 30em;
 
   &__item {
-    padding: 1.5rem;
-    background: var(--parsec-color-light-secondary-background);
-    border-radius: var(--parsec-radius-12);
-    box-shadow: var(--parsec-shadow-input);
+    padding: ms.spacing('padding-4xl');
+    background: ms.color('surface-base-page');
+    border-radius: ms.radius('2xl');
+    box-shadow: ms.shadow('input');
   }
 
   @include ms.responsive-breakpoint('sm') {

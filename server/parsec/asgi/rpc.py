@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Sequence
+from collections.abc import AsyncGenerator, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -19,9 +19,9 @@ from fastapi.responses import StreamingResponse
 from starlette.requests import ClientDisconnect
 
 from parsec._parsec import (
+    AccessToken,
     ApiVersion,
     DateTime,
-    InvitationToken,
     OrganizationID,
     anonymous_cmds,
     anonymous_server_cmds,
@@ -137,15 +137,15 @@ TOS_CMDS_LOAD_FN = {
 }
 
 
-rpc_router = APIRouter(tags=["rpc"])
+rpc_router = APIRouter(include_in_schema=False)
 
 
-async def _rpc_get_body_with_limit_check(request: Request) -> bytes:
+async def _rpc_get_body_with_limit_check(request: Request, api_version: ApiVersion) -> bytes:
     try:
         content_length = int(request.headers["Content-Length"])
 
     except ValueError:
-        raise HTTPException(status_code=413)
+        _handshake_abort(CustomHttpStatus.ContentTooLarge, api_version)
 
     except KeyError:
         # Header missing, we must be en chunk-encoding mode
@@ -153,19 +153,19 @@ async def _rpc_get_body_with_limit_check(request: Request) -> bytes:
 
     else:
         if content_length > MAX_CONTENT_LENGTH:
-            raise HTTPException(status_code=413)
+            _handshake_abort(CustomHttpStatus.ContentTooLarge, api_version)
 
     chunks = []
     try:
         async for chunk in request.stream():
             chunks.append(chunk)
             if sum(len(c) for c in chunks) > content_length:
-                raise HTTPException(status_code=413)
+                _handshake_abort(CustomHttpStatus.ContentTooLarge, api_version)
     # The client disconnected while sending the body.
     # Here we simply raise an HTTP exception to ignore the `ClientDisconnect` exception
     # so that it doesn't get logged as an error.
     except ClientDisconnect:
-        raise HTTPException(status_code=413)
+        _handshake_abort(CustomHttpStatus.ContentTooLarge, api_version)
 
     return b"".join(chunks)
 
@@ -235,6 +235,7 @@ def settle_compatible_versions(
 # - 404: Organization not found or invalid organization ID
 # - 406: Bad accept type (for the SSE events route)
 # - 410: Invitation already deleted / used
+# - 413: Payload too large
 # - 415: Bad content-type, body is not a valid message or unknown command
 # - 422: Unsupported API version
 # - 460: Organization is expired
@@ -251,6 +252,7 @@ class CustomHttpStatus(Enum):
     OrganizationNotFound = 404
     BadAcceptType = 406
     InvitationAlreadyUsedOrDeleted = 410
+    ContentTooLarge = 413
     BadContentTypeOrInvalidBodyOrUnknownCommand = 415
     UnsupportedApiVersion = 422
     OrganizationExpired = 460
@@ -298,7 +300,7 @@ class ParsedAuthHeaders:
     client_api_version: ApiVersion
     user_agent: str
     authenticated_token: AuthenticatedToken | None
-    invited_token: InvitationToken | None
+    invited_token: AccessToken | None
     last_event_id: UUID | None
 
 
@@ -382,7 +384,7 @@ def _parse_auth_headers_or_abort(
             expected_bearer, raw_invitation_token = raw_authorization.split()
             if expected_bearer.lower() != "bearer":
                 raise ValueError
-            invited_token = InvitationToken.from_hex(raw_invitation_token)
+            invited_token = AccessToken.from_hex(raw_invitation_token)
         except ValueError:
             _handshake_abort(
                 CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
@@ -612,7 +614,7 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
             },
         )
 
-    body = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request, parsed.settled_api_version)
 
     try:
         req = ANONYMOUS_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
@@ -641,7 +643,7 @@ async def anonymous_server_api(request: Request) -> Response:
         client_ip_address=request.client.host if request.client is not None else "",
     )
 
-    body = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request, parsed.settled_api_version)
 
     try:
         req = ANONYMOUS_SERVER_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
@@ -663,7 +665,7 @@ async def authenticated_account_api(request: Request) -> Response:
 
     assert parsed.authentication_token is not None
 
-    body = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request, parsed.settled_api_version)
     outcome = await backend.auth.authenticated_account_auth(
         now=DateTime.now(), token=parsed.authentication_token
     )
@@ -759,7 +761,7 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
         client_user_agent=parsed.user_agent,
     )
 
-    body: bytes = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request, parsed.settled_api_version)
 
     try:
         req = INVITED_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
@@ -786,7 +788,7 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
     )
     assert parsed.authenticated_token is not None
 
-    body: bytes = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request, parsed.settled_api_version)
     outcome = await backend.auth.authenticated_auth(
         now=DateTime.now(),
         organization_id=parsed.organization_id,
@@ -1048,26 +1050,33 @@ class StreamingResponseMiddleware(StreamingResponse):
 
     async def __call__(self, scope, receive, send) -> None:
         self.client_ctx.logger.info("SSE session start")
+        # NOTE: since anyio>=4, functions using task groups always wrap exceptions in groups.
+        #       Thus the except* syntax below for exceptions raised from _run_session
+        #       See: https://anyio.readthedocs.io/en/stable/migration.html#task-groups-now-wrap-single-exceptions-in-groups
         try:
             await self._run_session(scope, receive, send)
-        except HTTPException as exc:
+        except* HTTPException as excgrp:
+            exc = excgrp.exceptions[0]
+            assert isinstance(exc, HTTPException)
             self.client_ctx.logger.info(
                 "SSE session HTTP error",
                 status_code=exc.status_code,
                 detail=exc.detail,
             )
-            raise
-        except Exception as exc:
+            raise exc
+        except* Exception as excgrp:
+            exc = excgrp.exceptions[0]
             self.client_ctx.logger.error("SSE session exception", exc_info=exc)
-            raise
-        except BaseException as exc:
+            raise exc
+        except* BaseException as excgrp:
+            exc = excgrp.exceptions[0]
             self.client_ctx.logger.debug("SSE session base exception", exc_info=exc)
-            raise
+            raise exc
         else:
             self.client_ctx.logger.info("SSE session end")
 
     @asynccontextmanager
-    async def listen_events_context(self) -> AsyncIterator[ApiEventListenOutcome]:
+    async def listen_events_context(self) -> AsyncGenerator[ApiEventListenOutcome]:
         # This task is responsible for registering the client to the SSE stream and unregistering it
         # when it finishes. It can either get cancelled internally (e.g. when the client gets frozen
         # or revoked) or externally by the task group below (e.g. when the client gets disconnected).
@@ -1147,7 +1156,7 @@ async def tos_api(raw_organization_id: str, request: Request) -> Response:
     )
     assert parsed.authenticated_token is not None
 
-    body: bytes = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request, parsed.settled_api_version)
     outcome = await backend.auth.authenticated_auth(
         now=DateTime.now(),
         organization_id=parsed.organization_id,

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
@@ -28,6 +29,6 @@ class RAID0BlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         blockstore = self._get_blockstore(block_id)
         await blockstore.create(organization_id, block_id, block)

@@ -1,13 +1,16 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+use anyhow::Context;
 use libparsec::{OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
+use std::fmt::Write;
 
-use crate::utils::*;
+use crate::ui::{CLIDisplay, Color};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
     pub struct Args {
         /// The organization name that will be created
+        #[arg(value_hint = clap::ValueHint::Other)]
         organization: OrganizationID,
     }
 );
@@ -23,6 +26,10 @@ enum CreateOrganizationRep {
 struct CreationOrganizationOk {
     #[serde(deserialize_with = "bootstrap_url_deserialize")]
     bootstrap_url: ParsecOrganizationBootstrapAddr,
+    // Note we ignore the field `bootstrap_url_as_http_redirection` here.
+    // This is for backward compatibility (it has been added in Parsec 3.8.0)
+    // since we can instead just compute the HTTP redirection URL ourself from
+    // the `bootstrap_url` field.
 }
 
 fn bootstrap_url_deserialize<'de, D>(
@@ -56,7 +63,9 @@ pub async fn create_organization_req(
             "organization_id": organization_id,
         }))
         .send()
-        .await?;
+        .await?
+        .error_for_status()
+        .context("Unexpected response status")?;
 
     match rep.json::<CreateOrganizationRep>().await? {
         CreateOrganizationRep::Ok(res) => Ok(res.bootstrap_url),
@@ -64,7 +73,7 @@ pub async fn create_organization_req(
     }
 }
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,
@@ -72,13 +81,35 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     } = args;
     log::trace!("Creating organization \"{organization}\" (addr={addr})");
 
-    let mut handle = start_spinner("Creating organization".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating organization"))?;
 
     let organization_addr = create_organization_req(&organization, &addr, &token).await?;
 
-    handle.stop_with_message(format!(
-        "Organization bootstrap url: {YELLOW}{organization_addr}{RESET}"
-    ));
+    handle.stop();
+
+    ui.data_print(&OrganizationBootstrapUrlDisplay(
+        organization_addr.to_http_redirection_url(),
+    ))?;
 
     Ok(())
+}
+
+#[serde_with::serde_as]
+#[derive(serde::Serialize)]
+pub struct OrganizationBootstrapUrlDisplay(
+    #[serde_as(as = "serde_with::DisplayFromStr")] pub libparsec_types::Url,
+);
+
+impl CLIDisplay for OrganizationBootstrapUrlDisplay {
+    fn plain_write<W: std::io::prelude::Write>(
+        &self,
+        fmt: &crate::ui::ColorFormatter,
+        mut w: W,
+    ) -> std::io::Result<()> {
+        writeln!(
+            w,
+            "Organization bootstrap URL: {}",
+            fmt.wrap_in_color(Color::Yellow, &self.0)
+        )
+    }
 }

@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 
 use libparsec_types::prelude::*;
 
-use crate::{test_drop_testbed, test_new_testbed, TestbedEnv, TestbedTimeToLive};
+use crate::{TestbedEnv, TestbedTimeToLive, test_drop_testbed, test_new_testbed};
 
 /// Keep track of testbed's lifetime, don't drop this before the test is done !
 pub struct TestbedScope {
@@ -180,7 +180,7 @@ fn start_testbed_server() -> (std::process::Child, u16) {
         }
     };
 
-    let mut process = std::process::Command::new("poetry")
+    let mut process = std::process::Command::new("uv")
         .args([
             "--directory",
             server_dir.to_str().expect("Script path contains non-utf8"),

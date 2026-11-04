@@ -32,24 +32,26 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     for (const card of await cards.all()) {
       const lastLogin = card.locator('.login-text').nth(0);
-      await expect(card.locator('.organization-card-content-text').locator('.title-h4')).toHaveText(/TestbedOrg\d+/);
+      await expect(card.locator('.organization-card-content-text').locator('.organization-name')).toHaveText(/TestbedOrg\d+/);
       await expect(lastLogin).toHaveText('--');
     }
     await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
 
     if (displaySize === 'large') {
       await expect(container.locator('#organization-filter-select')).toHaveText('Organization name');
-      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join']);
+      await expect(topBar.locator('.topbar-right').locator('#create-organization-button')).toHaveText(['Create or join']);
+      await expect(topBar.locator('.topbar-right').locator('#recover-button-header')).toHaveText(['Lost your access?']);
       await expect(home.locator('.homepage-sidebar')).toBeVisible();
       await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
         'About',
         'Documentation',
         'Contact',
         'Settings',
+        'Report a bug',
         'Customer area',
       ]);
     } else {
-      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join']);
+      await expect(topBar.locator('.topbar-right').locator('#create-organization-button')).toHaveText(['Create or join']);
       await expect(home.locator('.homepage-sidebar')).toBeHidden();
       await expect(home.locator('.menu-secondary')).toBeHidden();
       await home.locator('.menu-button').isVisible();
@@ -59,6 +61,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Documentation',
         'Contact',
         'Settings',
+        'Report a bug',
         'Customer area',
       ]);
     }
@@ -125,6 +128,10 @@ msTest('Check join link', async ({ home }) => {
       // cspell:disable-next-line
       link: 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS',
     },
+    {
+      // cspell:disable-next-line
+      link: 'https://parsec.cloud/redirect/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS',
+    },
   ];
 
   await home.locator('#create-organization-button').click();
@@ -167,13 +174,14 @@ msTest('Login with invalid password', async ({ home }) => {
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
   const loginButton = home.locator('.login-card-footer').locator('.login-button');
   await expect(loginButton).toHaveDisabledAttribute();
-  await expect(home.locator('#password-input').locator('.form-error')).toBeHidden();
+  const errorLabel = home.locator('.login-card-footer').locator('.container-textinfo');
+  await expect(errorLabel).toBeHidden();
   const input = home.locator('#password-input').locator('ion-input');
   await fillIonInput(input, 'InvalidP@ssw0rd.');
   await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
-  await expect(home.locator('#password-input').locator('.form-error')).toBeVisible();
-  await expect(home.locator('#password-input').locator('.form-error')).toHaveText('Incorrect password.');
+  await expect(errorLabel).toBeVisible();
+  await expect(errorLabel).toHaveText('Incorrect password.');
   await expect(home).toBeHomePage();
 });
 
@@ -186,12 +194,13 @@ msTest('Logout and go back to devices list', async ({ home }) => {
 });
 
 msTest('Check header buttons', async ({ home }) => {
-  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveCount(5);
+  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveCount(6);
   await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
     'About',
     'Documentation',
     'Contact',
     'Settings',
+    'Report a bug',
     'Customer area',
   ]);
 });
@@ -244,6 +253,23 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const newTab = await newTabPromise;
     await newTab.waitForLoadState();
     await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
+  });
+
+  msTest(`Open bug report modal in ${displaySize} display`, async ({ home }) => {
+    const bugReportModal = home.locator('.bug-report-modal');
+    await expect(bugReportModal).toBeHidden();
+    if (displaySize === DisplaySize.Small) {
+      await home.setDisplaySize(DisplaySize.Small);
+      await expect(home.locator('.menu-secondary')).toBeHidden();
+      await home.locator('.menu-button').isVisible();
+      await home.locator('.menu-button').click();
+      await expect(home.locator('.menu-secondary-collapse-buttons').locator('ion-button').nth(4)).toHaveText('Report a bug');
+      await home.locator('.menu-secondary-collapse-buttons').locator('ion-button').nth(4).click();
+    } else {
+      await expect(home.locator('.menu-secondary-buttons').locator('ion-button').nth(4)).toHaveText('Report a bug');
+      await home.locator('.menu-secondary-buttons').locator('ion-button').nth(4).click();
+    }
+    await expect(bugReportModal).toBeVisible();
   });
 }
 
@@ -305,12 +331,12 @@ msTest('Empty home page recover', async ({ context }) => {
   const container = page.locator('.no-devices');
   await expect(container).toBeVisible();
 
-  const recoverBtn = container.locator('.recovery-no-devices').locator('ion-button');
-  await expect(page.locator('.recovery-content')).toBeHidden();
+  const recoverBtn = container.locator('.buttons-container').locator('ion-button').nth(1);
+  await expect(page.locator('.choose-recovery-device-modal')).toBeHidden();
   await recoverBtn.click();
-  await expect(page.locator('.recovery-content')).toBeVisible();
-  await page.locator('.topbar-left__back-button').click();
-  await expect(page.locator('.recovery-content')).toBeHidden();
+  await expect(page.locator('.choose-recovery-device-modal')).toBeVisible();
+  await page.locator('.closeBtn').click();
+  await expect(page.locator('.choose-recovery-device-modal')).toBeHidden();
   await page.release();
 });
 

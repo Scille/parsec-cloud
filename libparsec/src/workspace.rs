@@ -1,21 +1,25 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
-    EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
+    CryptpadSessionKeys, EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
     WorkspaceCreateFolderError, WorkspaceDecryptPathAddrError, WorkspaceFdCloseError,
     WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
     WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
-    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
-    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError,
+    WorkspaceRemoveEntryError, WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
+    WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
 
-use crate::handle::{
-    borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
-    FilterCloseHandle, Handle, HandleItem,
+use crate::{
+    ParsecWorkspacePathAddrAndRedirectionURL,
+    handle::{
+        FilterCloseHandle, Handle, HandleItem, borrow_from_handle, filter_close_handles,
+        register_handle_with_init, take_and_close_handle,
+    },
 };
 
 fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::WorkspaceOps>> {
@@ -221,8 +225,12 @@ pub enum WorkspaceInfoError {
 pub struct StartedWorkspaceInfo {
     pub client: Handle,
     pub id: VlobID,
-    pub current_name: EntryName,
-    pub current_self_role: RealmRole,
+    pub name: EntryName,
+    pub name_origin: CertificateBasedInfoOrigin,
+    pub self_role: RealmRole,
+    pub self_role_origin: CertificateBasedInfoOrigin,
+    pub archiving_configuration: RealmArchivingConfiguration,
+    pub archiving_configuration_origin: CertificateBasedInfoOrigin,
     pub mountpoints: Vec<(Handle, std::path::PathBuf)>,
 }
 
@@ -237,7 +245,7 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
         _ => None,
     })?;
 
-    let (current_name, current_self_role) = workspace.get_current_name_and_self_role();
+    let entry = workspace.get_workspace_external_info(|info| info.entry.clone());
 
     #[cfg(target_arch = "wasm32")]
     let mountpoints = vec![];
@@ -260,8 +268,16 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
     Ok(StartedWorkspaceInfo {
         client: client_handle,
         id: workspace.realm_id(),
-        current_name,
-        current_self_role,
+        name: entry.name,
+        name_origin: entry.name_origin,
+        self_role: entry.role,
+        self_role_origin: entry.role_origin,
+        archiving_configuration: entry
+            .archiving_configuration
+            .unwrap_or(RealmArchivingConfiguration::Available),
+        archiving_configuration_origin: entry
+            .archiving_configuration_origin
+            .unwrap_or(CertificateBasedInfoOrigin::Placeholder),
         mountpoints,
     })
 }
@@ -728,10 +744,11 @@ pub async fn workspace_fd_write_start_eof(
 pub async fn workspace_generate_path_addr(
     workspace: Handle,
     path: &FsPath,
-) -> Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError> {
+) -> Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace.generate_path_addr(path).await
+    let addr = workspace.generate_path_addr(path).await?;
+    Ok((addr.clone(), addr.to_http_redirection_url()))
 }
 
 pub async fn workspace_decrypt_path_addr(
@@ -741,4 +758,40 @@ pub async fn workspace_decrypt_path_addr(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.decrypt_path_addr(link).await
+}
+
+pub async fn workspace_register_cryptpad_session(
+    workspace: Handle,
+    document_id: VlobID,
+    candidate_edit_key: String,
+    candidate_view_key: String,
+) -> Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .register_cryptpad_session(document_id, candidate_edit_key, candidate_view_key)
+        .await
+}
+
+pub type WorkspaceSaveAndSyncFileWithCryptpadError = WorkspaceSaveAndSyncFileWithOriginError;
+
+pub async fn workspace_save_and_sync_file_with_cryptpad(
+    workspace: Handle,
+    entry_id: VlobID,
+    cryptpad_session_channel_id: String,
+    cryptpad_session_timestamp: DateTime,
+    content: &[u8],
+) -> Result<(), WorkspaceSaveAndSyncFileWithCryptpadError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .save_and_sync_file_with_origin(
+            entry_id,
+            FileManifestOrigin::Cryptpad {
+                channel_id: cryptpad_session_channel_id,
+                timestamp: cryptpad_session_timestamp,
+            },
+            content,
+        )
+        .await
 }

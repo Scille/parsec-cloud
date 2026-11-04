@@ -1,34 +1,45 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-use libparsec::{AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, ParsecAddr};
+use std::io::Write;
 
-use crate::utils::*;
+use dialoguer::Confirm;
+use libparsec::{
+    AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy, ParsecAddr,
+};
+
+use crate::{
+    ui::{Color, compat::AvailableDeviceDisplay},
+    utils::*,
+};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, force]
     pub struct Args {
         /// The new server URL
-        #[arg(short, long, value_parser = ParsecAddr::from_http_url)]
+        #[arg(short, long, value_parser = ParsecAddr::from_http_url, value_hint = clap::ValueHint::Url)]
         server_url: ParsecAddr,
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
+
+    if device.totp_opaque_key_id.is_some() {
+        // In theory we should support this authentication method here,
+        // however:
+        // - It is cumbersome since it requires a TOTP challenge involving the server.
+        // - In practice it is a niche usage that will most likely only be used in the GUI.
+        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication.into());
+    }
 
     let access_strategy = match device.ty {
         AvailableDeviceType::Password => {
-            let password = read_password(if args.password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter password for the device:",
-                }
-            })?;
+            let password = read_password("Enter password for the device:")?;
 
-            DeviceAccessStrategy::Password {
+            DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
-                password: password.clone(),
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
             }
         }
 
@@ -40,8 +51,10 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             // }
         }
 
-        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy {
             key_file: device.key_file_path.clone(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
         },
 
         AvailableDeviceType::AccountVault => {
@@ -67,39 +80,37 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         }
     };
 
-    let short_id = &device.device_id.hex()[..3];
-    let AvailableDevice {
-        organization_id,
-        human_handle,
-        device_label,
-        ..
-    } = &device;
+    let device = AvailableDeviceDisplay(device);
 
-    println!("You are about to update the following device:");
-    println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-    println!("Current server URL: {YELLOW}{}{RESET}", device.server_addr);
-    println!("New server URL: {YELLOW}{}{RESET}", args.server_url);
-    println!("Are you sure? (y/n)");
+    ui.with_message(|_, out| write!(out, "You are about to update the following device:"))?;
+    ui.message_println(&device)?;
+    ui.with_message(|fmt, out| {
+        writeln!(
+            out,
+            "Current server URL: {url}",
+            url = fmt.wrap_in_color(Color::Yellow, &device.server_addr)
+        )
+    })?;
+    ui.with_message(|fmt, out| {
+        writeln!(
+            out,
+            "New server URL: {url}",
+            url = fmt.wrap_in_color(Color::Yellow, &args.server_url)
+        )
+    })?;
 
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)?;
+    if args.force || Confirm::new().with_prompt("Are you sure? ").interact()? {
+        libparsec::update_device_overwrite_server_addr(
+            &args.config_dir,
+            access_strategy,
+            args.server_url.clone(),
+        )
+        .await?;
 
-    match input.trim() {
-        "y" => (),
-        _ => {
-            eprintln!("Operation cancelled");
-            return Ok(());
-        }
+        ui.with_message(|_, out| write!(out, "Device updated successfully"))?;
+    } else {
+        ui.with_message(|_, out| writeln!(out, "Operation cancelled"))?;
     }
-
-    libparsec::update_device_overwrite_server_addr(
-        &args.config_dir,
-        access_strategy,
-        args.server_url.clone(),
-    )
-    .await?;
-
-    println!("Device updated successfully");
 
     Ok(())
 }

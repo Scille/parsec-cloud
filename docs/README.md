@@ -14,14 +14,16 @@ Parsec docs are written in [reStructuredText (.rst)](https://www.sphinx-doc.org/
 
 There are two ways to install dependencies:
 
-- Using [Poetry](https://python-poetry.org/docs/#installation)
+- Using [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
   ```bash
-  poetry install
+  uv sync
   ```
 
 > **Note**
 > You'll need extra dependencies to build PDF docs (via `latexmk`), see Dockerfile.
+
+  If you choose this method, you will need to prefix `uv run` to the `make` commands.
 
 - Using [Docker](https://docs.docker.com/engine/install/)
 

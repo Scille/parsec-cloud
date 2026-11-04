@@ -13,7 +13,9 @@ from .common import (
     Path,
     Ref,
     Result,
+    SecretKey,
     Structure,
+    TOTPOpaqueKeyID,
     UserID,
     Variant,
     VariantItemUnit,
@@ -37,15 +39,14 @@ class AvailableDeviceType(Variant):
         openbao_entity_id: str
 
 
-class DeviceSaveStrategy(Variant):
-    class Keyring:
-        pass
+class DevicePrimaryProtectionStrategy(Variant):
+    Keyring = VariantItemUnit()
 
     class Password:
         password: Password
 
     class PKI:
-        certificate_ref: X509CertificateReference
+        pki_encrypt_private_key_handle: Handle
 
     class AccountVault:
         account_handle: Handle
@@ -59,28 +60,15 @@ class DeviceSaveStrategy(Variant):
         openbao_preferred_auth_id: str
 
 
-class DeviceAccessStrategy(Variant):
-    class Keyring:
-        key_file: Path
+class DeviceAccessStrategy(Structure):
+    key_file: Path
+    totp_protection: tuple[TOTPOpaqueKeyID, SecretKey] | None
+    primary_protection: DevicePrimaryProtectionStrategy
 
-    class Password:
-        password: Password
-        key_file: Path
 
-    class PKI:
-        key_file: Path
-
-    class AccountVault:
-        key_file: Path
-        account_handle: Handle
-
-    class OpenBao:
-        key_file: Path
-        openbao_server_url: str
-        openbao_secret_mount_path: str
-        openbao_transit_mount_path: str
-        openbao_entity_id: str
-        openbao_auth_token: str
+class DeviceSaveStrategy(Structure):
+    totp_protection: tuple[TOTPOpaqueKeyID, SecretKey] | None
+    primary_protection: DevicePrimaryProtectionStrategy
 
 
 class AvailableDevice(Structure):
@@ -93,6 +81,7 @@ class AvailableDevice(Structure):
     device_id: DeviceID
     human_handle: HumanHandle
     device_label: DeviceLabel
+    totp_opaque_key_id: TOTPOpaqueKeyID | None
     ty: AvailableDeviceType
 
 
@@ -111,7 +100,7 @@ async def list_available_devices(
 
 
 class ArchiveDeviceError(ErrorVariant):
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class Internal:
@@ -136,13 +125,22 @@ async def remove_device_data(
 
 
 class UpdateDeviceError(ErrorVariant):
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:
         pass
 
     class InvalidData:
+        pass
+
+    class BadAccessStrategy:
+        pass
+
+    class CiphertextKeyGenerationFailed:
+        pass
+
+    class TOTPDecryptionFailed:
         pass
 
     class DecryptionFailed:
@@ -155,6 +153,9 @@ class UpdateDeviceError(ErrorVariant):
         pass
 
     class RemoteOpaqueKeyOperationFailed:
+        pass
+
+    class KeyringError:
         pass
 
 
@@ -172,11 +173,3 @@ async def update_device_overwrite_server_addr(
     new_server_addr: ParsecAddr,
 ) -> Result[ParsecAddr, UpdateDeviceError]:
     raise NotImplementedError
-
-
-class RemoveDeviceError(ErrorVariant):
-    class StorageNotAvailable: ...
-
-    class NotFound: ...
-
-    class Internal: ...

@@ -1,38 +1,44 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-button
-    fill="clear"
+    fill="outline"
     @click="openPopover($event)"
     id="select-filter-popover-button"
-    class="filter-button button-small"
+    class="filter-button color-secondary"
   >
     <ion-icon
       :icon="filter"
-      class="filter-button__icon"
+      class="filter-button__icon button-icon-left"
     />
     <span :class="{ 'missing-filters': missingFilters }">{{ $msTranslate('UsersPage.filter.title') }}</span>
   </ion-button>
 </template>
 
 <script setup lang="ts">
-import { UserCollection } from '@/components/users';
+import { UserFilterLabels } from '@/components/users';
 import UserFilterPopover from '@/components/users/UserFilterPopover.vue';
 import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { filter } from 'ionicons/icons';
 import { computed } from 'vue';
 
 const props = defineProps<{
-  users: UserCollection;
+  filters: UserFilterLabels;
 }>();
 
 const emits = defineEmits<{
-  (event: 'change'): void;
+  (event: 'update:filters', filters: UserFilterLabels): void;
 }>();
 
 const missingFilters = computed(() => {
-  const filters = props.users.getFilters();
-  return !filters.profileAdmin || !filters.profileOutsider || !filters.profileStandard || !filters.statusActive || !filters.statusRevoked;
+  return (
+    !props.filters.statusActive ||
+    !props.filters.statusRevoked ||
+    !props.filters.statusFrozen ||
+    !props.filters.profileAdmin ||
+    !props.filters.profileStandard ||
+    !props.filters.profileOutsider
+  );
 });
 
 async function openPopover(event: Event): Promise<void> {
@@ -40,7 +46,9 @@ async function openPopover(event: Event): Promise<void> {
     component: UserFilterPopover,
     cssClass: 'filter-popover',
     componentProps: {
-      users: props.users,
+      filters: props.filters,
+      // Popovers are not created from a template, so we can't use `v-model`.
+      'onUpdate:filters': (filters: UserFilterLabels): void => emits('update:filters', filters),
     },
     event: event,
     alignment: 'end',
@@ -49,7 +57,6 @@ async function openPopover(event: Event): Promise<void> {
   await popover.present();
   await popover.onDidDismiss();
   await popover.dismiss();
-  emits('change');
 }
 </script>
 

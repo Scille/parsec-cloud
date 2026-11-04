@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -177,7 +178,7 @@ async def realm_share(
         author_verify_key=author_verify_key,
         realm_role_certificate=realm_role_certificate,
     ):
-        case RealmRoleCertificate() as certif:
+        case (new_user_role, certif):
             assert certif.role is not None
         case error:
             return error
@@ -194,6 +195,8 @@ async def realm_share(
             pass
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmShareStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmShareStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -339,7 +342,7 @@ async def realm_share(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=certif.user_id,
-            role_removed=False,
+            kind=("SHARE", new_user_role),
         ),
     )
 

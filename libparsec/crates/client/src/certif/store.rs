@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 //! The store is an intermediary layer between certificate ops and the storage.
 //! Its goals are twofold:
@@ -33,7 +33,7 @@ use libparsec_types::prelude::*;
 
 use crate::certif::CertifPollServerError;
 
-use super::{realm_keys_bundle::RealmKeys, CertificateOps, InvalidCertificateError};
+use super::{CertificateOps, InvalidCertificateError, realm_keys_bundle::RealmKeys};
 
 /// This enum list all possible states for a realm.
 ///
@@ -380,7 +380,6 @@ pub(super) enum LastUserExistAndRevokedInfo {
 
 macro_rules! impl_read_methods {
     () => {
-        #[allow(unused)]
         pub async fn get_current_self_profile(&mut self) -> anyhow::Result<UserProfile> {
             {
                 let guard = self
@@ -416,7 +415,6 @@ macro_rules! impl_read_methods {
             Ok(self_profile)
         }
 
-        #[allow(unused)]
         pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
             {
                 let guard = self
@@ -455,7 +453,6 @@ macro_rules! impl_read_methods {
                 .map(|(verify_key, _)| verify_key)
         }
 
-        #[allow(unused)]
         pub async fn get_device_verify_key_and_user_id(
             &mut self,
             up_to: UpTo,
@@ -506,7 +503,6 @@ macro_rules! impl_read_methods {
             Ok((certif.verify_key.to_owned(), certif.user_id))
         }
 
-        #[allow(unused)]
         pub async fn get_user_certificate(
             &mut self,
             up_to: UpTo,
@@ -565,7 +561,6 @@ macro_rules! impl_read_methods {
             )
         }
 
-        #[allow(unused)]
         pub async fn get_device_certificate(
             &mut self,
             up_to: UpTo,
@@ -604,7 +599,6 @@ macro_rules! impl_read_methods {
             )
         }
 
-        #[allow(unused)]
         pub async fn get_revoked_user_certificate(
             &mut self,
             up_to: UpTo,
@@ -658,7 +652,6 @@ macro_rules! impl_read_methods {
             .map(Some)
         }
 
-        #[allow(unused)]
         pub async fn get_last_user_update_certificate(
             &mut self,
             up_to: UpTo,
@@ -931,7 +924,6 @@ macro_rules! impl_read_methods {
             Ok(state)
         }
 
-        #[allow(unused)]
         /// Return all certificates involving the realm.
         ///
         /// ⚠️ This method returns *all* certificates, including the ones that have been
@@ -1052,6 +1044,31 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        pub async fn get_realm_last_archiving_certificate(
+            &mut self,
+            up_to: UpTo,
+            realm_id: VlobID,
+        ) -> anyhow::Result<Option<Arc<RealmArchivingCertificate>>> {
+            let query = GetCertificateQuery::realm_archiving_certificates(&realm_id);
+            let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
+            let encrypted = match outcome {
+                Ok((_, encrypted)) => encrypted,
+                Err(GetCertificateError::NonExisting)
+                | Err(GetCertificateError::ExistButTooRecent { .. }) => return Ok(None),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            let certif = get_certificate_from_encrypted(
+                self.store,
+                &encrypted,
+                RealmArchivingCertificate::unsecure_load,
+                UnsecureRealmArchivingCertificate::skip_validation,
+            )?;
+
+            Ok(Some(certif))
+        }
+
+        #[allow(unused)]
         /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_realm_key_rotation_certificate(
             &mut self,
@@ -1113,7 +1130,6 @@ macro_rules! impl_read_methods {
             Ok(certifs)
         }
 
-        #[allow(unused)]
         pub async fn get_sequester_authority_certificate(
             &mut self,
         ) -> anyhow::Result<Option<Arc<SequesterAuthorityCertificate>>> {
@@ -1140,7 +1156,6 @@ macro_rules! impl_read_methods {
             Ok(Some(certif))
         }
 
-        #[allow(unused)]
         /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_sequester_service_certificates(
             &mut self,
@@ -1191,7 +1206,6 @@ macro_rules! impl_read_methods {
             .await
         }
 
-        #[allow(unused)]
         pub async fn get_sequester_revoked_service_certificate(
             &mut self,
             up_to: UpTo,
@@ -1308,7 +1322,6 @@ macro_rules! impl_read_methods {
             Ok(Some(Arc::new(certif)))
         }
 
-        #[allow(unused)]
         pub async fn get_last_shamir_recovery_brief_certificate_for_author(
             &mut self,
             up_to: UpTo,
@@ -1342,7 +1355,6 @@ macro_rules! impl_read_methods {
             Ok(Some(Arc::new(certif)))
         }
 
-        #[allow(unused)]
         pub async fn get_last_shamir_recovery_share_certificate_for_recipient(
             &mut self,
             up_to: UpTo,
@@ -1379,7 +1391,6 @@ macro_rules! impl_read_methods {
             Ok(Some(Arc::new(certif)))
         }
 
-        #[allow(unused)]
         pub async fn get_last_shamir_recovery_deletion_certificate_for_author(
             &mut self,
             up_to: UpTo,
@@ -1413,7 +1424,6 @@ macro_rules! impl_read_methods {
             Ok(Some(Arc::new(certif)))
         }
 
-        #[allow(unused)]
         pub async fn get_last_shamir_recovery_for_author(
             &mut self,
             up_to: UpTo,

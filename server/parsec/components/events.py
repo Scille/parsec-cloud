@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import asyncio
 from collections import deque
-from collections.abc import AsyncIterator, Callable, Iterator, Sequence
+from collections.abc import AsyncGenerator, Callable, Generator, Sequence
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from enum import auto
@@ -204,7 +205,7 @@ class EventBus:
             pass
 
     @contextmanager
-    def create_waiter(self, filter: Callable[[Event], bool]) -> Iterator[EventWaiter]:
+    def create_waiter(self, filter: Callable[[Event], bool]) -> Generator[EventWaiter]:
         waiter = EventWaiter(filter)
         self.connect(waiter._cb)
         try:
@@ -213,7 +214,7 @@ class EventBus:
             self.disconnect(waiter._cb)
 
     @contextmanager
-    def spy(self) -> Iterator[EventBusSpy]:
+    def spy(self) -> Generator[EventBusSpy]:
         """Only for tests !"""
         spy = EventBusSpy()
         self.connect(spy._on_event_cb)
@@ -462,11 +463,11 @@ class BaseEventsComponent:
     @asynccontextmanager
     async def sse_api_events_listen(
         self, client_ctx: AuthenticatedClientContext, last_event_id: UUID | None
-    ) -> AsyncIterator[
+    ) -> AsyncGenerator[
         tuple[EventOrganizationConfig, ClientBroadcastableEventStream]
         | SseAPiEventsListenBadOutcome
     ]:
-        async with anyio.open_cancel_scope() as cancel_scope:
+        with anyio.CancelScope() as cancel_scope:
             outcome = await self._register_client(
                 client_ctx=client_ctx, last_event_id=last_event_id, cancel_scope=cancel_scope
             )
@@ -528,15 +529,29 @@ class BaseEventsComponent:
                 transit_mount_path=self._config.openbao_config.transit_mount_path,
                 auths=[
                     anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
-                        id=auth.id.str,
+                        id=auth.id,
                         mount_path=auth.mount_path,
+                        name=auth.name,
+                        help_link=auth.help_link,
+                        icon=auth.icon,
                     )
                     for auth in self._config.openbao_config.auths
                 ],
             )
 
+        if self._config.cryptpad_config is None:
+            cryptpad = anonymous_server_cmds.latest.server_config.CryptPadConfigDisabled()
+        else:
+            cryptpad = anonymous_server_cmds.latest.server_config.CryptPadConfigEnabled(
+                server_url=self._config.cryptpad_config.server_url,
+            )
+
         return anonymous_server_cmds.latest.server_config.RepOk(
             account=account,
             organization_bootstrap=organization_bootstrap,
+            cryptpad=cryptpad,
             openbao=openbao,
+            advisory_device_file_protection=[
+                p.str for p in self._config.advisory_device_file_protection
+            ],
         )

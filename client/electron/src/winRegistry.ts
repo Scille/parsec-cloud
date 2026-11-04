@@ -1,7 +1,10 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+import { createRequire } from 'module';
 import { join } from 'path';
-import { electronIsDev } from './utils';
+import { electronIsDev } from './utils.js';
+
+const _require = createRequire(import.meta.url);
 
 export class WinRegistry {
   private regedit: any = null;
@@ -11,14 +14,14 @@ export class WinRegistry {
     this.APP_GUID = appGuid;
     if (process.platform === 'win32') {
       try {
-        const reg = require('regedit');
+        const reg = _require('regedit');
         if (!electronIsDev) {
           const vbsDirectory = join(appPath, '../vbs');
           reg.setExternalVBSLocation(vbsDirectory);
         }
         this.regedit = reg.promisified;
       } catch (error: any) {
-        console.error('Failed to init regedit', error);
+        console.info('Failed to init regedit', error);
       }
     }
   }
@@ -32,17 +35,18 @@ export class WinRegistry {
       const values = await this.regedit.list([KEY]);
       const longPathValue = values[KEY].values['LongPathsEnabled'];
       if (!longPathValue) {
-        console.warn('`LongPathsEnabled` was not found in registry.');
+        console.info('`LongPathsEnabled` was not found in registry.');
         return false;
       }
       if (longPathValue.type !== 'REG_DWORD') {
-        console.warn('`LongPathsEnabled`has incorrect type.');
+        console.info('`LongPathsEnabled`has incorrect type.');
         return false;
       }
       console.debug(`'${KEY}\\LongPathsEnabled' has value ${longPathValue.value}`);
       return (longPathValue.value as any as number) === 1;
     } catch (e: any) {
-      console.error(`Error while trying to obtain 'LongPathsEnabled' value: ${e.toString()}`);
+      console.info(`Error while trying to obtain 'LongPathsEnabled' value: ${e.toString()}`);
+      return false;
     }
   }
 
@@ -150,7 +154,7 @@ export class WinRegistry {
         },
       });
     } catch (error: any) {
-      console.error('Failed to add mountpoint link to sidebar', error);
+      console.info('Failed to add mountpoint link to sidebar', error);
     }
   }
 

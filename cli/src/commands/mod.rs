@@ -1,12 +1,18 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+#[cfg(feature = "shell-completion")]
+pub mod auto_complete;
 pub mod certificate;
 pub mod device;
 pub mod invite;
 pub mod ls;
-pub mod mount_realm_export;
+#[cfg(feature = "manpage")]
+pub mod man_page;
 pub mod organization;
 pub mod rm;
 #[cfg(feature = "testenv")]
 pub mod run_testenv;
+pub mod sequester;
 pub mod server;
 pub mod shared_recovery;
 pub mod tos;

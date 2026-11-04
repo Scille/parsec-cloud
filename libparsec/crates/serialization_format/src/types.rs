@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -236,19 +236,20 @@ generate_field_type_enum!(
     SequesterServiceID => libparsec_types::SequesterServiceID,
     AccountAuthMethodID => libparsec_types::AccountAuthMethodID,
     AccountVaultItemOpaqueKeyID => libparsec_types::AccountVaultItemOpaqueKeyID,
+    TOTPOpaqueKeyID => libparsec_types::TOTPOpaqueKeyID,
     DeviceLabel => libparsec_types::DeviceLabel,
     HumanHandle => libparsec_types::HumanHandle,
     EmailAddress => libparsec_types::EmailAddress,
     UserProfile => libparsec_types::UserProfile,
     RealmRole => libparsec_types::RealmRole,
-    BootstrapToken => libparsec_types::BootstrapToken,
-    InvitationToken => libparsec_types::InvitationToken,
+    AccessToken => libparsec_types::AccessToken,
     InvitationStatus => libparsec_types::InvitationStatus,
     InvitationType => libparsec_types::InvitationType,
     CertificateSigner => libparsec_types::CertificateSigner,
     BlockAccess => libparsec_types::BlockAccess,
     EntryName => libparsec_types::EntryName,
     FileManifest => libparsec_types::FileManifest,
+    FileManifestOrigin => libparsec_types::FileManifestOrigin,
     FolderManifest => libparsec_types::FolderManifest,
     WorkspaceManifest => libparsec_types::WorkspaceManifest,
     UserManifest => libparsec_types::UserManifest,
@@ -269,4 +270,5 @@ generate_field_type_enum!(
     // Used only in shamir
     ShamirRecoveryShareData => libparsec_types::ShamirRecoveryShareData,
     ShamirShare =>  libparsec_types::ShamirShare,
+    RealmArchivingConfiguration => libparsec_types::RealmArchivingConfiguration,
 );

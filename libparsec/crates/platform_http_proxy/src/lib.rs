@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
@@ -8,7 +8,7 @@ mod web;
 use libparsec_types::prelude::*;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use native::{HTTPS_PROXY, HTTP_PROXY};
+pub use native::{HTTP_PROXY, HTTPS_PROXY};
 
 #[derive(Default, Debug, Clone)]
 pub struct ProxyConfig {

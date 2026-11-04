@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -26,7 +27,7 @@ def get_server_addr_split(request: Request) -> SplitResult | None:
     return request.app.state.server_addr_split
 
 
-redirect_router = APIRouter()
+redirect_router = APIRouter(include_in_schema=False)
 
 
 @redirect_router.get("/redirect/{path:path}")

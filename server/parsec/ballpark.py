@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -83,7 +84,7 @@ def timestamps_in_the_ballpark(
     server: DateTime,
     ballpark_client_early_offset: int = BALLPARK_CLIENT_EARLY_OFFSET,
     ballpark_client_late_offset: int = BALLPARK_CLIENT_LATE_OFFSET,
-) -> None | TimestampOutOfBallpark:
+) -> TimestampOutOfBallpark | None:
     """
     Useful to compare signed message timestamp with the one stored by the server.
 

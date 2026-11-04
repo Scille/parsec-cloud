@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 //! This module defines the type of URL used in Parsec.
 //!
@@ -25,7 +25,7 @@ pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID};
+use crate::{AccessToken, IndexInt, InvitationType, OrganizationID, UserID, VlobID};
 
 pub const PARSEC_SCHEME: &str = "parsec3";
 const HTTP_OR_HTTPS_SCHEME: &str = "http(s)";
@@ -40,6 +40,16 @@ const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
 const PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY: &str = "claim_shamir_recovery";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
 const PARSEC_ACTION_ASYNC_ENROLLMENT: &str = "async_enrollment";
+const PARSEC_ACTION_TOTP_RESET: &str = "totp_reset";
+// The domain "saas-v3.parsec.cloud" is the name of a specific server. It was chosen
+// before the web app was released but there are still some devices created with it.
+// Since this domain was largely hidden from the end-user, we decided, for security reasons,
+// that each server had to host its own web frontend.
+// The domain "app.parsec.cloud", which is much more user friendly, was chosen for the Parsec
+// SaaS web app.
+// See: https://github.com/Scille/parsec-cloud/issues/12377
+const PARSEC_SAAS_SERVER_HOSTNAME_CURRENT: &str = "app.parsec.cloud";
+const PARSEC_SAAS_SERVER_HOSTNAME_LEGACY: &str = "saas-v3.parsec.cloud";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -296,7 +306,14 @@ mod base {
             let port = port.and_then(|p| if p == default_port { None } else { Some(p) });
 
             Self {
-                hostname,
+                // This patch is required because there are still some devices created with the legacy domain
+                // which causes issues on web. See: https://github.com/Scille/parsec-cloud/issues/12377
+                // Also, see comment above (on the lines declaring the LEGACY and CURRENT constants).
+                hostname: if hostname == PARSEC_SAAS_SERVER_HOSTNAME_LEGACY {
+                    PARSEC_SAAS_SERVER_HOSTNAME_CURRENT.to_owned()
+                } else {
+                    hostname
+                },
                 port,
                 use_ssl,
             }
@@ -645,6 +662,7 @@ pub enum ParsecActionAddr {
     Invitation(ParsecInvitationAddr),
     PkiEnrollment(ParsecPkiEnrollmentAddr),
     AsyncEnrollment(ParsecAsyncEnrollmentAddr),
+    TOTPReset(ParsecTOTPResetAddr),
 }
 
 impl ParsecActionAddr {
@@ -657,6 +675,8 @@ impl ParsecActionAddr {
             Ok(ParsecActionAddr::Invitation(addr))
         } else if let Ok(addr) = ParsecAsyncEnrollmentAddr::from_any(url) {
             Ok(ParsecActionAddr::AsyncEnrollment(addr))
+        } else if let Ok(addr) = ParsecTOTPResetAddr::from_any(url) {
+            Ok(ParsecActionAddr::TOTPReset(addr))
         } else {
             ParsecPkiEnrollmentAddr::from_any(url).map(ParsecActionAddr::PkiEnrollment)
         }
@@ -673,6 +693,8 @@ impl ParsecActionAddr {
             Ok(ParsecActionAddr::Invitation(addr))
         } else if let Ok(addr) = ParsecAsyncEnrollmentAddr::_from_url(&parsed) {
             Ok(ParsecActionAddr::AsyncEnrollment(addr))
+        } else if let Ok(addr) = ParsecTOTPResetAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::TOTPReset(addr))
         } else {
             ParsecPkiEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::PkiEnrollment)
         }
@@ -686,17 +708,40 @@ impl std::str::FromStr for ParsecActionAddr {
     fn from_str(url: &str) -> Result<Self, Self::Err> {
         let parsed = url.parse()?;
 
-        if let Ok(addr) = ParsecOrganizationBootstrapAddr::_from_url(&parsed) {
-            Ok(ParsecActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = ParsecWorkspacePathAddr::_from_url(&parsed) {
-            Ok(ParsecActionAddr::WorkspacePath(addr))
-        } else if let Ok(addr) = ParsecInvitationAddr::_from_url(&parsed) {
-            Ok(ParsecActionAddr::Invitation(addr))
-        } else if let Ok(addr) = ParsecAsyncEnrollmentAddr::_from_url(&parsed) {
-            Ok(ParsecActionAddr::AsyncEnrollment(addr))
-        } else {
-            ParsecPkiEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::PkiEnrollment)
-        }
+        ParsecOrganizationBootstrapAddr::_from_url(&parsed)
+            .map(ParsecActionAddr::OrganizationBootstrap)
+            .or_else(|_| {
+                ParsecWorkspacePathAddr::_from_url(&parsed).map(ParsecActionAddr::WorkspacePath)
+            })
+            .or_else(|_| ParsecInvitationAddr::_from_url(&parsed).map(ParsecActionAddr::Invitation))
+            .or_else(|_| {
+                ParsecAsyncEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::AsyncEnrollment)
+            })
+            .or_else(|_| ParsecTOTPResetAddr::_from_url(&parsed).map(ParsecActionAddr::TOTPReset))
+            .or_else(|_| {
+                ParsecPkiEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::PkiEnrollment)
+            })
+            // Must patch the error to avoid too specific "Expected `a=pki_enrollment`" message
+            .map_err(|err| match err {
+                AddrError::InvalidParamValue { param, .. } if param == PARSEC_PARAM_ACTION => {
+                    AddrError::InvalidParamValue {
+                        param,
+                        // Don't forget to update me when new action are added!
+                        help: format!(
+                            "Expected `a=({}|{}|{}|{}|{}|{}|{}|{})`",
+                            PARSEC_ACTION_BOOTSTRAP_ORGANIZATION,
+                            PARSEC_ACTION_WORKSPACE_PATH,
+                            PARSEC_ACTION_CLAIM_USER,
+                            PARSEC_ACTION_CLAIM_DEVICE,
+                            PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY,
+                            PARSEC_ACTION_ASYNC_ENROLLMENT,
+                            PARSEC_ACTION_TOTP_RESET,
+                            PARSEC_ACTION_PKI_ENROLLMENT,
+                        ),
+                    }
+                }
+                err => err,
+            })
     }
 }
 
@@ -711,7 +756,7 @@ impl std::str::FromStr for ParsecActionAddr {
 pub struct ParsecOrganizationBootstrapAddr {
     base: BaseParsecAddr,
     organization_id: OrganizationID,
-    token: Option<BootstrapToken>,
+    token: Option<AccessToken>,
 }
 
 impl_common_stuff!(ParsecOrganizationBootstrapAddr);
@@ -720,7 +765,7 @@ impl ParsecOrganizationBootstrapAddr {
     pub fn new(
         server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
-        token: Option<BootstrapToken>,
+        token: Option<AccessToken>,
     ) -> Self {
         Self {
             base: server_addr.into().base,
@@ -742,7 +787,7 @@ impl ParsecOrganizationBootstrapAddr {
         let token = extract_param_and_b64_msgpack_deserialize!(
             &pairs,
             PARSEC_PARAM_PAYLOAD,
-            Option<BootstrapToken>
+            Option<AccessToken>
         )?;
 
         Ok(Self {
@@ -771,7 +816,7 @@ impl ParsecOrganizationBootstrapAddr {
         &self.organization_id
     }
 
-    pub fn token(&self) -> Option<&BootstrapToken> {
+    pub fn token(&self) -> Option<&AccessToken> {
         self.token.as_ref()
     }
 
@@ -886,7 +931,7 @@ pub struct ParsecInvitationAddr {
     base: BaseParsecAddr,
     organization_id: OrganizationID,
     invitation_type: InvitationType,
-    token: InvitationToken,
+    token: AccessToken,
 }
 
 impl_common_stuff!(ParsecInvitationAddr);
@@ -896,7 +941,7 @@ impl ParsecInvitationAddr {
         server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Self {
         Self {
             base: server_addr.into().base,
@@ -921,14 +966,11 @@ impl ParsecInvitationAddr {
                     help: format!(
                         "Expected `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_USER}`, `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_DEVICE}` or `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY}`"
                     ),
-                })
+                });
             }
         };
-        let token = extract_param_and_b64_msgpack_deserialize!(
-            &pairs,
-            PARSEC_PARAM_PAYLOAD,
-            InvitationToken
-        )?;
+        let token =
+            extract_param_and_b64_msgpack_deserialize!(&pairs, PARSEC_PARAM_PAYLOAD, AccessToken)?;
 
         Ok(Self {
             base,
@@ -968,7 +1010,7 @@ impl ParsecInvitationAddr {
         self.invitation_type
     }
 
-    pub fn token(&self) -> InvitationToken {
+    pub fn token(&self) -> AccessToken {
         self.token
     }
 
@@ -1111,68 +1153,193 @@ impl ParsecAsyncEnrollmentAddr {
 }
 
 /*
- * ParsecActionAddr
+ * ParsecTOTPResetAddr
+ */
+
+/// Represent the URL to reset a TOTP authentication
+///
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=totp_reset&p=kqRhbGljZcQQoAAAAAAAAAAAAAAAAAAAAQ``)  // cspell:disable-line
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ParsecTOTPResetAddr {
+    base: BaseParsecAddr,
+    organization_id: OrganizationID,
+    user_id: UserID,
+    token: AccessToken,
+}
+
+impl_common_stuff!(ParsecTOTPResetAddr);
+
+impl ParsecTOTPResetAddr {
+    pub fn new(
+        server_addr: impl Into<ParsecAddr>,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        token: AccessToken,
+    ) -> Self {
+        Self {
+            base: server_addr.into().base,
+            organization_id,
+            user_id,
+            token,
+        }
+    }
+
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseParsecAddr::from_url(parsed)?;
+        let organization_id = extract_organization_id(parsed)?;
+        let pairs = parsed.0.query_pairs();
+        extract_param_and_expect_value(&pairs, PARSEC_PARAM_ACTION, PARSEC_ACTION_TOTP_RESET)?;
+        let (user_id, token) = extract_param_and_b64_msgpack_deserialize!(
+            &pairs,
+            PARSEC_PARAM_PAYLOAD,
+            (UserID, AccessToken)
+        )?;
+
+        Ok(Self {
+            base,
+            organization_id,
+            user_id,
+            token,
+        })
+    }
+
+    expose_base_parsec_addr_fields!();
+
+    fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .expect("expected url not to be a cannot-be-a-base")
+            .push(self.organization_id.as_ref());
+
+        let payload = b64_msgpack_serialize(&(&self.user_id, self.token));
+
+        url.query_pairs_mut()
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_TOTP_RESET)
+            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
+        url
+    }
+
+    pub fn organization_id(&self) -> &OrganizationID {
+        &self.organization_id
+    }
+
+    pub fn user_id(&self) -> UserID {
+        self.user_id
+    }
+
+    pub fn token(&self) -> AccessToken {
+        self.token
+    }
+
+    pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
+        ParsecOrganizationAddr::new(
+            self.clone(),
+            self.organization_id().clone(),
+            root_verify_key,
+        )
+    }
+}
+
+/*
+ * ParsecAnonymousAddr
  */
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ParsecAnonymousAddr {
+pub struct ParsecAnonymousAddr(ParsecAnonymousAddrInternal);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ParsecAnonymousAddrInternal {
+    Organization(ParsecOrganizationAddr),
     OrganizationBootstrap(ParsecOrganizationBootstrapAddr),
     PkiEnrollment(ParsecPkiEnrollmentAddr),
     AsyncEnrollment(ParsecAsyncEnrollmentAddr),
+    TOTPReset(ParsecTOTPResetAddr),
 }
 
 impl ParsecAnonymousAddr {
+    pub fn new(server_addr: ParsecAddr, organization_id: OrganizationID) -> Self {
+        // Small hack: we benefit from the fact a bootstrap organization can be
+        // constructed from the parameters we have at hand.
+        let addr = ParsecOrganizationBootstrapAddr::new(server_addr, organization_id, None);
+        Self(ParsecAnonymousAddrInternal::OrganizationBootstrap(addr))
+    }
+
     /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
-        let (ParsecAnonymousAddr::OrganizationBootstrap(ParsecOrganizationBootstrapAddr {
+        let (ParsecAnonymousAddrInternal::Organization(ParsecOrganizationAddr {
             base,
             organization_id,
             ..
         })
-        | ParsecAnonymousAddr::PkiEnrollment(ParsecPkiEnrollmentAddr {
+        | ParsecAnonymousAddrInternal::OrganizationBootstrap(ParsecOrganizationBootstrapAddr {
+            base,
+            organization_id,
+            ..
+        })
+        | ParsecAnonymousAddrInternal::PkiEnrollment(ParsecPkiEnrollmentAddr {
             base,
             organization_id,
         })
-        | ParsecAnonymousAddr::AsyncEnrollment(ParsecAsyncEnrollmentAddr {
+        | ParsecAnonymousAddrInternal::AsyncEnrollment(ParsecAsyncEnrollmentAddr {
             base,
             organization_id,
-        })) = self;
+        })
+        | ParsecAnonymousAddrInternal::TOTPReset(ParsecTOTPResetAddr {
+            base,
+            organization_id,
+            ..
+        })) = &self.0;
         base.to_http_url(Some(&format!("/anonymous/{organization_id}")))
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
-        match self {
-            ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.organization_id(),
-            ParsecAnonymousAddr::PkiEnrollment(addr) => addr.organization_id(),
-            ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.organization_id(),
+        match &self.0 {
+            ParsecAnonymousAddrInternal::Organization(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::OrganizationBootstrap(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::PkiEnrollment(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::AsyncEnrollment(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::TOTPReset(addr) => addr.organization_id(),
         }
+    }
+}
+
+impl From<ParsecOrganizationAddr> for ParsecAnonymousAddr {
+    fn from(addr: ParsecOrganizationAddr) -> Self {
+        Self(ParsecAnonymousAddrInternal::Organization(addr))
     }
 }
 
 impl From<ParsecOrganizationBootstrapAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecOrganizationBootstrapAddr) -> Self {
-        Self::OrganizationBootstrap(addr)
+        Self(ParsecAnonymousAddrInternal::OrganizationBootstrap(addr))
     }
 }
 
 impl From<ParsecPkiEnrollmentAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecPkiEnrollmentAddr) -> Self {
-        Self::PkiEnrollment(addr)
+        Self(ParsecAnonymousAddrInternal::PkiEnrollment(addr))
     }
 }
 
 impl From<ParsecAsyncEnrollmentAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecAsyncEnrollmentAddr) -> Self {
-        Self::AsyncEnrollment(addr)
+        Self(ParsecAnonymousAddrInternal::AsyncEnrollment(addr))
+    }
+}
+
+impl From<ParsecTOTPResetAddr> for ParsecAnonymousAddr {
+    fn from(addr: ParsecTOTPResetAddr) -> Self {
+        Self(ParsecAnonymousAddrInternal::TOTPReset(addr))
     }
 }
 
 impl From<ParsecAnonymousAddr> for ParsecAddr {
     fn from(addr: ParsecAnonymousAddr) -> Self {
-        let base = match addr {
-            ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.base,
-            ParsecAnonymousAddr::PkiEnrollment(addr) => addr.base,
-            ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.base,
+        let base = match addr.0 {
+            ParsecAnonymousAddrInternal::Organization(addr) => addr.base,
+            ParsecAnonymousAddrInternal::OrganizationBootstrap(addr) => addr.base,
+            ParsecAnonymousAddrInternal::PkiEnrollment(addr) => addr.base,
+            ParsecAnonymousAddrInternal::AsyncEnrollment(addr) => addr.base,
+            ParsecAnonymousAddrInternal::TOTPReset(addr) => addr.base,
         };
         ParsecAddr { base }
     }

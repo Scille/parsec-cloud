@@ -1,12 +1,17 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 use std::sync::Arc;
 
-use libparsec::{internal::Client, tmp_path, EntryName, EntryStat, LocalDevice, TmpPath, VlobID};
+use libparsec::{EntryName, EntryStat, LocalDevice, TmpPath, VlobID, internal::Client, tmp_path};
 
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::utils::{start_client, StartedClient};
+use parsec_cli::{
+    ui::Ui,
+    utils::{StartedClient, start_client},
+};
 
 struct Setup {
     alice_client: Arc<StartedClient>,
@@ -77,8 +82,9 @@ async fn find_foo_file(client: &Client, wid: VlobID) -> Option<(EntryName, Entry
 /// The goal is to test that the sync command perform an outbound sync.
 #[rstest::rstest]
 #[tokio::test]
-async fn workspace_sync_alice_need_to_sync(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn workspace_sync_alice_need_to_sync(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let Setup {
         alice_client,
@@ -125,8 +131,9 @@ async fn workspace_sync_alice_need_to_sync(tmp_path: TmpPath) {
 /// The goal is to test that the command perform an inbound sync.
 #[rstest::rstest]
 #[tokio::test]
-async fn workspace_sync_bob_need_to_sync(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn workspace_sync_bob_need_to_sync(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let Setup {
         alice_client,

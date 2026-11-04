@@ -99,7 +99,7 @@ class WebhooksComponent:
         version: int,
         timestamp: DateTime,
         blob: bytes,
-    ) -> None | SequesterServiceUnavailable | RejectedBySequesterService:
+    ) -> SequesterServiceUnavailable | RejectedBySequesterService | None:
         # Proceed webhook service before storage (guarantee data are not stored if they are rejected)
         try:
             ret = await self._http_client.post(
@@ -174,7 +174,7 @@ class WebhooksComponent:
         encryption_algorithm: SecretKeyAlgorithm,
         hash_algorithm: HashAlgorithm,
         key_canary: bytes,
-    ) -> None | SequesterServiceUnavailable | RejectedBySequesterService:
+    ) -> SequesterServiceUnavailable | RejectedBySequesterService | None:
         # Proceed webhook service before storage (guarantee data are not stored if they are rejected)
         try:
             ret = await self._http_client.post(
@@ -236,3 +236,55 @@ class WebhooksComponent:
             return SequesterServiceUnavailable(
                 service_id=service_id,
             )
+
+
+class MockedWebhooksComponent(WebhooksComponent):
+    """
+    Webhooks that does nothing,
+
+    Used when creating components that require a webhook class but we do not except that component to use webhook (useful for tasks)"""
+
+    def __init__(self) -> None:
+        pass
+
+    async def on_organization_bootstrap(
+        self,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        device_label: DeviceLabel,
+        human_email: EmailAddress,
+        human_label: str,
+    ) -> None:
+        return None
+
+    async def sequester_service_on_vlob_create_or_update(
+        self,
+        webhook_url: str,
+        service_id: SequesterServiceID,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: VlobID,
+        vlob_id: VlobID,
+        key_index: int,
+        version: int,
+        timestamp: DateTime,
+        blob: bytes,
+    ) -> SequesterServiceUnavailable | RejectedBySequesterService | None:
+        return None
+
+    async def sequester_service_on_realm_rotate_key(
+        self,
+        webhook_url: str,
+        service_id: SequesterServiceID,
+        organization_id: OrganizationID,
+        keys_bundle: bytes,
+        keys_bundle_access: bytes,
+        author: DeviceID,
+        timestamp: DateTime,
+        realm_id: VlobID,
+        key_index: int,
+        encryption_algorithm: SecretKeyAlgorithm,
+        hash_algorithm: HashAlgorithm,
+        key_canary: bytes,
+    ) -> SequesterServiceUnavailable | RejectedBySequesterService | None:
+        return None

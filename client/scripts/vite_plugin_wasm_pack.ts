@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import fs from 'fs-extra';
 import crypto from 'crypto';
@@ -83,7 +83,7 @@ function vitePluginWasmPack(
       }
     },
 
-    transform(code: string, id: string): void {
+    transform(_code: string, id: string): void {
       // Add watchers to detect changes on the crate
       if (id.indexOf(prefix) === 0) {
         const source = id.replace(prefix, '');

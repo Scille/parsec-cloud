@@ -1,15 +1,11 @@
-Hello!
-
+{% extends "email/base.txt.j2" %}
+{% block main_content %}
 You have requested to delete your Parsec Account.
 
 To confirm your Parsec Account deletion, use the following code:
 
 {{ validation_code }}
 
-Thank you,
-
-Parsec Cloud team
-https://parsec.cloud/
-
-If you didn’t request this email, then someone has access to your account you should take the appropriate actions.
-Sorry about that. You can safely ignore this email or get in touch with us to report it.
+If you didn't request this email, someone may have accessed your account.
+Please get in touch with us to report it.
+{% endblock %}

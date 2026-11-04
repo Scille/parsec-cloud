@@ -1,12 +1,12 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
 use libparsec_types::prelude::*;
 
 use crate::workspace::{
-    store::{ReadChunkOrBlockLocalOnlyError, UpdateFileManifestAndContinueError},
     OpenedFile, WorkspaceOps, WriteMode,
+    store::{ReadChunkOrBlockLocalOnlyError, UpdateFileManifestAndContinueError},
 };
 
 use super::prepare_reshape;
@@ -172,10 +172,10 @@ async fn reshape(
                             break;
                         }
                         Err(ReadChunkOrBlockLocalOnlyError::Stopped) => {
-                            return Err(ReshapeAndFlushError::Stopped)
+                            return Err(ReshapeAndFlushError::Stopped);
                         }
                         Err(ReadChunkOrBlockLocalOnlyError::Internal(err)) => {
-                            return Err(err.context("cannot read chunks").into())
+                            return Err(err.context("cannot read chunks").into());
                         }
                     }
                 }

@@ -5,12 +5,14 @@
 from __future__ import annotations
 
 from . import (
+    async_enrollment_cancel,
     async_enrollment_info,
     async_enrollment_submit,
     organization_bootstrap,
     ping,
-    pki_enrollment_info,
-    pki_enrollment_submit,
+    totp_fetch_opaque_key,
+    totp_setup_confirm,
+    totp_setup_get_secret,
 )
 
 class AnyCmdReq:
@@ -18,20 +20,24 @@ class AnyCmdReq:
     def load(
         cls, raw: bytes
     ) -> (
-        async_enrollment_info.Req
+        async_enrollment_cancel.Req
+        | async_enrollment_info.Req
         | async_enrollment_submit.Req
         | organization_bootstrap.Req
         | ping.Req
-        | pki_enrollment_info.Req
-        | pki_enrollment_submit.Req
+        | totp_fetch_opaque_key.Req
+        | totp_setup_confirm.Req
+        | totp_setup_get_secret.Req
     ): ...
 
 __all__ = [
     "AnyCmdReq",
+    "async_enrollment_cancel",
     "async_enrollment_info",
     "async_enrollment_submit",
     "organization_bootstrap",
     "ping",
-    "pki_enrollment_info",
-    "pki_enrollment_submit",
+    "totp_fetch_opaque_key",
+    "totp_setup_confirm",
+    "totp_setup_get_secret",
 ]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     BlockID,
     DateTime,
@@ -11,7 +12,6 @@ from parsec._parsec import (
     DeviceLabel,
     EmailAddress,
     HumanHandle,
-    InvitationToken,
     PrivateKey,
     RealmArchivingCertificate,
     RealmKeyRotationCertificate,
@@ -156,18 +156,18 @@ class TestbedEventNewUserInvitation:
     claimer_email: EmailAddress
     created_by: DeviceID
     created_on: DateTime
-    token: InvitationToken
+    token: AccessToken
 
 class TestbedEventNewDeviceInvitation:
     created_by: DeviceID
     created_on: DateTime
-    token: InvitationToken
+    token: AccessToken
 
 class TestbedEventNewShamirRecoveryInvitation:
     claimer: UserID
     created_by: DeviceID
     created_on: DateTime
-    token: InvitationToken
+    token: AccessToken
 
 class TestbedEventNewRealm:
     timestamp: DateTime
@@ -220,6 +220,10 @@ class TestbedEventArchiveRealm:
     raw_redacted_certificate: bytes
     raw_certificate: bytes
 
+class TestbedEventDeleteRealm:
+    timestamp: DateTime
+    realm: VlobID
+
 class TestbedEventNewShamirRecovery:
     timestamp: DateTime
     user_id: UserID
@@ -228,7 +232,7 @@ class TestbedEventNewShamirRecovery:
     per_recipient_shares: dict[UserID, int]
     recovery_device: DeviceID
     data_key: SecretKey
-    reveal_token: InvitationToken
+    reveal_token: AccessToken
 
     ciphered_data: bytes
     brief_certificate: ShamirRecoveryBriefCertificate
@@ -282,8 +286,8 @@ class TestbedEventUpdateOrganization:
     is_expired: bool | UnsetType
     active_users_limit: ActiveUsersLimit | UnsetType
     user_profile_outsider_allowed: bool | UnsetType
-    minimum_archiving_period: int | UnsetType
-    tos: None | dict[str, str] | UnsetType
+    realm_minimum_archiving_period_before_deletion: int | UnsetType
+    tos: dict[str, str] | UnsetType | None
 
 TestbedEvent = (
     TestbedEventBootstrapOrganization
@@ -301,6 +305,7 @@ TestbedEvent = (
     | TestbedEventRenameRealm
     | TestbedEventRotateKeyRealm
     | TestbedEventArchiveRealm
+    | TestbedEventDeleteRealm
     | TestbedEventNewShamirRecovery
     | TestbedEventDeleteShamirRecovery
     | TestbedEventCreateOrUpdateOpaqueVlob

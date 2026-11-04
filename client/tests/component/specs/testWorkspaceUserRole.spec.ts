@@ -1,16 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockRouter } from '@tests/component/support/mocks';
-import { describe, expect, it } from 'vitest';
-
-// Mock before importing anything else
-mockRouter();
-
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, WorkspaceRole } from '@/parsec';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { MsDropdown } from 'megashark-lib';
+import { describe, expect, it } from 'vitest';
 
 describe('Workspace user role selector', () => {
   it('Display workspace user role selector', () => {

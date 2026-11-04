@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 export enum PageToWindowChannel {
   ConfigUpdate = 'parsec-config-update',
@@ -17,6 +17,8 @@ export enum PageToWindowChannel {
   PageInitError = 'parsec-page-init-error',
   GetLogs = 'parsec-get-logs',
   OpenPopup = 'parsec-open-popup',
+  SetupActionMenu = 'parsec-setup-action-menu',
+  SetWindowTheme = 'parsec-set-window-theme',
 }
 
 export enum WindowToPageChannel {
@@ -31,4 +33,5 @@ export enum WindowToPageChannel {
   CustomBrandingFolder = 'parsec-custom-branding-folder',
   LogRecords = 'parsec-log-records',
   SSOComplete = 'parsec-sso-complete',
+  MenuActionClicked = 'parsec-menu-action-clicked',
 }

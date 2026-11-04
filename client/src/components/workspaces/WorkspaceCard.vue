@@ -1,16 +1,22 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div
     class="workspace-card-item ion-no-padding"
-    :class="{ 'workspace-hovered': isHovered || menuOpened }"
+    :class="{
+      'workspace-card-item--hovered': isHovered || menuOpened,
+      'workspace-card-item--hidden': isHidden,
+      'workspace-card-item--archived': workspace.isArchived,
+      'workspace-card-item--trashed': workspace.isTrashed,
+    }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    @contextmenu="onOptionsClick"
+    @contextmenu.stop="onOptionsClick"
   >
     <div class="workspace-card-content">
       <div
+        v-show="!workspace.isArchived && !workspace.isTrashed"
         class="workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
@@ -22,14 +28,17 @@
       </div>
 
       <ion-text
-        class="workspace-card-content__title subtitles-sm"
-        :title="workspace.currentName"
+        class="workspace-card-content__title"
+        :title="workspace.name"
       >
-        {{ workspace.currentName }}
+        {{ workspace.name }}
       </ion-text>
 
       <div class="workspace-card-content-info">
-        <ion-text class="workspace-card-content__update subtitles-sm">
+        <ion-text
+          class="workspace-card-content__update"
+          v-if="!workspace.isArchived && !workspace.isTrashed"
+        >
           <span v-if="false">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
           <ion-icon
             class="cloud-overlay"
@@ -37,23 +46,73 @@
             :icon="workspace.availableOffline ? cloudDone : cloudOffline"
           />
         </ion-text>
-
         <ion-text
-          class="workspace-card-content__size body-sm"
+          class="workspace-card-content__update"
+          v-else
+        >
+          <span v-if="workspace.isArchived && workspace.archivedOn">{{
+            $msTranslate({
+              key: 'WorkspacesPage.archiveWorkspace.timestamp',
+              data: { timestamp: $msTranslate(I18n.formatDate(workspace.archivedOn, 'full')) },
+            })
+          }}</span>
+          <span v-if="workspace.isTrashed && workspace.deletionDate">{{ $msTranslate('WorkspacesPage.trashWorkspace.timestamp') }}</span>
+          <span
+            v-if="workspace.isTrashed && workspace.deletionDate"
+            class="deletion-date"
+          >
+            {{ $msTranslate(I18n.formatDate(workspace.deletionDate, 'full')) }}
+          </span>
+        </ion-text>
+        <ion-text
+          class="workspace-card-content__size"
           v-if="false"
         >
           {{ $msTranslate(formatFileSize(workspace.size)) }}
         </ion-text>
+
+        <div
+          class="workspace-hidden"
+          v-if="isHidden && !workspace.isArchived && !workspace.isTrashed"
+        >
+          <ion-icon
+            class="cloud-overlay"
+            :icon="eyeOff"
+          />
+          <ion-text>{{ $msTranslate('WorkspacesPage.Workspace.hidden') }}</ion-text>
+        </div>
+        <ion-icon
+          v-if="workspace.isArchived"
+          class="custom-icon"
+          :icon="archive"
+        />
+        <ion-icon
+          v-if="workspace.isTrashed"
+          class="custom-icon"
+          :icon="trash"
+        />
       </div>
     </div>
     <div class="workspace-card-bottom">
-      <workspace-role-tag
-        class="workspace-card-bottom__role"
-        :role="workspace.currentSelfRole"
+      <workspace-missing-ownership
+        v-if="workspace.canSelfPromoteToOwner"
+        :show-text="true"
+        @click.stop="$emit('selfPromoteClick', workspace, $event)"
       />
+      <workspace-role-tag
+        v-else-if="!workspace.isArchived"
+        class="workspace-card-bottom__role"
+        :role="workspace.selfRole"
+      />
+      <ion-text
+        v-else
+        class="archived-label"
+      >
+        {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+      </ion-text>
       <div class="workspace-card-bottom__icons">
         <div
-          v-show="clientProfile !== UserProfile.Outsider"
+          v-show="clientProfile !== UserProfile.Outsider && !workspace.isArchived && !workspace.canSelfPromoteToOwner"
           class="icon-share-container"
           @click.stop="$emit('shareClick', workspace, $event)"
         >
@@ -79,10 +138,11 @@
 <script setup lang="ts">
 import { formatFileSize } from '@/common/file';
 import { WorkspaceRoleTag } from '@/components/workspaces';
+import WorkspaceMissingOwnership from '@/components/workspaces/WorkspaceMissingOwnership.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';
-import { formatTimeSince } from 'megashark-lib';
+import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star, trash } from 'ionicons/icons';
+import { formatTimeSince, I18n } from 'megashark-lib';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
@@ -92,6 +152,7 @@ const props = defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
+  isHidden: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -99,6 +160,7 @@ const emits = defineEmits<{
   (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'menuClick', workspace: WorkspaceInfo, event: Event, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'selfPromoteClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 
 async function onOptionsClick(event: Event): Promise<void> {
@@ -115,13 +177,16 @@ async function onOptionsClick(event: Event): Promise<void> {
   cursor: pointer;
   text-align: center;
   user-select: none;
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-disabled);
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+  background: ms.color('surface-base-default');
+  box-shadow: ms.shadow('elevation-sm');
   max-width: 16rem;
   width: 100%;
   overflow: hidden;
-  padding: 0.25rem;
+  padding: ms.spacing('padding-sm');
   transition: all 0.15s ease-in-out;
+  min-width: 14rem;
 
   @include ms.responsive-breakpoint('sm') {
     max-width: 100%;
@@ -131,63 +196,76 @@ async function onOptionsClick(event: Event): Promise<void> {
     max-width: 100%;
   }
 
-  &:hover {
-    border: 1px solid var(--parsec-color-light-secondary-medium) !important;
-    box-shadow: var(--parsec-shadow-light);
+  &:hover,
+  &--hovered {
+    border-color: ms.color('border-neutral-default-subtle-hover');
+    box-shadow: ms.shadow('elevation-xs');
+
+    .workspace-card-content {
+      background: ms.color('surface-elevated-subtle-hover');
+    }
+
+    .workspace-card-bottom__icons {
+      opacity: 1;
+    }
   }
 }
 
 .workspace-favorite-icon {
   display: flex;
   align-items: center;
-  font-size: 1.25rem;
+  font-size: 1rem;
   margin-left: auto;
-  padding: 0.25rem;
-  border-radius: var(--parsec-radius-6);
+  padding: ms.spacing('padding-sm');
+  border-radius: ms.radius('md');
   transition: color 150ms ease-out;
   position: absolute;
-  right: 0.75rem;
-  top: 0.75rem;
+  right: ms.spacing('padding-2xl');
+  top: ms.spacing('padding-2xl');
   z-index: 10;
 
   &__on {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('icon-brand-default');
 
     &:hover {
-      background: var(--parsec-color-light-primary-100);
-      color: var(--parsec-color-light-primary-700);
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('icon-brand-default-hover');
     }
   }
 
   &__off {
-    color: var(--parsec-color-light-secondary-light);
+    color: ms.color('icon-disabled-default');
+    opacity: ms.opacity('disabled');
 
     &:hover {
-      background: var(--parsec-color-light-primary-100);
-      color: var(--parsec-color-light-primary-600);
-      opacity: 0.9;
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('icon-brand-default-hover');
+      opacity: ms.opacity('9');
     }
   }
 }
 
 .workspace-card-content {
   transition: all 0.15s ease-in-out;
-  padding: 1.5rem 1rem;
+  padding: ms.spacing('padding-3xl') ms.spacing('padding-3xl');
   width: 100%;
-  background: var(--parsec-color-light-secondary-premiere);
-  border-radius: var(--parsec-radius-8);
+  background: ms.color('surface-elevated-subtle');
+  border-radius: ms.radius('lg');
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   overflow: hidden;
+  position: relative;
 
   &__title {
-    color: var(--parsec-color-light-primary-900);
-    font-size: 18px;
+    @include ms.font('heading-h4');
+    color: ms.color('text-base-heading');
     text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    align-items: center;
+    gap: ms.spacing('gap-lg');
     margin-right: 1.125rem;
 
     ion-text {
@@ -200,24 +278,24 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   &__update {
     display: flex;
-    align-items: center;
     justify-content: flex-start;
-    color: var(--parsec-color-light-secondary-grey);
-    gap: 0.25rem;
+    @include ms.font('body-md-medium');
+    color: ms.color('text-base-description');
+    gap: ms.spacing('gap-sm');
 
     .cloud-overlay {
       font-size: 1rem;
-      padding: 0.25rem;
-      border-radius: 50%;
-      background: var(--parsec-color-light-secondary-white);
+      padding: ms.spacing('padding-sm');
+      border-radius: ms.radius('full');
+      background: ms.color('surface-base-default');
     }
 
     .cloud-overlay-ok {
-      color: var(--parsec-color-light-primary-500);
+      color: ms.color('icon-brand-default');
     }
 
     .cloud-overlay-ko {
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('icon-neutral-default');
     }
   }
 
@@ -228,36 +306,38 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   &__size {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  &:hover {
-    background: var(--parsec-color-light-primary-50);
+    @include ms.font('body-sm-regular');
+    color: ms.color('text-base-description');
   }
 }
 
 .workspace-card-bottom {
-  background-color: var(--parsec-color-light-secondary-white);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.375rem;
+  padding: ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-md');
+  position: relative;
 
   &__icons {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    color: ms.color('icon-neutral-default');
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.25rem;
+    gap: ms.spacing('gap-2xl');
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+
+    @include ms.responsive-breakpoint('sm') {
+      opacity: 1;
+    }
 
     .icon-option-container,
     .icon-share-container {
       display: flex;
       align-items: center;
-      padding: 0.25rem;
-      border-radius: var(--parsec-radius-6);
+      padding: ms.spacing('padding-sm');
+      border-radius: ms.radius('md');
       transition: background 0.15s ease-in-out;
-      gap: 0.25rem;
+      gap: ms.spacing('gap-sm');
 
       .icon-option,
       .icon-share {
@@ -269,13 +349,88 @@ async function onOptionsClick(event: Event): Promise<void> {
       }
 
       &:hover {
-        background: var(--parsec-color-light-primary-50);
-        color: var(--parsec-color-light-primary-600);
+        background: ms.color('surface-brand-default-subtle');
+        color: ms.color('icon-brand-default');
       }
     }
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0 0.25rem;
+      padding: 0 ms.spacing('padding-sm');
+    }
+  }
+}
+
+.workspace-card-item--hidden {
+  .workspace-hidden {
+    @include ms.font('label-md-medium');
+    background: ms.color('surface-base-default-secondary');
+    color: ms.color('text-base-label');
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: ms.spacing('gap-md');
+    padding: 3px ms.spacing('padding-lg');
+    border-radius: ms.radius('lg');
+
+    ion-icon {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.workspace-card-item--archived,
+.workspace-card-item--trashed {
+  position: relative;
+
+  .custom-icon {
+    color: ms.color('icon-neutral-default');
+    opacity: ms.opacity('2');
+    position: absolute;
+    top: ms.spacing('padding-sm');
+    right: -1rem;
+    margin: 0 0 auto auto;
+    font-size: 4.5rem;
+  }
+
+  .workspace-card-bottom__icons {
+    padding: ms.spacing('padding-none');
+    opacity: 1;
+  }
+
+  .workspace-card-content {
+    box-shadow: ms.shadow('elevation-xs');
+  }
+}
+
+.workspace-card-item--archived {
+  .archived-label {
+    @include ms.font('label-md-medium');
+    display: flex;
+    align-items: center;
+    background: ms.color('surface-neutral-default-subtle');
+    border-radius: ms.radius('lg');
+    padding: 0.1875rem ms.spacing('padding-md');
+    color: ms.color('text-information-default');
+  }
+}
+
+.workspace-card-item--trashed {
+  .workspace-card-content__update {
+    position: relative;
+    text-align: start;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-sm');
+
+    .deletion-date {
+      @include ms.font('label-md-medium');
+      width: fit-content;
+      background: ms.color('surface-error-default-subtle');
+      color: ms.color('text-error-default');
+      border-radius: ms.radius('md');
+      padding: 0.1875rem ms.spacing('padding-md');
+      box-shadow: ms.shadow('elevation-xs');
     }
   }
 }

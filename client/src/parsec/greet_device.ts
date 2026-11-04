@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import {
   ClientNewDeviceInvitationError,
@@ -16,7 +16,7 @@ import {
   createDeviceInvitation,
 } from '@/parsec';
 import { generateNoHandleError } from '@/parsec/utils';
-import { InvitationToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
+import { AccessToken, ParsecInvitationAddr, ParsecInvitationRedirectionURL, SASCode, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 
 export class DeviceGreet {
@@ -26,8 +26,8 @@ export class DeviceGreet {
   correctSASCode: SASCode;
   SASCodeChoices: SASCode[];
   requestedDeviceLabel: DeviceLabel;
-  token: InvitationToken;
-  invitationLink: ParsecInvitationAddr;
+  token: AccessToken;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
 
   constructor() {
     this.handle = null;
@@ -72,7 +72,7 @@ export class DeviceGreet {
     }
   }
 
-  setInvitationInformation(invitationLink: string, token: string): void {
+  setInvitationInformation(invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL, token: string): void {
     this.invitationLink = invitationLink;
     this.token = token;
   }
@@ -81,7 +81,8 @@ export class DeviceGreet {
     const result = await createDeviceInvitation(sendEmail);
 
     if (result.ok) {
-      this.invitationLink = result.value.addr;
+      const [invitationAddr, _] = result.value.addr;
+      this.invitationLink = invitationAddr;
       this.token = result.value.token;
     }
     return result;

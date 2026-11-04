@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -60,7 +60,7 @@ pub async fn submitter_get_async_enrollment_info(
                 return Err(SubmitterGetAsyncEnrollmentInfoError::EnrollmentNotFound);
             }
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
             }
         }
     };

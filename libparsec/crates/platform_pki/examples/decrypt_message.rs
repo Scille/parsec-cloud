@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![allow(clippy::unwrap_used)]
 
 mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::decrypt_message;
+use libparsec_platform_pki::PkiSystem;
 use libparsec_types::{PKIEncryptionAlgorithm, X509CertificateHash};
 
 #[derive(Debug, Parser)]
@@ -20,29 +21,37 @@ struct Args {
     algorithm: PKIEncryptionAlgorithm,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
 
     let cert_ref = args.certificate_hash.into();
-    let b64_data = args.content.into_bytes()?;
-    let data = data_encoding::BASE64
-        .decode(&b64_data)
-        .context("Failed to decode hex encoded data")?;
+    let data = args.content.into_bytes()?;
 
-    let res =
-        decrypt_message(args.algorithm, &data, &cert_ref).context("Failed to decrypt message")?;
+    // Config dir is only used for testbed, we can safely provide an empty path here
+    let pki = PkiSystem::init(std::path::Path::new(""), None)
+        .await
+        .context("Failed to initialize PKI system")?;
+    let cert = pki
+        .open_certificate(&cert_ref)
+        .await
+        .context("Failed to find certificate")?;
 
+    let key = cert
+        .request_private_key()
+        .await
+        .context("Failed to get private key")?;
+    let data = key
+        .decrypt(args.algorithm, &data)
+        .await
+        .context("Failed to decrypt message")?;
+
+    println!("Decrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(
-        "Decrypted by cert with id {{{}}} with algo {}",
-        &res.cert_ref.uris().next().unwrap(),
-        args.algorithm
-    );
-    println!("Decrypted by cert with fingerprint: {}", res.cert_ref.hash);
-    println!(
-        "Decrypted data: {}",
-        data_encoding::BASE64.encode_display(&res.data)
+        "Decrypted data (in base64): {}",
+        data_encoding::BASE64.encode_display(&data)
     );
 
     Ok(())

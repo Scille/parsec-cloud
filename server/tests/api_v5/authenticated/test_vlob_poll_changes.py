@@ -7,6 +7,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
@@ -145,6 +146,16 @@ async def test_authenticated_vlob_poll_changes_ok(
     )
 
 
+async def test_authenticated_vlob_poll_changes_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_poll_changes(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        last_checkpoint=0,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.vlob_poll_changes.RepOk)
+
+
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_vlob_poll_changes_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
@@ -172,6 +183,16 @@ async def test_authenticated_vlob_poll_changes_realm_not_found(
     bad_realm_id = VlobID.new()
     rep = await coolorg.alice.vlob_poll_changes(realm_id=bad_realm_id, last_checkpoint=0)
     assert rep == authenticated_cmds.latest.vlob_poll_changes.RepRealmNotFound()
+
+
+async def test_authenticated_vlob_poll_changes_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_poll_changes(
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        last_checkpoint=0,
+    )
+    assert rep == authenticated_cmds.latest.vlob_poll_changes.RepRealmDeleted()
 
 
 async def test_authenticated_vlob_poll_changes_http_common_errors(

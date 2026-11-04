@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     OrganizationID,
 )
@@ -29,7 +30,7 @@ WITH new_organization AS (
         _bootstrapped_on,
         is_expired,
         _expired_on,
-        minimum_archiving_period,
+        realm_minimum_archiving_period_before_deletion,
         tos_updated_on,
         tos_per_locale_urls
     )
@@ -42,7 +43,7 @@ WITH new_organization AS (
         NULL,
         FALSE,
         NULL,
-        $minimum_archiving_period,
+        $realm_minimum_archiving_period_before_deletion,
         CASE
             WHEN $tos_per_locale_urls::JSON IS NULL
                 THEN NULL::TIMESTAMPTZ
@@ -60,7 +61,7 @@ WITH new_organization AS (
             _created_on = excluded._created_on,
             is_expired = excluded.is_expired,
             _expired_on = excluded._expired_on,
-            minimum_archiving_period = excluded.minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion = excluded.realm_minimum_archiving_period_before_deletion,
             tos_updated_on = excluded.tos_updated_on,
             tos_per_locale_urls = excluded.tos_per_locale_urls
         WHERE organization.root_verify_key IS NULL
@@ -101,9 +102,9 @@ async def organization_create(
     id: OrganizationID,
     active_users_limit: ActiveUsersLimit,
     user_profile_outsider_allowed: bool,
-    minimum_archiving_period: int,
+    realm_minimum_archiving_period_before_deletion: int,
     tos_per_locale_urls: dict[TosLocale, TosUrl] | None,
-    bootstrap_token: BootstrapToken | None,
+    bootstrap_token: AccessToken | None,
 ) -> int | OrganizationCreateBadOutcome:
     organization_internal_id = await conn.fetchval(
         *_q_insert_organization(
@@ -114,7 +115,7 @@ async def organization_create(
             else None,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             created_on=now,
-            minimum_archiving_period=minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion=realm_minimum_archiving_period_before_deletion,
             tos_per_locale_urls=tos_per_locale_urls,
         )
     )

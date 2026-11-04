@@ -50,7 +50,7 @@ This configuration is included in a certificate signed by the owner:
         },
         {
             "name": "realm_id",
-            "type": "RealmID",
+            "type": "VlobID",
         }
         {
             "name": "configuration",
@@ -60,6 +60,7 @@ This configuration is included in a certificate signed by the owner:
     "nested_types": [
         {
             "name": "RealmArchivingConfiguration",
+            "discriminant_field": "type",
             "variants": [
                 {
                     "name": "Available",

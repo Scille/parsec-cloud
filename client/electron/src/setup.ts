@@ -1,31 +1,53 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { CapElectronEventEmitter, setupCapacitorElectronPlugins } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
-import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, shell } from 'electron';
-import log from 'electron-log/main';
-import electronServe from 'electron-serve';
+import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, nativeTheme, shell } from 'electron';
+import log from 'electron-log/main.js';
 import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
 import { join } from 'path';
-import { WindowToPageChannel } from './communicationChannels';
-import { Env } from './envVariables';
-import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
-import { electronIsDev } from './utils';
-import { WinRegistry } from './winRegistry';
+import { WindowToPageChannel } from './communicationChannels.js';
+import { Env } from './envVariables.js';
+import { FEATURE_FLAGS } from './features.js';
+import { serveDirectories } from './serveDirectory.js';
+import AppUpdater, { UpdaterState, createAppUpdater } from './updater.js';
+import { electronIsDev } from './utils.js';
+import { WinRegistry } from './winRegistry.js';
+
+export interface CapacitorElectronConfig {
+  electron?: {
+    customUrlScheme?: string;
+    trayIconAndMenuEnabled?: boolean;
+    deepLinkingEnabled?: boolean;
+    deepLinkingCustomProtocol?: string;
+    backgroundColor?: string;
+  };
+}
 
 const AUTHORIZED_PROTOCOLS = ['http', 'https', 'parsec3'];
 const CHECK_UPDATE_INTERVAL = 1000 * 60 * 60; // 1 hour
+// `overlay` colors are the `normal` ones under a modal or popover backdrop.
+// Keep in sync with the theme and the backdrop opacity in src/theme.
+const WINDOW_CONTROLS_COLORS = {
+  light: {
+    normal: { color: '#fcfcfc', symbolColor: '#006eff' },
+    overlay: { color: '#909090', symbolColor: '#004bad' },
+  },
+  dark: {
+    normal: { color: '#171725', symbolColor: '#ffffff' },
+    overlay: { color: '#13131a', symbolColor: '#adadad' },
+  },
+};
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
-const reloadWatcher = {
+const reloadWatcher: any = {
   debouncer: null,
   ready: false,
   watcher: null,
 };
-export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): void {
+
+export function setupReloadWatcher(electronCapacitorApp: ParsecApp): void {
   reloadWatcher.watcher = chokidar
     .watch(join(app.getAppPath(), 'app'), {
       ignored: /[/\\]\./,
@@ -50,17 +72,17 @@ export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): 
 }
 
 // Define our class to manage our app.
-export class ElectronCapacitorApp {
-  private MainWindow: BrowserWindow;
-  private TrayIcon: Tray;
+export class ParsecApp {
+  private MainWindow!: BrowserWindow;
+  private TrayIcon!: Tray;
   private CapacitorFileConfig: CapacitorElectronConfig;
   private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [];
   private AppMenuBarMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
     { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
     { role: 'viewMenu' },
   ];
-  private mainWindowState;
-  private loadWebApp;
+  private mainWindowState!: windowStateKeeper.State;
+  private loadWebApp: (window: BrowserWindow) => Promise<void>;
   private customScheme: string;
   private config: object;
   public forceClose: boolean;
@@ -92,7 +114,7 @@ export class ElectronCapacitorApp {
     for (let i = 1; i < process.argv.length; i++) {
       const arg = process.argv.at(i);
       // We're only interested in potential Parsec links
-      if (arg.startsWith('parsec3://')) {
+      if (arg && arg.startsWith('parsec3://')) {
         if (this.storedLink) {
           this.log('warn', `Multiple links were passed as arguments, using only the first: ${this.storedLink}`);
         } else {
@@ -115,16 +137,16 @@ export class ElectronCapacitorApp {
 
     // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
     this.log('debug', 'Setting up web app loader');
-    this.loadWebApp = electronServe({
-      directory: join(app.getAppPath(), 'app'),
-      scheme: this.customScheme,
-    });
+    [this.loadWebApp] = serveDirectories([
+      { scheme: this.customScheme, directory: 'app' },
+      { scheme: 'parsec-editics', directory: 'app-editics' },
+    ]);
 
-    if (Env.DISABLE_UPDATES) {
-      this.log('info', 'Disabled application updates');
-    } else {
+    if (FEATURE_FLAGS.updatesEnabled()) {
       this.log('info', 'Setting up application updates');
       this.updater = createAppUpdater();
+    } else {
+      this.log('info', 'Disabled application updates');
     }
 
     if (this.updater) {
@@ -134,7 +156,7 @@ export class ElectronCapacitorApp {
 
       // Check periodically if an update is available
       setInterval(async () => {
-        await this.updater.checkForUpdates();
+        await this.updater?.checkForUpdates();
       }, CHECK_UPDATE_INTERVAL);
     } else if (!electronIsDev) {
       this.log('warn', 'Could not enable application updates');
@@ -142,12 +164,12 @@ export class ElectronCapacitorApp {
   }
 
   // Helper function to load in the app.
-  private async loadMainWindow(thisRef: any): Promise<void> {
-    await thisRef.loadWebApp(thisRef.MainWindow);
+  private async loadMainWindow(): Promise<void> {
+    await this.loadWebApp(this.MainWindow);
   }
 
   async quitApp(): Promise<void> {
-    await this.winRegistry.removeMountpointFromQuickAccess();
+    await this.winRegistry?.removeMountpointFromQuickAccess();
     app.quit();
   }
 
@@ -222,30 +244,35 @@ export class ElectronCapacitorApp {
         label: locale === 'fr-FR' ? 'Quitter' : 'Quit',
         click: () => {
           this.MainWindow.show();
-          this.sendEvent(WindowToPageChannel.CloseRequest, this.skipConfirmBeforeQuit());
+          this.sendEvent(WindowToPageChannel.CloseRequest);
         },
       }),
     ];
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
-    this.setAppMenu(locale);
+  }
+
+  setWindowTheme(themePreference: 'system' | 'light' | 'dark', theme: 'light' | 'dark', overlay: boolean): void {
+    // Chromium uses the native theme for the hover color on title bar buttons.
+    // This is also what `prefers-color-scheme` reads, so "system" must stay as such for the page to see the OS changes.
+    if (nativeTheme.themeSource !== themePreference) {
+      nativeTheme.themeSource = themePreference;
+    }
+    const colors = WINDOW_CONTROLS_COLORS[theme];
+    this.MainWindow.setBackgroundColor(colors.normal.color);
+    if (process.platform !== 'darwin') {
+      this.MainWindow.setTitleBarOverlay(overlay ? colors.overlay : colors.normal);
+    }
   }
 
   updateMountpoint(path: string): void {
     this.log('debug', 'Updating mountpoint');
     fs.mkdirSync(path, { recursive: true });
-    this.winRegistry.addMountpointToQuickAccess(path, this.getIconPaths().tray);
+    this.winRegistry?.addMountpointToQuickAccess(path, this.getIconPaths().tray);
   }
 
   isTrayEnabled(): boolean {
     if ('minimizeToTray' in this.config) {
       return (this.config as any).minimizeToTray;
-    }
-    return false;
-  }
-
-  skipConfirmBeforeQuit(): boolean {
-    if (process.platform === 'darwin' && 'confirmBeforeQuit' in this.config) {
-      return !(this.config as any).confirmBeforeQuit;
     }
     return false;
   }
@@ -294,65 +321,6 @@ export class ElectronCapacitorApp {
     };
   }
 
-  setAppMenu(locale: any): void {
-    if (process.platform === 'darwin') {
-      const menu = new Menu();
-      menu.append(
-        new MenuItem({
-          label: app.name,
-          submenu: [
-            {
-              label: locale === 'fr-FR' ? 'Quitter' : 'Quit',
-              accelerator: 'Cmd+Q',
-              click: (): void => {
-                this.sendEvent(WindowToPageChannel.CloseRequest, this.skipConfirmBeforeQuit());
-              },
-            },
-          ],
-        }),
-      );
-      menu.append(
-        new MenuItem({
-          label: locale === 'fr-FR' ? 'Edition' : 'Edit',
-          submenu: [
-            {
-              label: locale === 'fr-FR' ? 'Annuler' : 'Undo',
-              accelerator: 'Cmd+Z',
-              role: 'undo',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Rétablir' : 'Redo',
-              accelerator: 'Shift+Cmd+Z',
-              role: 'redo',
-            },
-            { type: 'separator' },
-            {
-              label: locale === 'fr-FR' ? 'Couper' : 'Cut',
-              accelerator: 'Cmd+X',
-              role: 'cut',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Copier' : 'Copy',
-              accelerator: 'Cmd+C',
-              role: 'copy',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Coller' : 'Paste',
-              accelerator: 'Cmd+V',
-              role: 'paste',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Tout sélectionner' : 'Select All',
-              accelerator: 'Cmd+A',
-              role: 'selectAll',
-            },
-          ],
-        }),
-      );
-      Menu.setApplicationMenu(menu);
-    }
-  }
-
   onPageInitialized(): void {
     this.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
     setTimeout(() => {
@@ -362,7 +330,7 @@ export class ElectronCapacitorApp {
         this.storedLink = '';
       }
 
-      this.winRegistry.areLongPathsEnabled().then((longPathsEnabled) => {
+      this.winRegistry?.areLongPathsEnabled().then((longPathsEnabled) => {
         if (!longPathsEnabled) {
           this.sendEvent(WindowToPageChannel.LongPathsDisabled);
         }
@@ -388,9 +356,13 @@ export class ElectronCapacitorApp {
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
     const windowState = process.platform === 'linux' ? {} : this.mainWindowState;
+
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
-      backgroundColor: '#fcfcfc',
+      titleBarStyle: 'hidden',
+      trafficLightPosition: { x: 12, y: 12 },
+      titleBarOverlay: process.platform !== 'darwin' ? { ...WINDOW_CONTROLS_COLORS.light.normal, height: 40 } : undefined,
+      backgroundColor: WINDOW_CONTROLS_COLORS.light.normal.color,
       show: false,
       ...windowState,
       minWidth: 1280,
@@ -411,7 +383,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.hide();
     this.log('debug', `MainWindow created at '${this.MainWindow.getPosition()}' with size '${this.MainWindow.getSize()}'`);
 
-    if (this.CapacitorFileConfig.backgroundColor) {
+    if (this.CapacitorFileConfig?.electron?.backgroundColor) {
       this.MainWindow.setBackgroundColor(this.CapacitorFileConfig.electron.backgroundColor);
     }
 
@@ -431,7 +403,6 @@ export class ElectronCapacitorApp {
         if (electronIsDev || process.env.OPEN_DEV_TOOLS == 'true') {
           this.MainWindow.webContents.openDevTools({ mode: 'detach' });
         }
-        CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
       }, 400);
     });
 
@@ -489,7 +460,7 @@ export class ElectronCapacitorApp {
     // Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
     this.log('debug', 'Loading MainWindow');
-    this.loadMainWindow(this);
+    this.loadMainWindow();
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
@@ -517,8 +488,5 @@ export class ElectronCapacitorApp {
         event.preventDefault();
       }
     });
-
-    // Link electron plugins into the system.
-    setupCapacitorElectronPlugins();
   }
 }

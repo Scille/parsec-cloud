@@ -1,19 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable, Coroutine
 from hashlib import blake2b
 from pathlib import Path
 from typing import Any
 
 import click
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, ValidationError
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey, TrustAnchor
+from parsec._parsec import (
+    ActiveUsersLimit,
+    AdvisoryDeviceFileProtection,
+    EmailAddress,
+    ParsecAddr,
+    SecretKey,
+    X509TrustAnchor,
+)
 from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
 from parsec.cli.options import (
     _split_with_escaping,
+    asyncio_run,
     blockstore_server_options,
     db_server_options,
     debug_config_options,
@@ -21,6 +32,7 @@ from parsec.cli.options import (
     sentry_config_options,
 )
 from parsec.cli.pki import pki_server_options
+from parsec.cli.scws import scws_server_options
 from parsec.cli.utils import (
     cli_exception_handler,
 )
@@ -30,12 +42,13 @@ from parsec.config import (
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
+    CryptpadConfig,
     EmailConfig,
     LogLevel,
     MockedEmailConfig,
     OpenBaoAuthConfig,
-    OpenBaoAuthType,
     OpenBaoConfig,
+    ScwsConfig,
     SmtpEmailConfig,
 )
 from parsec.logging import get_logger
@@ -69,6 +82,46 @@ def _parse_organization_initial_tos_url(raw_param: str | None) -> dict[TosLocale
         locales[locale] = url
 
     return locales
+
+
+class _OpenBaoAuthParam(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    id: str = Field(min_length=1)
+    mount_path: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    help_link: HttpUrl | None = None
+    icon: HttpUrl | None = None
+
+
+def _parse_openbao_auths(raw_param: str | None) -> list[OpenBaoAuthConfig] | None:
+    if raw_param is None:
+        return None
+
+    try:
+        raw = TypeAdapter(list[_OpenBaoAuthParam]).validate_json(raw_param)
+    except ValidationError as err:
+        details = "; ".join(
+            f"[{error['loc'][0]}].{'.'.join(map(str, error['loc'][1:]))}: {error['msg']}"
+            if len(error["loc"]) > 1
+            else error["msg"]
+            for error in err.errors()
+        )
+        raise click.BadParameter(
+            f"Invalid format, should be JSON array, see --help: {details}"
+        ) from err
+
+    if len(set(auth.id for auth in raw)) != len(raw):
+        raise click.BadParameter("Duplicate id")
+    return [
+        OpenBaoAuthConfig(
+            id=auth.id,
+            mount_path=auth.mount_path,
+            name=auth.name,
+            help_link=str(auth.help_link) if auth.help_link is not None else None,
+            icon=str(auth.icon) if auth.icon is not None else None,
+        )
+        for auth in raw
+    ]
 
 
 class DevOption(click.Option):
@@ -191,6 +244,30 @@ password to gain access to his vault).
     default=AccountConfig.DISABLED,
 )
 @click.option(
+    "--advisory-device-file-protection",
+    "advisory_device_file_protection",
+    envvar="PARSEC_ADVISORY_DEVICE_FILE_PROTECTION",
+    show_envvar=True,
+    multiple=True,
+    type=AdvisoryDeviceFileProtection.from_str,
+    metavar="STRATEGY",
+    help="""Advisory device file protection to recommend to clients.
+
+Can be specified multiple times to recommend multiple strategies.
+
+Allowed values: PASSWORD, PASSWORD+TOTP, KEYRING, KEYRING+TOTP, PKI,
+PKI+TOTP, OPENBAO, OPENBAO+TOTP, ACCOUNT_VAULT, ACCOUNT_VAULT+TOTP.
+
+When not specified, no recommendation is made (all strategies accepted).
+""",
+)
+@click.option(
+    "--cryptpad-server-url",
+    envvar="PARSEC_CRYPTPAD_SERVER_URL",
+    show_envvar=True,
+    help="The CryptPad server URL to enable secure document viewing and editing",
+)
+@click.option(
     "--openbao-server-url",
     envvar="PARSEC_OPENBAO_SERVER_URL",
     show_envvar=True,
@@ -232,24 +309,33 @@ according to its own threat model.
 """,
 )
 @click.option(
-    "--openbao-auth-pro-connect",
-    envvar="PARSEC_OPENBAO_AUTH_PRO_CONNECT_MOUNT_PATH",
-    metavar="MOUNT_PATH",
+    "--openbao-auths",
+    envvar="PARSEC_OPENBAO_AUTHS",
+    metavar="JSON",
     show_envvar=True,
-    help="""Configure an auth module for end-user authentication using OIDC with ProConnect.
+    callback=lambda _ctx, _param, value: _parse_openbao_auths(value),
+    help="""Configure the auth modules for end-user authentication using OIDC (i.e. the
+SSO providers displayed to the user).
+
+Should be provided as a JSON array of objects with the following fields:
+
+\b
+- id: Opaque identifier of the provider (e.g. `PRO_CONNECT`). It is stored in the
+  user's device file, so it should not be changed once in use.
+- mount_path: Mount path of the OpenBao auth module (e.g. `auth/pro_connect`).
+- name: Name of the provider displayed to the user (e.g. `ProConnect`).
+- help_link (optional): HTTP(S) URL to a documentation/help page about the provider.
+- icon (optional): HTTP(S) URL to an image representing the provider.
+
+For instance:
+
+\b
+    [{"id": "PRO_CONNECT", "mount_path": "auth/pro_connect", "name": "ProConnect",
+      "icon": "https://example.com/pro_connect.svg"}]
 
 (see: https://openbao.org/api-docs/auth/jwt/)
 """,
-)
-@click.option(
-    "--openbao-auth-hexagone",
-    envvar="PARSEC_OPENBAO_AUTH_HEXAGONE_MOUNT_PATH",
-    metavar="MOUNT_PATH",
-    show_envvar=True,
-    help="""Configure an auth module for end-user authentication using OIDC with Hexagone.
-
-(see: https://openbao.org/api-docs/auth/jwt/)
-""",
+    show_default="no SSO configured",
 )
 @click.option(
     "--spontaneous-organization-bootstrap",
@@ -283,32 +369,49 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--organization-initial-active-users-limit",
     envvar="PARSEC_ORGANIZATION_INITIAL_ACTIVE_USERS_LIMIT",
     show_envvar=True,
-    help="Non-revoked users limit used to configure newly created organizations (default: no limit)",
+    help="Non-revoked users limit used to configure newly created organizations",
+    show_default="no limit",
     type=int,
 )
 @click.option(
     "--organization-initial-user-profile-outsider-allowed",
     envvar="PARSEC_ORGANIZATION_INITIAL_USER_PROFILE_OUTSIDER_ALLOWED",
     show_envvar=True,
-    help="Allow the outsider profiles for the newly created organizations (default: True)",
+    help="Allow the outsider profiles for the newly created organizations",
     default=True,
     type=bool,
+)
+@click.option(
+    "--organization-initial-realm-deletion-min-archiving-period",
+    envvar="PARSEC_ORGANIZATION_INITIAL_REALM_DELETION_MIN_ARCHIVING_PERIOD",
+    show_envvar=True,
+    help="""Deleting a realm is done by first scheduling it for deletion with an archiving period.
+
+This value is the minimum mandatory archiving period used to configure newly
+created organizations.
+""",
+    default=3600 * 24 * 30,
+    show_default="2592000 seconds i.e. 30 days",
+    type=int,
 )
 @click.option(
     "--organization-initial-tos",
     envvar="PARSEC_ORGANIZATION_INITIAL_TOS",
     show_envvar=True,
     callback=lambda ctx, param, value: _parse_organization_initial_tos_url(value),
-    help="""Terms Of Service (TOS) used to configure newly created organizations (default: no TOS)
+    help="""Terms Of Service (TOS) used to configure newly created organizations
 
 The TOS should be provided as a comma-separated list of `<locale>:<url>` (with any comma
 in the URL escaped with a backslash).
 
 For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr`.
 """,
-    default=None,
+    show_default="no TOS",
 )
+# Add option to load trusted CA for server to do a pre-check during async-enrollment
 @pki_server_options
+# Add scws related options (scws public keys, scws service private key)
+@scws_server_options
 @click.option(
     "--validation-email-rate-limit",
     default=(60, 3),
@@ -366,6 +469,15 @@ for any given email address).
     metavar="URL",
     type=ParsecAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
+)
+@click.option(
+    "--editics-server-addr",
+    envvar="PARSEC_EDITICS_SERVER_ADDR",
+    show_envvar=True,
+    metavar="URL",
+    type=ParsecAddr.from_url,
+    default=None,
+    help="URL to reach this server from the editics domain (typically used to serve the editics pages in an isolated iframe)",
 )
 @click.option(
     "--template-dir",
@@ -476,8 +588,8 @@ for any given email address).
 )
 # Add --log-level/--log-format/--log-file
 @logging_config_options(default_log_level="INFO")
-# Add --sentry-url
-@sentry_config_options(configure_sentry=True)
+# Add --sentry-environment/--sentry-dsn
+@sentry_config_options
 @click.option(
     "--sse-keepalive",
     default=30,
@@ -493,10 +605,8 @@ for any given email address).
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     envvar="PARSEC_WITH_CLIENT_WEB_APP",
     show_envvar=True,
-    help=(
-        "Host the client web app (default: disabled)."
-        " When enabled, the server landing page serves the content of the given directory."
-    ),
+    help="Host the client web app. When enabled, the server landing page serves the content of the given directory.",
+    show_default="disabled",
 )
 @click.option(
     "--cors-allow-origins",
@@ -524,7 +634,8 @@ for any given email address).
 )
 # Add --debug & --version
 @debug_config_options
-def run_cmd(
+@asyncio_run
+async def run_cmd(
     host: str,
     port: int,
     db: BaseDatabaseConfig,
@@ -536,21 +647,25 @@ def run_cmd(
     blockstore: BaseBlockStoreConfig,
     administration_token: str,
     account_config: AccountConfig,
+    advisory_device_file_protection: tuple[AdvisoryDeviceFileProtection, ...],
+    cryptpad_server_url: str | None,
     openbao_server_url: str | None,
     openbao_secret_mount_path: str,
     openbao_transit_mount_path: str,
-    openbao_auth_pro_connect: str | None,
-    openbao_auth_hexagone: str | None,
+    openbao_auths: list[OpenBaoAuthConfig] | None,
     spontaneous_organization_bootstrap: bool,
     organization_bootstrap_webhook: str | None,
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
+    organization_initial_realm_deletion_min_archiving_period: int,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
-    trusted_x509_root_dir: list[TrustAnchor],
+    trusted_x509_root_dir: list[X509TrustAnchor],
+    scws_config: ScwsConfig | None,
     # (cooldown in seconds, max number of email per hour)
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
+    editics_server_addr: ParsecAddr | None,
     template_dir: Path | None,
     email_host: str,
     email_port: int,
@@ -568,6 +683,9 @@ def run_cmd(
     log_file: str | None,
     sentry_dsn: str | None,
     sentry_environment: str,
+    sentry_traces_sample_rate: float | None,
+    sentry_profiles_sample_rate: float | None,
+    configure_sentry: Callable[[], Coroutine[Any, Any, None]],
     sse_keepalive: int | None,
     with_client_web_app: Path | None,
     cors_allow_origins: list[str],
@@ -576,9 +694,11 @@ def run_cmd(
 ) -> None:
     # Start a local server
 
+    await configure_sentry()
+
     with cli_exception_handler(debug):
         if not skip_database_migrations_check:
-            _check_database_migrations_applied(db)
+            await _check_database_migrations_applied(db)
 
         email_config: EmailConfig
         if email_host == "MOCKED":
@@ -602,35 +722,24 @@ def run_cmd(
 
         jinja_env = get_environment(template_dir)
 
+        if cryptpad_server_url is None:
+            cryptpad_config = None
+        else:
+            cryptpad_config = CryptpadConfig(server_url=cryptpad_server_url)
+
         if openbao_server_url is None:
             openbao_config = None
         else:
-            auths = []
-            if openbao_auth_hexagone is not None:
-                auths.append(
-                    OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.HEXAGONE,
-                        mount_path=openbao_auth_hexagone,
-                    )
-                )
-            if openbao_auth_pro_connect is not None:
-                auths.append(
-                    OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.PRO_CONNECT,
-                        mount_path=openbao_auth_pro_connect,
-                    )
-                )
-
-            if not auths:
+            if not openbao_auths:
                 raise ValueError(
-                    "At least one --openbao-auth-* option is required when --openbao-server-url is provided"
+                    "--openbao-auths is required when --openbao-server-url is provided"
                 )
 
             openbao_config = OpenBaoConfig(
                 server_url=openbao_server_url,
                 secret_mount_path=openbao_secret_mount_path,
                 transit_mount_path=openbao_transit_mount_path,
-                auths=auths,
+                auths=openbao_auths,
             )
 
         app_config = BackendConfig(
@@ -642,9 +751,13 @@ def run_cmd(
             email_config=email_config,
             proxy_trusted_addresses=proxy_trusted_addresses,
             server_addr=server_addr,
+            editics_server_addr=editics_server_addr,
             debug=debug,
             account_config=account_config,
+            advisory_device_file_protection=advisory_device_file_protection,
+            cryptpad_config=cryptpad_config,
             openbao_config=openbao_config,
+            scws_config=scws_config,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
             x509_trust_anchor=trusted_x509_root_dir,
@@ -654,6 +767,7 @@ def run_cmd(
             if organization_initial_active_users_limit is not None
             else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
+            organization_initial_realm_deletion_min_archiving_period=organization_initial_realm_deletion_min_archiving_period,
             organization_initial_tos=organization_initial_tos,
             email_rate_limit_cooldown_delay=max(validation_email_rate_limit[0], 0),
             email_rate_limit_max_per_hour=max(validation_email_rate_limit[1], 0),
@@ -673,18 +787,16 @@ def run_cmd(
             retry_policy = RetryPolicy(
                 maximum_database_connection_attempts, pause_before_retry_database_connection
             )
-            asyncio.run(
-                _run_backend(
-                    host=host,
-                    port=port,
-                    ssl_certfile=ssl_certfile,
-                    ssl_keyfile=ssl_keyfile,
-                    ssl_ciphers=ssl_ciphers,
-                    retry_policy=retry_policy,
-                    with_client_web_app=with_client_web_app,
-                    cors_allow_origins=cors_allow_origins,
-                    app_config=app_config,
-                )
+            await _run_backend(
+                host=host,
+                port=port,
+                ssl_certfile=ssl_certfile,
+                ssl_keyfile=ssl_keyfile,
+                ssl_ciphers=ssl_ciphers,
+                retry_policy=retry_policy,
+                with_client_web_app=with_client_web_app,
+                cors_allow_origins=cors_allow_origins,
+                app_config=app_config,
             )
         # Ignore some noisy cancellation
         # Note that this is no longer necessary with the latest anyio version (version 4.6)
@@ -776,7 +888,7 @@ async def _run_backend(
             await retry_policy.pause()
 
 
-def _check_database_migrations_applied(db_config: BaseDatabaseConfig) -> None:
+async def _check_database_migrations_applied(db_config: BaseDatabaseConfig) -> None:
     if db_config.is_mocked():
         return
 
@@ -785,7 +897,7 @@ def _check_database_migrations_applied(db_config: BaseDatabaseConfig) -> None:
 
     migrations = retrieve_migrations()
     assert isinstance(db_config, PostgreSQLDatabaseConfig)
-    result = asyncio.run(apply_migrations(db_config.url, migrations, dry_run=True))
+    result = await apply_migrations(db_config.url, migrations, dry_run=True)
     if result.new_apply:
         raise SystemExit(
             f"Database requires {len(result.new_apply)} migration(s). Run `parsec migrate` to apply them."

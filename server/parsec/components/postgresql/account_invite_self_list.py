@@ -1,9 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
-    InvitationToken,
     InvitationType,
     OrganizationID,
 )
@@ -67,7 +66,7 @@ WHERE
 async def invite_self_list(
     conn: AsyncpgConnection,
     auth_method_id: AccountAuthMethodID,
-) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+) -> list[tuple[OrganizationID, AccessToken, InvitationType]] | AccountInviteListBadOutcome:
     # 1) Get the account email
 
     row = await conn.fetchrow(*_q_get_account_email(auth_method_id=auth_method_id))
@@ -94,7 +93,7 @@ async def invite_self_list(
 
         match row["token"]:
             case str() as raw_invitation_token:
-                invitation_token = InvitationToken.from_hex(raw_invitation_token)
+                invitation_token = AccessToken.from_hex(raw_invitation_token)
             case _:
                 assert False, row
 

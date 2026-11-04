@@ -30,6 +30,7 @@ describe('User List Item', () => {
       isRevoked: () => false,
       isFrozen: () => false,
       isActive: () => true,
+      isAnonymous: () => false,
       isSelected: false,
       isCurrent: false,
     };
@@ -37,7 +38,8 @@ describe('User List Item', () => {
     const wrapper = mount(UserListItem, {
       props: {
         user: USER,
-        showCheckbox: true,
+        activeCheckbox: true,
+        allowSelection: true,
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -54,10 +56,10 @@ describe('User List Item', () => {
 
     // "JoJohn Smith" because the user is displayed with an avatar before their name,
     // currently using the first two letters for the avatar, (Jo) John Smith
-    expect(wrapper.get('.user-name__label').text()).to.equal('JoJohn Smith');
-    expect(wrapper.get('.user-email__label').text()).to.equal('john.smith@gmail.com');
+    expect(wrapper.get('.label-name').text()).to.equal('JoJohn Smith');
+    expect(wrapper.get('.label-email').text()).to.equal('john.smith@gmail.com');
     expect(wrapper.get('.user-profile').text()).to.equal('UserProfileStandard');
-    expect(wrapper.get('.user-join-label').text()).to.equal('now');
+    expect(wrapper.get('.label-join-date').text()).to.equal('now');
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(USER);

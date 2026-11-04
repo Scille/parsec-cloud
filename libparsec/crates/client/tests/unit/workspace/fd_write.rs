@@ -7,8 +7,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::{restart_workspace_ops, workspace_ops_factory};
 use crate::{
-    workspace::{EntryStat, OpenOptions, WorkspaceFdWriteError},
     EventWorkspaceOpsOutboundSyncNeeded, WorkspaceOps,
+    workspace::{EntryStat, OpenOptions, WorkspaceFdWriteError},
 };
 
 async fn open_for_read(ops: &WorkspaceOps, file_id: VlobID) -> FileDescriptor {

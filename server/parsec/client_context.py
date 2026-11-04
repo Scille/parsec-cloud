@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -6,11 +7,11 @@ from typing import Literal, NoReturn
 from uuid import uuid4
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     ApiVersion,
     DeviceID,
     EmailAddress,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     UserID,
@@ -63,7 +64,7 @@ class InvitedClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
     organization_id: OrganizationID
-    token: InvitationToken
+    token: AccessToken
     type: InvitationType
     organization_internal_id: int
     invitation_internal_id: int

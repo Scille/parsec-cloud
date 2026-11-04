@@ -1,0 +1,31 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-man-page 1  "man-page " 
+.SH NAME
+parsec\-cli\-man\-page \- Print CLI man pages to the console or a file
+.SH SYNOPSIS
+\fBparsec\-cli man\-page\fR [\fB\-\-mode\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fIOUTPUT\fR] 
+.SH DESCRIPTION
+Print CLI man pages to the console or a file
+.SH OPTIONS
+.TP
+\fB\-\-mode\fR \fI<MODE>\fR [default: all\-in\-one]
+How the man pages would be written to the output path
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+all\-in\-one: All man entries are written in the single file
+.IP \(bu 2
+separate: Each man entry is written to its own file
+.RE
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.TP
+[\fIOUTPUT\fR] [default: \-]
+Man page(s) output path
+
+The output path should be a file or a directory depending on `mode`.

@@ -110,14 +110,14 @@ msTest.describe(() => {
       if (gridMode) {
         await expect(entries).toHaveCount(1);
         await expect(entries.nth(0).locator('.file-card__title')).toHaveText('Dir_Folder');
+        await entries.nth(0).locator('.file-card__title').click();
       } else {
         await expect(entries).toHaveCount(1);
         await expect(entries.nth(0).locator('.label-name')).toHaveText('Dir_Folder');
+        await entries.nth(0).locator('.label-name').click();
       }
       // But in the folder
-      await entries.nth(0).dblclick();
 
-      await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
       await expect(entries).toHaveCount(1);
 
       if (gridMode) {
@@ -127,6 +127,56 @@ msTest.describe(() => {
       }
     });
   }
+
+  msTest('Move document in new folder', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(documents.locator('.folder-selection-modal')).toBeHidden();
+    await expect(entries.nth(1).locator('.file-name')).toHaveText('image.png');
+    await DocumentsPage.clickAction(await DocumentsPage.openActionPopover(documents, 1), 'Move to');
+    const modal = documents.locator('.folder-selection-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.ms-modal-header__title')).toHaveText('Move one item');
+
+    // Try to create a folder with existing name
+    await modal.locator('.create-folder-button').click();
+    await modal.locator('.new-folder').locator('input').fill('Dir_Folder');
+    await modal.locator('.new-folder').locator('input').press('Enter');
+    await expect(modal.locator('.folder-selection-modal-error__text')).toBeVisible();
+    await expect(modal.locator('.folder-selection-modal-error__text')).toHaveText(
+      'Failed to create folder `Dir_Folder` because an entry with the same name already exists.',
+    );
+
+    // Create a new folder with valid name
+    await modal.locator('.new-folder').locator('input').fill('1-Folder');
+    await modal.locator('.new-folder').locator('input').press('Enter');
+
+    await expect(modal.locator('.current-folder__text')).toHaveText('1-Folder');
+
+    const okButton = modal.locator('#next-button');
+    await expect(okButton).toHaveText('Move here');
+    await expect(okButton).toNotHaveDisabledAttribute();
+    await okButton.click();
+    await expect(modal).toBeHidden();
+
+    const uploadMenu = documents.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(2);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving image.png');
+    await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
+
+    await expect(entries).toHaveCount(2);
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('1-Folder');
+    // But in the folder
+    await entries.nth(0).dblclick();
+
+    await expect(documents).toHaveHeader(['wksp1', '1-Folder'], true, true);
+    await expect(entries).toHaveCount(1);
+
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('image.png');
+  });
 
   for (const dupPolicy of ['replace', 'ignore', 'addCount']) {
     msTest(`Move document with duplicate and ${dupPolicy}`, async ({ documents }) => {
@@ -186,9 +236,8 @@ msTest.describe(() => {
       } else if (dupPolicy === 'ignore') {
         await buttons.nth(0).click();
         await expect(dupModal).toBeHidden();
-        await expect(uploadMenu).toBeVisible();
-        await expect(opItems).toHaveCount(3);
-        await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving file.txt');
+        await expect(documents).toShowToast('No files to move.', 'Info');
+        await expect(uploadMenu).toBeHidden();
         await expect(entries).toHaveCount(2);
         await expect(entries.locator('.label-name')).toHaveText(['Folder', 'file.txt']);
         await entries.nth(0).dblclick();
@@ -205,8 +254,8 @@ msTest.describe(() => {
         await expect(entries.locator('.label-name')).toHaveText('Folder');
         await entries.nth(0).dblclick();
         await expect(entries).toHaveCount(2);
-        await expect(entries.locator('.label-name')).toHaveText(['file.txt', 'file (2).txt']);
-        await expect(entries.locator('.file-size')).toHaveText(['1 B', '5 B']);
+        await expect(entries.locator('.label-name')).toHaveText(['file (2).txt', 'file.txt']);
+        await expect(entries.locator('.file-size')).toHaveText(['5 B', '1 B']);
       }
     });
 
@@ -216,9 +265,9 @@ msTest.describe(() => {
 
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['FolderB', 'FolderA']);
+      await expect(entries.locator('.label-name')).toHaveText(['FolderA', 'FolderB']);
 
-      await entries.nth(1).dblclick();
+      await entries.nth(0).dblclick();
       await expect(documents).toHaveHeader(['wksp1', 'FolderA'], true, true);
       await createFolder(documents, 'Folder');
       // Drop a file with the content '1' in the 'FolderA/Folder' folder
@@ -231,7 +280,7 @@ msTest.describe(() => {
       await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
       await expect(documents).toHaveHeader(['wksp1'], true, true);
 
-      await entries.nth(0).dblclick();
+      await entries.nth(1).dblclick();
       await expect(documents).toHaveHeader(['wksp1', 'FolderB'], true, true);
       await createFolder(documents, 'Folder');
       // Drop a file with the content '12345' in the 'FolderB/Folder' folder
@@ -285,19 +334,21 @@ msTest.describe(() => {
       }
 
       await expect(dupModal).toBeHidden();
-      await expect(uploadMenu).toBeVisible();
-      await expect(opItems).toHaveCount(3);
-      await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving Folder');
       // Folder is not here anymore for replace and count
       if (dupPolicy === 'replace' || dupPolicy === 'addCount') {
         await expect(entries).toHaveCount(0);
+        await expect(uploadMenu).toBeVisible();
+        await expect(opItems).toHaveCount(3);
+        await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving Folder');
       } else {
+        await expect(documents).toShowToast('No files to move.', 'Info');
+        await expect(uploadMenu).toBeHidden();
         await expect(entries.locator('.label-name')).toHaveText('Folder');
       }
 
       await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
       await expect(documents).toHaveHeader(['wksp1'], true, true);
-      await entries.nth(1).dblclick();
+      await entries.nth(0).dblclick();
       await expect(documents).toHaveHeader(['wksp1', 'FolderA'], true, true);
 
       if (dupPolicy === 'replace') {
@@ -318,14 +369,14 @@ msTest.describe(() => {
         await expect(entries.locator('.file-size')).toHaveText('1 B');
       } else {
         await expect(entries.locator('.label-name')).toHaveCount(2);
-        await expect(entries.locator('.label-name')).toHaveText(['Folder (2)', 'Folder']);
-        await entries.nth(1).dblclick();
+        await expect(entries.locator('.label-name')).toHaveText(['Folder', 'Folder (2)']);
+        await entries.nth(0).dblclick();
         await expect(documents).toHaveHeader(['wksp1', '', 'Folder'], true, true);
         await expect(entries.locator('.label-name')).toHaveCount(1);
         await expect(entries.locator('.label-name')).toHaveText('file.txt');
         await expect(entries.locator('.file-size')).toHaveText('1 B');
         await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
-        await entries.nth(0).dblclick();
+        await entries.nth(1).dblclick();
         await expect(documents).toHaveHeader(['wksp1', '', 'Folder (2)'], true, true);
         await expect(entries.locator('.label-name')).toHaveCount(1);
         await expect(entries.locator('.label-name')).toHaveText('file.txt');

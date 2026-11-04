@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![allow(clippy::unwrap_used)]
 
 mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::encrypt_message;
+use libparsec_platform_pki::{PkiSystem, encrypt_message};
 use libparsec_types::X509CertificateHash;
 
 #[derive(Debug, Parser)]
@@ -17,7 +18,8 @@ struct Args {
     content: utils::ContentOpts,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
@@ -25,17 +27,25 @@ fn main() -> anyhow::Result<()> {
     let cert_ref = args.certificate_hash.into();
     let data = args.content.into_bytes()?;
 
-    let res = encrypt_message(&data, &cert_ref).context("Failed to encrypt message")?;
+    // Config dir is only used for testbed, we can safely provide an empty path here
+    let pki = PkiSystem::init(std::path::Path::new(""), None)
+        .await
+        .context("Failed to initialize PKI system")?;
+    let cert = pki
+        .open_certificate(&cert_ref)
+        .await
+        .context("Failed to find certificate")?;
 
+    let der = cert.get_der().await.context("Failed to get DER")?;
+    let (algo, ciphered) = encrypt_message(der, &data)
+        .await
+        .context("Failed to encrypt message")?;
+
+    println!("Encrypted using the algorithm {}", algo);
+    println!("Encrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(
-        "Encrypted by cert with id {{{}}} using the algorithm {}",
-        &res.cert_ref.uris().next().unwrap(),
-        res.algo
-    );
-    println!("Encrypted by cert with fingerprint: {}", res.cert_ref.hash);
-    println!(
-        "Encrypted data: {}",
-        data_encoding::BASE64.encode_display(&res.ciphered)
+        "Encrypted data (in base64): {}",
+        data_encoding::BASE64.encode_display(&ciphered)
     );
 
     Ok(())

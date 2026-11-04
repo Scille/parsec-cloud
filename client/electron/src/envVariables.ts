@@ -1,7 +1,7 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+import { FEATURE_FLAGS } from './features.js';
 
 export const Env = {
-  DISABLE_SENTRY: false,
-  DISABLE_UPDATES: false,
-  ENABLE_CUSTOM_BRANDING: process.env.PARSEC_APP_ENABLE_CUSTOM_BRANDING === 'true',
+  ENABLE_CUSTOM_BRANDING: !FEATURE_FLAGS.hardened() && process.env.PARSEC_APP_ENABLE_CUSTOM_BRANDING === 'true',
 };

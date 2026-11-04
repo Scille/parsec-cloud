@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -9,18 +9,20 @@ use libparsec_platform_device_loader::{
 };
 use libparsec_types::prelude::*;
 
-use crate::ClientConfig;
+use crate::{ClientConfig, PkiErrorDetail};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SubmitAsyncEnrollmentError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("An enrollment request already exists for the requested email (submitted on: {submitted_on})")]
+    #[error(
+        "An enrollment request already exists for the requested email (submitted on: {submitted_on})"
+    )]
     EmailAlreadySubmitted { submitted_on: DateTime },
     #[error("A user already exists for the requested email")]
     EmailAlreadyEnrolled,
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error(transparent)]
@@ -36,9 +38,12 @@ pub enum SubmitAsyncEnrollmentError {
 
     // PKI-related errors
     #[error("Invalid X509 trustchain (server doesn't recognize the root certificate)")]
-    InvalidX509Trustchain,
-    // TODO: add other PKI-related errors
-    // (see https://github.com/Scille/parsec-cloud/issues/12028)
+    PKIServerInvalidX509Trustchain,
+    #[error("Cannot open PKI X509 certificate store: {0}")]
+    PKICannotOpenCertificateStore(anyhow::Error),
+    // Certificate not found, invalid certificate, cannot use to sign etc.
+    #[error("Cannot use the referenced X509 certificate for PKI operation: {0}")]
+    PKIUnusableX509CertificateReference(PkiErrorDetail),
 }
 
 pub trait SubmitAsyncEnrollmentIdentityStrategy: Send + Sync {
@@ -103,7 +108,9 @@ pub async fn submit_async_enrollment(
                 Err(SubmitAsyncEnrollmentError::EmailAlreadySubmitted { submitted_on })
             }
             Rep::EmailAlreadyEnrolled => Err(SubmitAsyncEnrollmentError::EmailAlreadyEnrolled),
-            Rep::InvalidX509Trustchain => Err(SubmitAsyncEnrollmentError::InvalidX509Trustchain),
+            Rep::InvalidX509Trustchain => {
+                Err(SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain)
+            }
             bad_rep @ (Rep::IdAlreadyUsed
             | Rep::InvalidSubmitPayload
             | Rep::InvalidDerX509Certificate
@@ -143,8 +150,8 @@ pub async fn submit_async_enrollment(
     )
     .await
     .map_err(|err| match err {
-        SaveAsyncEnrollmentLocalPendingError::NoSpaceLeft => {
-            SubmitAsyncEnrollmentError::StorageNotAvailable
+        SaveAsyncEnrollmentLocalPendingError::NoSpaceAvailable => {
+            SubmitAsyncEnrollmentError::NoSpaceAvailable
         }
         SaveAsyncEnrollmentLocalPendingError::InvalidPath => {
             SubmitAsyncEnrollmentError::InvalidPath(anyhow::anyhow!(

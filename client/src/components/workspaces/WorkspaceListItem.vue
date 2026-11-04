@@ -1,19 +1,23 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-item
     button
     class="workspace-list-item no-padding-end"
     :detail="false"
-    :class="{ 'workspace-hovered': isHovered || menuOpened }"
+    :class="{
+      'workspace-list-item--hovered': isHovered || menuOpened,
+      'workspace-list-item--hidden': isHidden || workspace.isArchived,
+    }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    @contextmenu="onOptionsClick"
+    @contextmenu.stop="onOptionsClick"
   >
     <div class="workspace-list-item-content">
       <div
-        class="workspace-favorite-icon"
+        v-show="!workspace.isArchived"
+        class="list-item-column workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
           'workspace-favorite-icon__off': !isFavorite,
@@ -23,33 +27,64 @@
         <ion-icon :icon="star" />
       </div>
       <ion-icon
+        v-if="!workspace.isArchived"
         class="cloud-overlay"
         :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
         :icon="workspace.availableOffline ? cloudDone : cloudOffline"
       />
       <!-- workspace name -->
       <div
-        class="workspace-name"
-        :title="workspace.currentName"
+        class="list-item-column workspace-name"
+        :title="workspace.name"
       >
-        <ion-text class="workspace-name__label title-h4">
-          {{ workspace.currentName }}
+        <ion-text class="workspace-name__label">
+          {{ workspace.name }}
         </ion-text>
+      </div>
+      <ion-icon
+        v-if="workspace.isArchived"
+        class="list-item-column workspace-archive"
+        :icon="archive"
+      />
+      <div
+        class="list-item-column workspace-hidden"
+        v-if="isHidden && !workspace.isArchived"
+      >
+        <ion-icon
+          class="workspace-hidden__icon"
+          :icon="eyeOff"
+        />
+        <ion-text class="workspace-hidden__text">{{ $msTranslate('WorkspacesPage.Workspace.hidden') }}</ion-text>
       </div>
 
       <!-- role user -->
-      <div class="workspace-role">
+      <div class="list-item-column workspace-role">
         <workspace-role-tag
-          :role="workspace.currentSelfRole"
+          v-if="!workspace.isArchived && windowWidth > WindowSizeBreakpoints.XS"
+          :role="workspace.selfRole"
           class="workspace-role-tag"
+        />
+        <ion-label
+          v-if="workspace.isArchived"
+          class="archived-label"
+        >
+          <ion-text class="archived-label-text">
+            {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+          </ion-text>
+        </ion-label>
+        <workspace-missing-ownership
+          class="missing-ownership"
+          v-if="workspace.canSelfPromoteToOwner"
+          :show-text="isLargeDisplay && workspace.canSelfPromoteToOwner"
+          @click.stop="$emit('selfPromoteClick', workspace, $event)"
         />
       </div>
 
       <!-- user avatars -->
       <div
-        class="workspace-users"
+        class="list-item-column workspace-users"
         v-show="clientProfile !== UserProfile.Outsider"
-        v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD"
+        v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD && !workspace.isArchived"
       >
         <avatar-group
           v-show="workspace.sharing.length > 0"
@@ -69,17 +104,17 @@
 
       <!-- last update -->
       <div
-        class="workspace-last-update"
-        v-show="false"
+        class="list-item-column workspace-last-update"
+        v-show="workspace.isArchived"
       >
-        <ion-label class="label-last-update cell">
+        <ion-label class="list-item-label label-last-update cell">
           {{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}
         </ion-label>
       </div>
 
       <!-- workspace size -->
       <div
-        class="workspace-size"
+        class="list-item-column workspace-size"
         v-show="false"
       >
         <ion-label class="label-size cell">
@@ -88,8 +123,9 @@
       </div>
 
       <!-- options -->
-      <div class="workspace-options">
+      <div class="list-item-end workspace-options">
         <ion-button
+          slot="icon-only"
           fill="clear"
           class="options-button"
           @click.stop="$emit('shareClick', workspace, $event)"
@@ -102,6 +138,7 @@
           />
         </ion-button>
         <ion-button
+          slot="icon-only"
           fill="clear"
           class="options-button"
           @click.stop="onOptionsClick($event)"
@@ -120,10 +157,11 @@
 <script setup lang="ts">
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
+import WorkspaceMissingOwnership from '@/components/workspaces/WorkspaceMissingOwnership.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';
+import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -135,6 +173,7 @@ const props = defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
+  isHidden: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -142,6 +181,7 @@ const emits = defineEmits<{
   (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'menuClick', workspace: WorkspaceInfo, event: Event, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'selfPromoteClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 
 async function onOptionsClick(event: Event): Promise<void> {
@@ -158,34 +198,37 @@ async function onOptionsClick(event: Event): Promise<void> {
   cursor: pointer;
   text-align: center;
   user-select: none;
-  border-radius: var(--parsec-radius-12);
-  border: 1px solid var(--parsec-color-light-secondary-disabled);
-  --background: var(--parsec-color-light-secondary-white);
+  border-radius: ms.radius('2xl');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  --background: #{ms.color('surface-base-default')};
   width: 100%;
   overflow: hidden;
   transition: all 0.15s ease-in-out;
 
   &::part(native) {
+    cursor: pointer !important;
     width: -webkit-fill-available;
     padding-left: 0;
-    margin: 0.25rem;
-    --background-hover: var(--parsec-color-light-secondary-white);
+    margin: ms.spacing('padding-sm');
   }
 
   &-content {
     display: flex;
-    background: var(--parsec-color-light-secondary-background);
-    border-radius: var(--parsec-radius-8);
+    background: ms.color('surface-elevated-subtle');
+    border-radius: ms.radius('lg');
     align-items: center;
     width: 100%;
-    height: 3rem;
+  }
+
+  .list-item-column {
+    cursor: pointer !important;
   }
 
   &:hover {
-    box-shadow: var(--parsec-shadow-input);
+    box-shadow: ms.shadow('input');
 
     .workspace-list-item-content {
-      background: var(--parsec-color-light-primary-30);
+      background: ms.color('surface-brand-default-subtle');
     }
   }
 }
@@ -194,34 +237,36 @@ async function onOptionsClick(event: Event): Promise<void> {
   display: flex;
   align-items: center;
   font-size: 1.25rem;
-  padding: 0.25rem;
-  margin-left: 0.5rem;
-  border-radius: var(--parsec-radius-6);
+  padding: ms.spacing('padding-sm');
+  margin-left: ms.spacing('padding-lg');
+  border-radius: ms.radius('md');
   transition: color 150ms ease-out;
   flex-shrink: 0;
+  position: relative;
+  z-index: 20;
 
   &__on {
-    color: var(--parsec-color-light-primary-600);
+    color: ms.color('icon-brand-default');
 
     &:hover {
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-700);
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('icon-brand-default-hover');
     }
   }
 
   &__off {
-    color: var(--parsec-color-light-secondary-disabled);
+    color: ms.color('icon-disabled-default');
 
     &:hover {
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-600);
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('icon-brand-default-hover');
     }
   }
 }
 
 .cloud-overlay {
   position: sticky;
-  margin-left: 0.75rem;
+  margin-left: ms.spacing('padding-2xl');
   left: 0;
   display: flex;
   align-items: center;
@@ -229,21 +274,27 @@ async function onOptionsClick(event: Event): Promise<void> {
   font-size: 1rem;
   bottom: 1px;
   padding: 2px;
-  background: var(--parsec-color-light-secondary-white);
-  border-radius: 50%;
+  background: ms.color('surface-base-default');
+  border-radius: ms.radius('full');
   flex-shrink: 0;
 
   &-ok {
-    color: var(--parsec-color-light-primary-500);
+    color: ms.color('icon-brand-default');
   }
 
   &-ko {
-    color: var(--parsec-color-light-secondary-text);
+    color: ms.color('icon-neutral-default');
   }
 }
 
+.workspace-archive {
+  font-size: 7rem;
+  color: ms.color('icon-disabled-default');
+  z-index: 0;
+}
+
 .workspace-name {
-  padding-inline: 0.5rem 1rem;
+  padding-inline: ms.spacing('padding-lg') ms.spacing('padding-3xl');
   width: 100%;
   height: 100%;
   min-width: 15rem;
@@ -265,31 +316,93 @@ async function onOptionsClick(event: Event): Promise<void> {
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: left;
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h5');
+    color: ms.color('text-base-label');
     min-width: 0;
+  }
+  z-index: 1;
+}
+
+.workspace-hidden {
+  background: ms.color('surface-base-default');
+  color: ms.color('text-base-label');
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-md');
+  padding: 3px ms.spacing('padding-lg');
+  border-radius: ms.radius('lg');
+  flex-shrink: 0;
+  width: 5rem;
+
+  &__icon {
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+
+  &__text {
+    @include ms.font('body-md-medium');
+    @include ms.responsive-breakpoint('xs') {
+      display: none;
+    }
   }
 }
 
 .workspace-role {
   min-width: 8rem;
-  max-width: 6vw;
+  width: 100%;
+  height: 100%;
+  max-width: 15vw;
   flex-grow: 2;
   position: relative;
   z-index: 10;
+  gap: ms.spacing('gap-lg');
 
-  .workspace-role-tag {
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-18);
-    background: var(--parsec-color-light-secondary-white);
+  @include ms.responsive-breakpoint('lg') {
+    min-width: 13rem;
+    max-width: 11rem;
   }
 
   @include ms.responsive-breakpoint('md') {
+    min-width: 11rem;
+    max-width: 11rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-inline: ms.spacing('padding-xs');
     min-width: 5rem;
     max-width: 8rem;
   }
 
-  @include ms.responsive-breakpoint('sm') {
-    padding-inline: 0.125rem;
+  .archived-label {
+    color: ms.color('text-base-label');
+    display: flex;
+    align-items: center;
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('4xl');
+    background: ms.color('surface-base-default');
+
+    &-text {
+      background-color: none;
+      padding: 0.2rem ms.spacing('padding-lg');
+      color: ms.color('text-brand-default');
+    }
+  }
+
+  .missing-ownership {
+    flex-shrink: 0;
+    left: 0;
+    height: fit-content;
+  }
+
+  &:has(.missing-ownership) {
+    .workspace-role-tag {
+      display: none;
+
+      @include ms.responsive-breakpoint('sm') {
+        display: flex;
+      }
+    }
   }
 }
 
@@ -300,26 +413,26 @@ async function onOptionsClick(event: Event): Promise<void> {
   overflow: visible;
 
   .shared-group {
-    padding: 0.25rem;
+    padding: ms.spacing('padding-sm');
     transition: background 0.2s ease-in-out;
 
     &:hover {
-      background: var(--parsec-color-light-primary-100);
+      background: ms.color('surface-brand-default-subtle-hover');
     }
   }
 
   .not-shared-label {
-    color: var(--parsec-color-light-secondary-grey);
-    padding: 0.375rem 0.5rem;
-    border-radius: var(--parsec-radius-6);
+    color: ms.color('text-base-description');
+    padding: ms.spacing('padding-md') ms.spacing('padding-lg');
+    border-radius: ms.radius('md');
     transition: background 0.15s ease-in-out;
     flex-grow: 0 !important;
     position: relative;
     z-index: 2;
 
     &:hover {
-      background: var(--parsec-color-light-primary-100);
-      color: var(--parsec-color-light-primary-700) !important;
+      background: ms.color('surface-brand-default-subtle-hover');
+      color: ms.color('text-brand-default-hover') !important;
     }
   }
 }
@@ -334,38 +447,25 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .workspace-options {
-  flex-grow: 0;
-  margin-left: auto;
-  align-items: center;
-  flex-shrink: 0;
-  display: flex;
-  gap: 0.5rem;
-  position: relative;
-  z-index: 8;
+  margin-right: 1rem;
+}
 
-  ion-button::part(native) {
-    padding: 0;
+.workspace-list-item--hidden {
+  border: ms.border('thin') solid ms.color('border-base-default-hover');
+
+  .workspace-list-item-content {
+    opacity: ms.opacity('9');
+    filter: brightness(0.85);
   }
 
-  .options-button {
-    --background-hover: none;
-    background: none;
-    border-radius: var(--parsec-radius-8);
-    padding: 0.375rem;
-
-    &__icon {
-      color: var(--parsec-color-light-secondary-grey);
-      font-size: 1.25rem;
-      flex-shrink: 0;
+  &:hover {
+    .workspace-list-item-content {
+      background: ms.color('surface-base-page-secondary');
     }
+  }
 
-    &:hover {
-      background: var(--parsec-color-light-secondary-disabled);
-
-      .options-button__icon {
-        color: var(--parsec-color-light-primary-500);
-      }
-    }
+  .workspace-name {
+    max-width: calc(45vw - 5rem);
   }
 }
 </style>

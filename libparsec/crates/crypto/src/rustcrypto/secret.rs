@@ -1,14 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use blake2::Blake2bMac;
 use crypto_box::aead::Aead;
 use crypto_secretbox::{AeadCore, Key, XSalsa20Poly1305};
 use digest::{KeyInit, Mac};
 use generic_array::{
-    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
+    typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
-use rand::rngs::OsRng;
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
@@ -23,7 +22,7 @@ impl SecretKey {
     pub const SIZE: usize = XSalsa20Poly1305::KEY_SIZE;
 
     pub fn generate() -> Self {
-        Self(XSalsa20Poly1305::generate_key(OsRng))
+        Self(XSalsa20Poly1305::generate_key(rand8::rngs::OsRng))
     }
 
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
@@ -31,7 +30,7 @@ impl SecretKey {
         // TODO: zero copy with pre-allocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce = XSalsa20Poly1305::generate_nonce(OsRng);
+        let nonce = XSalsa20Poly1305::generate_nonce(rand8::rngs::OsRng);
         // TODO: handle this error?
         let mut ciphered = cipher.encrypt(&nonce, data).expect("encryption failure !");
         let mut res = vec![];

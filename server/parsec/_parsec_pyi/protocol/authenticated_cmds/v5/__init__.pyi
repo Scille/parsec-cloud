@@ -11,6 +11,7 @@ from . import (
     block_create,
     block_read,
     certificate_get,
+    cryptpad_register_session,
     device_create,
     events_listen,
     invite_cancel,
@@ -25,17 +26,19 @@ from . import (
     list_frozen_users,
     organization_info,
     ping,
-    pki_enrollment_accept,
-    pki_enrollment_list,
-    pki_enrollment_reject,
     realm_create,
     realm_get_keys_bundle,
     realm_rename,
     realm_rotate_key,
+    realm_self_promote_to_owner,
     realm_share,
     realm_unshare,
+    realm_update_archiving,
     shamir_recovery_delete,
     shamir_recovery_setup,
+    totp_create_opaque_key,
+    totp_setup_confirm,
+    totp_setup_get_secret,
     user_create,
     user_revoke,
     user_update,
@@ -57,6 +60,7 @@ class AnyCmdReq:
         | block_create.Req
         | block_read.Req
         | certificate_get.Req
+        | cryptpad_register_session.Req
         | device_create.Req
         | events_listen.Req
         | invite_cancel.Req
@@ -71,17 +75,19 @@ class AnyCmdReq:
         | list_frozen_users.Req
         | organization_info.Req
         | ping.Req
-        | pki_enrollment_accept.Req
-        | pki_enrollment_list.Req
-        | pki_enrollment_reject.Req
         | realm_create.Req
         | realm_get_keys_bundle.Req
         | realm_rename.Req
         | realm_rotate_key.Req
+        | realm_self_promote_to_owner.Req
         | realm_share.Req
         | realm_unshare.Req
+        | realm_update_archiving.Req
         | shamir_recovery_delete.Req
         | shamir_recovery_setup.Req
+        | totp_create_opaque_key.Req
+        | totp_setup_confirm.Req
+        | totp_setup_get_secret.Req
         | user_create.Req
         | user_revoke.Req
         | user_update.Req
@@ -100,6 +106,7 @@ __all__ = [
     "block_create",
     "block_read",
     "certificate_get",
+    "cryptpad_register_session",
     "device_create",
     "events_listen",
     "invite_cancel",
@@ -114,17 +121,19 @@ __all__ = [
     "list_frozen_users",
     "organization_info",
     "ping",
-    "pki_enrollment_accept",
-    "pki_enrollment_list",
-    "pki_enrollment_reject",
     "realm_create",
     "realm_get_keys_bundle",
     "realm_rename",
     "realm_rotate_key",
+    "realm_self_promote_to_owner",
     "realm_share",
     "realm_unshare",
+    "realm_update_archiving",
     "shamir_recovery_delete",
     "shamir_recovery_setup",
+    "totp_create_opaque_key",
+    "totp_setup_confirm",
+    "totp_setup_get_secret",
     "user_create",
     "user_revoke",
     "user_update",

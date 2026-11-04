@@ -8,8 +8,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    submit_async_enrollment, submitter_list_local_async_enrollments, SubmitAsyncEnrollmentError,
-    SubmitAsyncEnrollmentIdentityStrategy,
+    SubmitAsyncEnrollmentError, SubmitAsyncEnrollmentIdentityStrategy, submit_async_enrollment,
+    submitter_list_local_async_enrollments,
 };
 
 use super::utils::MockedAsyncEnrollmentIdentityStrategy;
@@ -147,7 +147,7 @@ async fn invalid_x509_trustchain(env: &TestbedEnv) {
             protocol::anonymous_cmds::latest::async_enrollment_submit::Rep::InvalidX509Trustchain
         )
         .await,
-        SubmitAsyncEnrollmentError::InvalidX509Trustchain
+        SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain
     );
 }
 

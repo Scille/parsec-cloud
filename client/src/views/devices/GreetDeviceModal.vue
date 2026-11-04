@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page
@@ -13,7 +13,8 @@
     <ion-button
       slot="icon-only"
       @click="cancelModal()"
-      class="closeBtn"
+      fill="clear"
+      class="closeBtn color-secondary"
       v-if="pageStep !== GreetDeviceStep.Summary && isLargeDisplay"
     >
       <ion-icon
@@ -26,11 +27,11 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h3">
+        <ion-title class="modal-header__title">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
-          class="modal-header__text body"
+          class="modal-header__text"
           v-if="steps[pageStep]?.subtitle"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
@@ -58,27 +59,19 @@
           v-show="pageStep === GreetDeviceStep.WaitForGuest"
           class="first-step"
         >
-          <ms-informative-text>
-            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuest') }}
-          </ms-informative-text>
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('DevicesPage.greet.step1.info') }}
+          </ms-report-text>
+
+          <div class="step-info">
+            <ion-text class="step-info__title">{{ $msTranslate('DevicesPage.greet.step1.title') }}</ion-text>
+            <ion-text class="step-info__subtitle">{{ $msTranslate('DevicesPage.greet.step1.description') }}</ion-text>
+          </div>
+
           <div class="first-step-content">
-            <!-- title -->
-            <ion-text class="content-title">
-              <span class="content-title__blue">
-                {{ $msTranslate('DevicesPage.greet.subtitles.scanOrShare1') }}
-              </span>
-              <span class="content-title__grey">
-                {{ $msTranslate('DevicesPage.greet.subtitles.scanOrShare2') }}
-              </span>
-              <span class="content-title__blue">
-                {{ $msTranslate('DevicesPage.greet.subtitles.scanOrShare3') }}
-              </span>
-            </ion-text>
             <!-- qr code, link and button -->
-            <div class="content-sharing">
-              <!-- left element: qr code -->
-              <figure class="qrcode">
-                <!-- #4294FF is light-primary-500 -->
+            <div class="step-link">
+              <figure class="step-link-qrcode">
                 <!-- prettier-ignore -->
                 <q-r-code-vue3
                   :value="greeter.invitationLink"
@@ -88,93 +81,75 @@
                   :qr-options="{ errorCorrectionLevel: 'L' }"
                   :dots-options="{
                     type: 'dots',
-                    color: '#4294FF',
+                    color: '#0058CC',
                   }"
-                  :background-options="{ color: '#ffffff' }"
-                  :corners-square-options="{ type: 'extra-rounded', color: '#4294FF' }"
-                  :corners-dot-options="{ type: 'dot', color: '#4294FF' }"
+                  :background-options="{ color: qrCodeBackgroundColor }"
+                  :corners-square-options="{ type: 'extra-rounded', color: '#0058CC' }"
+                  :corners-dot-options="{ type: 'dot', color: '#0058CC' }"
                 />
               </figure>
               <div class="divider">
-                <ion-text class="title-h4">
+                <ion-text>
                   {{ $msTranslate('FoldersPage.importModal.or') }}
                 </ion-text>
               </div>
               <!-- right element: invite link, copy button, email button -->
-              <div class="right-side">
-                <div
-                  class="link-content"
-                  v-if="isLargeDisplay"
-                >
-                  <div
-                    class="link-content-card"
-                    v-if="!linkCopiedToClipboard"
-                  >
-                    <ion-text class="link-content-card__text body">
-                      {{ greeter.invitationLink }}
-                    </ion-text>
-                    <ion-button
-                      fill="clear"
-                      size="small"
-                      id="copy-link-btn"
-                      @click="copyLink"
-                    >
-                      <ion-icon
-                        class="icon-copy"
-                        :icon="copy"
-                      />
-                    </ion-button>
-                  </div>
-                  <ion-text
-                    v-else
-                    class="link-content__text body copied"
-                  >
-                    {{ $msTranslate('DevicesPage.greet.subtitles.copiedToClipboard') }}
-                  </ion-text>
+              <div class="input-action">
+                <div class="input-action-text-container">
+                  <ion-text class="input-action-text">{{ greeter.invitationLink }}</ion-text>
                 </div>
-                <div
-                  class="link-content-small"
-                  v-else
-                >
+                <div class="input-action-buttons">
                   <ion-button
-                    id="copy-link-btn-small"
-                    :class="{ copied: linkCopiedToClipboard }"
+                    class="input-action-button color-secondary"
+                    fill="clear"
+                    id="copy-link-btn"
                     @click="copyLink"
+                    :disabled="linkCopiedToClipboard !== undefined"
                   >
                     <ion-icon
-                      class="icon-copy"
-                      :icon="copy"
+                      class="button-icon button-icon-left"
+                      :icon="linkCopiedToClipboard ? checkmarkCircle : copy"
                     />
-                    <span v-if="!linkCopiedToClipboard">{{ $msTranslate('DevicesPage.greet.actions.copyLink') }}</span>
-                    <span v-else>{{ $msTranslate('DevicesPage.greet.subtitles.copiedToClipboard') }}</span>
+                    <span v-show="linkCopiedToClipboard === undefined">
+                      {{ $msTranslate('DevicesPage.greet.actions.copyLink') }}
+                    </span>
+                    <span v-show="linkCopiedToClipboard === true">
+                      {{ $msTranslate('DevicesPage.greet.actions.copied') }}
+                    </span>
                   </ion-button>
-                </div>
-                <div class="email">
                   <ion-button
-                    class="email-button"
-                    @click="sendEmail"
+                    class="input-action-button color-secondary"
                     fill="outline"
-                    v-show="!isEmailSent"
+                    :class="isEmailSent && elapsedCount === 0 ? 'button-clicked' : ''"
+                    @click="sendEmail"
+                    :disabled="isEmailSent && elapsedCount > 0"
                   >
-                    {{ $msTranslate('DevicesPage.greet.actions.sendEmail') }}
-                  </ion-button>
-                  <ion-text
-                    v-show="isEmailSent"
-                    class="small-text subtitles-sm"
-                  >
-                    {{ $msTranslate('DevicesPage.greet.emailSent') }}
                     <ion-icon
-                      class="email-button__icon"
-                      :icon="checkmarkCircle"
+                      class="button-icon button-icon-left"
+                      v-if="!(isEmailSent && elapsedCount > 0)"
+                      :icon="mail"
                     />
-                  </ion-text>
+                    <span v-show="!isEmailSent">
+                      {{ $msTranslate('DevicesPage.greet.actions.sendEmail') }}
+                    </span>
+                    <span v-show="isEmailSent && elapsedCount > 0">
+                      {{ $msTranslate({ key: 'DevicesPage.greet.actions.waitBeforeResending', data: { seconds: elapsedCount } }) }}
+                    </span>
+                    <span v-show="isEmailSent && elapsedCount === 0">
+                      {{ $msTranslate('DevicesPage.greet.actions.reSendEmail') }}
+                    </span>
+                  </ion-button>
                 </div>
               </div>
+
+              <ion-text
+                v-if="clipboardNotAvailable"
+                class="step-link-copy-error"
+              >
+                {{ $msTranslate('DevicesPage.greet.linkNotCopiedToClipboard') }}
+              </ion-text>
             </div>
           </div>
-          <ms-report-text :theme="MsReportTheme.Info">
-            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuestVersionInfo') }}
-          </ms-report-text>
         </div>
 
         <!-- give code step -->
@@ -231,7 +206,6 @@
         <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
-            size="default"
             id="next-button"
             v-show="nextButtonIsVisible"
             @click="nextStep()"
@@ -245,10 +219,11 @@
             v-show="waitingForGuest"
             class="spinner-container"
           >
-            <ion-text class="subtitles-normal">
-              {{ $msTranslate('DevicesPage.greet.waiting') }}
-            </ion-text>
-            <ms-spinner class="spinner" />
+            <ms-spinner
+              class="spinner"
+              title="DevicesPage.greet.waiting"
+              :size="14"
+            />
           </div>
         </div>
       </ion-footer>
@@ -264,10 +239,11 @@ import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepMod
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { CancelledGreetingAttemptReason, DeviceGreet, DevicePurpose, GreetInProgressErrorTag } from '@/parsec';
+import { ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import { checkmarkCircle, close, copy, phonePortrait } from 'ionicons/icons';
+import { checkmarkCircle, close, copy, mail, phonePortrait } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import {
   Answer,
@@ -296,18 +272,21 @@ enum GreetDeviceStep {
 
 const props = defineProps<{
   informationManager: InformationManager;
-  invitationLink: string;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
   token: string;
 }>();
 
 const { isLargeDisplay } = useWindowSize();
+// QR code is drawn on a canvas, so the theme token has to be resolved to a concrete color
+const qrCodeBackgroundColor = getComputedStyle(document.body).getPropertyValue('--parsec-color-surface-base-default').trim();
 const pageStep = ref(GreetDeviceStep.WaitForGuest);
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const isEmailSent = ref(false);
 const elapsedCount = ref(0);
 const greeter = ref(new DeviceGreet());
-const linkCopiedToClipboard = ref(false);
+const linkCopiedToClipboard = ref<boolean | undefined>(undefined);
+const clipboardNotAvailable = ref(false);
 const cancelled = ref(false);
 
 const steps = computed(() => [
@@ -550,19 +529,17 @@ async function nextStep(): Promise<void> {
 }
 
 async function copyLink(): Promise<void> {
-  if (!(await Clipboard.writeText(greeter.value.invitationLink))) {
-    props.informationManager.present(
-      new Information({
-        message: 'DevicesPage.greet.linkNotCopiedToClipboard',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
+  linkCopiedToClipboard.value = await Clipboard.writeText(greeter.value.invitationLink);
+
+  if (!linkCopiedToClipboard.value) {
+    clipboardNotAvailable.value = true;
+
+    linkCopiedToClipboard.value = undefined;
   } else {
-    linkCopiedToClipboard.value = true;
+    clipboardNotAvailable.value = false;
     setTimeout(() => {
-      linkCopiedToClipboard.value = false;
-    }, 5000);
+      linkCopiedToClipboard.value = undefined;
+    }, 2000);
     props.informationManager.present(
       new Information({
         message: 'DevicesPage.greet.linkCopiedToClipboard',
@@ -585,6 +562,13 @@ async function sendEmail(): Promise<void> {
   if (await greeter.value.sendEmail()) {
     isEmailSent.value = true;
     startCounter(5000, 1000, updateCounter);
+    props.informationManager.present(
+      new Information({
+        message: 'DevicesPage.greet.emailSentToast',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
   } else {
     props.informationManager.present(
       new Information({
@@ -603,268 +587,123 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.modal-header__title {
+  @include ms.font('heading-h4');
+}
+
+.modal-header__text {
+  @include ms.font('body-md-regular');
+}
+
 .first-step {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  flex-shrink: 0;
-
-  @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
-  }
-}
-
-.first-step-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 auto;
+  gap: ms.spacing('gap-3xl');
   width: 100%;
-  max-width: 37.5rem;
-  background-color: var(--parsec-color-light-secondary-background);
-  border-radius: var(--parsec-radius-6);
-  padding: 2rem 1rem;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 2rem;
-    max-width: 20rem;
-    border-radius: var(--parsec-radius-12);
-    box-shadow: var(--parsec-shadow-soft);
+    padding-inline: ms.spacing('padding-3xl');
   }
 
-  .content-title {
-    text-align: center;
-
-    &__blue {
-      color: var(--parsec-color-light-primary-600);
-    }
-
-    &__grey {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-  }
-
-  .content-sharing {
+  .step-info {
     display: flex;
-    align-items: center;
-    margin-top: 1.5rem;
-    gap: 1.5rem;
-    width: 100%;
+    flex-direction: column;
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-base-body');
 
-    @include ms.responsive-breakpoint('sm') {
-      flex-direction: column;
+    &__title {
+      @include ms.font('heading-h5');
     }
 
-    .qrcode {
-      display: flex;
-      width: 7.5rem;
-      padding: 0.5rem;
-      background: var(--parsec-color-light-secondary-white);
-      position: relative;
+    &__subtitle {
+      @include ms.font('body-lg-regular');
+    }
+  }
+
+  .step-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: ms.spacing('gap-3xl');
+    background: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    padding: ms.spacing('padding-3xl');
+    border-radius: ms.radius('2xl');
+    //should be replaced by a shadow token --parsec-shadow-filter when it will be available
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+
+    &-qrcode {
       margin: 0;
+      width: 11rem;
+      height: 11rem;
+    }
+
+    .input-action {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+
+      &-text-container {
+        background-color: ms.color('surface-neutral-default-subtle');
+        padding: ms.spacing('padding-xl');
+        border-radius: ms.radius('lg');
+        border: ms.border('thin') solid ms.color('border-base-default');
+      }
+
+      &-text {
+        @include ms.font('label-md-medium');
+        color: ms.color('text-base-label');
+        word-break: break-all;
+      }
+
+      &-buttons {
+        display: flex;
+        gap: ms.spacing('gap-2xl');
+        justify-content: flex-end;
+        margin-top: 1rem;
+      }
+
+      .button-icon {
+        width: 1rem;
+        --fill-color: #{ms.color('icon-neutral-default')};
+      }
+    }
+
+    .step-link-copy-error {
+      @include ms.font('body-sm-regular');
     }
 
     .divider {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
+      gap: ms.spacing('gap-lg');
 
       ion-text {
-        color: var(--parsec-color-light-secondary-light);
+        @include ms.font('heading-h5');
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: ms.spacing('gap-lg');
+        color: ms.color('text-disabled-default');
         text-transform: uppercase;
 
-        @include ms.responsive-breakpoint('sm') {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        &::before {
-          content: '';
-          margin: auto;
-          display: flex;
-          margin-bottom: 1rem;
-          background: var(--parsec-color-light-secondary-light);
-          width: 1.5px;
-          height: 3rem;
-
-          @include ms.responsive-breakpoint('sm') {
-            margin: 0;
-            width: 3rem;
-            height: 1.5px;
-          }
-        }
-
+        &::before,
         &::after {
           content: '';
           margin: auto;
           display: flex;
-          margin-top: 1rem;
-          background: var(--parsec-color-light-secondary-light);
-          width: 1.5px;
-          height: 3rem;
-
-          @include ms.responsive-breakpoint('sm') {
-            margin: 0;
-            width: 3rem;
-            height: 1.5px;
-          }
-        }
-      }
-    }
-
-    .right-side {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      width: 20rem;
-
-      @include ms.responsive-breakpoint('sm') {
-        max-width: 30rem;
-        width: 100%;
-      }
-
-      .small-text {
-        color: var(--parsec-color-light-success-700);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        position: absolute;
-      }
-    }
-
-    .link-content {
-      margin: 0;
-      background-color: var(--parsec-color-light-secondary-white);
-      border-radius: var(--parsec-radius-6);
-      border: 1px solid var(--parsec-color-light-secondary-disabled);
-      padding: 0.25rem 0.5rem;
-
-      @include ms.responsive-breakpoint('sm') {
-        width: 100%;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-      }
-
-      &-card {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-
-        @include ms.responsive-breakpoint('sm') {
-          width: 100%;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
+          background: ms.color('border-disabled-default');
         }
 
-        &__text {
-          margin: 0;
-          overflow: hidden;
-          color: var(--parsec-color-light-secondary-text);
-          white-space: nowrap;
-          text-overflow: ellipsis;
-
-          &.copied {
-            color: var(--parsec-color-light-success-700);
-          }
+        &::before {
+          height: 1px;
+          width: 3rem;
         }
 
-        #copy-link-btn {
-          color: var(--parsec-color-light-secondary-text);
-          margin: 0;
-
-          &::part(native) {
-            padding: 0.5rem;
-            border-radius: var(--parsec-radius-6);
-          }
-
-          &:hover {
-            color: var(--parsec-color-light-primary-600);
-          }
-        }
-      }
-
-      .icon-checkmark {
-        position: relative;
-        color: var(--parsec-color-light-success-700);
-        padding: 0.5rem;
-      }
-
-      @include ms.responsive-breakpoint('sm') {
-        &-small {
-          #copy-link-btn-small {
-            width: 100%;
-
-            &::part(native) {
-              background: var(--parsec-color-light-secondary-text);
-              color: var(--parsec-color-light-secondary-white);
-              --background-hover: var(--parsec-color-light-secondary-contrast);
-            }
-
-            &.copied {
-              &::part(native) {
-                background: var(--parsec-color-light-secondary-background);
-                border: none;
-                color: var(--parsec-color-light-secondary-text);
-              }
-            }
-          }
-
-          ion-icon {
-            margin-right: 0.5rem;
-            font-size: 1rem;
-          }
-        }
-      }
-    }
-
-    .email {
-      height: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      position: relative;
-
-      @include ms.responsive-breakpoint('sm') {
-        height: initial;
-        min-height: 2rem;
-      }
-
-      &-button {
-        display: flex;
-        width: fit-content;
-        position: relative;
-        margin: 0;
-        color: var(--parsec-color-light-secondary-text);
-        --background-hover: var(--parsec-color-light-secondary-medium);
-
-        @include ms.responsive-breakpoint('sm') {
-          width: 100%;
-        }
-
-        &::part(native) {
-          border: 1px solid var(--parsec-color-light-secondary-text);
-        }
-
-        &:hover {
-          &::part(native) {
-            border: 1px solid var(--parsec-color-light-secondary-contrast);
-          }
-        }
-
-        &__icon {
-          font-size: 1rem;
-        }
-      }
-
-      .small-text {
-        @include ms.responsive-breakpoint('sm') {
-          width: 100%;
-          justify-content: center;
+        &::after {
+          height: 1px;
+          width: 3rem;
         }
       }
     }
@@ -875,9 +714,9 @@ onMounted(async () => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  border-radius: var(--parsec-radius-6);
+  border-radius: ms.radius('md');
   justify-content: space-between;
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-body');
   width: 20rem;
 
   @include ms.responsive-breakpoint('sm') {
@@ -886,6 +725,6 @@ onMounted(async () => {
 }
 
 .spinner {
-  padding-bottom: 0.5rem;
+  padding-bottom: ms.spacing('padding-lg');
 }
 </style>

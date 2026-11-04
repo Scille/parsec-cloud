@@ -1,0 +1,37 @@
+{% extends "email/base.html.j2" %}
+
+{% block document_title %}Parsec join request accepted{% endblock %}
+
+{% block preheader %}Your request to join {{ organization_id }} has been accepted.{% endblock %}
+
+{% block title %}You are now part of {{ organization_id }}{% endblock %}
+
+{% block description %}Your request to join <b>{{ organization_id }}</b> has been accepted.{% endblock %}
+
+{% block main_content %}
+{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_note %}
+{{
+  gen_contents([
+    namespace(
+      title="Open Parsec",
+      text="Open Parsec and continue on <strong>Web</strong> or <strong>Desktop</strong> depending on where you submitted your join request from.",
+      extras=[
+        render_link(server_url, "Open Parsec")
+      ]
+    ),
+    namespace(
+      title="Add your new organization",
+      text="Click on <strong>Add to my organizations</strong> next to your join request. You can now login and start sharing your data securely.",
+    )
+  ])
+}}
+
+{% call render_note() %}
+<p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">
+  <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+  origin page using window.opener unless link type noopener or noreferrer is specified. -->
+  For more information please refer to the User Guide:
+  <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/join-organization.html#join-an-organization-with-a-join-request" rel="noopener noreferrer" target="_blank">Join an organization</a>.
+</p>
+{% endcall %}
+{% endblock %}

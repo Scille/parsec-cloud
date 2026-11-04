@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use paste::paste;
@@ -348,6 +348,7 @@ impl_events!(
     ServerConfigNotified {
         active_users_limit: ActiveUsersLimit,
         user_profile_outsider_allowed: bool,
+        realm_minimum_archiving_period_before_deletion: u64,  // In seconds
     },
     /// This event is fired by the server config monitor.
     ///
@@ -415,7 +416,7 @@ impl_events!(
     /// we are at the origin of the change (e.g. we cancelled the invitation).
     InvitationChanged {
         status: InvitationStatus,
-        token: InvitationToken,
+        token: AccessToken,
     },
 
     /// This event is fired by the connection monitor.
@@ -424,7 +425,7 @@ impl_events!(
     /// More precisely, this event is sent each time the claimer polls the first step
     /// (WAIT_PEER) of the corresponding greeting attempt.
     GreetingAttemptReady {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 
@@ -437,7 +438,7 @@ impl_events!(
     /// Note this event will be fired (i.e. the server pushes it to us) even if
     /// we are at the origin of the change (e.g. we cancelled the greeting attempt).
     GreetingAttemptCancelled {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 
@@ -450,7 +451,7 @@ impl_events!(
     /// Note this event will be fired (i.e. the server pushes it to us) even if
     /// we are at the origin of the change (e.g. we cancelled the greeting attempt).
     GreetingAttemptJoined {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 

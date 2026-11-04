@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
@@ -7,6 +8,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -19,6 +21,12 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.realm_create import realm_create
+from parsec.components.postgresql.realm_delete_1_get_blocks_batch import (
+    realm_delete_1_get_blocks_batch,
+)
+from parsec.components.postgresql.realm_delete_2_do_delete_metadata import (
+    realm_delete_2_do_delete_metadata,
+)
 from parsec.components.postgresql.realm_dump_realms_granted_roles import (
     realm_dump_realms_granted_roles,
 )
@@ -38,10 +46,15 @@ from parsec.components.postgresql.realm_get_current_realms_for_user import (
     realm_get_current_realms_for_user,
 )
 from parsec.components.postgresql.realm_get_keys_bundle import realm_get_keys_bundle
+from parsec.components.postgresql.realm_list_deletion_candidates import (
+    realm_list_deletion_candidates,
+)
 from parsec.components.postgresql.realm_rename import realm_rename
 from parsec.components.postgresql.realm_rotate_key import realm_rotate_key
+from parsec.components.postgresql.realm_self_promote_to_owner import realm_self_promote_to_owner
 from parsec.components.postgresql.realm_share import realm_share
 from parsec.components.postgresql.realm_unshare import realm_unshare
+from parsec.components.postgresql.realm_update_archiving import realm_update_archiving
 from parsec.components.postgresql.utils import (
     no_transaction,
     transaction,
@@ -54,6 +67,11 @@ from parsec.components.realm import (
     ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
+    RealmDelete1GetBlocksBatchBadOutcome,
+    RealmDelete2DoDeleteMetadataBadOutcome,
+    RealmDeleteGetBlocksBatch,
+    RealmDeleteGetBlocksBatchOffsetMarker,
+    RealmDeletionCandidate,
     RealmDumpRealmsGrantedRolesBadOutcome,
     RealmExportBatchOffsetMarker,
     RealmExportBlocksMetadataBatch,
@@ -67,14 +85,20 @@ from parsec.components.realm import (
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
+    RealmListDeletionCandidatesBadOutcome,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRotateKeyStoreBadOutcome,
     RealmRotateKeyValidateBadOutcome,
+    RealmSelfPromoteToOwnerActiveOwnerAlreadyExists,
+    RealmSelfPromoteToOwnerStoreBadOutcome,
+    RealmSelfPromoteToOwnerValidateBadOutcome,
     RealmShareStoreBadOutcome,
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    RealmUpdateArchivingStoreBadOutcome,
+    RealmUpdateArchivingValidateBadOutcome,
     RejectedBySequesterService,
     SequesterServiceMismatch,
     SequesterServiceUnavailable,
@@ -175,6 +199,33 @@ class PGRealmComponent(BaseRealmComponent):
 
     @override
     @transaction
+    async def self_promote_to_owner(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_role_certificate: bytes,
+    ) -> (
+        RealmRoleCertificate
+        | RealmSelfPromoteToOwnerActiveOwnerAlreadyExists
+        | RealmSelfPromoteToOwnerValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmSelfPromoteToOwnerStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        return await realm_self_promote_to_owner(
+            conn,
+            now,
+            organization_id,
+            author,
+            author_verify_key,
+            realm_role_certificate,
+        )
+
+    @override
+    @transaction
     async def rename(
         self,
         conn: AsyncpgConnection,
@@ -239,6 +290,32 @@ class PGRealmComponent(BaseRealmComponent):
             per_participant_keys_bundle_access,
             keys_bundle,
             per_sequester_service_keys_bundle_access,
+        )
+
+    @override
+    @transaction
+    async def update_archiving(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_archiving_certificate: bytes,
+    ) -> (
+        RealmArchivingCertificate
+        | RealmUpdateArchivingValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmUpdateArchivingStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        return await realm_update_archiving(
+            conn,
+            now,
+            organization_id,
+            author,
+            author_verify_key,
+            realm_archiving_certificate,
         )
 
     @override
@@ -325,3 +402,38 @@ class PGRealmComponent(BaseRealmComponent):
         return await realm_export_do_blocks_metadata_batch(
             conn, organization_id, realm_id, batch_offset_marker, batch_size
         )
+
+    @override
+    @no_transaction
+    async def delete_1_get_blocks_batch(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmDeleteGetBlocksBatch | RealmDelete1GetBlocksBatchBadOutcome:
+        return await realm_delete_1_get_blocks_batch(
+            conn, organization_id, realm_id, batch_offset_marker, batch_size
+        )
+
+    @override
+    @transaction
+    async def delete_2_do_delete_metadata(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        now: DateTime,
+    ) -> RealmDelete2DoDeleteMetadataBadOutcome | None:
+        return await realm_delete_2_do_delete_metadata(conn, organization_id, realm_id, now)
+
+    @override
+    @no_transaction
+    async def list_deletion_candidates(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> list[RealmDeletionCandidate] | RealmListDeletionCandidatesBadOutcome:
+        return await realm_list_deletion_candidates(conn, organization_id, now)

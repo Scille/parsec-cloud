@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -6,15 +6,15 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
+    EventWorkspaceOpsOutboundSyncNeeded,
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             EnsureManifestExistsWithParentError, ForUpdateFolderError, GetManifestError,
             UpdateFolderManifestError,
         },
-        WorkspaceOps,
     },
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 pub(crate) enum RemoveEntryExpect {
@@ -38,6 +38,8 @@ pub enum WorkspaceRemoveEntryError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path points to a file")]
     EntryIsFile,
     #[error("Path points to a folder")]
@@ -59,13 +61,12 @@ pub(crate) async fn remove_entry(
     path: FsPath,
     expect: RemoveEntryExpect,
 ) -> Result<(), WorkspaceRemoveEntryError> {
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceRemoveEntryError::ReadOnlyRealm);
     }
@@ -88,6 +89,7 @@ pub(crate) async fn remove_entry(
             ForUpdateFolderError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
             ForUpdateFolderError::EntryNotAFolder => WorkspaceRemoveEntryError::EntryNotFound,
             ForUpdateFolderError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
+            ForUpdateFolderError::RealmDeleted => WorkspaceRemoveEntryError::RealmDeleted,
             ForUpdateFolderError::InvalidKeysBundle(err) => {
                 WorkspaceRemoveEntryError::InvalidKeysBundle(err)
             }
@@ -117,6 +119,7 @@ pub(crate) async fn remove_entry(
             GetManifestError::Stopped => WorkspaceRemoveEntryError::Stopped,
             GetManifestError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
             GetManifestError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
+            GetManifestError::RealmDeleted => WorkspaceRemoveEntryError::RealmDeleted,
             GetManifestError::InvalidKeysBundle(err) => {
                 WorkspaceRemoveEntryError::InvalidKeysBundle(err)
             }
@@ -134,7 +137,7 @@ pub(crate) async fn remove_entry(
 
         (RemoveEntryExpect::File, ArcLocalChildManifest::File(_)) => (),
         (RemoveEntryExpect::File, ArcLocalChildManifest::Folder(_)) => {
-            return Err(WorkspaceRemoveEntryError::EntryIsFolder)
+            return Err(WorkspaceRemoveEntryError::EntryIsFolder);
         }
 
         // A word about removing non-empty folder:
@@ -173,6 +176,9 @@ pub(crate) async fn remove_entry(
                         }
                         EnsureManifestExistsWithParentError::NoRealmAccess => {
                             WorkspaceRemoveEntryError::NoRealmAccess
+                        }
+                        EnsureManifestExistsWithParentError::RealmDeleted => {
+                            WorkspaceRemoveEntryError::RealmDeleted
                         }
                         EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                             WorkspaceRemoveEntryError::InvalidKeysBundle(err)

@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import os
@@ -9,14 +10,16 @@ from typing import Any
 import click
 
 from parsec.cli.export import export_realm
-from parsec.cli.export_email import export_email
 from parsec.cli.inspect import human_accesses
 from parsec.cli.migration import migrate
 from parsec.cli.options import version_option
+from parsec.cli.realm_delete import delete_realm, list_deletable_realms
+from parsec.cli.render_email import render_email
 from parsec.cli.run import run_cmd
 from parsec.cli.sequester_create import create_service, generate_service_certificate
 from parsec.cli.sequester_list import list_services
 from parsec.cli.sequester_revoke import generate_service_revocation_certificate, revoke_service
+from parsec.cli.tasks import server_tasks_cmd_group
 from parsec.cli.testbed import TESTBED_AVAILABLE, testbed_cmd
 
 __all__ = ("cli",)
@@ -49,13 +52,17 @@ cli.add_command(run_cmd, "run")
 cli.add_command(migrate, "migrate")
 cli.add_command(export_realm, "export_realm")
 cli.add_command(human_accesses, "human_accesses")
+cli.add_command(list_deletable_realms, "list_deletable_realms")
+cli.add_command(delete_realm, "delete_realm")
 cli.add_command(server_sequester_cmd, "sequester")
+cli.add_command(server_tasks_cmd_group)
+
 if TESTBED_AVAILABLE:
     cli.add_command(testbed_cmd, "testbed")
-    # Since `export_email` is only for debugging purpose, we don't expose it
+    # Since `render_email` is only for debugging purpose, we don't expose it
     # in release (and a close enough way to detect this is to check if
     # `TESTBED_AVAILABLE` is defined)
-    cli.add_command(export_email, "export_email")
+    cli.add_command(render_email, "render_email")
 
 
 # Add support for PARSEC_CMD_ARGS env var
@@ -69,7 +76,7 @@ def patched_cli_main(args: Sequence[str] | None = None, **kwargs: Any) -> Any:
     raw_extra_args = os.environ.get("PARSEC_CMD_ARGS", "")
     args_list += [os.path.expandvars(x) for x in raw_extra_args.split()]
 
-    return vanilla_cli_main(args=args_list[:], **kwargs)
+    return vanilla_cli_main(args=args_list, **kwargs)
 
 
 cli.main = patched_cli_main  # pyright: ignore[reportAttributeAccessIssue]

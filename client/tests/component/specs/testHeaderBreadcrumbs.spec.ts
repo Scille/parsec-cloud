@@ -1,12 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockRouter, resetRoutesCalled } from '@tests/component/support/mocks';
-
-// Before importing anything else
-mockRouter();
-
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { Routes } from '@/router';
+import { getDefaultProvideConfig, resetRoutesCalled } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -41,6 +37,7 @@ describe('Header breadcrumbs', () => {
     ];
     const wrapper = mount(HeaderBreadcrumbs, {
       props: {
+        workspaceName: 'My Workspace',
         pathNodes: NODES,
       },
       global: {

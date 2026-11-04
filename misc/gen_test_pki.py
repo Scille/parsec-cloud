@@ -4,22 +4,27 @@ from __future__ import annotations
 
 import shlex
 import subprocess
-from argparse import ArgumentParser, Namespace
-from collections.abc import Generator, Sequence
+import tempfile
+from argparse import ArgumentParser
+from base64 import b64encode
+from binascii import unhexlify
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum, auto
 from pathlib import Path
 
+ROOT_DIR = Path(__file__).parent.parent.resolve()
+
 ROOT_CERT_DIR = Path("Root")
 INTERMEDIATE_CERT_DIR = Path("Intermediate")
 LEAF_CERT_DIR = Path("Cert")
+CRL_DIR = Path("CRL")
 
 SCRIPT_LAST_MODIFICATION = Path(__file__).stat().st_mtime
 
 
-def file_need_update(file: Path) -> bool:
-    return not file.exists()
+type Sha256Fingerprint = bytes
 
 
 @dataclass
@@ -36,11 +41,13 @@ class RSAKeyAlgorithm(KeyAlgorithm):
     id = "RSA"
 
     def run_openssl_cmd(self, path: Path):
-        return check_run(["openssl", "genrsa", "-out", path, str(self.length)])
+        return display_and_run_check_call(
+            ["openssl", "genrsa", "-out", str(path), str(self.length)]
+        )
 
 
-def check_run(args: Sequence[str | Path]) -> int:
-    print(f"+ {shlex.join(map(str, args))}")
+def display_and_run_check_call(args: Sequence[str]) -> int:
+    print(f"+ {shlex.join(args)}")
     return subprocess.check_call(args)
 
 
@@ -71,7 +78,8 @@ class CertificateConfig:
     not_after: datetime
     """Certificate is not valid after that date"""
     type: CertificateType = CertificateType.Leaf
-    extensions: dict[str, str] = field(default_factory=dict)
+    extensions: dict[str, str | list[str]] = field(default_factory=dict)
+    revoked: bool = False
     signing: list[CertificateConfig] = field(default_factory=list)
     """Certificates that will by signed by this certificate"""
 
@@ -130,6 +138,37 @@ TRUSTCHAINS = [
                 not_after=not_before,  # Not a typo, we want old-boby cert to be expired
                 extensions={BASIC_CONSTRAINTS: "CA:FALSE"},
             ),
+            CertificateConfig(
+                name="revoked_anomalous_materials_laboratories",
+                type=CertificateType.Intermediate,
+                subject={
+                    COMMON_NAME: "Anomalous Materials Laboratories",
+                    ORGANIZATIONAL_UNIT: "Anomalous Materials Laboratories",
+                },
+                key_algorithm=RSAKeyAlgorithm(length=2048),
+                not_before=not_before,
+                not_after=not_after,
+                revoked=True,
+                extensions={BASIC_CONSTRAINTS: "CA:TRUE"},
+                signing=[
+                    CertificateConfig(
+                        name="gordon",
+                        subject={COMMON_NAME: "Gordon", EMAIL_ADDRESS: "gordon@black-mesa.corp"},
+                        key_algorithm=RSAKeyAlgorithm(length=2048),
+                        not_before=not_before,
+                        not_after=not_after,
+                        extensions={SUBJECT_ALT_NAME: f"{SAN_EMAIL}:gordon@black-mesa.corp"},
+                    ),
+                ],
+            ),
+            CertificateConfig(
+                name="revoked_breen",
+                subject={COMMON_NAME: "Breen", EMAIL_ADDRESS: "breen@black-mesa.corp"},
+                key_algorithm=RSAKeyAlgorithm(length=2048),
+                not_before=not_before,
+                not_after=not_after,
+                revoked=True,
+            ),
         ],
     ),
     CertificateConfig(
@@ -164,7 +203,25 @@ TRUSTCHAINS = [
                         key_algorithm=RSAKeyAlgorithm(length=2048),
                         not_before=not_before,
                         not_after=not_after,
+                        extensions={KEY_USAGE: "keyEncipherment"},
+                    ),
+                    CertificateConfig(
+                        name="mallory-encrypt-dataEncipherment",
+                        subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
+                        key_algorithm=RSAKeyAlgorithm(length=2048),
+                        not_before=not_before,
+                        not_after=not_after,
                         extensions={KEY_USAGE: "dataEncipherment"},
+                    ),
+                    CertificateConfig(
+                        name="mallory-both",
+                        subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
+                        key_algorithm=RSAKeyAlgorithm(length=2048),
+                        not_before=not_before,
+                        # Make this certificate expires before the others, hence it should be the other
+                        # ones that are picked for use.
+                        not_after=not_after - timedelta(days=1),
+                        extensions={KEY_USAGE: ["keyEncipherment", "digitalSignature"]},
                     ),
                 ],
             )
@@ -173,25 +230,58 @@ TRUSTCHAINS = [
 ]
 
 
-def main():
-    args = parse_args()
-    output_dir: Path = args.output_dir
-
+def main(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    gitignore = output_dir / ".gitignore"
-    gitignore.write_text("*")
+    readme_file_content = [
+        "# Test PKI certificates",
+        "",
+        "⚠️ Auto-generated file, don't edit by hand ! ⚠️",
+        "",
+        "This directory contains X509 certificates for test purpose.",
+        "See `misc/gen_test_pki.py` for the generation script.",
+        f"Last generation date: {datetime.fromtimestamp(SCRIPT_LAST_MODIFICATION, tz=UTC).isoformat()}",
+        "",
+        "Certificates:",
+        "",
+    ]
+
+    all_revoked: dict[str, list[CertificateConfig]] = {}
+    """Maps root certificate name to the list of revoked children"""
+
     for chain in TRUSTCHAINS:
-        create_trustchain(chain, None, output_dir)
+        certifs = create_trustchain(chain, None, output_dir)
+        for name, fingerprint in certifs.items():
+            hex_fingerprint = fingerprint.hex().upper()
+            coded_fingerprint = f"sha256-{b64encode(fingerprint).decode('utf-8')}"
+            readme_file_content.append(
+                f"- {name}: SHA256={hex_fingerprint} (aka `{coded_fingerprint}`)"
+            )
+
+        revoked = [child for child in chain.signing if child.revoked]
+        if revoked:
+            all_revoked[chain.name] = revoked
+
+    for root_name, revoked_certs in all_revoked.items():
+        generate_crl(root_name, revoked_certs, output_dir)
+
+    if all_revoked:
+        readme_file_content.append("")
+        readme_file_content.append("CRL files:")
+        readme_file_content.append("")
+        for root_name, revoked_certs in all_revoked.items():
+            revoked_names = ", ".join(c.name for c in revoked_certs)
+            readme_file_content.append(
+                f"- {CRL_DIR / root_name}.crl: revokes {revoked_names} (signed by {root_name})"
+            )
+        readme_file_content.append("")
+
+    readme_file = output_dir / "README.md"
+    readme_file.write_text("\n".join(readme_file_content))
 
 
-def parse_args() -> Namespace:
-    parser = ArgumentParser()
-    parser.add_argument("--output-dir", default=Path("test-pki"), type=Path)
-
-    return parser.parse_args()
-
-
-def create_trustchain(chain: CertificateConfig, signer: CertificateConfig | None, output_dir: Path):
+def create_trustchain(
+    chain: CertificateConfig, signer: CertificateConfig | None, output_dir: Path
+) -> dict[str, Sha256Fingerprint]:
     if signer:
         print(f"Creating trustchain for {chain.name} signed by {signer.name}")
         # Inherit signer subject
@@ -204,14 +294,16 @@ def create_trustchain(chain: CertificateConfig, signer: CertificateConfig | None
 
     # Create key file
     key_file = workdir / (chain.name + ".key")
+    cert_file = workdir / (chain.name + ".crt")
+    pkcs12_file = workdir / (chain.name + ".pfx")
 
-    if file_need_update(key_file):
+    if key_file.exists():
+        print(f"Skipping {key_file} creation since it already exists")
+    else:
         print(f"Creating key {key_file} of type {chain.key_algorithm}")
         key_file.parent.mkdir(parents=True, exist_ok=True)
         chain.key_algorithm.run_openssl_cmd(key_file)
 
-    cert_file = workdir / (chain.name + ".crt")
-    if file_need_update(cert_file):
         print(f"Creating cert {cert_file}")
         cert_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -220,23 +312,29 @@ def create_trustchain(chain: CertificateConfig, signer: CertificateConfig | None
         else:
             generate_signed_cert(chain, signer, key_file, cert_file, output_dir)
 
-        pkcs12_file = workdir / (chain.name + ".pfx")
         generate_pkcs12_file(chain, cert_file, key_file, pkcs12_file)
 
+    generated = {}
+
+    fingerprint = get_sha256_fingerprint(cert_file)
+    generated[chain.name] = fingerprint
+
     for children in chain.signing:
-        create_trustchain(children, chain, output_dir)
+        generated |= create_trustchain(children, chain, output_dir)
+
+    return generated
 
 
 def generate_self_signed_cert(chain: CertificateConfig, key_file: Path, cert_file: Path):
-    check_run(
+    display_and_run_check_call(
         [
             "openssl",
             "req",
             "-x509",  # Output a certificate instead of a CSR
             "-key",
-            key_file,
+            str(key_file),
             "-out",
-            cert_file,
+            str(cert_file),
             "-not_before",
             format_date_for_openssl(chain.not_before),
             "-not_after",
@@ -259,8 +357,15 @@ def gen_subject_option_arg(subject: dict[str, str]) -> str:
     return "".join(f"/{k}={v}" for k, v in subject.items())
 
 
-def gen_extensions_args(extensions: dict[str, str]) -> Generator[str, None, None]:
-    return (f"--addext={k}={v}" for k, v in extensions.items())
+def gen_extensions_args(extensions: dict[str, str | list[str]]) -> list[str]:
+    args = []
+    for k, v in extensions.items():
+        match v:
+            case str():
+                args.append(f"-addext={k}={v}")
+            case list():
+                args.append(f"-addext={k}={','.join(v)}")
+    return args
 
 
 def generate_signed_cert(
@@ -269,17 +374,17 @@ def generate_signed_cert(
     key_file: Path,
     cert_file: Path,
     output_dir: Path,
-):
+) -> None:
     csr_file = cert_file.with_suffix(".csr")
-    check_run(
+    display_and_run_check_call(
         [
             "openssl",
             "req",
             "-new",
             "-key",
-            key_file,
+            str(key_file),
             "-out",
-            csr_file,
+            str(csr_file),
             "-not_before",
             format_date_for_openssl(chain.not_before),
             "-not_after",
@@ -295,19 +400,19 @@ def generate_signed_cert(
     ca_cert = ca_workdir / (signer.name + ".crt")
     ca_key = ca_workdir / (signer.name + ".key")
     ca_serial_file = ca_workdir / (signer.name + ".srl")
-    check_run(
+    display_and_run_check_call(
         [
             "openssl",
             "x509",
             "-req",
             "-in",
-            csr_file,
+            str(csr_file),
             "-out",
-            cert_file,
+            str(cert_file),
             "-CA",
-            ca_cert,
+            str(ca_cert),
             "-CAkey",
-            ca_key,
+            str(ca_key),
             # Not using "-preserve_dates" because during testing, it does not seems to be taken into account
             "-not_before",
             format_date_for_openssl(chain.not_before),
@@ -316,22 +421,43 @@ def generate_signed_cert(
             "-copy_extensions",
             "copyall",
         ]
-        + (["-CAserial", ca_serial_file] if ca_serial_file.exists() else ["-CAcreateserial"])
+        + (["-CAserial", str(ca_serial_file)] if ca_serial_file.exists() else ["-CAcreateserial"])
     )
 
 
-def generate_pkcs12_file(chain: CertificateConfig, cert_file: Path, key_file: Path, out_file: Path):
-    check_run(
+def get_sha256_fingerprint(cert_file: Path) -> Sha256Fingerprint:
+    raw_fingerprint = subprocess.check_output(
+        [
+            "openssl",
+            "x509",
+            "-in",
+            str(cert_file),
+            "-inform",
+            "pem",
+            "-noout",
+            "-fingerprint",
+            "-sha256",
+        ]
+    )
+    PREFIX = b"sha256 Fingerprint="
+    assert raw_fingerprint.startswith(PREFIX)
+    return unhexlify(raw_fingerprint[len(PREFIX) :].strip().decode("utf-8").replace(":", ""))
+
+
+def generate_pkcs12_file(
+    chain: CertificateConfig, cert_file: Path, key_file: Path, out_file: Path
+) -> None:
+    display_and_run_check_call(
         [
             "openssl",
             "pkcs12",
             "-export",
             "-in",
-            cert_file,
+            str(cert_file),
             "-inkey",
-            key_file,
+            str(key_file),
             "-out",
-            out_file,
+            str(out_file),
             "-passout",
             "pass:",  # Do not use a password
             "-name",
@@ -340,5 +466,94 @@ def generate_pkcs12_file(chain: CertificateConfig, cert_file: Path, key_file: Pa
     )
 
 
+def generate_crl(
+    root_name: str,
+    revoked_certs: list[CertificateConfig],
+    output_dir: Path,
+) -> None:
+    ca_workdir = output_dir / ROOT_CERT_DIR
+    ca_cert = ca_workdir / (root_name + ".crt")
+    ca_key = ca_workdir / (root_name + ".key")
+
+    crl_workdir = output_dir / CRL_DIR
+    crl_workdir.mkdir(parents=True, exist_ok=True)
+    crl_file = crl_workdir / (root_name + ".crl")
+
+    # By default `openssl ca` reads config from `/usr/lib/ssl/openssl.cnf`,
+    # we must overwrite this with our own config.
+    #
+    # This is typically needed since OpenSSL CRLs are tracked with an index
+    # and a database that are handled as files.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+
+        index_file = tmpdir_path / "index.txt"
+        index_file.touch()
+        index_attr_file = tmpdir_path / "index.txt.attr"
+        index_attr_file.write_text("unique_subject = no\n")
+        crlnumber_file = tmpdir_path / "crlnumber"
+        crlnumber_file.write_text("1000\n")
+
+        openssl_conf = tmpdir_path / "openssl.cnf"
+        openssl_conf.write_text(
+            f"""[ca]
+default_ca = CA_default
+
+[CA_default]
+database = {index_file}
+crlnumber = {crlnumber_file}
+default_md = sha256
+# How long before next CRL, we use 100 years so the validation
+# never complains a new CRL should have been issued.
+default_crl_days = 36500
+"""
+        )
+
+        # Revoke each certificate
+        for cert in revoked_certs:
+            cert_workdir = output_dir / cert.type.get_path()
+            cert_file = cert_workdir / (cert.name + ".crt")
+            display_and_run_check_call(
+                [
+                    "openssl",
+                    "ca",
+                    "-config",
+                    str(openssl_conf),
+                    "-cert",
+                    str(ca_cert),
+                    "-keyfile",
+                    str(ca_key),
+                    "-revoke",
+                    str(cert_file),
+                ]
+            )
+
+        # Build the CRL
+        display_and_run_check_call(
+            [
+                "openssl",
+                "ca",
+                "-config",
+                str(openssl_conf),
+                "-cert",
+                str(ca_cert),
+                "-keyfile",
+                str(ca_key),
+                # cspell: disable-next-line
+                "-gencrl",
+                "-out",
+                str(crl_file),
+            ]
+        )
+
+    print(f"Generated CRL {crl_file}")
+
+
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--output-dir", default=ROOT_DIR / "libparsec/crates/platform_pki/test-pki/", type=Path
+    )
+
+    args = parser.parse_args()
+    main(args.output_dir)

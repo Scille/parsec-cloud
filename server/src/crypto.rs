@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    create_exception,
+    Bound, create_exception,
     exceptions::{PyException, PyValueError},
     prelude::*,
     types::{PyBytes, PyType},
-    Bound,
 };
 
 create_exception!(_parsec, CryptoError, PyException);
@@ -23,6 +22,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SequesterVerifyKeyDer>()?;
     m.add_class::<UntrustedPasswordAlgorithm>()?;
     m.add_class::<UntrustedPasswordAlgorithmArgon2id>()?;
+    m.add_class::<RsaPrivateKey>()?;
     m.add_function(wrap_pyfunction!(generate_sas_code_nonce, m)?)?;
 
     crate::binding_utils::export_exception!(m, py, CryptoError);
@@ -334,7 +334,7 @@ impl SequesterPrivateKeyDer {
                 _ => {
                     return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    ))
+                    ));
                 }
             });
         Ok((Self(priv_key), SequesterPublicKeyDer(pub_key)))
@@ -433,7 +433,7 @@ impl SequesterSigningKeyDer {
                 _ => {
                     return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    ))
+                    ));
                 }
             });
         Ok((Self(priv_key), SequesterVerifyKeyDer(pub_key)))
@@ -504,7 +504,7 @@ pub(crate) fn generate_sas_code_nonce(py: Python<'_>) -> Bound<'_, PyBytes> {
     PyBytes::new(py, &libparsec_crypto::generate_sas_code_nonce())
 }
 
-#[pyclass(subclass)]
+#[pyclass(subclass, from_py_object)]
 #[derive(Clone)]
 pub struct UntrustedPasswordAlgorithm(pub libparsec_types::UntrustedPasswordAlgorithm);
 
@@ -545,7 +545,7 @@ impl UntrustedPasswordAlgorithm {
     }
 }
 
-#[pyclass(extends=UntrustedPasswordAlgorithm, subclass)]
+#[pyclass(extends=UntrustedPasswordAlgorithm, subclass, from_py_object)]
 #[derive(Clone)]
 pub struct UntrustedPasswordAlgorithmArgon2id {}
 
@@ -557,15 +557,15 @@ impl UntrustedPasswordAlgorithmArgon2id {
         opslimit: u32,
         memlimit_kb: u32,
         parallelism: u32,
-    ) -> (Self, UntrustedPasswordAlgorithm) {
-        (
-            Self {},
-            UntrustedPasswordAlgorithm(libparsec_types::UntrustedPasswordAlgorithm::Argon2id {
+    ) -> PyResult<PyClassInitializer<Self>> {
+        Ok(PyClassInitializer::from(UntrustedPasswordAlgorithm(
+            libparsec_types::UntrustedPasswordAlgorithm::Argon2id {
                 opslimit,
                 memlimit_kb,
                 parallelism,
-            }),
-        )
+            },
+        ))
+        .add_subclass(Self {}))
     }
 
     #[getter]
@@ -594,5 +594,34 @@ impl UntrustedPasswordAlgorithmArgon2id {
                 *parallelism
             }
         }
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class!(
+    RsaPrivateKey,
+    libparsec_crypto::RsaPrivateKey,
+    __repr__,
+    __copy__,
+    __deepcopy__
+);
+
+#[pymethods]
+impl RsaPrivateKey {
+    #[classmethod]
+    fn load_pkcs8_pem(_cls: Bound<'_, PyType>, s: &str) -> PyResult<Self> {
+        libparsec_crypto::RsaPrivateKey::load_pkcs8_pem(s)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    fn sign_pkcs1v15_unprefixed<'py>(
+        &self,
+        py: Python<'py>,
+        data: &[u8],
+    ) -> PyResult<Bound<'py, PyBytes>> {
+        self.0
+            .sign_pkcs1v15_unprefixed(data)
+            .map(|v| PyBytes::new(py, &v))
+            .map_err(|e| CryptoError::new_err(e.to_string()))
     }
 }

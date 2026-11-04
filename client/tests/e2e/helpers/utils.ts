@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BrowserContext, Locator, Page, TestInfo } from '@playwright/test';
+import { BrowserContext, Download, Locator, Page, request, TestInfo } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { DisplaySize, ImportAllDocuments, ImportDocuments, MsPage } from '@tests/e2e/helpers/types';
 import { readFileSync } from 'fs';
+import { generate as otplibGenerate } from 'otplib';
 import path from 'path';
 
 interface QuestionOptions {
@@ -33,7 +34,7 @@ export async function answerQuestion(page: MsPage, positiveAnswer: boolean, opti
       if (smallDisplay) {
         await expect(modal.locator('.ms-small-display-modal-header__text')).toHaveText(options.expectedQuestionText);
       } else {
-        await expect(modal.locator('.ms-modal-header__text')).toHaveText(options.expectedQuestionText);
+        await expect(modal.locator('.ms-modal-header__subtitle')).toHaveText(options.expectedQuestionText);
       }
     }
     if (options.expectedPositiveText) {
@@ -122,7 +123,7 @@ export async function selectDropdown(button: Locator, select: string, currentlyS
 export async function sortBy(sortButton: Locator, clickOnLabel: string): Promise<void> {
   await sortButton.click();
   const popover = sortButton.page().locator('.sorter-popover');
-  await popover.getByRole('listitem').filter({ hasText: clickOnLabel }).click();
+  await popover.locator('ion-item').filter({ hasText: clickOnLabel }).click();
   await expect(popover).toBeHidden();
 }
 
@@ -179,7 +180,7 @@ export async function openFileType(
   for (const entry of await entries.all()) {
     const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith(`.${type}`)) {
-      await entry.dblclick();
+      await entry.locator('.label-name').click();
       await expect(documentsPage).toBeFileHandlerPage();
       return;
     }
@@ -193,23 +194,27 @@ export async function testFileViewerZoomLevel(fileWrapper: Locator, zoom: string
   expect(value).toMatch(new RegExp(`^--[a-f0-9]+-zoomLevel: ${zoom};$`));
 }
 
-export async function addDownloadedFile(win: Window, data: Uint8Array, name: string = 'default'): Promise<void> {
-  if ((win as any).__downloadedFiles === undefined) {
-    (win as any).__downloadedFiles = {
-      [name]: data,
-    };
-  } else {
-    (win as any).__downloadedFiles[name] = data;
-  }
+// Runs `trigger`, which must make the browser start a download, and returns that download.
+export async function waitForDownload(page: Page, trigger: () => Promise<void>): Promise<Download> {
+  const [download] = await Promise.all([page.waitForEvent('download'), trigger()]);
+  return download;
 }
 
-export async function getDownloadedFile(page: Page, name: string = 'default'): Promise<Uint8Array | undefined> {
-  return await page.evaluate((name) => {
-    if ((window as any).__downloadedFiles && (window as any).__downloadedFiles[name]) {
-      return Array.from((window as any).__downloadedFiles[name]) as unknown as Uint8Array;
-    }
-    return undefined;
-  }, name);
+// Content of a download, once the browser is done with it. Fails if the download failed.
+export async function readDownload(download: Download): Promise<Buffer> {
+  expect(await download.failure()).toBeNull();
+  return readFileSync(await download.path());
+}
+
+// Content of one of the files that the tests import (`tests/e2e/data/imports`)
+export function readImportedFile(testInfo: TestInfo, name: string): Buffer {
+  return readFileSync(path.join(testInfo.config.rootDir, 'data', 'imports', name));
+}
+
+// Same content, without printing everything if it differs
+export function expectSameContent(actual: Uint8Array, expected: Uint8Array): void {
+  expect(actual.length).toEqual(expected.length);
+  expect(Buffer.compare(Buffer.from(actual), Buffer.from(expected))).toEqual(0);
 }
 
 export async function sliderClick(page: Page, slider: Locator, progressPercent: number): Promise<void> {
@@ -260,6 +265,26 @@ export async function workspacesInGridMode(workspacesPage: Page): Promise<boolea
   return (await workspacesPage.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
 }
 
+export async function documentsInGridMode(documentsPage: MsPage): Promise<boolean> {
+  const smallDisplay = (await documentsPage.getDisplaySize()) === DisplaySize.Small;
+  return (
+    (await documentsPage
+      .locator(smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar')
+      .locator('#grid-view')
+      .getAttribute('disabled')) !== null
+  );
+}
+
+export async function documentsToggleViewMode(documentsPage: MsPage): Promise<void> {
+  const smallDisplay = (await documentsPage.getDisplaySize()) === DisplaySize.Small;
+  const locator = smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar';
+  if (await documentsInGridMode(documentsPage)) {
+    await documentsPage.locator(locator).locator('#list-view').click();
+  } else {
+    await documentsPage.locator(locator).locator('#grid-view').click();
+  }
+}
+
 export async function createWorkspace(workspacesPage: MsPage, name: string): Promise<void> {
   const displaySize = await workspacesPage.getDisplaySize();
   let workspacesCount = 0;
@@ -288,8 +313,42 @@ export async function createWorkspace(workspacesPage: MsPage, name: string): Pro
     } else {
       await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(workspacesCount + 1);
     }
+
+    await expect(workspacesPage.locator('#sidebar-all-workspaces')).toContainClass('active');
   }
   await dismissToast(workspacesPage);
+}
+
+export async function shareWorkspace(
+  workspacesPage: MsPage,
+  workspaceName: string,
+  withUser: string,
+  role: 'Reader' | 'Contributor' | 'Manager' | 'Owner' | 'Not shared',
+): Promise<void> {
+  const modal = workspacesPage.locator('.workspace-sharing-modal');
+  await expect(modal).toBeHidden();
+  await workspacesPage.locator('.workspace-card-item', { hasText: workspaceName }).locator('.icon-share-container').click();
+  await expect(modal).toBeVisible();
+  const user = modal.locator('.workspace-user-role', { hasText: withUser });
+  await user.locator('.dropdown-button').click();
+  const roleDropdown = workspacesPage.locator('.dropdown-popover');
+  const roles = roleDropdown.getByRole('listitem');
+  await roles.locator('.option-text__label', { hasText: role }).click();
+  await expect(workspacesPage).toShowToast(`${withUser}'s role has been updated to ${role}.`, 'Success');
+  await modal.locator('.closeBtn').click();
+  await expect(modal).toBeHidden();
+}
+
+export async function revokeUser(usersPage: MsPage, user: string): Promise<void> {
+  const item = usersPage.locator('#users-page-user-list').locator('.user-list-item', { hasText: user });
+  await item.hover();
+  const menu = usersPage.locator('#user-context-menu');
+  await expect(menu).toBeHidden();
+  await item.locator('.options-button').click();
+  await expect(menu).toBeVisible();
+  await menu.locator('.list-group-item', { hasText: 'Revoke this user' }).click();
+  await answerQuestion(usersPage, true);
+  await expect(usersPage).toShowToast(`${user} has been revoked. They can no longer access this organization.`, 'Success');
 }
 
 export async function createFolder(documentsPage: MsPage, name: string): Promise<void> {
@@ -313,24 +372,73 @@ export async function dismissToast(page: Page): Promise<void> {
 
 export function getTestbedBootstrapAddr(orgName: string): string {
   const url = new URL(process.env.TESTBED_SERVER ?? '');
-  const port = url.port ? `:${url.port}` : '';
   let search = '?a=bootstrap_organization&p=wA';
 
   for (const [key, val] of url.searchParams.entries()) {
     search = `${search}&${key}=${val}`;
   }
-  return `${url.protocol}//${url.hostname}${port}/${orgName}${search}`;
+  return `${url.protocol}//${url.host}/${orgName}${search}`;
+}
+
+export function generateOrganizationLink(
+  orgName: string,
+  linkType: 'async_enrollment' | 'claim_user' | 'claim_device' | 'path' | 'bootstrap_organization',
+): string {
+  const url = new URL(process.env.TESTBED_SERVER ?? '');
+
+  let search = '';
+  switch (linkType) {
+    case 'async_enrollment':
+      search = '?a=async_enrollment';
+      break;
+    case 'claim_device':
+      // cspell:disable-next-line
+      search = '?a=claim_device&p=xBDgAAAAAAAAAAAAAAAAAAAC';
+      break;
+    case 'claim_user':
+      // cspell:disable-next-line
+      search = '?a=claim_user&p=xBDgAAAAAAAAAAAAAAAAAAAB';
+      break;
+    case 'path':
+      search =
+        // cspell:disable-next-line
+        '?a=path&p=k9gC8AAAAAAAAAAAAAAAAAAABAHcADlNK2rMiczKZcz6QCdzTip7YmH' +
+        // cspell:disable-next-line
+        'M4XrMrszBBBnM-SfMm3QJzO0NzMkDIXDMzGvMg0jM2szwW8z1zLPM81R4zITMiGnMgTnMiBd2BsyDzPR0Ew';
+      break;
+    case 'bootstrap_organization':
+      search = '?a=bootstrap_organization&p=wA';
+      break;
+    default:
+      break;
+  }
+  for (const [key, val] of url.searchParams.entries()) {
+    search = `${search}&${key}=${val}`;
+  }
+  return `${url.protocol}//${url.host}/${orgName}${search}`;
 }
 
 export function getOrganizationAddr(orgName: string): string {
   const url = new URL(process.env.TESTBED_SERVER ?? '');
-  const port = url.port ? `:${url.port}` : '';
 
-  return `${url.protocol}//${url.hostname}${port}/${orgName}${url.search}`;
+  return `${url.protocol}//${url.host}/${orgName}${url.search}`;
 }
 
 export function getServerAddr(): string {
   return process.env.TESTBED_SERVER ?? '';
+}
+
+export function getServerHttpAddr(): string {
+  const server = getServerAddr();
+  if (!server) {
+    return server;
+  }
+  const url = new URL(server);
+  if (server.includes('no_ssl')) {
+    return `http://${url.host}`;
+  } else {
+    return `https://${url.host}`;
+  }
 }
 
 export async function login(homePage: Page, name: string): Promise<void> {
@@ -344,6 +452,7 @@ export async function login(homePage: Page, name: string): Promise<void> {
   await homePage.locator('.login-button').click();
   await expect(homePage.locator('#connected-header')).toContainText('My workspaces');
   await expect(homePage).toBeWorkspacePage();
+  await expect(homePage.locator('.topbar-right').locator('.text-content-name')).toHaveText(name);
 }
 
 export async function logout(page: MsPage): Promise<void> {
@@ -399,6 +508,9 @@ export async function importDefaultFiles(
         paths.push(path.join(testInfo.config.rootDir, 'data', 'imports', document));
       }
     }
+    if (paths.length === 0) {
+      return;
+    }
 
     await dragAndDropFile(documentsPage, dropZone, paths);
     imported = paths.length;
@@ -443,6 +555,296 @@ export async function resizePage(page: Page, width: number, height?: number): Pr
 
 export async function sendUpdateEvent(page: MsPage): Promise<void> {
   await page.evaluate(() => {
-    window.electronAPI.getUpdateAvailability(true);
+    window.nativeAPI.getUpdateAvailability(true);
   });
+}
+
+type Events =
+  | 'ClientEventMustAcceptTos'
+  | 'ClientEventIncompatibleServer'
+  | 'ClientEventRevokedSelfUser'
+  | 'ClientEventExpiredOrganization'
+  | 'ClientEventWebClientNotAllowedByOrganization'
+  | 'ClientEventTooMuchDriftWithServerClock';
+
+export async function sendEvent(page: MsPage, event: Events): Promise<void> {
+  const url = new URL(page.url());
+  const segments = url.pathname.split('/').filter((s) => s !== '');
+  const handle = Number(segments[0]);
+  expect(Number.isNaN(handle)).toBe(false);
+  await page.evaluate(
+    ([handle, event]) => {
+      (window as any).testingEventCallback(handle, { tag: event });
+    },
+    [handle, event],
+  );
+}
+
+export async function generateTotpCode(secret: string): Promise<string> {
+  return await otplibGenerate({ secret });
+}
+
+export async function resetTotp(server: string, orgName: string, email: string): Promise<string> {
+  const apiContext = await request.newContext();
+  const response = await apiContext.post(`${server}/administration/organizations/${orgName}/users/reset_totp`, {
+    headers: {
+      Authorization: 'Bearer s3cr3t',
+    },
+    data: {
+      // eslint-disable-next-line camelcase
+      user_email: email,
+    },
+  });
+  const body = await response.json();
+  await apiContext.dispose();
+  return body.totp_reset_url;
+}
+
+export async function selectFile(entry: Locator): Promise<void> {
+  await entry.hover();
+  await entry.locator('.ms-checkbox').check();
+  await entry.page().waitForTimeout(200);
+  await expect(entry.locator('.ms-checkbox')).toBeChecked();
+}
+
+export async function unselectFile(entry: Locator): Promise<void> {
+  await entry.locator('.ms-checkbox').uncheck();
+  await entry.page().waitForTimeout(200);
+  await expect(entry.locator('.ms-checkbox')).not.toBeChecked();
+}
+
+type EntryContextMenuMode =
+  'folder-full' | 'folder-readonly' | 'file-full' | 'file-readonly' | 'multiple-entries-full' | 'multiple-entries-readonly';
+
+interface EntryContextMenuOptions {
+  canEdit?: boolean;
+  fromSearch?: boolean;
+  onDesktop?: true;
+}
+
+export async function checkEntryContextMenu(
+  page: MsPage,
+  mode: EntryContextMenuMode,
+  action?: string | 'dismiss',
+  options?: EntryContextMenuOptions,
+): Promise<void> {
+  const menu = page.locator(page.displaySize === DisplaySize.Large ? '.file-context-menu' : '.file-context-sheet-modal');
+  await expect(menu).toBeVisible();
+  const labels = menu
+    .locator('.menu-list')
+    .locator(page.displaySize === DisplaySize.Large ? '.list-group-item__label' : '.list-group-item__label-small');
+  const titles = menu.locator('.menu-list').locator('.list-group-title');
+
+  if (mode === 'file-full') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['File management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
+      'Preview',
+      ...(options?.canEdit ? ['Edit'] : []),
+      'Rename',
+      'Move to',
+      'Make a copy',
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
+      ...(options?.onDesktop ? ['Open with default app'] : []),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
+      'History',
+      ...(options?.onDesktop ? [] : ['Download']),
+      'Details',
+      'Delete',
+      'Copy link',
+    ]);
+  } else if (mode === 'folder-full') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
+      'Rename',
+      'Move to',
+      'Make a copy',
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
+      'History',
+      ...(options?.onDesktop ? [] : ['Download']),
+      'Details',
+      'Delete',
+      'Copy link',
+    ]);
+  } else if (mode === 'file-readonly') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['File management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
+      'Preview',
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
+      ...(options?.onDesktop ? [] : ['Download']),
+      ...(options?.onDesktop ? ['Open with default app'] : []),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
+      'Details',
+      'Copy link',
+    ]);
+  } else if (mode === 'folder-readonly') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
+      ...(options?.onDesktop ? [] : ['Download']),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
+      'Details',
+      'Copy link',
+    ]);
+  } else if (mode === 'multiple-entries-full') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management']);
+    }
+    await expect(labels).toHaveText(['Move to', 'Make a copy', 'Download', 'Delete']);
+  } else if (mode === 'multiple-entries-readonly') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management']);
+    }
+    await expect(labels).toHaveText(['Download']);
+  }
+  if (action === 'dismiss') {
+    await menu.locator('ion-backdrop').click();
+    await expect(menu).toBeHidden();
+  } else if (action) {
+    await labels.filter({ hasText: new RegExp(`^${action}$`) }).click();
+    await expect(menu).toBeHidden();
+  }
+}
+
+export async function checkFolderGlobalContextMenu(page: MsPage, mode: 'full' | 'readonly', action?: string | 'dismiss'): Promise<void> {
+  const menu = page.locator('.folder-global-context-menu');
+
+  if (mode === 'full') {
+    await expect(menu).toBeVisible();
+    const actions = menu.locator('.menu-list').locator('.list-group-item');
+    await expect(actions.locator('.list-group-item__label')).toHaveText([
+      'New folder',
+      'Import files',
+      'Import a folder',
+      'Document',
+      'Spreadsheet',
+      'Presentation',
+      'Text',
+    ]);
+    if (action === 'dismiss') {
+      await menu.locator('ion-backdrop').click();
+      await expect(menu).toBeHidden();
+    } else if (action) {
+      await actions.locator('.list-group-item__label', { hasText: action }).click();
+      await expect(menu).toBeHidden();
+    }
+  } else if (mode === 'readonly') {
+    await expect(menu).toBeHidden();
+  }
+}
+
+interface WorkspaceContextMenuOptions {
+  isHidden?: boolean;
+  isFavorite?: boolean;
+}
+
+export async function checkWorkspaceContextMenu(
+  page: MsPage,
+  mode: 'owner' | 'archived' | 'deleted' | 'normal',
+  action?: string | 'dismiss',
+  options?: WorkspaceContextMenuOptions,
+): Promise<void> {
+  const menu = page.locator(page.displaySize === DisplaySize.Large ? '.workspace-context-menu' : '.workspace-context-sheet-modal');
+  const actions = menu
+    .locator('.menu-list')
+    .locator(page.displaySize === DisplaySize.Large ? '.list-group-item__label' : '.list-group-item__label-small');
+  const titles = menu.locator('.menu-list').locator('.list-group-title__label');
+
+  await expect(menu).toBeVisible();
+  if (mode === 'owner') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management', 'Collaboration', 'Miscellaneous']);
+    }
+    await expect(actions).toHaveText([
+      'Rename',
+      'History',
+      options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
+      'Archive this workspace',
+      'Details',
+      'Delete this workspace',
+      'Copy link',
+      'Sharing and roles',
+      options?.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+    ]);
+  } else if (mode === 'archived') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management']);
+    }
+    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Details', 'Delete this workspace']);
+  } else if (mode === 'deleted') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management']);
+    }
+    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Details']);
+  } else if (mode === 'normal') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management', 'Collaboration', 'Miscellaneous']);
+    }
+    await expect(actions).toHaveText([
+      'History',
+      options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
+      'Details',
+      'Copy link',
+      'Sharing and roles',
+      options?.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+    ]);
+  }
+
+  if (action === 'dismiss') {
+    await menu.locator('ion-backdrop').click({ position: { x: 5, y: 5 } });
+    await expect(menu).toBeHidden();
+  } else if (action) {
+    await actions.filter({ hasText: action }).click();
+    await expect(menu).toBeHidden();
+  }
+}
+
+export async function checkUserContextMenu(
+  page: MsPage,
+  clientRole: 'Administrator' | 'Standard',
+  userRole: 'Administrator' | 'External' | 'Standard' | 'multi-users',
+  action?: string | 'dismiss',
+  options?: { isRevoked?: boolean },
+): Promise<void> {
+  const menu = page.locator(page.displaySize === DisplaySize.Large ? '.user-context-menu' : '.user-context-sheet-modal');
+  const labels = menu.locator(page.displaySize === DisplaySize.Large ? '.list-group-item__label' : '.list-group-item__label-small');
+
+  const expectedTitles = [
+    ...(clientRole === 'Administrator' && !options?.isRevoked ? ['Deletion'] : []),
+    ...(userRole !== 'multi-users' ? ['Copy roles'] : []),
+    ...(userRole !== 'External' && !options?.isRevoked ? ['Profile'] : []),
+    ...(userRole !== 'multi-users' ? ['User details'] : []),
+  ];
+  const expectedLabels = [
+    ...(clientRole === 'Administrator' && !options?.isRevoked
+      ? userRole === 'multi-users'
+        ? ['Revoke these users']
+        : ['Revoke this user']
+      : []),
+    ...(userRole !== 'multi-users' ? ['Copy workspace roles'] : []),
+    ...(userRole !== 'External' && !options?.isRevoked ? (userRole === 'multi-users' ? ['Change profiles'] : ['Change profile']) : []),
+    ...(userRole !== 'multi-users' ? ['Details'] : []),
+  ];
+
+  await expect(menu).toBeVisible();
+  if (page.displaySize === DisplaySize.Large) {
+    await expect(menu.locator('.list-group-title')).toHaveText(expectedTitles);
+  }
+  await expect(labels).toHaveText(expectedLabels);
+  if (action === 'dismiss') {
+    await menu.locator('ion-backdrop').click();
+    await expect(menu).toBeHidden();
+  } else if (action) {
+    expect(expectedLabels).toContain(action);
+    await labels.filter({ hasText: action }).click();
+    await expect(menu).toBeHidden();
+  }
 }

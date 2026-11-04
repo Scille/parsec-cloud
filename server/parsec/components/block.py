@@ -33,6 +33,7 @@ class BlockReadBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     BLOCK_NOT_FOUND = auto()
     STORE_UNAVAILABLE = auto()
 
@@ -44,6 +45,8 @@ class BlockCreateBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_ARCHIVED = auto()
+    REALM_DELETED = auto()
     BLOCK_ALREADY_EXISTS = auto()
     STORE_UNAVAILABLE = auto()
 
@@ -67,7 +70,7 @@ class BaseBlockComponent:
         block_id: BlockID,
         key_index: int,
         block: bytes,
-    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
+    ) -> BadKeyIndex | BlockCreateBadOutcome | None:
         raise NotImplementedError
 
     async def test_dump_blocks(
@@ -98,6 +101,8 @@ class BaseBlockComponent:
                 )
             case BlockReadBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.block_read.RepRealmNotFound()
+            case BlockReadBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.block_read.RepRealmDeleted()
             case BlockReadBadOutcome.BLOCK_NOT_FOUND:
                 return authenticated_cmds.latest.block_read.RepBlockNotFound()
             case BlockReadBadOutcome.AUTHOR_NOT_ALLOWED:
@@ -137,6 +142,10 @@ class BaseBlockComponent:
                 )
             case BlockCreateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.block_create.RepRealmNotFound()
+            case BlockCreateBadOutcome.REALM_ARCHIVED:
+                return authenticated_cmds.latest.block_create.RepRealmArchived()
+            case BlockCreateBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.block_create.RepRealmDeleted()
             case BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS:
                 return authenticated_cmds.latest.block_create.RepBlockAlreadyExists()
             case BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED:

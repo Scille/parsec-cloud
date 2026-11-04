@@ -50,7 +50,7 @@ msTest('Go through trial org creation process', async ({ context }) => {
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
   await expect(userNext).toHaveDisabledAttribute();
-  await userInfoContainer.locator('.checkbox').locator('.native-wrapper').click();
+  await userInfoContainer.locator('.ms-checkbox').check();
   await expect(userNext).toNotHaveDisabledAttribute();
 
   // Try cancelling
@@ -93,12 +93,9 @@ msTest('Go through trial org creation process', async ({ context }) => {
   await expect(authNext).toHaveDisabledAttribute();
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
 
-  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
 
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
@@ -119,7 +116,7 @@ msTest('Go through trial org creation process', async ({ context }) => {
   // Check does not match
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), `${DEFAULT_USER_INFORMATION.password}-extra`);
   await expect(authNext).toHaveDisabledAttribute();
-  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-helperText').nth(1);
+  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-error');
   await expect(matchError).toBeVisible();
   await expect(matchError).toHaveText('Do not match');
 
@@ -168,7 +165,7 @@ msTest('Go through trial org creation process from bootstrap link', async ({ con
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
   await expect(userNext).toHaveDisabledAttribute();
-  await userInfoContainer.locator('.checkbox').locator('.native-wrapper').click();
+  await userInfoContainer.locator('.ms-checkbox').check();
   await expect(userNext).toNotHaveDisabledAttribute();
   await userNext.click();
 
@@ -184,11 +181,8 @@ msTest('Go through trial org creation process from bootstrap link', async ({ con
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);

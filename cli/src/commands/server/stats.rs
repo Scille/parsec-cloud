@@ -1,18 +1,21 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+use std::io::Write;
+
+use anyhow::Context;
 use reqwest::Response;
 use serde_json::Value;
 
 use libparsec::{DateTime, ParsecAddr};
+use tokio::io::AsyncWriteExt;
+
+use crate::ui::DataFormat;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
     pub struct Args {
-        /// Output format (json/csv)
-        #[arg(short, long, default_value_t = Format::Json)]
-        format: Format,
         /// Ignore everything after this date (e.g: 2024-01-01T00:00:00-00:00)
-        #[arg(short, long)]
+        #[arg(short, long, value_hint = clap::ValueHint::Other)]
         end_date: Option<DateTime>,
     }
 );
@@ -23,14 +26,11 @@ pub enum Format {
     Csv,
 }
 
-impl std::str::FromStr for Format {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "json" => Ok(Self::Json),
-            "csv" => Ok(Self::Csv),
-            _ => Err("Invalid format"),
+impl From<DataFormat> for Format {
+    fn from(value: DataFormat) -> Self {
+        match value {
+            DataFormat::Plain => Self::Csv,
+            DataFormat::Json => Self::Json,
         }
     }
 }
@@ -67,20 +67,33 @@ pub async fn stats_server_req(
         .await?)
 }
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
-        format,
         end_date,
         token,
         addr,
     } = args;
-    log::trace!("Retrieving server's stats (addr={addr}, format={format})");
+    log::trace!("Retrieving server's stats (addr={addr})");
 
-    let rep = stats_server_req(&addr, &token, format, end_date).await?;
+    let rep = stats_server_req(&addr, &token, ui.format.into(), end_date)
+        .await?
+        .error_for_status()
+        .context("Unexpected response status")?;
 
-    match format {
-        Format::Json => println!("{:#}", rep.json::<Value>().await?),
-        Format::Csv => println!("{}", rep.text().await?),
+    std::debug_assert_matches!(rep.content_length(), Some(size) if size > 0, "Server should have replied with a response containing data");
+
+    match ui.format {
+        DataFormat::Json => {
+            let mut stdout = std::io::stdout().lock();
+            let json = rep.json::<Value>().await?;
+            serde_json::to_writer_pretty(&mut stdout, &json)?;
+            stdout.flush()?;
+        }
+        DataFormat::Plain => {
+            let mut stdout = tokio::io::stdout();
+            stdout.write_all(rep.text().await?.as_bytes()).await?;
+            stdout.flush().await?;
+        }
     }
 
     Ok(())

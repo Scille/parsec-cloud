@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -176,7 +177,7 @@ class BaseSequesterComponent:
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
         config: SequesterServiceConfig,
-    ) -> None | SequesterUpdateConfigForServiceStoreBadOutcome:
+    ) -> SequesterUpdateConfigForServiceStoreBadOutcome | None:
         raise NotImplementedError
 
     async def revoke_service(

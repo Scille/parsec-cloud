@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
@@ -65,13 +66,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobCreateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -99,6 +100,12 @@ class MemoryVlobComponent(BaseVlobComponent):
             except KeyError:
                 return VlobCreateBadOutcome.REALM_NOT_FOUND
 
+            if realm.is_deleted:
+                return VlobCreateBadOutcome.REALM_DELETED
+
+            if realm.is_archived_or_deletion_planned:
+                return VlobCreateBadOutcome.REALM_ARCHIVED
+
             match realm.get_current_role_for(author_user_id):
                 case RealmRole.READER | None:
                     return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
@@ -108,6 +115,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
                 case unknown:
                     # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                    # (see https://github.com/Scille/parsec-cloud/issues/12725)
                     assert False, unknown
 
             # We only accept the last key
@@ -203,13 +211,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobUpdateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -234,6 +242,12 @@ class MemoryVlobComponent(BaseVlobComponent):
             except KeyError:
                 return VlobUpdateBadOutcome.REALM_NOT_FOUND
 
+            if realm.is_deleted:
+                return VlobUpdateBadOutcome.REALM_DELETED
+
+            if realm.is_archived_or_deletion_planned:
+                return VlobUpdateBadOutcome.REALM_ARCHIVED
+
             try:
                 vlobs = realm.vlobs[vlob_id]
             except KeyError:
@@ -250,6 +264,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
                     case unknown:
                         # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                        # (see https://github.com/Scille/parsec-cloud/issues/12725)
                         assert False, unknown
 
                 # We only accept the last key
@@ -367,6 +382,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
 
+        if realm.is_deleted:
+            return VlobReadAsUserBadOutcome.REALM_DELETED
+
         match realm.get_current_role_for(author_user_id):
             case None:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
@@ -376,6 +394,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             case unknown:
                 # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                # (see https://github.com/Scille/parsec-cloud/issues/12725)
                 assert False, unknown
 
         output = []
@@ -445,6 +464,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
 
+        if realm.is_deleted:
+            return VlobReadAsUserBadOutcome.REALM_DELETED
+
         match realm.get_current_role_for(author_user_id):
             case None:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
@@ -454,6 +476,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             case unknown:
                 # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                # (see https://github.com/Scille/parsec-cloud/issues/12725)
                 assert False, unknown
 
         output = []
@@ -524,6 +547,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
 
+        if realm.is_deleted:
+            return VlobPollChangesAsUserBadOutcome.REALM_DELETED
+
         match realm.get_current_role_for(author_user_id):
             case None:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_ALLOWED
@@ -533,6 +559,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             case unknown:
                 # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                # (see https://github.com/Scille/parsec-cloud/issues/12725)
                 assert False, unknown
 
         items = {}

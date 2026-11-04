@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_platform_storage::workspace::workspace_storage_non_speculative_init;
 use libparsec_types::prelude::*;
@@ -32,6 +32,9 @@ pub(super) async fn create_workspace(
             name_origin: CertificateBasedInfoOrigin::Placeholder,
             role: RealmRole::Owner,
             role_origin: CertificateBasedInfoOrigin::Placeholder,
+            archiving_configuration: RealmArchivingConfiguration::Available.into(),
+            archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+            can_self_promote_to_owner: false.into(),
         });
         local_workspaces.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         local_workspaces

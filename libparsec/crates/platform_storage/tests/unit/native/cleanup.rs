@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_tests_fixtures::prelude::{parsec_test, tmp_path, TestbedEnv, TmpPath};
+use libparsec_tests_fixtures::prelude::{TestbedEnv, TmpPath, parsec_test, tmp_path};
 use libparsec_types::VlobID;
 
 use crate::{
@@ -31,6 +31,20 @@ async fn cleanup_device_data(tmp_path: TmpPath, env: &TestbedEnv) {
         .unwrap();
     assert!(!wksp_file.exists(), "wksp file still exists");
     assert!(!device_dir.exists(), "device dir still exists");
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn cleanup_device_data_missing_dir(tmp_path: TmpPath, env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+
+    // The device data dir was never created (e.g. device from an old
+    // organization, see #12807): cleanup must succeed anyway.
+    let device_dir = tmp_path.join(alice.device_id.hex());
+    assert!(!device_dir.exists(), "device dir should not exist");
+
+    remove_device_data(&tmp_path, alice.device_id)
+        .await
+        .unwrap();
 }
 
 // TODO: Convert this test be compatible with web

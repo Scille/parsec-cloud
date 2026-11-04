@@ -1,21 +1,23 @@
-use libparsec::{tmp_path, TmpPath};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+use libparsec::{TmpPath, tmp_path};
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test, shared_recovery_create,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, shared_recovery_create, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::utils::{GREEN, RESET};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn list_shared_recovery_ok(tmp_path: TmpPath) {
+async fn list_shared_recovery_ok(tmp_path: TmpPath, test_ui: &Ui) {
     let (
         _,
         TestOrganization {
             alice, bob, toto, ..
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -24,7 +26,7 @@ async fn list_shared_recovery_ok(tmp_path: TmpPath) {
         "--device",
         &bob.device_id.hex()
     )
-    .stdout(predicates::str::contains("No shared recovery found"));
+    .stderr(predicates::str::contains("No shared recovery found"));
 
     shared_recovery_create(&alice, &bob, Some(&toto));
 
@@ -36,7 +38,7 @@ async fn list_shared_recovery_ok(tmp_path: TmpPath) {
         &bob.device_id.hex()
     )
     .stdout(predicates::str::contains(format!(
-        "Shared recovery for {GREEN}{}{RESET}",
+        "Shared recovery for {}",
         alice.human_handle
     )));
 }

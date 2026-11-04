@@ -1,6 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
+
+pub type ParsecOrganizationBootstrapAddrAndRedirectionURL = (ParsecOrganizationBootstrapAddr, Url);
+pub type ParsecInvitationAddrAndRedirectionURL = (ParsecInvitationAddr, Url);
+pub type ParsecWorkspacePathAddrAndRedirectionURL = (ParsecWorkspacePathAddr, Url);
+pub type ParsecPkiEnrollmentAddrAndRedirectionURL = (ParsecPkiEnrollmentAddr, Url);
+pub type ParsecAsyncEnrollmentAddrAndRedirectionURL = (ParsecAsyncEnrollmentAddr, Url);
+pub type ParsecTOTPResetAddrAndRedirectionURL = (ParsecTOTPResetAddr, Url);
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseParsecAddrError {
@@ -46,7 +53,7 @@ pub enum ParsedParsecAddr {
         is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     },
     InvitationDevice {
         hostname: String,
@@ -54,7 +61,7 @@ pub enum ParsedParsecAddr {
         is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     },
     InvitationShamirRecovery {
         hostname: String,
@@ -62,7 +69,7 @@ pub enum ParsedParsecAddr {
         is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     },
     PkiEnrollment {
         hostname: String,
@@ -77,6 +84,15 @@ pub enum ParsedParsecAddr {
         is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
+    },
+    TOTPReset {
+        hostname: String,
+        port: u16,
+        is_default_port: bool,
+        use_ssl: bool,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        token: AccessToken,
     },
 }
 
@@ -143,6 +159,15 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                 use_ssl: addr.use_ssl(),
                 organization_id: addr.organization_id().clone(),
             },
+            ParsecActionAddr::TOTPReset(addr) => ParsedParsecAddr::TOTPReset {
+                hostname: addr.hostname().into(),
+                port: addr.port(),
+                is_default_port: addr.is_default_port(),
+                use_ssl: addr.use_ssl(),
+                organization_id: addr.organization_id().clone(),
+                user_id: addr.user_id(),
+                token: addr.token(),
+            },
         })
     } else if let Ok(addr) = ParsecOrganizationAddr::from_any(url) {
         Ok(ParsedParsecAddr::Organization {
@@ -173,4 +198,8 @@ pub fn build_parsec_organization_bootstrap_addr(
 
 pub fn build_parsec_addr(hostname: String, port: Option<u16>, use_ssl: bool) -> ParsecAddr {
     ParsecAddr::new(hostname, port, use_ssl)
+}
+
+pub fn try_convert_http_to_parsec_addr(http_url: &str) -> Result<ParsecAddr, AddrError> {
+    ParsecAddr::from_http_url(http_url)
 }

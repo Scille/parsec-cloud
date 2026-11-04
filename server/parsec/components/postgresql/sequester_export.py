@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import sqlite3
@@ -8,6 +9,10 @@ from pathlib import Path
 from typing import NewType, cast
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 
 from parsec._parsec import BlockID, OrganizationID, SequesterServiceID, VlobID
 from parsec.components.blockstore import BaseBlockStoreComponent

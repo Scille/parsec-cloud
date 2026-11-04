@@ -8,6 +8,11 @@ interface AssertReturnType {
   pass: boolean;
 }
 
+export enum AuthMethodDisabledReason {
+  NotAvailable = 'not-available',
+  Forbidden = 'forbidden',
+}
+
 // Helper function for file handler page assertions
 async function checkFileHandlerPage(page: MsPage, mode?: 'view' | 'edit'): Promise<AssertReturnType> {
   try {
@@ -250,7 +255,7 @@ export const expect = baseExpect.extend({
 
   async toBeWorkspacePage(page: Page): Promise<AssertReturnType> {
     try {
-      await expect(page).toHaveURL(/\/\d+\/workspaces$/);
+      await expect(page).toHaveURL(/\/\d+\/workspaces\??.*$/);
     } catch (error: any) {
       console.log(error);
       return {
@@ -411,7 +416,12 @@ export const expect = baseExpect.extend({
     };
   },
 
-  async toShowInformationModal(page: Page, message: string, theme: 'Success' | 'Warning' | 'Error' | 'Info'): Promise<AssertReturnType> {
+  async toShowInformationModal(
+    page: Page,
+    message: string,
+    theme: 'Success' | 'Warning' | 'Error' | 'Info',
+    title?: string,
+  ): Promise<AssertReturnType> {
     const modal = page.locator('.information-modal');
     let errorMessage = '';
     let pass = true;
@@ -421,6 +431,15 @@ export const expect = baseExpect.extend({
     } catch (_error: any) {
       errorMessage = 'Modal is not visible';
       pass = false;
+    }
+
+    if (pass && title) {
+      try {
+        await baseExpect(modal.locator('.ms-modal-header__title')).toHaveText(title);
+      } catch (error: any) {
+        errorMessage = `Modal does not contain the title '${title}'. Found: '${error.matcherResult.actual}' instead.`;
+        pass = false;
+      }
     }
 
     if (pass) {
@@ -442,7 +461,7 @@ export const expect = baseExpect.extend({
       }
     }
 
-    // Close toast
+    // Close modal
     await modal.locator('#next-button').click();
     await expect(modal).toBeHidden();
 
@@ -465,6 +484,84 @@ export const expect = baseExpect.extend({
     const items = notifCenter.locator('.notification-container');
     const messages = await items.locator('.notification-details__message').allInnerTexts();
     baseExpect(messages.some((m) => m === expectedText)).toBeTruthy();
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
+  async toHaveAuthentication(
+    authRadio: Locator,
+    state?: { passwordDisabled?: boolean; ssoDisabled?: boolean; pkiDisabled?: boolean; keyringDisabled?: boolean },
+    reason?: {
+      password?: AuthMethodDisabledReason;
+      sso?: AuthMethodDisabledReason;
+      pki?: AuthMethodDisabledReason;
+      keyring?: AuthMethodDisabledReason;
+    },
+  ): Promise<AssertReturnType> {
+    await baseExpect(authRadio).toHaveCount(4);
+    await baseExpect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('Password');
+    await baseExpect(authRadio.nth(1).locator('.authentication-card-text__title')).toHaveText('System authentication');
+    await baseExpect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Smartcard');
+    await baseExpect(authRadio.nth(3).locator('.authentication-card-text__title')).toHaveText('Single Sign-On');
+
+    if (state?.passwordDisabled) {
+      await baseExpect(authRadio.nth(0)).toHaveClass(/radio-disabled/);
+      if (reason?.password) {
+        await baseExpect(authRadio.nth(0).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      }
+    } else {
+      await baseExpect(authRadio.nth(0)).not.toHaveClass(/radio-disabled/);
+    }
+    if (state?.keyringDisabled) {
+      await baseExpect(authRadio.nth(1)).toHaveClass(/radio-disabled/);
+      if (reason?.keyring === AuthMethodDisabledReason.Forbidden) {
+        await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      } else {
+        await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText(
+          /^(Unavailable on web|Unavailable on your system)$/,
+        );
+      }
+    } else {
+      await baseExpect(authRadio.nth(1)).not.toHaveClass(/radio-disabled/);
+    }
+    if (state?.pkiDisabled) {
+      await baseExpect(authRadio.nth(2)).toHaveClass(/radio-disabled/);
+      if (reason?.pki === AuthMethodDisabledReason.Forbidden) {
+        await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      } else {
+        await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
+          'Smartcard authentication is unavailable.',
+        );
+      }
+    } else {
+      await baseExpect(authRadio.nth(2)).not.toHaveClass(/radio-disabled/);
+      await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
+        'The smartcard should be plugged in and ready to use.',
+      );
+    }
+    if (state?.ssoDisabled) {
+      await baseExpect(authRadio.nth(3)).toHaveClass(/radio-disabled/);
+      if (reason?.sso === AuthMethodDisabledReason.Forbidden) {
+        await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      } else {
+        await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText(
+          'This method is not allowed by this server.',
+        );
+      }
+    } else {
+      await baseExpect(authRadio.nth(3)).not.toHaveClass(/radio-disabled/);
+      await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
+    }
     return {
       message: () => '',
       pass: true,

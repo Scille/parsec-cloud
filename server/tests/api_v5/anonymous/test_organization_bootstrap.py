@@ -8,8 +8,8 @@ from unittest.mock import ANY
 import pytest
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     DeviceLabel,
     EmailAddress,
@@ -44,7 +44,7 @@ class BackendPreConfig:
 class BackendConfig:
     spontaneous: bool
     sequestered: bool
-    bootstrap_token: BootstrapToken | None
+    bootstrap_token: AccessToken | None
 
 
 class ConfigureBackend(Protocol):
@@ -77,7 +77,7 @@ def backend_bootstrap_config(backend: Backend, request: pytest.FixtureRequest) -
                 id=organization_id,
                 tos={"cn_HK": "https://parsec.invalid/tos_cn.pdf"},
             )
-            assert isinstance(bootstrap_token, BootstrapToken), bootstrap_token
+            assert isinstance(bootstrap_token, AccessToken), bootstrap_token
         return BackendConfig(
             spontaneous=config.spontaneous,
             sequestered=config.sequestered,
@@ -115,7 +115,7 @@ async def test_anonymous_organization_bootstrap_ok(
     if config.spontaneous:
         backend.config.organization_initial_active_users_limit = ActiveUsersLimit.limited_to(3)
         backend.config.organization_initial_user_profile_outsider_allowed = False
-        backend.config.organization_initial_minimum_archiving_period = 42
+        backend.config.organization_initial_realm_deletion_min_archiving_period = 42
         backend.config.organization_initial_tos = {"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
 
     rep = await anonymous_client.organization_bootstrap(
@@ -133,7 +133,7 @@ async def test_anonymous_organization_bootstrap_ok(
     # Ensure the default config has been used to configure the organization
     # when spontaneously created.
     if config.spontaneous:
-        orgs = await backend.organization.test_dump_organizations()
+        orgs = await backend.organization.list_organizations()
         org = orgs[organization_id]
         assert org.active_users_limit == backend.config.organization_initial_active_users_limit
         assert (
@@ -141,8 +141,8 @@ async def test_anonymous_organization_bootstrap_ok(
             == backend.config.organization_initial_user_profile_outsider_allowed
         )
         assert (
-            org.minimum_archiving_period
-            == backend.config.organization_initial_minimum_archiving_period
+            org.realm_minimum_archiving_period_before_deletion
+            == backend.config.organization_initial_realm_deletion_min_archiving_period
         )
         assert backend.config.organization_initial_tos is not None  # Sanity check to please typing
         assert org.tos == TermsOfService(
@@ -294,7 +294,7 @@ async def test_anonymous_organization_bootstrap_invalid_bootstrap_token(
     sequester_authority_certificate = bootstrap_event.sequester_authority_raw_certificate
 
     rep = await anonymous_client.organization_bootstrap(
-        bootstrap_token=BootstrapToken.new(),
+        bootstrap_token=AccessToken.new(),
         root_verify_key=root_verify_key,
         user_certificate=user_certificate,
         device_certificate=device_certificate,

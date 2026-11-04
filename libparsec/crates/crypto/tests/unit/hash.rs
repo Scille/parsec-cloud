@@ -2,7 +2,7 @@
 
 use hex_literal::hex;
 use pretty_assertions::{assert_eq, assert_matches};
-use serde_test::{assert_tokens, Token};
+use serde_test::{Token, assert_tokens};
 
 use super::{
     platform,
@@ -107,7 +107,10 @@ fn blake2b_hash() {
         hex!("e9a804b2e527fd3601d2ffc0bb023cd6"),
     );
     assert_eq!(
-        crate::blake2b_hash::<generic_array::typenum::U64>([b"hello world".as_ref()].into_iter()).to_vec(),
-        hex!("021ced8799296ceca557832ab941a50b4a11f83478cf141f51f933f653ab9fbcc05a037cddbed06e309bf334942c4e58cdf1a46e237911ccd7fcf9787cbc7fd0"),
+        crate::blake2b_hash::<generic_array::typenum::U64>([b"hello world".as_ref()].into_iter())
+            .to_vec(),
+        hex!(
+            "021ced8799296ceca557832ab941a50b4a11f83478cf141f51f933f653ab9fbcc05a037cddbed06e309bf334942c4e58cdf1a46e237911ccd7fcf9787cbc7fd0"
+        ),
     );
 }

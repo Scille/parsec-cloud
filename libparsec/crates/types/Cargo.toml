@@ -7,6 +7,7 @@ homepage.workspace = true
 license.workspace = true
 version.workspace = true
 repository.workspace = true
+exclude = ["tests/", "examples/", "benches/"]
 
 [lints]
 workspace = true
@@ -41,11 +42,11 @@ regex = { workspace = true, features = ["std", "perf", "unicode"] }
 regex-syntax = { workspace = true, features = ["unicode-perl"] }
 unicode-normalization = { workspace = true, features = ["std"] }
 paste = { workspace = true }
-rand = { workspace = true, features = ["std", "std_rng"] }
+rand = { workspace = true }
 thiserror = { workspace = true, features = ["std"] }
 email-address-parser = { workspace = true }
 anyhow = { workspace = true, features = ["std", "backtrace"] }
-fnmatch-regex = { workspace = true }
+fnmatch-regex = { workspace = true, features = ["regex"] }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
 blahaj = { workspace = true }
@@ -53,6 +54,7 @@ blahaj = { workspace = true }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { workspace = true, features = ["wasmbind"] }
 uuid = { workspace = true, features = ["js"] }
+getrandom = { workspace = true, features = ["wasm_js"] }
 
 [dev-dependencies]
 libparsec_types = { workspace = true, features = ["test-fixtures"] }

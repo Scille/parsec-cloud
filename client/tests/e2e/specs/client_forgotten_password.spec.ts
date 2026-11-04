@@ -63,7 +63,7 @@ msTest('Client area forgot password go back', async ({ context }) => {
   const container = home.locator('.saas-forgot-password');
   await expect(container).toBeVisible();
   const buttons = container.locator('.saas-forgot-password-button').locator('.saas-forgot-password-button__item');
-  await expect(buttons.nth(0)).toHaveText('Back to login');
+  await expect(buttons.nth(0)).toBeVisible();
   await buttons.nth(0).click();
   await expect(home.locator('.saas-login-container').locator('.saas-login__title')).toHaveText('Log in to your customer account');
 });

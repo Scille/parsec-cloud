@@ -3,7 +3,7 @@
 use libparsec_tests_lite::prelude::*;
 use std::time::Duration;
 
-use crate::{oneshot, select2_biased, sleep};
+use crate::{oneshot, sleep};
 
 #[parsec_test]
 pub async fn oneshot() {

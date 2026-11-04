@@ -1,21 +1,21 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 use libparsec::ClientConfig;
 
 use crate::{
     testenv_utils::{
-        initialize_test_organization, new_environment, parsec_addr_from_http_url, TestenvConfig,
-        DEFAULT_DEVICE_PASSWORD,
+        DEFAULT_DEVICE_PASSWORD, TestenvConfig, initialize_test_organization, new_environment,
+        parsec_addr_from_http_url,
     },
-    utils::{RESET, YELLOW},
+    ui::Color,
 };
 
 #[derive(clap::Parser)]
 pub struct RunTestenv {
     /// Sourced script file
-    #[arg(long)]
+    #[arg(long, value_hint = clap::ValueHint::FilePath)]
     source_file: Option<PathBuf>,
     /// Main process id.
     /// When this process stops, the server will be automatically killed
@@ -25,11 +25,11 @@ pub struct RunTestenv {
     #[arg(short, long, default_value_t)]
     empty: bool,
     /// The organization ID to use for the test environment.
-    #[arg(default_value_os = "Org")]
+    #[arg(default_value_os = "Org", value_hint = clap::ValueHint::Other)]
     organization: libparsec::OrganizationID,
 }
 
-pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
+pub async fn run_testenv(ui: crate::Ui, run_testenv: RunTestenv) -> anyhow::Result<()> {
     let RunTestenv {
         main_process_id,
         source_file,
@@ -53,22 +53,34 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
         )),
     };
 
-    let url = new_environment(&tmp_dir, source_file, testenv_config, empty).await?;
+    let url = new_environment(&ui, &tmp_dir, source_file, testenv_config, empty).await?;
 
     if !empty {
         let url = url.expect("Mismatch condition in new_environment when starting a new server");
         let org = initialize_test_organization(ClientConfig::default(), url, organization).await?;
 
-        println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
-        println!(
-            "- {YELLOW}{}{RESET} // Alice",
-            &org.alice.device_id.hex()[..3]
-        );
-        println!(
-            "- {YELLOW}{}{RESET} // Alice 2nd device",
-            &org.other_alice.device_id.hex()[..3]
-        );
-        println!("- {YELLOW}{}{RESET} // Bob", &org.bob.device_id.hex()[..3]);
+        ui.with_message(|fmt, out| {
+            writeln!(
+                out,
+                "Alice & Bob devices (password: {}):",
+                fmt.wrap_in_color(Color::Yellow, DEFAULT_DEVICE_PASSWORD)
+            )?;
+            writeln!(
+                out,
+                "- {} // Alice",
+                fmt.wrap_in_color(Color::Yellow, &org.alice.device_id.hex()[..3])
+            )?;
+            writeln!(
+                out,
+                "- {} // Alice 2nd device",
+                fmt.wrap_in_color(Color::Yellow, &org.other_alice.device_id.hex()[..3])
+            )?;
+            writeln!(
+                out,
+                "- {} // Bob",
+                fmt.wrap_in_color(Color::Yellow, &org.bob.device_id.hex()[..3])
+            )
+        })?;
     }
 
     Ok(())

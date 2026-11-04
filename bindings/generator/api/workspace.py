@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 from .addr import (
     ParsecWorkspacePathAddr,
+    ParsecWorkspacePathAddrAndRedirectionURL,
 )
+from .client import CertificateBasedInfoOrigin, RealmArchivingConfiguration
 from .common import (
     U64,
     DateTime,
@@ -18,7 +19,7 @@ from .common import (
     Result,
     SizeInt,
     Structure,
-    U32BasedType,
+    U64BasedType,
     Variant,
     VariantItemUnit,
     VersionInt,
@@ -52,8 +53,12 @@ async def workspace_stop(workspace: Handle) -> Result[None, WorkspaceStopError]:
 class StartedWorkspaceInfo(Structure):
     client: Handle
     id: VlobID
-    current_name: EntryName
-    current_self_role: RealmRole
+    name: EntryName
+    name_origin: CertificateBasedInfoOrigin
+    self_role: RealmRole
+    self_role_origin: CertificateBasedInfoOrigin
+    archiving_configuration: RealmArchivingConfiguration
+    archiving_configuration_origin: CertificateBasedInfoOrigin
     mountpoints: list[tuple[Handle, Path]]
 
 
@@ -77,6 +82,9 @@ class WorkspaceWatchEntryOneShotError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class InvalidKeysBundle:
@@ -143,6 +151,9 @@ class WorkspaceCreateFileError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class ParentNotFound:
         pass
 
@@ -176,6 +187,9 @@ class WorkspaceCreateFolderError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class ParentNotFound:
@@ -219,6 +233,9 @@ class WorkspaceRemoveEntryError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class EntryIsFile:
         pass
 
@@ -260,6 +277,9 @@ class WorkspaceMoveEntryError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class DestinationExists:
         pass
 
@@ -290,6 +310,9 @@ class WorkspaceStatEntryError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class InvalidKeysBundle:
@@ -365,6 +388,9 @@ class WorkspaceStatFolderChildrenError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class InvalidKeysBundle:
@@ -470,9 +496,9 @@ class OpenOptions(Structure):
     create_new: bool
 
 
-class FileDescriptor(U32BasedType):
-    custom_from_rs_u32 = "|raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) }"
-    custom_to_rs_u32 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
+class FileDescriptor(U64BasedType):
+    custom_from_rs_u64 = "|raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) }"
+    custom_to_rs_u64 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
 
 
 class WorkspaceIsFileContentLocalError(ErrorVariant):
@@ -483,6 +509,9 @@ class WorkspaceIsFileContentLocalError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class EntryNotFound:
@@ -521,6 +550,9 @@ class WorkspaceOpenFileError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class EntryNotFound:
@@ -645,6 +677,9 @@ class WorkspaceFdReadError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class InvalidBlockAccess:
         pass
 
@@ -722,6 +757,9 @@ class WorkspaceGeneratePathAddrError(ErrorVariant):
     class NotAllowed:
         pass
 
+    class RealmDeleted:
+        pass
+
     class NoKey:
         pass
 
@@ -735,7 +773,7 @@ class WorkspaceGeneratePathAddrError(ErrorVariant):
 async def workspace_generate_path_addr(
     workspace: Handle,
     path: Ref[FsPath],
-) -> Result[ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError]:
+) -> Result[ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError]:
     raise NotImplementedError
 
 
@@ -747,6 +785,9 @@ class WorkspaceDecryptPathAddrError(ErrorVariant):
         pass
 
     class NotAllowed:
+        pass
+
+    class RealmDeleted:
         pass
 
     class KeyNotFound:
@@ -772,4 +813,116 @@ async def workspace_decrypt_path_addr(
     workspace: Handle,
     link: Ref[ParsecWorkspacePathAddr],
 ) -> Result[FsPath, WorkspaceDecryptPathAddrError]:
+    raise NotImplementedError
+
+
+class CryptpadSessionKeys(Structure):
+    view_key: str
+    edit_key: str | None
+
+
+class WorkspaceRegisterCryptpadSessionError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class CryptpadUnavailable:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class NoKey:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidCryptpadSessionKeys:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_register_cryptpad_session(
+    workspace: Handle,
+    vlob_id: VlobID,
+    candidate_view_key: str,
+    candidate_edit_key: str,
+) -> Result[CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError]:
+    raise NotImplementedError
+
+
+class WorkspaceSaveAndSyncFileWithCryptpadError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class ReadOnlyRealm:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class NoRealm:
+        pass
+
+    class RealmArchived:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class NoKey:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class EntryNotAFile:
+        pass
+
+    class ServerBlockstoreUnavailable:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class InvalidBlockAccess:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_save_and_sync_file_with_cryptpad(
+    workspace: Handle,
+    entry_id: VlobID,
+    cryptpad_session_channel_id: str,
+    cryptpad_session_timestamp: DateTime,
+    content: Ref[bytes],
+) -> Result[None, WorkspaceSaveAndSyncFileWithCryptpadError]:
     raise NotImplementedError

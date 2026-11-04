@@ -1,10 +1,10 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    blake2b_hash, compute_from_password, generate_rand, CryptoError, KeyDerivation, Password,
-    SecretKey,
+    CryptoError, KeyDerivation, Password, SecretKey, blake2b_hash, compute_from_password,
+    generate_rand,
 };
 
 // https://github.com/sodiumoxide/sodiumoxide/blob/3057acb1a030ad86ed8892a223d64036ab5e8523/libsodium-sys/src/sodium_bindings.rs#L137

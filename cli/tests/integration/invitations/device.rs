@@ -1,21 +1,25 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![cfg_attr(target_family = "windows", allow(unused_imports))]
 
 use std::sync::{Arc, Mutex};
 
 use libparsec::{
-    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
+    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
 };
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test, std_cmd,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, std_cmd, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn invite_device(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn invite_device(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -31,8 +35,14 @@ async fn invite_device(tmp_path: TmpPath) {
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn invite_device_dance(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn invite_device_dance(
+    tmp_path: TmpPath,
+    test_ui: &Ui,
+    #[values("http", "parsec3")] scheme: &str,
+    #[values("password", "keyring")] auth: &str,
+) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -63,6 +73,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     // spawn greeter thread
 
     let program_greeter = std_cmd!(
+        "--progress=plain",
         "invite",
         "greet",
         "--device",
@@ -76,7 +87,13 @@ async fn invite_device_dance(tmp_path: TmpPath) {
 
     // spawn claimer thread
 
-    let program_claimer = std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
+    let addr = match scheme {
+        "parsec3" => invitation_addr.to_url().to_string(),
+        "http" => invitation_addr.to_http_redirection_url().to_string(),
+        _ => unimplemented!(),
+    };
+
+    let program_claimer = std_cmd!("--progress=plain", "invite", "claim", &addr, "--auth", auth);
 
     let p_claimer = Arc::new(Mutex::new(
         crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
@@ -99,6 +116,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
 
         locked
             .exp_string("Select code provided by greeter")
+            .inspect_err(|e| log::error!("Error while expecting code claimer code choice: {e}"))
             .unwrap();
     });
     greeter.await.unwrap();
@@ -148,6 +166,9 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         locked
             .exp_string(&format!("Select code provided by claimer: {sas_code}"))
             .unwrap();
+        locked
+            .exp_string("Waiting for claimer information")
+            .unwrap();
     }
 
     // device creation
@@ -157,14 +178,14 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         locked.exp_string("Enter device label:").unwrap();
         locked.send_line("label").unwrap();
 
-        locked
-            .exp_string("Enter password for the new device:")
-            .unwrap();
-        locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
-        locked.exp_string("Confirm password:").unwrap();
+        if auth == "password" {
+            locked.exp_string("New device password:").unwrap();
+            locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+            locked.exp_string("Confirm password:").unwrap();
 
-        locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
-        locked.exp_eof().unwrap();
+            locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+            locked.exp_eof().unwrap();
+        }
     }
 
     {

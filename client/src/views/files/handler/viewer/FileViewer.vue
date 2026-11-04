@@ -1,85 +1,87 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <component
     :is="viewerComponent"
-    :content-info="contentInfoRef"
+    :content-info="contentInfo"
+    v-bind="viewerComponent === TextViewer ? { readOnly: readOnly } : {}"
+    v-on="viewerComponent === TextViewer ? { onSaveStateChange: onSaveStateChange } : {}"
   />
 </template>
 
 <script setup lang="ts">
-import { DetectedFileType, FileContentType } from '@/common/fileTypes';
+import { FileContentType } from '@/common/fileTypes';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import {
-  AudioViewer,
-  DocumentViewer,
-  ImageViewer,
-  PdfViewer,
-  SpreadsheetViewer,
-  TextViewer,
-  VideoViewer,
-} from '@/views/files/handler/viewer';
+import { SaveState } from '@/views/files/handler/types';
+import { AudioViewer, ImageViewer, PdfViewer, TextViewer, VideoViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { inject, onMounted, onUnmounted, ref, Ref, shallowRef, type Component } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, shallowRef } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const viewerComponent: Ref<Component | null> = shallowRef(null);
-const contentInfoRef: Ref<FileContentInfo | undefined> = ref(undefined);
+type ViewerType = typeof AudioViewer | typeof ImageViewer | typeof PdfViewer | typeof TextViewer | typeof VideoViewer;
 
-const { contentInfo, fileInfo } = defineProps<{
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const viewerComponent: Ref<ViewerType | undefined> = shallowRef(undefined);
+
+const { contentInfo } = defineProps<{
   contentInfo: FileContentInfo;
-  fileInfo: DetectedFileType;
+  readOnly: boolean;
 }>();
 
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
   (event: 'fileError'): void;
+  (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
 
+defineExpose({ save });
+
 onMounted(async () => {
-  await onFileLoaded(contentInfo, fileInfo);
+  await loadFile();
 });
 
 onUnmounted(() => {
-  contentInfoRef.value = undefined;
-  viewerComponent.value = null;
+  viewerComponent.value = undefined;
 });
 
-async function onFileLoaded(contentInfo: FileContentInfo, fileInfo: DetectedFileType): Promise<void> {
-  contentInfoRef.value = contentInfo;
+function onSaveStateChange(state: SaveState): void {
+  emits('onSaveStateChange', state);
+}
 
-  const component = await getComponent(fileInfo);
-  if (!component) {
-    emitError(`No component for file with extension '${fileInfo.extension}'`);
+async function loadFile(): Promise<void> {
+  viewerComponent.value = await getComponent();
+  if (!viewerComponent.value) {
+    emitError(`No component for file with extension '${contentInfo.extension}'`);
     return;
   }
-
-  viewerComponent.value = component;
   emits('fileLoaded');
 }
 
-async function getComponent(fileInfo: DetectedFileType): Promise<Component | undefined> {
-  switch (fileInfo.type) {
+async function getComponent(): Promise<ViewerType | undefined> {
+  switch (contentInfo.contentType) {
     case FileContentType.Image:
       return ImageViewer;
     case FileContentType.Video:
       return VideoViewer;
-    case FileContentType.Spreadsheet:
-      return SpreadsheetViewer;
     case FileContentType.Audio:
       return AudioViewer;
-    case FileContentType.Document:
-      return DocumentViewer;
-    case FileContentType.Text:
-      return TextViewer;
     case FileContentType.PdfDocument:
       return PdfViewer;
+    case FileContentType.Text:
+      return TextViewer;
   }
 }
 
+async function save(): Promise<boolean> {
+  if (viewerComponent.value?.saveDocument) {
+    window.nativeAPI.log('debug', 'Forced save on a viewer');
+    return await viewerComponent.value.saveDocument();
+  }
+  return true;
+}
+
 function emitError(message: string): void {
-  window.electronAPI.log('error', message);
-  informationManager.present(
+  window.nativeAPI.log('error', message);
+  informationManager.value.present(
     new Information({
       message: 'fileViewers.errors.titles.genericError',
       level: InformationLevel.Error,

@@ -77,6 +77,10 @@ class Ref[REFERENCED]:
     pass
 
 
+class Box[INNER]:
+    pass
+
+
 # A type that should be converted from/into string
 class StrBasedType:
     pass
@@ -206,6 +210,13 @@ class PKIEnrollmentID(StrBasedType):
     )
 
 
+class TOTPOpaqueKeyID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> { libparsec::TOTPOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
 class DeviceLabel(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string()) }"
 
@@ -296,7 +307,7 @@ class EntryName(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, _> { s.parse::<libparsec::EntryName>().map_err(|e| e.to_string()) }"
 
 
-# VlobID and InvitationToken, are defined as strings (instead of
+# VlobID and AccessToken, are defined as strings (instead of
 # Uint8Array) so that the Typescript code only manipulates strings without
 # conversion or parsing.
 
@@ -306,10 +317,10 @@ class VlobID(StrBasedType):
     custom_to_rs_string = "|x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
-class InvitationToken(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::InvitationToken, _> { libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+class AccessToken(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::AccessToken, _> { libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
-        "|x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) }"
+        "|x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) }"
     )
 
 
@@ -369,41 +380,40 @@ class X509CertificateHash(StrBasedType):
     custom_to_rs_string = DISPLAY_TO_STRING
 
 
-class X509WindowsCngURI(Structure):
-    issuer: BytesVec
-    serial_number: BytesVec
-
-
-class X509Pkcs11URI(UnitStructure):
-    pass
-
-
-class X509URIFlavorValue(Variant):
-    WindowsCNG = VariantItemTuple(X509WindowsCngURI)
-    PKCS11 = VariantItemTuple(X509Pkcs11URI)
+class X509Pkcs11URI(Structure):
+    id: BytesVec | None
+    label: BytesVec | None
+    der_issuer: BytesVec
+    der_subject: BytesVec
+    serial: BytesVec
 
 
 class X509CertificateReference(Structure):
-    uris: list[X509URIFlavorValue]
+    uri: X509Pkcs11URI | None
     hash: X509CertificateHash
     custom_getters: ClassVar = {
-        "uris": """
-        |o: &libparsec::X509CertificateReference| -> Vec<libparsec::X509URIFlavorValue> {
-            o.uris().cloned().collect()
+        "uri": """
+        |o: &libparsec::X509CertificateReference| -> Option<libparsec::X509Pkcs11URI> {
+            match &o.uri {
+                libparsec::Maybe::Present(uri) => Some(uri.to_owned()),
+                libparsec::Maybe::Absent => None,
+            }
         }
         """,
         "hash": """
         |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash {
-            o.hash.clone()
+            o.hash
         }
         """,
     }
     custom_init: str = """
-        |uris: Vec<libparsec::X509URIFlavorValue>, hash: libparsec::X509CertificateHash| -> Result<_, String> {
-            let mut cert_ref = libparsec::X509CertificateReference::from(hash);
-            for uri in uris {
-                cert_ref = cert_ref.add_or_replace_uri_wrapped(uri);
-            }
-            Ok(cert_ref)
+        |uri: Option<libparsec::X509Pkcs11URI>, hash: libparsec::X509CertificateHash| -> Result<_, String> {
+            Ok(libparsec::X509CertificateReference {
+                uri: match uri {
+                    Some(uri) => libparsec::Maybe::Present(uri),
+                    None => libparsec::Maybe::Absent,
+                },
+                hash,
+            })
         }
     """

@@ -56,6 +56,11 @@ class RepRealmNotFound(Rep):
         self,
     ) -> None: ...
 
+class RepRealmDeleted(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepTimestampOutOfBallpark(Rep):
     def __init__(
         self,

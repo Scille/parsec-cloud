@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -6,8 +6,8 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace_history::{
-        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
         InvalidManifestHistoryError, WorkspaceHistoryOps,
+        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
     },
 };
 
@@ -19,6 +19,8 @@ pub enum WorkspaceHistoryOpenFileError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error("Path points to an entry (ID: `{}`) that is not a file", .entry_id)]
@@ -56,6 +58,9 @@ pub async fn open_file(
             }
             WorkspaceHistoryStoreResolvePathError::NoRealmAccess => {
                 WorkspaceHistoryOpenFileError::NoRealmAccess
+            }
+            WorkspaceHistoryStoreResolvePathError::RealmDeleted => {
+                WorkspaceHistoryOpenFileError::RealmDeleted
             }
             WorkspaceHistoryStoreResolvePathError::InvalidKeysBundle(invalid_keys_bundle_error) => {
                 WorkspaceHistoryOpenFileError::InvalidKeysBundle(invalid_keys_bundle_error)
@@ -109,6 +114,9 @@ pub async fn open_file_by_id(
             }
             WorkspaceHistoryStoreGetEntryError::NoRealmAccess => {
                 WorkspaceHistoryOpenFileError::NoRealmAccess
+            }
+            WorkspaceHistoryStoreGetEntryError::RealmDeleted => {
+                WorkspaceHistoryOpenFileError::RealmDeleted
             }
             WorkspaceHistoryStoreGetEntryError::InvalidKeysBundle(invalid_keys_bundle_error) => {
                 WorkspaceHistoryOpenFileError::InvalidKeysBundle(invalid_keys_bundle_error)

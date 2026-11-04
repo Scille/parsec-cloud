@@ -1,8 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{path::Path, sync::Arc};
 
-use libparsec_client_connection::{protocol::anonymous_cmds, AnonymousCmds, ConnectionError};
+use libparsec_client_connection::{AnonymousCmds, ConnectionError, protocol::anonymous_cmds};
 use libparsec_platform_device_loader::{AvailableDevice, DeviceSaveStrategy};
 use libparsec_types::prelude::*;
 
@@ -18,7 +18,9 @@ pub enum BootstrapOrganizationError {
     InvalidToken,
     #[error("Bootstrap token already used")]
     AlreadyUsedToken,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -205,7 +207,7 @@ pub fn test_organization_bootstrap_finalize_ctx_factory(
 }
 
 pub type OrganizationBootstrapFinalizeSaveLocalDeviceError =
-    libparsec_platform_device_loader::SaveDeviceError; // TODO 11955
+    libparsec_platform_device_loader::SaveDeviceError;
 
 impl OrganizationBootstrapFinalizeCtx {
     pub async fn save_local_device(

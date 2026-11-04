@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::PyException,
-    prelude::{pymodule, PyModule, PyResult, Python},
-    types::{PyAnyMethods, PyModuleMethods, PyTuple},
     Bound,
+    exceptions::PyException,
+    prelude::{PyModule, PyResult, Python, pymodule},
+    types::{PyAnyMethods, PyModuleMethods, PyTuple},
 };
 
 mod addrs;
@@ -15,10 +15,10 @@ mod enumerate;
 mod ids;
 mod misc;
 mod protocol;
+pub(crate) mod pydantic_support;
 #[cfg(feature = "test-utils")]
 mod testbed;
 mod time;
-mod token;
 
 pub(crate) use addrs::*;
 pub(crate) use binding_utils::*;
@@ -29,7 +29,6 @@ pub(crate) use misc::*;
 #[cfg(feature = "test-utils")]
 pub(crate) use testbed::*;
 pub(crate) use time::*;
-pub(crate) use token::*;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -53,6 +52,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ParsecWorkspacePathAddr>()?;
     m.add_class::<ParsecInvitationAddr>()?;
     m.add_class::<ParsecPkiEnrollmentAddr>()?;
+    m.add_class::<ParsecTOTPResetAddr>()?;
 
     m.add_class::<InvitationStatus>()?;
     m.add_class::<InvitationType>()?;
@@ -61,7 +61,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<RealmRole>()?;
     m.add_class::<UserProfile>()?;
     m.add_class::<DevicePurpose>()?;
-    m.add_class::<OpenBaoAuthType>()?;
+    m.add_class::<AdvisoryDeviceFilePrimaryProtection>()?;
 
     m.add_class::<OrganizationID>()?;
     m.add_class::<VlobID>()?;
@@ -77,10 +77,10 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DeviceID>()?;
     m.add_class::<DeviceLabel>()?;
     m.add_class::<UserID>()?;
-    m.add_class::<BootstrapToken>()?;
-    m.add_class::<InvitationToken>()?;
+    m.add_class::<AccessToken>()?;
     m.add_class::<GreetingAttemptID>()?;
     m.add_class::<AccountAuthMethodID>()?;
+    m.add_class::<TOTPOpaqueKeyID>()?;
 
     // Time
     m.add_class::<DateTime>()?;
@@ -88,6 +88,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     // Misc
     m.add_class::<ApiVersion>()?;
     m.add_class::<ValidationCode>()?;
+    m.add_class::<AdvisoryDeviceFileProtection>()?;
 
     // Testbed stuff
     #[cfg(feature = "test-utils")]
@@ -116,6 +117,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
         tm.add_class::<TestbedEventRenameRealm>()?;
         tm.add_class::<TestbedEventRotateKeyRealm>()?;
         tm.add_class::<TestbedEventArchiveRealm>()?;
+        tm.add_class::<TestbedEventDeleteRealm>()?;
         tm.add_class::<TestbedEventNewShamirRecovery>()?;
         tm.add_class::<TestbedEventDeleteShamirRecovery>()?;
         tm.add_class::<TestbedEventCreateOrUpdateOpaqueVlob>()?;
@@ -143,7 +145,7 @@ fn patch_panic_exception_to_inherit_exception(py: Python) {
     // initialized (which is done lazily the first time pyo3 accesses `PanicException`)
     let mro_any = unsafe { Bound::from_borrowed_ptr(py, (*panic_exception_cls).tp_mro) };
     let mro = mro_any
-        .downcast::<PyTuple>()
+        .cast::<PyTuple>()
         .expect("PanicException.tp_mro is a tuple");
     let new_mro = PyTuple::new(
         py,

@@ -30,6 +30,19 @@
         {
             "name": "blocks",
             "type": "List<List<ChunkView>>"
+        },
+        {
+            // The origin of this manifest version (e.g. a regular Parsec write, or a
+            // save coming from a Cryptpad collaborative editing session).
+            //
+            // This is notably used to resolve conflicts: if multiple participants of
+            // the same Cryptpad session save the document concurrently, we can just
+            // keep the most recent one since the collaborative session has acted
+            // as a single source of truth.
+            "name": "origin",
+            "type": "FileManifestOrigin",
+            // Introduced in Parsec 3.10.0
+            "introduced_in_revision": 3100
         }
     ]
 }

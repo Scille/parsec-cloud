@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
@@ -6,13 +6,12 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    realm_keys_bundle::CertifEncryptForRealmError, store::CertifStoreError,
     CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError, InvalidKeysBundleError,
-    UpTo,
+    UpTo, realm_keys_bundle::CertifGetLatestRealmKeyForEncryptionError, store::CertifStoreError,
 };
 use crate::{
-    certif::CertifPollServerError, greater_timestamp, EncrytionUsage,
-    EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    EncryptionUsage, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    certif::CertifPollServerError, greater_timestamp,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -23,9 +22,13 @@ pub enum CertifRenameRealmError {
     Offline(#[from] ConnectionError),
     #[error("Unknown realm ID")]
     UnknownRealm,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Not allowed")]
     AuthorNotAllowed,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -70,25 +73,32 @@ async fn rename_realm_internal(
     loop {
         // 1) Encrypt the new name
 
-        let (encrypted_name, key_index) = ops
-            .encrypt_for_realm(
-                EncrytionUsage::RealmRename,
-                realm_id,
-                new_name.as_ref().as_bytes(),
-            )
+        let (key, key_index) = ops
+            .get_latest_realm_key_for_encryption(EncryptionUsage::RealmRename, realm_id)
             .await
             .map_err(|e| match e {
-                CertifEncryptForRealmError::Stopped => CertifRenameRealmError::Stopped,
-                CertifEncryptForRealmError::Offline(e) => CertifRenameRealmError::Offline(e),
-                CertifEncryptForRealmError::NotAllowed => CertifRenameRealmError::AuthorNotAllowed,
-                CertifEncryptForRealmError::NoKey => CertifRenameRealmError::NoKey,
-                CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Stopped => {
+                    CertifRenameRealmError::Stopped
+                }
+                CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                    CertifRenameRealmError::Offline(e)
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                    CertifRenameRealmError::AuthorNotAllowed
+                }
+                CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
+                    CertifRenameRealmError::RealmDeleted
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NoKey => CertifRenameRealmError::NoKey,
+                CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                     CertifRenameRealmError::InvalidKeysBundle(err)
                 }
-                CertifEncryptForRealmError::Internal(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                     err.context("Cannot encrypt name for realm").into()
                 }
             })?;
+
+        let encrypted_name = key.encrypt(new_name.as_ref().as_bytes());
 
         // 2) Generate the realm name certificate
 
@@ -146,6 +156,7 @@ async fn rename_realm_internal(
                 continue;
             }
             Rep::RealmNotFound => Err(CertifRenameRealmError::UnknownRealm),
+            Rep::RealmDeleted => Err(CertifRenameRealmError::RealmDeleted),
             Rep::AuthorNotAllowed => Err(CertifRenameRealmError::AuthorNotAllowed),
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,

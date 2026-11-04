@@ -1,26 +1,41 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="organization-info">
     <div class="card-header">
-      <ion-title class="card-header__title title-h3">
+      <ion-title class="card-header__title">
         {{ $msTranslate('OrganizationPage.configuration.title') }}
       </ion-title>
     </div>
 
     <div class="card-content">
       <div class="info-list">
+        <!-- Workspace deletion delay -->
+        <div class="info-list-item">
+          <ion-label class="info-list-item__title">
+            {{ $msTranslate('OrganizationPage.configuration.workspaceDeletionDelay') }}
+          </ion-label>
+          <div class="info-list-item__value info-list-item__badge info">
+            {{
+              $msTranslate(
+                orgInfo.workspaceDeletionDelay === 0
+                  ? 'WorkspacesPage.trashWorkspace.deletionDelay.immediate'
+                  : formatWorkspaceDeletionDelay(orgInfo.workspaceDeletionDelay),
+              )
+            }}
+          </div>
+        </div>
         <!-- Outsider profile -->
         <div class="info-list-item">
-          <ion-label class="info-list-item__title body">
+          <ion-label class="info-list-item__title">
             {{ $msTranslate('OrganizationPage.configuration.outsidersAllowed') }}
           </ion-label>
           <div
-            class="info-list-item__value cell-title"
-            :class="orgInfo.outsidersAllowed ? 'success' : 'warning'"
+            class="info-list-item__value info-list-item__badge"
+            :class="orgInfo.clientInfo.serverOrganizationConfig.userProfileOutsiderAllowed ? 'success' : 'warning'"
           >
             {{
-              orgInfo.outsidersAllowed
+              orgInfo.clientInfo.serverOrganizationConfig.userProfileOutsiderAllowed
                 ? $msTranslate('OrganizationPage.configuration.allowed')
                 : $msTranslate('OrganizationPage.configuration.forbidden')
             }}
@@ -28,30 +43,31 @@
         </div>
         <!-- User limit -->
         <div class="info-list-item">
-          <ion-text class="info-list-item__title body">
+          <ion-text class="info-list-item__title">
             {{ $msTranslate('OrganizationPage.configuration.userLimit') }}
           </ion-text>
           <div
-            class="info-list-item__value cell-title"
-            :class="orgInfo.hasUserLimit ? 'warning' : 'success'"
+            class="info-list-item__value info-list-item__badge"
+            :class="orgInfo.userLimit !== undefined ? 'warning' : 'success'"
           >
-            {{ orgInfo.hasUserLimit ? orgInfo.userLimit : $msTranslate('OrganizationPage.configuration.unlimited') }}
+            {{ orgInfo.userLimit !== undefined ? orgInfo.userLimit : $msTranslate('OrganizationPage.configuration.unlimited') }}
           </div>
         </div>
         <!-- Server addr -->
         <div class="info-list-item server-address">
-          <ion-text class="info-list-item__title server-address__title body">
-            {{ $msTranslate('OrganizationPage.configuration.serverAddr') }}
+          <ion-text class="info-list-item__title server-address__title">
+            {{ $msTranslate('OrganizationPage.configuration.serverAddress') }}
           </ion-text>
           <div class="server-address-value">
-            <ion-text class="server-address-value__text body">
-              {{ orgInfo.organizationAddr }}
+            <ion-text class="server-address-value__text">
+              {{ orgInfo.clientInfo.organizationAddr }}
             </ion-text>
             <ion-button
               fill="clear"
               size="small"
               id="copy-link-btn"
-              @click="copyAddress(orgInfo.organizationAddr)"
+              slot="icon-only"
+              @click="copyAddress(orgInfo.clientInfo.organizationAddr)"
               v-if="!addressCopiedToClipboard"
             >
               <ion-icon
@@ -61,10 +77,29 @@
             </ion-button>
             <ion-text
               v-if="addressCopiedToClipboard"
-              class="server-address-value__copied body copied"
+              class="server-address-value__copied copied"
             >
               {{ $msTranslate('OrganizationPage.configuration.copyPath') }}
             </ion-text>
+          </div>
+        </div>
+        <div class="info-list-item">
+          <ion-label class="info-list-item__title">
+            {{ $msTranslate('OrganizationPage.configuration.serverVersion') }}
+          </ion-label>
+          <ion-text
+            class="info-list-item__value"
+            id="server-version"
+            v-if="serverConfig && serverConfig.serverVersion"
+          >
+            {{ serverConfig.serverVersion }}
+          </ion-text>
+          <div
+            v-else
+            id="unavailable-server-version"
+            class="info-list-item__value info-list-item__badge warning"
+          >
+            {{ $msTranslate('OrganizationPage.size.unavailable') }}
           </div>
         </div>
       </div>
@@ -73,18 +108,20 @@
 </template>
 
 <script setup lang="ts">
-import { OrganizationInfo } from '@/parsec';
+import { formatWorkspaceDeletionDelay } from '@/components/workspaces/utils';
+import { OrganizationInfo, ServerConfig } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { copy } from 'ionicons/icons';
 import { Clipboard } from 'megashark-lib';
-import { inject, ref } from 'vue';
+import { inject, Ref, ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const addressCopiedToClipboard = ref(false);
 
 defineProps<{
   orgInfo: OrganizationInfo;
+  serverConfig: ServerConfig | null;
 }>();
 
 async function copyAddress(address: string): Promise<void> {
@@ -95,7 +132,7 @@ async function copyAddress(address: string): Promise<void> {
       addressCopiedToClipboard.value = false;
     }, 5000);
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'OrganizationPage.configuration.copyFailed',
         level: InformationLevel.Error,
@@ -110,15 +147,15 @@ async function copyAddress(address: string): Promise<void> {
 .organization-info {
   display: flex;
   flex-direction: column;
-  background: var(--parsec-color-light-secondary-white);
+  background: ms.color('surface-base-default');
   align-items: center;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   width: 100%;
   max-width: 30rem;
-  border-radius: var(--parsec-radius-12);
+  border-radius: ms.radius('2xl');
   height: fit-content;
   box-shadow: var(--parsec-shadow-input);
-  padding: 1.5rem;
+  padding: ms.spacing('padding-4xl');
 
   .card-header {
     display: flex;
@@ -126,7 +163,8 @@ async function copyAddress(address: string): Promise<void> {
     width: 100%;
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h4');
+      color: ms.color('text-base-body');
     }
   }
 
@@ -134,82 +172,106 @@ async function copyAddress(address: string): Promise<void> {
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 
   .info-list {
-    padding: 0;
+    padding: ms.spacing('padding-none');
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
 
     &-item {
       justify-content: space-between;
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: ms.spacing('gap-3xl');
 
       &__title {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
+      }
+
+      &__badge {
+        @include ms.font('label-xs-emphasis');
+        padding: ms.spacing('padding-xs') ms.spacing('padding-lg');
+        border-radius: ms.radius('6xl');
+      }
+
+      #server-version {
+        @include ms.font('heading-h6');
+        color: ms.color('text-base-body');
       }
 
       .success {
-        color: var(--parsec-color-light-success-700);
-        padding: 0.125rem 0.5rem;
-        border-radius: var(--parsec-radius-32);
-        background: var(--parsec-color-light-success-50);
+        color: ms.color('text-success-default');
+        background: ms.color('surface-success-default-subtle-hover');
       }
 
       .warning {
-        color: var(--parsec-color-light-warning-700);
-        padding: 0.125rem 0.5rem;
-        border-radius: var(--parsec-radius-32);
-        background: var(--parsec-color-light-warning-50);
+        color: ms.color('text-warning-default');
+        background: ms.color('surface-warning-default-subtle-hover');
+      }
+
+      .info {
+        color: ms.color('text-base-body');
+        background: ms.color('surface-base-page-secondary');
       }
     }
   }
+}
 
-  .server-address {
+.server-address {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-lg') !important;
+  align-items: start;
+
+  &__title {
+    width: 100%;
+  }
+
+  &-value {
+    color: ms.color('text-neutral-default');
+    background-color: ms.color('surface-base-default-secondary');
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
+    border-radius: ms.radius('lg');
+    padding: ms.spacing('padding-lg') ms.spacing('padding-lg') ms.spacing('padding-lg') ms.spacing('padding-3xl');
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: start;
+    align-items: center;
+    justify-content: space-between;
+    gap: ms.spacing('gap-lg');
+    overflow: hidden;
+    width: 100%;
 
-    &-value {
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-background);
-      border-radius: var(--parsec-radius-6);
-      padding: 0.5rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      overflow: hidden;
-      width: 100%;
-
-      &__text {
-        white-space: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-      }
-
-      &__copied {
-        color: var(--parsec-color-light-success-700);
-      }
+    &__text {
+      @include ms.font('body-md-regular');
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-gutter: auto;
+      scrollbar-width: none;
     }
 
-    #copy-link-btn {
-      color: var(--parsec-color-light-secondary-text);
-      margin: 0;
+    &__copied {
+      @include ms.font('body-md-regular');
+      color: ms.color('text-success-default');
+    }
+  }
 
-      &::part(native) {
-        padding: 0.5rem;
-        border-radius: var(--parsec-radius-6);
-      }
+  #copy-link-btn {
+    color: ms.color('icon-neutral-default');
+    margin: 0;
+    height: 2rem;
+    width: 2rem;
 
-      &:hover {
-        color: var(--parsec-color-light-primary-600);
-      }
+    &::part(native) {
+      padding: ms.spacing('padding-md');
+      border-radius: ms.radius('md');
+    }
+
+    &:hover {
+      color: ms.color('icon-brand-default');
     }
   }
 }

@@ -1,23 +1,25 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 #![cfg_attr(target_family = "windows", allow(unused_imports))]
 
 use std::sync::{Arc, Mutex};
 
 use libparsec::{
-    authenticated_cmds::latest::invite_new_user, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
+    authenticated_cmds::latest::invite_new_user, get_default_config_dir, tmp_path,
 };
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    bootstrap_cli_test, test_ui,
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
-use parsec_cli::utils::YELLOW;
 
 #[rstest::rstest]
 #[tokio::test]
-async fn invite_user(tmp_path: TmpPath) {
+async fn invite_user(tmp_path: TmpPath, test_ui: &Ui) {
     let (addr, TestOrganization { alice, .. }, org_id) =
-        bootstrap_cli_test(&tmp_path).await.unwrap();
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let mut addr = addr.to_url();
     addr.path_segments_mut().unwrap().push(org_id.as_ref());
@@ -33,16 +35,20 @@ async fn invite_user(tmp_path: TmpPath) {
         "a@b.c"
     )
     .stdout(predicates::str::contains("Invitation token:"))
-    .stdout(predicates::str::contains(format!(
-        "Invitation URL: {YELLOW}{addr}"
-    )));
+    .stdout(predicates::str::is_match("Invitation URL: .*https?://.*/redirect/.*").unwrap());
 }
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn invite_user_dance(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn invite_user_dance(
+    tmp_path: TmpPath,
+    test_ui: &Ui,
+    #[values("http", "parsec3")] scheme: &str,
+    #[values("password", "keyring")] auth: &str,
+) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -76,6 +82,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     // spawn greeter thread
 
     let program_greeter = crate::std_cmd!(
+        "--progress=plain",
         "invite",
         "greet",
         "--device",
@@ -88,8 +95,14 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     ));
 
     // spawn claimer thread
+    let addr = match scheme {
+        "parsec3" => invitation_addr.to_url().to_string(),
+        "http" => invitation_addr.to_http_redirection_url().to_string(),
+        _ => unimplemented!(),
+    };
 
-    let program_claimer = crate::std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
+    let program_claimer =
+        crate::std_cmd!("--progress=plain", "invite", "claim", &addr, "--auth", auth);
 
     let p_claimer = Arc::new(Mutex::new(
         crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
@@ -161,6 +174,9 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         locked
             .exp_string(&format!("Select code provided by claimer: {sas_code}"))
             .unwrap();
+        locked
+            .exp_string("Waiting for claimer information")
+            .unwrap();
     }
 
     // device creation
@@ -192,13 +208,13 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 
     {
         let mut locked = p_claimer.lock().unwrap();
-        locked
-            .exp_string("Enter password for the new device:")
-            .unwrap();
-        locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
-        locked.exp_string("Confirm password:").unwrap();
+        if auth == "password" {
+            locked.exp_string("New device password:").unwrap();
+            locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+            locked.exp_string("Confirm password:").unwrap();
 
-        locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+            locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+        }
         locked.exp_eof().unwrap();
     }
 }

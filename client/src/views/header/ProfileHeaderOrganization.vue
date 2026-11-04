@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-item
@@ -12,14 +12,14 @@
       class="avatar small"
       :class="{ online: isOnline, offline: !isOnline }"
     >
-      <ion-icon
-        :icon="personCircle"
-        class="avatar-icon"
+      <ms-image
+        :image="PersonCircle"
+        class="profile-info-card__avatar"
       />
     </div>
     <div class="text-content">
       <div class="text-content-name">
-        <ion-text class="text-content-name__text subtitles-normal">
+        <ion-text class="text-content-name__text">
           {{ name }}
         </ion-text>
         <ion-icon
@@ -29,7 +29,7 @@
         />
       </div>
       <ion-text
-        class="text-content-update button-small"
+        class="text-content-update"
         v-show="updateAvailability.updateAvailable"
       >
         {{ $msTranslate('HomePage.topbar.updateAvailable') }}
@@ -39,26 +39,27 @@
 </template>
 
 <script setup lang="ts">
+import PersonCircle from '@/assets/images/person-circle.svg?raw';
 import { openBugReportModal } from '@/components/misc';
 import { getClientInfo, UserProfile } from '@/parsec';
 import { navigateTo, ProfilePages, Routes } from '@/router';
-import { APP_VERSION, Env } from '@/services/environment';
+import { Env } from '@/services/environment';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { openUpdateAppModal } from '@/views/about';
 import ProfileHeaderOrganizationPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderOrganizationPopover.vue';
-import { IonIcon, IonItem, IonText, modalController, popoverController } from '@ionic/vue';
-import { chevronDown, personCircle } from 'ionicons/icons';
-import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
+import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
+import { chevronDown } from 'ionicons/icons';
+import { Answer, askQuestion, MsImage, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 const isOnline = ref(false);
 const isPopoverOpen = ref(false);
 
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const updateAvailability: Ref<UpdateAvailabilityData> = ref({ updateAvailable: false });
 let eventCbId: null | string = null;
 
@@ -69,8 +70,8 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  eventCbId = await eventDistributor.registerCallback(
-    Events.Offline | Events.Online | Events.UpdateAvailability,
+  eventCbId = await eventDistributor.value.registerCallback(
+    [Events.Offline, Events.Online, Events.UpdateAvailability],
     async (event: Events, data?: EventData) => {
       if (event === Events.Offline) {
         isOnline.value = false;
@@ -87,12 +88,12 @@ onMounted(async () => {
     isOnline.value = clientInfoResult.value.isServerOnline;
   }
 
-  window.electronAPI.getUpdateAvailability();
+  window.nativeAPI.getUpdateAvailability();
 });
 
 onUnmounted(async () => {
   if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -118,29 +119,17 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   if (data === undefined) {
     return;
   }
-  if (data.option === ProfilePopoverOption.Update) {
-    const modal = await modalController.create({
-      component: UpdateAppModal,
-      canDismiss: true,
-      cssClass: 'update-app-modal',
-      backdropDismiss: false,
-      componentProps: {
-        currentVersion: APP_VERSION,
-        targetVersion: updateAvailability.value.version,
-      },
-    });
-    await modal.present();
-    const { role } = await modal.onWillDismiss();
-    await modal.dismiss();
+  if (data.option === ProfilePopoverOption.Update && updateAvailability.value.version) {
+    const answer = await openUpdateAppModal(updateAvailability.value.version);
 
-    if (role === MsModalResult.Confirm) {
-      await eventDistributor.dispatchEvent(Events.LogoutRequested);
-      window.electronAPI.prepareUpdate();
+    if (answer === Answer.Yes) {
+      await eventDistributor.value.dispatchEvent(Events.LogoutRequested);
+      window.nativeAPI.prepareUpdate();
     }
   } else if (data.option === ProfilePopoverOption.LogOut) {
     const answer = await askQuestion(
       'HomePage.topbar.logoutConfirmTitle',
-      fileOperationManager.hasOperations() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
+      fileOperationManager.value.hasOperations() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
       {
         yesText: 'HomePage.topbar.logoutYes',
         noText: 'HomePage.topbar.logoutNo',
@@ -148,7 +137,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
     );
 
     if (answer === Answer.Yes) {
-      await eventDistributor.dispatchEvent(Events.LogoutRequested);
+      await eventDistributor.value.dispatchEvent(Events.LogoutRequested);
     }
   } else if (data.option === ProfilePopoverOption.Settings) {
     await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Settings } });
@@ -167,7 +156,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   } else if (data.option === ProfilePopoverOption.ReportBug) {
     const result = await openBugReportModal();
     if (result === MsModalResult.Confirm) {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: 'bugReport.sent',
           level: InformationLevel.Success,
@@ -183,9 +172,9 @@ async function openOrganizationPopover(event: Event): Promise<void> {
 .profile-header {
   --background: none;
   --background-hover: none;
-  border-radius: var(--parsec-radius-12);
-  padding: 0.375rem 0.5rem 0.375rem 0.25rem;
-  border: 1px solid transparent;
+  border-radius: ms.radius('2xl');
+  padding: ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-sm');
+  border: ms.border('thin') solid transparent;
   transition: all ease-in-out 200ms;
   flex-shrink: 0;
   max-width: 15rem;
@@ -196,21 +185,21 @@ async function openOrganizationPopover(event: Event): Promise<void> {
 
   &:hover {
     --background-hover: none;
-    border-color: var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-background);
+    border-color: ms.color('border-base-default');
+    background: ms.color('surface-neutral-default-subtle-hover');
   }
 
   &-clicked {
-    border-color: var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-background);
+    border-color: ms.color('border-base-default');
+    background: ms.color('surface-neutral-default-subtle-hover');
   }
 }
 
 .avatar {
   position: relative;
-  color: var(--parsec-color-light-primary-600);
+  color: ms.color('icon-brand-default');
   display: flex;
-  margin-right: 0.5rem;
+  margin-right: ms.spacing('padding-lg');
 
   @include ms.responsive-breakpoint('md') {
     margin: 0;
@@ -223,21 +212,21 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   &::after {
     content: '';
     position: absolute;
-    bottom: 0px;
-    right: 0px;
+    bottom: 2px;
+    right: 1px;
     height: 0.5rem;
     width: 0.5rem;
-    border-radius: 50%;
-    border: var(--parsec-color-light-secondary-white) solid 2px;
+    border-radius: ms.radius('full');
+    border: ms.color('border-base-on-color') solid ms.border('thick');
     z-index: 2;
   }
 
   &.online::after {
-    background-color: var(--parsec-color-light-success-500);
+    background-color: ms.color('surface-success-default');
   }
 
   &.offline::after {
-    background-color: var(--parsec-color-light-secondary-light);
+    background-color: ms.color('surface-disabled-default');
   }
 }
 
@@ -250,11 +239,11 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   &-name {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-soft-text);
+    gap: ms.spacing('gap-lg');
+    color: ms.color('text-neutral-default');
 
     &__text {
-      font-size: 0.9375rem;
+      @include ms.font('body-lg-medium');
       width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -277,7 +266,8 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   }
 
   &-update {
-    color: var(--parsec-color-light-primary-500);
+    @include ms.font('label-sm-medium');
+    color: ms.color('text-brand-default');
 
     @include ms.responsive-breakpoint('md') {
       display: none;

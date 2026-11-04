@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -10,8 +10,8 @@ use super::WorkspaceCreateFileError;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{ForUpdateFileError, ReadChunkOrBlockLocalOnlyError, ResolvePathError},
         FileUpdater, OpenedFile, OpenedFileCursor, ReadMode, WorkspaceOps, WriteMode,
+        store::{ForUpdateFileError, ReadChunkOrBlockLocalOnlyError, ResolvePathError},
     },
 };
 
@@ -62,6 +62,8 @@ pub enum WorkspaceIsFileContentLocalError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error(transparent)]
@@ -91,7 +93,7 @@ pub async fn is_file_content_local(
     let local_file_manifest = match outcome {
         Ok((ArcLocalChildManifest::File(file), _)) => file,
         Ok((ArcLocalChildManifest::Folder(_), _)) => {
-            return Err(WorkspaceIsFileContentLocalError::NotAFile)
+            return Err(WorkspaceIsFileContentLocalError::NotAFile);
         }
 
         Err(err) => {
@@ -104,6 +106,9 @@ pub async fn is_file_content_local(
                 ResolvePathError::NoRealmAccess => {
                     Err(WorkspaceIsFileContentLocalError::NoRealmAccess)
                 }
+                ResolvePathError::RealmDeleted => {
+                    Err(WorkspaceIsFileContentLocalError::RealmDeleted)
+                }
                 ResolvePathError::InvalidKeysBundle(err) => {
                     Err(WorkspaceIsFileContentLocalError::InvalidKeysBundle(err))
                 }
@@ -114,7 +119,7 @@ pub async fn is_file_content_local(
                     Err(WorkspaceIsFileContentLocalError::InvalidManifest(err))
                 }
                 ResolvePathError::Internal(err) => Err(err.context("cannot resolve path").into()),
-            }
+            };
         }
     };
     for chunk_views in &local_file_manifest.blocks {
@@ -122,10 +127,10 @@ pub async fn is_file_content_local(
             match ops.store.get_chunk_or_block_local_only(chunk_view).await {
                 Ok(_) => continue,
                 Err(ReadChunkOrBlockLocalOnlyError::Stopped) => {
-                    return Err(WorkspaceIsFileContentLocalError::Stopped)
+                    return Err(WorkspaceIsFileContentLocalError::Stopped);
                 }
                 Err(ReadChunkOrBlockLocalOnlyError::Internal(err)) => {
-                    return Err(err.context("read local chunk or block").into())
+                    return Err(err.context("read local chunk or block").into());
                 }
 
                 Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound) => return Ok(false),
@@ -146,6 +151,8 @@ pub enum WorkspaceOpenFileError {
     ReadOnlyRealm,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error("Path points to an entry (ID: `{}`) that is not a file", .entry_id)]
@@ -174,7 +181,7 @@ pub async fn open_file(
             .workspace_external_info
             .lock()
             .expect("mutex is poisoned");
-        if !guard.entry.role.can_write() {
+        if guard.entry.is_read_only() {
             return Err(WorkspaceOpenFileError::ReadOnlyRealm);
         }
     }
@@ -207,6 +214,9 @@ pub async fn open_file(
                     WorkspaceCreateFileError::NoRealmAccess => {
                         Err(WorkspaceOpenFileError::NoRealmAccess)
                     }
+                    WorkspaceCreateFileError::RealmDeleted => {
+                        Err(WorkspaceOpenFileError::RealmDeleted)
+                    }
                     WorkspaceCreateFileError::ParentNotFound => {
                         Err(WorkspaceOpenFileError::EntryNotFound)
                     }
@@ -234,6 +244,7 @@ pub async fn open_file(
                     ResolvePathError::Stopped => Err(WorkspaceOpenFileError::Stopped),
                     ResolvePathError::EntryNotFound => Err(WorkspaceOpenFileError::EntryNotFound),
                     ResolvePathError::NoRealmAccess => Err(WorkspaceOpenFileError::NoRealmAccess),
+                    ResolvePathError::RealmDeleted => Err(WorkspaceOpenFileError::RealmDeleted),
                     ResolvePathError::InvalidKeysBundle(err) => {
                         Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
                     }
@@ -246,19 +257,21 @@ pub async fn open_file(
                     ResolvePathError::Internal(err) => {
                         Err(err.context("cannot resolve path").into())
                     }
-                }
+                };
             }
         }
     };
 
-    open_file_by_id(ops, entry_id, options).await
+    open_file_by_id(ops, entry_id, options)
+        .await
+        .map(|fd| (fd, entry_id))
 }
 
 pub async fn open_file_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
     options: OpenOptions,
-) -> Result<(FileDescriptor, VlobID), WorkspaceOpenFileError> {
+) -> Result<FileDescriptor, WorkspaceOpenFileError> {
     // Handling of truncate-on-open, will be done in the next step
 
     let maybe_truncate_on_open =
@@ -396,25 +409,28 @@ pub async fn open_file_by_id(
                 ForUpdateFileError::Offline(e) => return Err(WorkspaceOpenFileError::Offline(e)),
                 ForUpdateFileError::Stopped => return Err(WorkspaceOpenFileError::Stopped),
                 ForUpdateFileError::EntryNotFound => {
-                    return Err(WorkspaceOpenFileError::EntryNotFound)
+                    return Err(WorkspaceOpenFileError::EntryNotFound);
                 }
                 ForUpdateFileError::EntryNotAFile { entry_id } => {
-                    return Err(WorkspaceOpenFileError::EntryNotAFile { entry_id })
+                    return Err(WorkspaceOpenFileError::EntryNotAFile { entry_id });
                 }
                 ForUpdateFileError::NoRealmAccess => {
-                    return Err(WorkspaceOpenFileError::NoRealmAccess)
+                    return Err(WorkspaceOpenFileError::NoRealmAccess);
+                }
+                ForUpdateFileError::RealmDeleted => {
+                    return Err(WorkspaceOpenFileError::RealmDeleted);
                 }
                 ForUpdateFileError::InvalidKeysBundle(err) => {
-                    return Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
+                    return Err(WorkspaceOpenFileError::InvalidKeysBundle(err));
                 }
                 ForUpdateFileError::InvalidCertificate(err) => {
-                    return Err(WorkspaceOpenFileError::InvalidCertificate(err))
+                    return Err(WorkspaceOpenFileError::InvalidCertificate(err));
                 }
                 ForUpdateFileError::InvalidManifest(err) => {
-                    return Err(WorkspaceOpenFileError::InvalidManifest(err))
+                    return Err(WorkspaceOpenFileError::InvalidManifest(err));
                 }
                 ForUpdateFileError::Internal(err) => {
-                    return Err(err.context("cannot resolve path").into())
+                    return Err(err.context("cannot resolve path").into());
                 }
             },
         };
@@ -431,7 +447,7 @@ pub async fn open_file_by_id(
     };
 
     match cursor_insertion_outcome {
-        CursorInsertionOutcome::OpenedFile { file_descriptor } => Ok((file_descriptor, entry_id)),
+        CursorInsertionOutcome::OpenedFile { file_descriptor } => Ok(file_descriptor),
         CursorInsertionOutcome::FileAlreadyOpened {
             opened_file,
             new_cursor,
@@ -452,7 +468,7 @@ pub async fn open_file_by_id(
                 opened_file_guard.flush_needed = true;
                 opened_file_guard.removed_chunks.extend(removed_chunks);
             }
-            Ok((file_descriptor, entry_id))
+            Ok(file_descriptor)
         }
     }
 }

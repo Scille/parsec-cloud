@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -6,15 +6,15 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
+    EventWorkspaceOpsOutboundSyncNeeded,
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             EnsureManifestExistsWithParentError, FolderUpdater, ForUpdateFolderError,
             ForUpdateReparentingError, ReparentingUpdater, UpdateFolderManifestError,
         },
-        WorkspaceOps,
     },
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -48,6 +48,8 @@ pub enum WorkspaceMoveEntryError {
     ReadOnlyRealm,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Destination already exists (ID `{}`)", .entry_id)]
     DestinationExists { entry_id: VlobID },
     #[error("Destination doesn't exist so exchange is not possible")]
@@ -75,13 +77,12 @@ pub(crate) async fn rename_entry_by_id(
     //       This is because rename is often used as a way to update an entry
     //       in an atomic way.
 
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceMoveEntryError::ReadOnlyRealm);
     }
@@ -97,6 +98,7 @@ pub(crate) async fn rename_entry_by_id(
             // If the source's parent is not a folder... then the source cannot exist !
             ForUpdateFolderError::EntryNotAFolder => WorkspaceMoveEntryError::SourceNotFound,
             ForUpdateFolderError::NoRealmAccess => WorkspaceMoveEntryError::NoRealmAccess,
+            ForUpdateFolderError::RealmDeleted => WorkspaceMoveEntryError::RealmDeleted,
             ForUpdateFolderError::InvalidKeysBundle(err) => {
                 WorkspaceMoveEntryError::InvalidKeysBundle(err)
             }
@@ -134,13 +136,12 @@ pub(crate) async fn move_entry(
     //       This is because rename is often used as a way to update an entry
     //       in an atomic way.
 
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceMoveEntryError::ReadOnlyRealm);
     }
@@ -165,6 +166,7 @@ pub(crate) async fn move_entry(
                 // If the source's parent is not a folder... then the source cannot exist !
                 ForUpdateFolderError::EntryNotAFolder => WorkspaceMoveEntryError::SourceNotFound,
                 ForUpdateFolderError::NoRealmAccess => WorkspaceMoveEntryError::NoRealmAccess,
+                ForUpdateFolderError::RealmDeleted => WorkspaceMoveEntryError::RealmDeleted,
                 ForUpdateFolderError::InvalidKeysBundle(err) => {
                     WorkspaceMoveEntryError::InvalidKeysBundle(err)
                 }
@@ -212,6 +214,7 @@ pub(crate) async fn move_entry(
                     WorkspaceMoveEntryError::DestinationNotFound
                 }
                 ForUpdateReparentingError::NoRealmAccess => WorkspaceMoveEntryError::NoRealmAccess,
+                ForUpdateReparentingError::RealmDeleted => WorkspaceMoveEntryError::RealmDeleted,
                 ForUpdateReparentingError::InvalidKeysBundle(err) => {
                     WorkspaceMoveEntryError::InvalidKeysBundle(err)
                 }
@@ -258,6 +261,9 @@ async fn move_entry_same_parent(
             EnsureManifestExistsWithParentError::NoRealmAccess => {
                 WorkspaceMoveEntryError::NoRealmAccess
             }
+            EnsureManifestExistsWithParentError::RealmDeleted => {
+                WorkspaceMoveEntryError::RealmDeleted
+            }
             EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                 WorkspaceMoveEntryError::InvalidKeysBundle(err)
             }
@@ -292,6 +298,9 @@ async fn move_entry_same_parent(
                     }
                     EnsureManifestExistsWithParentError::NoRealmAccess => {
                         WorkspaceMoveEntryError::NoRealmAccess
+                    }
+                    EnsureManifestExistsWithParentError::RealmDeleted => {
+                        WorkspaceMoveEntryError::RealmDeleted
                     }
                     EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                         WorkspaceMoveEntryError::InvalidKeysBundle(err)
@@ -432,6 +441,9 @@ async fn move_entry_different_parents(
                     EnsureManifestExistsWithParentError::NoRealmAccess => {
                         WorkspaceMoveEntryError::NoRealmAccess
                     }
+                    EnsureManifestExistsWithParentError::RealmDeleted => {
+                        WorkspaceMoveEntryError::RealmDeleted
+                    }
                     EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                         WorkspaceMoveEntryError::InvalidKeysBundle(err)
                     }
@@ -457,7 +469,7 @@ async fn move_entry_different_parents(
                             ArcLocalChildManifest::Folder(_) => {
                                 return Err(WorkspaceMoveEntryError::DestinationExists {
                                     entry_id: dst_child_id,
-                                })
+                                });
                             }
                         },
 

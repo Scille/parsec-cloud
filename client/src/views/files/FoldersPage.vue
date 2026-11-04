@@ -1,25 +1,51 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page>
     <ion-content
       :fullscreen="true"
       class="content-scroll folder-content"
+      :class="{
+        searching: searchInputValue.length > 0,
+        archived: workspaceInfo?.isArchived || workspaceInfo?.isTrashed,
+      }"
     >
       <ms-action-bar
         id="folders-ms-action-bar"
         v-if="isLargeDisplay"
-        :buttons="actionBarOptionsFoldersPage"
+        :buttons="actionBarDesktop"
       >
         <div class="right-side">
+          <ion-text
+            class="read-only-info"
+            v-if="workspaceInfo?.isArchived || workspaceInfo?.isTrashed"
+          >
+            <ion-icon
+              :icon="eye"
+              class="read-only-info__icon"
+            />
+            {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+          </ion-text>
+          <ms-search-input
+            :placeholder="'FoldersPage.search.placeholder'"
+            id="search-input-files"
+            ref="searchInputRef"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
+          />
           <workspace-role-tag
+            v-if="!workspaceInfo?.isArchived"
             :role="ownRole"
             class="workspace-role-tag"
           />
 
-          <div class="counter">
+          <div
+            class="counter"
+            v-show="!search"
+          >
             <ion-text
-              class="body"
+              class="counter-text"
               v-if="selectedFilesCount === 0"
             >
               {{
@@ -31,7 +57,7 @@
               }}
             </ion-text>
             <ion-text
-              class="body item-selected"
+              class="counter-text item-selected"
               v-if="selectedFilesCount > 0"
             >
               {{ $msTranslate({ key: 'FoldersPage.itemSelectedCount', data: { count: selectedFilesCount }, count: selectedFilesCount }) }}
@@ -39,6 +65,7 @@
           </div>
 
           <ms-sorter
+            v-show="!search"
             :sort-ascending="currentSortOrder"
             :key="`${currentSortProperty}-${currentSortOrder}`"
             label="FoldersPage.sort.byName"
@@ -50,37 +77,32 @@
           />
 
           <ms-grid-list-toggle
+            v-show="!search"
             v-model="displayView"
             @update:model-value="onDisplayStateChange"
           />
         </div>
       </ms-action-bar>
-      <small-display-header-title
-        v-if="workspaceInfo && isSmallDisplay"
+      <small-display-selection-header
+        v-if="workspaceInfo && isSmallDisplay && selectionEnabled"
         :title="getDisplayText()"
         @open-contextual-modal="openGlobalContextMenu"
         @select="selectAll"
         @unselect="unselectAll"
         @cancel-selection="onSelectionCancel"
-        :selection-enabled="selectionEnabled"
         :some-selected="selectedFilesCount > 0"
       />
-      <div class="folder-container scroll">
+      <div class="main-container folder-container scroll">
         <file-inputs
           ref="fileInputs"
           @files-added="startImportFiles"
         />
-        <div
+
+        <ms-spinner
           v-show="querying"
-          class="body-lg"
-        >
-          <div class="no-files-content">
-            <ms-spinner class="ms-spinner" />
-            <ion-text>
-              {{ $msTranslate('FoldersPage.loading') }}
-            </ion-text>
-          </div>
-        </div>
+          class="ms-spinner loading-files-content"
+          title="FoldersPage.loading"
+        />
 
         <div
           v-if="isSmallDisplay"
@@ -88,6 +110,7 @@
         >
           <div class="mobile-filters-buttons">
             <ms-sorter
+              v-if="!search"
               :key="`${currentSortProperty}-${currentSortOrder}`"
               :label="'FoldersPage.sort.byName'"
               :options="msSorterOptions"
@@ -105,14 +128,29 @@
         </div>
 
         <div
+          v-if="isSmallDisplay"
+          class="search-mobile-container"
+        >
+          <ms-search-input
+            :placeholder="'FoldersPage.search.placeholder'"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
+            id="search-input-files"
+            class="search-input-mobile"
+          />
+        </div>
+
+        <div
           v-if="!querying && itemsToShow === 0"
-          class="no-files body-lg"
+          class="no-files"
         >
           <file-drop-zone
             :show-drop-message="true"
             @files-added="startImportFiles"
+            @drop-as-reader="onDropAsReader"
             @global-menu-click="openGlobalContextMenu"
-            :is-reader="ownRole === parsec.WorkspaceRole.Reader"
+            :is-reader="isReadOnly"
           >
             <div
               class="error-list-folder"
@@ -133,24 +171,21 @@
               class="no-files-content"
               v-else
             >
-              <ms-image :image="EmptyFolder" />
+              <ms-image :image="theme === Theme.Dark ? NoFileImportedDark : NoFileImported" />
               <ion-text>
                 {{ $msTranslate('FoldersPage.emptyFolder') }}
               </ion-text>
             </div>
           </file-drop-zone>
         </div>
-        <div
-          v-else-if="!querying && !showErrorListPage"
-          class="grid-list-container"
-        >
+        <div v-else-if="!querying && !showErrorListPage && !search">
           <div v-if="displayView === DisplayState.List && userInfo">
             <file-list-display
               ref="fileListDisplay"
               :files="files"
               :folders="folders"
               :own-profile="userInfo.currentProfile"
-              :own-role="ownRole"
+              :is-reader="isReadOnly"
               :selection-enabled="selectionEnabled && isSmallDisplay"
               :current-sort-order="currentSortOrder"
               :current-sort-property="currentSortProperty"
@@ -168,7 +203,7 @@
               ref="fileGridDisplay"
               :files="files"
               :folders="folders"
-              :own-role="ownRole"
+              :is-reader="isReadOnly"
               :selection-enabled="selectionEnabled && isSmallDisplay"
               :file-operations="fileOperationsCurrentDir"
               @open-item="onEntryClick"
@@ -179,6 +214,17 @@
             />
           </div>
         </div>
+        <template v-if="search">
+          <file-search-results
+            :pattern="search.pattern"
+            :search-results="search.results"
+            :active="search.active"
+            :multiple-workspaces="false"
+            @item-click="onSearchResultClick"
+            @menu-item-click="onSearchResultContextMenu"
+            @update-pattern="search.pattern = $event"
+          />
+        </template>
       </div>
       <tab-bar-options
         v-if="customTabBar.isVisible.value"
@@ -192,31 +238,38 @@
 import { entryNameValidator } from '@/common/validators';
 import * as parsec from '@/parsec';
 import {
-  Answer,
   DisplayState,
   DocumentImport,
-  EmptyFolder,
   EyeOpenIcon,
   I18n,
   MsActionBar,
+  MsActionBarAction,
   MsGridListToggle,
   MsImage,
   MsModalResult,
   MsOptions,
   MsReportText,
   MsReportTheme,
+  MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
   MsSpinner,
+  NoFileImported,
+  NoFileImportedDark,
   RenameIcon,
+  Theme,
   Translatable,
-  askQuestion,
   asyncComputed,
   getTextFromUser,
+  openSpinnerModal,
+  useTheme,
   useWindowSize,
 } from 'megashark-lib';
 
+import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
+import { findAvailableFileName } from '@/common/file';
+import { FileContentType, OPENABLE_FILES, isFileEditable } from '@/common/fileTypes';
 import {
   EntryCollection,
   EntryModel,
@@ -226,36 +279,44 @@ import {
   FileInputs,
   FileListDisplay,
   FileModel,
+  FileSearchResults,
   FolderDefaultData,
   FolderModel,
   FoldersPageSavedData,
   ImportType,
+  NewFilePopover,
   SortProperty,
   copyPathLinkToClipboard,
-  selectFolder,
 } from '@/components/files';
+import { FileSearch } from '@/components/files/handler/viewer/types';
 import { EntrySyncStatus, FileOperationCurrentFolder } from '@/components/files/types';
-import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
+import SmallDisplaySelectionHeader from '@/components/header/SmallDisplaySelectionHeader.vue';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import {
   ClientInfo,
   EntryName,
-  EntryStatFile,
-  FsPath,
   Path,
   WorkspaceCreateFolderErrorTag,
-  WorkspaceID,
   WorkspaceRole,
   entryStat,
   getClientInfo,
   isDesktop,
   isWeb,
-  listWorkspaces,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
-import { isFileEditable } from '@/services/cryptpad';
-import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
+import { useFileContextMenu } from '@/services/contextMenu';
+import { useFileActions } from '@/services/contextMenu/fileActions';
 import {
+  EntrySyncData,
+  EventData,
+  EventDistributor,
+  EventDistributorKey,
+  Events,
+  MenuActionData,
+  OpenContextualMenuData,
+} from '@/services/eventDistributor';
+import {
+  DuplicatePolicy,
   FileEventRegistrationCanceller,
   FileOperationCopyData,
   FileOperationData,
@@ -268,30 +329,22 @@ import {
   FileOperationMoveData,
   FileOperationRestoreData,
 } from '@/services/fileOperation';
+import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import usePathOpener, { OpenPathOptions } from '@/services/pathOpener';
+import { OpenPathOptions } from '@/services/pathOpener';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import {
-  FileAction,
-  FileDetailsModal,
-  FolderGlobalAction,
-  openEntryContextMenu as _openEntryContextMenu,
-  openGlobalContextMenu as _openGlobalContextMenu,
-  downloadArchive,
-  downloadEntry,
-  getDuplicatePolicy,
-  isFolderGlobalAction,
-  openDownloadConfirmationModal,
-} from '@/views/files';
+import { FileAction, FolderGlobalAction, getDuplicatePolicy, isFolderGlobalAction } from '@/views/files';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
-import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
+import { IonContent, IonIcon, IonPage, IonText, popoverController } from '@ionic/vue';
 import { arrowRedo, create, download, duplicate, eye, folderOpen, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const customTabBar = useCustomTabBar();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { hideHeader, showHeader } = useHeaderControl();
+const { theme } = useTheme();
 
 const msSorterOptions: MsOptions = new MsOptions([
   { label: 'FoldersPage.sort.byName', key: SortProperty.Name },
@@ -304,77 +357,6 @@ const msSorterLabels = {
   asc: 'FoldersPage.sort.asc',
   desc: 'FoldersPage.sort.desc',
 };
-
-const tabBarActions = computed(() => {
-  const selectedEntries = getSelectedEntries();
-  const isReadOnly: boolean = workspaceInfo.value ? workspaceInfo.value.currentSelfRole === WorkspaceRole.Reader : true;
-  const actions: MenuAction[] = [];
-  if (!isReadOnly) {
-    if (selectedEntries.length === 1) {
-      actions.push({
-        label: 'FoldersPage.tabbar.rename',
-        action: async () => await renameEntries(getSelectedEntries()),
-        image: RenameIcon,
-      });
-    } else {
-      actions.push({ label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate });
-    }
-    actions.push({ label: 'FoldersPage.tabbar.move', action: async () => await moveEntriesTo(getSelectedEntries()), icon: arrowRedo });
-    actions.push({
-      label: 'FoldersPage.tabbar.delete',
-      action: async () => await deleteEntries(getSelectedEntries()),
-      icon: trashBin,
-      danger: true,
-    });
-  }
-  if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
-    actions.push({
-      label: 'FoldersPage.tabbar.preview',
-      action: async () => await openEntry(getSelectedEntries()[0], {}),
-      icon: eye,
-    });
-    if (isFileEditable(selectedEntries[0].name) && !isReadOnly) {
-      actions.push({
-        label: 'FoldersPage.tabbar.edit',
-        action: async () => await openEntry(getSelectedEntries()[0], {}),
-        icon: create,
-      });
-    }
-  }
-  if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
-    actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
-  }
-  if (selectedEntries.length === 1) {
-    if (isDesktop()) {
-      if (selectedEntries[0].isFile()) {
-        actions.push({
-          label: 'FoldersPage.tabbar.seeInExplorer',
-          action: async () => await seeInExplorer(getSelectedEntries()),
-          image: EyeOpenIcon,
-        });
-      }
-      actions.push({
-        label: 'FoldersPage.tabbar.openWithDefault',
-        action: async () => await openEntry(getSelectedEntries()[0], { skipViewers: true }),
-        icon: open,
-      });
-    }
-    if (isReadOnly) {
-      actions.push(
-        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
-        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
-      );
-    } else {
-      actions.push(
-        { label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate },
-        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
-        { label: 'FoldersPage.tabbar.history', action: async () => await showHistory(getSelectedEntries()), icon: time },
-        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
-      );
-    }
-  }
-  return actions;
-});
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Documents)) {
@@ -406,11 +388,12 @@ const routeWatchCancel = watchRoute(async () => {
   await listFolder({ selectFile: query.selectFile, sameFolder: samePath });
 });
 
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
+const contextMenu = useFileContextMenu();
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
@@ -425,13 +408,18 @@ const currentFolder: Ref<EntryName> = ref('/');
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
-const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
+const search = ref<FileSearch | undefined>(undefined);
+let searchAborter: AbortController | undefined = undefined;
+const searchPattern = ref('');
+const searchInputValue = ref('');
+const workspaceInfo: Ref<parsec.WorkspaceInfo | null> = ref(null);
 // Init at true to avoid blinking while we're mounting the component
 // but we're not loading the files yet.
 const querying = ref(true);
 const fileListDisplayRef = useTemplateRef<InstanceType<typeof FileListDisplay>>('fileListDisplay');
 const fileGridDisplayRef = useTemplateRef<InstanceType<typeof FileGridDisplay>>('fileGridDisplay');
 
+const searchInputRef = ref();
 const fileInputsRef = useTemplateRef<InstanceType<typeof FileInputs>>('fileInputs');
 let eventCbId: string | null = null;
 
@@ -441,17 +429,222 @@ const selectedFilesCount = computed(() => {
 const selectionEnabled = ref<boolean>(false);
 const manualSelection = ref<boolean>(false);
 
-const pathOpener = usePathOpener();
+const fileActions = useFileActions();
 
 let hotkeys: HotkeyGroup | null = null;
 let fileOpCanceller!: FileEventRegistrationCanceller;
 
 const ownRole = computed(() => {
-  return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
+  return workspaceInfo.value ? workspaceInfo.value.selfRole : parsec.WorkspaceRole.Reader;
+});
+
+const isReadOnly = asyncComputed(async (): Promise<boolean> => {
+  if (
+    ownRole.value === parsec.WorkspaceRole.Reader ||
+    workspaceInfo.value?.isArchived === true ||
+    workspaceInfo.value?.isTrashed === true
+  ) {
+    return true;
+  }
+  return false;
 });
 
 const itemsToShow = computed(() => {
   return folders.value.entriesCount() + files.value.entriesCount() + fileOperationsCurrentDir.value.length;
+});
+
+const tabBarActions = computed(() => {
+  const selectedEntries = getSelectedEntries();
+  const actions: MenuAction[] = [];
+
+  if (search.value) {
+    return actions;
+  }
+
+  // disagreement between prettier and eslint
+  actions.push(
+    ...(isLargeDisplay.value && !isReadOnly.value && selectedEntries.length === 0
+      ? [
+          {
+            label: 'FoldersPage.createFolder',
+            icon: folderOpen,
+            action: createFolder,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isLargeDisplay.value && !isReadOnly.value && selectedEntries.length === 0
+      ? [
+          {
+            label: 'FoldersPage.createFile.button',
+            image: DocumentNew,
+            action: async (event: MouseEvent) => {
+              await onCreateNewFileClicked(event);
+            },
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isLargeDisplay.value && !isReadOnly.value && selectedEntries.length === 0
+      ? [
+          {
+            label: 'FoldersPage.import',
+            image: DocumentImport,
+            action: async (event: MouseEvent) => {
+              await onImportClicked(event);
+            },
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(selectedEntries.length === 1 && selectedEntries[0].isFile()
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionPreview',
+            action: async () => await openEntry(selectedEntries[0], { skipViewers: false, readOnly: true }),
+            icon: eye,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length === 1 && selectedEntries[0].isFile() && isFileEditable(selectedEntries[0].name)
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionEdit',
+            action: async () => await openEntry(selectedEntries[0], {}),
+            icon: create,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionRename',
+            action: async () => await dispatchContextMenuAction(FileAction.Rename, selectedEntries),
+            image: RenameIcon,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionMoveTo',
+            action: async () => await dispatchContextMenuAction(FileAction.MoveTo, selectedEntries),
+            icon: arrowRedo,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionMakeACopy',
+            action: async () => await dispatchContextMenuAction(FileAction.MakeACopy, selectedEntries),
+            icon: duplicate,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionDelete',
+            action: async () => await dispatchContextMenuAction(FileAction.Delete, selectedEntries),
+            icon: trashBin,
+            danger: true,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isWeb() && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionDownload',
+            action: async () => await dispatchContextMenuAction(FileAction.Download, selectedEntries),
+            icon: download,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isDesktop() && selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionSeeInExplorer',
+            action: async () => await dispatchContextMenuAction(FileAction.SeeInExplorer, selectedEntries),
+            image: EyeOpenIcon,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isDesktop() && selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionOpen',
+            action: async () => await openEntry(selectedEntries[0], { skipViewers: true }),
+            icon: open,
+          },
+        ]
+      : []),
+  );
+
+  actions.push(
+    ...(selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionHistory',
+            action: async () => await dispatchContextMenuAction(FileAction.ShowHistory, selectedEntries),
+            icon: time,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionCopyLink',
+            action: async () => await dispatchContextMenuAction(FileAction.CopyLink, selectedEntries),
+            icon: link,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionDetails',
+            action: async () => await dispatchContextMenuAction(FileAction.ShowDetails, selectedEntries),
+            icon: informationCircle,
+          },
+        ]
+      : []),
+  );
+  return actions;
+});
+
+const actionBarDesktop = computed(() => {
+  return tabBarActions.value.map((action) => {
+    return {
+      label: action.label,
+      image: action.image,
+      icon: action.icon,
+      onClick: action.action,
+    } as MsActionBarAction;
+  });
 });
 
 const fileOperationsCurrentDir = asyncComputed(async () => {
@@ -469,7 +662,8 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
         continue;
       }
       for (const file of importOp.files) {
-        const filePath = await Path.parent(await Path.joinPaths(importOp.destination, (file as any).relativePath));
+        const dest = Path.quickJoin(importOp.destination, (file as any).relativePath);
+        const filePath = await Path.parent(dest);
         if (Path.areSame(filePath, currentPath.value)) {
           entryNames.push({ type: op.type, entryName: file.name });
         }
@@ -498,6 +692,10 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
     }
   }
   return entryNames;
+});
+
+const headerWatchCancel = watch([isSmallDisplay, selectionEnabled], () => {
+  isSmallDisplay.value && selectionEnabled.value ? hideHeader() : showHeader();
 });
 
 const tabBarWatchCancel = watch([isSmallDisplay, selectedFilesCount], () => {
@@ -534,28 +732,48 @@ async function defineShortcuts(): Promise<void> {
   );
   hotkeys.add(
     { key: 'enter', modifiers: Modifiers.None, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
-    async () => await renameEntries(getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries());
+      }
+    },
   );
   hotkeys.add(
     { key: 'f2', modifiers: Modifiers.None, platforms: Platforms.Windows | Platforms.Linux, disableIfModal: true, route: Routes.Documents },
-    async () => await renameEntries(getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries());
+      }
+    },
   );
   hotkeys.add(
     { key: 'i', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-    async () => await showDetails(getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries());
+      }
+    },
   );
-  // FIXME: Reactivate `x` and `c` hotkeys when copy/move bindings are available
+  // TODO find appropriate shortcuts for MakeACopy and MoveTo, knowing that each of these opens the console on Chrome and Firefox:
+  // - ctrl + shift + C
+  // - cmd + shift + C
+  // - cmd + option + C
+
   // hotkeys.add(
   //   { key: 'c', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-  //   async () => await copyEntries(getSelectedEntries()),
+  //   async () => await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries()),
   // );
   // hotkeys.add(
   //   { key: 'x', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-  //   async () => await moveEntriesTo(getSelectedEntries()),
+  //   async () => await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries()),
   // );
   hotkeys.add(
     { key: 'l', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
-    async () => await copyLink(getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries());
+      }
+    },
   );
   hotkeys.add(
     {
@@ -565,11 +783,11 @@ async function defineShortcuts(): Promise<void> {
       disableIfModal: true,
       route: Routes.Documents,
     },
-    async () => await deleteEntries(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries()),
   );
   hotkeys.add(
     { key: 'backspace', modifiers: Modifiers.Ctrl, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
-    async () => await deleteEntries(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries()),
   );
   hotkeys.add(
     { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
@@ -580,8 +798,12 @@ async function defineShortcuts(): Promise<void> {
   hotkeys.add(
     { key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
     async () => {
-      selectAll();
+      files.value.hasAllSelected() && folders.value.hasAllSelected() ? unselectAll() : selectAll();
     },
+  );
+  hotkeys.add(
+    { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+    async () => await searchInputRef.value?.setFocus(),
   );
 }
 
@@ -589,7 +811,7 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
   if (event === Events.EntryUpdated) {
     await listFolder({ sameFolder: true });
   } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
-    await updateWorkspaceInfo(workspaceInfo.value.id);
+    await updateWorkspaceInfo(workspaceInfo.value.handle);
   } else if (event === Events.EntrySynced || event === Events.EntrySyncStarted || event === Events.EntrySyncProgress) {
     const syncedData = data as EntrySyncData;
     if (!workspaceInfo.value || workspaceInfo.value.id !== syncedData.workspaceId) {
@@ -605,10 +827,12 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
       if (entry && workspaceInfo.value) {
         if (event === Events.EntrySynced) {
           entry.needSync = false;
+          entry.syncProgress = undefined;
           entry.syncStatus = EntrySyncStatus.Synced;
         } else if (event === Events.EntrySyncProgress || event === Events.EntrySyncStarted) {
           entry.needSync = true;
           entry.syncStatus = EntrySyncStatus.Uploading;
+          entry.syncProgress = syncedData.progress;
         }
       }
     }
@@ -617,6 +841,8 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
     if (isFolderGlobalAction(menuAction.action)) {
       await performFolderAction(menuAction.action);
     }
+  } else if (event === Events.OpenContextMenu) {
+    await openGlobalContextMenu((data as OpenContextualMenuData).event);
   }
 }
 
@@ -630,7 +856,7 @@ function getDisplayText(): Translatable {
   } else {
     return currentFolder.value !== '/'
       ? I18n.valueAsTranslatable(currentFolder.value)
-      : I18n.valueAsTranslatable(workspaceInfo.value?.currentName);
+      : I18n.valueAsTranslatable(workspaceInfo.value?.name);
   }
 }
 
@@ -643,13 +869,16 @@ onMounted(async () => {
 
   await defineShortcuts();
 
-  eventCbId = await eventDistributor.registerCallback(
-    Events.EntryUpdated |
-      Events.WorkspaceUpdated |
-      Events.EntrySynced |
-      Events.EntrySyncStarted |
-      Events.MenuAction |
+  eventCbId = await eventDistributor.value.registerCallback(
+    [
+      Events.EntryUpdated,
+      Events.WorkspaceUpdated,
+      Events.EntrySynced,
+      Events.EntrySyncStarted,
+      Events.MenuAction,
       Events.EntrySyncProgress,
+      Events.OpenContextMenu,
+    ],
     handleEvents,
   );
 
@@ -665,10 +894,10 @@ onMounted(async () => {
   if (clientInfoResult.ok) {
     userInfo.value = clientInfoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
 
-  fileOpCanceller = await fileOperationManager.registerCallback(onFileOperationEvent);
+  fileOpCanceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
   currentPath.value = getDocumentPath();
   const query = getCurrentRouteQuery();
   await listFolder({ selectFile: query.selectFile });
@@ -683,78 +912,77 @@ onUnmounted(async () => {
   selectionEnabled.value = false;
   routeWatchCancel();
   tabBarWatchCancel();
+  headerWatchCancel();
   selectedCountWatchCancel();
   if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
-async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
-  const workspacesResult = await listWorkspaces();
+async function updateWorkspaceInfo(handle: parsec.WorkspaceHandle): Promise<void> {
+  const workspaceResult = await parsec.getWorkspaceInfo(handle);
 
-  if (workspacesResult.ok) {
-    const wInfo = workspacesResult.value.find((wi) => wi.id === workspaceId);
-    if (!wInfo) {
+  if (!workspaceResult.ok) {
+    const listWorkspacesResult = await parsec.listWorkspaces();
+
+    if (listWorkspacesResult.ok && !listWorkspacesResult.value.find((wk) => wk.handle === handle)) {
       // Not found, probably means that we've been excluded from the workspace
-      await informationManager.present(
+      await informationManager.value.present(
         new Information({
           message: {
             key: 'FoldersPage.events.workspaceUnshared',
             data: {
-              name: workspaceInfo.value?.currentName,
+              name: workspaceInfo.value?.name,
             },
           },
           level: InformationLevel.Error,
         }),
         PresentationMode.Modal,
       );
-      await navigateTo(Routes.Workspaces);
     } else {
-      // display a toast if the role has been changed in a significant manner: Reader to something else, or something else to Reader
-      if (workspaceInfo.value?.currentSelfRole === WorkspaceRole.Reader && wInfo.currentSelfRole !== WorkspaceRole.Reader) {
-        await informationManager.present(
-          new Information({
-            message: {
-              key: 'FoldersPage.events.roleUpdateNoLongerReader',
+      await informationManager.value.present(
+        new Information({
+          message: {
+            key: 'FoldersPage.errors.failedToListWorkspaces',
+            data: {
+              reason: workspaceResult.error.tag,
             },
-            level: InformationLevel.Info,
-          }),
-          PresentationMode.Toast,
-        );
-      } else if (workspaceInfo.value?.currentSelfRole !== WorkspaceRole.Reader && wInfo.currentSelfRole === WorkspaceRole.Reader) {
-        await informationManager.present(
-          new Information({
-            message: {
-              key: 'FoldersPage.events.roleUpdateNowReader',
-            },
-            level: InformationLevel.Warning,
-          }),
-          PresentationMode.Toast,
-        );
-      }
-      // Just update the info, the page appearance should update automatically
-      if (!workspaceInfo.value) {
-        return;
-      }
-      workspaceInfo.value.currentName = wInfo.currentName;
-      workspaceInfo.value.currentSelfRole = wInfo.currentSelfRole;
+          },
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
     }
-  } else {
-    // Don't really know what to do in this case, just move the user back to workspaces list
-    await informationManager.present(
+    await navigateTo(Routes.Workspaces);
+    return;
+  }
+  // display a toast if the role has been changed in a significant manner: Reader to something else, or something else to Reader
+  if (workspaceInfo.value?.selfRole === WorkspaceRole.Reader && workspaceResult.value.selfRole !== WorkspaceRole.Reader) {
+    await informationManager.value.present(
       new Information({
         message: {
-          key: 'FoldersPage.errors.failedToListWorkspaces',
-          data: {
-            reason: workspacesResult.error.tag,
-          },
+          key: 'FoldersPage.events.roleUpdateNoLongerReader',
         },
         level: InformationLevel.Info,
       }),
       PresentationMode.Toast,
     );
-    await navigateTo(Routes.Workspaces);
+  } else if (
+    workspaceInfo.value &&
+    workspaceInfo.value.selfRole !== WorkspaceRole.Reader &&
+    workspaceResult.value.selfRole === WorkspaceRole.Reader
+  ) {
+    await informationManager.value.present(
+      new Information({
+        message: {
+          key: 'FoldersPage.events.roleUpdateNowReader',
+        },
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
   }
+  workspaceInfo.value = workspaceResult.value;
 }
 
 async function onDisplayStateChange(): Promise<void> {
@@ -784,7 +1012,7 @@ async function onFileOperationEvent(
 ): Promise<void> {
   if (!operationData) {
     if (event !== FileOperationEvents.AllFinished) {
-      window.electronAPI.log('warn', `Event ${event} received without operation data`);
+      window.nativeAPI.log('warn', `Event ${event} received without operation data`);
     }
     return;
   }
@@ -792,7 +1020,18 @@ async function onFileOperationEvent(
     case FileOperationEvents.Added:
       fileOperations.value.push(operationData);
       break;
+    case FileOperationEvents.Updated: {
+      const idx = fileOperations.value.findIndex((op) => op.id === operationData.id);
+      if (idx !== -1) {
+        fileOperations.value.splice(idx, 1);
+      }
+      fileOperations.value.push(operationData);
+      break;
+    }
     case FileOperationEvents.Progress:
+      if (fileOperations.value.find((op) => op.id === operationData.id) === undefined) {
+        fileOperations.value.push(operationData);
+      }
       break;
     case FileOperationEvents.Cancelled:
     case FileOperationEvents.Failed: {
@@ -814,40 +1053,73 @@ async function onFileOperationEvent(
   }
 }
 
-async function startImportFiles(files: Array<File>, destinationFolder?: EntryName): Promise<void> {
-  const existing: Array<File> = [];
-
+async function startImportFiles(gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
 
+  const preparedImport = await fileOperationManager.value.prepareImport(
+    workspaceInfo.value.handle,
+    [],
+    destinationFolder ? await Path.join(currentPath.value, destinationFolder) : currentPath.value,
+  );
+
+  if (!preparedImport) {
+    return;
+  }
+
+  const existing: Array<File> = [];
   let destination = currentPath.value;
   if (destinationFolder && destinationFolder !== '/') {
     destination = await Path.join(destination, destinationFolder);
   }
-  for (const file of files) {
-    if (!(file as any).relativePath) {
-      (file as any).relativePath = `/${file.name}`;
+
+  for await (const files of gen) {
+    // Reverse iteration to be able to remove entries from the list
+    for (let i = files.length - 1; i >= 0; i--) {
+      const file = files[i];
+      if (!(file as any).relativePath) {
+        (file as any).relativePath = `/${file.name}`;
+      }
+      const confined = await parsec.isPathConfined((file as any).relativePath);
+      if (confined) {
+        files.splice(i, 1);
+        continue;
+      }
+      const importPath = Path.quickJoin(destination, (file as any).relativePath);
+      const result = await entryStat(workspaceInfo.value.handle, importPath);
+      if (result.ok) {
+        existing.push(file);
+      }
     }
-    const importPath = await Path.joinPaths(destination, (file as any).relativePath);
-    const result = await entryStat(workspaceInfo.value.handle, importPath);
-    if (result.ok && result.value.isFile()) {
-      existing.push(file);
+
+    if (files.length === 0) {
+      continue;
     }
+    preparedImport.addFiles(files);
   }
 
-  const dupPolicy = await getDuplicatePolicy(existing);
+  if (existing.length > 0) {
+    preparedImport.data.dupPolicy = await getDuplicatePolicy(existing);
+  }
 
-  if (!dupPolicy) {
+  if (preparedImport.data.dupPolicy === DuplicatePolicy.Ignore) {
+    preparedImport.removeFiles(existing);
+  }
+
+  if (preparedImport.data.files.length === 0) {
+    informationManager.value.present(
+      new Information({
+        message: 'FoldersPage.noFilesToImport',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+    preparedImport.cancel();
     return;
   }
 
-  await fileOperationManager.import(
-    workspaceInfo.value.handle,
-    files,
-    destinationFolder ? await Path.join(currentPath.value, destinationFolder) : currentPath.value,
-    dupPolicy,
-  );
+  preparedImport.finalize();
 }
 
 async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boolean }): Promise<void> {
@@ -880,7 +1152,7 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
         (childStat as FileModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
         newFiles.push(childStat as FileModel);
       } else {
-        (childStat as FolderModel).isSelected = false;
+        (childStat as FolderModel).isSelected = Boolean(options && options.selectFile && options.selectFile === childName);
         (childStat as FolderModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
         newFolders.push(childStat as FolderModel);
       }
@@ -910,19 +1182,101 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
   }
 }
 
-async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
+async function onSearchResultClick(entry: parsec.SearchResult): Promise<void> {
+  await onSelectionCancel();
+  if (!entry.stats.isFile()) {
+    searchPattern.value = '';
+    await cancelSearch();
+  }
+  await onEntryClick({ ...entry.stats, isSelected: false });
+}
+
+async function createNewFile(name: EntryName, fileType: FileContentType): Promise<void> {
+  if (!workspaceInfo.value) {
+    return;
+  }
+  const modal = await openSpinnerModal();
+  try {
+    if ([FileContentType.Document, FileContentType.Presentation, FileContentType.Spreadsheet].includes(fileType)) {
+      let template: Uint8Array;
+      switch (fileType) {
+        case FileContentType.Document:
+          template = (await import('@/parsec/file_templates/docx_template')).default;
+          break;
+        case FileContentType.Spreadsheet:
+          template = (await import('@/parsec/file_templates/xlsx_template')).default;
+          break;
+        case FileContentType.Presentation:
+          template = (await import('@/parsec/file_templates/pptx_template')).default;
+          break;
+        default:
+          return;
+      }
+      const tmpPath = await parsec.getTemporaryPath(currentPath.value);
+      const fdResult = await parsec.openFile(workspaceInfo.value.handle, tmpPath, { createNew: true, create: true, write: true });
+      if (!fdResult.ok) {
+        informationManager.value.present(
+          new Information({
+            message:
+              fdResult.error.tag === parsec.WorkspaceOpenFileErrorTag.EntryExistsInCreateNewMode
+                ? 'FoldersPage.errors.createFileFailedAlreadyExists'
+                : 'FoldersPage.errors.createFileFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+        return;
+      }
+      try {
+        const writeResult = await parsec.writeFile(workspaceInfo.value.handle, fdResult.value, 0, template);
+        if (!writeResult.ok) {
+          informationManager.value.present(
+            new Information({
+              message: 'FoldersPage.errors.createFileFailed',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
+          await parsec.deleteFile(workspaceInfo.value.handle, tmpPath);
+        } else {
+          await parsec.rename(workspaceInfo.value.handle, tmpPath, name, true);
+        }
+      } finally {
+        await parsec.closeFile(workspaceInfo.value.handle, fdResult.value);
+      }
+    } else if (fileType === FileContentType.Text) {
+      const path = await parsec.Path.join(currentPath.value, name);
+      const createResult = await parsec.createFile(workspaceInfo.value.handle, path);
+      if (!createResult.ok) {
+        informationManager.value.present(
+          new Information({
+            message: 'FoldersPage.errors.createFileFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      }
+    } else {
+      window.nativeAPI.log('error', `Cannot create a new document of type ${fileType}`);
+    }
+  } finally {
+    await modal.dismiss();
+  }
+  await listFolder({ sameFolder: true });
+}
+
+async function onEntryClick(entry: EntryModel): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
 
   if (!entry.isFile()) {
-    const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
-      query: { documentPath: newPath, workspaceHandle: workspaceInfo.value?.handle },
+      query: { documentPath: entry.path, workspaceHandle: workspaceInfo.value?.handle },
     });
   } else {
     const config = await storageManager.retrieveConfig();
-    await openEntry(entry, { skipViewers: config.skipViewers });
+    await openEntry(entry, { skipViewers: config.skipViewers, readOnly: isReadOnly.value });
   }
 }
 
@@ -934,7 +1288,10 @@ async function createFolder(): Promise<void> {
     {
       title: 'FoldersPage.CreateFolderModal.title',
       trim: true,
-      validator: entryNameValidator,
+      validator: entryNameValidator(false, {
+        checkExists: { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value },
+        checkConfined: true,
+      }),
       inputLabel: 'FoldersPage.CreateFolderModal.label',
       placeholder: 'FoldersPage.CreateFolderModal.placeholder',
       okButtonText: 'FoldersPage.CreateFolderModal.create',
@@ -957,7 +1314,7 @@ async function createFolder(): Promise<void> {
       default:
         break;
     }
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: message,
         level: InformationLevel.Error,
@@ -973,7 +1330,7 @@ async function onImportClicked(event: Event): Promise<void> {
     component: FileImportPopover,
     cssClass: 'import-popover',
     event: event,
-    alignment: 'end',
+    alignment: 'start',
     showBackdrop: false,
   });
   await popover.present();
@@ -989,331 +1346,105 @@ async function onImportClicked(event: Event): Promise<void> {
   }
 }
 
+async function getNewFileName(fileType: FileContentType): Promise<string | null> {
+  if (!workspaceInfo.value) {
+    return null;
+  }
+
+  let defaultNewName = '';
+  let ext = '';
+  let allowedExts: Array<string> = [];
+
+  switch (fileType) {
+    case FileContentType.Document:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.document');
+      ext = 'docx';
+      allowedExts = [ext];
+      break;
+    case FileContentType.Spreadsheet:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.spreadsheet');
+      ext = 'xlsx';
+      allowedExts = [ext];
+      break;
+    case FileContentType.Presentation:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.presentation');
+      ext = 'pptx';
+      allowedExts = [ext];
+      break;
+    case FileContentType.Text:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.text');
+      ext = 'txt';
+      allowedExts = OPENABLE_FILES.TEXTS;
+      break;
+    default:
+      break;
+  }
+  if (!defaultNewName) {
+    window.nativeAPI.log('warn', 'No default name for file');
+    return null;
+  }
+
+  const finalDefaultName =
+    (await findAvailableFileName({
+      handle: workspaceInfo.value.handle,
+      fileName: `${defaultNewName}.${ext}`,
+      path: currentPath.value,
+    })) ?? `${defaultNewName}.${ext}`;
+
+  const newName = await getTextFromUser(
+    {
+      title: 'FoldersPage.createFile.fileName',
+      trim: true,
+      validator: entryNameValidator(true, {
+        checkExists: { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value },
+        checkConfined: true,
+        allowedExtensions: allowedExts,
+      }),
+      inputLabel: 'FoldersPage.createFile.label',
+      placeholder: 'FoldersPage.createFile.placeholder',
+      okButtonText: 'FoldersPage.createFile.create',
+      defaultValue: finalDefaultName,
+      selectionRange: [0, Path.filenameWithoutExtension(finalDefaultName).length],
+    },
+    isLargeDisplay.value,
+  );
+  if (!newName) {
+    return null;
+  }
+  return newName;
+}
+
+async function onCreateNewFileClicked(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: NewFilePopover,
+    cssClass: 'new-file-popover',
+    event: event,
+    alignment: 'start',
+    showBackdrop: false,
+  });
+  await popover.present();
+  const result = await popover.onDidDismiss();
+  await popover.dismiss();
+  if (result.role !== MsModalResult.Confirm) {
+    return;
+  }
+  const name = await getNewFileName(result.data.fileType);
+  if (!name) {
+    return;
+  }
+  await createNewFile(name, result.data.fileType);
+}
+
 function getSelectedEntries(): EntryModel[] {
   return [...folders.value.getSelectedEntries(), ...files.value.getSelectedEntries()];
 }
 
-async function deleteEntries(entries: EntryModel[]): Promise<void> {
-  if (entries.length === 0 || !workspaceInfo.value) {
-    return;
-  } else if (entries.length === 1) {
-    const entry = entries[0];
-    const title = entry.isFile() ? 'FoldersPage.deleteOneFileQuestionTitle' : 'FoldersPage.deleteOneFolderQuestionTitle';
-    const subtitle = entry.isFile()
-      ? { key: 'FoldersPage.deleteOneFileQuestionSubtitle', data: { name: entry.name } }
-      : { key: 'FoldersPage.deleteOneFolderQuestionSubtitle', data: { name: entry.name } };
-    const answer = await askQuestion(title, subtitle, {
-      yesIsDangerous: true,
-      yesText: entry.isFile() ? 'FoldersPage.deleteOneFileYes' : 'FoldersPage.deleteOneFolderYes',
-      noText: entry.isFile() ? 'FoldersPage.deleteOneFileNo' : 'FoldersPage.deleteOneFolderNo',
-    });
-
-    if (answer === Answer.No) {
-      return;
-    }
-    const path = await parsec.Path.join(currentPath.value, entry.name);
-    const result = entry.isFile()
-      ? await parsec.deleteFile(workspaceInfo.value.handle, path)
-      : await parsec.deleteFolder(workspaceInfo.value.handle, path);
-    if (!result.ok) {
-      informationManager.present(
-        new Information({
-          message: { key: 'FoldersPage.errors.deleteFailed', data: { name: entry.name } },
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      await eventDistributor.dispatchEvent(Events.EntryDeleted, {
-        workspaceHandle: workspaceInfo.value.handle,
-        entryId: entry.id,
-        path: entry.path,
-      });
-    }
-  } else {
-    const answer = await askQuestion(
-      'FoldersPage.deleteMultipleQuestionTitle',
-      {
-        key: 'FoldersPage.deleteMultipleQuestionSubtitle',
-        data: {
-          count: entries.length,
-        },
-      },
-      {
-        yesIsDangerous: true,
-        yesText: { key: 'FoldersPage.deleteMultipleYes', data: { count: entries.length } },
-        noText: { key: 'FoldersPage.deleteMultipleNo', data: { count: entries.length } },
-      },
-    );
-    if (answer === Answer.No) {
-      return;
-    }
-    let errorsEncountered = 0;
-    for (const entry of entries) {
-      const path = await parsec.Path.join(currentPath.value, entry.name);
-      const result = entry.isFile()
-        ? await parsec.deleteFile(workspaceInfo.value.handle, path)
-        : await parsec.deleteFolder(workspaceInfo.value.handle, path);
-      if (!result.ok) {
-        errorsEncountered += 1;
-      } else {
-        await eventDistributor.dispatchEvent(Events.EntryDeleted, {
-          workspaceHandle: workspaceInfo.value.handle,
-          entryId: entry.id,
-          path: entry.path,
-        });
-      }
-    }
-    if (errorsEncountered > 0) {
-      informationManager.present(
-        new Information({
-          message:
-            errorsEncountered === entries.length
-              ? 'FoldersPage.errors.deleteMultipleAllFailed'
-              : 'FoldersPage.errors.deleteMultipleSomeFailed',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  }
-  await onSelectionCancel();
-  await listFolder({ sameFolder: true });
-}
-
-async function renameEntries(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value) {
-    return;
-  }
-  const entry = entries[0];
-  const ext = parsec.Path.getFileExtension(entry.name);
-  const newName = await getTextFromUser(
-    {
-      title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
-      trim: true,
-      validator: entryNameValidator,
-      inputLabel: entry.isFile() ? 'FoldersPage.RenameModal.fileLabel' : 'FoldersPage.RenameModal.folderLabel',
-      placeholder: entry.isFile() ? 'FoldersPage.RenameModal.filePlaceholder' : 'FoldersPage.RenameModal.folderPlaceholder',
-      okButtonText: 'FoldersPage.RenameModal.rename',
-      defaultValue: entry.name,
-      selectionRange: [0, entry.name.length - (ext.length > 0 ? ext.length + 1 : 0)],
-    },
-    isLargeDisplay.value,
-  );
-
-  if (!newName) {
-    return;
-  }
-  const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.rename(workspaceInfo.value.handle, filePath, newName);
-  if (!result.ok) {
-    let message: Translatable = '';
-    switch (result.error.tag) {
-      case parsec.WorkspaceMoveEntryErrorTag.DestinationExists:
-        message = 'FoldersPage.errors.renameFailedAlreadyExists';
-        break;
-      default:
-        message = { key: 'FoldersPage.errors.renameFailed', data: { name: entry.name } };
-    }
-    informationManager.present(
-      new Information({
-        message: message,
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    await eventDistributor.dispatchEvent(Events.EntryRenamed, {
-      workspaceHandle: workspaceInfo.value.handle,
-      entryId: entry.id,
-      oldPath: entry.path,
-      newPath: result.value,
-      oldName: entry.name,
-      newName: newName,
-    });
-
-    entry.name = newName;
-    entry.path = result.value;
-  }
-  await onSelectionCancel();
-}
-
-async function copyLink(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value) {
-    return;
-  }
-  const entry = entries[0];
-  const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const workspaceHandle = workspaceInfo.value.handle;
-
-  copyPathLinkToClipboard(filePath, workspaceHandle, informationManager);
-}
-
-async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
-  if (entries.length === 0 || !workspaceInfo.value) {
-    return;
-  }
-  const excludePaths: Array<FsPath> = [];
-  for (const entry of entries) {
-    if (!entry.isFile()) {
-      excludePaths.push(entry.path);
-    }
-  }
-  const folder = await selectFolder({
-    title: { key: 'FoldersPage.moveSelectFolderTitle', data: { count: entries.length }, count: entries.length },
-    startingPath: currentPath.value,
-    workspaceHandle: workspaceInfo.value.handle,
-    excludePaths: excludePaths,
-  });
-  if (!folder) {
-    return;
-  }
-
-  const existing: Array<EntryModel> = [];
-
-  for (const entry of entries) {
-    const destPath = await Path.join(folder, entry.name);
-    const result = await entryStat(workspaceInfo.value.handle, destPath);
-    if (result.ok) {
-      existing.push(entry);
-    }
-  }
-  const dupPolicy = await getDuplicatePolicy(existing);
-  if (!dupPolicy) {
-    return;
-  }
-
-  await fileOperationManager.move(workspaceInfo.value.handle, entries, folder, dupPolicy);
-  selectionEnabled.value = false;
-}
-
-async function showDetails(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value) {
-    return;
-  }
-  const entry = entries[0];
-  const modal = await modalController.create({
-    component: FileDetailsModal,
-    cssClass: 'file-details-modal',
-    componentProps: {
-      entry: entry,
-      ownProfile: userInfo.value ? userInfo.value.currentProfile : undefined,
-      workspaceHandle: workspaceInfo.value.handle,
-    },
-  });
-  await modal.present();
-  await modal.onWillDismiss();
-}
-
-async function copyEntries(entries: EntryModel[]): Promise<void> {
-  if (entries.length === 0 || !workspaceInfo.value) {
-    return;
-  }
-
-  const excludePaths: Array<FsPath> = [];
-  for (const entry of entries) {
-    if (!entry.isFile()) {
-      excludePaths.push(entry.path);
-    }
-  }
-  const folder = await selectFolder({
-    title: { key: 'FoldersPage.copySelectFolderTitle', data: { count: entries.length }, count: entries.length },
-    startingPath: currentPath.value,
-    workspaceHandle: workspaceInfo.value.handle,
-    excludePaths: excludePaths,
-    allowStartingPath: true,
-    okButtonLabel: 'FoldersPage.copyHere',
-  });
-  if (!folder) {
-    return;
-  }
-
-  const existing: Array<EntryModel> = [];
-
-  for (const entry of entries) {
-    const destPath = await Path.join(folder, entry.name);
-    const result = await entryStat(workspaceInfo.value.handle, destPath);
-    if (result.ok) {
-      existing.push(entry);
-    }
-  }
-  const dupPolicy = await getDuplicatePolicy(existing);
-  if (!dupPolicy) {
-    return;
-  }
-
-  await fileOperationManager.copy(workspaceInfo.value.handle, entries, folder, dupPolicy);
-  selectionEnabled.value = false;
-}
-
-async function downloadEntries(entries: EntryModel[]): Promise<void> {
-  if (!workspaceInfo.value) {
-    window.electronAPI.log('error', 'No workspace info when trying to download a file');
-    return;
-  }
-  if (entries.length < 1) {
-    return;
-  }
-
-  const result = await openDownloadConfirmationModal(storageManager);
-  if (result === MsModalResult.Cancel) {
-    return;
-  }
-
-  if (entries.length === 1 && entries[0].isFile()) {
-    await downloadEntry({
-      entry: entries[0] as EntryStatFile,
-      workspaceHandle: workspaceInfo.value.handle,
-      workspaceId: workspaceInfo.value.id,
-      informationManager: informationManager,
-      fileOperationManager: fileOperationManager,
-    });
-  } else {
-    await downloadArchive({
-      entries: entries,
-      archiveName: `${workspaceInfo.value.currentName}_${currentFolder.value === '/' ? 'ROOT' : currentFolder.value}.zip`,
-      workspaceHandle: workspaceInfo.value.handle,
-      workspaceId: workspaceInfo.value.id,
-      informationManager: informationManager,
-      fileOperationManager: fileOperationManager,
-      relativePath: currentPath.value ?? '/',
-    });
-  }
-  await onSelectionCancel();
-}
-
-async function showHistory(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1) {
-    return;
-  }
-  if (!workspaceInfo.value) {
-    window.electronAPI.log('error', 'No workspace info when trying to navigate to history');
-    return;
-  }
-
-  await navigateTo(Routes.History, {
-    query: {
-      documentPath: entries[0].path,
-      workspaceHandle: workspaceInfo.value.handle,
-      selectFile: entries[0].isFile() ? entries[0].name : undefined,
-    },
-  });
-  selectionEnabled.value = false;
-}
-
 async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions): Promise<void> {
   if (!workspaceInfo.value) {
-    window.electronAPI.log('warn', 'Trying to open an entry but missing workspace info.');
-    return;
-  } else if (!entryToOpen.isFile()) {
-    window.electronAPI.log('warn', 'Trying to open an entry that is not a file.');
+    window.nativeAPI.log('warn', 'Trying to open an entry but missing workspace info.');
     return;
   }
-
-  const entry = entryToOpen as EntryStatFile;
-  const workspaceHandle = workspaceInfo.value.handle;
-
-  await pathOpener.openPath(workspaceHandle, entry.path, informationManager, options);
+  await fileActions.openEntry(entryToOpen, options, workspaceInfo.value);
   selectionEnabled.value = false;
 }
 
@@ -1329,71 +1460,113 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
     case FolderGlobalAction.ImportFolder:
       return await fileInputsRef.value?.importFolder();
     case FolderGlobalAction.OpenInExplorer:
-      return await pathOpener.openPath(workspaceInfo.value.handle, currentPath.value, informationManager, { skipViewers: true });
+      return await fileActions.seeInExplorer(currentPath.value, workspaceInfo.value);
     case FolderGlobalAction.ToggleSelect:
       return await toggleSelection();
     case FolderGlobalAction.SelectAll:
       return await selectAll();
     case FolderGlobalAction.Share:
       return await shareEntries();
+    case FolderGlobalAction.CreateFileDocument: {
+      const name = await getNewFileName(FileContentType.Document);
+      if (name) {
+        await createNewFile(name, FileContentType.Document);
+      }
+      break;
+    }
+    case FolderGlobalAction.CreateFileSpreadsheet: {
+      const name = await getNewFileName(FileContentType.Spreadsheet);
+      if (name) {
+        await createNewFile(name, FileContentType.Spreadsheet);
+      }
+      break;
+    }
+    case FolderGlobalAction.CreateFilePresentation: {
+      const name = await getNewFileName(FileContentType.Presentation);
+      if (name) {
+        await createNewFile(name, FileContentType.Presentation);
+      }
+      break;
+    }
+    case FolderGlobalAction.CreateFileText: {
+      const name = await getNewFileName(FileContentType.Text);
+      if (name) {
+        await createNewFile(name, FileContentType.Text);
+      }
+      break;
+    }
+    default:
+      break;
   }
 }
 
 async function openGlobalContextMenu(event: Event): Promise<void> {
-  const data = await _openGlobalContextMenu(
+  if (!workspaceInfo.value) {
+    return;
+  }
+  const action = await contextMenu.openGlobalContextMenu(
     event,
-    ownRole.value,
-    isLargeDisplay.value,
+    isReadOnly.value,
     folders.value.entriesCount() + files.value.entriesCount() === 0,
   );
 
-  if (!data || !workspaceInfo.value) {
+  if (!action) {
     return;
   }
-  await performFolderAction(data.action);
+  await performFolderAction(action);
+}
+
+async function dispatchContextMenuAction(action: FileAction, entries: Array<parsec.EntryStat>): Promise<void> {
+  if (!workspaceInfo.value || !userInfo.value || entries.length === 0) {
+    return;
+  }
+  await contextMenu.dispatchContextMenuAction(action, entries, workspaceInfo.value, userInfo.value.currentProfile);
+  if ([FileAction.ShowHistory, FileAction.Open, FileAction.MakeACopy, FileAction.MoveTo].includes(action)) {
+    selectionEnabled.value = false;
+  }
+  if ([FileAction.Rename, FileAction.Download, FileAction.Delete].includes(action)) {
+    await onSelectionCancel();
+  }
+  if ([FileAction.Delete, FileAction.Rename, FileAction.MoveTo, FileAction.MakeACopy].includes(action)) {
+    if (search.value) {
+      await startSearch(searchPattern.value);
+    }
+    await listFolder({ sameFolder: true });
+  }
+  if ([FileAction.SeeInExplorer].includes(action)) {
+    searchPattern.value = '';
+    await cancelSearch();
+  }
+}
+
+async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResult, onFinished?: () => void): Promise<void> {
+  await onSelectionCancel();
+  const action = await contextMenu.openEntryContextMenu(event, [entry.stats], isReadOnly.value, true);
+
+  if (action) {
+    await dispatchContextMenuAction(action, [entry.stats]);
+  }
+  if (onFinished) {
+    onFinished();
+  }
 }
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
   const selectedEntries = getSelectedEntries();
-  const data = await _openEntryContextMenu(event, entry, selectedEntries, ownRole.value, isLargeDisplay.value);
 
-  if (!data) {
-    if (onFinished) {
-      onFinished();
-    }
-    return;
+  const entries: EntryModel[] = [];
+
+  if (!selectedEntries.includes(entry)) {
+    await onSelectionCancel();
+    entries.push(entry);
+  } else {
+    entries.push(...selectedEntries);
   }
 
-  const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
-    [
-      FileAction.Preview,
-      async (entries: EntryModel[]): Promise<void> =>
-        await openEntry(entries[0], { disallowSystem: true, skipViewers: false, readOnly: true }),
-    ],
-    [FileAction.Rename, renameEntries],
-    [
-      FileAction.Edit,
-      async (entries: EntryModel[]): Promise<void> =>
-        await openEntry(entries[0], { readOnly: ownRole.value === parsec.WorkspaceRole.Reader }),
-    ],
-    [FileAction.MoveTo, moveEntriesTo],
-    [FileAction.MakeACopy, copyEntries],
-    [FileAction.Open, async (entries: EntryModel[]): Promise<void> => await openEntry(entries[0], { skipViewers: true })],
-    [FileAction.ShowHistory, showHistory],
-    [FileAction.Download, downloadEntries],
-    [FileAction.ShowDetails, showDetails],
-    [FileAction.CopyLink, copyLink],
-    [FileAction.Delete, deleteEntries],
-    [FileAction.SeeInExplorer, seeInExplorer],
-  ]);
+  const action = await contextMenu.openEntryContextMenu(event, entries, isReadOnly.value);
 
-  const fn = actions.get(data.action);
-  if (fn) {
-    if (!selectedEntries.includes(entry)) {
-      await fn([entry]);
-    } else {
-      await fn(selectedEntries);
-    }
+  if (action) {
+    await dispatchContextMenuAction(action, entries);
   }
   if (onFinished) {
     onFinished();
@@ -1431,22 +1604,11 @@ async function shareEntries(): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
-  copyPathLinkToClipboard(currentPath.value, workspaceInfo.value.handle, informationManager);
-}
-
-async function seeInExplorer(entries: EntryModel[]): Promise<void> {
-  if (entries.length > 1 || !workspaceInfo.value || !isDesktop()) {
-    return;
-  }
-  if (entries[0].isFile()) {
-    await pathOpener.showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager);
-  } else {
-    await pathOpener.openPath(workspaceInfo.value.handle, entries[0].path, informationManager, { skipViewers: true });
-  }
+  copyPathLinkToClipboard(currentPath.value, workspaceInfo.value.handle, informationManager.value);
 }
 
 async function onDropAsReader(): Promise<void> {
-  await informationManager.present(
+  await informationManager.value.present(
     new Information({
       message: 'FoldersPage.ImportFile.noDropForReader',
       level: InformationLevel.Error,
@@ -1455,155 +1617,44 @@ async function onDropAsReader(): Promise<void> {
   );
 }
 
-const actionBarOptionsFoldersPage = computed(() => {
-  const actionArray = [];
-  const selectedEntries = getSelectedEntries();
+function onSearchValueChange(pattern: string): void {
+  searchInputValue.value = pattern;
+  startSearch(pattern);
+}
 
-  if (selectedFilesCount.value === 0 && ownRole.value !== parsec.WorkspaceRole.Reader) {
-    actionArray.push(
-      {
-        label: 'FoldersPage.createFolder',
-        icon: folderOpen,
-        onClick: async () => {
-          await createFolder();
-        },
-      },
-      {
-        label: 'FoldersPage.import',
-        image: DocumentImport,
-        onClick: async (event: MouseEvent) => {
-          await onImportClicked(event);
-        },
-      },
-    );
+async function cancelSearch(): Promise<void> {
+  if (searchAborter) {
+    searchAborter.abort();
   }
-  if (selectedFilesCount.value === 1) {
-    if (selectedEntries[0].isFile()) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionPreview',
-        icon: eye,
-        onClick: async () => {
-          await openEntry(getSelectedEntries()[0], { skipViewers: false, readOnly: true });
-        },
-      });
-    }
-    if (selectedEntries[0].isFile() && ownRole.value !== parsec.WorkspaceRole.Reader && isFileEditable(selectedEntries[0].name)) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionEdit',
-        icon: create,
-        onClick: async () => {
-          await openEntry(getSelectedEntries()[0], {});
-        },
-      });
-    }
-    if (ownRole.value !== parsec.WorkspaceRole.Reader) {
-      actionArray.push(
-        {
-          label: 'FoldersPage.fileContextMenu.actionRename',
-          image: RenameIcon,
-          onClick: async () => {
-            await renameEntries(getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionMoveTo',
-          icon: arrowRedo,
-          onClick: async () => {
-            await moveEntriesTo(getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: duplicate,
-          onClick: async () => {
-            await copyEntries(getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionDelete',
-          icon: trashBin,
-          onClick: async () => {
-            await deleteEntries(getSelectedEntries());
-          },
-        },
-      );
-    }
-    if (isWeb()) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionDownload',
-        icon: download,
-        onClick: async () => {
-          await downloadEntries(getSelectedEntries());
-        },
-      });
-    }
-    actionArray.push(
-      {
-        label: 'FoldersPage.fileContextMenu.actionDetails',
-        icon: informationCircle,
-        onClick: async () => {
-          await showDetails(getSelectedEntries());
-        },
-      },
-      {
-        label: 'FoldersPage.fileContextMenu.actionCopyLink',
-        icon: link,
-        onClick: async () => {
-          await copyLink(getSelectedEntries());
-        },
-      },
-    );
-  }
-  if (selectedFilesCount.value > 1) {
-    if (ownRole.value !== parsec.WorkspaceRole.Reader) {
-      actionArray.push(
-        {
-          label: 'FoldersPage.fileContextMenu.actionMoveTo',
-          icon: arrowRedo,
-          onClick: async () => {
-            await moveEntriesTo(getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: duplicate,
-          onClick: async () => {
-            await copyEntries(getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionDelete',
-          icon: trashBin,
-          onClick: async () => {
-            await deleteEntries(getSelectedEntries());
-          },
-        },
-      );
-    }
-    if (isWeb()) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionDownload',
-        icon: download,
-        onClick: async () => {
-          await downloadEntries(getSelectedEntries());
-        },
-      });
-    }
-  }
+  search.value = undefined;
+}
 
-  return actionArray;
-});
+async function startSearch(pattern: string): Promise<void> {
+  await cancelSearch();
+  await onSelectionCancel();
+  if (pattern.length < 3 || !workspaceInfo.value) {
+    return;
+  }
+  search.value = {
+    results: [],
+    pattern: pattern,
+    active: true,
+  };
+  searchAborter = new AbortController();
+  for await (const result of parsec.fileSearch(workspaceInfo.value.handle, '/', pattern, searchAborter.signal)) {
+    if (search.value) {
+      search.value.results.push(result);
+    }
+    await nextTick();
+  }
+  if (search.value) {
+    search.value.active = false;
+  }
+  searchAborter = undefined;
+}
 </script>
 
 <style scoped lang="scss">
-.grid-list-container {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
 .content-scroll {
   &::part(scroll) {
     -ms-overflow-style: -ms-autohiding-scrollbar;
@@ -1611,7 +1662,13 @@ const actionBarOptionsFoldersPage = computed(() => {
 
   &::part(background) {
     @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-default-secondary');
+    }
+  }
+
+  &::part(scroll) {
+    @include ms.responsive-breakpoint('sm') {
+      padding-top: ms.spacing('padding-3xl');
     }
   }
 }
@@ -1623,14 +1680,23 @@ const actionBarOptionsFoldersPage = computed(() => {
   @include ms.responsive-breakpoint('sm') {
     position: sticky;
     z-index: 10;
-    background: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-strong);
-    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    background: ms.color('surface-base-default');
+    box-shadow: ms.shadow('strong');
+    border-radius: ms.radius('4xl') ms.radius('4xl') 0 0;
   }
 }
 
 .folder-container div:not(.no-files-content div) {
   height: 100%;
+}
+
+.counter-text {
+  @include ms.font('body-md-regular');
+}
+
+.loading-files-content {
+  display: flex;
+  justify-content: center;
 }
 
 .mobile-filters {
@@ -1641,40 +1707,58 @@ const actionBarOptionsFoldersPage = computed(() => {
 
   &-buttons {
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.5rem 0.75rem;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
       width: 100%;
       justify-content: flex-end;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+      border-bottom: ms.border('thin') solid ms.color('border-neutral-default-subtle');
     }
   }
 }
 
-.workspace-role-tag {
-  background: var(--parsec-color-light-secondary-white);
-  padding: 0.25rem;
-  border-radius: var(--parsec-radius-32);
-  border: 1px solid var(--parsec-color-light-secondary-disabled);
+.search-mobile-container {
+  height: auto !important;
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl') ms.spacing('padding-lg') ms.spacing('padding-3xl') !important;
+
+  .search-input-mobile {
+    height: auto !important;
+    background: ms.color('surface-base-default-secondary');
+
+    &.input-content:focus-within:not(.form-input-disabled) {
+      background: ms.color('surface-base-default');
+    }
+  }
+}
+
+.read-only-info {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: ms.spacing('gap-lg');
+  @include ms.font('label-md-medium');
+  color: ms.color('text-brand-default');
+
+  &__icon {
+    width: 1rem;
+    height: 1rem;
+  }
 }
 
 .no-files {
+  @include ms.font('body-lg-regular');
   width: 100%;
 
   &-content {
     width: 100%;
     height: 100%;
     margin: auto;
-    color: var(--parsec-color-light-secondary-grey);
-    border-radius: var(--parsec-radius-8);
+    color: ms.color('text-base-description');
+    border-radius: ms.radius('lg');
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 2rem 1rem;
-
-    .ms-spinner {
-      height: 1.5rem;
-    }
+    gap: ms.spacing('gap-3xl');
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   }
 }
 
@@ -1683,8 +1767,8 @@ const actionBarOptionsFoldersPage = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 2rem 1rem;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   max-width: 30rem;
   margin: auto;
 

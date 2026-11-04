@@ -1,10 +1,10 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="devices-container">
     <ion-button
       id="add-device-button"
-      class="button-normal button-default"
+      class="button-normal"
       fill="clear"
       @click="onAddDeviceClick()"
     >
@@ -15,9 +15,11 @@
     <div class="devices-content">
       <ion-text
         class="no-device"
-        v-if="devices.length === 0"
+        v-if="error"
       >
-        {{ $msTranslate('DevicesPage.noDevices') }}
+        <ms-report-text :theme="MsReportTheme.Error">
+          {{ $msTranslate('DevicesPage.greet.errors.retrieveDeviceInfoFailed') }}
+        </ms-report-text>
       </ion-text>
       <ion-list
         class="devices-list"
@@ -42,24 +44,22 @@
 
 <script setup lang="ts">
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { OwnDeviceInfo, createDeviceInvitation, listOwnDevices } from '@/parsec';
-import { Routes, getCurrentRouteName, watchRoute } from '@/router';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
-import { IonButton, IonItem, IonList, IonText, modalController } from '@ionic/vue';
-import { MsModalResult } from 'megashark-lib';
+import { OwnDeviceInfo, listOwnDevices } from '@/parsec';
+import { ProfilePages, Routes, watchRoute } from '@/router';
+import { InformationManager, InformationManagerKey } from '@/services/informationManager';
+import { openDeviceGreetModal } from '@/views/devices/utils';
+import { IonButton, IonItem, IonList, IonText } from '@ionic/vue';
+import { MsModalResult, MsReportText, MsReportTheme, Translatable } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
+const error = ref<Translatable | undefined>(undefined);
 
-const routeWatchCancel = watchRoute(async () => {
-  if (getCurrentRouteName() !== Routes.MyProfile) {
-    return;
+const routeWatchCancel = watchRoute(async (newRoute) => {
+  if (newRoute.name === Routes.MyProfile && newRoute.query.profilePage === ProfilePages.Devices) {
+    await refreshDevicesList();
   }
-  await refreshDevicesList();
 });
 
 onMounted(async () => {
@@ -73,52 +73,17 @@ onUnmounted(async () => {
 async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
   if (result.ok) {
+    error.value = undefined;
     devices.value = result.value.filter((d) => !d.isRecovery && !d.isShamir && !d.isRegistration).sort((d) => (d.isCurrent ? -1 : 1));
   } else {
-    informationManager.present(
-      new Information({
-        message: 'DevicesPage.greet.errors.retrieveDeviceInfoFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    window.electronAPI.log('error', `Failed to list devices ${JSON.stringify(result.error)}`);
+    error.value = 'DevicesPage.greet.errors.retrieveDeviceInfoFailed';
   }
 }
 
 async function onAddDeviceClick(): Promise<void> {
-  const result = await createDeviceInvitation(false);
-  if (!result.ok) {
-    informationManager.present(
-      new Information({
-        message: 'DevicesPage.greet.errors.startFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-
-  const modal = await modalController.create({
-    component: GreetDeviceModal,
-    canDismiss: true,
-    backdropDismiss: false,
-    cssClass: 'greet-organization-modal',
-    componentProps: {
-      informationManager: informationManager,
-      invitationLink: result.value.addr,
-      token: result.value.token,
-    },
-  });
-  await modal.present();
-  const modalResult = await modal.onWillDismiss();
-  await modal.dismiss();
-  if (modalResult.role === MsModalResult.Confirm) {
+  const modalResult = await openDeviceGreetModal(informationManager.value);
+  if (modalResult === MsModalResult.Confirm) {
     await refreshDevicesList();
-    const lastDevice = devices.value.toSorted((d1, d2) => (d1.createdOn > d2.createdOn ? -1 : 1))[0];
-    if (lastDevice) {
-      eventDistributor.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
-    }
   }
 }
 </script>
@@ -129,13 +94,20 @@ async function onAddDeviceClick(): Promise<void> {
   flex-direction: column;
   justify-content: end;
   position: relative;
+  border-radius: ms.radius('2xl');
+  background: ms.color('surface-base-page');
+  padding: ms.spacing('padding-4xl');
+  box-shadow:
+    0 1px 1px 0 rgba(0, 0, 0, 0.05),
+    0 1px 4px 0 rgba(0, 0, 0, 0.03),
+    0 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 #add-device-button {
   margin-left: auto;
-  --background: var(--parsec-color-light-secondary-text);
-  --background-hover: var(--parsec-color-light-secondary-contrast);
-  color: var(--parsec-color-light-secondary-white);
+  --background: #{ms.color('surface-neutral-default')};
+  --background-hover: #{ms.color('surface-neutral-default-hover')};
+  color: ms.color('text-on-color-heading');
 
   @include ms.responsive-breakpoint('xs') {
     position: fixed;
@@ -158,7 +130,7 @@ async function onAddDeviceClick(): Promise<void> {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 </style>

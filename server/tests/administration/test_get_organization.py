@@ -43,7 +43,7 @@ async def test_ok(
         "is_bootstrapped": True,
         "is_expired": False,
         "user_profile_outsider_allowed": True,
-        "minimum_archiving_period": 2592000,  # 30 days
+        "realm_minimum_archiving_period_before_deletion": 2592000,  # 30 days
         "tos": None,
     }
 
@@ -55,7 +55,7 @@ async def test_ok(
         is_expired=True,
         active_users_limit=ActiveUsersLimit.limited_to(1),
         user_profile_outsider_allowed=False,
-        minimum_archiving_period=10,
+        realm_minimum_archiving_period_before_deletion=10,
         tos={"en_HK": "https://parsec.invalid/tos_en"},
     )
 
@@ -69,7 +69,7 @@ async def test_ok(
         "is_bootstrapped": True,
         "is_expired": True,
         "user_profile_outsider_allowed": False,
-        "minimum_archiving_period": 10,
+        "realm_minimum_archiving_period_before_deletion": 10,
         "tos": {
             "updated_on": "2020-01-01T00:00:00Z",
             "per_locale_urls": {"en_HK": "https://parsec.invalid/tos_en"},

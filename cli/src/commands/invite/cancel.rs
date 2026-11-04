@@ -1,33 +1,39 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
+use std::fmt::Write;
 
 use anyhow::Context;
-use libparsec::InvitationToken;
+use libparsec::AccessToken;
 
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device]
     pub struct Args {
         /// Invitation token
-        #[arg(value_parser = InvitationToken::from_hex)]
-        token: InvitationToken,
+        #[arg(value_parser = AccessToken::from_hex, value_hint = clap::ValueHint::Other)]
+        token: AccessToken,
     }
 );
 
 crate::build_main_with_client!(main, invite_cancel);
 
-pub async fn invite_cancel(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn invite_cancel(
+    ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args { token, .. } = args;
     log::trace!("Cancelling invitation");
 
-    let mut handle = start_spinner("Deleting invitation".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Deleting invitation"))?;
 
     client
         .cancel_invitation(token)
         .await
         .context("Server refused to cancel invitation")?;
 
-    handle.stop_with_message("Invitation canceled".into());
+    handle.stop_with(|_, out| write!(out, "Invitation canceled"))?;
 
     Ok(())
 }

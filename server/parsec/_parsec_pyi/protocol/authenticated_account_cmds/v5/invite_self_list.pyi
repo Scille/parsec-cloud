@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import InvitationToken, InvitationType, OrganizationID
+from parsec._parsec import AccessToken, InvitationType, OrganizationID
 
 class Req:
     def __init__(
@@ -26,7 +26,7 @@ class RepUnknownStatus(Rep):
 
 class RepOk(Rep):
     def __init__(
-        self, invitations: list[tuple[OrganizationID, InvitationToken, InvitationType]]
+        self, invitations: list[tuple[OrganizationID, AccessToken, InvitationType]]
     ) -> None: ...
     @property
-    def invitations(self) -> list[tuple[OrganizationID, InvitationToken, InvitationType]]: ...
+    def invitations(self) -> list[tuple[OrganizationID, AccessToken, InvitationType]]: ...

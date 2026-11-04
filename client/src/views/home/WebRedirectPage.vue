@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="page">
@@ -9,41 +9,37 @@
       />
 
       <div class="redirect-text">
-        <ion-text class="redirect-text__title title-h1">
+        <ion-text class="redirect-text__title">
           {{ $msTranslate('WebRedirectPage.title') }}
         </ion-text>
-        <ion-text class="redirect-text__subtitle body-lg">
+        <ion-text class="redirect-text__subtitle">
           {{ $msTranslate('WebRedirectPage.subtitle') }}
         </ion-text>
       </div>
 
       <div class="redirect-buttons">
-        <ion-button class="redirect-buttons__item button-large button-primary">
-          <a
-            :href="redirectLink"
-            target="_blank"
-            class="link"
-          >
-            {{ $msTranslate('WebRedirectPage.desktop') }}
-          </a>
+        <ion-button
+          class="redirect-buttons__item button-large button-primary"
+          @click="Env.Links.openUrl(redirectLink)"
+        >
+          {{ $msTranslate('WebRedirectPage.desktop') }}
         </ion-button>
         <ion-button
           @click="openLinkInWeb()"
-          class="redirect-buttons__item button-large button-default"
+          class="redirect-buttons__item button-large"
           fill="clear"
         >
           {{ $msTranslate('WebRedirectPage.web') }}
         </ion-button>
       </div>
-
       <div class="redirect-download">
-        <ion-text class="redirect-download__text body">
+        <ion-text class="redirect-download__text">
           {{ $msTranslate('WebRedirectPage.downloadText') }}
         </ion-text>
         <a
           :href="$msTranslate('MenuPage.downloadParsecLink')"
           target="_blank"
-          class="redirect-download__link button-medium"
+          class="redirect-download__link"
         >
           {{ $msTranslate('WebRedirectPage.downloadLink') }}
         </a>
@@ -53,26 +49,69 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentRouteQuery } from '@/router';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
-import { handleParsecLink } from '@/services/linkHandler';
+import { ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
+import { getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { Env } from '@/services/environment';
+import { InformationManager } from '@/services/informationManager';
+import { handleFileLink } from '@/services/linkHandler';
 import { IonButton, IonPage, IonText } from '@ionic/vue';
 import { LogoIconGradient, MsImage } from 'megashark-lib';
-import { inject } from 'vue';
+import { onMounted, ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const redirectLink = ref<string>('');
+const linkType = ref<ParsedParsecAddrTag | undefined>(undefined);
 
-const query = getCurrentRouteQuery();
-const redirectLink = query.webRedirectUrl ?? '';
+onMounted(async () => {
+  const query = getCurrentRouteQuery();
+  redirectLink.value = query.webRedirectUrl || '';
+
+  if (!redirectLink.value) {
+    redirectLink.value = 'parsec3://';
+    return;
+  }
+  const result = await parseParsecAddr(redirectLink.value);
+  if (!result.ok) {
+    // If the link is invalid, we convert it to parsec3:// to still open the app, but
+    // without giving it any link to process
+    redirectLink.value = 'parsec3://';
+  } else {
+    linkType.value = result.value.tag;
+  }
+});
 
 async function openLinkInWeb(): Promise<void> {
-  await handleParsecLink(redirectLink, informationManager);
+  switch (linkType.value) {
+    case ParsedParsecAddrTag.AsyncEnrollment:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { asyncEnrollmentLink: redirectLink.value } });
+      break;
+    case ParsedParsecAddrTag.OrganizationBootstrap:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { bootstrapLink: redirectLink.value } });
+      break;
+    case ParsedParsecAddrTag.InvitationUser:
+    case ParsedParsecAddrTag.InvitationDevice:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { claimLink: redirectLink.value } });
+      break;
+    case ParsedParsecAddrTag.WorkspacePath:
+      const informationManager = new InformationManager();
+      const navigationOk = await handleFileLink(redirectLink.value, informationManager);
+      if (!navigationOk) {
+        await navigateTo(Routes.Home, { skipHandle: true });
+      }
+      break;
+    case ParsedParsecAddrTag.TOTPReset:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { totpResetLink: redirectLink.value } });
+      break;
+    default:
+      console.warn(`Unhandled link type '${linkType.value}', redirecting...`);
+      await navigateTo(Routes.Home, { skipHandle: true });
+      break;
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 .page {
-  background-color: var(--parsec-color-light-secondary-white);
+  background-color: ms.color('surface-base-default');
 }
 
 .redirect-container {
@@ -94,18 +133,20 @@ async function openLinkInWeb(): Promise<void> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: ms.spacing('gap-3xl');
+  margin-bottom: ms.spacing('padding-4xl');
 
   &__title {
+    @include ms.font('heading-h2');
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-image: var(--parsec-color-light-gradient-background);
+    background-image: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
   }
 
   &__subtitle {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-lg-regular');
+    color: ms.color('text-base-description');
     text-align: center;
   }
 }
@@ -114,39 +155,42 @@ async function openLinkInWeb(): Promise<void> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   max-width: 22rem;
   width: 100%;
 
   &__item {
+    @include ms.font('label-lg-medium');
     width: 100%;
 
     .link {
-      color: var(--parsec-color-light-secondary-white);
+      color: ms.color('text-on-color-heading');
     }
   }
 }
 
 .redirect-download {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
+  margin-top: ms.spacing('padding-6xl');
+  padding-top: ms.spacing('padding-4xl');
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  gap: ms.spacing('gap-lg');
+  border-top: ms.border('thin') solid ms.color('border-base-default');
 
   &__text {
-    color: var(--parsec-color-light-secondary-hard-grey);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
   }
 
   &__link {
-    color: var(--parsec-color-light-primary-500);
+    @include ms.font('label-md-medium');
+    color: ms.color('text-brand-default');
     transition: all 0.2s ease-in-out;
 
     &:hover {
       text-decoration: underline;
-      color: var(--parsec-color-light-primary-600);
+      color: ms.color('text-brand-default-hover');
     }
   }
 }

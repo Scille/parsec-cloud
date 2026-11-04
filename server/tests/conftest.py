@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import logging
@@ -177,7 +178,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     # Divide tests into slices of equal size
-    slices_to_run, total_slices = config.getoption("--slice-tests")
+    slices_to_run, total_slices = config.getoption("--slice-tests") or ([], 0)
     if total_slices > 1:
         # Reorder tests to be deterministic given they will be ran across multiples instances
         # Note this must be done as an in-place update to have it taken into account
@@ -280,12 +281,32 @@ async def db_config(request: pytest.FixtureRequest) -> BaseDatabaseConfig:
 
 
 @pytest.fixture
+async def db_args(db_config: BaseDatabaseConfig) -> list[str]:
+    if isinstance(db_config, PostgreSQLDatabaseConfig):
+        return [
+            f"--db={db_config.url}",
+            f"--db-min-connections={db_config.min_connections}",
+            f"--db-max-connections={db_config.max_connections}",
+        ]
+    else:
+        return ["--db=MOCKED"]
+
+
+@pytest.fixture
 def blockstore_config(db_config: BaseDatabaseConfig) -> BaseBlockStoreConfig:
     # TODO: allow to test against swift ?
     if db_config.is_mocked():
         return MockedBlockStoreConfig()
     else:
         return PostgreSQLBlockStoreConfig()
+
+
+@pytest.fixture
+def blockstore_args(db_config: BaseDatabaseConfig) -> list[str]:
+    if isinstance(db_config, PostgreSQLDatabaseConfig):
+        return ["--blockstore=POSTGRESQL"]
+    else:
+        return ["--blockstore=MOCKED"]
 
 
 # Finally other fixtures

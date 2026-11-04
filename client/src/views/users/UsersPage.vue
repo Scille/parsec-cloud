@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="users-page">
@@ -11,14 +11,11 @@
       >
         <div class="right-side">
           <div class="counter">
-            <ion-text
-              class="body"
-              v-show="users.selectedCount() === 0"
-            >
+            <ion-text v-show="users.selectedCount() === 0">
               {{ $msTranslate({ key: 'UsersPage.itemCount', data: { count: getUsersCount() }, count: getUsersCount() }) }}
             </ion-text>
             <ion-text
-              class="body item-selected"
+              class="item-selected"
               v-show="users.selectedCount() > 0"
             >
               {{
@@ -31,20 +28,19 @@
             v-model="users.searchFilter"
             @change="users.unselectHiddenUsers()"
             id="search-input-users"
+            ref="searchInputRef"
           />
-          <!-- prettier-ignore -->
           <user-filter
-            :users="(users as UserCollection)"
-            @change="onFilterUpdated"
+            :filters="users.getFilters()"
+            @update:filters="onFilterUpdated"
           />
           <ms-sorter
             :key="`${currentSortProperty}-${currentSortOrder}`"
-            :label="'UsersPage.sort.byName'"
             :options="msSorterOptions"
             :default-option="currentSortProperty"
             :sorter-labels="msSorterLabels"
             :sort-by-asc="currentSortOrder"
-            @change="onSortChange"
+            @change="onSortChange($event.option.key, $event.sortByAsc)"
           />
           <ms-grid-list-toggle
             v-model="displayView"
@@ -52,29 +48,24 @@
           />
         </div>
       </ms-action-bar>
-      <small-display-header-title
-        v-if="isSmallDisplay"
-        :title="
-          users.selectedCount() > 0
-            ? { key: 'UsersPage.userSelectedCount', data: { count: users.selectedCount() }, count: users.selectedCount() }
-            : 'HeaderPage.titles.users'
-        "
+      <small-display-selection-header
+        v-if="isSmallDisplay && selectionEnabled"
+        :title="{ key: 'UsersPage.userSelectedCount', data: { count: users.selectedCount() }, count: users.selectedCount() }"
         @open-contextual-modal="openGlobalUserContextMenu"
         @select="selectAllUsers"
         @unselect="unselectAllUsers"
         @cancel-selection="onSelectionCancel"
-        :selection-enabled="selectionEnabled"
         :some-selected="users.hasSelected()"
         :options-disabled="users.selectableUsersCount() === 0"
       />
       <!-- users -->
-      <div class="users-container scroll">
+      <div class="main-container users-container scroll">
         <div
           v-show="users.totalUsersCount() === 0"
-          class="no-active body-lg"
+          class="no-active"
         >
           <div class="no-active-content">
-            <ms-image :image="NoActiveUser" />
+            <ms-image :image="theme === Theme.Dark ? NoActiveUserDark : NoActiveUser" />
             <ion-text>
               {{ $msTranslate('UsersPage.emptyList') }}
             </ion-text>
@@ -87,18 +78,17 @@
           >
             <div class="mobile-filters-buttons">
               <user-filter
-                :users="users as UserCollection"
-                @change="onFilterUpdated"
+                :filters="users.getFilters()"
+                @update:filters="onFilterUpdated"
                 class="mobile-filters-buttons__filter"
               />
               <ms-sorter
                 :key="`${currentSortProperty}-${currentSortOrder}`"
-                :label="'UsersPage.sort.byName'"
                 :options="msSorterOptions"
                 :default-option="currentSortProperty"
                 :sorter-labels="msSorterLabels"
                 :sort-by-asc="currentSortOrder"
-                @change="onSortChange"
+                @change="onSortChange($event.option.key, $event.sortByAsc)"
                 class="mobile-filterss-buttons__sorter"
               />
             </div>
@@ -111,24 +101,24 @@
             />
           </div>
           <div v-if="displayView === DisplayState.List">
-            <!-- prettier-ignore -->
             <user-list-display
-              :users="(users as UserCollection)"
+              :users="users"
               @menu-click="openUserContextMenu"
-              @checkbox-click="selectionEnabled = true"
+              @checkbox-click="selectionEnabled = users.hasSelected()"
               :selection-enabled="selectionEnabled && isSmallDisplay"
+              :sort-by="currentSortProperty"
+              :sort-ascending="currentSortOrder"
+              @sort-update="onSortChange"
+              :allow-selection="isAdmin"
             />
           </div>
-          <div
-            v-else
-            class="users-container-grid"
-          >
-            <!-- prettier-ignore -->
+          <div v-else>
             <user-grid-display
-              :users="(users as UserCollection)"
+              :users="users"
               @menu-click="openUserContextMenu"
-              @checkbox-click="selectionEnabled = true"
+              @checkbox-click="selectionEnabled = users.hasSelected()"
               :selection-enabled="selectionEnabled && isSmallDisplay"
+              :allow-selection="isAdmin"
             />
           </div>
         </div>
@@ -143,62 +133,58 @@
 
 <script setup lang="ts">
 import { copyToClipboard } from '@/common/clipboard';
-import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
+import SmallDisplaySelectionHeader from '@/components/header/SmallDisplaySelectionHeader.vue';
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
   ClientInfo,
-  ClientUserUpdateProfileError,
-  ClientUserUpdateProfileErrorTag,
   InvitationStatus,
   UserID,
   UserInfo,
   UserProfile,
-  getPkiJoinOrganizationLink,
+  getAsyncEnrollmentAddr,
   getClientInfo as parsecGetClientInfo,
   listUsers as parsecListUsers,
-  revokeUser as parsecRevokeUser,
-  updateProfile as parsecUpdateProfile,
 } from '@/parsec';
 import { Routes, currentRouteIsUserRoute, navigateTo, watchRoute } from '@/router';
+import { UserAction, useUserActions, useUserContextMenu } from '@/services/contextMenu';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
+import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
-import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
-import { UserAction } from '@/views/users/types';
-import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
-import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
-import { openGlobalUserContextMenu as _openGlobalUserContextMenu, openUserContextMenu as _openUserContextMenu } from '@/views/users/utils';
-import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
+import { IonContent, IonPage, IonText } from '@ionic/vue';
 import { informationCircle, link, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
 import {
-  Answer,
   DisplayState,
   MsActionBar,
   MsGridListToggle,
   MsImage,
-  MsModalResult,
   MsOptions,
   MsSearchInput,
   MsSorter,
-  MsSorterChangeEvent,
   NoActiveUser,
-  askQuestion,
+  NoActiveUserDark,
+  Theme,
+  useTheme,
   useWindowSize,
 } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 
+const contextMenu = useUserContextMenu();
+const actions = useUserActions();
+
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const selectionEnabled = ref<boolean>(false);
+const searchInputRef = ref();
 
 let hotkeys: HotkeyGroup | null = null;
 const users = ref(new UserCollection());
@@ -208,6 +194,8 @@ let eventCbId: string | null = null;
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { hideHeader, showHeader } = useHeaderControl();
+const { theme } = useTheme();
 
 const customTabBar = useCustomTabBar();
 
@@ -285,6 +273,7 @@ const ALL_SORT_OPTIONS = [
   { label: 'UsersPage.sort.byJoined', key: SortProperty.JoinedDate },
   { label: 'UsersPage.sort.byProfile', key: SortProperty.Profile },
   { label: 'UsersPage.sort.byStatus', key: SortProperty.Status },
+  { label: 'UsersPage.sort.byEmail', key: SortProperty.Email },
 ];
 
 const msSorterOptions = ref<MsOptions>(new MsOptions(ALL_SORT_OPTIONS));
@@ -294,51 +283,17 @@ const msSorterLabels = {
   desc: 'UsersPage.sort.desc',
 };
 
-async function onSortChange(event: MsSorterChangeEvent): Promise<void> {
-  currentSortProperty.value = event.option.key;
-  currentSortOrder.value = event.sortByAsc;
+async function onSortChange(property: SortProperty, ascending: boolean): Promise<void> {
+  currentSortProperty.value = property;
+  currentSortOrder.value = ascending;
   users.value.sort(currentSortProperty.value, currentSortOrder.value);
   await storeComponentData();
 }
 
-async function onFilterUpdated(): Promise<void> {
+async function onFilterUpdated(filters: UserFilterLabels): Promise<void> {
+  users.value.setFilters(filters);
+  users.value.unselectHiddenUsers();
   await storeComponentData();
-}
-
-async function revokeUser(user: UserInfo): Promise<void> {
-  const answer = await askQuestion(
-    { key: 'UsersPage.revocation.revokeTitle', count: 1 },
-    { key: 'UsersPage.revocation.revokeQuestion', data: { user: user.humanHandle.label }, count: 1 },
-    {
-      yesIsDangerous: true,
-      yesText: 'UsersPage.revocation.revokeYes',
-      noText: 'UsersPage.revocation.revokeNo',
-    },
-  );
-  if (answer === Answer.No) {
-    return;
-  }
-  const result = await parsecRevokeUser(user.id);
-
-  if (!result.ok) {
-    informationManager.present(
-      new Information({
-        message: { key: 'UsersPage.revocation.revokeFailed', count: 1 },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.present(
-      new Information({
-        message: { key: 'UsersPage.revocation.revokeSuccess', data: { user: user.humanHandle.label }, count: 1 },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-  await onSelectionCancel();
-  await refreshUserList();
 }
 
 function getUsersCount(): number {
@@ -347,83 +302,17 @@ function getUsersCount(): number {
 
 async function revokeSelectedUsers(): Promise<void> {
   const selectedUsers = users.value.getSelectedUsers();
+  await actions.revokeUsers(selectedUsers);
 
-  if (selectedUsers.length === 1) {
-    return await revokeUser(selectedUsers[0]);
-  }
-
-  const answer = await askQuestion(
-    { key: 'UsersPage.revocation.revokeTitle', count: selectedUsers.length },
-    { key: 'UsersPage.revocation.revokeQuestion', data: { count: selectedUsers.length }, count: selectedUsers.length },
-    {
-      yesIsDangerous: true,
-      yesText: 'UsersPage.revocation.revokeYes',
-      noText: 'UsersPage.revocation.revokeNo',
-    },
-  );
-  if (answer === Answer.No) {
-    return;
-  }
-  let errorCount = 0;
-
-  for (const user of selectedUsers) {
-    const result = await parsecRevokeUser(user.id);
-    if (!result.ok) {
-      errorCount += 1;
-    }
-  }
-  if (errorCount === 0) {
-    informationManager.present(
-      new Information({
-        message: {
-          key: 'UsersPage.revocation.revokeSuccess',
-          data: { count: selectedUsers.length },
-          count: selectedUsers.length,
-        },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else if (errorCount < selectedUsers.length) {
-    informationManager.present(
-      new Information({
-        message: 'UsersPage.revocation.revokeSomeFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.present(
-      new Information({
-        message: { key: 'UsersPage.revocation.revokeFailed', count: selectedUsers.length },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
   await onSelectionCancel();
   await refreshUserList();
-}
-
-async function openUserDetails(user: UserInfo): Promise<void> {
-  const modal = await modalController.create({
-    component: UserDetailsModal,
-    cssClass: 'user-details-modal',
-    componentProps: {
-      user: user,
-      informationManager: informationManager,
-    },
-  });
-  await modal.present();
-  await modal.onWillDismiss();
-  await modal.dismiss();
 }
 
 async function openSelectedUserDetails(): Promise<void> {
   const selectedUsers = users.value.getSelectedUsers();
 
   if (selectedUsers.length === 1) {
-    return await openUserDetails(selectedUsers[0]);
+    await actions.openDetails(selectedUsers[0]);
   }
 }
 
@@ -432,68 +321,40 @@ function isCurrentUser(userId: UserID): boolean {
 }
 
 async function openUserContextMenu(event: Event, user: UserModel, onFinished?: () => void): Promise<void> {
+  const currentUser = users.value.getCurrentUser();
+  if (!currentUser) {
+    return;
+  }
   let selectedUsers = users.value.getSelectedUsers();
   if (selectedUsers.length === 0 || !selectedUsers.includes(user)) {
+    users.value.selectAll(false);
     selectedUsers = [user];
   }
 
-  // a Standard or Outsider user can't do anything with multiple users
-  if (!isAdmin.value && selectedUsers.length > 1) {
-    return;
-  }
-
-  const data = await _openUserContextMenu(event, selectedUsers, isAdmin.value, isLargeDisplay.value);
-
-  const actions = new Map<UserAction, (user: UserModel) => Promise<void>>([
-    [UserAction.Revoke, revokeUser],
-    [UserAction.Details, openUserDetails],
-    [UserAction.AssignRoles, assignWorkspaceRoles],
-    [UserAction.UpdateProfile, updateUserProfile],
-  ]);
-  const actionsMultiple = new Map<UserAction, () => Promise<void>>([
-    [UserAction.Revoke, revokeSelectedUsers],
-    [UserAction.UpdateProfile, updateSelectedUserProfiles],
-  ]);
-
-  if (!data) {
-    if (onFinished) {
-      onFinished();
-    }
-    return;
-  }
-
-  if (selectedUsers.length === 1) {
-    const fn = actions.get(data.action);
-    if (fn) {
-      await fn(selectedUsers[0]);
-    }
-  } else {
-    const fn = actionsMultiple.get(data.action);
-    if (fn) {
-      await fn();
-    }
-  }
+  await contextMenu.openUserContextMenu(selectedUsers, currentUser, event);
 
   if (onFinished) {
     onFinished();
   }
+  await onSelectionCancel();
+  await refreshUserList();
 }
 
 async function openGlobalUserContextMenu(): Promise<void> {
-  const data = await _openGlobalUserContextMenu();
+  const action = await contextMenu.openGlobalUserContextMenu();
 
-  const actions = new Map<UserAction, () => Promise<void>>([
-    [UserAction.ToggleSelect, toggleSelection],
-    [UserAction.SelectAll, selectAllUsers],
-  ]);
-
-  if (!data) {
-    return;
-  }
-
-  const fn = actions.get(data.action);
-  if (fn) {
-    await fn();
+  switch (action) {
+    case UserAction.ToggleSelect: {
+      await toggleSelection();
+      break;
+    }
+    case UserAction.SelectAll: {
+      await selectAllUsers();
+      break;
+    }
+    default: {
+      break;
+    }
   }
 }
 
@@ -502,6 +363,9 @@ async function toggleSelection(): Promise<void> {
 }
 
 async function selectAllUsers(): Promise<void> {
+  if (!isAdmin.value) {
+    return;
+  }
   selectionEnabled.value = true;
   users.value.selectAll(true);
 }
@@ -519,81 +383,19 @@ async function updateSelectedUserProfiles(): Promise<void> {
   await updateUserProfiles(users.value.getSelectedUsers());
 }
 
-async function updateUserProfile(user: UserInfo): Promise<void> {
-  await updateUserProfiles([user]);
-}
-
 async function updateUserProfiles(selectedUsers: Array<UserInfo>): Promise<void> {
-  const modal = await modalController.create({
-    component: UpdateProfileModal,
-    cssClass: 'update-profile-modal',
-    componentProps: {
-      users: selectedUsers,
-    },
-  });
-  await modal.present();
-  const { data, role } = await modal.onWillDismiss();
-  await modal.dismiss();
-
-  if (role !== MsModalResult.Confirm) {
-    return;
-  }
-  const newProfile = data.profile;
-  let firstError: ClientUserUpdateProfileError | undefined = undefined;
-  const affectedUsers = selectedUsers.filter((u) => u.currentProfile !== UserProfile.Outsider);
-
-  for (const user of affectedUsers) {
-    if (user.currentProfile === newProfile) {
-      continue;
-    }
-    const result = await parsecUpdateProfile(user.id, newProfile);
-    if (!result.ok) {
-      if (!firstError) {
-        firstError = result.error;
-      }
-    }
-  }
-  let message = '';
-  if (!firstError) {
-    message = 'UsersPage.updateProfile.success';
-  } else {
-    switch (firstError.tag) {
-      case ClientUserUpdateProfileErrorTag.Offline:
-        message = 'UsersPage.updateProfile.failedOffline';
-        break;
-      default:
-        message = 'UsersPage.updateProfile.failedGeneric';
-        break;
-    }
-  }
-  informationManager.present(
-    new Information({
-      message: { key: message, count: affectedUsers.length },
-      level: firstError === undefined ? InformationLevel.Success : InformationLevel.Error,
-    }),
-    PresentationMode.Toast,
-  );
-
+  await actions.updateProfiles(selectedUsers);
   await onSelectionCancel();
   await refreshUserList();
 }
 
 async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
-  const modal = await modalController.create({
-    component: BulkRoleAssignmentModal,
-    cssClass: 'role-assignment-modal',
-    componentProps: {
-      sourceUser: user,
-      currentUser: users.value.getCurrentUser(),
-      informationManager: informationManager,
-    },
-  });
-  await modal.present();
-  const result = await modal.onWillDismiss();
-  await modal.dismiss();
-  if (result.role === MsModalResult.Confirm) {
-    onSelectionCancel();
+  const currentUser = users.value.getCurrentUser();
+  if (!currentUser) {
+    return;
   }
+  await actions.copyWorkspaceRoles(user, currentUser);
+  onSelectionCancel();
 }
 
 async function refreshUserList(): Promise<void> {
@@ -607,7 +409,7 @@ async function refreshUserList(): Promise<void> {
     }
     users.value.replace(newUsers);
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'UsersPage.listUsersFailed',
         level: InformationLevel.Error,
@@ -635,14 +437,18 @@ const routeWatchCancel = watchRoute(async () => {
   await refreshUserList();
 });
 
-onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
-    if (event === Events.InvitationUpdated && data) {
-      if ((data as InvitationUpdatedData).status === InvitationStatus.Finished) {
-        await refreshUserList();
-      }
+async function handleEvents(event: Events, data?: EventData): Promise<void> {
+  if (event === Events.InvitationUpdated && data) {
+    if ((data as InvitationUpdatedData).status === InvitationStatus.Finished) {
+      await refreshUserList();
     }
-  });
+  } else if (event === Events.OpenContextMenu) {
+    await openGlobalUserContextMenu();
+  }
+}
+
+onMounted(async (): Promise<void> => {
+  eventCbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated, Events.OpenContextMenu], handleEvents);
   await restoreComponentData();
 
   hotkeys = hotkeyManager.newHotkeys();
@@ -653,7 +459,11 @@ onMounted(async (): Promise<void> => {
     },
   );
   hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users }, async () =>
-    selectAllUsers(),
+    users.value.hasAllSelected() ? unselectAllUsers() : selectAllUsers(),
+  );
+  hotkeys.add(
+    { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Users },
+    async () => await searchInputRef.value?.setFocus(),
   );
 
   const result = await parsecGetClientInfo();
@@ -670,12 +480,13 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
+    await eventDistributor.value.removeCallback(eventCbId);
   }
   selectionEnabled.value = false;
   customTabBar.hide();
   routeWatchCancel();
   tabBarWatchCancel();
+  headerWatchCancel();
 });
 
 const actionBarOptionsUsersPage = computed(() => {
@@ -690,24 +501,22 @@ const actionBarOptionsUsersPage = computed(() => {
       },
     });
 
-    if (false) {
-      // TODO enable with PKI support
-      actionArray.push({
-        label: 'InvitationsPage.pkiRequests.copyLink',
-        icon: link,
-        onClick: async (): Promise<void> => {
-          const result = await getPkiJoinOrganizationLink();
-          if (result.ok) {
-            await copyToClipboard(
-              result.value,
-              informationManager,
-              'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
-              'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
-            );
-          }
-        },
-      });
-    }
+    actionArray.push({
+      label: 'InvitationsPage.asyncEnrollmentRequest.copyLink',
+      icon: link,
+      onClick: async (): Promise<void> => {
+        const result = await getAsyncEnrollmentAddr();
+        if (result.ok) {
+          const [_, invitationAddrAsHttpRedirection] = result.value;
+          await copyToClipboard(
+            invitationAddrAsHttpRedirection,
+            informationManager.value,
+            'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
+            'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
+          );
+        }
+      },
+    });
   }
 
   if (users.value.selectedCount() >= 1 && isAdmin.value) {
@@ -746,39 +555,49 @@ const actionBarOptionsUsersPage = computed(() => {
 
   return actionArray;
 });
+
+const headerWatchCancel = watch([isSmallDisplay, selectionEnabled], () => {
+  isSmallDisplay.value && selectionEnabled.value ? hideHeader() : showHeader();
+});
 </script>
 
 <style scoped lang="scss">
 .users-page {
   @include ms.responsive-breakpoint('sm') {
-    --background: var(--parsec-color-light-secondary-background);
+    --background: #{ms.color('surface-base-page')};
   }
 
   .content-scroll::part(background) {
     @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-page');
     }
   }
 }
 
+.counter ion-text {
+  @include ms.font('body-md-regular');
+}
+
 .no-active {
+  @include ms.font('body-lg-regular');
+
   width: 100%;
   height: 100%;
-  color: var(--parsec-color-light-secondary-grey);
+  color: ms.color('text-base-description');
   display: flex;
   margin: auto;
   align-items: center;
 
   &-content {
-    border-radius: var(--parsec-radius-8);
+    border-radius: ms.radius('lg');
     display: flex;
     height: fit-content;
     width: 100%;
     text-align: center;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
     align-items: center;
-    padding: 2rem 1rem;
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl');
   }
 }
 
@@ -786,20 +605,13 @@ const actionBarOptionsUsersPage = computed(() => {
   @include ms.responsive-breakpoint('sm') {
     position: sticky;
     z-index: 10;
-    background: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-strong);
-    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    background: ms.color('surface-base-default');
+    box-shadow: ms.shadow('strong');
+    border-radius: ms.radius('4xl') ms.radius('4xl') ms.radius('none') ms.radius('none');
   }
 }
 
 .users-container > div {
   height: 100%;
-}
-
-.users-container-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5em;
-  overflow-y: auto;
 }
 </style>

@@ -1,0 +1,45 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "totp_setup_confirm",
+        "req": {
+            "fields": [
+                {
+                    "name": "user_id",
+                    "type": "UserID"
+                },
+                {
+                    // Authentication token, this should be provided by the server admin
+                    // once he has reset the TOTP config.
+                    "name": "token",
+                    "type": "AccessToken"
+                },
+                {
+                    // Value obtained from the authenticator app storing the TOTP secret
+                    "name": "one_time_password",
+                    "type": "String"
+                }
+            ]
+        },
+        "reps": [
+            {
+                // Once `ok` status has been returned, the TOTP setup is considered
+                // completed and any further attempt at calling `totp_setup_*` will
+                // return `bad_token`.
+                "status": "ok"
+            },
+            {
+                "status": "invalid_one_time_password"
+            },
+            {
+                // This status is returned if:
+                // - The authentication token is invalid (obviously)
+                // - The user is revoked or frozen
+                // - TOTP setup has already been completed
+                "status": "bad_token"
+            }
+        ]
+    }
+]

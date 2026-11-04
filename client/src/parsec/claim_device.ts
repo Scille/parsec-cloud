@@ -1,12 +1,12 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import {
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoTag,
   AvailableDevice,
+  ClaimerRetrieveInfoError,
   ClaimFinalizeError,
   ClaimInProgressError,
-  ClaimerRetrieveInfoError,
   ConnectionHandle,
   DeviceClaimFinalizeInfo,
   DeviceClaimInProgress1Info,
@@ -19,7 +19,7 @@ import {
   SASCode,
 } from '@/parsec';
 import { getClientConfig } from '@/parsec/internals';
-import { libparsec } from '@/plugins/libparsec';
+import { libparsec, ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export class DeviceClaim {
@@ -70,7 +70,9 @@ export class DeviceClaim {
     }
   }
 
-  async retrieveInfo(invitationLink: string): Promise<Result<AnyClaimRetrievedInfoDevice, ClaimerRetrieveInfoError>> {
+  async retrieveInfo(
+    invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL,
+  ): Promise<Result<AnyClaimRetrievedInfoDevice, ClaimerRetrieveInfoError>> {
     this._assertState(true, true);
 
     const clientConfig = getClientConfig();

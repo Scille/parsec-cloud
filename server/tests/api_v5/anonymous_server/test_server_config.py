@@ -2,12 +2,16 @@
 
 import pytest
 
-from parsec._parsec import OpenBaoAuthType, anonymous_server_cmds
-from parsec.config import AccountConfig, OpenBaoAuthConfig, OpenBaoConfig
+from parsec._parsec import (
+    AdvisoryDeviceFilePrimaryProtection,
+    AdvisoryDeviceFileProtection,
+    anonymous_server_cmds,
+)
+from parsec.config import AccountConfig, CryptpadConfig, OpenBaoAuthConfig, OpenBaoConfig
 from tests.common import AnonymousServerRpcClient, Backend, HttpCommonErrorsTester
 
 
-@pytest.mark.parametrize("kind", ("default", "custom"))
+@pytest.mark.parametrize("kind", ("default", "custom", "with_advisory_device_file_protection"))
 async def test_anonymous_server_server_config_ok(
     backend: Backend,
     anonymous_server: AnonymousServerRpcClient,
@@ -18,24 +22,35 @@ async def test_anonymous_server_server_config_ok(
             expected_rep = anonymous_server_cmds.latest.server_config.RepOk(
                 account=anonymous_server_cmds.latest.server_config.AccountConfig.DISABLED,
                 organization_bootstrap=anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.WITH_BOOTSTRAP_TOKEN,
+                cryptpad=anonymous_server_cmds.latest.server_config.CryptPadConfigDisabled(),
                 openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigDisabled(),
+                advisory_device_file_protection=[],
             )
 
         case "custom":
             backend.config.organization_spontaneous_bootstrap = True
             backend.config.account_config = AccountConfig.ENABLED_WITH_VAULT
+            backend.config.cryptpad_config = CryptpadConfig(
+                server_url="https://cryptpad.parsec.invalid",
+            )
             backend.config.openbao_config = OpenBaoConfig(
                 server_url="https://openbao.parsec.invalid",
                 secret_mount_path="secret",
                 transit_mount_path="transit",
                 auths=[
                     OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.HEXAGONE,
+                        id="HEXAGONE",
                         mount_path="auth/hexagone",
+                        name="Hexagone",
+                        help_link=None,
+                        icon=None,
                     ),
                     OpenBaoAuthConfig(
-                        id=OpenBaoAuthType.PRO_CONNECT,
+                        id="PRO_CONNECT",
                         mount_path="auth/pro_connect",
+                        name="ProConnect",
+                        help_link="https://proconnect.parsec.invalid/help",
+                        icon="https://proconnect.parsec.invalid/icon.svg",
                     ),
                 ],
             )
@@ -44,6 +59,9 @@ async def test_anonymous_server_server_config_ok(
             expected_rep = anonymous_server_cmds.latest.server_config.RepOk(
                 account=anonymous_server_cmds.latest.server_config.AccountConfig.ENABLED_WITH_VAULT,
                 organization_bootstrap=anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.SPONTANEOUS,
+                cryptpad=anonymous_server_cmds.latest.server_config.CryptPadConfigEnabled(
+                    server_url="https://cryptpad.parsec.invalid"
+                ),
                 openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigEnabled(
                     server_url="https://openbao.parsec.invalid",
                     secret=anonymous_server_cmds.latest.server_config.OpenBaoSecretConfigKV2(
@@ -52,13 +70,40 @@ async def test_anonymous_server_server_config_ok(
                     transit_mount_path="transit",
                     auths=[
                         anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
-                            id="HEXAGONE", mount_path="auth/hexagone"
+                            id="HEXAGONE",
+                            mount_path="auth/hexagone",
+                            name="Hexagone",
+                            help_link=None,
+                            icon=None,
                         ),
                         anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
-                            id="PRO_CONNECT", mount_path="auth/pro_connect"
+                            id="PRO_CONNECT",
+                            mount_path="auth/pro_connect",
+                            name="ProConnect",
+                            help_link="https://proconnect.parsec.invalid/help",
+                            icon="https://proconnect.parsec.invalid/icon.svg",
                         ),
                     ],
                 ),
+                advisory_device_file_protection=[],
+            )
+
+        case "with_advisory_device_file_protection":
+            backend.config.advisory_device_file_protection = (
+                AdvisoryDeviceFileProtection(
+                    primary=AdvisoryDeviceFilePrimaryProtection.PASSWORD, with_totp=True
+                ),
+                AdvisoryDeviceFileProtection(
+                    primary=AdvisoryDeviceFilePrimaryProtection.PKI, with_totp=False
+                ),
+            )
+
+            expected_rep = anonymous_server_cmds.latest.server_config.RepOk(
+                account=anonymous_server_cmds.latest.server_config.AccountConfig.DISABLED,
+                organization_bootstrap=anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.WITH_BOOTSTRAP_TOKEN,
+                cryptpad=anonymous_server_cmds.latest.server_config.CryptPadConfigDisabled(),
+                openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigDisabled(),
+                advisory_device_file_protection=["PASSWORD+TOTP", "PKI"],
             )
 
         case unknown:

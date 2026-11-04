@@ -1,8 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::{collections::HashMap, num::NonZeroU8};
 
-pub use crate::certif::CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError;
+pub type ClientSetupShamirRecoveryError = crate::certif::CertifSetupShamirRecoveryError;
 use crate::CertifPollServerError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::UserID;

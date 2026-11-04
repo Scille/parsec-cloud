@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 /*
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
@@ -7,9 +7,61 @@
 #[allow(unused_imports)]
 use neon::{
     prelude::*,
-    types::{buffer::TypedArray, JsBigInt},
+    types::{JsBigInt, buffer::TypedArray},
 };
 use std::str::FromStr;
+
+// AdvisoryDeviceFilePrimaryProtection
+
+#[allow(dead_code)]
+fn enum_advisory_device_file_primary_protection_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::AdvisoryDeviceFilePrimaryProtection> {
+    match raw_value {
+        "AdvisoryDeviceFilePrimaryProtectionAccountVault" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::AccountVault)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionKeyring" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::Keyring)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionOpenBao" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::OpenBao)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionPKI" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::PKI)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionPassword" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::Password)
+        }
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum AdvisoryDeviceFilePrimaryProtection"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_advisory_device_file_primary_protection_rs_to_js(
+    value: libparsec::AdvisoryDeviceFilePrimaryProtection,
+) -> &'static str {
+    match value {
+        libparsec::AdvisoryDeviceFilePrimaryProtection::AccountVault => {
+            "AdvisoryDeviceFilePrimaryProtectionAccountVault"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::Keyring => {
+            "AdvisoryDeviceFilePrimaryProtectionKeyring"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::OpenBao => {
+            "AdvisoryDeviceFilePrimaryProtectionOpenBao"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::PKI => {
+            "AdvisoryDeviceFilePrimaryProtectionPKI"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::Password => {
+            "AdvisoryDeviceFilePrimaryProtectionPassword"
+        }
+    }
+}
 
 // CancelledGreetingAttemptReason
 
@@ -761,6 +813,44 @@ fn struct_account_organizations_revoked_user_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AdvisoryDeviceFileProtection
+
+#[allow(dead_code)]
+fn struct_advisory_device_file_protection_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AdvisoryDeviceFileProtection> {
+    let primary = {
+        let js_val: Handle<JsString> = obj.get(cx, "primary")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_advisory_device_file_primary_protection_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let with_totp = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "withTotp")?;
+        js_val.value(cx)
+    };
+    Ok(libparsec::AdvisoryDeviceFileProtection { primary, with_totp })
+}
+
+#[allow(dead_code)]
+fn struct_advisory_device_file_protection_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AdvisoryDeviceFileProtection,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_primary = JsString::try_new(
+        cx,
+        enum_advisory_device_file_primary_protection_rs_to_js(rs_obj.primary),
+    )
+    .or_throw(cx)?;
+    js_obj.set(cx, "primary", js_primary)?;
+    let js_with_totp = JsBoolean::new(cx, rs_obj.with_totp);
+    js_obj.set(cx, "withTotp", js_with_totp)?;
+    Ok(js_obj)
+}
+
 // AsyncEnrollmentUntrusted
 
 #[allow(dead_code)]
@@ -1069,6 +1159,27 @@ fn struct_available_device_js_to_rs<'a>(
             }
         }
     };
+    let totp_opaque_key_id = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpOpaqueKeyId")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                            libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
     let ty = {
         let js_val: Handle<JsObject> = obj.get(cx, "ty")?;
         variant_available_device_type_js_to_rs(cx, js_val)?
@@ -1083,6 +1194,7 @@ fn struct_available_device_js_to_rs<'a>(
         device_id,
         human_handle,
         device_label,
+        totp_opaque_key_id,
         ty,
     })
 }
@@ -1163,6 +1275,20 @@ fn struct_available_device_rs_to_js<'a>(
     js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
+    let js_totp_opaque_key_id = match rs_obj.totp_opaque_key_id {
+        Some(elem) => JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err.to_string()),
+            }
+        })
+        .or_throw(cx)?
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpOpaqueKeyId", js_totp_opaque_key_id)?;
     let js_ty = variant_available_device_type_rs_to_js(cx, rs_obj.ty)?;
     js_obj.set(cx, "ty", js_ty)?;
     Ok(js_obj)
@@ -1200,23 +1326,11 @@ fn struct_available_pending_async_enrollment_js_to_rs<'a>(
             }
         }
     };
-    let server_addr = {
-        let js_val: Handle<JsString> = obj.get(cx, "serverAddr")?;
+    let addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "addr")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let organization_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -1259,8 +1373,7 @@ fn struct_available_pending_async_enrollment_js_to_rs<'a>(
     Ok(libparsec::AvailablePendingAsyncEnrollment {
         file_path,
         submitted_on,
-        server_addr,
-        organization_id,
+        addr,
         enrollment_id,
         requested_device_label,
         requested_human_handle,
@@ -1297,19 +1410,18 @@ fn struct_available_pending_async_enrollment_rs_to_js<'a>(
         }
     });
     js_obj.set(cx, "submittedOn", js_submitted_on)?;
-    let js_server_addr = JsString::try_new(cx, {
-        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-            Ok(addr.to_url().into())
-        };
-        match custom_to_rs_string(rs_obj.server_addr) {
+    let js_addr = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.addr) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
-    js_obj.set(cx, "serverAddr", js_server_addr)?;
-    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
-    js_obj.set(cx, "organizationId", js_organization_id)?;
+    js_obj.set(cx, "addr", js_addr)?;
     let js_enrollment_id = JsString::try_new(cx, {
         let custom_to_rs_string =
             |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -1467,6 +1579,152 @@ fn struct_client_config_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "logLevel", js_log_level)?;
+    Ok(js_obj)
+}
+
+// ClientGetOutboundSyncBacklog
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ClientGetOutboundSyncBacklog> {
+    let total_pending_entries_for_started_workspaces = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "totalPendingEntriesForStartedWorkspaces")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let total_pending_bytes_for_started_workspaces = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "totalPendingBytesForStartedWorkspaces")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let per_workspace = {
+        let js_val: Handle<JsArray> = obj.get(cx, "perWorkspace")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(struct_client_get_outbound_sync_backlog_item_js_to_rs(
+                    cx, js_item,
+                )?);
+            }
+            v
+        }
+    };
+    Ok(libparsec::ClientGetOutboundSyncBacklog {
+        total_pending_entries_for_started_workspaces,
+        total_pending_bytes_for_started_workspaces,
+        per_workspace,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetOutboundSyncBacklog,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_total_pending_entries_for_started_workspaces =
+        JsBigInt::from_u64(cx, rs_obj.total_pending_entries_for_started_workspaces);
+    js_obj.set(
+        cx,
+        "totalPendingEntriesForStartedWorkspaces",
+        js_total_pending_entries_for_started_workspaces,
+    )?;
+    let js_total_pending_bytes_for_started_workspaces =
+        JsBigInt::from_u64(cx, rs_obj.total_pending_bytes_for_started_workspaces);
+    js_obj.set(
+        cx,
+        "totalPendingBytesForStartedWorkspaces",
+        js_total_pending_bytes_for_started_workspaces,
+    )?;
+    let js_per_workspace = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.per_workspace.len());
+        for (i, elem) in rs_obj.per_workspace.into_iter().enumerate() {
+            let js_elem = struct_client_get_outbound_sync_backlog_item_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "perWorkspace", js_per_workspace)?;
+    Ok(js_obj)
+}
+
+// ClientGetOutboundSyncBacklogItem
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_item_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ClientGetOutboundSyncBacklogItem> {
+    let realm_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let pending_entries = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "pendingEntries")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let pending_bytes = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "pendingBytes")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    Ok(libparsec::ClientGetOutboundSyncBacklogItem {
+        realm_id,
+        pending_entries,
+        pending_bytes,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_item_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetOutboundSyncBacklogItem,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_realm_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.realm_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "realmId", js_realm_id)?;
+    let js_pending_entries = JsBigInt::from_u64(cx, rs_obj.pending_entries);
+    js_obj.set(cx, "pendingEntries", js_pending_entries)?;
+    let js_pending_bytes = JsBigInt::from_u64(cx, rs_obj.pending_bytes);
+    js_obj.set(cx, "pendingBytes", js_pending_bytes)?;
     Ok(js_obj)
 }
 
@@ -1639,6 +1897,190 @@ fn struct_client_info_rs_to_js<'a>(
     js_obj.set(cx, "isOrganizationExpired", js_is_organization_expired)?;
     let js_must_accept_tos = JsBoolean::new(cx, rs_obj.must_accept_tos);
     js_obj.set(cx, "mustAcceptTos", js_must_accept_tos)?;
+    Ok(js_obj)
+}
+
+// CryptPadConfig
+
+#[allow(dead_code)]
+fn struct_crypt_pad_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CryptPadConfig> {
+    let server_url = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverUrl")?;
+        js_val.value(cx)
+    };
+    Ok(libparsec::CryptPadConfig { server_url })
+}
+
+#[allow(dead_code)]
+fn struct_crypt_pad_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CryptPadConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_server_url = JsString::try_new(cx, rs_obj.server_url).or_throw(cx)?;
+    js_obj.set(cx, "serverUrl", js_server_url)?;
+    Ok(js_obj)
+}
+
+// CryptpadSessionKeys
+
+#[allow(dead_code)]
+fn struct_cryptpad_session_keys_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CryptpadSessionKeys> {
+    let view_key = {
+        let js_val: Handle<JsString> = obj.get(cx, "viewKey")?;
+        js_val.value(cx)
+    };
+    let edit_key = {
+        let js_val: Handle<JsValue> = obj.get(cx, "editKey")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
+    Ok(libparsec::CryptpadSessionKeys { view_key, edit_key })
+}
+
+#[allow(dead_code)]
+fn struct_cryptpad_session_keys_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CryptpadSessionKeys,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_view_key = JsString::try_new(cx, rs_obj.view_key).or_throw(cx)?;
+    js_obj.set(cx, "viewKey", js_view_key)?;
+    let js_edit_key = match rs_obj.edit_key {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "editKey", js_edit_key)?;
+    Ok(js_obj)
+}
+
+// DeviceAccessStrategy
+
+#[allow(dead_code)]
+fn struct_device_access_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceAccessStrategy> {
+    let key_file = {
+        let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let totp_protection = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpProtection")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsArray, _>(cx)?;
+                Some((
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                    libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, 1)?;
+                        {
+                            #[allow(clippy::unnecessary_mut_passed)]
+                            match js_item.as_slice(cx).try_into() {
+                                Ok(val) => val,
+                                // err can't infer type in some cases, because of the previous `try_into`
+                                #[allow(clippy::useless_format)]
+                                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                            }
+                        }
+                    },
+                ))
+            }
+        }
+    };
+    let primary_protection = {
+        let js_val: Handle<JsObject> = obj.get(cx, "primaryProtection")?;
+        variant_device_primary_protection_strategy_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::DeviceAccessStrategy {
+        key_file,
+        totp_protection,
+        primary_protection,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_access_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceAccessStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_key_file = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.key_file) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "keyFile", js_key_file)?;
+    let js_totp_protection = match rs_obj.totp_protection {
+        Some(elem) => {
+            let (x0, x1) = elem;
+            let js_array = JsArray::new(cx, 2);
+            let js_value = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(x0) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, 0, js_value)?;
+            let js_value = {
+                let rs_buff = { x1 };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_array.set(cx, 1, js_value)?;
+            js_array
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpProtection", js_totp_protection)?;
+    let js_primary_protection =
+        variant_device_primary_protection_strategy_rs_to_js(cx, rs_obj.primary_protection)?;
+    js_obj.set(cx, "primaryProtection", js_primary_protection)?;
     Ok(js_obj)
 }
 
@@ -2236,6 +2678,99 @@ fn struct_device_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// DeviceSaveStrategy
+
+#[allow(dead_code)]
+fn struct_device_save_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceSaveStrategy> {
+    let totp_protection = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpProtection")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsArray, _>(cx)?;
+                Some((
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                    libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, 1)?;
+                        {
+                            #[allow(clippy::unnecessary_mut_passed)]
+                            match js_item.as_slice(cx).try_into() {
+                                Ok(val) => val,
+                                // err can't infer type in some cases, because of the previous `try_into`
+                                #[allow(clippy::useless_format)]
+                                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                            }
+                        }
+                    },
+                ))
+            }
+        }
+    };
+    let primary_protection = {
+        let js_val: Handle<JsObject> = obj.get(cx, "primaryProtection")?;
+        variant_device_primary_protection_strategy_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::DeviceSaveStrategy {
+        totp_protection,
+        primary_protection,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_save_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceSaveStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_totp_protection = match rs_obj.totp_protection {
+        Some(elem) => {
+            let (x0, x1) = elem;
+            let js_array = JsArray::new(cx, 2);
+            let js_value = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(x0) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, 0, js_value)?;
+            let js_value = {
+                let rs_buff = { x1 };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_array.set(cx, 1, js_value)?;
+            js_array
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpProtection", js_totp_protection)?;
+    let js_primary_protection =
+        variant_device_primary_protection_strategy_rs_to_js(cx, rs_obj.primary_protection)?;
+    js_obj.set(cx, "primaryProtection", js_primary_protection)?;
+    Ok(js_obj)
+}
+
 // FileStat
 
 #[allow(dead_code)]
@@ -2442,22 +2977,39 @@ fn struct_new_invitation_info_js_to_rs<'a>(
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::NewInvitationInfo> {
     let addr = {
-        let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+        let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+        (
+            {
+                let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            },
+            {
+                let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            },
+        )
     };
     let token = {
         let js_val: Handle<JsString> = obj.get(cx, "token")?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -2485,21 +3037,37 @@ fn struct_new_invitation_info_rs_to_js<'a>(
     rs_obj: libparsec::NewInvitationInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_addr = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                Ok(addr.to_url().into())
-            };
-        match custom_to_rs_string(rs_obj.addr) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
+    let js_addr = {
+        let (x0, x1) = rs_obj.addr;
+        let js_array = JsArray::new(cx, 2);
+        let js_value = JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(x0) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err.to_string()),
+            }
+        })
+        .or_throw(cx)?;
+        js_array.set(cx, 0, js_value)?;
+        let js_value = JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+            match custom_to_rs_string(x1) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err.to_string()),
+            }
+        })
+        .or_throw(cx)?;
+        js_array.set(cx, 1, js_value)?;
+        js_array
+    };
     js_obj.set(cx, "addr", js_addr)?;
     let js_token = JsString::try_new(cx, {
         let custom_to_rs_string =
-            |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+            |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.token) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err.to_string()),
@@ -2513,6 +3081,81 @@ fn struct_new_invitation_info_rs_to_js<'a>(
     )
     .or_throw(cx)?;
     js_obj.set(cx, "emailSentStatus", js_email_sent_status)?;
+    Ok(js_obj)
+}
+
+// OpenBaoAuthConfig
+
+#[allow(dead_code)]
+fn struct_open_bao_auth_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OpenBaoAuthConfig> {
+    let id = {
+        let js_val: Handle<JsString> = obj.get(cx, "id")?;
+        js_val.value(cx)
+    };
+    let mount_path = {
+        let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
+        js_val.value(cx)
+    };
+    let name = {
+        let js_val: Handle<JsString> = obj.get(cx, "name")?;
+        js_val.value(cx)
+    };
+    let help_link = {
+        let js_val: Handle<JsValue> = obj.get(cx, "helpLink")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
+    let icon = {
+        let js_val: Handle<JsValue> = obj.get(cx, "icon")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
+    Ok(libparsec::OpenBaoAuthConfig {
+        id,
+        mount_path,
+        name,
+        help_link,
+        icon,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_open_bao_auth_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OpenBaoAuthConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_id = JsString::try_new(cx, rs_obj.id).or_throw(cx)?;
+    js_obj.set(cx, "id", js_id)?;
+    let js_mount_path = JsString::try_new(cx, rs_obj.mount_path).or_throw(cx)?;
+    js_obj.set(cx, "mountPath", js_mount_path)?;
+    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
+    js_obj.set(cx, "name", js_name)?;
+    let js_help_link = match rs_obj.help_link {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "helpLink", js_help_link)?;
+    let js_icon = match rs_obj.icon {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "icon", js_icon)?;
     Ok(js_obj)
 }
 
@@ -2542,7 +3185,7 @@ fn struct_open_bao_config_js_to_rs<'a>(
             let mut v = Vec::with_capacity(size as usize);
             for i in 0..size {
                 let js_item: Handle<JsObject> = js_val.get(cx, i)?;
-                v.push(variant_open_bao_auth_config_js_to_rs(cx, js_item)?);
+                v.push(struct_open_bao_auth_config_js_to_rs(cx, js_item)?);
             }
             v
         }
@@ -2571,7 +3214,7 @@ fn struct_open_bao_config_rs_to_js<'a>(
         // JsArray::new allocates with `undefined` value, that's why we `set` value
         let js_array = JsArray::new(cx, rs_obj.auths.len());
         for (i, elem) in rs_obj.auths.into_iter().enumerate() {
-            let js_elem = variant_open_bao_auth_config_rs_to_js(cx, elem)?;
+            let js_elem = struct_open_bao_auth_config_rs_to_js(cx, elem)?;
             js_array.set(cx, i as u32, js_elem)?;
         }
         js_array
@@ -2679,559 +3322,6 @@ fn struct_organization_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// PKILocalPendingEnrollment
-
-#[allow(dead_code)]
-fn struct_pki_local_pending_enrollment_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::PKILocalPendingEnrollment> {
-    let cert_ref = {
-        let js_val: Handle<JsObject> = obj.get(cx, "certRef")?;
-        struct_x509_certificate_reference_js_to_rs(cx, js_val)?
-    };
-    let addr = {
-        let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let submitted_on = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
-        {
-            let v = js_val.value(cx);
-            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                    .map_err(|_| "Out-of-bound datetime")
-            };
-            match custom_from_rs_f64(v) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let enrollment_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let payload = {
-        let js_val: Handle<JsObject> = obj.get(cx, "payload")?;
-        struct_pki_enrollment_submit_payload_js_to_rs(cx, js_val)?
-    };
-    let encrypted_key = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "encryptedKey")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let encrypted_key_algo = {
-        let js_val: Handle<JsString> = obj.get(cx, "encryptedKeyAlgo")?;
-        {
-            match js_val.value(cx).parse() {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let ciphertext = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "ciphertext")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    Ok(libparsec::PKILocalPendingEnrollment {
-        cert_ref,
-        addr,
-        submitted_on,
-        enrollment_id,
-        payload,
-        encrypted_key,
-        encrypted_key_algo,
-        ciphertext,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_pki_local_pending_enrollment_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PKILocalPendingEnrollment,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_cert_ref = struct_x509_certificate_reference_rs_to_js(cx, rs_obj.cert_ref)?;
-    js_obj.set(cx, "certRef", js_cert_ref)?;
-    let js_addr = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> {
-                Ok(addr.to_url().into())
-            };
-        match custom_to_rs_string(rs_obj.addr) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "addr", js_addr)?;
-    let js_submitted_on = JsNumber::new(cx, {
-        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-        };
-        match custom_to_rs_f64(rs_obj.submitted_on) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    });
-    js_obj.set(cx, "submittedOn", js_submitted_on)?;
-    let js_enrollment_id = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.enrollment_id) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
-    let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(cx, rs_obj.payload)?;
-    js_obj.set(cx, "payload", js_payload)?;
-    let js_encrypted_key = {
-        let rs_buff = { rs_obj.encrypted_key };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "encryptedKey", js_encrypted_key)?;
-    let js_encrypted_key_algo = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
-        match custom_to_rs_string(rs_obj.encrypted_key_algo) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "encryptedKeyAlgo", js_encrypted_key_algo)?;
-    let js_ciphertext = {
-        let rs_buff = { rs_obj.ciphertext };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "ciphertext", js_ciphertext)?;
-    Ok(js_obj)
-}
-
-// PkiEnrollmentAnswerPayload
-
-#[allow(dead_code)]
-fn struct_pki_enrollment_answer_payload_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::PkiEnrollmentAnswerPayload> {
-    let user_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
-                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let device_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
-                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let device_label = {
-        let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let profile = {
-        let js_val: Handle<JsString> = obj.get(cx, "profile")?;
-        {
-            let js_string = js_val.value(cx);
-            enum_user_profile_js_to_rs(cx, js_string.as_str())?
-        }
-    };
-    let root_verify_key = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "rootVerifyKey")?;
-        {
-            #[allow(clippy::unnecessary_mut_passed)]
-            match js_val.as_slice(cx).try_into() {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    Ok(libparsec::PkiEnrollmentAnswerPayload {
-        user_id,
-        device_id,
-        device_label,
-        profile,
-        root_verify_key,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_pki_enrollment_answer_payload_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentAnswerPayload,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_user_id = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.user_id) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "userId", js_user_id)?;
-    let js_device_id = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.device_id) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "deviceId", js_device_id)?;
-    let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
-    js_obj.set(cx, "deviceLabel", js_device_label)?;
-    let js_profile =
-        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.profile)).or_throw(cx)?;
-    js_obj.set(cx, "profile", js_profile)?;
-    let js_root_verify_key = {
-        let rs_buff = { rs_obj.root_verify_key };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "rootVerifyKey", js_root_verify_key)?;
-    Ok(js_obj)
-}
-
-// PkiEnrollmentSubmitPayload
-
-#[allow(dead_code)]
-fn struct_pki_enrollment_submit_payload_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::PkiEnrollmentSubmitPayload> {
-    let verify_key = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "verifyKey")?;
-        {
-            #[allow(clippy::unnecessary_mut_passed)]
-            match js_val.as_slice(cx).try_into() {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let public_key = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "publicKey")?;
-        {
-            #[allow(clippy::unnecessary_mut_passed)]
-            match js_val.as_slice(cx).try_into() {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let device_label = {
-        let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    Ok(libparsec::PkiEnrollmentSubmitPayload {
-        verify_key,
-        public_key,
-        device_label,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_pki_enrollment_submit_payload_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentSubmitPayload,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_verify_key = {
-        let rs_buff = { rs_obj.verify_key };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "verifyKey", js_verify_key)?;
-    let js_public_key = {
-        let rs_buff = { rs_obj.public_key };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "publicKey", js_public_key)?;
-    let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
-    js_obj.set(cx, "deviceLabel", js_device_label)?;
-    Ok(js_obj)
-}
-
-// RawPkiEnrollmentListItem
-
-#[allow(dead_code)]
-fn struct_raw_pki_enrollment_list_item_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::RawPkiEnrollmentListItem> {
-    let enrollment_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let submitted_on = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
-        {
-            let v = js_val.value(cx);
-            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                    .map_err(|_| "Out-of-bound datetime")
-            };
-            match custom_from_rs_f64(v) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let der_x509_certificate = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derX509Certificate")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let intermediate_der_x509_certificates = {
-        let js_val: Handle<JsArray> = obj.get(cx, "intermediateDerX509Certificates")?;
-        {
-            let size = js_val.len(cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, i)?;
-                v.push({
-                    let custom_from_rs_bytes =
-                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_item.as_slice(cx)) {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
-                    }
-                });
-            }
-            v
-        }
-    };
-    let payload_signature = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payloadSignature")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let payload_signature_algorithm = {
-        let js_val: Handle<JsString> = obj.get(cx, "payloadSignatureAlgorithm")?;
-        {
-            match js_val.value(cx).parse() {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let payload = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payload")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    Ok(libparsec::RawPkiEnrollmentListItem {
-        enrollment_id,
-        submitted_on,
-        der_x509_certificate,
-        intermediate_der_x509_certificates,
-        payload_signature,
-        payload_signature_algorithm,
-        payload,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_raw_pki_enrollment_list_item_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::RawPkiEnrollmentListItem,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_enrollment_id = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.enrollment_id) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
-    let js_submitted_on = JsNumber::new(cx, {
-        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-        };
-        match custom_to_rs_f64(rs_obj.submitted_on) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    });
-    js_obj.set(cx, "submittedOn", js_submitted_on)?;
-    let js_der_x509_certificate = {
-        let rs_buff = { rs_obj.der_x509_certificate };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "derX509Certificate", js_der_x509_certificate)?;
-    let js_intermediate_der_x509_certificates = {
-        // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.intermediate_der_x509_certificates.len());
-        for (i, elem) in rs_obj
-            .intermediate_der_x509_certificates
-            .into_iter()
-            .enumerate()
-        {
-            let js_elem = {
-                let rs_buff = { elem };
-                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-                js_buff
-            };
-            js_array.set(cx, i as u32, js_elem)?;
-        }
-        js_array
-    };
-    js_obj.set(
-        cx,
-        "intermediateDerX509Certificates",
-        js_intermediate_der_x509_certificates,
-    )?;
-    let js_payload_signature = {
-        let rs_buff = { rs_obj.payload_signature };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "payloadSignature", js_payload_signature)?;
-    let js_payload_signature_algorithm = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
-        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(
-        cx,
-        "payloadSignatureAlgorithm",
-        js_payload_signature_algorithm,
-    )?;
-    let js_payload = {
-        let rs_buff = { rs_obj.payload };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "payload", js_payload)?;
-    Ok(js_obj)
-}
-
 // ServerConfig
 
 #[allow(dead_code)]
@@ -3242,6 +3332,17 @@ fn struct_server_config_js_to_rs<'a>(
     let account = {
         let js_val: Handle<JsObject> = obj.get(cx, "account")?;
         variant_account_config_js_to_rs(cx, js_val)?
+    };
+    let cryptpad = {
+        let js_val: Handle<JsValue> = obj.get(cx, "cryptpad")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_crypt_pad_config_js_to_rs(cx, js_val)?)
+            }
+        }
     };
     let organization_bootstrap = {
         let js_val: Handle<JsObject> = obj.get(cx, "organizationBootstrap")?;
@@ -3258,10 +3359,38 @@ fn struct_server_config_js_to_rs<'a>(
             }
         }
     };
+    let advisory_device_file_protection = {
+        let js_val: Handle<JsArray> = obj.get(cx, "advisoryDeviceFileProtection")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(struct_advisory_device_file_protection_js_to_rs(
+                    cx, js_item,
+                )?);
+            }
+            v
+        }
+    };
+    let server_version = {
+        let js_val: Handle<JsValue> = obj.get(cx, "serverVersion")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
     Ok(libparsec::ServerConfig {
         account,
+        cryptpad,
         organization_bootstrap,
         openbao,
+        advisory_device_file_protection,
+        server_version,
     })
 }
 
@@ -3273,6 +3402,11 @@ fn struct_server_config_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_account = variant_account_config_rs_to_js(cx, rs_obj.account)?;
     js_obj.set(cx, "account", js_account)?;
+    let js_cryptpad = match rs_obj.cryptpad {
+        Some(elem) => struct_crypt_pad_config_rs_to_js(cx, elem)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "cryptpad", js_cryptpad)?;
     let js_organization_bootstrap =
         variant_organization_bootstrap_config_rs_to_js(cx, rs_obj.organization_bootstrap)?;
     js_obj.set(cx, "organizationBootstrap", js_organization_bootstrap)?;
@@ -3281,6 +3415,29 @@ fn struct_server_config_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "openbao", js_openbao)?;
+    let js_advisory_device_file_protection = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.advisory_device_file_protection.len());
+        for (i, elem) in rs_obj
+            .advisory_device_file_protection
+            .into_iter()
+            .enumerate()
+        {
+            let js_elem = struct_advisory_device_file_protection_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(
+        cx,
+        "advisoryDeviceFileProtection",
+        js_advisory_device_file_protection,
+    )?;
+    let js_server_version = match rs_obj.server_version {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "serverVersion", js_server_version)?;
     Ok(js_obj)
 }
 
@@ -3299,9 +3456,19 @@ fn struct_server_organization_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "activeUsersLimit")?;
         variant_active_users_limit_js_to_rs(cx, js_val)?
     };
+    let realm_minimum_archiving_period_before_deletion = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "realmMinimumArchivingPeriodBeforeDeletion")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
     Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
+        realm_minimum_archiving_period_before_deletion,
     })
 }
 
@@ -3319,6 +3486,13 @@ fn struct_server_organization_config_rs_to_js<'a>(
     )?;
     let js_active_users_limit = variant_active_users_limit_rs_to_js(cx, rs_obj.active_users_limit)?;
     js_obj.set(cx, "activeUsersLimit", js_active_users_limit)?;
+    let js_realm_minimum_archiving_period_before_deletion =
+        JsBigInt::from_u64(cx, rs_obj.realm_minimum_archiving_period_before_deletion);
+    js_obj.set(
+        cx,
+        "realmMinimumArchivingPeriodBeforeDeletion",
+        js_realm_minimum_archiving_period_before_deletion,
+    )?;
     Ok(js_obj)
 }
 
@@ -3956,8 +4130,8 @@ fn struct_started_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_name = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentName")?;
+    let name = {
+        let js_val: Handle<JsString> = obj.get(cx, "name")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
@@ -3968,12 +4142,28 @@ fn struct_started_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_self_role = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentSelfRole")?;
+    let name_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "nameOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
+    let self_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "selfRole")?;
         {
             let js_string = js_val.value(cx);
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
         }
+    };
+    let self_role_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "selfRoleOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
+    let archiving_configuration = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfiguration")?;
+        variant_realm_archiving_configuration_js_to_rs(cx, js_val)?
+    };
+    let archiving_configuration_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfigurationOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
     };
     let mountpoints = {
         let js_val: Handle<JsArray> = obj.get(cx, "mountpoints")?;
@@ -4014,8 +4204,12 @@ fn struct_started_workspace_info_js_to_rs<'a>(
     Ok(libparsec::StartedWorkspaceInfo {
         client,
         id,
-        current_name,
-        current_self_role,
+        name,
+        name_origin,
+        self_role,
+        self_role_origin,
+        archiving_configuration,
+        archiving_configuration_origin,
         mountpoints,
     })
 }
@@ -4038,11 +4232,26 @@ fn struct_started_workspace_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
-    let js_current_name = JsString::try_new(cx, rs_obj.current_name).or_throw(cx)?;
-    js_obj.set(cx, "currentName", js_current_name)?;
-    let js_current_self_role =
-        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_self_role)).or_throw(cx)?;
-    js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
+    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
+    js_obj.set(cx, "name", js_name)?;
+    let js_name_origin = variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.name_origin)?;
+    js_obj.set(cx, "nameOrigin", js_name_origin)?;
+    let js_self_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_role)).or_throw(cx)?;
+    js_obj.set(cx, "selfRole", js_self_role)?;
+    let js_self_role_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.self_role_origin)?;
+    js_obj.set(cx, "selfRoleOrigin", js_self_role_origin)?;
+    let js_archiving_configuration =
+        variant_realm_archiving_configuration_rs_to_js(cx, rs_obj.archiving_configuration)?;
+    js_obj.set(cx, "archivingConfiguration", js_archiving_configuration)?;
+    let js_archiving_configuration_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.archiving_configuration_origin)?;
+    js_obj.set(
+        cx,
+        "archivingConfigurationOrigin",
+        js_archiving_configuration_origin,
+    )?;
     let js_mountpoints = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
         let js_array = JsArray::new(cx, rs_obj.mountpoints.len());
@@ -5056,6 +5265,193 @@ fn struct_user_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// UserX509CertificateDetails
+
+#[allow(dead_code)]
+fn struct_user_x509_certificate_details_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserX509CertificateDetails> {
+    let common_name = {
+        let js_val: Handle<JsString> = obj.get(cx, "commonName")?;
+        js_val.value(cx)
+    };
+    let subject = {
+        let js_val: Handle<JsArray> = obj.get(cx, "subject")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(variant_distinguished_name_value_js_to_rs(cx, js_item)?);
+            }
+            v
+        }
+    };
+    let issuer = {
+        let js_val: Handle<JsArray> = obj.get(cx, "issuer")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(variant_distinguished_name_value_js_to_rs(cx, js_item)?);
+            }
+            v
+        }
+    };
+    let not_before = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "notBefore")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let not_after = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "notAfter")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let serial = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serial")?;
+        js_val.as_slice(cx).to_vec()
+    };
+    let emails = {
+        let js_val: Handle<JsArray> = obj.get(cx, "emails")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                v.push({
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                });
+            }
+            v
+        }
+    };
+    let can_sign = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "canSign")?;
+        js_val.value(cx)
+    };
+    let can_encrypt = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "canEncrypt")?;
+        js_val.value(cx)
+    };
+    Ok(libparsec::UserX509CertificateDetails {
+        common_name,
+        subject,
+        issuer,
+        not_before,
+        not_after,
+        serial,
+        emails,
+        can_sign,
+        can_encrypt,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_user_x509_certificate_details_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserX509CertificateDetails,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_common_name = JsString::try_new(cx, rs_obj.common_name).or_throw(cx)?;
+    js_obj.set(cx, "commonName", js_common_name)?;
+    let js_subject = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.subject.len());
+        for (i, elem) in rs_obj.subject.into_iter().enumerate() {
+            let js_elem = variant_distinguished_name_value_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "subject", js_subject)?;
+    let js_issuer = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.issuer.len());
+        for (i, elem) in rs_obj.issuer.into_iter().enumerate() {
+            let js_elem = variant_distinguished_name_value_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "issuer", js_issuer)?;
+    let js_not_before = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.not_before) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "notBefore", js_not_before)?;
+    let js_not_after = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.not_after) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "notAfter", js_not_after)?;
+    let js_serial = {
+        let js_buff = JsTypedArray::from_slice(cx, rs_obj.serial.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "serial", js_serial)?;
+    let js_emails = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.emails.len());
+        for (i, elem) in rs_obj.emails.into_iter().enumerate() {
+            let js_elem = JsString::try_new(cx, {
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(elem) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "emails", js_emails)?;
+    let js_can_sign = JsBoolean::new(cx, rs_obj.can_sign);
+    js_obj.set(cx, "canSign", js_can_sign)?;
+    let js_can_encrypt = JsBoolean::new(cx, rs_obj.can_encrypt);
+    js_obj.set(cx, "canEncrypt", js_can_encrypt)?;
+    Ok(js_obj)
+}
+
 // WorkspaceHistoryFileStat
 
 #[allow(dead_code)]
@@ -5194,8 +5590,16 @@ fn struct_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_name = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentName")?;
+    let is_started = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isStarted")?;
+        js_val.value(cx)
+    };
+    let is_bootstrapped = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isBootstrapped")?;
+        js_val.value(cx)
+    };
+    let name = {
+        let js_val: Handle<JsString> = obj.get(cx, "name")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
@@ -5206,27 +5610,44 @@ fn struct_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_self_role = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentSelfRole")?;
+    let name_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "nameOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
+    let self_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "selfRole")?;
         {
             let js_string = js_val.value(cx);
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
         }
     };
-    let is_started = {
-        let js_val: Handle<JsBoolean> = obj.get(cx, "isStarted")?;
-        js_val.value(cx)
+    let self_role_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "selfRoleOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
     };
-    let is_bootstrapped = {
-        let js_val: Handle<JsBoolean> = obj.get(cx, "isBootstrapped")?;
+    let archiving_configuration = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfiguration")?;
+        variant_realm_archiving_configuration_js_to_rs(cx, js_val)?
+    };
+    let archiving_configuration_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfigurationOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
+    let can_self_promote_to_owner = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "canSelfPromoteToOwner")?;
         js_val.value(cx)
     };
     Ok(libparsec::WorkspaceInfo {
         id,
-        current_name,
-        current_self_role,
         is_started,
         is_bootstrapped,
+        name,
+        name_origin,
+        self_role,
+        self_role_origin,
+        archiving_configuration,
+        archiving_configuration_origin,
+        can_self_promote_to_owner,
     })
 }
 
@@ -5246,15 +5667,32 @@ fn struct_workspace_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
-    let js_current_name = JsString::try_new(cx, rs_obj.current_name).or_throw(cx)?;
-    js_obj.set(cx, "currentName", js_current_name)?;
-    let js_current_self_role =
-        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_self_role)).or_throw(cx)?;
-    js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
     let js_is_started = JsBoolean::new(cx, rs_obj.is_started);
     js_obj.set(cx, "isStarted", js_is_started)?;
     let js_is_bootstrapped = JsBoolean::new(cx, rs_obj.is_bootstrapped);
     js_obj.set(cx, "isBootstrapped", js_is_bootstrapped)?;
+    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
+    js_obj.set(cx, "name", js_name)?;
+    let js_name_origin = variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.name_origin)?;
+    js_obj.set(cx, "nameOrigin", js_name_origin)?;
+    let js_self_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_role)).or_throw(cx)?;
+    js_obj.set(cx, "selfRole", js_self_role)?;
+    let js_self_role_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.self_role_origin)?;
+    js_obj.set(cx, "selfRoleOrigin", js_self_role_origin)?;
+    let js_archiving_configuration =
+        variant_realm_archiving_configuration_rs_to_js(cx, rs_obj.archiving_configuration)?;
+    js_obj.set(cx, "archivingConfiguration", js_archiving_configuration)?;
+    let js_archiving_configuration_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.archiving_configuration_origin)?;
+    js_obj.set(
+        cx,
+        "archivingConfigurationOrigin",
+        js_archiving_configuration_origin,
+    )?;
+    let js_can_self_promote_to_owner = JsBoolean::new(cx, rs_obj.can_self_promote_to_owner);
+    js_obj.set(cx, "canSelfPromoteToOwner", js_can_self_promote_to_owner)?;
     Ok(js_obj)
 }
 
@@ -5330,6 +5768,96 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceUserRoleChange
+
+#[allow(dead_code)]
+fn struct_workspace_user_role_change_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceUserRoleChange> {
+    let granted_by = {
+        let js_val: Handle<JsString> = obj.get(cx, "grantedBy")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let granted_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "grantedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let role = {
+        let js_val: Handle<JsValue> = obj.get(cx, "role")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    let js_string = js_val.value(cx);
+                    enum_realm_role_js_to_rs(cx, js_string.as_str())?
+                })
+            }
+        }
+    };
+    Ok(libparsec::WorkspaceUserRoleChange {
+        granted_by,
+        granted_on,
+        role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_user_role_change_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceUserRoleChange,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_granted_by = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.granted_by) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "grantedBy", js_granted_by)?;
+    let js_granted_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.granted_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "grantedOn", js_granted_on)?;
+    let js_role = match rs_obj.role {
+        Some(elem) => JsString::try_new(cx, enum_realm_role_rs_to_js(elem))
+            .or_throw(cx)?
+            .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "role", js_role)?;
+    Ok(js_obj)
+}
+
 // X509CertificateReference
 
 #[allow(dead_code)]
@@ -5337,16 +5865,15 @@ fn struct_x509_certificate_reference_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::X509CertificateReference> {
-    let uris = {
-        let js_val: Handle<JsArray> = obj.get(cx, "uris")?;
+    let uri = {
+        let js_val: Handle<JsValue> = obj.get(cx, "uri")?;
         {
-            let size = js_val.len(cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
-                v.push(variant_x509_uri_flavor_value_js_to_rs(cx, js_item)?);
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_x509_pkcs11_uri_js_to_rs(cx, js_val)?)
             }
-            v
         }
     };
     let hash = {
@@ -5363,16 +5890,18 @@ fn struct_x509_certificate_reference_js_to_rs<'a>(
         }
     };
     {
-        let custom_init = |uris: Vec<libparsec::X509URIFlavorValue>,
+        let custom_init = |uri: Option<libparsec::X509Pkcs11URI>,
                            hash: libparsec::X509CertificateHash|
          -> Result<_, String> {
-            let mut cert_ref = libparsec::X509CertificateReference::from(hash);
-            for uri in uris {
-                cert_ref = cert_ref.add_or_replace_uri_wrapped(uri);
-            }
-            Ok(cert_ref)
+            Ok(libparsec::X509CertificateReference {
+                uri: match uri {
+                    Some(uri) => libparsec::Maybe::Present(uri),
+                    None => libparsec::Maybe::Absent,
+                },
+                hash,
+            })
         };
-        custom_init(uris, hash).or_else(|e| cx.throw_error(e))
+        custom_init(uri, hash).or_else(|e| cx.throw_error(e))
     }
 }
 
@@ -5382,27 +5911,23 @@ fn struct_x509_certificate_reference_rs_to_js<'a>(
     rs_obj: libparsec::X509CertificateReference,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_uris = {
+    let js_uri = {
         let custom_getter =
-            |o: &libparsec::X509CertificateReference| -> Vec<libparsec::X509URIFlavorValue> {
-                o.uris().cloned().collect()
+            |o: &libparsec::X509CertificateReference| -> Option<libparsec::X509Pkcs11URI> {
+                match &o.uri {
+                    libparsec::Maybe::Present(uri) => Some(uri.to_owned()),
+                    libparsec::Maybe::Absent => None,
+                }
             };
-        {
-            // JsArray::new allocates with `undefined` value, that's why we `set` value
-            let js_array = JsArray::new(cx, custom_getter(&rs_obj).len());
-            for (i, elem) in custom_getter(&rs_obj).into_iter().enumerate() {
-                let js_elem = variant_x509_uri_flavor_value_rs_to_js(cx, elem)?;
-                js_array.set(cx, i as u32, js_elem)?;
-            }
-            js_array
+        match custom_getter(&rs_obj) {
+            Some(elem) => struct_x509_pkcs11_uri_rs_to_js(cx, elem)?.as_value(cx),
+            None => JsNull::new(cx).as_value(cx),
         }
     };
-    js_obj.set(cx, "uris", js_uris)?;
+    js_obj.set(cx, "uri", js_uri)?;
     let js_hash = {
         let custom_getter =
-            |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash {
-                o.hash.clone()
-            };
+            |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash { o.hash };
         JsString::try_new(cx, {
             let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
                 Ok(std::string::ToString::to_string(&v))
@@ -5418,63 +5943,147 @@ fn struct_x509_certificate_reference_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// X509WindowsCngURI
+// X509Pkcs11URI
 
 #[allow(dead_code)]
-fn struct_x509_windows_cng_uri_js_to_rs<'a>(
+fn struct_x509_pkcs11_uri_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::X509WindowsCngURI> {
-    let issuer = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "issuer")?;
+) -> NeonResult<libparsec::X509Pkcs11URI> {
+    let id = {
+        let js_val: Handle<JsValue> = obj.get(cx, "id")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
+                Some({
+                    let custom_from_rs_bytes =
+                        |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some cases, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                })
+            }
+        }
+    };
+    let label = {
+        let js_val: Handle<JsValue> = obj.get(cx, "label")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
+                Some({
+                    let custom_from_rs_bytes =
+                        |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some cases, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                })
+            }
+        }
+    };
+    let der_issuer = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derIssuer")?;
         {
             let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
+                // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
         }
     };
-    let serial_number = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serialNumber")?;
+    let der_subject = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derSubject")?;
         {
             let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
+                // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
                 Err(err) => return cx.throw_type_error(format!("{}", err)),
             }
         }
     };
-    Ok(libparsec::X509WindowsCngURI {
-        issuer,
-        serial_number,
+    let serial = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serial")?;
+        {
+            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some cases, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    Ok(libparsec::X509Pkcs11URI {
+        id,
+        label,
+        der_issuer,
+        der_subject,
+        serial,
     })
 }
 
 #[allow(dead_code)]
-fn struct_x509_windows_cng_uri_rs_to_js<'a>(
+fn struct_x509_pkcs11_uri_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::X509WindowsCngURI,
+    rs_obj: libparsec::X509Pkcs11URI,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_issuer = {
-        let rs_buff = { rs_obj.issuer };
+    let js_id = match rs_obj.id {
+        Some(elem) => {
+            let rs_buff = { elem };
+            let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+            js_buff
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "id", js_id)?;
+    let js_label = match rs_obj.label {
+        Some(elem) => {
+            let rs_buff = { elem };
+            let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+            js_buff
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "label", js_label)?;
+    let js_der_issuer = {
+        let rs_buff = { rs_obj.der_issuer };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
-    js_obj.set(cx, "issuer", js_issuer)?;
-    let js_serial_number = {
-        let rs_buff = { rs_obj.serial_number };
+    js_obj.set(cx, "derIssuer", js_der_issuer)?;
+    let js_der_subject = {
+        let rs_buff = { rs_obj.der_subject };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
-    js_obj.set(cx, "serialNumber", js_serial_number)?;
+    js_obj.set(cx, "derSubject", js_der_subject)?;
+    let js_serial = {
+        let rs_buff = { rs_obj.serial };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "serial", js_serial)?;
     Ok(js_obj)
 }
 
@@ -5519,13 +6128,32 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs<'a>(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
-            let certificate_reference = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            let pki_sign_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiSignPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_encrypt_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiEncryptPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-                    certificate_reference,
+                    pki_sign_private_key_handle,
+                    pki_encrypt_private_key_handle,
                 },
             )
         }
@@ -5566,15 +6194,27 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-            certificate_reference,
+            pki_sign_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
-            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+            let js_pki_sign_private_key_handle =
+                JsNumber::new(cx, pki_sign_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiSignPrivateKeyHandle",
+                js_pki_sign_private_key_handle,
+            )?;
+            let js_pki_encrypt_private_key_handle =
+                JsNumber::new(cx, pki_encrypt_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiEncryptPrivateKeyHandle",
+                js_pki_encrypt_private_key_handle,
+            )?;
         }
     }
     Ok(js_obj)
@@ -5596,7 +6236,7 @@ fn variant_account_auth_method_strategy_js_to_rs<'a>(
                     #[allow(clippy::unnecessary_mut_passed)]
                     match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
+                        // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
@@ -5762,68 +6402,56 @@ fn variant_account_create_registration_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess")
-                    .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal")
-                .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::Internal{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::KeyringError{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorKeyringError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceBadAccessStrategy{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceCiphertextKeyGenerationFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline")
-                .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::Offline{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -6199,7 +6827,7 @@ fn variant_account_login_strategy_js_to_rs<'a>(
                     #[allow(clippy::unnecessary_mut_passed)]
                     match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
+                        // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
                         Err(err) => return cx.throw_type_error(format!("{}", err)),
                     }
@@ -6426,6 +7054,11 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountRegisterNewDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorNoSpaceAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountRegisterNewDeviceError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorOffline").or_throw(cx)?;
@@ -6445,11 +7078,6 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
                 "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline",
             )
             .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::AccountRegisterNewDeviceError::TimestampOutOfBallpark { .. } => {
@@ -6478,8 +7106,8 @@ fn variant_active_users_limit_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "ActiveUsersLimitLimitedTo" => {
-            let x0 = {
-                let js_val: Handle<JsBigInt> = obj.get(cx, "x0")?;
+            let x1 = {
+                let js_val: Handle<JsBigInt> = obj.get(cx, "x1")?;
                 {
                     let v = js_val
                         .to_u64(cx)
@@ -6487,7 +7115,7 @@ fn variant_active_users_limit_js_to_rs<'a>(
                     v
                 }
             };
-            Ok(libparsec::ActiveUsersLimit::LimitedTo(x0))
+            Ok(libparsec::ActiveUsersLimit::LimitedTo(x1))
         }
         "ActiveUsersLimitNoLimit" => Ok(libparsec::ActiveUsersLimit::NoLimit {}),
         _ => cx.throw_type_error("Object is not a ActiveUsersLimit"),
@@ -6501,14 +7129,71 @@ fn variant_active_users_limit_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::ActiveUsersLimit::LimitedTo(x0, ..) => {
+        libparsec::ActiveUsersLimit::LimitedTo(x1, ..) => {
             let js_tag = JsString::try_new(cx, "ActiveUsersLimitLimitedTo").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = JsBigInt::from_u64(cx, x0);
-            js_obj.set(cx, "x0", js_x0)?;
+            let js_x1 = JsBigInt::from_u64(cx, x1);
+            js_obj.set(cx, "x1", js_x1)?;
         }
         libparsec::ActiveUsersLimit::NoLimit { .. } => {
             let js_tag = JsString::try_new(cx, "ActiveUsersLimitNoLimit").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AddrError
+
+#[allow(dead_code)]
+fn variant_addr_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AddrError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AddrError::DuplicateParam(x1, ..) => {
+            let js_tag = JsString::try_new(cx, "AddrErrorDuplicateParam").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
+        }
+        libparsec::AddrError::InvalidOrganizationID { .. } => {
+            let js_tag = JsString::try_new(cx, "AddrErrorInvalidOrganizationID").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AddrError::InvalidParamValue { param, help, .. } => {
+            let js_tag = JsString::try_new(cx, "AddrErrorInvalidParamValue").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_param = JsString::try_new(cx, param).or_throw(cx)?;
+            js_obj.set(cx, "param", js_param)?;
+            let js_help = JsString::try_new(cx, help).or_throw(cx)?;
+            js_obj.set(cx, "help", js_help)?;
+        }
+        libparsec::AddrError::InvalidUrl { .. } => {
+            let js_tag = JsString::try_new(cx, "AddrErrorInvalidUrl").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AddrError::InvalidUrlScheme { expected, .. } => {
+            let js_tag = JsString::try_new(cx, "AddrErrorInvalidUrlScheme").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_expected = JsString::try_new(cx, expected).or_throw(cx)?;
+            js_obj.set(cx, "expected", js_expected)?;
+        }
+        libparsec::AddrError::MissingParam(x1, ..) => {
+            let js_tag = JsString::try_new(cx, "AddrErrorMissingParam").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
+        }
+        libparsec::AddrError::NotARedirection { .. } => {
+            let js_tag = JsString::try_new(cx, "AddrErrorNotARedirection").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AddrError::ShouldNotHaveAPath { .. } => {
+            let js_tag = JsString::try_new(cx, "AddrErrorShouldNotHaveAPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -6864,9 +7549,9 @@ fn variant_archive_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ArchiveDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ArchiveDeviceError::StorageNotAvailable { .. } => {
+        libparsec::ArchiveDeviceError::NoSpaceAvailable { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ArchiveDeviceErrorStorageNotAvailable").or_throw(cx)?;
+                JsString::try_new(cx, "ArchiveDeviceErrorNoSpaceAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -6898,6 +7583,13 @@ fn variant_async_enrollment_identity_system_js_to_rs<'a>(
                 x509_root_certificate_common_name,
                 x509_root_certificate_subject,
             })
+        }
+        "AsyncEnrollmentIdentitySystemPKICorrupted" => {
+            let reason = {
+                let js_val: Handle<JsString> = obj.get(cx, "reason")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::AsyncEnrollmentIdentitySystem::PKICorrupted { reason })
         }
         _ => cx.throw_type_error("Object is not a AsyncEnrollmentIdentitySystem"),
     }
@@ -6938,6 +7630,13 @@ fn variant_async_enrollment_identity_system_rs_to_js<'a>(
                 "x509RootCertificateSubject",
                 js_x509_root_certificate_subject,
             )?;
+        }
+        libparsec::AsyncEnrollmentIdentitySystem::PKICorrupted { reason, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AsyncEnrollmentIdentitySystemPKICorrupted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_reason = JsString::try_new(cx, reason).or_throw(cx)?;
+            js_obj.set(cx, "reason", js_reason)?;
         }
     }
     Ok(js_obj)
@@ -7102,6 +7801,91 @@ fn variant_available_pending_async_enrollment_identity_system_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AvailablePkiCertificate
+
+#[allow(dead_code)]
+fn variant_available_pki_certificate_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AvailablePkiCertificate> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AvailablePkiCertificateInvalid" => {
+            let reference = {
+                let js_val: Handle<JsObject> = obj.get(cx, "reference")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            let invalid_reason = {
+                let js_val: Handle<JsObject> = obj.get(cx, "invalidReason")?;
+                variant_user_x509_certificate_load_error_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AvailablePkiCertificate::Invalid {
+                reference,
+                invalid_reason,
+            })
+        }
+        "AvailablePkiCertificateValid" => {
+            let reference = {
+                let js_val: Handle<JsObject> = obj.get(cx, "reference")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            let friendly_name = {
+                let js_val: Handle<JsString> = obj.get(cx, "friendlyName")?;
+                js_val.value(cx)
+            };
+            let details = {
+                let js_val: Handle<JsObject> = obj.get(cx, "details")?;
+                struct_user_x509_certificate_details_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AvailablePkiCertificate::Valid {
+                reference,
+                friendly_name,
+                details,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a AvailablePkiCertificate"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_available_pki_certificate_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AvailablePkiCertificate,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AvailablePkiCertificate::Invalid {
+            reference,
+            invalid_reason,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailablePkiCertificateInvalid").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_reference = struct_x509_certificate_reference_rs_to_js(cx, reference)?;
+            js_obj.set(cx, "reference", js_reference)?;
+            let js_invalid_reason =
+                variant_user_x509_certificate_load_error_rs_to_js(cx, invalid_reason)?;
+            js_obj.set(cx, "invalidReason", js_invalid_reason)?;
+        }
+        libparsec::AvailablePkiCertificate::Valid {
+            reference,
+            friendly_name,
+            details,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailablePkiCertificateValid").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_reference = struct_x509_certificate_reference_rs_to_js(cx, reference)?;
+            js_obj.set(cx, "reference", js_reference)?;
+            let js_friendly_name = JsString::try_new(cx, friendly_name).or_throw(cx)?;
+            js_obj.set(cx, "friendlyName", js_friendly_name)?;
+            let js_details = struct_user_x509_certificate_details_rs_to_js(cx, details)?;
+            js_obj.set(cx, "details", js_details)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -7150,6 +7934,12 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::BootstrapOrganizationError::SaveDeviceNoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
             let js_tag = JsString::try_new(
                 cx,
@@ -7164,14 +7954,6 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(
                 cx,
                 "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline",
-            )
-            .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceStorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable",
             )
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -7246,6 +8028,70 @@ fn variant_cancel_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// CertificateBasedInfoOrigin
+
+#[allow(dead_code)]
+fn variant_certificate_based_info_origin_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CertificateBasedInfoOrigin> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "CertificateBasedInfoOriginCertificate" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::CertificateBasedInfoOrigin::Certificate { timestamp })
+        }
+        "CertificateBasedInfoOriginPlaceholder" => {
+            Ok(libparsec::CertificateBasedInfoOrigin::Placeholder)
+        }
+        _ => cx.throw_type_error("Object is not a CertificateBasedInfoOrigin"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_certificate_based_info_origin_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CertificateBasedInfoOrigin,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::CertificateBasedInfoOrigin::Certificate { timestamp, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "CertificateBasedInfoOriginCertificate").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+        }
+        libparsec::CertificateBasedInfoOrigin::Placeholder => {
+            let js_tag =
+                JsString::try_new(cx, "CertificateBasedInfoOriginPlaceholder").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClaimFinalizeError
 
 #[allow(dead_code)]
@@ -7265,6 +8111,11 @@ fn variant_claim_finalize_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClaimFinalizeErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClaimFinalizeError::NoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClaimFinalizeErrorNoSpaceAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadFailed { .. } => {
             let js_tag = JsString::try_new(cx, "ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed")
                 .or_throw(cx)?;
@@ -7273,11 +8124,6 @@ fn variant_claim_finalize_error_rs_to_js<'a>(
         libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadOffline { .. } => {
             let js_tag = JsString::try_new(cx, "ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline")
                 .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClaimFinalizeError::StorageNotAvailable { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClaimFinalizeErrorStorageNotAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -7497,12 +8343,6 @@ fn variant_client_accept_async_enrollment_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::ClientAcceptAsyncEnrollmentError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorOffline").or_throw(cx)?;
@@ -7528,6 +8368,35 @@ fn variant_client_accept_async_enrollment_error_rs_to_js<'a>(
             )
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+            x1,
+            ..,
+        ) => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x1 = variant_pki_error_detail_rs_to_js(cx, x1)?;
+            js_obj.set(cx, "x1", js_x1)?;
         }
         libparsec::ClientAcceptAsyncEnrollmentError::TimestampOutOfBallpark { .. } => {
             let js_tag =
@@ -7564,6 +8433,116 @@ fn variant_client_accept_tos_error_rs_to_js<'a>(
         }
         libparsec::ClientAcceptTosError::TosMismatch { .. } => {
             let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorTosMismatch").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientArchiveWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_archive_workspace_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientArchiveWorkspaceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientArchiveWorkspaceError::ArchivingPeriodTooShort { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorArchivingPeriodTooShort")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::AuthorNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorAuthorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidEncryptedRealmName { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorInvalidEncryptedRealmName")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorInvalidKeysBundle")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorTimestampOutOfBallpark")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::WorkspaceDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorWorkspaceDeleted")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::WorkspaceNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorWorkspaceNotFound")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -7727,6 +8706,9 @@ fn variant_client_event_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientEvent> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "ClientEventAsyncEnrollmentUpdated" => {
+            Ok(libparsec::ClientEvent::AsyncEnrollmentUpdated {})
+        }
         "ClientEventClientErrorResponse" => {
             let error_type = {
                 let js_val: Handle<JsString> = obj.get(cx, "errorType")?;
@@ -7770,11 +8752,9 @@ fn variant_client_event_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -7804,11 +8784,9 @@ fn variant_client_event_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -7838,11 +8816,9 @@ fn variant_client_event_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -7921,11 +8897,9 @@ fn variant_client_event_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -8229,6 +9203,10 @@ fn variant_client_event_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::ClientEvent::AsyncEnrollmentUpdated { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventAsyncEnrollmentUpdated").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientEvent::ClientErrorResponse { error_type, .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventClientErrorResponse").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -8281,7 +9259,7 @@ fn variant_client_event_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -8311,7 +9289,7 @@ fn variant_client_event_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -8341,7 +9319,7 @@ fn variant_client_event_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -8416,7 +9394,7 @@ fn variant_client_event_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -8815,6 +9793,26 @@ fn variant_client_forget_all_certificates_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientGetAsyncEnrollmentAddrError
+
+#[allow(dead_code)]
+fn variant_client_get_async_enrollment_addr_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetAsyncEnrollmentAddrError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientGetAsyncEnrollmentAddrError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientGetAsyncEnrollmentAddrErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientGetOrganizationBootstrapDateError
 
 #[allow(dead_code)]
@@ -8855,6 +9853,31 @@ fn variant_client_get_organization_bootstrap_date_error_rs_to_js<'a>(
         libparsec::ClientGetOrganizationBootstrapDateError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "ClientGetOrganizationBootstrapDateErrorStopped")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientGetOutboundSyncBacklogError
+
+#[allow(dead_code)]
+fn variant_client_get_outbound_sync_backlog_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetOutboundSyncBacklogError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientGetOutboundSyncBacklogError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientGetOutboundSyncBacklogErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetOutboundSyncBacklogError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientGetOutboundSyncBacklogErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -9122,6 +10145,31 @@ fn variant_client_list_users_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientListWorkspaceUserRoleChangesError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_user_role_changes_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListWorkspaceUserRoleChangesError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListWorkspaceUserRoleChangesError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientListWorkspaceUserRoleChangesErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientListWorkspaceUserRoleChangesError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientListWorkspaceUserRoleChangesErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientListWorkspaceUsersError
 
 #[allow(dead_code)]
@@ -9376,6 +10424,11 @@ fn variant_client_rename_workspace_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClientRenameWorkspaceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClientRenameWorkspaceError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientRenameWorkspaceErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientRenameWorkspaceError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "ClientRenameWorkspaceErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -9485,6 +10538,124 @@ fn variant_client_revoke_user_error_rs_to_js<'a>(
         }
         libparsec::ClientRevokeUserError::UserNotFound { .. } => {
             let js_tag = JsString::try_new(cx, "ClientRevokeUserErrorUserNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientSelfPromoteToWorkspaceOwnerError
+
+#[allow(dead_code)]
+fn variant_client_self_promote_to_workspace_owner_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientSelfPromoteToWorkspaceOwnerError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::ActiveOwnerAlreadyExists { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::AuthorIsOutsider { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorAuthorIsOutsider")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::AuthorNotAllowed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::WorkspaceNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -9641,6 +10812,11 @@ fn variant_client_share_workspace_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClientShareWorkspaceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClientShareWorkspaceError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientShareWorkspaceError::RecipientIsSelf { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientShareWorkspaceErrorRecipientIsSelf").or_throw(cx)?;
@@ -9738,6 +10914,23 @@ fn variant_client_start_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClientStartErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClientStartError::KeyringError { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientStartErrorKeyringError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceBadAccessStrategy { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientStartErrorLoadDeviceBadAccessStrategy")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceCiphertextKeyGenerationFailed { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientStartErrorLoadDeviceDecryptionFailed").or_throw(cx)?;
@@ -9763,6 +10956,11 @@ fn variant_client_start_error_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline")
                     .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceTOTPDecryptionFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientStartErrorLoadDeviceTOTPDecryptionFailed")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -9919,6 +11117,90 @@ fn variant_client_stop_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientTOTPSetupConfirmError
+
+#[allow(dead_code)]
+fn variant_client_totp_setup_confirm_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientTOTPSetupConfirmError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientTOTPSetupConfirmError::AlreadySetup { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTOTPSetupConfirmErrorAlreadySetup").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTOTPSetupConfirmErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::InvalidOneTimePassword { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientTOTPSetupConfirmErrorInvalidOneTimePassword")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTOTPSetupConfirmErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientTotpCreateOpaqueKeyError
+
+#[allow(dead_code)]
+fn variant_client_totp_create_opaque_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientTotpCreateOpaqueKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientTotpCreateOpaqueKeyError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTotpCreateOpaqueKeyErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTotpCreateOpaqueKeyError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTotpCreateOpaqueKeyErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientTotpSetupStatusError
+
+#[allow(dead_code)]
+fn variant_client_totp_setup_status_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientTotpSetupStatusError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientTotpSetupStatusError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTotpSetupStatusErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTotpSetupStatusError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientTotpSetupStatusErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientUserUpdateProfileError
 
 #[allow(dead_code)]
@@ -9980,27 +11262,16 @@ fn variant_client_user_update_profile_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceAccessStrategy
+// DevicePrimaryProtectionStrategy
 
 #[allow(dead_code)]
-fn variant_device_access_strategy_js_to_rs<'a>(
+fn variant_device_primary_protection_strategy_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceAccessStrategy> {
+) -> NeonResult<libparsec::DevicePrimaryProtectionStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "DeviceAccessStrategyAccountVault" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
+        "DevicePrimaryProtectionStrategyAccountVault" => {
             let account_handle = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
                 {
@@ -10012,259 +11283,12 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                     v
                 }
             };
-            Ok(libparsec::DeviceAccessStrategy::AccountVault {
-                key_file,
-                account_handle,
-            })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle })
         }
-        "DeviceAccessStrategyKeyring" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
+        "DevicePrimaryProtectionStrategyKeyring" => {
+            Ok(libparsec::DevicePrimaryProtectionStrategy::Keyring)
         }
-        "DeviceAccessStrategyOpenBao" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let openbao_server_url = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
-                js_val.value(cx)
-            };
-            let openbao_secret_mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
-                js_val.value(cx)
-            };
-            let openbao_transit_mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoTransitMountPath")?;
-                js_val.value(cx)
-            };
-            let openbao_entity_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
-                js_val.value(cx)
-            };
-            let openbao_auth_token = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthToken")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::DeviceAccessStrategy::OpenBao {
-                key_file,
-                openbao_server_url,
-                openbao_secret_mount_path,
-                openbao_transit_mount_path,
-                openbao_entity_id,
-                openbao_auth_token,
-            })
-        }
-        "DeviceAccessStrategyPKI" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::PKI { key_file })
-        }
-        "DeviceAccessStrategyPassword" => {
-            let password = {
-                let js_val: Handle<JsString> = obj.get(cx, "password")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
-        }
-        _ => cx.throw_type_error("Object is not a DeviceAccessStrategy"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_device_access_strategy_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceAccessStrategy,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::DeviceAccessStrategy::AccountVault {
-            key_file,
-            account_handle,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyAccountVault").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_account_handle = JsNumber::new(cx, account_handle as f64);
-            js_obj.set(cx, "accountHandle", js_account_handle)?;
-        }
-        libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyKeyring").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-        libparsec::DeviceAccessStrategy::OpenBao {
-            key_file,
-            openbao_server_url,
-            openbao_secret_mount_path,
-            openbao_transit_mount_path,
-            openbao_entity_id,
-            openbao_auth_token,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyOpenBao").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
-            js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
-            let js_openbao_secret_mount_path =
-                JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
-            js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
-            let js_openbao_transit_mount_path =
-                JsString::try_new(cx, openbao_transit_mount_path).or_throw(cx)?;
-            js_obj.set(cx, "openbaoTransitMountPath", js_openbao_transit_mount_path)?;
-            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
-            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
-            let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
-            js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
-        }
-        libparsec::DeviceAccessStrategy::PKI { key_file, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPKI").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-        libparsec::DeviceAccessStrategy::Password {
-            password, key_file, ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPassword").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_password = JsString::try_new(cx, password).or_throw(cx)?;
-            js_obj.set(cx, "password", js_password)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeviceSaveStrategy
-
-#[allow(dead_code)]
-fn variant_device_save_strategy_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceSaveStrategy> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "DeviceSaveStrategyAccountVault" => {
-            let account_handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
-            Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
-        }
-        "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
-        "DeviceSaveStrategyOpenBao" => {
+        "DevicePrimaryProtectionStrategyOpenBao" => {
             let openbao_server_url = {
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
                 js_val.value(cx)
@@ -10289,7 +11313,7 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoPreferredAuthId")?;
                 js_val.value(cx)
             };
-            Ok(libparsec::DeviceSaveStrategy::OpenBao {
+            Ok(libparsec::DevicePrimaryProtectionStrategy::OpenBao {
                 openbao_server_url,
                 openbao_secret_mount_path,
                 openbao_transit_mount_path,
@@ -10298,14 +11322,23 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 openbao_preferred_auth_id,
             })
         }
-        "DeviceSaveStrategyPKI" => {
-            let certificate_ref = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+        "DevicePrimaryProtectionStrategyPKI" => {
+            let pki_encrypt_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiEncryptPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
-            Ok(libparsec::DeviceSaveStrategy::PKI { certificate_ref })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
+                pki_encrypt_private_key_handle,
+            })
         }
-        "DeviceSaveStrategyPassword" => {
+        "DevicePrimaryProtectionStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
                 {
@@ -10316,30 +11349,32 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::DeviceSaveStrategy::Password { password })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::Password { password })
         }
-        _ => cx.throw_type_error("Object is not a DeviceSaveStrategy"),
+        _ => cx.throw_type_error("Object is not a DevicePrimaryProtectionStrategy"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_device_save_strategy_rs_to_js<'a>(
+fn variant_device_primary_protection_strategy_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceSaveStrategy,
+    rs_obj: libparsec::DevicePrimaryProtectionStrategy,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DeviceSaveStrategy::AccountVault { account_handle, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyAccountVault").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle, .. } => {
+            let js_tag = JsString::try_new(cx, "DevicePrimaryProtectionStrategyAccountVault")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_account_handle = JsNumber::new(cx, account_handle as f64);
             js_obj.set(cx, "accountHandle", js_account_handle)?;
         }
-        libparsec::DeviceSaveStrategy::Keyring { .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyKeyring").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::Keyring => {
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::DeviceSaveStrategy::OpenBao {
+        libparsec::DevicePrimaryProtectionStrategy::OpenBao {
             openbao_server_url,
             openbao_secret_mount_path,
             openbao_transit_mount_path,
@@ -10348,7 +11383,8 @@ fn variant_device_save_strategy_rs_to_js<'a>(
             openbao_preferred_auth_id,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyOpenBao").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyOpenBao").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
             js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
@@ -10366,20 +11402,117 @@ fn variant_device_save_strategy_rs_to_js<'a>(
                 JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
-        libparsec::DeviceSaveStrategy::PKI {
-            certificate_ref, ..
+        libparsec::DevicePrimaryProtectionStrategy::PKI {
+            pki_encrypt_private_key_handle,
+            ..
         } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPKI").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_certificate_ref =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
-            js_obj.set(cx, "certificateRef", js_certificate_ref)?;
+            let js_pki_encrypt_private_key_handle =
+                JsNumber::new(cx, pki_encrypt_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiEncryptPrivateKeyHandle",
+                js_pki_encrypt_private_key_handle,
+            )?;
         }
-        libparsec::DeviceSaveStrategy::Password { password, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPassword").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyPassword").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// DistinguishedNameValue
+
+#[allow(dead_code)]
+fn variant_distinguished_name_value_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DistinguishedNameValue> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "DistinguishedNameValueCommonName" => {
+            let x1 = {
+                let js_val: Handle<JsString> = obj.get(cx, "x1")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::DistinguishedNameValue::CommonName(x1))
+        }
+        "DistinguishedNameValueEmailAddress" => {
+            let x1 = {
+                let js_val: Handle<JsString> = obj.get(cx, "x1")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::DistinguishedNameValue::EmailAddress(x1))
+        }
+        _ => cx.throw_type_error("Object is not a DistinguishedNameValue"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_distinguished_name_value_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DistinguishedNameValue,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::DistinguishedNameValue::CommonName(x1, ..) => {
+            let js_tag = JsString::try_new(cx, "DistinguishedNameValueCommonName").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
+        }
+        libparsec::DistinguishedNameValue::EmailAddress(x1, ..) => {
+            let js_tag =
+                JsString::try_new(cx, "DistinguishedNameValueEmailAddress").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// EmailSentStatus
+
+#[allow(dead_code)]
+fn variant_email_sent_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::EmailSentStatus> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "EmailSentStatusRecipientRefused" => Ok(libparsec::EmailSentStatus::RecipientRefused {}),
+        "EmailSentStatusServerUnavailable" => Ok(libparsec::EmailSentStatus::ServerUnavailable {}),
+        "EmailSentStatusSuccess" => Ok(libparsec::EmailSentStatus::Success {}),
+        _ => cx.throw_type_error("Object is not a EmailSentStatus"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_email_sent_status_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::EmailSentStatus,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::EmailSentStatus::RecipientRefused { .. } => {
+            let js_tag = JsString::try_new(cx, "EmailSentStatusRecipientRefused").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::EmailSentStatus::ServerUnavailable { .. } => {
+            let js_tag = JsString::try_new(cx, "EmailSentStatusServerUnavailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::EmailSentStatus::Success { .. } => {
+            let js_tag = JsString::try_new(cx, "EmailSentStatusSuccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
@@ -11043,6 +12176,11 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ImportRecoveryDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorNoSpaceAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -11061,11 +12199,6 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
         }
         libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStopped").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ImportRecoveryDeviceError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {
@@ -11110,87 +12243,6 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
                 "ballparkClientLateOffset",
                 js_ballpark_client_late_offset,
             )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// InvalidityReason
-
-#[allow(dead_code)]
-fn variant_invalidity_reason_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::InvalidityReason> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "InvalidityReasonCannotGetCertificateInfo" => {
-            Ok(libparsec::InvalidityReason::CannotGetCertificateInfo {})
-        }
-        "InvalidityReasonCannotOpenStore" => Ok(libparsec::InvalidityReason::CannotOpenStore {}),
-        "InvalidityReasonDataError" => Ok(libparsec::InvalidityReason::DataError {}),
-        "InvalidityReasonInvalidCertificateDer" => {
-            Ok(libparsec::InvalidityReason::InvalidCertificateDer {})
-        }
-        "InvalidityReasonInvalidRootCertificate" => {
-            Ok(libparsec::InvalidityReason::InvalidRootCertificate {})
-        }
-        "InvalidityReasonInvalidSignature" => Ok(libparsec::InvalidityReason::InvalidSignature {}),
-        "InvalidityReasonInvalidUserInformation" => {
-            Ok(libparsec::InvalidityReason::InvalidUserInformation {})
-        }
-        "InvalidityReasonNotFound" => Ok(libparsec::InvalidityReason::NotFound {}),
-        "InvalidityReasonUntrusted" => Ok(libparsec::InvalidityReason::Untrusted {}),
-        _ => cx.throw_type_error("Object is not a InvalidityReason"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_invalidity_reason_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::InvalidityReason,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::InvalidityReason::CannotGetCertificateInfo { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidityReasonCannotGetCertificateInfo").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::CannotOpenStore { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidityReasonCannotOpenStore").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::DataError { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidityReasonDataError").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::InvalidCertificateDer { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidityReasonInvalidCertificateDer").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::InvalidRootCertificate { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidityReasonInvalidRootCertificate").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::InvalidSignature { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidityReasonInvalidSignature").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::InvalidUserInformation { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidityReasonInvalidUserInformation").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidityReasonNotFound").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::Untrusted { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidityReasonUntrusted").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
@@ -11367,25 +12419,41 @@ fn variant_invite_list_item_js_to_rs<'a>(
     match tag.as_str() {
         "InviteListItemDevice" => {
             let addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
+                let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+                (
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::ParsecInvitationAddr::from_any(&s)
+                                    .map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                )
             };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -11427,25 +12495,41 @@ fn variant_invite_list_item_js_to_rs<'a>(
         }
         "InviteListItemShamirRecovery" => {
             let addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
+                let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+                (
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::ParsecInvitationAddr::from_any(&s)
+                                    .map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                )
             };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -11515,25 +12599,41 @@ fn variant_invite_list_item_js_to_rs<'a>(
         }
         "InviteListItemUser" => {
             let addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
+                let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+                (
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::ParsecInvitationAddr::from_any(&s)
+                                    .map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                )
             };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -11607,21 +12707,39 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "InviteListItemDevice").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
+            let js_addr = {
+                let (x0, x1) = addr;
+                let js_array = JsArray::new(cx, 2);
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x0) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 0, js_value)?;
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 1, js_value)?;
+                js_array
+            };
             js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -11657,21 +12775,39 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "InviteListItemShamirRecovery").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
+            let js_addr = {
+                let (x0, x1) = addr;
+                let js_array = JsArray::new(cx, 2);
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x0) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 0, js_value)?;
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 1, js_value)?;
+                js_array
+            };
             js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -11726,21 +12862,39 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "InviteListItemUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
+            let js_addr = {
+                let (x0, x1) = addr;
+                let js_array = JsArray::new(cx, 2);
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x0) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 0, js_value)?;
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 1, js_value)?;
+                js_array
+            };
             js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -11820,30 +12974,6 @@ fn variant_list_invitations_error_rs_to_js<'a>(
         }
         libparsec::ListInvitationsError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ListInvitationsErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ListPkiLocalPendingError
-
-#[allow(dead_code)]
-fn variant_list_pki_local_pending_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ListPkiLocalPendingError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::ListPkiLocalPendingError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "ListPkiLocalPendingErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ListPkiLocalPendingError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "ListPkiLocalPendingErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -11998,51 +13128,35 @@ fn variant_move_entry_mode_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// OpenBaoAuthConfig
+// OpenBaoListSelfEmailsError
 
 #[allow(dead_code)]
-fn variant_open_bao_auth_config_js_to_rs<'a>(
+fn variant_open_bao_list_self_emails_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::OpenBaoAuthConfig> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "OpenBaoAuthConfigOIDCHexagone" => {
-            let mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path })
-        }
-        "OpenBaoAuthConfigOIDCProConnect" => {
-            let mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path })
-        }
-        _ => cx.throw_type_error("Object is not a OpenBaoAuthConfig"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_open_bao_auth_config_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::OpenBaoAuthConfig,
+    rs_obj: libparsec::OpenBaoListSelfEmailsError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path, .. } => {
-            let js_tag = JsString::try_new(cx, "OpenBaoAuthConfigOIDCHexagone").or_throw(cx)?;
+        libparsec::OpenBaoListSelfEmailsError::BadServerResponse { .. } => {
+            let js_tag = JsString::try_new(cx, "OpenBaoListSelfEmailsErrorBadServerResponse")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_mount_path = JsString::try_new(cx, mount_path).or_throw(cx)?;
-            js_obj.set(cx, "mountPath", js_mount_path)?;
         }
-        libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path, .. } => {
-            let js_tag = JsString::try_new(cx, "OpenBaoAuthConfigOIDCProConnect").or_throw(cx)?;
+        libparsec::OpenBaoListSelfEmailsError::BadURL { .. } => {
+            let js_tag = JsString::try_new(cx, "OpenBaoListSelfEmailsErrorBadURL").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_mount_path = JsString::try_new(cx, mount_path).or_throw(cx)?;
-            js_obj.set(cx, "mountPath", js_mount_path)?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "OpenBaoListSelfEmailsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::NoServerResponse { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "OpenBaoListSelfEmailsErrorNoServerResponse").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
@@ -13116,255 +14230,6 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// PKIInfoItem
-
-#[allow(dead_code)]
-fn variant_pki_info_item_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::PKIInfoItem> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "PKIInfoItemAccepted" => {
-            let answer = {
-                let js_val: Handle<JsObject> = obj.get(cx, "answer")?;
-                struct_pki_enrollment_answer_payload_js_to_rs(cx, js_val)?
-            };
-            let submitted_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let accepted_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "acceptedOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::PKIInfoItem::Accepted {
-                answer,
-                submitted_on,
-                accepted_on,
-            })
-        }
-        "PKIInfoItemCancelled" => {
-            let submitted_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let cancelled_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "cancelledOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::PKIInfoItem::Cancelled {
-                submitted_on,
-                cancelled_on,
-            })
-        }
-        "PKIInfoItemRejected" => {
-            let submitted_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let rejected_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "rejectedOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::PKIInfoItem::Rejected {
-                submitted_on,
-                rejected_on,
-            })
-        }
-        "PKIInfoItemSubmitted" => {
-            let submitted_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::PKIInfoItem::Submitted { submitted_on })
-        }
-        _ => cx.throw_type_error("Object is not a PKIInfoItem"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_pki_info_item_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PKIInfoItem,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::PKIInfoItem::Accepted {
-            answer,
-            submitted_on,
-            accepted_on,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "PKIInfoItemAccepted").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_answer = struct_pki_enrollment_answer_payload_rs_to_js(cx, answer)?;
-            js_obj.set(cx, "answer", js_answer)?;
-            let js_submitted_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(submitted_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "submittedOn", js_submitted_on)?;
-            let js_accepted_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(accepted_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "acceptedOn", js_accepted_on)?;
-        }
-        libparsec::PKIInfoItem::Cancelled {
-            submitted_on,
-            cancelled_on,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "PKIInfoItemCancelled").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_submitted_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(submitted_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "submittedOn", js_submitted_on)?;
-            let js_cancelled_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(cancelled_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "cancelledOn", js_cancelled_on)?;
-        }
-        libparsec::PKIInfoItem::Rejected {
-            submitted_on,
-            rejected_on,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "PKIInfoItemRejected").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_submitted_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(submitted_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "submittedOn", js_submitted_on)?;
-            let js_rejected_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(rejected_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "rejectedOn", js_rejected_on)?;
-        }
-        libparsec::PKIInfoItem::Submitted { submitted_on, .. } => {
-            let js_tag = JsString::try_new(cx, "PKIInfoItemSubmitted").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_submitted_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(submitted_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "submittedOn", js_submitted_on)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // ParseParsecAddrError
 
 #[allow(dead_code)]
@@ -13476,11 +14341,9 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -13535,11 +14398,9 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -13594,11 +14455,9 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::InvitationToken, _> {
-                            libparsec::InvitationToken::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
@@ -13789,6 +14648,76 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
                 use_ssl,
             })
         }
+        "ParsedParsecAddrTOTPReset" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+                        cx.throw_type_error("Not an u16 number")?
+                    }
+                    let v = v as u16;
+                    v
+                }
+            };
+            let is_default_port = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "isDefaultPort")?;
+                js_val.value(cx)
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedParsecAddr::TOTPReset {
+                hostname,
+                port,
+                is_default_port,
+                use_ssl,
+                organization_id,
+                user_id,
+                token,
+            })
+        }
         "ParsedParsecAddrWorkspacePath" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
@@ -13916,7 +14845,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             js_obj.set(cx, "organizationId", js_organization_id)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -13949,7 +14878,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             js_obj.set(cx, "organizationId", js_organization_id)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -13981,7 +14910,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             js_obj.set(cx, "organizationId", js_organization_id)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err.to_string()),
@@ -14077,6 +15006,49 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             js_obj.set(cx, "isDefaultPort", js_is_default_port)?;
             let js_use_ssl = JsBoolean::new(cx, use_ssl);
             js_obj.set(cx, "useSsl", js_use_ssl)?;
+        }
+        libparsec::ParsedParsecAddr::TOTPReset {
+            hostname,
+            port,
+            is_default_port,
+            use_ssl,
+            organization_id,
+            user_id,
+            token,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrTOTPReset").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_is_default_port = JsBoolean::new(cx, is_default_port);
+            js_obj.set(cx, "isDefaultPort", js_is_default_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "userId", js_user_id)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
         }
         libparsec::ParsedParsecAddr::WorkspacePath {
             hostname,
@@ -14368,183 +15340,166 @@ fn variant_pending_async_enrollment_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// PkiEnrollmentAcceptError
+// PkiErrorDetail
 
 #[allow(dead_code)]
-fn variant_pki_enrollment_accept_error_rs_to_js<'a>(
+fn variant_pki_error_detail_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentAcceptError,
+    rs_obj: libparsec::PkiErrorDetail,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::PkiEnrollmentAcceptError::ActiveUsersLimitReached { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentAcceptErrorActiveUsersLimitReached")
+        libparsec::PkiErrorDetail::CannotAcquirePubkey { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiErrorDetailCannotAcquirePubkey").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiErrorDetail::CannotEncrypt { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiErrorDetailCannotEncrypt").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiErrorDetail::Decrypt { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiErrorDetailDecrypt").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiErrorDetail::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiErrorDetailInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiErrorDetail::Sign { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiErrorDetailSign").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiErrorDetail::UnsupportedAlgorithm { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiErrorDetailUnsupportedAlgorithm").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiErrorDetail::Untrusted { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiErrorDetailUntrusted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiOpenUserCertificatePrivateKeyError
+
+#[allow(dead_code)]
+fn variant_pki_open_user_certificate_private_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiOpenUserCertificatePrivateKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiOpenUserCertificatePrivateKeyError::CertificateNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiOpenUserCertificatePrivateKeyError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiOpenUserCertificatePrivateKeyErrorInternal")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::PkiEnrollmentAcceptError::AuthorNotAllowed { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentAcceptErrorAuthorNotAllowed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentAcceptError::EnrollmentNoLongerAvailable { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentAcceptError::EnrollmentNotFound { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentAcceptErrorEnrollmentNotFound").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentAcceptError::HumanHandleAlreadyTaken { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentAcceptError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentAcceptErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentAcceptError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentAcceptErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentAcceptError::PkiOperationError { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentAcceptErrorPkiOperationError").or_throw(cx)?;
+        libparsec::PkiOpenUserCertificatePrivateKeyError::PrivateKeyNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
 }
 
-// PkiEnrollmentFinalizeError
+// PkiPrivateKeyCloseError
 
 #[allow(dead_code)]
-fn variant_pki_enrollment_finalize_error_rs_to_js<'a>(
+fn variant_pki_private_key_close_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentFinalizeError,
+    rs_obj: libparsec::PkiPrivateKeyCloseError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::PkiEnrollmentFinalizeError::Internal { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentFinalizeErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentFinalizeError::SaveError { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentFinalizeErrorSaveError").or_throw(cx)?;
+        libparsec::PkiPrivateKeyCloseError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiPrivateKeyCloseErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
 }
 
-// PkiEnrollmentInfoError
+// PkiSystemInitError
 
 #[allow(dead_code)]
-fn variant_pki_enrollment_info_error_rs_to_js<'a>(
+fn variant_pki_system_init_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentInfoError,
+    rs_obj: libparsec::PkiSystemInitError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::PkiEnrollmentInfoError::EnrollmentNotFound { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentInfoErrorEnrollmentNotFound").or_throw(cx)?;
+        libparsec::PkiSystemInitError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiSystemInitErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::PkiEnrollmentInfoError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentInfoErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentInfoError::InvalidAcceptPayload { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentInfoErrorInvalidAcceptPayload").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentInfoError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentInfoErrorOffline").or_throw(cx)?;
+        libparsec::PkiSystemInitError::NotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiSystemInitErrorNotAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
 }
 
-// PkiEnrollmentListError
+// PkiSystemListUserCertificateError
 
 #[allow(dead_code)]
-fn variant_pki_enrollment_list_error_rs_to_js<'a>(
+fn variant_pki_system_list_user_certificate_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentListError,
+    rs_obj: libparsec::PkiSystemListUserCertificateError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::PkiEnrollmentListError::AuthorNotAllowed { .. } => {
+        libparsec::PkiSystemListUserCertificateError::Internal { .. } => {
             let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentListErrorAuthorNotAllowed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentListError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentListErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentListError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentListErrorOffline").or_throw(cx)?;
+                JsString::try_new(cx, "PkiSystemListUserCertificateErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
 }
 
-// PkiEnrollmentListItem
+// RealmArchivingConfiguration
 
 #[allow(dead_code)]
-fn variant_pki_enrollment_list_item_js_to_rs<'a>(
+fn variant_realm_archiving_configuration_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::PkiEnrollmentListItem> {
+) -> NeonResult<libparsec::RealmArchivingConfiguration> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "PkiEnrollmentListItemInvalid" => {
-            let human_handle = {
-                let js_val: Handle<JsValue> = obj.get(cx, "humanHandle")?;
-                {
-                    if js_val.is_a::<JsNull, _>(cx) {
-                        None
-                    } else {
-                        let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
-                        Some(struct_human_handle_js_to_rs(cx, js_val)?)
-                    }
-                }
-            };
-            let enrollment_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                            libparsec::PKIEnrollmentID::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let submitted_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+        "RealmArchivingConfigurationArchived" => {
+            Ok(libparsec::RealmArchivingConfiguration::Archived)
+        }
+        "RealmArchivingConfigurationAvailable" => {
+            Ok(libparsec::RealmArchivingConfiguration::Available)
+        }
+        "RealmArchivingConfigurationDeletionPlanned" => {
+            let deletion_date = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "deletionDate")?;
                 {
                     let v = js_val.value(cx);
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
@@ -14557,283 +15512,43 @@ fn variant_pki_enrollment_list_item_js_to_rs<'a>(
                     }
                 }
             };
-            let reason = {
-                let js_val: Handle<JsObject> = obj.get(cx, "reason")?;
-                variant_invalidity_reason_js_to_rs(cx, js_val)?
-            };
-            let details = {
-                let js_val: Handle<JsString> = obj.get(cx, "details")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::PkiEnrollmentListItem::Invalid {
-                human_handle,
-                enrollment_id,
-                submitted_on,
-                reason,
-                details,
-            })
+            Ok(libparsec::RealmArchivingConfiguration::DeletionPlanned { deletion_date })
         }
-        "PkiEnrollmentListItemValid" => {
-            let human_handle = {
-                let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
-                struct_human_handle_js_to_rs(cx, js_val)?
-            };
-            let enrollment_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                            libparsec::PKIEnrollmentID::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let submitted_on = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let submitter_der_cert = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "submitterDerCert")?;
-                {
-                    let custom_from_rs_bytes =
-                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
-                    }
-                }
-            };
-            let payload = {
-                let js_val: Handle<JsObject> = obj.get(cx, "payload")?;
-                struct_pki_enrollment_submit_payload_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::PkiEnrollmentListItem::Valid {
-                human_handle,
-                enrollment_id,
-                submitted_on,
-                submitter_der_cert,
-                payload,
-            })
-        }
-        _ => cx.throw_type_error("Object is not a PkiEnrollmentListItem"),
+        _ => cx.throw_type_error("Object is not a RealmArchivingConfiguration"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_pki_enrollment_list_item_rs_to_js<'a>(
+fn variant_realm_archiving_configuration_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentListItem,
+    rs_obj: libparsec::RealmArchivingConfiguration,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::PkiEnrollmentListItem::Invalid {
-            human_handle,
-            enrollment_id,
-            submitted_on,
-            reason,
-            details,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentListItemInvalid").or_throw(cx)?;
+        libparsec::RealmArchivingConfiguration::Archived => {
+            let js_tag =
+                JsString::try_new(cx, "RealmArchivingConfigurationArchived").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_human_handle = match human_handle {
-                Some(elem) => struct_human_handle_rs_to_js(cx, elem)?.as_value(cx),
-                None => JsNull::new(cx).as_value(cx),
-            };
-            js_obj.set(cx, "humanHandle", js_human_handle)?;
-            let js_enrollment_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(enrollment_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
-            let js_submitted_on = JsNumber::new(cx, {
+        }
+        libparsec::RealmArchivingConfiguration::Available => {
+            let js_tag =
+                JsString::try_new(cx, "RealmArchivingConfigurationAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RealmArchivingConfiguration::DeletionPlanned { deletion_date, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "RealmArchivingConfigurationDeletionPlanned").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_deletion_date = JsNumber::new(cx, {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
-                match custom_to_rs_f64(submitted_on) {
+                match custom_to_rs_f64(deletion_date) {
                     Ok(ok) => ok,
                     Err(err) => return cx.throw_type_error(err),
                 }
             });
-            js_obj.set(cx, "submittedOn", js_submitted_on)?;
-            let js_reason = variant_invalidity_reason_rs_to_js(cx, reason)?;
-            js_obj.set(cx, "reason", js_reason)?;
-            let js_details = JsString::try_new(cx, details).or_throw(cx)?;
-            js_obj.set(cx, "details", js_details)?;
-        }
-        libparsec::PkiEnrollmentListItem::Valid {
-            human_handle,
-            enrollment_id,
-            submitted_on,
-            submitter_der_cert,
-            payload,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentListItemValid").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_human_handle = struct_human_handle_rs_to_js(cx, human_handle)?;
-            js_obj.set(cx, "humanHandle", js_human_handle)?;
-            let js_enrollment_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(enrollment_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
-            let js_submitted_on = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(submitted_on) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "submittedOn", js_submitted_on)?;
-            let js_submitter_der_cert = {
-                let rs_buff = { submitter_der_cert };
-                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-                js_buff
-            };
-            js_obj.set(cx, "submitterDerCert", js_submitter_der_cert)?;
-            let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(cx, payload)?;
-            js_obj.set(cx, "payload", js_payload)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// PkiEnrollmentRejectError
-
-#[allow(dead_code)]
-fn variant_pki_enrollment_reject_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentRejectError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::PkiEnrollmentRejectError::AuthorNotAllowed { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentRejectErrorAuthorNotAllowed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentRejectError::EnrollmentNoLongerAvailable { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentRejectError::EnrollmentNotFound { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentRejectErrorEnrollmentNotFound").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentRejectError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentRejectErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentRejectError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentRejectErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// PkiEnrollmentSubmitError
-
-#[allow(dead_code)]
-fn variant_pki_enrollment_submit_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiEnrollmentSubmitError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::PkiEnrollmentSubmitError::AlreadyEnrolled { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentSubmitErrorAlreadyEnrolled").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentSubmitError::AlreadySubmitted { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentSubmitErrorAlreadySubmitted").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentSubmitError::EmailAlreadyUsed { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentSubmitErrorEmailAlreadyUsed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentSubmitError::IdAlreadyUsed { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentSubmitErrorIdAlreadyUsed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentSubmitError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentSubmitErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentSubmitError::InvalidPayload { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentSubmitErrorInvalidPayload").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentSubmitError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiEnrollmentSubmitErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::PkiEnrollmentSubmitError::PkiOperationError { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentSubmitErrorPkiOperationError").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// PkiGetAddrError
-
-#[allow(dead_code)]
-fn variant_pki_get_addr_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::PkiGetAddrError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::PkiGetAddrError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "PkiGetAddrErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
+            js_obj.set(cx, "deletionDate", js_deletion_date)?;
         }
     }
     Ok(js_obj)
@@ -14859,29 +15574,75 @@ fn variant_remove_device_data_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// RemoveDeviceError
+// RequestedRealmArchivingConfiguration
 
 #[allow(dead_code)]
-fn variant_remove_device_error_rs_to_js<'a>(
+fn variant_requested_realm_archiving_configuration_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::RemoveDeviceError,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::RequestedRealmArchivingConfiguration> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "RequestedRealmArchivingConfigurationArchived" => {
+            Ok(libparsec::RequestedRealmArchivingConfiguration::Archived)
+        }
+        "RequestedRealmArchivingConfigurationAvailable" => {
+            Ok(libparsec::RequestedRealmArchivingConfiguration::Available)
+        }
+        "RequestedRealmArchivingConfigurationDeletionPlanned" => {
+            let archiving_period_in_seconds = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "archivingPeriodInSeconds")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(
+                libparsec::RequestedRealmArchivingConfiguration::DeletionPlanned {
+                    archiving_period_in_seconds,
+                },
+            )
+        }
+        _ => cx.throw_type_error("Object is not a RequestedRealmArchivingConfiguration"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_requested_realm_archiving_configuration_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::RequestedRealmArchivingConfiguration,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::RemoveDeviceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "RemoveDeviceErrorInternal").or_throw(cx)?;
+        libparsec::RequestedRealmArchivingConfiguration::Archived => {
+            let js_tag = JsString::try_new(cx, "RequestedRealmArchivingConfigurationArchived")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::RemoveDeviceError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "RemoveDeviceErrorNotFound").or_throw(cx)?;
+        libparsec::RequestedRealmArchivingConfiguration::Available => {
+            let js_tag = JsString::try_new(cx, "RequestedRealmArchivingConfigurationAvailable")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::RemoveDeviceError::StorageNotAvailable { .. } => {
+        libparsec::RequestedRealmArchivingConfiguration::DeletionPlanned {
+            archiving_period_in_seconds,
+            ..
+        } => {
             let js_tag =
-                JsString::try_new(cx, "RemoveDeviceErrorStorageNotAvailable").or_throw(cx)?;
+                JsString::try_new(cx, "RequestedRealmArchivingConfigurationDeletionPlanned")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+            let js_archiving_period_in_seconds =
+                JsNumber::new(cx, archiving_period_in_seconds as f64);
+            js_obj.set(
+                cx,
+                "archivingPeriodInSeconds",
+                js_archiving_period_in_seconds,
+            )?;
         }
     }
     Ok(js_obj)
@@ -16372,9 +17133,9 @@ fn variant_submit_async_enrollment_error_rs_to_js<'a>(
                 JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::SubmitAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidX509Trustchain")
-                .or_throw(cx)?;
+        libparsec::SubmitAsyncEnrollmentError::NoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitAsyncEnrollmentErrorNoSpaceAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
@@ -16397,10 +17158,31 @@ fn variant_submit_async_enrollment_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorStorageNotAvailable")
-                .or_throw(cx)?;
+        libparsec::SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(x1, ..) => {
+            let js_tag = JsString::try_new(
+                cx,
+                "SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x1 = variant_pki_error_detail_rs_to_js(cx, x1)?;
+            js_obj.set(cx, "x1", js_x1)?;
         }
     }
     Ok(js_obj)
@@ -16455,12 +17237,31 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs<'a>(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
-            let certificate_reference = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            let pki_sign_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiSignPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_encrypt_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiEncryptPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                certificate_reference,
+                pki_sign_private_key_handle,
+                pki_encrypt_private_key_handle,
             })
         }
         _ => cx.throw_type_error("Object is not a SubmitAsyncEnrollmentIdentityStrategy"),
@@ -16507,15 +17308,63 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-            certificate_reference,
+            pki_sign_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             let js_tag =
                 JsString::try_new(cx, "SubmitAsyncEnrollmentIdentityStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
-            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+            let js_pki_sign_private_key_handle =
+                JsNumber::new(cx, pki_sign_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiSignPrivateKeyHandle",
+                js_pki_sign_private_key_handle,
+            )?;
+            let js_pki_encrypt_private_key_handle =
+                JsNumber::new(cx, pki_encrypt_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiEncryptPrivateKeyHandle",
+                js_pki_encrypt_private_key_handle,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterCancelAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submitter_cancel_async_enrollment_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitterCancelAsyncEnrollmentError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::SubmitterCancelAsyncEnrollmentError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::StorageNotAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
@@ -16560,8 +17409,8 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::InvalidX509Trustchain{  .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain").or_throw(cx)?;
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{  .. } => {
@@ -16584,6 +17433,16 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference( x1, .. ) => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x1 = variant_pki_error_detail_rs_to_js(cx, x1)?;
+            js_obj.set(cx, "x1", js_x1)?;
+        }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16594,41 +17453,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{  .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// SubmitterForgetAsyncEnrollmentError
-
-#[allow(dead_code)]
-fn variant_submitter_forget_async_enrollment_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::SubmitterForgetAsyncEnrollmentError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::SubmitterForgetAsyncEnrollmentError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorInternal")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::SubmitterForgetAsyncEnrollmentError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorNotFound")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::SubmitterForgetAsyncEnrollmentError::StorageNotAvailable { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable")
-                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -16694,6 +17518,50 @@ fn variant_submitter_list_local_async_enrollments_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// TOTPSetupStatus
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::TOTPSetupStatus> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "TOTPSetupStatusConfirmed" => Ok(libparsec::TOTPSetupStatus::Confirmed),
+        "TOTPSetupStatusUnconfirmed" => {
+            let base32_totp_secret = {
+                let js_val: Handle<JsString> = obj.get(cx, "base32TotpSecret")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::TOTPSetupStatus::Unconfirmed { base32_totp_secret })
+        }
+        _ => cx.throw_type_error("Object is not a TOTPSetupStatus"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TOTPSetupStatus,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::TOTPSetupStatus::Confirmed => {
+            let js_tag = JsString::try_new(cx, "TOTPSetupStatusConfirmed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TOTPSetupStatus::Unconfirmed {
+            base32_totp_secret, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "TOTPSetupStatusUnconfirmed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_base32_totp_secret = JsString::try_new(cx, base32_totp_secret).or_throw(cx)?;
+            js_obj.set(cx, "base32TotpSecret", js_base32_totp_secret)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // TestbedError
 
 #[allow(dead_code)]
@@ -16717,6 +17585,104 @@ fn variant_testbed_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// TotpFetchOpaqueKeyError
+
+#[allow(dead_code)]
+fn variant_totp_fetch_opaque_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TotpFetchOpaqueKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::TotpFetchOpaqueKeyError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::InvalidOneTimePassword { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorInvalidOneTimePassword")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::Throttled { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorThrottled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpSetupConfirmAnonymousError
+
+#[allow(dead_code)]
+fn variant_totp_setup_confirm_anonymous_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TotpSetupConfirmAnonymousError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::TotpSetupConfirmAnonymousError::BadToken { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorBadToken").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::InvalidOneTimePassword { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorInvalidOneTimePassword")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpSetupStatusAnonymousError
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_anonymous_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TotpSetupStatusAnonymousError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::TotpSetupStatusAnonymousError::BadToken { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupStatusAnonymousErrorBadToken").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupStatusAnonymousError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupStatusAnonymousErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupStatusAnonymousError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupStatusAnonymousErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // UpdateDeviceError
 
 #[allow(dead_code)]
@@ -16728,6 +17694,16 @@ fn variant_update_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
+        libparsec::UpdateDeviceError::BadAccessStrategy { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UpdateDeviceErrorBadAccessStrategy").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UpdateDeviceError::CiphertextKeyGenerationFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorCiphertextKeyGenerationFailed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::UpdateDeviceError::DecryptionFailed { .. } => {
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16744,6 +17720,14 @@ fn variant_update_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::UpdateDeviceError::KeyringError { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorKeyringError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UpdateDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorNoSpaceAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationFailed { .. } => {
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorRemoteOpaqueKeyOperationFailed")
                 .or_throw(cx)?;
@@ -16754,9 +17738,9 @@ fn variant_update_device_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UpdateDeviceError::StorageNotAvailable { .. } => {
+        libparsec::UpdateDeviceError::TOTPDecryptionFailed { .. } => {
             let js_tag =
-                JsString::try_new(cx, "UpdateDeviceErrorStorageNotAvailable").or_throw(cx)?;
+                JsString::try_new(cx, "UpdateDeviceErrorTOTPDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -16777,6 +17761,62 @@ fn variant_user_claim_list_initial_infos_error_rs_to_js<'a>(
         libparsec::UserClaimListInitialInfosError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "UserClaimListInitialInfosErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// UserX509CertificateLoadError
+
+#[allow(dead_code)]
+fn variant_user_x509_certificate_load_error_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserX509CertificateLoadError> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "UserX509CertificateLoadErrorInvalidCertificateDer" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidCertificateDer {})
+        }
+        "UserX509CertificateLoadErrorInvalidEmail" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidEmail {})
+        }
+        "UserX509CertificateLoadErrorInvalidTime" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidTime {})
+        }
+        "UserX509CertificateLoadErrorNoCommonName" => {
+            Ok(libparsec::UserX509CertificateLoadError::NoCommonName {})
+        }
+        _ => cx.throw_type_error("Object is not a UserX509CertificateLoadError"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_user_x509_certificate_load_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserX509CertificateLoadError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::UserX509CertificateLoadError::InvalidCertificateDer { .. } => {
+            let js_tag = JsString::try_new(cx, "UserX509CertificateLoadErrorInvalidCertificateDer")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserX509CertificateLoadError::InvalidEmail { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UserX509CertificateLoadErrorInvalidEmail").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserX509CertificateLoadError::InvalidTime { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UserX509CertificateLoadErrorInvalidTime").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserX509CertificateLoadError::NoCommonName { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UserX509CertificateLoadErrorNoCommonName").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -16862,6 +17902,11 @@ fn variant_workspace_create_file_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceCreateFileErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceCreateFileError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceCreateFileErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceCreateFileError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceCreateFileErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16930,6 +17975,11 @@ fn variant_workspace_create_folder_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceCreateFolderErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceCreateFolderError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceCreateFolderErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceCreateFolderError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceCreateFolderErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16987,6 +18037,11 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js<'a>(
         libparsec::WorkspaceDecryptPathAddrError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptPathAddrError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceDecryptPathAddrError::Stopped { .. } => {
@@ -17104,6 +18159,10 @@ fn variant_workspace_fd_read_error_rs_to_js<'a>(
         }
         libparsec::WorkspaceFdReadError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFdReadError::ServerBlockstoreUnavailable { .. } => {
@@ -17235,6 +18294,11 @@ fn variant_workspace_generate_path_addr_error_rs_to_js<'a>(
         libparsec::WorkspaceGeneratePathAddrError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceGeneratePathAddrError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceGeneratePathAddrError::Stopped { .. } => {
@@ -17652,6 +18716,11 @@ fn variant_workspace_history_fd_read_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceHistoryFdReadErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceHistoryFdReadError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryFdReadErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable")
@@ -17768,6 +18837,11 @@ fn variant_workspace_history_open_file_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceHistoryOpenFileErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceHistoryOpenFileError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryOpenFileErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceHistoryOpenFileError::Stopped { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryOpenFileErrorStopped").or_throw(cx)?;
@@ -17822,7 +18896,7 @@ fn variant_workspace_history_realm_export_decryptor_js_to_rs<'a>(
         "WorkspaceHistoryRealmExportDecryptorUser" => {
             let access = {
                 let js_val: Handle<JsObject> = obj.get(cx, "access")?;
-                variant_device_access_strategy_js_to_rs(cx, js_val)?
+                struct_device_access_strategy_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::WorkspaceHistoryRealmExportDecryptor::User { access })
         }
@@ -17876,7 +18950,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryRealmExportDecryptorUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_access = variant_device_access_strategy_rs_to_js(cx, access)?;
+            let js_access = struct_device_access_strategy_rs_to_js(cx, access)?;
             js_obj.set(cx, "access", js_access)?;
         }
     }
@@ -17970,6 +19044,14 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js<'a>(
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceHistorySetTimestampOfInterestError::Stopped { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistorySetTimestampOfInterestErrorStopped")
@@ -18047,6 +19129,11 @@ fn variant_workspace_history_start_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "WorkspaceHistoryStartErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceHistoryStartError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryStartErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceHistoryStartError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceHistoryStartErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -18112,6 +19199,11 @@ fn variant_workspace_history_stat_entry_error_rs_to_js<'a>(
         libparsec::WorkspaceHistoryStatEntryError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryStatEntryErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistoryStatEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryStatEntryErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceHistoryStatEntryError::Stopped { .. } => {
@@ -18188,6 +19280,12 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js<'a>(
         libparsec::WorkspaceHistoryStatFolderChildrenError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceHistoryStatFolderChildrenErrorOffline")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistoryStatFolderChildrenError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryStatFolderChildrenErrorRealmDeleted")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceHistoryStatFolderChildrenError::Stopped { .. } => {
@@ -18268,6 +19366,11 @@ fn variant_workspace_is_file_content_local_error_rs_to_js<'a>(
         libparsec::WorkspaceIsFileContentLocalError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorRealmDeleted")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceIsFileContentLocalError::Stopped { .. } => {
@@ -18361,6 +19464,11 @@ fn variant_workspace_move_entry_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceMoveEntryErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceMoveEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceMoveEntryErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceMoveEntryError::SourceNotFound { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceMoveEntryErrorSourceNotFound").or_throw(cx)?;
@@ -18433,8 +19541,97 @@ fn variant_workspace_open_file_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceOpenFileErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceOpenFileError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceOpenFileError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceOpenFileErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceRegisterCryptpadSessionError
+
+#[allow(dead_code)]
+fn variant_workspace_register_cryptpad_session_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceRegisterCryptpadSessionError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceRegisterCryptpadSessionError::CryptpadUnavailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidCryptpadSessionKeys { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidKeysBundle { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::NoKey { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorNoKey").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorNoRealmAccess")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorRealmDeleted")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::TimestampOutOfBallpark { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -18510,8 +19707,139 @@ fn variant_workspace_remove_entry_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceRemoveEntryErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceRemoveEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRemoveEntryErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceRemoveEntryError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceRemoveEntryErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceSaveAndSyncFileWithCryptpadError
+
+#[allow(dead_code)]
+fn variant_workspace_save_and_sync_file_with_cryptpad_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceSaveAndSyncFileWithCryptpadError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::EntryNotAFile { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::EntryNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidBlockAccess { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidManifest { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::NoKey { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::NoRealm { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::ReadOnlyRealm { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::RealmArchived { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::ServerBlockstoreUnavailable {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::TimestampOutOfBallpark { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -18560,6 +19888,11 @@ fn variant_workspace_stat_entry_error_rs_to_js<'a>(
         }
         libparsec::WorkspaceStatEntryError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceStatEntryErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceStatEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceStatEntryErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceStatEntryError::Stopped { .. } => {
@@ -18620,6 +19953,11 @@ fn variant_workspace_stat_folder_children_error_rs_to_js<'a>(
         libparsec::WorkspaceStatFolderChildrenError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceStatFolderChildrenErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceStatFolderChildrenErrorRealmDeleted")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceStatFolderChildrenError::Stopped { .. } => {
@@ -18745,66 +20083,15 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceWatchEntryOneShotError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorRealmDeleted")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceWatchEntryOneShotError::Stopped { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// X509URIFlavorValue
-
-#[allow(dead_code)]
-fn variant_x509_uri_flavor_value_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::X509URIFlavorValue> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "X509URIFlavorValuePKCS11" => {
-            let x0 = {
-                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
-                {
-                    let _ = js_val;
-                    libparsec::X509Pkcs11URI
-                }
-            };
-            Ok(libparsec::X509URIFlavorValue::PKCS11(x0))
-        }
-        "X509URIFlavorValueWindowsCNG" => {
-            let x0 = {
-                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
-                struct_x509_windows_cng_uri_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::X509URIFlavorValue::WindowsCNG(x0))
-        }
-        _ => cx.throw_type_error("Object is not a X509URIFlavorValue"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_x509_uri_flavor_value_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::X509URIFlavorValue,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::X509URIFlavorValue::PKCS11(x0, ..) => {
-            let js_tag = JsString::try_new(cx, "X509URIFlavorValuePKCS11").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = {
-                let _ = x0;
-                cx.undefined()
-            };
-            js_obj.set(cx, "x0", js_x0)?;
-        }
-        libparsec::X509URIFlavorValue::WindowsCNG(x0, ..) => {
-            let js_tag = JsString::try_new(cx, "X509URIFlavorValueWindowsCNG").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = struct_x509_windows_cng_uri_rs_to_js(cx, x0)?;
-            js_obj.set(cx, "x0", js_x0)?;
         }
     }
     Ok(js_obj)
@@ -18851,7 +20138,7 @@ fn account_create_1_send_validation_email(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -18936,7 +20223,7 @@ fn account_create_2_check_validation_code(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19020,7 +20307,7 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19085,7 +20372,7 @@ fn account_create_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19139,12 +20426,12 @@ fn account_create_registration_device(mut cx: FunctionContext) -> JsResult<JsPro
     };
     let existing_local_device_access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19204,7 +20491,7 @@ fn account_delete_1_send_validation_email(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19264,7 +20551,7 @@ fn account_delete_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19330,7 +20617,7 @@ fn account_disable_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19423,7 +20710,7 @@ fn account_list_auth_methods(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19482,7 +20769,7 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
         let ret = libparsec::account_list_invitations(
@@ -19502,6 +20789,9 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_elem = {
     let (x0, x1, x2, x3) = elem;
     let js_array = JsArray::new(&mut cx, 4);
+    let js_value = {
+    let (x0, x1) = x0;
+    let js_array = JsArray::new(&mut cx, 2);
     let js_value = JsString::try_new(&mut cx,{
     let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
     match custom_to_rs_string(x0) {
@@ -19510,10 +20800,21 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     }
 }).or_throw(&mut cx)?;
     js_array.set(&mut cx, 0, js_value)?;
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 1, js_value)?;
+    js_array
+};
+    js_array.set(&mut cx, 0, js_value)?;
     let js_value = JsString::try_new(&mut cx,x1).or_throw(&mut cx)?;
     js_array.set(&mut cx, 1, js_value)?;
     let js_value = JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+    let custom_to_rs_string = |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
     match custom_to_rs_string(x2) {
         Ok(ok) => ok,
         Err(err) => return cx.throw_type_error(err.to_string()),
@@ -19564,7 +20865,7 @@ fn account_list_organizations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19615,7 +20916,7 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19646,7 +20947,7 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
                                         match custom_to_rs_string(x1) {
                                             Ok(ok) => ok,
                                             Err(err) => {
-                                                return cx.throw_type_error(err.to_string())
+                                                return cx.throw_type_error(err.to_string());
                                             }
                                         }
                                     })
@@ -19711,7 +21012,7 @@ fn account_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19827,7 +21128,7 @@ fn account_recover_1_send_validation_email(mut cx: FunctionContext) -> JsResult<
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -19916,7 +21217,7 @@ fn account_recover_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20012,12 +21313,12 @@ fn account_register_new_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(4)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20086,7 +21387,7 @@ fn archive_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20144,7 +21445,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let human_handle = {
         let js_val = cx.argument::<JsObject>(3)?;
@@ -20172,7 +21473,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20356,12 +21657,12 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20423,7 +21724,7 @@ fn claimer_device_in_progress_1_do_deny_trust(mut cx: FunctionContext) -> JsResu
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20489,7 +21790,7 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20551,7 +21852,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20625,7 +21926,7 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20691,7 +21992,7 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20741,7 +22042,7 @@ fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20801,7 +22102,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20902,12 +22203,12 @@ fn claimer_shamir_recovery_finalize_save_local_device(
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -20974,7 +22275,7 @@ fn claimer_shamir_recovery_in_progress_1_do_deny_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21043,7 +22344,7 @@ fn claimer_shamir_recovery_in_progress_1_do_signify_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21110,7 +22411,7 @@ fn claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21175,7 +22476,7 @@ fn claimer_shamir_recovery_in_progress_3_do_claim(mut cx: FunctionContext) -> Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21238,7 +22539,7 @@ fn claimer_shamir_recovery_initial_do_wait_peer(mut cx: FunctionContext) -> JsRe
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21352,7 +22653,7 @@ fn claimer_shamir_recovery_recover_device(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21407,12 +22708,12 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21474,7 +22775,7 @@ fn claimer_user_in_progress_1_do_deny_trust(mut cx: FunctionContext) -> JsResult
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21539,7 +22840,7 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21601,7 +22902,7 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21679,7 +22980,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21746,7 +23047,7 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21853,7 +23154,7 @@ fn claimer_user_wait_all_peers(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21923,10 +23224,14 @@ fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
         let js_val = cx.argument::<JsObject>(3)?;
         variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(&mut cx, js_val)?
     };
+    let send_email = {
+        let js_val = cx.argument::<JsBoolean>(4)?;
+        js_val.value(&mut cx)
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -21936,6 +23241,7 @@ fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
                 profile,
                 enrollment_id,
                 identity_strategy,
+                send_email,
             )
             .await;
 
@@ -21945,11 +23251,7 @@ fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            #[allow(clippy::let_unit_value)]
-                            let _ = ok;
-                            JsNull::new(&mut cx)
-                        };
+                        let js_value = variant_email_sent_status_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -22001,7 +23303,7 @@ fn client_accept_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22038,6 +23340,76 @@ fn client_accept_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_archive_workspace
+fn client_archive_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let configuration = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        variant_requested_realm_archiving_configuration_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_archive_workspace(client, realm_id, configuration).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_archive_workspace_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_cancel_invitation
 fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -22055,8 +23427,8 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let token = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -22067,7 +23439,7 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22133,7 +23505,7 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22193,7 +23565,7 @@ fn client_delete_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22260,7 +23632,7 @@ fn client_export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22322,7 +23694,7 @@ fn client_forget_all_certificates(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22360,6 +23732,68 @@ fn client_forget_all_certificates(mut cx: FunctionContext) -> JsResult<JsPromise
     Ok(promise)
 }
 
+// client_get_async_enrollment_addr
+fn client_get_async_enrollment_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let ret = libparsec::client_get_async_enrollment_addr(client);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = {
+                let (x0, x1) = ok;
+                let js_array = JsArray::new(&mut cx, 2);
+                let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x0) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+                js_array.set(&mut cx, 0, js_value)?;
+                let js_value = JsString::try_new(&mut cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(&mut cx)?;
+                js_array.set(&mut cx, 1, js_value)?;
+                js_array
+            };
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_client_get_async_enrollment_addr_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // client_get_organization_bootstrap_date
 fn client_get_organization_bootstrap_date(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -22377,7 +23811,7 @@ fn client_get_organization_bootstrap_date(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22421,6 +23855,58 @@ fn client_get_organization_bootstrap_date(mut cx: FunctionContext) -> JsResult<J
     Ok(promise)
 }
 
+// client_get_outbound_sync_backlog
+fn client_get_outbound_sync_backlog(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_get_outbound_sync_backlog(client).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_client_get_outbound_sync_backlog_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_get_outbound_sync_backlog_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_get_self_shamir_recovery
 fn client_get_self_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -22438,7 +23924,7 @@ fn client_get_self_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22489,7 +23975,7 @@ fn client_get_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22551,7 +24037,7 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22621,7 +24107,7 @@ fn client_get_user_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22671,7 +24157,7 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22721,7 +24207,7 @@ fn client_list_async_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22781,7 +24267,7 @@ fn client_list_frozen_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22849,7 +24335,7 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22907,7 +24393,7 @@ fn client_list_shamir_recoveries_for_others(mut cx: FunctionContext) -> JsResult
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -22981,7 +24467,7 @@ fn client_list_user_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23043,7 +24529,7 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23084,6 +24570,93 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_list_workspace_user_role_changes
+fn client_list_workspace_user_role_changes(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let user_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::client_list_workspace_user_role_changes(client, realm_id, user_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    struct_workspace_user_role_change_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_list_workspace_user_role_changes_error_rs_to_js(
+                                &mut cx, err,
+                            )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_list_workspace_users
 fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -23113,7 +24686,7 @@ fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23173,7 +24746,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23235,7 +24808,7 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23302,7 +24875,7 @@ fn client_new_shamir_recovery_invitation(mut cx: FunctionContext) -> JsResult<Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23375,7 +24948,7 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23427,7 +25000,7 @@ fn client_organization_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23449,369 +25022,6 @@ fn client_organization_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_organization_info_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// client_pki_enrollment_accept
-fn client_pki_enrollment_accept(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let client_handle = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let profile = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let js_string = js_val.value(&mut cx);
-            enum_user_profile_js_to_rs(&mut cx, js_string.as_str())?
-        }
-    };
-    let enrollment_id = {
-        let js_val = cx.argument::<JsString>(2)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let accepter_cert_ref = {
-        let js_val = cx.argument::<JsObject>(3)?;
-        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
-    };
-    let submitter_der_cert = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(4)?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let submit_payload = {
-        let js_val = cx.argument::<JsObject>(5)?;
-        struct_pki_enrollment_submit_payload_js_to_rs(&mut cx, js_val)?
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::client_pki_enrollment_accept(
-                client_handle,
-                profile,
-                enrollment_id,
-                &accepter_cert_ref,
-                &submitter_der_cert,
-                submit_payload,
-            )
-            .await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            #[allow(clippy::let_unit_value)]
-                            let _ = ok;
-                            JsNull::new(&mut cx)
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_pki_enrollment_accept_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// client_pki_enrollment_reject
-fn client_pki_enrollment_reject(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let client_handle = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let enrollment_id = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::client_pki_enrollment_reject(client_handle, enrollment_id).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            #[allow(clippy::let_unit_value)]
-                            let _ = ok;
-                            JsNull::new(&mut cx)
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_pki_enrollment_reject_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// client_pki_get_addr
-fn client_pki_get_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let client = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
-
-        let ret = libparsec::client_pki_get_addr(
-            client,
-        ).await;
-
-        deferred.settle_with(&channel, move |mut cx| {
-            let js_ret = match ret {
-    Ok(ok) => {
-        let js_obj = JsObject::new(&mut cx);
-        let js_tag = JsBoolean::new(&mut cx, true);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_value = JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-    match custom_to_rs_string(ok) {
-        Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err.to_string()),
-    }
-}).or_throw(&mut cx)?;
-        js_obj.set(&mut cx, "value", js_value)?;
-        js_obj
-    }
-    Err(err) => {
-        let js_obj = cx.empty_object();
-        let js_tag = JsBoolean::new(&mut cx, false);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_err = variant_pki_get_addr_error_rs_to_js(&mut cx, err)?;
-        js_obj.set(&mut cx, "error", js_err)?;
-        js_obj
-    }
-};
-            Ok(js_ret)
-        });
-    });
-
-    Ok(promise)
-}
-
-// client_pki_list_enrollments_untrusted
-fn client_pki_list_enrollments_untrusted(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let client_handle = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::client_pki_list_enrollments_untrusted(client_handle).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len());
-                            for (i, elem) in ok.into_iter().enumerate() {
-                                let js_elem =
-                                    struct_raw_pki_enrollment_list_item_rs_to_js(&mut cx, elem)?;
-                                js_array.set(&mut cx, i as u32, js_elem)?;
-                            }
-                            js_array
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_pki_enrollment_list_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// client_pki_list_verify_items
-fn client_pki_list_verify_items(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let client_handle = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let cert_ref = {
-        let js_val = cx.argument::<JsObject>(1)?;
-        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
-    };
-    let untrusted_items = {
-        let js_val = cx.argument::<JsArray>(2)?;
-        {
-            let size = js_val.len(&mut cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsObject> = js_val.get(&mut cx, i)?;
-                v.push(struct_raw_pki_enrollment_list_item_js_to_rs(
-                    &mut cx, js_item,
-                )?);
-            }
-            v
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret =
-                libparsec::client_pki_list_verify_items(client_handle, cert_ref, untrusted_items)
-                    .await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len());
-                            for (i, elem) in ok.into_iter().enumerate() {
-                                let js_elem =
-                                    variant_pki_enrollment_list_item_rs_to_js(&mut cx, elem)?;
-                                js_array.set(&mut cx, i as u32, js_elem)?;
-                            }
-                            js_array
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_pki_enrollment_list_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -23852,7 +25062,7 @@ fn client_reject_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23931,7 +25141,7 @@ fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -23997,7 +25207,7 @@ fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24023,6 +25233,74 @@ fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_revoke_user_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_self_promote_to_workspace_owner
+fn client_self_promote_to_workspace_owner(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_self_promote_to_workspace_owner(client, realm_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_self_promote_to_workspace_owner_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -24133,7 +25411,7 @@ fn client_setup_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24227,7 +25505,7 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24273,12 +25551,12 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24328,8 +25606,8 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
     let token = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -24340,7 +25618,7 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24391,8 +25669,8 @@ fn client_start_shamir_recovery_invitation_greet(mut cx: FunctionContext) -> JsR
     let token = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -24403,7 +25681,7 @@ fn client_start_shamir_recovery_invitation_greet(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24457,8 +25735,8 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
     let token = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -24469,7 +25747,7 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24532,7 +25810,7 @@ fn client_start_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24594,7 +25872,7 @@ fn client_start_workspace_history(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24644,7 +25922,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24670,6 +25948,183 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_stop_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_totp_create_opaque_key
+fn client_totp_create_opaque_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+
+        let ret = libparsec::client_totp_create_opaque_key(
+            client,
+        ).await;
+
+        deferred.settle_with(&channel, move |mut cx| {
+            let js_ret = match ret {
+    Ok(ok) => {
+        let js_obj = JsObject::new(&mut cx);
+        let js_tag = JsBoolean::new(&mut cx, true);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_value = {
+    let (x0, x1) = ok;
+    let js_array = JsArray::new(&mut cx, 2);
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+    match custom_to_rs_string(x0) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 0, js_value)?;
+    let js_value = {
+    let rs_buff = {x1};
+    let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
+    js_buff
+};
+    js_array.set(&mut cx, 1, js_value)?;
+    js_array
+};
+        js_obj.set(&mut cx, "value", js_value)?;
+        js_obj
+    }
+    Err(err) => {
+        let js_obj = cx.empty_object();
+        let js_tag = JsBoolean::new(&mut cx, false);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_err = variant_client_totp_create_opaque_key_error_rs_to_js(&mut cx, err)?;
+        js_obj.set(&mut cx, "error", js_err)?;
+        js_obj
+    }
+};
+            Ok(js_ret)
+        });
+    });
+
+    Ok(promise)
+}
+
+// client_totp_setup_confirm
+fn client_totp_setup_confirm(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let one_time_password = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_totp_setup_confirm(client, one_time_password).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_totp_setup_confirm_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_totp_setup_status
+fn client_totp_setup_status(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_totp_setup_status(client).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_totp_setup_status_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_totp_setup_status_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -24717,7 +26172,7 @@ fn client_update_user_profile(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24857,7 +26312,7 @@ fn get_server_config(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24918,7 +26373,7 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -24980,7 +26435,7 @@ fn greeter_device_in_progress_2_do_deny_trust(mut cx: FunctionContext) -> JsResu
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25046,7 +26501,7 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25110,7 +26565,7 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25185,7 +26640,7 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25252,7 +26707,7 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25315,7 +26770,7 @@ fn greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25382,7 +26837,7 @@ fn greeter_shamir_recovery_in_progress_2_do_deny_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25451,7 +26906,7 @@ fn greeter_shamir_recovery_in_progress_2_do_signify_trust(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25518,7 +26973,7 @@ fn greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25586,7 +27041,7 @@ fn greeter_shamir_recovery_initial_do_wait_peer(mut cx: FunctionContext) -> JsRe
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25649,7 +27104,7 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25711,7 +27166,7 @@ fn greeter_user_in_progress_2_do_deny_trust(mut cx: FunctionContext) -> JsResult
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25776,7 +27231,7 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25840,7 +27295,7 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25926,7 +27381,7 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -25998,7 +27453,7 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26060,12 +27515,12 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(4)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26115,25 +27570,28 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// is_pki_available
-fn is_pki_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// is_path_confined
+fn is_path_confined(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
-    let channel = cx.channel();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::is_path_confined(client, &path);
+    let js_ret = JsBoolean::new(&mut cx, ret);
     let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::is_pki_available().await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = JsBoolean::new(&mut cx, ret);
-                Ok(js_ret)
-            });
-        });
-
+    deferred.resolve(&mut cx, js_ret);
     Ok(promise)
 }
 
@@ -26147,7 +27605,7 @@ fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26168,13 +27626,13 @@ fn libparsec_init_set_on_event_callback(mut cx: FunctionContext) -> JsResult<JsP
     crate::init_sentry();
     let on_event_callback = {
         let js_val = cx.argument::<JsFunction>(0)?;
-        // The Javascript function object is going to be shared between the closure
+        // The JavaScript function object is going to be shared between the closure
         // called by rust (that can be called multiple times) and the single-use
         // closure sent to the js runtime.
         // So we must use an Arc to ensure the resource is shared correctly, but
         // that's not all of it !
-        // When the resource is no longer use, we must consume the reference we
-        // had on the javascript function in a neon context so that it can itself
+        // When the resource is no longer used, we must consume the reference we
+        // had on the JavaScript function in a neon context so that it can itself
         // notify the js runtime's garbage collector.
         struct Callback {
             js_fn: Option<neon::handle::Root<JsFunction>>,
@@ -26239,7 +27697,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26269,65 +27727,6 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_list_available_device_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// list_pki_local_pending_enrollments
-fn list_pki_local_pending_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let config_dir = {
-        let js_val = cx.argument::<JsString>(0)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::list_pki_local_pending_enrollments(&config_dir).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len());
-                            for (i, elem) in ok.into_iter().enumerate() {
-                                let js_elem =
-                                    struct_pki_local_pending_enrollment_rs_to_js(&mut cx, elem)?;
-                                js_array.set(&mut cx, i as u32, js_elem)?;
-                            }
-                            js_array
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_list_pki_local_pending_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -26420,7 +27819,7 @@ fn mountpoint_to_os_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26481,7 +27880,7 @@ fn mountpoint_unmount(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -26525,6 +27924,81 @@ fn new_canceller(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let js_ret = JsNumber::new(&mut cx, ret as f64);
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// openbao_list_self_emails
+fn openbao_list_self_emails(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let openbao_server_url = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_secret_mount_path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_transit_mount_path = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_entity_id = {
+        let js_val = cx.argument::<JsString>(3)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_auth_token = {
+        let js_val = cx.argument::<JsString>(4)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::openbao_list_self_emails(
+                openbao_server_url,
+                openbao_secret_mount_path,
+                openbao_transit_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = JsString::try_new(&mut cx, elem).or_throw(&mut cx)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_open_bao_list_self_emails_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
     Ok(promise)
 }
 
@@ -26718,92 +28192,14 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// pki_enrollment_finalize
-fn pki_enrollment_finalize(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// pki_init_for_native
+fn pki_init_for_native(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
-    let config = {
-        let js_val = cx.argument::<JsObject>(0)?;
-        struct_client_config_js_to_rs(&mut cx, js_val)?
-    };
-    let save_strategy = {
-        let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
-    };
-    let accepted = {
-        let js_val = cx.argument::<JsObject>(2)?;
-        struct_pki_enrollment_answer_payload_js_to_rs(&mut cx, js_val)?
-    };
-    let local_pending = {
-        let js_val = cx.argument::<JsObject>(3)?;
-        struct_pki_local_pending_enrollment_js_to_rs(&mut cx, js_val)?
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret =
-                libparsec::pki_enrollment_finalize(config, save_strategy, accepted, local_pending)
-                    .await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_pki_enrollment_finalize_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// pki_enrollment_info
-fn pki_enrollment_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let config = {
-        let js_val = cx.argument::<JsObject>(0)?;
-        struct_client_config_js_to_rs(&mut cx, js_val)?
-    };
-    let addr = {
-        let js_val = cx.argument::<JsString>(1)?;
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let cert_ref = {
-        let js_val = cx.argument::<JsObject>(2)?;
-        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
-    };
-    let enrollment_id = {
-        let js_val = cx.argument::<JsString>(3)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
@@ -26813,152 +28209,12 @@ fn pki_enrollment_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::pki_enrollment_info(config, addr, cert_ref, enrollment_id).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = variant_pki_info_item_rs_to_js(&mut cx, ok)?;
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_pki_enrollment_info_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// pki_enrollment_submit
-fn pki_enrollment_submit(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let config = {
-        let js_val = cx.argument::<JsObject>(0)?;
-        struct_client_config_js_to_rs(&mut cx, js_val)?
-    };
-    let addr = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let cert_ref = {
-        let js_val = cx.argument::<JsObject>(2)?;
-        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
-    };
-    let device_label = {
-        let js_val = cx.argument::<JsString>(3)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let force = {
-        let js_val = cx.argument::<JsBoolean>(4)?;
-        js_val.value(&mut cx)
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret =
-                libparsec::pki_enrollment_submit(config, addr, cert_ref, device_label, force).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_f64 =
-                                |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                                };
-                            match custom_to_rs_f64(ok) {
-                                Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
-                            }
-                        });
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_pki_enrollment_submit_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// pki_remove_local_pending
-fn pki_remove_local_pending(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let config = {
-        let js_val = cx.argument::<JsObject>(0)?;
-        struct_client_config_js_to_rs(&mut cx, js_val)?
-    };
-    let id = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::pki_remove_local_pending(config, id).await;
+            let ret = libparsec::pki_init_for_native(&config_dir).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -26978,7 +28234,221 @@ fn pki_remove_local_pending(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_remove_device_error_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_pki_system_init_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_init_for_scws
+fn pki_init_for_scws(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let parsec_addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_init_for_scws(&config_dir, parsec_addr).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_system_init_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_list_user_certificates
+fn pki_list_user_certificates(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_list_user_certificates().await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    variant_available_pki_certificate_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_pki_system_list_user_certificate_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_open_user_certificate_private_key
+fn pki_open_user_certificate_private_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let cert_ref = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_open_user_certificate_private_key(&cert_ref).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_open_user_certificate_private_key_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_private_key_close
+fn pki_private_key_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_private_key_close(handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_private_key_close_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -27012,7 +28482,7 @@ fn remove_device_data(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27055,7 +28525,7 @@ fn show_certificate_selection_dialog_windows_only(mut cx: FunctionContext) -> Js
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27137,7 +28607,7 @@ fn submit_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27178,6 +28648,79 @@ fn submit_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// submitter_cancel_async_enrollment
+fn submitter_cancel_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let enrollment_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::submitter_cancel_async_enrollment(config, addr, enrollment_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_submitter_cancel_async_enrollment_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // submitter_finalize_async_enrollment
 fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27198,27 +28741,16 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let new_device_save_strategy = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
-    };
-    let new_device_key_file = {
-        let js_val = cx.argument::<JsString>(3)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let identity_strategy = {
-        let js_val = cx.argument::<JsObject>(4)?;
+        let js_val = cx.argument::<JsObject>(3)?;
         variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27227,7 +28759,6 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
                 config,
                 &enrollment_file,
                 new_device_save_strategy,
-                &new_device_key_file,
                 identity_strategy,
             )
             .await;
@@ -27249,74 +28780,6 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_err = variant_submitter_finalize_async_enrollment_error_rs_to_js(
                             &mut cx, err,
                         )?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// submitter_forget_async_enrollment
-fn submitter_forget_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let config_dir = {
-        let js_val = cx.argument::<JsString>(0)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let enrollment_id = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
-                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret =
-                libparsec::submitter_forget_async_enrollment(&config_dir, enrollment_id).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            #[allow(clippy::let_unit_value)]
-                            let _ = ok;
-                            JsNull::new(&mut cx)
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err =
-                            variant_submitter_forget_async_enrollment_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -27362,7 +28825,7 @@ fn submitter_get_async_enrollment_info(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27415,7 +28878,7 @@ fn submitter_list_async_enrollments(mut cx: FunctionContext) -> JsResult<JsPromi
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27490,7 +28953,7 @@ fn test_check_mailbox(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27518,7 +28981,7 @@ fn test_check_mailbox(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                         match custom_to_rs_string(x0) {
                                             Ok(ok) => ok,
                                             Err(err) => {
-                                                return cx.throw_type_error(err.to_string())
+                                                return cx.throw_type_error(err.to_string());
                                             }
                                         }
                                     })
@@ -27580,7 +29043,7 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27727,7 +29190,7 @@ fn test_new_account(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27797,7 +29260,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27841,6 +29304,275 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// totp_fetch_opaque_key
+fn totp_fetch_opaque_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let server_addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let organization_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let user_id = {
+        let js_val = cx.argument::<JsString>(3)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let opaque_key_id = {
+        let js_val = cx.argument::<JsString>(4)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                libparsec::TOTPOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let one_time_password = {
+        let js_val = cx.argument::<JsString>(5)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::totp_fetch_opaque_key(
+                config,
+                server_addr,
+                organization_id,
+                user_id,
+                opaque_key_id,
+                one_time_password,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let rs_buff = { ok };
+                            let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
+                            js_buff
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_totp_fetch_opaque_key_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// totp_setup_confirm_anonymous
+fn totp_setup_confirm_anonymous(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let one_time_password = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::totp_setup_confirm_anonymous(config, addr, one_time_password).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_totp_setup_confirm_anonymous_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// totp_setup_status_anonymous
+fn totp_setup_status_anonymous(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::totp_setup_status_anonymous(config, addr).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_totp_setup_status_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_totp_setup_status_anonymous_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// try_convert_http_to_parsec_addr
+fn try_convert_http_to_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let http_url = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::try_convert_http_to_parsec_addr(&http_url);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = JsString::try_new(&mut cx, {
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(ok) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(&mut cx)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_addr_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // update_device_change_authentication
 fn update_device_change_authentication(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27857,16 +29589,16 @@ fn update_device_change_authentication(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let current_auth = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let new_auth = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -27917,7 +29649,7 @@ fn update_device_overwrite_server_addr(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let new_server_addr = {
         let js_val = cx.argument::<JsString>(2)?;
@@ -27934,7 +29666,7 @@ fn update_device_overwrite_server_addr(mut cx: FunctionContext) -> JsResult<JsPr
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28109,7 +29841,7 @@ fn wait_for_device_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28176,7 +29908,7 @@ fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28248,7 +29980,7 @@ fn workspace_create_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28320,7 +30052,7 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28392,7 +30124,7 @@ fn workspace_decrypt_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28450,16 +30182,14 @@ fn workspace_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -28468,7 +30198,7 @@ fn workspace_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28520,16 +30250,14 @@ fn workspace_fd_flush(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -28538,7 +30266,7 @@ fn workspace_fd_flush(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28590,16 +30318,14 @@ fn workspace_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -28626,7 +30352,7 @@ fn workspace_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28677,16 +30403,14 @@ fn workspace_fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -28708,7 +30432,7 @@ fn workspace_fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28760,16 +30484,14 @@ fn workspace_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -28778,7 +30500,7 @@ fn workspace_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28826,16 +30548,14 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -28857,7 +30577,7 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28905,16 +30625,14 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -28936,7 +30654,7 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -28985,16 +30703,14 @@ fn workspace_fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> 
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -29007,7 +30723,7 @@ fn workspace_fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29069,7 +30785,7 @@ fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
         let ret = libparsec::workspace_generate_path_addr(
@@ -29083,13 +30799,27 @@ fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> 
         let js_obj = JsObject::new(&mut cx);
         let js_tag = JsBoolean::new(&mut cx, true);
         js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_value = JsString::try_new(&mut cx,{
+        let js_value = {
+    let (x0, x1) = ok;
+    let js_array = JsArray::new(&mut cx, 2);
+    let js_value = JsString::try_new(&mut cx,{
     let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-    match custom_to_rs_string(ok) {
+    match custom_to_rs_string(x0) {
         Ok(ok) => ok,
         Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 0, js_value)?;
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 1, js_value)?;
+    js_array
+};
         js_obj.set(&mut cx, "value", js_value)?;
         js_obj
     }
@@ -29124,16 +30854,14 @@ fn workspace_history_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -29182,16 +30910,14 @@ fn workspace_history_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -29218,7 +30944,7 @@ fn workspace_history_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29271,16 +30997,14 @@ fn workspace_history_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -29289,7 +31013,7 @@ fn workspace_history_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29490,7 +31214,7 @@ fn workspace_history_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29503,16 +31227,16 @@ fn workspace_history_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -29562,7 +31286,7 @@ fn workspace_history_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29579,17 +31303,16 @@ fn workspace_history_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<J
                         let js_value = {
                             let (x0, x1) = ok;
                             let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = JsNumber::new(&mut cx, {
-                                let custom_to_rs_u32 =
+                            let js_value = JsBigInt::from_u64(&mut cx, {
+                                let custom_to_rs_u64 =
                                     |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                         Ok(fd.0)
                                     };
-                                match custom_to_rs_u32(x0) {
+                                match custom_to_rs_u64(x0) {
                                     Ok(ok) => ok,
                                     Err(err) => return cx.throw_type_error(err),
                                 }
-                            }
-                                as f64);
+                            });
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = JsString::try_new(&mut cx, {
                                 let custom_to_rs_string =
@@ -29654,7 +31377,7 @@ fn workspace_history_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsProm
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29668,16 +31391,16 @@ fn workspace_history_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -29729,7 +31452,7 @@ fn workspace_history_set_timestamp_of_interest(mut cx: FunctionContext) -> JsRes
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29806,7 +31529,7 @@ fn workspace_history_start_with_realm_export(mut cx: FunctionContext) -> JsResul
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29873,7 +31596,7 @@ fn workspace_history_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -29936,7 +31659,7 @@ fn workspace_history_stat_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPro
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30000,7 +31723,7 @@ fn workspace_history_stat_folder_children(mut cx: FunctionContext) -> JsResult<J
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30083,7 +31806,7 @@ fn workspace_history_stat_folder_children_by_id(mut cx: FunctionContext) -> JsRe
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30199,7 +31922,7 @@ fn workspace_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30261,7 +31984,7 @@ fn workspace_is_file_content_local(mut cx: FunctionContext) -> JsResult<JsPromis
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30312,7 +32035,7 @@ fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30410,7 +32133,7 @@ fn workspace_move_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30480,7 +32203,7 @@ fn workspace_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30493,16 +32216,16 @@ fn workspace_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -30555,7 +32278,7 @@ fn workspace_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30571,17 +32294,16 @@ fn workspace_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<JsPromise
                         let js_value = {
                             let (x0, x1) = ok;
                             let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = JsNumber::new(&mut cx, {
-                                let custom_to_rs_u32 =
+                            let js_value = JsBigInt::from_u64(&mut cx, {
+                                let custom_to_rs_u64 =
                                     |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                         Ok(fd.0)
                                     };
-                                match custom_to_rs_u32(x0) {
+                                match custom_to_rs_u64(x0) {
                                     Ok(ok) => ok,
                                     Err(err) => return cx.throw_type_error(err),
                                 }
-                            }
-                                as f64);
+                            });
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = JsString::try_new(&mut cx, {
                                 let custom_to_rs_string =
@@ -30649,7 +32371,7 @@ fn workspace_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30662,16 +32384,16 @@ fn workspace_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -30680,6 +32402,84 @@ fn workspace_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_workspace_open_file_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_register_cryptpad_session
+fn workspace_register_cryptpad_session(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let vlob_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let candidate_view_key = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let candidate_edit_key = {
+        let js_val = cx.argument::<JsString>(3)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_register_cryptpad_session(
+                workspace,
+                vlob_id,
+                candidate_view_key,
+                candidate_edit_key,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_cryptpad_session_keys_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_register_cryptpad_session_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -30720,7 +32520,7 @@ fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30786,7 +32586,7 @@ fn workspace_remove_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30852,7 +32652,7 @@ fn workspace_remove_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -30918,7 +32718,7 @@ fn workspace_remove_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31012,7 +32812,7 @@ fn workspace_rename_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31056,6 +32856,104 @@ fn workspace_rename_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> 
     Ok(promise)
 }
 
+// workspace_save_and_sync_file_with_cryptpad
+fn workspace_save_and_sync_file_with_cryptpad(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let entry_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let cryptpad_session_channel_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let cryptpad_session_timestamp = {
+        let js_val = cx.argument::<JsNumber>(3)?;
+        {
+            let v = js_val.value(&mut cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let content = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(4)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_save_and_sync_file_with_cryptpad(
+                workspace,
+                entry_id,
+                cryptpad_session_channel_id,
+                cryptpad_session_timestamp,
+                &content,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_save_and_sync_file_with_cryptpad_error_rs_to_js(
+                                &mut cx, err,
+                            )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_stat_entry
 fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -31085,7 +32983,7 @@ fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31147,7 +33045,7 @@ fn workspace_stat_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31211,7 +33109,7 @@ fn workspace_stat_entry_by_id_ignore_confinement_point(
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31275,7 +33173,7 @@ fn workspace_stat_folder_children(mut cx: FunctionContext) -> JsResult<JsPromise
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31355,7 +33253,7 @@ fn workspace_stat_folder_children_by_id(mut cx: FunctionContext) -> JsResult<JsP
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31423,7 +33321,7 @@ fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31489,7 +33387,7 @@ fn workspace_watch_entry_oneshot(mut cx: FunctionContext) -> JsResult<JsPromise>
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME
         .lock()
         .expect("Mutex is poisoned")
@@ -31674,6 +33572,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_accept_async_enrollment,
     )?;
     cx.export_function("clientAcceptTos", client_accept_tos)?;
+    cx.export_function("clientArchiveWorkspace", client_archive_workspace)?;
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
     cx.export_function("clientDeleteShamirRecovery", client_delete_shamir_recovery)?;
@@ -31683,8 +33582,16 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_forget_all_certificates,
     )?;
     cx.export_function(
+        "clientGetAsyncEnrollmentAddr",
+        client_get_async_enrollment_addr,
+    )?;
+    cx.export_function(
         "clientGetOrganizationBootstrapDate",
         client_get_organization_bootstrap_date,
+    )?;
+    cx.export_function(
+        "clientGetOutboundSyncBacklog",
+        client_get_outbound_sync_backlog,
     )?;
     cx.export_function(
         "clientGetSelfShamirRecovery",
@@ -31703,6 +33610,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientListUserDevices", client_list_user_devices)?;
     cx.export_function("clientListUsers", client_list_users)?;
+    cx.export_function(
+        "clientListWorkspaceUserRoleChanges",
+        client_list_workspace_user_role_changes,
+    )?;
     cx.export_function("clientListWorkspaceUsers", client_list_workspace_users)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
     cx.export_function("clientNewDeviceInvitation", client_new_device_invitation)?;
@@ -31712,20 +33623,16 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientNewUserInvitation", client_new_user_invitation)?;
     cx.export_function("clientOrganizationInfo", client_organization_info)?;
-    cx.export_function("clientPkiEnrollmentAccept", client_pki_enrollment_accept)?;
-    cx.export_function("clientPkiEnrollmentReject", client_pki_enrollment_reject)?;
-    cx.export_function("clientPkiGetAddr", client_pki_get_addr)?;
-    cx.export_function(
-        "clientPkiListEnrollmentsUntrusted",
-        client_pki_list_enrollments_untrusted,
-    )?;
-    cx.export_function("clientPkiListVerifyItems", client_pki_list_verify_items)?;
     cx.export_function(
         "clientRejectAsyncEnrollment",
         client_reject_async_enrollment,
     )?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;
+    cx.export_function(
+        "clientSelfPromoteToWorkspaceOwner",
+        client_self_promote_to_workspace_owner,
+    )?;
     cx.export_function("clientSetupShamirRecovery", client_setup_shamir_recovery)?;
     cx.export_function("clientShareWorkspace", client_share_workspace)?;
     cx.export_function("clientStart", client_start)?;
@@ -31747,6 +33654,9 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_start_workspace_history,
     )?;
     cx.export_function("clientStop", client_stop)?;
+    cx.export_function("clientTotpCreateOpaqueKey", client_totp_create_opaque_key)?;
+    cx.export_function("clientTotpSetupConfirm", client_totp_setup_confirm)?;
+    cx.export_function("clientTotpSetupStatus", client_totp_setup_status)?;
     cx.export_function("clientUpdateUserProfile", client_update_user_profile)?;
     cx.export_function("getDefaultConfigDir", get_default_config_dir)?;
     cx.export_function("getDefaultDataBaseDir", get_default_data_base_dir)?;
@@ -31826,7 +33736,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
-    cx.export_function("isPkiAvailable", is_pki_available)?;
+    cx.export_function("isPathConfined", is_path_confined)?;
     cx.export_function(
         "libparsecInitNativeOnlyInit",
         libparsec_init_native_only_init,
@@ -31836,25 +33746,26 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         libparsec_init_set_on_event_callback,
     )?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
-    cx.export_function(
-        "listPkiLocalPendingEnrollments",
-        list_pki_local_pending_enrollments,
-    )?;
     cx.export_function("listStartedAccounts", list_started_accounts)?;
     cx.export_function("listStartedClients", list_started_clients)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
     cx.export_function("newCanceller", new_canceller)?;
+    cx.export_function("openbaoListSelfEmails", openbao_list_self_emails)?;
     cx.export_function("parseParsecAddr", parse_parsec_addr)?;
     cx.export_function("pathFilename", path_filename)?;
     cx.export_function("pathJoin", path_join)?;
     cx.export_function("pathNormalize", path_normalize)?;
     cx.export_function("pathParent", path_parent)?;
     cx.export_function("pathSplit", path_split)?;
-    cx.export_function("pkiEnrollmentFinalize", pki_enrollment_finalize)?;
-    cx.export_function("pkiEnrollmentInfo", pki_enrollment_info)?;
-    cx.export_function("pkiEnrollmentSubmit", pki_enrollment_submit)?;
-    cx.export_function("pkiRemoveLocalPending", pki_remove_local_pending)?;
+    cx.export_function("pkiInitForNative", pki_init_for_native)?;
+    cx.export_function("pkiInitForScws", pki_init_for_scws)?;
+    cx.export_function("pkiListUserCertificates", pki_list_user_certificates)?;
+    cx.export_function(
+        "pkiOpenUserCertificatePrivateKey",
+        pki_open_user_certificate_private_key,
+    )?;
+    cx.export_function("pkiPrivateKeyClose", pki_private_key_close)?;
     cx.export_function("removeDeviceData", remove_device_data)?;
     cx.export_function(
         "showCertificateSelectionDialogWindowsOnly",
@@ -31862,12 +33773,12 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("submitAsyncEnrollment", submit_async_enrollment)?;
     cx.export_function(
-        "submitterFinalizeAsyncEnrollment",
-        submitter_finalize_async_enrollment,
+        "submitterCancelAsyncEnrollment",
+        submitter_cancel_async_enrollment,
     )?;
     cx.export_function(
-        "submitterForgetAsyncEnrollment",
-        submitter_forget_async_enrollment,
+        "submitterFinalizeAsyncEnrollment",
+        submitter_finalize_async_enrollment,
     )?;
     cx.export_function(
         "submitterGetAsyncEnrollmentInfo",
@@ -31889,6 +33800,13 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("testNewAccount", test_new_account)?;
     cx.export_function("testNewTestbed", test_new_testbed)?;
+    cx.export_function("totpFetchOpaqueKey", totp_fetch_opaque_key)?;
+    cx.export_function("totpSetupConfirmAnonymous", totp_setup_confirm_anonymous)?;
+    cx.export_function("totpSetupStatusAnonymous", totp_setup_status_anonymous)?;
+    cx.export_function(
+        "tryConvertHttpToParsecAddr",
+        try_convert_http_to_parsec_addr,
+    )?;
     cx.export_function(
         "updateDeviceChangeAuthentication",
         update_device_change_authentication,
@@ -31977,11 +33895,19 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceOpenFile", workspace_open_file)?;
     cx.export_function("workspaceOpenFileAndGetId", workspace_open_file_and_get_id)?;
     cx.export_function("workspaceOpenFileById", workspace_open_file_by_id)?;
+    cx.export_function(
+        "workspaceRegisterCryptpadSession",
+        workspace_register_cryptpad_session,
+    )?;
     cx.export_function("workspaceRemoveEntry", workspace_remove_entry)?;
     cx.export_function("workspaceRemoveFile", workspace_remove_file)?;
     cx.export_function("workspaceRemoveFolder", workspace_remove_folder)?;
     cx.export_function("workspaceRemoveFolderAll", workspace_remove_folder_all)?;
     cx.export_function("workspaceRenameEntryById", workspace_rename_entry_by_id)?;
+    cx.export_function(
+        "workspaceSaveAndSyncFileWithCryptpad",
+        workspace_save_and_sync_file_with_cryptpad,
+    )?;
     cx.export_function("workspaceStatEntry", workspace_stat_entry)?;
     cx.export_function("workspaceStatEntryById", workspace_stat_entry_by_id)?;
     cx.export_function(

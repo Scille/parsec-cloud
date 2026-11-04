@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::sync::Arc;
 
@@ -8,9 +8,9 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace_history::{
-        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
         InvalidManifestHistoryError, WorkspaceHistoryEntryStat, WorkspaceHistoryOps,
         WorkspaceHistoryStatEntryError,
+        store::{WorkspaceHistoryStoreGetEntryError, WorkspaceHistoryStoreResolvePathError},
     },
 };
 
@@ -26,6 +26,8 @@ pub enum WorkspaceHistoryOpenFolderReaderError {
     EntryIsFile,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -46,6 +48,8 @@ pub enum WorkspaceHistoryFolderReaderStatEntryError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -116,7 +120,7 @@ impl WorkspaceHistoryFolderReader {
                     // invalid (e.g. the entry has been reparented during a move) and
                     // should just be ignored.
                     WorkspaceHistoryStatEntryError::EntryNotFound => {
-                        return Ok(WorkspaceHistoryFolderReaderStatNextOutcome::InvalidChild)
+                        return Ok(WorkspaceHistoryFolderReaderStatNextOutcome::InvalidChild);
                     }
                     WorkspaceHistoryStatEntryError::Offline(e) => {
                         WorkspaceHistoryFolderReaderStatEntryError::Offline(e)
@@ -126,6 +130,9 @@ impl WorkspaceHistoryFolderReader {
                     }
                     WorkspaceHistoryStatEntryError::NoRealmAccess => {
                         WorkspaceHistoryFolderReaderStatEntryError::NoRealmAccess
+                    }
+                    WorkspaceHistoryStatEntryError::RealmDeleted => {
+                        WorkspaceHistoryFolderReaderStatEntryError::RealmDeleted
                     }
                     WorkspaceHistoryStatEntryError::InvalidKeysBundle(err) => {
                         WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(err)
@@ -182,6 +189,9 @@ impl WorkspaceHistoryFolderReader {
                             WorkspaceHistoryStoreGetEntryError::NoRealmAccess => {
                                 WorkspaceHistoryFolderReaderStatEntryError::NoRealmAccess
                             }
+                            WorkspaceHistoryStoreGetEntryError::RealmDeleted => {
+                                WorkspaceHistoryFolderReaderStatEntryError::RealmDeleted
+                            }
                             WorkspaceHistoryStoreGetEntryError::InvalidKeysBundle(
                                 invalid_keys_bundle_error,
                             ) => WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(
@@ -203,7 +213,7 @@ impl WorkspaceHistoryFolderReader {
                                 invalid_manifest_error,
                             ),
                             WorkspaceHistoryStoreGetEntryError::Internal(err) => err.into(),
-                        })
+                        });
                     }
                 };
 
@@ -238,6 +248,9 @@ pub async fn open_folder_reader_by_id(
             }
             WorkspaceHistoryStoreGetEntryError::NoRealmAccess => {
                 WorkspaceHistoryOpenFolderReaderError::NoRealmAccess
+            }
+            WorkspaceHistoryStoreGetEntryError::RealmDeleted => {
+                WorkspaceHistoryOpenFolderReaderError::RealmDeleted
             }
             WorkspaceHistoryStoreGetEntryError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryOpenFolderReaderError::InvalidKeysBundle(err)
@@ -284,6 +297,9 @@ pub async fn open_folder_reader(
             WorkspaceHistoryStoreResolvePathError::NoRealmAccess => {
                 WorkspaceHistoryOpenFolderReaderError::NoRealmAccess
             }
+            WorkspaceHistoryStoreResolvePathError::RealmDeleted => {
+                WorkspaceHistoryOpenFolderReaderError::RealmDeleted
+            }
             WorkspaceHistoryStoreResolvePathError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryOpenFolderReaderError::InvalidKeysBundle(err)
             }
@@ -319,6 +335,8 @@ pub enum WorkspaceHistoryStatFolderChildrenError {
     EntryIsFile,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -353,6 +371,9 @@ pub async fn stat_folder_children(
             }
             WorkspaceHistoryOpenFolderReaderError::NoRealmAccess => {
                 WorkspaceHistoryStatFolderChildrenError::NoRealmAccess
+            }
+            WorkspaceHistoryOpenFolderReaderError::RealmDeleted => {
+                WorkspaceHistoryStatFolderChildrenError::RealmDeleted
             }
             WorkspaceHistoryOpenFolderReaderError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryStatFolderChildrenError::InvalidKeysBundle(err)
@@ -397,6 +418,9 @@ pub async fn stat_folder_children_by_id(
             WorkspaceHistoryOpenFolderReaderError::NoRealmAccess => {
                 WorkspaceHistoryStatFolderChildrenError::NoRealmAccess
             }
+            WorkspaceHistoryOpenFolderReaderError::RealmDeleted => {
+                WorkspaceHistoryStatFolderChildrenError::RealmDeleted
+            }
             WorkspaceHistoryOpenFolderReaderError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryStatFolderChildrenError::InvalidKeysBundle(err)
             }
@@ -439,6 +463,9 @@ async fn consume_reader(
                 }
                 WorkspaceHistoryFolderReaderStatEntryError::NoRealmAccess => {
                     WorkspaceHistoryStatFolderChildrenError::NoRealmAccess
+                }
+                WorkspaceHistoryFolderReaderStatEntryError::RealmDeleted => {
+                    WorkspaceHistoryStatFolderChildrenError::RealmDeleted
                 }
                 WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(err) => {
                     WorkspaceHistoryStatFolderChildrenError::InvalidKeysBundle(err)

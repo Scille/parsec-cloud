@@ -70,18 +70,22 @@
         {
             // Arbitrary field only used by the GUI.
             //
-            // In practice, it is expected to contain a `OpenBaoAuthType`
-            // corresponding to the authentication method that have been used
+            // In practice, it is expected to contain the `id` (as provided by the
+            // `server_config` API command) of the SSO auth that have been used
             // to authenticate to OpenBao during the creation of this device keys file.
+            //
+            // Note devices created before API 5.7 contain instead the legacy tag
+            // used by the GUI at that time (i.e. `OpenBaoAuthConfigOIDCProConnect`
+            // or `OpenBaoAuthConfigOIDCHexagone`).
             //
             // The idea here is to allow the GUI to use this again during subsequent
             // access of this device keys file in order to pre-select the
             // authentication method that should be used.
             //
-            // Note we use a string instead of directly a `OpenBaoAuthType` for backward
-            // compatibility (given, even if the auth ID is unknown, we could still
-            // be able to decrypt this device file if the user can authenticate to
-            // OpenBao using a different SSO auth).
+            // Note this ID is only a hint: even if it is unknown (e.g. the SSO auth
+            // has been removed from the server config), we could still be able to
+            // decrypt this device file if the user can authenticate to OpenBao using
+            // a different SSO auth.
             "name": "openbao_preferred_auth_id",
             "type": "String"
         },
@@ -102,6 +106,32 @@
             // its entity ID).
             "name": "openbao_ciphertext_key_path",
             "type": "String"
+        },
+        {
+            // When TOTP is not used, `ciphertext` contains data encrypted by the
+            // key obtained from the primary protection (i.e. the cooking of the
+            // user-provided password).
+            //
+            // When TOTP is used, `ciphertext` is contains data encrypted:
+            // - First using the secret key obtained from the primary protection.
+            // - Then using the secret key obtained from the TOTP challenge.
+            // Put it another way, the local device decryption is done this way:
+            //
+            // ```rust
+            // let key_from_primary_protection: SecretKey = ...
+            // let key_from_totp_challenge: SecretKey = do_totp_challenge(
+            //     <totp_opaque_key_id>,
+            //     <one_time_password>
+            // ).await;
+            // let cleartext = key_from_totp_challenge.decrypt(
+            //     key_from_primary_protection.decrypt(ciphertext)
+            // );
+            // let device = LocalDevice::load(cleartext);
+            // ```
+            "name": "totp_opaque_key_id",
+            "type": "NonRequiredOption<TOTPOpaqueKeyID>",
+            // Introduced in Parsec 3.8.0
+            "introduced_in_revision": 380
         }
     ]
 }

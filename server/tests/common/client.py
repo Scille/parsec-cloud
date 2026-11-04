@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from base64 import b64decode
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pytest
 from httpx import ASGITransport, AsyncClient, Response
 from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     ApiVersion,
+    BlockID,
     DateTime,
     DeviceID,
     EmailAddress,
     HumanHandle,
-    InvitationToken,
     OrganizationID,
     SecretKey,
     SequesterServiceID,
@@ -209,7 +210,7 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient, BaseTosRpcClient):
     @asynccontextmanager
     async def events_listen(  # pyright: ignore [reportIncompatibleMethodOverride]
         self, last_event_id: str | None = None, now: DateTime | None = None
-    ) -> AsyncIterator[EventsListenSSE]:
+    ) -> AsyncGenerator[EventsListenSSE]:
         now = now or DateTime.now()
         token = AuthenticatedToken.generate_raw(
             device_id=self.device_id,
@@ -273,7 +274,7 @@ class InvitedRpcClient(BaseInvitedRpcClient):
         return self.event.claimer_email
 
     @property
-    def token(self) -> InvitationToken:
+    def token(self) -> AccessToken:
         return self.event.token
 
     async def _do_request(self, req: bytes, family: str) -> bytes:
@@ -654,19 +655,19 @@ class ShamirOrgRpcClients:
         return self._last_shamir_topic_timestamp()
 
     @property
-    def alice_shamir_reveal_token(self) -> InvitationToken:
+    def alice_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("alice")
 
     @property
-    def bob_shamir_reveal_token(self) -> InvitationToken:
+    def bob_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("bob")
 
     @property
-    def mallory_shamir_reveal_token(self) -> InvitationToken:
+    def mallory_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("mallory")
 
     @property
-    def mike_shamir_reveal_token(self) -> InvitationToken:
+    def mike_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("mike")
 
     @property
@@ -710,7 +711,7 @@ class ShamirOrgRpcClients:
                 return event.shares_certificates
         raise RuntimeError(f"New shamir recovery event not found for user `{user}` !")
 
-    def _shamir_reveal_token_for(self, user: str) -> InvitationToken:
+    def _shamir_reveal_token_for(self, user: str) -> AccessToken:
         user_id = UserID.test_from_nickname(user)
         for event in self.testbed_template.events:
             if isinstance(event, tb.TestbedEventNewShamirRecovery) and event.user_id == user_id:
@@ -1045,6 +1046,137 @@ async def workspace_history_org(
         )
 
 
+@dataclass(slots=True)
+class WorkspaceArchivedOrgRpcClients:
+    """
+    See `libparsec/crates/testbed/src/templates/workspace_archived.rs` for it actual definition.
+    """
+
+    raw_client: AsyncClient
+    testbed_template: tb.TestbedTemplateContent
+    organization_id: OrganizationID
+    bob_user_id: UserID = field(init=False)
+    bob_device_id: DeviceID = field(init=False)
+    wksp_archived_id: VlobID = field(init=False)
+    wksp_soon_to_delete_id: VlobID = field(init=False)
+    wksp_ready_to_delete_id: VlobID = field(init=False)
+    wksp_deleted_id: VlobID = field(init=False)
+    wksp_not_longer_to_delete_id: VlobID = field(init=False)
+    wksp_orphaned_id: VlobID = field(init=False)
+    wksp_orphaned_and_ready_to_delete_id: VlobID = field(init=False)
+    _anonymous: AnonymousRpcClient | None = None
+    _alice: AuthenticatedRpcClient | None = None
+
+    def __post_init__(self):
+        self.bob_user_id = UserID.test_from_nickname("bob")
+        self.bob_device_id = DeviceID.test_from_nickname("bob@dev1")
+        realms = (
+            event.realm_id
+            for event in self.testbed_template.events
+            if isinstance(event, tb.TestbedEventNewRealm)
+        )
+        self.wksp_archived_id = next(realms)
+        self.wksp_soon_to_delete_id = next(realms)
+        self.wksp_ready_to_delete_id = next(realms)
+        self.wksp_deleted_id = next(realms)
+        self.wksp_not_longer_to_delete_id = next(realms)
+        self.wksp_orphaned_id = next(realms)
+        self.wksp_orphaned_and_ready_to_delete_id = next(realms)
+        assert next(realms, None) is None
+
+    @property
+    def wksp_archived_block_id(self) -> BlockID:
+        for event in self.testbed_template.events:
+            if isinstance(event, (tb.TestbedEventCreateBlock, tb.TestbedEventCreateOpaqueBlock)):
+                # This testbed template has only a single block
+                if event.realm == self.wksp_archived_id:
+                    return event.block_id
+        raise RuntimeError("Block create event not found !")
+
+    @property
+    def wksp_archived_file_id(self) -> VlobID:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventCreateOrUpdateOpaqueVlob):
+                # This testbed template has two vlob: the workspace manifest and the file manifest we want
+                if event.realm == self.wksp_archived_id and event.vlob_id != self.wksp_archived_id:
+                    return event.vlob_id
+        raise RuntimeError("Vlob create event not found !")
+
+    @property
+    def wksp_ready_to_delete_blocks(self) -> set[BlockID]:
+        return {
+            event.block_id
+            for event in self.testbed_template.events
+            if isinstance(event, (tb.TestbedEventCreateBlock, tb.TestbedEventCreateOpaqueBlock))
+            and event.realm == self.wksp_ready_to_delete_id
+        }
+
+    @property
+    def root_signing_key(self) -> SigningKey:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                return event.root_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.root_signing_key.verify_key
+
+    @property
+    def anonymous(self) -> AnonymousRpcClient:
+        self._anonymous = self._anonymous or AnonymousRpcClient(
+            self.raw_client, self.organization_id
+        )
+        return self._anonymous
+
+    @property
+    def alice(self) -> AuthenticatedRpcClient:
+        if self._alice:
+            return self._alice
+        self._alice = self._init_for("alice")
+        return self._alice
+
+    def _init_for(self, user: str) -> AuthenticatedRpcClient:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if (
+                isinstance(event, tb.TestbedEventBootstrapOrganization)
+                and event.first_user_id == user_id
+            ):
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.first_user_id,
+                    device_id=event.first_user_first_device_id,
+                    signing_key=event.first_user_first_device_signing_key,
+                    event=event,
+                )
+            elif isinstance(event, tb.TestbedEventNewUser) and event.user_id == user_id:
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.user_id,
+                    device_id=event.first_device_id,
+                    signing_key=event.first_device_signing_key,
+                    event=event,
+                )
+        else:
+            raise RuntimeError(f"`{user}` user creation event not found !")
+
+
+@pytest.fixture
+async def workspace_archived_org(
+    app: AsgiApp, testbed: TestbedBackend
+) -> AsyncGenerator[WorkspaceArchivedOrgRpcClients, None]:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
+        organization_id, _, template_content = await testbed.new_organization("workspace_archived")
+        yield WorkspaceArchivedOrgRpcClients(
+            raw_client=raw_client,
+            organization_id=organization_id,
+            testbed_template=template_content,
+        )
+
+
 def get_last_realm_certificate_timestamp(
     testbed_template: tb.TestbedTemplateContent, realm_id: VlobID
 ) -> DateTime:
@@ -1064,6 +1196,9 @@ def get_last_realm_certificate_timestamp(
                 if event.realm == realm_id:
                     return event.timestamp
             case tb.TestbedEventArchiveRealm() as event:
+                if event.realm == realm_id:
+                    return event.timestamp
+            case tb.TestbedEventDeleteRealm() as event:
                 if event.realm == realm_id:
                     return event.timestamp
             case (

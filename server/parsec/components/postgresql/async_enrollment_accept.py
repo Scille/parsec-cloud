@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -33,6 +34,7 @@ from parsec.components.postgresql.queries import (
 )
 from parsec.components.postgresql.user_create_user import _q_insert_user_and_device
 from parsec.components.postgresql.utils import Q
+from parsec.config import BackendConfig
 from parsec.events import EventAsyncEnrollment, EventCommonCertificate
 
 _q_get_enrollment = Q("""
@@ -66,6 +68,7 @@ WHERE
 
 
 async def async_enrollment_accept(
+    config: BackendConfig,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,

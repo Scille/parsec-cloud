@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import asyncio
@@ -81,6 +82,7 @@ TRUNCATE TABLE account_recover_validation_code;
 TRUNCATE TABLE organization RESTART IDENTITY CASCADE;
 
 TRUNCATE TABLE block_data;
+TRUNCATE TABLE cryptpad_session;
 
 -- Normally, all sequence starts at 0.
 -- However this means in the test we basically have all primary key with very low value
@@ -99,11 +101,9 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_setup', '_id'), 7000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_share', '_id'), 8000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('invitation', '_id'), 9000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('pki_enrollment', '_id'), 11000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm', '_id'), 12000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_user_role', '_id'), 13000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_archiving', '_id'), 14000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('realm_user_change', '_id'), 15000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_keys_bundle', '_id'), 16000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_keys_bundle_access', '_id'), 17000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_sequester_keys_bundle_access', '_id'), 18000),
@@ -119,7 +119,8 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('account', '_id'), 28000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('vault', '_id'), 29000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('vault_item', '_id'), 30000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('vault_authentication_method', '_id'), 31000)
+    SETVAL(PG_GET_SERIAL_SEQUENCE('vault_authentication_method', '_id'), 31000),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('cryptpad_session', '_id'), 32000)
 ;
 """
 

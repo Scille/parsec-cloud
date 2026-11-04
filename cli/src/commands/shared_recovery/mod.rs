@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
+
 pub mod create;
 pub mod delete;
 pub mod info;
@@ -15,11 +17,11 @@ pub enum Group {
     Info(info::Args),
 }
 
-pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
+pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
-        Group::Create(args) => create::main(args).await,
-        Group::List(args) => list::main(args).await,
-        Group::Delete(args) => delete::main(args).await,
-        Group::Info(args) => info::main(args).await,
+        Group::Create(args) => create::main(ui, args).await,
+        Group::List(args) => list::main(ui, args).await,
+        Group::Delete(args) => delete::main(ui, args).await,
+        Group::Info(args) => info::main(ui, args).await,
     }
 }

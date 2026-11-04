@@ -88,11 +88,10 @@ python-server: &python-server
   - server/parsec/**
   - server/tests/**
   - make.py
-  - server/build.py
 
 python-dependencies-project: &python-dependencies-project
   - server/pyproject.toml
-  - server/poetry.lock
+  - server/uv.lock
   - server/setup.cfg
 
 python-changes: &python-changes
@@ -101,7 +100,6 @@ python-changes: &python-changes
 
 # The python jobs need to be run when:
 # - The ci workflow has changed
-# - The action `setup-python-poetry` has changed
 # - The rust has changed
 #   - The dependencies
 #   - The pure code has changed
@@ -130,21 +128,13 @@ python-jobs:
 # rust-electron-binding: &rust-electron-binding bindings/electron
 # new-client-electron: &new-client-electron: /client/electron
 
-# TODO: We currently don't test the android application
-# So we don't have to watch the android binding (likewise for the client code related to android)
-# rust-android-binding: &rust-android-binding bindings/android
-# new-client-android: &new-client-android: /client/android
-
-# TODO: We currently don't test the ios application
-# So we don't have to watch the client code related to the ios application
-# new-client-ios: &new-client-ios /client/ios
-
 web: &web
+  - client/editics/**
+  - client/electron/**
   - client/public/**
   - client/resources/**
   - client/src/**
   - client/tests/**
-  - client/electron/**
 
 new-client-dependencies-project: &new-client-dependencies-project
   - client/*.ts
@@ -178,6 +168,6 @@ docs-jobs:
   - docs/locale/**.po
   - docs/conf.py
   - docs/pyproject.toml
-  - docs/poetry.lock
+  - docs/uv.lock
   - docs/Makefile
   - docs/**.rst

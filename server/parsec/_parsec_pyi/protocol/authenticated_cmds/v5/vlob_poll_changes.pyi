@@ -42,3 +42,8 @@ class RepRealmNotFound(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepRealmDeleted(Rep):
+    def __init__(
+        self,
+    ) -> None: ...

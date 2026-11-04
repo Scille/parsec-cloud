@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="workspace-user-role">
@@ -6,18 +6,14 @@
       <user-avatar-name
         :user-avatar="user.humanHandle.label"
         :user-name="user.humanHandle.label"
+        :user-description="getProfileTranslationKey(user.profile)"
       />
       <span
         v-if="isCurrentUser"
-        class="body content-user__you"
+        class="content-user--self"
       >
         {{ $msTranslate('UsersPage.currentUser') }}
       </span>
-
-      <user-profile-tag
-        v-if="user.profile === UserProfile.Outsider"
-        :profile="UserProfile.Outsider"
-      />
     </div>
 
     <ms-dropdown
@@ -33,10 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import { UserAvatarName, UserProfileTag } from '@/components/users';
+import { UserAvatarName } from '@/components/users';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
-import { getWorkspaceRoleTranslationKey } from '@/services/translation';
+import { getProfileTranslationKey, getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { MsAppearance, MsDropdown, MsOption, MsOptions } from 'megashark-lib';
 import { computed, useTemplateRef } from 'vue';
 
@@ -83,7 +79,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
 
 <style scoped lang="scss">
 .workspace-user-role {
-  padding: 0.5rem;
+  padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -95,10 +91,18 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
     position: absolute;
     display: block;
     width: calc(100% - 3rem);
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    border-bottom: ms.border('thin') solid ms.color('border-base-default');
     bottom: 0;
     right: 0;
   }
+}
+
+.dropdown {
+  flex-shrink: 0;
+}
+
+.workspace-user-role .dropdown.dropdown-container {
+  width: auto;
 }
 
 .content-user {
@@ -106,11 +110,11 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
   white-space: nowrap;
   overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-sm');
 
-  &__you {
-    color: var(--parsec-color-light-secondary-grey);
+  &--self {
+    @include ms.font('body-md-regular');
+    color: ms.color('text-base-description');
   }
 }
 </style>

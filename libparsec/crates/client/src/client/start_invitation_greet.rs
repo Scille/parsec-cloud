@@ -1,16 +1,16 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::Client;
 pub use crate::invite::{
-    list_invitations, DeviceGreetInitialCtx, InviteListItem, ListInvitationsError,
-    ShamirRecoveryGreetInitialCtx, UserGreetInitialCtx,
+    DeviceGreetInitialCtx, InviteListItem, ListInvitationsError, ShamirRecoveryGreetInitialCtx,
+    UserGreetInitialCtx, list_invitations,
 };
-use crate::{certif::InvalidCertificateError, CertifGetShamirRecoveryShareDataError};
+use crate::{CertifGetShamirRecoveryShareDataError, certif::InvalidCertificateError};
 
-pub fn start_user_invitation_greet(client: &Client, token: InvitationToken) -> UserGreetInitialCtx {
+pub fn start_user_invitation_greet(client: &Client, token: AccessToken) -> UserGreetInitialCtx {
     UserGreetInitialCtx::new(
         client.device.clone(),
         client.cmds.clone(),
@@ -19,10 +19,7 @@ pub fn start_user_invitation_greet(client: &Client, token: InvitationToken) -> U
     )
 }
 
-pub fn start_device_invitation_greet(
-    client: &Client,
-    token: InvitationToken,
-) -> DeviceGreetInitialCtx {
+pub fn start_device_invitation_greet(client: &Client, token: AccessToken) -> DeviceGreetInitialCtx {
     DeviceGreetInitialCtx::new(
         client.device.clone(),
         client.cmds.clone(),
@@ -109,7 +106,7 @@ impl From<CertifGetShamirRecoveryShareDataError> for ClientStartShamirRecoveryIn
 
 pub async fn start_shamir_recovery_invitation_greet(
     client: &Client,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<ShamirRecoveryGreetInitialCtx, ClientStartShamirRecoveryInvitationGreetError> {
     // Retrieve the invitation
     let invitations = list_invitations(&client.cmds).await?;

@@ -1,12 +1,31 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import { isElectron } from '@/parsec';
+import { isElectron, isWeb } from '@/parsec';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
-import { I18n, Locale, Theme } from 'megashark-lib';
+import { I18n, Locale, ThemePreference } from 'megashark-lib';
 
 export const StorageManagerKey = 'storageManager';
-export const ThemeManagerKey = 'themeManager';
+
+export async function persistStorage(): Promise<void> {
+  async function _persist(): Promise<void> {
+    try {
+      if ((window as any).TESTING !== true && isWeb() && navigator.storage && !(await navigator.storage.persisted())) {
+        const result = await navigator.storage.persist();
+        if (!result) {
+          window.nativeAPI.log('warn', 'Failed to make the storage persistent.');
+        } else {
+          window.nativeAPI.log('info', 'Storage is persistent.');
+        }
+      }
+    } catch (err: any) {
+      window.nativeAPI.log('warn', `Error when trying to make the storage persistent: ${err.toString()}`);
+    }
+  }
+  // Wrapping and calling without await so even if `persistStorage` is called with await,
+  // the GUI will not block.
+  _persist();
+}
 
 export interface StoredDeviceData {
   lastLogin?: DateTime;
@@ -20,7 +39,7 @@ export interface BmsAccessData {
 
 export interface Config {
   locale: Locale;
-  theme: Theme;
+  theme: ThemePreference;
   enableTelemetry: boolean;
   minimizeToTray: boolean;
   confirmBeforeQuit: boolean;
@@ -32,6 +51,8 @@ export interface Config {
   skipLongPathsSupportWarning: boolean;
   disableDownloadWarning: boolean;
   hideParsecDownload: boolean;
+  skipWorkspaceHiddenWarning: boolean;
+  appVersionLastVisit?: string;
 }
 
 export class StorageManager {
@@ -43,8 +64,7 @@ export class StorageManager {
   static get DEFAULT_CONFIG(): Config {
     return {
       locale: I18n.getPreferredLocale(),
-      theme: Theme.Light,
-      // theme: Theme.System, Remove previous line and uncomment this when dark theme will be implemented
+      theme: ThemePreference.System,
       enableTelemetry: true,
       minimizeToTray: true,
       confirmBeforeQuit: true,
@@ -56,6 +76,8 @@ export class StorageManager {
       skipLongPathsSupportWarning: false,
       disableDownloadWarning: false,
       hideParsecDownload: false,
+      skipWorkspaceHiddenWarning: false,
+      appVersionLastVisit: undefined,
     };
   }
 
@@ -70,7 +92,7 @@ export class StorageManager {
 
     const config = await this.retrieveConfig();
     if (isElectron()) {
-      window.electronAPI.sendConfig(config);
+      window.nativeAPI.sendConfig(config);
     }
     return storage;
   }
@@ -130,7 +152,7 @@ export class StorageManager {
     try {
       await this.internalStore.set(key, data);
     } catch (error) {
-      console.log(`Failed to serialize ${componentKey}: ${error}`);
+      window.nativeAPI.log('warn', `Failed to serialize ${componentKey}: ${error}`);
     }
   }
 
@@ -147,7 +169,7 @@ export class StorageManager {
       }
       return parsedData;
     } catch (error) {
-      console.log(`Failed to deserialize ${componentKey}: ${error}`);
+      window.nativeAPI.log('warn', `Failed to deserialize ${componentKey}: ${error}`);
       await this.internalStore.set(key, {});
     }
     return defaultValues;
@@ -160,7 +182,7 @@ export class StorageManager {
       minimizeToTray: data.minimizeToTray,
       confirmBeforeQuit: data.confirmBeforeQuit,
       enableTelemetry: data.enableTelemetry,
-      synchroWifiOnly: data.meteredConnection,
+      meteredConnection: data.meteredConnection,
       unsyncFiles: data.unsyncFiles,
       skipViewers: data.skipViewers,
       skipAccount: data.skipAccount,
@@ -168,8 +190,10 @@ export class StorageManager {
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning,
       hideParsecDownload: data.hideParsecDownload,
+      skipWorkspaceHiddenWarning: data.skipWorkspaceHiddenWarning,
+      appVersionLastVisit: data.appVersionLastVisit,
     });
-    window.electronAPI.sendConfig(data);
+    window.nativeAPI.sendConfig(data);
   }
 
   async retrieveConfig(): Promise<Config> {
@@ -179,7 +203,7 @@ export class StorageManager {
       return StorageManager.DEFAULT_CONFIG;
     }
 
-    const currentTheme = Object.values(Theme).find((t) => t === data.theme);
+    const currentTheme = Object.values(ThemePreference).find((t) => t === data.theme);
 
     // We could just return directly but we create a new object explicitly
     // so we don't have any implicit deserialization that we don't want
@@ -189,7 +213,7 @@ export class StorageManager {
       enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
       minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
       confirmBeforeQuit: data.confirmBeforeQuit !== undefined ? data.confirmBeforeQuit : StorageManager.DEFAULT_CONFIG.confirmBeforeQuit,
-      meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
+      meteredConnection: data.meteredConnection !== undefined ? data.meteredConnection : StorageManager.DEFAULT_CONFIG.meteredConnection,
       unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles,
       skipViewers: data.skipViewers !== undefined ? data.skipViewers : StorageManager.DEFAULT_CONFIG.skipViewers,
       skipAccount: data.skipAccount ?? StorageManager.DEFAULT_CONFIG.skipAccount,
@@ -197,21 +221,15 @@ export class StorageManager {
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning ?? StorageManager.DEFAULT_CONFIG.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning ?? StorageManager.DEFAULT_CONFIG.disableDownloadWarning,
       hideParsecDownload: data.hideParsecDownload ?? StorageManager.DEFAULT_CONFIG.hideParsecDownload,
+      skipWorkspaceHiddenWarning: data.skipWorkspaceHiddenWarning ?? StorageManager.DEFAULT_CONFIG.skipWorkspaceHiddenWarning,
+      appVersionLastVisit: data.appVersionLastVisit ?? StorageManager.DEFAULT_CONFIG.appVersionLastVisit,
     };
     return config;
   }
 
   async updateConfig(data: Partial<Config>): Promise<void> {
-    const config = await this.retrieveConfig();
+    const config = { ...(await this.retrieveConfig()), ...data };
 
-    for (const key of Object.keys(data) as (keyof Config)[]) {
-      const value = data[key];
-      if (value !== undefined) {
-        // Don't understand why this doesn't work. `key` is of type `keyof Config`,
-        // yet I cannot do `config[key]`.
-        (config as any)[key] = value;
-      }
-    }
     await this.storeConfig(config);
   }
 
@@ -231,7 +249,7 @@ export class StorageManager {
   }
 
   async clearAll(): Promise<void> {
-    window.electronAPI.log('warn', 'Clearing all cache');
+    window.nativeAPI.log('info', 'Clearing all cache');
     await this.internalStore.clear();
   }
 }

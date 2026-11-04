@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Taken from electron-is-dev` to avoid another useless dependency
 
@@ -9,7 +9,7 @@ if (typeof electron === 'string') {
 }
 
 const isEnvSet = 'ELECTRON_IS_DEV' in process.env;
-const getFromEnv = Number.parseInt(process.env.ELECTRON_IS_DEV, 10) === 1;
+const getFromEnv = Number.parseInt(process.env.ELECTRON_IS_DEV ?? '', 10) === 1;
 
 const isDev = isEnvSet ? getFromEnv : !electron.app.isPackaged;
 

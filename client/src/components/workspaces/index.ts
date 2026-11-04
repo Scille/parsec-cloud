@@ -1,14 +1,10 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-export {
-  WORKSPACES_PAGE_DATA_KEY,
-  WorkspaceDefaultData,
-  openWorkspaceContextMenu,
-  workspaceShareClick,
-} from '@/components/workspaces/utils';
+export { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData } from '@/components/workspaces/types';
 
 import WorkspaceFilter from '@/components/workspaces/WorkspaceFilter.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 
-export type { WorkspacesPageFilters, WorkspacesPageSavedData } from '@/components/workspaces/utils';
+export type { WorkspacesPageFilters, WorkspacesPageSavedData } from '@/components/workspaces/types';
+export * from '@/components/workspaces/utils';
 export { WorkspaceFilter, WorkspaceRoleTag };

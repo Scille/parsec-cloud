@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -28,7 +29,7 @@ LIMIT 1
 async def organization_get_tos(
     conn: AsyncpgConnection,
     id: OrganizationID,
-) -> TermsOfService | None | OrganizationGetTosBadOutcome:
+) -> TermsOfService | OrganizationGetTosBadOutcome | None:
     row = await conn.fetchrow(*_q_get_tos(organization_id=id.str))
 
     if not row:

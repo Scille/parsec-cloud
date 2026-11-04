@@ -1,27 +1,11 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import { CapacitorElectronConfig } from '@capacitor-community/electron';
+import type { CapacitorConfig } from '@capacitor/cli';
 
-const config: CapacitorElectronConfig = {
+const config: CapacitorConfig = {
   appId: 'com.scille.parsec',
   appName: 'Parsec',
   webDir: 'dist',
-  plugins: {
-    SplashScreen: {
-      launchAutoHide: false,
-      androidScaleType: 'CENTER_CROP',
-      splashFullScreen: true,
-      splashImmersive: false,
-      backgroundColor: '#121212',
-    },
-  },
-  electron: {
-    trayIconAndMenuEnabled: true,
-    splashScreenEnabled: true,
-    deepLinkingEnabled: true,
-    deepLinkingCustomProtocol: 'parsec3',
-    customUrlScheme: 'parsec-desktop',
-  },
 };
 
 export default config;

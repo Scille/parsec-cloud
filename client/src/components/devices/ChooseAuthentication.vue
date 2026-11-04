@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div
@@ -10,7 +10,7 @@
       v-if="authentication === undefined"
     >
       <ion-text
-        class="body choose-auth-list__label"
+        class="choose-auth-list__label"
         v-show="showTitle"
       >
         {{ $msTranslate('Authentication.description') }}
@@ -25,55 +25,53 @@
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
-          :value="DeviceSaveStrategyTag.Keyring"
-          :disabled="!keyringAvailable || activeAuth === AvailableDeviceTypeTag.Keyring"
+          :value="DevicePrimaryProtectionStrategyTag.Password"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.Password)"
         >
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Keyring"
-            :state="getAuthCardState(AvailableDeviceTypeTag.Keyring)"
-            :disabled="!keyringAvailable"
+            @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.Password)"
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.Password)"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Password"
           />
         </ion-radio>
         <ion-radio
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
-          :value="DeviceSaveStrategyTag.Password"
+          :value="DevicePrimaryProtectionStrategyTag.Keyring"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.Keyring)"
         >
           <authentication-card
-            @click="onMethodSelected(DeviceSaveStrategyTag.Password)"
-            :state="getAuthCardState(AvailableDeviceTypeTag.Password)"
-            :auth-method="DeviceSaveStrategyTag.Password"
-          />
-        </ion-radio>
-
-        <ion-radio
-          v-show="smartcardAvailable"
-          class="item-radio radio-list-item"
-          label-placement="end"
-          justify="start"
-          :value="DeviceSaveStrategyTag.PKI"
-          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.PKI"
-        >
-          <authentication-card
-            @click="onMethodSelected(DeviceSaveStrategyTag.PKI)"
-            :state="getAuthCardState(AvailableDeviceTypeTag.PKI)"
-            :auth-method="DeviceSaveStrategyTag.PKI"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.Keyring)"
           />
         </ion-radio>
 
         <ion-radio
-          v-show="showOpenBaoAuth"
           class="item-radio radio-list-item"
           label-placement="end"
-          :value="DeviceSaveStrategyTag.OpenBao"
           justify="start"
-          :disabled="activeAuth === AvailableDeviceTypeTag.OpenBao"
+          :value="DevicePrimaryProtectionStrategyTag.PKI"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.PKI)"
         >
           <authentication-card
-            :state="getAuthCardState(AvailableDeviceTypeTag.OpenBao)"
-            @click="onMethodSelected(DeviceSaveStrategyTag.OpenBao)"
-            :auth-method="DeviceSaveStrategyTag.OpenBao"
+            @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.PKI)"
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.PKI)"
+            :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
+          />
+        </ion-radio>
+
+        <ion-radio
+          class="item-radio radio-list-item"
+          label-placement="end"
+          :value="DevicePrimaryProtectionStrategyTag.OpenBao"
+          justify="start"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.OpenBao)"
+        >
+          <authentication-card
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.OpenBao)"
+            @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.OpenBao)"
+            :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
           />
         </ion-radio>
       </ion-radio-group>
@@ -83,24 +81,22 @@
       class="choose-auth-choice"
       v-else
     >
-      <div v-if="authentication === DeviceSaveStrategyTag.Keyring">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.Keyring">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Keyring"
-            :state="AuthenticationCardState.Update"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
         <keyring-information />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.Password">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.Password">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Password"
-            :state="AuthenticationCardState.Update"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Password"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
@@ -111,94 +107,99 @@
         />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.PKI">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.PKI">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.PKI"
-            :state="AuthenticationCardState.Update"
+            :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
-        <choose-certificate ref="chooseCertificate" />
+        <certificate-selection
+          :purpose="CertificatePurpose.Encrypt"
+          @certificate-selected="certif = $event"
+        />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.OpenBao && serverConfig?.openbao && showOpenBaoAuth">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.OpenBao && serverConfig?.openbao && openBaoAuthAvailable">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.OpenBao"
-            :state="AuthenticationCardState.Update"
-            :disabled="querying"
+            :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod()"
           />
         </div>
-        <div class="provider-card">
+        <div class="sso-provider-list">
           <sso-provider-card
-            v-for="auth in serverConfig?.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
-            :key="auth.tag"
-            :provider="auth.tag"
-            :is-connected="openBaoClient !== undefined"
+            v-for="provider in serverConfig.openbao.auths"
+            :key="provider.id"
+            :provider="provider"
+            :is-connected="openBaoClient?.getConnectionInfo()?.provider === provider.id"
             @sso-selected="onSSOLoginClicked"
           />
           <ms-spinner
             v-if="querying"
-            class="provider-card-spinner"
+            class="spinner"
           />
         </div>
       </div>
 
-      <span
-        class="form-error subtitles-sm"
-        v-show="error"
+      <ms-report-text
+        v-if="error"
+        :theme="MsReportTheme.Error"
+        class="choose-auth-error"
       >
         {{ $msTranslate(error) }}
-      </span>
+      </ms-report-text>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ChooseCertificate from '@/components/devices/ChooseCertificate.vue';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
 import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
+import CertificateSelection from '@/components/misc/CertificateSelection.vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
 import {
-  AvailableDeviceTypeTag,
+  CertificatePurpose,
+  CertificateWithDetailsValid,
+  DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
-  OpenBaoAuthConfigTag,
-  SaveStrategy,
+  OpenBaoAuthConfig,
+  ParsecAddr,
+  PrimaryProtectionStrategy,
   ServerConfig,
-  X509CertificateReference,
+  constructSaveStrategy,
   isKeyringAvailable,
   isSmartcardAvailable,
   isWeb,
+  openCertificate,
 } from '@/parsec';
-import { OpenBaoClient, OpenBaoErrorType, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
+import { OpenBaoClient, OpenBaoErrorType, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
-import { MsChoosePasswordInput, MsSpinner } from 'megashark-lib';
-import { computed, onMounted, ref, toRaw, useTemplateRef } from 'vue';
+import { MsChoosePasswordInput, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 
-const authentication = ref<DeviceSaveStrategyTag | undefined>(undefined);
+const authentication = ref<DevicePrimaryProtectionStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
-const chooseCertificateRef = useTemplateRef<InstanceType<typeof ChooseCertificate>>('chooseCertificate');
+const certif = ref<CertificateWithDetailsValid | undefined>(undefined);
 const openBaoClient = ref<undefined | OpenBaoClient>(undefined);
 const smartcardAvailable = ref(false);
 const querying = ref(false);
 
 const error = ref('');
 
-const showOpenBaoAuth = computed(() => {
-  return props.serverConfig?.openbao && props.serverConfig?.openbao.auths.some((auth) => isSSOProviderHandled(auth.tag));
+const openBaoAuthAvailable = computed(() => {
+  return props.serverConfig?.openbao && props.serverConfig?.openbao.auths.length > 0;
 });
 
 const props = defineProps<{
   showTitle?: boolean;
-  activeAuth?: AvailableDeviceTypeTag;
+  activeAuth?: DevicePrimaryProtectionStrategyTag;
   serverConfig?: ServerConfig;
+  serverAddr: ParsecAddr;
 }>();
 
 defineExpose({
@@ -207,108 +208,124 @@ defineExpose({
   getSaveStrategy,
 });
 
-defineEmits<{
+const emits = defineEmits<{
+  (e: 'authReset'): void;
   (e: 'enterPressed'): void;
 }>();
 
 onMounted(async () => {
-  keyringAvailable.value = props.activeAuth === AvailableDeviceTypeTag.Keyring ? true : await isKeyringAvailable();
+  keyringAvailable.value = props.activeAuth === DevicePrimaryProtectionStrategyTag.Keyring ? true : await isKeyringAvailable();
   smartcardAvailable.value = await isSmartcardAvailable();
 });
 
 async function onChange(_value: any): Promise<void> {
-  if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
+  if (authentication.value === DevicePrimaryProtectionStrategyTag.Password && choosePasswordRef.value) {
     await choosePasswordRef.value.setFocus();
   }
 }
 
-function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState {
+function getAuthCardState(auth: DevicePrimaryProtectionStrategyTag): AuthenticationCardState {
+  if (props.serverConfig && !props.serverConfig.isAuthMethodAllowed(auth)) {
+    return AuthenticationCardState.Forbidden;
+  }
   switch (auth) {
-    case AvailableDeviceTypeTag.Password:
+    case DevicePrimaryProtectionStrategyTag.Password:
       return AuthenticationCardState.Default;
-    case AvailableDeviceTypeTag.Keyring:
+    case DevicePrimaryProtectionStrategyTag.Keyring:
       if (!keyringAvailable.value) {
         return AuthenticationCardState.Unavailable;
       }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
-    case AvailableDeviceTypeTag.PKI:
+    case DevicePrimaryProtectionStrategyTag.PKI:
       if (!smartcardAvailable.value) {
         return AuthenticationCardState.Unavailable;
       }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
-    case AvailableDeviceTypeTag.OpenBao:
+    case DevicePrimaryProtectionStrategyTag.OpenBao:
+      if (!openBaoAuthAvailable.value) {
+        return AuthenticationCardState.Unavailable;
+      }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
     default:
       return AuthenticationCardState.Default;
   }
 }
 
-async function onMethodSelected(method: DeviceSaveStrategyTag): Promise<void> {
+function authMethodIsDisabled(auth: DevicePrimaryProtectionStrategyTag): boolean {
+  const state = getAuthCardState(auth);
+  return [AuthenticationCardState.Disabled, AuthenticationCardState.Forbidden, AuthenticationCardState.Unavailable].includes(state);
+}
+
+async function onMethodSelected(method: DevicePrimaryProtectionStrategyTag): Promise<void> {
   authentication.value = method;
   error.value = '';
+  if (method === DevicePrimaryProtectionStrategyTag.Password) {
+    await nextTick();
+    if (choosePasswordRef.value) {
+      choosePasswordRef.value.setFocus();
+    }
+  }
 }
 
 async function changeAuthenticationMethod(): Promise<void> {
   authentication.value = undefined;
+  certif.value = undefined;
   error.value = '';
+  emits('authReset');
 }
 
-function getSaveStrategy(): DeviceSaveStrategy | undefined {
-  if (authentication.value === DeviceSaveStrategyTag.Keyring) {
-    return SaveStrategy.useKeyring();
-  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao) {
+async function getSaveStrategy(): Promise<DeviceSaveStrategy | undefined> {
+  if (authentication.value === DevicePrimaryProtectionStrategyTag.Keyring) {
+    return constructSaveStrategy(PrimaryProtectionStrategy.useKeyring());
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.OpenBao) {
     if (!openBaoClient.value) {
-      window.electronAPI.log('error', 'Selected auth is openBao but no client available');
+      window.nativeAPI.log('error', 'Selected auth is openBao but no client available');
       return undefined;
     }
-    return SaveStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()) as any as DeviceSaveStrategy;
-  } else if (authentication.value === DeviceSaveStrategyTag.PKI) {
-    if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
-      return SaveStrategy.useSmartCard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference));
+    return constructSaveStrategy(PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()));
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI) {
+    if (certif.value?.encryptCert) {
+      const certResult = await openCertificate(certif.value.encryptCert.reference);
+      if (certResult.ok) {
+        return constructSaveStrategy(PrimaryProtectionStrategy.useSmartcard(certResult.value));
+      }
     }
     return undefined;
-  }
-  if (choosePasswordRef.value?.password) {
-    return SaveStrategy.usePassword(choosePasswordRef.value?.password);
+  } else if (choosePasswordRef.value?.password) {
+    return constructSaveStrategy(PrimaryProtectionStrategy.usePassword(choosePasswordRef.value?.password));
   }
   return undefined;
 }
 
 async function areFieldsCorrect(): Promise<boolean> {
-  if (keyringAvailable.value && authentication.value === DeviceSaveStrategyTag.Keyring) {
+  if (keyringAvailable.value && authentication.value === DevicePrimaryProtectionStrategyTag.Keyring) {
     return true;
-  } else if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.Password && choosePasswordRef.value) {
     return await choosePasswordRef.value.areFieldsCorrect();
-  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao && openBaoClient.value !== undefined) {
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.OpenBao && openBaoClient.value !== undefined) {
     return true;
-  } else if (authentication.value === DeviceSaveStrategyTag.PKI && chooseCertificateRef.value) {
-    return chooseCertificateRef.value.getCertificate() !== undefined;
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI) {
+    return certif.value !== undefined;
   }
   return false;
 }
 
-async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
+async function onSSOLoginClicked(provider: OpenBaoAuthConfig): Promise<void> {
   if (querying.value) {
-    window.electronAPI.log('warn', 'Clicked on SSO login while already login in');
+    window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
   }
   if (!props.serverConfig?.openbao) {
     error.value = 'Authentication.openBaoUnavailable';
-    window.electronAPI.log('error', 'OpenBao not enabled on this server');
-    return;
-  }
-  const auth = props.serverConfig.openbao.auths.find((auth) => auth.tag === provider);
-  if (!auth) {
-    error.value = 'Authentication.invalidOpenBaoData';
-    window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    window.nativeAPI.log('error', 'OpenBao not enabled on this server');
     return;
   }
   try {
     querying.value = true;
     const result = await openBaoConnect(
       props.serverConfig.openbao.serverUrl,
-      auth.tag,
-      auth.mountPath,
+      provider.id,
+      provider.mountPath,
       props.serverConfig.openbao.secret.mountPath,
       props.serverConfig.openbao.transitMountPath,
     );
@@ -318,7 +335,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
       } else {
         error.value = 'Authentication.invalidOpenBaoData';
       }
-      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+      window.nativeAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
     } else {
       openBaoClient.value = result.value;
     }
@@ -330,12 +347,19 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
 
 <style scoped lang="scss">
 .choose-auth-list {
-  padding: 0;
+  padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-sm');
 
   &__label {
-    color: var(--parsec-color-light-primary-700);
+    @include ms.font('body-md-regular');
+    color: ms.color('text-brand-default');
     margin-bottom: 1rem;
     display: block;
+  }
+
+  .radio-list {
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-lg');
   }
 
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
@@ -344,13 +368,13 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
 
     &.radio-disabled {
       &::part(container) {
-        opacity: 0.3;
+        opacity: ms.opacity('3');
       }
 
       &::part(label) {
-        opacity: 1;
+        opacity: ms.opacity('10');
         display: flex;
-        gap: 0.125rem;
+        gap: ms.spacing('gap-xs');
       }
     }
 
@@ -365,6 +389,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
       flex-direction: column;
       align-items: flex-start;
       margin: 0;
+      overflow: visible;
       width: 100%;
     }
 
@@ -378,48 +403,44 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
   .method-chosen {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     margin-bottom: 1.5rem;
 
     &__title {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      color: ms.color('text-base-description');
     }
   }
 
   .choose-password {
-    padding: 1.5rem 1rem;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-12) 0 var(--parsec-radius-12) var(--parsec-radius-12);
-    box-shadow: var(--parsec-shadow-soft);
-    background: var(--parsec-color-light-secondary-inversed-contrast);
+    padding: ms.spacing('padding-4xl') ms.spacing('padding-3xl');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl') ms.radius('none') ms.radius('2xl') ms.radius('2xl');
+    box-shadow: ms.shadow('elevation-sm');
+    background: ms.color('surface-base-default');
 
     @include ms.responsive-breakpoint('sm') {
-      border-top: 1px solid var(--parsec-color-light-secondary-medium);
+      border-top: ms.border('thin') solid ms.color('border-base-default');
     }
   }
 }
 
 .choose-auth-page--web {
-  padding: 0;
+  padding: ms.spacing('padding-none');
 
   .choose-password {
-    border-radius: none;
-    border: none;
+    border-radius: ms.radius('none');
+    border: ms.border('none');
     box-shadow: none;
-    padding: 0 0.25rem;
+    padding: ms.spacing('padding-none') ms.spacing('padding-sm');
     background: none;
   }
 }
 
-.provider-card {
-  position: relative;
+.sso-provider-list {
   margin-top: 1.25rem;
+}
 
-  .provider-card-spinner {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    transform: translate(-50%, -50%);
-  }
+.choose-auth-error {
+  margin-top: 1rem;
 }
 </style>

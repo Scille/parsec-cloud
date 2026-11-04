@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 """
 For a given Parsec version, this script outputs the `<channel>` value intended to be used in the `--release=<channel>` option for `snapcraft upload`.
 

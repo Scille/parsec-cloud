@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <iframe
@@ -26,12 +26,12 @@
   >
     <div class="error-content">
       <div class="error-content-text">
-        <ion-text class="error-content-text__title title-h3">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
-        <ion-text class="error-content-text__message body-lg">{{ $msTranslate(error) }}</ion-text>
+        <ion-text class="error-content-text__title">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
+        <ion-text class="error-content-text__message">{{ $msTranslate(error) }}</ion-text>
       </div>
       <div class="error-content-buttons">
         <ion-button
-          class="error-content-buttons__item button-default"
+          class="error-content-buttons__item color-secondary"
           @click="routerGoBack()"
         >
           {{ $msTranslate(EditorButtonAction.BackToFiles) }}
@@ -39,17 +39,20 @@
       </div>
     </div>
 
-    <div class="error-advices">
-      <ion-text class="error-advices__title title-h4">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
+    <div
+      class="error-advices"
+      v-show="showErrorTips"
+    >
+      <ion-text class="error-advices__title">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
       <ion-list class="error-advices-list ion-no-padding">
-        <ion-item class="error-advices-list__item ion-no-padding body">
+        <ion-item class="error-advices-list__item ion-no-padding">
           <ion-icon
             class="item-icon"
             :icon="checkmarkCircle"
           />
           {{ $msTranslate('fileEditors.advices.advice1') }}
         </ion-item>
-        <ion-item class="error-advices-list__item ion-no-padding body">
+        <ion-item class="error-advices-list__item ion-no-padding">
           <ion-icon
             class="item-icon"
             :icon="checkmarkCircle"
@@ -62,46 +65,52 @@
 </template>
 
 <script setup lang="ts">
-import { DetectedFileType } from '@/common/fileTypes';
-import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
+import { getFileContent } from '@/common/file';
+import { ClientInfo, closeFile, openFile, WorkspaceHandle, writeFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
-  CryptpadEditors,
-  CryptpadError,
-  CryptpadErrorCodes,
-  CryptpadOpenModes,
-  getCryptpadEditor,
+  EditicsError,
+  EditicsErrorCodes,
+  EditicsHostSession,
+  EditicsSaveState,
+  getEditicsDocumentType,
   openDocument,
-} from '@/services/cryptpad';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+} from '@/services/editics';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
-import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
+import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus } from '@/views/files/handler/editor';
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
-import { FileHandlerMode } from '@/views/files/handler/types';
+import { FileHandlerMode, SaveState } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import type { EditicsDocumentTypes, EditicsOpenOptions } from '@editics_parent_host_api';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner, Theme, useTheme } from 'megashark-lib';
+import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
+// Time to wait for the document to be fully loaded (fonts, dictionaries, etc.) before offering
+// the user the option to keep waiting or give up, see openTimeoutModal(). OnlyOffice's own assets
+// (sdkjs, fonts, dictionaries) are heavy and can take a while to load on first use, so this is
+// generous on purpose (the editor shows a loading state in the meantime).
+const READY_TIMEOUT_MS = 30_000;
+const AUTOSAVE_INTERVAL = 600_000;
+
+const { theme } = useTheme();
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
-const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
 const error = ref('');
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
-let eventCbId: null | string = null;
+const showErrorTips = ref(false);
 const loadFinished = ref(false);
-let abortController: AbortController | undefined = undefined;
+let session: EditicsHostSession | undefined = undefined;
 const frameReady = ref(false);
+let readyTimeoutId: ReturnType<typeof setTimeout> | undefined;
+let autoSaveTimeoutId: any = undefined;
 
 const {
   contentInfo,
-  fileInfo,
   readOnly,
   userInfo = undefined,
 } = defineProps<{
   contentInfo: FileContentInfo;
-  fileInfo: DetectedFileType;
   readOnly?: boolean;
   userInfo?: ClientInfo;
 }>();
@@ -112,228 +121,195 @@ const emits = defineEmits<{
   (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
 
-onMounted(async () => {
-  documentType.value = getCryptpadEditor(fileInfo.type);
+defineExpose({ save });
 
-  if (documentType.value === CryptpadEditors.Unsupported) {
+function getEditorTheme(): EditicsOpenOptions['theme'] {
+  return theme.value === Theme.Dark ? 'dark' : 'light';
+}
+
+watch(theme, () => {
+  session?.setTheme(getEditorTheme());
+});
+
+onMounted(async () => {
+  // The document type is resolved from the file content type detected on this
+  // side (see getEditicsDocumentType), so it is always known by the time
+  // the open options are constructed.
+  const documentType = getEditicsDocumentType(contentInfo.contentType);
+
+  if (documentType === undefined) {
     error.value = EditorErrorTitle.UnsupportedFileType;
     await openIssueModal(EditorIssueStatus.UnsupportedFileType);
     return;
   }
 
-  await loadEditor();
-
-  eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
-    if (event === Events.Offline) {
-      window.electronAPI.log('warn', 'Network connection lost while editing');
-      emits('onSaveStateChange', SaveState.Offline);
-      await openIssueModal(EditorIssueStatus.NetworkOffline, false);
-    } else if (event === Events.Online) {
-      window.electronAPI.log('info', 'Network connection restored');
-      emits('onSaveStateChange', SaveState.None);
-    }
-  });
+  await loadEditor(documentType);
 });
 
 onUnmounted(() => {
-  if (abortController) {
-    abortController.abort();
-    abortController = undefined;
+  if (readyTimeoutId) {
+    clearTimeout(readyTimeoutId);
   }
-
-  if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+  if (autoSaveTimeoutId) {
+    clearTimeout(autoSaveTimeoutId);
+  }
+  if (session) {
+    session.controller.abort();
+    session = undefined;
   }
 });
 
-async function loadEditor(): Promise<void> {
+// Persists the original-format document bytes prepared by the offline host
+// into the workspace file it was opened from. This is the workspace-access
+// side of the offline editor: the iframe hosting the editor only gets to send
+// us `save` requests (see services/onlyoffice.ts), never libparsec itself.
+async function saveToWorkspace(workspaceHandle: WorkspaceHandle, data: Uint8Array): Promise<void> {
+  if (!contentInfo) {
+    throw new Error('missing content info');
+  }
+  const { path } = contentInfo;
+
+  // Overwrite the file in place: opening with truncate keeps the same entry
+  // (id, path, history), unlike the create-temporary-then-rename dance used
+  // for new files.
+  const fdResult = await openFile(workspaceHandle, path, { write: true, truncate: true });
+  if (!fdResult.ok) {
+    throw new Error(`failed to open the file for writing: ${JSON.stringify(fdResult.error)}`);
+  }
+  try {
+    const writeResult = await writeFile(workspaceHandle, fdResult.value, 0, data);
+    if (!writeResult.ok) {
+      throw new Error(`failed to write the file: ${JSON.stringify(writeResult.error)}`);
+    }
+  } finally {
+    await closeFile(workspaceHandle, fdResult.value);
+  }
+}
+
+// Maps the save states reported by the OnlyOffice service onto the states
+// displayed by the file handler topbar.
+function mapSaveState(state: EditicsSaveState): SaveState {
+  switch (state) {
+    case EditicsSaveState.Unsaved:
+      return SaveState.Unsaved;
+    case EditicsSaveState.Saving:
+      return SaveState.Saving;
+    case EditicsSaveState.Saved:
+      return SaveState.Saved;
+    case EditicsSaveState.Error:
+      return SaveState.Error;
+  }
+}
+
+async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
 
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Cannot retrieve workspace handle');
+    window.nativeAPI.log('error', 'Cannot retrieve workspace handle');
+    emits('fileError');
     return;
   }
   if (!editorFrame.value) {
-    window.electronAPI.log('error', 'Cannot get the iframe element');
+    window.nativeAPI.log('error', 'Cannot get the iframe element');
+    emits('fileError');
     return;
   }
   frameReady.value = false;
-  if (abortController) {
-    abortController.abort();
-    abortController = undefined;
+  if (session) {
+    session.controller.abort();
+    session = undefined;
   }
 
-  let isSaving = false;
-  abortController = await openDocument(
+  const documentContent = await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp);
+  if (!documentContent) {
+    emits('fileError');
+    return;
+  }
+  session = await openDocument(
     {
-      documentContent: contentInfo.data,
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
-      cryptpadEditor: documentType.value as CryptpadEditors,
-      key: crypto.randomUUID(),
-      userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UNKNOWN_USER'),
+      documentType,
+      userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
-      autosaveInterval: 10,
-      mode: readOnly ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
+      mode: readOnly || contentInfo.timestamp ? 'view' : 'edit',
       locale: longLocaleCodeToShort(I18n.getLocale()),
+      theme: getEditorTheme(),
     },
+    documentContent,
     {
       onReady: (): void => {
-        window.electronAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
+        window.nativeAPI.log('info', 'OnlyOffice editor is ready and document loaded successfully');
+        if (readyTimeoutId) {
+          clearTimeout(readyTimeoutId);
+          readyTimeoutId = undefined;
+        }
         loadFinished.value = true;
         emits('fileLoaded');
       },
-      onSave: async (file: Blob): Promise<void> => {
-        let hasError = false;
-        let fd: FileDescriptor | undefined = undefined;
-        const start = Date.now();
-        try {
-          if (readOnly) {
-            return;
-          }
-          isSaving = true;
-          emits('onSaveStateChange', SaveState.Saving);
-          // Handle save logic here
-          const openResult = await openFile(workspaceHandle, contentInfo.path, { write: true, truncate: true });
-
-          if (!openResult.ok) {
-            window.electronAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
-            hasError = true;
-            return;
-          }
-          fd = openResult.value;
-          const arrayBuffer = await file.arrayBuffer();
-          const writeResult = await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
-          if (!writeResult.ok) {
-            hasError = true;
-            window.electronAPI.log('error', `Failed to write file: ${writeResult.error.tag} (${writeResult.error.error})`);
-          }
-        } catch (e: any) {
-          window.electronAPI.log('error', `Failed to save file: ${e.toString()}`);
-          hasError = true;
-        } finally {
-          if (fd) {
-            await closeFile(workspaceHandle, fd);
-          }
-          const end = Date.now();
-          setTimeout(
-            () => {
-              if (isSaving === true) {
-                isSaving = false;
-                if (!hasError) {
-                  emits('onSaveStateChange', SaveState.Saved);
-                } else {
-                  emits('onSaveStateChange', SaveState.Error);
-                }
-              }
-            },
-            (window as any).TESTING === true ? 0 : Math.max(1000 - (end - start), 0),
-          );
-        }
+      // The editor iframe asks us to persist the document (it has no
+      // workspace access itself): convert the OnlyOffice native serialization
+      // back to the file's office format and write it to the workspace.
+      onSave: async (data: Uint8Array): Promise<void> => {
+        await saveToWorkspace(workspaceHandle, data);
       },
-      onHasUnsavedChanges: (unsaved: boolean): void => {
-        if (unsaved) {
-          isSaving = false;
-          emits('onSaveStateChange', SaveState.Unsaved);
+      onSaveStateChange: (state: EditicsSaveState): void => {
+        if (autoSaveTimeoutId) {
+          clearTimeout(autoSaveTimeoutId);
+          autoSaveTimeoutId = undefined;
         }
+        if (state === EditicsSaveState.Unsaved || state === EditicsSaveState.Error) {
+          autoSaveTimeoutId = setTimeout(save, AUTOSAVE_INTERVAL);
+        }
+        emits('onSaveStateChange', mapSaveState(state));
       },
       onError: async (err: unknown): Promise<void> => {
-        emits('fileError');
-        loadFinished.value = true;
         error.value = 'fileViewers.errors.titles.genericError';
+        showErrorTips.value = true;
 
-        if (err instanceof CryptpadError) {
+        if (err instanceof EditicsError) {
+          window.nativeAPI.log('info', `Failed to load OnlyOffice: ${err}`);
           switch (err.code) {
-            case CryptpadErrorCodes.InitFailed:
-              error.value = EditorErrorMessage.EditableOnlyOnSystem;
-              break;
-            case CryptpadErrorCodes.OpenFailed:
-            case CryptpadErrorCodes.OpenInvalidConfig:
-              error.value = 'fileEditors.errors.titles.openFailed';
-              break;
-            case CryptpadErrorCodes.FrameLoadFailed:
-            case CryptpadErrorCodes.FrameNotLoaded:
+            case EditicsErrorCodes.FrameLoadFailed:
+            case EditicsErrorCodes.FrameNotLoaded:
               error.value = 'fileEditors.errors.titles.frameLoadFailed';
+              break;
+            case EditicsErrorCodes.EventError:
+              window.nativeAPI.log('error', `Unhandled event error: ${err.details}`);
               break;
           }
         } else {
-          window.electronAPI.log('error', `Unhandled error: ${err} `);
+          window.nativeAPI.log('error', `Unhandled error: ${err}`);
         }
+        emits('fileError');
+        loadFinished.value = true;
       },
     },
     editorFrame.value,
   );
   frameReady.value = true;
 
-  await handleTimeout();
-}
-
-async function handleTimeout(): Promise<void> {
-  // Set up timeout for loading files
-  // If the file does not open before timeout, a dialog is displayed
-  // to ask the user if it wants to keep waiting or go back to files.
-  const LOADING_TIMEOUT_MS = 30000;
-  let shouldContinueWaiting = true;
-
-  // TODO: Fix timeout false positives - OnlyOffice doesn't reliably call onReady in some cases
-  // See: https://github.com/Scille/parsec-cloud/issues/11753
-  // For now, we ignore timeout for some files to avoid false positive "corrupted file" modals
-  const shouldSkipTimeout =
-    documentType.value === CryptpadEditors.Doc ||
-    documentType.value === CryptpadEditors.Presentation ||
-    (documentType.value === CryptpadEditors.Sheet && readOnly);
-
-  if (shouldSkipTimeout) {
-    window.electronAPI.log('info', 'Skipping timeout for DOCX and PPTX files');
-    return;
-  }
-
-  // Wait for file to load with timeout and restart capability
-  while (!loadFinished.value && shouldContinueWaiting) {
-    // Wait for timeout or file load
-    const timeoutOccurred = await new Promise<boolean>((resolve) => {
-      const timeoutId = window.setTimeout(() => {
-        resolve(true); // Timeout occurred
-      }, LOADING_TIMEOUT_MS);
-
-      // Watch for file loaded to resolve immediately
-      const stopWatch = watch(loadFinished, (loaded) => {
-        if (loaded) {
-          window.clearTimeout(timeoutId);
-          stopWatch();
-          resolve(false); // File loaded
-        }
-      });
-    });
-
-    // If file loaded, exit successfully
-    if (!timeoutOccurred) {
-      window.electronAPI.log('info', 'CryptPad editor initialized successfully');
-      return;
-    }
-
-    // Timeout occurred - show modal
-    window.electronAPI.log('warn', 'CryptPad loading timeout - file appears to be corrupted or too large');
-    const result = await openTimeoutModal();
-
-    // Check if file loaded while modal was open
-    if (loadFinished.value) {
-      window.electronAPI.log('info', 'File loaded while modal was open');
-      return;
-    }
-
-    // Continue waiting if user clicked wait, stop if they clicked close
-    shouldContinueWaiting = result === 'wait';
-    if (shouldContinueWaiting) {
-      window.electronAPI.log('info', 'User chose to wait - restarting timeout');
-    }
+  // Give the user the option to keep waiting rather than silently doing nothing if the
+  // document takes too long to load. The e2e tests manage their own waits and skip the
+  // timeout modal entirely (it would otherwise pop up while the editor assets are still
+  // loading and intercept the test's clicks).
+  if ((window as any).TESTING !== true) {
+    readyTimeoutId = setTimeout(() => {
+      if (!loadFinished.value) {
+        openTimeoutModal();
+      }
+    }, READY_TIMEOUT_MS);
   }
 }
 
 async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = true): Promise<MsModalResult> {
   // Safety check: only show modal if we're still on the file handler/editor route
-  if (!currentRouteIs(Routes.FileHandler) || getFileHandlerMode() !== FileHandlerMode.Edit) {
-    window.electronAPI.log('info', 'Skipping modal - user navigated away from editor');
+  if (!currentRouteIs(Routes.FileHandler) || (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() !== FileHandlerMode.Edit)) {
+    window.nativeAPI.log('info', 'Skipping modal - user navigated away from editor');
+    return MsModalResult.Cancel;
+  }
+  if (await modalController.getTop()) {
+    window.nativeAPI.log('warn', 'A modal is already opened, skipping...');
     return MsModalResult.Cancel;
   }
 
@@ -359,6 +335,11 @@ async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = 
 }
 
 async function openTimeoutModal(): Promise<'wait' | 'close'> {
+  const WAIT_TIMEOUT = 15000;
+
+  if (loadFinished.value) {
+    return 'close';
+  }
   const role = await openIssueModal(EditorIssueStatus.LoadingTimeout, false);
 
   // If user clicks primary button (close/dismiss)
@@ -366,6 +347,10 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
     if (loadFinished.value) {
       return 'close';
     } else {
+      window.nativeAPI.log('info', `User chose to wait, ask them again in ${WAIT_TIMEOUT}ms`);
+      setTimeout(() => {
+        openTimeoutModal();
+      }, WAIT_TIMEOUT);
       return 'wait';
     }
   } else if (role === MsModalResult.Cancel) {
@@ -376,19 +361,30 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
   // Modal was dismissed (close button) - just close without navigating
   return 'close';
 }
+
+async function save(): Promise<boolean> {
+  // Ask the editor to save now (its serialization goes through `onSave` →
+  // saveToWorkspace above) and wait for the completion. Returns false when it
+  // could not be saved, in which case the file handler asks the user whether
+  // to discard the changes or stay (see FileHandler.vue checkSaved).
+  if (!session) {
+    return true;
+  }
+  return await session.save();
+}
 </script>
 
 <style scoped lang="scss">
 .file-editor {
   height: 100%;
-  background: var(--parsec-color-light-secondary-premiere);
+  background: ms.color('surface-base-default');
   border: none;
 }
 
 .file-editor-error {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: ms.spacing('gap-5xl');
   max-width: 32rem;
   margin: auto;
   justify-content: center;
@@ -400,57 +396,47 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 1.5rem;
-  background: var(--parsec-color-light-secondary-white);
-  padding: 1.5rem;
-  border-radius: var(--parsec-radius-12);
-  box-shadow: var(--parsec-shadow-light);
+  gap: ms.spacing('gap-4xl');
+  background: ms.color('surface-base-default');
+  padding: ms.spacing('padding-4xl');
+  border-radius: ms.radius('2xl');
+  box-shadow: ms.shadow('light');
 
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: ms.spacing('gap-2xl');
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('heading-h4');
+      color: ms.color('text-base-heading');
     }
 
     &__message {
-      color: var(--parsec-color-light-secondary-hard-grey);
+      @include ms.font('body-lg-regular');
+      color: ms.color('text-base-description');
     }
   }
 
-  &-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-
-    &__item {
-      width: 100%;
-      &:first-child {
-        --background: var(--parsec-color-light-secondary-text);
-        --color: var(--parsec-color-light-secondary-white);
-        --border-color: var(--parsec-color-light-secondary-text);
-        --color-hover: var(--parsec-color-light-secondary-text);
-        --background-hover: var(--parsec-color-light-secondary-contrast);
-      }
-    }
+  &-buttons__item {
+    width: 100%;
   }
 }
 
 .error-advices {
-  border-top: 1px solid var(--parsec-color-light-secondary-disabled);
-  padding: 2rem 1rem 1rem;
+  border-top: ms.border('thin') solid ms.color('border-base-default');
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-3xl') ms.spacing('padding-3xl');
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
 
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    @include ms.font('heading-h4');
+    color: ms.color('text-base-heading');
   }
 
   &-list {
-    padding-left: 0.5rem;
+    padding-left: ms.spacing('padding-lg');
     list-style-type: circle;
     background: none;
 
@@ -458,13 +444,13 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
       margin-bottom: 0.5rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-soft-text);
+      gap: ms.spacing('gap-lg');
+      color: ms.color('text-base-body');
       --background: none;
-      font-size: 0.9375rem;
+      @include ms.font('body-md-regular');
 
       .item-icon {
-        color: var(--parsec-color-light-secondary-grey);
+        color: ms.color('icon-neutral-default');
         flex-shrink: 0;
         margin-right: 0.5rem;
         font-size: 1rem;
@@ -498,7 +484,7 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
   align-items: center;
   flex-direction: column;
   width: fit-content;
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 
   .logo-img {
     animation: LogoFadeIn 0.8s ease-in-out;

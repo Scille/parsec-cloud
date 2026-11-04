@@ -44,7 +44,7 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
 
 msTest('Go through saas org creation process', { tag: '@important' }, async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -81,6 +81,10 @@ msTest('Go through saas org creation process', { tag: '@important' }, async ({ c
   const orgNameError = orgNameContainer.locator('#org-name-input').locator('.form-error');
   await expect(orgNameError).toBeVisible();
   await expect(orgNameError).toHaveText('Only letters, digits, underscores and hyphens. No spaces.');
+  await fillIonInput(orgNameContainer.locator('ion-input').nth(0), 'A'.repeat(34));
+  await expect(orgNameNext).toHaveDisabledAttribute();
+  await expect(orgNameError).toBeVisible();
+  await expect(orgNameError).toHaveText('Name is too long, limit is 32 characters.');
 
   // Back to good name
   await fillIonInput(orgNameContainer.locator('ion-input'), uniqueOrgName);
@@ -102,11 +106,8 @@ msTest('Go through saas org creation process', { tag: '@important' }, async ({ c
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
+  await authRadio.nth(0).click();
 
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
@@ -127,7 +128,7 @@ msTest('Go through saas org creation process', { tag: '@important' }, async ({ c
   // Check does not match
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), `${DEFAULT_USER_INFORMATION.password}-extra`);
   await expect(authNext).toHaveDisabledAttribute();
-  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-helperText').nth(1);
+  const matchError = authContainer.locator('.choose-password').locator('.inputs-container-item').nth(1).locator('.form-error');
   await expect(matchError).toBeVisible();
   await expect(matchError).toHaveText('Do not match');
 
@@ -213,7 +214,7 @@ for (const testInfo of [
 ])
   msTest(`Org creation error (${testInfo.status} - ${testInfo.code})`, async ({ context }) => {
     const home = (await context.newPage()) as MsPage;
-    await setupNewPage(home, { enableStripe: true });
+    await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
     const modal = await openCreateOrganizationModal(home);
 
@@ -249,11 +250,8 @@ for (const testInfo of [
     const authContainer = modal.locator('.authentication-page');
 
     const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveCount(2);
-    await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-    await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-    await expect(authRadio.nth(1)).toHaveText('Password');
-    await authRadio.nth(1).click();
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
+    await authRadio.nth(0).click();
     const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -318,11 +316,8 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -387,22 +382,19 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
 
 msTest('Open customer account creation', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
   const bmsContainer = modal.locator('.saas-login');
-  await expect(bmsContainer.locator('.saas-login-footer').locator('.create-account__link')).toHaveText('Create an account');
-  await openExternalLink(
-    home,
-    bmsContainer.locator('.saas-login-footer').locator('.create-account__link'),
-    /https:\/\/sign-dev\.parsec\.cloud.*/,
-  );
+  const createAccountButton = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(2);
+  await expect(createAccountButton).toHaveText('Create an account');
+  await openExternalLink(home, createAccountButton, /https:\/\/sign-dev\.parsec\.cloud.*/);
 });
 
 msTest('Fail to login to BMS', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -425,7 +417,7 @@ msTest('Fail to login to BMS', async ({ context }) => {
 
 msTest('Cannot reach the BMS', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   await MockBms.mockLogin(home, { POST: { timeout: true } });
   const modal = await openCreateOrganizationModal(home);
@@ -449,7 +441,7 @@ msTest('Cannot reach the BMS', async ({ context }) => {
 
 msTest('Edit from summary', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -479,11 +471,8 @@ msTest('Edit from summary', async ({ context }) => {
 
   await expect(authContainer).toBeVisible();
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
+  await authRadio.nth(0).click();
 
   await expect(authNext).toBeTrulyDisabled();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
@@ -535,7 +524,7 @@ msTest('Edit from summary', async ({ context }) => {
 
 msTest('Try to create an org with custom order', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -559,7 +548,7 @@ msTest('Try to create an org with custom order', async ({ context }) => {
 
 msTest('Try to create an org without being a client', async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
-  await setupNewPage(home, { enableStripe: true });
+  await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
   const modal = await openCreateOrganizationModal(home);
 
@@ -580,7 +569,7 @@ msTest('Try to create an org without being a client', async ({ context }) => {
 for (const displaySize of ['small', 'large']) {
   msTest(`Go through saas org creation process with authority key on ${displaySize} display`, async ({ context }, testInfo: TestInfo) => {
     const home = (await context.newPage()) as MsPage;
-    await setupNewPage(home, { enableStripe: true });
+    await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
     if (displaySize === DisplaySize.Small) {
       await home.setDisplaySize(DisplaySize.Small);
@@ -659,11 +648,8 @@ for (const displaySize of ['small', 'large']) {
     await expect(authNext).toHaveDisabledAttribute();
 
     const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveCount(2);
-    await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-    await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-    await expect(authRadio.nth(1)).toHaveText('Password');
-    await authRadio.nth(1).click();
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
+    await authRadio.nth(0).click();
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
     await expect(authNext).toHaveDisabledAttribute();
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -733,7 +719,7 @@ for (const displaySize of ['small', 'large']) {
     `Go through saas org creation process with invalid authority key on ${displaySize} display`,
     async ({ context }, testInfo: TestInfo) => {
       const home = (await context.newPage()) as MsPage;
-      await setupNewPage(home, { enableStripe: true });
+      await setupNewPage(home, { enableStripe: true, saasServers: process.env.TESTBED_SERVER });
 
       if (displaySize === DisplaySize.Small) {
         await home.setDisplaySize(DisplaySize.Small);
@@ -800,11 +786,8 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toHaveDisabledAttribute();
 
       const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-      await expect(authRadio).toHaveCount(2);
-      await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-      await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-      await expect(authRadio.nth(1)).toHaveText('Password');
-      await authRadio.nth(1).click();
+      await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
+      await authRadio.nth(0).click();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
       await expect(authNext).toHaveDisabledAttribute();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -899,11 +882,8 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toHaveDisabledAttribute();
 
       const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-      await expect(authRadio).toHaveCount(3);
-      await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-      await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-      await expect(authRadio.nth(1)).toHaveText('Password');
-      await authRadio.nth(1).click();
+      await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+      await authRadio.nth(0).click();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
       await expect(authNext).toHaveDisabledAttribute();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);

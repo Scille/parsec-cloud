@@ -1,14 +1,14 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use futures::FutureExt;
 use pin_project::{pin_project, pinned_drop};
 use std::num::NonZeroU64;
-use std::sync::{atomic::AtomicU64, Mutex};
+use std::sync::{Mutex, atomic::AtomicU64};
 use std::{
     any::Any,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
 };
 
@@ -137,13 +137,10 @@ impl std::error::Error for JoinError {}
 
 impl From<JoinError> for std::io::Error {
     fn from(src: JoinError) -> std::io::Error {
-        std::io::Error::new(
-            std::io::ErrorKind::Other,
-            match src.repr {
-                Repr::Cancelled => "task was cancelled",
-                Repr::Panic(_) => "task panicked",
-            },
-        )
+        std::io::Error::other(match src.repr {
+            Repr::Cancelled => "task was cancelled",
+            Repr::Panic(_) => "task panicked",
+        })
     }
 }
 

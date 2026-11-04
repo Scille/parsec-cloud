@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 mod list;
 mod load;
@@ -6,4 +6,8 @@ mod remove;
 mod rename;
 mod save;
 
+pub use list::list_files;
+pub use load::load_file;
+pub use remove::remove_file;
+pub use rename::rename_file;
 pub use save::save_content;

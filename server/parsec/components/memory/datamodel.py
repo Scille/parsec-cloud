@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from asyncio import Event, Lock
 from collections import defaultdict
-from collections.abc import AsyncIterator, Iterable, Iterator
+from collections.abc import AsyncGenerator, Iterable, Iterator
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -12,13 +13,13 @@ from itertools import chain
 from typing import Literal
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     ActiveUsersLimit,
     AsyncEnrollmentAcceptPayload,
     AsyncEnrollmentID,
     AsyncEnrollmentSubmitPayload,
     BlockID,
-    BootstrapToken,
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceCertificate,
@@ -29,12 +30,12 @@ from parsec._parsec import (
     HashDigest,
     HumanHandle,
     InvitationStatus,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     PKIEnrollmentID,
     PkiSignatureAlgorithm,
     RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -48,6 +49,7 @@ from parsec._parsec import (
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
+    TOTPOpaqueKeyID,
     UntrustedPasswordAlgorithm,
     UserCertificate,
     UserID,
@@ -60,8 +62,8 @@ from parsec.components.account import ValidationCodeInfo
 from parsec.components.async_enrollment import AsyncEnrollmentPayloadSignature
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
-from parsec.components.pki import MAX_INTERMEDIATE_CERTIFICATES_DEPTH, PkiCertificate
 from parsec.components.sequester import SequesterServiceType
+from parsec.components.totp import compute_wait_until
 from parsec.locks import AdvisoryLock
 
 type CommonTopicCertificate = (
@@ -142,7 +144,7 @@ class MemoryDatamodel:
 @dataclass(slots=True)
 class MemoryOrganization:
     organization_id: OrganizationID
-    bootstrap_token: BootstrapToken | None
+    bootstrap_token: AccessToken | None
     created_on: DateTime
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
@@ -151,21 +153,21 @@ class MemoryOrganization:
     sequester_authority_certificate: bytes | None = field(default=None, repr=False)
     cooked_sequester_authority: SequesterAuthorityCertificate | None = None
     root_verify_key: VerifyKey | None = field(default=None, repr=False)
+    expired_on: DateTime | None = None
     is_expired: bool = False
-    minimum_archiving_period: int = 2592000  # 30 days
+    realm_minimum_archiving_period_before_deletion: int = 2592000  # 30 days
     tos: TermsOfService | None = None
 
     # None for non-sequestered organization
     sequester_services: dict[SequesterServiceID, MemorySequesterService] | None = None
     users: dict[UserID, MemoryUser] = field(default_factory=dict)
     devices: dict[DeviceID, MemoryDevice] = field(default_factory=dict)
-    invitations: dict[InvitationToken, MemoryInvitation] = field(default_factory=dict)
+    invitations: dict[AccessToken, MemoryInvitation] = field(default_factory=dict)
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
-    pki_enrollments: dict[PKIEnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
-    pki_certificates: dict[bytes, MemoryPkiCertificate] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
+    cryptpad_sessions: dict[VlobID, MemoryCryptpadSession] = field(default_factory=dict)
     # The user id is the author of the shamir recovery
     shamir_recoveries: dict[UserID, list[MemoryShamirRecovery]] = field(
         default_factory=lambda: defaultdict(list)
@@ -183,7 +185,7 @@ class MemoryOrganization:
     _notify_me_on_topic_lock_release: Event | None = None
 
     @asynccontextmanager
-    async def advisory_lock_exclusive(self, lock: AdvisoryLock) -> AsyncIterator[None]:
+    async def advisory_lock_exclusive(self, lock: AdvisoryLock) -> AsyncGenerator[None]:
         """
         Equivalent to `SELECT pg_advisory_xact_lock(<lock ID>, _id) FROM organization WHERE organization_id = <org>`
         """
@@ -191,7 +193,7 @@ class MemoryOrganization:
             yield
 
     @asynccontextmanager
-    async def advisory_lock_shared(self, lock: AdvisoryLock) -> AsyncIterator[None]:
+    async def advisory_lock_shared(self, lock: AdvisoryLock) -> AsyncGenerator[None]:
         """
         Equivalent to `SELECT pg_advisory_xact_lock_shared(<lock ID>, _id) FROM organization WHERE organization_id = <org>`
         """
@@ -201,7 +203,7 @@ class MemoryOrganization:
     @asynccontextmanager
     async def topics_lock(
         self, read: Iterable[TopicAndDiscriminant] = (), write: Iterable[TopicAndDiscriminant] = ()
-    ) -> AsyncIterator[tuple[DateTime, ...]]:
+    ) -> AsyncGenerator[tuple[DateTime, ...]]:
         """
         Read is equivalent to `SELECT last_timestamp FROM <topic table> WHERE organization_id = <org> FOR SHARE`
 
@@ -413,7 +415,10 @@ class MemoryOrganization:
             (role.cooked.timestamp, role.realm_name_certificate, role.cooked)
             for role in realm.renames
         ]
-        # TODO #6092: support archiving here !
+        realm_certificates_unordered += [
+            (archiving.cooked.timestamp, archiving.realm_archiving_certificate, archiving.cooked)
+            for archiving in realm.archivings
+        ]
 
         yield from sorted(realm_certificates_unordered, key=lambda x: x[0])
 
@@ -474,49 +479,6 @@ class MemoryOrganization:
         # a list offset.
         return enumerate(all_vlob_atoms, start=200)
 
-    async def save_trustchain(self, trustchain: list[PkiCertificate]):
-        for cert in trustchain:
-            if cert.fingerprint_sha256 not in self.pki_certificates:
-                self.pki_certificates[cert.fingerprint_sha256] = MemoryPkiCertificate(
-                    sha256_fingerprint=cert.fingerprint_sha256,
-                    der_content=cert.content,
-                    signed_by=cert.signed_by,
-                )
-
-    async def get_trustchain(
-        self, leaf_fingerprint: bytes
-    ) -> tuple[MemoryPkiCertificate, list[MemoryPkiCertificate]] | None:
-        """
-        return (leaf cert, list ordered by leaf.signed_by -> last known cert of the trustchain)
-        leaf cert is not in trustchain
-        """
-        try:
-            leaf = self.pki_certificates[leaf_fingerprint]
-        except KeyError:
-            return None
-        current = leaf
-        sorted_trustchain = [current]
-        for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):
-            # check circular trustchain (allows to stop iteration)
-            if current.signed_by is None or current.signed_by in map(
-                lambda x: x.sha256_fingerprint, sorted_trustchain
-            ):
-                return (leaf, sorted_trustchain[1:])
-            try:
-                cert = self.pki_certificates[current.signed_by]
-            # the last signer is not in DB
-            except ValueError:
-                return (leaf, sorted_trustchain[1:])
-            # add signer to trustchain
-            sorted_trustchain.append(cert)
-            current = cert
-        # Raise error trustchain too long ?
-        # in theory it should not have been stored if too long
-        return (leaf, sorted_trustchain[1:])
-
-    async def get_cert(self, fingerprint: bytes) -> MemoryPkiCertificate | None:
-        return self.pki_certificates.get(fingerprint)
-
 
 @dataclass(slots=True)
 class MemorySequesterService:
@@ -540,6 +502,24 @@ class MemoryUserProfileUpdate:
 
 
 @dataclass(slots=True)
+class MemoryTOTPThrottle:
+    last_attempt: DateTime | None = None
+    failed_attemps: int = 0
+
+    @property
+    def wait_until(self) -> DateTime | None:
+        return compute_wait_until(self.failed_attemps, self.last_attempt)
+
+    def register_failed_attempt(self, now: DateTime) -> None:
+        self.last_attempt = now
+        self.failed_attemps += 1
+
+    def reset(self) -> None:
+        self.last_attempt = None
+        self.failed_attemps = 0
+
+
+@dataclass(slots=True)
 class MemoryUser:
     cooked: UserCertificate
     user_certificate: bytes = field(repr=False)
@@ -553,6 +533,13 @@ class MemoryUser:
     is_frozen: bool = False
     # None if not yet accepted (or nothing to accept)
     tos_accepted_on: DateTime | None = None
+    # TOTP config
+    totp_setup_completed: bool = False
+    totp_secret: bytes | None = None
+    totp_reset_token: AccessToken | None = None
+    totp_opaque_keys: dict[TOTPOpaqueKeyID, tuple[SecretKey, MemoryTOTPThrottle]] = field(
+        default_factory=dict
+    )
 
     @property
     def current_profile(self) -> UserProfile:
@@ -584,7 +571,7 @@ class MemoryInvitationDeletedReason(Enum):
 
 @dataclass(slots=True)
 class MemoryInvitation:
-    token: InvitationToken
+    token: AccessToken
     type: InvitationType
     created_by: InvitationCreatedBy
 
@@ -641,7 +628,7 @@ class MemoryInvitation:
 @dataclass(slots=True)
 class MemoryGreetingSession:
     # Immutable properties
-    token: InvitationToken
+    token: AccessToken
     greeter_id: UserID
 
     # Mutable properties
@@ -690,13 +677,13 @@ class MemoryGreetingSession:
 class MemoryGreetingAttempt:
     # Immutable properties
     greeting_attempt: GreetingAttemptID
-    token: InvitationToken
+    token: AccessToken
     greeter_id: UserID
 
     # Mutable properties
-    claimer_joined: None | DateTime = None
-    greeter_joined: None | DateTime = None
-    cancelled_reason: None | tuple[GreeterOrClaimer, CancelledGreetingAttemptReason, DateTime] = (
+    claimer_joined: DateTime | None = None
+    greeter_joined: DateTime | None = None
+    cancelled_reason: tuple[GreeterOrClaimer, CancelledGreetingAttemptReason, DateTime] | None = (
         None
     )
     greeter_steps: list[bytes] = field(default_factory=list)
@@ -829,6 +816,7 @@ class MemoryRealm:
     archivings: list[MemoryRealmArchiving] = field(default_factory=list)
     last_vlob_timestamp: DateTime | None = None
     vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
+    is_deleted: bool = False
 
     def get_current_role_for(self, user_id: UserID) -> RealmRole | None:
         for role in reversed(self.roles):
@@ -836,14 +824,14 @@ class MemoryRealm:
                 return role.cooked.role
         return None
 
-    def is_personal(self) -> bool:
-        """
-        A personal realm is a realm that has never been shared.
-        """
-        # If the realm is not shared, then only a single user is part of it.
-        # And given it is not possible to change his own role, then there must
-        # only be a single certificate !
-        return len(self.roles) == 1
+    @property
+    def is_archived_or_deletion_planned(self) -> bool:
+        if not self.archivings:
+            return False
+        if self.archivings[-1].cooked.configuration == RealmArchivingConfiguration.AVAILABLE:
+            return False
+        else:
+            return True
 
 
 @dataclass(slots=True)
@@ -919,6 +907,16 @@ class MemoryBlock:
 
 
 @dataclass(slots=True)
+class MemoryCryptpadSession:
+    document_id: VlobID
+    key_index: int
+    encrypted_edit_key: bytes | None
+    encrypted_view_key: bytes
+    author: DeviceID
+    timestamp: DateTime
+
+
+@dataclass(slots=True)
 class MemoryShamirRecovery:
     # The actual data we want to recover.
     # It is encrypted with `data_key` that is itself split into shares.
@@ -927,7 +925,7 @@ class MemoryShamirRecovery:
     # The token the claimer should provide to get access to `ciphered_data`.
     # This token is split into shares, hence it acts as a proof the claimer
     # asking for the `ciphered_data` had it identity confirmed by the recipients.
-    reveal_token: InvitationToken
+    reveal_token: AccessToken
     # The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
     # It contains the threshold for the quorum and the shares recipients.
     # This field has a certain level of duplication with the "shares" below,

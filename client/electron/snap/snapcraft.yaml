@@ -1,6 +1,6 @@
 name: parsec
 base: core24
-version: 3.7.2-a.0+dev
+version: 3.11.1-a.0+dev
 summary: Secure file sharing in the cloud
 license: BUSL-1.1
 description: |
@@ -79,7 +79,7 @@ parts:
       update-alternatives --install /usr/local/bin/python python $(which python3) 100
 
       # Install rust
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.89.0
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.96.0
       source "$HOME/.cargo/env"
 
       # Debug software versions
@@ -95,32 +95,8 @@ parts:
       cp -va dist/libparsec.node "$CRAFT_PART_INSTALL/libparsec.node"
       cp -va dist/libparsec.d.ts "$CRAFT_PART_INSTALL/libparsec.d.ts"
 
-  # We pre-package `megashark-lib` to workaround a permission issue during it's `prepare` step when installed as a 3rd dependencies from `client-vite`.
-  megashark-lib:
-    plugin: nil
-    build-snaps:
-      - node/22/stable
-    source: client
-    build-packages:
-      - git
-      - jq
-      - wget
-    override-build: |
-      set -x
-
-      MEGASHARK_COMMIT_ID=$(jq -r '.packages."node_modules/megashark-lib".resolved' package-lock.json | cut -d '#' -f 2)
-      wget https://github.com/Scille/megashark-lib/archive/${MEGASHARK_COMMIT_ID}.tar.gz -O megashark-lib-src.tar.gz
-      mkdir -pv megashark-lib && cd megashark-lib
-      tar --extract --file ../megashark-lib-src.tar.gz --strip-components=1
-
-      npm clean-install
-      MEGASHARK_ARCHIVE=$(npm pack | tail -n1)
-
-      cp -v $MEGASHARK_ARCHIVE "$CRAFT_STAGE/megashark-lib.tar.gz"
-
   parsec:
     after:
-      - megashark-lib
       - libparsec
     plugin: nil
     source: client
@@ -132,6 +108,7 @@ parts:
       - # Define a placeholder for the token, it will be replaced by the CI/CD pipeline.
         SENTRY_AUTH_TOKEN: __TOKEN__
       - VITE_MODE: development
+      - NPM_CONFIG_LOGLEVEL: silent
     override-build: |
       set -x
 
@@ -139,14 +116,11 @@ parts:
       node --version
       npm --version
 
-      # Patch client package.json to use local pre-packaged megashark-lib
-      sed -i "s;megashark-lib\": \".*\";megashark-lib\": \"file:${CRAFT_STAGE}/megashark-lib.tar.gz\";" package.json
-
       # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
       # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
       npm install --ignore-scripts
       npm run native:build -- --mode $VITE_MODE
-      npm exec cap copy @capacitor-community/electron
+      npm run electron:copy:webapp
 
       cd electron
       npm clean-install
@@ -167,7 +141,7 @@ parts:
       fi
 
       # Package
-      node package.js --mode prod --platform linux dir
+      node package.cjs --mode prod --platform linux dir
 
       cp -vr dist/linux-unpacked "$CRAFT_PART_INSTALL"/app
 

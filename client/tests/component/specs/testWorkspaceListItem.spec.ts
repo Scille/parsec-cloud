@@ -2,6 +2,7 @@
 
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import { UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
+import { CertificateBasedInfoOriginTag, RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import { IonAvatar } from '@ionic/vue';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
@@ -13,7 +14,8 @@ describe('Workspace List Item', () => {
 
   const WORKSPACE: WorkspaceInfo = {
     id: 'id1',
-    currentName: 'My Workspace',
+    name: 'My Workspace',
+    nameOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
     sharing: [
       [
         {
@@ -57,11 +59,17 @@ describe('Workspace List Item', () => {
       ],
     ],
     size: 60_817_408,
-    currentSelfRole: WorkspaceRole.Reader,
+    selfRole: WorkspaceRole.Reader,
+    selfRoleOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
     availableOffline: true,
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
     isStarted: false,
     isBootstrapped: true,
+    archivingConfiguration: { tag: RealmArchivingConfigurationTag.Available },
+    archivingConfigurationOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
+    canSelfPromoteToOwner: false,
+    isArchived: false,
+    isTrashed: false,
     mountpoints: [[42, '/']],
     handle: 1,
   };
@@ -72,6 +80,7 @@ describe('Workspace List Item', () => {
         workspace: WORKSPACE,
         clientProfile: UserProfile.Admin,
         isFavorite: false,
+        isHidden: false,
       },
       global: {
         provide: getDefaultProvideConfig(),

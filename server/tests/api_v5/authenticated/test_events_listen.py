@@ -7,13 +7,14 @@ import pytest
 
 from parsec import events
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     DateTime,
     DeviceID,
     InvitationStatus,
-    InvitationToken,
     OrganizationID,
     PKIEnrollmentID,
+    RealmRole,
     UserID,
     VlobID,
     authenticated_cmds,
@@ -35,7 +36,7 @@ class GenerateEvent(Protocol):
     ) -> Event: ...
 
 
-INVITATION_TOKEN = InvitationToken.from_hex("f22a1230c2d6463d85b1b7575e601d9f")
+INVITATION_TOKEN = AccessToken.from_hex("f22a1230c2d6463d85b1b7575e601d9f")
 ENROLLMENT_ID = PKIEnrollmentID.from_hex("be6510e4-3e0b-4144-b3a7-fd5ad2c01fd8")
 VLOB_ID = VlobID.from_hex("cc7dca19-447c-4aca-9c99-b8205655afee")
 DEVICE_ID = DeviceID.from_hex("86615315-5af4-4b55-bc6c-723bd72df7ac")
@@ -106,7 +107,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
                 timestamp=TIMESTAMP,
                 realm_id=VLOB_ID,
                 user_id=ALICE_USER_ID,
-                role_removed=False,
+                kind=("SHARE", RealmRole.READER),
             ),
             authenticated_cmds.latest.events_listen.APIEventRealmCertificate(
                 timestamp=TIMESTAMP, realm_id=VLOB_ID
@@ -152,6 +153,7 @@ async def test_authenticated_events_listen_ok(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -178,6 +180,7 @@ async def test_receive_server_config_as_first_event(
         minimalorg.organization_id,
         active_users_limit=ActiveUsersLimit.limited_to(10),
         user_profile_outsider_allowed=False,
+        realm_minimum_archiving_period_before_deletion=666,
     )
 
     # Native client must have `User-Agent` starting with `Parsec-Client/`
@@ -190,6 +193,7 @@ async def test_receive_server_config_as_first_event(
                 active_users_limit=ActiveUsersLimit.limited_to(10),
                 user_profile_outsider_allowed=False,
                 sse_keepalive_seconds=42,
+                realm_minimum_archiving_period_before_deletion=666,
             )
         )
 
@@ -221,6 +225,7 @@ async def test_user_not_receive_event_before_listen(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -260,6 +265,7 @@ async def test_conn_closed_on_bad_outcome(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -304,6 +310,7 @@ async def test_self_vlob_events_skipped(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -352,6 +359,7 @@ async def test_self_certificate_events_provided(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -383,7 +391,7 @@ async def test_self_certificate_events_provided(
                 timestamp=TIMESTAMP,
                 realm_id=VLOB_ID,
                 user_id=ALICE_USER_ID,
-                role_removed=False,
+                kind=("SHARE", RealmRole.READER),
             )
         )
 
@@ -423,6 +431,7 @@ async def test_receive_event_of_newly_shared_realm(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -453,7 +462,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=dummy_user_id,
-                    role_removed=False,
+                    kind=("SHARE", RealmRole.READER),
                 )
             )
             await send_vlob_event(org, 1)
@@ -466,7 +475,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=minimalorg.alice.user_id,
-                    role_removed=False,
+                    kind=("SHARE", RealmRole.READER),
                 )
             )
             await send_vlob_event(org, 2)
@@ -479,7 +488,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=dummy_user_id,
-                    role_removed=True,
+                    kind="UNSHARE",
                 )
             )
             await send_vlob_event(org, 3)
@@ -492,7 +501,7 @@ async def test_receive_event_of_newly_shared_realm(
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
                     user_id=minimalorg.alice.user_id,
-                    role_removed=True,
+                    kind="UNSHARE",
                 )
             )
             await send_vlob_event(org, 4)
@@ -567,6 +576,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 
@@ -592,6 +602,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
             )
         )
 

@@ -6,23 +6,24 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::PinBoxFutureResult;
 use libparsec_platform_device_loader::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsUploadOpaqueKeyError, DeviceSaveStrategy,
+    AccountVaultOperationsUploadOpaqueKeyError, DevicePrimaryProtectionStrategy,
+    DeviceSaveStrategy,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::make_config;
 use crate::{
-    bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
     BootstrapOrganizationError, Client, EventBus,
-    OrganizationBootstrapFinalizeSaveLocalDeviceError,
+    OrganizationBootstrapFinalizeSaveLocalDeviceError, bootstrap_organization,
+    test_organization_bootstrap_finalize_ctx_factory,
 };
 
 // should be the same as bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN
 const TEST_BOOTSTRAP_TOKEN_STR: &str = "672bc6ba9c43455da28344e975dc72b7";
 
-fn test_bootstrap_token() -> BootstrapToken {
-    BootstrapToken::from_hex(TEST_BOOTSTRAP_TOKEN_STR).unwrap()
+fn test_bootstrap_token() -> AccessToken {
+    AccessToken::from_hex(TEST_BOOTSTRAP_TOKEN_STR).unwrap()
 }
 
 #[parsec_test(testbed = "empty", with_server)]
@@ -90,9 +91,7 @@ async fn ok(#[case] sequestered: bool, env: &TestbedEnv) {
 async fn finalize(tmp_path: TmpPath, env: &TestbedEnv) {
     let config = make_config(env);
     let key_file = tmp_path.join("alice.keys");
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
+    let save_strategy = DeviceSaveStrategy::new_password("P@ssw0rd.".to_owned().into());
 
     let finalize_ctx = test_organization_bootstrap_finalize_ctx_factory(
         config.clone(),
@@ -140,9 +139,7 @@ async fn bad_finalize(
             // Simple way to make the folder unwritable
             std::fs::write(&config.data_base_dir, b"").unwrap();
 
-            let save_strategy = DeviceSaveStrategy::Password {
-                password: "P@ssw0rd.".to_owned().into(),
-            };
+            let save_strategy = DeviceSaveStrategy::new_password("P@ssw0rd.".to_owned().into());
             p_assert_matches!(
                 finalize_ctx
                     .save_local_device(&save_strategy, &key_file)
@@ -157,14 +154,12 @@ async fn bad_finalize(
             // Simple way to make the folder unwritable
             std::fs::write(&config.config_dir, b"").unwrap();
 
-            let save_strategy = DeviceSaveStrategy::Password {
-                password: "P@ssw0rd.".to_owned().into(),
-            };
+            let save_strategy = DeviceSaveStrategy::new_password("P@ssw0rd.".to_owned().into());
             p_assert_matches!(
                 finalize_ctx
                     .save_local_device(&save_strategy, &key_file)
                     .await,
-                Err(OrganizationBootstrapFinalizeSaveLocalDeviceError::InvalidPath)
+                Err(OrganizationBootstrapFinalizeSaveLocalDeviceError::InvalidPath(_))
             );
         }
 
@@ -196,8 +191,11 @@ async fn bad_finalize(
                 }
             }
 
-            let save_strategy = DeviceSaveStrategy::AccountVault {
-                operations: Arc::new(MockedAccountVaultOperations),
+            let save_strategy = DeviceSaveStrategy {
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+                    operations: Arc::new(MockedAccountVaultOperations),
+                },
             };
             p_assert_matches!(
                 finalize_ctx
@@ -239,8 +237,11 @@ async fn bad_finalize(
                 }
             }
 
-            let save_strategy = DeviceSaveStrategy::AccountVault {
-                operations: Arc::new(MockedAccountVaultOperations),
+            let save_strategy = DeviceSaveStrategy {
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+                    operations: Arc::new(MockedAccountVaultOperations),
+                },
             };
             p_assert_matches!(
                 finalize_ctx
@@ -286,7 +287,7 @@ async fn bad_token(env: &TestbedEnv) {
         env.server_addr.clone(),
         env.organization_id.clone(),
         // not the bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN
-        Some(BootstrapToken::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap()),
+        Some(AccessToken::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap()),
     );
     let config = make_config(env);
     let event_bus = EventBus::default();

@@ -79,7 +79,7 @@ async fn setup_all_valid_while_previously_deleted(env: &TestbedEnv) {
 async fn setup_with_revoked_recipients(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.revoke_user("bob"); // Bob has 2 shares
-                                    // Threshold is 2, and Mallory & Mike remain with 1 share each
+        // Threshold is 2, and Mallory & Mike remain with 1 share each
         builder.certificates_storage_fetch_certificates("alice@dev1");
     })
     .await;
@@ -108,7 +108,7 @@ async fn setup_but_unusable(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.revoke_user("bob"); // Bob has 2 shares
         builder.revoke_user("mallory"); // Mallory has 1 share
-                                        // Threshold is 2, and only Mike with 1 share remains
+        // Threshold is 2, and only Mike with 1 share remains
         builder.certificates_storage_fetch_certificates("alice@dev1");
     })
     .await;

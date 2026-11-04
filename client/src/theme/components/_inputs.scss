@@ -1,71 +1,27 @@
-/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS */
 
 // must be at the top of the file
 // at the moment, we are forced to put this in every scss file, since vite is not adding preprocessors additionalData to files imported by @use & @forward
 @use 'megashark-lib/theme' as ms;
 
 // Workspace Sharing Modal
-.current-user {
-  // remove currentUser icon in dropdown
-  .ms-dropdown-icon {
-    display: none;
-  }
-
-  // set opacity to 1 for multiple selection
-  &.workspace-user-role .button-disabled {
-    opacity: 1;
-  }
-}
-
 .saas-login-content__input .input-content,
 .saas-forgot-password-content__input .input-content {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
+  background: ms.color('surface-base-page');
 }
 
 .sc-ion-input-md-h:not(.legacy-input) {
   min-height: 0;
 }
 
-.workspace-sharing-modal {
-  .current-user .dropdown-button-content .input-text {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  .dropdown-button {
-    --background: none;
-    --background-hover: var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-secondary-text);
-
-    &::part(native) {
-      border-color: var(--parsec-color-light-secondary-white);
-    }
-
-    .ms-dropdown-icon {
-      font-size: 1rem;
-    }
-  }
-}
-
-.organization-filter .ms-search-input {
-  border-color: var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-background);
-  transition: border-color 0.15s ease-in-out;
-
-  @include ms.responsive-breakpoint('xs') {
-    height: 2.25rem;
-  }
-
-  input::placeholder {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  &:hover {
-    border-color: var(--parsec-color-light-secondary-light);
+.organization-filter .ms-search-input.input-content {
+  ion-icon.icon {
+    opacity: ms.opacity('4');
   }
 }
 
 .create-account-page .code-input-list {
-  gap: 0.5rem;
+  gap: ms.spacing('gap-lg');
 }
 
 .account-login,
@@ -73,7 +29,7 @@
 .create-account-page {
   .form-input-disabled.input-valid,
   .form-input-disabled.input-default {
-    border: none !important;
+    border: ms.border('none') !important;
   }
 
   .login-server-input {
@@ -86,17 +42,26 @@
   }
 
   .input-edit-button {
+    @include ms.font('label-sm-medium');
+
     position: absolute;
     right: 0.25rem;
     z-index: 10;
     width: fit-content;
     text-align: right;
-    color: var(--parsec-color-light-primary-500);
-    padding: 0.125rem 0;
+    color: ms.color('text-brand-default');
+    padding: ms.spacing('padding-xs') 0;
 
     &:hover {
       cursor: pointer;
       text-decoration: underline;
     }
+  }
+}
+
+.folder-selection-modal,
+.image-selection-modal {
+  .new-folder .input-default {
+    height: 2.25rem !important;
   }
 }

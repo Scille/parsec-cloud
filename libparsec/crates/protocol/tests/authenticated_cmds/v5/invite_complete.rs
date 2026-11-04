@@ -7,7 +7,7 @@
 use super::authenticated_cmds;
 
 use libparsec_tests_lite::{hex, p_assert_eq};
-use libparsec_types::InvitationToken;
+use libparsec_types::AccessToken;
 
 // Request
 
@@ -22,7 +22,7 @@ pub fn req() {
     )
     .as_ref();
     let req = authenticated_cmds::invite_complete::Req {
-        token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+        token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
     };
     println!("***expected: {:?}", req.dump().unwrap());
 

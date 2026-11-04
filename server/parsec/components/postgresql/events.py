@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import cast, override
 
@@ -47,7 +47,7 @@ class PGEventBus(EventBus):
 
 
 @asynccontextmanager
-async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
+async def event_bus_factory(pool: AsyncpgPool) -> AsyncGenerator[PGEventBus]:
     _connection_lost = False
 
     def _on_notification_conn_termination(conn: object) -> None:
@@ -98,7 +98,8 @@ WITH my_organization AS (
         _id,
         is_expired,
         user_profile_outsider_allowed,
-        active_users_limit
+        active_users_limit,
+        realm_minimum_archiving_period_before_deletion
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -146,6 +147,9 @@ SELECT
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
     (SELECT user_profile_outsider_allowed FROM my_organization) AS organization_user_profile_outsider_allowed,
     (SELECT active_users_limit FROM my_organization) AS organization_active_users_limit,
+    (
+        SELECT realm_minimum_archiving_period_before_deletion FROM my_organization
+    ) AS organization_realm_minimum_archiving_period_before_deletion,
     (SELECT _id FROM my_user) AS user_internal_id,
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (SELECT user_id FROM my_user) AS user_id,
@@ -203,6 +207,12 @@ class PGEventsComponent(BaseEventsComponent):
             case _:
                 assert False, row
 
+        match row["organization_realm_minimum_archiving_period_before_deletion"]:
+            case int() as organization_realm_minimum_archiving_period_before_deletion:
+                pass
+            case _:
+                assert False, row
+
         # 2) Check user
 
         match row["user_internal_id"]:
@@ -247,6 +257,7 @@ class PGEventsComponent(BaseEventsComponent):
             organization_id=organization_id,
             user_profile_outsider_allowed=organization_user_profile_outsider_allowed,
             active_users_limit=organization_active_users_limit,
+            realm_minimum_archiving_period_before_deletion=organization_realm_minimum_archiving_period_before_deletion,
         )
 
         return org_config, user_current_profile, user_realms

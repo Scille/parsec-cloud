@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from typing import override
@@ -20,6 +21,7 @@ from parsec.ballpark import (
 from parsec.components.async_enrollment import (
     AsyncEnrollmentAcceptBadOutcome,
     AsyncEnrollmentAcceptValidateBadOutcome,
+    AsyncEnrollmentCancelBadOutcome,
     AsyncEnrollmentEmailAlreadySubmitted,
     AsyncEnrollmentInfo,
     AsyncEnrollmentInfoAccepted,
@@ -38,7 +40,9 @@ from parsec.components.async_enrollment import (
     BaseAsyncEnrollmentComponent,
     async_enrollment_accept_validate,
     async_enrollment_submit_validate,
+    send_accepted_enrollment_email,
 )
+from parsec.components.email import SendEmailBadOutcome
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryAsyncEnrollment,
@@ -47,6 +51,7 @@ from parsec.components.memory.datamodel import (
     MemoryDevice,
     MemoryUser,
 )
+from parsec.config import BackendConfig
 from parsec.events import EventAsyncEnrollment, EventCommonCertificate
 from parsec.locks import AdvisoryLock
 
@@ -56,9 +61,11 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         self,
         data: MemoryDatamodel,
         event_bus: EventBus,
+        config: BackendConfig,
     ) -> None:
         self._data = data
         self._event_bus = event_bus
+        self._config = config
 
     @override
     async def submit(
@@ -70,10 +77,10 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         submit_payload: bytes,
         submit_payload_signature: AsyncEnrollmentPayloadSignature,
     ) -> (
-        None
-        | AsyncEnrollmentSubmitValidateBadOutcome
+        AsyncEnrollmentSubmitValidateBadOutcome
         | AsyncEnrollmentEmailAlreadySubmitted
         | AsyncEnrollmentSubmitBadOutcome
+        | None
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -215,13 +222,40 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         )
 
     @override
+    async def cancel(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        enrollment_id: AsyncEnrollmentID,
+    ) -> AsyncEnrollmentCancelBadOutcome | None:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return AsyncEnrollmentCancelBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return AsyncEnrollmentCancelBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            enrollment = org.async_enrollments[enrollment_id]
+        except KeyError:
+            return AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NOT_FOUND
+
+        if enrollment.state != MemoryAsyncEnrollmentState.SUBMITTED:
+            return AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
+
+        enrollment.state = MemoryAsyncEnrollmentState.CANCELLED
+        enrollment.cancelled_on = now
+
+        await self._event_bus.send(EventAsyncEnrollment(organization_id=organization_id))
+
+    @override
     async def reject(
         self,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentRejectBadOutcome:
+    ) -> AsyncEnrollmentRejectBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -268,12 +302,14 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         submitter_redacted_user_certificate: bytes,
         submitter_device_certificate: bytes,
         submitter_redacted_device_certificate: bytes,
+        send_mail: bool,
     ) -> (
         tuple[UserCertificate, DeviceCertificate]
         | AsyncEnrollmentAcceptValidateBadOutcome
         | AsyncEnrollmentAcceptBadOutcome
         | RequireGreaterTimestamp
         | TimestampOutOfBallpark
+        | SendEmailBadOutcome
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -382,5 +418,14 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             )
 
             await self._event_bus.send(EventAsyncEnrollment(organization_id=organization_id))
+
+            # Send mail
+            if send_mail:
+                await send_accepted_enrollment_email(
+                    config=self._config,
+                    organization_id=organization_id,
+                    claimer_email=u_certif.human_handle.email,
+                    user_label=u_certif.human_handle.label,
+                )
 
             return u_certif, d_certif

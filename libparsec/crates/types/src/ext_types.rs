@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
@@ -156,30 +156,33 @@ pub mod maybe_field {
     // serialize is not needed given we never omit fields
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Maybe<T> {
     Present(T),
+    #[default]
     Absent,
 }
 
-impl<T> Default for Maybe<T> {
-    fn default() -> Self {
-        Self::Absent
-    }
-}
+impl<T: Copy> Copy for Maybe<T> {}
 
 impl<T> Maybe<T> {
     pub fn is_absent(&self) -> bool {
         matches!(self, Self::Absent)
     }
+
     pub fn unwrap_or(self, default: T) -> T {
         self.unwrap_or_else(|| default)
     }
+
     pub fn unwrap_or_else(self, default: impl FnOnce() -> T) -> T {
         match self {
             Self::Present(data) => data,
             Self::Absent => default(),
         }
+    }
+
+    pub fn expect(self, msg: &str) -> T {
+        self.unwrap_or_else(|| panic!("{}", msg))
     }
 }
 

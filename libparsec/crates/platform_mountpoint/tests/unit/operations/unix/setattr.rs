@@ -6,7 +6,7 @@
 
 use std::path::PathBuf;
 
-use libparsec_tests_fixtures::{tmp_path, TestbedEnv, TmpPath};
+use libparsec_tests_fixtures::{TestbedEnv, TmpPath, tmp_path};
 use libparsec_tests_lite::parsec_test;
 
 use crate::operations::utils::mount_and_test;

@@ -36,7 +36,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.1.1
   CARGO_CI_FLAGS: --locked --profile=ci-rust
   CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile=ci-rust
   WINFSP_VERSION: 2.1.25156
@@ -62,13 +61,14 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     env:
       TESTBED_SERVER: http://localhost:6777
+      CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: -C link-arg=-B/home/runner/.install-action/bin -C link-arg=-fuse-ld=mold
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.7.2-a.0.dev.20462.c20c78b
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.9.3-a.0.dev.20648.a5d5731
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -76,14 +76,14 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c # pin v1.15.2
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
         with:
           # We setup the cache by hand, see below
           cache: false
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # pin v2.8.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -103,9 +103,14 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
+      - name: Install tools
+        uses: taiki-e/install-action@1919c4a95903d2c33e4a221102edca87309fc14b # v2.89.0
         with:
-          tool: nextest@0.9.114, wasm-pack@0.13.1, cargo-deny@0.18.9, cargo-udeps@0.1.56
+          tool: nextest@0.9.114, wasm-pack@0.13.1, cargo-deny@0.19.0, cargo-udeps@0.1.56, mold
+
+      # FIXME: Remove me once https://github.com/taiki-e/install-action/pull/2050 is merged and released
+      - name: Patch missing `ld.mold`
+        run: ln -sv mold ~/.install-action/bin/ld.mold
 
       - name: Categorize workspace crates
         id: crates
@@ -139,7 +144,7 @@ jobs:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
       - name: unlock keyring
-        uses: t1m0thyj/unlock-keyring@728cc718a07b5e7b62c269fc89295e248b24cba7 # pin v1.1.0
+        uses: t1m0thyj/unlock-keyring@cbcf205c879ebd86add70bab3a6abfcce59a5cae # pin v1.2.0
 
       # The default value is 1000, we increase it to not be limited when executing our mountpoint tests.
       - name: Configure fuse options
@@ -154,6 +159,11 @@ jobs:
         timeout-minutes: 30
         env:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
+
+      - name: Clippy on wasm
+        if: inputs.run-wasm-tests
+        run: cargo clippy --target wasm32-unknown-unknown -p libparsec_bindings_web ${{ steps.crates.outputs.platform }}
+        timeout-minutes: 10
 
       - name: Test platform-async on wasm
         if: inputs.run-wasm-tests
@@ -243,22 +253,34 @@ jobs:
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
+
+      - name: Install test PKI certificates
+        if: startsWith(matrix.os, 'windows')
+        shell: powershell
+        # Root certificates require admin credentials, and Windows UAC triggers a
+        # confirmation dialogue (that then hangs forever...) when importing them
+        # from `import_testpki_windows.ps1`.
+        # However no such dialogue is displayed when directly importing with `certutil`
+        # since the current powershell runs with admin privilege ¯\_(ツ)_/¯
+        run: |
+          certutil -addstore -f "Root" libparsec\crates\platform_pki\test-pki\Root\aperture_science.crt
+          certutil -addstore -f "Root" libparsec\crates\platform_pki\test-pki\Root\black_mesa.crt
+          ./libparsec/crates/platform_pki/examples/import_testpki_windows.ps1 -ImportPath ./libparsec/crates/platform_pki/test-pki -NoCleanup
 
       - name: Retrieve runner specs
         id: runner-specs
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c # pin v1.15.2
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
         with:
-          # We setup the cache by hand, see below
-          cache: false
+          cache: false # We setup the cache by hand, see below
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # pin v2.8.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -279,14 +301,40 @@ jobs:
           echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
-      - name: Install winfsp
+      - name: Download WinFsp
+        shell: bash -eux {0}
+        if: startsWith(matrix.os, 'windows')
+        run: >-
+          curl -L --fail
+          https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-${{ env.WINFSP_VERSION }}.msi -o '${{ runner.temp }}/winfsp.msi'
+          https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
+        timeout-minutes: 2
+
+      - name: Install WinFsp
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList @(
+            '/i', '${{ runner.temp }}\winfsp.msi',
+            '/qn', '/norestart',
+            'INSTALLLEVEL=1000'
+          )
+
+          # Ensure install is successful
+          if (@(0, 3010, 1641) -notcontains $p.ExitCode) {
+            throw "WinFsp install failed with exit code $($p.ExitCode)"
+          }
+
+          # Sanity check
+          Get-ChildItem "${env:ProgramFiles(x86)}\WinFsp\bin" | Select-Object -First 20
+        timeout-minutes: 1
+
+      - name: Install WinFsp tests
         if: startsWith(matrix.os, 'windows')
         shell: bash -eux {0}
         run: |
-          choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
-          curl -L https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
           unzip '${{ runner.temp }}/winfsp-tests.zip' -d '${{ runner.temp }}/'
           mv '${{ runner.temp }}/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
+        timeout-minutes: 1
 
       - name: Install macFUSE
         if: startsWith(matrix.os, 'macos')
@@ -294,7 +342,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
         with:
           tool: nextest@0.9.114
 
@@ -309,6 +357,8 @@ jobs:
             # Mountpoint cannot be tested on macOS because it requires macFUSE installation,
             # that required the installation of a kernel extension that require a restart.
             PLATFORM_CRATES=`echo $PLATFORM_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
+            # Instead run check only for that crate
+            cargo check -p libparsec_platform_mountpoint
           fi
           cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-libsodium
         timeout-minutes: 30

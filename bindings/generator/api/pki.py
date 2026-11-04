@@ -1,33 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
-from .addr import ParsecPkiEnrollmentAddr
+from .addr import ParsecAddr
 from .common import (
-    DISPLAY_TO_STRING,
-    Bytes,
-    BytesBasedType,
     DateTime,
-    DeviceID,
-    DeviceLabel,
+    EmailAddress,
     ErrorVariant,
-    HumanHandle,
+    Handle,
     Path,
-    PKIEnrollmentID,
     Ref,
     Result,
-    StrBasedType,
     Structure,
-    UserID,
-    UserProfile,
     Variant,
+    VariantItemTuple,
     X509CertificateReference,
 )
-from .config import ClientConfig
-from .device import AvailableDevice, DeviceSaveStrategy, RemoveDeviceError
-
-
-class PkiSignatureAlgorithm(StrBasedType):
-    custom_to_rs_string = DISPLAY_TO_STRING
 
 
 class ShowCertificateSelectionDialogError(ErrorVariant):
@@ -42,232 +28,92 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
     raise NotImplementedError
 
 
-class VerifyKey(BytesBasedType): ...
+class PkiSystemInitError(ErrorVariant):
+    class NotAvailable: ...
+
+    class Internal: ...
 
 
-class PublicKey(BytesBasedType): ...
+async def pki_init_for_native(
+    config_dir: Ref[Path],
+) -> Result[None, PkiSystemInitError]:
+    raise NotImplementedError
 
 
-class PkiEnrollmentAnswerPayload(Structure):
-    user_id: UserID
-    device_id: DeviceID
-    device_label: DeviceLabel
-    profile: UserProfile
-    root_verify_key: VerifyKey
+async def pki_init_for_scws(
+    config_dir: Ref[Path],
+    parsec_addr: ParsecAddr,
+) -> Result[None, PkiSystemInitError]:
+    raise NotImplementedError
 
 
-class PkiEnrollmentSubmitPayload(Structure):
-    verify_key: VerifyKey
-    public_key: PublicKey
-    device_label: DeviceLabel
+class DistinguishedNameValue(Variant):
+    CommonName = VariantItemTuple(str)
+    EmailAddress = VariantItemTuple(str)
 
 
-class InvalidityReason(Variant):
+class UserX509CertificateDetails(Structure):
+    common_name: str
+    subject: list[DistinguishedNameValue]
+    issuer: list[DistinguishedNameValue]
+    not_before: DateTime
+    not_after: DateTime
+    serial: bytes
+    emails: list[EmailAddress]
+    can_sign: bool
+    can_encrypt: bool
+
+
+class UserX509CertificateLoadError(Variant):
     class InvalidCertificateDer: ...
 
-    class InvalidRootCertificate: ...
+    class NoCommonName: ...
 
-    class CannotOpenStore: ...
+    class InvalidTime: ...
 
-    class NotFound: ...
-
-    class CannotGetCertificateInfo: ...
-
-    class Untrusted: ...
-
-    class InvalidSignature: ...
-
-    class DataError: ...
-
-    class InvalidUserInformation: ...
+    class InvalidEmail: ...
 
 
-class RawPkiEnrollmentListItem(Structure):
-    enrollment_id: PKIEnrollmentID
-    submitted_on: DateTime
-    der_x509_certificate: Bytes
-    intermediate_der_x509_certificates: list[Bytes]
-    payload_signature: Bytes
-    payload_signature_algorithm: PkiSignatureAlgorithm
-    payload: Bytes
-
-
-class PkiEnrollmentListItem(Variant):
+class AvailablePkiCertificate(Variant):
     class Valid:
-        human_handle: HumanHandle
-        enrollment_id: PKIEnrollmentID
-        submitted_on: DateTime
-        submitter_der_cert: Bytes
-        payload: PkiEnrollmentSubmitPayload
+        reference: X509CertificateReference
+        friendly_name: str
+        details: UserX509CertificateDetails
 
     class Invalid:
-        human_handle: HumanHandle | None
-        enrollment_id: PKIEnrollmentID
-        submitted_on: DateTime
-        reason: InvalidityReason
-        details: str
+        reference: X509CertificateReference
+        invalid_reason: UserX509CertificateLoadError
 
 
-class PkiEnrollmentListError(ErrorVariant):
-    class Offline: ...
-
-    class AuthorNotAllowed: ...
-
+class PkiSystemListUserCertificateError(ErrorVariant):
     class Internal: ...
 
 
-class PkiGetAddrError(ErrorVariant):
-    class Internal: ...
-
-
-async def is_pki_available() -> bool:
+async def pki_list_user_certificates() -> Result[
+    list[AvailablePkiCertificate], PkiSystemListUserCertificateError
+]:
     raise NotImplementedError
 
 
-class PkiEnrollmentRejectError(ErrorVariant):
-    class Offline: ...
+class PkiOpenUserCertificatePrivateKeyError(ErrorVariant):
+    class CertificateNotFound: ...
 
-    class Internal: ...
-
-    class AuthorNotAllowed: ...
-
-    class EnrollmentNoLongerAvailable: ...
-
-    class EnrollmentNotFound: ...
-
-
-class PkiEnrollmentSubmitError(ErrorVariant):
-    class Offline: ...
-
-    class Internal: ...
-
-    class AlreadyEnrolled: ...
-
-    class AlreadySubmitted: ...
-
-    class EmailAlreadyUsed: ...
-
-    class IdAlreadyUsed: ...
-
-    class InvalidPayload: ...
-
-    class PkiOperationError: ...
-
-
-async def pki_enrollment_submit(
-    config: ClientConfig,
-    addr: ParsecPkiEnrollmentAddr,
-    cert_ref: X509CertificateReference,
-    device_label: DeviceLabel,
-    force: bool,
-) -> Result[DateTime, PkiEnrollmentSubmitError]:
-    raise NotImplementedError
-
-
-class PkiEnrollmentAcceptError(ErrorVariant):
-    class Offline: ...
-
-    class Internal: ...
-
-    class AuthorNotAllowed: ...
-
-    class EnrollmentNoLongerAvailable: ...
-
-    class EnrollmentNotFound: ...
-
-    class ActiveUsersLimitReached: ...
-
-    class HumanHandleAlreadyTaken: ...
-
-    class PkiOperationError: ...
-
-
-class PKIEncryptionAlgorithm(StrBasedType):
-    custom_to_rs_string = DISPLAY_TO_STRING
-
-
-class PKILocalPendingEnrollment(Structure):
-    cert_ref: X509CertificateReference
-    addr: ParsecPkiEnrollmentAddr
-    submitted_on: DateTime
-    enrollment_id: PKIEnrollmentID
-    payload: PkiEnrollmentSubmitPayload
-    encrypted_key: Bytes
-    encrypted_key_algo: PKIEncryptionAlgorithm
-    ciphertext: Bytes
-
-
-class PkiEnrollmentFinalizeError(ErrorVariant):
-    class SaveError: ...
+    class PrivateKeyNotFound: ...
 
     class Internal: ...
 
 
-async def pki_enrollment_finalize(
-    config: ClientConfig,
-    save_strategy: DeviceSaveStrategy,
-    accepted: PkiEnrollmentAnswerPayload,
-    local_pending: PKILocalPendingEnrollment,
-) -> Result[AvailableDevice, PkiEnrollmentFinalizeError]:
+async def pki_open_user_certificate_private_key(
+    cert_ref: Ref[X509CertificateReference],
+) -> Result[Handle, PkiOpenUserCertificatePrivateKeyError]:
     raise NotImplementedError
 
 
-class ListPkiLocalPendingError(ErrorVariant):
-    class StorageNotAvailable:
-        pass
-
-    class Internal:
-        pass
+class PkiPrivateKeyCloseError(ErrorVariant):
+    class Internal: ...
 
 
-async def list_pki_local_pending_enrollments(
-    config_dir: Ref[Path],
-) -> Result[list[PKILocalPendingEnrollment], ListPkiLocalPendingError]:
-    raise NotImplementedError
-
-
-class PKIInfoItem(Variant):
-    class Accepted:
-        answer: PkiEnrollmentAnswerPayload
-        submitted_on: DateTime
-        accepted_on: DateTime
-
-    class Rejected:
-        submitted_on: DateTime
-        rejected_on: DateTime
-
-    class Cancelled:
-        submitted_on: DateTime
-        cancelled_on: DateTime
-
-    class Submitted:
-        submitted_on: DateTime
-
-
-class PkiEnrollmentInfoError(ErrorVariant):
-    class Offline:
-        pass
-
-    class EnrollmentNotFound:
-        pass
-
-    class InvalidAcceptPayload:
-        pass
-
-    class Internal:
-        pass
-
-
-async def pki_enrollment_info(
-    config: ClientConfig,
-    addr: ParsecPkiEnrollmentAddr,
-    cert_ref: X509CertificateReference,
-    enrollment_id: PKIEnrollmentID,
-) -> Result[PKIInfoItem, PkiEnrollmentInfoError]:
-    raise NotImplementedError
-
-
-async def pki_remove_local_pending(
-    config: ClientConfig, id: PKIEnrollmentID
-) -> Result[None, RemoveDeviceError]:
+async def pki_private_key_close(
+    handle: Handle,
+) -> Result[None, PkiPrivateKeyCloseError]:
     raise NotImplementedError

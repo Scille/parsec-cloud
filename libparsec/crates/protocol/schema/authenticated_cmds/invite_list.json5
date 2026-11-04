@@ -57,7 +57,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "created_on",
@@ -83,7 +83,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "created_on",
@@ -105,7 +105,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "created_on",

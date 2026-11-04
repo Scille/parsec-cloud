@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 //! Certificate storage relies on the upper layer to do the actual certification
 //! validation work and takes care of handling concurrency issues.
@@ -114,7 +114,7 @@ impl PerTopicLastTimestamps {
                 None => return false,
                 // We are not up to date with this realm
                 Some(self_realm_timestamp) if self_realm_timestamp < other_realm_timestamp => {
-                    return false
+                    return false;
                 }
                 _ => (),
             }
@@ -158,7 +158,7 @@ pub(super) trait StorableCertificateTopic {
     ///
     /// See the implementation of this method in the [`impl_storable_certificate_topic!`] macro.
     #[cfg(test)]
-    #[allow(unused)]
+    #[expect(unused)]
     fn topic_certifs_correspondence_canary(certif: Self);
 }
 

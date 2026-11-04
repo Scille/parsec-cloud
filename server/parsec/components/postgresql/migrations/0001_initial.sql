@@ -34,7 +34,7 @@ CREATE TABLE organization (
 -------------------------------------------------------
 -- Sequester
 -------------------------------------------------------
-CREATE TYPE sequester_service_type AS ENUM ('STORAGE', 'WEBHOOK');
+CREATE TYPE SEQUESTER_SERVICE_TYPE AS ENUM ('STORAGE', 'WEBHOOK');
 
 CREATE TABLE sequester_service (
     _id SERIAL PRIMARY KEY,
@@ -69,7 +69,7 @@ CREATE TABLE human (
 );
 
 
-CREATE TYPE user_profile AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
+CREATE TYPE USER_PROFILE AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
 
 
 CREATE TABLE user_ (
@@ -126,20 +126,23 @@ CREATE TABLE device (
     UNIQUE (organization, device_id)
 );
 
+ALTER TABLE user_
+ADD CONSTRAINT fk_user_device_user_certifier
+FOREIGN KEY (user_certifier)
+REFERENCES device (_id);
 
 ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_user_certifier FOREIGN KEY (
-    user_certifier
-) REFERENCES device (_id);
-ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_revoked_user_certifier FOREIGN KEY (
-    revoked_user_certifier
-) REFERENCES device (_id);
-ALTER TABLE sequester_service ADD FOREIGN KEY (
-    revoked_sequester_certifier
-) REFERENCES device (_id);
+ADD CONSTRAINT fk_user_device_revoked_user_certifier
+FOREIGN KEY (revoked_user_certifier)
+REFERENCES device (_id);
 
-ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
+ALTER TABLE sequester_service
+ADD FOREIGN KEY (revoked_sequester_certifier)
+REFERENCES device (_id);
+
+ALTER TABLE profile
+ADD FOREIGN KEY (certified_by)
+REFERENCES device (_id);
 
 -------------------------------------------------------
 --  Shamir recovery
@@ -176,20 +179,20 @@ CREATE TABLE shamir_recovery_share (
 
 
 -- Alter user table to introduce a cross-reference between user id and shamir id
-ALTER TABLE user_ ADD FOREIGN KEY (
-    shamir_recovery
-) REFERENCES shamir_recovery_setup (_id);
+ALTER TABLE user_
+ADD FOREIGN KEY (shamir_recovery)
+REFERENCES shamir_recovery_setup (_id);
 
 
 -------------------------------------------------------
 --  Invitation
 -------------------------------------------------------
 
-CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
-CREATE TYPE invitation_deleted_reason AS ENUM (
+CREATE TYPE INVITATION_TYPE AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
+CREATE TYPE INVITATION_DELETED_REASON AS ENUM (
     'FINISHED', 'CANCELLED', 'ROTTEN'
 );
-CREATE TYPE invitation_conduit_state AS ENUM (
+CREATE TYPE INVITATION_CONDUIT_STATE AS ENUM (
     '1_WAIT_PEERS',
     '2_1_CLAIMER_HASHED_NONCE',
     '2_2_GREETER_NONCE',
@@ -240,25 +243,25 @@ CREATE TABLE invitation_conduit (
 -------------------------------------------------------
 
 
-CREATE TYPE enrollment_state AS ENUM (
+CREATE TYPE ENROLLMENT_STATE AS ENUM (
     'SUBMITTED',
     'ACCEPTED',
     'REJECTED',
     'CANCELLED'
 );
 
-CREATE TYPE pki_enrollment_info_accepted AS (
+CREATE TYPE PKI_ENROLLMENT_INFO_ACCEPTED AS (
     accepted_on TIMESTAMPTZ,
     accepter_der_x509_certificate BYTEA,
     accept_payload_signature BYTEA,
     accept_payload BYTEA
 );
 
-CREATE TYPE pki_enrollment_info_rejected AS (
+CREATE TYPE PKI_ENROLLMENT_INFO_REJECTED AS (
     rejected_on TIMESTAMPTZ
 );
 
-CREATE TYPE pki_enrollment_info_cancelled AS (
+CREATE TYPE PKI_ENROLLMENT_INFO_CANCELLED AS (
     cancelled_on TIMESTAMPTZ
 );
 
@@ -290,7 +293,7 @@ CREATE TABLE pki_enrollment (
 -------------------------------------------------------
 
 
-CREATE TYPE maintenance_type AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
+CREATE TYPE MAINTENANCE_TYPE AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
 
 
 CREATE TABLE realm (
@@ -304,7 +307,7 @@ CREATE TABLE realm (
 );
 
 
-CREATE TYPE realm_role AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
+CREATE TYPE REALM_ROLE AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
 
 
 CREATE TABLE realm_user_role (
@@ -318,7 +321,7 @@ CREATE TABLE realm_user_role (
     certified_on TIMESTAMPTZ NOT NULL
 );
 
-CREATE TYPE realm_archiving_configuration AS ENUM (
+CREATE TYPE REALM_ARCHIVING_CONFIGURATION AS ENUM (
     'AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED'
 );
 

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
@@ -7,11 +7,10 @@ use libparsec_serialization_format::parsec_data;
 
 use super::utils::{impl_dump, impl_load};
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, AsyncEnrollmentID, DataError, DateTime, DeviceID, DeviceLabel,
+    HumanHandle, OrganizationID, ParsecAddr, PublicKey, UserID, UserProfile, VerifyKey,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    AsyncEnrollmentID, DataError, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
-    ParsecAddr, PublicKey, UserID, UserProfile, VerifyKey,
 };
 
 /*

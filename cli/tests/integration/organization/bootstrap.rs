@@ -1,16 +1,23 @@
-use libparsec::{tmp_path, SequesterKeySize, SequesterSigningKeyDer, TmpPath};
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+use libparsec::{SequesterKeySize, SequesterSigningKeyDer, TmpPath, tmp_path};
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER},
     unique_org_id,
 };
-use parsec_cli::commands::organization::create::create_organization_req;
+use parsec_cli::{commands::organization::create::create_organization_req, ui::Ui};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn bootstrap_organization(tmp_path: TmpPath) {
-    bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn bootstrap_organization(
+    tmp_path: TmpPath,
+    test_ui: &Ui,
+    #[values("http", "parsec3")] scheme: &str,
+    #[values("password", "keyring")] auth: &str,
+) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let organization_id = unique_org_id();
     let addr = std::env::var(TESTBED_SERVER).unwrap().parse().unwrap();
@@ -21,27 +28,35 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
             .await
             .unwrap();
 
+    let addr = match scheme {
+        "parsec3" => organization_addr.to_string(),
+        "http" => organization_addr.to_http_redirection_url().to_string(),
+        _ => unimplemented!(),
+    };
     log::debug!("Bootstrapping organization {organization_id}");
+
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "organization",
         "bootstrap",
         "--addr",
-        &organization_addr.to_string(),
+        &addr,
         "--device-label",
         "pc",
         "--label",
         "Alice",
         "--email",
-        "alice@example.com"
+        "alice@example.com",
+        "--auth",
+        auth
     )
-    .stdout(predicates::str::contains("Organization bootstrapped"));
+    .stderr(predicates::str::contains("Organization bootstrapped"));
 }
 
 #[rstest::rstest]
 #[tokio::test]
-async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
-    bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn bootstrap_organization_with_sequester(tmp_path: TmpPath, test_ui: &Ui) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // write verify key to file
     let (_private_key, verify_key) =
@@ -74,7 +89,44 @@ async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
         "--email",
         "alice@example.com",
         "--sequester-key",
-        &path.to_string_lossy()
+        &path
     )
-    .stdout(predicates::str::contains("Organization bootstrapped"));
+    .stderr(predicates::str::contains("Organization bootstrapped"));
+}
+
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
+#[rstest::rstest]
+#[tokio::test]
+async fn bootstrap_organization_password_stdin(tmp_path: TmpPath, test_ui: &Ui) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
+
+    let organization_id = unique_org_id();
+    let addr = std::env::var(TESTBED_SERVER).unwrap().parse().unwrap();
+
+    log::debug!("Creating organization {organization_id}");
+    let organization_addr =
+        create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN)
+            .await
+            .unwrap();
+
+    log::debug!("Bootstrapping organization {organization_id}");
+    let cmd = crate::std_cmd!(
+        "organization",
+        "bootstrap",
+        "--addr",
+        &organization_addr.to_string(),
+        "--device-label",
+        "pc",
+        "--label",
+        "Alice",
+        "--email",
+        "alice@example.com"
+    );
+    let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
+    p.exp_string("New device password").unwrap();
+    p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+    p.exp_string("Confirm password").unwrap();
+    p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+    p.exp_string("Organization bootstrapped").unwrap();
+    p.exp_eof().unwrap();
 }

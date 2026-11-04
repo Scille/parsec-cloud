@@ -91,17 +91,56 @@ paste is no longer maintained but in a correct state.
 """
 
 [[advisories.ignore]]
-id = "RUSTSEC-2025-0020"
-reason = """
-`PyString::from_object` is not used in the codebase.
-"""
-
-[[advisories.ignore]]
 id = "RUSTSEC-2025-0026"
 reason = """
 registry is no longer maintained but in a ok state.
 We depend on it from `winfsp-wrs-sys` crate an issue as been opened on their side: https://github.com/Scille/winfsp_wrs/issues/36
 """
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0194"
+reason = """
+quick-xml needs to be updated to >=0.41.0 but can't because email-address-parser v2.0.0 requires quick-xml=0.18.1.
+email-address-parser v3.0.0 is not yet released http://crates.io/crates/email-address-parser
+"""
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0195"
+reason = """
+quick-xml needs to be updated to >=0.41.0 but can't because email-address-parser v2.0.0 requires quick-xml=0.18.1.
+email-address-parser v3.0.0 is not yet released http://crates.io/crates/email-address-parser
+"""
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0367"
+reason = """
+Zip is only used by the build script to libsodium-sys-stable.
+Where it fetch pre-built release from `download.libsodium.org`.
+
+A PR to bump that dependency is available:
+https://github.com/jedisct1/libsodium-sys-stable/pull/26
+"""
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0368"
+reason = """
+Zip is only used by the build script to libsodium-sys-stable.
+Where it fetch pre-built release from `download.libsodium.org`.
+
+A PR to bump that dependency is available:
+https://github.com/jedisct1/libsodium-sys-stable/pull/26
+"""
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0369"
+reason = """
+Zip is only used by the build script to libsodium-sys-stable.
+Where it fetch pre-built release from `download.libsodium.org`.
+
+A PR to bump that dependency is available:
+https://github.com/jedisct1/libsodium-sys-stable/pull/26
+"""
+
 
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
@@ -142,11 +181,13 @@ exceptions = [
     # Each entry is the crate and version constraint, and its specific allow
     # list
     #{ allow = ["Zlib"], name = "adler32", version = "*" },
+    { allow = ["BUSL-1.1"], name = "scwsapi", version = "*" },     # Allow our own crate
+    { allow = ["BUSL-1.1"], name = "scwsapi-sys", version = "*" }, # Allow our own crate
 ]
 
 # Determines what happens when one of the licenses that appears in the allow list is not encountered in the dependency graph.
 # https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html#the-unused-allowed-license-field-optional
-unused-allowed-license = "warn"
+unused-allowed-license = "allow"
 
 # Some crates don't have (easily) machine readable licensing information,
 # adding a clarification entry for it allows you to manually specify the
@@ -253,10 +294,7 @@ skip = [
 # detection. Unlike skip, it also includes the entire tree of transitive
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite.
-skip-tree = [
-    { crate = "jni@0.21.1", reason = "`jni` crate hasn't updated its dependencies in a long time" },
-    { crate = "windows-sys", reason = "hard to have a single version of `windows-sys`" },
-]
+skip-tree = [{ crate = "windows-sys", reason = "hard to have a single version of `windows-sys`" }]
 
 # This section is considered when running `cargo deny check sources`.
 # More documentation about the 'sources' section can be found here:
@@ -278,7 +316,7 @@ required-git-spec = "rev"
 # if not specified. If it is specified but empty, no registries are allowed.
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # List of URLs for allowed Git repositories
-allow-git = ["https://github.com/FirelightFlagboy/wasm-bindgen.git"]
+allow-git = ["https://github.com/FirelightFlagboy/fuser.git"]
 
 [sources.allow-org]
 # 1 or more github.com organizations to allow git sources for

@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    Bound, Py, PyAny, PyResult, Python,
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{PyBytes, PyType},
-    Bound, PyResult, Python,
 };
 
 crate::binding_utils::gen_py_wrapper_class!(
@@ -129,5 +129,78 @@ impl ValidationCode {
     #[staticmethod]
     fn generate() -> Self {
         Self(libparsec_types::ValidationCode::default())
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
+    AdvisoryDeviceFilePrimaryProtection,
+    libparsec_types::AdvisoryDeviceFilePrimaryProtection,
+    [
+        "PASSWORD",
+        password,
+        libparsec_types::AdvisoryDeviceFilePrimaryProtection::Password
+    ],
+    [
+        "KEYRING",
+        keyring,
+        libparsec_types::AdvisoryDeviceFilePrimaryProtection::Keyring
+    ],
+    [
+        "PKI",
+        pki,
+        libparsec_types::AdvisoryDeviceFilePrimaryProtection::PKI
+    ],
+    [
+        "OPENBAO",
+        openbao,
+        libparsec_types::AdvisoryDeviceFilePrimaryProtection::OpenBao
+    ],
+    [
+        "ACCOUNT_VAULT",
+        account_vault,
+        libparsec_types::AdvisoryDeviceFilePrimaryProtection::AccountVault
+    ],
+);
+
+crate::binding_utils::gen_py_wrapper_class!(
+    AdvisoryDeviceFileProtection,
+    libparsec_types::AdvisoryDeviceFileProtection,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
+
+#[pymethods]
+impl AdvisoryDeviceFileProtection {
+    #[new]
+    fn new(primary: AdvisoryDeviceFilePrimaryProtection, with_totp: bool) -> Self {
+        Self(libparsec_types::AdvisoryDeviceFileProtection {
+            primary: primary.0,
+            with_totp,
+        })
+    }
+
+    #[classmethod]
+    fn from_str(_cls: Bound<'_, PyType>, value: &str) -> PyResult<Self> {
+        value
+            .parse::<libparsec_types::AdvisoryDeviceFileProtection>()
+            .map(Self)
+            .map_err(|_| PyValueError::new_err(format!("Invalid value `{}`", value)))
+    }
+
+    #[getter]
+    fn primary(&self) -> &'static Py<PyAny> {
+        AdvisoryDeviceFilePrimaryProtection::convert(self.0.primary.clone())
+    }
+
+    #[getter]
+    fn with_totp(&self) -> bool {
+        self.0.with_totp
+    }
+
+    #[getter]
+    fn str(&self) -> &'static str {
+        self.0.as_str()
     }
 }

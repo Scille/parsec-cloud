@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -231,6 +232,8 @@ async def realm_rotate_key(
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmRotateKeyStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -382,7 +385,7 @@ async def realm_rotate_key(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=db_common.user_id,
-            role_removed=False,
+            kind="OTHER",
         ),
     )
 

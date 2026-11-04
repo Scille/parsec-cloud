@@ -1,27 +1,104 @@
-/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS */
 
 /**** Components CSS overloads ****/
 @use 'components' as components;
 @use 'global-client' as globalClient;
 
 /**** Global CSS overloads ****/
-// scroll behavior: user(revoked, active, invitation)/folder/workspace
-
-.connected-layout {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
+// ------ switch specific variables for dark mode ------ //
+:root {
+  --parsec-color-popover-header-background: var(--parsec-color-light-primary-800);
+  --parsec-color-sidebar: #{ms.color('brand-800')};
 }
 
+// manage background page
+.ion-page {
+  .content-scroll::part(background) {
+    --background: #{ms.color('surface-base-default')};
+  }
+
+  .invitations-page,
+  .organization-page {
+    background: ms.color('surface-base-default-secondary');
+
+    .content-scroll::part(background) {
+      --background: inherit;
+    }
+  }
+}
+
+body.ms-theme-dark {
+  --parsec-color-popover-header-background: #{ms.color('surface-base-default')};
+  --parsec-color-sidebar: #{ms.color('surface-base-page')};
+
+  #trigger-checklist-button .checklist-security {
+    background: ms.color('surface-neutral-default');
+  }
+
+  .download-parsec-text {
+    background-image: none;
+    color: ms.color('text-base-label');
+    -webkit-text-fill-color: ms.color('text-base-label');
+  }
+
+  // MsActionBar toolbar
+  .toolbar {
+    border-bottom: ms.border('none');
+  }
+}
+
+.connected-layout {
+  background: ms.color('surface-base-page');
+}
+
+// Ionic's `.in-toolbar` rule makes an outline button's border fall back to --color
+// (text/icon color) instead of --border-color once it sits inside an ion-toolbar.
+// Force the border back to the design-system token without touching --color.
+ion-toolbar ion-button.button-outline::part(native) {
+  border-color: ms.color('border-base-default') !important;
+}
+
+// scroll behavior: user(revoked, active, invitation)/folder/workspace
 .content-scroll {
   --overflow: hidden;
 
   &::part(scroll) {
     display: flex;
     flex-direction: column;
+    padding-top: 1rem;
+    border-top: 1px solid ms.color('border-neutral-default-subtle');
+
+    @include ms.responsive-breakpoint('sm') {
+      padding-top: 0;
+    }
+  }
+
+  &:has(.toggle-view-container) {
+    &::part(scroll) {
+      padding-top: 0;
+      border-top: none;
+    }
   }
 }
 
+.checklist-security-container {
+  padding: ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-3xl') ms.spacing('padding-2xl');
+  transition:
+    max-height 0.3s ease-out,
+    visibility 0.3s ease-out,
+    padding 0.3s ease-out;
+  overflow: hidden;
+}
+
+.split-pane-main:has(.searching) .checklist-security-container,
+.split-pane-main:has(#search-input-files:focus-within) .checklist-security-container {
+  max-height: 0;
+  visibility: hidden;
+  padding: ms.spacing('padding-none') !important;
+}
+
 ion-title {
-  padding: 0;
+  padding: ms.spacing('padding-none');
 }
 
 svg {
@@ -32,33 +109,22 @@ svg {
 .scroll {
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 2rem;
+  padding: ms.spacing('padding-none') ms.spacing('padding-5xl');
   height: 100%;
 
   @include ms.responsive-breakpoint('xl') {
-    padding: 0 1rem 0 2rem;
+    padding: 0 ms.spacing('padding-3xl') ms.spacing('padding-none') ms.spacing('padding-5xl');
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0;
+    padding: ms.spacing('padding-none');
     margin-bottom: 0;
-  }
-
-  .list,
-  .users-container-grid,
-  .folders-container-grid,
-  .invitation-container-grid {
-    padding-top: 2rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding-top: 0;
-    }
   }
 }
 
 /* ----- item counter ------ */
 .counter {
-  color: var(--parsec-color-light-secondary-text);
+  color: ms.color('text-base-body');
   display: flex;
   align-items: center;
 
@@ -68,9 +134,13 @@ svg {
     display: block;
     width: 1.5px;
     height: 1.5rem;
-    background: var(--parsec-color-light-secondary-light);
-    border-radius: var(--parsec-radius-8);
+    background: ms.color('border-base-default');
+    border-radius: ms.radius('lg');
   }
+}
+
+.searching .counter::after {
+  margin-left: 0;
 }
 
 // temporary fix for password input
@@ -84,7 +154,7 @@ svg {
 
 // add specific style for drop-zone on folders
 .drop-zone .list,
-.drop-zone .folders-container-grid {
+.drop-zone .files-grid-container {
   background: transparent;
   position: relative;
   z-index: 3;
@@ -96,13 +166,13 @@ svg {
     top: 0;
     height: 100%;
     outline-offset: -1.5px;
-    outline: 1.5px dashed var(--parsec-color-light-primary-400) !important;
-    background: var(--parsec-color-light-outline);
+    outline: 1.5px dashed ms.color('border-brand-default') !important;
+    background: ms.color('surface-brand-default-subtle');
   }
 }
 
-.drop-zone .folders-container-grid .drop-active {
-  border-radius: var(--parsec-radius-12) !important;
+.drop-zone .files-grid-container .drop-active {
+  border-radius: ms.radius('2xl') !important;
   width: 100%;
 }
 
@@ -110,7 +180,7 @@ svg {
 .no-match-result {
   display: block;
   margin: 0.5rem 0;
-  color: var(--parsec-color-light-secondary-soft-text);
+  color: ms.color('text-base-label');
 }
 
 // ion-icon specific overloads
@@ -124,11 +194,11 @@ svg {
 
 .create-account-page {
   @media screen and (max-height: 600px) {
-    padding: 2rem 0;
+    padding: ms.spacing('padding-5xl') 0;
   }
 
   .choose-auth-page {
-    padding: 0;
+    padding: ms.spacing('padding-none');
   }
 
   .radio-list {
@@ -140,30 +210,14 @@ svg {
   }
 
   .choose-password {
-    padding: 0 !important;
-    border: none !important;
+    padding: ms.spacing('padding-none') !important;
+    border: ms.border('none') !important;
     background: transparent !important;
     box-shadow: none !important;
   }
 
   .inputs-container {
     flex-direction: column;
-  }
-}
-
-// hiding keyring option in web for the recovery device
-.recovery-content {
-  .web-authentication {
-    .radio-list {
-      display: none !important;
-    }
-
-    .choose-password {
-      padding: 0 !important;
-      border: none !important;
-      background: transparent !important;
-      box-shadow: none !important;
-    }
   }
 }
 
@@ -188,35 +242,35 @@ svg {
 
 .recover-account-step {
   .code-input-list {
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 
   .choose-password .inputs-container {
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
   }
 }
 
 // manage homepage content inside the slider
 .homepage-content .slider-container {
-  padding: 2rem 4rem 0;
+  padding: ms.spacing('padding-5xl') ms.spacing('padding-8xl') 0;
 
   @include ms.responsive-breakpoint('md') {
-    padding: 2rem 3rem 0;
+    padding: ms.spacing('padding-5xl') ms.spacing('padding-7xl') 0;
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 1rem 0 0;
+    padding: ms.spacing('padding-3xl') 0 0;
   }
 
   &:has(.account-settings-page-container) {
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
   }
 
   &:has(.recovery-content),
   &:has(.login-popup) {
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.5rem 1.5rem 0;
+      padding: ms.spacing('padding-lg') ms.spacing('padding-4xl') 0;
     }
   }
 }
@@ -232,6 +286,41 @@ svg {
   .radio-group-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: ms.spacing('gap-3xl');
+  }
+}
+
+// manage FoldersPage for archived workspace
+.folder-content.archived {
+  &::part(scroll) {
+    border: ms.border('thin') solid ms.color('border-base-default');
+    border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
+    box-shadow: ms.shadow('light');
+    margin: 1.5rem 1.5rem 0 !important;
+
+    @include ms.responsive-breakpoint('sm') {
+      margin: 0 !important;
+      border: ms.border('none');
+    }
+  }
+
+  &::part(background) {
+    --background: #{ms.color('surface-base-default-secondary')};
+  }
+
+  .toolbar {
+    margin: 0;
+    background-color: ms.color('surface-base-default');
+    border-radius: ms.radius('none');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-2xl') ms.spacing('padding-lg') ms.spacing('padding-3xl');
+  }
+
+  .scroll {
+    padding: ms.spacing('padding-none');
+    background: ms.color('surface-base-default');
+  }
+
+  .files-grid-container {
+    padding: ms.spacing('padding-4xl');
   }
 }

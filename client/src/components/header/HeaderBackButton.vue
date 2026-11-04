@@ -1,11 +1,12 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <div class="back-button-container">
     <ion-button
-      fill="clear"
+      :fill="isSmallDisplay ? 'outline' : 'clear'"
       @click="goBack()"
       class="back-button"
+      :slot="short || isSmallDisplay ? 'icon-only' : ''"
     >
       <ion-icon
         :icon="chevronBack"
@@ -33,7 +34,7 @@ import { IonButton, IonIcon, IonLabel } from '@ionic/vue';
 import { chevronBack } from 'ionicons/icons';
 import { useWindowSize } from 'megashark-lib';
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const fileOpener = useFileOpener();
 
 defineProps<{
@@ -47,30 +48,30 @@ async function goBack(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.back-button-container {
+  display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-3xl');
+}
+
 .back-button {
   margin-inline: 0px;
   margin-top: 0px;
   margin-bottom: 0px;
   min-height: 0;
   flex-shrink: 0;
+  --background: none;
 
   @include ms.responsive-breakpoint('sm') {
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-8);
+    box-shadow: ms.shadow('light');
   }
 
   &::part(native) {
-    padding: 0.5rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0.375rem;
-    }
+    padding: ms.spacing('padding-lg');
   }
 
   &__icon {
-    @include ms.responsive-breakpoint('sm') {
-      color: var(--parsec-color-light-secondary-hard-grey);
-    }
+    font-size: 1.375rem;
   }
 
   &__label {
@@ -78,15 +79,9 @@ async function goBack(): Promise<void> {
   }
 }
 
-.back-button-container {
-  display: flex;
-  align-items: center;
-}
-
 .vertical-spacer {
   display: block;
-  border-right: 1px solid var(--parsec-color-light-secondary-light);
+  border-right: ms.border('thin') solid ms.color('border-base-default');
   height: 1.5rem;
-  margin: 0 1rem;
 }
 </style>

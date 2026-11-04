@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-page class="modal-container">
@@ -36,16 +36,31 @@
 </template>
 
 <script setup lang="ts">
-import { AccessStrategy, AvailableDevice, DeviceSaveStrategy, OrganizationID, ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
+import {
+  AvailableDevice,
+  constructAccessStrategy,
+  DeviceSaveStrategy,
+  isElectron,
+  isWeb,
+  OrganizationID,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
+} from '@/parsec';
+import { Env } from '@/services/environment';
 import { InformationManager } from '@/services/informationManager';
-import { getServerTypeFromParsedParsecAddr, ServerType } from '@/services/parsecServers';
+import {
+  currentLocationIsSaasServer,
+  currentLocationIsTrialServer,
+  getServerTypeFromParsedParsecAddr,
+  ServerType,
+} from '@/services/parsecServers';
 import CreateOrganizationCustomServer from '@/views/organizations/creation/CreateOrganizationCustomServer.vue';
 import CreateOrganizationSaas from '@/views/organizations/creation/CreateOrganizationSaas.vue';
 import CreateOrganizationTrial from '@/views/organizations/creation/CreateOrganizationTrial.vue';
 import ServerTypeChoice from '@/views/organizations/creation/ServerTypeChoice.vue';
 import { IonPage, modalController } from '@ionic/vue';
 import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 
 const props = defineProps<{
   informationManager: InformationManager;
@@ -54,6 +69,7 @@ const props = defineProps<{
 }>();
 
 const serverType = ref<ServerType | undefined>(props.defaultChoice);
+const forced = ref(false);
 
 onMounted(async () => {
   if (props.bootstrapLink) {
@@ -61,11 +77,33 @@ onMounted(async () => {
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       serverType.value = getServerTypeFromParsedParsecAddr(result.value);
     }
+  } else if (isElectron()) {
+    serverType.value = undefined;
+  } else if ((window as any).TESTING === true || window.isDev()) {
+    // On Playwright, everything's available
+    serverType.value = undefined;
+  } else if (currentLocationIsTrialServer()) {
+    // Trial server, can't have custom or saas
+    serverType.value = ServerType.Trial;
+    forced.value = true;
+  } else if (!currentLocationIsSaasServer() && !currentLocationIsTrialServer()) {
+    // Custom server, can't have saas or trial
+    serverType.value = ServerType.Custom;
+    forced.value = true;
+  } else if (currentLocationIsSaasServer()) {
+    serverType.value = ServerType.Saas;
+    forced.value = true;
   }
 });
 
 async function onServerChosen(chosenServerType: ServerType): Promise<void> {
-  serverType.value = chosenServerType;
+  if (chosenServerType === ServerType.Trial && isWeb() && !currentLocationIsTrialServer() && !(window as any).TESTING === true) {
+    await Env.Links.openUrl(`https://${Env.getTrialServers()[0]}/client/home?createOrg=trial`);
+  } else if (chosenServerType === ServerType.Saas && isWeb() && !currentLocationIsSaasServer() && !(window as any).TESTING === true) {
+    await Env.Links.openUrl(`https://${Env.getSaasServers()[0]}/client/home?createOrg=saas`);
+  } else {
+    serverType.value = chosenServerType;
+  }
 }
 
 async function onCloseRequested(force = false): Promise<void> {
@@ -91,12 +129,16 @@ async function onOrganizationCreated(
   device: AvailableDevice,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<void> {
-  const accessStrategy = await AccessStrategy.fromSaveStrategy(device, saveStrategy);
+  const accessStrategy = constructAccessStrategy(device, toRaw(saveStrategy.primaryProtection));
   await modalController.dismiss({ device: device, access: accessStrategy }, MsModalResult.Confirm);
 }
 
 async function onBackToServerChoice(): Promise<void> {
-  serverType.value = undefined;
+  if (!forced.value) {
+    serverType.value = undefined;
+  } else {
+    await onCloseRequested(true);
+  }
 }
 </script>
 
@@ -104,14 +146,9 @@ async function onBackToServerChoice(): Promise<void> {
 .modal-content {
   --height: 100%;
   height: 100%;
-  overflow: auto;
-
-  @media only screen and (max-height: 500px) and (min-width: 600px) {
-    --height: 90vh;
-    height: 90vh;
-  }
 
   @include ms.responsive-breakpoint('sm') {
+    overflow: auto;
     min-width: 100%;
     --max-height: 90vh;
     max-height: 90vh;

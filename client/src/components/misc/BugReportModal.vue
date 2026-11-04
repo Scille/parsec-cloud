@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ms-modal
@@ -41,15 +41,16 @@
       <ion-toggle
         v-model="includeLogs"
         @ion-change="logToggled"
+        :disabled="aggregatingLogs"
         class="report-logs__toggle"
       />
       <div class="report-logs-text">
-        <ion-text class="report-logs-text__title subtitles-normal">{{ $msTranslate('ReportBugModal.log.title') }}</ion-text>
+        <ion-text class="report-logs-text__title">{{ $msTranslate('ReportBugModal.log.title') }}</ion-text>
         <div class="report-logs-text-subtitles">
-          <ion-text class="report-logs-text-subtitles__description body">{{ $msTranslate('ReportBugModal.log.description') }}</ion-text>
+          <ion-text class="report-logs-text-subtitles__description">{{ $msTranslate('ReportBugModal.log.description') }}</ion-text>
           <ion-button
             fill="clear"
-            @click.stop="openLogDisplayModal"
+            @click.stop="openLogDisplayModal()"
             id="see-logs-button"
           >
             {{ $msTranslate('ReportBugModal.log.seeLogs') }}
@@ -72,10 +73,9 @@
 import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import { emailValidator } from '@/common/validators';
 import { FileInputList } from '@/components/files';
-import { openLogDisplayModal } from '@/components/misc';
-import { isWeb, ParsecAccount } from '@/parsec';
+import { getLogs, openLogDisplayModal } from '@/components/misc';
+import { ParsecAccount } from '@/parsec';
 import { BmsApi, FileData } from '@/services/bms';
-import { formatLogEntry, LogEntry, WebLogger } from '@/services/webLogger';
 import { IonButton, IonText, IonToggle, modalController } from '@ionic/vue';
 import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsTextarea, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
@@ -87,7 +87,9 @@ const includeLogs = ref(false);
 const listInputRef = useTemplateRef<InstanceType<typeof FileInputList>>('listInput');
 const sendingReport = ref(false);
 const sendError = ref('');
-const logs = ref<Array<LogEntry>>([]);
+const guiLogs = ref<string>('');
+const libparsecLogs = ref<string>('');
+const aggregatingLogs = ref(false);
 
 const canSend = computed(() => {
   return emailInputRef.value && emailInputRef.value.validity === Validity.Valid && description.value.length > 0 && email.value.length > 0;
@@ -104,17 +106,11 @@ onMounted(async () => {
 
 async function logToggled(): Promise<void> {
   if (includeLogs.value) {
-    if (isWeb()) {
-      logs.value = await WebLogger.getEntries();
-    } else {
-      window.electronAPI.getLogs();
-    }
+    aggregatingLogs.value = true;
+    [guiLogs.value, libparsecLogs.value] = await Promise.all([getLogs('GUI'), getLogs('libparsec')]);
+    aggregatingLogs.value = false;
   }
 }
-
-window.electronAPI.receive('parsec-log-records', async (logRecords: Array<LogEntry>) => {
-  logs.value = logRecords;
-});
 
 async function readFile(file: File): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
@@ -150,7 +146,8 @@ async function sendBugReport(): Promise<boolean> {
       description: description.value,
     },
     {
-      logs: includeLogs.value ? logs.value.map((entry) => formatLogEntry(entry)) : undefined,
+      guiLogs: includeLogs.value ? guiLogs.value : undefined,
+      libparsecLogs: includeLogs.value ? libparsecLogs.value : undefined,
       files: files,
     },
   );
@@ -168,24 +165,24 @@ async function sendBugReport(): Promise<boolean> {
 .report-bug-modal-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ms.spacing('gap-3xl');
   position: relative;
   z-index: 3;
 
   .add-file-container {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
   }
 }
 
 .report-logs {
   display: flex;
-  gap: 0.75rem;
+  gap: ms.spacing('gap-2xl');
   margin-top: 1rem;
-  padding: 1rem;
-  border-radius: var(--parsec-radius-8);
-  background: var(--parsec-color-light-secondary-background);
+  padding: ms.spacing('padding-3xl');
+  border-radius: ms.radius('lg');
+  background: ms.color('surface-base-default-secondary');
   transition: background 0.15s ease-in-out;
   position: relative;
   z-index: 3;
@@ -208,30 +205,32 @@ async function sendBugReport(): Promise<boolean> {
   &-text {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: ms.spacing('gap-lg');
     cursor: pointer;
 
     &__title {
-      color: var(--parsec-color-light-secondary-text);
+      @include ms.font('body-lg-medium');
+      color: ms.color('text-base-body');
     }
 
     &-subtitles {
       display: flex;
-      gap: 0.5rem;
+      gap: ms.spacing('gap-lg');
 
       &__description {
-        color: var(--parsec-color-light-secondary-hard-grey);
+        @include ms.font('body-md-regular');
+        color: ms.color('text-base-description');
       }
     }
   }
 
   &:hover:not(#see-logs-button) {
-    background: var(--parsec-color-light-secondary-premiere);
+    background: ms.color('surface-base-page-secondary');
   }
 }
 
 #see-logs-button {
-  --color: var(--parsec-color-light-secondary-text);
+  --color: #{ms.color('text-base-body')};
   --background: transparent;
   --background-hover: transparent;
 
@@ -240,7 +239,7 @@ async function sendBugReport(): Promise<boolean> {
   }
 
   &:hover {
-    color: var(--parsec-color-light-secondary-contrast);
+    color: ms.color('text-base-heading');
   }
 }
 </style>

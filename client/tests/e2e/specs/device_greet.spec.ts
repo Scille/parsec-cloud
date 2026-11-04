@@ -8,6 +8,7 @@ import {
   fillInputModal,
   fillIonInput,
   getClipboardText,
+  mockLibParsec,
   MsPage,
   msTest,
   setWriteClipboardPermission,
@@ -33,22 +34,19 @@ async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalDa
   await hostPage.locator('.profile-content-item').locator('#add-device-button').click();
   const greetModal = hostPage.locator('.greet-organization-modal');
   await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
-  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text').nth(0)).toHaveText(
-    'Parsec must be open on both devices during the onboarding process.',
-  );
-  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text').nth(1)).toHaveText(
+  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text')).toHaveText(
     'Before you start, make sure you are using the latest version of Parsec on both devices.',
+  );
+  await expect(greetModal.locator('.first-step').locator('.step-info__title')).toHaveText('Open Parsec on the new device');
+  await expect(greetModal.locator('.first-step').locator('.step-info__subtitle')).toHaveText(
+    'Parsec must be open on both devices during the onboarding process.',
   );
   await expect(greetModal.locator('#next-button')).toHaveText('Start');
   await expect(greetModal.locator('.closeBtn')).toBeVisible();
 
   await setWriteClipboardPermission(hostPage.context(), true);
 
-  if (displaySize === DisplaySize.Small) {
-    await greetModal.locator('#copy-link-btn-small').click();
-  } else {
-    await greetModal.locator('#copy-link-btn').click();
-  }
+  await greetModal.locator('#copy-link-btn').click();
   await expect(hostPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
   const invitationLink = await getClipboardText(hostPage);
 
@@ -148,11 +146,8 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -161,13 +156,10 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
   await joinData.nextButton.scrollIntoViewIfNeeded();
   await expect(joinData.nextButton).not.toHaveDisabledAttribute();
   await joinData.nextButton.click();
-  await expect(joinData.title).toHaveText('Device has been added!');
-  await expect(joinData.modal.locator('.final-step').locator('.container-textinfo__text')).toHaveText(
-    'The device has been created and added to this organization. You can now use it to connect to Parsec.',
-  );
-  await expect(joinData.nextButton).toHaveText('Log in');
-  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
-  await joinData.nextButton.click();
+  await expect(joinData.modal.locator('.final-step__title')).toHaveText('Device has been added!');
+  await expect(joinData.modal.locator('.final-step__button')).toHaveText('Log in to the organization');
+  await expect(joinData.modal.locator('.final-step__button')).not.toHaveDisabledAttribute();
+  await joinData.modal.locator('.final-step__button').click();
   await expect(joinData.modal).toBeHidden();
   await expect(secondTab).toShowToast('You can now access your organization from your new device.', 'Success');
   // Automatically logged in
@@ -243,12 +235,8 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -257,13 +245,10 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   await joinData.nextButton.scrollIntoViewIfNeeded();
   await expect(joinData.nextButton).not.toHaveDisabledAttribute();
   await joinData.nextButton.click();
-  await expect(joinData.title).toHaveText('Device has been added!');
-  await expect(joinData.modal.locator('.final-step').locator('.container-textinfo__text')).toHaveText(
-    'The device has been created and added to this organization. You can now use it to connect to Parsec.',
-  );
-  await expect(joinData.nextButton).toHaveText('Log in');
-  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
-  await joinData.nextButton.click();
+  await expect(joinData.modal.locator('.final-step__title')).toHaveText('Device has been added!');
+  await expect(joinData.modal.locator('.final-step__button')).toHaveText('Log in to the organization');
+  await expect(joinData.modal.locator('.final-step__button')).not.toHaveDisabledAttribute();
+  await joinData.modal.locator('.final-step__button').click();
   await expect(joinData.modal).toBeHidden();
   await expect(secondTab).toShowToast('You can now access your organization from your new device.', 'Success');
   // Automatically logged in
@@ -371,7 +356,7 @@ msTest('Host selects no SAS code', async ({ myProfilePage }) => {
   const questionModal = myProfilePage.locator('.question-modal');
   await expect(questionModal).toBeVisible();
   await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
-  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+  await expect(questionModal.locator('.ms-modal-header__subtitle')).toHaveText(
     "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
   );
   await questionModal.locator('#cancel-button').click();
@@ -507,7 +492,7 @@ msTest('Guest selects no SAS code', async ({ myProfilePage }) => {
   const questionModal = secondTab.locator('.question-modal');
   await expect(questionModal).toBeVisible();
   await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
-  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+  await expect(questionModal.locator('.ms-modal-header__subtitle')).toHaveText(
     "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
   );
   await questionModal.locator('#cancel-button').click();
@@ -570,4 +555,37 @@ msTest('Guest closes greet process', async ({ myProfilePage }) => {
   await expect(myProfilePage).toShowToast('The process has been cancelled from the other device.', 'Error');
   await expect(greetData.title).toHaveText('Create a new device');
   await expect(greetData.nextButton).toHaveText('Start');
+});
+
+msTest('Trying copy/paste link for adding a new device', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await myProfilePage.locator('.menu-list__item').nth(1).click();
+
+  await myProfilePage.locator('.profile-content-item').locator('#add-device-button').click();
+  const greetModal = myProfilePage.locator('.greet-organization-modal');
+  await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
+
+  await greetModal.locator('#copy-link-btn').click();
+  await expect(greetModal.locator('.step-link-copy-error')).toHaveText(
+    'Failed to copy the link. Your browser or device does not seem to support copy/paste.',
+  );
+
+  await setWriteClipboardPermission(myProfilePage.context(), true);
+  await greetModal.locator('#copy-link-btn').click();
+  await expect(myProfilePage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
+});
+
+msTest('Greet device process start fails', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await myProfilePage.locator('.menu-list__item').nth(1).click();
+  await mockLibParsec(myProfilePage, [
+    {
+      name: 'clientNewDeviceInvitation',
+      result: { ok: false, error: { tag: 'ClientNewDeviceInvitationErrorOffline', error: 'Cannot create invitation' } },
+    },
+  ]);
+  await myProfilePage.locator('.profile-content-item').locator('#add-device-button').click();
+  const greetModal = myProfilePage.locator('.greet-organization-modal');
+  await expect(myProfilePage).toShowToast('Failed to start the onboarding process. Please make sure you are online.', 'Error');
+  await expect(greetModal).toBeHidden();
 });

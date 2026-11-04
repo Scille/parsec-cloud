@@ -15,7 +15,7 @@ msTest('Navigate to unknown URL from logged in', async ({ connected }) => {
 });
 
 msTest('Navigate to unknown logged in URL from home', async ({ home }) => {
-  await setupNewPage(home, { location: '/42/unknownURL' });
+  await setupNewPage(home, { skipTestbed: true, location: '/42/unknownURL' });
   await expect(home).toBeHomePage();
   await expect(home).toHaveURL(new RegExp('/home$'));
 });
@@ -43,13 +43,13 @@ msTest('Navigate to an unknown logged in URL with a valid handle and another tab
 
 msTest('Navigate to an unknown logged in URL with a valid handle', async ({ connected }) => {
   // The web worker is killed, and the handle becomes invalid
-  await setupNewPage(connected, { location: '/1/unknownURL' });
+  await setupNewPage(connected, { skipTestbed: true, location: '/1/unknownURL' });
   await expect(connected).toBeHomePage();
   await expect(connected).toHaveURL(new RegExp('/home$'));
 });
 
 msTest('Reload page while logged in', async ({ connected }) => {
   await connected.reload();
-  await setupNewPage(connected, { skipGoto: true });
+  await setupNewPage(connected, { skipTestbed: true, skipGoto: true });
   await expect(connected).toBeHomePage();
 });

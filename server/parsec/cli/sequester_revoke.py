@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 import asyncio
@@ -27,7 +28,12 @@ from parsec.components.sequester import (
     SequesterRevokeServiceStoreBadOutcome,
     SequesterRevokeServiceValidateBadOutcome,
 )
-from parsec.config import BaseDatabaseConfig, DisabledBlockStoreConfig, LogLevel
+from parsec.config import (
+    BaseDatabaseConfig,
+    DisabledBlockStoreConfig,
+    LogLevel,
+    MockedBlockStoreConfig,
+)
 
 SEQUESTER_SERVICE_REVOCATION_CERTIFICATE_PEM_HEADER = (
     "-----BEGIN PARSEC SEQUESTER SERVICE REVOCATION CERTIFICATE-----"
@@ -280,7 +286,11 @@ async def _revoke_service(
     service_revocation_certificate_pem: str,
 ) -> None:
     # Can use a dummy blockstore config since we are not going to query it
-    blockstore_config = DisabledBlockStoreConfig()
+    if with_testbed is None:
+        blockstore_config = DisabledBlockStoreConfig()
+    else:
+        # Testbed template might need to create some blocks
+        blockstore_config = MockedBlockStoreConfig()
 
     async with start_backend(
         db_config=db_config,

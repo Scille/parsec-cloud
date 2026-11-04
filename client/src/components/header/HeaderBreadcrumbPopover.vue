@@ -1,19 +1,19 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <ion-content class="popover">
     <ion-list>
       <ion-item
-        class="popover-item ion-no-padding"
         v-for="(breadcrumb, index) in filteredBreadcrumbs"
+        class="breadcrumb-item ion-no-padding"
         :key="index"
         @click="onClick(breadcrumb)"
       >
         <ion-icon
           :icon="breadcrumb.popoverIcon ? breadcrumb.popoverIcon : returnDownForward"
-          class="popover-item__icon"
+          class="breadcrumb-item__icon"
         />
-        <ion-text class="button-medium">{{ breadcrumb.display }}</ion-text>
+        <ion-text class="breadcrumb-item__text">{{ breadcrumb.display }}</ion-text>
       </ion-item>
     </ion-list>
   </ion-content>
@@ -36,30 +36,42 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.popover {
+.breadcrumb {
   &-item {
-    color: var(--parsec-color-light-secondary-soft-text);
+    color: ms.color('text-base-label');
     --background: none;
 
     &::part(native) {
-      padding: 0.75rem 1rem;
+      padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
     }
 
     &:hover {
       cursor: pointer;
-      background: var(--parsec-color-light-secondary-background);
+      background: ms.color('surface-base-default-secondary');
     }
 
-    ion-text {
+    &__text {
+      @include ms.font('label-md-medium');
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
     }
 
     &__icon {
+      min-width: 1rem;
       font-size: 1rem;
-      color: var(--parsec-color-light-secondary-grey);
+      color: ms.color('text-neutral-default');
       margin-right: 0.625rem;
+    }
+
+    &--disabled {
+      pointer-events: none;
+      color: ms.color('text-base-body');
+      opacity: ms.opacity('5');
+
+      &.breadcrumb-item__icon {
+        color: ms.color('text-base-body');
+      }
     }
   }
 }

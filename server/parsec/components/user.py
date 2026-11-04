@@ -347,6 +347,7 @@ class UserFreezeUserBadOutcome(BadOutcomeEnum):
     # command is used by the administration.
     ORGANIZATION_NOT_FOUND = auto()
     USER_NOT_FOUND = auto()
+    USER_REVOKED = auto()
     BOTH_USER_ID_AND_EMAIL = auto()
     NO_USER_ID_NOR_EMAIL = auto()
 
@@ -458,9 +459,7 @@ class BaseUserComponent:
     ) -> VerifyKey | UserGetActiveDeviceVerifyKeyBadOutcome:
         raise NotImplementedError
 
-    async def test_dump_current_users(
-        self, organization_id: OrganizationID
-    ) -> dict[UserID, UserDump]:
+    async def dump_current_users(self, organization_id: OrganizationID) -> dict[UserID, UserDump]:
         raise NotImplementedError
 
     async def list_active_users(
@@ -483,7 +482,7 @@ class BaseUserComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         tos_updated_on: DateTime,
-    ) -> None | UserAcceptTosBadOutcome:
+    ) -> UserAcceptTosBadOutcome | None:
         raise NotImplementedError
 
     async def list_frozen_users(

@@ -29,7 +29,6 @@ on:
     paths:
       - .github/workflows/package-server.yml
       - server/packaging
-      - server/build.py
       - server/pyproject.toml
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
@@ -40,10 +39,6 @@ on:
 concurrency:
   group: package-server-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
-
-env:
-  node-version: 22.14.0
-  poetry-version: 2.2.1
 
 permissions:
   contents: read
@@ -66,7 +61,7 @@ jobs:
         include:
           - name: 🐧 Linux
             platform: linux-gnu
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - name: 🍎 macOS
             platform: macos
             os: macos-15
@@ -76,31 +71,27 @@ jobs:
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: ./.github/actions/setup-python-poetry
-        with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
-        timeout-minutes: 10
-
       - name: Download version.patch artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # pin v8.0.2
         with:
           name: version.patch
+          digest-mismatch: error
           path: ${{ runner.temp }}/version.patch
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
-      - name: Windows > Install yq
-        if: matrix.platform == 'windows'
-        run: choco install yq
-        timeout-minutes: 3
+      - name: Install tools
+        uses: taiki-e/install-action@1919c4a95903d2c33e4a221102edca87309fc14b # v2.89.0
+        with:
+          tool: syft@0.84.0, yq
+        timeout-minutes: 1
 
       # Building OpenSSL requires a perl interpreter.
       # The default one does not provide windows-style filesystem
@@ -113,15 +104,44 @@ jobs:
           echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
+      - name: Get rust flag release
+        shell: bash
+        run: |
+          echo "MATURIN_PEP517_ARGS=$(python make.py --quiet python-release-libparsec-cargo-flags) --locked" >> $GITHUB_ENV
+        env:
+          LIBPARSEC_FORCE_VENDORED_OPENSSL: true
+        timeout-minutes: 1
+
+      # Ensure rust toolchain is correctly installed on MacOS
+      # Previously, with some bad luck on the runner, `cibuildwheel` would fail when `maturin` invoking `cargo`
+      # fail to install the effective toolchain
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
+        if: matrix.platform == 'macos' || matrix.platform == 'windows'
+        with:
+          # We setup the cache by hand, see below
+          cache: false
+        timeout-minutes: 10
+
       - name: Build wheel
-        uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e  # pin v3.3.1
+        uses: pypa/cibuildwheel@b9e566a2b284570af229f6c2a33673410d0389a3 # pin v4.3.4
         with:
           package-dir: server
           output-dir: dist
+        env:
+          MATURIN_PEP517_ARGS: ${{ env.MATURIN_PEP517_ARGS }}
         timeout-minutes: 50
 
       - name: Set file for wheel version
         run: cp -v libparsec/version dist/version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          working-directory: server
+          version: 0.13.4 # marker:uv-version
+        timeout-minutes: 5
+
+      - run: git status --porcelain
 
       - name: Generate requirements & constraints infos
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
@@ -131,15 +151,10 @@ jobs:
         run: |
           yq --null-input ".${{ matrix.platform }}.$(uname -m).server = \"$(cd dist; ls *.whl | head -n 1)\"" | tee dist/artifacts.yml
 
-      # Install syft
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
-        with:
-          tool: syft@0.84.0
-
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=dist/Parsec-SBOM-Wheel-${{ matrix.platform }}.spdx.json .
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: |

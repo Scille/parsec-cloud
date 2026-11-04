@@ -9,13 +9,14 @@ updates:
   - package-ecosystem: github-actions
     directories:
       - /
-      - /.github/actions/setup-python-poetry
       - /.github/actions/use-pre-commit
     pull-request-branch-name:
       separator: "-"
     labels:
       - I-Dependency
       - I-Github-Actions
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -27,6 +28,27 @@ updates:
           - "*"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
+
+  ##############
+  # Pre-commit #
+  ##############
+
+  - package-ecosystem: pre-commit
+    directory: /
+    labels:
+      - I-Dependency
+      - I-CICD
+    cooldown:
+      default-days: 10
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:20"
+      timezone: Europe/Paris
+    groups:
+      pre-commit:
+        patterns:
+          - "*"
 
   ########
   # Rust #
@@ -64,6 +86,8 @@ updates:
       - dependency-name: pyo3
         versions:
           - ">=0.26.0"
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -76,6 +100,7 @@ updates:
           - blahaj
           - blake2
           - crypto*
+          - curve25519-dalek
           - ed25519-dalek
           - generic-array
           - getrandom
@@ -123,7 +148,7 @@ updates:
   # Python #
   ##########
 
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /docs
     versioning-strategy: increase-if-necessary
     pull-request-branch-name:
@@ -131,6 +156,8 @@ updates:
     labels:
       - I-Dependency
       - I-Python
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -143,19 +170,16 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /server
     versioning-strategy: increase-if-necessary
-    ignore:
-      - dependency-name: typing-extensions
-      - dependency-name: anyio
-        versions:
-          - ">=4.0.0"
     pull-request-branch-name:
       separator: "-"
     labels:
       - I-Dependency
       - I-Python
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -163,6 +187,11 @@ updates:
       timezone: Europe/Paris
     # Note these groups correspond more or less to the [dependency-groups] in server/pyproject.toml
     groups:
+      server-boto3:
+        patterns:
+          - boto3
+          - botocore
+          - types-boto3
       server-dev-test:
         dependency-type: development
         patterns:
@@ -177,12 +206,6 @@ updates:
           - pyright
           - ruff
           - sqlfluff
-      server-dev-types:
-        dependency-type: development
-        patterns:
-          - asyncpg-stubs
-          - boto3-stubs
-          - types-requests
       server-dev-build:
         dependency-type: development
         patterns:
@@ -212,6 +235,12 @@ updates:
     labels:
       - I-Dependency
       - I-Javascript
+    ignore:
+      # vue-tsc 3.3.12+ reports false TS2339 `.value` errors on imports used inside template closures.
+      - dependency-name: vue-tsc
+        versions: [3.3.12, 3.3.13]
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -219,8 +248,7 @@ updates:
       timezone: Europe/Paris
     groups:
       client-prod-ionic:
-        # Disabled dependency-type because @ionic/cli is a dev dependency
-        # dependency-type: production
+        dependency-type: production
         patterns:
           - "@ionic/*"
       client-prod-capacitor:
@@ -233,10 +261,8 @@ updates:
         dependency-type: development
         patterns:
           - eslint*
-          - "@intlify/eslint*"
           - prettier*
           - "@typescript-eslint*"
-          - "@vue/eslint*"
       client-dev-vite:
         dependency-type: development
         patterns:
@@ -265,6 +291,8 @@ updates:
       # `electron-is-dev@3` require to build the electron app in ESM mode, but capacitor doesn't support it yet.
       - dependency-name: electron-is-dev
         versions: [^3.0.0]
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -280,29 +308,17 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: npm
-    directory: /bindings/electron
+    directories:
+      - /bindings/electron
+      - /bindings/web
     pull-request-branch-name:
       separator: "-"
     labels:
       - I-Bindings
       - I-Dependency
       - I-Javascript
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:20"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
-  - package-ecosystem: npm
-    directory: /bindings/web
-    pull-request-branch-name:
-      separator: "-"
-    labels:
-      - I-Bindings
-      - I-Dependency
-      - I-Javascript
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -318,11 +334,10 @@ updates:
     labels:
       - I-Dependency
       - I-CICD
+    cooldown:
+      default-days: 10
     schedule:
-      interval: weekly
-      day: monday
-      time: "04:20"
-      timezone: Europe/Paris
+      interval: monthly
     groups:
       cspell-dependencies:
         patterns:
@@ -330,44 +345,40 @@ updates:
     open-pull-requests-limit: 1
     rebase-strategy: disabled
 
-  # ########
-  # # Java #
-  # ########
+  ##########
+  # Docker #
+  ##########
 
-  # - package-ecosystem: gradle
-  #   directory: /client/android
-  #   pull-request-branch-name:
-  #     separator: "-"
-  #   labels:
-  #     - I-Dependency
-  #     - I-Java
-  #   schedule:
-  #     interval: weekly
-  #     day: monday
-  #     time: "04:20"
-  #     timezone: Europe/Paris
-  #   groups:
-  #     android-client:
-  #       patterns:
-  #         - "*"
-  #   open-pull-requests-limit: 5
-  #   rebase-strategy: disabled
+  - package-ecosystem: docker
+    schedule:
+      interval: monthly
+    pull-request-branch-name:
+      separator: "-"
+    cooldown:
+      default-days: 10
+    directories:
+      - server/packaging/server
+      - server/packaging/testbed-server
+    labels:
+      - I-Dependency
+      - I-Docker
+    groups:
+      docker:
+        patterns:
+          - "*"
 
-  # - package-ecosystem: gradle
-  #   directory: /bindings/android
-  #   pull-request-branch-name:
-  #     separator: "-"
-  #   labels:
-  #     - I-Dependency
-  #     - I-Java
-  #   schedule:
-  #     interval: weekly
-  #     day: monday
-  #     time: "04:20"
-  #     timezone: Europe/Paris
-  #   groups:
-  #     android-binding:
-  #       patterns:
-  #         - "*"
-  #   open-pull-requests-limit: 5
-  #   rebase-strategy: disabled
+  - package-ecosystem: docker-compose
+    schedule:
+      interval: monthly
+    pull-request-branch-name:
+      separator: "-"
+    cooldown:
+      default-days: 10
+    directory: docs/hosting/deployment
+    labels:
+      - I-Dependency
+      - I-Docker
+    groups:
+      docker:
+        patterns:
+          - "*"

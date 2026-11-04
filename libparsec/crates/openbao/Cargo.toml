@@ -7,6 +7,7 @@ homepage.workspace = true
 license.workspace = true
 version.workspace = true
 repository.workspace = true
+exclude = ["tests/", "examples/", "benches/"]
 
 [lints]
 workspace = true
@@ -20,6 +21,7 @@ url = { workspace = true }
 serde_json = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 data-encoding = { workspace = true, features = ["std"] }
+log = { workspace = true }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }

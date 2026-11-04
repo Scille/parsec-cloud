@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
@@ -6,13 +6,12 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    greater_timestamp, store::CertifStoreError, CertifPollServerError,
-    CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset, InvalidCertificateError,
-    InvalidKeysBundleError,
+    CertifPollServerError, CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset,
+    InvalidCertificateError, InvalidKeysBundleError, greater_timestamp, store::CertifStoreError,
 };
 use crate::{
-    certif::realm_keys_bundle::EncryptRealmKeysBundleAccessForUserError,
     EventTooMuchDriftWithServerClock,
+    certif::realm_keys_bundle::EncryptRealmKeysBundleAccessForUserError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -25,6 +24,8 @@ pub enum CertifShareRealmError {
     RecipientNotFound,
     #[error("Workspace realm not found")]
     RealmNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Cannot share with a revoked user")]
     RecipientRevoked,
     #[error("Author not allowed")]
@@ -33,7 +34,9 @@ pub enum CertifShareRealmError {
     RoleIncompatibleWithOutsider,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -212,6 +215,7 @@ async fn unshare_do_server_command(
             })
         }
         Rep::RealmNotFound => Err(CertifShareRealmError::RealmNotFound),
+        Rep::RealmDeleted => Err(CertifShareRealmError::RealmDeleted),
         // Unlike for the sharing, we didn't have retrieved the user on our side,
         // so this error can actually occur (this is only theoretical though, as the
         // user ID is supposed to have been obtained from certificates).
@@ -254,6 +258,9 @@ async fn share_do_server_command(
             }
             EncryptRealmKeysBundleAccessForUserError::NotAllowed => {
                 CertifShareRealmError::AuthorNotAllowed
+            }
+            EncryptRealmKeysBundleAccessForUserError::RealmDeleted => {
+                CertifShareRealmError::RealmDeleted
             }
             EncryptRealmKeysBundleAccessForUserError::UserNotFound => {
                 CertifShareRealmError::RecipientNotFound
@@ -348,6 +355,7 @@ async fn share_do_server_command(
         // Note this error should never occur in practice given we have already
         // made sure the workspace exists in the server.
         Rep::RealmNotFound => Err(CertifShareRealmError::RealmNotFound),
+        Rep::RealmDeleted => Err(CertifShareRealmError::RealmDeleted),
         // Note this error should never occur in practice given we have already
         // retrieve the user on our side.
         Rep::RecipientNotFound => Err(CertifShareRealmError::RecipientNotFound),

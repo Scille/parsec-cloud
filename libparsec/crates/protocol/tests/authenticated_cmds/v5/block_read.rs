@@ -73,6 +73,16 @@ pub fn rep_realm_not_found() {
     rep_helper(raw, expected);
 }
 
+pub fn rep_realm_deleted() {
+    // Generated from Parsec 3.8.2-a.0+dev
+    // Content:
+    //   status: 'realm_deleted'
+    let raw: &[u8] = hex!("81a6737461747573ad7265616c6d5f64656c65746564").as_ref();
+    let expected = authenticated_cmds::block_read::Rep::RealmDeleted;
+    println!("***expected: {:?}", expected.dump().unwrap());
+    rep_helper(raw, expected);
+}
+
 pub fn rep_block_not_found() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:

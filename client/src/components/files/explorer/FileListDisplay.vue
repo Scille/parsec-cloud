@@ -1,11 +1,11 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <file-drop-zone
     ref="fileDropZone"
     @files-added="$emit('filesAdded', $event)"
     :show-drop-message="true"
-    :is-reader="ownRole === WorkspaceRole.Reader"
+    :is-reader="isReader"
     @drop-as-reader="$emit('dropAsReader')"
     class="file-drop-zone"
   >
@@ -15,15 +15,16 @@
       @contextmenu="onContextMenu"
     >
       <ion-list
-        class="files-container-list"
+        class="list-container files-list-container"
         :class="{ 'file-list-mobile': isSmallDisplay }"
+        id="files-page-file-container"
       >
         <ion-list-header
-          class="folder-list-header"
+          class="list-header files-list-header"
           lines="full"
           v-if="isLargeDisplay"
         >
-          <ion-label class="folder-list-header__label ion-text-nowrap header-label-selected">
+          <ion-label class="list-header-label ion-text-nowrap header-label-selected">
             <ms-checkbox
               @change="selectAll"
               :checked="allSelected"
@@ -31,67 +32,67 @@
             />
           </ion-label>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap header-label-name"
+            class="list-header-label cell-title ion-text-nowrap header-label-name"
             @click="onHeaderSortChange(SortProperty.Name)"
-            :class="{ 'header-label-name-sorted': currentSortProperty === SortProperty.Name }"
+            :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.Name }"
           >
-            <span class="header-label-name__text">{{ $msTranslate('FoldersPage.listDisplayTitles.name') }}</span>
+            <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.name') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="header-label-name__sort-icon"
+              class="sort-icon"
             />
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap header-label-updated-by"
+            class="list-header-label cell-title ion-text-nowrap header-label-updated-by"
             v-if="ownProfile !== UserProfile.Outsider"
           >
             {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap header-label-last-update"
+            class="list-header-label cell-title ion-text-nowrap header-label-last-update"
             @click="onHeaderSortChange(SortProperty.LastUpdate)"
-            :class="{ 'header-label-last-update-sorted': currentSortProperty === SortProperty.LastUpdate }"
+            :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.LastUpdate }"
           >
-            <span class="header-label-last-update__text">{{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}</span>
+            <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="header-label-last-update__sort-icon"
+              class="sort-icon"
             />
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap header-label-creation-date"
+            class="list-header-label cell-title ion-text-nowrap header-label-creation-date"
             @click="onHeaderSortChange(SortProperty.CreationDate)"
-            :class="{ 'header-label-creation-date-sorted': currentSortProperty === SortProperty.CreationDate }"
+            :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.CreationDate }"
           >
-            <span class="header-label-creation-date__text">{{ $msTranslate('FoldersPage.listDisplayTitles.creation') }}</span>
+            <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.creation') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="header-label-creation-date__sort-icon"
+              class="sort-icon"
             />
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap header-label-size"
+            class="list-header-label cell-title ion-text-nowrap header-label-size list-header-label"
             @click="onHeaderSortChange(SortProperty.Size)"
-            :class="{ 'header-label-size-sorted': currentSortProperty === SortProperty.Size }"
+            :class="{ 'list-header-label--sorted': currentSortProperty === SortProperty.Size }"
           >
-            <span class="header-label-size__text">{{ $msTranslate('FoldersPage.listDisplayTitles.size') }}</span>
+            <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.size') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="header-label-size__sort-icon"
+              class="sort-icon"
             />
           </ion-text>
-          <ion-text class="folder-list-header__label cell-title ion-text-nowrap header-label-space" />
+          <ion-text class="list-header-label list-item-end cell-title ion-text-nowrap header-label-space" />
         </ion-list-header>
         <div>
           <file-list-item
             v-for="folder in folders.getEntries()"
             ref="folderItems"
-            v-model="folder.isSelected"
+            v-model:selected="folder.isSelected"
             :key="folder.id"
             :entry="folder"
             :own-profile="ownProfile"
             :show-checkbox="someSelected || selectionEnabled === true"
-            :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+            :is-workspace-reader="isReader"
             @open-item.stop="$emit('openItem', folder, $event)"
             @menu-click="onMenuClick"
             @files-added="onFilesAdded"
@@ -100,7 +101,7 @@
           <file-list-item
             v-for="file in files.getEntries()"
             ref="fileItems"
-            v-model="file.isSelected"
+            v-model:selected="file.isSelected"
             :key="file.id"
             :entry="file"
             :own-profile="ownProfile"
@@ -128,7 +129,7 @@ import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
 import { EntryCollection, EntryModel, FileModel, FileOperationCurrentFolder, FolderModel } from '@/components/files/types';
-import { EntryName, UserProfile, WorkspaceRole } from '@/parsec';
+import { EntryName, UserProfile } from '@/parsec';
 import { IonIcon, IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { arrowDown, arrowUp } from 'ionicons/icons';
 import { MsCheckbox, MsSorterChangeEvent, useWindowSize } from 'megashark-lib';
@@ -139,7 +140,7 @@ const props = defineProps<{
   ownProfile: UserProfile;
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
-  ownRole: WorkspaceRole;
+  isReader: boolean;
   fileOperations: Array<FileOperationCurrentFolder>;
   selectionEnabled?: boolean;
   currentSortProperty: SortProperty;
@@ -151,7 +152,7 @@ const emits = defineEmits<{
   (e: 'sortChange', event: MsSorterChangeEvent): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
-  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
+  (e: 'filesAdded', gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
 }>();
 
@@ -182,9 +183,9 @@ async function onMenuClick(event: Event, entry: EntryModel, onFinished: () => vo
   emits('menuClick', event, entry, onFinished);
 }
 
-function onFilesAdded(files: Array<File>, destinationFolder?: EntryName): void {
+function onFilesAdded(gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void {
   fileDropZoneRef.value?.reset();
-  emits('filesAdded', files, destinationFolder);
+  emits('filesAdded', gen, destinationFolder);
 }
 
 async function selectAll(selected: boolean): Promise<void> {
@@ -238,11 +239,19 @@ async function scrollToSelected(): Promise<void> {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  @include ms.responsive-breakpoint('sm') {
+    overflow: visible;
+  }
 }
 
 .container-scroll {
   flex-grow: 1;
   overflow: auto;
+
+  @include ms.responsive-breakpoint('sm') {
+    overflow: visible;
+  }
 }
 
 .header-label-selected {
@@ -250,10 +259,6 @@ async function scrollToSelected(): Promise<void> {
 }
 
 .file-list-mobile {
-  padding-top: 1rem;
-}
-
-.folder-list-header__label {
-  padding: 0.75rem 1rem;
+  padding-top: ms.spacing('padding-3xl');
 }
 </style>

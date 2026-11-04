@@ -42,6 +42,9 @@
                 "status": "author_not_allowed"
             },
             {
+                "status": "realm_deleted"
+            },
+            {
                 // `key_index` argument doesn't correspond to a `RealmRotateKeyCertificate`
                 "status": "bad_key_index"
             }

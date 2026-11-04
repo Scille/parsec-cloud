@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
   <!-- file-viewer wrapper -->
@@ -60,6 +60,6 @@ defineProps<{
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
+  gap: ms.spacing('gap-4xl');
 }
 </style>

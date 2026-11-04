@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use libparsec_client::{workspace::WorkspaceOps, Client};
+use libparsec_client::{Client, workspace::WorkspaceOps};
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
 };
@@ -187,7 +187,14 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
 
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
             #[cfg(not(target_os = "windows"))]
-            p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+            {
+                let abi_version = crate::unix::FUSE_ABI_VERSION.wait();
+                if abi_version >= &fuser::Version(7, 45) {
+                    p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+                } else {
+                    p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+                }
+            }
             #[cfg(target_os = "windows")]
             p_assert_eq!(
                 err.raw_os_error(),

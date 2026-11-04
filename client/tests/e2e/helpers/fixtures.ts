@@ -1,18 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, TestInfo, test as base } from '@playwright/test';
+import { BrowserContext, Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
-import { CRYPTPAD_SERVER } from '@tests/e2e/helpers/cryptpad';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
 import { mockLibParsec } from '@tests/e2e/helpers/libparsec';
+import { mockStripe } from '@tests/e2e/helpers/mock';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
-import { DisplaySize, MsContext, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
+import { DisplaySize, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
+import { CoverageReport } from 'monocart-coverage-reports';
+// @ts-expect-error
+import coverageOptions from '@/../mcr.config.cjs';
 
 const DEV_TOOLS_OFFSET = 400;
 const DEFAULT_INIT_TIMEOUT = 5000;
+
+const COLLECT_COVERAGE = process.env.COLLECT_COVERAGE === 'true';
+const coverageReport = COLLECT_COVERAGE ? new CoverageReport(coverageOptions) : undefined;
 
 export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promise<void> {
   const TESTBED_SERVER = process.env.TESTBED_SERVER;
@@ -26,49 +32,25 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
 
   await page.addInitScript(
     (options: SetupOptions & { testbedServer: string }) => {
-      async function createMockWritableStream(): Promise<FileSystemWritableFileStream> {
-        return {
-          write: async (data: any): Promise<any> => {
-            if ((window as any).__downloadedFiles === undefined) {
-              (window as any).__downloadedFiles = {
-                default: data,
-              };
-            } else {
-              (window as any).__downloadedFiles.default = data;
-            }
-          },
-          close: async (): Promise<any> => {},
-          abort: async (): Promise<any> => {
-            console.log('Stream aborted');
-          },
-          writable: {
-            size: 0,
-            getWriter: (): WritableStreamDefaultWriter => {
-              return {
-                ready: new Promise<void>((resolve) => resolve()),
-                close: async (): Promise<void> => {},
-                releaseLock: (): void => {},
-                write: async (chunk: any): Promise<void> => {
-                  if ((window as any).__downloadedFiles === undefined) {
-                    (window as any).__downloadedFiles = {
-                      default: chunk,
-                    };
-                  } else {
-                    (window as any).__downloadedFiles.default = new Uint8Array([...(window as any).__downloadedFiles.default, ...chunk]);
-                  }
-                },
-              } as WritableStreamDefaultWriter;
-            },
-          },
-        } as unknown as FileSystemWritableFileStream;
-      }
-
       (window as any).TESTING = true;
       (window as any).TESTING_DISABLE_STRIPE = !options.enableStripe;
       if (options.enableUpdateEvent) {
         (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
       }
-
+      if (options.enableShamir) {
+        (window as any).TESTING_ENABLE_SHAMIR = true;
+      }
+      if (options.mockPki) {
+        // When the testbed is used, `pkiInitForScws()` relies on a mock and never
+        // actually tries to access the SCWS middleware.
+        // So we configure dummies values here given `pkiInitForScws()` will
+        // be entirely skipped if they are missing.
+        // libparsec.pkiInitForScws = libparsec.pkiInitForNative;
+        (window as any).TESTING_MOCKED_SCWS = true;
+      }
+      if (options.openBaoServer) {
+        (window as any).TESTING_OPEN_BAO_SERVER = options.openBaoServer;
+      }
       if (options.parsecAccountAutoLogin) {
         options.withParsecAccount = true;
         (window as any).TESTING_ACCOUNT_AUTO_LOGIN = true;
@@ -77,16 +59,15 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
         (window as any).TESTING_ENABLE_ACCOUNT = true;
         (window as any).TESTING_ACCOUNT_SERVER = options.testbedServer;
       }
-      if (options.withEditics) {
-        (window as any).TESTING_ENABLE_EDITICS = true;
-        (window as any).TESTING_CRYPTPAD_SERVER = `https://${options.cryptpadServer}`;
-        (window as any).TESTING_EDITICS_SAVE_TIMEOUT = 1;
-      }
       if (options.withCustomBranding) {
         (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
       }
       if (options.mockBrowser) {
         (window as any).TESTING_MOCK_BROWSER = options.mockBrowser;
+      }
+      (window as any).TESTING_ALLOW_LOGS = options.allowLogs;
+      if (options.allowedProtectionMethods) {
+        (window as any).TESTING_MOCK_ALLOWED_PROTECTION_METHODS = options.allowedProtectionMethods;
       }
       if (options.saasServers) {
         (window as any).TESTING_SAAS_SERVERS = options.saasServers;
@@ -94,50 +75,9 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.trialServers) {
         (window as any).TESTING_TRIAL_SERVERS = options.trialServers;
       }
-      (window as any).showSaveFilePicker = (opts?: { suggestedName?: string }): Promise<FileSystemFileHandle> => {
-        return new Promise((resolve) => {
-          resolve({
-            kind: 'file',
-            name: opts?.suggestedName ?? 'downloadedFile.tmp',
-            createWritable: createMockWritableStream,
-            remove: async (): Promise<undefined> => {
-              if ((window as any).__downloadedFiles) {
-                (window as any).__downloadedFiles.default = undefined;
-              }
-            },
-          } as unknown as FileSystemFileHandle);
-        });
-      };
-      (window as any).showDirectoryPicker = async (): Promise<FileSystemDirectoryHandle> => {
-        return {
-          kind: 'directory',
-          name: 'folder',
-          getFileHandle: async (name: string, _options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle> => {
-            return {
-              kind: 'file',
-              name: name,
-              createWritable: async () => ({
-                write: async (data: Uint8Array): Promise<any> => {
-                  if ((window as any).__downloadedFiles === undefined) {
-                    (window as any).__downloadedFiles = {
-                      [name]: data,
-                    };
-                  } else {
-                    (window as any).__downloadedFiles[name] = new Uint8Array([...(window as any).__downloadedFiles[name], ...data]);
-                  }
-                },
-                close: async (): Promise<any> => {},
-              }),
-            } as FileSystemFileHandle;
-          },
-          getDirectoryHandle: async (_name: string, _options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle> => {
-            return {} as FileSystemDirectoryHandle;
-          },
-          removeEntry: async (_name: string, _options?: FileSystemRemoveOptions): Promise<void> => {},
-          resolve: async (_descendant: FileSystemHandle): Promise<string[] | null> => null,
-          isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
-        };
-      };
+      if (options.additionalUsers) {
+        (window as any).TESTING_ADD_USERS = options.additionalUsers.map((user) => `${user.label}:${user.profile}`).join(';');
+      }
     },
     { ...opts, testbedServer: TESTBED_SERVER },
   );
@@ -156,11 +96,13 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   let testbed: string | undefined;
   if (!opts.skipTestbed) {
     testbed = await initTestBed(page, opts.testbedPath);
-  } else {
+  } else if (!opts.customNextStage) {
     await page.evaluate(async () => {
       const [, nextStage] = window.nextStageHook();
       await nextStage(undefined, 'en-US');
     });
+  } else {
+    await opts.customNextStage(page);
   }
 
   page.userData = generateDefaultUserData();
@@ -188,6 +130,11 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   page.isDebugEnabled = (): boolean => {
     return process.env.PWDEBUG === 'true';
   };
+
+  if (!opts.enableStripe) {
+    await mockStripe(page.context());
+  }
+
   page.defaultLargeSize = [1600, 900];
   page.defaultSmallSize = [700, 700];
   page.setDisplaySize = async (displaySize: DisplaySize): Promise<void> => {
@@ -202,6 +149,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
     return page.displaySize;
   };
   await page.setDisplaySize(opts.displaySize ?? DisplaySize.Large);
+  page.setupOptions = opts;
 }
 
 const debugTest = base.extend({
@@ -242,7 +190,7 @@ interface ClientAreaInitialParams {
 }
 
 export const msTest = debugTest.extend<{
-  context: MsContext;
+  context: BrowserContext;
   home: MsPage;
   secondTab: MsPage;
   connected: MsPage;
@@ -267,13 +215,45 @@ export const msTest = debugTest.extend<{
   clientAreaInitialParams: ClientAreaInitialParams;
   parsecAccount: MsPage;
   parsecAccountLoggedIn: MsPage;
-  parsecEditics: MsPage;
 }>({
   context: async ({ browser }, use) => {
-    const context = (await browser.newContext()) as MsContext;
+    const context = await browser.newContext();
     await context.grantPermissions(['clipboard-read']);
     await mockExternalWebsites(context);
+
+    if (COLLECT_COVERAGE) {
+      // One listener for the whole context: fires once per page/tab, however it was created, so
+      // there's no risk of double-starting coverage on a page that gets set up more than once.
+      context.on('page', (page) => {
+        page.coverage.startJSCoverage({ resetOnNavigation: false }).catch((error) => {
+          console.log('Failed to start coverage for page', page.url(), error);
+        });
+        // Collect coverage before the page actually closes: by the time a `close` event fires,
+        // the CDP session backing `page.coverage` may already be gone. Pages get closed all over
+        // the place (mid-test via `page.release()`, or implicitly), so patching `close()` here is
+        // the one place that reliably intercepts all of them without touching those call sites.
+        const originalClose = page.close.bind(page);
+        page.close = (async (options) => {
+          try {
+            const jsCoverage = await page.coverage.stopJSCoverage();
+            await coverageReport?.add(jsCoverage);
+          } catch (error) {
+            console.log('Failed to collect coverage for page', page.url(), error);
+          }
+          return originalClose(options);
+        }) as typeof page.close;
+      });
+    }
+
     await use(context);
+
+    if (COLLECT_COVERAGE) {
+      // `context.close()` doesn't seem to go through the patched `close()`.
+      for (const page of context.pages()) {
+        await page.close();
+      }
+    }
+
     await context.close();
   },
 
@@ -440,7 +420,7 @@ export const msTest = debugTest.extend<{
 
   invitationsPage: async ({ connected }, use) => {
     await connected.locator('.sidebar').locator('#sidebar-invitations').click();
-    await expect(connected).toHavePageTitle('Invitations');
+    await expect(connected).toHavePageTitle('Invitations & Join Requests');
     await expect(connected).toBeInvitationPage();
     use(connected);
   },
@@ -535,16 +515,16 @@ export const msTest = debugTest.extend<{
     const saasContainer = home.locator('.saas-login');
     await expect(saasContainer).toBeVisible();
     await expect(saasContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
-    const loginButton = saasContainer.locator('.saas-login-button').locator('ion-button');
+    const loginButton = saasContainer.locator('.saas-login-button').locator('.saas-login-button__login');
     await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
 
     // Check "remember me" checkbox so tokens persist across page reloads
     if (clientAreaInitialParams?.rememberMe) {
-      const rememberMeCheckbox = saasContainer.locator('ion-checkbox');
+      const rememberMeCheckbox = saasContainer.locator('.ms-checkbox');
       await expect(rememberMeCheckbox).toBeVisible();
-      await rememberMeCheckbox.click();
+      await rememberMeCheckbox.check();
       await expect(rememberMeCheckbox).toBeChecked();
     }
 
@@ -589,16 +569,16 @@ export const msTest = debugTest.extend<{
     const saasContainer = home.locator('.saas-login');
     await expect(saasContainer).toBeVisible();
     await expect(saasContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
-    const loginButton = saasContainer.locator('.saas-login-button').locator('ion-button');
+    const loginButton = saasContainer.locator('.saas-login-button').locator('.saas-login-button__login');
     await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
 
     // Check "remember me" checkbox so tokens persist across page reloads
     if (clientAreaInitialParams?.rememberMe) {
-      const rememberMeCheckbox = saasContainer.locator('ion-checkbox');
+      const rememberMeCheckbox = saasContainer.locator('.ms-checkbox');
       await expect(rememberMeCheckbox).toBeVisible();
-      await rememberMeCheckbox.click();
+      await rememberMeCheckbox.check();
       await expect(rememberMeCheckbox).toBeChecked();
     }
 
@@ -635,36 +615,5 @@ export const msTest = debugTest.extend<{
     await expect(page).toHaveURL(/.+\/home$/);
     await use(page);
     await page.release();
-  },
-
-  parsecEditics: async ({ context, documentsOptions }, use, testInfo: TestInfo) => {
-    const page = (await context.newPage()) as MsPage;
-    await setupNewPage(page, {
-      withParsecAccount: false,
-      withEditics: true,
-      location: '/home',
-      cryptpadServer: CRYPTPAD_SERVER,
-      expectTimeout: 15000,
-    });
-    await page.locator('.organization-card').first().click();
-    await expect(page.locator('#password-input')).toBeVisible();
-
-    await expect(page.locator('.login-button')).toHaveDisabledAttribute();
-
-    await page.locator('#password-input').locator('input').fill('P@ssw0rd.');
-    await expect(page.locator('.login-button')).toBeEnabled();
-    await page.locator('.login-button').click();
-    await expect(page.locator('#connected-header')).toContainText('My workspaces');
-    await expect(page.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
-    await expect(page).toBeWorkspacePage();
-    await expect(page).toHaveURL(/.+\/workspaces$/);
-    await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(page).toHaveHeader(['wksp1'], true, true);
-    await expect(page.locator('.folder-container').locator('.no-files')).toBeVisible();
-    if (!documentsOptions.empty) {
-      await importDefaultFiles(page, testInfo);
-      await expect(page.locator('.folder-container').locator('.no-files')).toBeHidden();
-    }
-    await use(page);
   },
 });

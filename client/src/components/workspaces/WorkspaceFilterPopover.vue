@@ -1,91 +1,122 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <!-- eslint-disable vue/no-mutating-props -->
   <ion-content class="filter-container">
     <ion-list
       class="filter-list"
-      id="user-filter-list"
+      id="workspace-filter-list"
     >
       <ion-item-group class="list-group">
-        <ion-text
-          class="body-sm list-group-title"
-          id="filter-title-role"
-        >
-          {{ $msTranslate('WorkspacesPage.filter.roles') }}
-        </ion-text>
+        <div class="list-group-header">
+          <ion-text
+            class="list-group-title"
+            id="filter-title-role"
+          >
+            {{ $msTranslate('WorkspacesPage.filter.roles') }}
+          </ion-text>
+          <ion-button
+            v-if="!currentFilters.owner || !currentFilters.manager || !currentFilters.contributor || !currentFilters.reader"
+            @click="updateFilters({ owner: true, manager: true, contributor: true, reader: true })"
+            class="reset-filters-button"
+            fill="clear"
+          >
+            {{ $msTranslate('WorkspacesPage.filter.reset') }}
+          </ion-button>
+        </div>
         <ion-item
           class="list-group-item ion-no-padding"
           id="filter-check-admin"
         >
-          <ion-text
-            class="filter-text body"
-            @click="filters.owner = !filters.owner"
-          >
-            {{ $msTranslate('workspaceRoles.owner.label') }}
-          </ion-text>
           <ms-checkbox
-            v-model="filters.owner"
+            :model-value="currentFilters.owner"
+            @update:model-value="updateFilters({ owner: $event })"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.owner.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
         <ion-item
           class="list-group-item ion-no-padding"
           id="filter-check-standard"
         >
-          <ion-text
-            class="filter-text body"
-            @click="filters.manager = !filters.manager"
-          >
-            {{ $msTranslate('workspaceRoles.manager.label') }}
-          </ion-text>
           <ms-checkbox
-            v-model="filters.manager"
+            :model-value="currentFilters.manager"
+            @update:model-value="updateFilters({ manager: $event })"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.manager.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
         <ion-item class="list-group-item ion-no-padding">
-          <ion-text
-            class="filter-text body"
-            @click="filters.contributor = !filters.contributor"
-          >
-            {{ $msTranslate('workspaceRoles.contributor.label') }}
-          </ion-text>
           <ms-checkbox
-            v-model="filters.contributor"
+            :model-value="currentFilters.contributor"
+            @update:model-value="updateFilters({ contributor: $event })"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.contributor.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
         <ion-item class="list-group-item ion-no-padding">
-          <ion-text
-            class="filter-text body"
-            @click="filters.reader = !filters.reader"
-          >
-            {{ $msTranslate('workspaceRoles.reader.label') }}
-          </ion-text>
           <ms-checkbox
-            v-model="filters.reader"
+            :model-value="currentFilters.reader"
+            @update:model-value="updateFilters({ reader: $event })"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.reader.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
       </ion-item-group>
     </ion-list>
   </ion-content>
-  <!-- eslint-disable vue/no-mutating-props -->
 </template>
 
 <script setup lang="ts">
-import { WorkspacesPageFilters } from '@/components/workspaces/utils';
-import { IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
+import { WorkspacesPageFilters } from '@/components/workspaces/types';
+import { IonButton, IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
 import { MsCheckbox } from 'megashark-lib';
+import { ref } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   filters: WorkspacesPageFilters;
 }>();
+
+const emits = defineEmits<{
+  (event: 'update:filters', filters: WorkspacesPageFilters): void;
+}>();
+
+// Props passed through `popoverController` are not reactive, keep a local copy
+const currentFilters = ref<WorkspacesPageFilters>({ ...props.filters });
+
+function updateFilters(changes: Partial<WorkspacesPageFilters>): void {
+  currentFilters.value = { ...currentFilters.value, ...changes };
+  emits('update:filters', currentFilters.value);
+}
 </script>
 
 <style lang="scss" scoped>
+.list-group-title {
+  @include ms.font('body-sm-regular');
+}
+
 .status-tag > * {
   cursor: pointer;
+}
+
+.filter-text {
+  display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-lg');
 }
 </style>

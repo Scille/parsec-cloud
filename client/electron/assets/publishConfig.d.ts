@@ -1,10 +1,11 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 export interface CustomPublishOptions {
   readonly provider: 'custom';
   /** The machine arch the electron-builder is running on */
   readonly buildMachineArch: string;
   nightlyBuild: boolean;
+  features: ParsecFeatures;
   /**
    * The repository name.
    */
@@ -31,4 +32,9 @@ export interface CustomPublishOptions {
    * @default draft
    */
   releaseType?: 'draft' | 'prerelease' | 'release' | null;
+}
+
+export interface ParsecFeatures {
+  hardened: boolean;
+  [k: string]: any;
 }

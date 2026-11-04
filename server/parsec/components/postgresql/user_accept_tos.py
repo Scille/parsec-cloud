@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._parsec import (
@@ -54,7 +55,7 @@ async def user_accept_tos(
     organization_id: OrganizationID,
     author: DeviceID,
     tos_updated_on: DateTime,
-) -> None | UserAcceptTosBadOutcome:
+) -> UserAcceptTosBadOutcome | None:
     match await auth_no_lock(conn, organization_id, author):
         case AuthNoLockData() as db_auth:
             pass

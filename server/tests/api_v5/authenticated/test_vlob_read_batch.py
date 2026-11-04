@@ -8,6 +8,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -179,6 +180,17 @@ async def test_authenticated_vlob_read_batch_ok(
         )
 
 
+async def test_authenticated_vlob_read_batch_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_read_batch(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        vlobs=[workspace_archived_org.wksp_archived_file_id],
+        at=None,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.vlob_read_batch.RepOk)
+
+
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_vlob_read_batch_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
@@ -216,6 +228,17 @@ async def test_authenticated_vlob_read_batch_too_many_elements(
         realm_id=coolorg.wksp1_id, vlobs=too_many_vlobs, at=None
     )
     assert rep == authenticated_cmds.latest.vlob_read_batch.RepTooManyElements()
+
+
+async def test_authenticated_vlob_read_batch_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_read_batch(
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        vlobs=[VlobID.new()],
+        at=None,
+    )
+    assert rep == authenticated_cmds.latest.vlob_read_batch.RepRealmDeleted()
 
 
 async def test_authenticated_vlob_read_batch_http_common_errors(

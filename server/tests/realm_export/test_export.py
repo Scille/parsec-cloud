@@ -35,6 +35,7 @@ from tests.common import (
     Backend,
     MinimalorgRpcClients,
     SequesteredOrgRpcClients,
+    WorkspaceArchivedOrgRpcClients,
     WorkspaceHistoryOrgRpcClients,
 )
 
@@ -278,6 +279,8 @@ def extract_export_expected_from_template(
                             event.encrypted,
                         )
                     )
+            case tb.TestbedEventDeleteRealm():
+                assert False, "Realm has been deleted"
             # Other events don't produce data that is exported
             case (
                 tb.TestbedEventNewShamirRecoveryInvitation()
@@ -675,11 +678,11 @@ async def test_restart_partially_exported(
     vanilla_blockstore_read = backend.blockstore.read
     block_fetch_semaphore = asyncio.Semaphore(1)
 
-    async def patched_blocstore_read(*args, **kwargs):
+    async def patched_blockstore_read(*args, **kwargs):
         await block_fetch_semaphore.acquire()
         return await vanilla_blockstore_read(*args, **kwargs)
 
-    backend.blockstore.read = patched_blocstore_read
+    backend.blockstore.read = patched_blockstore_read
 
     for cancel_on_event in (
         "certificates_start",
@@ -733,6 +736,9 @@ async def test_re_export_is_noop(
     backend: Backend,
     sequestered_export_db_path: Path,
 ):
+    # ruff: noqa: ASYNC240
+    # Since this is test-related code it should not matter that we use blocking
+    # calls to pathlib.Path instead of async equivalents like anyio.Path.
     output_db_stat = sequestered_export_db_path.stat()
 
     await export_realm(
@@ -887,6 +893,25 @@ async def test_export_realm_not_found(
         str(exc.value)
         == f"Realm `aec70837083b48c98d6b305f608975b3` doesn't exist in organization `{workspace_history_org.organization_id}`"
     )
+
+
+async def test_export_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+    backend: Backend,
+    tmp_path: Path,
+):
+    output_db_path = tmp_path / "output.sqlite"
+
+    with pytest.raises(RealmExporterInputError) as exc:
+        await export_realm(
+            backend=backend,
+            organization_id=workspace_archived_org.organization_id,
+            realm_id=workspace_archived_org.wksp_deleted_id,
+            output_db_path=output_db_path,
+            snapshot_timestamp=DateTime.now().subtract(seconds=BALLPARK_CLIENT_LATE_OFFSET),
+            on_progress=lambda x: None,
+        )
+    assert str(exc.value) == "Realm `f000000000000000000000000000000e` has been deleted"
 
 
 @pytest.mark.parametrize("kind", ["in_the_future", "too_close_to_present"])

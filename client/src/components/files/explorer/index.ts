@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import FileCard from '@/components/files/explorer/FileCard.vue';
 import FileCardProcessing from '@/components/files/explorer/FileCardProcessing.vue';
@@ -10,8 +10,11 @@ import FileInputs from '@/components/files/explorer/FileInputs.vue';
 import FileListDisplay from '@/components/files/explorer/FileListDisplay.vue';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
+import FileSearchResults from '@/components/files/explorer/FileSearchResults.vue';
 import FolderSelectionModal from '@/components/files/explorer/FolderSelectionModal.vue';
 import HistoryFileListItem from '@/components/files/explorer/HistoryFileListItem.vue';
+import ImageSelectionModal from '@/components/files/explorer/ImageSelectionModal.vue';
+import NewFilePopover from '@/components/files/explorer/NewFilePopover.vue';
 
 export {
   FileCard,
@@ -24,6 +27,9 @@ export {
   FileListDisplay,
   FileListItem,
   FileListItemProcessing,
+  FileSearchResults,
   FolderSelectionModal,
   HistoryFileListItem,
+  ImageSelectionModal,
+  NewFilePopover,
 };

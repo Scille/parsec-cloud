@@ -55,6 +55,32 @@ pub fn rep_ok() {
             ),
         ),
         (
+            // Generated from Parsec 3.8.2-a.0+dev
+            // Content:
+            //   status: 'ok'
+            //   event: 'ORGANIZATION_CONFIG'
+            //   active_users_limit: 8
+            //   realm_minimum_archiving_period_before_deletion: 2592000
+            //   sse_keepalive_seconds: 30
+            //   user_profile_outsider_allowed: True
+            &hex!(
+                "86a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d697408d92e7265616c6d5f6d696e696d"
+                "756d5f617263686976696e675f706572696f645f6265666f72655f64656c6574696f6e"
+                "ce00278d00b57373655f6b656570616c6976655f7365636f6e64731ebd757365725f70"
+                "726f66696c655f6f757473696465725f616c6c6f776564c3"
+            )[..],
+            authenticated_cmds::events_listen::Rep::Ok(
+                authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
+                    active_users_limit: ActiveUsersLimit::LimitedTo(8),
+                    user_profile_outsider_allowed: true,
+                    sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    realm_minimum_archiving_period_before_deletion: Maybe::Present(2592000),
+                },
+            ),
+        ),
+        (
+            // Legacy 5.3>=API<5.5 format (without `realm_minimum_archiving_period_before_deletion` field)
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -73,10 +99,12 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    realm_minimum_archiving_period_before_deletion: Maybe::Absent,
                 },
             ),
         ),
         (
+            // Legacy 5.3>=API<5.5 format (without `realm_minimum_archiving_period_before_deletion` field)
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -95,6 +123,7 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    realm_minimum_archiving_period_before_deletion: Maybe::Absent,
                 },
             ),
         ),
@@ -122,6 +151,7 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    realm_minimum_archiving_period_before_deletion: Maybe::Absent,
                 },
             ),
         ),
@@ -149,6 +179,7 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    realm_minimum_archiving_period_before_deletion: Maybe::Absent,
                 },
             ),
         ),
@@ -167,7 +198,7 @@ pub fn rep_ok() {
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::Invitation {
                     invitation_status: InvitationStatus::Pending,
-                    token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                    token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 },
             ),
         ),

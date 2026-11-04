@@ -1,16 +1,15 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 use std::num::NonZeroU8;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, AccessToken, DataError, DataResult, DateTime, DeviceID,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DataResult, DateTime, DeviceID, InvitationToken,
 };
 use libparsec_crypto::{
-    impl_key_debug, CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey, SigningKey,
-    VerifyKey,
+    CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey,
+    impl_key_debug,
 };
 use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
@@ -20,7 +19,7 @@ use serde_bytes::Bytes;
 #[serde(into = "ShamirRecoverySecretData", from = "ShamirRecoverySecretData")]
 pub struct ShamirRecoverySecret {
     pub data_key: SecretKey,
-    pub reveal_token: InvitationToken,
+    pub reveal_token: AccessToken,
 }
 
 parsec_data!("schema/shamir/shamir_recovery_secret.json5");
@@ -46,11 +45,33 @@ impl ShamirRecoverySecret {
         threshold: NonZeroU8,
         shares: NonZeroU8,
     ) -> Vec<ShamirShare> {
+        self.dump_and_encrypt_into_shares_with_rng(
+            threshold,
+            shares,
+            &mut rand::rand_core::UnwrapErr(rand::rngs::SysRng),
+        )
+    }
+
+    /// Same as [`Self::dump_and_encrypt_into_shares`], but the share generation is
+    /// driven by the provided RNG.
+    ///
+    /// This is only useful for testing purpose: passing a seeded RNG makes the
+    /// output deterministic, so that a given shamir recovery setup yields
+    /// byte-identical share certificates across processes (e.g. the testbed
+    /// generates the certificates independently on the client and on the server,
+    /// and combining shares obtained from different parties only works if both
+    /// sides used the same secret sharing polynomial).
+    pub fn dump_and_encrypt_into_shares_with_rng(
+        &self,
+        threshold: NonZeroU8,
+        shares: NonZeroU8,
+        rng: &mut impl rand::CryptoRng,
+    ) -> Vec<ShamirShare> {
         let secret = self.dump();
 
         let blahaj = blahaj::Sharks(threshold.get());
         blahaj
-            .dealer(&secret)
+            .dealer_rng(&secret, rng)
             .map(ShamirShare)
             // Note, unlike what Sharks's documentation claims, at most
             // 255 shares can be generated !

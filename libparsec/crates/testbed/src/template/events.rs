@@ -10,7 +10,7 @@ use serde_with::serde_as;
 
 use super::crc_hash::CrcHash;
 use super::utils::{get_user_current_profile, user_id_from_device_id};
-use super::{utils, TestbedTemplate, TestbedTemplateBuilder};
+use super::{TestbedTemplate, TestbedTemplateBuilder, utils};
 
 #[derive(Default)]
 enum TestbedEventCacheEntry<T> {
@@ -156,6 +156,7 @@ pub enum TestbedEvent {
     RenameRealm(TestbedEventRenameRealm),
     RotateKeyRealm(TestbedEventRotateKeyRealm),
     ArchiveRealm(TestbedEventArchiveRealm),
+    DeleteRealm(TestbedEventDeleteRealm),
     NewShamirRecovery(TestbedEventNewShamirRecovery),
     DeleteShamirRecovery(TestbedEventDeleteShamirRecovery),
 
@@ -208,6 +209,7 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::RenameRealm(x) => x.crc_hash(hasher),
             TestbedEvent::RotateKeyRealm(x) => x.crc_hash(hasher),
             TestbedEvent::ArchiveRealm(x) => x.crc_hash(hasher),
+            TestbedEvent::DeleteRealm(x) => x.crc_hash(hasher),
             TestbedEvent::NewShamirRecovery(x) => x.crc_hash(hasher),
             TestbedEvent::DeleteShamirRecovery(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) => x.crc_hash(hasher),
@@ -384,6 +386,7 @@ impl TestbedEvent {
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
             | TestbedEvent::CreateBlock(_)
             | TestbedEvent::CreateOpaqueBlock(_)
+            | TestbedEvent::DeleteRealm(_)
             | TestbedEvent::FreezeUser(_)
             | TestbedEvent::UpdateOrganization(_)
             | TestbedEvent::CertificatesStorageFetchCertificates(_)
@@ -427,6 +430,7 @@ impl TestbedEvent {
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
             | TestbedEvent::CreateBlock(_)
             | TestbedEvent::CreateOpaqueBlock(_)
+            | TestbedEvent::DeleteRealm(_)
             | TestbedEvent::FreezeUser(_)
             | TestbedEvent::UpdateOrganization(_) => false,
 
@@ -1957,7 +1961,7 @@ impl TestbedEventArchiveRealm {
                 author: self.author,
                 timestamp: self.timestamp,
                 realm_id: self.realm,
-                configuration: self.configuration.clone(),
+                configuration: self.configuration,
             };
             let signed: Bytes = certif.dump_and_sign(author_signkey).into();
             TestbedTemplateEventCertificate {
@@ -1971,6 +1975,39 @@ impl TestbedEventArchiveRealm {
             let mut guard = self.cache.lock().expect("Mutex is poisoned");
             guard.populated(populate).to_owned()
         })
+    }
+}
+
+/*
+ * TestbedEventDeleteRealm
+ */
+
+no_certificate_event!(
+    TestbedEventDeleteRealm,
+    [
+        timestamp: DateTime,
+        realm: VlobID,
+    ]
+);
+
+impl TestbedEventDeleteRealm {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            let already_deleted = builder
+                .events
+                .iter()
+                .any(|e| matches!(e, TestbedEvent::DeleteRealm(x) if x.realm == realm));
+            assert!(!already_deleted, "Realm already deleted");
+        }
+
+        // 2) Actual creation
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            realm,
+        }
     }
 }
 
@@ -1994,7 +2031,7 @@ pub struct TestbedEventNewShamirRecovery {
     pub per_recipient_shares: Vec<(UserID, NonZeroU8)>,
     pub recovery_device: DeviceID,
     pub data_key: SecretKey,
-    pub reveal_token: InvitationToken,
+    pub reveal_token: AccessToken,
     #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventNewShamirRecoveryCache>>>,
 }
@@ -2008,7 +2045,7 @@ impl_event_debug!(
         per_recipient_shares: Vec<UserID, NonZeroU8>,
         recovery_device: DeviceID,
         data_key: SecretKey,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
     ]
 );
 impl_event_crc_hash!(
@@ -2020,7 +2057,7 @@ impl_event_crc_hash!(
         per_recipient_shares: Vec<(UserID, NonZeroU8)>,
         recovery_device: DeviceID,
         data_key: SecretKey,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
     ]
 );
 
@@ -2043,7 +2080,7 @@ impl TestbedEventNewShamirRecovery {
                         panic!("User `{user}` already has a shamir recovery");
                     }
                     TestbedEvent::DeleteShamirRecovery(x) if x.setup_to_delete_user_id == user => {
-                        break
+                        break;
                     }
                     _ => (),
                 }
@@ -2131,11 +2168,23 @@ impl TestbedEventNewShamirRecovery {
             NonZeroU8::try_from(total_share_count).expect("Share must be > 0")
         };
 
+        // The shares must be generated deterministically: the testbed materializes
+        // this shamir recovery setup independently on the client and on the server,
+        // and recovering the secret only works if every party's share belongs to
+        // the same secret sharing polynomial. Seeding the RNG from `data_key` (which
+        // is itself deterministically derived from the template builder counters)
+        // guarantees byte-identical share certificates across processes.
+        let mut rng = {
+            let mut seed = <rand::rngs::StdRng as rand::SeedableRng>::Seed::default();
+            seed.copy_from_slice(self.data_key.as_ref());
+            <rand::rngs::StdRng as rand::SeedableRng>::from_seed(seed)
+        };
+
         let mut shark_shares = ShamirRecoverySecret {
             data_key: self.data_key.clone(),
             reveal_token: self.reveal_token,
         }
-        .dump_and_encrypt_into_shares(self.threshold, total_share_count)
+        .dump_and_encrypt_into_shares_with_rng(self.threshold, total_share_count, &mut rng)
         .into_iter();
 
         for (recipient, shares_count) in &self.per_recipient_shares {
@@ -2185,7 +2234,7 @@ impl TestbedEventNewShamirRecovery {
             //
             // When this code is called, the server address and organization ID are unknown,
             // this is especially true since on the server we first load the template as
-            // it own organization, then clone it everytime we need to instantiate the template
+            // it own organization, then clone it every time we need to instantiate the template
             // for a given test.
             //
             // So we have no choice but to provide placeholder values for server address and
@@ -2418,7 +2467,7 @@ no_certificate_event!(
     [
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ]
 );
 
@@ -2452,7 +2501,7 @@ no_certificate_event!(
         created_by: DeviceID,
         claimer_email: EmailAddress,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ]
 );
 
@@ -2489,7 +2538,7 @@ no_certificate_event!(
         claimer: UserID,
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ]
 );
 
@@ -2938,6 +2987,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 size,
                 blocksize,
                 blocks,
+                origin: FileManifestOrigin::Default,
             }),
             cache: Arc::default(),
         }
@@ -3164,7 +3214,7 @@ no_certificate_event!(
         /// `None` represents unset (i.e. `Unset` in Python)
         user_profile_outsider_allowed: Option<bool>,
         /// `None` represents unset (i.e. `Unset` in Python)
-        minimum_archiving_period: Option<u64>,
+        realm_minimum_archiving_period_before_deletion: Option<u64>,
         /// - `None` represents unset (i.e. `Unset` in Python)
         /// - An empty hashmap represents removing the ToS (i.e. `None` in Python)
         ///
@@ -3181,7 +3231,7 @@ impl TestbedEventUpdateOrganization {
         is_expired: Option<bool>,
         active_users_limit: Option<ActiveUsersLimit>,
         user_profile_outsider_allowed: Option<bool>,
-        minimum_archiving_period: Option<u64>,
+        realm_minimum_archiving_period_before_deletion: Option<u64>,
         tos: Option<HashMap<String, String>>,
     ) -> Self {
         let timestamp = builder.counters.next_timestamp();
@@ -3190,7 +3240,7 @@ impl TestbedEventUpdateOrganization {
             is_expired,
             active_users_limit,
             user_profile_outsider_allowed,
-            minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion,
             tos,
         }
     }

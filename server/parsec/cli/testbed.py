@@ -7,7 +7,7 @@ import hashlib
 import uuid
 from base64 import b64decode, b64encode
 from collections import defaultdict
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
@@ -54,17 +54,18 @@ except ImportError:
 from parsec.asgi import AsgiApp, app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
+from parsec.cli.testbed_sso_icons import TESTBED_SSO_ICONS
 from parsec.cli.utils import cli_exception_handler
 from parsec.components.memory.user import MemoryDatamodel, MemoryUserComponent
 from parsec.config import (
     BackendConfig,
+    CryptpadConfig,
     LogLevel,
     MockedBlockStoreConfig,
     MockedDatabaseConfig,
     MockedEmailConfig,
     MockedSentEmail,
     OpenBaoAuthConfig,
-    OpenBaoAuthType,
     OpenBaoConfig,
     PostgreSQLBlockStoreConfig,
     PostgreSQLDatabaseConfig,
@@ -184,7 +185,7 @@ class TestbedBackend:
         del self.template_per_org[id]
 
 
-testbed_router = APIRouter(tags=["testbed"])
+testbed_router = APIRouter(include_in_schema=False)
 
 
 def testbed_app_factory(testbed: TestbedBackend) -> AsgiApp:
@@ -530,7 +531,7 @@ async def test_openbao_create_key(request: Request, key_name: str):
     if not entity_id:
         return Response(status_code=403)
 
-    if key_name != f"user-{entity_id}":
+    if key_name != f"entity-{entity_id}":
         return Response(status_code=403)
 
     # See https://openbao.org/api-docs/secret/transit/#create-key
@@ -592,7 +593,7 @@ async def test_openbao_sign(request: Request, key_name: str):
     if not entity_id:
         return Response(status_code=403)
 
-    if key_name != f"user-{entity_id}":
+    if key_name != f"entity-{entity_id}":
         return Response(status_code=403)
 
     # See https://openbao.org/api-docs/secret/transit/#sign-data
@@ -640,7 +641,7 @@ async def test_openbao_verify(request: Request, key_name: str):
     if not entity_id:
         return Response(status_code=403)
 
-    author_entity_id = key_name.removeprefix("user-")
+    author_entity_id = key_name.removeprefix("entity-")
 
     # See https://openbao.org/api-docs/secret/transit/#verify-signed-data
 
@@ -773,6 +774,15 @@ async def test_openbao_hexagone_auth_url(request: Request):
     )
 
     return RedirectResponse(url=redirect_uri, status_code=302)
+
+
+@testbed_router.get("/testbed/mock/sso/icon/{name}")
+async def test_openbao_sso_icon(request: Request, name: str):
+    try:
+        content = TESTBED_SSO_ICONS[name]
+        return Response(content=content[0], media_type=content[1])
+    except KeyError:
+        return Response(status_code=404)
 
 
 @testbed_router.get("/testbed/mock/openbao/v1/auth/{auth_provider}/oidc/callback")
@@ -958,7 +968,7 @@ async def test_new_account(request: Request) -> Response:
 @asynccontextmanager
 async def testbed_backend_factory(
     server_addr: ParsecAddr, with_postgresql: str | None
-) -> AsyncIterator[TestbedBackend]:
+) -> AsyncGenerator[TestbedBackend]:
     blockstore_config = (
         MockedBlockStoreConfig() if with_postgresql is None else PostgreSQLBlockStoreConfig()
     )
@@ -989,15 +999,22 @@ async def testbed_backend_factory(
             transit_mount_path="transit",
             auths=[
                 OpenBaoAuthConfig(
-                    id=OpenBaoAuthType.HEXAGONE,
+                    id="HEXAGONE",
                     mount_path="auth/hexagone",
+                    name="Hexagone",
+                    help_link=None,
+                    icon=server_addr.to_http_url("/testbed/mock/sso/icon/hexagone"),
                 ),
                 OpenBaoAuthConfig(
-                    id=OpenBaoAuthType.PRO_CONNECT,
+                    id="PRO_CONNECT",
                     mount_path="auth/pro_connect",
+                    name="ProConnect",
+                    help_link="https://proconnect.parsec.invalid/help",
+                    icon=server_addr.to_http_url("/testbed/mock/sso/icon/pro_connect"),
                 ),
             ],
         ),
+        cryptpad_config=CryptpadConfig(server_url="https://cryptpad-dev.parsec.cloud"),
         # Disable the rate limit
         email_rate_limit_cooldown_delay=0,
         email_rate_limit_max_per_hour=0,
@@ -1031,25 +1048,30 @@ async def testbed_backend_factory(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
     metavar="URL",
-    help="""URL to reach this server (typically used in invitation emails)
-[default: parsec3://localhost:$PORT?no_ssl=True]
-""",
+    help="URL to reach this server (typically used in invitation emails)",
+    show_default="parsec3://localhost:$PORT?no_ssl=True",
 )
 @click.option(
     "--with-postgresql",
     envvar="PARSEC_WITH_POSTGRESQL",
-    default=None,
-    show_default=True,
     metavar="WITH_POSTGRESQL",
     help="Use a postgresql database instead of the mocked one",
 )
 @click.option(
     "--stop-after-process",
     type=int,
-    default=None,
-    show_default=True,
     envvar="PARSEC_STOP_AFTER_PROCESS",
     help="Stop the server once the given process has terminated",
+)
+@click.option(
+    "--populate",
+    is_flag=False,
+    flag_value="coolorg",
+    multiple=True,
+    show_default=True,
+    metavar="[coolorg]",
+    envvar="PARSEC_POPULATE",
+    help="Populate the testbed server at startup with an organization created from a template (e.g. coolorg, minimal)",
 )
 # Add --log-level/--log-format/--log-file
 @logging_config_options(default_log_level="INFO")
@@ -1061,6 +1083,7 @@ def testbed_cmd(
     server_addr: str | None,
     with_postgresql: str | None,
     stop_after_process: int | None,
+    populate: tuple[str, ...],
     log_level: LogLevel,
     log_format: str,
     log_file: str | None,
@@ -1092,6 +1115,16 @@ def testbed_cmd(
             async with testbed_backend_factory(
                 server_addr=cooked_server_addr, with_postgresql=with_postgresql
             ) as testbed:
+                for template in populate:
+                    try:
+                        (new_org_id, _, _) = await testbed.new_organization(template)
+                    except UnknownTemplateError:
+                        raise RuntimeError(f"Unknown testbed template {template!r}")
+
+                    click.echo(
+                        f"Populated organization `{click.style(new_org_id, fg='yellow')}` (template: `{template}`)"
+                    )
+
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER` environ variable:")
                 click.secho(
