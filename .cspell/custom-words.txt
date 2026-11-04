@@ -89,6 +89,7 @@ deptry
 derandomize
 derivated
 DESYNC
+desynchronization
 detailmenu
 detectincognitojs
 devel
