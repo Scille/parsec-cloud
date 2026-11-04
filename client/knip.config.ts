@@ -49,6 +49,8 @@ const config = {
     'public/file-service-worker-*.js',
     // loaded by the file service worker with `importScripts()`
     'public/vendor/zip-native.min-*.js',
+    // TODO: remove this once editics collaborative is implemented on the client
+    'editics/collaborative_protocol.js',
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
