@@ -1747,7 +1747,9 @@
             "title": "User details",
             "subtitles": {
                 "generalInfo": "General information",
-                "joined": "Joined on",
+                "joined": "Invited on",
+                "memberSince": "Member since",
+                "by": "by",
                 "commonWorkspaces": "Shared workspaces",
                 "revoked": "Revoked",
                 "revokedSince": "Revoked since"

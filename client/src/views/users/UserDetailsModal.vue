@@ -28,16 +28,28 @@
         <div class="user-section">
           <ion-text class="user-section__title">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.generalInfo') }}</ion-text>
           <div class="user-info">
-            <!-- Joined on -->
+            <!-- Joined on / by -->
             <div class="user-info-item">
               <ion-label class="user-info-item__title">
-                {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}
+                {{
+                  $msTranslate(
+                    invitedBy ? 'UsersPage.UserDetailsModal.subtitles.joined' : 'UsersPage.UserDetailsModal.subtitles.memberSince',
+                  )
+                }}
               </ion-label>
-              <ion-text class="user-info-item__value">
-                {{ $msTranslate(I18n.formatDate(user.createdOn, 'full')) }}
-              </ion-text>
+              <div class="user-info-item__content">
+                <ion-text class="user-info-item__value">
+                  {{ $msTranslate(I18n.formatDate(user.createdOn, 'full')) }}
+                </ion-text>
+                <ion-text
+                  class="user-info-item__author"
+                  v-if="invitedBy"
+                >
+                  {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.by') }} {{ invitedBy }}
+                </ion-text>
+              </div>
             </div>
-            <!-- Revoked since -->
+            <!-- Revoked since / by -->
             <div
               class="user-info-item"
               v-if="user.isRevoked() && user.revokedOn"
@@ -45,9 +57,17 @@
               <ion-label class="user-info-item__title">
                 {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}
               </ion-label>
-              <ion-text class="user-info-item__value">
-                {{ $msTranslate(I18n.formatDate(user.revokedOn, 'full')) }}
-              </ion-text>
+              <div class="user-info-item__content">
+                <ion-text class="user-info-item__value">
+                  {{ $msTranslate(I18n.formatDate(user.revokedOn, 'full')) }}
+                </ion-text>
+                <ion-text
+                  class="user-info-item__author"
+                  v-if="revokedBy"
+                >
+                  {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.by') }} {{ revokedBy }}
+                </ion-text>
+              </div>
             </div>
           </div>
           <technical-id :id="user.id" />
@@ -94,7 +114,7 @@
 import { TechnicalId } from '@/components/misc';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
-import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
+import { SharedWithInfo, UserInfo, getUserInfoFromDeviceID, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { business, person } from 'ionicons/icons';
@@ -107,6 +127,9 @@ const props = defineProps<{
   user: UserInfo;
   informationManager: InformationManager;
 }>();
+
+const invitedBy: Ref<string | null> = ref(null);
+const revokedBy: Ref<string | null> = ref(null);
 
 onMounted(async () => {
   const result = await getWorkspacesSharedWith(props.user.id);
@@ -121,6 +144,18 @@ onMounted(async () => {
       }),
       PresentationMode.Toast,
     );
+  }
+  if (props.user.createdBy) {
+    const inviter = await getUserInfoFromDeviceID(props.user.createdBy);
+    if (inviter.ok) {
+      invitedBy.value = inviter.value.humanHandle.label;
+    }
+  }
+  if (props.user.revokedBy) {
+    const revoker = await getUserInfoFromDeviceID(props.user.revokedBy);
+    if (revoker.ok) {
+      revokedBy.value = revoker.value.humanHandle.label;
+    }
   }
 });
 </script>
@@ -190,12 +225,16 @@ onMounted(async () => {
   overflow: hidden;
   border: ms.border('thin') solid ms.color('border-base-default');
   border-radius: ms.radius('lg');
-  margin-bottom: 0.75rem;
+
+  &:not(:last-child) {
+    margin-bottom: 0.75rem;
+  }
 
   &-item {
     display: flex;
     flex-direction: column;
     flex: 1 0 0;
+    min-width: 0;
     gap: ms.spacing('gap-lg');
     padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
     background: ms.color('surface-base-default-secondary');
@@ -210,10 +249,23 @@ onMounted(async () => {
       color: ms.color('text-base-description');
     }
 
+    &__content {
+      display: flex;
+      flex-direction: column;
+      gap: ms.spacing('gap-md');
+    }
+
     &__value {
       @include ms.font('body-md-regular');
-
       color: ms.color('text-base-body');
+    }
+
+    &__author {
+      @include ms.font('body-sm-regular');
+      color: ms.color('text-base-description');
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }

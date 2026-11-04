@@ -1747,10 +1747,12 @@
             "title": "Détails de l'utilisateur",
             "subtitles": {
                 "generalInfo": "Informations générales",
-                "joined": "Rejoint le",
+                "joined": "Invité le",
+                "memberSince": "Membre depuis",
+                "by": "par",
                 "commonWorkspaces": "Espaces de travail communs",
                 "revoked": "Révoqué",
-                "revokedSince": "Révoqué depuis le"
+                "revokedSince": "Révoqué le"
             },
             "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec cet utilisateur.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."
