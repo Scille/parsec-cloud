@@ -138,7 +138,7 @@ jobs:
         uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           working-directory: server
-          version: 0.13.4 # marker:uv-version
+          version: 0.13.6 # marker:uv-version
         timeout-minutes: 5
 
       - run: git status --porcelain
