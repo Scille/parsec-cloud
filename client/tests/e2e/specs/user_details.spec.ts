@@ -31,8 +31,9 @@ msTest('User details modal', async ({ usersPage }) => {
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
   await expect(modal.locator('.user-header-text__name')).toHaveText('Boby McBobFace');
   const timeItems = modal.locator('.ms-modal-content').locator('.user-info-item');
-  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Joined on');
+  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Invited on');
   await expect(timeItems.nth(0).locator('.user-info-item__value')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
+  await expect(timeItems.nth(0).locator('.user-info-item__author')).toHaveText('by Alicey McAliceFace');
   await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9]+$/);
   await expect(modal.locator('.workspace-list')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toBeHidden();
@@ -48,8 +49,9 @@ msTest('User details modal no common workspaces', async ({ usersPage }) => {
   await expect(modal.locator('.user-header-text__name')).toHaveText('Malloryy McMalloryFace');
   await expect(modal.locator('.user-header').locator('.label-status')).toBeVisible();
   const timeItems = modal.locator('.ms-modal-content').locator('.user-info-item');
-  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Joined on');
+  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Invited on');
   await expect(timeItems.nth(0).locator('.user-info-item__value')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
+  await expect(timeItems.nth(0).locator('.user-info-item__author')).toHaveText('by Alicey McAliceFace');
   await expect(modal.locator('.workspace-list')).toBeHidden();
   await expect(modal.locator('.workspace-empty')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toHaveText('You have no workspaces in common with this user.');
@@ -62,10 +64,12 @@ msTest('Revoked user details modal no common workspaces', async ({ usersPage }) 
   await expect(modal.locator('.user-header-text__name')).toHaveText('Malloryy McMalloryFace');
   await expect(modal.locator('.user-header').locator('.label-status')).toBeVisible();
   const timeItems = modal.locator('.ms-modal-content').locator('.user-info-item');
-  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Joined on');
+  await expect(timeItems.nth(0).locator('.user-info-item__title')).toHaveText('Invited on');
   await expect(timeItems.nth(0).locator('.user-info-item__value')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/);
+  await expect(timeItems.nth(0).locator('.user-info-item__author')).toHaveText('by Alicey McAliceFace');
   await expect(timeItems.nth(1).locator('.user-info-item__title')).toHaveText('Revoked since');
   await expect(timeItems.nth(1).locator('.user-info-item__value')).toContainText(`${DateTime.now().day}`);
+  await expect(timeItems.nth(1).locator('.user-info-item__author')).toHaveText('by Alicey McAliceFace');
   await expect(modal.locator('.workspace-list')).toBeHidden();
   await expect(modal.locator('.workspace-empty')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toHaveText('You have no workspaces in common with this user.');
