@@ -114,6 +114,7 @@ export {
   WorkspaceStatEntryErrorTag,
   WorkspaceStatFolderChildrenErrorTag,
   WorkspaceStopErrorTag,
+  WorkspaceTimelineEntryTag,
 } from '@/plugins/libparsec';
 export type {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
@@ -186,6 +187,7 @@ export type {
   ClientListUsersError,
   ClientListWorkspacesError,
   ClientListWorkspacesInfoError,
+  ClientListWorkspaceTimelineError,
   ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
   ClientNewDeviceInvitationError,
@@ -337,6 +339,7 @@ export type {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
+  WorkspaceTimelineEntry,
   WorkspaceUserRoleChange,
   X509CertificateReference,
 } from '@/plugins/libparsec';
