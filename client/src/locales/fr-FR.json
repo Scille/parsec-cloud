@@ -570,6 +570,11 @@
         "breadcrumbs": {
             "archived": "Archivés",
             "trashed": "Corbeille"
+        },
+        "offline": {
+            "title": "Vous êtes hors ligne",
+            "message": "Vous pouvez continuer à travailler sur les fichiers disponibles sur cet appareil. Vos <b>modifications seront conservées et seront synchronisées</b> dès le retour de votre connexion.",
+            "restored": "Connexion rétablie"
         }
     },
     "WorkspaceDetails": {
