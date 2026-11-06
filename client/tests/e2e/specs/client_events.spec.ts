@@ -181,3 +181,37 @@ msTest('Test web client not allowed', async ({ connected }) => {
   );
   await expect(connected).toBeHomePage();
 });
+
+msTest('Test connection lost and restored', async ({ connected }) => {
+  const avatar = connected.locator('.profile-header').locator('.avatar');
+  const offlineButton = connected.locator('#connected-header').locator('.offline-button');
+  const restoredText = connected.locator('#connected-header').locator('.offline-restored');
+
+  await expect(avatar).toHaveClass('avatar small online');
+  await expect(offlineButton).not.toBeVisible();
+  await expect(restoredText).not.toBeVisible();
+
+  // Trigger offline event
+  await sendEvent(connected, 'ClientEventOffline');
+  await expect(avatar).toHaveClass('avatar small offline');
+  await expect(offlineButton).toBeVisible();
+  await expect(offlineButton).toHaveText('You are offline');
+  await offlineButton.click();
+  const modal = connected.locator('.information-modal');
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('You are offline');
+  await expect(modal.locator('.report-text__text')).toHaveText(
+    'You can keep working on available files on this device. Your changes \
+    will be saved and synchronized as soon as your connection is restored.',
+  );
+  await modal.locator('#next-button').click();
+  await expect(modal).not.toBeVisible();
+
+  // Back online
+  await sendEvent(connected, 'ClientEventOnline');
+  await expect(avatar).toHaveClass('avatar small online');
+  await expect(offlineButton).not.toBeVisible();
+  await expect(restoredText).toBeVisible();
+  await expect(restoredText).toHaveText('Connection restored');
+  await connected.waitForTimeout(5000);
+  await expect(restoredText).not.toBeVisible();
+});

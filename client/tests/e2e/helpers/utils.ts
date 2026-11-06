@@ -565,7 +565,9 @@ type Events =
   | 'ClientEventRevokedSelfUser'
   | 'ClientEventExpiredOrganization'
   | 'ClientEventWebClientNotAllowedByOrganization'
-  | 'ClientEventTooMuchDriftWithServerClock';
+  | 'ClientEventTooMuchDriftWithServerClock'
+  | 'ClientEventOffline'
+  | 'ClientEventOnline';
 
 export async function sendEvent(page: MsPage, event: Events): Promise<void> {
   const url = new URL(page.url());
