@@ -2259,7 +2259,8 @@
                     "noCodeSelected": "No code was selected, the recovery has been cancelled.",
                     "wrongCodeSelected": "The selected code is incorrect, the recovery has been cancelled.",
                     "signifyTrustFailed": "Failed to validate the code. Please try again.",
-                    "finalizeFailed": "Failed to finalize the recovery. Please try again."
+                    "finalizeFailed": "Failed to finalize the recovery. Please try again.",
+                    "emailNotSent": "Email could not be sent. Please give the link to the user."
                 }
             }
         },

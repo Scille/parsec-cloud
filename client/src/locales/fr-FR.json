@@ -2259,7 +2259,8 @@
                     "noCodeSelected": "Aucun code n'a été sélectionné, la récupération a été annulée.",
                     "wrongCodeSelected": "Le code sélectionné est incorrect, la récupération a été annulée.",
                     "signifyTrustFailed": "Impossible de valider le code. Veuillez réessayer.",
-                    "finalizeFailed": "Impossible de finaliser la récupération. Veuillez réessayer."
+                    "finalizeFailed": "Impossible de finaliser la récupération. Veuillez réessayer.",
+                    "emailNotSent": "Impossible d'envoyer un email. Veuillez transmettre le lien à l'utilisateur."
                 }
             }
         },
