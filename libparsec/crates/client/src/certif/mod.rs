@@ -45,8 +45,9 @@ pub use list::{
     CertifGetCurrentSelfProfileError, CertifGetCurrentSelfRealmRoleError,
     CertifGetCurrentSelfRealmsRoleError, CertifGetRealmArchivingConfigurationError,
     CertifGetUserDeviceError, CertifGetUserInfoError, CertifListUserDevicesError,
-    CertifListUsersError, CertifListWorkspaceUserRoleChangesError, CertifListWorkspaceUsersError,
-    DeviceInfo, UserInfo, WorkspaceUserAccessInfo, WorkspaceUserRoleChange,
+    CertifListUsersError, CertifListWorkspaceTimelineError,
+    CertifListWorkspaceUserRoleChangesError, CertifListWorkspaceUsersError, DeviceInfo, UserInfo,
+    WorkspaceTimelineEntry, WorkspaceUserAccessInfo, WorkspaceUserRoleChange,
 };
 pub use manifest_validate::{CertifValidateManifestError, InvalidManifestError};
 pub use poll::CertifPollServerError;
@@ -721,6 +722,15 @@ impl CertificateOps {
         user_id: UserID,
     ) -> Result<Vec<WorkspaceUserRoleChange>, CertifListWorkspaceUserRoleChangesError> {
         list::list_workspace_user_role_changes(self, realm_id, user_id).await
+    }
+
+    /// List all events (creation, sharing, renaming, archiving etc.) that occurred
+    /// on a given realm, ordered by timestamp (oldest first).
+    pub async fn list_workspace_timeline(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<Vec<WorkspaceTimelineEntry>, CertifListWorkspaceTimelineError> {
+        list::list_workspace_timeline(self, realm_id).await
     }
 
     /// Retrieve the current archiving configuration of a realm from the last

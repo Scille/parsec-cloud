@@ -1070,6 +1070,26 @@ macro_rules! impl_read_methods {
 
         #[allow(unused)]
         /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
+        pub async fn get_realm_archiving_certificates(
+            &mut self,
+            up_to: UpTo,
+            realm_id: VlobID,
+        ) -> anyhow::Result<Vec<Arc<RealmArchivingCertificate>>> {
+            let query = GetCertificateQuery::realm_archiving_certificates(&realm_id);
+            let items = self
+                .storage
+                .get_multiple_certificates_encrypted(query, up_to, None, None)
+                .await?;
+            get_multiple_certificates_from_encrypted(
+                &self.store,
+                items,
+                RealmArchivingCertificate::unsecure_load,
+                UnsecureRealmArchivingCertificate::skip_validation,
+            )
+        }
+
+        #[allow(unused)]
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_realm_key_rotation_certificate(
             &mut self,
             up_to: UpTo,

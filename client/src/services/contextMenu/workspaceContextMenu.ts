@@ -212,6 +212,9 @@ export function useWorkspaceContextMenu(fromSidebar = false) {
       case WorkspaceAction.Trash:
         await actions.trashWorkspace(workspace);
         break;
+      case WorkspaceAction.ShowDetails:
+        await actions.showDetails(workspace);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
         break;

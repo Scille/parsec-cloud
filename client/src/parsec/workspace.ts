@@ -8,6 +8,7 @@ import {
   ClientArchiveWorkspaceError,
   ClientCreateWorkspaceError,
   ClientListWorkspacesError,
+  ClientListWorkspaceTimelineError,
   ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
   ClientRenameWorkspaceError,
@@ -40,10 +41,11 @@ import {
   WorkspaceName,
   WorkspaceRole,
   WorkspaceStopError,
+  WorkspaceTimelineEntry,
   WorkspaceUserRoleChange,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { CertificateBasedInfoOriginTag, libparsec, RealmArchivingConfiguration } from '@/plugins/libparsec';
+import { CertificateBasedInfoOriginTag, libparsec, RealmArchivingConfiguration, WorkspaceTimelineEntryTag } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -458,6 +460,25 @@ export async function getWorkspaceUserRoleChanges(
   if (result.ok) {
     for (const change of result.value) {
       change.grantedOn = DateTime.fromSeconds(change.grantedOn as any as number);
+    }
+  }
+  return result;
+}
+
+export async function getWorkspaceTimeline(
+  workspaceId: WorkspaceID,
+): Promise<Result<Array<WorkspaceTimelineEntry>, ClientListWorkspaceTimelineError>> {
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientListWorkspaceTimelineError>();
+  }
+  const result = await libparsec.clientListWorkspaceTimeline(handle, workspaceId);
+  if (result.ok) {
+    for (const entry of result.value) {
+      entry.timestamp = DateTime.fromSeconds(entry.timestamp as any as number);
+      if (entry.tag === WorkspaceTimelineEntryTag.DeletionPlanned) {
+        entry.deletionDate = DateTime.fromSeconds(entry.deletionDate as any as number);
+      }
     }
   }
   return result;

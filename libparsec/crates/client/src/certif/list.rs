@@ -1,10 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+use std::collections::HashMap;
+
 use libparsec_types::prelude::*;
 
+use crate::EncryptionUsage;
+
 use super::{
-    CertificateOps, UpTo,
-    store::{CertifStoreError, GetCertificateError},
+    CertificateOps, UpTo, realm_keys_bundle,
+    store::{CertifStoreError, CertificatesStoreReadGuard, GetCertificateError},
 };
 
 pub type CertifGetCurrentSelfProfileError = super::store::CertifStoreError;
@@ -15,6 +19,7 @@ pub type CertifListUsersError = super::store::CertifStoreError;
 pub type CertifListUserDevicesError = super::store::CertifStoreError;
 pub type CertifListWorkspaceUsersError = super::store::CertifStoreError;
 pub type CertifListWorkspaceUserRoleChangesError = super::store::CertifStoreError;
+pub type CertifListWorkspaceTimelineError = super::store::CertifStoreError;
 
 pub(super) async fn get_current_self_profile(
     ops: &CertificateOps,
@@ -472,6 +477,222 @@ pub(super) async fn list_workspace_user_role_changes(
         })
         .await?
         .map_err(|err| err.into())
+}
+
+/// An entry of a workspace's timeline, built from the realm certificates.
+///
+/// `author` is the device that issued the certificate.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum WorkspaceTimelineEntry {
+    /// The workspace has been created (first realm role certificate, the
+    /// creator gives itself the `Owner` role).
+    /// `initial_name` is `None` if the workspace has never been named
+    /// or if the name cannot be decrypted.
+    Created {
+        timestamp: DateTime,
+        author: DeviceID,
+        initial_name: Option<EntryName>,
+    },
+    /// The role of a user on the workspace has been changed:
+    /// - `previous_role` is `None` if the workspace has just been shared with the user.
+    /// - `new_role` is `None` if the user has been removed from the workspace.
+    UserRoleChanged {
+        timestamp: DateTime,
+        author: DeviceID,
+        user_id: UserID,
+        previous_role: Option<RealmRole>,
+        new_role: Option<RealmRole>,
+    },
+    /// The workspace has been renamed (the initial naming done during the
+    /// workspace bootstrap is not reported).
+    /// A name is `None` if it cannot be decrypted.
+    Renamed {
+        timestamp: DateTime,
+        author: DeviceID,
+        previous_name: Option<EntryName>,
+        new_name: Option<EntryName>,
+    },
+    /// The workspace has been archived (i.e. it is now read-only).
+    Archived {
+        timestamp: DateTime,
+        author: DeviceID,
+    },
+    /// The workspace has been planned for deletion.
+    DeletionPlanned {
+        timestamp: DateTime,
+        author: DeviceID,
+        deletion_date: DateTime,
+    },
+    /// The workspace has been made available again after being archived
+    /// or planned for deletion.
+    Restored {
+        timestamp: DateTime,
+        author: DeviceID,
+    },
+}
+
+impl WorkspaceTimelineEntry {
+    pub fn timestamp(&self) -> DateTime {
+        match self {
+            Self::Created { timestamp, .. }
+            | Self::UserRoleChanged { timestamp, .. }
+            | Self::Renamed { timestamp, .. }
+            | Self::Archived { timestamp, .. }
+            | Self::DeletionPlanned { timestamp, .. }
+            | Self::Restored { timestamp, .. } => *timestamp,
+        }
+    }
+}
+
+/// List all the events that occurred on a workspace, according to its realm certificates.
+/// Entries are returned ordered by timestamp in increasing order (i.e. oldest first)
+pub(super) async fn list_workspace_timeline(
+    ops: &CertificateOps,
+    realm_id: VlobID,
+) -> Result<Vec<WorkspaceTimelineEntry>, CertifListWorkspaceTimelineError> {
+    ops.store
+        .for_read(async |store| {
+            let role_certifs = store.get_realm_roles(UpTo::Current, realm_id).await?;
+            let name_certifs = store
+                .get_realm_name_certificates(UpTo::Current, realm_id)
+                .await?;
+            let archiving_certifs = store
+                .get_realm_archiving_certificates(UpTo::Current, realm_id)
+                .await?;
+
+            // Maximum size it can be
+            let mut entries = Vec::with_capacity(
+                role_certifs.len() + name_certifs.len() + archiving_certifs.len(),
+            );
+
+            // Decrypt all the names first, since the initial one is needed by the
+            // `Created` entry. A name that cannot be decrypted is not considered
+            // an error: the entry is still returned, only without the name.
+            let mut names = Vec::with_capacity(name_certifs.len());
+            for certif in &name_certifs {
+                names.push(decrypt_realm_name_certificate(ops, store, certif).await);
+            }
+
+            // We keep track of the current role of each user to provide
+            // the previous role (`None` meaning the user had no access).
+            let mut current_roles: HashMap<UserID, RealmRole> = HashMap::new();
+            for (index, certif) in role_certifs.iter().enumerate() {
+                let previous_role = match certif.role {
+                    Some(role) => current_roles.insert(certif.user_id, role),
+                    None => current_roles.remove(&certif.user_id),
+                };
+                // The very first role certificate is the creator giving themselves
+                // the `Owner` role.
+                let entry = if index == 0 {
+                    WorkspaceTimelineEntry::Created {
+                        timestamp: certif.timestamp,
+                        author: certif.author,
+                        initial_name: names.first().cloned().flatten(),
+                    }
+                } else {
+                    match (previous_role, certif.role) {
+                        // Unsharing a user that has no access, should not occur
+                        // since certificates are validated before being stored.
+                        (None, None) => continue,
+                        (previous_role, new_role) => WorkspaceTimelineEntry::UserRoleChanged {
+                            timestamp: certif.timestamp,
+                            author: certif.author,
+                            user_id: certif.user_id,
+                            previous_role,
+                            new_role,
+                        },
+                    }
+                };
+                entries.push(entry);
+            }
+
+            // The first name certificate is the initial naming done
+            // during the workspace bootstrap, so it is not a rename.
+            for index in 1..name_certifs.len() {
+                let certif = &name_certifs[index];
+                entries.push(WorkspaceTimelineEntry::Renamed {
+                    timestamp: certif.timestamp,
+                    author: certif.author,
+                    previous_name: names[index - 1].clone(),
+                    new_name: names[index].clone(),
+                });
+            }
+
+            entries.extend(
+                archiving_certifs
+                    .iter()
+                    .map(|certif| match certif.configuration {
+                        RealmArchivingConfiguration::Available => {
+                            WorkspaceTimelineEntry::Restored {
+                                timestamp: certif.timestamp,
+                                author: certif.author,
+                            }
+                        }
+                        RealmArchivingConfiguration::Archived => WorkspaceTimelineEntry::Archived {
+                            timestamp: certif.timestamp,
+                            author: certif.author,
+                        },
+                        RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
+                            WorkspaceTimelineEntry::DeletionPlanned {
+                                timestamp: certif.timestamp,
+                                author: certif.author,
+                                deletion_date,
+                            }
+                        }
+                    }),
+            );
+
+            entries.sort_by_key(|entry| entry.timestamp());
+
+            Ok::<_, anyhow::Error>(entries)
+        })
+        .await?
+        .map_err(|err| err.into())
+}
+
+/// Decrypt the name contained in a realm name certificate.
+///
+/// Returns `None` (and logs a warning) if the name cannot be decrypted, e.g.
+/// because the keys bundle cannot be fetched (offline) or is corrupted.
+async fn decrypt_realm_name_certificate(
+    ops: &CertificateOps,
+    store: &mut CertificatesStoreReadGuard<'_>,
+    certif: &RealmNameCertificate,
+) -> Option<EntryName> {
+    let decrypted = match realm_keys_bundle::decrypt_for_realm(
+        ops,
+        store,
+        EncryptionUsage::RealmRename,
+        certif.realm_id,
+        certif.key_index,
+        &certif.encrypted_name,
+    )
+    .await
+    {
+        Ok(decrypted) => decrypted,
+        Err(err) => {
+            log::warn!(
+                "Cannot decrypt realm name certificate (realm `{}`, created by `{}` on {}): {err}",
+                certif.realm_id,
+                certif.author,
+                certif.timestamp,
+            );
+            return None;
+        }
+    };
+
+    let name = std::str::from_utf8(&decrypted)
+        .ok()
+        .and_then(|decrypted_str| decrypted_str.parse().ok());
+    if name.is_none() {
+        log::warn!(
+            "Invalid name in realm name certificate (realm `{}`, created by `{}` on {})",
+            certif.realm_id,
+            certif.author,
+            certif.timestamp,
+        );
+    }
+    name
 }
 
 pub(super) async fn get_realm_archiving_configuration(

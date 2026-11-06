@@ -10060,6 +10060,31 @@ fn variant_client_list_users_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientListWorkspaceTimelineError
+
+#[allow(dead_code)]
+fn variant_client_list_workspace_timeline_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListWorkspaceTimelineError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListWorkspaceTimelineError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientListWorkspaceTimelineErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientListWorkspaceTimelineError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientListWorkspaceTimelineErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientListWorkspaceUserRoleChangesError
 
 #[allow(dead_code)]
@@ -19952,6 +19977,556 @@ fn variant_workspace_storage_cache_size_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceTimelineEntry
+
+#[allow(dead_code)]
+fn variant_workspace_timeline_entry_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceTimelineEntry> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "WorkspaceTimelineEntryArchived" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let author = {
+                let js_val: Handle<JsString> = obj.get(cx, "author")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Archived { timestamp, author })
+        }
+        "WorkspaceTimelineEntryCreated" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let author = {
+                let js_val: Handle<JsString> = obj.get(cx, "author")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let initial_name = {
+                let js_val: Handle<JsValue> = obj.get(cx, "initialName")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_val.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                    }
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Created {
+                timestamp,
+                author,
+                initial_name,
+            })
+        }
+        "WorkspaceTimelineEntryDeletionPlanned" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let author = {
+                let js_val: Handle<JsString> = obj.get(cx, "author")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let deletion_date = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "deletionDate")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::DeletionPlanned {
+                timestamp,
+                author,
+                deletion_date,
+            })
+        }
+        "WorkspaceTimelineEntryRenamed" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let author = {
+                let js_val: Handle<JsString> = obj.get(cx, "author")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let previous_name = {
+                let js_val: Handle<JsValue> = obj.get(cx, "previousName")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_val.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                    }
+                }
+            };
+            let new_name = {
+                let js_val: Handle<JsValue> = obj.get(cx, "newName")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_val.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                    }
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Renamed {
+                timestamp,
+                author,
+                previous_name,
+                new_name,
+            })
+        }
+        "WorkspaceTimelineEntryRestored" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let author = {
+                let js_val: Handle<JsString> = obj.get(cx, "author")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::Restored { timestamp, author })
+        }
+        "WorkspaceTimelineEntryUserRoleChanged" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let author = {
+                let js_val: Handle<JsString> = obj.get(cx, "author")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let previous_role = {
+                let js_val: Handle<JsValue> = obj.get(cx, "previousRole")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let js_string = js_val.value(cx);
+                            enum_realm_role_js_to_rs(cx, js_string.as_str())?
+                        })
+                    }
+                }
+            };
+            let new_role = {
+                let js_val: Handle<JsValue> = obj.get(cx, "newRole")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                        Some({
+                            let js_string = js_val.value(cx);
+                            enum_realm_role_js_to_rs(cx, js_string.as_str())?
+                        })
+                    }
+                }
+            };
+            Ok(libparsec::WorkspaceTimelineEntry::UserRoleChanged {
+                timestamp,
+                author,
+                user_id,
+                previous_role,
+                new_role,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a WorkspaceTimelineEntry"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_workspace_timeline_entry_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceTimelineEntry,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::WorkspaceTimelineEntry::Archived {
+            timestamp, author, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceTimelineEntryArchived").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+            let js_author = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(author) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "author", js_author)?;
+        }
+        libparsec::WorkspaceTimelineEntry::Created {
+            timestamp,
+            author,
+            initial_name,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceTimelineEntryCreated").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+            let js_author = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(author) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "author", js_author)?;
+            let js_initial_name = match initial_name {
+                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "initialName", js_initial_name)?;
+        }
+        libparsec::WorkspaceTimelineEntry::DeletionPlanned {
+            timestamp,
+            author,
+            deletion_date,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceTimelineEntryDeletionPlanned").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+            let js_author = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(author) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "author", js_author)?;
+            let js_deletion_date = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(deletion_date) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "deletionDate", js_deletion_date)?;
+        }
+        libparsec::WorkspaceTimelineEntry::Renamed {
+            timestamp,
+            author,
+            previous_name,
+            new_name,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceTimelineEntryRenamed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+            let js_author = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(author) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "author", js_author)?;
+            let js_previous_name = match previous_name {
+                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "previousName", js_previous_name)?;
+            let js_new_name = match new_name {
+                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "newName", js_new_name)?;
+        }
+        libparsec::WorkspaceTimelineEntry::Restored {
+            timestamp, author, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceTimelineEntryRestored").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+            let js_author = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(author) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "author", js_author)?;
+        }
+        libparsec::WorkspaceTimelineEntry::UserRoleChanged {
+            timestamp,
+            author,
+            user_id,
+            previous_role,
+            new_role,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceTimelineEntryUserRoleChanged").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+            let js_author = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(author) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "author", js_author)?;
+            let js_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "userId", js_user_id)?;
+            let js_previous_role = match previous_role {
+                Some(elem) => JsString::try_new(cx, enum_realm_role_rs_to_js(elem))
+                    .or_throw(cx)?
+                    .as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "previousRole", js_previous_role)?;
+            let js_new_role = match new_role {
+                Some(elem) => JsString::try_new(cx, enum_realm_role_rs_to_js(elem))
+                    .or_throw(cx)?
+                    .as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "newRole", js_new_role)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceWatchEntryOneShotError
 
 #[allow(dead_code)]
@@ -24422,6 +24997,78 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_list_users_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_list_workspace_timeline
+fn client_list_workspace_timeline(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_workspace_timeline(client, realm_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    variant_workspace_timeline_entry_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_list_workspace_timeline_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -33469,6 +34116,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientListUserDevices", client_list_user_devices)?;
     cx.export_function("clientListUsers", client_list_users)?;
+    cx.export_function(
+        "clientListWorkspaceTimeline",
+        client_list_workspace_timeline,
+    )?;
     cx.export_function(
         "clientListWorkspaceUserRoleChanges",
         client_list_workspace_user_role_changes,
