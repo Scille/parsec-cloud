@@ -6,6 +6,33 @@
       v-if="showHeader"
       id="connected-header"
     >
+      <!-- Offline banner (small display)-->
+      <template v-if="isSmallDisplay">
+        <ion-text
+          v-if="connectionRestored"
+          class="offline-restored offline-banner"
+        >
+          <ms-image
+            class="offline-icon button-icon-left"
+            :image="WifiIcon"
+          />
+          {{ $msTranslate('HeaderPage.offline.restored') }}
+        </ion-text>
+        <ion-button
+          v-else-if="!isOnline"
+          class="offline-button offline-banner color-secondary"
+          fill="solid"
+          expand="full"
+          @click="openOfflineModal()"
+        >
+          <ms-image
+            class="offline-icon button-icon-left"
+            :image="WifiOffIcon"
+          />
+          {{ $msTranslate('HeaderPage.offline.title') }}
+        </ion-button>
+      </template>
+
       <!-- Archived / trashed workspace banner in small display -->
       <ion-text
         v-if="isSmallDisplay && workspaceIsArchivedOrTrashed"
@@ -110,8 +137,11 @@
           slot="primary"
           class="topbar-right"
         >
-          <div class="topbar-right-buttons">
-            <template v-if="!currentRouteIsOneOf([Routes.History, Routes.MyProfile, Routes.Invitations])">
+          <template v-if="!currentRouteIsOneOf([Routes.History, Routes.MyProfile, Routes.Invitations])">
+            <div
+              v-if="showInvitationsButton || (isSmallDisplay && !currentRouteIsWorkspaceManagementRoute())"
+              class="topbar-right-buttons"
+            >
               <!-- Invitations button -->
               <invitations-button v-if="showInvitationsButton" />
 
@@ -127,9 +157,34 @@
               >
                 <ion-icon :icon="ellipsisHorizontal" />
               </ion-button>
-            </template>
-          </div>
+            </div>
+          </template>
 
+          <!-- Offline button -->
+          <template v-if="!isSmallDisplay">
+            <ion-text
+              v-if="connectionRestored"
+              class="offline-restored"
+            >
+              <ms-image
+                class="offline-icon button-icon-left"
+                :image="WifiIcon"
+              />
+              {{ $msTranslate('HeaderPage.offline.restored') }}
+            </ion-text>
+            <ion-button
+              v-else-if="!isOnline"
+              class="offline-button color-secondary"
+              fill="solid"
+              @click="openOfflineModal()"
+            >
+              <ms-image
+                class="offline-icon button-icon-left"
+                :image="WifiOffIcon"
+              />
+              {{ $msTranslate('HeaderPage.offline.title') }}
+            </ion-button>
+          </template>
           <!-- Profile button -->
           <profile-header-organization
             v-if="isLargeDisplay"
@@ -157,6 +212,8 @@
 </template>
 
 <script setup lang="ts">
+import WifiIcon from '@/assets/images/wifi-icon.svg?raw';
+import WifiOffIcon from '@/assets/images/wifi-off-icon.svg?raw';
 import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
@@ -193,6 +250,7 @@ import {
 } from '@/services/eventDistributor';
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
 import WorkspaceSwitchModal from '@/views/header/WorkspaceSwitchModal.vue';
@@ -216,6 +274,8 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, wat
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+
 let hotkeys: HotkeyGroup | null = null;
 let eventDistributorCbId: string | null = null;
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
@@ -224,7 +284,8 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const securityWarnings = ref<SecurityWarnings | undefined>();
-
+const isOnline = ref(false);
+const connectionRestored = ref(false);
 const workspaceIsArchivedOrTrashed = computed(
   () => currentWorkspace.value && (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed),
 );
@@ -399,13 +460,22 @@ onMounted(async () => {
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
+    isOnline.value = result.value.isServerOnline;
   } else {
     window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(result.error)}`);
   }
   await updateRoute();
 
   eventDistributorCbId = await eventDistributor.value.registerCallback(
-    [Events.WorkspaceCreated, Events.MenuAction, Events.WorkspaceRoleUpdate, Events.DeviceCreated, Events.WorkspaceUpdated],
+    [
+      Events.WorkspaceCreated,
+      Events.MenuAction,
+      Events.WorkspaceRoleUpdate,
+      Events.DeviceCreated,
+      Events.WorkspaceUpdated,
+      Events.Online,
+      Events.Offline,
+    ],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
         securityWarnings.value = await getSecurityWarnings();
@@ -421,9 +491,16 @@ onMounted(async () => {
         }
       } else if (event === Events.Online) {
         securityWarnings.value = await getSecurityWarnings();
+        if (!isOnline.value) {
+          connectionRestored.value = true;
+          setTimeout(() => (connectionRestored.value = false), 5000);
+        }
+        isOnline.value = true;
       } else if (event === Events.WorkspaceUpdated) {
         securityWarnings.value = await getSecurityWarnings();
         await updateRoute();
+      } else if (event === Events.Offline) {
+        isOnline.value = false;
       }
     },
   );
@@ -508,6 +585,17 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 
   await navigateTo(data);
 }
+
+async function openOfflineModal(): Promise<void> {
+  informationManager.value.present(
+    new Information({
+      title: 'HeaderPage.offline.title',
+      message: 'HeaderPage.offline.message',
+      level: InformationLevel.Info,
+    }),
+    PresentationMode.Modal,
+  );
+}
 </script>
 
 <style scoped lang="scss">
@@ -531,6 +619,52 @@ async function openWorkspacesSwitchModal(): Promise<void> {
   &__icon {
     color: ms.color('icon-neutral-on-color');
     width: 1rem;
+  }
+}
+
+.offline {
+  &-icon {
+    width: ms.size('sm');
+    height: ms.size('sm');
+  }
+
+  &-button {
+    min-height: auto !important;
+
+    &::part(native) {
+      padding: ms.spacing('padding-md') ms.spacing('padding-xl');
+      color: ms.color('text-on-color-label');
+    }
+
+    &.offline-banner {
+      width: 100%;
+      margin: 0;
+
+      &::part(native) {
+        border-radius: 0;
+      }
+    }
+
+    .offline-icon {
+      --fill-color: #{ms.color('icon-on-color-label')};
+    }
+  }
+
+  &-restored {
+    display: flex;
+    align-items: center;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-md') ms.spacing('padding-2xl');
+    color: ms.color('text-brand-default');
+    @include ms.font('label-md-emphasis');
+
+    &.offline-banner {
+      justify-content: center;
+    }
+
+    .offline-icon {
+      --fill-color: #{ms.color('text-brand-default')};
+    }
   }
 }
 

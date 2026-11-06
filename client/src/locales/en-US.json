@@ -570,6 +570,11 @@
         "breadcrumbs": {
             "archived": "Archived",
             "trashed": "Bin"
+        },
+        "offline": {
+            "title": "You are offline",
+            "message": "You can keep working on available files on this device. Your <b>changes will be saved and synchronized</b> as soon as your connection is restored.",
+            "restored": "Connection restored"
         }
     },
     "WorkspaceDetails": {
