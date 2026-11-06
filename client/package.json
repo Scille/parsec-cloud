@@ -50,7 +50,7 @@
         "ionicons": "^8.1.0",
         "luxon": "^3.5.0",
         "markdown-it": "^15.0.3",
-        "megashark-lib": "https://github.com/Scille/megashark-lib/releases/download/build-87c227a9a8ccbc90ceb0025d89d66c06756c50a9/megashark-lib-87c227a9a8ccbc90ceb0025d89d66c06756c50a9.tgz",
+        "megashark-lib": "https://github.com/Scille/megashark-lib/releases/download/build-1af639fdf396f38c67fbd1ad514522466fd892d5/megashark-lib-1af639fdf396f38c67fbd1ad514522466fd892d5.tgz",
         "monaco-editor": "^0.57.0",
         "onlyoffice-editor": "https://github.com/Scille/onlyoffice-editor/releases/download/v9.3.0.140+parsec0/onlyoffice-editor-9.3.0.140+parsec0.tgz",
         "onlyoffice-x2t": "https://github.com/Scille/onlyoffice-x2t-wasm/releases/download/v9.3.2+parsec0/onlyoffice-x2t-v9.3.2+parsec0.tgz",

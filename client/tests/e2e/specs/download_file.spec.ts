@@ -6,6 +6,7 @@ import {
   dragAndDropFile,
   expect,
   expectSameContent,
+  FileOperationMenu,
   importDefaultFiles,
   ImportDocuments,
   MsPage,
@@ -203,11 +204,12 @@ msTest.describe(() => {
       path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
     ]);
     await documents.waitForTimeout(1000);
+    const uploadMenu = new FileOperationMenu(documents);
+    await uploadMenu.expectVisible();
+    await uploadMenu.expectOperationsCount(1);
+    await uploadMenu.hideUploadStatus();
+    await uploadMenu.close();
 
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
-    await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     // cspell:disable-next-line
     await renameDocument(documents, entries.nth(1), '文件名.png');
     // cspell:disable-next-line
@@ -232,6 +234,7 @@ msTest.describe(() => {
     const download = await downloadFromActionBar(documents);
 
     expect(download.suggestedFilename()).toBe('Folder.zip');
+
     expectZipContent(await readDownload(download), {
       // cspell:disable-next-line
       'Folder/Имя файла.png': readImportedFile(testInfo, 'image.png'),
@@ -290,9 +293,12 @@ msTest.describe(() => {
     await expect(documents).toBeDocumentPage();
     const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
     await dragAndDropFile(documents, dropZone, [filePath]);
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu.locator('.file-operation-item').locator('.folder-icon')).toBeVisible({ timeout: 60_000 });
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+
+    const uploadMenu = new FileOperationMenu(documents);
+    await uploadMenu.expectVisible();
+    await uploadMenu.expectOperationsCount(1);
+    await uploadMenu.hideUploadStatus();
+    await uploadMenu.close();
 
     const entry = documents.locator('.folder-container').locator('.file-list-item').first();
     const download = await downloadFromContextMenu(documents, entry);

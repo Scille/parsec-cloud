@@ -419,7 +419,7 @@
   &:has(.request-list-item) {
     .label-name,
     .request-name {
-      width: 100%;
+      flex: 1 1 11.25rem;
       min-width: 11.25rem;
       max-width: 25rem;
 
@@ -430,9 +430,8 @@
 
     .label-email,
     .request-email {
-      min-width: 16rem;
-      max-width: 16rem;
-      flex-grow: 1;
+      flex: 0 1 16rem;
+      min-width: 0;
 
       @include ms.responsive-breakpoint('lg') {
         display: none;
@@ -441,8 +440,7 @@
 
     .label-createdOn,
     .request-createdOn {
-      min-width: 11.25rem;
-      flex-grow: 0;
+      flex: 0 0 11.25rem;
 
       @include ms.responsive-breakpoint('xl') {
         display: none;
@@ -451,8 +449,7 @@
 
     .label-type,
     .request-type {
-      min-width: 12rem;
-      max-width: 12rem;
+      flex: 0 0 12rem;
 
       @include ms.responsive-breakpoint('sm') {
         min-width: fit-content;
@@ -463,8 +460,12 @@
     .label-space,
     .request-actions {
       min-height: 1rem;
-      min-width: 15rem;
-      flex-grow: 0;
+      flex: 0 0 15rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        min-width: fit-content;
+        flex-basis: auto;
+      }
     }
   }
 
@@ -752,6 +753,10 @@
   .invitations-list-header,
   .requests-list-header {
     padding: ms.spacing('padding-none') ms.spacing('padding-3xl');
+
+    &::part(inner) {
+      padding: ms.spacing('padding-none');
+    }
   }
 
   .invitation-list-item,
@@ -770,6 +775,7 @@
       overflow: visible;
       padding: ms.spacing('padding-xl') ms.spacing('padding-3xl');
       overflow: visible;
+      height: fit-content !important;
       cursor: default;
 
       @include ms.responsive-breakpoint('sm') {
