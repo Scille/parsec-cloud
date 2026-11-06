@@ -23,6 +23,7 @@ import {
   SelfShamirRecoveryInfo,
   SelfShamirRecoveryInfoSetupAllValid,
   SelfShamirRecoveryInfoTag,
+  ShamirInvitation,
   ShamirRecoveryClaimAddShareError,
   ShamirRecoveryClaimInitialInfo,
   ShamirRecoveryClaimInProgress1Info,
@@ -42,7 +43,7 @@ import {
 } from '@/parsec/types';
 import { getUserInfo } from '@/parsec/user';
 import { generateNoHandleError } from '@/parsec/utils';
-import { libparsec } from '@/plugins/libparsec';
+import { InviteListItemTag, libparsec, ListInvitationsError } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -50,6 +51,20 @@ const SHAMIR_THRESHOLD = 2;
 
 export async function getRequiredShamirThreshold(): Promise<number> {
   return SHAMIR_THRESHOLD;
+}
+
+export async function listShamirInvitations(): Promise<Result<Array<ShamirInvitation>, ListInvitationsError>> {
+  const handle = getConnectionHandle();
+
+  if (handle === null) {
+    return generateNoHandleError<ListInvitationsError>();
+  }
+  const result = await libparsec.clientListInvitations(handle);
+  if (!result.ok) {
+    return result;
+  }
+  const invitations = result.value.filter((invitation) => invitation.tag === InviteListItemTag.ShamirRecovery);
+  return { ok: true, value: invitations };
 }
 
 export async function getSelfShamirRecovery(): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>> {

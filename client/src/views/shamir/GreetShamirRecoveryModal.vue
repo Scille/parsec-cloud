@@ -91,7 +91,7 @@ onMounted(async () => {
 
 async function startProcess(): Promise<void> {
   const waitResult = await props.greeter.initialWaitClaimer();
-  if (!waitResult.ok) {
+  if (!waitResult.ok && waitResult.error.tag !== GreetInProgressErrorTag.Cancelled) {
     props.informationManager.present(
       new Information({
         message: { key: 'OrganizationRecovery.shamir.greet.errors.waitFailed', data: { name: props.claimerName.label } },
@@ -105,7 +105,7 @@ async function startProcess(): Promise<void> {
   step.value = Steps.ProvideCode;
   await nextTick();
   const waitTrustResult = await props.greeter.waitClaimerTrust();
-  if (!waitTrustResult.ok) {
+  if (!waitTrustResult.ok && waitTrustResult.error.tag !== GreetInProgressErrorTag.Cancelled) {
     props.informationManager.present(
       new Information({
         message: {

@@ -59,6 +59,7 @@
               fill="outline"
               class="shamir-others-list-item-buttons__copy"
               @click="$emit('copyLink', info)"
+              :disabled="loading"
             >
               <ion-icon
                 class="button-icon-left"
@@ -69,6 +70,7 @@
             <ion-button
               class="shamir-others-list-item-buttons__start"
               @click="$emit('startRecovery', info)"
+              :disabled="loading"
             >
               {{ $msTranslate('OrganizationRecovery.shamir.modalOthers.start') }}
             </ion-button>
@@ -95,6 +97,10 @@ import { onMounted, ref } from 'vue';
 const shamirInfo = ref<Array<OtherShamirRecoveryInfo>>([]);
 const error = ref('');
 const expandedUserId = ref<string | undefined>(undefined);
+
+defineProps<{
+  loading?: boolean;
+}>();
 
 defineEmits<{
   (e: 'copyLink', info: OtherShamirRecoveryInfo): void;
