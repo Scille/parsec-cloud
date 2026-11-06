@@ -3,9 +3,7 @@
 use std::io::Write;
 
 use dialoguer::Confirm;
-use libparsec::{
-    AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy, ParsecAddr,
-};
+use libparsec::ParsecAddr;
 
 use crate::{
     ui::{Color, compat::AvailableDeviceDisplay},
@@ -22,63 +20,7 @@ crate::clap_parser_with_shared_opts_builder!(
 );
 
 pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
-    let device = load_device_file(&args.config_dir, args.device).await?;
-
-    if device.totp_opaque_key_id.is_some() {
-        // In theory we should support this authentication method here,
-        // however:
-        // - It is cumbersome since it requires a TOTP challenge involving the server.
-        // - In practice it is a niche usage that will most likely only be used in the GUI.
-        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication.into());
-    }
-
-    let access_strategy = match device.ty {
-        AvailableDeviceType::Password => {
-            let password = read_password("Enter password for the device:")?;
-
-            DeviceAccessStrategy {
-                key_file: device.key_file_path.clone(),
-                totp_protection: None,
-                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
-            }
-        }
-
-        AvailableDeviceType::PKI { .. } => {
-            todo!("read PKI #11270");
-            // DeviceAccessStrategy::PKI {
-            //     certificate_reference: todo!(),
-            //     key_file: device.key_file_path.clone(),
-            // }
-        }
-
-        AvailableDeviceType::Keyring => DeviceAccessStrategy {
-            key_file: device.key_file_path.clone(),
-            totp_protection: None,
-            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
-        },
-
-        AvailableDeviceType::AccountVault => {
-            // In theory we should support this authentication method here,
-            // however:
-            // - It is cumbersome since it requires obtaining the account authentication
-            //   info (login&password) from the CLI parameters.
-            // - In practice it is only used on web, where CLI is never going to be used.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
-        }
-
-        AvailableDeviceType::Recovery => {
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
-        }
-
-        AvailableDeviceType::OpenBao { .. } => {
-            // In theory we should support this authentication method here,
-            // however:
-            // - It is cumbersome since it requires opening a browser window for login
-            //   and redirect its result to a server listening on localhost...
-            // - In practice it is a niche usage that will most likely only be used in the GUI.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
-        }
-    };
+    let device = load_device_file(&args.config_dir, args.device.clone()).await?;
 
     let device = AvailableDeviceDisplay(device);
 
@@ -100,9 +42,16 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     })?;
 
     if args.force || Confirm::new().with_prompt("Are you sure? ").interact()? {
-        libparsec::update_device_overwrite_server_addr(
+        let access_strategy = crate::utils::get_access_strategy_for_device(
             &args.config_dir,
-            access_strategy,
+            args.device,
+            Some(args.server_url.clone()),
+        )
+        .await?;
+
+        libparsec_platform_device_loader::update_device_overwrite_server_addr(
+            &args.config_dir,
+            &access_strategy,
             args.server_url.clone(),
         )
         .await?;
