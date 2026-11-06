@@ -560,7 +560,7 @@ function scrollToTop(): void {
 
 .minimized-with-status {
   width: 28rem;
-  max-height: 6rem;
+  max-height: 6.5rem;
 
   .upload-menu-header {
     padding: ms.spacing('padding-sm');
