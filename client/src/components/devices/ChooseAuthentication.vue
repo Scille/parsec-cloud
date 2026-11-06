@@ -309,6 +309,7 @@ async function areFieldsCorrect(): Promise<boolean> {
 }
 
 async function onSSOLoginClicked(provider: OpenBaoAuthConfig): Promise<void> {
+  error.value = '';
   if (querying.value) {
     window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
