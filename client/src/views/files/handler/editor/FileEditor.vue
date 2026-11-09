@@ -379,6 +379,7 @@ async function save(): Promise<boolean> {
   height: 100%;
   background: ms.color('surface-base-default');
   border: none;
+  user-select: none;
 }
 
 .file-editor-error {

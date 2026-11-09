@@ -1112,10 +1112,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   }
 }
 
-.current-workspace {
-  margin-bottom: 1rem;
-}
-
 .freeze-card {
   display: flex;
   flex-direction: column;

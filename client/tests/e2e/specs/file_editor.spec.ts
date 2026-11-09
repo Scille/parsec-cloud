@@ -171,7 +171,7 @@ msTest.describe(() => {
     await frame.locator('#editor-container').focus();
     await documents.keyboard.insertText('TEST');
     await expect(topbar.locator('.save-info-text')).toBeVisible();
-    await expect(topbar.locator('.save-info-text')).toHaveText('Changes unsaved');
+    await expect(topbar.locator('.save-info-text')).toHaveText('Unsaved changes');
     await saveDocument(frame);
     await waitUntilSaved(documents);
   });
@@ -194,7 +194,7 @@ msTest.describe(() => {
     await frame.locator('#editor-container').focus();
     await documents.keyboard.insertText('TEST');
     await expect(topbar.locator('.save-info-text')).toBeVisible();
-    await expect(topbar.locator('.save-info-text')).toHaveText('Changes unsaved');
+    await expect(topbar.locator('.save-info-text')).toHaveText('Unsaved changes');
     await topbar.locator('.back-button').click();
     await expect(documents).toBeDocumentPage();
   });
