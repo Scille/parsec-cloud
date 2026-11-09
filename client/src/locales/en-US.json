@@ -3018,13 +3018,12 @@
             }
         },
         "saving": {
-            "unsaved": "Changes unsaved",
-            "saving": "Saving...",
-            "saved": "File saved",
-            "error": "Error while saving",
+            "unsaved": "Unsaved changes",
+            "saving": "Saving…",
+            "saved": "Saved",
+            "error": "Unable to save",
             "offline": "Offline",
             "tooltipSaved": "Changes have been saved.",
-            "tooltipUnsaved": "Changes haven't been saved yet.",
             "tooltipError": "Failed to save the changes.",
             "tooltipOffline": "You are offline, changes cannot be saved.",
             "readOnly": "Read only",

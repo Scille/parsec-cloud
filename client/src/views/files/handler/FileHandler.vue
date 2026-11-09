@@ -34,77 +34,69 @@
                 class="file-handler-topbar__back-button"
               />
             </div>
-            <ms-image
-              :image="getFileIcon(contentInfo.fileName)"
-              class="file-icon"
-            />
-            <div class="file-handler-topbar__title">
-              <ion-text class="file-title">
-                {{ contentInfo.fileName }}
-              </ion-text>
-              <ion-text
-                class="file-date"
-                v-if="contentInfo.timestamp"
-              >
-                {{ $msTranslate(I18n.formatDate(contentInfo.timestamp)) }}
-              </ion-text>
-            </div>
-            <div
-              v-if="isComponentEditor() && readOnly"
-              class="save-info read-only"
-            >
-              <ion-icon
-                :icon="eye"
-                class="read-only-icon"
-              />
-              {{ $msTranslate('fileEditors.saving.readOnly') }}
-            </div>
-            <div
-              v-if="!readOnly && saveState !== SaveState.None"
-              class="save-info"
-            >
-              <ion-icon
-                v-show="saveState === SaveState.Error"
-                class="save-info-icon save-info-icon-error"
-                ref="errorIcon"
-                :icon="alert"
-              />
-              <ion-icon
-                v-show="saveState === SaveState.Saved"
-                class="save-info-icon save-info-icon-ok"
-                id="saved-changes"
-                ref="savedIcon"
-                :icon="save"
-              />
-              <ms-spinner
-                v-show="saveState === SaveState.Saving"
-                class="save-info-spinner"
-              />
+            <div class="file-handler-topbar__file">
               <ms-image
-                v-show="saveState === SaveState.Unsaved"
-                class="save-info-icon save-info-icon-ko"
-                id="unsaved-changes"
-                ref="unsavedIcon"
-                :image="UnsavedIcon"
+                :image="getFileIcon(contentInfo.fileName)"
+                class="file-icon"
               />
-              <ion-icon
-                v-show="saveState === SaveState.Offline"
-                class="save-info-icon save-info-icon-ko"
-                ref="offlineIcon"
-                :icon="warning"
-              />
-              <ion-text
-                v-show="showSaveStateText && isLargeDisplay"
-                class="save-info-text"
-                :class="{
-                  'save-info-text-fade-out': saveState === SaveState.Saved || saveState === SaveState.Error,
-                  'save-info-text-fade-in': saveState !== SaveState.Saved && saveState !== SaveState.Error,
-                  'save-info-text-ok': saveState !== SaveState.Error,
-                  'save-info-text-ko': saveState === SaveState.Error,
-                }"
+              <div class="file-handler-topbar__title">
+                <ion-text class="file-title">
+                  {{ contentInfo.fileName }}
+                </ion-text>
+                <ion-text
+                  class="file-date"
+                  v-if="contentInfo.timestamp"
+                >
+                  {{ $msTranslate(I18n.formatDate(contentInfo.timestamp)) }}
+                </ion-text>
+              </div>
+              <div
+                v-if="isComponentEditor() && readOnly"
+                class="save-info read-only"
               >
-                {{ $msTranslate(saveStateText) }}
-              </ion-text>
+                <ion-icon
+                  :icon="eye"
+                  class="read-only-icon"
+                />
+                {{ $msTranslate('fileEditors.saving.readOnly') }}
+              </div>
+              <div
+                v-if="!readOnly && saveState !== SaveState.None"
+                class="save-info"
+                :class="{ 'save-info-error': saveState === SaveState.Error, 'save-info-unsaved': saveState === SaveState.Unsaved }"
+              >
+                <ion-icon
+                  v-show="saveState === SaveState.Error"
+                  class="save-info-icon save-info-icon-error"
+                  ref="errorIcon"
+                  :icon="alertCircle"
+                />
+                <ion-icon
+                  v-show="saveState === SaveState.Saved"
+                  class="save-info-icon save-info-icon-ok"
+                  id="saved-changes"
+                  ref="savedIcon"
+                  :icon="checkmarkCircle"
+                />
+                <ms-spinner
+                  v-show="saveState === SaveState.Saving"
+                  class="save-info-spinner"
+                  :size="16"
+                />
+                <ion-icon
+                  v-show="saveState === SaveState.Offline"
+                  class="save-info-icon save-info-icon-ko"
+                  ref="offlineIcon"
+                  :icon="warning"
+                />
+                <ion-text
+                  v-show="isLargeDisplay"
+                  class="save-info-text"
+                  :class="saveState === SaveState.Error ? 'save-info-text-ko' : 'save-info-text-ok'"
+                >
+                  {{ $msTranslate(saveStateText) }}
+                </ion-text>
+              </div>
             </div>
             <!-- Here we could put the file action buttons -->
             <div
@@ -264,7 +256,8 @@ import { FileViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
 import {
-  alert,
+  alertCircle,
+  checkmarkCircle,
   chevronDown,
   chevronUp,
   create,
@@ -273,7 +266,6 @@ import {
   informationCircle,
   link,
   open,
-  save,
   warning,
 } from 'ionicons/icons';
 import { DateTime } from 'luxon';
@@ -288,7 +280,6 @@ import {
   MsModalResult,
   MsSpinner,
   SidebarToggle,
-  UnsavedIcon,
   useWindowSize,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
@@ -310,10 +301,8 @@ const userInfo: Ref<ClientInfo | undefined> = ref(undefined);
 const isReader: Ref<boolean> = ref(true);
 const saveState = ref<SaveState>(SaveState.None);
 const savedIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('savedIcon');
-const unsavedIconRef = useTemplateRef<InstanceType<typeof MsImage>>('unsavedIcon');
 const errorIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('errorIcon');
 const offlineIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('offlineIcon');
-const showSaveStateText = ref(true);
 const readOnly = ref(false);
 const pathOpener = usePathOpener();
 
@@ -522,9 +511,6 @@ onMounted(async () => {
   if (savedIconRef.value) {
     attachMouseOverTooltip(savedIconRef.value.$el, 'fileEditors.saving.tooltipSaved');
   }
-  if (unsavedIconRef.value) {
-    attachMouseOverTooltip(unsavedIconRef.value.$el, 'fileEditors.saving.tooltipUnsaved');
-  }
   if (errorIconRef.value) {
     attachMouseOverTooltip(errorIconRef.value.$el, 'fileEditors.saving.tooltipError');
   }
@@ -692,15 +678,6 @@ async function downloadFile(): Promise<void> {
 }
 
 async function onSaveStateChange(newState: SaveState): Promise<void> {
-  if (newState !== SaveState.Saved) {
-    showSaveStateText.value = true;
-  } else {
-    setTimeout(() => {
-      if (saveState.value === SaveState.Saved) {
-        showSaveStateText.value = false;
-      }
-    }, 3000);
-  }
   saveState.value = newState;
 }
 
@@ -789,18 +766,24 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
       }
 
+      &__file {
+        display: flex;
+        align-items: center;
+        gap: ms.spacing('gap-md');
+        overflow: hidden;
+      }
+
       .file-icon {
-        width: 2rem;
-        height: 2rem;
-        min-width: 2rem;
-        min-height: 2rem;
-        margin-left: ms.spacing('padding-lg');
+        width: 1.5rem;
+        height: 1.5rem;
+        min-width: 1.5rem;
+        min-height: 1.5rem;
 
         @include ms.responsive-breakpoint('sm') {
-          width: 1.75rem;
-          height: 1.75rem;
-          min-width: 1.75rem;
-          min-height: 1.75rem;
+          width: 1.25rem;
+          height: 1.25rem;
+          min-width: 1.25rem;
+          min-height: 1.25rem;
         }
       }
 
@@ -899,11 +882,27 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         display: flex;
         flex-shrink: 0;
         align-items: center;
-        gap: ms.spacing('gap-lg');
+        gap: ms.spacing('gap-sm');
+
+        &:not(.read-only) {
+          background: ms.color('surface-brand-default-subtle');
+          padding: ms.spacing('padding-xs') ms.spacing('padding-lg');
+          border-radius: ms.radius('2xl');
+
+          &.save-info-error {
+            background: ms.color('surface-error-default-subtle');
+          }
+
+          &.save-info-unsaved {
+            background: ms.color('surface-base-page-secondary');
+
+            .save-info-text {
+              color: ms.color('text-base-description');
+            }
+          }
+        }
 
         @include ms.responsive-breakpoint('sm') {
-          min-width: 1.125rem;
-          width: 1.125rem;
           font-size: 1.125rem;
           margin-right: 0;
         }
@@ -924,25 +923,11 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
 
         &-text {
-          @include ms.font('label-sm-medium');
+          @include ms.font('body-xs-medium');
           text-overflow: ellipsis;
 
-          &-fade-in {
-            visibility: visible;
-            opacity: 1;
-            transition: opacity 0.5s linear;
-          }
-
-          &-fade-out {
-            visibility: hidden;
-            opacity: 0;
-            transition:
-              visibility 0s 3s,
-              opacity 3s ease-in;
-          }
-
           &-ok {
-            color: ms.color('text-base-description');
+            color: ms.color('text-brand-default');
           }
 
           &-ko {
@@ -951,8 +936,6 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
 
         &-spinner {
-          height: 1.125rem;
-          width: 1.125rem;
           background: none;
         }
 
@@ -960,8 +943,17 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           font-size: 1.125rem;
           width: 1.125rem;
 
+          &-ok,
+          &-error {
+            font-size: 0.875rem;
+            width: 0.875rem;
+          }
+
           &-ok {
             color: ms.color('icon-brand-default');
+          }
+          &-error {
+            color: ms.color('icon-error-default');
           }
           &-ko {
             color: ms.color('icon-neutral-default');
