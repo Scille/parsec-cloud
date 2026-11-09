@@ -212,7 +212,6 @@ serde_with = { version = "3.19.0", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 shadow-rs = { version = "2.0.0", default-features = false }
 smallvec = { version = "1.15.1", default-features = false }
-spinners = { version = "4.2.0", default-features = false }
 sqlx = { version = "0.9.0", default-features = false }
 syn = { version = "3.0.3", default-features = false }
 textwrap = { version = "0.16.2", default-features = false }
@@ -234,6 +233,14 @@ x25519-dalek = { version = "2.0.1", default-features = false }
 x509-cert = { version = "0.3.0", default-features = false }
 zeroize = { version = "1.8.2", default-features = false }
 zstd = { version = "0.14.0", default-features = false }
+
+[workspace.dependencies.spinners]
+default-features = false
+version = "4.2.0"
+# Using a commit from main branch as the maintainer does not seems to create releases anymore.
+# Using that commit allow Cargo to not depend on syn@1
+rev = "79660ac0c864f721cabba8e5cae952042a9f45f1"
+git = "https://github.com/FGRibreau/spinners.git"
 
 [workspace.dependencies.criterion]
 default-features = false
