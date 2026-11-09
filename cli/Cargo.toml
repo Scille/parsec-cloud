@@ -18,6 +18,10 @@ harness = false
 name = "upload_speed"
 harness = false
 
+[[bench]]
+name = "fetch_children"
+harness = false
+
 [[test]]
 name = "integration"
 path = "tests/integration/mod.rs"
