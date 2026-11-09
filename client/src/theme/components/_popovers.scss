@@ -28,9 +28,9 @@
 .invitations-list-popover {
   --background: none;
   --box-shadow: #{ms.shadow('strong')};
-  --width: var(--popover-notification-center-width);
+  --width: var(--popover-menu-center-width);
   --offset-y: 0.5rem;
-  --offset-x: -5%;
+  --offset-x: -1%;
 }
 
 /* --- users filter popover --- */

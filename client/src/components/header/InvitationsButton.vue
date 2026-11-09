@@ -72,7 +72,7 @@ async function openInvitationsMenu(event: Event): Promise<void> {
   if (isLargeDisplay.value) {
     const popover = await popoverController.create({
       component: InvitationsListPopover,
-      alignment: 'center',
+      alignment: 'end',
       event: event,
       cssClass: 'invitations-list-popover',
       showBackdrop: false,
