@@ -73,6 +73,22 @@ repos:
         pass_filenames: false
         files: ^client/(public|src)/
 
+      - id: pin-pre-commit-recipes
+        name: pin pre-commit recipes by commit
+        entry: python ./misc/pin_recipes_by_commit.py pre-commit
+        language: python
+        language_version: python3
+        pass_filenames: false
+        files: ^\.pre-commit-config\.yaml$
+
+      - id: pin-github-action-recipes
+        name: pin Github Action recipes by commit
+        entry: python ./misc/pin_recipes_by_commit.py github-actions
+        language: python
+        language_version: python3
+        pass_filenames: false
+        files: ^\.github/(workflows|actions)/.*\.yml$
+
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.38.0
     hooks:
