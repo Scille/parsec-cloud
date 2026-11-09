@@ -277,7 +277,7 @@ msTest('Change auth with TOTP active', async ({ myProfilePage }) => {
   await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await fillInputModal(home, await generateTotpCode(totpSecret));
   await expect(home).toBeWorkspacePage();
-  await expect(home).toHaveHeader(['My workspaces'], false, false);
+  await expect(home).toHavePageTitle('My workspaces');
 });
 
 msTest('Remove and re-add TOTP', async ({ myProfilePage }) => {

@@ -71,7 +71,7 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   await checkSidebarToggleVisibility(filesContent, 'Recent documents');
 
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-  await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+  await workspaces.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0).click();
 });
 
 msTest('Sidebar recommendations checklist in large display', async ({ workspaces }) => {
@@ -272,7 +272,7 @@ msTest.describe(() => {
     await expect(documents.locator('.sidebar')).toBeHidden();
 
     // Navigate to workspaces
-    await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+    await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0).click();
     await expect(documents.locator('.workspaces-container')).toBeVisible();
 
     // Sidebar should remain hidden
@@ -329,7 +329,7 @@ msTest.describe(() => {
     await expect(documents.locator('.sidebar')).toBeHidden();
 
     // Navigate to workspaces
-    await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+    await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0).click();
     await expect(documents.locator('.workspaces-container')).toBeVisible();
 
     // Verify sidebar stays hidden

@@ -92,10 +92,37 @@
             </ion-label>
           </div>
 
+          <!-- Folder title -->
+          <div
+            v-if="isLargeDisplay && currentRouteIs(Routes.Documents) && currentFolderTitle"
+            class="topbar-left-folder"
+          >
+            <ion-text
+              class="topbar-left-folder__title"
+              :title="currentFolderTitle"
+            >
+              {{ currentFolderTitle }}
+            </ion-text>
+            <ion-text
+              v-if="workspaceIsArchivedOrTrashed"
+              class="topbar-left-folder__state"
+            >
+              <ion-icon
+                :icon="currentWorkspace?.isArchived ? archive : trash"
+                class="topbar-left-folder__state-icon"
+              />
+              {{
+                currentWorkspace?.isArchived
+                  ? $msTranslate('HeaderPage.workspaceState.archived')
+                  : $msTranslate('HeaderPage.workspaceState.trashed')
+              }}
+            </ion-text>
+          </div>
+
           <!-- Breadcrumbs -->
           <div
+            v-if="isSmallDisplay && currentRouteIs(Routes.Documents)"
             class="topbar-left__breadcrumb"
-            v-if="currentRouteIs(Routes.Documents) || (currentRouteIs(Routes.Workspaces) && isLargeDisplay)"
           >
             <header-breadcrumbs
               :workspace-name="currentWorkspace?.name ?? ''"
@@ -187,6 +214,25 @@
           </template>
         </ion-buttons>
       </ion-toolbar>
+
+      <!-- Breadcrumbs bar -->
+      <div
+        v-if="isLargeDisplay && currentRouteIs(Routes.Documents)"
+        class="topbar-breadcrumb-bar"
+      >
+        <div
+          class="topbar-left__breadcrumb"
+          ref="breadcrumbBlock"
+        >
+          <header-breadcrumbs
+            :workspace-name="currentWorkspace?.name ?? ''"
+            :path-nodes="fullPath"
+            @change="onNodeSelected"
+            :from-header-page="true"
+            :available-width="breadcrumbsWidth"
+          />
+        </div>
+      </div>
 
       <small-display-security-recommendations
         v-if="showSmallDisplaySecurityRecommendations"
@@ -294,8 +340,11 @@ const showHeader = computed(() => {
 const breadcrumbsWidth = ref(0);
 const backBlockRef = useTemplateRef('backBlock');
 const topbarLeftRef = useTemplateRef('topbarLeft');
+const breadcrumbBlockRef = useTemplateRef('breadcrumbBlock');
 const showRouteTitle = computed(
-  () => !currentRouteIsFileRoute() && !(isSmallDisplay.value && currentRouteIsOneOf([Routes.Archived, Routes.Trash])),
+  () =>
+    (isLargeDisplay.value && currentRouteIs(Routes.Workspaces)) ||
+    (!currentRouteIsFileRoute() && !(isSmallDisplay.value && currentRouteIsOneOf([Routes.Archived, Routes.Trash]))),
 );
 const showInvitationsButton = computed(() => currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash, Routes.Users]));
 const showSmallDisplaySecurityRecommendations = computed(() => {
@@ -323,6 +372,8 @@ const currentWorkspace: Ref<WorkspaceInfo | undefined> = ref(undefined);
 
 const routeTitle = computed((): Translatable => {
   switch (getCurrentRouteName()) {
+    case Routes.Workspaces:
+      return 'HeaderPage.titles.workspaces';
     case Routes.Users:
       return 'HeaderPage.titles.users';
     case Routes.Invitations:
@@ -345,11 +396,21 @@ const routeTitle = computed((): Translatable => {
   return '';
 });
 
-const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
-  if (topbarLeftRef.value?.offsetWidth && backBlockRef.value?.offsetWidth) {
-    breadcrumbsWidth.value = pxToRem(topbarLeftRef.value.offsetWidth - backBlockRef.value.offsetWidth);
-  }
+const currentFolderTitle = computed((): string => {
+  return fullPath.value[fullPath.value.length - 1]?.display ?? '';
 });
+
+const topbarWidthWatchCancel = watch(
+  [windowWidth, fullPath],
+  () => {
+    if (breadcrumbBlockRef.value?.offsetWidth) {
+      breadcrumbsWidth.value = pxToRem(breadcrumbBlockRef.value.offsetWidth);
+    } else if (topbarLeftRef.value?.offsetWidth && backBlockRef.value?.offsetWidth) {
+      breadcrumbsWidth.value = pxToRem(topbarLeftRef.value.offsetWidth - backBlockRef.value.offsetWidth);
+    }
+  },
+  { flush: 'post' },
+);
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIsLoggedRoute()) {
@@ -377,15 +438,7 @@ async function updateRoute(): Promise<void> {
   }
 
   if (currentRouteIs(Routes.Workspaces)) {
-    fullPath.value = [
-      {
-        id: 0,
-        title: 'HeaderPage.titles.workspaces',
-        icon: home,
-        route: Routes.Workspaces,
-        params: {},
-      },
-    ];
+    fullPath.value = [];
   } else if (currentRouteIs(Routes.Documents)) {
     const workspaceHandle = getWorkspaceHandle();
     if (workspaceHandle) {
@@ -772,6 +825,52 @@ async function openOfflineModal(): Promise<void> {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+  }
+
+  &-folder {
+    display: flex;
+    align-items: center;
+    gap: ms.spacing('gap-xl');
+    min-width: 0;
+
+    &__title {
+      @include ms.font('heading-h3');
+      color: ms.color('text-brand-default');
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    &__state {
+      @include ms.font('label-sm-medium');
+      display: flex;
+      align-items: center;
+      gap: ms.spacing('gap-sm');
+      flex-shrink: 0;
+      padding: ms.spacing('padding-xs') ms.spacing('padding-md');
+      border-radius: ms.radius('full');
+      background: ms.color('surface-neutral-default-subtle');
+      color: ms.color('text-neutral-default');
+      white-space: nowrap;
+
+      &-icon {
+        color: ms.color('icon-neutral-default');
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+.topbar-breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  padding: ms.spacing('padding-md') ms.spacing('padding-4xl');
+  background: ms.color('surface-base-page');
+  border-top: ms.border('thin') solid ms.color('border-base-default');
+
+  .topbar-left__breadcrumb {
+    width: 100%;
+    margin-inline-start: calc(-1 * #{ms.spacing('padding-lg')});
   }
 }
 

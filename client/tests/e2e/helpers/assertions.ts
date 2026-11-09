@@ -161,7 +161,7 @@ export const expect = baseExpect.extend({
       if (hasHomeButton) {
         breadcrumbs.unshift('');
       }
-      const bcs = header.locator('ion-breadcrumbs').locator('ion-breadcrumb');
+      const bcs = page.locator('#connected-header').locator('ion-breadcrumbs').locator('ion-breadcrumb');
       expect(bcs).toHaveCount(breadcrumbs.length);
       await expect(bcs).toHaveText(breadcrumbs, { useInnerText: true });
     } catch (error: any) {

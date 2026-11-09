@@ -567,6 +567,10 @@
         "modalHeader": {
             "step": "Étape {current} sur {total}"
         },
+        "workspaceState": {
+            "archived": "Espace archivé",
+            "trashed": "Espace à la corbeille"
+        },
         "breadcrumbs": {
             "archived": "Archivés",
             "trashed": "Corbeille"

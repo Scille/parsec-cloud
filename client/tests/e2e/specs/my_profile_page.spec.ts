@@ -161,7 +161,7 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
   await expect(home).toBeWorkspacePage();
-  await expect(home).toHaveHeader(['My workspaces'], false, false);
+  await expect(home).toHavePageTitle('My workspaces');
   const profile = home.locator('.sidebar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
 });
@@ -207,7 +207,7 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
   await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(home).toBeWorkspacePage();
-  await expect(home).toHaveHeader(['My workspaces'], false, false);
+  await expect(home).toHavePageTitle('My workspaces');
   const profile = home.locator('.sidebar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
   await profile.click();
