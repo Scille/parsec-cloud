@@ -65,13 +65,13 @@ msTest.describe(() => {
       const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
       if (mode === 'edit') {
         await expect(topbar.locator('.save-info')).toBeHidden();
-        await expect(topbarButtons).toHaveCount(4);
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+        await expect(topbarButtons).toHaveCount(3);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download']);
       } else {
         await expect(topbar.locator('.save-info')).toBeVisible();
         await expect(topbar.locator('.save-info')).toHaveText('Read only');
-        await expect(topbarButtons).toHaveCount(5);
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
+        await expect(topbarButtons).toHaveCount(4);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download']);
       }
       const editicsFrame = await getEditorFrame(documents);
       await expect(editicsFrame.locator('#editor-container')).toBeVisible();
@@ -81,7 +81,7 @@ msTest.describe(() => {
     });
   }
 
-  for (const action of ['details', 'copy_link', 'edit', 'download', 'show_menu']) {
+  for (const action of ['details', 'copy_link', 'edit', 'download']) {
     msTest(`File editor header '${action}' action`, async ({ documents }, testInfo: TestInfo) => {
       await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
       const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
@@ -97,7 +97,7 @@ msTest.describe(() => {
       await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document.docx');
       await expect(topbar.locator('.back-button')).toBeVisible();
       const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
-      await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
+      await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download']);
       await expect(topbar.locator('.save-info')).toBeVisible();
       await expect(topbar.locator('.save-info')).toHaveText('Read only');
 
@@ -114,17 +114,12 @@ msTest.describe(() => {
       } else if (action === 'edit') {
         await topbarButtons.nth(2).click();
         await expect(topbar.locator('.save-info')).toBeHidden();
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download']);
       } else if (action === 'download') {
         const modal = documents.locator('.download-warning-modal');
         await expect(modal).toBeHidden();
         await topbarButtons.nth(3).click();
         await expect(modal).toBeVisible();
-      } else if (action === 'show_menu') {
-        const header = documents.locator('#connected-header');
-        await expect(header).toBeHidden();
-        await topbarButtons.nth(4).click();
-        await expect(header).toBeVisible();
       }
     });
   }

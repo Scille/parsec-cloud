@@ -13,10 +13,6 @@ export default function useHeaderControl(): any {
     isVisible.value = false;
   }
 
-  function toggleHeader(): void {
-    isVisible.value = !isVisible.value;
-  }
-
   function isHeaderVisible(): boolean {
     return isVisible.value;
   }
@@ -24,7 +20,6 @@ export default function useHeaderControl(): any {
   return {
     showHeader,
     hideHeader,
-    toggleHeader,
     isHeaderVisible,
   };
 }

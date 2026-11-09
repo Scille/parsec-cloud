@@ -2925,8 +2925,6 @@
         "copyLink": "Copier le lien",
         "openInEditor": "Éditer",
         "download": "Télécharger",
-        "hideMenu": "Cacher le menu",
-        "showMenu": "Afficher le menu",
         "errors": {
             "titles": {
                 "genericError": "Impossible d'ouvrir ce fichier",

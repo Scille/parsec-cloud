@@ -170,19 +170,6 @@
                 />
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
-              <ion-button
-                class="file-handler-topbar-buttons__item toggle-menu color-secondary"
-                @click="toggleMainHeader"
-                :class="{ 'header-visible': isHeaderVisible() }"
-              >
-                <ion-icon
-                  :icon="isHeaderVisible() ? chevronUp : chevronDown"
-                  class="button-icon-left"
-                />
-                <span v-if="windowWidth > WindowSizeBreakpoints.MD">
-                  {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
-                </span>
-              </ion-button>
             </div>
             <ion-button
               class="file-handler-topbar-buttons__item action-menu"
@@ -255,19 +242,7 @@ import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayView
 import { FileViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import {
-  alertCircle,
-  checkmarkCircle,
-  chevronDown,
-  chevronUp,
-  create,
-  ellipsisHorizontal,
-  eye,
-  informationCircle,
-  link,
-  open,
-  warning,
-} from 'ionicons/icons';
+import { alertCircle, checkmarkCircle, create, ellipsisHorizontal, eye, informationCircle, link, open, warning } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import {
   Answer,
@@ -281,17 +256,16 @@ import {
   MsSpinner,
   SidebarToggle,
   useWindowSize,
-  WindowSizeBreakpoints,
 } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, ref, Ref, shallowRef, useTemplateRef } from 'vue';
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 
-const { isLargeDisplay, windowWidth } = useWindowSize();
+const { isLargeDisplay } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
 const loaded = ref(false);
-const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
+const { isHeaderVisible, showHeader, hideHeader } = useHeaderControl();
 const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shallowRef(null);
 const handlerRef = useTemplateRef<InstanceType<typeof FileEditor>>('handlerRef');
@@ -831,49 +805,6 @@ async function openSmallDisplayActionMenu(): Promise<void> {
 
           @include ms.responsive-breakpoint('sm') {
             font-size: 1.25rem;
-          }
-        }
-
-        .toggle-menu {
-          margin-right: ms.spacing('padding-lg');
-          position: relative;
-          margin-left: ms.spacing('padding-lg');
-          --background: none;
-          color: ms.color('text-base-label');
-          opacity: ms.opacity('7');
-
-          &::part(native) {
-            --background: none;
-            --background-hover: none;
-          }
-
-          ion-icon {
-            font-size: 1rem;
-            margin-right: ms.spacing('padding-lg');
-
-            @include ms.responsive-breakpoint('md') {
-              margin-right: 0;
-            }
-          }
-
-          @include ms.responsive-breakpoint('sm') {
-            font-size: 1.125rem;
-            margin-right: 0;
-          }
-
-          &:hover {
-            opacity: ms.opacity('10');
-          }
-
-          &::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: calc(-1 * ms.spacing('padding-lg'));
-            transform: translateY(-50%);
-            width: 1px;
-            height: 1.5rem;
-            background: ms.color('border-base-default');
           }
         }
       }
