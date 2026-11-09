@@ -9,7 +9,7 @@ repos:
   # Common stuff
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
     hooks:
       - id: mixed-line-ending
         alias: eol
@@ -90,12 +90,12 @@ repos:
         files: ^\.github/(workflows|actions)/.*\.yml$
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.38.0
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530 # v1.38.0
     hooks:
       - id: yamllint
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v10.3.0
+    rev: f5c5d72342f35643988a9ffa0705c05bd3ff8383 # v10.3.0
     hooks:
       - id: cspell
         stages:
@@ -122,7 +122,7 @@ repos:
   # [0] https://github.com/koalaman/shellcheck-precommit
   # [1] https://github.com/koalaman/shellcheck/issues/2495
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95 # v0.11.0.1
     hooks:
       - id: shellcheck
         args: [
@@ -355,7 +355,7 @@ repos:
   # JSON
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.2
+    rev: 0494aa7fa1314e98913a41227d8f0a515b2c1049 # 0.38.2
     hooks:
       - id: check-jsonschema
         name: Validate protocol files with jsonschema
