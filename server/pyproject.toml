@@ -71,7 +71,7 @@ dev = [
     "sqlfluff>=4.0,<4.5",
     # test
     "httpx-sse~=0.4.1",
-    "pytest>=9.0.1,<9.2.0",
+    "pytest>=9.0.1,<9.3.0",
     "pytest-asyncio~=1.0",
     "pytest-cov>=7.0,<7.2",
     "pytest-rerunfailures~=16.0",
