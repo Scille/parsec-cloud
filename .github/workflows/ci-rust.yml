@@ -70,7 +70,7 @@ jobs:
           - 6777:6777
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -88,7 +88,7 @@ jobs:
           sqlfluff lint --disable-progress-bar --config libparsec/crates/platform_storage/src/native/sql/.sqlfluff  libparsec/crates/platform_storage/src/native/sql/
 
       - name: Setup rust
-        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
+        uses: actions-rust-lang/setup-rust-toolchain@a188e68d0fd2bd36ad51dccb2b07ba6e75105f30 # v2.0.1
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -100,7 +100,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -113,13 +113,9 @@ jobs:
 
       # Install cargo nextest command
       - name: Install tools
-        uses: taiki-e/install-action@1919c4a95903d2c33e4a221102edca87309fc14b # v2.89.0
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: nextest@0.9.114, wasm-pack@0.13.1, cargo-deny@0.19.0, cargo-udeps@0.1.56, mold
-
-      # FIXME: Remove me once https://github.com/taiki-e/install-action/pull/2050 is merged and released
-      - name: Patch missing `ld.mold`
-        run: ln -sv mold ~/.install-action/bin/ld.mold
 
       # Install fuse
       - name: Install build dependencies
@@ -154,7 +150,7 @@ jobs:
         timeout-minutes: 10
 
       - name: unlock keyring
-        uses: t1m0thyj/unlock-keyring@cbcf205c879ebd86add70bab3a6abfcce59a5cae # pin v1.2.0
+        uses: t1m0thyj/unlock-keyring@cbcf205c879ebd86add70bab3a6abfcce59a5cae # v1.2.0
 
       # The default value is 1000, we increase it to not be limited when executing our mountpoint tests.
       - name: Configure fuse options
@@ -259,7 +255,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         timeout-minutes: 5
 
       - name: Install test PKI certificates
@@ -280,13 +276,13 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
+      - uses: actions-rust-lang/setup-rust-toolchain@a188e68d0fd2bd36ad51dccb2b07ba6e75105f30 # v2.0.1
         with:
           cache: false # We setup the cache by hand, see below
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -348,7 +344,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # pin v2.87.31
+      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: nextest@0.9.114
 

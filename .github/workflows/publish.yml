@@ -53,7 +53,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: |
             misc
@@ -130,7 +130,7 @@ jobs:
         run: tree dist snap
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@fceeb3c308e76f3487e72ef608618de625fb7fe8 # pin v3.0.1
+        uses: samuelmeuli/action-snapcraft@fceeb3c308e76f3487e72ef608618de625fb7fe8 # v3.0.1
         timeout-minutes: 2
 
       - name: Get releases for snapcraft
@@ -164,7 +164,7 @@ jobs:
 
       - name: Publish wheel on PyPI
         if: steps.version.outputs.local == ''
-        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # pin v1.14.3
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
