@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+use std::collections::HashSet;
+
 use libparsec_client_connection::{
     AuthenticatedCmds, ConnectionError, protocol::authenticated_cmds,
 };
@@ -37,6 +39,10 @@ pub(crate) enum ServerFetchManifestError {
     Internal(#[from] anyhow::Error),
 }
 
+/// Maximum number of vlobs the server accepts in a single `vlob_read_batch` request
+/// (see `VLOB_READ_REQUEST_ITEMS_LIMIT` in the server).
+const VLOB_READ_BATCH_MAX_ITEMS: usize = 1000;
+
 pub(crate) async fn server_fetch_child_manifest(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertificateOps,
@@ -44,8 +50,48 @@ pub(crate) async fn server_fetch_child_manifest(
     vlob_id: VlobID,
     at: Option<DateTime>,
 ) -> Result<ChildManifest, ServerFetchManifestError> {
-    let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
+    let mut items = fetch_vlobs(cmds, realm_id, &[vlob_id], at).await?;
+    let (_, data) = items.pop().ok_or(ServerFetchManifestError::VlobNotFound)?;
+    validate_child_vlob(certificates_ops, realm_id, vlob_id, &data).await
+}
 
+/// Batch version of [`server_fetch_child_manifest`]: fetch multiple child manifests
+/// using as few `vlob_read_batch` requests as possible.
+pub(crate) async fn server_fetch_child_manifests(
+    cmds: &AuthenticatedCmds,
+    certificates_ops: &CertificateOps,
+    realm_id: VlobID,
+    vlob_ids: &[VlobID],
+    at: Option<DateTime>,
+) -> Result<Vec<(VlobID, ChildManifest)>, ServerFetchManifestError> {
+    let mut manifests = Vec::with_capacity(vlob_ids.len());
+
+    for chunk in vlob_ids.chunks(VLOB_READ_BATCH_MAX_ITEMS) {
+        let items = fetch_vlobs(cmds, realm_id, chunk, at).await?;
+        let requested: HashSet<&VlobID> = chunk.iter().collect();
+        for (vlob_id, data) in items {
+            if !requested.contains(&vlob_id) {
+                continue;
+            }
+            match validate_child_vlob(certificates_ops, realm_id, vlob_id, &data).await {
+                Ok(manifest) => manifests.push((vlob_id, manifest)),
+                // Errors specific to this manifest: skip it
+                Err(err) => {
+                    log::warn!("Skipping child manifest {vlob_id} that cannot be validated: {err}");
+                }
+            }
+        }
+    }
+
+    Ok(manifests)
+}
+
+async fn validate_child_vlob(
+    certificates_ops: &CertificateOps,
+    realm_id: VlobID,
+    vlob_id: VlobID,
+    data: &VlobData,
+) -> Result<ChildManifest, ServerFetchManifestError> {
     certificates_ops
         .validate_child_manifest(
             data.needed_realm_certificate_timestamp,
@@ -59,24 +105,26 @@ pub(crate) async fn server_fetch_child_manifest(
             &data.blob,
         )
         .await
-        .map_err(|err| match err {
-            CertifValidateManifestError::Offline(e) => ServerFetchManifestError::Offline(e),
-            CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
-            CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
-            CertifValidateManifestError::RealmDeleted => ServerFetchManifestError::RealmDeleted,
-            CertifValidateManifestError::InvalidManifest(err) => {
-                ServerFetchManifestError::InvalidManifest(err)
-            }
-            CertifValidateManifestError::InvalidCertificate(err) => {
-                ServerFetchManifestError::InvalidCertificate(err)
-            }
-            CertifValidateManifestError::InvalidKeysBundle(err) => {
-                ServerFetchManifestError::InvalidKeysBundle(err)
-            }
-            CertifValidateManifestError::Internal(err) => {
-                err.context("Cannot validate vlob").into()
-            }
-        })
+        .map_err(map_validate_manifest_error)
+}
+
+fn map_validate_manifest_error(err: CertifValidateManifestError) -> ServerFetchManifestError {
+    match err {
+        CertifValidateManifestError::Offline(e) => ServerFetchManifestError::Offline(e),
+        CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
+        CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
+        CertifValidateManifestError::RealmDeleted => ServerFetchManifestError::RealmDeleted,
+        CertifValidateManifestError::InvalidManifest(err) => {
+            ServerFetchManifestError::InvalidManifest(err)
+        }
+        CertifValidateManifestError::InvalidCertificate(err) => {
+            ServerFetchManifestError::InvalidCertificate(err)
+        }
+        CertifValidateManifestError::InvalidKeysBundle(err) => {
+            ServerFetchManifestError::InvalidKeysBundle(err)
+        }
+        CertifValidateManifestError::Internal(err) => err.context("Cannot validate vlob").into(),
+    }
 }
 
 pub(super) async fn server_fetch_workspace_manifest(
@@ -86,7 +134,8 @@ pub(super) async fn server_fetch_workspace_manifest(
     at: Option<DateTime>,
 ) -> Result<FolderManifest, ServerFetchManifestError> {
     let vlob_id = realm_id; // Remember: workspace manifest's ID *is* the realm ID !
-    let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
+    let mut items = fetch_vlobs(cmds, realm_id, &[vlob_id], at).await?;
+    let (_, data) = items.pop().ok_or(ServerFetchManifestError::VlobNotFound)?;
 
     certificates_ops
         .validate_workspace_manifest(
@@ -100,24 +149,7 @@ pub(super) async fn server_fetch_workspace_manifest(
             &data.blob,
         )
         .await
-        .map_err(|err| match err {
-            CertifValidateManifestError::Offline(e) => ServerFetchManifestError::Offline(e),
-            CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
-            CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
-            CertifValidateManifestError::RealmDeleted => ServerFetchManifestError::RealmDeleted,
-            CertifValidateManifestError::InvalidManifest(err) => {
-                ServerFetchManifestError::InvalidManifest(err)
-            }
-            CertifValidateManifestError::InvalidCertificate(err) => {
-                ServerFetchManifestError::InvalidCertificate(err)
-            }
-            CertifValidateManifestError::InvalidKeysBundle(err) => {
-                ServerFetchManifestError::InvalidKeysBundle(err)
-            }
-            CertifValidateManifestError::Internal(err) => {
-                err.context("Cannot validate vlob").into()
-            }
-        })
+        .map_err(map_validate_manifest_error)
 }
 
 struct VlobData {
@@ -130,34 +162,41 @@ struct VlobData {
     blob: Bytes,
 }
 
-async fn fetch_vlob(
+/// Fetch multiple vlobs in a single `vlob_read_batch` request.
+async fn fetch_vlobs(
     cmds: &AuthenticatedCmds,
     realm_id: VlobID,
-    vlob_id: VlobID,
+    vlob_ids: &[VlobID],
     at: Option<DateTime>,
-) -> Result<VlobData, ServerFetchManifestError> {
+) -> Result<Vec<(VlobID, VlobData)>, ServerFetchManifestError> {
     use authenticated_cmds::latest::vlob_read_batch::{Rep, Req};
 
     let req = Req {
         realm_id,
-        vlobs: vec![vlob_id],
+        vlobs: vlob_ids.to_vec(),
         at,
     };
 
     let rep = cmds.send(req).await?;
 
     match rep {
-        Rep::Ok { mut items, needed_common_certificate_timestamp, needed_realm_certificate_timestamp } => {
-            let (_, key_index, expected_author, expected_version, expected_timestamp, blob) = items.pop().ok_or(ServerFetchManifestError::VlobNotFound)?;
-            Ok(VlobData {
-                needed_common_certificate_timestamp,
-                needed_realm_certificate_timestamp,
-                key_index,
-                expected_author,
-                expected_version,
-                expected_timestamp,
-                blob
-            })
+        Rep::Ok { items, needed_common_certificate_timestamp, needed_realm_certificate_timestamp } => {
+            let items = items
+                .into_iter()
+                .map(|(vlob_id, key_index, expected_author, expected_version, expected_timestamp, blob)| {
+                    let data = VlobData {
+                        needed_common_certificate_timestamp,
+                        needed_realm_certificate_timestamp,
+                        key_index,
+                        expected_author,
+                        expected_version,
+                        expected_timestamp,
+                        blob,
+                    };
+                    (vlob_id, data)
+                })
+                .collect();
+            Ok(items)
         },
         // Expected errors
         Rep::AuthorNotAllowed => Err(ServerFetchManifestError::NoRealmAccess),
@@ -165,7 +204,7 @@ async fn fetch_vlob(
         Rep::RealmDeleted => Err(ServerFetchManifestError::RealmDeleted),
         // Unexpected errors :(
         rep @ (
-            // One item is too many ???? Really ????
+            // We never send more items than the server's limit
             Rep::TooManyElements |
             // Don't know what to do with this status :/
             Rep::UnknownStatus { .. }

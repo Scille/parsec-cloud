@@ -341,7 +341,18 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
     let last_realm_certificate_timestamp = env.get_last_realm_certificate_timestamp(wksp1_id);
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        // Client will try to fetch the non existing ID from the server
+        // 1) Batch prefetch of the children missing from local storage
+        move |req: authenticated_cmds::latest::vlob_read_batch::Req| {
+            p_assert_eq!(req.realm_id, wksp1_id);
+            p_assert_eq!(req.vlobs, [non_existing_id]);
+            p_assert_eq!(req.at, None);
+            authenticated_cmds::latest::vlob_read_batch::Rep::Ok {
+                items: vec![],
+                needed_common_certificate_timestamp: last_common_certificate_timestamp,
+                needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
+            }
+        },
+        // 2) Prefetch didn't find it, so the per-child stat tries again
         move |req: authenticated_cmds::latest::vlob_read_batch::Req| {
             p_assert_eq!(req.realm_id, wksp1_id);
             p_assert_eq!(req.vlobs, [non_existing_id]);

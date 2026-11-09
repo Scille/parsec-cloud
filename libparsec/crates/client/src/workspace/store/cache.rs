@@ -8,7 +8,9 @@ use libparsec_types::prelude::*;
 
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
-    server_fetch::{ServerFetchManifestError, server_fetch_child_manifest},
+    server_fetch::{
+        ServerFetchManifestError, server_fetch_child_manifest, server_fetch_child_manifests,
+    },
 };
 
 use super::per_manifest_update_lock::PerManifestUpdateLock;
@@ -277,13 +279,8 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
         None,
     )
     .await;
-    let manifest = match outcome {
-        Ok(ChildManifest::File(manifest)) => {
-            ArcLocalChildManifest::File(Arc::new(LocalFileManifest::from_remote(manifest)))
-        }
-        Ok(ChildManifest::Folder(manifest)) => ArcLocalChildManifest::Folder(Arc::new(
-            LocalFolderManifest::from_remote(manifest, &store.prevent_sync_pattern),
-        )),
+    let remote_manifest = match outcome {
+        Ok(remote_manifest) => remote_manifest,
         Err(err) => {
             return Err(match err {
                 ServerFetchManifestError::Stopped => {
@@ -336,7 +333,30 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
         }
     };
 
-    // 3) We got our manifest, update local storage with it
+    // 3) We got our manifest, update local storage and cache with it
+
+    populate_local_storage_and_cache_from_remote(store, entry_id, remote_manifest).await
+}
+
+/// Store a manifest freshly fetched from the server in the local storage and in the cache.
+///
+/// If the local storage already contains this entry (i.e. a concurrent operation has
+/// populated it in the meantime), the local storage version is kept and returned instead.
+async fn populate_local_storage_and_cache_from_remote(
+    store: &super::WorkspaceStore,
+    entry_id: VlobID,
+    remote_manifest: ChildManifest,
+) -> Result<ArcLocalChildManifest, PopulateCacheFromLocalStorageOrServerError> {
+    let manifest = match remote_manifest {
+        ChildManifest::File(manifest) => {
+            ArcLocalChildManifest::File(Arc::new(LocalFileManifest::from_remote(manifest)))
+        }
+        ChildManifest::Folder(manifest) => ArcLocalChildManifest::Folder(Arc::new(
+            LocalFolderManifest::from_remote(manifest, &store.prevent_sync_pattern),
+        )),
+    };
+
+    // 1) Update local storage
 
     let manifest = loop {
         let update_data = match &manifest {
@@ -409,11 +429,71 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
         }
     };
 
-    // 4) Also update the cache
+    // 2) Also update the cache
 
     let manifest = store
         .data
         .with_current_view_cache(|cache| cache.manifests.insert_if_missing(manifest));
 
     Ok(manifest)
+}
+
+/// Make sure the given entries are available locally, fetching the missing ones
+/// from the server in batch.
+pub(super) async fn prefetch_manifests(
+    store: &super::WorkspaceStore,
+    entry_ids: impl IntoIterator<Item = &VlobID>,
+) {
+    // 1) Determine which entries are neither in cache nor in local storage
+
+    let mut missing = Vec::new();
+    for &entry_id in entry_ids {
+        let in_cache = store
+            .data
+            .with_current_view_cache(|cache| cache.manifests.get(&entry_id).is_some());
+        if in_cache {
+            continue;
+        }
+        match populate_cache_from_local_storage(store, entry_id).await {
+            Ok(_) => (),
+            Err(PopulateCacheFromLocalStorageError::EntryNotFound) => missing.push(entry_id),
+            Err(err) => {
+                log::warn!("Cannot prefetch manifests, local storage error: {err:?}");
+                return;
+            }
+        }
+    }
+
+    if missing.is_empty() {
+        return;
+    }
+
+    // 2) Fetch the missing entries from the server in batch
+
+    let manifests = match server_fetch_child_manifests(
+        &store.cmds,
+        &store.certificates_ops,
+        store.realm_id,
+        &missing,
+        None,
+    )
+    .await
+    {
+        Ok(manifests) => manifests,
+        Err(err) => {
+            log::info!("Cannot prefetch manifests from server: {err:?}");
+            return;
+        }
+    };
+
+    // 3) Store the fetched manifests
+
+    for (entry_id, remote_manifest) in manifests {
+        if let Err(err) =
+            populate_local_storage_and_cache_from_remote(store, entry_id, remote_manifest).await
+        {
+            log::warn!("Cannot store prefetched manifest {entry_id}: {err:?}");
+            return;
+        }
+    }
 }
