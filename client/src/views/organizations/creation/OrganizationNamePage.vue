@@ -96,7 +96,7 @@ import { MsInput, Translatable, Validity } from 'megashark-lib';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
-  organizationName?: OrganizationID;
+  initialOrganizationName?: OrganizationID;
   error?: Translatable;
   disableOrganizationNameField?: boolean;
   hidePrevious?: boolean;
@@ -110,11 +110,11 @@ defineEmits<{
 
 const organizationNameInputRef = useTemplateRef<InstanceType<typeof MsInput>>('organizationNameInput');
 const sequesterKeyInputRef = useTemplateRef<InstanceType<typeof SequesterKeyInput>>('sequesterKeyInput');
-const organizationName = ref<OrganizationID>(props.organizationName ?? '');
+const organizationName = ref<OrganizationID>(props.initialOrganizationName ?? '');
 const advancedSettings = ref<boolean>(false);
 
 const cancelWatch = watch(
-  () => props.organizationName,
+  () => props.initialOrganizationName,
   (newName?: OrganizationID) => {
     if (newName) {
       organizationName.value = newName;

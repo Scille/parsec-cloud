@@ -170,6 +170,7 @@ export default defineConfig([
         },
       ],
       'vue/singleline-html-element-content-newline': 'off',
+      'vue/no-props-shadow': 'error',
     },
   },
   {

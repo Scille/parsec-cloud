@@ -20,7 +20,7 @@
       :class="step === Steps.OrganizationName ? 'active' : ''"
       v-show="step === Steps.OrganizationName"
       :disable-organization-name-field="bootstrapLink !== undefined"
-      :organization-name="organizationName ?? ''"
+      :initial-organization-name="organizationName ?? ''"
       @organization-name-chosen="onOrganizationNameChosen"
       :error="currentError"
       @go-back-requested="$emit('backRequested')"

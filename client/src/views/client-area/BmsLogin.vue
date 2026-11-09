@@ -185,7 +185,7 @@ import { MsCheckbox, MsInput, MsPasswordInput, MsSpinner, Translatable, Validity
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
-  email?: string;
+  initialEmail?: string;
   hideHeader?: boolean;
   showBackButton?: boolean;
 }>();
@@ -197,7 +197,7 @@ const emits = defineEmits<{
   (e: 'forgottenPasswordClicked'): void;
 }>();
 
-const email = ref<string>(props.email ?? '');
+const email = ref<string>(props.initialEmail ?? '');
 const password = ref<string>('');
 const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');

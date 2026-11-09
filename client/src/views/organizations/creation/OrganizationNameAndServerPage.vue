@@ -108,8 +108,8 @@ import { MsInput, MsSpinner, Translatable, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
-  organizationName?: OrganizationID;
-  serverAddr?: string;
+  initialOrganizationName?: OrganizationID;
+  initialServerAddr?: string;
   disableServerAddrField?: boolean;
   disableOrganizationNameField?: boolean;
   error?: Translatable;
@@ -126,8 +126,8 @@ defineEmits<{
 const organizationNameInputRef = useTemplateRef<InstanceType<typeof MsInput>>('organizationNameInput');
 const serverAddrInputRef = useTemplateRef<InstanceType<typeof MsInput>>('serverAddrInput');
 const sequesterKeyInputRef = useTemplateRef<InstanceType<typeof SequesterKeyInput>>('sequesterKeyInput');
-const organizationName = ref<OrganizationID>(props.organizationName ?? '');
-const serverAddr = ref<string>(props.serverAddr ?? '');
+const organizationName = ref<OrganizationID>(props.initialOrganizationName ?? '');
+const serverAddr = ref<string>(props.initialServerAddr ?? '');
 const advancedSettings = ref<boolean>(false);
 
 const valid = computed(() => {
