@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DEFAULT_USER_INFORMATION, DisplaySize, expect, getClipboardText, mockLibParsec, msTest } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, DisplaySize, expect, fillInputModal, getClipboardText, mockLibParsec, msTest } from '@tests/e2e/helpers';
 
 for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   msTest(`Org info default state on ${displaySize} display`, async ({ organizationPage }) => {
@@ -108,14 +108,14 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       await userSmall.hover();
       await userSmall.locator('.options-button').click();
       await usersPage.locator('.user-context-sheet-modal').getByRole('listitem').nth(0).click();
-      await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
+      await fillInputModal(usersPage, 'bob@example.com');
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
     } else {
       const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
       await user.hover();
       await user.locator('.options-button').click();
       await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
-      await answerQuestion(usersPage, true);
+      await fillInputModal(usersPage, 'bob@example.com');
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
       await usersPage.locator('.sidebar').locator('#sidebar-organization-information').click();
       await expect(usersPage).toBeOrganizationPage();

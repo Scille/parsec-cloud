@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+import { matchingStringValidator } from '@/common/validators';
 import {
   ClientUserUpdateProfileError,
   ClientUserUpdateProfileErrorTag,
@@ -13,31 +14,43 @@ import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import { modalController } from '@ionic/vue';
-import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
+import { getTextFromUser, I18n, MsModalResult, MsReportTheme, useWindowSize } from 'megashark-lib';
 import { inject, Ref } from 'vue';
 
 export function useUserActions() {
   const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+  const { isLargeDisplay } = useWindowSize();
 
-  async function _revokeUser(user: UserInfo): Promise<void> {
-    const answer = await askQuestion(
-      { key: 'UsersPage.revocation.revokeTitle', count: 1 },
-      { key: 'UsersPage.revocation.revokeQuestion', data: { user: user.humanHandle.label }, count: 1 },
+  async function revokeUser(user: UserInfo): Promise<void> {
+    // Ask for confirmation by inputting the user email
+    const userEmail = await getTextFromUser(
       {
+        title: 'UsersPage.revocation.revokeTitle',
+        additionalMessage: {
+          message: { key: 'UsersPage.revocation.revokeText', data: { user: user.humanHandle.label, email: user.humanHandle.email } },
+          theme: MsReportTheme.Warning,
+        },
+        trim: true,
+        validator: matchingStringValidator(user.humanHandle.email),
+        inputLabel: 'UsersPage.revocation.label',
+        placeholder: I18n.valueAsTranslatable(user.humanHandle.email),
+        okButtonText: 'UsersPage.revocation.revokeYes',
         yesIsDangerous: true,
-        yesText: 'UsersPage.revocation.revokeYes',
-        noText: 'UsersPage.revocation.revokeNo',
       },
+      isLargeDisplay.value,
     );
-    if (answer === Answer.No) {
+
+    if (!userEmail || userEmail.localeCompare(user.humanHandle.email) !== 0) {
+      // Shouldn't happen
       return;
     }
+
     const result = await parsecRevokeUser(user.id);
 
     if (!result.ok) {
       informationManager.value.present(
         new Information({
-          message: { key: 'UsersPage.revocation.revokeFailed', count: 1 },
+          message: 'UsersPage.revocation.revokeFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -45,64 +58,8 @@ export function useUserActions() {
     } else {
       informationManager.value.present(
         new Information({
-          message: { key: 'UsersPage.revocation.revokeSuccess', data: { user: user.humanHandle.label }, count: 1 },
+          message: { key: 'UsersPage.revocation.revokeSuccess', data: { user: user.humanHandle.label } },
           level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  }
-
-  async function revokeUsers(users: Array<UserInfo>): Promise<void> {
-    if (users.length === 1) {
-      return await _revokeUser(users[0]);
-    }
-
-    const answer = await askQuestion(
-      { key: 'UsersPage.revocation.revokeTitle', count: users.length },
-      { key: 'UsersPage.revocation.revokeQuestion', data: { count: users.length }, count: users.length },
-      {
-        yesIsDangerous: true,
-        yesText: 'UsersPage.revocation.revokeYes',
-        noText: 'UsersPage.revocation.revokeNo',
-      },
-    );
-    if (answer === Answer.No) {
-      return;
-    }
-    let errorCount = 0;
-
-    for (const user of users) {
-      const result = await parsecRevokeUser(user.id);
-      if (!result.ok) {
-        errorCount += 1;
-      }
-    }
-    if (errorCount === 0) {
-      informationManager.value.present(
-        new Information({
-          message: {
-            key: 'UsersPage.revocation.revokeSuccess',
-            data: { count: users.length },
-            count: users.length,
-          },
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    } else if (errorCount < users.length) {
-      informationManager.value.present(
-        new Information({
-          message: 'UsersPage.revocation.revokeSomeFailed',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      informationManager.value.present(
-        new Information({
-          message: { key: 'UsersPage.revocation.revokeFailed', count: users.length },
-          level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
       );
@@ -191,7 +148,7 @@ export function useUserActions() {
   }
 
   return {
-    revokeUsers,
+    revokeUser,
     openDetails,
     updateProfiles,
     copyWorkspaceRoles,

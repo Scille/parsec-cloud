@@ -291,7 +291,7 @@ for (const method of ['button', 'context']) {
     await home.locator('.sidebar').locator('#sidebar-users').click();
     await expect(home).toBeUserPage();
     await expect(home).toHavePageTitle('Users');
-    await revokeUser(home, 'Boby McBobFace');
+    await revokeUser(home, 'Boby McBobFace', 'bob@example.com');
     await home.locator('.sidebar').locator('#sidebar-all-workspaces').click();
     await expect(home).toBeWorkspacePage();
     const workspace = home.locator('.workspace-card-item', { hasText: 'BOB WORKSPACE' });

@@ -339,7 +339,7 @@ export async function shareWorkspace(
   await expect(modal).toBeHidden();
 }
 
-export async function revokeUser(usersPage: MsPage, user: string): Promise<void> {
+export async function revokeUser(usersPage: MsPage, user: string, email: string): Promise<void> {
   const item = usersPage.locator('#users-page-user-list').locator('.user-list-item', { hasText: user });
   await item.hover();
   const menu = usersPage.locator('#user-context-menu');
@@ -347,7 +347,7 @@ export async function revokeUser(usersPage: MsPage, user: string): Promise<void>
   await item.locator('.options-button').click();
   await expect(menu).toBeVisible();
   await menu.locator('.list-group-item', { hasText: 'Revoke this user' }).click();
-  await answerQuestion(usersPage, true);
+  await fillInputModal(usersPage, email);
   await expect(usersPage).toShowToast(`${user} has been revoked. They can no longer access this organization.`, 'Success');
 }
 
@@ -852,17 +852,13 @@ export async function checkUserContextMenu(
   const labels = menu.locator(page.displaySize === DisplaySize.Large ? '.list-group-item__label' : '.list-group-item__label-small');
 
   const expectedTitles = [
-    ...(clientRole === 'Administrator' && !options?.isRevoked ? ['Deletion'] : []),
+    ...(clientRole === 'Administrator' && !options?.isRevoked && userRole !== 'multi-users' ? ['Deletion'] : []),
     ...(userRole !== 'multi-users' ? ['Copy roles'] : []),
     ...(userRole !== 'External' && !options?.isRevoked ? ['Profile'] : []),
     ...(userRole !== 'multi-users' ? ['User details'] : []),
   ];
   const expectedLabels = [
-    ...(clientRole === 'Administrator' && !options?.isRevoked
-      ? userRole === 'multi-users'
-        ? ['Revoke these users']
-        : ['Revoke this user']
-      : []),
+    ...(clientRole === 'Administrator' && !options?.isRevoked && userRole !== 'multi-users' ? ['Revoke this user'] : []),
     ...(userRole !== 'multi-users' ? ['Copy workspace roles'] : []),
     ...(userRole !== 'External' && !options?.isRevoked ? (userRole === 'multi-users' ? ['Change profiles'] : ['Change profile']) : []),
     ...(userRole !== 'multi-users' ? ['Details'] : []),

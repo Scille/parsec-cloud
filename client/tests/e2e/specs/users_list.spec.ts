@@ -3,7 +3,6 @@
 import { Locator, Page } from '@playwright/test';
 import {
   addUser,
-  answerQuestion,
   checkUserContextMenu,
   DisplaySize,
   expect,
@@ -152,13 +151,19 @@ for (const success of [true, false]) {
     // Opens context menu with button
     await item.locator('.options-button').click();
     await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'Revoke this user');
-    await answerQuestion(usersPage, true, {
-      expectedTitleText: 'Revoke this user?',
-      expectedQuestionText:
-        'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
-      expectedPositiveText: 'Revoke',
-      expectedNegativeText: 'Cancel',
-    });
+
+    const inputModal = usersPage.locator('.text-input-modal');
+    await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+    await expect(inputModal.locator('.report-text__text')).toHaveText(
+      'This will permanently revoke Boby McBobFace, preventing them \
+      from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
+      in the field below.Email address: bob@example.com',
+    );
+    await fillIonInput(inputModal.locator('ion-input'), 'bob@example.fr');
+    await expect(inputModal.locator('#next-button')).toHaveAttribute('disabled');
+    await fillIonInput(inputModal.locator('ion-input'), 'bob@example.com');
+    await expect(inputModal.locator('#next-button')).toBeEnabled();
+    await inputModal.locator('#next-button').click();
 
     if (success) {
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
@@ -173,43 +178,6 @@ for (const success of [true, false]) {
       await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'dismiss');
     }
   });
-
-  msTest(`Revoke two users with selection (success: ${success})`, async ({ usersPage }) => {
-    if (!success) {
-      await mockLibParsec(usersPage, [
-        {
-          name: 'clientRevokeUser',
-          result: { ok: false, error: { tag: 'ClientRevokeUserErrorOffline', error: 'offline' } },
-        },
-      ]);
-    }
-
-    const item1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-    await item1.hover();
-    await item1.locator('.ms-checkbox').check();
-
-    const item2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
-    await item2.hover();
-    await item2.locator('.ms-checkbox').check();
-
-    await usersPage.locator('#activate-users-ms-action-bar').getByText('Revoke these users').click();
-    await answerQuestion(usersPage, true, {
-      expectedTitleText: 'Revoke these users?',
-      expectedQuestionText:
-        'This will revoke these 2 users, preventing them from accessing this organization.Are you sure you want to proceed?',
-      expectedPositiveText: 'Revoke',
-      expectedNegativeText: 'Cancel',
-    });
-    if (success) {
-      await expect(usersPage).toShowToast('2 users have been revoked, they can no longer access this organization.', 'Success');
-      await expect(item1.locator('.user-status')).toHaveText('Revoked');
-      await expect(item2.locator('.user-status')).toHaveText('Revoked');
-    } else {
-      await expect(usersPage).toShowToast('Failed to revoke any user.', 'Error');
-      await expect(item1.locator('.user-status')).toHaveText('Active');
-      await expect(item2.locator('.user-status')).toHaveText('Active');
-    }
-  });
 }
 
 msTest('Revoke one user with selection', async ({ usersPage }) => {
@@ -217,13 +185,18 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
   await item.hover();
   await item.locator('.ms-checkbox').check();
   await usersPage.locator('#activate-users-ms-action-bar').getByText('Revoke this user').click();
-  await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke this user?',
-    expectedQuestionText:
-      'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
-    expectedPositiveText: 'Revoke',
-    expectedNegativeText: 'Cancel',
-  });
+  const inputModal = usersPage.locator('.text-input-modal');
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(inputModal.locator('.report-text__text')).toHaveText(
+    'This will permanently revoke Boby McBobFace, preventing them \
+    from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
+    in the field below.Email address: bob@example.com',
+  );
+  await fillIonInput(inputModal.locator('ion-input'), 'bob@example.fr');
+  await expect(inputModal.locator('#next-button')).toHaveAttribute('disabled');
+  await fillIonInput(inputModal.locator('ion-input'), 'bob@example.com');
+  await expect(inputModal.locator('#next-button')).toBeEnabled();
+  await inputModal.locator('#next-button').click();
   await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
   await expect(item.locator('.user-status')).toHaveText('Revoked');
 });
@@ -277,7 +250,7 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
     }
   }
   await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length - 1} users selected`, { useInnerText: true });
-  await expect(actionBar.getByText('Revoke these users')).toBeVisible();
+  await expect(actionBar.getByText('Change profiles')).toBeVisible();
 
   const expectedSelected = USERS.filter((u) => (u.active || u.frozen) && u.name !== 'Alicey McAliceFace');
   await expect(actionBar.locator('.counter')).toHaveText(`${expectedSelected.length} users selected`, { useInnerText: true });
@@ -865,7 +838,7 @@ for (const gridOrList of ['grid', 'list']) {
         .locator(gridOrList === 'list' ? '.user-list-item' : '.user-card-item')
         .nth(1);
       await user.click({ button: 'right' });
-      await checkUserContextMenu(usersPage, 'Administrator', 'multi-users', 'Revoke these users');
+      await checkUserContextMenu(usersPage, 'Administrator', 'multi-users', 'Change profiles');
     });
   }
 }

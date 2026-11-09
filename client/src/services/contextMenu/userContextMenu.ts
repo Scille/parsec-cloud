@@ -13,7 +13,7 @@ async function _canUpdateProfile(users: UserInfo[], clientIsAdmin: boolean): Pro
 }
 
 async function _canRevoke(users: UserInfo[], clientIsAdmin: boolean): Promise<boolean> {
-  return clientIsAdmin && users.some((u) => !u.isRevoked());
+  return clientIsAdmin && users.length === 1 && !users[0].isRevoked();
 }
 
 export function useUserContextMenu() {
@@ -78,7 +78,7 @@ export function useUserContextMenu() {
 
     switch (data.action) {
       case UserAction.Revoke: {
-        await userActions.revokeUsers(users);
+        await userActions.revokeUser(users[0]);
         break;
       }
       case UserAction.Details: {

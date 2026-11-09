@@ -5,7 +5,7 @@
     <ion-list class="menu-list">
       <ion-item-group
         class="list-group"
-        v-if="canRevoke"
+        v-if="canRevoke && !multipleSelected"
       >
         <ion-item class="list-group-title">
           <ion-text class="list-group-title__label">
@@ -23,7 +23,7 @@
             :icon="personRemove"
           />
           <ion-text class="list-group-item__label">
-            {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: multipleSelected ? 2 : 1 }) }}
+            {{ $msTranslate('UsersPage.userContextMenu.actionRevoke') }}
           </ion-text>
         </ion-item>
       </ion-item-group>

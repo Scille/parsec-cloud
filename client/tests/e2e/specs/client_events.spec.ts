@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, login, logout, mockLibParsec, msTest, sendEvent } from '@tests/e2e/helpers';
+import { expect, fillIonInput, login, logout, mockLibParsec, msTest, sendEvent } from '@tests/e2e/helpers';
 
 msTest('Revoked event', async ({ usersPage }) => {
   msTest.setTimeout(60_000);
@@ -11,13 +11,16 @@ msTest('Revoked event', async ({ usersPage }) => {
   const menu = usersPage.locator('#user-context-menu');
   await expect(menu).toBeVisible();
   await menu.getByRole('listitem').nth(1).click();
-  await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke this user?',
-    expectedQuestionText:
-      'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
-    expectedPositiveText: 'Revoke',
-    expectedNegativeText: 'Cancel',
-  });
+  const inputModal = usersPage.locator('.text-input-modal');
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(inputModal.locator('.report-text__text')).toHaveText(
+    'This will permanently revoke Boby McBobFace, preventing them \
+    from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
+    in the field below.Email address: bob@example.com',
+  );
+  await fillIonInput(inputModal.locator('ion-input'), 'bob@example.com');
+  await expect(inputModal.locator('#next-button')).toBeEnabled();
+  await inputModal.locator('#next-button').click();
   await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
   await expect(item).toHaveTheClass('revoked');
 
@@ -25,13 +28,15 @@ msTest('Revoked event', async ({ usersPage }) => {
   const item2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
   await item2.click({ button: 'right' });
   await menu.getByRole('listitem').nth(1).click();
-  await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke this user?',
-    expectedQuestionText:
-      'This will revoke Malloryy McMalloryFace, preventing them from accessing this organization.Are you sure you want to proceed?',
-    expectedPositiveText: 'Revoke',
-    expectedNegativeText: 'Cancel',
-  });
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(inputModal.locator('.report-text__text')).toHaveText(
+    'This will permanently revoke Malloryy McMalloryFace, preventing them \
+    from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
+    in the field below.Email address: mallory@example.com',
+  );
+  await fillIonInput(inputModal.locator('ion-input'), 'mallory@example.com');
+  await expect(inputModal.locator('#next-button')).toBeEnabled();
+  await inputModal.locator('#next-button').click();
   await expect(usersPage).toShowToast('Malloryy McMalloryFace has been revoked. They can no longer access this organization.', 'Success');
   await expect(item2).toHaveTheClass('revoked');
 
