@@ -95,7 +95,7 @@ repos:
       - id: yamllint
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: f5c5d72342f35643988a9ffa0705c05bd3ff8383 # v10.3.0
+    rev: f6467e1f1ebecf5020560405c7b26e01786a43c8 # v10.4.0
     hooks:
       - id: cspell
         stages:
@@ -355,7 +355,7 @@ repos:
   # JSON
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0494aa7fa1314e98913a41227d8f0a515b2c1049 # 0.38.2
+    rev: a76b92851fc9eede9f9bc4073eb55202f34eb0df # 0.39.0
     hooks:
       - id: check-jsonschema
         name: Validate protocol files with jsonschema
