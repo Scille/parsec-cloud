@@ -6,8 +6,8 @@
       v-if="initialized"
       v-show="step === Steps.OrganizationNameAndServer"
       :class="step === Steps.OrganizationNameAndServer ? 'active' : ''"
-      :organization-name="organizationName ?? ''"
-      :server-addr="serverAddr ?? ''"
+      :initial-organization-name="organizationName ?? ''"
+      :initial-server-addr="serverAddr ?? ''"
       :disable-server-addr-field="bootstrapLink !== undefined"
       :disable-organization-name-field="bootstrapLink !== undefined"
       @organization-name-and-server-chosen="onOrganizationNameAndServerChosen"
@@ -132,7 +132,6 @@ const emits = defineEmits<{
   (e: 'organizationCreated', organizationName: OrganizationID, device: AvailableDevice, saveStrategy: DeviceSaveStrategy): void;
 }>();
 
-const bootstrapLink = ref<string | undefined>(props.bootstrapLink);
 const step = ref<Steps>(Steps.OrganizationNameAndServer);
 const organizationName = ref<OrganizationID | undefined>(undefined);
 const serverAddr = ref<ParsecAddr>('');
@@ -148,8 +147,8 @@ const querying = ref(false);
 const userInformationRef = useTemplateRef<InstanceType<typeof OrganizationUserInformationPage>>('userInformation');
 
 onMounted(async () => {
-  if (bootstrapLink.value) {
-    const result = await parseParsecAddr(bootstrapLink.value);
+  if (props.bootstrapLink) {
+    const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
       serverAddr.value = await buildParsecAddr(result.value);
@@ -239,11 +238,11 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
 }
 
 async function bootstrapOrganization(): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
-  if (!name.value || !email.value || !saveStrategy.value || !bootstrapLink.value) {
+  if (!name.value || !email.value || !saveStrategy.value || !props.bootstrapLink) {
     return { ok: false, error: { tag: BootstrapOrganizationErrorTag.Internal, error: 'Missing data' } };
   }
   const result = await parsecBootstrapOrganization(
-    bootstrapLink.value,
+    props.bootstrapLink,
     name.value,
     email.value,
     getDefaultDeviceName(),
@@ -263,7 +262,7 @@ async function onCreateClicked(): Promise<void> {
 
   const startTime = new Date().valueOf();
   let result;
-  if (bootstrapLink.value) {
+  if (props.bootstrapLink) {
     result = await bootstrapOrganization();
   } else {
     result = await createOrganization();

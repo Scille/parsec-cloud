@@ -8,7 +8,7 @@
         class="organization-list__item"
         button
         lines="none"
-        v-for="org in organizations"
+        v-for="org in organizationsList"
         :key="org.bmsId"
         @click="onOrganizationSelected(org)"
         :class="{ 'current-organization': org.bmsId === currentOrganization.bmsId }"
@@ -88,11 +88,11 @@ const props = defineProps<{
   organizations: Array<BmsOrganization>;
 }>();
 
-const organizations = ref<Array<BmsOrganization>>(Array.from(props.organizations));
+const organizationsList = ref<Array<BmsOrganization>>(Array.from(props.organizations));
 
 onMounted(async () => {
   if (props.organizations.length > 1) {
-    organizations.value.push(DefaultBmsOrganization);
+    organizationsList.value.push(DefaultBmsOrganization);
   }
 });
 
