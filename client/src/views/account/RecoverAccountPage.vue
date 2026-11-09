@@ -67,7 +67,7 @@
           <ms-input
             v-if="!isEditingServer"
             class="login-server-input account-login-content__input login-server-input-disabled"
-            :value="server.replace('parsec3://', '')"
+            :value="serverWithoutScheme"
             label="loginPage.inputFields.server"
             :disabled="true"
           />
@@ -183,7 +183,7 @@ import {
   Translatable,
   Validity,
 } from 'megashark-lib';
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 
 enum Steps {
   Email = 0,
@@ -206,6 +206,10 @@ const passwordInputRef = useTemplateRef<typeof MsChoosePasswordInput>('passwordI
 const serverInputRef = useTemplateRef('serverInput');
 const emailInputRef = useTemplateRef('emailInput');
 const codeInputRef = useTemplateRef('codeInput');
+
+const serverWithoutScheme = computed(() => {
+  return server.value.replace('parsec3://', '');
+});
 
 const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
   {
