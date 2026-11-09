@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+# pyright: reportUnnecessaryTypeIgnoreComment=false
 
 """
 List versions of what we consider important dependencies of our client & server application.
@@ -16,10 +17,21 @@ from collections.abc import Callable, Generator, Sequence
 from enum import Enum, auto
 from os import environ
 from pathlib import Path
-from typing import BinaryIO, NamedTuple
+from typing import TYPE_CHECKING, BinaryIO, NamedTuple
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
-from pydantic.dataclasses import dataclass
+try:
+    from pydantic import BaseModel, ConfigDict, Field, RootModel  # type: ignore
+    from pydantic.dataclasses import dataclass  # type: ignore
+except ImportError:
+    raise SystemExit(
+        "pydantic is missing, run this script with: `uv --project server run misc/list_important_dependencies.py`"
+    )
+
+if TYPE_CHECKING:
+    # Pyright is often run from outside the server virtualenv, so Pydantic is not
+    # available. However we can use stdlib dataclasses instead since it is equivalent
+    # to `pydantic.dataclasses` from a typing point of view.
+    from dataclasses import dataclass
 
 ROOT_DIR = Path(__file__).parent.parent.resolve()
 NPM_LOCK_FILES = (
