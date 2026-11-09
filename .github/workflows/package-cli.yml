@@ -94,7 +94,7 @@ jobs:
             runner: windows-2025
             extension: .exe
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -105,7 +105,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # pin v8.0.2
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: version.patch
           digest-mismatch: error
@@ -124,7 +124,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Install tools
-        uses: taiki-e/install-action@1919c4a95903d2c33e4a221102edca87309fc14b # v2.89.0
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: cross@${{ env.cross-version }}, yq
         timeout-minutes: 2
@@ -238,7 +238,7 @@ jobs:
           $jsonContent = '{ "version": "${{ steps.version.outputs.full }}" }'
           $jsonContent | Tee-Object -FilePath "${{ runner.temp }}\package.json"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin v7.0.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cli-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
           # NOTE: package.json is only present on Windows builds
