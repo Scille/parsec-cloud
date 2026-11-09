@@ -166,7 +166,7 @@ msTest('Login', async ({ home }) => {
   await loginButton.click();
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);
-  const profile = home.locator('.topbar').locator('.profile-header');
+  const profile = home.locator('.sidebar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
 });
 

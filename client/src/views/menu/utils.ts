@@ -5,7 +5,7 @@ import { Ref, ref } from 'vue';
 export interface SidebarSavedData {
   width?: number;
   visible?: boolean;
-  organizationVisible?: boolean;
+  collapsed?: boolean;
   workspacesVisible?: boolean;
   favoritesVisible?: boolean;
   recentWorkspacesVisible?: boolean;
@@ -18,7 +18,7 @@ export const SIDEBAR_CLIENTAREA_MENU_DATA_KEY = 'SidebarClientAreaMenu';
 export const SidebarDefaultData: Required<SidebarSavedData> = {
   width: 300,
   visible: true,
-  organizationVisible: true,
+  collapsed: false,
   workspacesVisible: true,
   favoritesVisible: true,
   recentWorkspacesVisible: true,

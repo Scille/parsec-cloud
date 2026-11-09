@@ -913,7 +913,7 @@ msTest('Check in UsersPage if action bar updates after resized', async ({ usersP
   await expect(actionBarMoreButton).toBeVisible();
 
   // Finally, check if action bar buttons are updated after toggling the sidebar menu
-  const topbarButton = usersPage.locator('#connected-header').locator('#trigger-toggle-menu-button');
+  const topbarButton = usersPage.locator('.sidebar').locator('#trigger-toggle-menu-button');
   await expect(topbarButton).toBeVisible();
   await topbarButton.click();
   await expect(actionsBarButtons).toHaveText(['Revoke this user', 'Change profile', 'Details']);

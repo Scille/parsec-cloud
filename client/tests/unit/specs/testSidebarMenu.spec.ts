@@ -170,6 +170,46 @@ describe('useSidebarMenu', () => {
     });
   });
 
+  describe('collapsed state', () => {
+    it('should load collapsed state from storage', async () => {
+      const savedData: SidebarSavedData = { width: 400, visible: true, collapsed: true };
+      mockStorageManager.retrieveComponentData.mockResolvedValue(savedData);
+
+      const { default: useSidebarMenu } = await import('@/services/sidebarMenu');
+      const sidebar = useSidebarMenu();
+      await waitForInitialization();
+
+      expect(sidebar.isCollapsed.value).toBe(true);
+      // Collapsing does not change the stored width nor the visibility
+      expect(sidebar.width.value).toBe(400);
+      expect(sidebar.isVisible.value).toBe(true);
+    });
+
+    it('should toggle and persist the collapsed state', async () => {
+      const { default: useSidebarMenu } = await import('@/services/sidebarMenu');
+      const sidebar = useSidebarMenu();
+      await waitForInitialization();
+
+      expect(sidebar.isCollapsed.value).toBe(false);
+
+      sidebar.toggleCollapsed();
+      expect(sidebar.isCollapsed.value).toBe(true);
+      expect(mockStorageManager.updateComponentData).toHaveBeenLastCalledWith(
+        SIDEBAR_MENU_DATA_KEY,
+        { collapsed: true },
+        SidebarDefaultData,
+      );
+
+      sidebar.toggleCollapsed();
+      expect(sidebar.isCollapsed.value).toBe(false);
+      expect(mockStorageManager.updateComponentData).toHaveBeenLastCalledWith(
+        SIDEBAR_MENU_DATA_KEY,
+        { collapsed: false },
+        SidebarDefaultData,
+      );
+    });
+  });
+
   describe('loading state behavior', () => {
     it('should show isVisible as false during loading', async () => {
       mockStorageManager.retrieveComponentData.mockImplementation(

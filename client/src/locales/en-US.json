@@ -1191,7 +1191,6 @@
         "technicalId": "Internal ID:"
     },
     "SideMenu": {
-        "organization": "Organization",
         "workspaces": "Workspaces",
         "recent": "Recent",
         "archived": "Archived",

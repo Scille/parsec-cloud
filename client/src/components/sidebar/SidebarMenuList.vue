@@ -1,8 +1,12 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="list-sidebar">
+  <ion-list
+    class="list-sidebar"
+    :class="{ 'list-sidebar--collapsed': collapsed }"
+  >
     <ion-header
+      v-if="!collapsed"
       lines="none"
       class="list-sidebar-header"
       :class="isContentVisible ? 'open' : 'close'"
@@ -17,7 +21,7 @@
       />
     </ion-header>
     <div
-      v-if="isContentVisible"
+      v-if="isContentVisible || collapsed"
       class="list-sidebar-content"
     >
       <slot />
@@ -33,6 +37,7 @@ import { Translatable } from 'megashark-lib';
 defineProps<{
   title: Translatable;
   isContentVisible: boolean;
+  collapsed?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -44,32 +49,43 @@ const emits = defineEmits<{
 .list-sidebar {
   display: flex;
   flex-direction: column;
+  padding: ms.spacing('padding-none');
   margin-bottom: 1.5rem;
   background: transparent;
+
+  & + & {
+    padding-top: ms.spacing('padding-4xl');
+    border-top: ms.border('thin') solid ms.color('border-neutral-on-color');
+  }
 
   &.list-file {
     margin: 1rem 0;
   }
 
+  &--collapsed {
+    margin-bottom: 0;
+    padding-bottom: ms.spacing('padding-2xl');
+    border-bottom: ms.border('thin') solid ms.color('border-neutral-on-color');
+
+    .list-sidebar-content {
+      padding-inline: ms.spacing('padding-lg');
+    }
+  }
+
   &-header {
-    @include ms.font('heading-h6');
+    @include ms.font('label-sm-emphasis');
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: ms.spacing('gap-lg');
-    transition: border 0.2s ease-in-out;
-    width: 100%;
-    padding: ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+    gap: ms.spacing('gap-sm');
+    margin-inline: ms.spacing('padding-3xl');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-2xl') ms.spacing('padding-2xl');
+    border-inline: ms.border('thin') solid transparent;
     overflow: hidden;
-    border-bottom: ms.border('thin') solid ms.color('opacity-inverse-500');
     cursor: pointer;
 
-    &.open {
-      margin-bottom: 1rem;
-    }
-
     &__text {
-      color: ms.color('text-on-color-heading');
+      color: ms.color('text-on-color-label');
+      opacity: ms.opacity('6');
       display: flex;
       align-items: center;
       user-select: none;
@@ -89,7 +105,7 @@ const emits = defineEmits<{
     &__toggle {
       user-select: none;
       padding: ms.spacing('padding-xs');
-      font-size: 1rem;
+      font-size: 0.75rem;
       border-radius: ms.radius('md');
       color: ms.color('text-on-color-heading');
       flex-shrink: 0;
@@ -107,7 +123,7 @@ const emits = defineEmits<{
   &-content {
     display: flex;
     flex-direction: column;
-    gap: ms.spacing('gap-lg');
+    gap: ms.spacing('gap-sm');
     padding-inline: ms.spacing('padding-3xl');
   }
 }

@@ -10,19 +10,21 @@
     <ion-menu
       content-id="main"
       class="sidebar"
-      :class="{ 'sidebar--hidden': !isSidebarVisible }"
+      :class="{ 'sidebar--hidden': !isSidebarVisible, 'sidebar--collapsed': isSidebarCollapsed, 'sidebar--animated': isWidthAnimated }"
+      @transitionend="onSidebarTransitionEnd"
     >
       <div
         class="resize-divider"
         ref="divider"
-        v-show="isSidebarVisible"
+        v-show="isSidebarVisible && !isSidebarCollapsed"
       />
       <ion-header class="sidebar-header">
-        <div>
-          <!-- active organization -->
-          <ion-card class="organization-card">
-            <ion-card-header
-              class="organization-card-header organization-card-header-desktop"
+        <!-- active organization -->
+        <div class="organization-block">
+          <div class="organization-block-header">
+            <div
+              class="organization-card-header-desktop"
+              :title="userInfo?.organizationId"
               @click="openOrganizationChoice($event)"
             >
               <!-- Restricted to large display to prevent duplicate v-html id in small display -->
@@ -38,25 +40,94 @@
                   class="organization-avatar-logo"
                 />
               </ion-avatar>
-              <ion-card-title
-                class="organization-name"
-                :title="userInfo?.organizationId"
-              >
-                {{ userInfo?.organizationId }}
-              </ion-card-title>
-              <ms-image
-                :image="ChevronExpand"
-                class="header-icon"
+              <template v-if="!isSidebarCollapsed">
+                <ion-text class="organization-name">
+                  {{ userInfo?.organizationId }}
+                </ion-text>
+                <ms-image
+                  :image="ChevronExpand"
+                  class="organization-switch-icon"
+                />
+              </template>
+            </div>
+            <ms-image
+              id="trigger-toggle-menu-button"
+              class="sidebar-toggle"
+              :image="SidebarToggle"
+              @click="onToggleCollapsedClick()"
+            />
+          </div>
+
+          <div
+            v-if="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
+            class="sidebar-content-organization organization-block-menu"
+            id="sidebar-organization"
+          >
+            <!-- manage users -->
+            <ion-text
+              @click="navigateTo(Routes.Users)"
+              class="sidebar-content-organization-button"
+              :class="currentRouteIs(Routes.Users) ? 'active' : ''"
+              :title="isSidebarCollapsed ? $msTranslate('SideMenu.users') : undefined"
+              id="sidebar-users"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="people"
               />
-            </ion-card-header>
-          </ion-card>
-          <!-- end of active organization -->
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.users') }}
+              </span>
+            </ion-text>
+
+            <!-- invitations -->
+            <ion-text
+              v-if="userInfo?.currentProfile === UserProfile.Admin"
+              @click="navigateTo(Routes.Invitations)"
+              class="sidebar-content-organization-button"
+              :class="currentRouteIs(Routes.Invitations) ? 'active' : ''"
+              :title="isSidebarCollapsed ? $msTranslate('SideMenu.invitationsRequests') : undefined"
+              id="sidebar-invitations"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="pendingRequestsCount > 0 ? mailUnread : mail"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.invitationsRequests') }}
+              </span>
+              <span
+                v-if="pendingRequestsCount > 0"
+                class="request-notification"
+              />
+            </ion-text>
+
+            <!-- organization information -->
+            <ion-text
+              @click="navigateTo(Routes.Organization)"
+              class="sidebar-content-organization-button"
+              :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
+              :title="isSidebarCollapsed ? $msTranslate('SideMenu.information') : undefined"
+              id="sidebar-organization-information"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="informationCircle"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.information') }}
+              </span>
+            </ion-text>
+          </div>
         </div>
 
         <!-- frozen organization -->
         <div
           class="freeze-card"
-          v-if="isExpired"
+          v-if="isExpired && !isSidebarCollapsed"
         >
           <div class="freeze-card-header">
             <ion-icon
@@ -87,7 +158,7 @@
       <ion-content class="ion-padding sidebar-content">
         <!-- trial section -->
         <div
-          v-show="isTrialOrg"
+          v-show="isTrialOrg && !isSidebarCollapsed"
           v-if="expirationDuration"
           class="trial-card"
         >
@@ -111,84 +182,18 @@
           </ion-button>
         </div>
 
-        <!-- organisation content -->
-        <sidebar-menu-list
-          v-if="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
-          title="SideMenu.organization"
-          v-model:is-content-visible="menusVisible.organization"
-          @update:is-content-visible="onOrganizationMenuVisibilityChanged"
-          id="sidebar-organization"
-        >
-          <div class="sidebar-content-organization">
-            <!-- manage users -->
-            <ion-text
-              @click="navigateTo(Routes.Users)"
-              class="sidebar-content-organization-button"
-              :class="currentRouteIs(Routes.Users) ? 'active' : ''"
-              id="sidebar-users"
-              button
-            >
-              <ion-icon
-                class="sidebar-content-organization-button__icon"
-                :icon="people"
-              />
-              <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('SideMenu.users') }}
-              </span>
-            </ion-text>
-
-            <!-- invitations -->
-            <ion-text
-              v-if="userInfo?.currentProfile === UserProfile.Admin"
-              @click="navigateTo(Routes.Invitations)"
-              class="sidebar-content-organization-button"
-              :class="currentRouteIs(Routes.Invitations) ? 'active' : ''"
-              id="sidebar-invitations"
-              button
-            >
-              <ion-icon
-                class="sidebar-content-organization-button__icon"
-                :icon="pendingRequestsCount > 0 ? mailUnread : mail"
-              />
-              <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('SideMenu.invitationsRequests') }}
-              </span>
-              <span
-                v-if="pendingRequestsCount > 0"
-                class="request-notification"
-              />
-            </ion-text>
-
-            <!-- organization information -->
-            <ion-text
-              @click="navigateTo(Routes.Organization)"
-              class="sidebar-content-organization-button"
-              :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
-              id="sidebar-organization-information"
-              button
-            >
-              <ion-icon
-                class="sidebar-content-organization-button__icon"
-                :icon="informationCircle"
-              />
-              <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('SideMenu.information') }}
-              </span>
-            </ion-text>
-          </div>
-        </sidebar-menu-list>
-
         <!-- workspaces content -->
         <sidebar-menu-list
           title="SideMenu.workspaces"
           v-model:is-content-visible="menusVisible.workspaces"
           @update:is-content-visible="onWorkspacesMenuVisibilityChanged"
+          :collapsed="isSidebarCollapsed"
           id="sidebar-workspaces"
         >
           <div class="sidebar-content-organization">
             <div
               class="sidebar-content-workspaces current-workspace"
-              v-if="currentWorkspace && !currentRouteIs(Routes.History)"
+              v-if="currentWorkspace && !currentRouteIs(Routes.History) && !isSidebarCollapsed"
             >
               <sidebar-workspace-item
                 :workspace="currentWorkspace"
@@ -204,6 +209,7 @@
               @contextmenu="openWorkspaceGlobalContextMenu"
               class="sidebar-content-organization-button"
               :class="{ active: currentRouteIs(Routes.Workspaces) }"
+              :title="isSidebarCollapsed ? $msTranslate('SideMenu.myWorkspaces') : undefined"
               id="sidebar-all-workspaces"
               button
             >
@@ -221,6 +227,7 @@
               @click="navigateTo(Routes.Archived)"
               :class="{ active: currentRouteIs(Routes.Archived) }"
               class="sidebar-content-organization-button"
+              :title="isSidebarCollapsed ? $msTranslate('SideMenu.archived') : undefined"
               id="sidebar-archived-workspaces"
               button
             >
@@ -239,6 +246,7 @@
               @click="navigateTo(Routes.Trash)"
               :class="{ active: currentRouteIs(Routes.Trash) }"
               class="sidebar-content-organization-button"
+              :title="isSidebarCollapsed ? $msTranslate('SideMenu.trashed') : undefined"
               id="sidebar-trashed-workspaces"
               button
             >
@@ -255,6 +263,7 @@
 
         <!-- last files content -->
         <sidebar-menu-list
+          v-if="!isSidebarCollapsed"
           title="SideMenu.recentDocuments"
           :icon="documentIcon"
           v-model:is-content-visible="menusVisible.recentFiles"
@@ -287,7 +296,20 @@
           class="organization-checklist"
           v-show="securityWarningsCount > 0"
         >
+          <ion-text
+            v-if="isSidebarCollapsed"
+            class="sidebar-content-organization-button"
+            :title="$msTranslate('SideMenu.checklist.title')"
+            button
+            @click="openSecurityWarningsPopover"
+          >
+            <ion-icon
+              class="sidebar-content-organization-button__icon"
+              :icon="warning"
+            />
+          </ion-text>
           <ion-item
+            v-else
             button
             lines="none"
             class="sidebar-item-manage item-selected checklist ion-no-padding"
@@ -317,6 +339,20 @@
           </ion-item>
         </div>
       </ion-content>
+
+      <!-- profile -->
+      <div
+        v-if="isLargeDisplay"
+        class="sidebar-footer"
+      >
+        <profile-header-organization
+          id="profile-button"
+          :name="userInfo.humanHandle.label"
+          :email="userInfo.humanHandle.email"
+          :profile="userInfo.currentProfile"
+          :collapsed="isSidebarCollapsed"
+        />
+      </div>
     </ion-menu>
     <tab-bar-menu
       class="tab-bar-menu"
@@ -381,6 +417,7 @@ import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import { FolderGlobalAction } from '@/views/files';
+import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
 import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 import TabBarMenu from '@/views/menu/TabBarMenu.vue';
 import { useCustomTabBar } from '@/views/menu/utils';
@@ -391,9 +428,6 @@ import {
   GestureDetail,
   IonAvatar,
   IonButton,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
   IonContent,
   IonHeader,
   IonIcon,
@@ -423,7 +457,7 @@ import {
   warning,
 } from 'ionicons/icons';
 import { Duration } from 'luxon';
-import { ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
+import { ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, SidebarToggle, useWindowSize } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -442,14 +476,20 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
-const { width: sidebarWidth, isVisible: isSidebarVisible, setWidth: setSidebarWidth } = useSidebarMenu();
+const {
+  width: sidebarWidth,
+  isVisible: isSidebarVisible,
+  isCollapsed: isSidebarCollapsed,
+  setWidth: setSidebarWidth,
+  toggleCollapsed: toggleSidebarCollapsed,
+} = useSidebarMenu();
 const sidebarWidthProperty = ref('');
 const dividerRef = useTemplateRef('divider');
 const dividerWidthProperty = ref('');
 let eventDistributorCbId: string | null = null;
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
 const isExpired = ref(false);
-const menusVisible = ref({ organization: true, workspaces: true, recentFiles: true, recentWorkspaces: true, favorites: true });
+const menusVisible = ref({ workspaces: true, recentFiles: true, recentWorkspaces: true, favorites: true });
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isTrialOrg = ref(false);
 const pathOpener = usePathOpener();
@@ -482,11 +522,28 @@ const isReadOnly = computed(() => {
 const MIN_WIDTH = 150;
 const MAX_WIDTH = 370;
 const MAX_WIDTH_SHOWING_SIDEBAR = 768;
+const COLLAPSED_WIDTH = 64;
 const RESIZE_DEBOUNCE_MS = 100;
 
 let resizeTimeout: number | undefined = undefined;
 
-const watchSidebarWidthCancel = watch(sidebarWidth, async (value: number) => {
+const isWidthAnimated = ref(false);
+
+function onToggleCollapsedClick(): void {
+  isWidthAnimated.value = true;
+  toggleSidebarCollapsed();
+}
+
+function onSidebarTransitionEnd(event: TransitionEvent): void {
+  if (event.target === event.currentTarget && event.propertyName === 'width') {
+    isWidthAnimated.value = false;
+  }
+}
+
+// A fully hidden sidebar (width 0) stays hidden, even when collapsed
+const displayedWidth = computed(() => (isSidebarCollapsed.value && sidebarWidth.value > 0 ? COLLAPSED_WIDTH : sidebarWidth.value));
+
+const watchSidebarWidthCancel = watch(displayedWidth, async (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
   updateDividerPosition(value);
   emits('sidebarWidthChanged', value);
@@ -704,12 +761,11 @@ onMounted(async () => {
     },
   );
 
-  sidebarWidthProperty.value = `${sidebarWidth.value}px`;
-  emits('sidebarWidthChanged', sidebarWidth.value);
+  sidebarWidthProperty.value = `${displayedWidth.value}px`;
+  emits('sidebarWidthChanged', displayedWidth.value);
 
   // Load menu visibility settings separately
   const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
-  menusVisible.value.organization = savedSidebarData.organizationVisible ?? true;
   menusVisible.value.workspaces = savedSidebarData.workspacesVisible ?? true;
   menusVisible.value.favorites = savedSidebarData.favoritesVisible ?? true;
   menusVisible.value.recentWorkspaces = savedSidebarData.recentWorkspacesVisible ?? true;
@@ -850,16 +906,6 @@ async function onOpenWorkspaceContextMenu(event: Event): Promise<void> {
   }
 }
 
-async function onOrganizationMenuVisibilityChanged(visible: boolean): Promise<void> {
-  await storageManager.updateComponentData<SidebarSavedData>(
-    SIDEBAR_MENU_DATA_KEY,
-    {
-      organizationVisible: visible,
-    },
-    SidebarDefaultData,
-  );
-}
-
 async function onWorkspacesMenuVisibilityChanged(visible: boolean): Promise<void> {
   await storageManager.updateComponentData<SidebarSavedData>(
     SIDEBAR_MENU_DATA_KEY,
@@ -912,9 +958,17 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     border-right: none;
   }
 
+  &--animated {
+    transition: width 0.2s ease-in-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
   &::part(container) {
     display: flex;
-    gap: ms.spacing('gap-5xl');
+    gap: ms.spacing('gap-4xl');
   }
 
   @include ms.responsive-breakpoint('sm') {
@@ -971,86 +1025,106 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   }
 }
 
-.organization-card {
-  background: transparent;
-  box-shadow: none;
+.organization-block {
   display: flex;
   flex-direction: column;
-  margin: 0;
-  border-radius: 0;
-  gap: ms.spacing('gap-3xl');
+  border-bottom: ms.border('thin') solid ms.color('border-neutral-on-color');
 
   &-header {
     display: flex;
-    flex-direction: row;
-    border-radius: ms.radius('2xl');
-    box-shadow: none;
     align-items: center;
-    margin: 1.5rem 0.5rem 0;
-    padding: ms.spacing('padding-2xl');
-    gap: ms.spacing('gap-2xl');
-    position: relative;
-    z-index: 2;
-    border: ms.border('thin') solid transparent;
+    gap: ms.spacing('gap-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-2xl');
+    border-bottom: ms.border('thin') solid ms.color('border-neutral-on-color');
+  }
 
-    &-desktop:hover {
-      cursor: pointer;
-      border-color: ms.color('border-neutral-on-color');
-    }
+  &-menu {
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl');
+  }
+}
 
-    &-desktop .organization-avatar {
-      @include ms.font('heading-h6');
-      background-color: ms.color('surface-base-page');
-      color: ms.color('text-brand-default');
-      border: ms.border('thin') solid ms.color('border-base-default');
-      padding: ms.spacing('padding-sm');
-      width: 2.125rem;
-      height: 2.125rem;
-      border-radius: ms.radius('lg');
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
+.organization-card-header-desktop {
+  display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-lg');
+  flex-grow: 1;
+  min-width: 0;
+  padding: ms.spacing('padding-sm');
+  border-radius: ms.radius('lg');
+  border: ms.border('thin') solid transparent;
+  cursor: pointer;
 
-      &-logo {
-        width: 1.5rem;
-      }
-    }
+  &:hover {
+    border-color: ms.color('border-neutral-on-color');
+  }
 
-    .organization-name {
-      display: flex;
-      flex-direction: column;
-      white-space: nowrap;
-      overflow: hidden;
-      @include ms.font('heading-h4');
-      padding: 0.1875em 0;
-      margin: 0;
-      --color: #{ms.color('text-on-color-label')};
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+  .organization-avatar {
+    @include ms.font('heading-h6');
+    background-color: ms.color('surface-base-page');
+    color: ms.color('text-brand-default');
+    border: ms.border('thin') solid ms.color('border-base-default');
+    padding: ms.spacing('padding-sm');
+    width: 2.125rem;
+    height: 2.125rem;
+    border-radius: ms.radius('lg');
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 
-    .header-icon {
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      --fill-color: #{ms.color('icon-on-color-heading')};
-      width: 1.875rem;
-      margin-left: auto;
-      flex-shrink: 0;
+    &-logo {
+      width: 1.5rem;
     }
   }
+
+  .organization-name {
+    @include ms.font('heading-h5');
+    color: ms.color('text-on-color-heading');
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .organization-switch-icon {
+    --fill-color: #{ms.color('icon-on-color-label')};
+    width: 1.25rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+.sidebar-toggle {
+  --fill-color: #{ms.color('icon-on-color-label')};
+  display: flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: ms.spacing('padding-sm');
+  border-radius: ms.radius('md');
+  flex-shrink: 0;
+  cursor: pointer;
+  opacity: 0.8;
+
+  &:hover {
+    --fill-color: #{ms.color('icon-on-color-heading')};
+    background: ms.color('surface-neutral-on-color');
+  }
+}
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: ms.spacing('gap-sm');
+  padding: ms.spacing('padding-2xl') ms.spacing('padding-3xl') ms.spacing('padding-3xl');
+  border-top: ms.border('thin') solid ms.color('border-neutral-on-color');
+  position: relative;
+  z-index: 12;
 }
 
 .sidebar-content-organization {
   display: flex;
   flex-direction: column;
   user-select: none;
-  gap: ms.spacing('gap-lg');
+  gap: ms.spacing('gap-sm');
 
   &-button {
     @include ms.font('label-md-medium');
@@ -1102,7 +1176,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 .sidebar-content-files {
   display: flex;
   flex-direction: column;
-  gap: ms.spacing('gap-lg');
+  gap: ms.spacing('gap-sm');
 
   &--no-recent {
     @include ms.font('body-md-medium');
@@ -1307,6 +1381,48 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
         font-size: 0.875rem;
       }
     }
+  }
+}
+
+// Icons-only sidebar
+.sidebar--collapsed {
+  &::before {
+    display: none;
+  }
+
+  .organization-block-header {
+    flex-direction: column;
+    padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
+  }
+
+  .organization-card-header-desktop {
+    flex-grow: 0;
+  }
+
+  .organization-block-menu,
+  .organization-checklist,
+  .sidebar-footer {
+    padding-inline: ms.spacing('padding-lg');
+  }
+
+  .sidebar-footer {
+    align-items: center;
+  }
+
+  .sidebar-content-organization-button {
+    position: relative;
+    justify-content: center;
+    padding: ms.spacing('padding-lg');
+
+    &__text {
+      display: none;
+    }
+  }
+
+  .request-notification {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
   }
 }
 </style>

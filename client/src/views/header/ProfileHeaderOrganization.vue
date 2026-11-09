@@ -5,29 +5,29 @@
     button
     id="click-trigger"
     class="profile-header ion-no-padding"
-    :class="{ 'profile-header-clicked': isPopoverOpen }"
+    :class="{ 'profile-header-clicked': isPopoverOpen, 'profile-header--collapsed': collapsed }"
+    :title="collapsed ? name : undefined"
     @click="openOrganizationPopover($event)"
   >
     <div
-      class="avatar small"
+      class="avatar"
       :class="{ online: isOnline, offline: !isOnline }"
     >
       <ms-image
         :image="PersonCircle"
-        class="profile-info-card__avatar"
+        class="avatar__image"
       />
     </div>
-    <div class="text-content">
-      <div class="text-content-name">
-        <ion-text class="text-content-name__text">
-          {{ name }}
-        </ion-text>
-        <ion-icon
-          :class="{ 'popover-is-open': isPopoverOpen }"
-          slot="end"
-          :icon="chevronDown"
-        />
-      </div>
+    <div
+      v-if="!collapsed"
+      class="text-content"
+    >
+      <ion-text class="text-content__name">
+        {{ name }}
+      </ion-text>
+      <ion-text class="text-content__profile">
+        {{ $msTranslate(getProfileTranslationKey(profile)) }}
+      </ion-text>
       <ion-text
         class="text-content-update"
         v-show="updateAvailability.updateAvailable"
@@ -47,10 +47,10 @@ import { Env } from '@/services/environment';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { getProfileTranslationKey } from '@/services/translation';
 import { openUpdateAppModal } from '@/views/about';
 import ProfileHeaderOrganizationPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderOrganizationPopover.vue';
-import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
+import { IonItem, IonText, popoverController } from '@ionic/vue';
 import { Answer, askQuestion, MsImage, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
@@ -67,6 +67,7 @@ const props = defineProps<{
   name: string;
   email: string;
   profile: UserProfile;
+  collapsed?: boolean;
 }>();
 
 onMounted(async () => {
@@ -109,6 +110,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
     },
     event: event,
     showBackdrop: false,
+    side: 'right',
     alignment: 'end',
   });
   await popover.present();
@@ -172,48 +174,55 @@ async function openOrganizationPopover(event: Event): Promise<void> {
 .profile-header {
   --background: none;
   --background-hover: none;
-  border-radius: ms.radius('2xl');
-  padding: ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-sm');
+  --min-height: 0;
+  --inner-padding-end: 0;
+  border-radius: ms.radius('lg');
+  padding: ms.spacing('padding-md') ms.spacing('padding-lg');
   border: ms.border('thin') solid transparent;
-  transition: all ease-in-out 200ms;
-  flex-shrink: 0;
-  max-width: 15rem;
+  transition: border-color ease-in-out 150ms;
+  width: 100%;
 
   & * {
     pointer-events: none;
   }
 
-  &:hover {
+  &:hover,
+  &-clicked {
     --background-hover: none;
-    border-color: ms.color('border-base-default');
-    background: ms.color('surface-neutral-default-subtle-hover');
+    border-color: ms.color('border-neutral-on-color');
   }
 
   &-clicked {
-    border-color: ms.color('border-base-default');
-    background: ms.color('surface-neutral-default-subtle-hover');
+    background: ms.color('surface-neutral-on-color');
+  }
+
+  &--collapsed {
+    width: fit-content;
+    margin: 0 auto;
+    padding: ms.spacing('padding-sm');
   }
 }
 
 .avatar {
   position: relative;
-  color: ms.color('icon-brand-default');
   display: flex;
-  margin-right: ms.spacing('padding-lg');
+  flex-shrink: 0;
+  margin-right: ms.spacing('gap-lg');
 
-  @include ms.responsive-breakpoint('md') {
-    margin: 0;
+  .profile-header--collapsed & {
+    margin-right: 0;
   }
 
-  &-icon {
-    font-size: 2rem;
+  &__image {
+    width: 2rem;
+    height: 2rem;
   }
 
   &::after {
     content: '';
     position: absolute;
-    bottom: 2px;
-    right: 1px;
+    bottom: 1px;
+    right: 0;
     height: 0.5rem;
     width: 0.5rem;
     border-radius: ms.radius('full');
@@ -233,45 +242,30 @@ async function openOrganizationPopover(event: Event): Promise<void> {
 .text-content {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  gap: ms.spacing('gap-xs');
   overflow: hidden;
 
-  &-name {
-    display: flex;
-    align-items: center;
-    gap: ms.spacing('gap-lg');
-    color: ms.color('text-neutral-default');
+  &__name,
+  &__profile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-    &__text {
-      @include ms.font('body-lg-medium');
-      width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+  &__name {
+    @include ms.font('label-md-medium');
+    color: ms.color('text-on-color-heading');
+  }
 
-      @include ms.responsive-breakpoint('md') {
-        display: none;
-      }
-    }
-
-    ion-icon {
-      transition: transform ease-out 300ms;
-      font-size: 1rem;
-      flex-shrink: 0;
-
-      &.popover-is-open {
-        transform: rotate(180deg);
-      }
-    }
+  &__profile {
+    @include ms.font('label-sm-medium');
+    color: ms.color('text-on-color-label');
+    opacity: ms.opacity('8');
   }
 
   &-update {
     @include ms.font('label-sm-medium');
-    color: ms.color('text-brand-default');
-
-    @include ms.responsive-breakpoint('md') {
-      display: none;
-    }
+    color: ms.color('text-on-color-heading');
   }
 }
 </style>

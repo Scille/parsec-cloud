@@ -55,11 +55,11 @@
       >
         <!-- Sidebar toggle icon -->
         <ms-image
-          v-if="isLargeDisplay"
+          v-if="isLargeDisplay && !isSidebarMenuVisible"
           slot="start"
           id="trigger-toggle-menu-button"
           class="topbar-button__item"
-          @click="isSidebarMenuVisible ? hideSidebarMenu() : resetSidebarMenu()"
+          @click="resetSidebarMenu()"
           :image="SidebarToggle"
         />
 
@@ -185,15 +185,6 @@
               {{ $msTranslate('HeaderPage.offline.title') }}
             </ion-button>
           </template>
-          <!-- Profile button -->
-          <profile-header-organization
-            v-if="isLargeDisplay"
-            id="profile-button"
-            :name="userInfo ? userInfo.humanHandle.label : ''"
-            :email="userInfo ? userInfo.humanHandle.email : ''"
-            :profile="userInfo ? userInfo.currentProfile : UserProfile.Outsider"
-            class="profile-header"
-          />
         </ion-buttons>
       </ion-toolbar>
 
@@ -252,7 +243,6 @@ import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
 import WorkspaceSwitchModal from '@/views/header/WorkspaceSwitchModal.vue';
 import { openSettingsModal } from '@/views/settings';
 import {
@@ -278,7 +268,7 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 
 let hotkeys: HotkeyGroup | null = null;
 let eventDistributorCbId: string | null = null;
-const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
