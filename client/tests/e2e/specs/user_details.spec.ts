@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator } from '@playwright/test';
-import { answerQuestion, checkUserContextMenu, expect, MsPage, msTest } from '@tests/e2e/helpers';
+import { checkUserContextMenu, expect, fillInputModal, MsPage, msTest } from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 
 async function openModalWithUser(usersPage: MsPage, userIndex: number, revokeFirst?: boolean): Promise<Locator> {
@@ -13,7 +13,7 @@ async function openModalWithUser(usersPage: MsPage, userIndex: number, revokeFir
     await user.hover();
     await user.locator('.options-button').click();
     await checkUserContextMenu(usersPage, 'Administrator', 'External', 'Revoke this user');
-    await answerQuestion(usersPage, true);
+    await fillInputModal(usersPage, 'mallory@example.com');
     await expect(usersPage).toShowToast('Malloryy McMalloryFace has been revoked. They can no longer access this organization.', 'Success');
     await expect(user).toHaveTheClass('revoked');
   }

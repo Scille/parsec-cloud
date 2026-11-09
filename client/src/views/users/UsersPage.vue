@@ -214,7 +214,9 @@ const tabBarActions = computed(() => {
     if (selectedUsers.some((u: UserModel) => u.currentProfile !== UserProfile.Outsider)) {
       actions.push({ label: 'UsersPage.tabbar.update', action: async () => await updateSelectedUserProfiles(), icon: repeat });
     }
-    actions.push({ label: 'UsersPage.tabbar.revoke', action: async () => await revokeSelectedUsers(), icon: personRemove, danger: true });
+    if (selectedUsers.length === 1) {
+      actions.push({ label: 'UsersPage.tabbar.revoke', action: async () => await revokeSelectedUsers(), icon: personRemove, danger: true });
+    }
   }
   return actions;
 });
@@ -302,7 +304,10 @@ function getUsersCount(): number {
 
 async function revokeSelectedUsers(): Promise<void> {
   const selectedUsers = users.value.getSelectedUsers();
-  await actions.revokeUsers(selectedUsers);
+  if (selectedUsers.length !== 1) {
+    return;
+  }
+  await actions.revokeUser(selectedUsers[0]);
 
   await onSelectionCancel();
   await refreshUserList();
@@ -329,6 +334,10 @@ async function openUserContextMenu(event: Event, user: UserModel, onFinished?: (
   if (selectedUsers.length === 0 || !selectedUsers.includes(user)) {
     users.value.selectAll(false);
     selectedUsers = [user];
+  }
+
+  if (selectedUsers.length > 1 && selectedUsers.every((user) => user.currentProfile === UserProfile.Outsider)) {
+    return;
   }
 
   await contextMenu.openUserContextMenu(selectedUsers, currentUser, event);
@@ -519,9 +528,9 @@ const actionBarOptionsUsersPage = computed(() => {
     });
   }
 
-  if (users.value.selectedCount() >= 1 && isAdmin.value) {
+  if (users.value.selectedCount() === 1 && isAdmin.value) {
     actionArray.push({
-      label: { key: 'UsersPage.userContextMenu.actionRevoke', count: users.value.selectedCount() },
+      label: 'UsersPage.userContextMenu.actionRevoke',
       icon: personRemove,
       onClick: async (): Promise<void> => {
         await revokeSelectedUsers();

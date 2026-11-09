@@ -16,7 +16,7 @@
               :icon="personRemove"
             />
             <ion-text class="list-group-item__label-small">
-              {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: multipleSelected ? 2 : 1 }) }}
+              {{ $msTranslate('UsersPage.userContextMenu.actionRevoke') }}
             </ion-text>
           </ion-item>
           <ion-item

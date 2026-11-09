@@ -1739,7 +1739,7 @@
         "userContextMenu": {
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",
-            "actionRevoke": "Révoquer cet utilisateur | Révoquer ces utilisateurs",
+            "actionRevoke": "Révoquer cet utilisateur",
             "actionDetails": "Voir les détails",
             "titleAssignRoles": "Copie de rôles",
             "actionAssignRoles": "Copier les rôles des espaces de travail",
@@ -1866,13 +1866,12 @@
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."
         },
         "revocation": {
-            "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
-            "revokeQuestion": "<b>{user}</b> sera révoqué(e) et ne pourra plus accéder à l'organisation.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ? | Ces <b>{count} utilisateurs</b> seront révoqués. Ils ne pourront plus accéder à l'organisation.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ?",
+            "revokeTitle": "Révoquer cet utilisateur ?",
+            "revokeText": "<b>{user}</b> sera <b>définitivement</b> révoqué(e) et ne pourra plus accéder à l'organisation. Si vous êtes certain(e) de vouloir procéder à cette révocation, veuillez renseigner son adresse email dans le champ ci-dessous.<br/><br/>Adresse email: <b><i>{email}</i></b>",
+            "label": "Saisissez l'adresse email pour confirmer",
             "revokeYes": "Révoquer",
-            "revokeNo": "Annuler",
-            "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
-            "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation. | {count} utilisateurs révoqués, ils ne peuvent plus accéder à l'organisation.",
-            "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués."
+            "revokeFailed": "Impossible de révoquer cet utilisateur.",
+            "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation."
         },
         "sort": {
             "byName": "Nom",

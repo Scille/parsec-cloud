@@ -1739,7 +1739,7 @@
         "userContextMenu": {
             "titleRemove": "Deletion",
             "titleDetails": "User details",
-            "actionRevoke": "Revoke this user | Revoke these users",
+            "actionRevoke": "Revoke this user",
             "actionDetails": "Details",
             "titleAssignRoles": "Copy roles",
             "actionAssignRoles": "Copy workspace roles",
@@ -1866,13 +1866,12 @@
             "failedToListWorkspaces": "Failed to list workspaces."
         },
         "revocation": {
-            "revokeTitle": "Revoke this user? | Revoke these users?",
-            "revokeQuestion": "This will revoke <b>{user}</b>, preventing them from accessing this organization.<br/><br/>Are you sure you want to proceed? | This will revoke these <b>{count} users</b>, preventing them from accessing this organization.<br/><br/>Are you sure you want to proceed?",
+            "revokeTitle": "Revoke this user?",
+            "revokeText": "This will <b>permanently</b> revoke <b>{user}</b>, preventing them from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address in the field below.<br/><br/>Email address: <b><i>{email}</i></b>",
+            "label": "Input the email address to proceed",
             "revokeYes": "Revoke",
-            "revokeNo": "Cancel",
-            "revokeFailed": "Failed to revoke this user. | Failed to revoke any user.",
-            "revokeSuccess": "{user} has been revoked. They can no longer access this organization. | {count} users have been revoked, they can no longer access this organization.",
-            "revokeSomeFailed": "Some users could not be revoked"
+            "revokeFailed": "Failed to revoke this user.",
+            "revokeSuccess": "{user} has been revoked. They can no longer access this organization."
         },
         "sort": {
             "byName": "Name",
