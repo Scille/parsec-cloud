@@ -469,6 +469,12 @@ impl WorkspaceStore {
         manifest_access::get_manifest(self, entry_id).await
     }
 
+    /// Best-effort batch fetch of the entries missing from local storage, so that
+    /// subsequent `get_manifest` calls on them don't need a server round-trip each.
+    pub async fn prefetch_manifests(&self, entry_ids: impl IntoIterator<Item = &VlobID>) {
+        cache::prefetch_manifests(self, entry_ids).await
+    }
+
     /// Don't blindly trust folder manifest's `children` field !
     ///
     /// It may contain invalid data (i.e. referencing a non existing child ID, or a child

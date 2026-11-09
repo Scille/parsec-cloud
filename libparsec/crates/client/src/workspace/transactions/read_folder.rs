@@ -414,6 +414,12 @@ async fn consume_reader(
     let max_children = reader.manifest.children.len();
     let mut children_stats = Vec::with_capacity(max_children);
 
+    // Fetch in batch all the children not available locally, otherwise each
+    // `stat_child` below would do its own server request.
+    ops.store
+        .prefetch_manifests(reader.manifest.children.values())
+        .await;
+
     for index in 0..max_children {
         let stat_outcome = reader
             .stat_child(ops, index)
