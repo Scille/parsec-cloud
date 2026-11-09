@@ -111,6 +111,15 @@ quick-xml needs to be updated to >=0.41.0 but can't because email-address-parser
 email-address-parser v3.0.0 is not yet released http://crates.io/crates/email-address-parser
 """
 
+# FIXME: Remove me once https://github.com/transact-rs/sqlx/commit/10462fa4414c6c7f1ed1d39bb31678e3b726878c is released
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0459"
+reason = """
+We are affected by the advisory (we enable the bundled version), but cannot upgrade since `sqlx` does not support yet the new version of that crate.
+
+A fix is available at https://github.com/transact-rs/sqlx/commit/10462fa4414c6c7f1ed1d39bb31678e3b726878c, but it need to be released.
+"""
+
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
 # Setting this to true can be helpful if you have special authentication requirements that cargo-deny does not support.
