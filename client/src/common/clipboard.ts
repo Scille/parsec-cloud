@@ -8,7 +8,7 @@ export async function copyToClipboard(
   informationManager: InformationManager,
   successMessage: Translatable,
   errorMessage: Translatable,
-): Promise<void> {
+): Promise<boolean> {
   const result = await Clipboard.writeText(value);
   if (result) {
     informationManager.present(
@@ -27,4 +27,5 @@ export async function copyToClipboard(
       PresentationMode.Toast,
     );
   }
+  return result;
 }
