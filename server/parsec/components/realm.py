@@ -420,6 +420,22 @@ class RealmGetCurrentRealmsForUserBadOutcome(BadOutcomeEnum):
     USER_NOT_FOUND = auto()
 
 
+@dataclass(slots=True)
+class RealmInfo:
+    realm_id: VlobID
+    metadata_size: int
+    data_size: int
+    users_per_role: dict[RealmRole, int]
+
+
+class RealmListInfoBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
 class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
@@ -752,6 +768,11 @@ class BaseRealmComponent:
     async def dump_realms_granted_roles(
         self, organization_id: OrganizationID
     ) -> list[RealmGrantedRole] | RealmDumpRealmsGrantedRolesBadOutcome:
+        raise NotImplementedError
+
+    async def list_info(
+        self, organization_id: OrganizationID, author: DeviceID
+    ) -> list[RealmInfo] | RealmListInfoBadOutcome:
         raise NotImplementedError
 
     async def export_do_base_info(
@@ -1263,4 +1284,38 @@ class BaseRealmComponent:
             case RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
             case RealmGetKeysBundleBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+    @api
+    async def api_realm_list_info(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.realm_list_info.Req,
+    ) -> authenticated_cmds.latest.realm_list_info.Rep:
+        outcome = await self.list_info(
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+        )
+        match outcome:
+            case list() as realms_info:
+                return authenticated_cmds.latest.realm_list_info.RepOk(
+                    realms=[
+                        authenticated_cmds.latest.realm_list_info.RealmInfoItem(
+                            realm_id=realm_info.realm_id,
+                            metadata_size=realm_info.metadata_size,
+                            data_size=realm_info.data_size,
+                            users_per_role=realm_info.users_per_role,
+                        )
+                        for realm_info in realms_info
+                    ]
+                )
+            case RealmListInfoBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.realm_list_info.RepAuthorNotAllowed()
+            case RealmListInfoBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case RealmListInfoBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case RealmListInfoBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case RealmListInfoBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()

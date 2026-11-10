@@ -24,6 +24,7 @@ from .test_organization_info import *
 from .test_ping import *
 from .test_realm_create import *
 from .test_realm_get_keys_bundle import *
+from .test_realm_list_info import *
 from .test_realm_rename import *
 from .test_realm_rotate_key import *
 from .test_realm_self_promote_to_owner import *

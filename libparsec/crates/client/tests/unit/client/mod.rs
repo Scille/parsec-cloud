@@ -25,4 +25,5 @@ mod tos;
 mod update_user_profile;
 mod utils;
 mod with_monitors;
+mod workspace_info_list;
 mod workspace_refresh_list;

@@ -60,7 +60,9 @@ from parsec.components.realm import (
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
+    RealmInfo,
     RealmListDeletionCandidatesBadOutcome,
+    RealmListInfoBadOutcome,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRole,
@@ -1038,6 +1040,64 @@ class MemoryRealmComponent(BaseRealmComponent):
             )
 
         return granted_roles
+
+    @override
+    async def list_info(
+        self, organization_id: OrganizationID, author: DeviceID
+    ) -> list[RealmInfo] | RealmListInfoBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmListInfoBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return RealmListInfoBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            device = org.devices[author]
+        except KeyError:
+            return RealmListInfoBadOutcome.AUTHOR_NOT_FOUND
+
+        user = org.users[device.cooked.user_id]
+
+        if user.is_revoked:
+            return RealmListInfoBadOutcome.AUTHOR_REVOKED
+
+        if user.current_profile != UserProfile.ADMIN:
+            return RealmListInfoBadOutcome.AUTHOR_NOT_ALLOWED
+
+        realms_info = []
+        for realm in org.realms.values():
+            if realm.is_deleted:
+                continue
+
+            metadata_size = sum(
+                len(atom.blob)
+                for vlob in realm.vlobs.values()
+                for atom in vlob
+                if atom.deleted_on is None
+            )
+            data_size = sum(
+                block.block_size
+                for block in org.blocks.values()
+                if block.realm_id == realm.realm_id and block.deleted_on is None
+            )
+
+            users_per_role = {role: 0 for role in RealmRole.VALUES}
+            for member in org.users.values():
+                role = realm.get_current_role_for(member.cooked.user_id)
+                if role is not None:
+                    users_per_role[role] += 1
+
+            realms_info.append(
+                RealmInfo(
+                    realm_id=realm.realm_id,
+                    metadata_size=metadata_size,
+                    data_size=data_size,
+                    users_per_role=users_per_role,
+                )
+            )
+
+        return realms_info
 
     @override
     async def export_do_base_info(
