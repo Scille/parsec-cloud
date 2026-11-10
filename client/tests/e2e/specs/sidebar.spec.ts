@@ -26,7 +26,7 @@ msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
 
   const mainButtons = sidebar.locator('.list-sidebar-header__text');
-  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Workspaces', 'Recent documents']);
 
   const items = sidebar.locator('#sidebar-organization').locator('.sidebar-content-organization-button__text');
   await expect(items).toHaveText(['Users', 'Invitations & Join Requests', 'Information']);
@@ -38,7 +38,7 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
 
   const mainButtons = sidebar.locator('.list-sidebar-header__text');
-  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Workspaces', 'Recent documents']);
 
   const currentWorkspace = sidebar.locator('#sidebar-workspaces').locator('.current-workspace').locator('.sidebar-item');
   await expect(currentWorkspace).toBeVisible();
@@ -51,9 +51,9 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   const sidebar = workspaces.locator('.sidebar');
 
   const mainButtons = sidebar.locator('.list-sidebar-header__text');
-  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Workspaces', 'Recent documents']);
 
-  const organizationContent = sidebar.locator('#sidebar-organization');
+  await expect(sidebar.locator('#sidebar-organization')).toBeVisible();
   const workspacesContent = sidebar.locator('#sidebar-workspaces');
   const filesContent = sidebar.locator('#sidebar-files');
 
@@ -66,7 +66,6 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
     await expect(content.locator('.list-sidebar-content')).toBeVisible();
   }
 
-  await checkSidebarToggleVisibility(organizationContent, 'Organization');
   await checkSidebarToggleVisibility(workspacesContent, 'Workspaces');
   await checkSidebarToggleVisibility(filesContent, 'Recent documents');
 
