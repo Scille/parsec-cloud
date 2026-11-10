@@ -569,7 +569,9 @@
         },
         "breadcrumbs": {
             "archived": "Archivés",
-            "trashed": "Corbeille"
+            "trashed": "Corbeille",
+            "pathCopySuccess": "Le chemin a été copié dans le presse-papier.",
+            "pathCopyFailure": "Impossible de copier le chemin dans le presse-papier."
         },
         "offline": {
             "title": "Vous êtes hors ligne",

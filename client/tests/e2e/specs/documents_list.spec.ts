@@ -7,12 +7,14 @@ import {
   DisplaySize,
   documentsToggleViewMode,
   expect,
+  getClipboardText,
   importDefaultFiles,
   ImportDocuments,
   mockLibParsec,
   msTest,
   resizePage,
   selectFile,
+  setWriteClipboardPermission,
   unselectFile,
 } from '@tests/e2e/helpers';
 
@@ -196,6 +198,8 @@ msTest.describe(() => {
 
       await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
 
+      await setWriteClipboardPermission(documents.context(), true);
+
       if (displaySize === DisplaySize.Small) {
         await documents.setDisplaySize(DisplaySize.Small);
         const smallBreadcrumbsPopover = documents.locator('.breadcrumbs-popover');
@@ -212,6 +216,9 @@ msTest.describe(() => {
         await expect(smallBreadcrumbsPopover).toBeHidden();
         await createFolder(documents, 'Subdir');
         await navigateDown();
+        await documents.locator('.topbar').locator('.copy-path-button').click();
+        await expect(documents).toShowToast('The path has been copied to the clipboard.', 'Info');
+        expect(await getClipboardText(documents)).toContain('wksp1:/Dir_Folder/Subdir');
         await documents.locator('.topbar').locator('.breadcrumb-file-mobile').click();
         await expect(smallBreadcrumbsPopover.locator('ion-text')).toHaveCount(2);
         await expect(smallBreadcrumbsPopover.locator('ion-text').nth(0)).toHaveText('wksp1');
@@ -231,6 +238,9 @@ msTest.describe(() => {
         await createFolder(documents, 'Subdir 3');
         await navigateDown();
         await expect(documents).toHaveHeader(['wksp1', '', '', '', 'Subdir 3'], true, true);
+        await documents.locator('.topbar').locator('.copy-path-button').click();
+        await expect(documents).toShowToast('The path has been copied to the clipboard.', 'Info');
+        expect(await getClipboardText(documents)).toContain('wksp1:/Dir_Folder/Subdir/Subdir 2/Subdir 3');
         await clickOnBreadcrumb(2);
         const popoverItems = documents.locator('ion-popover').locator('.breadcrumb-item');
         await expect(popoverItems).toHaveCount(3);
@@ -241,6 +251,9 @@ msTest.describe(() => {
         await popoverItems.nth(1).click();
         await expect(documents).toHaveHeader(['wksp1', '', 'Subdir'], true, true);
         await clickOnBreadcrumb(1);
+        await documents.locator('.topbar').locator('.copy-path-button').click();
+        await expect(documents).toShowToast('The path has been copied to the clipboard.', 'Info');
+        expect(await getClipboardText(documents)).toContain('wksp1:/');
         await expect(documents).toHaveHeader(['wksp1'], true, true);
         await clickOnBreadcrumb(0);
         await expect(documents).toBeWorkspacePage();

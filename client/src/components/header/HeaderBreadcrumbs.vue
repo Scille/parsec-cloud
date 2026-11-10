@@ -48,6 +48,16 @@
         :icon="chevronDown"
       />
     </div>
+    <ms-feedback-button
+      fill="clear"
+      size="small"
+      class="copy-path-button color-secondary"
+      v-if="pathNodes.length > 1"
+      :callback="onCopyPath"
+      :normal-state="{ text: '', icon: copy }"
+      :success-state="{ text: '', icon: checkmark }"
+      :failure-state="{ text: '', icon: closeCircle }"
+    />
   </div>
 </template>
 
@@ -65,13 +75,15 @@ export interface RouterPathNode {
 </script>
 
 <script setup lang="ts">
+import { copyToClipboard } from '@/common/clipboard';
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
 import { WorkspaceName } from '@/parsec';
 import { Query, Routes } from '@/router';
+import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
-import { Translatable, useWindowSize } from 'megashark-lib';
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { checkmark, chevronDown, closeCircle, copy } from 'ionicons/icons';
+import { MsFeedbackButton, Translatable, useWindowSize } from 'megashark-lib';
+import { computed, inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
@@ -97,6 +109,7 @@ const props = withDefaults(
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const breadcrumbRef = useTemplateRef<HTMLIonBreadcrumbElement>('breadcrumb');
 const breadcrumbWidthProperty = ref('');
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 
 const watchWindowWidthCancel = watch(windowWidth, () => {
   setBreadcrumbWidth();
@@ -134,6 +147,19 @@ const currentFolderName = computed(() => {
   const lastNode = props.pathNodes[props.pathNodes.length - 1];
   return lastNode.display || props.workspaceName;
 });
+
+async function onCopyPath(): Promise<boolean | undefined> {
+  if (props.pathNodes.length <= 1) {
+    return;
+  }
+  const path = `${props.workspaceName}:${props.pathNodes[props.pathNodes.length - 1].query?.documentPath}`;
+  return await copyToClipboard(
+    path,
+    informationManager.value,
+    'HeaderPage.breadcrumbs.pathCopySuccess',
+    'HeaderPage.breadcrumbs.pathCopyFailure',
+  );
+}
 
 function setBreadcrumbWidth(): void {
   if (props.availableWidth > 0 && breadcrumbRef.value) {
@@ -339,6 +365,18 @@ async function openPopover(event: Event): Promise<void> {
         color: ms.color('icon-neutral-default');
       }
     }
+  }
+}
+
+.copy-path-button {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.15s ease-in-out;
+}
+
+.header-breadcrumbs:hover {
+  .copy-path-button {
+    opacity: ms.opacity('10');
   }
 }
 </style>

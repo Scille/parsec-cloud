@@ -569,7 +569,9 @@
         },
         "breadcrumbs": {
             "archived": "Archived",
-            "trashed": "Bin"
+            "trashed": "Bin",
+            "pathCopySuccess": "The path has been copied to the clipboard.",
+            "pathCopyFailure": "Could not copy the path to the clipboard."
         },
         "offline": {
             "title": "You are offline",
