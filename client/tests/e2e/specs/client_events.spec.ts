@@ -187,13 +187,13 @@ msTest('Test connection lost and restored', async ({ connected }) => {
   const offlineButton = connected.locator('#connected-header').locator('.offline-button');
   const restoredText = connected.locator('#connected-header').locator('.offline-restored');
 
-  await expect(avatar).toHaveClass('avatar small online');
+  await expect(avatar).toHaveClass('avatar online');
   await expect(offlineButton).not.toBeVisible();
   await expect(restoredText).not.toBeVisible();
 
   // Trigger offline event
   await sendEvent(connected, 'ClientEventOffline');
-  await expect(avatar).toHaveClass('avatar small offline');
+  await expect(avatar).toHaveClass('avatar offline');
   await expect(offlineButton).toBeVisible();
   await expect(offlineButton).toHaveText('You are offline');
   await offlineButton.click();
@@ -208,7 +208,7 @@ msTest('Test connection lost and restored', async ({ connected }) => {
 
   // Back online
   await sendEvent(connected, 'ClientEventOnline');
-  await expect(avatar).toHaveClass('avatar small online');
+  await expect(avatar).toHaveClass('avatar online');
   await expect(offlineButton).not.toBeVisible();
   await expect(restoredText).toBeVisible();
   await expect(restoredText).toHaveText('Connection restored');

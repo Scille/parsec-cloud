@@ -510,7 +510,7 @@ msTest.describe(() => {
   msTest('File viewer restores sidebar state on exit', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Png, false);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
-    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+    const toggleButton = documents.locator('.sidebar').locator('#trigger-toggle-menu-button');
 
     // Sidebar starts visible (default state)
     await expect(documents.locator('.sidebar')).toBeVisible();
@@ -537,9 +537,9 @@ msTest.describe(() => {
     await expect(documents.locator('.sidebar')).toBeVisible();
     await expect(documents.locator('#connected-header .topbar')).toBeVisible();
 
-    // Hide sidebar and test restoration of hidden state
+    // Collapse sidebar and test restoration of collapsed state
     await toggleButton.click();
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    await expect(documents.locator('.sidebar')).toContainClass('sidebar--collapsed');
 
     // Open file viewer again
     await entries.nth(1).locator('.file-name .label-name').click();
@@ -554,8 +554,9 @@ msTest.describe(() => {
     await expect(entries).toHaveCount(2);
     await expect(documents.locator('.folder-container')).toBeVisible();
 
-    // Sidebar should remain hidden as it was before
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    // Sidebar should be restored collapsed as it was before
+    await expect(documents.locator('.sidebar')).toBeVisible();
+    await expect(documents.locator('.sidebar')).toContainClass('sidebar--collapsed');
     await expect(documents.locator('#connected-header .topbar')).toBeVisible();
   });
 
