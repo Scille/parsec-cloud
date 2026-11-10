@@ -324,7 +324,7 @@ msTest('Remove and re-add TOTP', async ({ myProfilePage }) => {
   await expect(home.locator('#connected-header')).toContainText('My workspaces');
   await expect(home).toBeWorkspacePage();
 
-  await myProfilePage.locator('.topbar').locator('.profile-header').click();
+  await myProfilePage.locator('.sidebar').locator('.profile-header').click();
   const myProfileButton = myProfilePage.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
   await expect(myProfileButton).toHaveText('Settings');
   await myProfileButton.click();

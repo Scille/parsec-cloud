@@ -163,7 +163,7 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(home).toBeWorkspacePage();
   await expect(home).toHavePageTitle('My workspaces');
   const profile = home.locator('.sidebar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(profile.locator('.text-content__name')).toHaveText('Alicey McAliceFace');
 });
 
 msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
@@ -209,7 +209,7 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   await expect(home).toBeWorkspacePage();
   await expect(home).toHavePageTitle('My workspaces');
   const profile = home.locator('.sidebar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(profile.locator('.text-content__name')).toHaveText('Alicey McAliceFace');
   await profile.click();
   const myProfileButton = home.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(2);
   await expect(myProfileButton).toHaveText('Authentication');

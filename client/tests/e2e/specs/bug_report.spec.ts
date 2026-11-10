@@ -30,7 +30,7 @@ msTest('Submit bug report', async ({ connected }, testInfo: TestInfo) => {
 
   const modal = connected.locator('.bug-report-modal');
   await expect(modal).toBeHidden();
-  await connected.locator('.topbar').locator('.profile-header').click();
+  await connected.locator('.sidebar').locator('.profile-header').click();
   const reportButton = connected.locator('.profile-header-organization-popover').locator('.footer-list').getByRole('listitem').nth(3);
   await expect(reportButton).toHaveText('Report a bug');
   await reportButton.click();
@@ -90,7 +90,7 @@ msTest('Submit bug report failed', async ({ connected }) => {
 
   const modal = connected.locator('.bug-report-modal');
   await expect(modal).toBeHidden();
-  await connected.locator('.topbar').locator('.profile-header').click();
+  await connected.locator('.sidebar').locator('.profile-header').click();
   const reportButton = connected.locator('.profile-header-organization-popover').locator('.footer-list').getByRole('listitem').nth(3);
   await expect(reportButton).toHaveText('Report a bug');
   await reportButton.click();

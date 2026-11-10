@@ -452,11 +452,11 @@ export async function login(homePage: Page, name: string): Promise<void> {
   await homePage.locator('.login-button').click();
   await expect(homePage.locator('#connected-header')).toContainText('My workspaces');
   await expect(homePage).toBeWorkspacePage();
-  await expect(homePage.locator('.topbar-right').locator('.text-content-name')).toHaveText(name);
+  await expect(homePage.locator('#profile-button').locator('.text-content__name')).toHaveText(name);
 }
 
 export async function logout(page: MsPage): Promise<void> {
-  await page.locator('#connected-header').locator('#profile-button').click();
+  await page.locator('.sidebar').locator('#profile-button').click();
   const buttons = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem');
   await buttons.nth(4).click();
   await answerQuestion(page, true);

@@ -167,7 +167,7 @@ msTest('Login', async ({ home }) => {
   await expect(home).toBeWorkspacePage();
   await expect(home).toHavePageTitle('My workspaces');
   const profile = home.locator('.sidebar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(profile.locator('.text-content__name')).toHaveText('Alicey McAliceFace');
 });
 
 msTest('Login with invalid password', async ({ home }) => {

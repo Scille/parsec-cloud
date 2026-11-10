@@ -33,7 +33,7 @@ msTest('Sidebar with trial orgs', async ({ context }) => {
   await expect(page.locator('.login-button')).toBeEnabled();
   await page.locator('.login-button').click();
   await expect(page.locator('#connected-header')).toContainText('My workspaces');
-  await expect(page.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(page.locator('#profile-button').locator('.text-content__name')).toHaveText('Alicey McAliceFace');
   await expect(page).toBeWorkspacePage();
 
   const trialMenu = page.locator('.sidebar').locator('.trial-card');

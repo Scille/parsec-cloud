@@ -130,7 +130,7 @@ for (const authMode of ['password', 'sso']) {
     }
 
     await expect(myProfilePage.locator('#connected-header')).toContainText('My workspaces');
-    await expect(myProfilePage.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+    await expect(myProfilePage.locator('#profile-button').locator('.text-content__name')).toHaveText('Alicey McAliceFace');
     await expect(myProfilePage).toBeWorkspacePage();
   });
 }

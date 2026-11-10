@@ -55,7 +55,7 @@ msTest('Setup shamir recovery', async ({ context }) => {
   });
 
   await login(page, 'Alicey McAliceFace');
-  await page.locator('.topbar').locator('.profile-header').click();
+  await page.locator('.sidebar').locator('.profile-header').click();
   const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3);
   await expect(myProfileButton).toHaveText('Access recovery');
   await myProfileButton.click();
@@ -166,7 +166,7 @@ msTest('Setup shamir recovery as outsider', async ({ context }) => {
   await login(page, 'Alicey McAliceFace');
   await logout(page);
   await login(page, 'Malloryy McMalloryFace');
-  await page.locator('.topbar').locator('.profile-header').click();
+  await page.locator('.sidebar').locator('.profile-header').click();
   const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3);
   await expect(myProfileButton).toHaveText('Access recovery');
   await myProfileButton.click();
@@ -208,7 +208,7 @@ msTest('Setup shamir recovery not enough users', async ({ context }) => {
   });
 
   await login(page, 'Alicey McAliceFace');
-  await page.locator('.topbar').locator('.profile-header').click();
+  await page.locator('.sidebar').locator('.profile-header').click();
   const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3);
   await expect(myProfileButton).toHaveText('Access recovery');
   await myProfileButton.click();
@@ -247,7 +247,7 @@ async function goThroughShamirInstructions(page: MsPage): Promise<void> {
 
 async function openGreeterModal(page: MsPage, user: 'Boby McBobFace' | 'Mikey McMikeFace', copyLink = false): Promise<Locator> {
   await login(page, user);
-  await page.locator('.topbar').locator('.profile-header').click();
+  await page.locator('.sidebar').locator('.profile-header').click();
   await expect(page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3)).toHaveText(
     'Access recovery',
   );

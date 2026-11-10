@@ -131,7 +131,7 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   await expect(checklistPopover).toBeHidden();
 
   // Create a recovery file
-  await workspaces.locator('.topbar').locator('.profile-header').click();
+  await workspaces.locator('.sidebar').locator('.profile-header').click();
   workspaces.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0).click();
   const profilePage = workspaces;
   await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
@@ -434,7 +434,7 @@ msTest('Trying to navigate through the workspace content, profile, invitations, 
   await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
   await expect(connected).toBeDocumentPage();
 
-  await connected.locator('.topbar').locator('.profile-header').click();
+  await connected.locator('.sidebar').locator('.profile-header').click();
   const myProfileButton = connected.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
   await expect(myProfileButton).toHaveText('Settings');
   await myProfileButton.click();
