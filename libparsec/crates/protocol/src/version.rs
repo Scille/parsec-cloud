@@ -62,6 +62,7 @@ use libparsec_types::prelude::*;
 //   * Add `cryptpad_register_session` to authenticated commands.
 // - v5.7 (Parsec 3.12+)
 //   * Add `name/help_link/icon` fields to `server_config.openbao.auths` response
+//   * Add `realm_list_info` to authenticated commands.
 
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,

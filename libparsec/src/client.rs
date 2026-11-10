@@ -11,12 +11,12 @@ pub use libparsec_client::{
     ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
     ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
     ClientListWorkspaceUserRoleChangesError, ClientListWorkspaceUsersError,
-    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
-    ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
+    ClientListWorkspacesInfoError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
+    ClientRevokeUserError, ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
     ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo,
     OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration, SelfShamirRecoveryInfo,
-    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
-    WorkspaceUserRoleChange,
+    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceInfoItem,
+    WorkspaceUserAccessInfo, WorkspaceUserRoleChange,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -759,6 +759,17 @@ pub async fn client_organization_info(
     let client = borrow_client(client)?;
 
     client.organization_info().await
+}
+
+/*
+ * Workspace info list
+ */
+pub async fn client_list_workspaces_info(
+    client: Handle,
+) -> Result<Vec<WorkspaceInfoItem>, ClientListWorkspacesInfoError> {
+    let client = borrow_client(client)?;
+
+    client.list_workspaces_info().await
 }
 
 pub async fn client_get_organization_bootstrap_date(

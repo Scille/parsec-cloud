@@ -571,6 +571,14 @@ export interface WorkspaceInfo {
 }
 
 
+export interface WorkspaceInfoItem {
+    realmId: string
+    metadataSize: number
+    dataSize: number
+    usersPerRole: Map<RealmRole, number>
+}
+
+
 export interface WorkspaceUserAccessInfo {
     userId: string
     humanHandle: HumanHandle
@@ -2237,6 +2245,25 @@ export interface ClientListWorkspacesErrorInternal {
 }
 export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
+
+
+// ClientListWorkspacesInfoError
+export interface ClientListWorkspacesInfoErrorAuthorNotAllowed {
+    tag: "ClientListWorkspacesInfoErrorAuthorNotAllowed"
+    error: string
+}
+export interface ClientListWorkspacesInfoErrorInternal {
+    tag: "ClientListWorkspacesInfoErrorInternal"
+    error: string
+}
+export interface ClientListWorkspacesInfoErrorOffline {
+    tag: "ClientListWorkspacesInfoErrorOffline"
+    error: string
+}
+export type ClientListWorkspacesInfoError =
+  | ClientListWorkspacesInfoErrorAuthorNotAllowed
+  | ClientListWorkspacesInfoErrorInternal
+  | ClientListWorkspacesInfoErrorOffline
 
 
 // ClientNewDeviceInvitationError
@@ -5991,6 +6018,9 @@ export function clientListWorkspaceUsers(
 export function clientListWorkspaces(
     client: number
 ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
+export function clientListWorkspacesInfo(
+    client_handle: number
+): Promise<Result<Array<WorkspaceInfoItem>, ClientListWorkspacesInfoError>>
 export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean

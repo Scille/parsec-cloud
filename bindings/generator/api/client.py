@@ -950,6 +950,30 @@ async def client_organization_info(
     raise NotImplementedError
 
 
+class WorkspaceInfoItem(Structure):
+    realm_id: VlobID
+    metadata_size: SizeInt
+    data_size: SizeInt
+    users_per_role: dict[RealmRole, SizeInt]
+
+
+class ClientListWorkspacesInfoError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+
+async def client_list_workspaces_info(
+    client_handle: Handle,
+) -> Result[list[WorkspaceInfoItem], ClientListWorkspacesInfoError]:
+    raise NotImplementedError
+
+
 class ClientGetOrganizationBootstrapDateError(ErrorVariant):
     class Internal:
         pass

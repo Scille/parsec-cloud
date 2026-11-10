@@ -6254,6 +6254,130 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Ok(js_obj)
 }
 
+// WorkspaceInfoItem
+
+#[allow(dead_code)]
+fn struct_workspace_info_item_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceInfoItem, JsValue> {
+    let realm_id = {
+        let js_val = Reflect::get(&obj, &"realmId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
+            })?
+    };
+    let metadata_size = {
+        let js_val = Reflect::get(&obj, &"metadataSize".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    let data_size = {
+        let js_val = Reflect::get(&obj, &"dataSize".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    let users_per_role = {
+        let js_val = Reflect::get(&obj, &"usersPerRole".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Map>()
+                .map_err(|_| TypeError::new("Not a Map"))?;
+            let mut converted = std::collections::HashMap::with_capacity(js_val.size() as usize);
+            let js_keys = js_val.keys();
+            let js_values = js_val.values();
+            loop {
+                let next_js_key = js_keys.next()?;
+                let next_js_value = js_values.next()?;
+                if next_js_key.done() {
+                    assert!(next_js_value.done());
+                    break;
+                }
+                assert!(!next_js_value.done());
+
+                let js_key = next_js_key.value();
+                let js_value = next_js_value.value();
+
+                let key = {
+                    let raw_string = js_key.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_key);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_realm_role_js_to_rs(raw_string.as_str())
+                }?;
+                let value = {
+                    let v = u64::try_from(js_value)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
+                    v
+                };
+                converted.insert(key, value);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::WorkspaceInfoItem {
+        realm_id,
+        metadata_size,
+        data_size,
+        users_per_role,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_info_item_rs_to_js(
+    rs_obj: libparsec::WorkspaceInfoItem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_realm_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.realm_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
+        }
+        .as_ref(),
+    );
+    Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+    let js_metadata_size = JsValue::from(rs_obj.metadata_size);
+    Reflect::set(&js_obj, &"metadataSize".into(), &js_metadata_size)?;
+    let js_data_size = JsValue::from(rs_obj.data_size);
+    Reflect::set(&js_obj, &"dataSize".into(), &js_data_size)?;
+    let js_users_per_role = {
+        let js_map = Map::new();
+        for (key, value) in rs_obj.users_per_role.into_iter() {
+            let js_key = JsValue::from_str(enum_realm_role_rs_to_js(key));
+            let js_value = JsValue::from(value);
+            js_map.set(&js_key, &js_value);
+        }
+        js_map.into()
+    };
+    Reflect::set(&js_obj, &"usersPerRole".into(), &js_users_per_role)?;
+    Ok(js_obj)
+}
+
 // WorkspaceUserAccessInfo
 
 #[allow(dead_code)]
@@ -11845,6 +11969,44 @@ fn variant_client_list_workspaces_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientListWorkspacesErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListWorkspacesInfoError
+
+#[allow(dead_code)]
+fn variant_client_list_workspaces_info_error_rs_to_js(
+    rs_obj: libparsec::ClientListWorkspacesInfoError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientListWorkspacesInfoError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspacesInfoErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientListWorkspacesInfoError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspacesInfoErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientListWorkspacesInfoError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspacesInfoErrorOffline".into(),
             )?;
         }
     }
@@ -26972,6 +27134,39 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_list_workspaces_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_list_workspaces_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListWorkspacesInfo(client_handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_list_workspaces_info(client_handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_workspace_info_item_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_list_workspaces_info_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

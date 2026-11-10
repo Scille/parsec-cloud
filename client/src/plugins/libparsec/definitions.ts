@@ -593,6 +593,13 @@ export interface WorkspaceInfo {
     canSelfPromoteToOwner: boolean
 }
 
+export interface WorkspaceInfoItem {
+    realmId: VlobID
+    metadataSize: SizeInt
+    dataSize: SizeInt
+    usersPerRole: Map<RealmRole, SizeInt>
+}
+
 export interface WorkspaceUserAccessInfo {
     userId: UserID
     humanHandle: HumanHandle
@@ -2647,6 +2654,30 @@ export interface ClientListWorkspacesErrorInternal {
 }
 export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
+
+// ClientListWorkspacesInfoError
+export enum ClientListWorkspacesInfoErrorTag {
+    AuthorNotAllowed = 'ClientListWorkspacesInfoErrorAuthorNotAllowed',
+    Internal = 'ClientListWorkspacesInfoErrorInternal',
+    Offline = 'ClientListWorkspacesInfoErrorOffline',
+}
+
+export interface ClientListWorkspacesInfoErrorAuthorNotAllowed {
+    tag: ClientListWorkspacesInfoErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientListWorkspacesInfoErrorInternal {
+    tag: ClientListWorkspacesInfoErrorTag.Internal
+    error: string
+}
+export interface ClientListWorkspacesInfoErrorOffline {
+    tag: ClientListWorkspacesInfoErrorTag.Offline
+    error: string
+}
+export type ClientListWorkspacesInfoError =
+  | ClientListWorkspacesInfoErrorAuthorNotAllowed
+  | ClientListWorkspacesInfoErrorInternal
+  | ClientListWorkspacesInfoErrorOffline
 
 // ClientNewDeviceInvitationError
 export enum ClientNewDeviceInvitationErrorTag {
@@ -7188,6 +7219,9 @@ export interface LibParsecPlugin {
     clientListWorkspaces(
         client: Handle
     ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
+    clientListWorkspacesInfo(
+        client_handle: Handle
+    ): Promise<Result<Array<WorkspaceInfoItem>, ClientListWorkspacesInfoError>>
     clientNewDeviceInvitation(
         client: Handle,
         send_email: boolean
