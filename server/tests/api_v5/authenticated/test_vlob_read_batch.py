@@ -220,13 +220,70 @@ async def test_authenticated_vlob_read_batch_realm_not_found(
     assert rep == authenticated_cmds.latest.vlob_read_batch.RepRealmNotFound()
 
 
-async def test_authenticated_vlob_read_batch_too_many_elements(
+async def test_authenticated_vlob_read_batch_ignore_unknown_vlobs(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
-    too_many_vlobs = [VlobID.new()] * (VLOB_READ_REQUEST_ITEMS_LIMIT + 1)
+    dt = DateTime(2020, 1, 1)
+    existing_ids = [
+        await create_vlob(
+            backend=backend,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            realm_id=coolorg.wksp1_id,
+            dt=dt,
+        )
+        for _ in range(5)
+    ]
+    unknown_ids = [VlobID.new() for _ in range(5)]
+    # Interleave existing and unknown IDs
+    requested_ids = [id for pair in zip(existing_ids, unknown_ids) for id in pair]
+    assert len(requested_ids) == 10
+
     rep = await coolorg.alice.vlob_read_batch(
-        realm_id=coolorg.wksp1_id, vlobs=too_many_vlobs, at=None
+        realm_id=coolorg.wksp1_id, vlobs=requested_ids, at=None
     )
+    assert isinstance(rep, authenticated_cmds.latest.vlob_read_batch.RepOk)
+    assert sorted(rep.items, key=lambda item: item[0].hex) == sorted(
+        [
+            (vlob_id, 1, coolorg.alice.device_id, 1, dt, b"<block content v1>")
+            for vlob_id in existing_ids
+        ],
+        key=lambda item: item[0].hex,
+    )
+
+
+async def test_authenticated_vlob_read_batch_too_many_elements(
+    coolorg: CoolorgRpcClients, backend: Backend, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The client relies on this exact value to split its requests, so it should not
+    # be changed lightly.
+    assert VLOB_READ_REQUEST_ITEMS_LIMIT == 1000
+
+    # Lower the limit to avoid creating a thousand vlobs
+    limit = 10
+    monkeypatch.setattr("parsec.components.vlob.VLOB_READ_REQUEST_ITEMS_LIMIT", limit)
+
+    dt = DateTime(2020, 1, 1)
+    vlob_ids = [
+        await create_vlob(
+            backend=backend,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            realm_id=coolorg.wksp1_id,
+            dt=dt,
+        )
+        for _ in range(limit + 1)
+    ]
+
+    # Exactly at the limit: accepted
+    rep = await coolorg.alice.vlob_read_batch(
+        realm_id=coolorg.wksp1_id, vlobs=vlob_ids[:limit], at=None
+    )
+    assert isinstance(rep, authenticated_cmds.latest.vlob_read_batch.RepOk)
+    assert {item[0] for item in rep.items} == set(vlob_ids[:limit])
+
+    # One above the limit: rejected
+    rep = await coolorg.alice.vlob_read_batch(realm_id=coolorg.wksp1_id, vlobs=vlob_ids, at=None)
     assert rep == authenticated_cmds.latest.vlob_read_batch.RepTooManyElements()
 
 
