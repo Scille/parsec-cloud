@@ -56,7 +56,14 @@ jobs:
       - name: Validate PR commits
         if: github.event_name == 'pull_request'
         run: >-
-          npx commitlint
-          --verbose
+          npx commitlint --verbose
           --from ${{ github.event.pull_request.base.sha }}
           --to ${{ github.event.pull_request.head.sha }}
+
+      # https://docs.github.com/en/webhooks/webhook-events-and-payloads#merge_group
+      - name: Validate MQ commits
+        if: github.event_name == 'merge_group'
+        run: >-
+          npx commitlint --verbose
+          --from ${{ github.event.merge_group.base_sha }}
+          --to ${{ github.event.merge_group.head_sha }}
