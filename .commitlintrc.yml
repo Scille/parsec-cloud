@@ -1,0 +1,19 @@
+extends:
+  - "@commitlint/config-conventional"
+rules:
+  scope-enum:
+    - 2
+    - always
+    - scopes:
+        - server
+        - cli
+        - client
+        - client/web
+        - client/desktop
+        - libparsec
+        - rfcs
+      delimiters: [","]
+  subject-case:
+    - 1
+    - always
+    - sentence-case
