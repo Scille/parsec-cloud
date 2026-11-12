@@ -1,0 +1,1 @@
+Opening a document in the editor now defaults to collaborative editing when the client is online: your changes are shared live with the other participants editing the same document. When the client is offline, the document can still be opened in offline mode, where changes stay local to your device.

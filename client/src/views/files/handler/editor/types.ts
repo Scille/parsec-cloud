@@ -5,6 +5,7 @@ export enum EditorIssueStatus {
   NetworkOffline = 'network_offline',
   EditionNotAvailable = 'edition_not_available',
   LoadingTimeout = 'loading_timeout',
+  CollaborativeUnavailable = 'collaborative_unavailable',
 }
 
 export enum EditorErrorTitle {
@@ -13,6 +14,7 @@ export enum EditorErrorTitle {
   EditionNotAvailable = 'fileViewers.errors.titles.editionNotAvailable',
   NetworkOffline = 'fileEditors.errors.titles.networkOffline',
   TooLongToOpen = 'fileEditors.errors.titles.tooLongToOpen',
+  CollaborativeUnavailable = 'fileEditors.errors.titles.collaborativeUnavailable',
 }
 
 export enum EditorErrorMessage {
@@ -20,10 +22,12 @@ export enum EditorErrorMessage {
   NetworkOffline = 'fileEditors.errors.networkOfflineMessage',
   TooLongToOpenOnWeb = 'fileEditors.errors.tooLongToOpenOnWeb',
   TooLongToOpenOnDesktop = 'fileEditors.errors.tooLongToOpenOnDesktop',
+  CollaborativeUnavailable = 'fileEditors.errors.collaborativeUnavailableMessage',
 }
 
 export enum EditorButtonAction {
   BackToFiles = 'fileEditors.actions.backToFiles',
   Close = 'fileEditors.actions.close',
   Wait = 'fileEditors.actions.wait',
+  OpenOfflineMode = 'fileEditors.actions.openOfflineMode',
 }

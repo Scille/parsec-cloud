@@ -15,6 +15,7 @@ import {
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   ConnectionHandle,
+  EntryID,
   FsPath,
   MountpointHandle,
   MountpointToOsPathError,
@@ -28,7 +29,10 @@ import {
   SystemPath,
   UserID,
   UserTuple,
+  WorkspaceDecryptEditicsError,
   WorkspaceDecryptPathAddrError,
+  WorkspaceEditicsGenerateAuthTokenError,
+  WorkspaceEncryptEditicsError,
   WorkspaceGeneratePathAddrError,
   WorkspaceHandle,
   WorkspaceID,
@@ -464,4 +468,48 @@ export async function getWorkspaceUserRoleChanges(
     }
   }
   return result;
+}
+
+// Generates the authentication token for the editics routes of the Parsec
+// server (see `workspace_editics_generate_auth_token` in libparsec): scoped to the
+// editics session of the given document, so the (deliberately isolated)
+// editor host page can use it without putting the rest of the client API at
+// risk. Returns the token as a string, or an error if the workspace is stopped.
+export async function generateEditicsToken(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+): Promise<Result<string, WorkspaceEditicsGenerateAuthTokenError>> {
+  return await libparsec.workspaceEditicsGenerateAuthToken(workspaceHandle, documentId);
+}
+
+// Encrypts a batch of editics payloads (the original content parts of a
+// document, i.e. its x2t conversion result, or session event payloads such
+// as change fragments, cursors, messages) with the workspace's latest realm
+// key, so the editics server only ever sees the opaque ciphertexts. The
+// payloads travel as a single flat buffer (the i-th cleartext is
+// `flat[offsets[i]..offsets[i+1]]`, so `offsets` has one more entry than the
+// payload count), and the single returned key index is the one the other
+// participants use to resolve the key on their side.
+export async function editicsEncryptBatch(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  flat: Uint8Array,
+  offsets: number[],
+): Promise<Result<[bigint, Uint8Array, number[]], WorkspaceEncryptEditicsError>> {
+  return await libparsec.workspaceEditicsEncryptBatch(workspaceHandle, documentId, flat, offsets);
+}
+
+// Decrypts a batch of editics payloads received from a collaborative edition
+// session: the counterpart of `editicsEncryptBatch`, resolving the key by
+// index from the workspace's realm keys bundle. All the payloads of a batch
+// are sealed with the same key, and travel as a single flat buffer like on
+// the encrypt side.
+export async function editicsDecryptBatch(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  keyIndex: bigint,
+  flat: Uint8Array,
+  offsets: number[],
+): Promise<Result<[Uint8Array, number[]], WorkspaceDecryptEditicsError>> {
+  return await libparsec.workspaceEditicsDecryptBatch(workspaceHandle, documentId, keyIndex, flat, offsets);
 }
