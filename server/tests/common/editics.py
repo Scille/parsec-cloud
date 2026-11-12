@@ -268,41 +268,6 @@ class EditicsJSRuntime:
                 return logs;
             };
 
-            // The test records have been captured against a stock OnlyOffice
-            // server, in default mode where the change fragments are JSON-serialized
-            // `"<len>;<base64>"` strings.
-            // However in editics `binaryChanges` is always enabled, in which the
-            // OnlyOffice editor provides/consumes the fragments as raw change bytes.
-            //
-            // In theory we should do the json-mode<->binary-mode translation during
-            // the record parsing, however we can only communicate in JSON between
-            // Python and Javascript.
-            // Hence why we keep the json-mode format in the Python code and only
-            // do the conversion in Javascript right before feeding the events to
-            // the translator being tested.
-            globalThis.__oo_json_changes_to_binary = (event) => {
-                if (event.type === 'saveChanges' && typeof event.changes === 'string') {
-                    event.changes = JSON.parse(event.changes).map((fragment) => {
-                        const semiColonIndex = fragment.indexOf(';');
-                        const length = parseInt(fragment.slice(0, semiColonIndex), 10);
-                        const raw = Uint8Array.fromBase64(fragment.slice(semiColonIndex + 1));
-                        if (raw.length !== length) {
-                            throw new Error(`Malformed record change fragment: ${fragment}`);
-                        }
-                        return raw;
-                    });
-                }
-                return event;
-            };
-            globalThis.__oo_binary_changes_to_json = (event) => {
-                if (event !== null && (event.type === 'saveChanges' || event.type === 'authChanges')) {
-                    for (const c of event.changes ?? []) {
-                        c.change = JSON.stringify(`${c.change.length};${c.change.toBase64()}`);
-                    }
-                }
-                return event;
-            };
-
             // The V8 runtime provided by PyMiniRacer comes with none of the standard
             // Web APIs. So `collaborative_protocol.js` only use those APIs in wrapper
             // functions that we are going to mock here.
@@ -532,7 +497,7 @@ class EditicsJSClient:
         raw_editics_client_event: str | None = await self.js_runtime.async_eval(
             f"""
             globalThis.__editics_instances['{self.participant_session_id}']
-                .cookClientEvent(globalThis.__oo_json_changes_to_binary({json.dumps(oo_client_event)}))
+                .cookClientEvent({json.dumps(oo_client_event)})
                 .then((result) => {{
                     if (!result.ok) throw new Error(result.error);
                     return result.value !== null ? JSON.stringify(result.value) : null;
@@ -561,7 +526,7 @@ class EditicsJSClient:
                         .then((result) => {{
                             if (!result.ok) throw new Error(result.error);
                             return result.value !== null
-                                ? JSON.stringify(globalThis.__oo_binary_changes_to_json(result.value))
+                                ? JSON.stringify(result.value)
                                 : null;
                         }})
                     """
@@ -595,7 +560,7 @@ class EditicsJSClient:
                 .then((result) => {{
                     if (!result.ok) throw new Error(result.error);
                     return result.value !== null
-                        ? JSON.stringify(globalThis.__oo_binary_changes_to_json(result.value))
+                        ? JSON.stringify(result.value)
                         : null;
                 }})
             """
