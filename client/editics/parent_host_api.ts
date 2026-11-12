@@ -44,11 +44,17 @@ export type EditicsHostToParentMessage =
   // The user wants to insert an image into the document: the parents should
   // display a file picker to the user, load the selected file and return its
   // content to the host.
-  | { command: 'oo-insert-image'; requestId: number };
+  | { command: 'oo-insert-image'; requestId: number }
+  // Completion of an `oo-convert-to-pdf` request: `data` holds the PDF file on
+  // success, `error` describes why the conversion failed otherwise.
+  | { command: 'oo-convert-to-pdf-result'; requestId: number; data?: Uint8Array; error?: string };
 
 export type EditicsParentToHostMessage =
   | { command: 'oo-open'; options: EditicsOpenOptions; documentContent: Uint8Array }
   | { command: 'oo-save-request' }
   // The app theme changed while the editor is open.
   | { command: 'oo-set-theme'; theme: EditicsOpenOptions['theme'] }
-  | { command: 'oo-insert-image-result'; requestId: number; fileName?: string; data?: Uint8Array; error?: string };
+  | { command: 'oo-insert-image-result'; requestId: number; fileName?: string; data?: Uint8Array; error?: string }
+  // Asks the host to export the document's current state (saved or not) to
+  // PDF. Answered with `oo-convert-to-pdf-result` carrying the same `requestId`.
+  | { command: 'oo-convert-to-pdf'; requestId: number };

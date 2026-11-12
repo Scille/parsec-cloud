@@ -966,8 +966,7 @@
             "failedToListWorkspaces": "Impossible de lister les espaces de travail (raison: {reason}).",
             "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
             "failedToListContent": "Impossible de lister le contenu de ce dossier.",
-            "createFileFailed": "Impossible de créer le fichier.",
-            "createFileFailedAlreadyExists": "Impossible de créer le nouveau fichier car un fichier du même nom existe déjà."
+            "createFileFailed": "Impossible de créer le fichier."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",
@@ -2923,6 +2922,9 @@
         "copyLink": "Copier le lien",
         "openInEditor": "Éditer",
         "download": "Télécharger",
+        "convertToPdf": "Convertir en PDF",
+        "convertingToPdf": "Conversion en PDF...",
+        "pdfSaved": "Le fichier a été enregistré sous {name}.",
         "hideMenu": "Cacher le menu",
         "showMenu": "Afficher le menu",
         "errors": {
@@ -2934,7 +2936,10 @@
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
             "mediaNotSupported": "Ce média ne peut pas être joué.",
-            "statsFailed": "Impossible de récupérer les informations du fichier."
+            "statsFailed": "Impossible de récupérer les informations du fichier.",
+            "pdfConversionFailed": "Impossible de convertir {name} en PDF.",
+            "pdfConversionTimeout": "La conversion de {name} en PDF a pris trop de temps.",
+            "pdfSaveFailed": "Impossible d'enregistrer {name}."
         },
         "retrievingFileContent": "Récupération du contenu du fichier...",
         "openLink": {

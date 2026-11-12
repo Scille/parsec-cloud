@@ -65,13 +65,13 @@ msTest.describe(() => {
       const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
       if (mode === 'edit') {
         await expect(topbar.locator('.save-info')).toBeHidden();
-        await expect(topbarButtons).toHaveCount(4);
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+        await expect(topbarButtons).toHaveCount(5);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF', 'Show menu']);
       } else {
         await expect(topbar.locator('.save-info')).toBeVisible();
         await expect(topbar.locator('.save-info')).toHaveText('Read only');
-        await expect(topbarButtons).toHaveCount(5);
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
+        await expect(topbarButtons).toHaveCount(6);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF', 'Show menu']);
       }
       const editicsFrame = await getEditorFrame(documents);
       await expect(editicsFrame.locator('#editor-container')).toBeVisible();
@@ -97,7 +97,7 @@ msTest.describe(() => {
       await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document.docx');
       await expect(topbar.locator('.back-button')).toBeVisible();
       const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
-      await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
+      await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF', 'Show menu']);
       await expect(topbar.locator('.save-info')).toBeVisible();
       await expect(topbar.locator('.save-info')).toHaveText('Read only');
 
@@ -114,7 +114,7 @@ msTest.describe(() => {
       } else if (action === 'edit') {
         await topbarButtons.nth(2).click();
         await expect(topbar.locator('.save-info')).toBeHidden();
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF', 'Show menu']);
       } else if (action === 'download') {
         const modal = documents.locator('.download-warning-modal');
         await expect(modal).toBeHidden();
@@ -123,7 +123,7 @@ msTest.describe(() => {
       } else if (action === 'show_menu') {
         const header = documents.locator('#connected-header');
         await expect(header).toBeHidden();
-        await topbarButtons.nth(4).click();
+        await topbarButtons.nth(5).click();
         await expect(header).toBeVisible();
       }
     });
@@ -197,6 +197,79 @@ msTest.describe(() => {
     await expect(topbar.locator('.save-info-text')).toHaveText('Unsaved changes');
     await topbar.locator('.back-button').click();
     await expect(documents).toBeDocumentPage();
+  });
+
+  msTest('Convert document to PDF', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(60_000);
+
+    await importDefaultFiles(documents, testInfo, ImportDocuments.DocxNoImage, false);
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await entries.nth(0).click({ button: 'right' });
+    await checkEntryContextMenu(documents, 'file-full', 'Preview', { canEdit: true });
+
+    await expect(documents.locator('.file-editor')).toBeVisible();
+    const topbar = documents.locator('.file-handler-topbar');
+    await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document_no_image.docx');
+    const convertButton = topbar.locator('#file-handler-convert-to-pdf');
+    await expect(convertButton).toHaveText('Convert to PDF');
+    // Only enabled once the document is loaded in the editor
+    await expect(convertButton).toBeEnabled({ timeout: 10_000 });
+
+    const spinner = documents.locator('.ms-spinner-modal');
+    await convertButton.click();
+    await expect(spinner).toBeHidden({ timeout: 10_000 });
+    await expect(documents).toShowToast('File was saved as document_no_image.pdf.', 'Success');
+
+    // Convert again: the PDF already exists, keep both
+    await expect(convertButton).toBeEnabled();
+    await convertButton.click();
+    await expect(spinner).toBeHidden({ timeout: 10_000 });
+    const dupModal = documents.locator('.file-operation-conflicts-modal');
+    await expect(dupModal).toBeVisible();
+    await dupModal.locator('.modal-footer-buttons').locator('ion-button').nth(2).click();
+    await expect(dupModal).toBeHidden();
+    await expect(documents).toShowToast('File was saved as document_no_image (2).pdf.', 'Success');
+
+    await topbar.locator('.back-button').click();
+    await expect(documents).toBeDocumentPage();
+    await expect(entries).toHaveCount(3);
+    const names = await entries.locator('.label-name').allTextContents();
+    expect(names.sort()).toEqual(['document_no_image (2).pdf', 'document_no_image.docx', 'document_no_image.pdf']);
+
+    // Make sure the PDF is valid: it opens in the viewer and its first page renders
+    await entries.filter({ has: documents.locator('.label-name', { hasText: /^document_no_image\.pdf$/ }) }).dblclick();
+    await expect(documents).toBeViewerPage();
+    await expect(documents.locator('.file-handler-topbar').locator('.file-handler-topbar__title')).toHaveText('document_no_image.pdf');
+    const wrapper = documents.locator('.file-viewer-wrapper');
+    await expect(wrapper.locator('.pdf-error')).toBeHidden();
+    const pages = wrapper.locator('.pdf-container').locator('canvas');
+    await expect(pages.first()).toHaveAttribute('data-canvas-state', 'rendered');
+  });
+
+  msTest('Convert document to PDF fails', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(60_000);
+
+    // Contains an image, which OnlyOffice fails to export to PDF
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await entries.nth(0).click({ button: 'right' });
+    await checkEntryContextMenu(documents, 'file-full', 'Preview', { canEdit: true });
+
+    await expect(documents.locator('.file-editor')).toBeVisible();
+    const topbar = documents.locator('.file-handler-topbar');
+    const convertButton = topbar.locator('#file-handler-convert-to-pdf');
+    await expect(convertButton).toBeEnabled({ timeout: 10_000 });
+
+    await convertButton.click();
+    await expect(documents.locator('.ms-spinner-modal')).toBeHidden({ timeout: 10_000 });
+    await expect(documents).toShowToast('Unable to convert document.docx to PDF.', 'Error');
+    await expect(convertButton).toBeEnabled();
+
+    // Nothing was written
+    await topbar.locator('.back-button').click();
+    await expect(documents).toBeDocumentPage();
+    await expect(entries).toHaveCount(1);
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('document.docx');
   });
 
   msTest('Check files handled', async ({ documents }, testInfo: TestInfo) => {

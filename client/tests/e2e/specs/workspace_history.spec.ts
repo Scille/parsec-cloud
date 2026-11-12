@@ -170,8 +170,8 @@ msTest.describe(() => {
     const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
     await expect(topbar.locator('.save-info')).toBeVisible();
     await expect(topbar.locator('.save-info')).toHaveText('Read only');
-    await expect(topbarButtons).toHaveCount(4);
-    await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+    await expect(topbarButtons).toHaveCount(5);
+    await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF', 'Show menu']);
     const editicsFrame = await getEditorFrame(documents);
     await expect(editicsFrame.locator('#editor-container')).toBeVisible();
   });

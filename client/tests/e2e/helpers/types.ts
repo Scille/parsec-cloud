@@ -87,6 +87,8 @@ export enum ImportDocuments {
   Mp3 = 1 << 6,
   Mp4 = 1 << 7,
   Pdf = 1 << 8,
+  // Not part of `ImportAllDocuments`: only used for the PDF conversion
+  DocxNoImage = 1 << 9,
 }
 
 export const ImportAllDocuments =

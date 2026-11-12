@@ -1,17 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 import {
+  closeFile,
+  deleteFile,
   EntryName,
   entryStat,
   EntryStatFile,
   FsPath,
+  getTemporaryPath,
   getWorkspaceInfo,
+  moveEntry,
+  openFile,
   Path,
   readAll,
   WorkspaceHandle,
   WorkspaceHistory,
   WorkspaceHistoryEntryStatFile,
+  writeFile,
 } from '@/parsec';
+import { moveWithCounter } from '@/services/fileOperation/operations';
 import { DateTime } from 'luxon';
 import { File, Translatable } from 'megashark-lib';
 
@@ -349,6 +356,47 @@ export async function getFileContent(workspaceHandle: WorkspaceHandle, path: FsP
     content = result.value;
   }
   return content;
+}
+
+export async function saveFileContent(
+  workspaceHandle: WorkspaceHandle,
+  destination: FsPath,
+  data: Uint8Array,
+  replace = true,
+): Promise<EntryName> {
+  const tmpPath = await getTemporaryPath(await Path.parent(destination));
+  const fdResult = await openFile(workspaceHandle, tmpPath, { write: true, createNew: true });
+  if (!fdResult.ok) {
+    throw new Error(`failed to create the file: ${JSON.stringify(fdResult.error)}`);
+  }
+  try {
+    try {
+      const writeResult = await writeFile(workspaceHandle, fdResult.value, 0, data);
+      if (!writeResult.ok) {
+        throw new Error(`failed to write the file: ${JSON.stringify(writeResult.error)}`);
+      }
+    } finally {
+      await closeFile(workspaceHandle, fdResult.value);
+    }
+
+    let finalPath: FsPath | undefined;
+    if (replace) {
+      const moveResult = await moveEntry(workspaceHandle, tmpPath, destination, true);
+      if (!moveResult.ok) {
+        throw new Error(`failed to replace the file: ${JSON.stringify(moveResult.error)}`);
+      }
+      finalPath = destination;
+    } else {
+      finalPath = await moveWithCounter(workspaceHandle, tmpPath, destination);
+      if (!finalPath) {
+        throw new Error('failed to find an available name');
+      }
+    }
+    return (await Path.filename(finalPath)) ?? '';
+  } catch (e: unknown) {
+    await deleteFile(workspaceHandle, tmpPath);
+    throw e;
+  }
 }
 
 export async function getFileStats(

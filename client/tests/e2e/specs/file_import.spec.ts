@@ -202,7 +202,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     expect(fileChooser.isMultiple()).toBe(false);
     const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
     await fileChooser.setFiles([importPath]);
-    await checkFilesUploaded(documents, 1, 11);
+    await checkFilesUploaded(documents, 1, 12);
     await new FileOperationMenu(documents).close();
     await documents.locator('.folder-container').locator('.file-list-item').locator('.label-name').nth(0).click();
     if (displaySize === DisplaySize.Large) {
