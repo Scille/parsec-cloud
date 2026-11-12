@@ -203,6 +203,16 @@ export async function openDocument(
   }
   const hostOrigin = frameUrl.origin;
 
+  // In Electron the editics pages are served by the main process, which also
+  // stamps their CSP: declare the origin of the server hosting the session so
+  // it is allowed in `connect-src` (see `cspRules.ts`). This is done lazily
+  // (i.e. right before an editics page is actually needed) so no bookkeeping
+  // of the logged-in devices' servers is required; the main process takes
+  // care of the deduplication.
+  if (options.collaborative !== undefined && isElectron()) {
+    await window.nativeAPI.declareEditicsServerOrigin(options.collaborative.serverUrl);
+  }
+
   try {
     await new Promise<void>((resolve, reject) => {
       const hostReadyTimeoutId = setTimeout(() => {

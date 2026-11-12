@@ -585,6 +585,10 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
       console.log('setupActionMenu: Not available');
     },
     setWindowTheme: (_themePreference: ThemePreference, _theme: Theme, _overlay: boolean): void => {},
+    declareEditicsServerOrigin: (_origin: string): Promise<void> => {
+      // In web, CSP is handled by the server hosting the editics pages
+      return Promise.resolve();
+    },
   };
 }
 
@@ -644,6 +648,7 @@ declare global {
       openPopup: (url: string) => boolean;
       setupActionMenu: (items: ParsecMenuItem[]) => void;
       setWindowTheme: (themePreference: ThemePreference, theme: Theme, overlay: boolean) => void;
+      declareEditicsServerOrigin: (origin: string) => Promise<void>;
     };
   }
 }

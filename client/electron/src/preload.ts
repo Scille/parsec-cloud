@@ -88,6 +88,12 @@ process.once('loaded', async () => {
     setWindowTheme: (themePreference: 'system' | 'light' | 'dark', theme: 'light' | 'dark', overlay: boolean) => {
       ipcRenderer.send(PageToWindowChannel.SetWindowTheme, themePreference, theme, overlay);
     },
+    declareEditicsServerOrigin: (origin: string): Promise<void> => {
+      // `invoke` (as opposed to `send`) so the caller knows the origin has
+      // been taken into account before loading the editics page (whose CSP
+      // is stamped by the main process, see `cspRules.ts`)
+      return ipcRenderer.invoke(PageToWindowChannel.DeclareEditicsServerOrigin, origin);
+    },
   });
 
   try {

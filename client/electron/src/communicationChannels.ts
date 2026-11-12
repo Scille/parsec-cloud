@@ -15,6 +15,7 @@ export enum PageToWindowChannel {
   MacfuseNotInstalled = 'parsec-macfuse-not-installed',
   SeeInExplorer = 'parsec-see-in-explorer',
   PageInitError = 'parsec-page-init-error',
+  DeclareEditicsServerOrigin = 'parsec-declare-editics-server-origin',
   GetLogs = 'parsec-get-logs',
   OpenPopup = 'parsec-open-popup',
   SetupActionMenu = 'parsec-setup-action-menu',
