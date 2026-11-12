@@ -1,6 +1,7 @@
 # This file lists the owners of the sub-parts in our monorepo.
 # These parts are assigned to a specific team whose members are proficient in them.
 # If you think you belongs to one of these teams because you're proficient in one of those parts, ask @touilleMan.
+# cspell:words commitlintrc
 
 # JS team is responsible for the web code.
 /client/                @Scille/js-code-owners
@@ -45,6 +46,7 @@ setup.cfg               @Scille/python-code-owners
 /.github/               @Scille/ops-code-owners
 /server/packaging/      @Scille/ops-code-owners
 /misc/                  @Scille/ops-code-owners
+.commitlintrc.yml       @Scille/ops-code-owners
 
 # @touilleMan is responsible for the CODEOWNERS file ;)
 /.github/CODEOWNERS     @touilleMan
