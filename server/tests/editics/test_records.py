@@ -283,7 +283,7 @@ def _parse_record(
                 payload["licenseType"] = 0
                 payload["settings"] = {
                     "reconnection": {"attempts": 50, "delay": 2000},
-                    "binaryChanges": True,
+                    "binaryChanges": False,
                     "websocketMaxPayloadSize": 1572864,
                     "maxChangesSize": 157286400,
                     "limits_image_size": 26214400,
@@ -339,12 +339,6 @@ def _parse_record(
                 payload=payload,
             )
         )
-
-    # Note the test records have their change fragments in JSON-serialized mode
-    # while editics expects binary (i.e. `binaryChanges` is always enabled).
-    # The json-mode<->binary-mode conversion is done in the Javascript (see
-    # `EditicsJSClient.inject_oo_client_event|listen_oo_server_event`) since
-    # transmitting binary between Python and Javascript is cumbersome.
 
     editor_type = next(
         event.payload["editorType"]
@@ -682,6 +676,15 @@ async def test_untranslatable_events(
         # ...but the events with no Editics counterpart (e.g. `rpc`) still can.
         result = await editics_js_runtime.async_eval(f"{instance}.cookClientEvent({{type: 'rpc'}})")
         assert result == {"ok": True, "value": None}
+
+        # Client -> server: a malformed OnlyOffice payload (here: the save
+        # changes are not valid JSON) is an expected translation error too.
+        result = await editics_js_runtime.async_eval(
+            f"{instance}.cookClientEvent({{type: 'saveChanges', changes: '{{not-json'}})"
+        )
+        assert result["ok"] is False
+        assert result["kind"] == "translation"
+        assert result["error"].startswith("Malformed OnlyOffice `saveChanges.changes` payload")
 
         # Server -> client: an unknown editics event cannot be translated either.
         result = await editics_js_runtime.async_eval(
