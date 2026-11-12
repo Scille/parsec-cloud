@@ -9,6 +9,11 @@ on:
       # Also trigger on label added/removed to check for `ignore-changelog`
       - labeled
       - unlabeled
+  merge_group:
+  push:
+    branches:
+      - master
+      - releases/*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -38,13 +43,17 @@ jobs:
           npm --version
           npx commitlint --version
 
-      - name: Validate current commit (last commit) with commitlint
+      # https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
+      - name: Validate pushed commits
         if: github.event_name == 'push'
-        run: npx commitlint --verbose --last
+        run: >
+          npx commitlint --verbose
+          --from ${{ github.event.before }}
+          --to ${{ github.event.after }}
 
       # Directly use pull request event values
       # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request
-      - name: Validate PR commits with commit lint
+      - name: Validate PR commits
         if: github.event_name == 'pull_request'
         run: >-
           npx commitlint
