@@ -90,9 +90,9 @@ function bytesToStr(bytes) {
  * @property {string} vlobId - VlobID hex of the document.
  * @property {string} deviceIdHex - DeviceID hex of the client's device.
  * @property {string} userId - Integrator user id (the same `user.id` the editor
- * config gets, so the composite user IDs match, see RFC 1030 §1.3).
+ * config gets, so the composite user IDs match).
  * @property {string} userName - Integrator user display name.
- * @property {number} vlobVersion - loaded vlob version (RFC §1.2).
+ * @property {number} vlobVersion - loaded vlob version.
  * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
  */
 
@@ -335,12 +335,17 @@ class EditicsTranslator {
    * @returns {Promise<EditicsClientEventSaveChanges>}
    */
   async _cookSaveChanges(oo) {
-    // Editics always enables OnlyOffice `binaryChanges` mode, so `changes` is
-    // already an array of raw change fragments ready to be encrypted.
+    // OnlyOffice editor is always configured in JSON change mode (i.e.
+    // `binaryChanges: false`), so `changes` is a JSON-serialized array of
+    // `<cleartext length>;<base64(cleartext)>` fragments.
+    const fragments = JSON.parse(/** @type string */ (oo.changes));
     /** @type {[number, string][]} */
     const encryptedChanges = [];
-    for (const fragment of oo.changes) {
-      const [keyIndex, cipherText] = await this.libparsec.encrypt(/** @type {Uint8Array} */ (fragment));
+    for (const fragment of fragments) {
+      // The length prefix is redundant with the base64 payload, only the
+      // base64 part carries information.
+      const bytes = Uint8Array.fromBase64(fragment.slice(fragment.indexOf(';') + 1));
+      const [keyIndex, cipherText] = await this.libparsec.encrypt(bytes);
       encryptedChanges.push([keyIndex, cipherText.toBase64()]);
     }
 
@@ -388,7 +393,7 @@ class EditicsTranslator {
       excelAdditionalInfoIndexCols,
       excelAdditionalInfoIndexRows,
       encryptedCursorAdditionalInfo: encryptedCursor,
-      releaseLocks: oo.releaseLocks,
+      releaseLocks: oo.releaseLocks ?? false,
     };
   }
 
@@ -556,8 +561,12 @@ class EditicsTranslator {
       licenseType: 0,
       settings: {
         reconnection: { attempts: 50, delay: 2000 },
-        // Always use binary changes mode, since it makes encryption easier&faster
-        binaryChanges: true,
+        // It would be tempting to use the binary change mode here (faster&more
+        // convenient since we are going to encrypt the changes).
+        // However this flag is never used in the original OnlyOffice editor (and
+        // is in fact buggy!), so we stick with the battle-tested default mode
+        // where changes are encoded as a `"<length>;<base64>"` strings.
+        binaryChanges: false,
         websocketMaxPayloadSize: 1572864,
         maxChangesSize: 157286400,
         // eslint-disable-next-line camelcase -- OnlyOffice wire field name
@@ -644,9 +653,10 @@ class EditicsTranslator {
             ok: true,
             value: {
               docid: this.docId,
-              // Editics always enables OnlyOffice `binaryChanges` mode, so the
-              // fragment is provided as the raw change bytes.
-              change: cleartext.value,
+              // OnlyOffice editor is always configured in JSON change mode (i.e.
+              // `binaryChanges: false`), so `changes` is a JSON-serialized array of
+              // `<cleartext length>;<base64(cleartext)>` fragments.
+              change: JSON.stringify(`${cleartext.value.byteLength};${cleartext.value.toBase64()}`),
               time: c.time,
               user: this._onlyofficeUserId(c.author),
               useridoriginal: authorDeviceId,
@@ -828,9 +838,10 @@ class EditicsTranslator {
             ok: true,
             value: {
               docid: this.docId,
-              // Editics always enables OnlyOffice `binaryChanges` mode, so the
-              // fragment is provided as the raw change bytes.
-              change: cleartext.value,
+              // OnlyOffice editor is always configured in JSON change mode (i.e.
+              // `binaryChanges: false`), so `changes` is a JSON-serialized array of
+              // `<cleartext length>;<base64(cleartext)>` fragments.
+              change: JSON.stringify(`${cleartext.value.byteLength};${cleartext.value.toBase64()}`),
               time: c.time,
               user: this._onlyofficeUserId(author),
               useridoriginal: authorDeviceId,
