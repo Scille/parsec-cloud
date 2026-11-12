@@ -9,6 +9,8 @@ on:
       # Also trigger on label added/removed to check for `ignore-changelog`
       - labeled
       - unlabeled
+      # Or when the title/body as changed
+      - edited
   merge_group:
   push:
     branches:
@@ -59,6 +61,16 @@ jobs:
           npx commitlint --verbose
           --from ${{ github.event.pull_request.base.sha }}
           --to ${{ github.event.pull_request.head.sha }}
+
+      # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request
+      - name: Validate PR title
+        if: github.event_name == 'pull_request'
+        run: |
+          cat << EOF | npx commitlint --verbose
+          ${{ github.event.pull_request.title }}
+
+          ${{ github.event.pull_request.body }}
+          EOF
 
       # https://docs.github.com/en/webhooks/webhook-events-and-payloads#merge_group
       - name: Validate MQ commits
