@@ -262,6 +262,9 @@ export async function getWorkspaceSharing(
           }
         }
       }
+      value.sort(
+        (item1, item2) => item1[0].humanHandle.label.localeCompare(item2[0].humanHandle.label) || item1[0].id.localeCompare(item2[0].id),
+      );
       return { ok: true, value: value };
     }
     return result;

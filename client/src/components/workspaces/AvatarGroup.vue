@@ -13,7 +13,7 @@
       class="avatar extra-avatar"
       v-if="people.length > maxDisplay"
     >
-      + {{ people.length - maxDisplay }}
+      +{{ people.length - maxDisplay }}
     </ion-avatar>
   </div>
 </template>
@@ -43,7 +43,7 @@ defineProps<{
     height: 2rem;
     width: 2rem;
     border: ms.border('thick') solid ms.color('surface-base-default');
-    @include ms.font('body-sm-regular');
+    @include ms.font('label-sm-medium');
 
     &:first-of-type {
       margin-left: 0;
