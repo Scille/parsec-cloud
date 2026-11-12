@@ -34,13 +34,13 @@ jobs:
       - name: Print versions
         run: |
           git --version
-          node: --version
+          node --version
           npm --version
           npx commitlint --version
 
       - name: Validate current commit (last commit) with commitlint
         if: github.event_name == 'push'
-        run: npx commitlint --last --verbose
+        run: npx commitlint --verbose --last
 
       # Directly use pull request event values
       # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request
@@ -48,5 +48,6 @@ jobs:
         if: github.event_name == 'pull_request'
         run: >-
           npx commitlint
+          --verbose
           --from ${{ github.event.pull_request.base.sha }}
           --to ${{ github.event.pull_request.head.sha }}
