@@ -11343,6 +11343,36 @@ fn variant_client_forget_all_certificates_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientGenerateEditicsTokenError
+
+#[allow(dead_code)]
+fn variant_client_generate_editics_token_error_rs_to_js(
+    rs_obj: libparsec::ClientGenerateEditicsTokenError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientGenerateEditicsTokenError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGenerateEditicsTokenErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientGenerateEditicsTokenError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGenerateEditicsTokenErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientGetAsyncEnrollmentAddrError
 
 #[allow(dead_code)]
@@ -21450,6 +21480,100 @@ fn variant_workspace_create_folder_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceDecryptEditicsError
+
+#[allow(dead_code)]
+fn variant_workspace_decrypt_editics_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceDecryptEditicsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::CorruptedData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorCorruptedData".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::CorruptedKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorCorruptedKey".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorInvalidCertificate".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::KeyNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorKeyNotFound".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorNoRealmAccess".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorOffline".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorRealmDeleted".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceDecryptEditicsError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptEditicsErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceDecryptPathAddrError
 
 #[allow(dead_code)]
@@ -21538,6 +21662,84 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceDecryptPathAddrErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceEncryptEditicsError
+
+#[allow(dead_code)]
+fn variant_workspace_encrypt_editics_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceEncryptEditicsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorInvalidCertificate".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::NoKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorNoKey".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorNoRealmAccess".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorOffline".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorRealmDeleted".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEncryptEditicsError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEncryptEditicsErrorStopped".into(),
             )?;
         }
     }
@@ -26382,6 +26584,57 @@ pub fn clientForgetAllCertificates(client: u32) -> Promise {
     }))
 }
 
+// client_generate_editics_token
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientGenerateEditicsToken(
+    client_handle: u32,
+    realm_id: String,
+    document_id: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+        let document_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(document_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+        let ret =
+            libparsec::client_generate_editics_token(client_handle, realm_id, document_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    #[allow(clippy::useless_asref)]
+                    JsValue::from_str(value.as_ref())
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_generate_editics_token_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // client_get_async_enrollment_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -26681,9 +26934,7 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                                     Ok(ok) => ok,
                                     #[allow(clippy::unnecessary_to_owned)]
                                     Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(
-                                            &err.to_string(),
-                                        )));
+                                        return Err(JsValue::from(TypeError::new(&err.to_string())));
                                     }
                                 }
                             }
@@ -30391,6 +30642,100 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_decrypt_path_addr_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_editics_decrypt
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceEditicsDecrypt(
+    workspace: u32,
+    document: String,
+    key_index: u64,
+    encrypted: Uint8Array,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let document = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(document).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+
+        let encrypted = {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            custom_from_rs_bytes(&encrypted.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret =
+            libparsec::workspace_editics_decrypt(workspace, document, key_index, encrypted).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_decrypt_editics_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_editics_encrypt
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceEditicsEncrypt(workspace: u32, document: String, cleartext: Uint8Array) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let document = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(document).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+        let cleartext = {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            custom_from_rs_bytes(&cleartext.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_editics_encrypt(workspace, document, cleartext).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from(x1);
+                    js_array.set(0, js_value);
+                    let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
+                    js_array.set(1, js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_encrypt_editics_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

@@ -973,5 +973,21 @@ async def client_get_organization_bootstrap_date(
     raise NotImplementedError
 
 
+class ClientGenerateEditicsTokenError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_generate_editics_token(
+    client_handle: Handle,
+    realm_id: VlobID,
+    document_id: VlobID,
+) -> Result[str, ClientGenerateEditicsTokenError]:
+    raise NotImplementedError
+
+
 def is_path_confined(client: Handle, path: Ref[str]) -> bool:
     raise NotImplementedError
