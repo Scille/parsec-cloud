@@ -966,8 +966,7 @@
             "failedToListWorkspaces": "Failed to list the workspaces (reason: {reason}).",
             "seeInExplorerFailed": "Failed to open the selected entry in file explorer.",
             "failedToListContent": "Failed to list the content of this folder.",
-            "createFileFailed": "Failed to create the file.",
-            "createFileFailedAlreadyExists": "Failed to create the new file because a file with the same name already exists."
+            "createFileFailed": "Failed to create the file."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
@@ -2923,6 +2922,9 @@
         "copyLink": "Copy link",
         "openInEditor": "Edit",
         "download": "Download",
+        "convertToPdf": "Convert to PDF",
+        "convertingToPdf": "Converting to PDF...",
+        "pdfSaved": "File was saved as {name}.",
         "hideMenu": "Hide menu",
         "showMenu": "Show menu",
         "errors": {
@@ -2934,7 +2936,10 @@
             "informationEditDownload": "If you want to edit this file, you can download it and open it locally on your device.",
             "noFolderPreview": "Cannot preview folders.",
             "mediaNotSupported": "This media is not supported.",
-            "statsFailed": "Cannot get file information."
+            "statsFailed": "Cannot get file information.",
+            "pdfConversionFailed": "Unable to convert {name} to PDF.",
+            "pdfConversionTimeout": "Converting {name} to PDF took too long.",
+            "pdfSaveFailed": "Unable to save {name}."
         },
         "retrievingFileContent": "Retrieving the file content...",
         "openLink": {

@@ -8,6 +8,7 @@ enum FileHandlerAction {
   Download = 'download',
   Edit = 'edit',
   OpenWithSystem = 'openWithSystem',
+  ConvertToPdf = 'convertToPdf',
 }
 
 function isFileHandlerAction(value: any): value is FileHandlerAction {

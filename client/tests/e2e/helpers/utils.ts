@@ -532,6 +532,7 @@ export async function importDefaultFiles(
       [ImportDocuments.Xlsx, 'spreadsheet.xlsx'],
       [ImportDocuments.Txt, 'text.txt'],
       [ImportDocuments.Py, 'code.py'],
+      [ImportDocuments.DocxNoImage, 'document_no_image.docx'],
     ]);
 
     const paths: Array<string> = [];

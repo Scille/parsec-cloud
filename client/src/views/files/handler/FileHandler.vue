@@ -158,6 +158,20 @@
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item color-secondary"
+                id="file-handler-convert-to-pdf"
+                @click="convertToPdf"
+                v-if="canConvertToPdf"
+                :disabled="pathOpener.currentlyOpening.value || convertingToPdf"
+                fill="clear"
+              >
+                <ion-icon
+                  :icon="documentText"
+                  class="item-icon button-icon-left"
+                />
+                {{ $msTranslate('fileViewers.convertToPdf') }}
+              </ion-button>
+              <ion-button
+                class="file-handler-topbar-buttons__item color-secondary"
                 id="file-handler-open-with-system"
                 @click="openWithSystem(contentInfo.path)"
                 v-show="isDesktop() && !contentInfo.timestamp"
@@ -213,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { getFileIcon, getFileStats } from '@/common/file';
+import { getFileIcon, getFileStats, saveFileContent } from '@/common/file';
 import { DetectedFileType } from '@/common/fileTypes';
 import { copyPathLinkToClipboard } from '@/components/files';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
@@ -241,14 +255,15 @@ import {
   Routes,
   watchRoute,
 } from '@/router';
-import { isEditicsEnabledForDocumentType } from '@/services/editics';
+import { EditicsError, EditicsErrorCodes, isEditicsEnabledForDocumentType } from '@/services/editics';
 import { Env } from '@/services/environment';
+import { DuplicatePolicy } from '@/services/fileOperation';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { downloadFiles, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
+import { downloadFiles, FileDetailsModal, FileHandlerAction, getDuplicatePolicy, openDownloadConfirmationModal } from '@/views/files';
 import { FileHandlerMode, SaveState } from '@/views/files/handler';
 import { FileEditor } from '@/views/files/handler/editor';
 import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
@@ -261,6 +276,7 @@ import {
   chevronDown,
   chevronUp,
   create,
+  documentText,
   ellipsisHorizontal,
   eye,
   informationCircle,
@@ -279,6 +295,7 @@ import {
   MsImage,
   MsModalResult,
   MsSpinner,
+  openSpinnerModal,
   SidebarToggle,
   useWindowSize,
   WindowSizeBreakpoints,
@@ -352,6 +369,9 @@ const saveStateText = computed(() => {
 function isComponentEditor(): boolean {
   return handlerComponent.value === FileEditor;
 }
+
+const canConvertToPdf = computed(() => isComponentEditor() && !isReader.value);
+const convertingToPdf = ref(false);
 
 async function loadFile(): Promise<boolean> {
   loaded.value = false;
@@ -677,6 +697,82 @@ async function downloadFile(): Promise<void> {
   });
 }
 
+async function convertToPdf(): Promise<void> {
+  // Guards against a second click before the spinner modal is presented
+  if (convertingToPdf.value) {
+    return;
+  }
+  const editor = handlerRef.value;
+  const workspaceHandle = getWorkspaceHandle();
+  const info = contentInfo.value;
+  if (!isComponentEditor() || !editor?.convertToPdf || !workspaceHandle || !info) {
+    window.nativeAPI.log('error', 'Cannot convert to PDF: editor not available');
+    showPdfError('fileViewers.errors.pdfConversionFailed', contentInfo.value?.fileName ?? '');
+    return;
+  }
+
+  convertingToPdf.value = true;
+  try {
+    let data: Uint8Array;
+    const spinnerModal = await openSpinnerModal('fileViewers.convertingToPdf');
+    try {
+      data = await editor.convertToPdf();
+    } catch (e: unknown) {
+      if (e instanceof EditicsError && e.code === EditicsErrorCodes.ConversionTimeout) {
+        window.nativeAPI.log('error', 'PDF conversion timed out');
+        showPdfError('fileViewers.errors.pdfConversionTimeout', info.fileName);
+      } else {
+        const details = e instanceof EditicsError ? `${e.code}: ${e.details ?? ''}` : String(e);
+        window.nativeAPI.log('error', `PDF conversion failed: ${details}`);
+        showPdfError('fileViewers.errors.pdfConversionFailed', info.fileName);
+      }
+      return;
+    } finally {
+      await spinnerModal.dismiss();
+    }
+
+    // The PDF is saved next to the document, with the same name (e.g. `report.docx` -> `report.pdf`)
+    const pdfName = `${Path.filenameWithoutExtension(info.fileName)}.pdf`;
+    const destination = Path.quickJoin(await Path.parent(info.path), pdfName);
+
+    let replace = false;
+    const existing = await entryStat(workspaceHandle, destination);
+    if (existing.ok) {
+      const policy = await getDuplicatePolicy([existing.value]);
+      if (policy === undefined || policy === DuplicatePolicy.Ignore) {
+        return;
+      }
+      replace = policy === DuplicatePolicy.Replace;
+    }
+
+    try {
+      const savedName = await saveFileContent(workspaceHandle, destination, data, replace);
+      informationManager.value.present(
+        new Information({
+          message: { key: 'fileViewers.pdfSaved', data: { name: savedName } },
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    } catch (e: unknown) {
+      window.nativeAPI.log('error', `Failed to save the PDF: ${String(e)}`);
+      showPdfError('fileViewers.errors.pdfSaveFailed', pdfName);
+    }
+  } finally {
+    convertingToPdf.value = false;
+  }
+}
+
+function showPdfError(message: string, name: string): void {
+  informationManager.value.present(
+    new Information({
+      message: { key: message, data: { name } },
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
+}
+
 async function onSaveStateChange(newState: SaveState): Promise<void> {
   saveState.value = newState;
 }
@@ -696,6 +792,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       canOpenWithSystem: !contentInfo.value.timestamp && isDesktop(),
       canEdit:
         !contentInfo.value.timestamp && readOnly.value && isEditicsEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value,
+      canConvertToPdf: canConvertToPdf.value,
     },
   });
   await modal.present();
@@ -710,6 +807,9 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         break;
       case FileHandlerAction.Download:
         await downloadFile();
+        break;
+      case FileHandlerAction.ConvertToPdf:
+        await convertToPdf();
         break;
       case FileHandlerAction.Edit:
         await openEditor(contentInfo.value.path);
