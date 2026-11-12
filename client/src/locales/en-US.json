@@ -2987,9 +2987,11 @@
             "titles": {
                 "networkOffline": "Network connection lost",
                 "tooLongToOpen": "The file seems to be taking too long to open",
-                "frameLoadFailed": "Could not load the editor. Please check your network connection."
+                "frameLoadFailed": "Could not load the editor. Please check your network connection.",
+                "collaborativeUnavailable": "Collaborative editing is not available"
             },
             "networkOfflineMessage": "Your network connection has been lost. Please check your internet connection and try again. Any unsaved changes may be lost.",
+            "collaborativeUnavailableMessage": "You are currently offline, so the document cannot be opened in collaborative editing mode. You can still open it in offline mode: your changes will only be visible to you, and you won't see the changes made by others.",
             "tooLongToOpenOnWeb": "You can try downloading it and opening with default app (right click on file > 'Download').",
             "tooLongToOpenOnDesktop": "You can try opening it with default app (right click on file > 'Open with default app')."
         },
@@ -3001,7 +3003,8 @@
         "actions": {
             "backToFiles": "Back to files",
             "wait": "Wait",
-            "close": "Close"
+            "close": "Close",
+            "openOfflineMode": "Open in offline mode"
         },
         "insertImage": {
             "title": "Insert an image",

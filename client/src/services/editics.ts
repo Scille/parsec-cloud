@@ -2,10 +2,27 @@
 
 import { FileContentType } from '@/common/fileTypes';
 import ImageSelectionModal from '@/components/files/explorer/ImageSelectionModal.vue';
-import { isElectron, WorkspaceHandle } from '@/parsec';
+import {
+  DeviceID,
+  editicsDecrypt,
+  editicsEncrypt,
+  EntryID,
+  entryStat,
+  EntryStatFile,
+  FsPath,
+  generateEditicsToken,
+  getClientInfo,
+  getUserInfoFromDeviceID,
+  getWorkspaceInfo,
+  isElectron,
+  isWeb,
+  parseParsecAddr,
+  WorkspaceHandle,
+} from '@/parsec';
 import { getWorkspaceHandle } from '@/router';
 import { Env } from '@/services/environment';
 import type {
+  EditicsCollaborativeSession,
   EditicsDocumentTypes,
   EditicsHostToParentMessage,
   EditicsOpenOptions,
@@ -37,32 +54,40 @@ async function getEditicsOrigin(): Promise<string> {
     // Just add a prefix (e.g. `app.parsec.cloud` -> `editics.app.parsec.cloud`).
     // This would fail if the host is an IP address, but this is highly unlikely
     // in release since a website is expected to always be accessed by its hostname.
-    // TODO: when collaborative mode is available, we should modify this to use the
-    // address of the editics server here (and, since we are in web, if the editics
-    // server cannot be joined we error out instead of going in offline mode, as
-    // fetching `editics/offline.html` would most likely fail anyway).
+    // Note the web app is then expected to be served by the Parsec server itself
+    // (see `server/parsec/asgi/__init__.py`), so the editics origin is also where
+    // the collaborative session lives (see `getEditicsSessionServerUrl`).
     return `${window.location.protocol}//editics.${window.location.host}`;
   }
 }
 
-// In release builds, `scripts/vite_plugin_editics.ts` emits the page with a
-// content hash for cache busting (e.g. `editics/offline-1234abcd.html`), and
-// advertises the actual name through a `editics-offline-page` meta tag injected
-// in the main app's `index.html`.
-//
-// In dev mode, the Vite dev server serves the page un-hashed, hence the
-// fallback (the meta tag is only injected in release builds).
-const EDITICS_OFFLINE_PAGE_META_NAME = 'editics-offline-page';
-const EDITICS_OFFLINE_PAGE_DEV = 'editics/offline.html';
+// The edition mode determines which host page is served in the iframe (see
+// `editics/README.md`): the parent picks it depending on whether a
+// collaborative session was resolved for the document (see
+// `getEditicsCollaborativeSession`).
+export type EditicsEditionMode = 'offline' | 'collaborative';
 
-function getEditicsHostPage(): string {
-  const content = document.querySelector<HTMLMetaElement>(`meta[name="${EDITICS_OFFLINE_PAGE_META_NAME}"]`)?.content;
-  return !!content ? content : EDITICS_OFFLINE_PAGE_DEV;
+// In release builds, `scripts/vite_plugin_editics.ts` emits each host page with
+// a content hash for cache busting (e.g. `editics/offline-1234abcd.html`), and
+// advertises the actual name through a dedicated meta tag injected in the main
+// app's `index.html` (i.e. `editics-offline-page` & `editics-collaborative-page`).
+//
+// In dev mode, the Vite dev server serves the pages un-hashed, hence the
+// fallbacks (the meta tags are only injected in release builds).
+const EDITICS_HOST_PAGES: Record<EditicsEditionMode, { metaName: string; devPage: string }> = {
+  offline: { metaName: 'editics-offline-page', devPage: 'editics/offline.html' },
+  collaborative: { metaName: 'editics-collaborative-page', devPage: 'editics/collaborative.html' },
+};
+
+function getEditicsHostPage(mode: EditicsEditionMode): string {
+  const { metaName, devPage } = EDITICS_HOST_PAGES[mode];
+  const content = document.querySelector<HTMLMetaElement>(`meta[name="${metaName}"]`)?.content;
+  return !!content ? content : devPage;
 }
 
-function getEditicsFrameUrl(editicsOrigin: string): URL {
+function getEditicsFrameUrl(editicsOrigin: string, mode: EditicsEditionMode): URL {
   const BASE_URL = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
-  const url = new URL(`${BASE_URL}${getEditicsHostPage()}`, editicsOrigin);
+  const url = new URL(`${BASE_URL}${getEditicsHostPage(mode)}`, editicsOrigin);
   // Passing our origin to the frame, so it knows how to contact us and check for us
   url.searchParams.set('parentOrigin', window.location.origin);
   return url;
@@ -179,7 +204,11 @@ export async function openDocument(
 
   let frameUrl: URL;
   try {
-    frameUrl = getEditicsFrameUrl(await getEditicsOrigin());
+    // The host page depends on the edition mode: `collaborative.html` joins
+    // the editics session hosted by the Parsec server, while `offline.html`
+    // runs a single-user local edition (see `editics/README.md`).
+    const mode: EditicsEditionMode = options.collaborative !== undefined ? 'collaborative' : 'offline';
+    frameUrl = getEditicsFrameUrl(await getEditicsOrigin(), mode);
   } catch (e: unknown) {
     handlers.onError(new EditicsError(EditicsErrorCodes.FrameLoadFailed, String(e)));
     return undefined;
@@ -204,6 +233,19 @@ export async function openDocument(
           switch (event.data?.command) {
             case 'oo-host-ready': {
               clearTimeout(hostReadyTimeoutId);
+              // The host page asks for the document: send `oo-open` every time
+              // it signals readiness (a reloaded host page restarts from
+              // scratch and needs the document again). Also reset the save
+              // bookkeeping: the reloaded host page
+              // starts with a clean save state (the reload only ever happens
+              // before any change exists, so there is no pending save to
+              // preserve).
+              saving = false;
+              pendingSaveResult = undefined;
+              frame.contentWindow?.postMessage(
+                { command: 'oo-open', options, documentContent } satisfies EditicsParentToHostMessage,
+                hostOrigin,
+              );
               resolve();
               break;
             }
@@ -277,6 +319,97 @@ export async function openDocument(
               handleRequestImage(frame.contentWindow, event.data.requestId);
               break;
             }
+
+            case 'oo-get-user-name': {
+              // Collaborative mode: the host needs the display name of a
+              // session participant. The editics protocol deliberately
+              // doesn't carry user names (the server is not trusted for
+              // them), so the host asks the only side with access to
+              // libparsec to resolve the participant's device ID.
+              if (!frame.contentWindow) {
+                return;
+              }
+              handleUserNameRequest(frame.contentWindow, event.data.requestId, event.data.deviceIdHex, hostOrigin);
+              break;
+            }
+
+            case 'oo-encrypt-original-content': {
+              // Collaborative mode: the host wants to upload the document's
+              // original content archive (its x2t conversion result) to the
+              // editics session: it is sealed with the workspace
+              // key here (the only side with access to libparsec) before
+              // being sent to the server, which only ever sees an opaque
+              // blob.
+              if (!frame.contentWindow) {
+                return;
+              }
+              handleEncryptOriginalContentRequest(
+                frame.contentWindow,
+                event.data.requestId,
+                event.data.bin,
+                event.data.medias,
+                hostOrigin,
+                options,
+              );
+              break;
+            }
+
+            case 'oo-decrypt-original-content': {
+              // Collaborative mode: the host fetched the session's original
+              // content archive and asks the parent to open it (the
+              // counterpart of the `oo-encrypt-original-content` handling).
+              if (!frame.contentWindow) {
+                return;
+              }
+              handleDecryptOriginalContentRequest(
+                frame.contentWindow,
+                event.data.requestId,
+                event.data.keyIndex,
+                event.data.parts,
+                hostOrigin,
+                options,
+              );
+              break;
+            }
+
+            case 'oo-encrypt-batch': {
+              // Collaborative mode: the host wants to send session event
+              // payloads (change fragments, cursors, messages) to the editics
+              // session: they are sealed with the workspace's latest realm key
+              // here (the only side with access to libparsec) before being
+              // sent, so the server only ever sees opaque ciphertexts.
+              if (!frame.contentWindow) {
+                return;
+              }
+              handleEncryptChangesRequest(
+                frame.contentWindow,
+                event.data.requestId,
+                event.data.flat,
+                event.data.offsets,
+                hostOrigin,
+                options,
+              );
+              break;
+            }
+
+            case 'oo-decrypt-batch': {
+              // Collaborative mode: the host received session event payloads
+              // from the editics session and asks the parent to open them (the
+              // counterpart of the `oo-encrypt-batch` handling).
+              if (!frame.contentWindow) {
+                return;
+              }
+              handleDecryptChangesRequest(
+                frame.contentWindow,
+                event.data.requestId,
+                event.data.keyIndexes,
+                event.data.flat,
+                event.data.offsets,
+                hostOrigin,
+                options,
+              );
+              break;
+            }
           }
         },
         { signal: controller.signal },
@@ -331,16 +464,327 @@ export async function openDocument(
     },
   };
 
-  frame.contentWindow.postMessage(
-    {
-      command: 'oo-open',
-      options,
-      documentContent,
-    } satisfies EditicsParentToHostMessage,
-    hostOrigin,
-  );
+  // Note the document is *not* posted here: the host page asks for it with
+  // `oo-host-ready` (see its handling above), and may ask again if it gets
+  // reloaded (collaborative mode).
 
   return session;
+}
+
+// Resolves the display name of a collaborative session participant and
+// replies to the host's `oo-get-user-name` request. An unknown device ID (or
+// a failure to resolve it) makes the host fall back on a placeholder name,
+// see `collaborative.ts`.
+async function handleUserNameRequest(host: Window, requestId: number, deviceIdHex: string, hostOrigin: string): Promise<void> {
+  let userName: string | undefined = undefined;
+  // `DeviceID`s are UUIDs, whose hex form is exactly the string
+  // representation expected by libparsec.
+  const result = await getUserInfoFromDeviceID(deviceIdHex as DeviceID);
+  if (result.ok) {
+    userName = result.value.humanHandle.label;
+  } else {
+    onlyOfficeLog('warn', `Failed to resolve the user name of the device ${deviceIdHex}`);
+  }
+  host.postMessage({ command: 'oo-get-user-name-result', requestId, userName } satisfies EditicsParentToHostMessage, hostOrigin);
+}
+
+// --- original content media part (de)framing ------------------------------
+//
+// The original content (the OnlyOffice `.bin` of the document's x2t
+// conversion, plus the media files it references) is exchanged with the
+// editics session as one encrypted part per file (see the bundle wire format
+// in `server/parsec/asgi/editics.py`): part 0 is the `.bin` (encrypted
+// as-is), the following parts are the media files, each framed with its name
+// before encryption so the media names don't leak to the server:
+//
+//   [u32 name byte length][name UTF-8 bytes][content bytes]
+
+function frameMedia(name: string, content: Uint8Array): Uint8Array {
+  const nameBytes = new TextEncoder().encode(name);
+  const out = new Uint8Array(4 + nameBytes.byteLength + content.byteLength);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, nameBytes.byteLength);
+  out.set(nameBytes, 4);
+  out.set(content, 4 + nameBytes.byteLength);
+  return out;
+}
+
+function unframeMedia(data: Uint8Array): [string, Uint8Array] {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  if (data.byteLength < 4) {
+    throw new Error('truncated media part');
+  }
+  const nameLength = view.getUint32(0);
+  if (4 + nameLength > data.byteLength) {
+    throw new Error('truncated media part');
+  }
+  const name = new TextDecoder().decode(data.slice(4, 4 + nameLength));
+  return [name, data.slice(4 + nameLength)];
+}
+
+// Seals the original content archive of the document (its x2t conversion
+// result) with the workspace key, so the host can upload it to
+// the collaborative editics session: only this side has access to libparsec,
+// and the server only ever sees the opaque ciphertext.
+async function handleEncryptOriginalContentRequest(
+  host: Window,
+  requestId: number,
+  bin: Uint8Array,
+  medias: Array<[string, Uint8Array]>,
+  hostOrigin: string,
+  options: EditicsOpenOptions,
+): Promise<void> {
+  type EncryptPayload = Omit<
+    Extract<EditicsParentToHostMessage, { command: 'oo-encrypt-original-content-result' }>,
+    'command' | 'requestId'
+  >;
+  const postReply = (payload: EncryptPayload): void => {
+    host.postMessage(
+      { command: 'oo-encrypt-original-content-result', requestId, ...payload } satisfies EditicsParentToHostMessage,
+      hostOrigin,
+    );
+  };
+
+  const collaborative = options.collaborative;
+  if (!collaborative) {
+    postReply({ error: 'no collaborative session' });
+    return;
+  }
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({ error: 'cannot get the workspace handle' });
+    return;
+  }
+
+  // One part per file (see the framing comment above): the `.bin` as-is,
+  // then each media framed with its name, each sealed with the workspace's
+  // latest realm key. All the parts must end up with the same key index:
+  // the realm key cannot rotate between two consecutive calls, a mismatch
+  // would mean something unexpected happened and the bundle would be
+  // undecryptable by the other participants.
+  let keyIndex: bigint | undefined = undefined;
+  const parts: Uint8Array[] = [];
+  const cleartexts = [bin, ...medias.map(([name, content]) => frameMedia(name, content))];
+  for (const cleartext of cleartexts) {
+    const result = await editicsEncrypt(workspaceHandle, collaborative.vlobId as EntryID, cleartext);
+    if (!result.ok) {
+      onlyOfficeLog('warn', `Failed to encrypt the editics original content: ${JSON.stringify(result.error)}`);
+      postReply({ error: `failed to encrypt the original content (${result.error.tag})` });
+      return;
+    }
+    const [partKeyIndex, encrypted] = result.value;
+    if (keyIndex === undefined) {
+      keyIndex = partKeyIndex;
+    } else if (partKeyIndex !== keyIndex) {
+      onlyOfficeLog('warn', 'The realm key rotated while encrypting the editics original content');
+      postReply({ error: 'the realm key rotated during the encryption' });
+      return;
+    }
+    parts.push(encrypted);
+  }
+  // The host page carries the key index as a plain number (the wire schema
+  // uses JSON, which cannot serialize bigints).
+  postReply({ keyIndex: Number(keyIndex), parts });
+}
+
+// Opens the original content parts fetched from the collaborative editics
+// session (the counterpart of `handleEncryptOriginalContentRequest`): the
+// key is resolved by index from the workspace's realm keys bundle, part 0
+// is the `.bin` and the following parts are the framed media files.
+async function handleDecryptOriginalContentRequest(
+  host: Window,
+  requestId: number,
+  keyIndex: number,
+  parts: Uint8Array[],
+  hostOrigin: string,
+  options: EditicsOpenOptions,
+): Promise<void> {
+  type DecryptPayload = Omit<
+    Extract<EditicsParentToHostMessage, { command: 'oo-decrypt-original-content-result' }>,
+    'command' | 'requestId'
+  >;
+  const postReply = (payload: DecryptPayload): void => {
+    host.postMessage(
+      { command: 'oo-decrypt-original-content-result', requestId, ...payload } satisfies EditicsParentToHostMessage,
+      hostOrigin,
+    );
+  };
+
+  const collaborative = options.collaborative;
+  if (!collaborative) {
+    postReply({ error: 'no collaborative session' });
+    return;
+  }
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({ error: 'cannot get the workspace handle' });
+    return;
+  }
+
+  let bin: Uint8Array | undefined = undefined;
+  const medias: Array<[string, Uint8Array]> = [];
+  for (const [index, part] of parts.entries()) {
+    const result = await editicsDecrypt(workspaceHandle, collaborative.vlobId as EntryID, BigInt(keyIndex), part);
+    if (!result.ok) {
+      onlyOfficeLog('warn', `Failed to decrypt the editics original content: ${JSON.stringify(result.error)}`);
+      postReply({ error: `failed to decrypt the original content (${result.error.tag})` });
+      return;
+    }
+    if (index === 0) {
+      bin = result.value;
+    } else {
+      try {
+        medias.push(unframeMedia(result.value));
+      } catch (e) {
+        onlyOfficeLog('warn', `Failed to parse an editics media part: ${String(e)}`);
+        postReply({ error: 'corrupted media part' });
+        return;
+      }
+    }
+  }
+  if (bin === undefined) {
+    postReply({ error: 'the initial content has no part' });
+    return;
+  }
+  // Back to the `(name, content)` tuple shape the host page expects (see
+  // the encrypt handling above).
+  postReply({ bin, medias });
+}
+
+// The session payload buffers are freshly allocated (by libparsec on this
+// side, by `TextEncoder.encode`/`Uint8Array.fromBase64` on the host side) and
+// not used anymore once the reply is posted, so they can be transferred back
+// instead of being copied by the structured clone. The ownership check keeps
+// us safe should a future caller pass a view on a shared buffer (transferring
+// it would detach the other views' data); empty buffers are left to the
+// structured clone, which copies nothing for them.
+function transferBuffer(data: Uint8Array): Transferable[] {
+  return data.byteOffset === 0 && data.byteLength > 0 && data.byteLength === data.buffer.byteLength && data.buffer instanceof ArrayBuffer
+    ? [data.buffer]
+    : [];
+}
+
+// The batch crypto replies carry their payloads as a single flat buffer (the
+// i-th payload is `flat[offsets[i]..offsets[i+1]]`), so the whole batch
+// crosses the iframe boundary as one buffer instead of one per payload.
+function flattenChunks(chunks: Uint8Array[]): { flat: Uint8Array; offsets: number[] } {
+  const offsets = [0];
+  for (const chunk of chunks) {
+    offsets.push(offsets[offsets.length - 1] + chunk.byteLength);
+  }
+  const flat = new Uint8Array(offsets[offsets.length - 1]);
+  let pos = 0;
+  for (const chunk of chunks) {
+    flat.set(chunk, pos);
+    pos += chunk.byteLength;
+  }
+  return { flat, offsets };
+}
+
+// Seals the editics session event payloads (change fragments, cursors,
+// messages) with the workspace's latest realm key, so the host can send them
+// to the collaborative editics session: only this side has access to
+// libparsec, and the server only ever sees the opaque ciphertext. The key
+// index is carried along so the other participants can resolve the key on
+// their side. The payloads arrive as a single flat buffer (the i-th payload
+// is `flat[offsets[i]..offsets[i+1]]`), and the ciphertexts travel back the
+// same way.
+async function handleEncryptChangesRequest(
+  host: Window,
+  requestId: number,
+  flat: Uint8Array,
+  offsets: number[],
+  hostOrigin: string,
+  options: EditicsOpenOptions,
+): Promise<void> {
+  type EncryptReply = Extract<EditicsParentToHostMessage, { command: 'oo-encrypt-batch-result' }>;
+  const postReply = (payload: Omit<EncryptReply, 'command' | 'requestId'>, transfer: Transferable[] = []): void => {
+    host.postMessage(
+      { command: 'oo-encrypt-batch-result', requestId, ...payload } satisfies EditicsParentToHostMessage,
+      hostOrigin,
+      transfer,
+    );
+  };
+
+  const collaborative = options.collaborative;
+  if (!collaborative) {
+    postReply({ error: 'no collaborative session' });
+    return;
+  }
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({ error: 'cannot get the workspace handle' });
+    return;
+  }
+
+  const keyIndexes: number[] = [];
+  const encryptedChunks: Uint8Array[] = [];
+  for (let i = 0; i < offsets.length - 1; i++) {
+    const result = await editicsEncrypt(workspaceHandle, collaborative.vlobId as EntryID, flat.subarray(offsets[i], offsets[i + 1]));
+    if (!result.ok) {
+      onlyOfficeLog('warn', `Failed to encrypt the editics change: ${JSON.stringify(result.error)}`);
+      postReply({ error: `failed to encrypt the payload (${result.error.tag})` });
+      return;
+    }
+    const [keyIndex, encrypted] = result.value;
+    // The host page carries the key index as a plain number (the wire schema
+    // uses JSON, which cannot serialize bigints).
+    keyIndexes.push(Number(keyIndex));
+    encryptedChunks.push(encrypted);
+  }
+  const encrypted = flattenChunks(encryptedChunks);
+  postReply({ keyIndexes, flat: encrypted.flat, offsets: encrypted.offsets }, transferBuffer(encrypted.flat));
+}
+
+// Opens the editics session event payloads received from the collaborative
+// editics session: the counterpart of `handleEncryptChangesRequest`, resolving
+// the key of each payload by index from the workspace's realm keys bundle.
+async function handleDecryptChangesRequest(
+  host: Window,
+  requestId: number,
+  keyIndexes: number[],
+  flat: Uint8Array,
+  offsets: number[],
+  hostOrigin: string,
+  options: EditicsOpenOptions,
+): Promise<void> {
+  type DecryptReply = Extract<EditicsParentToHostMessage, { command: 'oo-decrypt-batch-result' }>;
+  const postReply = (payload: Omit<DecryptReply, 'command' | 'requestId'>, transfer: Transferable[] = []): void => {
+    host.postMessage(
+      { command: 'oo-decrypt-batch-result', requestId, ...payload } satisfies EditicsParentToHostMessage,
+      hostOrigin,
+      transfer,
+    );
+  };
+
+  const collaborative = options.collaborative;
+  if (!collaborative) {
+    postReply({ error: 'no collaborative session' });
+    return;
+  }
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({ error: 'cannot get the workspace handle' });
+    return;
+  }
+
+  const cleartextChunks: Uint8Array[] = [];
+  for (let i = 0; i < keyIndexes.length; i++) {
+    const result = await editicsDecrypt(
+      workspaceHandle,
+      collaborative.vlobId as EntryID,
+      BigInt(keyIndexes[i]),
+      flat.subarray(offsets[i], offsets[i + 1]),
+    );
+    if (!result.ok) {
+      onlyOfficeLog('warn', `Failed to decrypt the editics change: ${JSON.stringify(result.error)}`);
+      postReply({ error: `failed to decrypt the payload (${result.error.tag})` });
+      return;
+    }
+    cleartextChunks.push(result.value);
+  }
+  const cleartexts = flattenChunks(cleartextChunks);
+  postReply(cleartexts, transferBuffer(cleartexts.flat));
 }
 
 async function handleRequestImage(host: Window, requestId: number): Promise<void> {
@@ -391,4 +835,97 @@ async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promi
   const { data, role } = await modal.onWillDismiss();
   await modal.dismiss();
   return role === MsModalResult.Confirm ? (data as { name: string; content: Uint8Array }) : null;
+}
+
+// --- collaborative session ------------------------------------------------
+//
+// The collaborative edition is hosted by the Parsec server:
+// the host page joins the session with everything gathered here, since it is
+// isolated from the app's data by design (the parent is the only side with
+// access to libparsec, so it is the one resolving the organization/workspace/
+// document IDs and providing the authentication token).
+
+// The SSE/POST session routes live on the Parsec server hosting the
+// organization (see `server/parsec/asgi/editics.py`), which is not always
+// reachable on the same origin as the host page:
+// - Web release: the host page is served by the Parsec server itself, from the
+//   dedicated editics domain (see `EditicsHostIsolationMiddleware` in
+//   `server/parsec/asgi/__init__.py`), and its content security policy
+//   restricts it to `connect-src 'self'`: the session routes must then be
+//   reached on that same origin.
+// - Electron & web dev: the host page is served locally (custom scheme / Vite
+//   dev server), the Parsec server is the one from the organization address
+//   (note this requires the server to allow the editics origin for CORS in
+//   dev mode, see `editics/README.md`).
+async function getEditicsSessionServerUrl(organizationAddr: string): Promise<string | undefined> {
+  if (isWeb() && !window.isDev()) {
+    return await getEditicsOrigin();
+  }
+  const parsedAddr = await parseParsecAddr(organizationAddr);
+  if (!parsedAddr.ok) {
+    onlyOfficeLog('warn', `Failed to parse the organization address '${organizationAddr}'`);
+    return undefined;
+  }
+  const { hostname, port, isDefaultPort, useSsl } = parsedAddr.value;
+  return `${useSsl ? 'https' : 'http'}://${hostname}${isDefaultPort ? '' : `:${port}`}`;
+}
+
+// Gathers everything the collaborative host page needs to join the editics
+// session of the document (see `EditicsCollaborativeSession`).
+//
+// Resolves `undefined` when the session cannot be joined (e.g. the
+// organization address could not be resolved), in which case the caller
+// falls back on the offline mode.
+export async function getEditicsCollaborativeSession(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+): Promise<EditicsCollaborativeSession | undefined> {
+  const clientInfo = await getClientInfo();
+  if (!clientInfo.ok) {
+    onlyOfficeLog('warn', `Cannot get the client info: ${JSON.stringify(clientInfo.error)}`);
+    return undefined;
+  }
+
+  const serverUrl = await getEditicsSessionServerUrl(clientInfo.value.organizationAddr);
+  if (serverUrl === undefined) {
+    onlyOfficeLog('warn', 'Cannot resolve the editics server URL, falling back on the offline mode');
+    return undefined;
+  }
+
+  const [workspaceInfo, entry] = await Promise.all([getWorkspaceInfo(workspaceHandle), entryStat(workspaceHandle, path)]);
+  if (!workspaceInfo.ok) {
+    onlyOfficeLog('warn', `Cannot get the workspace info: ${JSON.stringify(workspaceInfo.error)}`);
+    return undefined;
+  }
+  if (!entry.ok || !entry.value.isFile()) {
+    onlyOfficeLog('warn', `Cannot stat the document being opened: ${JSON.stringify(entry.ok ? undefined : entry.error)}`);
+    return undefined;
+  }
+
+  // The collaborative edition is not possible in an archived workspace: the
+  // server would refuse the session anyway (the realm is read-only, see the
+  // `RealmArchived` outcome in `server/parsec/asgi/editics.py`).
+  if (workspaceInfo.value.isArchived) {
+    onlyOfficeLog('info', 'The workspace is archived, falling back on the offline mode');
+    return undefined;
+  }
+
+  const vlobId = (entry.value as EntryStatFile).id;
+  // The token is generated by libparsec (see `generateEditicsToken` in
+  // `@/parsec`): only it has access to the device's signing key.
+  const tokenResult = await generateEditicsToken(workspaceInfo.value.id, vlobId);
+  if (!tokenResult.ok) {
+    onlyOfficeLog('warn', `Cannot generate the editics token: ${JSON.stringify(tokenResult.error)}`);
+    return undefined;
+  }
+
+  return {
+    serverUrl,
+    organizationId: clientInfo.value.organizationId,
+    workspaceId: workspaceInfo.value.id,
+    vlobId,
+    vlobVersion: (entry.value as EntryStatFile).baseVersion,
+    deviceIdHex: clientInfo.value.deviceId,
+    token: tokenResult.value,
+  };
 }

@@ -7,6 +7,7 @@ import {
   CertificateBasedInfoOrigin,
   ClientArchiveWorkspaceError,
   ClientCreateWorkspaceError,
+  ClientGenerateEditicsTokenError,
   ClientListWorkspacesError,
   ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
@@ -15,6 +16,7 @@ import {
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   ConnectionHandle,
+  EntryID,
   FsPath,
   MountpointHandle,
   MountpointToOsPathError,
@@ -28,7 +30,9 @@ import {
   SystemPath,
   UserID,
   UserTuple,
+  WorkspaceDecryptEditicsError,
   WorkspaceDecryptPathAddrError,
+  WorkspaceEncryptEditicsError,
   WorkspaceGeneratePathAddrError,
   WorkspaceHandle,
   WorkspaceID,
@@ -461,4 +465,46 @@ export async function getWorkspaceUserRoleChanges(
     }
   }
   return result;
+}
+
+// Generates the authentication token for the editics routes of the Parsec
+// server (see `client_generate_editics_token` in libparsec): scoped to the
+// editics session of the given document, so the (deliberately isolated)
+// editor host page can use it without putting the rest of the client API at
+// risk. Returns the token as a string, or an error if the client is stopped.
+export async function generateEditicsToken(
+  workspaceId: WorkspaceID,
+  documentId: EntryID,
+): Promise<Result<string, ClientGenerateEditicsTokenError>> {
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientGenerateEditicsTokenError>();
+  }
+  return await libparsec.clientGenerateEditicsToken(handle, workspaceId, documentId);
+}
+
+// Encrypts an editics payload (the original content archive of a document,
+// i.e. its x2t conversion result, or a session event payload such as a
+// change fragment, cursor or message) with the workspace's latest realm key,
+// so the editics server only ever sees the opaque ciphertext. The key index
+// is carried along so the other participants can resolve the key on their
+// side.
+export async function editicsEncrypt(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  cleartext: Uint8Array,
+): Promise<Result<[bigint, Uint8Array], WorkspaceEncryptEditicsError>> {
+  return await libparsec.workspaceEditicsEncrypt(workspaceHandle, documentId, cleartext);
+}
+
+// Decrypts an editics payload received from a collaborative edition session:
+// the counterpart of `editicsEncrypt`, resolving the key by index from the
+// workspace's realm keys bundle.
+export async function editicsDecrypt(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  keyIndex: bigint,
+  encrypted: Uint8Array,
+): Promise<Result<Uint8Array, WorkspaceDecryptEditicsError>> {
+  return await libparsec.workspaceEditicsDecrypt(workspaceHandle, documentId, keyIndex, encrypted);
 }
