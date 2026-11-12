@@ -95,6 +95,7 @@ declare global {
 }
 
 const NATIVE_EXTENSION = 'bin';
+const X2T_FONTS_DIR = '/working/fonts';
 
 let x2tModulePromise: Promise<X2TModule> | undefined;
 
@@ -105,7 +106,7 @@ function loadX2T(): Promise<X2TModule> {
       module.onRuntimeInitialized = (): void => {
         module.FS.mkdir('/working');
         module.FS.mkdir('/working/media');
-        module.FS.mkdir('/working/fonts');
+        module.FS.mkdir(X2T_FONTS_DIR);
         module.FS.mkdir('/working/themes');
         resolve(module);
       };
@@ -120,7 +121,21 @@ function sanitizeFileName(name: string): string {
   return sanitized || 'file';
 }
 
-function runConversion(module: X2TModule, inputFileName: string, data: Uint8Array, outputFormat: string): Uint8Array {
+interface ConversionParams {
+  // The input is raw binary instead of base64 (e.g. the renderer stream
+  // handed to `APP.downloadAs` for PDF exports).
+  noBase64?: boolean;
+  // Point x2t to the fonts directory (needed to render text, e.g. for PDF).
+  useFontsDir?: boolean;
+}
+
+function runConversion(
+  module: X2TModule,
+  inputFileName: string,
+  data: Uint8Array,
+  outputFormat: string,
+  conversionParams: ConversionParams = {},
+): Uint8Array {
   const inputFilePath = `/working/${inputFileName}`;
   module.FS.writeFile(inputFilePath, data);
 
@@ -133,21 +148,31 @@ function runConversion(module: X2TModule, inputFileName: string, data: Uint8Arra
     `<m_sFileFrom>${inputFilePath}</m_sFileFrom>` +
     '<m_sThemeDir>/working/themes</m_sThemeDir>' +
     `<m_sFileTo>${outputFilePath}</m_sFileTo>` +
-    '<m_bIsNoBase64>false</m_bIsNoBase64>' +
+    `<m_bIsNoBase64>${conversionParams.noBase64 ? 'true' : 'false'}</m_bIsNoBase64>` +
+    `${conversionParams.useFontsDir ? `<m_sFontDir>${X2T_FONTS_DIR}/</m_sFontDir>` : ''}` +
     '</TaskQueueDataConvert>';
   module.FS.writeFile(paramsFileName, params);
 
-  module.ccall('main1', 'number', ['string'], [paramsFileName]);
-  const output = module.FS.readFile(outputFilePath);
-
-  module.FS.unlink(paramsFileName);
-  module.FS.unlink(inputFilePath);
-  module.FS.unlink(outputFilePath);
-  // Additional medias in the document got extracted to `/working/media`.
-  // We must keep this directory since it will be used when converting back the
-  // document to its original format (i.e. when saving the document).
-
-  return output;
+  try {
+    const ret = module.ccall('main1', 'number', ['string'], [paramsFileName]);
+    try {
+      return module.FS.readFile(outputFilePath);
+    } catch {
+      throw new Error(`x2t conversion to ${outputFormat} produced no output (code ${ret})`);
+    }
+  } finally {
+    // Clean up even on failure, so a failed conversion doesn't leave its files behind.
+    // Additional medias in the document got extracted to `/working/media`.
+    // We must keep this directory since it will be used when converting back the
+    // document to its original format (i.e. when saving the document).
+    for (const path of [paramsFileName, inputFilePath, outputFilePath]) {
+      try {
+        module.FS.unlink(path);
+      } catch {
+        // Not created (e.g. no output on failure)
+      }
+    }
+  }
 }
 
 async function convertToNativeFormat(data: Uint8Array, fileName: string): Promise<Uint8Array> {
@@ -648,6 +673,202 @@ function bytesToDataUrl(bytes: Uint8Array, fileName?: string, mimeType?: string)
   return `data:${mimeType};base64,${bytes.toBase64()}`;
 }
 
+// --- PDF conversion --------------------------------------------------------
+//
+// The parent asks for a PDF export of the document's current state.
+// Only one conversion runs at a time: a request received while another
+// one is in progress is rejected.
+//
+// We ask the editor to "download as" PDF: it lays out the pages itself and hands
+// the resulting renderer stream to `APP.downloadAs`, which x2t then turns
+// into a PDF.
+const PDF_EXPORT_TIMEOUT_MS = 15000;
+
+let pdfConversionInProgress = false;
+
+// The export waiting for the editor to call `APP.downloadAs`.
+let pendingPdfExport: ((dataContainer: OO.OOHostDataContainer) => void) | undefined;
+
+// The subset of the editor iframe's window used by the PDF conversion.
+interface EditorWindow {
+  // To trigger a download-as
+  Asc?: {
+    asc_CDownloadOptions?: new (fileType: number) => unknown;
+    c_oAscFileType?: Record<string, number>;
+    c_oAscAsyncAction?: Record<string, number>;
+    c_oAscAsyncActionType?: Record<string, number>;
+  };
+  // To access the fonts loaded by the editor
+  AscFonts?: {
+    g_font_files?: Array<{ Id: string; Status: number; stream_index: number }>;
+    g_fonts_streams?: Array<EditorFontStream | undefined>;
+    GetUint8ArrayFromPointer?: (pointer: number, size: number) => Uint8Array;
+  };
+}
+
+// A font file content, as stored by the editor in `AscFonts.g_fonts_streams`.
+type EditorFontStream =
+  // Loaded but not used yet (`AscFonts.FontStream`)
+  | { asc_marker?: undefined; data: Uint8Array; size: number }
+  // Once used, the content is moved into the font engine's wasm memory and
+  // `data` becomes a pointer in it.
+  | { asc_marker: true; data: number; len: number };
+
+function getEditorWindow(): EditorWindow | null {
+  return (document.querySelector<HTMLIFrameElement>('iframe[name="frameEditor"]')?.contentWindow as EditorWindow | null) ?? null;
+}
+
+// Asks the editor to lay out the document for PDF and resolves with the
+// resulting renderer stream.
+function exportRendererStream(): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    const api = getApi();
+    const asc = getEditorWindow()?.Asc;
+    const fileType = asc?.c_oAscFileType?.PDF;
+    if (!api || typeof api.asc_DownloadAs !== 'function' || !asc?.asc_CDownloadOptions || fileType === undefined) {
+      reject(new Error('editor does not support PDF export'));
+      return;
+    }
+
+    // `asc_DownloadAs` starts a blocking action (the editor shows a "Downloading
+    // document" modal), normally ended when `APP.downloadAs` calls back `cb(null)`.
+    // If the export fails before that (e.g. sdkjs crashing on some images), we
+    // must end it ourselves, otherwise the modal stays forever and the editor
+    // refuses any further export.
+    const endExportAction = (): void => {
+      const actionType = asc.c_oAscAsyncActionType?.BlockInteraction;
+      const action = asc.c_oAscAsyncAction?.DownloadAs;
+      if (typeof api.sync_EndAction === 'function' && actionType !== undefined && action !== undefined) {
+        (api.sync_EndAction as (type: number, id: number) => void)(actionType, action);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      pendingPdfExport = undefined;
+      endExportAction();
+      reject(new Error('editor did not export the document'));
+    }, PDF_EXPORT_TIMEOUT_MS);
+
+    pendingPdfExport = (dataContainer): void => {
+      clearTimeout(timer);
+      const data = dataContainer.data;
+      if (ArrayBuffer.isView(data)) {
+        resolve(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+      } else {
+        reject(new Error(`unexpected export data (${Object.prototype.toString.call(data)})`));
+      }
+    };
+
+    try {
+      (api.asc_DownloadAs as (options: unknown) => void)(new asc.asc_CDownloadOptions(fileType));
+    } catch (e: unknown) {
+      // The export crashed synchronously (e.g. while laying out an image)
+      clearTimeout(timer);
+      pendingPdfExport = undefined;
+      endExportAction();
+      reject(e);
+    }
+  });
+}
+
+// Called by the editor (`APP.downloadAs`) once `asc_DownloadAs` has serialized the document.
+function onDownloadAs(dataContainer: OO.OOHostDataContainer, cb: (result: null) => void): void {
+  const pending = pendingPdfExport;
+  pendingPdfExport = undefined;
+  // Hand the data over before ending the editor's action
+  if (pending) {
+    pending(dataContainer);
+  } else {
+    // Not triggered by us (download-as is not available in the UI): ignore
+    console.warn('Ignoring unexpected download-as from the editor');
+  }
+  // `null` ends the editor's blocking action without downloading anything.
+  cb(null);
+}
+
+// x2t needs the font files to render the text into the PDF: the renderer
+// stream only references the fonts by name, and x2t looks them up among the
+// files of its fonts directory.
+//
+// Rather than fetching them, we reuse the ones the editor has loaded to lay out
+// the document.
+// - `AscFonts.g_font_files` has one entry per font file listed in `AllFonts.js`,
+//   `Status === 0` meaning the file is loaded,
+// - `AscFonts.g_fonts_streams[stream_index]` holds its content.
+
+// Fonts already written into the x2t filesystem by a previous conversion.
+const x2tFonts = new Set<string>();
+
+function getEditorFontContent(ascFonts: NonNullable<EditorWindow['AscFonts']>, stream: EditorFontStream): Uint8Array | undefined {
+  let content: Uint8Array | undefined;
+  if (stream.asc_marker) {
+    content = ascFonts.GetUint8ArrayFromPointer?.(stream.data, stream.len);
+  } else if (ArrayBuffer.isView(stream.data)) {
+    content = stream.data.subarray(0, stream.size);
+  }
+  return content ? new Uint8Array(content) : undefined;
+}
+
+function copyEditorFontsToX2T(module: X2TModule): void {
+  const ascFonts = getEditorWindow()?.AscFonts;
+  const files = ascFonts?.g_font_files;
+  const streams = ascFonts?.g_fonts_streams;
+  if (!ascFonts || !files || !streams) {
+    console.warn('Cannot access the editor fonts, the PDF will be missing text');
+    return;
+  }
+
+  let copied = 0;
+  for (const file of files) {
+    if (file.Status !== 0 || file.stream_index < 0) {
+      continue;
+    }
+    // e.g. `/fonts/arial.ttf` -> `arial.ttf`
+    const name = file.Id.slice(file.Id.lastIndexOf('/') + 1);
+    if (!name || x2tFonts.has(name)) {
+      continue;
+    }
+    const stream = streams[file.stream_index];
+    const content = stream ? getEditorFontContent(ascFonts, stream) : undefined;
+    if (!content) {
+      console.warn(`Cannot get the content of font ${file.Id}`);
+      continue;
+    }
+    module.FS.writeFile(`${X2T_FONTS_DIR}/${name}`, content);
+    x2tFonts.add(name);
+    copied += 1;
+  }
+  console.debug(`Copied ${copied} font(s) to x2t, ${x2tFonts.size} available`);
+}
+
+async function convertToPdf(): Promise<Uint8Array> {
+  const rendererStream = await exportRendererStream();
+  const module = await loadX2T();
+  copyEditorFontsToX2T(module);
+  return runConversion(module, 'export.bin', rendererStream, 'pdf', { noBase64: true, useFontsDir: true });
+}
+
+async function onConvertToPdfRequest(requestId: number): Promise<void> {
+  if (!window.ooDocEditor || !window.ooDocumentReady) {
+    postToParent({ command: 'oo-convert-to-pdf-result', requestId, error: 'document not ready' });
+    return;
+  }
+  if (pdfConversionInProgress) {
+    postToParent({ command: 'oo-convert-to-pdf-result', requestId, error: 'conversion already in progress' });
+    return;
+  }
+  pdfConversionInProgress = true;
+  try {
+    const data = await convertToPdf();
+    postToParent({ command: 'oo-convert-to-pdf-result', requestId, data });
+  } catch (e: unknown) {
+    console.error('PDF conversion failed', e);
+    postToParent({ command: 'oo-convert-to-pdf-result', requestId, error: String(e) });
+  } finally {
+    pdfConversionInProgress = false;
+  }
+}
+
 // --- editor dirty state (for the Parsec topbar save indicator) -----------
 
 let lastModified = false;
@@ -784,14 +1005,12 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
     user: { id: options.userId, username: options.userName },
   });
   window.APP = {
-    // TODO: PDF print is disabled for now
-    onPrintPdf: (_dataContainer: unknown, cb: (result: unknown) => void) => {
+    // PDF print is not available, end the editor's action without doing anything
+    printPdf: (_dataContainer, cb) => {
       cb(null);
     },
-    // TODO: Download-as is disabled for now
-    onDownloadAs: (_dataContainer: unknown, cb: (result: unknown) => void) => {
-      cb(null);
-    },
+    // Used by the PDF conversion
+    downloadAs: onDownloadAs,
     // Resolves the media names referenced by the document
     getImageURL: (name: string, callback: (url: string) => void) => {
       // The name can in fact be a self-containing data URL (i.e. `data:[<media-type>][;base64],<data>`).
@@ -901,6 +1120,10 @@ window.addEventListener('message', function (event: MessageEvent) {
       }
       break;
     }
+
+    case 'oo-convert-to-pdf':
+      onConvertToPdfRequest(data.requestId);
+      break;
   }
 });
 

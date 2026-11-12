@@ -74,6 +74,8 @@ export enum EditicsErrorCodes {
   EventError = 'event-error',
   SaveFailed = 'save-failed',
   SaveTimeout = 'save-timeout',
+  ConversionFailed = 'conversion-failed',
+  ConversionTimeout = 'conversion-timeout',
 }
 
 export class EditicsError extends Error {
@@ -116,6 +118,10 @@ export interface EditicsHostSession {
   save: () => Promise<boolean>;
   // Applies a new theme to the editor while it is open.
   setTheme: (theme: EditicsOpenOptions['theme']) => void;
+  // Asks the editor to export the document's current state (saved or not) to
+  // PDF and resolves with the PDF file content. Rejects with an `EditicsError`
+  // (`ConversionFailed` or `ConversionTimeout`) if it could not be done.
+  convertToPdf: () => Promise<Uint8Array>;
 }
 
 // Time we give the host page to signal it is ready after its iframe is loaded.
@@ -126,6 +132,9 @@ const HOST_READY_TIMEOUT_MS = (window as any).TESTING === true ? 500 : 5000;
 // document, converts it back to its original office format with x2t, and asks
 // us to write it to the workspace before running the editor's save handshake.
 const SAVE_TIMEOUT_MS = 30000;
+
+// Time we give the host page to export the document to PDF.
+const PDF_CONVERSION_TIMEOUT_MS = 20000;
 
 function onlyOfficeLog(level: 'debug' | 'warn' | 'error' | 'info', message: string): void {
   window.nativeAPI.log(level, `[OnlyOffice] ${message}`);
@@ -166,6 +175,11 @@ export async function openDocument(
   // `session.save()` below can await it.
   let pendingSaveResult: ((success: boolean, error?: string) => void) | undefined = undefined;
   let saving = false;
+
+  // Pending PDF conversions, waiting for the host's `oo-convert-to-pdf-result`.
+  // A request is removed on completion or timeout, so a late reply is ignored.
+  const pendingPdfConversions = new Map<number, (reply: { data?: Uint8Array; error?: string }) => void>();
+  let pdfRequestCounter = 0;
 
   const finishSave = (port: MessagePort | undefined, success: boolean, error?: string): void => {
     port?.postMessage({ success, error } satisfies EditicsRequestParentSaveReply);
@@ -277,6 +291,17 @@ export async function openDocument(
               handleRequestImage(frame.contentWindow, event.data.requestId);
               break;
             }
+
+            case 'oo-convert-to-pdf-result': {
+              const resolver = pendingPdfConversions.get(event.data.requestId);
+              if (resolver) {
+                pendingPdfConversions.delete(event.data.requestId);
+                resolver(event.data);
+              } else {
+                onlyOfficeLog('warn', `Ignoring PDF conversion result for unknown request ${event.data.requestId}`);
+              }
+              break;
+            }
           }
         },
         { signal: controller.signal },
@@ -328,6 +353,31 @@ export async function openDocument(
     },
     setTheme: (theme: EditicsOpenOptions['theme']): void => {
       frame.contentWindow?.postMessage({ command: 'oo-set-theme', theme } satisfies EditicsParentToHostMessage, hostOrigin);
+    },
+    convertToPdf: (): Promise<Uint8Array> => {
+      if (!frame.contentWindow) {
+        return Promise.reject(new EditicsError(EditicsErrorCodes.FrameNotLoaded));
+      }
+      return new Promise<Uint8Array>((resolve, reject) => {
+        const requestId = ++pdfRequestCounter;
+        const timer = setTimeout(() => {
+          pendingPdfConversions.delete(requestId);
+          onlyOfficeLog('error', `PDF conversion request ${requestId} timed out`);
+          reject(new EditicsError(EditicsErrorCodes.ConversionTimeout));
+        }, PDF_CONVERSION_TIMEOUT_MS);
+        pendingPdfConversions.set(requestId, (reply): void => {
+          clearTimeout(timer);
+          // `data` comes from the frame's realm, `instanceof Uint8Array` would be false
+          if (reply.data !== undefined && ArrayBuffer.isView(reply.data)) {
+            resolve(reply.data);
+          } else {
+            const details = reply.error ?? 'no data';
+            onlyOfficeLog('error', `PDF conversion request ${requestId} failed: ${details}`);
+            reject(new EditicsError(EditicsErrorCodes.ConversionFailed, details));
+          }
+        });
+        frame.contentWindow!.postMessage({ command: 'oo-convert-to-pdf', requestId } satisfies EditicsParentToHostMessage, hostOrigin);
+      });
     },
   };
 

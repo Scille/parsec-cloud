@@ -60,6 +60,20 @@
         </ion-item>
         <ion-item
           button
+          @click="onClick(FileHandlerAction.ConvertToPdf)"
+          class="ion-no-padding list-group-item"
+          v-if="canConvertToPdf"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="documentText"
+          />
+          <ion-text class="list-group-item__label-small">
+            {{ $msTranslate('fileViewers.convertToPdf') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
           @click="onClick(FileHandlerAction.OpenWithSystem)"
           class="ion-no-padding list-group-item"
           v-if="canOpenWithSystem"
@@ -81,12 +95,13 @@
 import { isWeb } from '@/parsec';
 import { FileHandlerAction } from '@/views/files';
 import { IonContent, IonIcon, IonItem, IonList, IonPage, IonText, modalController } from '@ionic/vue';
-import { create, informationCircle, link, open } from 'ionicons/icons';
+import { create, documentText, informationCircle, link, open } from 'ionicons/icons';
 import { DownloadIcon, MsImage } from 'megashark-lib';
 
 defineProps<{
   canEdit: boolean;
   canOpenWithSystem: boolean;
+  canConvertToPdf: boolean;
 }>();
 
 function onClick(action: FileHandlerAction): Promise<boolean> {

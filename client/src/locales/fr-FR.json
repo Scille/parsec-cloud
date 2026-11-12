@@ -2923,6 +2923,9 @@
         "copyLink": "Copier le lien",
         "openInEditor": "Éditer",
         "download": "Télécharger",
+        "convertToPdf": "Convertir en PDF",
+        "convertingToPdf": "Conversion en PDF...",
+        "pdfSaved": "Le fichier a été enregistré sous {name}.",
         "hideMenu": "Cacher le menu",
         "showMenu": "Afficher le menu",
         "errors": {
@@ -2934,7 +2937,10 @@
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
             "mediaNotSupported": "Ce média ne peut pas être joué.",
-            "statsFailed": "Impossible de récupérer les informations du fichier."
+            "statsFailed": "Impossible de récupérer les informations du fichier.",
+            "pdfConversionFailed": "Impossible de convertir {name} en PDF.",
+            "pdfConversionTimeout": "La conversion de {name} en PDF a pris trop de temps.",
+            "pdfSaveFailed": "Impossible d'enregistrer {name}."
         },
         "retrievingFileContent": "Récupération du contenu du fichier...",
         "openLink": {

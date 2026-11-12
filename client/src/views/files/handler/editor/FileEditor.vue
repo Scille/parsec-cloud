@@ -121,7 +121,7 @@ const emits = defineEmits<{
   (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
 
-defineExpose({ save });
+defineExpose({ save, convertToPdf });
 
 function getEditorTheme(): EditicsOpenOptions['theme'] {
   return theme.value === Theme.Dark ? 'dark' : 'light';
@@ -371,6 +371,15 @@ async function save(): Promise<boolean> {
     return true;
   }
   return await session.save();
+}
+
+// Exports the document's current state (saved or not) to PDF. Throws an
+// `EditicsError` if the conversion could not be performed.
+async function convertToPdf(): Promise<Uint8Array> {
+  if (!session || !loadFinished.value || error.value) {
+    throw new EditicsError(EditicsErrorCodes.FrameNotLoaded);
+  }
+  return await session.convertToPdf();
 }
 </script>
 
