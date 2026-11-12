@@ -3,12 +3,14 @@
 use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
-    CryptpadSessionKeys, EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
-    WorkspaceCreateFolderError, WorkspaceDecryptPathAddrError, WorkspaceFdCloseError,
-    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
-    WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
-    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError,
-    WorkspaceRemoveEntryError, WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
+    CryptpadSessionKeys, EntryStat, FileStat, MoveEntryMode,
+    OpenOptions, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceDecryptEditicsError, WorkspaceDecryptPathAddrError,
+    WorkspaceEncryptEditicsError, WorkspaceFdCloseError, WorkspaceFdFlushError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError,
+    WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
+    WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
     WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
@@ -771,6 +773,45 @@ pub async fn workspace_register_cryptpad_session(
     workspace
         .register_cryptpad_session(document_id, candidate_edit_key, candidate_view_key)
         .await
+}
+
+/*
+ * Editics
+ */
+
+/// Encrypt an editics payload (original content archive of a document, i.e.
+/// its x2t conversion result, or a session event payload such as a change
+/// fragment, cursor or message) with the latest realm key derived for the
+/// document, so the editics server only ever sees the opaque ciphertext.
+///
+/// The returned key index must be carried along with the ciphertext (the
+/// other participants need it to resolve the key on their side).
+pub async fn workspace_editics_encrypt(
+    workspace: Handle,
+    document: VlobID,
+    cleartext: Bytes,
+) -> Result<(IndexInt, Bytes), WorkspaceEncryptEditicsError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    let (key_index, encrypted) = workspace.editics_encrypt(document, &cleartext).await?;
+
+    Ok((key_index, encrypted.into()))
+}
+
+/// Decrypt an editics payload received from a collaborative edition session:
+/// the counterpart of [`workspace_editics_encrypt`], resolving the key by
+/// index from the workspace's realm keys bundle.
+pub async fn workspace_editics_decrypt(
+    workspace: Handle,
+    document: VlobID,
+    key_index: IndexInt,
+    encrypted: Bytes,
+) -> Result<Bytes, WorkspaceDecryptEditicsError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    let cleartext = workspace.editics_decrypt(document, key_index, &encrypted).await?;
+
+    Ok(cleartext.into())
 }
 
 pub type WorkspaceSaveAndSyncFileWithCryptpadError = WorkspaceSaveAndSyncFileWithOriginError;

@@ -23,9 +23,10 @@ use store::WorkspaceStore;
 pub(crate) use store::{PathConfinementPoint, RetrievePathFromIDEntry, RetrievePathFromIDError};
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
-    FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode, OpenOptions,
-    OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    CryptpadSessionKeys, EntryStat, FileStat, FolderReader,
+    FolderReaderStatEntryError, FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode,
+    OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceDecryptEditicsError, WorkspaceEncryptEditicsError,
     WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
     WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
@@ -622,6 +623,33 @@ impl WorkspaceOps {
             candidate_view_key,
         )
         .await
+    }
+
+    /// Encrypt an editics payload (original content archive of a document, i.e.
+    /// its x2t conversion result, or a session event payload such as a change
+    /// fragment, cursor or message) with the latest realm key derived for the
+    /// document, so the editics server only ever sees the opaque ciphertext.
+    ///
+    /// The returned key index must be carried along with the ciphertext (the
+    /// other participants need it to resolve the key on their side).
+    pub async fn editics_encrypt(
+        &self,
+        document_id: VlobID,
+        cleartext: &[u8],
+    ) -> Result<(IndexInt, Vec<u8>), WorkspaceEncryptEditicsError> {
+        transactions::editics_encrypt(self, document_id, cleartext).await
+    }
+
+    /// Decrypt an editics payload received from a collaborative edition
+    /// session: the counterpart of [`WorkspaceOps::editics_encrypt`],
+    /// resolving the key by index from the realm keys bundle.
+    pub async fn editics_decrypt(
+        &self,
+        document_id: VlobID,
+        key_index: IndexInt,
+        encrypted: &[u8],
+    ) -> Result<Vec<u8>, WorkspaceDecryptEditicsError> {
+        transactions::editics_decrypt(self, document_id, key_index, encrypted).await
     }
 
     pub async fn save_and_sync_file_with_origin(

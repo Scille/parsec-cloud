@@ -781,6 +781,59 @@ pub async fn client_pki_get_addr(
     Ok(client.pki_get_addr().await)
 }
 
+/*
+ * Editics
+ */
+
+/// Error for [`client_generate_editics_token`].
+#[derive(Debug, thiserror::Error)]
+pub enum ClientGenerateEditicsTokenError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/// Generate the authentication token for the editics routes of the Parsec
+/// server (see `AuthenticatedToken` in `server/parsec/components/auth.py`):
+///
+/// `PARSEC-SIGN-ED25519.<device_id_hex>.<timestamp>.editics/<realm_id_hex>/<document_id_hex>.<urlsafe_b64_signature>`
+///
+/// with `<timestamp>` the current time in seconds since the UNIX epoch (checked
+/// against the server time within the usual ballpark tolerance) and
+/// `<urlsafe_b64_signature>` the ed25519 signature of everything before it.
+///
+/// The token is scoped (see the `scope` part) so that it can only be used on the
+/// editics routes of the given document: this is needed since, unlike the rest of
+/// the client, it is used from within the OnlyOffice editor's iframe.
+pub async fn client_generate_editics_token(
+    client: Handle,
+    realm_id: VlobID,
+    document_id: VlobID,
+) -> Result<String, ClientGenerateEditicsTokenError> {
+    const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
+
+    let client = borrow_client(client)?;
+    let device = client.device();
+
+    let timestamp = libparsec_types::DateTime::now().as_timestamp_seconds().to_string();
+    let header_and_payload = format!(
+        "{}.{}.{}.editics/{}/{}",
+        PARSEC_AUTH_METHOD,
+        device.device_id.hex(),
+        timestamp,
+        realm_id.hex(),
+        document_id.hex()
+    );
+    let signature = device
+        .signing_key
+        .sign_only_signature(header_and_payload.as_bytes());
+    // URL-safe base64 (with padding), like Python's `urlsafe_b64encode`.
+    let b64_signature = data_encoding::BASE64URL.encode(&signature);
+
+    Ok(format!("{}.{}", header_and_payload, b64_signature))
+}
+
 pub fn is_path_confined(client: Handle, path: &str) -> bool {
     let Ok(client) = borrow_client(client) else {
         return false;
