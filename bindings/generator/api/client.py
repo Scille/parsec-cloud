@@ -727,6 +727,33 @@ async def client_list_frozen_users(
     raise NotImplementedError
 
 
+class WorkspaceStats(Structure):
+    workspace_id: VlobID
+    metadata_size: SizeInt
+    data_size: SizeInt
+    owners: U64
+    managers: U64
+    contributors: U64
+    readers: U64
+
+
+class ClientListWorkspacesStatsError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+
+async def client_list_workspaces_stats(
+    client_handle: Handle,
+) -> Result[list[WorkspaceStats], ClientListWorkspacesStatsError]:
+    raise NotImplementedError
+
+
 class ClientSetupShamirRecoveryError(ErrorVariant):
     class Internal:
         pass

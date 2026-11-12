@@ -61,6 +61,7 @@ from parsec.components.realm import (
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
     RealmListDeletionCandidatesBadOutcome,
+    RealmListStatsBadOutcome,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRole,
@@ -71,6 +72,7 @@ from parsec.components.realm import (
     RealmSelfPromoteToOwnerValidateBadOutcome,
     RealmShareStoreBadOutcome,
     RealmShareValidateBadOutcome,
+    RealmStats,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
     RealmUpdateArchivingStoreBadOutcome,
@@ -1038,6 +1040,72 @@ class MemoryRealmComponent(BaseRealmComponent):
             )
 
         return granted_roles
+
+    @override
+    async def list_stats(
+        self, organization_id: OrganizationID, author: DeviceID
+    ) -> list[RealmStats] | RealmListStatsBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmListStatsBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return RealmListStatsBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            author_device = org.devices[author]
+        except KeyError:
+            return RealmListStatsBadOutcome.AUTHOR_NOT_FOUND
+        author_user = org.users[author_device.cooked.user_id]
+        if author_user.is_revoked:
+            return RealmListStatsBadOutcome.AUTHOR_REVOKED
+        if author_user.current_profile != UserProfile.ADMIN:
+            return RealmListStatsBadOutcome.AUTHOR_NOT_ALLOWED
+
+        data_size_per_realm: dict[VlobID, int] = {}
+        for block in org.blocks.values():
+            if block.deleted_on is None:
+                data_size_per_realm[block.realm_id] = (
+                    data_size_per_realm.get(block.realm_id, 0) + block.block_size
+                )
+
+        active_users = [user for user in org.users.values() if not user.is_revoked]
+
+        realms_stats = []
+        for realm in sorted(org.realms.values(), key=lambda r: r.created_on):
+            if realm.is_deleted:
+                continue
+            # Only consider workspaces: user realms never have key rotation (and a
+            # workspace without key rotation is not bootstrapped, hence has no data)
+            if not realm.key_rotations:
+                continue
+
+            metadata_size = sum(
+                len(atom.blob)
+                for atoms in realm.vlobs.values()
+                for atom in atoms
+                if atom.deleted_on is None
+            )
+
+            per_role_count = {role: 0 for role in RealmRole.VALUES}
+            for user in active_users:
+                role = realm.get_current_role_for(user.cooked.user_id)
+                if role is not None:
+                    per_role_count[role] += 1
+
+            realms_stats.append(
+                RealmStats(
+                    realm_id=realm.realm_id,
+                    metadata_size=metadata_size,
+                    data_size=data_size_per_realm.get(realm.realm_id, 0),
+                    owners=per_role_count[RealmRole.OWNER],
+                    managers=per_role_count[RealmRole.MANAGER],
+                    contributors=per_role_count[RealmRole.CONTRIBUTOR],
+                    readers=per_role_count[RealmRole.READER],
+                )
+            )
+
+        return realms_stats
 
     @override
     async def export_do_base_info(

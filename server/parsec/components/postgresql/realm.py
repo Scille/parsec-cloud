@@ -49,6 +49,7 @@ from parsec.components.postgresql.realm_get_keys_bundle import realm_get_keys_bu
 from parsec.components.postgresql.realm_list_deletion_candidates import (
     realm_list_deletion_candidates,
 )
+from parsec.components.postgresql.realm_list_stats import realm_list_stats
 from parsec.components.postgresql.realm_rename import realm_rename
 from parsec.components.postgresql.realm_rotate_key import realm_rotate_key
 from parsec.components.postgresql.realm_self_promote_to_owner import realm_self_promote_to_owner
@@ -86,6 +87,7 @@ from parsec.components.realm import (
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
     RealmListDeletionCandidatesBadOutcome,
+    RealmListStatsBadOutcome,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRotateKeyStoreBadOutcome,
@@ -95,6 +97,7 @@ from parsec.components.realm import (
     RealmSelfPromoteToOwnerValidateBadOutcome,
     RealmShareStoreBadOutcome,
     RealmShareValidateBadOutcome,
+    RealmStats,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
     RealmUpdateArchivingStoreBadOutcome,
@@ -343,6 +346,13 @@ class PGRealmComponent(BaseRealmComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> list[RealmGrantedRole] | RealmDumpRealmsGrantedRolesBadOutcome:
         return await realm_dump_realms_granted_roles(conn, organization_id)
+
+    @override
+    @no_transaction
+    async def list_stats(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
+    ) -> list[RealmStats] | RealmListStatsBadOutcome:
+        return await realm_list_stats(conn, organization_id, author)
 
     @override
     @no_transaction

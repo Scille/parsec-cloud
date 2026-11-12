@@ -571,6 +571,17 @@ export interface WorkspaceInfo {
 }
 
 
+export interface WorkspaceStats {
+    workspaceId: string
+    metadataSize: number
+    dataSize: number
+    owners: number
+    managers: number
+    contributors: number
+    readers: number
+}
+
+
 export interface WorkspaceUserAccessInfo {
     userId: string
     humanHandle: HumanHandle
@@ -2237,6 +2248,25 @@ export interface ClientListWorkspacesErrorInternal {
 }
 export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
+
+
+// ClientListWorkspacesStatsError
+export interface ClientListWorkspacesStatsErrorAuthorNotAllowed {
+    tag: "ClientListWorkspacesStatsErrorAuthorNotAllowed"
+    error: string
+}
+export interface ClientListWorkspacesStatsErrorInternal {
+    tag: "ClientListWorkspacesStatsErrorInternal"
+    error: string
+}
+export interface ClientListWorkspacesStatsErrorOffline {
+    tag: "ClientListWorkspacesStatsErrorOffline"
+    error: string
+}
+export type ClientListWorkspacesStatsError =
+  | ClientListWorkspacesStatsErrorAuthorNotAllowed
+  | ClientListWorkspacesStatsErrorInternal
+  | ClientListWorkspacesStatsErrorOffline
 
 
 // ClientNewDeviceInvitationError
@@ -5991,6 +6021,9 @@ export function clientListWorkspaceUsers(
 export function clientListWorkspaces(
     client: number
 ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>>
+export function clientListWorkspacesStats(
+    client_handle: number
+): Promise<Result<Array<WorkspaceStats>, ClientListWorkspacesStatsError>>
 export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean

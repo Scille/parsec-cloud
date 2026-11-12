@@ -28,6 +28,7 @@ from . import (
     ping,
     realm_create,
     realm_get_keys_bundle,
+    realm_list_stats,
     realm_rename,
     realm_rotate_key,
     realm_self_promote_to_owner,
@@ -77,6 +78,7 @@ class AnyCmdReq:
         | ping.Req
         | realm_create.Req
         | realm_get_keys_bundle.Req
+        | realm_list_stats.Req
         | realm_rename.Req
         | realm_rotate_key.Req
         | realm_self_promote_to_owner.Req
@@ -123,6 +125,7 @@ __all__ = [
     "ping",
     "realm_create",
     "realm_get_keys_bundle",
+    "realm_list_stats",
     "realm_rename",
     "realm_rotate_key",
     "realm_self_promote_to_owner",

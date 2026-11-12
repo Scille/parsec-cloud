@@ -1,0 +1,71 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "realm_list_stats",
+        "introduced_in": "5.7",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Stats for all the workspace realms of the organization (including
+                        // the ones the author is not part of).
+                        //
+                        // Are excluded:
+                        // - Deleted realms.
+                        // - Realms without any key rotation (i.e. user realms, since a
+                        //   workspace realm always does a key rotation as part of its
+                        //   bootstrap).
+                        "name": "realms",
+                        "type": "List<RealmStats>"
+                    }
+                ]
+            },
+            {
+                // Only user with ADMIN profile can use this command
+                "status": "author_not_allowed"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "RealmStats",
+                "fields": [
+                    {
+                        "name": "realm_id",
+                        "type": "VlobID"
+                    },
+                    {
+                        // Total size of the vlobs (all versions) stored in the realm.
+                        "name": "metadata_size",
+                        "type": "Size"
+                    },
+                    {
+                        // Total size of the blocks stored in the realm.
+                        "name": "data_size",
+                        "type": "Size"
+                    },
+                    // Number of (non-revoked) users currently having the given role in the realm
+                    {
+                        "name": "owners",
+                        "type": "Index"
+                    },
+                    {
+                        "name": "managers",
+                        "type": "Index"
+                    },
+                    {
+                        "name": "contributors",
+                        "type": "Index"
+                    },
+                    {
+                        "name": "readers",
+                        "type": "Index"
+                    }
+                ]
+            }
+        ]
+    }
+]

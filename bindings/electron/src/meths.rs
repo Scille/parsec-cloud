@@ -5550,6 +5550,121 @@ fn struct_workspace_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceStats
+
+#[allow(dead_code)]
+fn struct_workspace_stats_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceStats> {
+    let workspace_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "workspaceId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let metadata_size = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "metadataSize")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let data_size = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "dataSize")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let owners = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "owners")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let managers = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "managers")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let contributors = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "contributors")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let readers = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "readers")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    Ok(libparsec::WorkspaceStats {
+        workspace_id,
+        metadata_size,
+        data_size,
+        owners,
+        managers,
+        contributors,
+        readers,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_stats_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceStats,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_workspace_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.workspace_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "workspaceId", js_workspace_id)?;
+    let js_metadata_size = JsBigInt::from_u64(cx, rs_obj.metadata_size);
+    js_obj.set(cx, "metadataSize", js_metadata_size)?;
+    let js_data_size = JsBigInt::from_u64(cx, rs_obj.data_size);
+    js_obj.set(cx, "dataSize", js_data_size)?;
+    let js_owners = JsBigInt::from_u64(cx, rs_obj.owners);
+    js_obj.set(cx, "owners", js_owners)?;
+    let js_managers = JsBigInt::from_u64(cx, rs_obj.managers);
+    js_obj.set(cx, "managers", js_managers)?;
+    let js_contributors = JsBigInt::from_u64(cx, rs_obj.contributors);
+    js_obj.set(cx, "contributors", js_contributors)?;
+    let js_readers = JsBigInt::from_u64(cx, rs_obj.readers);
+    js_obj.set(cx, "readers", js_readers)?;
+    Ok(js_obj)
+}
+
 // WorkspaceUserAccessInfo
 
 #[allow(dead_code)]
@@ -10123,6 +10238,36 @@ fn variant_client_list_workspaces_error_rs_to_js<'a>(
     match rs_obj {
         libparsec::ClientListWorkspacesError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "ClientListWorkspacesErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListWorkspacesStatsError
+
+#[allow(dead_code)]
+fn variant_client_list_workspaces_stats_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListWorkspacesStatsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListWorkspacesStatsError::AuthorNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientListWorkspacesStatsErrorAuthorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientListWorkspacesStatsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientListWorkspacesStatsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientListWorkspacesStatsError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientListWorkspacesStatsErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -24650,6 +24795,65 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_list_workspaces_stats
+fn client_list_workspaces_stats(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_workspaces_stats(client_handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = struct_workspace_stats_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_list_workspaces_stats_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_new_device_invitation
 fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -33475,6 +33679,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientListWorkspaceUsers", client_list_workspace_users)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
+    cx.export_function("clientListWorkspacesStats", client_list_workspaces_stats)?;
     cx.export_function("clientNewDeviceInvitation", client_new_device_invitation)?;
     cx.export_function(
         "clientNewShamirRecoveryInvitation",

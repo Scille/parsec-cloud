@@ -423,6 +423,13 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.realm_get_keys_bundle.Rep.load(raw_rep)
 
+    async def realm_list_stats(
+        self,
+    ) -> authenticated_cmds.latest.realm_list_stats.Rep:
+        req = authenticated_cmds.latest.realm_list_stats.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.realm_list_stats.Rep.load(raw_rep)
+
     async def realm_rename(
         self, realm_name_certificate: bytes, initial_name_or_fail: bool
     ) -> authenticated_cmds.latest.realm_rename.Rep:

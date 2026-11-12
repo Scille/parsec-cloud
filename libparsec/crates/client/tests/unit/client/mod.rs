@@ -8,6 +8,7 @@ mod list_user_devices;
 mod list_users;
 mod list_workspace_users;
 mod list_workspaces;
+mod list_workspaces_stats;
 mod organization_info;
 mod outbound_sync_backlog;
 mod process_workspaces_needs;

@@ -11,12 +11,12 @@ pub use libparsec_client::{
     ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
     ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
     ClientListWorkspaceUserRoleChangesError, ClientListWorkspaceUsersError,
-    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
-    ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
+    ClientListWorkspacesStatsError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
+    ClientRevokeUserError, ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
     ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo,
     OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration, SelfShamirRecoveryInfo,
-    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
-    WorkspaceUserRoleChange,
+    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceStats,
+    WorkspaceUserAccessInfo, WorkspaceUserRoleChange,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -543,6 +543,18 @@ pub async fn client_list_frozen_users(
     let client = borrow_client(client)?;
 
     client.list_frozen_users().await
+}
+
+/// List stats (size and per-role users count) for all the workspaces of the
+/// organization, including the ones the current user is not part of.
+///
+/// Only an ADMIN is allowed to do this.
+pub async fn client_list_workspaces_stats(
+    client: Handle,
+) -> Result<Vec<WorkspaceStats>, ClientListWorkspacesStatsError> {
+    let client = borrow_client(client)?;
+
+    client.list_workspaces_stats().await
 }
 
 /*

@@ -424,6 +424,28 @@ class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+@dataclass(slots=True)
+class RealmStats:
+    realm_id: VlobID
+    # Total size of the vlobs (all versions) stored in the realm
+    metadata_size: int
+    # Total size of the blocks stored in the realm
+    data_size: int
+    # Number of non-revoked users currently having the given role in the realm
+    owners: int
+    managers: int
+    contributors: int
+    readers: int
+
+
+class RealmListStatsBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
 type RealmExportBatchOffsetMarker = int
 
 
@@ -752,6 +774,18 @@ class BaseRealmComponent:
     async def dump_realms_granted_roles(
         self, organization_id: OrganizationID
     ) -> list[RealmGrantedRole] | RealmDumpRealmsGrantedRolesBadOutcome:
+        raise NotImplementedError
+
+    async def list_stats(
+        self, organization_id: OrganizationID, author: DeviceID
+    ) -> list[RealmStats] | RealmListStatsBadOutcome:
+        """
+        Return stats for all the non-deleted workspace realms of the organization.
+
+        User realms (i.e. realms without any key rotation) are ignored.
+
+        Only an ADMIN can access this (since it concerns realms they may not be part of).
+        """
         raise NotImplementedError
 
     async def export_do_base_info(
@@ -1263,4 +1297,41 @@ class BaseRealmComponent:
             case RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
             case RealmGetKeysBundleBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+    @api
+    async def api_realm_list_stats(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.realm_list_stats.Req,
+    ) -> authenticated_cmds.latest.realm_list_stats.Rep:
+        outcome = await self.list_stats(
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+        )
+        match outcome:
+            case list() as realms_stats:
+                return authenticated_cmds.latest.realm_list_stats.RepOk(
+                    realms=[
+                        authenticated_cmds.latest.realm_list_stats.RealmStats(
+                            realm_id=stats.realm_id,
+                            metadata_size=stats.metadata_size,
+                            data_size=stats.data_size,
+                            owners=stats.owners,
+                            managers=stats.managers,
+                            contributors=stats.contributors,
+                            readers=stats.readers,
+                        )
+                        for stats in realms_stats
+                    ]
+                )
+            case RealmListStatsBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.realm_list_stats.RepAuthorNotAllowed()
+            case RealmListStatsBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case RealmListStatsBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case RealmListStatsBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case RealmListStatsBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()

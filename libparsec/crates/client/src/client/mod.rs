@@ -17,6 +17,7 @@ mod workspace_archive;
 mod workspace_bootstrap;
 mod workspace_create;
 mod workspace_list;
+mod workspace_list_stats;
 mod workspace_needs;
 mod workspace_outbound_sync_backlog;
 mod workspace_refresh_list;
@@ -40,6 +41,7 @@ pub use self::{
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
     workspace_create::ClientCreateWorkspaceError,
     workspace_list::WorkspaceInfo,
+    workspace_list_stats::{ClientListWorkspacesStatsError, WorkspaceStats},
     workspace_needs::ClientProcessWorkspacesNeedsError,
     workspace_outbound_sync_backlog::{
         ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogItem,
@@ -387,6 +389,16 @@ impl Client {
     /// List all frozen users.
     pub async fn list_frozen_users(&self) -> Result<Vec<UserID>, ClientListFrozenUsersError> {
         list_frozen_users::list_frozen_users(&self.cmds).await
+    }
+
+    /// List stats (size and per-role users count) for all the workspaces of the
+    /// organization, including the ones the current user is not part of.
+    ///
+    /// Only an ADMIN is allowed to do this.
+    pub async fn list_workspaces_stats(
+        &self,
+    ) -> Result<Vec<WorkspaceStats>, ClientListWorkspacesStatsError> {
+        workspace_list_stats::list_workspaces_stats(&self.cmds).await
     }
 
     /// List all devices for a given user.
