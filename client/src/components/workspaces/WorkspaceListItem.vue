@@ -93,13 +93,14 @@
           :max-display="2"
           @click.stop="$emit('shareClick', workspace, $event)"
         />
-        <ion-label
-          class="not-shared-label cell"
+        <ion-button
+          class="not-shared-label color-secondary"
+          fill="clear"
           v-show="workspace.sharing.length === 0"
           @click.stop="$emit('shareClick', workspace, $event)"
         >
           {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
-        </ion-label>
+        </ion-button>
       </div>
 
       <!-- last update -->
@@ -218,6 +219,7 @@ async function onOptionsClick(event: Event): Promise<void> {
     border-radius: ms.radius('lg');
     align-items: center;
     width: 100%;
+    min-height: 3rem;
   }
 
   .list-item-column {
@@ -236,7 +238,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 .workspace-favorite-icon {
   display: flex;
   align-items: center;
-  font-size: 1.25rem;
+  font-size: 1rem;
   padding: ms.spacing('padding-sm');
   margin-left: ms.spacing('padding-lg');
   border-radius: ms.radius('md');
@@ -256,10 +258,12 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   &__off {
     color: ms.color('icon-disabled-default');
+    opacity: ms.opacity('disabled');
 
     &:hover {
       background: ms.color('surface-brand-default-subtle-hover');
       color: ms.color('icon-brand-default-hover');
+      opacity: ms.opacity('9');
     }
   }
 }
@@ -422,18 +426,8 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   .not-shared-label {
-    color: ms.color('text-base-description');
-    padding: ms.spacing('padding-md') ms.spacing('padding-lg');
-    border-radius: ms.radius('md');
-    transition: background 0.15s ease-in-out;
-    flex-grow: 0 !important;
     position: relative;
     z-index: 2;
-
-    &:hover {
-      background: ms.color('surface-brand-default-subtle-hover');
-      color: ms.color('text-brand-default-hover') !important;
-    }
   }
 }
 
