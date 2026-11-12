@@ -47,7 +47,9 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     [CspDirective.StyleSrc, [EDITICS_PROTOCOL, "'unsafe-inline'"]],
     [CspDirective.ImgSrc, [EDITICS_PROTOCOL, 'blob:', 'data:']],
     [CspDirective.FontSrc, [EDITICS_PROTOCOL, 'blob:', 'data:']],
-    [CspDirective.ConnectSrc, [EDITICS_PROTOCOL, 'blob:', 'data:']],
+    // In collaborative mode the editics host page connects to the Parsec
+    // server hosting the editics session.
+    [CspDirective.ConnectSrc, [EDITICS_PROTOCOL, 'blob:', 'data:', 'https:', 'http:']],
     [CspDirective.WorkerSrc, [EDITICS_PROTOCOL, 'blob:']],
     [CspDirective.FrameSrc, [EDITICS_PROTOCOL]],
     [CspDirective.MediaSrc, [EDITICS_PROTOCOL, 'blob:', 'data:']],
