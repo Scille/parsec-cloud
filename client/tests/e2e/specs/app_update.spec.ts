@@ -85,10 +85,10 @@ msTest('Opens app update modal with profile popover', async ({ connected }) => {
   const modal = connected.locator('.update-app-modal');
   await modal.locator('.update-footer').locator('ion-button').nth(1).click();
 
-  const header = connected.locator('#connected-header');
-  await expect(header.locator('#profile-button').locator('.text-content-update')).toBeVisible();
-  await expect(header.locator('#profile-button').locator('.text-content-update')).toHaveText('Update available');
-  await header.locator('#profile-button').click();
+  const sidebar = connected.locator('.sidebar');
+  await expect(sidebar.locator('#profile-button').locator('.text-content-update')).toBeVisible();
+  await expect(sidebar.locator('#profile-button').locator('.text-content-update')).toHaveText('Update available');
+  await sidebar.locator('#profile-button').click();
   const profilePopover = connected.locator('.profile-header-organization-popover');
   await expect(profilePopover).toBeVisible();
   await expect(profilePopover.locator('.update-item')).toBeVisible();

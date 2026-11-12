@@ -274,7 +274,7 @@ export const msTest = debugTest.extend<{
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
-    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+    await expect(home.locator('#profile-button').locator('.text-content__name')).toHaveText('Alicey McAliceFace');
     await expect(home).toBeWorkspacePage();
 
     await use(home);
@@ -290,7 +290,7 @@ export const msTest = debugTest.extend<{
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
-    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Boby McBobFace');
+    await expect(home.locator('#profile-button').locator('.text-content__name')).toHaveText('Boby McBobFace');
     await expect(home).toBeWorkspacePage();
 
     await use(home);
@@ -306,7 +306,7 @@ export const msTest = debugTest.extend<{
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
-    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Malloryy McMalloryFace');
+    await expect(home.locator('#profile-button').locator('.text-content__name')).toHaveText('Malloryy McMalloryFace');
     await expect(home).toBeWorkspacePage();
 
     await use(home);
@@ -426,7 +426,7 @@ export const msTest = debugTest.extend<{
   },
 
   myProfilePage: async ({ connected }, use) => {
-    await connected.locator('.topbar').locator('.profile-header').click();
+    await connected.locator('.sidebar').locator('.profile-header').click();
     const myProfileButton = connected.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
     await expect(myProfileButton).toHaveText('Settings');
     await myProfileButton.click();
@@ -467,7 +467,7 @@ export const msTest = debugTest.extend<{
   },
 
   deviceGreetModal: async ({ connected }, use) => {
-    await connected.locator('.topbar').locator('.profile-header').click();
+    await connected.locator('.sidebar').locator('.profile-header').click();
     const myProfileButton = connected.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(1);
     await expect(myProfileButton).toHaveText('My devices');
     await myProfileButton.click();

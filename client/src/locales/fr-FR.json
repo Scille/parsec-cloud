@@ -567,6 +567,10 @@
         "modalHeader": {
             "step": "Étape {current} sur {total}"
         },
+        "workspaceState": {
+            "archived": "Espace archivé",
+            "trashed": "Espace à la corbeille"
+        },
         "breadcrumbs": {
             "archived": "Archivés",
             "trashed": "Corbeille",
@@ -1193,7 +1197,6 @@
         "technicalId": "ID interne :"
     },
     "SideMenu": {
-        "organization": "Organisation",
         "workspaces": "Espaces de travail",
         "recent": "Récents",
         "archived": "Archivés",
@@ -2923,8 +2926,6 @@
         "copyLink": "Copier le lien",
         "openInEditor": "Éditer",
         "download": "Télécharger",
-        "hideMenu": "Cacher le menu",
-        "showMenu": "Afficher le menu",
         "errors": {
             "titles": {
                 "genericError": "Impossible d'ouvrir ce fichier",

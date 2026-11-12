@@ -1,32 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, TestInfo } from '@playwright/test';
-import {
-  DisplaySize,
-  expect,
-  importDefaultFiles,
-  ImportDocuments,
-  login,
-  MsPage,
-  msTest,
-  openFileType,
-  setupNewPage,
-} from '@tests/e2e/helpers';
-
-async function toggleSidebar(page: MsPage): Promise<void> {
-  // Look for toggle button in standard locations - simplified approach
-  const toggleButton = page.locator('#trigger-toggle-menu-button').first();
-
-  // Wait for button to be available and click it
-  await expect(toggleButton).toBeVisible();
-  await toggleButton.click();
-}
+import { DisplaySize, expect, importDefaultFiles, ImportDocuments, login, msTest, openFileType, setupNewPage } from '@tests/e2e/helpers';
 
 msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
 
   const mainButtons = sidebar.locator('.list-sidebar-header__text');
-  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Workspaces', 'Recent documents']);
 
   const items = sidebar.locator('#sidebar-organization').locator('.sidebar-content-organization-button__text');
   await expect(items).toHaveText(['Users', 'Invitations & Join Requests', 'Information']);
@@ -38,7 +19,7 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
 
   const mainButtons = sidebar.locator('.list-sidebar-header__text');
-  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Workspaces', 'Recent documents']);
 
   const currentWorkspace = sidebar.locator('#sidebar-workspaces').locator('.current-workspace').locator('.sidebar-item');
   await expect(currentWorkspace).toBeVisible();
@@ -51,9 +32,9 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   const sidebar = workspaces.locator('.sidebar');
 
   const mainButtons = sidebar.locator('.list-sidebar-header__text');
-  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Workspaces', 'Recent documents']);
 
-  const organizationContent = sidebar.locator('#sidebar-organization');
+  await expect(sidebar.locator('#sidebar-organization')).toBeVisible();
   const workspacesContent = sidebar.locator('#sidebar-workspaces');
   const filesContent = sidebar.locator('#sidebar-files');
 
@@ -66,12 +47,11 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
     await expect(content.locator('.list-sidebar-content')).toBeVisible();
   }
 
-  await checkSidebarToggleVisibility(organizationContent, 'Organization');
   await checkSidebarToggleVisibility(workspacesContent, 'Workspaces');
   await checkSidebarToggleVisibility(filesContent, 'Recent documents');
 
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-  await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+  await workspaces.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0).click();
 });
 
 msTest('Sidebar recommendations checklist in large display', async ({ workspaces }) => {
@@ -113,7 +93,8 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   const workspaceSharingModal = workspaces.locator('.workspace-sharing-modal');
   await expect(workspaceSharingModal).toBeVisible();
   await workspaceSharingModal.locator('.user-member-item').nth(1).locator('.dropdown-button').click();
-  workspaces.locator('.dropdown-popover').getByRole('listitem').nth(0).click();
+  await workspaces.locator('.dropdown-popover').getByRole('listitem').nth(0).click();
+  await expect(workspaceSharingModal.locator('.user-member-item').nth(1).locator('.dropdown-button')).toHaveText('Owner');
   await workspaceSharingModal.locator('.closeBtn').click();
 
   await expect(checklist.locator('.checklist-text__title')).toHaveText('Security recommendations');
@@ -131,7 +112,7 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   await expect(checklistPopover).toBeHidden();
 
   // Create a recovery file
-  await workspaces.locator('.topbar').locator('.profile-header').click();
+  await workspaces.locator('.sidebar').locator('.profile-header').click();
   workspaces.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0).click();
   const profilePage = workspaces;
   await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
@@ -247,61 +228,64 @@ msTest.describe(() => {
     },
   });
 
-  // Sidebar visibility management tests
+  // Sidebar collapse management tests
   msTest('Sidebar toggle functionality', async ({ documents }) => {
     const sidebar = documents.locator('.sidebar');
-    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+    const toggleButton = sidebar.locator('#trigger-toggle-menu-button');
 
-    // Initially sidebar should be visible
+    // Initially sidebar should be expanded
     await expect(sidebar).toBeVisible();
+    await expect(sidebar).not.toContainClass('sidebar--collapsed');
 
-    // Hide sidebar
-    await toggleButton.click();
-    await expect(sidebar).toBeHidden();
-
-    // Show sidebar
+    // Collapse sidebar
     await toggleButton.click();
     await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainClass('sidebar--collapsed');
+
+    // Expand sidebar
+    await toggleButton.click();
+    await expect(sidebar).not.toContainClass('sidebar--collapsed');
   });
 
-  msTest('Sidebar visibility persists during same session navigation', async ({ documents }) => {
-    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+  msTest('Sidebar collapse persists during same session navigation', async ({ documents }) => {
+    const sidebar = documents.locator('.sidebar');
+    const toggleButton = sidebar.locator('#trigger-toggle-menu-button');
 
-    // Hide sidebar on documents page
+    // Collapse sidebar on documents page
     await toggleButton.click();
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    await expect(sidebar).toContainClass('sidebar--collapsed');
 
     // Navigate to workspaces
-    await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+    await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0).click();
     await expect(documents.locator('.workspaces-container')).toBeVisible();
 
-    // Sidebar should remain hidden
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    // Sidebar should remain collapsed
+    await expect(sidebar).toContainClass('sidebar--collapsed');
 
-    // Show sidebar on workspaces page
-    const workspaceToggleButton = documents.locator('#trigger-toggle-menu-button');
-    await workspaceToggleButton.click();
-    await expect(documents.locator('.sidebar')).toBeVisible();
+    // Expand sidebar on workspaces page
+    await toggleButton.click();
+    await expect(sidebar).not.toContainClass('sidebar--collapsed');
 
     // Navigate back to documents
     await documents.locator('.workspace-card-item').nth(0).click();
     await expect(documents.locator('.folder-container')).toBeVisible();
 
-    // Sidebar should remain visible
-    await expect(documents.locator('.sidebar')).toBeVisible();
+    // Sidebar should remain expanded
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).not.toContainClass('sidebar--collapsed');
   });
 
   msTest('Sidebar responsive behavior', async ({ documents }) => {
     const sidebar = documents.locator('.sidebar');
-    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+    const toggleButton = sidebar.locator('#trigger-toggle-menu-button');
 
     // Test in large display
     await expect(sidebar).toBeVisible();
     await expect(toggleButton).toBeVisible();
 
-    // Hide sidebar in large display
+    // Collapse sidebar in large display
     await toggleButton.click();
-    await expect(sidebar).toBeHidden();
+    await expect(sidebar).toContainClass('sidebar--collapsed');
 
     // Switch to small display
     await documents.setDisplaySize(DisplaySize.Small);
@@ -311,36 +295,13 @@ msTest.describe(() => {
     // Switch back to large display
     await documents.setDisplaySize(DisplaySize.Large);
 
-    // Verify sidebar state is consistent - should still be hidden
+    // Verify sidebar state is consistent - should still be collapsed
     await expect(toggleButton).toBeVisible();
-    await expect(sidebar).toBeHidden();
+    await expect(sidebar).toContainClass('sidebar--collapsed');
 
     // Test that toggle still works after display size change
     await toggleButton.click();
-    await expect(sidebar).toBeVisible();
-  });
-
-  msTest('Sidebar state persists across page navigation', async ({ documents }) => {
-    // Start on documents page
-    await expect(documents.locator('.sidebar')).toBeVisible();
-
-    // Hide sidebar
-    await toggleSidebar(documents);
-    await expect(documents.locator('.sidebar')).toBeHidden();
-
-    // Navigate to workspaces
-    await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
-    await expect(documents.locator('.workspaces-container')).toBeVisible();
-
-    // Verify sidebar stays hidden
-    await expect(documents.locator('.sidebar')).toBeHidden();
-
-    // Navigate back to documents
-    await documents.locator('.workspace-card-item').nth(0).click();
-    await expect(documents.locator('.folder-container')).toBeVisible();
-
-    // Verify sidebar still hidden
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    await expect(sidebar).not.toContainClass('sidebar--collapsed');
   });
 
   // Tests for sidebar persistence after page reload
@@ -357,25 +318,27 @@ msTest.describe(() => {
 
     // Verify sidebar visibility is preserved after reload
     await expect(documents.locator('.sidebar')).toBeVisible();
+    await expect(documents.locator('.sidebar')).not.toContainClass('sidebar--collapsed');
   });
 
-  msTest('Sidebar persistence after reload - basic hidden case', async ({ documents }) => {
-    // Hide sidebar initially on documents page
+  msTest('Sidebar persistence after reload - basic collapsed case', async ({ documents }) => {
+    // Collapse sidebar initially on documents page
     const sidebar = documents.locator('.sidebar');
-    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+    const toggleButton = sidebar.locator('#trigger-toggle-menu-button');
 
     await expect(sidebar).toBeVisible();
     await toggleButton.click();
-    await expect(sidebar).toBeHidden();
+    await expect(sidebar).toContainClass('sidebar--collapsed');
 
     // Directly reload to test basic persistence
     await documents.reload();
     await setupNewPage(documents);
     await expect(documents).toBeHomePage();
-    await login(documents, 'Alicey McAliceFace');
+    await login(documents, 'Alicey McAliceFace', true);
 
-    // Verify sidebar remains hidden after reload
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    // Verify sidebar remains collapsed after reload
+    await expect(documents.locator('.sidebar')).toBeVisible();
+    await expect(documents.locator('.sidebar')).toContainClass('sidebar--collapsed');
   });
 
   msTest('Sidebar persistence with file handler navigation and reload', async ({ documents }, testInfo: TestInfo) => {
@@ -397,34 +360,36 @@ msTest.describe(() => {
     await expect(documents.locator('.sidebar')).toBeVisible();
   });
 
-  msTest('Sidebar state change in file handler persists after reload', async ({ documents }, testInfo) => {
+  msTest('Sidebar collapsed state is kept through file handler and reload', async ({ documents }, testInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
 
-    // Start with sidebar hidden on documents page
+    // Start with sidebar collapsed on documents page
     const sidebar = documents.locator('.sidebar');
-    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+    const toggleButton = sidebar.locator('#trigger-toggle-menu-button');
 
     await expect(sidebar).toBeVisible();
     await toggleButton.click();
-    await expect(sidebar).toBeHidden();
+    await expect(sidebar).toContainClass('sidebar--collapsed');
 
     // Open a file to enter file handler view
     await openFileType(documents, 'png');
     await expect(documents).toBeViewerPage();
     await expect(sidebar).toBeHidden();
 
-    // Try to show sidebar in file handler
+    // Show sidebar in file handler, it should still be collapsed
     const fileHandlerToggle = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
     await fileHandlerToggle.click();
     await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainClass('sidebar--collapsed');
 
     // Reload the page (simulating F5)
     await documents.reload();
     await setupNewPage(documents);
     await expect(documents).toBeHomePage();
-    await login(documents, 'Alicey McAliceFace');
+    await login(documents, 'Alicey McAliceFace', true);
 
     await expect(documents.locator('.sidebar')).toBeVisible();
+    await expect(documents.locator('.sidebar')).toContainClass('sidebar--collapsed');
   });
 });
 
@@ -434,7 +399,7 @@ msTest('Trying to navigate through the workspace content, profile, invitations, 
   await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
   await expect(connected).toBeDocumentPage();
 
-  await connected.locator('.topbar').locator('.profile-header').click();
+  await connected.locator('.sidebar').locator('.profile-header').click();
   const myProfileButton = connected.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
   await expect(myProfileButton).toHaveText('Settings');
   await myProfileButton.click();

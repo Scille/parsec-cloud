@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { expect as baseExpect, Locator, Page } from '@playwright/test';
-import { dismissToast, DisplaySize, MsPage } from '@tests/e2e/helpers';
+import { dismissToast, MsPage } from '@tests/e2e/helpers';
 
 interface AssertReturnType {
   message: () => string;
@@ -20,21 +20,6 @@ async function checkFileHandlerPage(page: MsPage, mode?: 'view' | 'edit'): Promi
       await baseExpect(page).toHaveURL(new RegExp(`\\/\\d+\\/fileHandler\\/${mode}\\??.*$`));
     } else {
       await baseExpect(page).toHaveURL(/\/\d+\/fileHandler\/(view|edit)\??.*$/);
-    }
-
-    if ((await page.getDisplaySize()) === DisplaySize.Large) {
-      // Ensure header is visible before checking title
-      const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
-      const fileViewerButton = page.locator('.file-handler-topbar-buttons__item.toggle-menu');
-      let topbarToggled = false;
-      if (!isTopbarVisible && fileViewerButton) {
-        await fileViewerButton.click();
-        topbarToggled = true;
-      }
-
-      if (topbarToggled) {
-        await fileViewerButton.click();
-      }
     }
   } catch (error: any) {
     const modeText = mode ? ` in ${mode} mode` : '';
@@ -161,7 +146,7 @@ export const expect = baseExpect.extend({
       if (hasHomeButton) {
         breadcrumbs.unshift('');
       }
-      const bcs = header.locator('ion-breadcrumbs').locator('ion-breadcrumb');
+      const bcs = page.locator('#connected-header').locator('ion-breadcrumbs').locator('ion-breadcrumb');
       expect(bcs).toHaveCount(breadcrumbs.length);
       await expect(bcs).toHaveText(breadcrumbs, { useInnerText: true });
     } catch (error: any) {

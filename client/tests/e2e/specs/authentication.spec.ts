@@ -152,7 +152,7 @@ msTest('Login with forbidden auth method and update', async ({ home }) => {
 
   await home.locator('.login-button').click();
   await expect(home.locator('#connected-header')).toContainText('My workspaces');
-  await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(home.locator('#profile-button').locator('.text-content__name')).toHaveText('Alicey McAliceFace');
   await expect(home).toBeWorkspacePage();
 
   await answerQuestion(home, true, {
@@ -199,7 +199,7 @@ msTest('Login without totp and setup', async ({ home }) => {
 
   await home.locator('.login-button').click();
   await expect(home.locator('#connected-header')).toContainText('My workspaces');
-  await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(home.locator('#profile-button').locator('.text-content__name')).toHaveText('Alicey McAliceFace');
   await expect(home).toBeWorkspacePage();
 
   const requiredTotpModal = home.locator('.totp-required-modal');
@@ -251,7 +251,7 @@ msTest('Login update auth method and setup totp', async ({ home }) => {
 
   await home.locator('.login-button').click();
   await expect(home.locator('#connected-header')).toContainText('My workspaces');
-  await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(home.locator('#profile-button').locator('.text-content__name')).toHaveText('Alicey McAliceFace');
   await expect(home).toBeWorkspacePage();
 
   await answerQuestion(home, true, {
@@ -329,7 +329,7 @@ msTest('Login with forbidden auth method cancel', async ({ home }) => {
 
   await home.locator('.login-button').click();
   await expect(home.locator('#connected-header')).toContainText('My workspaces');
-  await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(home.locator('#profile-button').locator('.text-content__name')).toHaveText('Alicey McAliceFace');
   await expect(home).toBeWorkspacePage();
 
   await answerQuestion(home, false, {

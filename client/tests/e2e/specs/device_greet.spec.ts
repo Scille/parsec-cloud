@@ -254,8 +254,8 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   // Automatically logged in
   await expect(secondTab.locator('#connected-header')).toContainText('My workspaces');
   await expect(secondTab).toBeWorkspacePage();
-  const profile = secondTab.locator('.topbar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  const profile = secondTab.locator('.sidebar').locator('.profile-header');
+  await expect(profile.locator('.text-content__name')).toHaveText('Alicey McAliceFace');
 
   await secondTab.release();
 

@@ -161,9 +161,9 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
   await expect(home).toBeWorkspacePage();
-  await expect(home).toHaveHeader(['My workspaces'], false, false);
-  const profile = home.locator('.topbar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(home).toHavePageTitle('My workspaces');
+  const profile = home.locator('.sidebar').locator('.profile-header');
+  await expect(profile.locator('.text-content__name')).toHaveText('Alicey McAliceFace');
 });
 
 msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
@@ -207,9 +207,9 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
   await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(home).toBeWorkspacePage();
-  await expect(home).toHaveHeader(['My workspaces'], false, false);
-  const profile = home.locator('.topbar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(home).toHavePageTitle('My workspaces');
+  const profile = home.locator('.sidebar').locator('.profile-header');
+  await expect(profile.locator('.text-content__name')).toHaveText('Alicey McAliceFace');
   await profile.click();
   const myProfileButton = home.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(2);
   await expect(myProfileButton).toHaveText('Authentication');
@@ -308,7 +308,7 @@ msTest('Logout from my profile page', async ({ myProfilePage }) => {
 });
 
 msTest('Profile page back button', async ({ workspaces }) => {
-  await workspaces.locator('.topbar').locator('.profile-header').click();
+  await workspaces.locator('.sidebar').locator('.profile-header').click();
   const myProfileButton = workspaces.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
   await myProfileButton.click();
   await expect(workspaces).toHavePageTitle('My profile');
@@ -466,7 +466,7 @@ for (const platform of ['PlatformWeb', 'PlatformAndroid', 'PlatformWindows', 'Pl
     await page.waitForTimeout(1000);
     await expect(page).toBeWorkspacePage();
 
-    await page.locator('.topbar').locator('.profile-header').click();
+    await page.locator('.sidebar').locator('.profile-header').click();
     const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(1);
     await expect(myProfileButton).toHaveText('My devices');
     await myProfileButton.click();

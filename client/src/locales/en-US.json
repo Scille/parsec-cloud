@@ -567,6 +567,10 @@
         "modalHeader": {
             "step": "Step {current} of {total}"
         },
+        "workspaceState": {
+            "archived": "Archived workspace",
+            "trashed": "Workspace in the bin"
+        },
         "breadcrumbs": {
             "archived": "Archived",
             "trashed": "Bin",
@@ -1193,7 +1197,6 @@
         "technicalId": "Internal ID:"
     },
     "SideMenu": {
-        "organization": "Organization",
         "workspaces": "Workspaces",
         "recent": "Recent",
         "archived": "Archived",
@@ -2923,8 +2926,6 @@
         "copyLink": "Copy link",
         "openInEditor": "Edit",
         "download": "Download",
-        "hideMenu": "Hide menu",
-        "showMenu": "Show menu",
         "errors": {
             "titles": {
                 "genericError": "Failed to open the file",

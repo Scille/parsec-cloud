@@ -157,7 +157,7 @@ for (const gridMode of [false, true]) {
       await workspaces.locator('.workspace-card-item').nth(0).click();
     }
 
-    await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+    await workspaces.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0).click();
 
     const categoriesMenu = workspaces.locator('.workspace-categories-menu');
     const recentWorkspacesButton = categoriesMenu.locator('.workspace-categories-menu-item').nth(0);
@@ -642,20 +642,16 @@ msTest('Workspace interact with search results', async ({ workspaces }, testingI
 
 msTest('Back from files with back button', async ({ workspaces }) => {
   await workspaces.locator('.workspace-card-item').nth(0).click();
-  await expect(workspaces.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText('wksp1');
+  await expect(workspaces.locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText('wksp1');
   await workspaces.locator('.topbar-left').locator('.back-button').click();
-  await expect(workspaces.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
-    'My workspaces',
-  );
+  await expect(workspaces).toHavePageTitle('My workspaces');
 });
 
 msTest('Back from files with side menu', async ({ workspaces }) => {
   await workspaces.locator('.workspace-card-item').nth(0).click();
-  await expect(workspaces.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText('wksp1');
+  await expect(workspaces.locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText('wksp1');
   await workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
-  await expect(workspaces.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
-    'My workspaces',
-  );
+  await expect(workspaces).toHavePageTitle('My workspaces');
 });
 
 msTest('Check no create workspace button as external', async ({ workspacesExternal }) => {

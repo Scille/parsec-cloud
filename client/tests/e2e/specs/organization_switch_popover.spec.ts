@@ -5,7 +5,7 @@ import { createFolder, expect, msTest } from '@tests/e2e/helpers';
 msTest('Switch back and forth', async ({ connected }) => {
   // Logged in as Alice
 
-  const profileName = connected.locator('#connected-header').locator('.topbar-right').locator('.text-content-name');
+  const profileName = connected.locator('#profile-button').locator('.text-content__name');
   await expect(profileName).toHaveText('Alicey McAliceFace');
 
   // Add a folder

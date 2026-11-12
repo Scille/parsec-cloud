@@ -240,8 +240,8 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   // Automatically logged in
   await expect(secondTab.locator('#connected-header')).toContainText('My workspaces');
   await expect(secondTab).toBeWorkspacePage();
-  const profile = secondTab.locator('.topbar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Gordon Freeman');
+  const profile = secondTab.locator('.sidebar').locator('.profile-header');
+  await expect(profile.locator('.text-content__name')).toHaveText('Gordon Freeman');
 
   // Checking the message for no workspaces here as well since it can only be checked for a new user
   // and it takes a long time to invite someone.

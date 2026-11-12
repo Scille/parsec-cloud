@@ -9,6 +9,7 @@ const HIDDEN_WIDTH = 0;
 const computedWidth = ref<number>(DEFAULT_WIDTH);
 const storedWidth = ref<number>(DEFAULT_WIDTH);
 const isInitialized = ref<boolean>(false);
+const isCollapsed = ref<boolean>(false);
 const isVisible = computed(() => {
   return !isInitialized.value ? false : computedWidth.value > HIDDEN_WIDTH;
 });
@@ -16,10 +17,12 @@ const isVisible = computed(() => {
 interface SidebarMenu {
   width: Ref<number>;
   isVisible: ComputedRef<boolean>;
+  isCollapsed: Ref<boolean>;
   reset: (persist?: boolean) => void;
   hide: (persist?: boolean) => void;
   show: (persist?: boolean) => void;
   setWidth: (width: number, persist?: boolean) => void;
+  toggleCollapsed: () => void;
 }
 
 export default function useSidebarMenu(): SidebarMenu {
@@ -45,6 +48,7 @@ export default function useSidebarMenu(): SidebarMenu {
 
       const savedWidth = savedData.width || DEFAULT_WIDTH;
       const isVisible = savedData.visible !== undefined ? savedData.visible : true; // Default to visible
+      isCollapsed.value = savedData.collapsed ?? false;
 
       if (isVisible) {
         computedWidth.value = savedWidth;
@@ -112,12 +116,25 @@ export default function useSidebarMenu(): SidebarMenu {
     }
   }
 
+  function toggleCollapsed(): void {
+    isCollapsed.value = !isCollapsed.value;
+    if (storageManager) {
+      storageManager
+        .updateComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, { collapsed: isCollapsed.value }, SidebarDefaultData)
+        .catch((error) => {
+          console.warn('Failed to save sidebar collapsed state to storage:', error);
+        });
+    }
+  }
+
   return {
     width: computedWidth,
     isVisible,
+    isCollapsed,
     reset,
     hide,
     show,
     setWidth,
+    toggleCollapsed,
   };
 }

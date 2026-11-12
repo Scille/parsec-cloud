@@ -94,15 +94,15 @@ msTest.describe(() => {
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText('image.png');
     const buttons = documents.locator('.file-handler').locator('.file-handler-topbar-buttons').locator('ion-button:visible');
-    await expect(buttons).toHaveCount(4);
-    await expect(buttons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+    await expect(buttons).toHaveCount(3);
+    await expect(buttons).toHaveText(['Details', 'Copy link', 'Download']);
     const modal = documents.locator('.file-details-modal');
     await expect(modal).toBeHidden();
     await buttons.nth(0).click();
     await expect(modal).toBeVisible();
   });
 
-  msTest('File viewer header control functionality', async ({ documents }, testInfo: TestInfo) => {
+  msTest('File viewer hides the header', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, false);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
 
@@ -110,28 +110,7 @@ msTest.describe(() => {
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
-    const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
     const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
-    await expect(toggleButton).toBeVisible();
-    await expect(toggleButton).toContainText('Show menu');
-
-    await toggleButton.click();
-    await expect(toggleSidebarButton).toBeHidden();
-    await expect(documents.locator('#connected-header .topbar')).toBeVisible();
-    await expect(toggleButton).toContainText('Hide menu');
-
-    await toggleButton.click();
-    await expect(toggleSidebarButton).toBeVisible();
-    await expect(documents.locator('#connected-header .topbar')).toBeHidden();
-    await expect(toggleButton).toContainText('Show menu');
-
-    // Test that header state persists when navigating between files in viewer
-    await toggleButton.click();
-    await expect(documents.locator('#connected-header .topbar')).toBeVisible();
-    await documents.locator('.topbar-left').locator('.back-button').click();
-    await entries.nth(1).dblclick();
-    await expect(documents.locator('#connected-header .topbar')).toBeHidden();
-
     await toggleSidebarButton.click();
     await expect(documents.locator('.sidebar')).toBeVisible();
     await toggleSidebarButton.click();
@@ -157,17 +136,6 @@ msTest.describe(() => {
       await entries.nth(0).locator('.label-name').click();
       await expect(documents).toBeViewerPage();
       const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
-
-      // Ensure the main header is visible
-      const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
-      const fileViewerToggleMenuButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
-      if (!isTopbarVisible && fileViewerToggleMenuButton && displaySize === DisplaySize.Large) {
-        await fileViewerToggleMenuButton.click();
-      }
-
-      if (displaySize === DisplaySize.Small) {
-        await expect(fileViewerToggleMenuButton).toBeHidden();
-      }
 
       await documents.locator('.topbar-left-content').locator('.back-button').click();
       await entries.nth(1).locator('.label-name').click();
@@ -469,19 +437,9 @@ msTest.describe(() => {
     // Sidebar initially hidden
     await expect(documents.locator('.sidebar')).toBeHidden();
 
-    const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
-    const toggleSidebarButton = documents.locator('#trigger-toggle-menu-button');
-
-    await expect(toggleButton).toBeVisible();
-    await expect(toggleButton).toContainText('Show menu');
-
-    // Show menu and sidebar
-    await toggleButton.click();
-    await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+    const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
     await expect(toggleSidebarButton).toBeVisible();
-    await expect(toggleButton).toContainText('Hide menu');
 
-    // Toggle sidebar specifically
     await toggleSidebarButton.click();
     await expect(documents.locator('.sidebar')).toBeVisible();
 
@@ -506,18 +464,13 @@ msTest.describe(() => {
     await expect(sidebar).toBeHidden();
     await expect(header).toBeHidden();
 
-    const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
-    const toggleSidebarButton = documents.locator('#trigger-toggle-menu-button');
-
-    // Show header and sidebar
-    await toggleButton.click();
-    await expect(header).toBeVisible();
+    const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
 
     await toggleSidebarButton.click();
     await expect(sidebar).toBeVisible();
 
     // Go back to documents page and open a second file to ensure we have 2 recent files
-    const backButton = documents.locator('.topbar-left-content').locator('.back-button');
+    const backButton = documents.locator('.file-handler-topbar').locator('.back-button');
 
     await backButton.click();
     await expect(documents).toBeDocumentPage();
@@ -529,10 +482,6 @@ msTest.describe(() => {
     await expect(recentDocs).toHaveCount(1);
     await expect(recentDocs).toHaveText(['audio.mp3']);
 
-    // Hide sidebar again before opening second file
-    await toggleSidebarButton.click();
-    await expect(sidebar).toBeHidden();
-
     // Open second file
     await entries.nth(1).locator('.file-name .label-name').click();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
@@ -540,10 +489,6 @@ msTest.describe(() => {
 
     await expect(header).toBeHidden();
     await expect(sidebar).toBeHidden();
-
-    // Show header and sidebar again
-    await toggleButton.click();
-    await expect(header).toBeVisible();
 
     await toggleSidebarButton.click();
     await expect(sidebar).toBeVisible();
@@ -559,13 +504,13 @@ msTest.describe(() => {
 
     // Sidebar should remain visible
     await expect(sidebar).toBeVisible();
-    await expect(header).toBeVisible();
+    await expect(header).toBeHidden();
   });
 
   msTest('File viewer restores sidebar state on exit', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Png, false);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
-    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+    const toggleButton = documents.locator('.sidebar').locator('#trigger-toggle-menu-button');
 
     // Sidebar starts visible (default state)
     await expect(documents.locator('.sidebar')).toBeVisible();
@@ -592,9 +537,9 @@ msTest.describe(() => {
     await expect(documents.locator('.sidebar')).toBeVisible();
     await expect(documents.locator('#connected-header .topbar')).toBeVisible();
 
-    // Hide sidebar and test restoration of hidden state
+    // Collapse sidebar and test restoration of collapsed state
     await toggleButton.click();
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    await expect(documents.locator('.sidebar')).toContainClass('sidebar--collapsed');
 
     // Open file viewer again
     await entries.nth(1).locator('.file-name .label-name').click();
@@ -609,8 +554,9 @@ msTest.describe(() => {
     await expect(entries).toHaveCount(2);
     await expect(documents.locator('.folder-container')).toBeVisible();
 
-    // Sidebar should remain hidden as it was before
-    await expect(documents.locator('.sidebar')).toBeHidden();
+    // Sidebar should be restored collapsed as it was before
+    await expect(documents.locator('.sidebar')).toBeVisible();
+    await expect(documents.locator('.sidebar')).toContainClass('sidebar--collapsed');
     await expect(documents.locator('#connected-header .topbar')).toBeVisible();
   });
 
@@ -624,8 +570,6 @@ msTest.describe(() => {
 
     await expect(documents.locator('.sidebar')).toBeHidden();
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
-    const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
-    await expect(toggleButton).toBeHidden();
 
     // File viewer functionality should still work
     await expect(documents.locator('.file-handler')).toBeVisible();
