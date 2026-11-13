@@ -26,8 +26,9 @@ pub use transactions::{
     CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
     FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode, OpenOptions,
     OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
-    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
-    WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceDecryptEditicsError, WorkspaceEncryptEditicsError, WorkspaceFdCloseError,
+    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
+    WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
     WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
@@ -622,6 +623,50 @@ impl WorkspaceOps {
             candidate_view_key,
         )
         .await
+    }
+
+    /// Encrypt a batch of arbitrary payloads (original content parts, change
+    /// fragments, cursors, messages) as part of an editics collaborative
+    /// document edition session.
+    ///
+    /// This is used to translate an OnlyOffice protocol client event into the
+    /// editics protocol.
+    ///
+    /// The payloads of the batch travel as a single flat buffer (the i-th
+    /// cleartext is `flat_cleartexts[offsets[i]..offsets[i+1]]`, so `offsets`
+    /// has one more entry than the payload count), and are all sealed with
+    /// the workspace's latest realm key.
+    ///
+    /// Returns `(<key_index>, <flat_ciphertexts>, <ciphertexts_offsets>)`.
+    pub async fn editics_encrypt_batch(
+        &self,
+        document_id: VlobID,
+        flat_cleartexts: &[u8],
+        offsets: &[u32],
+    ) -> Result<(IndexInt, Vec<u8>, Vec<u32>), WorkspaceEncryptEditicsError> {
+        transactions::editics_encrypt_batch(self, document_id, flat_cleartexts, offsets).await
+    }
+
+    /// Decrypt a batch of arbitrary payloads (original content parts, change
+    /// fragments, cursors, messages) as part of an editics collaborative
+    /// document edition session.
+    ///
+    /// This is used to translate an editics protocol server event into the OnlyOffice
+    /// protocol.
+    ///
+    /// The payloads of the batch travel as a single flat buffer like on the
+    /// encrypt side, and are all sealed with the key at `key_index` (the batch
+    /// builder is responsible for splitting the batches when the key index
+    /// changes).
+    pub async fn editics_decrypt_batch(
+        &self,
+        document_id: VlobID,
+        key_index: IndexInt,
+        flat_ciphertexts: &[u8],
+        offsets: &[u32],
+    ) -> Result<(Vec<u8>, Vec<u32>), WorkspaceDecryptEditicsError> {
+        transactions::editics_decrypt_batch(self, document_id, key_index, flat_ciphertexts, offsets)
+            .await
     }
 
     pub async fn save_and_sync_file_with_origin(
