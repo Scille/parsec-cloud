@@ -163,17 +163,17 @@ const routes: Array<RouteRecordRaw> = [
                         name: Routes.History,
                         component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
                       },
-                      {
-                        path: `/:handle(\\d+)/${Routes.FileHandler}/:mode(${FileHandlerMode.View}|${FileHandlerMode.Edit})?`,
-                        name: Routes.FileHandler,
-                        component: () => import('@/views/files/handler/FileHandler.vue'),
-                        beforeEnter: (_to, from) => {
-                          if (!_to.params.mode || (_to.params.mode === FileHandlerMode.Edit && !Env.isEditicsEnabled())) {
-                            return from;
-                          }
-                        },
-                      },
                     ],
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.FileHandler}/:mode(${FileHandlerMode.View}|${FileHandlerMode.Edit})?`,
+                    name: Routes.FileHandler,
+                    component: () => import('@/views/files/handler/FileHandler.vue'),
+                    beforeEnter: (_to, from) => {
+                      if (!_to.params.mode || (_to.params.mode === FileHandlerMode.Edit && !Env.isEditicsEnabled())) {
+                        return from;
+                      }
+                    },
                   },
                   {
                     path: '/:handle(\\d+)',
