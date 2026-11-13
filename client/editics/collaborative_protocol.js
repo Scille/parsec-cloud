@@ -235,7 +235,9 @@ class EditicsTranslator {
       }
 
       case 'getLock': {
-        return { ok: true, value: { type: 'getLock', block: oo.block } };
+        // The OnlyOffice and editics block types are structurally compatible,
+        // but the former is looser (hence the cast).
+        return { ok: true, value: { type: 'getLock', block: /** @type {EditicsBlock[]} */ (oo.block) } };
       }
 
       case 'message': {
@@ -264,6 +266,7 @@ class EditicsTranslator {
       }
 
       case 'unLockDocument': {
+        /** @type {EditicsClientEventUnLockDocument} */
         const event = {
           type: 'unLockDocument',
           isSave: oo.isSave,
@@ -337,7 +340,7 @@ class EditicsTranslator {
     /** @type {[number, string][]} */
     const encryptedChanges = [];
     for (const fragment of oo.changes) {
-      const [keyIndex, cipherText] = await this.libparsec.encrypt(fragment);
+      const [keyIndex, cipherText] = await this.libparsec.encrypt(/** @type {Uint8Array} */ (fragment));
       encryptedChanges.push([keyIndex, cipherText.toBase64()]);
     }
 
@@ -797,7 +800,8 @@ class EditicsTranslator {
       /** @type {Record<string, OOLockEntry>} */
       const table = {};
       for (const record of records) {
-        table[record.block] = record;
+        // In the word editor the block is the lock table key itself.
+        table[/** @type {string} */ (record.block)] = record;
       }
       return table;
     } else {
