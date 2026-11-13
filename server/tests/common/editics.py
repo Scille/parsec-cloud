@@ -226,21 +226,24 @@ class EditicsJSRuntime:
         src = protocol_js_path.read_text()
         # V8 (PyMiniRacer) does not implement ESM `export`, so patch `collaborative_protocol.js`
         # to use a global assignment is instead.
-        assert "export { EditicsTranslator };" in src, (
-            "`collaborative_protocol.js` export marker changed"
-        )
+        assert "export { EditicsTranslator };" in src
         src = src.replace(
             "export { EditicsTranslator };",
             "globalThis.__EditicsTranslator = EditicsTranslator;",
         )
         # The API version constant is not used by the tests, but V8 would choke
         # on its ESM `export` keyword.
-        assert "export const EDITICS_API_VERSION" in src, (
-            "`collaborative_protocol.js` export marker changed"
-        )
+        assert "export const EDITICS_API_VERSION" in src
         src = src.replace(
             "export const EDITICS_API_VERSION",
             "const EDITICS_API_VERSION",
+        )
+        # Module-level initialization is not supported without ESM support, and
+        # also the V8 runtime provided by PyMiniRacer comes with none of the
+        # standard Web APIs (so no `TextEncoder`/`TextDecoder`).
+        assert "const [textEncoder, textDecoder] = [new TextEncoder(), new TextDecoder()];" in src
+        src = src.replace(
+            "const [textEncoder, textDecoder] = [new TextEncoder(), new TextDecoder()];", ""
         )
 
         self._js_runtime = py_mini_racer.MiniRacer()
@@ -361,22 +364,28 @@ class EditicsJSRuntime:
                         }}
                     }},
                     // Simulate encryption
-                    encrypt: async (cleartext) => {{
+                    encryptBatch: async (cleartexts) => {{
                         const keyIndex = 3;  // Dummy but realistic-looking value
-                        const ciphertext = bytesFromStr(JSON.stringify({{"keyIndex": keyIndex, "cleartext": cleartext.toBase64()}}));
-                        return [keyIndex, ciphertext];
+                        return cleartexts.map((cleartext) => [
+                            keyIndex,
+                            bytesFromStr(JSON.stringify({{"keyIndex": keyIndex, "cleartext": cleartext.toBase64()}})),
+                        ]);
                     }},
-                    decrypt: async (authorDeviceId, keyIndex, ciphertext) => {{
-                        let content;
-                        try {{
-                            content = JSON.parse(bytesToStr(ciphertext));
-                        }} catch(err) {{
-                            return {{ok: false, kind: 'libparsec', error: `Decryption failed: ${{err}}`}};
+                    decryptBatch: async (items) => {{
+                        const cleartexts = [];
+                        for (const [authorDeviceId, keyIndex, ciphertext] of items) {{
+                            let content;
+                            try {{
+                                content = JSON.parse(bytesToStr(ciphertext));
+                            }} catch(err) {{
+                                return {{ok: false, kind: 'libparsec', error: `Decryption failed: ${{err}}`}};
+                            }}
+                            if (content.keyIndex != keyIndex) {{
+                                return {{ok: false, kind: 'libparsec', error: "Decryption failed: keyIndex mismatch (expected: ${{keyIndex}}, got: ${{content.keyIndex}}"}};
+                            }}
+                            cleartexts.push(Uint8Array.fromBase64(content.cleartext));
                         }}
-                        if (content.keyIndex != keyIndex) {{
-                            return {{ok: false, kind: 'libparsec', error: "Decryption failed: keyIndex mismatch (expected: ${{keyIndex}}, got: ${{content.keyIndex}}"}};
-                        }}
-                        return {{ok: true, value: Uint8Array.fromBase64(content.cleartext)}};
+                        return {{ok: true, value: cleartexts}};
                     }},
                 }},
             );
