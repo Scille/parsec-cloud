@@ -319,6 +319,10 @@ impl WorkspaceOps {
         self.realm_id
     }
 
+    pub fn device(&self) -> &LocalDevice {
+        &self.device
+    }
+
     pub(crate) async fn get_outbound_sync_backlog(
         &self,
     ) -> Result<WorkspaceOutboundSyncBacklog, WorkspaceGetOutboundSyncBacklogError> {

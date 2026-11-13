@@ -346,25 +346,71 @@ impl AuthenticatedCmds {
 }
 
 /// Return the Bearer token to use for the `Authorization` header.
-///
-/// Authorization token format: `PARSEC-SIGN-ED25519.<author_id_hex>.<timestamp>.<b64_signature>`
-/// with:
-///     <author_id_hex> = hex(<author's device ID>)
-///     <timestamp> = str(<seconds since UNIX epoch>)
-///     <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<author_id_hex>.<timestamp>`))
-/// base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
 fn generate_authorization_header_value(
     author: DeviceID,
     author_signing_key: &SigningKey,
     now: DateTime,
 ) -> String {
+    format!(
+        "Bearer {}",
+        generate_authentication_token(author, author_signing_key, now, None)
+    )
+}
+
+/// Return the authentication token signed by the given author.
+///
+/// Authentication token format: `PARSEC-SIGN-ED25519.<author_id_hex>.<timestamp>[.<scope>].<b64_signature>`
+/// with:
+///     <author_id_hex> = hex(<author's device ID>)
+///     <timestamp> = str(<seconds since UNIX epoch>)
+///     <scope> = str(<what the token gives access to>)
+///     <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<author_id_hex>.<timestamp>[.<scope>]`))
+/// base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
+fn generate_authentication_token(
+    author: DeviceID,
+    author_signing_key: &SigningKey,
+    now: DateTime,
+    scope: Option<&str>,
+) -> String {
     let author_id_hex = author.hex();
     let timestamp = now.as_timestamp_seconds().to_string();
-    let header_and_body = format!("{}.{}.{}", PARSEC_AUTH_METHOD, &author_id_hex, &timestamp);
+    let header_and_body = match scope {
+        Some(scope) => format!(
+            "{}.{}.{}.{}",
+            PARSEC_AUTH_METHOD, &author_id_hex, &timestamp, scope
+        ),
+        None => format!("{}.{}.{}", PARSEC_AUTH_METHOD, &author_id_hex, &timestamp),
+    };
     let signature = author_signing_key.sign_only_signature(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 
-    format!("Bearer {}.{}", &header_and_body, &b64_signature)
+    format!("{}.{}", &header_and_body, &b64_signature)
+}
+
+/// Generate the authentication token for the editics routes of the Parsec server.
+///
+/// Unlike the rest of Parsec that handles server communication within libparsec,
+/// editics does that from within the Web Iframe that runs the OnlyOffice editor.
+///
+/// This implies two things:
+/// - This function is needed to provide to the Iframe the authentication token
+///   to send requests to the server.
+/// - This authentication token must have a limited scope (i.e. only allowing
+///   editics operations, and only for a given document) since the OnlyOffice
+///   Iframe that will get access to it is considered less trusted.
+pub fn editics_generate_auth_token(
+    device: &LocalDevice,
+    realm_id: VlobID,
+    document_id: VlobID,
+) -> String {
+    // Note `.editics/<realm_id>/<document_id>` that limits what this token can do
+    let scope = format!("editics/{}/{}", realm_id.hex(), document_id.hex());
+    generate_authentication_token(
+        device.device_id,
+        &device.signing_key,
+        device.now(),
+        Some(&scope),
+    )
 }
 
 #[cfg(test)]
