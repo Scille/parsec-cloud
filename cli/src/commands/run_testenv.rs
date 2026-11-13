@@ -37,7 +37,7 @@ pub async fn run_testenv(ui: crate::Ui, run_testenv: RunTestenv) -> anyhow::Resu
         organization,
     } = run_testenv;
 
-    let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", &uuid::Uuid::new_v4()));
+    let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", uuid::Uuid::new_v4()));
 
     let testenv_config = match (main_process_id, std::env::var("TESTBED_SERVER")) {
         (_, Ok(testbed_server)) => {

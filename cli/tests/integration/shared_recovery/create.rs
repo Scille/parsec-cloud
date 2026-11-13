@@ -91,8 +91,8 @@ async fn create_shared_recovery_with_weights(tmp_path: TmpPath, test_ui: &Ui) {
         "--device",
         &alice.device_id.hex(),
         "--recipients",
-        &format!("{}:{}", &bob.human_handle.email(), "2"),
-        &format!("{}:{}", &toto.human_handle.email(), "3"),
+        &format!("{}:{}", bob.human_handle.email(), "2"),
+        &format!("{}:{}", toto.human_handle.email(), "3"),
         "--threshold",
         "2",
         "--force"
@@ -101,11 +101,11 @@ async fn create_shared_recovery_with_weights(tmp_path: TmpPath, test_ui: &Ui) {
         predicates::str::contains("Shared recovery setup has been created")
             .and(predicates::str::contains(format!(
                 "• User {} will have 2 shares",
-                &bob.human_handle
+                bob.human_handle
             )))
             .and(predicates::str::contains(format!(
                 "• User {} will have 3 shares",
-                &toto.human_handle
+                toto.human_handle
             ))),
     );
 }

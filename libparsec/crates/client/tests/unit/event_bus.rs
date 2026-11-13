@@ -99,7 +99,7 @@ fn closure() {
         let closure_calls = closure_calls.clone();
         move |event: &EventPing| {
             let mut guard = closure_calls.lock().unwrap();
-            guard.push(format!("closure2:{}", &event.ping));
+            guard.push(format!("closure2:{}", event.ping));
         }
     };
     let _connection_lifetime2 = eb.connect(closure2);
