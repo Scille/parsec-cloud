@@ -19,7 +19,6 @@ from parsec.components.events import EventBus
 from parsec.config import BackendConfig
 from parsec.editics_protocol import (
     AuthChangeRecord,
-    CursorRecord,
     EditicsBlock,
     EditicsClientEvent,
     EditicsClientEventAuth,
@@ -1488,13 +1487,9 @@ class EditicsComponent:
                 # history like chat messages) and are only broadcasted to the
                 # other participants.
                 broadcasted_event = EditicsServerEventCursor(
-                    messages=[
-                        CursorRecord(
-                            time=session.monotonic_now(),
-                            author=(participant.device_id, participant.index),
-                            encryptedCursor=event.encryptedCursor,
-                        )
-                    ],
+                    time=session.monotonic_now(),
+                    author=(participant.device_id, participant.index),
+                    encryptedCursor=event.encryptedCursor,
                 )
                 for other_participant in session.participants.values():
                     if (

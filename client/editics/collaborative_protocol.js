@@ -721,31 +721,30 @@ class EditicsTranslator {
    * @returns {Promise<EditicsResult<OOServerEventCursor>>}
    */
   async _cookCursor(editics) {
-    const messages = this._collectResults(
-      await Promise.all(
-        editics.messages.map(async (m) => {
-          const [authorDeviceId, _authorIndexUser] = m.author;
-          const [keyIndex, b64CipherText] = m.encryptedCursor;
-          const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
-          if (!cleartext.ok) {
-            return cleartext;
-          }
-          return {
-            ok: true,
-            value: {
-              cursor: bytesToStr(cleartext.value),
-              time: m.time,
-              user: this._onlyofficeUserId(m.author),
-              useridoriginal: authorDeviceId,
-            },
-          };
-        }),
-      ),
+    const cleartext = await this.libparsec.decrypt(
+      editics.author[0],
+      editics.encryptedCursor[0],
+      Uint8Array.fromBase64(editics.encryptedCursor[1]),
     );
-    if (!messages.ok) {
-      return messages;
+    if (!cleartext.ok) {
+      return cleartext;
     }
-    return { ok: true, value: { type: 'cursor', messages: messages.value } };
+    return {
+      ok: true,
+      value: {
+        type: 'cursor',
+        // The editics protocol provides a single cursor movement, while the
+        // OnlyOffice protocol expects a (single-element) list of messages.
+        messages: [
+          {
+            cursor: bytesToStr(cleartext.value),
+            time: editics.time,
+            user: this._onlyofficeUserId(editics.author),
+            useridoriginal: editics.author[0],
+          },
+        ],
+      },
+    };
   }
 
   /**
@@ -1081,7 +1080,9 @@ export const EDITICS_API_VERSION = '1.0';
  *
  * @typedef {Object} EditicsServerEventCursor
  * @property {'cursor'} type
- * @property {Array<{time:EditicsTimestampMs, author:EditicsParticipantIdentity, encryptedCursor:EditicsEncryptedContent}>} messages
+ * @property {EditicsTimestampMs} time
+ * @property {EditicsParticipantIdentity} author
+ * @property {EditicsEncryptedContent} encryptedCursor
  *
  * @typedef {Object} EditicsServerEventGetLock
  * @property {'getLock'} type
