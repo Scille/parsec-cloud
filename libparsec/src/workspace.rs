@@ -4,11 +4,12 @@ use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
     CryptpadSessionKeys, EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
-    WorkspaceCreateFolderError, WorkspaceDecryptPathAddrError, WorkspaceFdCloseError,
-    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
-    WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
-    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError,
-    WorkspaceRemoveEntryError, WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
+    WorkspaceCreateFolderError, WorkspaceDecryptEditicsError, WorkspaceDecryptPathAddrError,
+    WorkspaceEncryptEditicsError, WorkspaceFdCloseError, WorkspaceFdFlushError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError,
+    WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
+    WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
     WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
@@ -794,4 +795,52 @@ pub async fn workspace_save_and_sync_file_with_cryptpad(
             content,
         )
         .await
+}
+
+/*
+ * Editics
+ */
+
+pub async fn workspace_editics_encrypt(
+    workspace: Handle,
+    document: VlobID,
+    cleartext: &[u8],
+) -> Result<(IndexInt, Vec<u8>), WorkspaceEncryptEditicsError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.editics_encrypt(document, cleartext).await
+}
+
+pub async fn workspace_editics_decrypt(
+    workspace: Handle,
+    document: VlobID,
+    key_index: IndexInt,
+    encrypted: &[u8],
+) -> Result<Vec<u8>, WorkspaceDecryptEditicsError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .editics_decrypt(document, key_index, encrypted)
+        .await
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceEditicsGenerateAuthTokenError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub fn workspace_editics_generate_auth_token(
+    workspace: Handle,
+    document: VlobID,
+) -> Result<String, WorkspaceEditicsGenerateAuthTokenError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    Ok(libparsec_client_connection::editics_generate_auth_token(
+        workspace.device(),
+        workspace.realm_id(),
+        document,
+    ))
 }
