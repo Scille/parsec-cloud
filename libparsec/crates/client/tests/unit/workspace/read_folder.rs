@@ -409,22 +409,21 @@ async fn read_folder_with_confined_entries(
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     // Rename foo to foo.tmp
-    
-    
-    
-    let (target_path, expected_egg_txt_confinement_point, expected_spam_confinement_point) = if folder_is_confined {
-        ops.rename_entry_by_id(
-            wksp1_id,
-            "foo".parse().unwrap(),
-            "foo.tmp".parse().unwrap(),
-            MoveEntryMode::NoReplace,
-        )
-        .await
-        .unwrap();
-        ("/foo.tmp".parse().unwrap(), Some(wksp1_id), Some(wksp1_id))
-    } else {
-        ("/foo".parse().unwrap(), Some(wksp1_foo_id), None)
-    };
+
+    let (target_path, expected_egg_txt_confinement_point, expected_spam_confinement_point) =
+        if folder_is_confined {
+            ops.rename_entry_by_id(
+                wksp1_id,
+                "foo".parse().unwrap(),
+                "foo.tmp".parse().unwrap(),
+                MoveEntryMode::NoReplace,
+            )
+            .await
+            .unwrap();
+            ("/foo.tmp".parse().unwrap(), Some(wksp1_id), Some(wksp1_id))
+        } else {
+            ("/foo".parse().unwrap(), Some(wksp1_foo_id), None)
+        };
 
     // Rename egg.txt to egg.txt.tmp
     ops.rename_entry_by_id(
