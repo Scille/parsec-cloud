@@ -26,6 +26,9 @@ harness = false
 name = "integration"
 path = "tests/integration/mod.rs"
 
+[lints]
+workspace = true
+
 [features]
 default = ["manpage", "shell-completion"]
 use-libsodium = ["libparsec_crypto/use-libsodium"]
