@@ -966,8 +966,7 @@
             "failedToListWorkspaces": "Impossible de lister les espaces de travail (raison: {reason}).",
             "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
             "failedToListContent": "Impossible de lister le contenu de ce dossier.",
-            "createFileFailed": "Impossible de créer le fichier.",
-            "createFileFailedAlreadyExists": "Impossible de créer le nouveau fichier car un fichier du même nom existe déjà."
+            "createFileFailed": "Impossible de créer le fichier."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",

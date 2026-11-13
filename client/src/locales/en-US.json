@@ -966,8 +966,7 @@
             "failedToListWorkspaces": "Failed to list the workspaces (reason: {reason}).",
             "seeInExplorerFailed": "Failed to open the selected entry in file explorer.",
             "failedToListContent": "Failed to list the content of this folder.",
-            "createFileFailed": "Failed to create the file.",
-            "createFileFailedAlreadyExists": "Failed to create the new file because a file with the same name already exists."
+            "createFileFailed": "Failed to create the file."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",

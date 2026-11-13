@@ -227,30 +227,23 @@
 </template>
 
 <script setup lang="ts">
-import { getFileIcon, getFileStats } from '@/common/file';
+import { getFileIcon, getFileStats, saveFileContent } from '@/common/file';
 import { DetectedFileType } from '@/common/fileTypes';
 import { copyPathLinkToClipboard } from '@/components/files';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import {
   ClientInfo,
-  closeFile,
-  deleteFile,
   entryStat,
   EntryStatFile,
   FsPath,
   getClientInfo,
   getSystemPath,
-  getTemporaryPath,
   getWorkspaceInfo,
   isDesktop,
   isMobile,
   isWeb,
-  moveEntry,
-  openFile,
   Path,
-  WorkspaceHandle,
   WorkspaceRole,
-  writeFile,
 } from '@/parsec';
 import {
   currentRouteIs,
@@ -265,7 +258,6 @@ import {
 import { EditicsError, EditicsErrorCodes, isEditicsEnabledForDocumentType } from '@/services/editics';
 import { Env } from '@/services/environment';
 import { DuplicatePolicy } from '@/services/fileOperation';
-import { moveWithCounter } from '@/services/fileOperation/operations';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
@@ -754,7 +746,7 @@ async function convertToPdf(): Promise<void> {
     }
 
     try {
-      const savedName = await savePdfToWorkspace(workspaceHandle, destination, data, replace);
+      const savedName = await saveFileContent(workspaceHandle, destination, data, replace);
       informationManager.value.present(
         new Information({
           message: { key: 'fileViewers.pdfSaved', data: { name: savedName } },
@@ -768,47 +760,6 @@ async function convertToPdf(): Promise<void> {
     }
   } finally {
     convertingToPdf.value = false;
-  }
-}
-
-async function savePdfToWorkspace(
-  workspaceHandle: WorkspaceHandle,
-  destination: FsPath,
-  data: Uint8Array,
-  replace: boolean,
-): Promise<string> {
-  const tmpPath = await getTemporaryPath(await Path.parent(destination));
-  const fdResult = await openFile(workspaceHandle, tmpPath, { write: true, createNew: true });
-  if (!fdResult.ok) {
-    throw new Error(`failed to create the file: ${JSON.stringify(fdResult.error)}`);
-  }
-  try {
-    try {
-      const writeResult = await writeFile(workspaceHandle, fdResult.value, 0, data);
-      if (!writeResult.ok) {
-        throw new Error(`failed to write the file: ${JSON.stringify(writeResult.error)}`);
-      }
-    } finally {
-      await closeFile(workspaceHandle, fdResult.value);
-    }
-
-    let finalPath: FsPath | undefined;
-    if (replace) {
-      const moveResult = await moveEntry(workspaceHandle, tmpPath, destination, true);
-      if (!moveResult.ok) {
-        throw new Error(`failed to replace the file: ${JSON.stringify(moveResult.error)}`);
-      }
-      finalPath = destination;
-    } else {
-      finalPath = await moveWithCounter(workspaceHandle, tmpPath, destination);
-      if (!finalPath) {
-        throw new Error('failed to find an available name');
-      }
-    }
-    return (await Path.filename(finalPath)) ?? '';
-  } catch (e: unknown) {
-    await deleteFile(workspaceHandle, tmpPath);
-    throw e;
   }
 }
 

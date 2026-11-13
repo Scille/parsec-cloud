@@ -268,7 +268,7 @@ import {
 
 import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
-import { findAvailableFileName } from '@/common/file';
+import { findAvailableFileName, saveFileContent } from '@/common/file';
 import { FileContentType, OPENABLE_FILES, isFileEditable } from '@/common/fileTypes';
 import {
   EntryCollection,
@@ -1212,37 +1212,18 @@ async function createNewFile(name: EntryName, fileType: FileContentType): Promis
         default:
           return;
       }
-      const tmpPath = await parsec.getTemporaryPath(currentPath.value);
-      const fdResult = await parsec.openFile(workspaceInfo.value.handle, tmpPath, { createNew: true, create: true, write: true });
-      if (!fdResult.ok) {
+
+      try {
+        await saveFileContent(workspaceInfo.value.handle, Path.quickJoin(currentPath.value, name), template, true);
+      } catch (err: any) {
+        window.nativeAPI.log('error', `Failed to create new file: ${err.toString()}`);
         informationManager.value.present(
           new Information({
-            message:
-              fdResult.error.tag === parsec.WorkspaceOpenFileErrorTag.EntryExistsInCreateNewMode
-                ? 'FoldersPage.errors.createFileFailedAlreadyExists'
-                : 'FoldersPage.errors.createFileFailed',
+            message: 'FoldersPage.errors.createFileFailed',
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
         );
-        return;
-      }
-      try {
-        const writeResult = await parsec.writeFile(workspaceInfo.value.handle, fdResult.value, 0, template);
-        if (!writeResult.ok) {
-          informationManager.value.present(
-            new Information({
-              message: 'FoldersPage.errors.createFileFailed',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Toast,
-          );
-          await parsec.deleteFile(workspaceInfo.value.handle, tmpPath);
-        } else {
-          await parsec.rename(workspaceInfo.value.handle, tmpPath, name, true);
-        }
-      } finally {
-        await parsec.closeFile(workspaceInfo.value.handle, fdResult.value);
       }
     } else if (fileType === FileContentType.Text) {
       const path = await parsec.Path.join(currentPath.value, name);

@@ -293,6 +293,12 @@ export async function openDocument(
             }
 
             case 'oo-convert-to-pdf-result': {
+              // When we send a request to convert a document to PDF to the frame,
+              // we add an id and store that id with a function (resolver) that will
+              // be called with the result.
+              // Since we request a conversion and we get the result asynchronously,
+              // this is done to match a request with the result (otherwise two quasi simultaneous
+              // requests resolved at different speeds could end up mixing up their results).
               const resolver = pendingPdfConversions.get(event.data.requestId);
               if (resolver) {
                 pendingPdfConversions.delete(event.data.requestId);
