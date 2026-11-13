@@ -183,7 +183,7 @@ impl AccountVaultItemRegistrationDevice {
         // the items already uploaded in the account vault.
         const LABEL: &str = "REGISTRATION_DEVICE";
         HashDigest::from_data(
-            format!("{}.{}.{}", LABEL, &self.organization_id, self.user_id.hex()).as_bytes(),
+            format!("{}.{}.{}", LABEL, self.organization_id, self.user_id.hex()).as_bytes(),
         )
     }
 }

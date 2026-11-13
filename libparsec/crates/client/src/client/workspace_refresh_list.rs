@@ -155,7 +155,7 @@ pub async fn refresh_workspaces_list(
                 | CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(_)
                 | CertifDecryptCurrentRealmNameError::InvalidKeysBundle(_)
                 => {
-                    let default_name = format!("Workspace {}", &workspace_id.hex()).parse().expect("valid name");
+                    let default_name = format!("Workspace {}", workspace_id.hex()).parse().expect("valid name");
                     Ok((default_name, CertificateBasedInfoOrigin::Placeholder))
                 },
                 CertifDecryptCurrentRealmNameError::Internal(err) => Err(err.context("Cannot retrieve workspace name").into()),
