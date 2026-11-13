@@ -303,7 +303,7 @@ mod base {
             } else {
                 PARSEC_NO_SSL_DEFAULT_PORT
             };
-            let port = port.and_then(|p| if p == default_port { None } else { Some(p) });
+            let port = port.filter(|&p| p != default_port);
 
             Self {
                 // This patch is required because there are still some devices created with the legacy domain
@@ -364,7 +364,7 @@ mod base {
 
         /// create a url in parsec format (i.e.: `parsec3://foo.bar[...]`)
         pub fn to_url(&self) -> Url {
-            let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
+            let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, self.hostname))
                 .expect("hostname already validated");
             url.set_port(self.port).expect("port already validated");
             if !self.use_ssl {
@@ -376,7 +376,7 @@ mod base {
         /// Create a url for http request with an optional path.
         pub fn to_http_url(&self, path: Option<&str>) -> Url {
             let scheme = if self.use_ssl { "https" } else { "http" };
-            let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
+            let mut url = Url::parse(&format!("{}://{}", scheme, self.hostname))
                 .expect("hostname already validated");
             url.set_port(self.port).expect("port already validated");
             let path = path.unwrap_or("");
@@ -1025,7 +1025,7 @@ impl ParsecInvitationAddr {
     /// Return an [Url] that points to the server endpoint for invited commands.
     pub fn to_invited_url(&self) -> Url {
         self.base
-            .to_http_url(Some(&format!("/invited/{}", &self.organization_id)))
+            .to_http_url(Some(&format!("/invited/{}", self.organization_id)))
     }
 }
 

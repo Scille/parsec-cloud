@@ -20,7 +20,7 @@ pub(crate) fn generate_protocol_cmds_family(
 
 fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
     let populate_mod_fn_name = format_ident!("{}_cmds_populate_mod", family.name);
-    let family_mod_name_as_str = &format!("{}_cmds", &family.name);
+    let family_mod_name_as_str = &format!("{}_cmds", family.name);
     let family_mod_name = format_ident!("{}", family_mod_name_as_str);
 
     let (versioned_cmds_populates, versioned_cmds_items): (Vec<TokenStream>, Vec<TokenStream>) =
