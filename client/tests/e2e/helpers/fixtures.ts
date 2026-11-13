@@ -11,7 +11,6 @@ import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { DisplaySize, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 import { CoverageReport } from 'monocart-coverage-reports';
-// @ts-expect-error
 import coverageOptions from '@/../mcr.config.cjs';
 
 const DEV_TOOLS_OFFSET = 400;
