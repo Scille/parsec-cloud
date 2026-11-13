@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import coverageOptions from '@/../mcr.config.cjs';
 import { BrowserContext, Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
@@ -11,8 +12,6 @@ import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { DisplaySize, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 import { CoverageReport } from 'monocart-coverage-reports';
-// @ts-expect-error
-import coverageOptions from '@/../mcr.config.cjs';
 
 const DEV_TOOLS_OFFSET = 400;
 const DEFAULT_INIT_TIMEOUT = 5000;
