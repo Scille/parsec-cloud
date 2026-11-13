@@ -29,6 +29,7 @@ env:
   wasm-pack-version: 0.12.1
   libparsec-cache-version: 1
   UV_EXTRA_ARGS: --verbose
+  NPM_EXTRA_ARGS: --no-fund --no-audit
 
 permissions:
   contents: read
@@ -53,6 +54,9 @@ jobs:
         env:
           # Setting the server addr so that getServerConfig() returns the proper host for openBao
           PARSEC_SERVER_ADDR: parsec3://parsec-testbed-server:6777?no_ssl=true
+    outputs:
+      npm-cache-key: ${{ steps.restore-cache.outputs.cache-matched-key || steps.restore-cache.outputs.cache-primary-key }}
+      npm-cache-path: ${{ steps.cachedata.outputs.path }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         timeout-minutes: 2
@@ -65,16 +69,40 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.node-version }}
-          cache: npm
-          cache-dependency-path: client/package-lock.json
+          package-manager-cache: false
         timeout-minutes: 2
+
+      # Inspired by https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md#caching-packages-data
+      # About how to manually restore cache
+      - name: Gen cache keys + paths
+        id: cachedata
+        run: |
+          arch="$(echo '${{ runner.arch }}' | tr '[:upper:]' '[:lower:]')"
+          base_key="node-cache-${{ runner.os }}-${arch}-npm"
+
+          echo "path=$(npm config get cache)" | tee -a $GITHUB_OUTPUT
+          echo "key=${base_key}-${{ hashFiles('client/package-lock.json', 'client/electron/package-lock.json') }}" | tee -a $GITHUB_OUTPUT
+          echo "restore-key=${base_key}-" | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
+
+      - name: Restore cache
+        id: restore-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
+        with:
+          path: ${{ steps.cachedata.outputs.path }}
+          key: ${{ steps.cachedata.outputs.key }}
+          restore-keys: ${{ steps.cachedata.outputs.restore-key }}
+        timeout-minutes: 2
+
+      - name: Inspect restore cache output
+        run: echo '${{ toJSON(steps.restore-cache.outputs) }}'
 
       - name: Install dependencies
         shell: bash -o pipefail -ex {0}
         run: |
           # Execute 'npm install' until success,
           # This is done that way because sometime some CDN respond with 503
-          until npm install --ignore-scripts --no-audit; do
+          until npm clean-install --ignore-scripts ${{ env.NPM_EXTRA_ARGS }}; do
             echo "Failed install, retrying ...";
           done
           # Failed if package-lock.json was modified
@@ -82,7 +110,7 @@ jobs:
           test -z "$(git status --porcelain package-lock.json)"
           # Prune dependencies present in `node_modules/` not listed in `package-lock.json`
           # Likely older dependencies unlisted but still present in the cache
-          npm prune
+          npm prune ${{ env.NPM_EXTRA_ARGS }}
         working-directory: client
         timeout-minutes: 5
 
@@ -97,7 +125,7 @@ jobs:
         run: |
           # Execute 'npm install' until success,
           # This is done that way because sometime some CDN respond with 503
-          until npm install --ignore-scripts --no-audit; do
+          until npm clean-install --ignore-scripts ${{ env.NPM_EXTRA_ARGS }}; do
             echo "Failed install, retrying ...";
           done
           # Failed if package-lock.json was modified
@@ -105,9 +133,17 @@ jobs:
           test -z "$(git status --porcelain package-lock.json)"
           # Prune dependencies present in `node_modules/` not listed in `package-lock.json`
           # Likely older dependencies unlisted but still present in the cache
-          npm prune
+          npm prune ${{ env.NPM_EXTRA_ARGS }}
         working-directory: client/electron
         timeout-minutes: 5
+
+      - name: Save npm cache
+        if: github.ref == 'refs/heads/master' && steps.restore-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
+        with:
+          path: ${{ steps.cachedata.outputs.path }}
+          key: ${{ steps.cachedata.outputs.key }}
+        timeout-minutes: 2
 
       - name: Check lint with eslint
         run: npm run lint:eslint
@@ -238,8 +274,15 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.node-version }}
-          cache: npm
-          cache-dependency-path: client/package-lock.json
+          # Cache by previous job, will manually restore it.
+          package-manager-cache: false
+        timeout-minutes: 2
+
+      - name: Restore cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
+        with:
+          path: ${{ needs.test-web-app.outputs.npm-cache-path }}
+          key: ${{ needs.test-web-app.outputs.npm-cache-key }}
         timeout-minutes: 2
 
       - name: Setup cache-key
@@ -266,7 +309,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Install client deps
-        run: npm install --ignore-scripts --no-audit
+        run: npm clean-install --ignore-scripts ${{ env.NPM_EXTRA_ARGS }}
         working-directory: client
 
       # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
@@ -334,8 +377,14 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.node-version }}
-          cache: npm
-          cache-dependency-path: client/package-lock.json
+          package-manager-cache: false
+        timeout-minutes: 2
+
+      - name: Restore cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
+        with:
+          path: ${{ needs.test-web-app.outputs.npm-cache-path }}
+          key: ${{ needs.test-web-app.outputs.npm-cache-key }}
         timeout-minutes: 2
 
       - name: Download blob reports from GitHub Actions Artifacts
@@ -369,7 +418,7 @@ jobs:
 
       - name: Install client deps
         if: inputs.enable-coverage
-        run: npm install --ignore-scripts --no-audit
+        run: npm clean-install --ignore-scripts ${{ env.NPM_EXTRA_ARGS }}
         working-directory: client
 
       # The OnlyOffice editor package is huge (~600Mo), we can save ~300Mo by
