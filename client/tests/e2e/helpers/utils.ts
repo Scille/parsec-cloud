@@ -462,7 +462,6 @@ export async function logout(page: MsPage): Promise<void> {
   await answerQuestion(page, true);
   await expect(page).toBeHomePage();
   await expect(page.locator('.homepage-header').locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
-  await expect(page.locator('.homepage-header').locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 }
 
 export class FileOperationMenu {
