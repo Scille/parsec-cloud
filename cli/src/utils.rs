@@ -8,12 +8,12 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::anyhow;
+use anyhow::{Context, anyhow};
 use clap::ValueEnum;
 use dialoguer::FuzzySelect;
 use libparsec::{
     AuthenticatedCmds, AvailableDevice, AvailableDeviceType, DeviceLabel, HumanHandle, LocalDevice,
-    Password, ProxyConfig, SASCode, UserProfile,
+    ParsecAddr, Password, ProxyConfig, SASCode, UserProfile,
     internal::{Client, EventBus},
     list_available_devices,
 };
@@ -193,8 +193,6 @@ pub enum LoadAndUnlockDeviceError {
     LoadDevice(LoadDeviceError),
     /// The device file authentication is not supported
     UnsupportedAuthentication(AvailableDeviceType),
-    /// The device file uses TOTP as secondary protection, which is not supported
-    UnsupportedTOTPAuthentication,
     /// Error while unlocking the device
     UnlockDevice(libparsec::LoadDeviceError),
     /// Internal error
@@ -209,9 +207,6 @@ impl Display for LoadAndUnlockDeviceError {
             LoadAndUnlockDeviceError::LoadDevice(e) => e.fmt(f),
             LoadAndUnlockDeviceError::UnsupportedAuthentication(ty) => {
                 write!(f, "Unsupported device file authentication `{ty:?}`")
-            }
-            LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication => {
-                write!(f, "Unsupported device file authentication `TOTP`")
             }
             LoadAndUnlockDeviceError::UnlockDevice(e) => e.fmt(f),
             LoadAndUnlockDeviceError::Internal(e) => e.fmt(f),
@@ -237,10 +232,11 @@ impl From<LoadDeviceError> for LoadAndUnlockDeviceError {
     }
 }
 
-pub async fn load_and_unlock_device(
+pub async fn get_access_strategy_for_device(
     config_dir: &Path,
     device: Option<String>,
-) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
+    override_server_url: Option<ParsecAddr>,
+) -> Result<DeviceAccessStrategy, LoadAndUnlockDeviceError> {
     log::trace!(
         "Loading device {device} from {dir}",
         dir = config_dir.display(),
@@ -250,23 +246,29 @@ pub async fn load_and_unlock_device(
 
     log::debug!("Loading device {:?}", device.ty);
 
-    if device.totp_opaque_key_id.is_some() {
-        // In theory we should support this authentication method here,
-        // however:
-        // - It is cumbersome since it requires a TOTP challenge involving the server.
-        // - In practice it is a niche usage that will most likely only be used in the GUI.
-        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication);
-    }
+    let totp_protection = if let Some(id) = device.totp_opaque_key_id {
+        let one_time_password = read_password("Enter TOTP for the device:")?;
+        let config = libparsec::ClientConfig::default();
+        let totp_secret = libparsec::totp_fetch_opaque_key(
+            config,
+            override_server_url.unwrap_or(device.server_addr),
+            device.organization_id,
+            device.user_id,
+            id,
+            one_time_password.to_string(),
+        )
+        .await
+        .context("Cannot fetch TOTP secret")?;
+        Some((id, totp_secret))
+    } else {
+        None
+    };
 
-    let access_strategy = match device.ty {
+    let primary_protection = match device.ty {
         AvailableDeviceType::Password => {
             let password = read_password("Enter password for the device:")?;
 
-            DeviceAccessStrategy {
-                key_file: device.key_file_path.clone(),
-                totp_protection: None,
-                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
-            }
+            DevicePrimaryProtectionStrategy::Password { password }
         }
         AvailableDeviceType::PKI { .. } => {
             todo!("read PKI #11270");
@@ -275,11 +277,7 @@ pub async fn load_and_unlock_device(
             //     key_file: device.key_file_path.clone(),
             // }
         }
-        AvailableDeviceType::Keyring => DeviceAccessStrategy {
-            key_file: device.key_file_path.clone(),
-            totp_protection: None,
-            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
-        },
+        AvailableDeviceType::Keyring => DevicePrimaryProtectionStrategy::Keyring,
         AvailableDeviceType::AccountVault => {
             // In theory we should support this authentication method here,
             // however:
@@ -307,6 +305,18 @@ pub async fn load_and_unlock_device(
         }
     };
 
+    Ok(DeviceAccessStrategy {
+        key_file: device.key_file_path,
+        totp_protection,
+        primary_protection,
+    })
+}
+
+pub async fn load_and_unlock_device(
+    config_dir: &Path,
+    device: Option<String>,
+) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
+    let access_strategy = get_access_strategy_for_device(config_dir, device, None).await?;
     let device = libparsec::load_device(config_dir, &access_strategy).await?;
 
     Ok(device)
