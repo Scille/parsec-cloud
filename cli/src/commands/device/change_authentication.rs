@@ -54,11 +54,15 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
             // - It is cumbersome since it requires obtaining the account authentication
             //   info (login&password) from the CLI parameters.
             // - In practice it is only used on web, where CLI is never going to be used.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
+            return Err(
+                LoadAndUnlockDeviceError::UnsupportedAuthentication(Box::new(device.ty)).into(),
+            );
         }
 
         AvailableDeviceType::Recovery => {
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
+            return Err(
+                LoadAndUnlockDeviceError::UnsupportedAuthentication(Box::new(device.ty)).into(),
+            );
         }
 
         AvailableDeviceType::OpenBao { .. } => {
@@ -67,7 +71,9 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
             // - It is cumbersome since it requires opening a browser window for login
             //   and redirect its result to a server listening on localhost...
             // - In practice it is a niche usage that will most likely only be used in the GUI.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
+            return Err(
+                LoadAndUnlockDeviceError::UnsupportedAuthentication(Box::new(device.ty)).into(),
+            );
         }
     };
 

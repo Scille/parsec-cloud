@@ -6,56 +6,45 @@ use crate::TestbedEventNewDevice;
 
 use super::{
     TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewSequesterService,
-    TestbedEventNewUser, TestbedEventUpdateUserProfile,
+    TestbedEventUpdateUserProfile,
 };
 
 pub(super) fn user_id_from_device_id(events: &[TestbedEvent], device: DeviceID) -> UserID {
     events
         .iter()
         .find_map(|e| match e {
-            TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_id: user_id,
-                first_user_first_device_id: device_id,
-                ..
-            })
-            | TestbedEvent::NewUser(TestbedEventNewUser {
-                user_id,
-                first_device_id: device_id,
-                ..
-            })
-            | TestbedEvent::NewDevice(TestbedEventNewDevice {
+            TestbedEvent::BootstrapOrganization(x) if x.first_user_first_device_id == device => {
+                Some(x.first_user_id)
+            }
+            TestbedEvent::NewUser(x) if x.first_device_id == device => Some(x.user_id),
+            TestbedEvent::NewDevice(TestbedEventNewDevice {
                 user_id, device_id, ..
             }) if *device_id == device => Some(*user_id),
             _ => None,
         })
-        .expect("Uknown device ID !")
+        .expect("Unknown device ID !")
 }
 
 /// Return the first device of each non-revoked user.
 pub(super) fn non_revoked_users(
     events: &[TestbedEvent],
 ) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
-    events.iter().filter_map(|e| match e {
-        TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-            first_user_id: user_id,
-            first_user_first_device_id: device_id,
-            ..
-        })
-        | TestbedEvent::NewUser(TestbedEventNewUser {
-            user_id,
-            first_device_id: device_id,
-            ..
-        }) => {
-            let is_revoked = events
-                .iter()
-                .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == *user_id));
-            if is_revoked {
-                None
-            } else {
-                Some((*user_id, *device_id))
+    events.iter().filter_map(|e| {
+        let (user_id, device_id) = match e {
+            TestbedEvent::BootstrapOrganization(x) => {
+                (x.first_user_id, x.first_user_first_device_id)
             }
+            TestbedEvent::NewUser(x) => (x.user_id, x.first_device_id),
+            _ => return None,
+        };
+        let is_revoked = events
+            .iter()
+            .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == user_id));
+        if is_revoked {
+            None
+        } else {
+            Some((user_id, device_id))
         }
-        _ => None,
     })
 }
 
@@ -63,30 +52,25 @@ pub(super) fn non_revoked_users(
 pub(super) fn non_revoked_users_each_devices(
     events: &[TestbedEvent],
 ) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
-    events.iter().filter_map(|e| match e {
-        TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-            first_user_id: user_id,
-            first_user_first_device_id: device_id,
-            ..
-        })
-        | TestbedEvent::NewUser(TestbedEventNewUser {
-            user_id,
-            first_device_id: device_id,
-            ..
-        })
-        | TestbedEvent::NewDevice(TestbedEventNewDevice {
-            user_id, device_id, ..
-        }) => {
-            let is_revoked = events
-                .iter()
-                .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == *user_id));
-            if is_revoked {
-                None
-            } else {
-                Some((*user_id, *device_id))
+    events.iter().filter_map(|e| {
+        let (user_id, device_id) = match e {
+            TestbedEvent::BootstrapOrganization(x) => {
+                (x.first_user_id, x.first_user_first_device_id)
             }
+            TestbedEvent::NewUser(x) => (x.user_id, x.first_device_id),
+            TestbedEvent::NewDevice(TestbedEventNewDevice {
+                user_id, device_id, ..
+            }) => (*user_id, *device_id),
+            _ => return None,
+        };
+        let is_revoked = events
+            .iter()
+            .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == user_id));
+        if is_revoked {
+            None
+        } else {
+            Some((user_id, device_id))
         }
-        _ => None,
     })
 }
 
@@ -94,44 +78,39 @@ pub(super) fn non_revoked_users_each_devices(
 pub(super) fn non_revoked_admins(
     events: &[TestbedEvent],
 ) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
-    events.iter().filter_map(|e| match e {
-        TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-            first_user_id: user_id,
-            first_user_first_device_id: device_id,
-            ..
-        })
-        | TestbedEvent::NewUser(TestbedEventNewUser {
-            user_id,
-            first_device_id: device_id,
-            ..
-        }) => {
-            // Is revoked ?
-            if events
-                .iter()
-                .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == *user_id))
-            {
-                return None;
+    events.iter().filter_map(|e| {
+        let (user_id, device_id) = match e {
+            TestbedEvent::BootstrapOrganization(x) => {
+                (x.first_user_id, x.first_user_first_device_id)
             }
-            // Is admin ?
-            let profile = events
-                .iter()
-                .rev()
-                .find_map(|e| match e {
-                    TestbedEvent::UpdateUserProfile(x) if x.user == *user_id => Some(x.profile),
-                    TestbedEvent::BootstrapOrganization(x) if x.first_user_id == *user_id => {
-                        Some(UserProfile::Admin)
-                    }
-                    TestbedEvent::NewUser(x) if x.user_id == *user_id => Some(x.initial_profile),
-                    _ => None,
-                })
-                .expect("The user must at least have a creation event");
-            if profile == UserProfile::Admin {
-                Some((*user_id, *device_id))
-            } else {
-                None
-            }
+            TestbedEvent::NewUser(x) => (x.user_id, x.first_device_id),
+            _ => return None,
+        };
+        // Is revoked ?
+        if events
+            .iter()
+            .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == user_id))
+        {
+            return None;
         }
-        _ => None,
+        // Is admin ?
+        let profile = events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::UpdateUserProfile(x) if x.user == user_id => Some(x.profile),
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => {
+                    Some(UserProfile::Admin)
+                }
+                TestbedEvent::NewUser(x) if x.user_id == user_id => Some(x.initial_profile),
+                _ => None,
+            })
+            .expect("The user must at least have a creation event");
+        if profile == UserProfile::Admin {
+            Some((user_id, device_id))
+        } else {
+            None
+        }
     })
 }
 
@@ -272,18 +251,14 @@ pub(super) fn assert_device_exists_and_not_revoked(
 
     for event in events.iter().rev() {
         match event {
-            e @ TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_first_device_id: candidate,
-                ..
-            })
-            | e @ TestbedEvent::NewUser(TestbedEventNewUser {
-                first_device_id: candidate,
-                ..
-            }) if *candidate == device => return e,
-            e @ TestbedEvent::NewDevice(TestbedEventNewDevice {
+            TestbedEvent::BootstrapOrganization(x) if x.first_user_first_device_id == device => {
+                return event;
+            }
+            TestbedEvent::NewUser(x) if x.first_device_id == device => return event,
+            TestbedEvent::NewDevice(TestbedEventNewDevice {
                 device_id: candidate,
                 ..
-            }) if *candidate == device => return e,
+            }) if *candidate == device => return event,
             TestbedEvent::RevokeUser(x) if x.user == user_id => {
                 panic!("User {user_id} already revoked !")
             }
@@ -300,14 +275,11 @@ pub(super) fn assert_user_exists_and_not_revoked(
     let mut creation_event = None;
     for event in events.iter() {
         match event {
-            e @ TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_id: candidate,
-                ..
-            })
-            | e @ TestbedEvent::NewUser(TestbedEventNewUser {
-                user_id: candidate, ..
-            }) if *candidate == user => {
-                creation_event = Some(e);
+            TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user => {
+                creation_event = Some(event);
+            }
+            TestbedEvent::NewUser(x) if x.user_id == user => {
+                creation_event = Some(event);
             }
             TestbedEvent::RevokeUser(x) if x.user == user => panic!("User already revoked !"),
             _ => (),
@@ -323,18 +295,14 @@ pub(super) fn assert_device_exists(
     events
         .iter()
         .rev()
-        .find(|e| {
-            matches!(e,
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_first_device_id: candidate,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    first_device_id: candidate, ..
-                })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { device_id: candidate, .. })
-                if *candidate == device
-            )
+        .find(|e| match e {
+            TestbedEvent::BootstrapOrganization(x) => x.first_user_first_device_id == device,
+            TestbedEvent::NewUser(x) => x.first_device_id == device,
+            TestbedEvent::NewDevice(TestbedEventNewDevice {
+                device_id: candidate,
+                ..
+            }) => *candidate == device,
+            _ => false,
         })
         .unwrap_or_else(|| panic!("Device {device} doesn't exist"))
 }
@@ -343,16 +311,10 @@ pub(super) fn assert_user_exists(events: &'_ [TestbedEvent], user: UserID) -> &'
     events
         .iter()
         .rev()
-        .find(|e| {
-            matches!(e,
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: candidate,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    user_id: candidate, ..
-                }) if *candidate == user
-            )
+        .find(|e| match e {
+            TestbedEvent::BootstrapOrganization(x) => x.first_user_id == user,
+            TestbedEvent::NewUser(x) => x.user_id == user,
+            _ => false,
         })
         .unwrap_or_else(|| panic!("User {user} doesn't exist"))
 }
@@ -385,18 +347,11 @@ pub(super) fn assert_user_has_non_deleted_shamir_recovery(
 pub(super) fn get_user_current_profile(events: &'_ [TestbedEvent], user: UserID) -> UserProfile {
     for event in events.iter().rev() {
         match event {
-            TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_id: candidate,
-                ..
-            }) if *candidate == user => {
+            TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user => {
                 return UserProfile::Admin;
             }
-            TestbedEvent::NewUser(TestbedEventNewUser {
-                user_id: candidate,
-                initial_profile,
-                ..
-            }) if *candidate == user => {
-                return *initial_profile;
+            TestbedEvent::NewUser(x) if x.user_id == user => {
+                return x.initial_profile;
             }
             TestbedEvent::UpdateUserProfile(TestbedEventUpdateUserProfile {
                 user: candidate,

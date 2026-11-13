@@ -143,10 +143,10 @@ macro_rules! single_certificate_event {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TestbedEvent {
     // 1) Client/server interaction events producing certificates
-    BootstrapOrganization(TestbedEventBootstrapOrganization),
+    BootstrapOrganization(Box<TestbedEventBootstrapOrganization>),
     NewSequesterService(TestbedEventNewSequesterService),
     RevokeSequesterService(TestbedEventRevokeSequesterService),
-    NewUser(TestbedEventNewUser),
+    NewUser(Box<TestbedEventNewUser>),
     NewDevice(TestbedEventNewDevice),
     UpdateUserProfile(TestbedEventUpdateUserProfile),
     RevokeUser(TestbedEventRevokeUser),
@@ -536,7 +536,7 @@ impl TestbedEventBootstrapOrganization {
     pub(super) fn from_builder(
         builder: &mut TestbedTemplateBuilder,
         first_user_id: UserID,
-    ) -> Self {
+    ) -> Box<Self> {
         // 1) Consistency checks
 
         if builder.check_consistency {
@@ -578,7 +578,7 @@ impl TestbedEventBootstrapOrganization {
             None => device_id.hex().parse().unwrap(),
         };
 
-        Self {
+        Box::new(Self {
             timestamp: builder.counters.next_timestamp(),
             root_signing_key: builder.counters.next_signing_key(),
             sequester_authority: None,
@@ -593,7 +593,7 @@ impl TestbedEventBootstrapOrganization {
             first_user_local_symkey: builder.counters.next_secret_key(),
             first_user_local_password: "P@ssw0rd.".to_string(),
             cache: Arc::default(),
-        }
+        })
     }
 
     pub fn certificates<'a: 'c, 'b: 'c, 'c>(
@@ -915,7 +915,7 @@ impl CrcHash for TestbedEventNewUser {
 }
 
 impl TestbedEventNewUser {
-    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user_id: UserID) -> Self {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user_id: UserID) -> Box<Self> {
         // 1) Consistency checks
 
         if builder.check_consistency {
@@ -962,7 +962,7 @@ impl TestbedEventNewUser {
             None => DeviceLabel::new_redacted(device_id),
         };
 
-        Self {
+        Box::new(Self {
             timestamp: builder.counters.next_timestamp(),
             author,
             initial_profile: UserProfile::Standard,
@@ -977,7 +977,7 @@ impl TestbedEventNewUser {
             local_symkey: builder.counters.next_secret_key(),
             local_password: "P@ssw0rd.".to_string(),
             cache: Arc::default(),
-        }
+        })
     }
 
     pub fn certificates<'a: 'c, 'b: 'c, 'c>(
@@ -1277,17 +1277,11 @@ single_certificate_event!(
     ],
     |e: &TestbedEventNewRealm, t: &TestbedTemplate| {
         let (user_id, author_signkey) = match t.device_creation_event(e.author) {
-            TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_id: user_id,
-                first_user_first_device_signing_key: signing_key,
-                ..
-            })
-            | TestbedEvent::NewUser(TestbedEventNewUser {
-                user_id,
-                first_device_signing_key: signing_key,
-                ..
-            })
-            | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, signing_key, .. }) => (*user_id, signing_key),
+            TestbedEvent::BootstrapOrganization(x) => {
+                (x.first_user_id, &x.first_user_first_device_signing_key)
+            }
+            TestbedEvent::NewUser(x) => (x.user_id, &x.first_device_signing_key),
+            TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, signing_key, .. }) => (*user_id, signing_key),
             _ => unreachable!(),
         };
         let certif = RealmRoleCertificate {
@@ -2747,12 +2741,9 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
             utils::assert_organization_bootstrapped(&builder.events);
             let author_user_id =
                 match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
-                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                        first_user_id: user_id,
-                        ..
-                    })
-                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                    TestbedEvent::NewUser(x) => x.user_id,
+                    TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                     _ => unreachable!(),
                 };
             utils::assert_realm_exists(&builder.events, realm);
@@ -2894,12 +2885,9 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
             utils::assert_organization_bootstrapped(&builder.events);
             let author_user_id =
                 match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
-                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                        first_user_id: user_id,
-                        ..
-                    })
-                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                    TestbedEvent::NewUser(x) => x.user_id,
+                    TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                     _ => unreachable!(),
                 };
             utils::assert_realm_exists(&builder.events, realm);
@@ -3068,12 +3056,9 @@ impl TestbedEventCreateBlock {
             utils::assert_organization_bootstrapped(&builder.events);
             let author_user_id =
                 match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
-                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                        first_user_id: user_id,
-                        ..
-                    })
-                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                    TestbedEvent::NewUser(x) => x.user_id,
+                    TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                     _ => unreachable!(),
                 };
             utils::assert_realm_exists(&builder.events, realm);
@@ -3142,12 +3127,9 @@ impl TestbedEventCreateOpaqueBlock {
             utils::assert_organization_bootstrapped(&builder.events);
             let author_user_id =
                 match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
-                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                        first_user_id: user_id,
-                        ..
-                    })
-                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                    TestbedEvent::NewUser(x) => x.user_id,
+                    TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                     _ => unreachable!(),
                 };
             utils::assert_realm_exists(&builder.events, realm);
@@ -3292,12 +3274,9 @@ impl TestbedEventUserStorageFetchUserVlob {
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
             match utils::assert_device_exists(&builder.events, device) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                TestbedEvent::NewUser(x) => x.user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                 _ => unreachable!(),
             }
         } else {
@@ -3361,12 +3340,9 @@ impl TestbedEventUserStorageFetchRealmCheckpoint {
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
             match utils::assert_device_exists(&builder.events, device) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                TestbedEvent::NewUser(x) => x.user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                 _ => unreachable!(),
             }
         } else {
@@ -3437,12 +3413,9 @@ impl TestbedEventUserStorageLocalUpdate {
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
             match utils::assert_device_exists(&builder.events, device) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                TestbedEvent::NewUser(x) => x.user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                 _ => unreachable!(),
             }
         } else {
@@ -3525,12 +3498,9 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
             let user_id = match utils::assert_device_exists(&builder.events, device) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                TestbedEvent::NewUser(x) => x.user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                 _ => unreachable!(),
             };
             utils::assert_realm_exists(&builder.events, realm);
@@ -3593,12 +3563,9 @@ impl TestbedEventWorkspaceDataStorageFetchFileVlob {
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
             let user_id = match utils::assert_device_exists(&builder.events, device) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                TestbedEvent::NewUser(x) => x.user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                 _ => unreachable!(),
             };
             utils::assert_realm_exists(&builder.events, realm);
@@ -3660,12 +3627,9 @@ impl TestbedEventWorkspaceDataStorageFetchRealmCheckpoint {
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
             let user_id = match utils::assert_device_exists(&builder.events, device) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                TestbedEvent::NewUser(x) => x.user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                 _ => unreachable!(),
             };
             utils::assert_realm_exists(&builder.events, realm);
@@ -3786,12 +3750,9 @@ impl TestbedEventWorkspaceCacheStorageFetchBlock {
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
             let user_id = match utils::assert_device_exists(&builder.events, device) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id,
+                TestbedEvent::NewUser(x) => x.user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
                 _ => unreachable!(),
             };
             utils::assert_realm_exists(&builder.events, realm);

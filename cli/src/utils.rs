@@ -192,7 +192,7 @@ pub enum LoadAndUnlockDeviceError {
     /// Error while loading the device file
     LoadDevice(LoadDeviceError),
     /// The device file authentication is not supported
-    UnsupportedAuthentication(AvailableDeviceType),
+    UnsupportedAuthentication(Box<AvailableDeviceType>),
     /// The device file uses TOTP as secondary protection, which is not supported
     UnsupportedTOTPAuthentication,
     /// Error while unlocking the device
@@ -287,12 +287,12 @@ pub async fn load_and_unlock_device(
             //   info (login&password) from the CLI parameters.
             // - In practice it is only used on web, where CLI is never going to be used.
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
-                device.ty,
+                Box::new(device.ty),
             ));
         }
         AvailableDeviceType::Recovery => {
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
-                device.ty,
+                Box::new(device.ty),
             ));
         }
         AvailableDeviceType::OpenBao { .. } => {
@@ -302,7 +302,7 @@ pub async fn load_and_unlock_device(
             //   and redirect its result to a server listening on localhost...
             // - In practice it is a niche usage that will most likely only be used in the GUI.
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
-                device.ty,
+                Box::new(device.ty),
             ));
         }
     };

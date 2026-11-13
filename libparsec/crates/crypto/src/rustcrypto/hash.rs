@@ -30,7 +30,7 @@ impl std::fmt::Debug for HashDigest {
             formatter,
             "{}({})",
             stringify!(HashDigest),
-            &self.hexdigest()
+            self.hexdigest()
         )
     }
 }
