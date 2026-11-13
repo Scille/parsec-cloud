@@ -22,7 +22,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     const topBar = home.locator('.topbar');
     await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
-    await expect(topBar.locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 
     const container = home.locator('.slider-container');
     await expect(container.locator('#search-input-organization')).toBeVisible();
@@ -289,23 +288,15 @@ msTest('Empty home page default state', { tag: '@important' }, async ({ context 
   await setupNewPage(page, { libparsecMockFunctions: [{ name: 'listAvailableDevices', result: { ok: true, value: [] } }] });
   const container = page.locator('.no-devices');
   await expect(container).toBeVisible();
-  await expect(container.locator('.create-organization-text__title')).toHaveText('New to Parsec?');
-  const createOrgBtn = container.locator('#create-organization-button');
-  await expect(createOrgBtn).toHaveText('Create an organization');
-
-  await expect(container.locator('.invitation').locator('.invitation__title')).toHaveText('You have received an invitation link?');
+  await expect(container.locator('.invitation').locator('.invitation-header__title')).toHaveText('Do you have a Parsec link?');
   const joinBtn = container.locator('.invitation').locator('#join-organization-button');
-  await expect(joinBtn).toHaveText('Join');
+  await expect(joinBtn).toHaveText('Continue');
   await expect(joinBtn).toBeTrulyDisabled();
-  await expect(container.locator('.webAccess').locator('.webAccess-header__title')).toHaveText(
-    'Would you like to access your organization from this browser?',
-  );
-  await expect(container.locator('.webAccess').locator('.webAccess-step')).toBeHidden();
-  await container.locator('.webAccess').locator('.webAccess-header-info').click();
-  await expect(container.locator('.webAccess').locator('.webAccess-step')).toBeVisible();
-  const continueBtn = container.locator('.webAccess').locator('#join-organization-button');
-  await expect(continueBtn).toHaveText('Continue');
-  await expect(continueBtn).toBeTrulyDisabled();
+
+  await expect(container.locator('.other-needs__title')).toHaveText('Looking for something else?');
+  await expect(container.locator('.other-needs-card-header__title')).toHaveText(['Create an organization', 'Try for free']);
+  await expect(container.locator('#create-organization-button')).toHaveText('Create my organization');
+  await expect(container.locator('#trial-organization-button')).toHaveText('Try Parsec');
 
   await page.release();
 });
@@ -324,22 +315,6 @@ msTest('Empty home page create org', async ({ context }) => {
   await page.release();
 });
 
-msTest('Empty home page recover', async ({ context }) => {
-  const page = (await context.newPage()) as MsPage;
-
-  await setupNewPage(page, { skipTestbed: true });
-  const container = page.locator('.no-devices');
-  await expect(container).toBeVisible();
-
-  const recoverBtn = container.locator('.buttons-container').locator('ion-button').nth(1);
-  await expect(page.locator('.choose-recovery-device-modal')).toBeHidden();
-  await recoverBtn.click();
-  await expect(page.locator('.choose-recovery-device-modal')).toBeVisible();
-  await page.locator('.closeBtn').click();
-  await expect(page.locator('.choose-recovery-device-modal')).toBeHidden();
-  await page.release();
-});
-
 msTest('Empty home page join1 with click', async ({ context }) => {
   const page = (await context.newPage()) as MsPage;
 
@@ -350,7 +325,7 @@ msTest('Empty home page join1 with click', async ({ context }) => {
   const joinBtn = container.locator('.invitation').locator('#join-organization-button');
   const linkInput = container.locator('.invitation').locator('ion-input');
   const modal = page.locator('.join-organization-modal');
-  await expect(joinBtn).toHaveText('Join');
+  await expect(joinBtn).toHaveText('Continue');
   await expect(joinBtn).toBeTrulyDisabled();
   // cspell:disable-next-line
   await fillIonInput(linkInput, generateMockInvitationLink(page, 'user'));
@@ -374,56 +349,12 @@ msTest('Empty home page join1 with enter', async ({ context }) => {
   const joinBtn = container.locator('.invitation').locator('#join-organization-button');
   const linkInput = container.locator('.invitation').locator('ion-input');
   const modal = page.locator('.join-organization-modal');
-  await expect(joinBtn).toHaveText('Join');
+  await expect(joinBtn).toHaveText('Continue');
   await expect(joinBtn).toBeTrulyDisabled();
   await expect(modal).toBeHidden();
   await fillIonInput(linkInput, generateMockInvitationLink(page, 'user'));
   await expect(joinBtn).toBeTrulyEnabled();
   await linkInput.locator('input').press('Enter');
-  await expect(modal).toBeVisible();
-  await expect(page).toShowToast('An unexpected error occurred (reason: ClaimerRetrieveInfoErrorInternal).', 'Error');
-  await expect(modal).toBeHidden();
-
-  await page.release();
-});
-
-msTest('Empty home page join2 with click', async ({ context }) => {
-  const page = (await context.newPage()) as MsPage;
-
-  await setupNewPage(page, { skipTestbed: true });
-  const container = page.locator('.no-devices');
-  await expect(container).toBeVisible();
-
-  const continueBtn = container.locator('.webAccess').locator('#join-organization-button');
-  const webLinkInput = container.locator('.webAccess').locator('ion-input');
-  const modal = page.locator('.join-organization-modal');
-  await expect(continueBtn).toBeTrulyDisabled();
-  await fillIonInput(webLinkInput, generateMockInvitationLink(page, 'user'));
-  await expect(continueBtn).toBeTrulyEnabled();
-  await expect(modal).toBeHidden();
-  await continueBtn.click();
-  await expect(modal).toBeVisible();
-  await expect(page).toShowToast('An unexpected error occurred (reason: ClaimerRetrieveInfoErrorInternal).', 'Error');
-  await expect(modal).toBeHidden();
-
-  await page.release();
-});
-
-msTest('Empty home page join2 with enter', async ({ context }) => {
-  const page = (await context.newPage()) as MsPage;
-
-  await setupNewPage(page, { skipTestbed: true });
-  const container = page.locator('.no-devices');
-  await expect(container).toBeVisible();
-
-  const continueBtn = container.locator('.webAccess').locator('#join-organization-button');
-  const webLinkInput = container.locator('.webAccess').locator('ion-input');
-  const modal = page.locator('.join-organization-modal');
-  await expect(continueBtn).toBeTrulyDisabled();
-  await fillIonInput(webLinkInput, generateMockInvitationLink(page, 'user'));
-  await expect(continueBtn).toBeTrulyEnabled();
-  await expect(modal).toBeHidden();
-  await webLinkInput.locator('input').press('Enter');
   await expect(modal).toBeVisible();
   await expect(page).toShowToast('An unexpected error occurred (reason: ClaimerRetrieveInfoErrorInternal).', 'Error');
   await expect(modal).toBeHidden();

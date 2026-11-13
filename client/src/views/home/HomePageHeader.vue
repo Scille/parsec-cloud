@@ -51,9 +51,6 @@
           <ion-text class="topbar-left-text__title">
             {{ $msTranslate('HomePage.topbar.welcome') }}
           </ion-text>
-          <ion-text class="topbar-left-text__subtitle">
-            {{ $msTranslate('HomePage.organizationList.title') }}
-          </ion-text>
         </div>
         <!-- back button -->
         <ion-button

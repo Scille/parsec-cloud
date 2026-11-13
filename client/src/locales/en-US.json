@@ -285,29 +285,26 @@
         },
         "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",
         "noDevices": {
-            "titleCreateOrga": "New to Parsec?",
-            "titleInvitation": "You have received an invitation link?",
-            "invitationLink": "Enter the invitation link",
-            "invitationJoin": "Join",
-            "subtitle": "Enjoy a cloud experience with the guarantee that your data belongs to you."
-        },
-        "webAccess": {
-            "title": "Would you like to access your organization from this browser?",
-            "subtitle": "If you have already joined an organization on Parsec, follow these steps to access it from this browser:",
-            "step": {
-                "showButton": "Show steps",
-                "hideButton": "Hide steps",
-                "one": "Launch <b>Parsec</b> (desktop app) and <b>log in</b> to your organization.",
-                "two": "From your account menu (top right), select <b>My devices</b>, then click on <b>Add New Device</b> and <b>copy the link</b>.",
-                "three": "<b>Paste the link</b> below and follow the instructions to set up your web browser."
+            "link": {
+                "title": "Do you have a Parsec link?",
+                "subtitle": "Paste it to join an organization or add this device.",
+                "placeholder": "Paste your link here",
+                "continue": "Continue",
+                "paste": "Paste from clipboard"
             },
-            "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
-            "joinButton": "Continue",
-            "info": "Parsec securely stores your access keys in your browser. Make sure that browser storage is enabled and that it is not deleted when you close your browser ({more}).",
-            "more": "Learn more"
+            "otherNeeds": "Looking for something else?",
+            "create": {
+                "title": "Create an organization",
+                "description": "Set up your organization to secure your data and your collaborators' data.",
+                "button": "Create my organization"
+            },
+            "trial": {
+                "title": "Try for free",
+                "description": "Try all features for <b>15 days</b>, with no commitment and no credit card required.",
+                "button": "Try Parsec"
+            }
         },
         "lostDevice": "Lost your access?",
-        "recoverDevice": "Recover my session",
         "shamir": {
             "invalidLink": "Not a valid recovery link.",
             "noAuthentication": "The recovery was stopped because no authentication method was chosen.",
