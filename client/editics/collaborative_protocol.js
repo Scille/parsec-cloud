@@ -42,13 +42,15 @@
 // standard Web APIs. So we only use those APIs in the wrapper functions defined
 // here (and that are going to be mocked during the tests).
 
+const [textEncoder, textDecoder] = [new TextEncoder(), new TextDecoder()];
+
 /**
  * UTF-8 encode a JS string into bytes (standard Web API: `TextEncoder`).
  * @param {string} s
  * @returns {Uint8Array}
  */
 function bytesFromStr(s) {
-  return new TextEncoder().encode(s);
+  return textEncoder.encode(s);
 }
 
 /**
@@ -57,7 +59,7 @@ function bytesFromStr(s) {
  * @returns {string}
  */
 function bytesToStr(bytes) {
-  return new TextDecoder().decode(bytes);
+  return textDecoder.decode(bytes);
 }
 
 // ---------------------------------------------------------------------------
