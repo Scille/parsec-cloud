@@ -24,9 +24,9 @@ module.exports = {
   // wasn't actually used, so we zero out the module-scope range too rather than let an
   // imprecise sourcemap position (Vue templates aren't JS, so mapping is approximate) report
   // stray template lines as covered.
-  onEntry: (entry) => {
-    const render = entry.functions?.find((fn) => fn.functionName === '_sfc_render');
-    const topLevel = entry.functions?.find((fn) => !fn.functionName);
+  onEntry: (/** @type {any} */ entry) => {
+    const render = entry.functions?.find((/** @type {any} */ fn) => fn.functionName === '_sfc_render');
+    const topLevel = entry.functions?.find((/** @type {any} */ fn) => !fn.functionName);
     if (render && topLevel && render.ranges[0]?.count === 0) {
       for (const range of topLevel.ranges) {
         range.count = 0;
