@@ -98,7 +98,7 @@ impl GenData {
                 match (nested_type.fields, nested_type.variants, nested_type.discriminant_field) {
                     (None, Some(variants), None) => {
                         let variants = variants.into_iter().map(|v| {
-                            assert!(v.fields.is_none(), "`{}::{}` is supposed to be a literal union, but has fields ! (missing `discriminant_field` ?)", &nested_type.name, v.discriminant_value);
+                            assert!(v.fields.is_none(), "`{}::{}` is supposed to be a literal union, but has fields ! (missing `discriminant_field` ?)", nested_type.name, v.discriminant_value);
                             (v.name, v.discriminant_value)
                         }).collect();
                         GenDataNestedType::LiteralsUnion {
@@ -139,7 +139,7 @@ impl GenData {
                         }
                     }
                     _ => {
-                        panic!("Nested type {:?} is neither union nor struct. Union should have `variants`&`discriminant_field`, Struct should have `fields`.", &nested_type.name);
+                        panic!("Nested type {:?} is neither union nor struct. Union should have `variants`&`discriminant_field`, Struct should have `fields`.", nested_type.name);
                     },
                 }
             }).collect();

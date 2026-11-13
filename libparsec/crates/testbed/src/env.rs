@@ -1245,9 +1245,9 @@ pub async fn test_new_account(
     .dump_and_encrypt(&auth_method_secret_key);
     let config = format!(
         "{}\n{}\n{}",
-        &auth_method_id.hex(),
-        &data_encoding::BASE64.encode(auth_method_mac_key.as_ref()),
-        &data_encoding::BASE64.encode(vault_key_access.as_ref()),
+        auth_method_id.hex(),
+        data_encoding::BASE64.encode(auth_method_mac_key.as_ref()),
+        data_encoding::BASE64.encode(vault_key_access.as_ref()),
     );
     let response = HTTP_CLIENT
         .post(url)

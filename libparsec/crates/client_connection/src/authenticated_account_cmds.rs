@@ -240,12 +240,12 @@ fn generate_authorization_header_value(auth_method: &AccountAuthMethod, now: Dat
     let timestamp = now.as_timestamp_seconds().to_string();
     let header_and_body = format!(
         "{}.{}.{}",
-        PARSEC_AUTH_METHOD, &auth_method_id_hex, &timestamp
+        PARSEC_AUTH_METHOD, auth_method_id_hex, timestamp
     );
     let signature = auth_method.mac_key.mac_512(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 
-    format!("Bearer {}.{}", &header_and_body, &b64_signature)
+    format!("Bearer {}.{}", header_and_body, b64_signature)
 }
 
 #[cfg(test)]

@@ -360,11 +360,11 @@ fn generate_authorization_header_value(
 ) -> String {
     let author_id_hex = author.hex();
     let timestamp = now.as_timestamp_seconds().to_string();
-    let header_and_body = format!("{}.{}.{}", PARSEC_AUTH_METHOD, &author_id_hex, &timestamp);
+    let header_and_body = format!("{}.{}.{}", PARSEC_AUTH_METHOD, author_id_hex, timestamp);
     let signature = author_signing_key.sign_only_signature(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 
-    format!("Bearer {}.{}", &header_and_body, &b64_signature)
+    format!("Bearer {}.{}", header_and_body, b64_signature)
 }
 
 #[cfg(test)]

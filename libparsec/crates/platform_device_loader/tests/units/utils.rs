@@ -273,7 +273,7 @@ impl OpenBaoDeviceOperations for MockedOpenBaoOperations {
     ) -> PinBoxFutureResult<(String, SecretKey), OpenBaoOperationsUploadOpaqueKeyError> {
         let key_path = format!(
             "{}/{}",
-            &self.openbao_entity_id,
+            self.openbao_entity_id,
             uuid::Uuid::new_v4().as_simple()
         );
         let key = key_from_openbao_ciphertext_key_path(&key_path);
