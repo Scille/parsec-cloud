@@ -26,8 +26,9 @@ pub use transactions::{
     CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
     FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode, OpenOptions,
     OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
-    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
-    WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceDecryptEditicsError, WorkspaceEncryptEditicsError, WorkspaceFdCloseError,
+    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
+    WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
     WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
@@ -622,6 +623,33 @@ impl WorkspaceOps {
             candidate_view_key,
         )
         .await
+    }
+
+    /// Encrypt an arbitrary payload (original content archive, change fragment,
+    /// cursor, message) as part of an editics collaborative document edition session.
+    ///
+    /// This is used to translate an OnlyOffice protocol client event into the
+    /// editics protocol.
+    pub async fn editics_encrypt(
+        &self,
+        document_id: VlobID,
+        cleartext: &[u8],
+    ) -> Result<(IndexInt, Vec<u8>), WorkspaceEncryptEditicsError> {
+        transactions::editics_encrypt(self, document_id, cleartext).await
+    }
+
+    /// Decrypt an arbitrary payload (original content archive, change fragment,
+    /// cursor, message) as part of an editics collaborative document edition session.
+    ///
+    /// This is used to translate an editics protocol server event into the OnlyOffice
+    /// protocol.
+    pub async fn editics_decrypt(
+        &self,
+        document_id: VlobID,
+        key_index: IndexInt,
+        encrypted: &[u8],
+    ) -> Result<Vec<u8>, WorkspaceDecryptEditicsError> {
+        transactions::editics_decrypt(self, document_id, key_index, encrypted).await
     }
 
     pub async fn save_and_sync_file_with_origin(
