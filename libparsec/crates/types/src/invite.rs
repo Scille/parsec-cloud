@@ -115,8 +115,8 @@ impl Display for GreeterOrClaimer {
 }
 
 /*
-* Cancel greeting attempt reason
-*/
+ * Cancel greeting attempt reason
+ */
 
 #[derive(Debug, Clone)]
 pub struct CancelledGreetingAttemptReasonParseError;
