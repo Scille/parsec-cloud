@@ -2600,6 +2600,24 @@ export type ClientListUsersError =
   | ClientListUsersErrorInternal
   | ClientListUsersErrorStopped
 
+// ClientListWorkspaceTimelineError
+export enum ClientListWorkspaceTimelineErrorTag {
+    Internal = 'ClientListWorkspaceTimelineErrorInternal',
+    Stopped = 'ClientListWorkspaceTimelineErrorStopped',
+}
+
+export interface ClientListWorkspaceTimelineErrorInternal {
+    tag: ClientListWorkspaceTimelineErrorTag.Internal
+    error: string
+}
+export interface ClientListWorkspaceTimelineErrorStopped {
+    tag: ClientListWorkspaceTimelineErrorTag.Stopped
+    error: string
+}
+export type ClientListWorkspaceTimelineError =
+  | ClientListWorkspaceTimelineErrorInternal
+  | ClientListWorkspaceTimelineErrorStopped
+
 // ClientListWorkspaceUserRoleChangesError
 export enum ClientListWorkspaceUserRoleChangesErrorTag {
     Internal = 'ClientListWorkspaceUserRoleChangesErrorInternal',
@@ -6834,6 +6852,61 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom
   | WorkspaceStorageCacheSizeDefault
 
+// WorkspaceTimelineEntry
+export enum WorkspaceTimelineEntryTag {
+    Archived = 'WorkspaceTimelineEntryArchived',
+    Created = 'WorkspaceTimelineEntryCreated',
+    DeletionPlanned = 'WorkspaceTimelineEntryDeletionPlanned',
+    Renamed = 'WorkspaceTimelineEntryRenamed',
+    Restored = 'WorkspaceTimelineEntryRestored',
+    UserRoleChanged = 'WorkspaceTimelineEntryUserRoleChanged',
+}
+
+export interface WorkspaceTimelineEntryArchived {
+    tag: WorkspaceTimelineEntryTag.Archived
+    timestamp: DateTime
+    author: DeviceID
+}
+export interface WorkspaceTimelineEntryCreated {
+    tag: WorkspaceTimelineEntryTag.Created
+    timestamp: DateTime
+    author: DeviceID
+    initialName: EntryName | null
+}
+export interface WorkspaceTimelineEntryDeletionPlanned {
+    tag: WorkspaceTimelineEntryTag.DeletionPlanned
+    timestamp: DateTime
+    author: DeviceID
+    deletionDate: DateTime
+}
+export interface WorkspaceTimelineEntryRenamed {
+    tag: WorkspaceTimelineEntryTag.Renamed
+    timestamp: DateTime
+    author: DeviceID
+    previousName: EntryName | null
+    newName: EntryName | null
+}
+export interface WorkspaceTimelineEntryRestored {
+    tag: WorkspaceTimelineEntryTag.Restored
+    timestamp: DateTime
+    author: DeviceID
+}
+export interface WorkspaceTimelineEntryUserRoleChanged {
+    tag: WorkspaceTimelineEntryTag.UserRoleChanged
+    timestamp: DateTime
+    author: DeviceID
+    userId: UserID
+    previousRole: RealmRole | null
+    newRole: RealmRole | null
+}
+export type WorkspaceTimelineEntry =
+  | WorkspaceTimelineEntryArchived
+  | WorkspaceTimelineEntryCreated
+  | WorkspaceTimelineEntryDeletionPlanned
+  | WorkspaceTimelineEntryRenamed
+  | WorkspaceTimelineEntryRestored
+  | WorkspaceTimelineEntryUserRoleChanged
+
 // WorkspaceWatchEntryOneShotError
 export enum WorkspaceWatchEntryOneShotErrorTag {
     EntryNotFound = 'WorkspaceWatchEntryOneShotErrorEntryNotFound',
@@ -7176,6 +7249,10 @@ export interface LibParsecPlugin {
         client: Handle,
         skip_revoked: boolean
     ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+    clientListWorkspaceTimeline(
+        client: Handle,
+        realm_id: VlobID
+    ): Promise<Result<Array<WorkspaceTimelineEntry>, ClientListWorkspaceTimelineError>>
     clientListWorkspaceUserRoleChanges(
         client: Handle,
         realm_id: VlobID,

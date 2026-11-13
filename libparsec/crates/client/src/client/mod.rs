@@ -83,13 +83,14 @@ pub use crate::certif::{
     CertifGetUserInfoError as ClientGetUserInfoError,
     CertifListUserDevicesError as ClientListUserDevicesError,
     CertifListUsersError as ClientListUsersError,
+    CertifListWorkspaceTimelineError as ClientListWorkspaceTimelineError,
     CertifListWorkspaceUserRoleChangesError as ClientListWorkspaceUserRoleChangesError,
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
     CertifRevokeUserError as ClientRevokeUserError,
     CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError,
     CertifUpdateUserProfileError as ClientUserUpdateProfileError, DeviceInfo,
-    RequestedRealmArchivingConfiguration, UserInfo, WorkspaceUserAccessInfo,
-    WorkspaceUserRoleChange,
+    RequestedRealmArchivingConfiguration, UserInfo, WorkspaceTimelineEntry,
+    WorkspaceUserAccessInfo, WorkspaceUserRoleChange,
 };
 pub use crate::invite::{
     AcceptAsyncEnrollmentError as ClientAcceptAsyncEnrollmentError,
@@ -420,6 +421,17 @@ impl Client {
     ) -> Result<Vec<WorkspaceUserRoleChange>, ClientListWorkspaceUserRoleChangesError> {
         self.certificates_ops
             .list_workspace_user_role_changes(realm_id, user_id)
+            .await
+    }
+
+    /// List all events (creation, sharing, renaming, archiving etc.) that occurred
+    /// on a given realm, ordered by timestamp (oldest first).
+    pub async fn list_workspace_timeline(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<Vec<WorkspaceTimelineEntry>, ClientListWorkspaceTimelineError> {
+        self.certificates_ops
+            .list_workspace_timeline(realm_id)
             .await
     }
 
