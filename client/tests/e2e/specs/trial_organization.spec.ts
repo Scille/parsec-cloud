@@ -10,7 +10,6 @@ msTest('Homepage with trial orgs', async ({ context }) => {
 
   const topBar = page.locator('.topbar');
   await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
-  await expect(topBar.locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 
   await page.release();
 });

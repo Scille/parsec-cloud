@@ -38,7 +38,7 @@
                   @join-organization-click="onJoinOrganizationClicked"
                   @join-organization-with-link-click="openJoinByLinkModal"
                   @bootstrap-organization-with-link-click="openCreateOrganizationModal"
-                  @recover-click="openChooseRecoveryModal"
+                  @trial-click="openTrialOrganizationCreation"
                   @create-or-join-organization-click="openCreateOrJoin"
                   @invitation-click="onInvitationClicked"
                   @join-request-click="onJoinRequestClicked"
@@ -131,12 +131,13 @@ import {
 } from '@/parsec';
 import { AvailableDeviceTypePKI, TotpFetchOpaqueKeyErrorTag } from '@/plugins/libparsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
+import { Env } from '@/services/environment';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { OpenBaoClient } from '@/services/openBao';
-import { ServerType, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
+import { ServerType, currentLocationIsTrialServer, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
 import { AccountSettingsTabs } from '@/views/account/types';
@@ -651,6 +652,14 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+  }
+}
+
+async function openTrialOrganizationCreation(): Promise<void> {
+  if (isWeb() && !currentLocationIsTrialServer() && (window as any).TESTING !== true) {
+    await Env.Links.openUrl(`https://${Env.getTrialServers()[0]}/client/home?createOrg=trial`);
+  } else {
+    await openCreateOrganizationModal(undefined, ServerType.Trial);
   }
 }
 
