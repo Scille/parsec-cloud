@@ -62,6 +62,8 @@ function bytesToStr(bytes) {
   return textDecoder.decode(bytes);
 }
 
+const CRYPTO_BATCH_SIZE = 64;
+
 // ---------------------------------------------------------------------------
 // EditicsTranslator
 // ---------------------------------------------------------------------------
@@ -82,10 +84,15 @@ function bytesToStr(bytes) {
 
 /**
  * The libparsec operations the translator depends on, provided by the integrator.
+ *
+ * The crypto operations are batched: a call carries all the payloads of a
+ * batch at once (preserving their order, and failing as a whole), so an event
+ * with many fragments doesn't cost one libparsec request per fragment. A
+ * decrypt item is a `(author device id, key index, ciphertext)` tuple.
  * @typedef {Object} EditicsLibparsecDeps
  * @property {(deviceIdHex: string) => Promise<EditicsLibparsecResult<string>>} getHumanLabelFromDeviceId
- * @property {(cleartext: Uint8Array) => Promise<[number, Uint8Array]>} encrypt
- * @property {(authorDeviceId: string, keyIndex: number, ciphertext: Uint8Array) => Promise<EditicsLibparsecResult<Uint8Array>>} decrypt
+ * @property {(cleartexts: Uint8Array[]) => Promise<Array<[number, Uint8Array]>>} encryptBatch
+ * @property {(items: Array<[string, number, Uint8Array]>) => Promise<EditicsLibparsecResult<Uint8Array[]>>} decryptBatch
  *
  * @typedef {Object} EditicsTranslatorConfig
  * @property {string} workspaceId - WorkspaceID (VlobID) hex.
@@ -180,6 +187,77 @@ class EditicsTranslator {
     return `${deviceId}${indexUser}`;
   }
 
+  // --- Session payload crypto ----------------------------------------------
+
+  /**
+   * @param {Uint8Array} cleartext
+   * @returns {Promise<[number, Uint8Array]>} (key index, ciphertext)
+   */
+  async _encrypt(cleartext) {
+    const [[keyIndex, cipherText]] = await this.libparsec.encryptBatch([cleartext]);
+    return [keyIndex, cipherText];
+  }
+
+  /**
+   * @param {string} authorDeviceId
+   * @param {number} keyIndex
+   * @param {string} b64CipherText
+   * @returns {Promise<EditicsLibparsecResult<Uint8Array>>}
+   */
+  async _decrypt(authorDeviceId, keyIndex, b64CipherText) {
+    const result = await this.libparsec.decryptBatch([[authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText)]]);
+    if (!result.ok) {
+      return result;
+    }
+    return { ok: true, value: result.value[0] };
+  }
+
+  /**
+   * Convoluted way to encrypt&cook a list of items:
+   * - Encryption is done outside of our iframe (which causes communication latency),
+   *   so we send the operation in batches.
+   * - `prepareItem` & `cookBatch` are used to reduce memory footprint by avoiding
+   *   allowing temporary data to be reclaimed by the GC early.
+   * @template T
+   * @param {T[]} items items to encrypt, gets altered (to free its items ASAP)
+   * @param {(item: T) => Uint8Array} prepareItem convert one item into the cleartext to be encrypted
+   * @param {(batch: Array<[number, Uint8Array]>) => void} cookBatch convert&collect a batch of ciphertexts into the final data
+   */
+  async _encryptInBatches(items, prepareItem, cookBatch) {
+    for (let i = 0; i < items.length; i += CRYPTO_BATCH_SIZE) {
+      const chunk = items.slice(i, i + CRYPTO_BATCH_SIZE);
+      cookBatch(await this.libparsec.encryptBatch(chunk.map(prepareItem)));
+      // Allows early GC reclaim of used items (as it is likely there are referenced once)
+      /** @type {unknown[]} */ (items).fill(null, i, i + chunk.length);
+    }
+  }
+
+  /**
+   * Convoluted way to decrypt&cook a list of items:
+   * - Encryption is done outside of our iframe (which causes communication latency),
+   *   so we send the operation in batches.
+   * - `prepareItem` & `cookBatch` are used to reduce memory footprint by avoiding
+   *   allowing temporary data to be reclaimed by the GC early.
+   * @template T
+   * @param {T[]} items items to decrypt, gets altered (to free its items ASAP)
+   * @param {(item: T) => [string, number, Uint8Array]} prepareItem convert one item into the ciphertext to be decrypted
+   * @param {(chunk: T[], cleartexts: Uint8Array[]) => void} cookBatch convert&collect a batch of cleartexts into the final data
+   * @returns {Promise<EditicsLibparsecResult<null>>} `null` on success, the libparsec error otherwise
+   */
+  async _decryptInBatches(items, prepareItem, cookBatch) {
+    for (let i = 0; i < items.length; i += CRYPTO_BATCH_SIZE) {
+      const chunk = items.slice(i, i + CRYPTO_BATCH_SIZE);
+      const result = await this.libparsec.decryptBatch(chunk.map(prepareItem));
+      if (!result.ok) {
+        return result;
+      }
+      cookBatch(chunk, result.value);
+      // Allows early GC reclaim of used items (as it is likely there are referenced once)
+      /** @type {unknown[]} */ (items).fill(null, i, i + chunk.length);
+    }
+    return { ok: true, value: null };
+  }
+
   // --- Client events translation -------------------------------------------
 
   /**
@@ -243,7 +321,7 @@ class EditicsTranslator {
       }
 
       case 'message': {
-        const [msgKeyIndex, msgCipherText] = await this.libparsec.encrypt(bytesFromStr(oo.message));
+        const [msgKeyIndex, msgCipherText] = await this._encrypt(bytesFromStr(oo.message));
         return {
           ok: true,
           value: {
@@ -257,7 +335,7 @@ class EditicsTranslator {
         // OnlyOffice provides the cursor as a base64-encoded payload in a
         // custom format (e.g. `"16;CAAAADEAMQAzADcAAAAAAA=="`).
         // We consider this format opaque and encrypt it as-is.
-        const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(oo.cursor));
+        const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(oo.cursor));
         return {
           ok: true,
           value: {
@@ -340,16 +418,26 @@ class EditicsTranslator {
     // OnlyOffice editor is always configured in JSON change mode (i.e.
     // `binaryChanges: false`), so `changes` is a JSON-serialized array of
     // `<cleartext length>;<base64(cleartext)>` fragments.
+    /** @type {string[]} */
     const fragments = JSON.parse(/** @type string */ (oo.changes));
+    // `oo.changes` is potentially a big buffer, and we no longer need it.
+    // Release its likely only reference, so GC can reclaim its memory.
+    /** @type {any} */ (oo).changes = null;
     /** @type {[number, string][]} */
     const encryptedChanges = [];
-    for (const fragment of fragments) {
-      // The length prefix is redundant with the base64 payload, only the
-      // base64 part carries information.
-      const bytes = Uint8Array.fromBase64(fragment.slice(fragment.indexOf(';') + 1));
-      const [keyIndex, cipherText] = await this.libparsec.encrypt(bytes);
-      encryptedChanges.push([keyIndex, cipherText.toBase64()]);
-    }
+    await this._encryptInBatches(
+      fragments,
+      (fragment) => {
+        // The length prefix is redundant with the base64 payload, only the
+        // base64 part carries information.
+        return Uint8Array.fromBase64(fragment.slice(fragment.indexOf(';') + 1));
+      },
+      (batch) => {
+        for (const [keyIndex, cipherText] of batch) {
+          encryptedChanges.push([keyIndex, cipherText.toBase64()]);
+        }
+      },
+    );
 
     // In OnlyOffice protocol, the `excelAdditionalInfo` (despite its name) is
     // carried by all the editor types.
@@ -381,7 +469,7 @@ class EditicsTranslator {
         if (key !== 'indexCols' && key !== 'indexRows') cursorPart[key] = parsed[key];
       }
       if (Object.keys(cursorPart).length > 0) {
-        const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(JSON.stringify(cursorPart)));
+        const [keyIndex, cipherText] = await this._encrypt(bytesFromStr(JSON.stringify(cursorPart)));
         encryptedCursor = [keyIndex, cipherText.toBase64()];
       }
     }
@@ -638,35 +726,46 @@ class EditicsTranslator {
   }
 
   /**
+   * Decrypt each change and rebuild its OnlyOffice change entry: the OnlyOffice
+   * editor is always configured in JSON change mode (i.e. `binaryChanges:
+   * false`), so the `change` field is a JSON-serialized
+   * `<cleartext length>;<base64(cleartext)>` fragment.
+   * @param {Array<{author: EditicsParticipantIdentity, time: EditicsTimestampMs, encryptedChange: EditicsEncryptedContent}>} changes
+   * @returns {Promise<EditicsResult<Array<{
+   *     docid: string,
+   *     change: string,
+   *     time: EditicsTimestampMs,
+   *     user: string,
+   *     useridoriginal: string,
+   *   }>>>}
+   */
+  async _cookChangeEntries(changes) {
+    /** @type {Array<{docid: string, change: string, time: EditicsTimestampMs, user: string, useridoriginal: string}>} */
+    const entries = [];
+    const result = await this._decryptInBatches(
+      changes,
+      (chunk) => [chunk.author[0], chunk.encryptedChange[0], Uint8Array.fromBase64(chunk.encryptedChange[1])],
+      (chunk, cleartexts) => {
+        for (let j = 0; j < chunk.length; j++) {
+          entries.push({
+            docid: this.docId,
+            change: JSON.stringify(`${cleartexts[j].byteLength};${cleartexts[j].toBase64()}`),
+            time: chunk[j].time,
+            user: this._onlyofficeUserId(chunk[j].author),
+            useridoriginal: chunk[j].author[0],
+          });
+        }
+      },
+    );
+    return result.ok ? { ok: true, value: entries } : result;
+  }
+
+  /**
    * @param {EditicsServerEventAuthChanges} editics
    * @returns {Promise<EditicsResult<OOServerEventAuthChanges>>}
    */
   async _cookAuthChanges(editics) {
-    const changes = this._collectResults(
-      await Promise.all(
-        editics.changes.map(async (c) => {
-          const [authorDeviceId, _authorIndexUser] = c.author;
-          const [keyIndex, b64CipherText] = c.encryptedChange;
-          const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
-          if (!cleartext.ok) {
-            return cleartext;
-          }
-          return {
-            ok: true,
-            value: {
-              docid: this.docId,
-              // OnlyOffice editor is always configured in JSON change mode (i.e.
-              // `binaryChanges: false`), so `changes` is a JSON-serialized array of
-              // `<cleartext length>;<base64(cleartext)>` fragments.
-              change: JSON.stringify(`${cleartext.value.byteLength};${cleartext.value.toBase64()}`),
-              time: c.time,
-              user: this._onlyofficeUserId(c.author),
-              useridoriginal: authorDeviceId,
-            },
-          };
-        }),
-      ),
-    );
+    const changes = await this._cookChangeEntries(editics.changes);
     if (!changes.ok) {
       return changes;
     }
@@ -685,33 +784,37 @@ class EditicsTranslator {
    *   }>>>}
    */
   async _cookMessageEntries(messages) {
-    return this._collectResults(
-      await Promise.all(
-        messages.map(async (m) => {
-          const [authorDeviceId, _authorIndexUser] = m.author;
-          const [keyIndex, b64CipherText] = m.encryptedMessage;
-          const username = await this.getHumanLabelFromDeviceId(authorDeviceId);
-          if (!username.ok) {
-            return username;
-          }
-          const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
-          if (!cleartext.ok) {
-            return cleartext;
-          }
-          return {
-            ok: true,
-            value: {
-              docid: this.docId,
-              message: bytesToStr(cleartext.value),
-              time: m.time,
-              user: this._onlyofficeUserId(m.author),
-              useridoriginal: authorDeviceId,
-              username: username.value,
-            },
-          };
-        }),
-      ),
+    /** @type {string[]} */
+    const usernames = [];
+    for (const m of messages) {
+      const username = await this.getHumanLabelFromDeviceId(m.author[0]);
+      if (!username.ok) {
+        return username;
+      }
+      usernames.push(username.value);
+    }
+    /** @type {Array<{docid: string, message: string, time: number, user: string, useridoriginal: string, username: string}>} */
+    const entries = [];
+    // The user names have been resolved for the whole event, so `cook` keeps
+    // a cursor over them (the batches are handed to `cook` in order).
+    let i = 0;
+    const result = await this._decryptInBatches(
+      messages,
+      (m) => [m.author[0], m.encryptedMessage[0], Uint8Array.fromBase64(m.encryptedMessage[1])],
+      (chunk, cleartexts) => {
+        for (let j = 0; j < chunk.length; j++, i++) {
+          entries.push({
+            docid: this.docId,
+            message: bytesToStr(cleartexts[j]),
+            time: chunk[j].time,
+            user: this._onlyofficeUserId(chunk[j].author),
+            useridoriginal: chunk[j].author[0],
+            username: usernames[i],
+          });
+        }
+      },
     );
+    return result.ok ? { ok: true, value: entries } : result;
   }
 
   /**
@@ -736,11 +839,7 @@ class EditicsTranslator {
    * @returns {Promise<EditicsResult<OOServerEventCursor>>}
    */
   async _cookCursor(editics) {
-    const cleartext = await this.libparsec.decrypt(
-      editics.author[0],
-      editics.encryptedCursor[0],
-      Uint8Array.fromBase64(editics.encryptedCursor[1]),
-    );
+    const cleartext = await this._decrypt(editics.author[0], editics.encryptedCursor[0], editics.encryptedCursor[1]);
     if (!cleartext.ok) {
       return cleartext;
     }
@@ -828,30 +927,8 @@ class EditicsTranslator {
   async _cookServerSaveChanges(editics) {
     const author = editics.author;
     const authorDeviceId = author[0];
-    const changes = this._collectResults(
-      await Promise.all(
-        editics.changes.map(async (c) => {
-          const [keyIndex, b64CipherText] = c.encryptedChange;
-          const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
-          if (!cleartext.ok) {
-            return cleartext;
-          }
-          return {
-            ok: true,
-            value: {
-              docid: this.docId,
-              // OnlyOffice editor is always configured in JSON change mode (i.e.
-              // `binaryChanges: false`), so `changes` is a JSON-serialized array of
-              // `<cleartext length>;<base64(cleartext)>` fragments.
-              change: JSON.stringify(`${cleartext.value.byteLength};${cleartext.value.toBase64()}`),
-              time: c.time,
-              user: this._onlyofficeUserId(author),
-              useridoriginal: authorDeviceId,
-            },
-          };
-        }),
-      ),
-    );
+    // A save carries a single author for all its changes.
+    const changes = await this._cookChangeEntries(editics.changes.map((c) => ({ ...c, author })));
     if (!changes.ok) {
       return changes;
     }
@@ -888,7 +965,7 @@ class EditicsTranslator {
     }
     if (editics.encryptedCursorAdditionalInfo !== null) {
       const [keyIndex, b64CipherText] = editics.encryptedCursorAdditionalInfo;
-      const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
+      const cleartext = await this._decrypt(authorDeviceId, keyIndex, b64CipherText);
       if (!cleartext.ok) {
         return cleartext;
       }

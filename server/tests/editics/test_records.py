@@ -702,3 +702,58 @@ async def test_untranslatable_events(
         assert result["ok"] is False
         assert result["kind"] == "libparsec"
         assert result["error"].startswith("Unknown device ID")
+
+
+async def test_auth_changes_backlog_is_cooked_in_order(
+    coolorg: CoolorgRpcClients,
+    editics_js_runtime: EditicsJSRuntime,
+) -> None:
+    async with editics_js_runtime.new_client(
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=EDITICS_DOCUMENT_ID,
+        editor_type=0,
+    ) as js_client:
+        instance = f"globalThis.__editics_instances['{js_client.participant_session_id}']"
+
+        # Cook a huge `authChanges` backlog (i.e. more than the crypto batch size
+        # of 64), and check the changes are kept in order.
+        more_than_batch_size = 150
+        result = await editics_js_runtime.async_eval(
+            f"""
+            (async () => {{
+                const cleartexts = [];
+                for (let i = 0; i < {more_than_batch_size}; i++) {{
+                    cleartexts.push(bytesFromStr(`change-${{i}}`));
+                }}
+                const encrypted = await {instance}.libparsec.encryptBatch(cleartexts);
+                const event = {{
+                    type: 'authChanges',
+                    changes: encrypted.map(([keyIndex, cipherText], i) => ({{
+                        author: ['de10a11cec0010000000000000000000', 0],
+                        time: i,
+                        encryptedChange: [keyIndex, cipherText.toBase64()],
+                    }})),
+                }};
+                const cooked = await {instance}.cookServerEvent(event);
+                if (!cooked.ok) {{
+                    return cooked;
+                }}
+                return {{
+                    ok: true,
+                    changes: cooked.value.changes.map((c) => {{
+                        const [len, b64] = JSON.parse(c.change).split(';');
+                        return {{
+                            time: c.time,
+                            len: Number(len),
+                            cleartext: bytesToStr(Uint8Array.fromBase64(b64)),
+                        }};
+                    }}),
+                }};
+            }})()
+            """
+        )
+        assert result["ok"] is True, result
+        assert len(result["changes"]) == more_than_batch_size
+        for i, change in enumerate(result["changes"]):
+            assert change == {"time": i, "len": len(f"change-{i}"), "cleartext": f"change-{i}"}
