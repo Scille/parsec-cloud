@@ -13,7 +13,8 @@ exclude = ["tests/", "examples/", "benches/"]
 workspace = true
 
 [features]
-# Remember kid: RustCrypto is used if `use-libsodium` is not set !
+default = ["use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
 use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 vendored-dbus = ["libparsec_platform_device_loader/vendored-dbus"]

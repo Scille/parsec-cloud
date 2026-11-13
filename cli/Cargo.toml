@@ -27,7 +27,8 @@ name = "integration"
 path = "tests/integration/mod.rs"
 
 [features]
-default = ["manpage", "shell-completion"]
+default = ["manpage", "shell-completion", "use-rustcrypto"]
+use-rustcrypto = ["libparsec_crypto/use-rustcrypto"]
 use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 vendored-dbus = ["libparsec/vendored-dbus"]

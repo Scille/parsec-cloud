@@ -3,17 +3,28 @@
 mod common;
 
 // Default to RustCrypto as it is much more convenient for dev ;-)
-#[cfg(not(feature = "use-libsodium"))]
+#[cfg(feature = "use-rustcrypto")]
 mod rustcrypto;
 #[cfg(feature = "use-libsodium")]
 mod sodium;
+#[cfg(all(feature = "use-rustcrypto", feature = "use-libsodium"))]
+compile_error!("`use-rustcrypto` and `use-libsodium` cannot be enabled at the same time");
 
 pub mod prelude {
     pub use crate::common::*;
-    #[cfg(not(feature = "use-libsodium"))]
-    pub use crate::rustcrypto::*;
-    #[cfg(feature = "use-libsodium")]
-    pub use crate::sodium::*;
+    cfg_select! {
+        feature = "use-rustcrypto" =>  {
+            pub use crate::rustcrypto::*;
+        }
+        feature = "use-libsodium" => {
+            pub use crate::sodium::*;
+        }
+        _ => {
+            compile_error!(
+                "No crypto backend enable, you need to enable either `use-rustcrypto` or `use-libsodium`"
+            );
+        }
+    }
 }
 
 pub use prelude::*;
