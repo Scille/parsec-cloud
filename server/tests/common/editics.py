@@ -363,23 +363,57 @@ class EditicsJSRuntime:
                                 return {{ok: false, kind: 'libparsec', error: `Unknown device ID (you may want to patch the test code): ${{ deviceId }}`}}
                         }}
                     }},
-                    // Simulate encryption
-                    encrypt: async (cleartext) => {{
+                    // Simulate encryption: the payloads travel as a single flat
+                    // buffer (the i-th payload is
+                    // `flat[offsets[i]..offsets[i+1]]`), and all the ciphertexts
+                    // of a batch are sealed with a single key index.
+                    encryptBatch: async (flat, offsets) => {{
                         const keyIndex = 3;  // Dummy but realistic-looking value
-                        const ciphertext = bytesFromStr(JSON.stringify({{"keyIndex": keyIndex, "cleartext": cleartext.toBase64()}}));
-                        return [keyIndex, ciphertext];
+                        const ciphertexts = [];
+                        for (let i = 0; i < offsets.length - 1; i++) {{
+                            const cleartext = flat.subarray(offsets[i], offsets[i + 1]);
+                            ciphertexts.push(
+                                bytesFromStr(JSON.stringify({{"keyIndex": keyIndex, "cleartext": cleartext.toBase64()}})),
+                            );
+                        }}
+                        const cipherFlat = new Uint8Array(
+                            ciphertexts.reduce((acc, ciphertext) => acc + ciphertext.byteLength, 0),
+                        );
+                        const cipherOffsets = [0];
+                        let pos = 0;
+                        for (const ciphertext of ciphertexts) {{
+                            cipherFlat.set(ciphertext, pos);
+                            pos += ciphertext.byteLength;
+                            cipherOffsets.push(pos);
+                        }}
+                        return {{keyIndex, flat: cipherFlat, offsets: cipherOffsets}};
                     }},
-                    decrypt: async (authorDeviceId, keyIndex, ciphertext) => {{
-                        let content;
-                        try {{
-                            content = JSON.parse(bytesToStr(ciphertext));
-                        }} catch(err) {{
-                            return {{ok: false, kind: 'libparsec', error: `Decryption failed: ${{err}}`}};
+                    decryptBatch: async (keyIndex, flat, offsets) => {{
+                        const cleartexts = [];
+                        for (let i = 0; i < offsets.length - 1; i++) {{
+                            const ciphertext = flat.subarray(offsets[i], offsets[i + 1]);
+                            let content;
+                            try {{
+                                content = JSON.parse(bytesToStr(ciphertext));
+                            }} catch(err) {{
+                                return {{ok: false, kind: 'libparsec', error: `Decryption failed: ${{err}}`}};
+                            }}
+                            if (content.keyIndex != keyIndex) {{
+                                return {{ok: false, kind: 'libparsec', error: "Decryption failed: keyIndex mismatch (expected: ${{keyIndex}}, got: ${{content.keyIndex}}"}};
+                            }}
+                            cleartexts.push(Uint8Array.fromBase64(content.cleartext));
                         }}
-                        if (content.keyIndex != keyIndex) {{
-                            return {{ok: false, kind: 'libparsec', error: "Decryption failed: keyIndex mismatch (expected: ${{keyIndex}}, got: ${{content.keyIndex}}"}};
+                        const cleartextFlat = new Uint8Array(
+                            cleartexts.reduce((acc, cleartext) => acc + cleartext.byteLength, 0),
+                        );
+                        const cleartextOffsets = [0];
+                        let pos = 0;
+                        for (const cleartext of cleartexts) {{
+                            cleartextFlat.set(cleartext, pos);
+                            pos += cleartext.byteLength;
+                            cleartextOffsets.push(pos);
                         }}
-                        return {{ok: true, value: Uint8Array.fromBase64(content.cleartext)}};
+                        return {{ok: true, value: {{flat: cleartextFlat, offsets: cleartextOffsets}}}};
                     }},
                 }},
             );
