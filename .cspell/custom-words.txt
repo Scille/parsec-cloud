@@ -447,6 +447,7 @@ uncaseify
 uncatched
 uncollectible
 UNDESERIALIZABLE
+unflatten
 unhexlify
 unloop
 unmounter
