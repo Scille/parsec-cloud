@@ -155,12 +155,6 @@ class RstLicenserMixin(Licenser):
         return f".. {cls.generate_license_text()}\n"
 
 
-class CppLicenserMixin(Licenser):
-    @classmethod
-    def generate_license_line(cls) -> str:
-        return f"/* {cls.generate_license_text()} */\n"
-
-
 class CssLicenserMixin(Licenser):
     @classmethod
     def generate_license_line(cls) -> str:
@@ -219,14 +213,6 @@ class HtmlBuslLicenser(BuslLicenserMixin, HtmlLicenserMixin):
     pass
 
 
-class CppAgplLicenser(AgplLicenserMixin, CppLicenserMixin):
-    pass
-
-
-class CppBuslLicenser(BuslLicenserMixin, CppLicenserMixin):
-    pass
-
-
 class CssAgplLicenser(AgplLicenserMixin, CssLicenserMixin):
     pass
 
@@ -266,7 +252,6 @@ LICENSERS_MAP = {
     re.compile(r"^client/src/.*\.vue$"): VueAgplLicenser,
     re.compile(r"^client/tests/.*\.(spec\.ts|ts)$"): JavascriptBuslLicenser,
     re.compile(r"^(client|bindings)/.*\.(ts|js)$"): JavascriptAgplLicenser,
-    re.compile(r"^windows-icon-handler/.*\.(cpp|h|idl)$"): CppAgplLicenser,
     re.compile(r"^cli/src/.*\.rs$"): RustAgplLicenser,
     re.compile(r"^cli/.*\.rs$"): RustBuslLicenser,
     re.compile(r"^libparsec/crates/test.*/.*\.rs$"): RustBuslLicenser,
@@ -371,7 +356,6 @@ if __name__ == "__main__":
             Path("libparsec"),
             Path("misc"),
             Path("server"),
-            Path("windows-icon-handler"),
         ],
     )
 
