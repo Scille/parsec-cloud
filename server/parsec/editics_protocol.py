@@ -392,16 +392,16 @@ class EditicsServerEventMessage(StrictBaseModel):
     messages: list[MessageRecord]
 
 
-class CursorRecord(StrictBaseModel):
+class EditicsServerEventCursor(StrictBaseModel):
     model_config = {"arbitrary_types_allowed": True}
+
+    type: Literal["cursor"] = "cursor"
+    # Note the OnlyOffice `eventCursor` carries a list of messages, but it is
+    # in practice always a single element, so the editics protocol flattens it to
+    # a single cursor movement (as it simplifies both server and client code).
     time: EditicsTimestampMs
     author: EditicsParticipantIdentity
     encryptedCursor: EditicsEncryptedContent
-
-
-class EditicsServerEventCursor(StrictBaseModel):
-    type: Literal["cursor"] = "cursor"
-    messages: list[CursorRecord]
 
 
 class EditicsServerEventGetLock(StrictBaseModel):
