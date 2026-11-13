@@ -17903,6 +17903,71 @@ fn variant_workspace_create_folder_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceDecryptEditicsError
+
+#[allow(dead_code)]
+fn variant_workspace_decrypt_editics_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceDecryptEditicsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceDecryptEditicsError::CorruptedData { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorCorruptedData").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::CorruptedKey { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorCorruptedKey").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceDecryptEditicsErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceDecryptEditicsErrorInvalidKeysBundle")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::KeyNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorKeyNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorNoRealmAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptEditicsError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptEditicsErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceDecryptPathAddrError
 
 #[allow(dead_code)]
@@ -17962,6 +18027,85 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js<'a>(
         libparsec::WorkspaceDecryptPathAddrError::Stopped { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceEditicsGenerateAuthTokenError
+
+#[allow(dead_code)]
+fn variant_workspace_editics_generate_auth_token_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceEditicsGenerateAuthTokenError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceEditicsGenerateAuthTokenError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceEditicsGenerateAuthTokenErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsGenerateAuthTokenError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceEditicsGenerateAuthTokenErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceEncryptEditicsError
+
+#[allow(dead_code)]
+fn variant_workspace_encrypt_editics_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceEncryptEditicsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceEncryptEditicsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEncryptEditicsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEncryptEditicsError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceEncryptEditicsErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEncryptEditicsError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceEncryptEditicsErrorInvalidKeysBundle")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEncryptEditicsError::NoKey { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceEncryptEditicsErrorNoKey").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEncryptEditicsError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEncryptEditicsErrorNoRealmAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEncryptEditicsError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEncryptEditicsErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEncryptEditicsError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEncryptEditicsErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEncryptEditicsError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEncryptEditicsErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -30030,6 +30174,218 @@ fn workspace_decrypt_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// workspace_editics_decrypt
+fn workspace_editics_decrypt(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let document = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let key_index = {
+        let js_val = cx.argument::<JsBigInt>(2)?;
+        {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let encrypted = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(3)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::workspace_editics_decrypt(workspace, document, key_index, &encrypted)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let rs_buff = { ok };
+                            let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
+                            js_buff
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_decrypt_editics_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_editics_encrypt
+fn workspace_editics_encrypt(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let document = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let cleartext = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(2)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_editics_encrypt(workspace, document, &cleartext).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let (x0, x1) = ok;
+                            let js_array = JsArray::new(&mut cx, 2);
+                            let js_value = JsBigInt::from_u64(&mut cx, x0);
+                            js_array.set(&mut cx, 0, js_value)?;
+                            let js_value = {
+                                let rs_buff = { x1 };
+                                let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
+                                js_buff
+                            };
+                            js_array.set(&mut cx, 1, js_value)?;
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_encrypt_editics_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_editics_generate_auth_token
+fn workspace_editics_generate_auth_token(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let document = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::workspace_editics_generate_auth_token(workspace, document);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = JsString::try_new(&mut cx, ok).or_throw(&mut cx)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err =
+                variant_workspace_editics_generate_auth_token_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // workspace_fd_close
 fn workspace_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -33686,6 +34042,12 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceCreateFolder", workspace_create_folder)?;
     cx.export_function("workspaceCreateFolderAll", workspace_create_folder_all)?;
     cx.export_function("workspaceDecryptPathAddr", workspace_decrypt_path_addr)?;
+    cx.export_function("workspaceEditicsDecrypt", workspace_editics_decrypt)?;
+    cx.export_function("workspaceEditicsEncrypt", workspace_editics_encrypt)?;
+    cx.export_function(
+        "workspaceEditicsGenerateAuthToken",
+        workspace_editics_generate_auth_token,
+    )?;
     cx.export_function("workspaceFdClose", workspace_fd_close)?;
     cx.export_function("workspaceFdFlush", workspace_fd_flush)?;
     cx.export_function("workspaceFdRead", workspace_fd_read)?;
