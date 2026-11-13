@@ -240,13 +240,16 @@ impl From<LoadDeviceError> for LoadAndUnlockDeviceError {
 pub async fn load_and_unlock_device(
     config_dir: &Path,
     device: Option<String>,
-) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
+) -> Result<Arc<LocalDevice>, Box<LoadAndUnlockDeviceError>> {
     log::trace!(
         "Loading device {device} from {dir}",
         dir = config_dir.display(),
         device = device.as_deref().unwrap_or("N/A")
     );
-    let device = load_device_file(config_dir, device).await?;
+    let device = load_device_file(config_dir, device)
+        .await
+        .map_err(Into::into)
+        .map_err(Box::new)?;
 
     log::debug!("Loading device {:?}", device.ty);
 
@@ -255,12 +258,16 @@ pub async fn load_and_unlock_device(
         // however:
         // - It is cumbersome since it requires a TOTP challenge involving the server.
         // - In practice it is a niche usage that will most likely only be used in the GUI.
-        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication);
+        return Err(Box::new(
+            LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication,
+        ));
     }
 
     let access_strategy = match device.ty {
         AvailableDeviceType::Password => {
-            let password = read_password("Enter password for the device:")?;
+            let password = read_password("Enter password for the device:")
+                .map_err(Into::into)
+                .map_err(Box::new)?;
 
             DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
@@ -286,13 +293,13 @@ pub async fn load_and_unlock_device(
             // - It is cumbersome since it requires obtaining the account authentication
             //   info (login&password) from the CLI parameters.
             // - In practice it is only used on web, where CLI is never going to be used.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
-                device.ty,
+            return Err(Box::new(
+                LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty),
             ));
         }
         AvailableDeviceType::Recovery => {
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
-                device.ty,
+            return Err(Box::new(
+                LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty),
             ));
         }
         AvailableDeviceType::OpenBao { .. } => {
@@ -301,13 +308,16 @@ pub async fn load_and_unlock_device(
             // - It is cumbersome since it requires opening a browser window for login
             //   and redirect its result to a server listening on localhost...
             // - In practice it is a niche usage that will most likely only be used in the GUI.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
-                device.ty,
+            return Err(Box::new(
+                LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty),
             ));
         }
     };
 
-    let device = libparsec::load_device(config_dir, &access_strategy).await?;
+    let device = libparsec::load_device(config_dir, &access_strategy)
+        .await
+        .map_err(Into::into)
+        .map_err(Box::new)?;
 
     Ok(device)
 }
