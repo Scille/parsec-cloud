@@ -71,7 +71,7 @@ mod native {
                     "Cannot remove {:?}: {}\n\
                 Content: {}\n\
                 Have you done a gracious close of resources in your test ?",
-                    &self.0, &err, content
+                    self.0, err, content
                 );
             }
         }

@@ -133,7 +133,7 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
 
             let addr = ParsecAddr::from_any(&url)
                 .expect("Invalid value in `TESTBED_SERVER` environ variable");
-            log::info!("Using already started testbed server at {}", &addr);
+            log::info!("Using already started testbed server at {}", addr);
             return (Some(addr), None);
         }
 

@@ -201,7 +201,7 @@ async fn create_second_device(
         let new_id_hex = libparsec::DeviceID::default().hex();
         libparsec::DeviceID::from_hex(&format!(
             "{}{}",
-            &dev_id_prefix,
+            dev_id_prefix,
             &new_id_hex[dev_id_prefix.len()..]
         ))
         .map_err(anyhow::Error::msg)

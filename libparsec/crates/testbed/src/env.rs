@@ -14,8 +14,7 @@ use reqwest::StatusCode;
 use libparsec_types::prelude::*;
 
 use crate::{
-    TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewDevice, TestbedEventNewUser,
-    TestbedTemplate, TestbedTemplateBuilder, test_get_template,
+    TestbedEvent, TestbedEventNewDevice, TestbedTemplate, TestbedTemplateBuilder, test_get_template,
 };
 
 // Testbed always works in memory, the path only acts as an identifier.
@@ -124,21 +123,19 @@ impl TestbedEnvCache {
 
         let (user_id, device_label, signing_key, local_symkey) =
             match env.template.device_creation_event(device_id) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: user_id,
-                    first_user_first_device_label: device_label,
-                    first_user_first_device_signing_key: signing_key,
-                    first_user_local_symkey: local_symkey,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    user_id,
-                    first_device_label: device_label,
-                    first_device_signing_key: signing_key,
-                    local_symkey,
-                    ..
-                })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                TestbedEvent::BootstrapOrganization(x) => (
+                    x.first_user_id,
+                    &x.first_user_first_device_label,
+                    &x.first_user_first_device_signing_key,
+                    &x.first_user_local_symkey,
+                ),
+                TestbedEvent::NewUser(x) => (
+                    x.user_id,
+                    &x.first_device_label,
+                    &x.first_device_signing_key,
+                    &x.local_symkey,
+                ),
+                TestbedEvent::NewDevice(TestbedEventNewDevice {
                     user_id,
                     device_label,
                     signing_key,
@@ -150,32 +147,19 @@ impl TestbedEnvCache {
 
         let (human_handle, private_key, profile, user_realm_id, user_realm_key) =
             match env.template.user_creation_event(user_id) {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_human_handle: human_handle,
-                    first_user_private_key: private_key,
-                    first_user_user_realm_id: user_realm_id,
-                    first_user_user_realm_key: user_realm_key,
-                    ..
-                }) => (
-                    human_handle,
-                    private_key,
+                TestbedEvent::BootstrapOrganization(x) => (
+                    &x.first_user_human_handle,
+                    &x.first_user_private_key,
                     UserProfile::Admin,
-                    user_realm_id,
-                    user_realm_key,
+                    &x.first_user_user_realm_id,
+                    &x.first_user_user_realm_key,
                 ),
-                TestbedEvent::NewUser(TestbedEventNewUser {
-                    human_handle,
-                    private_key,
-                    initial_profile,
-                    user_realm_id,
-                    user_realm_key,
-                    ..
-                }) => (
-                    human_handle,
-                    private_key,
-                    *initial_profile,
-                    user_realm_id,
-                    user_realm_key,
+                TestbedEvent::NewUser(x) => (
+                    &x.human_handle,
+                    &x.private_key,
+                    x.initial_profile,
+                    &x.user_realm_id,
+                    &x.user_realm_key,
                 ),
                 _ => unreachable!(),
             };
@@ -1245,9 +1229,9 @@ pub async fn test_new_account(
     .dump_and_encrypt(&auth_method_secret_key);
     let config = format!(
         "{}\n{}\n{}",
-        &auth_method_id.hex(),
-        &data_encoding::BASE64.encode(auth_method_mac_key.as_ref()),
-        &data_encoding::BASE64.encode(vault_key_access.as_ref()),
+        auth_method_id.hex(),
+        data_encoding::BASE64.encode(auth_method_mac_key.as_ref()),
+        data_encoding::BASE64.encode(vault_key_access.as_ref()),
     );
     let response = HTTP_CLIENT
         .post(url)

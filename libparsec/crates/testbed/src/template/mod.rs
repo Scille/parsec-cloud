@@ -112,21 +112,14 @@ impl TestbedTemplate {
     pub fn device_creation_event(&self, device_id: DeviceID) -> &TestbedEvent {
         self.events
             .iter()
-            .find(|e| {
-                matches!(e,
-                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                        first_user_first_device_id: candidate,
-                        ..
-                    })
-                    | TestbedEvent::NewUser(TestbedEventNewUser {
-                        first_device_id: candidate,
-                        ..
-                    })
-                    | TestbedEvent::NewDevice(TestbedEventNewDevice {
-                        device_id: candidate,
-                        ..
-                    }) if *candidate == device_id,
-                )
+            .find(|e| match e {
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_first_device_id == device_id,
+                TestbedEvent::NewUser(x) => x.first_device_id == device_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice {
+                    device_id: candidate,
+                    ..
+                }) => *candidate == device_id,
+                _ => false,
             })
             .expect("Device doesn't exist")
     }
@@ -134,19 +127,13 @@ impl TestbedTemplate {
     pub fn user_creation_event(&self, user_id: UserID) -> &TestbedEvent {
         self.events
             .iter()
-            .find(|e| {
-                matches!(e,
-                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                        first_user_id: candidate,
-                        ..
-                    })
-                    | TestbedEvent::NewUser(TestbedEventNewUser {
-                        user_id: candidate, ..
-                    })
-                    | TestbedEvent::NewDevice(TestbedEventNewDevice {
-                        user_id: candidate, ..
-                    }) if *candidate == user_id,
-                )
+            .find(|e| match e {
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_id == user_id,
+                TestbedEvent::NewUser(x) => x.user_id == user_id,
+                TestbedEvent::NewDevice(TestbedEventNewDevice {
+                    user_id: candidate, ..
+                }) => *candidate == user_id,
+                _ => false,
             })
             .expect("User doesn't exist")
     }
@@ -155,17 +142,13 @@ impl TestbedTemplate {
         self.events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_first_device_id: candidate,
-                    first_user_id: user_id,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    first_device_id: candidate,
-                    user_id,
-                    ..
-                })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                TestbedEvent::BootstrapOrganization(x)
+                    if x.first_user_first_device_id == device_id =>
+                {
+                    Some(x.first_user_id)
+                }
+                TestbedEvent::NewUser(x) if x.first_device_id == device_id => Some(x.user_id),
+                TestbedEvent::NewDevice(TestbedEventNewDevice {
                     device_id: candidate,
                     user_id,
                     ..
@@ -179,17 +162,15 @@ impl TestbedTemplate {
         self.events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_first_device_id: candidate,
-                    first_user_first_device_signing_key: signing_key,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    first_device_id: candidate,
-                    first_device_signing_key: signing_key,
-                    ..
-                })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                TestbedEvent::BootstrapOrganization(x)
+                    if x.first_user_first_device_id == device_id =>
+                {
+                    Some(&x.first_user_first_device_signing_key)
+                }
+                TestbedEvent::NewUser(x) if x.first_device_id == device_id => {
+                    Some(&x.first_device_signing_key)
+                }
+                TestbedEvent::NewDevice(TestbedEventNewDevice {
                     device_id: candidate,
                     signing_key,
                     ..
@@ -203,17 +184,13 @@ impl TestbedTemplate {
         self.events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_first_device_id: candidate,
-                    first_user_local_symkey: local_symkey,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    first_device_id: candidate,
-                    local_symkey,
-                    ..
-                })
-                | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                TestbedEvent::BootstrapOrganization(x)
+                    if x.first_user_first_device_id == device_id =>
+                {
+                    Some(&x.first_user_local_symkey)
+                }
+                TestbedEvent::NewUser(x) if x.first_device_id == device_id => Some(&x.local_symkey),
+                TestbedEvent::NewDevice(TestbedEventNewDevice {
                     device_id: candidate,
                     local_symkey,
                     ..
@@ -227,16 +204,10 @@ impl TestbedTemplate {
         self.events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: candidate,
-                    first_user_user_realm_key: user_realm_key,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    user_id: candidate,
-                    user_realm_key,
-                    ..
-                }) if *candidate == user_id => Some(user_realm_key),
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => {
+                    Some(&x.first_user_user_realm_key)
+                }
+                TestbedEvent::NewUser(x) if x.user_id == user_id => Some(&x.user_realm_key),
                 _ => None,
             })
             .expect("User doesn't exist")
@@ -246,16 +217,10 @@ impl TestbedTemplate {
         self.events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: candidate,
-                    first_user_private_key: private_key,
-                    ..
-                })
-                | TestbedEvent::NewUser(TestbedEventNewUser {
-                    user_id: candidate,
-                    private_key,
-                    ..
-                }) if *candidate == user_id => Some(private_key),
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => {
+                    Some(&x.first_user_private_key)
+                }
+                TestbedEvent::NewUser(x) if x.user_id == user_id => Some(&x.private_key),
                 _ => None,
             })
             .expect("User doesn't exist")
@@ -268,17 +233,12 @@ impl TestbedTemplate {
         let mut current_profile = None;
         self.events.iter().find_map(|e| {
             let maybe_profile_update = match e {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_id: candidate,
-                    timestamp,
-                    ..
-                }) if *candidate == user_id => Some((UserProfile::Admin, *timestamp)),
-                TestbedEvent::NewUser(TestbedEventNewUser {
-                    user_id: candidate,
-                    initial_profile,
-                    timestamp,
-                    ..
-                }) if *candidate == user_id => Some((*initial_profile, *timestamp)),
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => {
+                    Some((UserProfile::Admin, x.timestamp))
+                }
+                TestbedEvent::NewUser(x) if x.user_id == user_id => {
+                    Some((x.initial_profile, x.timestamp))
+                }
                 TestbedEvent::UpdateUserProfile(TestbedEventUpdateUserProfile {
                     user: candidate,
                     profile,

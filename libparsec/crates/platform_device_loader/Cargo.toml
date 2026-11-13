@@ -60,9 +60,7 @@ web-sys = { workspace = true, features = [
     "WorkerGlobalScope",
     "WorkerNavigator",
 ] }
-serde_json = { workspace = true, features = ["std"] }
 data-encoding = { workspace = true }
-error_set = { workspace = true }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }

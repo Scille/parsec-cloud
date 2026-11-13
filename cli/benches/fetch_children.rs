@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+#![expect(unwrap_used)]
 
 //! Measure `stat_folder_children` on a folder whose children are partially
 //! (or not at all) available in the local storage.

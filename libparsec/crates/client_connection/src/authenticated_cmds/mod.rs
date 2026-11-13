@@ -384,7 +384,7 @@ fn generate_authentication_token(
     let timestamp = now.as_timestamp_seconds().to_string();
     let header_and_body = match scope {
         AuthorizationScope::None => {
-            format!("{}.{}.{}", PARSEC_AUTH_METHOD, &author_id_hex, &timestamp)
+            format!("{}.{}.{}", PARSEC_AUTH_METHOD, author_id_hex, timestamp)
         }
         AuthorizationScope::Editics {
             realm_id,
@@ -393,8 +393,8 @@ fn generate_authentication_token(
             // Note `.editics/<realm_id>/<document_id>` that limits what this token can do
             "{}.{}.{}.editics/{}/{}",
             PARSEC_AUTH_METHOD,
-            &author_id_hex,
-            &timestamp,
+            author_id_hex,
+            timestamp,
             realm_id.hex(),
             document_id.hex()
         ),
@@ -402,7 +402,7 @@ fn generate_authentication_token(
     let signature = author_signing_key.sign_only_signature(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 
-    format!("{}.{}", &header_and_body, &b64_signature)
+    format!("{}.{}", header_and_body, b64_signature)
 }
 
 /// Generate the authentication token for the editics routes of the Parsec server.

@@ -17,6 +17,8 @@ path = "examples/minimal.rs"
 [lints]
 workspace = true
 
+[dependencies]
+
 [target.'cfg(target_os = "windows")'.dependencies]
 once_cell = { workspace = true }
 regex = { workspace = true }
@@ -32,16 +34,11 @@ fuser = { workspace = true, features = ["libfuse"] }
 libc = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-tokio = { workspace = true, features = ["rt-multi-thread"] }
-
-[dependencies]
 libparsec_client = { workspace = true }
 libparsec_types = { workspace = true }
-log = { workspace = true }
 
-[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
-ctrlc = { workspace = true, features = ["termination"] }
-tokio = { workspace = true, features = ["fs"] }
+log = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [dev-dependencies]
 # `termination` feature enable handling of SIGHUP/SIGTERM on top of SIGINT
@@ -49,7 +46,14 @@ env_logger = { workspace = true }
 libparsec_client_connection = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = ["default"] }
 libparsec_tests_lite = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
 windows-sys = { workspace = true, features = ["Win32"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
+ctrlc = { workspace = true, features = ["termination"] }
+tokio = { workspace = true, features = ["fs"] }
+
 
 [target.'cfg(target_family = "unix")'.dev-dependencies]
 libc = { workspace = true }
