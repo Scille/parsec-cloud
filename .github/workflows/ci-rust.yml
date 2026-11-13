@@ -36,9 +36,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CARGO_CI_FLAGS: --locked --profile=ci-rust
+  CARGO_CI_FLAGS: --locked --profile=ci-rust --cfg=crypto_backend="libsodium"
   # Use Nextest `ci` profile and Cargo `ci-rust` profile
-  CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile=ci-rust
+  CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile=ci-rust --cfg=crypto_backend="libsodium"
   WINFSP_VERSION: 2.1.25156
   WINFSP_TEST_EXE: C:/Program Files (x86)/WinFsp/bin/winfsp-tests-x64.exe
   TEST_RUST_LOG: debug,hyper_util=info,reqwest=info,sqlx=info
@@ -62,6 +62,8 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     env:
       TESTBED_SERVER: http://localhost:6777
+      # By default `libparsec_crypto` uses RustCrypto (more convenient for dev),
+      # however in production sodiumoxide is used for native platforms
       CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: -C link-arg=-B/home/runner/.install-action/bin -C link-arg=-fuse-ld=mold
     services:
       parsec-testbed-server:
@@ -157,42 +159,26 @@ jobs:
         run: echo 'mount_max = 8192' | sudo tee /etc/fuse.conf
         continue-on-error: true
 
+      - name: 👨‍💻 Build CLI binary
+        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec-cli
+        timeout-minutes: 5
+
       - name: 🧪 Test agnostic rust codebase
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
         env:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
         timeout-minutes: 10
 
-      - name: 👨‍💻 Build CLI binary
-        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec-cli
-        timeout-minutes: 5
+      - name: 🧪 Test platform crates
+        shell: bash
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }}
+        timeout-minutes: 30
+        env:
+          RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
       - name: 👨‍💻 Test CLI
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec-cli
         timeout-minutes: 10
-
-      # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
-      # implementation and it compatibility with the rest of the project
-      - name: 🧪 Test sodiumoxide rust crypto
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-libsodium
-        env:
-          RUST_LOG: ${{ env.TEST_RUST_LOG }}
-        timeout-minutes: 10
-
-      - name: 🔬 Check agnostic & platform crates using sodium crypto features
-        run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-libsodium
-        timeout-minutes: 10
-        env:
-          RUST_LOG: ${{ env.TEST_RUST_LOG }}
-
-      # Use sodiumoxide here given 1) it is composed of C code, so not totally
-      # platform independent and 2) it is what is going to be used in release
-      - name: 🧪 Test platform crates using sodium crypto features (🐧 Linux specific)
-        shell: bash
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }} --features libparsec_crypto/use-libsodium
-        timeout-minutes: 30
-        env:
-          RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
       - name: 📎 Clippy on wasm
         if: inputs.run-wasm-tests
@@ -260,6 +246,10 @@ jobs:
             os: macos-15
           - name: 🏁 Windows
             os: windows-2025
+    env:
+      # By default `libparsec_crypto` uses RustCrypto (more convenient for dev),
+      # however in production sodiumoxide is used for native platforms
+      RUSTFLAGS: --cfg=crypto_backend="libsodium"
     name: "${{ matrix.name }}: 🦀 Rust tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
@@ -361,7 +351,7 @@ jobs:
       # Only test `platform_*` crates here, the other crates are supposed to be
       # platform-agnostic so it is enough to only test them on Linux.
       # Also note we use libsodium for crypto to stay closer to what is used in release.
-      - name: Test Rust platform codebase with sodium
+      - name: Test Rust platform codebase
         shell: bash -ex -o pipefail {0}
         run: |
           PLATFORM_CRATES=`python3 misc/libparsec_crates_flags.py platform`
@@ -372,5 +362,5 @@ jobs:
             # Instead run check only for that crate
             cargo check -p libparsec_platform_mountpoint
           fi
-          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-libsodium
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES
         timeout-minutes: 30
