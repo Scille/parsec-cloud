@@ -131,12 +131,12 @@ import {
 } from '@/parsec';
 import { AvailableDeviceTypePKI, TotpFetchOpaqueKeyErrorTag } from '@/plugins/libparsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
+import { Env } from '@/services/environment';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { OpenBaoClient } from '@/services/openBao';
-import { Env } from '@/services/environment';
 import { ServerType, currentLocationIsTrialServer, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';

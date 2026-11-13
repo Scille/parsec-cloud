@@ -239,8 +239,8 @@
 </template>
 
 <script setup lang="ts">
-import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
 import LogoRowBlue from '@/assets/images/logo-row-blue.svg?raw';
+import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
 import { bootstrapLinkValidator, claimAndBootstrapLinkValidator } from '@/common/validators';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import OrganizationJoinRequest from '@/components/organizations/OrganizationJoinRequest.vue';
