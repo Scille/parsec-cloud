@@ -230,11 +230,11 @@ impl SequesterSigningKeyDer {
     }
 
     pub fn salt_len(&self) -> usize {
-        MessageDigest::sha256().size() / 8
+        MessageDigest::sha256().size()
     }
 
     pub fn hash_len() -> usize {
-        MessageDigest::sha256().size() / 8
+        MessageDigest::sha256().size()
     }
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {

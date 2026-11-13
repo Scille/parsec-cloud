@@ -27,7 +27,7 @@ impl TryFrom<PKey<Private>> for RsaPrivateKey {
 
     fn try_from(key: PKey<Private>) -> Result<Self, Self::Error> {
         if let Err(e) = key.rsa() {
-            return Err(CryptoError::RsaPrivateKeyDER(e.to_string()));
+            Err(CryptoError::RsaPrivateKeyDER(e.to_string()))
         } else {
             Ok(Self(key))
         }
@@ -71,7 +71,7 @@ impl RsaPrivateKey {
     }
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.size() as usize
+        self.0.size()
     }
 
     pub fn to_pkcs8_der(&self) -> zeroize::Zeroizing<Vec<u8>> {

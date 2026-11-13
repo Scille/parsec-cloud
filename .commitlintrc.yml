@@ -23,6 +23,7 @@ rules:
         - docs
         - github-actions
         - libparsec
+        - libparsec/crypto
         - pre-commit
         - rfcs
         - rust
