@@ -686,8 +686,19 @@ const PDF_EXPORT_TIMEOUT_MS = 15000;
 
 let pdfConversionInProgress = false;
 
-// The export waiting for the editor to call `APP.downloadAs`.
-let pendingPdfExport: ((dataContainer: OO.OOHostDataContainer) => void) | undefined;
+// The export waiting for the editor to call `APP.downloadAs` (or `APP.downloadAsError`).
+interface PendingPdfExport {
+  resolve: (dataContainer: OO.OOHostDataContainer) => void;
+  reject: (error: unknown) => void;
+}
+let pendingPdfExport: PendingPdfExport | undefined;
+
+// Takes the pending export, so that it's settled only once.
+function takePendingPdfExport(): PendingPdfExport | undefined {
+  const pending = pendingPdfExport;
+  pendingPdfExport = undefined;
+  return pending;
+}
 
 // The subset of the editor iframe's window used by the PDF conversion.
 interface EditorWindow {
@@ -695,8 +706,6 @@ interface EditorWindow {
   Asc?: {
     asc_CDownloadOptions?: new (fileType: number) => unknown;
     c_oAscFileType?: Record<string, number>;
-    c_oAscAsyncAction?: Record<string, number>;
-    c_oAscAsyncActionType?: Record<string, number>;
   };
   // To access the fonts loaded by the editor
   AscFonts?: {
@@ -731,59 +740,64 @@ function exportRendererStream(): Promise<Uint8Array> {
     }
 
     // `asc_DownloadAs` starts a blocking action (the editor shows a "Downloading
-    // document" modal), normally ended when `APP.downloadAs` calls back `cb(null)`.
-    // If the export fails before that (e.g. sdkjs crashing on some images), we
-    // must end it ourselves, otherwise the modal stays forever and the editor
-    // refuses any further export.
-    const endExportAction = (): void => {
-      const actionType = asc.c_oAscAsyncActionType?.BlockInteraction;
-      const action = asc.c_oAscAsyncAction?.DownloadAs;
-      if (typeof api.sync_EndAction === 'function' && actionType !== undefined && action !== undefined) {
-        (api.sync_EndAction as (type: number, id: number) => void)(actionType, action);
-      }
-    };
-
+    // document" modal). The editor ends it itself, whether the export succeeds
+    // (`APP.downloadAs` calling back `cb(null)`) or fails (reported through
+    // `APP.downloadAsError`, see our sdkjs fork).
+    // The timeout is only a safety net in case the editor never answers.
     const timer = setTimeout(() => {
-      pendingPdfExport = undefined;
-      endExportAction();
-      reject(new Error('editor did not export the document'));
+      takePendingPdfExport()?.reject(new Error('editor did not export the document'));
     }, PDF_EXPORT_TIMEOUT_MS);
 
-    pendingPdfExport = (dataContainer): void => {
-      clearTimeout(timer);
-      const data = dataContainer.data;
-      if (ArrayBuffer.isView(data)) {
-        resolve(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
-      } else {
-        reject(new Error(`unexpected export data (${Object.prototype.toString.call(data)})`));
-      }
+    pendingPdfExport = {
+      resolve: (dataContainer): void => {
+        clearTimeout(timer);
+        const data = dataContainer.data;
+        if (ArrayBuffer.isView(data)) {
+          resolve(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+        } else {
+          reject(new Error(`unexpected export data (${Object.prototype.toString.call(data)})`));
+        }
+      },
+      reject: (error): void => {
+        clearTimeout(timer);
+        reject(error);
+      },
     };
 
     try {
       (api.asc_DownloadAs as (options: unknown) => void)(new asc.asc_CDownloadOptions(fileType));
     } catch (e: unknown) {
-      // The export crashed synchronously (e.g. while laying out an image)
-      clearTimeout(timer);
-      pendingPdfExport = undefined;
-      endExportAction();
-      reject(e);
+      // The export crashed synchronously (e.g. while laying out an image). The
+      // editor already reported it through `APP.downloadAsError`, this only
+      // covers errors thrown before the export started.
+      takePendingPdfExport()?.reject(e);
     }
   });
 }
 
 // Called by the editor (`APP.downloadAs`) once `asc_DownloadAs` has serialized the document.
 function onDownloadAs(dataContainer: OO.OOHostDataContainer, cb: (result: null) => void): void {
-  const pending = pendingPdfExport;
-  pendingPdfExport = undefined;
+  const pending = takePendingPdfExport();
   // Hand the data over before ending the editor's action
   if (pending) {
-    pending(dataContainer);
+    pending.resolve(dataContainer);
   } else {
     // Not triggered by us (download-as is not available in the UI): ignore
     console.warn('Ignoring unexpected download-as from the editor');
   }
   // `null` ends the editor's blocking action without downloading anything.
   cb(null);
+}
+
+// Called by the editor (`APP.downloadAsError`) when `asc_DownloadAs` failed to
+// serialize the document. The editor has already ended its blocking action.
+function onDownloadAsError(error: unknown): void {
+  const pending = takePendingPdfExport();
+  if (pending) {
+    pending.reject(error);
+  } else {
+    console.warn('Ignoring unexpected download-as error from the editor', error);
+  }
 }
 
 // x2t needs the font files to render the text into the PDF: the renderer
@@ -1011,6 +1025,7 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
     },
     // Used by the PDF conversion
     downloadAs: onDownloadAs,
+    downloadAsError: onDownloadAsError,
     // Resolves the media names referenced by the document
     getImageURL: (name: string, callback: (url: string) => void) => {
       // The name can in fact be a self-containing data URL (i.e. `data:[<media-type>][;base64],<data>`).
