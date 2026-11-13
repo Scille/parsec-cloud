@@ -402,3 +402,22 @@ fn invalid_signature(#[case] signed: &[u8], #[case] err: CryptoError) {
 
     assert_eq!(e, err);
 }
+
+#[test]
+fn check_hash_len() {
+    assert_eq!(
+        SequesterSigningKeyDer::hash_len(),
+        32,
+        "We use sha256 as hashing algorithm, it's len should be 32 bytes"
+    );
+}
+
+#[test]
+fn check_salt_len() {
+    let (signing, _) = SequesterSigningKeyDer::generate_pair(SequesterKeySize::_1024Bits);
+    assert_eq!(
+        signing.salt_len(),
+        32,
+        "The salt should be of the same size as sha256 output bytes"
+    );
+}

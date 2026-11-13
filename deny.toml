@@ -120,6 +120,14 @@ We are affected by the advisory (we enable the bundled version), but cannot upgr
 A fix is available at https://github.com/transact-rs/sqlx/commit/10462fa4414c6c7f1ed1d39bb31678e3b726878c, but it need to be released.
 """
 
+# FIXME: https://github.com/Scille/parsec-cloud/issues/13841
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0543"
+reason = """
+We need to migrate, but should be a dedicated task (https://github.com/Scille/parsec-cloud/issues/13841)
+"""
+
+
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
 # Setting this to true can be helpful if you have special authentication requirements that cargo-deny does not support.

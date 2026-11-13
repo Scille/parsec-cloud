@@ -70,6 +70,8 @@ pub async fn main(_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         encryption_key_der,
     };
 
+    // NOTE: Adding `+2` to account for the concatenation of the byte separating PS (zero padding) & Salt
+    // And the trailing byte of EM for the PSS signature.
     let required_size = SequesterSigningKeyDer::hash_len() + authority_pkey.salt_len() + 2;
     anyhow::ensure!(
         required_size < authority_pkey.size_in_bytes(),

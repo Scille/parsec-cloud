@@ -21,7 +21,7 @@ bytes = { workspace = true }
 error_set = { workspace = true }
 rustls-webpki = { workspace = true, features = ["std", "ring"] }
 rustls-pki-types = { workspace = true }
-rsa = { workspace = true, features = ["sha2"] }
+rsa = { workspace = true, features = ["sha2", "encoding"] }
 rand = { workspace = true }
 sha2 = { workspace = true }
 libparsec_types = { workspace = true }
