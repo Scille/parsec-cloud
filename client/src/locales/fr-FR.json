@@ -215,7 +215,6 @@
             "downloadParsec": "Télécharger l'application de bureau"
         },
         "organizationList": {
-            "title": "Accéder à vos organisations",
             "subtitle": "Vos organisations",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",

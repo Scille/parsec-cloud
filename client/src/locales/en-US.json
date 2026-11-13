@@ -215,7 +215,6 @@
             "downloadParsec": "Download desktop app"
         },
         "organizationList": {
-            "title": "Access your organizations",
             "subtitle": "Your organizations",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
