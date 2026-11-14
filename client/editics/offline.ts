@@ -27,7 +27,7 @@ const parentWindow = window.parent;
 // The host page is served from a dedicated origin, so the parent (Parsec app)
 // origin is provided by the parent in the URL.
 function getParentOrigin(): string {
-  const param = new URLSearchParams(window.location.search).get('parentOrigin');
+  const param = new URLSearchParams(window.location.hash.slice(1)).get('parentOrigin');
   if (!param) {
     throw new Error('Missing `parentOrigin` URL parameter');
   }
