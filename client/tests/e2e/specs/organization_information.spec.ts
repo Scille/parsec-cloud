@@ -1,6 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, DisplaySize, expect, fillInputModal, getClipboardText, mockLibParsec, msTest } from '@tests/e2e/helpers';
+import {
+  DEFAULT_USER_INFORMATION,
+  DisplaySize,
+  expect,
+  fillInputModal,
+  getClipboardText,
+  mockLibParsec,
+  msTest,
+  readDownload,
+  waitForDownload,
+} from '@tests/e2e/helpers';
 
 for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   msTest(`Org info default state on ${displaySize} display`, async ({ organizationPage }) => {
@@ -304,4 +314,43 @@ msTest('Copy server address', async ({ organizationPage }) => {
   await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toHaveText('Copied');
 
   expect(await getClipboardText(organizationPage)).toMatch(/^parsec3:\/\/.+$/);
+});
+
+msTest('Export organization data as JSON', async ({ organizationPage }) => {
+  const exportButton = organizationPage.locator('.user-download-button');
+  await expect(exportButton).toBeVisible();
+  await expect(exportButton).toHaveText('Export data (.json)');
+
+  const download = await waitForDownload(organizationPage, async () => {
+    await exportButton.click();
+  });
+
+  expect(download.suggestedFilename()).toMatch(/^Export_TestbedOrg\d+_Users_.+\.json$/);
+  const content = JSON.parse((await readDownload(download)).toString('utf-8'));
+
+  expect(content.export.organization).toMatch(/^TestbedOrg\d+$/);
+  expect(content.export.exportedBy.name).toBe('Alicey McAliceFace');
+
+  expect(content.users).toHaveLength(3);
+  const userNames = content.users.map((u: any) => u.name);
+  expect(userNames).toContain('Alicey McAliceFace');
+  expect(userNames).toContain('Boby McBobFace');
+  expect(userNames).toContain('Malloryy McMalloryFace');
+  for (const user of content.users) {
+    expect(user).toHaveProperty('email');
+    expect(user).toHaveProperty('profile');
+    expect(user).toHaveProperty('devices');
+  }
+
+  expect(Array.isArray(content.workspaces)).toBe(true);
+  expect(content.workspaces.length).toBeGreaterThan(0);
+  for (const wksp of content.workspaces) {
+    expect(wksp).toHaveProperty('id');
+    expect(wksp).toHaveProperty('size');
+    expect(wksp).toHaveProperty('metadataSize');
+    expect(wksp).toHaveProperty('users');
+  }
+  const wksp1 = content.workspaces.find((w: any) => w.users.RealmRoleOwner > 0);
+  expect(wksp1).toBeDefined();
+  expect(wksp1.users.RealmRoleReader).toBeGreaterThan(0);
 });

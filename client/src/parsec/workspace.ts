@@ -8,6 +8,7 @@ import {
   ClientArchiveWorkspaceError,
   ClientCreateWorkspaceError,
   ClientListWorkspacesError,
+  ClientListWorkspacesInfoError,
   ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
   ClientRenameWorkspaceError,
@@ -35,6 +36,7 @@ import {
   WorkspaceInfo,
   WorkspaceInfoError,
   WorkspaceInfoErrorTag,
+  WorkspaceInfoItem,
   WorkspaceMountError,
   WorkspaceMountErrorTag,
   WorkspaceName,
@@ -161,6 +163,14 @@ export async function listTrashedWorkspaces(
     result.value = result.value.filter((workspace) => workspace.isTrashed);
   }
   return result;
+}
+
+export async function listWorkspacesInfo(): Promise<Result<Array<WorkspaceInfoItem>, ClientListWorkspacesInfoError>> {
+  const handle = getConnectionHandle();
+  if (handle !== null) {
+    return await libparsec.clientListWorkspacesInfo(handle);
+  }
+  return generateNoHandleError<ClientListWorkspacesInfoError>();
 }
 
 export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promise<Result<WorkspaceInfo, WorkspaceInfoError>> {
