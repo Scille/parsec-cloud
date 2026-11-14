@@ -4436,6 +4436,60 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorStopped
 
 
+// WorkspaceDecryptEditicsError
+export interface WorkspaceDecryptEditicsErrorCorruptedData {
+    tag: "WorkspaceDecryptEditicsErrorCorruptedData"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorCorruptedKey {
+    tag: "WorkspaceDecryptEditicsErrorCorruptedKey"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorInternal {
+    tag: "WorkspaceDecryptEditicsErrorInternal"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorInvalidCertificate {
+    tag: "WorkspaceDecryptEditicsErrorInvalidCertificate"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorInvalidKeysBundle {
+    tag: "WorkspaceDecryptEditicsErrorInvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorKeyNotFound {
+    tag: "WorkspaceDecryptEditicsErrorKeyNotFound"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorNoRealmAccess {
+    tag: "WorkspaceDecryptEditicsErrorNoRealmAccess"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorOffline {
+    tag: "WorkspaceDecryptEditicsErrorOffline"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorRealmDeleted {
+    tag: "WorkspaceDecryptEditicsErrorRealmDeleted"
+    error: string
+}
+export interface WorkspaceDecryptEditicsErrorStopped {
+    tag: "WorkspaceDecryptEditicsErrorStopped"
+    error: string
+}
+export type WorkspaceDecryptEditicsError =
+  | WorkspaceDecryptEditicsErrorCorruptedData
+  | WorkspaceDecryptEditicsErrorCorruptedKey
+  | WorkspaceDecryptEditicsErrorInternal
+  | WorkspaceDecryptEditicsErrorInvalidCertificate
+  | WorkspaceDecryptEditicsErrorInvalidKeysBundle
+  | WorkspaceDecryptEditicsErrorKeyNotFound
+  | WorkspaceDecryptEditicsErrorNoRealmAccess
+  | WorkspaceDecryptEditicsErrorOffline
+  | WorkspaceDecryptEditicsErrorRealmDeleted
+  | WorkspaceDecryptEditicsErrorStopped
+
+
 // WorkspaceDecryptPathAddrError
 export interface WorkspaceDecryptPathAddrErrorCorruptedData {
     tag: "WorkspaceDecryptPathAddrErrorCorruptedData"
@@ -4488,6 +4542,64 @@ export type WorkspaceDecryptPathAddrError =
   | WorkspaceDecryptPathAddrErrorOffline
   | WorkspaceDecryptPathAddrErrorRealmDeleted
   | WorkspaceDecryptPathAddrErrorStopped
+
+
+// WorkspaceEditicsGenerateAuthTokenError
+export interface WorkspaceEditicsGenerateAuthTokenErrorInternal {
+    tag: "WorkspaceEditicsGenerateAuthTokenErrorInternal"
+    error: string
+}
+export interface WorkspaceEditicsGenerateAuthTokenErrorStopped {
+    tag: "WorkspaceEditicsGenerateAuthTokenErrorStopped"
+    error: string
+}
+export type WorkspaceEditicsGenerateAuthTokenError =
+  | WorkspaceEditicsGenerateAuthTokenErrorInternal
+  | WorkspaceEditicsGenerateAuthTokenErrorStopped
+
+
+// WorkspaceEncryptEditicsError
+export interface WorkspaceEncryptEditicsErrorInternal {
+    tag: "WorkspaceEncryptEditicsErrorInternal"
+    error: string
+}
+export interface WorkspaceEncryptEditicsErrorInvalidCertificate {
+    tag: "WorkspaceEncryptEditicsErrorInvalidCertificate"
+    error: string
+}
+export interface WorkspaceEncryptEditicsErrorInvalidKeysBundle {
+    tag: "WorkspaceEncryptEditicsErrorInvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceEncryptEditicsErrorNoKey {
+    tag: "WorkspaceEncryptEditicsErrorNoKey"
+    error: string
+}
+export interface WorkspaceEncryptEditicsErrorNoRealmAccess {
+    tag: "WorkspaceEncryptEditicsErrorNoRealmAccess"
+    error: string
+}
+export interface WorkspaceEncryptEditicsErrorOffline {
+    tag: "WorkspaceEncryptEditicsErrorOffline"
+    error: string
+}
+export interface WorkspaceEncryptEditicsErrorRealmDeleted {
+    tag: "WorkspaceEncryptEditicsErrorRealmDeleted"
+    error: string
+}
+export interface WorkspaceEncryptEditicsErrorStopped {
+    tag: "WorkspaceEncryptEditicsErrorStopped"
+    error: string
+}
+export type WorkspaceEncryptEditicsError =
+  | WorkspaceEncryptEditicsErrorInternal
+  | WorkspaceEncryptEditicsErrorInvalidCertificate
+  | WorkspaceEncryptEditicsErrorInvalidKeysBundle
+  | WorkspaceEncryptEditicsErrorNoKey
+  | WorkspaceEncryptEditicsErrorNoRealmAccess
+  | WorkspaceEncryptEditicsErrorOffline
+  | WorkspaceEncryptEditicsErrorRealmDeleted
+  | WorkspaceEncryptEditicsErrorStopped
 
 
 // WorkspaceFdCloseError
@@ -6391,6 +6503,21 @@ export function workspaceDecryptPathAddr(
     workspace: number,
     link: string
 ): Promise<Result<string, WorkspaceDecryptPathAddrError>>
+export function workspaceEditicsDecrypt(
+    workspace: number,
+    document: string,
+    key_index: number,
+    encrypted: Uint8Array
+): Promise<Result<Uint8Array, WorkspaceDecryptEditicsError>>
+export function workspaceEditicsEncrypt(
+    workspace: number,
+    document: string,
+    cleartext: Uint8Array
+): Promise<Result<[number, Uint8Array], WorkspaceEncryptEditicsError>>
+export function workspaceEditicsGenerateAuthToken(
+    workspace: number,
+    document: string
+): Promise<Result<string, WorkspaceEditicsGenerateAuthTokenError>>
 export function workspaceFdClose(
     workspace: number,
     fd: number

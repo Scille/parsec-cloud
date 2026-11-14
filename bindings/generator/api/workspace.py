@@ -7,12 +7,14 @@ from .addr import (
 from .client import CertificateBasedInfoOrigin, RealmArchivingConfiguration
 from .common import (
     U64,
+    BytesVec,
     DateTime,
     DeviceID,
     EntryName,
     ErrorVariant,
     FsPath,
     Handle,
+    IndexInt,
     Path,
     RealmRole,
     Ref,
@@ -925,4 +927,94 @@ async def workspace_save_and_sync_file_with_cryptpad(
     cryptpad_session_timestamp: DateTime,
     content: Ref[bytes],
 ) -> Result[None, WorkspaceSaveAndSyncFileWithCryptpadError]:
+    raise NotImplementedError
+
+
+class WorkspaceEncryptEditicsError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class NoKey:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_editics_encrypt(
+    workspace: Handle,
+    document: VlobID,
+    cleartext: Ref[bytes],
+) -> Result[tuple[IndexInt, BytesVec], WorkspaceEncryptEditicsError]:
+    raise NotImplementedError
+
+
+class WorkspaceDecryptEditicsError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class KeyNotFound:
+        pass
+
+    class CorruptedKey:
+        pass
+
+    class CorruptedData:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_editics_decrypt(
+    workspace: Handle,
+    document: VlobID,
+    key_index: IndexInt,
+    encrypted: Ref[bytes],
+) -> Result[BytesVec, WorkspaceDecryptEditicsError]:
+    raise NotImplementedError
+
+
+class WorkspaceEditicsGenerateAuthTokenError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Internal:
+        pass
+
+
+def workspace_editics_generate_auth_token(
+    workspace: Handle,
+    document: VlobID,
+) -> Result[str, WorkspaceEditicsGenerateAuthTokenError]:
     raise NotImplementedError

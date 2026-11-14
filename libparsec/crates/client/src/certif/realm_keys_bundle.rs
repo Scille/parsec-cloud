@@ -27,6 +27,9 @@ pub enum EncryptionUsage {
     Block(BlockID),
     /// Encrypt `CryptpadSessionKey` for a given file
     CryptpadSessionKey(VlobID),
+    /// Encrypt an editics payload (original content archive, change fragment,
+    /// cursor, message) of a given file
+    Editics(VlobID),
 }
 
 impl EncryptionUsage {
@@ -38,6 +41,7 @@ impl EncryptionUsage {
             EncryptionUsage::Vlob(id) => **id,
             EncryptionUsage::Block(id) => **id,
             EncryptionUsage::CryptpadSessionKey(id) => **id,
+            EncryptionUsage::Editics(id) => **id,
         }
     }
 }

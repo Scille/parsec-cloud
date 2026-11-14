@@ -17,7 +17,7 @@ pub use anonymous_cmds::AnonymousCmds;
 pub use anonymous_server_cmds::AnonymousServerCmds;
 pub use authenticated_account_cmds::{AccountAuthMethod, AuthenticatedAccountCmds};
 pub use authenticated_cmds::{
-    AuthenticatedCmds, PARSEC_AUTH_METHOD,
+    AuthenticatedCmds, PARSEC_AUTH_METHOD, editics_generate_auth_token,
     sse::{RateLimiter, SSEEvent, SSEResponseOrMissedEvents, SSEStream},
 };
 pub use error::{ConnectionError, ConnectionResult};
