@@ -63,8 +63,11 @@ function getEditicsHostPage(): string {
 function getEditicsFrameUrl(editicsOrigin: string): URL {
   const BASE_URL = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
   const url = new URL(`${BASE_URL}${getEditicsHostPage()}`, editicsOrigin);
-  // Passing our origin to the frame, so it knows how to contact us and check for us
-  url.searchParams.set('parentOrigin', window.location.origin);
+  // Passing our origin to the frame, so it knows how to contact us and check for us.
+  // In web, this URL will really be used to fetch a page from the server; but
+  // those parameters are only used within our client, so pass them after the
+  // URL `#` to not send them to the server.
+  url.hash = new URLSearchParams({ parentOrigin: window.location.origin }).toString();
   return url;
 }
 
