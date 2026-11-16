@@ -14,7 +14,14 @@
     v-if="content && !error"
     v-show="!loading"
   >
+    <native-pdf-viewer
+      v-if="useNativeViewer"
+      :content="content"
+      @loaded="loading = false"
+      @error="onRendererError"
+    />
     <pdfjs-viewer
+      v-else
       :content="content"
       @loaded="loading = false"
       @error="onRendererError"
@@ -24,7 +31,7 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { FileViewerWrapper, PdfjsViewer } from '@/views/files/handler/viewer';
+import { FileViewerWrapper, NativePdfViewer, PdfjsViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { MsSpinner } from 'megashark-lib';
 import { onMounted, ref, Ref, shallowRef } from 'vue';
@@ -36,6 +43,7 @@ const props = defineProps<{
 const loading = ref(true);
 const error = ref('');
 const content: Ref<Uint8Array | null> = shallowRef(null);
+const useNativeViewer = navigator.pdfViewerEnabled && !(window as any).TESTING_FORCE_PDFJS;
 
 onMounted(async () => {
   try {

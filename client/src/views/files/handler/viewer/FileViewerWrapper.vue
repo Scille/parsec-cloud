@@ -26,7 +26,7 @@
   <!-- file-viewer bottombar -->
   <div
     class="file-viewer-bottombar"
-    v-if="!error"
+    v-if="!error && $slots.controls"
   >
     <slot name="controls" />
   </div>
