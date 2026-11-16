@@ -708,3 +708,25 @@ async def test_untranslatable_events(
         assert result["ok"] is False
         assert result["kind"] == "libparsec"
         assert result["error"].startswith("Unknown device ID")
+
+        # Server -> client: the payloads authored by the other participants are
+        # not trusted either (here: the encrypted cursor is not valid base64).
+        result = await editics_js_runtime.async_eval(
+            f"""
+            {instance}.cookServerEvent({{
+                type: 'saveChanges',
+                author: ['de10a11cec0010000000000000000000', 0],
+                changes: [],
+                changesIndex: 0,
+                syncChangesIndex: 0,
+                endSaveChanges: true,
+                locks: [],
+                excelAdditionalInfoIndexCols: null,
+                excelAdditionalInfoIndexRows: null,
+                encryptedCursorAdditionalInfo: [3, '$not-base64$'],
+            }})
+            """
+        )
+        assert result["ok"] is False
+        assert result["kind"] == "translation"
+        assert result["error"].startswith("Malformed editics encrypted cursor additional info")

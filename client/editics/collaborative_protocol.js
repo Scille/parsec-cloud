@@ -61,6 +61,56 @@ function bytesToStr(bytes) {
 }
 
 // ---------------------------------------------------------------------------
+// External payload parsing
+// ---------------------------------------------------------------------------
+
+// The payloads coming from the OnlyOffice editor or from the other session
+// participants (through the Parsec server) cannot be trusted to be well-formed.
+// So their parsing failures are expected errors, returned as an `EditicsResult`
+// with the `translation` kind (exceptions are reserved to bugs in this code).
+
+/**
+ * Parse a JSON payload coming from an external party.
+ * @template T
+ * @param {string} s
+ * @param {string} what description of the payload, used in the error message
+ * @returns {EditicsResult<T>}
+ */
+function parseJson(s, what) {
+  try {
+    return { ok: true, value: JSON.parse(s) };
+  } catch (error) {
+    return { ok: false, kind: 'translation', error: `Malformed ${what}: ${error}` };
+  }
+}
+
+/**
+ * Base64-decode a payload coming from an external party.
+ * @param {string} b64
+ * @param {string} what description of the payload, used in the error message
+ * @returns {EditicsResult<Uint8Array>}
+ */
+function bytesFromBase64(b64, what) {
+  try {
+    return { ok: true, value: Uint8Array.fromBase64(b64) };
+  } catch (error) {
+    return { ok: false, kind: 'translation', error: `Malformed ${what}: ${error}` };
+  }
+}
+
+/**
+ * Split an editics encrypted content (coming from another session participant)
+ * into its (key index, ciphertext) parts.
+ * @param {EditicsEncryptedContent} encrypted
+ * @param {string} what description of the payload, used in the error message
+ * @returns {EditicsResult<[number, Uint8Array]>}
+ */
+function bytesFromEncryptedContent(encrypted, what) {
+  const cipherText = bytesFromBase64(encrypted[1], what);
+  return cipherText.ok ? { ok: true, value: [encrypted[0], cipherText.value] } : cipherText;
+}
+
+// ---------------------------------------------------------------------------
 // EditicsTranslator
 // ---------------------------------------------------------------------------
 
@@ -178,6 +228,23 @@ class EditicsTranslator {
     return `${deviceId}${indexUser}`;
   }
 
+  // --- Session payload crypto ----------------------------------------------
+
+  /**
+   * @param {string} authorDeviceId
+   * @param {EditicsEncryptedContent} encrypted
+   * @param {string} what description of the payload, used in the error message
+   * @returns {Promise<EditicsResult<Uint8Array>>}
+   */
+  async _decrypt(authorDeviceId, encrypted, what) {
+    const parts = bytesFromEncryptedContent(encrypted, what);
+    if (!parts.ok) {
+      return parts;
+    }
+    const [keyIndex, cipherText] = parts.value;
+    return await this.libparsec.decrypt(authorDeviceId, keyIndex, cipherText);
+  }
+
   // --- Client events translation -------------------------------------------
 
   /**
@@ -292,7 +359,7 @@ class EditicsTranslator {
       }
 
       case 'saveChanges': {
-        return { ok: true, value: await this._cookSaveChanges(oo) };
+        return await this._cookSaveChanges(oo);
       }
 
       case 'unSaveLock': {
@@ -332,7 +399,7 @@ class EditicsTranslator {
 
   /**
    * @param {OOClientEventSaveChanges} oo
-   * @returns {Promise<EditicsClientEventSaveChanges>}
+   * @returns {Promise<EditicsResult<EditicsClientEventSaveChanges>>}
    */
   async _cookSaveChanges(oo) {
     // Editics always enables OnlyOffice `binaryChanges` mode, so `changes` is
@@ -343,6 +410,9 @@ class EditicsTranslator {
       const [keyIndex, cipherText] = await this.libparsec.encrypt(/** @type {Uint8Array} */ (fragment));
       encryptedChanges.push([keyIndex, cipherText.toBase64()]);
     }
+    // `oo.changes` is potentially a big buffer, and we no longer need it.
+    // Release its likely only reference, so GC can reclaim its memory.
+    /** @type {any} */ (oo).changes = null;
 
     // In OnlyOffice protocol, the `excelAdditionalInfo` (despite its name) is
     // carried by all the editor types.
@@ -365,13 +435,24 @@ class EditicsTranslator {
     /** @type {[number, string] | null} */
     let encryptedCursor = null;
     if (oo.excelAdditionalInfo !== null && oo.excelAdditionalInfo !== undefined) {
-      const parsed = JSON.parse(oo.excelAdditionalInfo);
-      excelAdditionalInfoIndexCols = parsed.indexCols ?? null;
-      excelAdditionalInfoIndexRows = parsed.indexRows ?? null;
+      const parsed = parseJson(oo.excelAdditionalInfo, 'OnlyOffice `saveChanges.excelAdditionalInfo` payload');
+      if (!parsed.ok) {
+        return parsed;
+      }
+      if (typeof parsed.value !== 'object' || parsed.value === null) {
+        return {
+          ok: false,
+          kind: 'translation',
+          error: 'Malformed OnlyOffice `saveChanges.excelAdditionalInfo` payload (expected a JSON object)',
+        };
+      }
+      const additionalInfo = parsed.value;
+      excelAdditionalInfoIndexCols = additionalInfo.indexCols ?? null;
+      excelAdditionalInfoIndexRows = additionalInfo.indexRows ?? null;
       /** @type {Record<string, any>} */
       const cursorPart = {};
-      for (const key of Object.keys(parsed)) {
-        if (key !== 'indexCols' && key !== 'indexRows') cursorPart[key] = parsed[key];
+      for (const key of Object.keys(additionalInfo)) {
+        if (key !== 'indexCols' && key !== 'indexRows') cursorPart[key] = additionalInfo[key];
       }
       if (Object.keys(cursorPart).length > 0) {
         const [keyIndex, cipherText] = await this.libparsec.encrypt(bytesFromStr(JSON.stringify(cursorPart)));
@@ -379,16 +460,19 @@ class EditicsTranslator {
       }
     }
     return {
-      type: 'saveChanges',
-      encryptedChanges,
-      startSaveChanges: oo.startSaveChanges,
-      endSaveChanges: oo.endSaveChanges,
-      // OnlyOffice uses `-1` as no-truncation marker, editics uses `null`.
-      deleteIndex: typeof oo.deleteIndex === 'number' && oo.deleteIndex >= 0 ? oo.deleteIndex : null,
-      excelAdditionalInfoIndexCols,
-      excelAdditionalInfoIndexRows,
-      encryptedCursorAdditionalInfo: encryptedCursor,
-      releaseLocks: oo.releaseLocks,
+      ok: true,
+      value: {
+        type: 'saveChanges',
+        encryptedChanges,
+        startSaveChanges: oo.startSaveChanges,
+        endSaveChanges: oo.endSaveChanges,
+        // OnlyOffice uses `-1` as no-truncation marker, editics uses `null`.
+        deleteIndex: typeof oo.deleteIndex === 'number' && oo.deleteIndex >= 0 ? oo.deleteIndex : null,
+        excelAdditionalInfoIndexCols,
+        excelAdditionalInfoIndexRows,
+        encryptedCursorAdditionalInfo: encryptedCursor,
+        releaseLocks: oo.releaseLocks,
+      },
     };
   }
 
@@ -635,8 +719,7 @@ class EditicsTranslator {
       await Promise.all(
         editics.changes.map(async (c) => {
           const [authorDeviceId, _authorIndexUser] = c.author;
-          const [keyIndex, b64CipherText] = c.encryptedChange;
-          const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
+          const cleartext = await this._decrypt(authorDeviceId, c.encryptedChange, 'editics encrypted change');
           if (!cleartext.ok) {
             return cleartext;
           }
@@ -677,12 +760,11 @@ class EditicsTranslator {
       await Promise.all(
         messages.map(async (m) => {
           const [authorDeviceId, _authorIndexUser] = m.author;
-          const [keyIndex, b64CipherText] = m.encryptedMessage;
           const username = await this.getHumanLabelFromDeviceId(authorDeviceId);
           if (!username.ok) {
             return username;
           }
-          const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
+          const cleartext = await this._decrypt(authorDeviceId, m.encryptedMessage, 'editics encrypted message');
           if (!cleartext.ok) {
             return cleartext;
           }
@@ -724,11 +806,7 @@ class EditicsTranslator {
    * @returns {Promise<EditicsResult<OOServerEventCursor>>}
    */
   async _cookCursor(editics) {
-    const cleartext = await this.libparsec.decrypt(
-      editics.author[0],
-      editics.encryptedCursor[0],
-      Uint8Array.fromBase64(editics.encryptedCursor[1]),
-    );
+    const cleartext = await this._decrypt(editics.author[0], editics.encryptedCursor, 'editics encrypted cursor');
     if (!cleartext.ok) {
       return cleartext;
     }
@@ -819,8 +897,7 @@ class EditicsTranslator {
     const changes = this._collectResults(
       await Promise.all(
         editics.changes.map(async (c) => {
-          const [keyIndex, b64CipherText] = c.encryptedChange;
-          const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
+          const cleartext = await this._decrypt(authorDeviceId, c.encryptedChange, 'editics encrypted change');
           if (!cleartext.ok) {
             return cleartext;
           }
@@ -874,12 +951,19 @@ class EditicsTranslator {
       hasExcelAdditionalInfo = true;
     }
     if (editics.encryptedCursorAdditionalInfo !== null) {
-      const [keyIndex, b64CipherText] = editics.encryptedCursorAdditionalInfo;
-      const cleartext = await this.libparsec.decrypt(authorDeviceId, keyIndex, Uint8Array.fromBase64(b64CipherText));
+      const cleartext = await this._decrypt(
+        authorDeviceId,
+        editics.encryptedCursorAdditionalInfo,
+        'editics encrypted cursor additional info',
+      );
       if (!cleartext.ok) {
         return cleartext;
       }
-      excelObj = Object.assign(excelObj, JSON.parse(bytesToStr(cleartext.value)));
+      const cursorPart = parseJson(bytesToStr(cleartext.value), 'participant cursor additional info payload');
+      if (!cursorPart.ok) {
+        return cursorPart;
+      }
+      excelObj = Object.assign(excelObj, cursorPart.value);
       hasExcelAdditionalInfo = true;
     }
     if (hasExcelAdditionalInfo) {
