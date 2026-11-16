@@ -1,6 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { checkWorkspaceContextMenu, DisplaySize, expect, login, logout, msTest, shareWorkspace } from '@tests/e2e/helpers';
+import {
+  checkWorkspaceContextMenu,
+  DisplaySize,
+  expect,
+  login,
+  logout,
+  msTest,
+  readDownload,
+  shareWorkspace,
+  waitForDownload,
+} from '@tests/e2e/helpers';
 
 const ROLES = [
   {
@@ -77,4 +87,66 @@ msTest('Workspace details in small display', async ({ workspaces }) => {
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('Workspace details');
   await expect(modal.locator('.workspace-header-text__name')).toHaveText('wksp1');
   await expect(modal.locator('.workspace-info-item__role')).toHaveText('Owner');
+});
+
+msTest('Export workspace data as JSON', async ({ workspaces }) => {
+  const modal = workspaces.locator('.workspace-details-modal');
+  await expect(modal).toBeHidden();
+
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item', { hasText: 'wksp1' });
+  await wk.click({ button: 'right' });
+  const menu = workspaces.locator('.workspace-context-menu');
+  await expect(menu).toBeVisible();
+  await menu.locator('.list-group-item__label', { hasText: 'Details' }).click();
+  await expect(modal).toBeVisible();
+
+  const exportButton = modal.locator('.workspace-export__button');
+  await expect(exportButton).toBeVisible();
+  await expect(exportButton).toHaveText('Download export (.json)');
+
+  const download = await waitForDownload(workspaces, async () => {
+    await exportButton.click();
+  });
+
+  expect(download.suggestedFilename()).toMatch(/^Export_TestbedOrg\d+_Workspace_wksp1_.+\.json$/);
+  const content = JSON.parse((await readDownload(download)).toString('utf-8'));
+
+  expect(content.export.organization).toMatch(/^TestbedOrg\d+$/);
+
+  // wksp1 in the coolorg testbed: id is deterministic, archived=false, no files
+  expect(content.workspace.name).toBe('wksp1');
+  expect(content.workspace.id).toBe('f0000000000000000000000000000004');
+  expect(content.workspace.archived).toBe(false);
+
+  // Users with a role on wksp1: alice (owner) & bob (reader)
+  // Dates (grantedOn, ...) are excluded from the strict comparison
+  const users = content.workspace.users
+    .map((u: any) => ({
+      name: u.name,
+      email: u.email,
+      currentRole: u.currentRole,
+      isRevoked: u.isRevoked,
+      roleChanges: u.roleChanges.map((rc: any) => ({
+        role: rc.role,
+        grantedBy: rc.grantedBy ? { name: rc.grantedBy.name, email: rc.grantedBy.email } : undefined,
+      })),
+    }))
+    .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+  expect(users).toEqual([
+    {
+      name: 'Alicey McAliceFace',
+      email: 'alice@example.com',
+      currentRole: 'RealmRoleOwner',
+      isRevoked: false,
+      roleChanges: [{ role: 'RealmRoleOwner', grantedBy: { name: 'Alicey McAliceFace', email: 'alice@example.com' } }],
+    },
+    {
+      name: 'Boby McBobFace',
+      email: 'bob@example.com',
+      currentRole: 'RealmRoleReader',
+      isRevoked: false,
+      roleChanges: [{ role: 'RealmRoleReader', grantedBy: { name: 'Alicey McAliceFace', email: 'alice@example.com' } }],
+    },
+  ]);
 });
