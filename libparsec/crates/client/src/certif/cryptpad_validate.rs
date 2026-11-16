@@ -5,7 +5,7 @@ use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 use crate::{
-    CertifDecryptForRealmError,
+    CertifGetRealmKeyForDecryption,
     certif::realm_keys_bundle::{self, EncryptionUsage},
 };
 
@@ -339,27 +339,26 @@ async fn decrypt_session_key(
     timestamp: DateTime,
     encrypted: &[u8],
 ) -> Result<Vec<u8>, CertifValidateCryptpadSessionKeysError> {
-    realm_keys_bundle::decrypt_for_realm(
+    let key = realm_keys_bundle::get_realm_key_for_decryption(
         ops,
         store,
         EncryptionUsage::CryptpadSessionKey(document_id),
         realm_id,
         key_index,
-        encrypted,
     )
     .await
     .map_err(|err| match err {
-        CertifDecryptForRealmError::Stopped => CertifValidateCryptpadSessionKeysError::Stopped,
-        CertifDecryptForRealmError::Offline(e) => {
+        CertifGetRealmKeyForDecryption::Stopped => CertifValidateCryptpadSessionKeysError::Stopped,
+        CertifGetRealmKeyForDecryption::Offline(e) => {
             CertifValidateCryptpadSessionKeysError::Offline(e)
         }
-        CertifDecryptForRealmError::NotAllowed => {
+        CertifGetRealmKeyForDecryption::NotAllowed => {
             CertifValidateCryptpadSessionKeysError::NotAllowed
         }
-        CertifDecryptForRealmError::RealmDeleted => {
+        CertifGetRealmKeyForDecryption::RealmDeleted => {
             CertifValidateCryptpadSessionKeysError::RealmDeleted
         }
-        CertifDecryptForRealmError::KeyNotFound => {
+        CertifGetRealmKeyForDecryption::KeyNotFound => {
             CertifValidateCryptpadSessionKeysError::InvalidCryptpadSessionKeys(Box::new(
                 InvalidCryptpadSessionKeysError::NonExistentKeyIndex {
                     realm: realm_id,
@@ -370,7 +369,7 @@ async fn decrypt_session_key(
                 },
             ))
         }
-        CertifDecryptForRealmError::CorruptedKey => {
+        CertifGetRealmKeyForDecryption::CorruptedKey => {
             CertifValidateCryptpadSessionKeysError::InvalidCryptpadSessionKeys(Box::new(
                 InvalidCryptpadSessionKeysError::CorruptedKey {
                     realm: realm_id,
@@ -381,24 +380,21 @@ async fn decrypt_session_key(
                 },
             ))
         }
-        CertifDecryptForRealmError::CorruptedData => {
-            CertifValidateCryptpadSessionKeysError::InvalidCryptpadSessionKeys(Box::new(
-                InvalidCryptpadSessionKeysError::CannotDecrypt {
-                    realm: realm_id,
-                    document: document_id,
-                    author: author.to_owned(),
-                    timestamp,
-                    key_index,
-                },
-            ))
-        }
-        CertifDecryptForRealmError::InvalidCertificate(err) => {
-            CertifValidateCryptpadSessionKeysError::InvalidCertificate(err)
-        }
-        CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+        CertifGetRealmKeyForDecryption::InvalidKeysBundle(err) => {
             CertifValidateCryptpadSessionKeysError::InvalidKeysBundle(err)
         }
-        CertifDecryptForRealmError::Internal(err) => err.into(),
+        CertifGetRealmKeyForDecryption::Internal(err) => err.into(),
+    })?;
+    key.decrypt(encrypted).map_err(|_| {
+        CertifValidateCryptpadSessionKeysError::InvalidCryptpadSessionKeys(Box::new(
+            InvalidCryptpadSessionKeysError::CannotDecrypt {
+                realm: realm_id,
+                document: document_id,
+                author: author.to_owned(),
+                timestamp,
+                key_index,
+            },
+        ))
     })
 }
 
