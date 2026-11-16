@@ -781,7 +781,7 @@ dev = [
     { name = "maturin", specifier = ">=1.14.1,<1.17.0" },
     { name = "mini-racer", specifier = ">=0.14.1" },
     { name = "msgpack", specifier = ">=1.1.2,<1.3.0" },
-    { name = "patchelf", marker = "sys_platform == 'linux'", specifier = ">=0.17.2.4,<0.19.2.0" },
+    { name = "patchelf", marker = "sys_platform == 'linux'", specifier = ">=0.17.2.4,<0.19.4.0" },
     { name = "pynacl", specifier = "~=1.6.2" },
     { name = "pyright", specifier = "~=1.1.353" },
     { name = "pytest", specifier = ">=9.0.1,<9.3.0" },
@@ -799,17 +799,17 @@ testbed-server = [{ name = "psutil", specifier = ">=7.0,<7.3" }]
 
 [[package]]
 name = "patchelf"
-version = "0.19.1.0"
+version = "0.19.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5a/0b/691b49b40201a80cb09dbf2003eef0e36270ae07b00de99baa915df1d274/patchelf-0.19.1.0.tar.gz", hash = "sha256:8976fbdef7d3e461d623e703024b70db6b6e3308f7e389930f39a71a1e347a2c", size = 371787, upload-time = "2026-08-08T05:07:29.253Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7c/99/1f5174c64fc0ed2e6e7da7ef59ae4d36ec694256ef93aa2c08231cbe1dbc/patchelf-0.19.3.0.tar.gz", hash = "sha256:568ede62875dc8e30ee0eb2920da5d39e6aebb43216c48d7362f80384217fee8", size = 380620, upload-time = "2026-11-03T21:33:41.549Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/03/29cd947cc94b2c91f5bd368c1b5d3469bec6b8ea538db67dcaf6e4ac065a/patchelf-0.19.1.0-py3-none-manylinux1_i686.manylinux_2_5_i686.musllinux_1_1_i686.whl", hash = "sha256:f16f44fbcf0da4f2d1dd841d49f849fe9ea1b8fb952d5c4e9b8234f09d3f149a", size = 624780, upload-time = "2026-08-08T05:07:20.401Z" },
-    { url = "https://files.pythonhosted.org/packages/e7/03/afd9bdd2ba5f96997196109f25dadbe5141bc6e70dffd85f3f84cc85d69c/patchelf-0.19.1.0-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:a8f6331ccf40c345507279f755f4a38c2cb00b9efda746fd43c17713cce0aba4", size = 549422, upload-time = "2026-08-08T05:07:21.583Z" },
-    { url = "https://files.pythonhosted.org/packages/cc/e6/1c78ad10adfc4b00a642ab518c246dd88dc826d641eb31faca5eaddc8b97/patchelf-0.19.1.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:b5c3dec03b89db2bb0df301d316360847eeaf72c6fb6ddde0227326655edabb4", size = 542031, upload-time = "2026-08-08T05:07:22.836Z" },
-    { url = "https://files.pythonhosted.org/packages/e3/b8/a8bcf0a627b688ed0798048e585f1c1c8dbef5070db3f6c30c6895d73ce9/patchelf-0.19.1.0-py3-none-manylinux2014_armv7l.manylinux_2_17_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:2ffad3734be73b83ac2f46709264a34dd2aee40a7dd5deccf84856684d606ec6", size = 487087, upload-time = "2026-08-08T05:07:24.03Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/05/816af7bf3a51106e3558d32e10dc021a306d64f257fc0c404e4a9fcb1fba/patchelf-0.19.1.0-py3-none-manylinux2014_ppc64le.manylinux_2_17_ppc64le.musllinux_1_1_ppc64le.whl", hash = "sha256:89760f542fac28c7798e5f56e66601a78ef20e088fc80a493b6a9161438b8dc5", size = 612621, upload-time = "2026-08-08T05:07:25.276Z" },
-    { url = "https://files.pythonhosted.org/packages/99/fc/48c07d0f74251946e62881a89ef105bed242e855928ac4f834a9bde85f73/patchelf-0.19.1.0-py3-none-manylinux2014_s390x.manylinux_2_17_s390x.musllinux_1_1_s390x.whl", hash = "sha256:efed44482d740e86d84e3f40e0ee9876c4249c7ac1128b5b1639e31287fa14a4", size = 674133, upload-time = "2026-08-08T05:07:26.541Z" },
-    { url = "https://files.pythonhosted.org/packages/0c/f3/dffc8a228ff8a2a627c48c7356ae36eb6d0c2497ba549a98a3b5a55f24af/patchelf-0.19.1.0-py3-none-manylinux_2_31_riscv64.musllinux_1_1_riscv64.whl", hash = "sha256:c2311d99eac1b9c40f5acd673e3b3581cde320bc4647e7f997e5e063731fc438", size = 572865, upload-time = "2026-08-08T05:07:27.867Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/2b/2f9b75533ca180796dd92cdae4e141cec625afcde980f6e28f1f81dd5a89/patchelf-0.19.3.0-py3-none-manylinux1_i686.manylinux_2_5_i686.musllinux_1_1_i686.whl", hash = "sha256:54339e1b048042a2b1c881bc997293c1b864e27ed49d25f66c6fc1683e115df7", size = 626808, upload-time = "2026-11-03T21:33:29.409Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/d8/b261671a4064a145ae8129c5585ac79d121d852055043d03b66ee0aa4653/patchelf-0.19.3.0-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:1668a30fcc414debbb1604cd0a361b2f28a33a0ff6e74a74bc71766ee746e21f", size = 550510, upload-time = "2026-11-03T21:33:31.178Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/11/ae611ffc3ccf14bdf4baf5b22ddb853617376fe5aff132fa388bde06aad9/patchelf-0.19.3.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:3c1cde40c0c5769415c29bcb510c6e529a061f4e11c91d4d74c367bf566d1d0c", size = 543394, upload-time = "2026-11-03T21:33:33.107Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/ef/fdb9eabb3dede0870fa6d5e754fd21649c6c03d02594de01265daba4a0a6/patchelf-0.19.3.0-py3-none-manylinux2014_armv7l.manylinux_2_17_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:39c84338b8fe604d1a299870047a66bccbf16bb4f6d4a4704d260d925cff0fd2", size = 488931, upload-time = "2026-11-03T21:33:34.749Z" },
+    { url = "https://files.pythonhosted.org/packages/63/4e/416756d107ef40be5a6def942f87e68114b1fc27391ec094ff07799d3338/patchelf-0.19.3.0-py3-none-manylinux2014_ppc64le.manylinux_2_17_ppc64le.musllinux_1_1_ppc64le.whl", hash = "sha256:ce15b5fa8b0bd897987b003cec3f49a0bce554c7010ccb1462378c4c9e42afd4", size = 613842, upload-time = "2026-11-03T21:33:36.583Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/f9/cf9d02a2d5db876f2732c0179a0c770299f7e0a610a3cb61e546159bca3d/patchelf-0.19.3.0-py3-none-manylinux2014_s390x.manylinux_2_17_s390x.musllinux_1_1_s390x.whl", hash = "sha256:8a4f106f5d4c3574d6adbf7f2d3733e454a8a8eda4f24660728ff7018a895917", size = 675816, upload-time = "2026-11-03T21:33:38.309Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/77/b53d1873f1e3c3492e5093920fd30b34b58cb945422552dc05d8797d7533/patchelf-0.19.3.0-py3-none-manylinux_2_31_riscv64.musllinux_1_1_riscv64.whl", hash = "sha256:e265835bdc6a40ee4bd4d479eaa80f12102c4eca9b0fc6c1c4acf17c2029aa99", size = 574420, upload-time = "2026-11-03T21:33:39.832Z" },
 ]
 
 [[package]]
