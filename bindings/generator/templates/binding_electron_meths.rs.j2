@@ -292,7 +292,7 @@ Box::new({{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }})
     {% if type.custom_from_rs_bytes -%}
     let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
     #[allow(clippy::unnecessary_mut_passed)]
-    match custom_from_rs_bytes({{ js_val }}.as_slice({{ mut_cx_ref }}))
+    match custom_from_rs_bytes({{ js_val }}.as_slice({{ mut_cx_ref }}).to_vec())
     {%- else -%}
     #[allow(clippy::unnecessary_mut_passed)]
     match {{ js_val }}.as_slice({{ mut_cx_ref }}).try_into()
