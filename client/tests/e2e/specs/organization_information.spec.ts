@@ -1,6 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, DisplaySize, expect, fillInputModal, getClipboardText, mockLibParsec, msTest } from '@tests/e2e/helpers';
+import {
+  DEFAULT_USER_INFORMATION,
+  DisplaySize,
+  expect,
+  fillInputModal,
+  getClipboardText,
+  mockLibParsec,
+  msTest,
+  readDownload,
+  waitForDownload,
+} from '@tests/e2e/helpers';
 
 for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   msTest(`Org info default state on ${displaySize} display`, async ({ organizationPage }) => {
@@ -304,4 +314,56 @@ msTest('Copy server address', async ({ organizationPage }) => {
   await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toHaveText('Copied');
 
   expect(await getClipboardText(organizationPage)).toMatch(/^parsec3:\/\/.+$/);
+});
+
+msTest('Export organization data as JSON', async ({ organizationPage }) => {
+  const exportButton = organizationPage.locator('.user-download-button');
+  await expect(exportButton).toBeVisible();
+  await expect(exportButton).toHaveText('Export data (.json)');
+
+  const download = await waitForDownload(organizationPage, async () => {
+    await exportButton.click();
+  });
+
+  expect(download.suggestedFilename()).toMatch(/^Export_TestbedOrg\d+_Users_.+\.json$/);
+  const content = JSON.parse((await readDownload(download)).toString('utf-8'));
+
+  expect(content.export.organization).toMatch(/^TestbedOrg\d+$/);
+  expect(content.export.exportedBy.name).toBe('Alicey McAliceFace');
+  expect(content.export.exportedBy.email).toBe('alice@example.com');
+
+  // 3 users: Alicey (admin), Boby (standard), Malloryy (outsider)
+  // Dates (createdOn, ...) are excluded from the strict comparison
+  expect(content.users.map((u: any) => ({ name: u.name, email: u.email, profile: u.profile, revoked: u.revoked }))).toEqual([
+    { name: 'Alicey McAliceFace', email: 'alice@example.com', profile: 'UserProfileAdmin', revoked: false },
+    { name: 'Boby McBobFace', email: 'bob@example.com', profile: 'UserProfileStandard', revoked: false },
+    { name: 'Malloryy McMalloryFace', email: 'mallory@example.com', profile: 'UserProfileOutsider', revoked: false },
+  ]);
+  for (const user of content.users) {
+    expect(user.devices.length).toBeGreaterThan(0);
+  }
+
+  // Coolorg has 3 realms: personal realms of alice & bob, plus wksp1 (shared alice/bob)
+  // Sorted by realm id for a stable comparison
+  const workspaces = [...content.workspaces].sort((a: any, b: any) => a.id.localeCompare(b.id));
+  expect(workspaces).toEqual([
+    {
+      id: 'f0000000000000000000000000000001',
+      size: 0,
+      metadataSize: expect.any(Number),
+      users: { RealmRoleOwner: 1, RealmRoleManager: 0, RealmRoleContributor: 0, RealmRoleReader: 0 },
+    },
+    {
+      id: 'f0000000000000000000000000000002',
+      size: 0,
+      metadataSize: expect.any(Number),
+      users: { RealmRoleOwner: 1, RealmRoleManager: 0, RealmRoleContributor: 0, RealmRoleReader: 0 },
+    },
+    {
+      id: 'f0000000000000000000000000000004',
+      size: 0,
+      metadataSize: expect.any(Number),
+      users: { RealmRoleOwner: 1, RealmRoleManager: 0, RealmRoleContributor: 0, RealmRoleReader: 1 },
+    },
+  ]);
 });

@@ -8,6 +8,7 @@ import {
   getWorkspaceUserRoleChanges,
   listUserDevices,
   listUsers,
+  listWorkspacesInfo,
   RealmArchivingConfigurationTag,
   UserInfo,
   WorkspaceHandle,
@@ -70,6 +71,13 @@ export interface WorkspaceExport {
   archived: boolean;
   deletionOn?: string;
   users: Array<WorkspaceUserExport>;
+}
+
+export interface WorkspaceInfoExport {
+  id: string;
+  size: number;
+  metadataSize: number;
+  users: Record<string, number>;
 }
 
 export interface ExportHeader {
@@ -181,7 +189,28 @@ export async function exportAllUsers(serializer: ISerializer = JSONSerializer): 
       }
       users.push(user);
     }
-    await downloadExport(serializer({ export: header, users: users }), `Export_${header.organization}_Users_${header.timestamp}.json`);
+
+    const workspaces: Array<WorkspaceInfoExport> = [];
+    const workspacesInfoResult = await listWorkspacesInfo();
+    if (workspacesInfoResult.ok) {
+      for (const item of workspacesInfoResult.value) {
+        const users: Record<string, number> = {};
+        for (const [role, count] of item.usersPerRole) {
+          users[role] = Number(count);
+        }
+        workspaces.push({
+          id: item.realmId,
+          size: Number(item.dataSize),
+          metadataSize: Number(item.metadataSize),
+          users: users,
+        });
+      }
+    }
+
+    await downloadExport(
+      serializer({ export: header, users: users, workspaces: workspaces }),
+      `Export_${header.organization}_Users_${header.timestamp}.json`,
+    );
     return true;
   } catch (err: any) {
     window.nativeAPI.log('error', `Failed to export: ${err.toString()}`);
