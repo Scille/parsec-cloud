@@ -199,6 +199,16 @@ jobs:
         run: cargo clippy --target wasm32-unknown-unknown -p libparsec_bindings_web ${{ steps.crates.outputs.platform }}
         timeout-minutes: 10
 
+      # `libparsec_crypto` has two implementations: RustCrypt and libsodium.
+      # RustCrypto is used on all platforms in dev (simpler to compile), but in release it is only used on web.
+      # So we follow the same logic to test `libparsec_crypto` on the CI:
+      # - use RustCrypto on web,
+      # - and libsodium on native platforms.
+      - name: 🧪 Test crypto on wasm
+        if: inputs.run-wasm-tests
+        run: wasm-pack test --headless --firefox libparsec/crates/crypto
+        timeout-minutes: 10
+
       - name: 🧪 Test platform-async on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_async
