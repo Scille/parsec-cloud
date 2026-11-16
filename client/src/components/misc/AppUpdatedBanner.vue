@@ -77,6 +77,7 @@ async function openChanges(): Promise<void> {
   width: fit-content;
   flex-shrink: 0;
   border-radius: ms.radius('lg');
+  overflow: hidden;
   z-index: 10;
   background: linear-gradient(93deg, ms.color('surface-extra-purple-default') 1%, ms.color('surface-extra-purple-default-pressed') 100%);
 
@@ -94,11 +95,11 @@ async function openChanges(): Promise<void> {
     color: ms.color('text-on-color-label');
     --background: transparent;
     --background-hover: #{ms.color('surface-neutral-on-color')};
-    --border-radius: #{ms.radius('none')};
     height: 100%;
     margin: 0;
 
     &::part(native) {
+      border-radius: ms.radius('none') !important;
       padding: ms.spacing('padding-2xl');
     }
 
@@ -132,16 +133,17 @@ async function openChanges(): Promise<void> {
 
   &-close {
     --color: #{ms.color('icon-on-color-label')};
-    --color-hover: #{ms.color('surface-base-default')};
+    --color-hover: #{ms.color('icon-on-color-label')};
     --background: transparent;
     --background-hover: #{ms.color('surface-neutral-on-color')};
-    position: absolute;
-    right: ms.spacing('padding-2xl');
+    flex-shrink: 0;
     height: auto;
     margin: 0;
+    border-left: ms.border('thin') solid ms.color('border-extra-purple-default');
 
     &::part(native) {
       padding: ms.spacing('padding-xs');
+      border-radius: ms.radius('none') !important;
     }
 
     &:hover {
