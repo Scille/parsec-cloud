@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from parsec._parsec import (
     AccessToken,
+    DateTime,
     DeviceCertificate,
     DeviceID,
     OrganizationID,
@@ -180,11 +181,20 @@ class Backend:
 
         org_id = OrganizationID(f"{template.id.title().replace('_', '')}OrgTemplate")
         bootstrap_event = next(
-            event
-            for event in template.events
-            if isinstance(event, testbed.TestbedEventBootstrapOrganization)
+            (
+                event
+                for event in template.events
+                if isinstance(event, testbed.TestbedEventBootstrapOrganization)
+            ),
+            # No bootstrap event for testbed template `empty`
+            None,
         )
-        creation_date = bootstrap_event.timestamp.add(days=-1)
+        creation_date = (
+            bootstrap_event.timestamp.add(days=-1)
+            if bootstrap_event
+            else DateTime.from_timestamp_micros(0)
+        )
+
         logger.info(
             "Load org template",
             ord_id=org_id.str,
