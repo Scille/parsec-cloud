@@ -14,10 +14,11 @@
 {{ function_param_type(type.elem) }}
 {%- elif type.kind == "dict" -%}
 Object
+{#- Lists/sets are received as raw JS values, the param cooking code takes care of the conversion -#}
 {%- elif type.kind == "list" -%}
-Vec<{{ function_param_type(type.elem) }}>
+Vec<JsValue>
 {%- elif type.kind == "set" -%}
-HashSet<{{ function_param_type(type.elem) }}>
+Vec<JsValue>
 {%- elif type.kind == "tuple" -%}
 (
     {%- for value in type.values -%}
@@ -179,15 +180,15 @@ let {{ param_name }} = {
 };
 {% elif type.kind == "list" %}
 let mut {{ param_name }}_converted = Vec::with_capacity({{ param_name }}.len());
-for js_elem in {{ param_name }}.iter() {
-    let rs_elem = {{ render_js_value_to_rs("js_elem.into()", type.elem) }};
+for js_elem in {{ param_name }} {
+    let rs_elem = {{ render_js_value_to_rs("js_elem", type.elem) }};
     {{ param_name }}_converted.push(rs_elem);
 }
 let {{ param_name }} = {{ param_name }}_converted;
 {% elif type.kind == "set" %}
 let mut {{ param_name }}_converted = Vec::with_capacity({{ param_name }}.len());
-for js_elem in {{ param_name }}.iter() {
-    let rs_elem = {{ render_js_value_to_rs("js_elem.into()", type.elem) }};
+for js_elem in {{ param_name }} {
+    let rs_elem = {{ render_js_value_to_rs("js_elem", type.elem) }};
     {{ param_name }}_converted.push(rs_elem);
 }
 let {{ param_name }} = {{ param_name }}_converted.into_iter().collect();
