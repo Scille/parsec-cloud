@@ -36,7 +36,7 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     [CspDirective.FontSrc, [customProtocol, 'data:', 'https:*', 'http:*']],
     [CspDirective.ConnectSrc, [customProtocol, 'https:', 'http:', 'wss:', 'ws:']],
     [CspDirective.WorkerSrc, [customProtocol, 'blob:', 'https:', 'http:']],
-    [CspDirective.FrameSrc, ['https:', 'http:', EDITICS_PROTOCOL]],
+    [CspDirective.FrameSrc, ['https:', 'http:', 'blob:', EDITICS_PROTOCOL]],
     [CspDirective.MediaSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
   ]);
   const EDITICS_CSP_RULE = buildPolicy([
