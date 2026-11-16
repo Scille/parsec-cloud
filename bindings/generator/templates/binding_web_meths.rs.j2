@@ -214,7 +214,7 @@ let {{ param_name }} = {{ enum_js_to_rs_function_name(type) }}(&{{ param_name }}
 {%- elif type.kind == "optional" and type.elem.kind == "ref" -%}
 {{ js_val }}.as_ref()
 {%- elif type.kind == "ref" and type.elem.kind == "bytes" -%}
-&{{ js_val }}.to_vec()
+&{{ js_val }}
 {%- elif type.kind == "ref" -%}
 &{{ js_val }}
 {%- else -%}
