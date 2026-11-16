@@ -41,7 +41,7 @@ msTest('Sidebar with trial orgs', async ({ context }) => {
   await expect(trialMenu.locator('.trial-card__tag')).toHaveText('Trial version');
   await expect(trialMenu.locator('.trial-card-text__time')).toHaveText('Expired');
   await expect(trialMenu.locator('.trial-card__button')).toHaveText('Subscribe now');
-  await openExternalLink(page, trialMenu.locator('.trial-card__button'), /^https:\/\/parsec\.cloud\/en\/pricing\/?.*$/);
+  await openExternalLink(page, trialMenu.locator('.trial-card__button'), /^https:\/\/parsec\.cloud\/pricing\/?.*$/);
 
   await logout(page);
   await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');

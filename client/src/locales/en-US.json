@@ -2,12 +2,12 @@
     "app": {
         "name": "Parsec Cloud",
         "developer": "Parsec Cloud",
-        "developerLink": "https://parsec.cloud/en",
+        "developerLink": "https://parsec.cloud/",
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "license": "AGPLv3",
         "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE-AGPL3",
         "history": "https://docs.parsec.cloud/en/{version}/history.html",
-        "pricingLink": "https://parsec.cloud/en/pricing/",
+        "pricingLink": "https://parsec.cloud/pricing/",
         "whatsNew": "https://parsec.cloud/blog/releases/{version}/"
     },
     "quit": {
@@ -427,10 +427,10 @@
         "acceptTOS": {
             "label": "By using Parsec, I accept the ",
             "tos": "Terms and Conditions",
-            "tosLink": "https://parsec.cloud/en/gtcs-parsec/",
+            "tosLink": "https://parsec.cloud/terms-conditions/",
             "and": " and ",
             "privacyPolicy": "Privacy Policy",
-            "privacyPolicyLink": "https://parsec.cloud/en/politique-de-confidentialite/",
+            "privacyPolicyLink": "https://parsec.cloud/privacy-policy/",
             "update": {
                 "title": "New terms of service",
                 "subtitle": "We have updated our terms of service. Please read and accept them to continue. You will automatically be disconnected if you refuse them.",
@@ -536,7 +536,7 @@
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/en/{version}",
         "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html#{anchor}",
-        "downloadParsecLink": "https://parsec.cloud/en/start-parsec/",
+        "downloadParsecLink": "https://parsec.cloud/download/",
         "reportBug": "Report a bug"
     },
     "bugReport": {
