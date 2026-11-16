@@ -5,7 +5,7 @@ use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 use crate::{
-    CertifDecryptForRealmError,
+    CertifGetRealmKeyForDecryption,
     certif::realm_keys_bundle::{self, EncryptionUsage},
 };
 
@@ -132,21 +132,22 @@ pub(super) async fn validate_block(
     let block = ops
         .store
         .for_read_with_requirements(ops, &needed_timestamps, async |store| {
-            realm_keys_bundle::decrypt_for_realm(
+            let key = realm_keys_bundle::get_realm_key_for_decryption(
                 ops,
                 store,
                 EncryptionUsage::Block(access.id),
                 realm_id,
                 key_index,
-                encrypted,
             )
             .await
             .map_err(|err| match err {
-                CertifDecryptForRealmError::Stopped => CertifValidateBlockError::Stopped,
-                CertifDecryptForRealmError::Offline(e) => CertifValidateBlockError::Offline(e),
-                CertifDecryptForRealmError::NotAllowed => CertifValidateBlockError::NotAllowed,
-                CertifDecryptForRealmError::RealmDeleted => CertifValidateBlockError::RealmDeleted,
-                CertifDecryptForRealmError::KeyNotFound => {
+                CertifGetRealmKeyForDecryption::Stopped => CertifValidateBlockError::Stopped,
+                CertifGetRealmKeyForDecryption::Offline(e) => CertifValidateBlockError::Offline(e),
+                CertifGetRealmKeyForDecryption::NotAllowed => CertifValidateBlockError::NotAllowed,
+                CertifGetRealmKeyForDecryption::RealmDeleted => {
+                    CertifValidateBlockError::RealmDeleted
+                }
+                CertifGetRealmKeyForDecryption::KeyNotFound => {
                     CertifValidateBlockError::InvalidBlockAccess(Box::new(
                         InvalidBlockAccessError::NonExistentKeyIndex {
                             realm_id,
@@ -159,7 +160,7 @@ pub(super) async fn validate_block(
                         },
                     ))
                 }
-                CertifDecryptForRealmError::CorruptedKey => {
+                CertifGetRealmKeyForDecryption::CorruptedKey => {
                     CertifValidateBlockError::InvalidBlockAccess(Box::new(
                         InvalidBlockAccessError::CorruptedKey {
                             realm_id,
@@ -172,26 +173,23 @@ pub(super) async fn validate_block(
                         },
                     ))
                 }
-                CertifDecryptForRealmError::CorruptedData => {
-                    CertifValidateBlockError::InvalidBlockAccess(Box::new(
-                        InvalidBlockAccessError::CannotDecrypt {
-                            realm_id,
-                            manifest_id: manifest.id,
-                            manifest_version: manifest.version,
-                            manifest_timestamp: manifest.timestamp,
-                            manifest_author: manifest.author,
-                            block_id: access.id,
-                            key_index,
-                        },
-                    ))
-                }
-                CertifDecryptForRealmError::InvalidCertificate(err) => {
-                    CertifValidateBlockError::InvalidCertificate(err)
-                }
-                CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+                CertifGetRealmKeyForDecryption::InvalidKeysBundle(err) => {
                     CertifValidateBlockError::InvalidKeysBundle(err)
                 }
-                CertifDecryptForRealmError::Internal(err) => err.into(),
+                CertifGetRealmKeyForDecryption::Internal(err) => err.into(),
+            })?;
+            key.decrypt(encrypted).map_err(|_| {
+                CertifValidateBlockError::InvalidBlockAccess(Box::new(
+                    InvalidBlockAccessError::CannotDecrypt {
+                        realm_id,
+                        manifest_id: manifest.id,
+                        manifest_version: manifest.version,
+                        manifest_timestamp: manifest.timestamp,
+                        manifest_author: manifest.author,
+                        block_id: access.id,
+                        key_index,
+                    },
+                ))
             })
         })
         .await

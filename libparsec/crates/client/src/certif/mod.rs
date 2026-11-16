@@ -11,6 +11,7 @@ pub use libparsec_platform_storage::certificates::UpTo;
 mod add;
 mod block_validate;
 mod cryptpad_validate;
+mod decrypt_opaque_data;
 mod encrypt;
 mod forget_all_certificates;
 mod list;
@@ -38,6 +39,7 @@ pub use block_validate::{CertifValidateBlockError, InvalidBlockAccessError};
 pub use cryptpad_validate::{
     CertifValidateCryptpadSessionKeysError, CryptpadSessionKeys, InvalidCryptpadSessionKeysError,
 };
+pub use decrypt_opaque_data::CertifDecryptOpaqueDataForRealmError;
 pub use encrypt::CertifEncryptForSequesterServicesError;
 pub use forget_all_certificates::CertifForgetAllCertificatesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
@@ -55,7 +57,7 @@ pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
 pub use realm_keys_bundle::{
-    CertifDecryptForRealmError, CertifGetLatestRealmKeyForEncryptionError, EncryptionUsage,
+    CertifGetLatestRealmKeyForEncryptionError, CertifGetRealmKeyForDecryption, EncryptionUsage,
     InvalidKeysBundleError,
 };
 pub use realm_rename::CertifRenameRealmError;
@@ -492,53 +494,33 @@ impl CertificateOps {
         usage: EncryptionUsage,
         realm_id: VlobID,
         key_index: IndexInt,
-        encrypted: &[u8],
-    ) -> Result<Vec<u8>, CertifDecryptForRealmError> {
-        let outcome = self
-            .store
-            .for_read(async |store| {
-                realm_keys_bundle::decrypt_for_realm(
-                    self, store, usage, realm_id, key_index, encrypted,
-                )
-                .await
-            })
-            .await
-            .map_err(|e| match e {
-                CertifStoreError::Stopped => CertifDecryptForRealmError::Stopped,
-                CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
-            })?;
+        ciphertext: &[u8],
+    ) -> Result<Vec<u8>, CertifDecryptOpaqueDataForRealmError> {
+        decrypt_opaque_data::decrypt_opaque_data_for_realm(
+            self, usage, realm_id, key_index, ciphertext,
+        )
+        .await
+    }
 
-        // If the current keys bundle doesn't contains the specified key index, we have
-        // no choice but to poll the server & retry in case we were actually lagging
-        // behind.
-
-        if !matches!(outcome, Err(CertifDecryptForRealmError::KeyNotFound)) {
-            return outcome;
-        }
-
-        self.poll_server_for_new_certificates(None)
-            .await
-            .map_err(|err| match err {
-                CertifPollServerError::Stopped => CertifDecryptForRealmError::Stopped,
-                CertifPollServerError::Offline(e) => CertifDecryptForRealmError::Offline(e),
-                CertifPollServerError::InvalidCertificate(err) => {
-                    CertifDecryptForRealmError::InvalidCertificate(err)
-                }
-                CertifPollServerError::Internal(err) => err.context("cannot poll server").into(),
-            })?;
-
-        self.store
-            .for_read(async |store| {
-                realm_keys_bundle::decrypt_for_realm(
-                    self, store, usage, realm_id, key_index, encrypted,
-                )
-                .await
-            })
-            .await
-            .map_err(|e| match e {
-                CertifStoreError::Stopped => CertifDecryptForRealmError::Stopped,
-                CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
-            })?
+    /// Counterpart of `decrypt_opaque_data_for_realm` for a batch encrypted with
+    /// a single key. Used in Editics.
+    ///
+    /// Be aware this function potentially do server accesses (to fetch the keys bundle).
+    pub async fn decrypt_opaque_data_batch_for_realm(
+        &self,
+        usage: EncryptionUsage,
+        realm_id: VlobID,
+        key_index: IndexInt,
+        ciphertexts: &[&[u8]],
+    ) -> Result<Vec<Vec<u8>>, CertifDecryptOpaqueDataForRealmError> {
+        decrypt_opaque_data::decrypt_opaque_data_batch_for_realm(
+            self,
+            usage,
+            realm_id,
+            key_index,
+            ciphertexts,
+        )
+        .await
     }
 
     #[allow(unused)]
