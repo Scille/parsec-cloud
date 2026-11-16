@@ -285,17 +285,15 @@ class SecretKey(BytesBasedType):
 
 
 class Bytes(BytesBasedType):
-    custom_from_rs_bytes = (
-        "|v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) }"
-    )
+    custom_from_rs_bytes = "|v: Vec<u8>| -> Result<libparsec::Bytes, String> { Ok(v.into()) }"
 
 
 class BytesVec(BytesBasedType):
-    custom_from_rs_bytes = "|v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) }"
+    custom_from_rs_bytes = "|v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) }"
 
 
 class Sha256BoxData(BytesBasedType):
-    custom_from_rs_bytes = '|v: &[u8]| -> Result<Box<[u8;32]>, String> { Ok(Box::from( <[u8; 32]>::try_from(v).map_err(|_| "invalid value length")?)) }'
+    custom_from_rs_bytes = '|v: Vec<u8>| -> Result<Box<[u8;32]>, String> { Ok(Box::new(<[u8; 32]>::try_from(v.as_slice()).map_err(|_| "invalid value length")?)) }'
     custom_to_rs_bytes = "|v: Box<[u8;32]>| -> Result<Vec<u8>, String> {Ok((*v).into())}"
 
 
