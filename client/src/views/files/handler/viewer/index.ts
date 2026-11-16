@@ -4,8 +4,9 @@ import AudioViewer from '@/views/files/handler/viewer/AudioViewer.vue';
 import FileViewer from '@/views/files/handler/viewer/FileViewer.vue';
 import FileViewerWrapper from '@/views/files/handler/viewer/FileViewerWrapper.vue';
 import ImageViewer from '@/views/files/handler/viewer/ImageViewer.vue';
+import PdfjsViewer from '@/views/files/handler/viewer/PdfjsViewer.vue';
 import PdfViewer from '@/views/files/handler/viewer/PdfViewer.vue';
 import TextViewer from '@/views/files/handler/viewer/TextViewer.vue';
 import VideoViewer from '@/views/files/handler/viewer/VideoViewer.vue';
 
-export { AudioViewer, FileViewer, FileViewerWrapper, ImageViewer, PdfViewer, TextViewer, VideoViewer };
+export { AudioViewer, FileViewer, FileViewerWrapper, ImageViewer, PdfjsViewer, PdfViewer, TextViewer, VideoViewer };
