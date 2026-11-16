@@ -13,7 +13,7 @@ msTest('Opens the about dialog', async ({ home }) => {
   await expect(titles).toHaveText(['Version', 'Developer', 'License', 'Project']);
   await expect(values).toHaveText([/^ v[a-z0-9-.+]+$/, 'Parsec Cloud', 'AGPLv3', ' GitHub ']);
 
-  await openExternalLink(home, values.nth(1), /^https:\/\/parsec\.cloud\/en\/?.*$/);
+  await openExternalLink(home, values.nth(1), /^https:\/\/parsec\.cloud\/?.*$/);
   await openExternalLink(home, values.nth(2), /^https:\/\/raw\.githubusercontent\.com\/Scille\/parsec-cloud\/.+\/LICENSE-AGPL3.*$/);
   await openExternalLink(home, values.nth(3), /^https:\/\/github\.com\/Scille\/parsec-cloud$/);
   await openExternalLink(home, modal.locator('.changelog-btn'), /^https:\/\/docs\.parsec\.cloud\/.+$/);

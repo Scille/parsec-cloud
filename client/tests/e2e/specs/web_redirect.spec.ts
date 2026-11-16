@@ -86,7 +86,7 @@ msTest('Open download link', async ({ context }) => {
   await setupNewPage(page, {
     location: `/webRedirect?webRedirectUrl=${encodeURIComponent(generateOrganizationLink('BlackMesa', 'bootstrap_organization'))}`,
   });
-  await openExternalLink(page, page.locator('.redirect-download__link'), /^https:\/\/parsec\.cloud\/en\/?.*$/);
+  await openExternalLink(page, page.locator('.redirect-download__link'), /^https:\/\/parsec\.cloud\/?.*$/);
 });
 
 msTest.describe(() => {

@@ -70,7 +70,7 @@ msTest('Profile popover go to download app page', async ({ connected }) => {
   await downloadButton.isVisible();
   await downloadButton.click();
   await connected.waitForLoadState();
-  await openExternalLink(connected, downloadButton, new RegExp('https://parsec.cloud/en/start-parsec'));
+  await openExternalLink(connected, downloadButton, new RegExp('https://parsec.cloud/download/'));
 });
 
 msTest('Profile popover hide download app bloc', async ({ connected }) => {

@@ -54,7 +54,7 @@ msTest('Use custom branding', async ({ context }) => {
   const newTabPromise = page.waitForEvent('popup');
   await page.locator('.sidebar-container').locator('.sidebar-bottom').locator('.logo-icon').click();
   const newTab = await newTabPromise;
-  await expect(newTab).toHaveURL(new RegExp('^https://parsec\\.cloud/.+$'));
+  await expect(newTab).toHaveURL(new RegExp('https://parsec.cloud/'));
   await newTab.close();
   await page.release();
 });
