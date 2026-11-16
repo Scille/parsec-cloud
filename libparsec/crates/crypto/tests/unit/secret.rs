@@ -26,6 +26,8 @@ fn round_trip() {
     let data = b"Hello, world !";
     let ciphered = sk.encrypt(data);
 
+    assert_eq!(ciphered.len(), data.len() + SecretKey::OVERHEAD);
+
     let data2 = sk.decrypt(&ciphered).unwrap();
     assert_eq!(data2, data);
 }

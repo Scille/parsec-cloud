@@ -31,6 +31,8 @@ impl std::hash::Hash for SecretKey {
 impl SecretKey {
     pub const ALGORITHM: &'static str = "xsalsa20poly1305";
     pub const SIZE: usize = KEYBYTES;
+    // Output is `<NONCE (24 bytes)> | <MAC (16 bytes)> | <CIPHERTEXT>`
+    pub const OVERHEAD: usize = 40;
 
     pub fn generate() -> Self {
         Self(Key::generate())
