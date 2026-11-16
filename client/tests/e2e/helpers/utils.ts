@@ -169,6 +169,11 @@ export const Media = {
       return (el as HTMLVideoElement).paused;
     });
   },
+  async getVolume(media: Locator): Promise<number> {
+    return await media.evaluate((el) => {
+      return (el as HTMLVideoElement).volume;
+    });
+  },
 };
 
 export async function openFileType(

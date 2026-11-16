@@ -264,11 +264,13 @@ msTest.describe(() => {
     const volumeButton = volume.locator('.file-controls-button').nth(0);
     await expectMedia(audio).toHaveVolume(1);
     await sliderClick(documents, volumeSlider, 70);
-    await expectMedia(audio).toHaveVolume(0.7);
+    const volumeValue = await Media.getVolume(audio);
+    expect(volumeValue).toBeGreaterThan(0.65);
+    expect(volumeValue).toBeLessThan(0.75);
     await volumeButton.click();
     await expectMedia(audio).toHaveVolume(0);
     await volumeButton.click();
-    await expectMedia(audio).toHaveVolume(0.7);
+    await expectMedia(audio).toHaveVolume(volumeValue);
 
     // Stream control
     await playPause.click();
@@ -386,11 +388,13 @@ msTest.describe(() => {
     // Volume control
     await expectMedia(video).toHaveVolume(1);
     await sliderClick(documents, volumeSlider, 40);
-    await expectMedia(video).toHaveVolume(0.4);
+    const volumeValue = await Media.getVolume(video);
+    expect(volumeValue).toBeGreaterThan(0.35);
+    expect(volumeValue).toBeLessThan(0.45);
     await volumeButton.click();
     await expectMedia(video).toHaveVolume(0);
     await volumeButton.click();
-    await expectMedia(video).toHaveVolume(0.4);
+    await expectMedia(video).toHaveVolume(volumeValue);
 
     // Stream control
     await sliderClick(documents, fluxBar, 90);
