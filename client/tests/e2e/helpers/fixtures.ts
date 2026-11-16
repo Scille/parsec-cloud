@@ -33,6 +33,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   await page.addInitScript(
     (options: SetupOptions & { testbedServer: string }) => {
       (window as any).TESTING = true;
+      (window as any).TESTING_FORCE_PDFJS = true;
       (window as any).TESTING_DISABLE_STRIPE = !options.enableStripe;
       if (options.enableUpdateEvent) {
         (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
