@@ -4,8 +4,8 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    CertifDecryptForRealmError, CertifGetLatestRealmKeyForEncryptionError, EncryptionUsage,
-    InvalidCertificateError, InvalidKeysBundleError, WorkspaceOps,
+    CertifDecryptOpaqueDataForRealmError, CertifGetLatestRealmKeyForEncryptionError,
+    EncryptionUsage, InvalidCertificateError, InvalidKeysBundleError, WorkspaceOps,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -115,22 +115,32 @@ pub async fn decrypt_path_addr(
         )
         .await
         .map_err(|err| match err {
-            CertifDecryptForRealmError::Stopped => WorkspaceDecryptPathAddrError::Stopped,
-            CertifDecryptForRealmError::Offline(e) => WorkspaceDecryptPathAddrError::Offline(e),
-            CertifDecryptForRealmError::NotAllowed => WorkspaceDecryptPathAddrError::NotAllowed,
-            CertifDecryptForRealmError::RealmDeleted => WorkspaceDecryptPathAddrError::RealmDeleted,
-            CertifDecryptForRealmError::KeyNotFound => WorkspaceDecryptPathAddrError::KeyNotFound,
-            CertifDecryptForRealmError::CorruptedKey => WorkspaceDecryptPathAddrError::CorruptedKey,
-            CertifDecryptForRealmError::CorruptedData => {
+            CertifDecryptOpaqueDataForRealmError::Stopped => WorkspaceDecryptPathAddrError::Stopped,
+            CertifDecryptOpaqueDataForRealmError::Offline(e) => {
+                WorkspaceDecryptPathAddrError::Offline(e)
+            }
+            CertifDecryptOpaqueDataForRealmError::NotAllowed => {
+                WorkspaceDecryptPathAddrError::NotAllowed
+            }
+            CertifDecryptOpaqueDataForRealmError::RealmDeleted => {
+                WorkspaceDecryptPathAddrError::RealmDeleted
+            }
+            CertifDecryptOpaqueDataForRealmError::KeyNotFound => {
+                WorkspaceDecryptPathAddrError::KeyNotFound
+            }
+            CertifDecryptOpaqueDataForRealmError::CorruptedKey => {
+                WorkspaceDecryptPathAddrError::CorruptedKey
+            }
+            CertifDecryptOpaqueDataForRealmError::CorruptedData => {
                 WorkspaceDecryptPathAddrError::CorruptedData
             }
-            CertifDecryptForRealmError::InvalidCertificate(err) => {
+            CertifDecryptOpaqueDataForRealmError::InvalidCertificate(err) => {
                 WorkspaceDecryptPathAddrError::InvalidCertificate(err)
             }
-            CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+            CertifDecryptOpaqueDataForRealmError::InvalidKeysBundle(err) => {
                 WorkspaceDecryptPathAddrError::InvalidKeysBundle(err)
             }
-            CertifDecryptForRealmError::Internal(err) => err.context("").into(),
+            CertifDecryptOpaqueDataForRealmError::Internal(err) => err.context("").into(),
         })?;
 
     let path_as_str = std::str::from_utf8(&cleartext)

@@ -3,7 +3,7 @@
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
-use crate::{CertifDecryptForRealmError, EncryptionUsage};
+use crate::{CertifGetRealmKeyForDecryption, EncryptionUsage};
 
 use super::{
     CertificateOps, InvalidKeysBundleError, UpTo, realm_keys_bundle, store::CertifStoreError,
@@ -93,27 +93,28 @@ pub(super) async fn decrypt_current_realm_name(
             let timestamp = certif.timestamp;
             let encrypted = &certif.encrypted_name;
 
-            let decrypted = realm_keys_bundle::decrypt_for_realm(
+            let key = realm_keys_bundle::get_realm_key_for_decryption(
                 ops,
                 store,
                 EncryptionUsage::RealmRename,
                 realm_id,
                 key_index,
-                encrypted,
             )
             .await
             .map_err(|err| match err {
-                CertifDecryptForRealmError::Stopped => CertifDecryptCurrentRealmNameError::Stopped,
-                CertifDecryptForRealmError::Offline(e) => {
+                CertifGetRealmKeyForDecryption::Stopped => {
+                    CertifDecryptCurrentRealmNameError::Stopped
+                }
+                CertifGetRealmKeyForDecryption::Offline(e) => {
                     CertifDecryptCurrentRealmNameError::Offline(e)
                 }
-                CertifDecryptForRealmError::NotAllowed => {
+                CertifGetRealmKeyForDecryption::NotAllowed => {
                     CertifDecryptCurrentRealmNameError::NotAllowed
                 }
-                CertifDecryptForRealmError::RealmDeleted => {
+                CertifGetRealmKeyForDecryption::RealmDeleted => {
                     CertifDecryptCurrentRealmNameError::RealmDeleted
                 }
-                CertifDecryptForRealmError::KeyNotFound => {
+                CertifGetRealmKeyForDecryption::KeyNotFound => {
                     CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
                         InvalidEncryptedRealmNameError::NonExistentKeyIndex {
                             realm: realm_id,
@@ -123,7 +124,7 @@ pub(super) async fn decrypt_current_realm_name(
                         },
                     ))
                 }
-                CertifDecryptForRealmError::CorruptedKey => {
+                CertifGetRealmKeyForDecryption::CorruptedKey => {
                     CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
                         InvalidEncryptedRealmNameError::CorruptedKey {
                             realm: realm_id,
@@ -133,22 +134,21 @@ pub(super) async fn decrypt_current_realm_name(
                         },
                     ))
                 }
-                CertifDecryptForRealmError::CorruptedData => {
-                    CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
-                        InvalidEncryptedRealmNameError::CannotDecrypt {
-                            realm: realm_id,
-                            author,
-                            timestamp,
-                            key_index,
-                        },
-                    ))
-                }
-                CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+                CertifGetRealmKeyForDecryption::InvalidKeysBundle(err) => {
                     CertifDecryptCurrentRealmNameError::InvalidKeysBundle(err)
                 }
-                CertifDecryptForRealmError::Internal(err) => err.into(),
-                // Error not actually used by `decrypt_for_realm`
-                CertifDecryptForRealmError::InvalidCertificate(_) => unreachable!(),
+                CertifGetRealmKeyForDecryption::Internal(err) => err.into(),
+            })?;
+
+            let decrypted = key.decrypt(encrypted).map_err(|_| {
+                CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
+                    InvalidEncryptedRealmNameError::CannotDecrypt {
+                        realm: realm_id,
+                        author,
+                        timestamp,
+                        key_index,
+                    },
+                ))
             })?;
 
             // 3) Finally parse the realm name
