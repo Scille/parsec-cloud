@@ -30838,7 +30838,7 @@ pub fn workspaceEditicsDecryptBatch(
             workspace,
             document,
             key_index,
-            &flat_encrypted.to_vec(),
+            &flat_encrypted,
             offsets.as_slice(),
         )
         .await;
@@ -30918,7 +30918,7 @@ pub fn workspaceEditicsEncryptBatch(
         let ret = libparsec::workspace_editics_encrypt_batch(
             workspace,
             document,
-            &flat_cleartexts.to_vec(),
+            &flat_cleartexts,
             offsets.as_slice(),
         )
         .await;
