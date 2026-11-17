@@ -221,8 +221,6 @@ class BaseAccountComponent:
         email: EmailAddress,
         validation_code: ValidationCode,
     ) -> SendEmailBadOutcome | None:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         message = _generate_account_create_validation_email(
             jinja_env=self._config.jinja_env,
@@ -244,8 +242,6 @@ class BaseAccountComponent:
         email: EmailAddress,
         validation_code: ValidationCode,
     ) -> SendEmailBadOutcome | None:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         message = _generate_account_delete_validation_email(
             jinja_env=self._config.jinja_env,
@@ -265,8 +261,6 @@ class BaseAccountComponent:
         email: EmailAddress,
         validation_code: ValidationCode,
     ) -> SendEmailBadOutcome | None:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         message = _generate_account_recover_validation_email(
             jinja_env=self._config.jinja_env,
