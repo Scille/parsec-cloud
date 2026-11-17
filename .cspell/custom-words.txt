@@ -354,6 +354,7 @@ rootdir
 ROOTDIRS
 ROOTDIRSRAW
 rpassword
+rsplitn
 rstest
 rustls
 ruzstd
