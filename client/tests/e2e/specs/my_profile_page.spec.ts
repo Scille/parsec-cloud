@@ -10,6 +10,7 @@ import {
   mockLibParsec,
   MsPage,
   msTest,
+  openCreateOrganization,
   openExternalLink,
   selectDropdown,
   setupNewPage,
@@ -423,8 +424,7 @@ for (const platform of ['PlatformWeb', 'PlatformAndroid', 'PlatformWindows', 'Pl
       (window as any).getPlatform = () => platform;
     }, platform);
     const uniqueOrgName = randomUUID().slice(0, 32);
-    await page.locator('#create-organization-button').click();
-    await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+    await openCreateOrganization(page);
     const modal = page.locator('.create-organization-modal');
     await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
 

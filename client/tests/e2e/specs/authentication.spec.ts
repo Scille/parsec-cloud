@@ -11,6 +11,7 @@ import {
   generateTotpCode,
   getClipboardText,
   msTest,
+  openCreateOrganization,
   ProtectionMethod,
   setWriteClipboardPermission,
 } from '@tests/e2e/helpers';
@@ -64,8 +65,7 @@ for (const [index, authMethods] of [
   msTest(`Check allowed auth method at org creation (${index + 1})`, async ({ home }) => {
     await mockAllowedProtectionMethods(home, authMethods);
 
-    await home.locator('#create-organization-button').click();
-    await home.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+    await openCreateOrganization(home);
     const modal = home.locator('.create-organization-modal');
     await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
 

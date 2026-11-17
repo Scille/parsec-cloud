@@ -5,26 +5,20 @@ import {
   DEFAULT_USER_INFORMATION,
   DisplaySize,
   expect,
-  fillInputModal,
   fillIonInput,
   getServerAddr,
   getTestbedBootstrapAddr,
+  joinWithLink,
   MsPage,
   msTest,
+  openCreateOrganization,
   setupNewPage,
 } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
 import path from 'path';
 
 async function openCreateOrganizationModal(page: MsPage): Promise<Locator> {
-  await page.locator('#create-organization-button').click();
-  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
-
-  if (smallDisplay) {
-    await page.locator('.create-join-modal-list__item').nth(0).click();
-  } else {
-    await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
-  }
+  await openCreateOrganization(page);
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
   return modal;
@@ -230,10 +224,8 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
   // Making sure that the testbed is recognized as the custom server
   await setupNewPage(page, { trialServers: 'unknown.host', saasServers: 'unknown.host' });
 
-  await page.locator('#create-organization-button').click();
-  await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
   const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
-  await fillInputModal(page, getTestbedBootstrapAddr(uniqueOrgName));
+  await joinWithLink(page, getTestbedBootstrapAddr(uniqueOrgName));
   const modal = page.locator('.create-organization-modal');
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
@@ -574,14 +566,8 @@ for (const displaySize of ['small', 'large']) {
         await page.setDisplaySize(DisplaySize.Small);
       }
 
-      await page.locator('#create-organization-button').click();
-      if (displaySize === DisplaySize.Small) {
-        await page.locator('.create-join-modal-list__item').nth(1).click();
-      } else {
-        await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-      }
       const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
-      await fillInputModal(page, getTestbedBootstrapAddr(uniqueOrgName));
+      await joinWithLink(page, getTestbedBootstrapAddr(uniqueOrgName));
       const modal = page.locator('.create-organization-modal');
 
       const orgServerContainer = modal.locator('.organization-name-and-server-page');

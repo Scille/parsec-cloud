@@ -67,6 +67,17 @@ export async function fillIonTextArea(ionTextArea: Locator, text: string): Promi
   await expect(ionTextArea).not.toBeFocused();
 }
 
+export async function openCreateOrganization(homePage: Page): Promise<void> {
+  await homePage.locator('#other-actions-create-button, #create-organization-button').click();
+}
+
+export async function joinWithLink(homePage: Page, link: string): Promise<void> {
+  await fillIonInput(homePage.locator('.other-actions-link-form__input, .invitation-link__input').locator('ion-input'), link);
+  const joinButton = homePage.locator('#other-actions-join-button, #join-organization-button');
+  await expect(joinButton).toBeTrulyEnabled();
+  await joinButton.click();
+}
+
 export async function fillInputModal(root: Locator | Page, text: string, clear?: boolean): Promise<void> {
   const modal = root.locator('.text-input-modal');
   await expect(modal).toBeVisible();
@@ -466,7 +477,6 @@ export async function logout(page: MsPage): Promise<void> {
   await buttons.nth(4).click();
   await answerQuestion(page, true);
   await expect(page).toBeHomePage();
-  await expect(page.locator('.homepage-header').locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
 }
 
 export class FileOperationMenu {

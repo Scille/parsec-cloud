@@ -16,7 +16,7 @@ msTest('Use custom branding', async ({ context }) => {
         status: 200,
         json: {
           HomePage: {
-            topbar: {
+            organizationList: {
               welcome: 'App with Custom Branding',
             },
           },
@@ -45,7 +45,7 @@ msTest('Use custom branding', async ({ context }) => {
 
   await setupNewPage(page, { withCustomBranding: true });
 
-  await expect(page.locator('.homepage-content').locator('.topbar-left-text__title')).toHaveText('App with Custom Branding');
+  await expect(page.locator('.homepage-content').locator('.organization-brand__subtitle')).toHaveText('App with Custom Branding');
   const logo = await page.locator('.sidebar-container').locator('.logo-img').locator('svg').innerHTML();
   expect(logo).toBe('\n<circle cx="250" cy="250" r="210" fill="#fff" stroke="#000" stroke-width="8"></circle>\n');
   await expect(page.locator('.sidebar-container').locator('.sidebar-bottom').locator('.sidebar-tagline')).toHaveText('Powered by');

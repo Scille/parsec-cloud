@@ -4,18 +4,18 @@ import { Locator, Page } from '@playwright/test';
 import {
   DEFAULT_USER_INFORMATION,
   expect,
-  fillInputModal,
   fillIonInput,
   getTestbedBootstrapAddr,
+  joinWithLink,
   MsPage,
   msTest,
+  openCreateOrganization,
   setupNewPage,
 } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
-  await page.locator('#create-organization-button').click();
-  await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+  await openCreateOrganization(page);
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-choice-item').nth(1).click();
   await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
@@ -147,11 +147,9 @@ msTest('Go through trial org creation process from bootstrap link', async ({ con
   const testbedUrl = new URL(process.env.TESTBED_SERVER ?? '');
   await setupNewPage(page, { trialServers: testbedUrl.host, saasServers: 'unknown.host' });
 
-  await page.locator('#create-organization-button').click();
-  await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
   const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
   const bootstrapAddr = getTestbedBootstrapAddr(uniqueOrgName);
-  await fillInputModal(page, bootstrapAddr);
+  await joinWithLink(page, bootstrapAddr);
   const modal = page.locator('.create-organization-modal');
 
   const userInfoContainer = modal.locator('.user-information-page');
