@@ -3,6 +3,7 @@
 import { Locator, Page, TestInfo } from '@playwright/test';
 import {
   checkEntryContextMenu,
+  checkWorkspaceContextMenu,
   createFolder,
   createWorkspace,
   DisplaySize,
@@ -284,61 +285,20 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const noWorkspaces = workspaces.locator('.no-all-workspaces');
     await expect(noWorkspaces).toBeHidden();
 
-    // Hide workspaces
+    // Hide first workspace
     await workspaceCard.nth(0).click({ button: 'right' });
-    let popover;
-
-    if (displaySize === DisplaySize.Large) {
-      popover = workspaces.locator('#workspace-context-menu');
-      await expect(popover).toBeVisible();
-      await expect(popover.getByRole('group')).toHaveCount(3);
-      await expect(popover.getByRole('listitem')).toHaveText([
-        'Workspace management',
-        'Rename',
-        'History',
-        'Hide this workspace',
-        'Archive this workspace',
-        'Details',
-        'Delete this workspace',
-        'Collaboration',
-        'Copy link',
-        'Sharing and roles',
-        'Miscellaneous',
-        'Add to Favorites',
-      ]);
-      await popover.getByRole('listitem').nth(3).click();
-    } else {
-      popover = workspaces.locator('.workspace-context-sheet-modal');
-      await expect(popover).toBeVisible();
-      await expect(popover.getByRole('listitem')).toHaveText([
-        'Rename',
-        'History',
-        'Hide this workspace',
-        'Archive this workspace',
-        'Details',
-        'Delete this workspace',
-        'Copy link',
-        'Sharing and roles',
-        'Add to Favorites',
-      ]);
-      await popover.getByRole('listitem').nth(2).click();
-    }
+    await checkWorkspaceContextMenu(workspaces, 'owner', 'Hide this workspace');
 
     await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
     await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites', 'Hidden']);
 
     await expect(workspaceCard.nth(0).locator('.workspace-card-content__title')).toHaveText('wksp1');
     await expect(workspaceCard.nth(1)).toBeHidden();
+
+    // Hide second workspace
     await workspaceCard.nth(0).click({ button: 'right' });
-    if (displaySize === DisplaySize.Large) {
-      popover = workspaces.locator('#workspace-context-menu');
-      await expect(popover).toBeVisible();
-      await popover.getByRole('listitem').nth(3).click();
-    } else {
-      popover = workspaces.locator('.workspace-context-sheet-modal');
-      await expect(popover).toBeVisible();
-      await popover.getByRole('listitem').nth(2).click();
-    }
+    await checkWorkspaceContextMenu(workspaces, 'owner', 'Hide this workspace');
+
     await expect(workspaceCard.nth(0)).toBeHidden();
     await expect(workspaceCard.nth(1)).toBeHidden();
 
@@ -353,52 +313,12 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(workspaceCard.nth(1).locator('.workspace-hidden')).toHaveText('Hidden');
     await expect(workspaceCard.nth(0)).toBeVisible();
 
-    // Show workspaces
+    // Show them against
     await workspaceCard.nth(0).click({ button: 'right' });
-    await expect(popover).toBeVisible();
-    if (displaySize === DisplaySize.Large) {
-      popover = workspaces.locator('#workspace-context-menu');
-      await expect(popover).toBeVisible();
-      await expect(popover.getByRole('group')).toHaveCount(3);
-      await expect(popover.getByRole('listitem')).toHaveText([
-        'Workspace management',
-        'Rename',
-        'History',
-        'Show this workspace',
-        'Archive this workspace',
-        'Details',
-        'Delete this workspace',
-        'Collaboration',
-        'Copy link',
-        'Sharing and roles',
-        'Miscellaneous',
-        'Add to Favorites',
-      ]);
-      await popover.getByRole('listitem').nth(3).click();
-    } else {
-      popover = workspaces.locator('.workspace-context-sheet-modal');
-      await expect(popover).toBeVisible();
-      await expect(popover.getByRole('listitem')).toHaveText([
-        'Rename',
-        'History',
-        'Show this workspace',
-        'Archive this workspace',
-        'Details',
-        'Delete this workspace',
-        'Copy link',
-        'Sharing and roles',
-        'Add to Favorites',
-      ]);
-      await popover.getByRole('listitem').nth(2).click();
-    }
+    await checkWorkspaceContextMenu(workspaces, 'owner', 'Show this workspace', { isHidden: true });
 
     await workspaceCard.nth(0).click({ button: 'right' });
-    await expect(popover).toBeVisible();
-    if (displaySize === DisplaySize.Large) {
-      await workspaces.locator('#workspace-context-menu').getByRole('listitem').nth(3).click();
-    } else {
-      await workspaces.locator('.workspace-context-sheet-modal').getByRole('listitem').nth(2).click();
-    }
+    await checkWorkspaceContextMenu(workspaces, 'owner', 'Show this workspace', { isHidden: true });
 
     // Auto redirect to default tab, hidden tab inaccessible
     await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Favorites']);

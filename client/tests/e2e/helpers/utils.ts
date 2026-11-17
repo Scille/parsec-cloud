@@ -783,6 +783,8 @@ export async function checkFolderGlobalContextMenu(page: MsPage, mode: 'full' | 
 interface WorkspaceContextMenuOptions {
   isHidden?: boolean;
   isFavorite?: boolean;
+  isDesktop?: boolean;
+  canClaim?: boolean;
 }
 
 export async function checkWorkspaceContextMenu(
@@ -803,10 +805,13 @@ export async function checkWorkspaceContextMenu(
       await expect(titles).toHaveText(['Workspace management', 'Collaboration', 'Miscellaneous']);
     }
     await expect(actions).toHaveText([
+      ...(options?.canClaim ? ['Claim ownership'] : []),
       'Rename',
+      ...(options?.isDesktop ? ['Open in explorer'] : []),
       'History',
       options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
       'Archive this workspace',
+      'Activity',
       'Details',
       'Delete this workspace',
       'Copy link',
@@ -817,17 +822,18 @@ export async function checkWorkspaceContextMenu(
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Workspace management']);
     }
-    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Details', 'Delete this workspace']);
+    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Activity', 'Details', 'Delete this workspace']);
   } else if (mode === 'deleted') {
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Workspace management']);
     }
-    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Details']);
+    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Activity', 'Details']);
   } else if (mode === 'normal') {
     if (page.displaySize === DisplaySize.Large) {
       await expect(titles).toHaveText(['Workspace management', 'Collaboration', 'Miscellaneous']);
     }
     await expect(actions).toHaveText([
+      ...(options?.canClaim ? ['Claim ownership'] : []),
       'History',
       options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
       'Details',

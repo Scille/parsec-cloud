@@ -165,6 +165,21 @@
 
         <ion-item
           button
+          v-if="workspace.selfRole === WorkspaceRole.Owner"
+          @click="onClick(WorkspaceAction.ShowTimeline)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="pulse"
+          />
+          <ion-text class="list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionActivity') }}
+          </ion-text>
+        </ion-item>
+
+        <ion-item
+          button
           @click="onClick(WorkspaceAction.ShowDetails)"
           class="ion-no-padding list-group-item"
         >
@@ -275,6 +290,7 @@ import {
   informationCircle,
   link,
   open,
+  pulse,
   reload,
   repeat,
   shareSocial,
