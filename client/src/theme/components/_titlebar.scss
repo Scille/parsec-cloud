@@ -35,4 +35,8 @@
   #connected-header {
     padding-top: 2rem;
   }
+
+  .homepage-header .topbar-right {
+    margin-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+  }
 }

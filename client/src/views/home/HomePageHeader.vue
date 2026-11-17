@@ -34,29 +34,21 @@
       />
     </ion-menu>
 
-    <home-page-secondary-menu
-      v-if="isLargeDisplay && showSecondaryMenu"
-      class="homepage-menu-secondary"
-      @customer-area-click="$emit('customerAreaClick')"
-      @settings-click="openSettings"
-      @report-bug-click="openBugReport"
-    />
-
     <div class="topbar">
       <div class="topbar-left">
-        <div
-          class="topbar-left-text"
-          v-if="!showBackButton"
-        >
-          <ion-text class="topbar-left-text__title">
-            {{ $msTranslate('HomePage.topbar.welcome') }}
-          </ion-text>
-        </div>
+        <home-page-secondary-menu
+          v-if="isLargeDisplay && showSecondaryMenu"
+          class="homepage-menu-secondary"
+          @customer-area-click="$emit('customerAreaClick')"
+          @settings-click="openSettings"
+          @report-bug-click="openBugReport"
+        />
         <!-- back button -->
         <ion-button
+          v-if="showBackButton && isSmallDisplay"
           @click="$emit('backClick')"
-          v-if="showBackButton"
-          class="topbar-left__back-button"
+          class="actions__back-button color-secondary"
+          fill="clear"
         >
           <ion-icon
             slot="start"
@@ -65,17 +57,6 @@
           />
           {{ $msTranslate(backButtonTitle ?? 'HomePage.topbar.backToList') }}
         </ion-button>
-
-        <ion-menu-button
-          id="main-content"
-          class="menu-button"
-          v-if="windowWidth < WindowSizeBreakpoints.XS"
-        >
-          <ion-icon
-            :icon="menu"
-            class="menu-button__icon"
-          />
-        </ion-menu-button>
       </div>
       <div class="topbar-right">
         <ion-button
@@ -84,19 +65,11 @@
           id="recover-button-header"
           fill="outline"
         >
-          <span class="topbar-right-button__text">{{ $msTranslate('HomePage.lostDevice') }}</span>
-        </ion-button>
-        <ion-button
-          @click="emits('createOrJoinOrganizationClick', $event)"
-          id="create-organization-button"
-          class="topbar-right-button color-secondary"
-          v-if="displayCreateJoin && !showBackButton"
-        >
-          <span class="topbar-right-button__text">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
           <ion-icon
-            :icon="caretDown"
-            class="button-icon-right"
+            :icon="refresh"
+            class="button-icon-left"
           />
+          {{ $msTranslate('HomePage.lostDevice') }}
         </ion-button>
 
         <profile-header-homepage
@@ -124,7 +97,7 @@
         <ion-menu-button
           id="main-content"
           class="menu-button"
-          v-if="windowWidth >= WindowSizeBreakpoints.XS && windowWidth < WindowSizeBreakpoints.SM"
+          v-if="isSmallDisplay"
         >
           <ion-icon
             :icon="menu"
@@ -132,6 +105,25 @@
           />
         </ion-menu-button>
       </div>
+    </div>
+
+    <div
+      class="actions"
+      v-if="showBackButton && isLargeDisplay"
+    >
+      <!-- back button -->
+      <ion-button
+        @click="$emit('backClick')"
+        class="actions__back-button color-secondary"
+        fill="clear"
+      >
+        <ion-icon
+          slot="start"
+          :icon="arrowBack"
+          class="button-icon-left"
+        />
+        {{ $msTranslate(backButtonTitle ?? 'HomePage.topbar.backToList') }}
+      </ion-button>
     </div>
   </div>
 </template>
@@ -153,11 +145,11 @@ import { AccountSettingsTabs } from '@/views/account/types';
 import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
 import { openSettingsModal } from '@/views/settings';
 import { IonButton, IonIcon, IonMenu, IonMenuButton, IonText, modalController } from '@ionic/vue';
-import { arrowBack, arrowForward, caretDown, menu, personCircle } from 'ionicons/icons';
-import { Answer, MsModalResult, Translatable, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { arrowBack, arrowForward, menu, personCircle, refresh } from 'ionicons/icons';
+import { Answer, MsModalResult, Translatable, useWindowSize } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
-const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
+const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const { isUpdatePromptAllowed, suppressUpdatePrompt } = useUpdateManager();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
@@ -278,13 +270,11 @@ defineProps<{
   showBackButton: boolean;
   showSecondaryMenu?: boolean;
   backButtonTitle?: Translatable;
-  displayCreateJoin: boolean;
 }>();
 
 const emits = defineEmits<{
   (e: 'backClick'): void;
   (e: 'customerAreaClick'): void;
-  (e: 'createOrJoinOrganizationClick', event: Event): void;
   (e: 'changeTab', tab: AccountSettingsTabs): void;
   (e: 'settingsClick'): void;
   (e: 'recoverClick'): void;
@@ -293,15 +283,13 @@ const emits = defineEmits<{
 
 <style lang="scss" scoped>
 .update-container {
-  margin-right: auto;
   min-height: 1rem;
   width: 100%;
-  margin: 0 ms.spacing('padding-sm') ms.spacing('padding-5xl');
+  margin: 0;
   background: linear-gradient(90deg, ms.color('surface-gradient-to') 0%, ms.color('surface-gradient-from-hover') 100%);
   color: ms.color('text-on-color-heading');
   min-height: 2rem;
   padding: ms.spacing('padding-none') ms.spacing('padding-md');
-  border-radius: ms.radius('lg');
   transition: all 150ms linear;
   display: flex;
   align-items: center;
@@ -364,21 +352,22 @@ const emits = defineEmits<{
   }
 }
 
+.homepage-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: linear-gradient(180deg, transparent 0%, ms.color('surface-base-default') 100%);
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-5xl');
+  padding: ms.spacing('padding-3xl');
   gap: ms.spacing('gap-3xl');
   position: relative;
   border-bottom: ms.border('thin') solid ms.color('border-base-default');
-
-  @include ms.responsive-breakpoint('sm') {
-    border: none;
-    padding: 0;
-    margin-inline: auto;
-  }
 
   @include ms.responsive-breakpoint('xs') {
     flex-wrap: wrap;
@@ -388,82 +377,13 @@ const emits = defineEmits<{
     display: flex;
     align-items: center;
     gap: ms.spacing('gap-4xl');
-    min-height: 4rem;
     user-select: none;
-
-    @include ms.responsive-breakpoint('xs') {
-      width: 100%;
-      min-height: auto;
-    }
-
-    &-text {
-      display: flex;
-      flex-direction: column;
-      gap: ms.spacing('gap-lg');
-
-      @include ms.responsive-breakpoint('xs') {
-        width: 100%;
-        justify-content: space-around;
-      }
-
-      &__title {
-        @include ms.font('heading-h2');
-        background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
-        background-clip: text;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: ms.spacing('padding-sm') 0;
-      }
-
-      &__subtitle {
-        @include ms.font('body-lg-medium');
-        color: ms.color('text-base-description');
-        margin: 0;
-
-        @include ms.responsive-breakpoint('sm') {
-          display: none;
-        }
-      }
-    }
-
-    &__back-button {
-      color: ms.color('text-neutral-default');
-      position: relative;
-      --overflow: visible;
-      margin: 1px 0;
-      padding-left: ms.spacing('padding-3xl');
-
-      @include ms.responsive-breakpoint('xs') {
-        margin: 1px auto 1px 0;
-      }
-
-      &::part(native) {
-        background: none;
-        --background-hover: none;
-        border-radius: ms.radius('6xl');
-        padding: ms.spacing('padding-lg') ms.spacing('padding-2xl');
-      }
-
-      ion-icon {
-        position: absolute;
-        left: -1.5rem;
-        transition: left 150ms linear;
-      }
-
-      &:hover {
-        border-color: transparent;
-
-        ion-icon {
-          left: -2rem;
-        }
-      }
-    }
   }
 
   .topbar-right {
     display: flex;
     user-select: none;
-    gap: 1.25rem;
+    gap: ms.spacing('gap-3xl');
     justify-content: flex-end;
     align-items: center;
     margin-left: auto;
@@ -489,6 +409,15 @@ const emits = defineEmits<{
       font-size: 1.75rem;
     }
   }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: ms.spacing('gap-3xl');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-3xl');
+  background: ms.color('surface-base-page');
 }
 
 .login-button {
