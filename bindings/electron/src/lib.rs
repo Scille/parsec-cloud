@@ -5,6 +5,7 @@ use once_cell::sync::OnceCell;
 use sentry::{ClientInitGuard, ClientOptions};
 use std::sync::Mutex;
 
+mod js_bytes_view;
 mod meths;
 
 lazy_static::lazy_static! {
