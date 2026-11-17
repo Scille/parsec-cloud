@@ -203,6 +203,17 @@ export async function openDocument(
   }
   const hostOrigin = frameUrl.origin;
 
+  // We have a strict Content-Security-Policy (CSP) for the Editics IFrame (since
+  // it has OnlyOffice loading an arbitrary document), and only allow communication
+  // with the Editics server.
+  // - In web this server is the one that host the Editics page, so it can provide
+  //   the CSP itself.
+  // - In Electron, the Editics page is served by the main process, so we need
+  //   to register the allowed server origin.
+  if (options.collaborative !== undefined && isElectron()) {
+    await window.nativeAPI.declareEditicsServerOriginForCsp(options.collaborative.serverUrl);
+  }
+
   try {
     await new Promise<void>((resolve, reject) => {
       const hostReadyTimeoutId = setTimeout(() => {

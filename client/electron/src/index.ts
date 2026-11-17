@@ -11,7 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import capacitorConfig from '../capacitor.config.js';
 import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels.js';
-import { setupContentSecurityPolicy } from './cspRules.js';
+import { declareEditicsServerOriginForCsp, setupContentSecurityPolicy } from './cspRules.js';
 import { setupCustomCaFile } from './customCa.js';
 import { FEATURE_FLAGS } from './features.js';
 import { ParsecMenuItem, setupAppMenu } from './menu.js';
@@ -193,6 +193,10 @@ app.on('activate', async () => {
 
 ipcMain.on(PageToWindowChannel.ConfigUpdate, (_event, data) => {
   parsecApp.updateConfig(data);
+});
+
+ipcMain.handle(PageToWindowChannel.DeclareEditicsServerOriginForCsp, (_event, origin: string) => {
+  declareEditicsServerOriginForCsp(origin);
 });
 
 ipcMain.on(PageToWindowChannel.MountpointUpdate, (_event, path) => {

@@ -7,6 +7,12 @@
 export type EditicsDocumentTypes = 'word' | 'cell' | 'slide' | 'pdf';
 export type EditicsOpenModes = 'view' | 'edit';
 
+export interface EditicsCollaborativeSession {
+  // Base URL of the Parsec server hosting the session, without a trailing slash
+  // (e.g. https://editics.app.parsec.cloud).
+  serverUrl: string;
+}
+
 export interface EditicsOpenOptions {
   documentName: string;
   // File extension of `documentContent` as stored in Parsec. The host
@@ -18,6 +24,7 @@ export interface EditicsOpenOptions {
   mode: EditicsOpenModes;
   locale: string;
   theme: 'light' | 'dark';
+  collaborative?: EditicsCollaborativeSession;
 }
 
 // Reply sent back by the parent to the host on the MessagePort transferred with the `oo-save` message.
