@@ -52,7 +52,11 @@ JsString
 
 
 {%- macro maybe_ref(js_val, type) -%}
-{%- if type.kind == "ref" and type.elem.kind == "list" -%}
+{%- if type.kind == "ref" and type.elem.kind == "bytes" -%}
+{{ js_val }}.as_slice()
+{%- elif type.kind == "optional" and type.elem.kind == "ref" and type.elem.elem.kind == "bytes" -%}
+{{ js_val }}.as_ref().map(|v| v.as_slice())
+{%- elif type.kind == "ref" and type.elem.kind == "list" -%}
 {{ js_val }}.as_slice()
 {%- elif type.kind == "ref" and type.elem.kind == "set" -%}
 {{ js_val }}.as_ref()
@@ -69,7 +73,9 @@ JsString
 
 
 {%- macro render_downcasted_js_to_rs(js_val, type, mut_cx_ref="&mut cx") -%}
-{%- if type.kind == "ref" -%}
+{%- if type.kind == "ref" and type.elem.kind == "bytes" -%}
+crate::js_bytes_view::JsBytesView::new({{ mut_cx_ref }}, {{ js_val }})?
+{%- elif type.kind == "ref" -%}
 {{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }}
 {%- elif type.kind == "box" -%}
 Box::new({{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }})

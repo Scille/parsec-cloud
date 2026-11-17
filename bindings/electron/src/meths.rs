@@ -27574,7 +27574,7 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let recovery_device = {
         let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
-        js_val.as_slice(&mut cx).to_vec()
+        crate::js_bytes_view::JsBytesView::new(&mut cx, js_val)?
     };
     let passphrase = {
         let js_val = cx.argument::<JsString>(2)?;
@@ -27606,7 +27606,7 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .spawn(async move {
             let ret = libparsec::import_recovery_device(
                 config,
-                &recovery_device,
+                recovery_device.as_slice(),
                 passphrase,
                 device_label,
                 save_strategy,
@@ -30651,7 +30651,7 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let data = {
         let js_val = cx.argument::<JsTypedArray<u8>>(3)?;
-        js_val.as_slice(&mut cx).to_vec()
+        crate::js_bytes_view::JsBytesView::new(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -30661,7 +30661,7 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::workspace_fd_write(workspace, fd, offset, &data).await;
+            let ret = libparsec::workspace_fd_write(workspace, fd, offset, data.as_slice()).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -30728,7 +30728,7 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
     };
     let data = {
         let js_val = cx.argument::<JsTypedArray<u8>>(3)?;
-        js_val.as_slice(&mut cx).to_vec()
+        crate::js_bytes_view::JsBytesView::new(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -30738,8 +30738,13 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::workspace_fd_write_constrained_io(workspace, fd, offset, &data).await;
+            let ret = libparsec::workspace_fd_write_constrained_io(
+                workspace,
+                fd,
+                offset,
+                data.as_slice(),
+            )
+            .await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -30797,7 +30802,7 @@ fn workspace_fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> 
     };
     let data = {
         let js_val = cx.argument::<JsTypedArray<u8>>(2)?;
-        js_val.as_slice(&mut cx).to_vec()
+        crate::js_bytes_view::JsBytesView::new(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -30807,7 +30812,7 @@ fn workspace_fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> 
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::workspace_fd_write_start_eof(workspace, fd, &data).await;
+            let ret = libparsec::workspace_fd_write_start_eof(workspace, fd, data.as_slice()).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -32981,7 +32986,7 @@ fn workspace_save_and_sync_file_with_cryptpad(mut cx: FunctionContext) -> JsResu
     };
     let content = {
         let js_val = cx.argument::<JsTypedArray<u8>>(4)?;
-        js_val.as_slice(&mut cx).to_vec()
+        crate::js_bytes_view::JsBytesView::new(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -32996,7 +33001,7 @@ fn workspace_save_and_sync_file_with_cryptpad(mut cx: FunctionContext) -> JsResu
                 entry_id,
                 cryptpad_session_channel_id,
                 cryptpad_session_timestamp,
-                &content,
+                content.as_slice(),
             )
             .await;
 
