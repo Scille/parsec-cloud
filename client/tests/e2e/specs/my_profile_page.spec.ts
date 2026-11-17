@@ -142,7 +142,7 @@ msTest('Change password', async ({ myProfilePage }) => {
   // Alias for clarity
   const home = myProfilePage;
 
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
   const loginButton = home.locator('.login-card-footer').locator('.login-button');
   await expect(loginButton).toHaveDisabledAttribute();
   await expect(home.locator('#password-input').locator('.form-error')).toBeHidden();
@@ -204,7 +204,7 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   // Alias for clarity
   const home = myProfilePage;
 
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
   await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);

@@ -53,7 +53,7 @@ msTest('Check workspace card', async ({ workspaces }) => {
 
 for (const gridMode of [false, true]) {
   msTest(`Empty workspaces for external in ${gridMode ? 'grid' : 'list'} mode`, async ({ home }) => {
-    await login(home, 'Malloryy McMalloryFace');
+    await login(home, 'Malloryy McMalloryFace', 'mallory@example.com');
     if (!gridMode) {
       await toggleViewMode(home);
     }
@@ -656,6 +656,6 @@ msTest('Workspace list error', async ({ home }) => {
       result: { ok: false, error: { tag: 'ClientListWorkspacesErrorInternal', error: 'failed' } },
     },
   ]);
-  await login(home, 'Alicey McAliceFace');
+  await login(home, 'Alicey McAliceFace', 'alice@example.com');
   await expect(home).toShowToast('Failed to list the workspaces.', 'Error');
 });

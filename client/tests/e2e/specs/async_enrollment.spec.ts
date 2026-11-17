@@ -29,7 +29,7 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
   const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
   const requests = page.locator('.organization-request');
   await expect(requests).toBeHidden();
-  const orgName = await page.locator('.organization-card').first().locator('.organization-name').textContent();
+  const orgName = await page.locator('.organization-item').first().locator('.organization-item-text__name').textContent();
   expect(orgName).not.toBeNull();
   const link = getAsyncEnrollmentJoinLink(orgName as string);
   await page.locator('#create-organization-button').click();
@@ -97,7 +97,7 @@ for (const identitySystem of ['pki', 'openbao']) {
 
     const requests = page.locator('.organization-request');
 
-    await login(page, 'Alicey McAliceFace');
+    await login(page, 'Alicey McAliceFace', 'alice@example.com');
 
     await page.locator('.sidebar').locator('#sidebar-invitations').click();
     await expect(page).toHavePageTitle('Invitations & Join Requests');
@@ -220,7 +220,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(requests).toHaveCount(0);
 
     // Check that the admin doesn't see the request
-    await login(page, 'Alicey McAliceFace');
+    await login(page, 'Alicey McAliceFace', 'alice@example.com');
 
     await page.locator('.sidebar').locator('#sidebar-invitations').click();
     await expect(page).toHavePageTitle('Invitations & Join Requests');
@@ -252,7 +252,7 @@ for (const identitySystem of ['pki', 'openbao']) {
 
     const requests = page.locator('.organization-request');
 
-    await login(page, 'Alicey McAliceFace');
+    await login(page, 'Alicey McAliceFace', 'alice@example.com');
 
     await page.locator('.sidebar').locator('#sidebar-invitations').click();
     await expect(page).toHavePageTitle('Invitations & Join Requests');
@@ -304,7 +304,7 @@ msTest('Cannot accept PKI request', async ({ context }) => {
   const page = (await context.newPage()) as MsPage;
   await setupNewPage(page, { mockPki: false });
 
-  await login(page, 'Alicey McAliceFace');
+  await login(page, 'Alicey McAliceFace', 'alice@example.com');
 
   const sidebar = page.locator('.sidebar');
   await page.locator('.sidebar').locator('#sidebar-invitations').click();

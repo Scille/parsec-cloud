@@ -142,7 +142,7 @@ msTest('Login with forbidden auth method and update', async ({ home }) => {
   msTest.setTimeout(45_000);
   await mockAllowedProtectionMethods(home, [{ primary: AllowedAuthenticationMethod.OpenBao, withTotp: false }]);
 
-  await home.locator('.organization-card').first().click();
+  await home.locator('.organization-item').first().click();
   await expect(home.locator('#password-input')).toBeVisible();
 
   await expect(home.locator('.login-button')).toHaveDisabledAttribute();
@@ -189,7 +189,7 @@ msTest('Login with forbidden auth method and update', async ({ home }) => {
 msTest('Login without totp and setup', async ({ home }) => {
   await mockAllowedProtectionMethods(home, [{ primary: AllowedAuthenticationMethod.Password, withTotp: true }]);
 
-  await home.locator('.organization-card').first().click();
+  await home.locator('.organization-item').first().click();
   await expect(home.locator('#password-input')).toBeVisible();
 
   await expect(home.locator('.login-button')).toHaveDisabledAttribute();
@@ -241,7 +241,7 @@ msTest('Login update auth method and setup totp', async ({ home }) => {
   msTest.setTimeout(45_000);
   await mockAllowedProtectionMethods(home, [{ primary: AllowedAuthenticationMethod.OpenBao, withTotp: true }]);
 
-  await home.locator('.organization-card').first().click();
+  await home.locator('.organization-item').first().click();
   await expect(home.locator('#password-input')).toBeVisible();
 
   await expect(home.locator('.login-button')).toHaveDisabledAttribute();
@@ -319,7 +319,7 @@ msTest('Login update auth method and setup totp', async ({ home }) => {
 msTest('Login with forbidden auth method cancel', async ({ home }) => {
   await mockAllowedProtectionMethods(home, [{ primary: AllowedAuthenticationMethod.OpenBao, withTotp: true }]);
 
-  await home.locator('.organization-card').first().click();
+  await home.locator('.organization-item').first().click();
   await expect(home.locator('#password-input')).toBeVisible();
 
   await expect(home.locator('.login-button')).toHaveDisabledAttribute();

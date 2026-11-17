@@ -265,7 +265,7 @@ export const msTest = debugTest.extend<{
   },
 
   connected: async ({ home }, use) => {
-    await home.locator('.organization-card').first().click();
+    await home.locator('.organization-item', { hasText: 'alice@example.com' }).click();
     await expect(home.locator('#password-input')).toBeVisible();
 
     await expect(home.locator('.login-button')).toHaveDisabledAttribute();
@@ -281,7 +281,7 @@ export const msTest = debugTest.extend<{
   },
 
   workspacesStandard: async ({ home }, use) => {
-    await home.locator('.organization-card').nth(1).click();
+    await home.locator('.organization-item', { hasText: 'bob@example.com' }).click();
     await expect(home.locator('#password-input')).toBeVisible();
 
     await expect(home.locator('.login-button')).toHaveDisabledAttribute();
@@ -297,7 +297,7 @@ export const msTest = debugTest.extend<{
   },
 
   workspacesExternal: async ({ home }, use) => {
-    await home.locator('.organization-card').nth(2).click();
+    await home.locator('.organization-item', { hasText: 'mallory@example.com' }).click();
     await expect(home.locator('#password-input')).toBeVisible();
 
     await expect(home.locator('.login-button')).toHaveDisabledAttribute();
@@ -338,7 +338,7 @@ export const msTest = debugTest.extend<{
 
   documentsReadOnly: async ({ home }, use, testInfo: TestInfo) => {
     // Log in with Bob
-    await home.locator('.organization-card').nth(1).click();
+    await home.locator('.organization-item', { hasText: 'bob@example.com' }).click();
     await expect(home.locator('#password-input')).toBeVisible();
     await expect(home.locator('.login-button')).toHaveDisabledAttribute();
     await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
@@ -382,7 +382,7 @@ export const msTest = debugTest.extend<{
     await logout(home);
 
     await expect(home).toBeHomePage();
-    await home.locator('.organization-card').nth(0).click();
+    await home.locator('.organization-item', { hasText: 'alice@example.com' }).click();
     await expect(home.locator('#password-input')).toBeVisible();
     await expect(home.locator('.login-button')).toHaveDisabledAttribute();
     await home.locator('#password-input').locator('input').fill('P@ssw0rd.');

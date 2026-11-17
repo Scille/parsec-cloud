@@ -39,8 +39,7 @@ describe('Organization Card', () => {
   });
 
   it('display the organization', async () => {
-    expect(wrapper.find('ion-avatar').text()).to.equal('Bl');
-    expect(wrapper.find('.organization-card-header__title').text()).to.equal('Black Mesa');
-    expect(wrapper.find('.organization-card-login__name').text()).to.equal('Gordon Freeman');
+    expect(wrapper.find('.organization-card__initials').text()).to.equal('Bl');
+    expect(wrapper.find('.organization-card__name').text()).to.equal('Black Mesa');
   });
 });

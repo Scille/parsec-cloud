@@ -54,7 +54,7 @@ msTest('Setup shamir recovery', async ({ context }) => {
     ],
   });
 
-  await login(page, 'Alicey McAliceFace');
+  await login(page, 'Alicey McAliceFace', 'alice@example.com');
   await page.locator('.topbar').locator('.profile-header').click();
   const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3);
   await expect(myProfileButton).toHaveText('Access recovery');
@@ -163,9 +163,9 @@ msTest('Setup shamir recovery as outsider', async ({ context }) => {
   });
 
   // To setup the users
-  await login(page, 'Alicey McAliceFace');
+  await login(page, 'Alicey McAliceFace', 'alice@example.com');
   await logout(page);
-  await login(page, 'Malloryy McMalloryFace');
+  await login(page, 'Malloryy McMalloryFace', 'mallory@example.com');
   await page.locator('.topbar').locator('.profile-header').click();
   const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3);
   await expect(myProfileButton).toHaveText('Access recovery');
@@ -207,7 +207,7 @@ msTest('Setup shamir recovery not enough users', async ({ context }) => {
     enableShamir: true,
   });
 
-  await login(page, 'Alicey McAliceFace');
+  await login(page, 'Alicey McAliceFace', 'alice@example.com');
   await page.locator('.topbar').locator('.profile-header').click();
   const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3);
   await expect(myProfileButton).toHaveText('Access recovery');
@@ -247,7 +247,7 @@ async function goThroughShamirInstructions(page: MsPage): Promise<void> {
 }
 
 async function openGreeterModal(page: MsPage, user: 'Boby McBobFace' | 'Mikey McMikeFace', copyLink = false): Promise<Locator> {
-  await login(page, user);
+  await login(page, user, user === 'Boby McBobFace' ? 'bob@example.com' : 'mike@example.com');
   await page.locator('.topbar').locator('.profile-header').click();
   await expect(page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3)).toHaveText(
     'Access recovery',

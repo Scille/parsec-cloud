@@ -426,7 +426,7 @@ msTest.skip('Edit file in editor with two users', async ({ documents }) => {
 
   // Open editor with Bob
   const secondTab = await documents.openNewTab();
-  await login(secondTab, 'Boby McBobFace');
+  await login(secondTab, 'Boby McBobFace', 'bob@example.com');
   await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').click();
   const secondEntries = secondTab.locator('.folder-container').locator('.file-list-item');
   await secondEntries.nth(2).hover();
@@ -521,7 +521,7 @@ msTest.skip('Check file edited by other user', async ({ documents }) => {
 
   // Open editor with Bob
   const secondTab = await documents.openNewTab();
-  await login(secondTab, 'Boby McBobFace');
+  await login(secondTab, 'Boby McBobFace', 'bob@example.com');
   await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').click();
   const secondEntries = secondTab.locator('.folder-container').locator('.file-list-item');
   await secondEntries.nth(2).hover();

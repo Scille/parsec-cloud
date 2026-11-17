@@ -141,7 +141,7 @@ msTest('Archive workspace in small display', async ({ workspaces }) => {
 
 msTest('Check workspace archiving sync on second client', async ({ workspaces }) => {
   const secondTab = await workspaces.openNewTab();
-  await login(secondTab, 'Boby McBobFace');
+  await login(secondTab, 'Boby McBobFace', 'bob@example.com');
 
   const aliceSidebarArchiveButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
   const bobSidebarArchiveButton = secondTab.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
