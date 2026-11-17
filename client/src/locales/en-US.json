@@ -186,7 +186,6 @@
             }
         },
         "topbar": {
-            "welcome": "Welcome to Parsec",
             "backToList": "Return to organizations",
             "back": "Return",
             "settings": "Settings",
@@ -245,14 +244,8 @@
             "validation": "Validate the invitation to access the organization"
         },
         "noExistingOrganization": {
-            "createOrJoin": "Create or join",
             "createOrganization": "Create an organization",
-            "createOrganizationDescription": "Would you like to create or join an organization?",
-            "createOrganizationTitle": "Create",
-            "createOrganizationSubtitle": "I want to create an organization",
-            "joinOrganization": "Join an organization",
-            "joinOrganizationTitle": "Join",
-            "joinOrganizationSubtitle": "I received an invitation to join an organization"
+            "joinOrganization": "Join an organization"
         },
         "organizationLogin": {
             "forgottenPassword": "Forgot your password?",
@@ -308,8 +301,7 @@
             "info": "Parsec securely stores your access keys in your browser. Make sure that browser storage is enabled and that it is not deleted when you close your browser ({more}).",
             "more": "Learn more"
         },
-        "lostDevice": "Lost your access?",
-        "recoverDevice": "Recover my session",
+        "lostDevice": "I lost my access",
         "shamir": {
             "invalidLink": "Not a valid recovery link.",
             "noAuthentication": "The recovery was stopped because no authentication method was chosen.",

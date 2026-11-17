@@ -266,7 +266,7 @@
 <script setup lang="ts">
 import LogoRowBlue from '@/assets/images/logo-row-blue.svg?raw';
 import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
-import { bootstrapLinkValidator, claimAndBootstrapLinkValidator } from '@/common/validators';
+import { claimAndBootstrapLinkValidator } from '@/common/validators';
 import OrganizationJoinRequest from '@/components/organizations/OrganizationJoinRequest.vue';
 import OrganizationListItem from '@/components/organizations/OrganizationListItem.vue';
 import { AccountInvitation, AsyncEnrollmentRequest, AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
@@ -281,9 +281,7 @@ import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
   (e: 'createOrganizationClick'): void;
-  (e: 'joinOrganizationClick'): void;
   (e: 'joinOrganizationWithLinkClick', link: string): void;
-  (e: 'bootstrapOrganizationWithLinkClick', link: string): void;
   (e: 'trialClick'): void;
   (e: 'invitationClick', invitation: AccountInvitation): void;
   (e: 'joinRequestClick', request: AsyncEnrollmentRequest): void;
@@ -314,12 +312,8 @@ const watchCancel = watch(
   },
 );
 
-async function onLinkClick(link: string): Promise<void> {
-  if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
-    emits('bootstrapOrganizationWithLinkClick', link);
-  } else {
-    emits('joinOrganizationWithLinkClick', link);
-  }
+function onLinkClick(link: string): void {
+  emits('joinOrganizationWithLinkClick', link);
 }
 
 onMounted(async (): Promise<void> => {
@@ -399,14 +393,13 @@ const sortDevices = computed(() => {
   width: 100%;
 
   &__logo {
-    width: 7.375rem;
+    width: 8rem;
     flex-shrink: 0;
   }
 
   &__subtitle {
-    @include ms.font('body-xl-medium');
+    @include ms.font('heading-h3');
     color: ms.color('text-brand-default-hover');
-    opacity: ms.opacity('description');
     text-align: center;
   }
 }
