@@ -2,19 +2,11 @@
 
 <template>
   <div class="login-popup">
-    <!-- login -->
-    <div class="login-header">
-      <ion-text class="login-header__title">
-        {{ $msTranslate('HomePage.organizationLogin.login') }}
-      </ion-text>
-    </div>
+    <organization-card
+      :device="device"
+      class="login-popup__organization"
+    />
     <ion-card class="login-card">
-      <ion-card-header class="login-card-header">
-        <organization-card
-          :device="device"
-          :org-name-only="true"
-        />
-      </ion-card-header>
       <ion-card-content class="login-card-content">
         <ms-input
           :label="'HomePage.organizationLogin.emailLabel'"
@@ -115,7 +107,7 @@ import {
   ServerConfig,
 } from '@/parsec';
 import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
+import { IonButton, IonCard, IonCardContent, IonFooter } from '@ionic/vue';
 import { MsInput, MsPasswordInput, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
 
@@ -256,14 +248,10 @@ defineExpose({
   @include ms.responsive-breakpoint('sm') {
     margin: 0 auto;
   }
-}
 
-.login-header__title {
-  @include ms.font('heading-h2');
-  background: linear-gradient(ms.color('surface-gradient-from'), ms.color('surface-gradient-to'));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  &__organization {
+    max-width: 100%;
+  }
 }
 
 .login-card {
@@ -286,10 +274,6 @@ defineExpose({
 
   &:has(.has-focus) {
     box-shadow: ms.shadow('elevation-sm');
-  }
-
-  &-header {
-    padding: ms.spacing('padding-none');
   }
 
   &-content {

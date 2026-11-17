@@ -39,7 +39,6 @@
                   @join-organization-with-link-click="openJoinByLinkModal"
                   @bootstrap-organization-with-link-click="openCreateOrganizationModal"
                   @trial-click="openTrialOrganizationCreation"
-                  @create-or-join-organization-click="openCreateOrJoin"
                   @invitation-click="onInvitationClicked"
                   @join-request-click="onJoinRequestClicked"
                   :device-list="deviceList"

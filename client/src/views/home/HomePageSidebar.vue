@@ -66,11 +66,11 @@ onMounted(() => {
   }
 
   @include ms.responsive-breakpoint('xxl') {
-    max-width: 35rem;
+    max-width: 30rem;
   }
 
   @include ms.responsive-breakpoint('xl') {
-    max-width: 30rem;
+    max-width: 25rem;
 
     &:before {
       height: 560px;
@@ -80,6 +80,8 @@ onMounted(() => {
 
   @include ms.responsive-breakpoint('lg') {
     max-width: 22rem;
+    display: none;
+    border: 3px solid green;
   }
 
   @include ms.responsive-breakpoint('md') {
