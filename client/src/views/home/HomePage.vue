@@ -19,10 +19,8 @@
               @back-click="backToPreviousPage"
               @customer-area-click="goToCustomerAreaLogin"
               @settings-click="goToAccountSettings"
-              @create-or-join-organization-click="openCreateOrJoin"
               @change-tab="onChangeTab"
               @recover-click="openChooseRecoveryModal"
-              :display-create-join="deviceList.length > 0"
               :back-button-title="getBackButtonTitle()"
               :show-secondary-menu="state !== HomePageState.AccountSettings"
               :show-back-button="showBackButton"
@@ -35,9 +33,7 @@
                 <organization-list-page
                   @create-organization-click="openCreateOrganizationModal"
                   @organization-select="onOrganizationSelected"
-                  @join-organization-click="onJoinOrganizationClicked"
-                  @join-organization-with-link-click="openJoinByLinkModal"
-                  @bootstrap-organization-with-link-click="openCreateOrganizationModal"
+                  @join-organization-with-link-click="handleLink"
                   @trial-click="openTrialOrganizationCreation"
                   @invitation-click="onInvitationClicked"
                   @join-request-click="onJoinRequestClicked"
@@ -87,7 +83,6 @@ import {
   totpResetLinkValidator,
 } from '@/common/validators';
 import AppUpdatedBanner from '@/components/misc/AppUpdatedBanner.vue';
-import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   AccountInvitation,
@@ -145,7 +140,6 @@ import ChooseRecoveryMethodModal from '@/views/devices/ChooseRecoveryMethodModal
 import ImportRecoveryDevice from '@/views/devices/ImportRecoveryDevice.vue';
 import { RecoveryMethod } from '@/views/devices/types';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
-import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
 import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
@@ -155,7 +149,7 @@ import { handleAsyncEnrollment, handleTotpReset } from '@/views/home/utils';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import { handleShamirRecovery } from '@/views/shamir/utils';
 import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBaoAuthModal.vue';
-import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
+import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
   Answer,
@@ -273,46 +267,6 @@ onUnmounted(() => {
     intervalId = null;
   }
 });
-
-async function openCreateOrJoin(event: Event): Promise<void> {
-  let result!: { role?: string; data?: { action: HomePageAction } };
-
-  if (isLargeDisplay.value) {
-    const popover = await popoverController.create({
-      component: HomePageButtons,
-      cssClass: 'homepage-popover',
-      event: event,
-      showBackdrop: false,
-      alignment: 'end',
-    });
-    await popover.present();
-    result = await popover.onWillDismiss();
-    await popover.dismiss();
-  } else {
-    const modal = await modalController.create({
-      component: SmallDisplayCreateJoinModal,
-      cssClass: 'create-join-modal',
-      showBackdrop: true,
-      handle: false,
-      breakpoints: isLargeDisplay.value ? undefined : [1],
-      expandToScroll: false,
-      initialBreakpoint: isLargeDisplay.value ? undefined : 1,
-    });
-    await modal.present();
-    result = await modal.onWillDismiss();
-    await modal.dismiss();
-  }
-
-  if (result.role !== MsModalResult.Confirm || !result.data) {
-    return;
-  }
-
-  if (result.data.action === HomePageAction.CreateOrganization) {
-    await openCreateOrganizationModal();
-  } else if (result.data.action === HomePageAction.JoinOrganization) {
-    await onJoinOrganizationClicked();
-  }
-}
 
 async function refreshInvitationList(): Promise<void> {
   if (!ParsecAccount.isLoggedIn()) {
@@ -472,23 +426,27 @@ async function onJoinOrganizationClicked(showRecoveryText?: boolean): Promise<vo
   );
 
   if (link) {
-    const result = await parseParsecAddr(link);
+    await handleLink(link);
+  }
+}
 
-    if (!result.ok) {
-      return;
-    }
-    if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
-      await openCreateOrganizationModal(link);
-    } else if ((await asyncEnrollmentLinkValidator(link)).validity === Validity.Valid) {
-      await handleAsyncEnrollment(link, informationManager);
-      await refreshJoinRequestsList();
-    } else if ((await totpResetLinkValidator(link)).validity === Validity.Valid) {
-      await handleTotpReset(link, informationManager);
-    } else if ((await shamirRecoveryLinkValidator(link)).validity === Validity.Valid) {
-      await wrapHandleShamirRecovery(link);
-    } else {
-      await openJoinByLinkModal(link);
-    }
+async function handleLink(link: string): Promise<void> {
+  const result = await parseParsecAddr(link);
+
+  if (!result.ok) {
+    return;
+  }
+  if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
+    await openCreateOrganizationModal(link);
+  } else if ((await asyncEnrollmentLinkValidator(link)).validity === Validity.Valid) {
+    await handleAsyncEnrollment(link, informationManager);
+    await refreshJoinRequestsList();
+  } else if ((await totpResetLinkValidator(link)).validity === Validity.Valid) {
+    await handleTotpReset(link, informationManager);
+  } else if ((await shamirRecoveryLinkValidator(link)).validity === Validity.Valid) {
+    await wrapHandleShamirRecovery(link);
+  } else {
+    await openJoinByLinkModal(link);
   }
 }
 
@@ -1086,7 +1044,7 @@ function getBackButtonTitle(): string {
   }
 
   .homepage-banner {
-    margin: 2.6rem 4rem 0;
+    margin: 2rem 2rem 0;
 
     @include ms.responsive-breakpoint('md') {
       margin: 1.5rem 3rem 0;
@@ -1095,25 +1053,6 @@ function getBackButtonTitle(): string {
     @include ms.responsive-breakpoint('sm') {
       align-self: center;
       margin: 1rem 1.5rem 0;
-    }
-  }
-
-  // Should be edited later with responsive
-  .homepage-header {
-    padding: ms.spacing('padding-4xl') ms.spacing('padding-8xl') ms.spacing('padding-none') ms.spacing('padding-8xl');
-
-    @include ms.responsive-breakpoint('lg') {
-      flex-direction: column-reverse;
-      gap: ms.spacing('gap-3xl');
-    }
-
-    @include ms.responsive-breakpoint('md') {
-      padding: ms.spacing('padding-5xl') ms.spacing('padding-7xl') ms.spacing('padding-none');
-    }
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: ms.spacing('padding-5xl') ms.spacing('padding-4xl') ms.spacing('padding-none');
-      margin-bottom: ms.spacing('padding-3xl');
     }
   }
 

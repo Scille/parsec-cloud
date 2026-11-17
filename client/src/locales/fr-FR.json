@@ -186,7 +186,6 @@
             }
         },
         "topbar": {
-            "welcome": "Bienvenue sur Parsec",
             "backToList": "Retour aux organisations",
             "back": "Retour",
             "settings": "Paramètres",
@@ -244,14 +243,8 @@
             "validation": "Validez l'invitation pour accéder à l'organisation"
         },
         "noExistingOrganization": {
-            "createOrJoin": "Créer ou rejoindre",
             "createOrganization": "Créer une organisation",
-            "createOrganizationDescription": "Vous souhaitez créer ou rejoindre une organisation ?",
-            "createOrganizationTitle": "Créer",
-            "createOrganizationSubtitle": "Je souhaite créer une organisation",
-            "joinOrganization": "Rejoindre une organisation",
-            "joinOrganizationTitle": "Rejoindre",
-            "joinOrganizationSubtitle": "J'ai reçu une invitation à rejoindre une organisation"
+            "joinOrganization": "Rejoindre une organisation"
         },
         "organizationLogin": {
             "forgottenPassword": "Mot de passe oublié ?",
@@ -303,7 +296,7 @@
                 "description": "Testez toutes les fonctionnalités pendant <b>15 jours</b> sans engagement ni carte bancaire."
             }
         },
-        "lostDevice": "Vous avez perdu votre accès ?",
+        "lostDevice": "J'ai perdu mon accès",
         "shamir": {
             "invalidLink": "Pas un lien de récupération valide.",
             "noAuthentication": "La récupération a été interrompue car aucune méthode d'authentification n'a été choisie.",

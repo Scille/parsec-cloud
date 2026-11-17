@@ -186,7 +186,6 @@
             }
         },
         "topbar": {
-            "welcome": "Welcome to Parsec",
             "backToList": "Return to organizations",
             "back": "Return",
             "settings": "Settings",
@@ -244,14 +243,8 @@
             "validation": "Validate the invitation to access the organization"
         },
         "noExistingOrganization": {
-            "createOrJoin": "Create or join",
             "createOrganization": "Create an organization",
-            "createOrganizationDescription": "Would you like to create or join an organization?",
-            "createOrganizationTitle": "Create",
-            "createOrganizationSubtitle": "I want to create an organization",
-            "joinOrganization": "Join an organization",
-            "joinOrganizationTitle": "Join",
-            "joinOrganizationSubtitle": "I received an invitation to join an organization"
+            "joinOrganization": "Join an organization"
         },
         "organizationLogin": {
             "forgottenPassword": "Forgot your password?",
@@ -303,7 +296,7 @@
                 "description": "Try all features for <b>15 days</b>, with no commitment and no credit card required."
             }
         },
-        "lostDevice": "Lost your access?",
+        "lostDevice": "I lost my access",
         "shamir": {
             "invalidLink": "Not a valid recovery link.",
             "noAuthentication": "The recovery was stopped because no authentication method was chosen.",

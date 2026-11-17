@@ -17,9 +17,9 @@
         @click="Env.Links.openDocumentationLink"
       >
         {{ $msTranslate('MenuPage.documentation') }}
-        <ion-icon
-          :icon="open"
-          class="button-icon-right"
+        <ms-image
+          class="menu-secondary-buttons-item__open-icon button-icon-right"
+          :image="OpenIcon"
         />
       </ion-button>
       <!-- contact button -->
@@ -28,9 +28,9 @@
         @click="Env.Links.openContactLink"
       >
         {{ $msTranslate('MenuPage.contact') }}
-        <ion-icon
-          :icon="open"
-          class="button-icon-right"
+        <ms-image
+          class="menu-secondary-buttons-item__open-icon button-icon-right"
+          :image="OpenIcon"
         />
       </ion-button>
       <!-- settings button -->
@@ -66,8 +66,8 @@
 import { Env } from '@/services/environment';
 import { openAboutModal } from '@/views/about';
 import { openSettingsModal } from '@/views/settings';
-import { IonButton, IonIcon } from '@ionic/vue';
-import { open } from 'ionicons/icons';
+import { IonButton } from '@ionic/vue';
+import { MsImage, OpenIcon } from 'megashark-lib';
 
 async function openSettings(): Promise<void> {
   if (!Env.isAccountEnabled()) {
@@ -87,26 +87,24 @@ const emits = defineEmits<{
 <style lang="scss" scoped>
 .menu-secondary {
   display: flex;
-  padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-5xl');
-  justify-content: space-between;
-
-  @include ms.responsive-breakpoint('md') {
-    flex-direction: column;
-    gap: ms.spacing('gap-3xl');
-    padding: ms.spacing('padding-none') ms.spacing('padding-none') ms.spacing('padding-3xl');
-  }
+  align-items: center;
 
   &-buttons {
-    --spacing-between: #{ms.spacing('gap-5xl')};
+    --spacing-between: #{ms.spacing('gap-4xl')};
     display: flex;
+    align-items: center;
     gap: var(--spacing-between);
     flex-wrap: wrap;
     -webkit-app-region: no-drag;
 
     &-item {
-      color: ms.color('text-base-description');
+      @include ms.font('label-md-medium');
+      color: ms.color('text-neutral-default');
+      min-height: auto;
+      margin: 0;
       transition: all 150ms linear;
       position: relative;
+      --color-hover: #{ms.color('text-brand-default')};
 
       &::part(native) {
         padding: ms.spacing('padding-none') !important;
@@ -114,12 +112,29 @@ const emits = defineEmits<{
         background: none;
       }
 
+      &__open-icon {
+        width: 1rem;
+        height: 1rem;
+        --fill-color: #{ms.color('icon-neutral-default')};
+        flex-shrink: 0;
+        position: relative;
+        top: 0;
+        right: 0;
+        transition: all 150ms linear;
+      }
+
+      &:hover &__open-icon {
+        top: -0.125rem;
+        right: -0.125rem;
+      }
+
       &:not(:last-child)::after {
         content: '';
         position: absolute;
         right: calc(var(--spacing-between) / (-2));
-        top: 0;
-        height: 1.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 1rem;
         width: ms.border('thin');
         background: ms.color('border-base-default');
         transition: all 150ms linear;
