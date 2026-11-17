@@ -40,7 +40,7 @@ for (const authMode of ['password', 'sso']) {
     await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
 
     await logout(myProfilePage);
-    await expect(myProfilePage.locator('#recover-button-header')).toHaveText('Lost your access?');
+    await expect(myProfilePage.locator('#recover-button-header')).toHaveText('I lost my access');
     await myProfilePage.locator('#recover-button-header').click();
 
     const chooseRecoveryModal = myProfilePage.locator('.choose-recovery-device-modal');
@@ -183,7 +183,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
 
     await logout(myProfilePage);
-    await expect(myProfilePage.locator('#recover-button-header')).toHaveText('Lost your access?');
+    await expect(myProfilePage.locator('#recover-button-header')).toHaveText('I lost my access');
     await myProfilePage.locator('#recover-button-header').click();
 
     const chooseRecoveryModal = myProfilePage.locator('.choose-recovery-device-modal');

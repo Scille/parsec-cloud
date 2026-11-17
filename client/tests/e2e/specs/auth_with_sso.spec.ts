@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, MsPage, msTest } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, MsPage, msTest, openCreateOrganization } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
-  await page.locator('#create-organization-button').click();
-  await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+  await openCreateOrganization(page);
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
   return modal;
