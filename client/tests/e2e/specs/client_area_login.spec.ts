@@ -29,8 +29,9 @@ msTest('Log into the customer area', { tag: '@important' }, async ({ context }) 
   await button.click();
   await expect(home).toHaveURL(/.+\/home$/);
   await expect(home.locator('.saas-login-container').locator('.saas-login__title')).toHaveText('Log in to your customer account');
-  await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
-  await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
+  const loginContainer = home.locator('.saas-login-container');
+  await fillIonInput(loginContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+  await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await home.locator('.saas-login-button__item').nth(1).click();
   await expect(home.locator('.topbar').locator('.topbar-left-text__title')).toHaveText('Dashboard');
   const logOutButton = home.locator('.sidebar-content').locator('.bottom-section-buttons-logout');
@@ -55,8 +56,9 @@ msTest('Log into the customer area failed', async ({ context }) => {
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home).toHaveURL(/.+\/home$/);
-  await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
-  await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), 'invalid_password');
+  const loginContainer = home.locator('.saas-login-container');
+  await fillIonInput(loginContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+  await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), 'invalid_password');
   await home.locator('.saas-login-button__item').nth(1).click();
   const error = home.locator('.saas-login-container').locator('.login-button-error');
   await expect(error).toBeVisible();
@@ -188,9 +190,13 @@ for (const frozen of [false, true]) {
 
     const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
     await button.click();
-    await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
-    await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    const loginButton = home.locator('.saas-login-button__item').nth(1);
+    await expect(home).toBeHomePage();
+    const loginContainer = home.locator('.saas-login-container');
+    await expect(loginContainer).toBeVisible();
+    await expect(loginContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
+    await fillIonInput(loginContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+    await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
+    const loginButton = loginContainer.locator('.saas-login-button__item').nth(1);
     await expect(loginButton).toHaveText('Log in');
     await expect(loginButton).toBeTrulyEnabled();
     await loginButton.click();

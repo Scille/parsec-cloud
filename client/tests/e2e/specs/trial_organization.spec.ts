@@ -23,7 +23,7 @@ msTest('Sidebar with trial orgs', async ({ context }) => {
   const topBar = page.locator('.topbar');
   await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
 
-  await page.locator('.organization-card').first().click();
+  await page.locator('.organization-item').first().click();
   await expect(page.locator('#password-input')).toBeVisible();
 
   await expect(page.locator('.login-button')).toHaveDisabledAttribute();
@@ -45,9 +45,9 @@ msTest('Sidebar with trial orgs', async ({ context }) => {
   await logout(page);
   await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
 
-  await expect(page.locator('.organization-card').first().locator('.organization-card-expiration')).toBeVisible();
-  await expect(page.locator('.organization-card').first().locator('.organization-card-expiration')).toHaveText('Expired');
-  await page.locator('.organization-card').first().click();
+  await expect(page.locator('.organization-item').first().locator('.organization-item-expiration')).toBeVisible();
+  await expect(page.locator('.organization-item').first().locator('.organization-item-expiration')).toHaveText('Expired');
+  await page.locator('.organization-item').first().click();
 
   await answerQuestion(page, false, {
     expectedTitleText: 'Expired organization',

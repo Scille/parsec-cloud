@@ -942,7 +942,7 @@ msTest('Test many users', async ({ context }) => {
     ],
   });
 
-  await login(page, 'Alicey McAliceFace');
+  await login(page, 'Alicey McAliceFace', 'alice@example.com');
   await page.locator('.sidebar').locator('#sidebar-users').click();
   await expect(page).toHavePageTitle('Users');
   await expect(page).toBeUserPage();

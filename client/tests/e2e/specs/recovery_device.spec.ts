@@ -114,7 +114,7 @@ for (const authMode of ['password', 'sso']) {
     await expect(myProfilePage).toBeWorkspacePage();
     await logout(myProfilePage);
 
-    await myProfilePage.locator('.organization-card').first().click();
+    await myProfilePage.locator('.organization-item').first().click();
 
     if (authMode === 'password') {
       await expect(myProfilePage.locator('#password-input')).toBeVisible();
