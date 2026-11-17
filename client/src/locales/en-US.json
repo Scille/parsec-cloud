@@ -2156,7 +2156,7 @@
         "device": {
             "title": "Trusted devices or browsers",
             "description": "Add secondary devices or browsers (Chrome or Firefox) as backup accesses to this organization.",
-            "otherActiveDevices": "{count} other active devices/browsers",
+            "otherDevices": "1 other device/browser | {count} other devices/browsers",
             "action": "Add a device"
         },
         "shamir": {

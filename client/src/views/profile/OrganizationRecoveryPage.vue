@@ -101,9 +101,9 @@
             <span class="has-devices">
               {{
                 $msTranslate({
-                  key: 'OrganizationRecovery.device.otherActiveDevices',
+                  key: 'OrganizationRecovery.device.otherDevices',
                   data: { count: devices.length - 1 },
-                  count: devices.length,
+                  count: devices.length - 1,
                 })
               }}
             </span>
