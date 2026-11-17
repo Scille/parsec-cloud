@@ -6661,8 +6661,8 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
                     .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
                         let custom_from_rs_bytes =
-                            |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                            |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
+                        custom_from_rs_bytes(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?,
             )
         }
@@ -6679,8 +6679,8 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
                     .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
                         let custom_from_rs_bytes =
-                            |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                            |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
+                        custom_from_rs_bytes(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?,
             )
         }
@@ -6692,8 +6692,8 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
             .map(|x| x.to_vec())
             .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
+                custom_from_rs_bytes(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
     let der_subject = {
@@ -6703,8 +6703,8 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
             .map(|x| x.to_vec())
             .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
+                custom_from_rs_bytes(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
     let serial = {
@@ -6714,8 +6714,8 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
             .map(|x| x.to_vec())
             .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
+                custom_from_rs_bytes(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
     Ok(libparsec::X509Pkcs11URI {
@@ -28651,7 +28651,7 @@ pub fn importRecoveryDevice(
 
         let ret = libparsec::import_recovery_device(
             config,
-            &recovery_device.to_vec(),
+            &recovery_device,
             passphrase,
             device_label,
             save_strategy,
@@ -30773,7 +30773,7 @@ pub fn workspaceFdWrite(workspace: u32, fd: u64, offset: u64, data: Uint8Array) 
 
         let data = data.to_vec();
 
-        let ret = libparsec::workspace_fd_write(workspace, fd, offset, &data.to_vec()).await;
+        let ret = libparsec::workspace_fd_write(workspace, fd, offset, &data).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -30811,9 +30811,7 @@ pub fn workspaceFdWriteConstrainedIo(
 
         let data = data.to_vec();
 
-        let ret =
-            libparsec::workspace_fd_write_constrained_io(workspace, fd, offset, &data.to_vec())
-                .await;
+        let ret = libparsec::workspace_fd_write_constrained_io(workspace, fd, offset, &data).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -30846,7 +30844,7 @@ pub fn workspaceFdWriteStartEof(workspace: u32, fd: u64, data: Uint8Array) -> Pr
 
         let data = data.to_vec();
 
-        let ret = libparsec::workspace_fd_write_start_eof(workspace, fd, &data.to_vec()).await;
+        let ret = libparsec::workspace_fd_write_start_eof(workspace, fd, &data).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -32199,7 +32197,7 @@ pub fn workspaceSaveAndSyncFileWithCryptpad(
             entry_id,
             cryptpad_session_channel_id,
             cryptpad_session_timestamp,
-            &content.to_vec(),
+            &content,
         )
         .await;
         Ok(match ret {

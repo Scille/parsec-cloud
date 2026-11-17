@@ -5941,10 +5941,9 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
                 Some({
-                    let custom_from_rs_bytes =
-                        |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+                    let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match custom_from_rs_bytes(js_val.as_slice(cx).to_vec()) {
                         Ok(val) => val,
                         // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -5962,10 +5961,9 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
                 Some({
-                    let custom_from_rs_bytes =
-                        |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+                    let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match custom_from_rs_bytes(js_val.as_slice(cx).to_vec()) {
                         Ok(val) => val,
                         // err can't infer type in some cases, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -5978,9 +5976,9 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
     let der_issuer = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derIssuer")?;
         {
-            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+            let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+            match custom_from_rs_bytes(js_val.as_slice(cx).to_vec()) {
                 Ok(val) => val,
                 // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -5991,9 +5989,9 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
     let der_subject = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derSubject")?;
         {
-            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+            let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+            match custom_from_rs_bytes(js_val.as_slice(cx).to_vec()) {
                 Ok(val) => val,
                 // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -6004,9 +6002,9 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
     let serial = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serial")?;
         {
-            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+            let custom_from_rs_bytes = |v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+            match custom_from_rs_bytes(js_val.as_slice(cx).to_vec()) {
                 Ok(val) => val,
                 // err can't infer type in some cases, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
