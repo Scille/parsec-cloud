@@ -41,11 +41,11 @@ msTest('Revoked event', async ({ usersPage }) => {
   await expect(item2).toHaveTheClass('revoked');
 
   await logout(usersPage);
-  const cards = usersPage.locator('.organization-list').locator('.organization-card');
+  const cards = usersPage.locator('.organization-list').locator('.organization-item');
   await expect(cards).toHaveCount(3);
 
   // Login to Boby: two devices exist and should be archived
-  await login(usersPage, 'Boby McBobFace');
+  await login(usersPage, 'Boby McBobFace', 'bob@example.com');
   const modal = usersPage.locator('.information-modal');
   await expect(modal).toBeVisible({ timeout: 10000 });
   await expect(modal.locator('.ms-error').nth(0)).toBeVisible();
@@ -59,7 +59,7 @@ msTest('Revoked event', async ({ usersPage }) => {
   await expect(cards).toHaveCount(2);
 
   // Login to Malloryy: a single device exists and should be archived
-  await login(usersPage, 'Malloryy McMalloryFace');
+  await login(usersPage, 'Malloryy McMalloryFace', 'mallory@example.com');
   await expect(modal).toBeVisible({ timeout: 10000 });
   await expect(modal.locator('.ms-error').nth(0)).toBeVisible();
   await expect(modal.locator('.container-textinfo__text')).toHaveText(

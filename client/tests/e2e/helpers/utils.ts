@@ -446,8 +446,8 @@ export function getServerHttpAddr(): string {
   }
 }
 
-export async function login(homePage: Page, name: string): Promise<void> {
-  await homePage.locator('.organization-card', { hasText: name }).click();
+export async function login(homePage: Page, name: string, email: string): Promise<void> {
+  await homePage.locator('.organization-item', { hasText: email }).click();
   await expect(homePage.locator('#password-input')).toBeVisible();
 
   await expect(homePage.locator('.login-button')).toHaveDisabledAttribute();

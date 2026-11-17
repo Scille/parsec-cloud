@@ -44,7 +44,7 @@ for (const { role, rights } of ROLES) {
     }
     if (role !== 'Owner') {
       await logout(workspaces);
-      await login(workspaces, 'Boby McBobFace');
+      await login(workspaces, 'Boby McBobFace', 'bob@example.com');
     }
 
     const modal = workspaces.locator('.workspace-details-modal');

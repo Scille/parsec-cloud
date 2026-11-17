@@ -353,7 +353,7 @@ msTest.describe(() => {
     await documents.reload();
     await setupNewPage(documents);
     await expect(documents).toBeHomePage();
-    await login(documents, 'Alicey McAliceFace');
+    await login(documents, 'Alicey McAliceFace', 'alice@example.com');
 
     // Verify sidebar visibility is preserved after reload
     await expect(documents.locator('.sidebar')).toBeVisible();
@@ -372,7 +372,7 @@ msTest.describe(() => {
     await documents.reload();
     await setupNewPage(documents);
     await expect(documents).toBeHomePage();
-    await login(documents, 'Alicey McAliceFace');
+    await login(documents, 'Alicey McAliceFace', 'alice@example.com');
 
     // Verify sidebar remains hidden after reload
     await expect(documents.locator('.sidebar')).toBeHidden();
@@ -393,7 +393,7 @@ msTest.describe(() => {
     await documents.reload();
     await setupNewPage(documents);
     await expect(documents).toBeHomePage();
-    await login(documents, 'Alicey McAliceFace');
+    await login(documents, 'Alicey McAliceFace', 'alice@example.com');
     await expect(documents.locator('.sidebar')).toBeVisible();
   });
 
@@ -422,7 +422,7 @@ msTest.describe(() => {
     await documents.reload();
     await setupNewPage(documents);
     await expect(documents).toBeHomePage();
-    await login(documents, 'Alicey McAliceFace');
+    await login(documents, 'Alicey McAliceFace', 'alice@example.com');
 
     await expect(documents.locator('.sidebar')).toBeVisible();
   });

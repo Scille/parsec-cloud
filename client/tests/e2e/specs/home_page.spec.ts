@@ -1,18 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  DisplaySize,
-  expect,
-  fillIonInput,
-  generateMockInvitationLink,
-  logout,
-  MsPage,
-  msTest,
-  setupNewPage,
-  sortBy,
-} from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillIonInput, generateMockInvitationLink, logout, MsPage, msTest, setupNewPage } from '@tests/e2e/helpers';
 
-const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
+const USER_EMAILS = ['alice@example.com', 'bob@example.com', 'mallory@example.com'];
 
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   msTest(`Home default state with devices on ${displaySize} display`, { tag: '@important' }, async ({ home }) => {
@@ -24,20 +14,25 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
 
     const container = home.locator('.slider-container');
-    await expect(container.locator('#search-input-organization')).toBeVisible();
+    await expect(container.locator('.organization-brand__subtitle')).toHaveText('Welcome back to Parsec');
+    await expect(container.locator('.organization-content')).toBeVisible();
+    await expect(container.locator('.organization-content--columns')).toBeHidden();
 
-    const cards = home.locator('.organization-list').locator('.organization-card');
-    await expect(cards).toHaveCount(USER_NAMES.length);
+    const cards = home.locator('.organization-list').locator('.organization-item');
+    await expect(cards).toHaveCount(USER_EMAILS.length);
 
     for (const card of await cards.all()) {
-      const lastLogin = card.locator('.login-text').nth(0);
-      await expect(card.locator('.organization-card-content-text').locator('.organization-name')).toHaveText(/TestbedOrg\d+/);
-      await expect(lastLogin).toHaveText('--');
+      await expect(card.locator('.organization-item-text__name')).toHaveText(/TestbedOrg\d+/);
+      await expect(card.locator('.organization-item-last-login__date')).toHaveText('--');
     }
-    await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+    await expect(cards.locator('.organization-item-text__email')).toHaveText(USER_EMAILS);
+
+    const otherActions = container.locator('.other-actions');
+    await expect(otherActions.locator('.other-actions-link__title')).toHaveText('Do you have a Parsec link?');
+    await expect(otherActions.locator('#other-actions-join-button')).toHaveDisabledAttribute();
+    await expect(otherActions.locator('#other-actions-create-button')).toHaveText('Create an organization');
 
     if (displaySize === 'large') {
-      await expect(container.locator('#organization-filter-select')).toHaveText('Organization name');
       await expect(topBar.locator('.topbar-right').locator('#create-organization-button')).toHaveText(['Create or join']);
       await expect(topBar.locator('.topbar-right').locator('#recover-button-header')).toHaveText(['Lost your access?']);
       await expect(home.locator('.homepage-sidebar')).toBeVisible();
@@ -66,42 +61,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
   });
 }
-
-msTest('Sort devices', async ({ home }) => {
-  const sortButton = home.locator('#organization-filter-select');
-  const cards = home.locator('.organization-list').locator('.organization-card');
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
-  await sortBy(sortButton, 'Ascending');
-  // Should not change anything right now because all devices have the same organization
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
-  await sortBy(sortButton, 'User name');
-  // By name desc
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u2.localeCompare(u1)));
-  await sortBy(sortButton, 'Descending');
-  // By name asc
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
-});
-
-msTest('Filter devices', async ({ home }) => {
-  const cards = home.locator('.organization-list').locator('.organization-card');
-  const searchInput = home.locator('#search-input-organization').locator('ion-input');
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
-  await fillIonInput(searchInput, 'cey');
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.filter((u) => u.includes('cey')));
-  await fillIonInput(searchInput, 'al');
-  await expect(cards.locator('.login-name')).toHaveCount(2);
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.filter((u) => u.toLowerCase().includes('al')));
-});
-
-msTest('Filter devices no match', async ({ home }) => {
-  const cards = home.locator('.organization-list').locator('.organization-card');
-  const searchInput = home.locator('#search-input-organization').locator('ion-input');
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
-  await fillIonInput(searchInput, 'nomatch');
-  await expect(cards).toBeHidden();
-  await expect(home.locator('.no-match-result')).toBeVisible();
-  await expect(home.locator('.no-match-result')).toHaveText("No organization found that matches 'nomatch'.");
-});
 
 msTest('Check join link', async ({ home }) => {
   const LINKS = [
@@ -155,8 +114,8 @@ msTest('Check join link', async ({ home }) => {
 });
 
 msTest('Login', async ({ home }) => {
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-  await expect(home.locator('.login-header__title')).toHaveText('Log in to an organization');
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
+  await expect(home.locator('.organization-card__name')).toHaveText(/^TestbedOrg\d+$/);
   const loginButton = home.locator('.login-card-footer').locator('.login-button');
   await expect(loginButton).toHaveDisabledAttribute();
   const input = home.locator('#password-input').locator('ion-input');
@@ -170,7 +129,7 @@ msTest('Login', async ({ home }) => {
 });
 
 msTest('Login with invalid password', async ({ home }) => {
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
   const loginButton = home.locator('.login-card-footer').locator('.login-button');
   await expect(loginButton).toHaveDisabledAttribute();
   const errorLabel = home.locator('.login-card-footer').locator('.container-textinfo');
@@ -185,7 +144,7 @@ msTest('Login with invalid password', async ({ home }) => {
 });
 
 msTest('Logout and go back to devices list', async ({ home }) => {
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
   await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
   await home.locator('.login-card-footer').locator('.login-button').click();
   await expect(home).toBeWorkspacePage();
@@ -206,8 +165,8 @@ msTest('Check header buttons', async ({ home }) => {
 
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   msTest(`Login page and back to device list ${displaySize} display`, async ({ home }) => {
-    await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-    await expect(home.locator('.login-header__title')).toHaveText('Log in to an organization');
+    await home.locator('.organization-list').locator('.organization-item').nth(0).click();
+    await expect(home.locator('.organization-card__name')).toHaveText(/^TestbedOrg\d+$/);
     await expect(home.locator('.organization-list')).toBeHidden();
     const backButton = home.locator('.topbar-left__back-button');
 
