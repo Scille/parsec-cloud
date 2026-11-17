@@ -392,7 +392,11 @@ fn generate_authentication_token(
         } => format!(
             // Note `.editics/<realm_id>/<document_id>` that limits what this token can do
             "{}.{}.{}.editics/{}/{}",
-            PARSEC_AUTH_METHOD, &author_id_hex, &timestamp, realm_id, document_id
+            PARSEC_AUTH_METHOD,
+            &author_id_hex,
+            &timestamp,
+            realm_id.hex(),
+            document_id.hex()
         ),
     };
     let signature = author_signing_key.sign_only_signature(header_and_body.as_bytes());
