@@ -137,7 +137,6 @@ export type {
   AccountRecoverProceedError,
   AccountRecoverSendValidationEmailError,
   AccountRegisterNewDeviceError,
-  AccountVaultItemOpaqueKeyID,
   AnyClaimRetrievedInfo,
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoShamirRecovery,

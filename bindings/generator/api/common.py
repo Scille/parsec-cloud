@@ -126,10 +126,6 @@ class U64BasedType:
     pass
 
 
-class CustomConversionType:
-    pass
-
-
 #
 # Common types
 #
@@ -180,10 +176,6 @@ class Handle(U32BasedType):
     pass
 
 
-class AnyhowError(StrBasedType):
-    custom_to_rs_string = DISPLAY_TO_STRING
-
-
 class ApiVersion(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ApiVersion::try_from(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = DISPLAY_TO_STRING
@@ -201,13 +193,6 @@ class UserID(StrBasedType):
 class DeviceID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::DeviceID, _> { libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = "|x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) }"
-
-
-class PKIEnrollmentID(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::PKIEnrollmentID, _> { libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) }"
-    )
 
 
 class TOTPOpaqueKeyID(StrBasedType):
@@ -272,10 +257,6 @@ class SequesterServiceID(StrBasedType):
     )
 
 
-class SequesterVerifyKeyDer(BytesBasedType):
-    pass
-
-
 class KeyDerivation(BytesBasedType):
     pass
 
@@ -290,11 +271,6 @@ class Bytes(BytesBasedType):
 
 class BytesVec(BytesBasedType):
     custom_from_rs_bytes = "|v: Vec<u8>| -> Result<Vec<u8>, String> { Ok(v) }"
-
-
-class Sha256BoxData(BytesBasedType):
-    custom_from_rs_bytes = '|v: Vec<u8>| -> Result<Box<[u8;32]>, String> { Ok(v.try_into::<Box<[u8; 32]>>().map_err(|_| "invalid value length")?)) }'
-    custom_to_rs_bytes = "|v: Box<[u8;32]>| -> Result<Vec<u8>, String> {Ok((*v).into())}"
 
 
 class SASCode(StrBasedType):
@@ -366,11 +342,6 @@ class AccountAuthMethodID(StrBasedType):
     custom_to_rs_string = (
         "|x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) }"
     )
-
-
-class AccountVaultItemOpaqueKeyID(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> { libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
 class X509CertificateHash(StrBasedType):
