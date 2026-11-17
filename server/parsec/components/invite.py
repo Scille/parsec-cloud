@@ -552,8 +552,6 @@ class BaseInviteComponent:
         claimer_email: EmailAddress,
         greeter_human_handle: HumanHandle,
     ) -> SendEmailBadOutcome | None:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         invitation_url = ParsecInvitationAddr.build(
             server_addr=self._config.server_addr,
@@ -587,8 +585,6 @@ class BaseInviteComponent:
         token: AccessToken,
         email: EmailAddress,
     ) -> SendEmailBadOutcome | None:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         invitation_url = ParsecInvitationAddr.build(
             server_addr=self._config.server_addr,
@@ -621,8 +617,6 @@ class BaseInviteComponent:
         email: EmailAddress,
         greeter_human_handle: HumanHandle,
     ) -> SendEmailBadOutcome | None:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         invitation_url = ParsecInvitationAddr.build(
             server_addr=self._config.server_addr,
