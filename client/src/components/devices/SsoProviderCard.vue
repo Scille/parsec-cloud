@@ -3,9 +3,9 @@
 <template>
   <button
     class="sso-provider-card"
-    :class="{ 'sso-provider-card--connected': isConnected }"
-    @click="$emit('ssoSelected', provider)"
-    :disabled="isConnected"
+    :class="{ 'sso-provider-card--connected': isConnected, 'sso-provider-card--loading': loading }"
+    @click="!disabled && !isConnected && $emit('ssoSelected', provider)"
+    :disabled="isConnected || disabled || loading"
   >
     <img
       v-if="provider.icon"
@@ -16,9 +16,14 @@
     <ion-text class="sso-provider-name">
       {{ $msTranslate({ key: 'Authentication.method.sso.continueWith', data: { name: provider.name } }) }}
     </ion-text>
+    <ms-spinner
+      v-if="loading"
+      class="sso-provider-card__spinner"
+      :size="16"
+    />
     <div
       class="sso-provider-tag"
-      v-if="isConnected"
+      v-else-if="isConnected"
     >
       <ion-icon
         :icon="checkmarkCircle"
@@ -35,6 +40,7 @@
 import { OpenBaoAuthConfig } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
+import { MsSpinner } from 'megashark-lib';
 
 defineEmits<{
   (e: 'ssoSelected', provider: OpenBaoAuthConfig): void;
@@ -43,6 +49,8 @@ defineEmits<{
 defineProps<{
   provider: OpenBaoAuthConfig;
   isConnected?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
 }>();
 </script>
 
@@ -65,9 +73,24 @@ defineProps<{
     background 150ms ease-in-out,
     border-color 150ms ease-in-out;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: ms.color('surface-elevated-default-hover');
     border-color: ms.color('border-base-default-hover');
+  }
+
+  &:disabled:not(.sso-provider-card--connected) {
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: ms.opacity('disabled');
+  }
+
+  &--loading {
+    cursor: progress;
+  }
+
+  &__spinner {
+    margin-left: auto;
+    flex-shrink: 0;
   }
 
   &:focus-visible {
@@ -92,6 +115,10 @@ defineProps<{
       border-color: ms.color('border-success-default');
     }
   }
+}
+
+.sso-provider-name {
+  @include ms.font('label-md-medium');
 }
 
 .sso-provider-tag {

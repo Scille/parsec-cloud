@@ -55,7 +55,7 @@
         </ms-report-text>
         <div v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao">
           <div
-            v-if="!loading && serverConfig?.openbao && serverConfig.openbao.auths.length > 0"
+            v-if="!globalLoading && serverConfig?.openbao && serverConfig.openbao.auths.length > 0"
             class="sso-provider-list"
           >
             <sso-provider-card
@@ -63,12 +63,15 @@
               :key="provider.id"
               :provider="provider"
               @sso-selected="onLoginSSOClick"
+              :disabled="connectingToProvider !== undefined || loginInProgress"
+              :loading="connectingToProvider === provider.id || loginInProgress"
+              :is-connected="connectedToProvider === provider.id"
             />
           </div>
-          <div v-else-if="loading">
+          <div v-else-if="globalLoading">
             <ms-spinner />
           </div>
-          <div v-else-if="!loading && !serverConfig">
+          <div v-else-if="!globalLoading && !serverConfig">
             {{ $msTranslate('Authentication.method.sso.serverConfigUnavailable') }}
             <ion-button @click="refreshServerConfig">{{ $msTranslate('Authentication.method.sso.retry') }}</ion-button>
           </div>
@@ -128,12 +131,13 @@ const emits = defineEmits<{
 
 const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 const password = ref('');
-const loading = ref(true);
+const globalLoading = ref(true);
 const errorMessage = ref('');
 const passwordIsInvalid = ref(false);
 const email = props.device.humanHandle.email;
-const isConnectWithSSO = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const connectingToProvider = ref<string | undefined>(undefined);
+const connectedToProvider = ref<string | undefined>(undefined);
 
 onMounted(async () => {
   await passwordInputRef.value?.setFocus();
@@ -143,43 +147,48 @@ onMounted(async () => {
 });
 
 async function refreshServerConfig(): Promise<void> {
-  loading.value = true;
+  globalLoading.value = true;
   const result = await getServerConfig(props.device.serverAddr);
   if (result.ok) {
     serverConfig.value = result.value;
   }
-  loading.value = false;
+  globalLoading.value = false;
 }
 
 async function onLoginSSOClick(provider: OpenBaoAuthConfig): Promise<void> {
-  if (props.loginInProgress || !serverConfig.value?.openbao) {
+  if (props.loginInProgress || !serverConfig.value?.openbao || connectingToProvider.value) {
     return;
   }
 
-  const connResult = await openBaoConnect(
-    serverConfig.value.openbao.serverUrl,
-    provider.id,
-    provider.mountPath,
-    serverConfig.value.openbao.secret.mountPath,
-    serverConfig.value.openbao.transitMountPath,
-  );
+  try {
+    connectingToProvider.value = provider.id;
+    const connResult = await openBaoConnect(
+      serverConfig.value.openbao.serverUrl,
+      provider.id,
+      provider.mountPath,
+      serverConfig.value.openbao.secret.mountPath,
+      serverConfig.value.openbao.transitMountPath,
+    );
 
-  if (!connResult.ok) {
-    if (connResult.error.type === OpenBaoErrorType.PopupFailed) {
-      errorMessage.value = 'Authentication.popupBlocked';
+    if (!connResult.ok) {
+      if (connResult.error.type === OpenBaoErrorType.PopupFailed) {
+        errorMessage.value = 'Authentication.popupBlocked';
+      } else {
+        errorMessage.value = 'Authentication.invalidOpenBaoData';
+      }
+      window.nativeAPI.log('error', `Failed to log in to openbao: ${JSON.stringify(connResult.error)}`);
+      connectedToProvider.value = undefined;
     } else {
-      errorMessage.value = 'Authentication.invalidOpenBaoData';
+      connectedToProvider.value = provider.id;
+      emits(
+        'loginClick',
+        props.device,
+        constructAccessStrategy(props.device, PrimaryProtectionStrategy.useOpenBao(connResult.value.getConnectionInfo())),
+      );
     }
-    window.nativeAPI.log('error', `Failed to log in to openbao: ${JSON.stringify(connResult.error)}`);
-    return;
-  } else {
-    isConnectWithSSO.value = true;
+  } finally {
+    connectingToProvider.value = undefined;
   }
-  emits(
-    'loginClick',
-    props.device,
-    constructAccessStrategy(props.device, PrimaryProtectionStrategy.useOpenBao(connResult.value.getConnectionInfo())),
-  );
 }
 
 async function onLoginClick(): Promise<void> {
