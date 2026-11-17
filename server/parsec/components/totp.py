@@ -219,8 +219,6 @@ class BaseTOTPComponent:
         totp_reset_url: ParsecTOTPResetAddr,
         to_addr: EmailAddress,
     ) -> SendEmailBadOutcome | None:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         message = generate_totp_reset_email(
             jinja_env=self._config.jinja_env,
