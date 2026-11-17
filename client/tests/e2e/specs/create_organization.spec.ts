@@ -7,20 +7,15 @@ import {
   expect,
   fillIonInput,
   msTest,
+  openCreateOrganization,
   openExternalLink,
   setupNewPage,
 } from '@tests/e2e/helpers';
 
 msTest('Opens the create organization modal', async ({ home }) => {
-  await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
-  await expect(home.locator('.homepage-popover')).toBeHidden();
-  await home.locator('#create-organization-button').click();
-  await expect(home.locator('.homepage-popover')).toBeVisible();
+  await expect(home.locator('#other-actions-create-button')).toHaveText('Create an organization');
   await expect(home.locator('.create-organization-modal')).toBeHidden();
-  const createButton = home.locator('.homepage-popover').getByRole('listitem').nth(0);
-  await expect(createButton.locator('ion-text').nth(0)).toHaveText('Create');
-  await expect(createButton.locator('ion-text').nth(1)).toHaveText('I want to create an organization');
-  await createButton.click();
+  await openCreateOrganization(home);
   const modal = home.locator('.create-organization-modal');
   await expect(modal).toBeVisible();
   await expect(modal.locator('.modal-header-title__text')).toHaveText('Create an organization');
@@ -48,8 +43,7 @@ msTest('Return to server selection after selecting server type', async ({ contex
   const home = (await context.newPage()) as MsPage;
   await setupNewPage(home, { enableStripe: true });
 
-  await home.locator('#create-organization-button').click();
-  await home.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+  await openCreateOrganization(home);
   const modal = home.locator('.create-organization-modal');
   await expect(modal.locator('.server-page')).toBeVisible();
 
@@ -94,13 +88,7 @@ msTest('Return to server selection after selecting server type', async ({ contex
 });
 
 msTest('Opens sequester documentation from create organization modal', async ({ home }) => {
-  await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
-  await expect(home.locator('.homepage-popover')).toBeHidden();
-  await home.locator('#create-organization-button').click();
-  await expect(home.locator('.homepage-popover')).toBeVisible();
-  await expect(home.locator('.create-organization-modal')).toBeHidden();
-  const createButton = home.locator('.homepage-popover').getByRole('listitem').nth(0);
-  await createButton.click();
+  await openCreateOrganization(home);
   const modal = home.locator('.create-organization-modal');
   await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
 

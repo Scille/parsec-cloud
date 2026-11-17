@@ -4,9 +4,9 @@ import { Locator } from '@playwright/test';
 import {
   answerQuestion,
   expect,
-  fillInputModal,
   fillIonInput,
   getClipboardText,
+  joinWithLink,
   login,
   logout,
   MsPage,
@@ -289,10 +289,7 @@ msTest('Recover device using shamir', async ({ context }) => {
   await expect(exch1Modal.locator('.greet-shamir__spinner')).toBeVisible();
 
   // Now start the process on the claimer's side
-  await page.locator('#create-organization-button').click();
-  await expect(page.locator('.homepage-popover')).toBeVisible();
-  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, link);
+  await joinWithLink(page, link);
   await goThroughShamirInstructions(page);
   const claimModal = page.locator('.claim-shamir-recovery-modal');
   await expect(claimModal).toBeVisible();
@@ -434,10 +431,7 @@ msTest('Claimer cancel shamir device recovery', async ({ context }) => {
   await expect(exch1Modal.locator('.greet-shamir__spinner')).toBeVisible();
 
   // Now start the process on the claimer's side
-  await page.locator('#create-organization-button').click();
-  await expect(page.locator('.homepage-popover')).toBeVisible();
-  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, link);
+  await joinWithLink(page, link);
   await goThroughShamirInstructions(page);
   const claimModal = page.locator('.claim-shamir-recovery-modal');
   await expect(claimModal).toBeVisible();
@@ -494,10 +488,7 @@ msTest('Greeter cancel shamir device recovery', async ({ context }) => {
   await expect(exch1Modal.locator('.greet-shamir__spinner')).toBeVisible();
 
   // Now start the process on the claimer's side
-  await page.locator('#create-organization-button').click();
-  await expect(page.locator('.homepage-popover')).toBeVisible();
-  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, link);
+  await joinWithLink(page, link);
   await goThroughShamirInstructions(page);
   const claimModal = page.locator('.claim-shamir-recovery-modal');
   await expect(claimModal).toBeVisible();

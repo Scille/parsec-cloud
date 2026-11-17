@@ -5,9 +5,9 @@ import {
   answerQuestion,
   DisplaySize,
   expect,
-  fillInputModal,
   fillIonInput,
   getClipboardText,
+  joinWithLink,
   mockLibParsec,
   MsPage,
   msTest,
@@ -51,16 +51,7 @@ async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalDa
   const invitationLink = await getClipboardText(hostPage);
 
   // Use the invitation link in the second tab
-  await guestPage.locator('#create-organization-button').click();
-
-  if (displaySize === DisplaySize.Small) {
-    await expect(guestPage.locator('.create-join-modal')).toBeVisible();
-    await guestPage.locator('.create-join-modal-list__item').nth(1).click();
-  } else {
-    await expect(guestPage.locator('.homepage-popover')).toBeVisible();
-    await guestPage.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  }
-  await fillInputModal(guestPage, invitationLink);
+  await joinWithLink(guestPage, invitationLink);
   const joinModal = guestPage.locator('.join-organization-modal');
   await expect(joinModal).toBeVisible();
 
