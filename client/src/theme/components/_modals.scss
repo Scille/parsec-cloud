@@ -229,39 +229,6 @@ ion-modal {
   }
 }
 
-.create-join-modal {
-  height: 100%;
-
-  @media only screen and (max-height: 580px) {
-    --height: auto;
-  }
-
-  &::part(content) {
-    border-radius: ms.radius('2xl');
-    max-width: var(--parsec-modal-width-sm);
-
-    @include ms.responsive-breakpoint('sm') {
-      border-radius: ms.radius('2xl') ms.radius('2xl') 0 0;
-    }
-  }
-
-  .modal-header-title {
-    max-width: none;
-    padding: ms.spacing('padding-4xl') ms.spacing('padding-5xl') 0;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: ms.spacing('padding-none');
-    }
-  }
-
-  .modal-content {
-    padding: ms.spacing('padding-4xl');
-    display: flex;
-    flex-direction: column;
-    gap: ms.spacing('gap-4xl');
-  }
-}
-
 .join-organization-modal {
   &::part(content) {
     max-width: var(--parsec-modal-width-lg);

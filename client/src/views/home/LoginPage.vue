@@ -246,7 +246,7 @@ defineExpose({
   }
 
   @include ms.responsive-breakpoint('sm') {
-    margin: 0 auto;
+    margin: 3rem auto;
   }
 
   &__organization {
