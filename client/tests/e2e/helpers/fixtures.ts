@@ -10,7 +10,7 @@ import { mockLibParsec } from '@tests/e2e/helpers/libparsec';
 import { mockStripe } from '@tests/e2e/helpers/mock';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { DisplaySize, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
-import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
+import { createWorkspace, fillIonInput, importDefaultFiles, joinWithLink, logout, openCreateOrganization } from '@tests/e2e/helpers/utils';
 import { CoverageReport } from 'monocart-coverage-reports';
 
 const DEV_TOOLS_OFFSET = 400;
@@ -439,19 +439,14 @@ export const msTest = debugTest.extend<{
     // cspell:disable-next-line
     const INVITATION_LINK = 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS';
 
-    await home.locator('#create-organization-button').click();
-    await expect(home.locator('.homepage-popover')).toBeVisible();
-    await home.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-    await fillInputModal(home, INVITATION_LINK);
+    await joinWithLink(home, INVITATION_LINK);
     const modal = home.locator('.join-organization-modal');
     await expect(home.locator('.join-organization-modal')).toBeVisible();
     await use(modal);
   },
 
   createOrgModal: async ({ home }, use) => {
-    await home.locator('#create-organization-button').click();
-    await expect(home.locator('.homepage-popover')).toBeVisible();
-    await home.locator('.homepage-popover').getByRole('listitem').nth(0).click();
+    await openCreateOrganization(home);
     const modal = home.locator('.create-organization-modal');
     await expect(home.locator('.create-organization-modal')).toBeVisible();
     await use(modal);

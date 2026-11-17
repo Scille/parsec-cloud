@@ -3,10 +3,10 @@
 import {
   answerQuestion,
   expect,
-  fillInputModal,
   fillIonInput,
   getClipboardText,
   getOrganizationAddr,
+  joinWithLink,
   login,
   logout,
   mockLibParsec,
@@ -32,10 +32,7 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
   const orgName = await page.locator('.organization-item').first().locator('.organization-item-text__name').textContent();
   expect(orgName).not.toBeNull();
   const link = getAsyncEnrollmentJoinLink(orgName as string);
-  await page.locator('#create-organization-button').click();
-  await expect(page.locator('.homepage-popover')).toBeVisible();
-  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, link);
+  await joinWithLink(page, link);
   const requestModal = page.locator('.async-enrollment-modal');
   await expect(requestModal).toBeVisible();
   const nextButton = requestModal.locator('#next-button');
@@ -326,11 +323,7 @@ msTest('Cannot accept PKI request', async ({ context }) => {
 
   const requests = secondTab.locator('.organization-request');
   await expect(requests).toBeHidden();
-  await secondTab.locator('#create-organization-button').click();
-  await expect(secondTab.locator('.homepage-popover')).toBeVisible();
-  await secondTab.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-
-  await fillInputModal(secondTab, await getClipboardText(page));
+  await joinWithLink(secondTab, await getClipboardText(page));
   const requestModal = secondTab.locator('.async-enrollment-modal');
   await expect(requestModal).toBeVisible();
   const nextButton = requestModal.locator('#next-button');
@@ -377,10 +370,7 @@ msTest('Check certificate cards', async ({ context }) => {
   await setupNewPage(page, { mockPki: true });
 
   const link = getAsyncEnrollmentJoinLink('Test');
-  await page.locator('#create-organization-button').click();
-  await expect(page.locator('.homepage-popover')).toBeVisible();
-  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, link);
+  await joinWithLink(page, link);
   const requestModal = page.locator('.async-enrollment-modal');
   await expect(requestModal).toBeVisible();
   const nextButton = requestModal.locator('#next-button');
@@ -425,10 +415,7 @@ msTest('List certificates error', async ({ context }) => {
   ]);
 
   const link = getAsyncEnrollmentJoinLink('Test');
-  await page.locator('#create-organization-button').click();
-  await expect(page.locator('.homepage-popover')).toBeVisible();
-  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, link);
+  await joinWithLink(page, link);
   const requestModal = page.locator('.async-enrollment-modal');
   await expect(requestModal).toBeVisible();
   const nextButton = requestModal.locator('#next-button');

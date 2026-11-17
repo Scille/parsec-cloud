@@ -7,6 +7,7 @@ import {
   generateTotpCode,
   getClipboardText,
   getServerHttpAddr,
+  joinWithLink,
   logout,
   MsPage,
   msTest,
@@ -174,11 +175,7 @@ msTest('Reset totp', async ({ myProfilePage }) => {
   await logout(myProfilePage);
   const page = myProfilePage;
   const resetLink = await resetTotp(getServerHttpAddr(), orgName, email);
-  await page.locator('#create-organization-button').click();
-
-  await expect(page.locator('.homepage-popover')).toBeVisible();
-  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, resetLink);
+  await joinWithLink(page, resetLink);
   const resetModal = page.locator('.mfa-activation-modal');
   await expect(resetModal).toBeVisible();
 

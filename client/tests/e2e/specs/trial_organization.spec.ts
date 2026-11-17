@@ -8,9 +8,7 @@ msTest('Homepage with trial orgs', async ({ context }) => {
   const testbedUrl = new URL(process.env.TESTBED_SERVER ?? '');
   await setupNewPage(page, { trialServers: testbedUrl.host, saasServers: 'unknown.host' });
 
-  const topBar = page.locator('.topbar');
-  await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
-  await expect(topBar.locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
+  await expect(page.locator('.organization-brand__subtitle')).toHaveText('Welcome back to Parsec');
 
   await page.release();
 });
@@ -21,8 +19,7 @@ msTest('Sidebar with trial orgs', async ({ context }) => {
   const testbedUrl = new URL(process.env.TESTBED_SERVER ?? '');
   await setupNewPage(page, { trialServers: testbedUrl.host, saasServers: 'unknown.host' });
 
-  const topBar = page.locator('.topbar');
-  await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
+  await expect(page.locator('.organization-brand__subtitle')).toHaveText('Welcome back to Parsec');
 
   await page.locator('.organization-item').first().click();
   await expect(page.locator('#password-input')).toBeVisible();
@@ -44,7 +41,7 @@ msTest('Sidebar with trial orgs', async ({ context }) => {
   await openExternalLink(page, trialMenu.locator('.trial-card__button'), /^https:\/\/parsec\.cloud\/pricing\/?.*$/);
 
   await logout(page);
-  await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
+  await expect(page.locator('.organization-brand__subtitle')).toHaveText('Welcome back to Parsec');
 
   await expect(page.locator('.organization-item').first().locator('.organization-item-expiration')).toBeVisible();
   await expect(page.locator('.organization-item').first().locator('.organization-item-expiration')).toHaveText('Expired');
