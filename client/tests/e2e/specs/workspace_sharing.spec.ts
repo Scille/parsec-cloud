@@ -114,7 +114,7 @@ msTest('Unshare workspace while on workspace page', async ({ workspaceSharingMod
   const page = workspaceSharingModal.page() as MsPage;
   const secondTab = await (workspaceSharingModal.page() as MsPage).openNewTab();
   // Login on the second tab with Bob, should have one workspace shared by default
-  await login(secondTab, 'Boby McBobFace');
+  await login(secondTab, 'Boby McBobFace', 'bob@example.com');
   const workspaces = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
   await expect(workspaces).toHaveCount(1);
   await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
@@ -152,7 +152,7 @@ msTest('Unshare workspace while navigating inside it', async ({ workspaceSharing
   const page = workspaceSharingModal.page() as MsPage;
   const secondTab = await (workspaceSharingModal.page() as MsPage).openNewTab();
   // Login on the second tab with Bob, should have one workspace shared by default
-  await login(secondTab, 'Boby McBobFace');
+  await login(secondTab, 'Boby McBobFace', 'bob@example.com');
   const workspaces = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
   await expect(workspaces).toHaveCount(1);
   await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
@@ -214,7 +214,7 @@ msTest.describe(() => {
 
     const secondTab = await documents.openNewTab();
     // Login on the second tab with Bob, should have one workspace shared by default
-    await login(secondTab, 'Boby McBobFace');
+    await login(secondTab, 'Boby McBobFace', 'bob@example.com');
     const workspaces = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
     await expect(workspaces).toHaveCount(1);
     await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
@@ -283,7 +283,7 @@ msTest('Change workspace role from and to reader while navigating inside it', as
   await expect(modal).toBeVisible();
   const secondTab = await workspaces.openNewTab();
   // Login on the second tab with Bob, should have one workspace shared by default
-  await login(secondTab, 'Boby McBobFace');
+  await login(secondTab, 'Boby McBobFace', 'bob@example.com');
   const wks2 = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
   await expect(wks2).toHaveCount(1);
   await expect(wks2.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
@@ -472,7 +472,7 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
 });
 
 msTest('Batch workspace sharing hidden when reader', async ({ home }) => {
-  await login(home, 'Boby McBobFace');
+  await login(home, 'Boby McBobFace', 'bob@example.com');
   await home
     .locator('.workspaces-container-grid')
     .locator('.workspace-card-item')

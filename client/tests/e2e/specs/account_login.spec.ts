@@ -92,7 +92,7 @@ msTest('Account create registration device and replace current', async ({ parsec
   const email = (await header.locator('.header-list-email').textContent()) ?? 'incorrect';
   await popover.locator('ion-backdrop').click();
 
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
   await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
   await home.locator('.login-card-footer').locator('.login-button').click();
   await expect(home).toBeWorkspacePage();
@@ -107,9 +107,9 @@ msTest('Account create registration device and replace current', async ({ parsec
   await secondTab.release();
 
   await logout(home);
-  await expect(home.locator('.organization-list').locator('.organization-card')).toHaveCount(4);
+  await expect(home.locator('.organization-list').locator('.organization-item')).toHaveCount(4);
 
-  await home.locator('.organization-list').locator('.organization-card').nth(3).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(3).click();
   await fillIonInput(home.locator('#password-input').locator('ion-input'), 'AVeryL0ngP@ssw0rd');
   await home.locator('.login-card-footer').locator('.login-button').click();
   await answerQuestion(home, true, {
@@ -120,7 +120,7 @@ msTest('Account create registration device and replace current', async ({ parsec
   });
   await expect(home).toBeWorkspacePage();
   await logout(home);
-  await home.locator('.organization-list').locator('.organization-card').nth(3).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(3).click();
   await expect(home).toBeWorkspacePage();
 });
 
@@ -139,7 +139,7 @@ msTest('Account create registration device and auto-register', async ({ browser,
   const email = (await header.locator('.header-list-email').textContent()) ?? 'incorrect';
   await popover.locator('ion-backdrop').click();
 
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
   await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
   await home.locator('.login-card-footer').locator('.login-button').click();
   await expect(home).toBeWorkspacePage();
@@ -183,9 +183,10 @@ msTest('Account create registration device and auto-register', async ({ browser,
   const newTab = await home.openNewTab({ location: '/home', withParsecAccount: true, parsecAccountAutoLogin: false });
   await expect(newTab).toBeHomePage();
 
-  await expect(newTab.locator('.organization-list').locator('.organization-card')).toHaveCount(4);
-  await expect(newTab.locator('.organization-list').locator('.organization-card').nth(3).locator('.login-name')).toHaveText('UserName');
-  await newTab.locator('.organization-list').locator('.organization-card').nth(3).click();
+  const newTabItems = newTab.locator('.organization-list').locator('.organization-item');
+  await expect(newTabItems).toHaveCount(4);
+  await expect(newTabItems.nth(3).locator('.organization-item-text__email')).toHaveText(email);
+  await newTabItems.nth(3).click();
   await expect(newTab).toBeWorkspacePage();
 });
 

@@ -60,7 +60,7 @@ msTest("Dismiss update on home page and update modal shouldn't be appear again",
   await modal.locator('.update-footer').locator('ion-button').nth(1).click();
   await expect(modal).toBeHidden();
 
-  await home.locator('.organization-card').first().click();
+  await home.locator('.organization-item').first().click();
   await expect(home.locator('#password-input')).toBeVisible();
   await sendUpdateEvent(home);
   await expect(modal).toBeHidden();
