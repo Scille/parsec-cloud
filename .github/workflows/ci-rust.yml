@@ -65,7 +65,7 @@ jobs:
       CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: -C link-arg=-B/home/runner/.install-action/bin -C link-arg=-fuse-ld=mold
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.9.3-a.0.dev.20648.a5d5731
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.11.1-a.0.dev.20774.e62ca10
         ports:
           - 6777:6777
     steps:
