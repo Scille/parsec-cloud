@@ -112,13 +112,16 @@
       .reset-filters-button {
         position: absolute;
         right: 0;
-        --padding-start: 0;
-        --padding-end: 0;
-        --min-width: 0;
+        min-width: 0;
         --height: auto;
+        --background: transparent;
         --background-hover: transparent;
         color: ms.color('text-brand-default');
         cursor: pointer;
+
+        &::part(native) {
+          padding: ms.spacing('padding-none') !important;
+        }
 
         &:hover {
           color: ms.color('text-brand-default-hover');

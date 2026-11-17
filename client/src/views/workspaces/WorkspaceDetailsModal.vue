@@ -76,7 +76,7 @@
             <ion-button
               class="workspace-export__button"
               @click="downloadWorkspaceExport"
-              v-show="workspace.selfRole === RealmRole.Owner"
+              v-show="workspace.selfRole === WorkspaceRole.Owner"
               fill="clear"
             >
               {{ $msTranslate('export.exportWorkspace') }}
@@ -92,7 +92,6 @@
 import { TechnicalId } from '@/components/misc';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { WorkspaceInfo, WorkspaceRole } from '@/parsec';
-import { RealmRole } from '@/plugins/libparsec';
 import { exportWorkspace } from '@/services/export';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';

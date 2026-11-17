@@ -6,7 +6,24 @@
     v-if="initialized"
     class="connected-layout"
   >
-    <ion-router-outlet />
+    <ion-menu
+      content-id="connected-layout-content"
+      class="side-popover-menu"
+      side="end"
+      :menu-id="sidePopoverMenu.MENU_ID"
+      @ion-did-close="sidePopoverMenu._onClose"
+      :swipe-gesture="false"
+    >
+      <ion-content id="side-menu-popover-content">
+        <component
+          id="side-menu-popover-content"
+          v-if="sidePopoverMenu.currentMenu.value"
+          :is="sidePopoverMenu.currentMenu.value.component"
+          v-bind="sidePopoverMenu.currentMenu.value.props"
+        />
+      </ion-content>
+    </ion-menu>
+    <ion-router-outlet id="connected-layout-content" />
   </ion-page>
 </template>
 
@@ -44,6 +61,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import useRefreshWarning from '@/services/refreshWarning';
+import { useSidePopoverMenu } from '@/services/sidePopoverMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useUpdateManager } from '@/services/updateManager';
 import { openUpdateAppModal } from '@/views/about';
@@ -51,7 +69,7 @@ import UpdateAuthenticationModal from '@/views/authentication/UpdateAuthenticati
 import TOSModal from '@/views/organizations/TOSModal.vue';
 import TotpRequiredModal from '@/views/profile/TotpRequiredModal.vue';
 import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
-import { IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
+import { IonContent, IonMenu, IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Answer, askQuestion, MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, provide, Ref, ref } from 'vue';
@@ -96,6 +114,8 @@ const updateAvailableData = ref<UpdateAvailabilityData | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 const refreshWarning = useRefreshWarning();
+
+const sidePopoverMenu = useSidePopoverMenu();
 
 const fileOperationManager = ref<FileOperationManager | null>(null);
 const eventDistributor = ref<EventDistributor | null>(null);
@@ -175,6 +195,7 @@ onUnmounted(async () => {
   if (injections && callbackId !== null) {
     injections.eventDistributor.removeCallback(callbackId);
   }
+  sidePopoverMenu.close();
 });
 
 async function eventCallback(event: Events, data?: EventData): Promise<void> {
@@ -601,3 +622,15 @@ async function logout(): Promise<void> {
   await navigateTo(Routes.Home, { replace: true, skipHandle: true });
 }
 </script>
+
+<style lang="scss" scoped>
+.side-popover-menu {
+  --width: 25rem;
+  --max-width: 90vw;
+
+  &::part(container) {
+    border-radius: ms.radius('2xl') 0 0 ms.radius('2xl');
+    box-shadow: ms.shadow('elevation-lg');
+  }
+}
+</style>

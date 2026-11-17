@@ -18,6 +18,7 @@ import {
   ClientStartWorkspaceError,
   ConnectionHandle,
   FsPath,
+  HumanHandle,
   MountpointHandle,
   MountpointToOsPathError,
   MountpointToOsPathErrorTag,
@@ -43,9 +44,10 @@ import {
   WorkspaceName,
   WorkspaceRole,
   WorkspaceStopError,
-  WorkspaceTimelineEntry,
+  WorkspaceTimelineEvent,
   WorkspaceUserRoleChange,
 } from '@/parsec/types';
+import { getUserInfo, getUserInfoFromDeviceID } from '@/parsec/user';
 import { generateNoHandleError } from '@/parsec/utils';
 import { CertificateBasedInfoOriginTag, libparsec, RealmArchivingConfiguration, WorkspaceTimelineEntryTag } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
@@ -480,19 +482,31 @@ export async function getWorkspaceUserRoleChanges(
 
 export async function getWorkspaceTimeline(
   workspaceId: WorkspaceID,
-): Promise<Result<Array<WorkspaceTimelineEntry>, ClientListWorkspaceTimelineError>> {
+): Promise<Result<Array<WorkspaceTimelineEvent>, ClientListWorkspaceTimelineError>> {
   const handle = getConnectionHandle();
   if (!handle) {
     return generateNoHandleError<ClientListWorkspaceTimelineError>();
   }
   const result = await libparsec.clientListWorkspaceTimeline(handle, workspaceId);
-  if (result.ok) {
-    for (const entry of result.value) {
-      entry.timestamp = DateTime.fromSeconds(entry.timestamp as any as number);
-      if (entry.tag === WorkspaceTimelineEntryTag.DeletionPlanned) {
-        entry.deletionDate = DateTime.fromSeconds(entry.deletionDate as any as number);
+  if (!result.ok) {
+    return result;
+  }
+  const events: Array<WorkspaceTimelineEvent> = [];
+
+  for (const entry of result.value) {
+    entry.timestamp = DateTime.fromSeconds(entry.timestamp as any as number);
+    if (entry.tag === WorkspaceTimelineEntryTag.DeletionPlanned) {
+      entry.deletionDate = DateTime.fromSeconds(entry.deletionDate as any as number);
+    }
+    const authorResult = await getUserInfoFromDeviceID(entry.author);
+    let recipient: HumanHandle | undefined = undefined;
+    if (entry.tag === WorkspaceTimelineEntryTag.UserRoleChanged) {
+      const recipientResult = await getUserInfo(entry.userId);
+      if (recipientResult.ok) {
+        recipient = recipientResult.value.humanHandle;
       }
     }
+    events.push({ entry: entry, author: authorResult.ok ? authorResult.value.humanHandle : undefined, recipient: recipient });
   }
-  return result;
+  return { ok: true, value: events };
 }

@@ -24,12 +24,14 @@ import { Routes, navigateTo } from '@/router';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { useSidePopoverMenu } from '@/services/sidePopoverMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import { WorkspaceMenu } from '@/views/workspaces';
 import WorkspaceDetailsModal from '@/views/workspaces/WorkspaceDetailsModal.vue';
 import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
+import WorkspaceTimeline from '@/views/workspaces/WorkspaceTimeline.vue';
 import { modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
@@ -51,6 +53,7 @@ export function useWorkspaceActions() {
   const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
   const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
   const storageManager: StorageManager = inject(StorageManagerKey)!;
+  const sidePopoverMenu = useSidePopoverMenu();
 
   async function takeOwnershipOfWorkspace(workspace: WorkspaceInfo): Promise<void> {
     const answer = await askQuestion(
@@ -571,6 +574,16 @@ export function useWorkspaceActions() {
     await modal.onWillDismiss();
   }
 
+  async function showTimeline(workspace: WorkspaceInfo): Promise<void> {
+    await sidePopoverMenu.open({
+      component: WorkspaceTimeline,
+      props: {
+        workspace: workspace,
+        informationManager: informationManager.value,
+      },
+    });
+  }
+
   return {
     takeOwnershipOfWorkspace,
     restoreWorkspace,
@@ -587,5 +600,6 @@ export function useWorkspaceActions() {
     createWorkspace,
     openCreateWorkspaceModal,
     showDetails,
+    showTimeline,
   };
 }

@@ -593,6 +593,24 @@
             "viewDocuments": "Consulter les documents (ouvrir, prévisualiser)"
         }
     },
+    "WorkspaceActivity": {
+        "title": "Activité de l'espace",
+        "exportAll": "Exporter toutes les données",
+        "loadError": "Impossible de charger l'activité de l'espace.",
+        "noActivity": "Aucune activité",
+        "unknownUser": "Utilisateur inconnu",
+        "events": {
+            "archived": "<strong>{author}</strong> a archivé l'espace.",
+            "created": "<strong>{author}</strong> a créé l'espace <strong>{name}</strong>.",
+            "deletionPlanned": "La suppression définitive de l'espace est prévue le <strong>{when}</strong>.",
+            "renamed": "<strong>{author}</strong> a renommé l'espace <strong>{previousName}</strong> en <strong>{newName}</strong>.",
+            "renamedTo": "<strong>{author}</strong> a renommé l'espace en <strong>{newName}</strong>.",
+            "restored": "<strong>{author}</strong> a restauré l'espace.",
+            "shared": "<strong>{author}</strong> a ajouté <strong>{with}</strong> comme <strong>{role}</strong>.",
+            "unshared": "<strong>{author}</strong> a supprimé <strong>{with}</strong> du partage de l'espace.",
+            "roleChanged": "<strong>{author}</strong> a changé le rôle de <strong>{with}</strong> en <strong>{role}</strong>."
+        }
+    },
     "WorkspaceSharing": {
         "title": "Partager l'espace de travail",
         "searchPlaceholder": "Jean Martin",
@@ -709,6 +727,7 @@
             "actionHistory": "Historique des versions",
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
+            "actionActivity": "Activité",
             "actionCopyLink": "Copier le lien",
             "actionHide": "Masquer cet espace",
             "actionShow": "Afficher cet espace",

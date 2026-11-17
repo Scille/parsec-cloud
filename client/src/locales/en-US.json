@@ -593,6 +593,24 @@
             "viewDocuments": "View documents (open, preview)"
         }
     },
+    "WorkspaceActivity": {
+        "title": "Workspace activity",
+        "exportAll": "Export all data",
+        "loadError": "Failed to load the workspace activity.",
+        "noActivity": "No activity",
+        "unknownUser": "Unknown user",
+        "events": {
+            "archived": "<strong>{author}</strong> archived the workspace.",
+            "created": "<strong>{author}</strong> created the workspace <strong>{name}</strong>.",
+            "deletionPlanned": "The permanent deletion of the workspace is scheduled for <strong>{when}</strong>.",
+            "renamed": "<strong>{author}</strong> renamed the workspace <strong>{previousName}</strong> to <strong>{newName}</strong>.",
+            "renamedTo": "<strong>{author}</strong> renamed the workspace to <strong>{newName}</strong>.",
+            "restored": "<strong>{author}</strong> restored the workspace.",
+            "shared": "<strong>{author}</strong> added <strong>{with}</strong> as <strong>{role}</strong>.",
+            "unshared": "<strong>{author}</strong> removed <strong>{with}</strong> from the workspace.",
+            "roleChanged": "<strong>{author}</strong> changed the role of <strong>{with}</strong> to <strong>{role}</strong>."
+        }
+    },
     "WorkspaceSharing": {
         "title": "Share the workspace",
         "searchPlaceholder": "John Smith",
@@ -709,6 +727,7 @@
             "actionHistory": "History",
             "actionShare": "Sharing and roles",
             "actionDetails": "Details",
+            "actionActivity": "Activity",
             "actionHide": "Hide this workspace",
             "actionShow": "Show this workspace",
             "actionArchive": "Archive this workspace",
