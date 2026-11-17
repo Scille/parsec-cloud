@@ -12,7 +12,7 @@ async def test_authenticated_organization_info_ok(
     rep = await coolorg.alice.organization_info()
     assert isinstance(rep, authenticated_cmds.latest.organization_info.RepOk)
     assert rep == authenticated_cmds.latest.organization_info.RepOk(
-        total_block_bytes=0, total_metadata_bytes=663
+        total_block_bytes=0, total_metadata_bytes=236
     )
 
 

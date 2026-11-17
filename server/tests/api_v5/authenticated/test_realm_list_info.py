@@ -23,9 +23,8 @@ async def test_authenticated_realm_list_info_ok(
     rep = await coolorg.alice.realm_list_info()
     assert isinstance(rep, authenticated_cmds.latest.realm_list_info.RepOk)
 
-    # Coolorg has 3 realms: `wksp1` (shared between alice and bob), and the
-    # personal realms of alice and bob
-    assert len(rep.realms) == 3
+    # Coolorg has 1 realm: `wksp1` (shared between alice and bob)
+    assert len(rep.realms) == 1
     realms_per_id = {realm.realm_id: realm for realm in rep.realms}
 
     # `wksp1` is shared between alice (owner) and bob (reader)
@@ -43,17 +42,6 @@ async def test_authenticated_realm_list_info_ok(
         len(blob) for vlob_atoms in vlobs[coolorg.wksp1_id].values() for _, _, blob in vlob_atoms
     )
     assert wksp1.metadata_size == expected_metadata_size
-
-    # The personal realms only contain a single owner
-    for realm_id, realm in realms_per_id.items():
-        if realm_id == coolorg.wksp1_id:
-            continue
-        assert realm.users_per_role == {
-            RealmRole.OWNER: 1,
-            RealmRole.MANAGER: 0,
-            RealmRole.CONTRIBUTOR: 0,
-            RealmRole.READER: 0,
-        }
 
     # Bob's role change should be reflected in the per-role counts
     await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.MANAGER)
@@ -107,7 +95,7 @@ async def test_authenticated_realm_list_info_ok(
 
     rep = await coolorg.alice.realm_list_info()
     assert isinstance(rep, authenticated_cmds.latest.realm_list_info.RepOk)
-    assert len(rep.realms) == 4
+    assert len(rep.realms) == 2
     realms_per_id = {realm.realm_id: realm for realm in rep.realms}
     bob_realm = realms_per_id[certif.realm_id]
     assert bob_realm.users_per_role == {
