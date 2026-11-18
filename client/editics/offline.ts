@@ -12,16 +12,8 @@
 // the Parsec workspace (see the `oo-rpc-save` message in `parent_host_api.ts`).
 
 import type OO from 'onlyoffice-editor';
-import {
-  onConvertToPdfRequest,
-  onSaveRequest,
-  openEditor,
-  parentWindow,
-  PARENT_ORIGIN,
-  postToParent,
-  setTheme,
-} from './common';
-import type { EditicsOpenOptions, EditicsParentToHostMessage } from './parent_host_api';
+import { openEditor } from './common';
+import type { EditicsOpenOptions } from './parent_host_api';
 
 // --- OfflineMockServer -----------------------------------------------------
 
@@ -248,7 +240,6 @@ class OfflineMockServer implements OO.MockServer {
   }
 }
 
-
 // --- open ---------------------------------------------------------------
 
 // `openDocument` is expected to be called only once since it loads OnlyOffice
@@ -260,63 +251,3 @@ export async function openDocument(options: EditicsOpenOptions, documentContent:
     });
   });
 }
-
-// The reply port of an `oo-rpc-*` message: it is always transferred along with
-// the message (see `parent_host_api.ts`), a missing one is a bug on the sender
-// (the parent) side.
-function expectRpcPort(event: MessageEvent, command: string): MessagePort {
-  const port = event.ports[0];
-  if (!port) {
-    throw new Error(`Bug: the '${command}' RPC message arrived without its reply port`);
-  }
-  return port;
-}
-
-window.addEventListener('message', function (event: MessageEvent) {
-  // Filter messages that are not from the parent window.
-  if (event.source !== parentWindow || event.origin !== PARENT_ORIGIN) {
-    return;
-  }
-  const data = event.data as EditicsParentToHostMessage | undefined | null;
-  if (!data) {
-    return;
-  }
-  switch (data.command) {
-    case 'oo-event-open':
-      openDocument(data.options, data.documentContent).catch(function (err: Error) {
-        let details = JSON.stringify(err);
-        if (details === '{}') {
-          console.warn('Error cannot be rendered in JSON, manually building it ...', err);
-          details = JSON.stringify({
-            name: err.name,
-            message: err.message,
-            str: String(err),
-          });
-        }
-        console.error('Error while opening the document', details);
-        postToParent({ command: 'oo-event-error', details });
-      });
-      break;
-
-    case 'oo-event-set-theme':
-      // The app theme changed while the editor is open.
-      setTheme(data.theme);
-      break;
-
-    case 'oo-rpc-request-save':
-      onSaveRequest(expectRpcPort(event, data.command));
-      break;
-
-    case 'oo-rpc-convert-to-pdf':
-      onConvertToPdfRequest(expectRpcPort(event, data.command));
-      break;
-
-    default:
-      // Guard to have the compilation fail whenever a new message is added
-      // to the protocol.
-      data satisfies never;
-      break;
-  }
-});
-
-postToParent({ command: 'oo-event-host-ready' });
