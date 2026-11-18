@@ -406,7 +406,7 @@ class OfflineMockServer implements OO.MockServer {
           buildNumber: 2,
           licenseType: 3,
           settings: {
-            binaryChanges: true,
+            binaryChanges: false,
           },
         } satisfies OO.OOServerEventAuth);
         break;
@@ -419,7 +419,7 @@ class OfflineMockServer implements OO.MockServer {
 
       case 'unSaveLock':
         // Cancellation of an in-progress save: release the save lock and
-        // acknowledge with -1 indices (RFC 1030 §2.2).
+        // acknowledge with -1 indices.
         this.editor.sendMessageToOO({ type: 'unSaveLock', index: -1, time: -1, syncChangesIndex: -1 } satisfies OO.OOServerEventUnSaveLock);
         break;
 
@@ -431,9 +431,11 @@ class OfflineMockServer implements OO.MockServer {
           // (the previous total).
           this.saveChangesIndex = this.syncChangesIndex;
         }
-        // Since we have enabled `binaryChanges` (see `auth` event), the changes
-        // are provided as an array instead of being JSON-serialized.
-        this.syncChangesIndex += (msg.changes as Array<Uint8Array>).length;
+        // OnlyOffice editor is always configured in JSON change mode (i.e.
+        // `binaryChanges: false`), so `changes` is a JSON-serialized array of
+        // `<cleartext length>;<base64(cleartext)>` fragments.
+        const changes = JSON.parse(msg.changes as string) as unknown[];
+        this.syncChangesIndex += changes.length;
         if (msg.endSaveChanges) {
           this.editor.sendMessageToOO({
             type: 'unSaveLock',
@@ -476,7 +478,7 @@ class OfflineMockServer implements OO.MockServer {
       case 'unLockDocument':
         // Fire-and-forget cleanup (there is no other participant to notify
         // and no auth lock to manage in single-user offline mode); only an
-        // in-progress save needs an answer (RFC 1030 §2.2).
+        // in-progress save needs an answer.
         if (msg.isSave) {
           this.editor.sendMessageToOO({
             type: 'unSaveLock',
