@@ -1213,9 +1213,13 @@ class EditicsComponent:
                         del session.changes[event.deleteIndex :]
                     elif event.deleteIndex > len(session.changes):
                         # Like the real OnlyOffice server's `checkEndAuthLock`:
-                        # a `deleteIndex` equal to the current change count is a
-                        # silent no-op (nothing to destroy), only an index ABOVE
-                        # it is a client bookkeeping error.
+                        # - A `deleteIndex` equal to the current change count is
+                        #   a silent no-op (nothing to destroy)
+                        # - An index above it is a client bookkeeping error (note
+                        #   this is not necessary due to a client bug, it can also
+                        #   occur with concurrent changes: an undo arrives first
+                        #   and makes the other change's deleteIndex appear
+                        #   "above count" for a healthy client).
                         logger.warning(
                             f"Client event `unLockDocument`'s `deleteIndex={event.deleteIndex}` "
                             f"is incompatible with server's session changes count `{len(session.changes)}`"
