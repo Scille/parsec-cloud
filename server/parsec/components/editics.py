@@ -152,10 +152,13 @@ class ParticipantSession:
 
     def send_event(self, event: EditicsServerEvent) -> None:
         """
-        Push `event` on the participant's SSE channel (no-op if it has no
-        live SSE connection).
+        Push `event` on the participant's SSE channel.
+
+        No-op if:
+        - it has no live SSE connection
+        - it is not currently authenticated
         """
-        if self.sse_channel_sender is None:
+        if self.authed is None or self.sse_channel_sender is None:
             return
         try:
             self.sse_channel_sender.send_nowait(event)
