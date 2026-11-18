@@ -23,7 +23,7 @@ function expectRpcPort(event: MessageEvent, command: string): MessagePort {
 //
 // `handlers.onOpen` is mode-specific (it plugs the OnlyOffice "server" of the
 // mode into `openEditor`).
-function startHostPage(handlers: { onOpen: (options: EditicsOpenOptions, documentContent: Uint8Array) => Promise<void> }): void {
+function startHostPage(handlers: { onOpen: (options: EditicsOpenOptions) => Promise<void> }): void {
   window.addEventListener('message', function (event: MessageEvent) {
     // Filter messages that are not from the parent window.
     if (event.source !== parentWindow || event.origin !== PARENT_ORIGIN) {
@@ -66,12 +66,12 @@ function startHostPage(handlers: { onOpen: (options: EditicsOpenOptions, documen
 }
 
 startHostPage({
-  onOpen: async (options: EditicsOpenOptions, documentContent: Uint8Array): Promise<void> => {
+  onOpen: async (options: EditicsOpenOptions): Promise<void> => {
     if (options.collaborative !== undefined) {
       // The collaborative edition mode is not implemented yet.
       throw new Error('Editics collaborative edition is not implemented yet');
     } else {
-      await openOfflineDocument(options, documentContent);
+      await openOfflineDocument(options);
     }
   },
 });

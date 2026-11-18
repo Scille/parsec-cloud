@@ -11,6 +11,7 @@ import type {
   EditicsOpenOptions,
   EditicsParentToHostMessage,
   EditicsRpcConvertToPdfReply,
+  EditicsRpcDocumentContentReply,
   EditicsRpcImageReply,
   EditicsRpcSaveReply,
 } from '@editics_parent_host_api';
@@ -200,7 +201,7 @@ export function isEditicsEnabledForDocumentType(contentType: FileContentType): b
 
 export async function openDocument(
   options: EditicsOpenOptions,
-  documentContent: Uint8Array,
+  getDocumentContent: () => Promise<Uint8Array | undefined>,
   handlers: EditicsEventHandlers,
   frame: HTMLIFrameElement,
 ): Promise<EditicsHostSession | undefined> {
@@ -262,7 +263,29 @@ export async function openDocument(
           switch (event.data?.command) {
             case 'oo-event-host-ready': {
               clearTimeout(hostReadyTimeoutId);
+              // The host page signals it is ready to open a document: send
+              // `oo-event-open` every time it does (a reloaded host page restarts
+              // from scratch and will fetch the document's content again, see
+              // `oo-rpc-get-document-content`).
+              frame.contentWindow?.postMessage({ command: 'oo-event-open', options } satisfies EditicsParentToHostMessage, hostOrigin);
               resolve();
+              break;
+            }
+
+            case 'oo-rpc-get-document-content': {
+              const port = expectRpcPort(event);
+              getDocumentContent()
+                .then(
+                  (documentContent): EditicsRpcDocumentContentReply => ({
+                    data: documentContent,
+                    error: documentContent === undefined ? 'failed to read the workspace file' : undefined,
+                  }),
+                  (err: unknown): EditicsRpcDocumentContentReply => ({ error: String(err) }),
+                )
+                .then((reply): void => {
+                  port.postMessage(reply);
+                  port.close();
+                });
               break;
             }
 
@@ -348,6 +371,9 @@ export async function openDocument(
       if (!frame.contentWindow) {
         return Promise.resolve(false);
       }
+      // The reply travels on the port transferred with the `oo-rpc-request-save`
+      // message: a host page reloaded mid-save would never answer (see
+      // `oo-event-host-ready`), hence the generous timeout.
       return rpcToHost<EditicsRpcSaveReply>(frame.contentWindow, { command: 'oo-rpc-request-save' }, hostOrigin, SAVE_TIMEOUT_MS).then(
         (reply): boolean => reply.success === true,
         (): boolean => {
@@ -386,15 +412,6 @@ export async function openDocument(
       );
     },
   };
-
-  frame.contentWindow.postMessage(
-    {
-      command: 'oo-event-open',
-      options,
-      documentContent,
-    } satisfies EditicsParentToHostMessage,
-    hostOrigin,
-  );
 
   return session;
 }
