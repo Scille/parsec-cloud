@@ -42,24 +42,24 @@ async function getEditicsOrigin(): Promise<string> {
     // TODO: when collaborative mode is available, we should modify this to use the
     // address of the editics server here (and, since we are in web, if the editics
     // server cannot be joined we error out instead of going in offline mode, as
-    // fetching `editics/offline.html` would most likely fail anyway).
+    // fetching `editics/index.html` would most likely fail anyway).
     return `${window.location.protocol}//editics.${window.location.host}`;
   }
 }
 
-// In release builds, `scripts/vite_plugin_editics.ts` emits the page with a
-// content hash for cache busting (e.g. `editics/offline-1234abcd.html`), and
-// advertises the actual name through a `editics-offline-page` meta tag injected
-// in the main app's `index.html`.
+// In release builds, `scripts/vite_plugin_editics.ts` emits the host page with
+// a content hash for cache busting (e.g. `editics/index-1234abcd.html`), and
+// advertises the actual name through a dedicated meta tag injected in the main
+// app's `index.html` (i.e. `editics-page`).
 //
 // In dev mode, the Vite dev server serves the page un-hashed, hence the
 // fallback (the meta tag is only injected in release builds).
-const EDITICS_OFFLINE_PAGE_META_NAME = 'editics-offline-page';
-const EDITICS_OFFLINE_PAGE_DEV = 'editics/offline.html';
+const EDITICS_HOST_PAGE_META_NAME = 'editics-page';
+const EDITICS_DEV_HOST_PAGE = 'editics/index.html';
 
 function getEditicsHostPage(): string {
-  const content = document.querySelector<HTMLMetaElement>(`meta[name="${EDITICS_OFFLINE_PAGE_META_NAME}"]`)?.content;
-  return !!content ? content : EDITICS_OFFLINE_PAGE_DEV;
+  const content = document.querySelector<HTMLMetaElement>(`meta[name="${EDITICS_HOST_PAGE_META_NAME}"]`)?.content;
+  return !!content ? content : EDITICS_DEV_HOST_PAGE;
 }
 
 function getEditicsFrameUrl(editicsOrigin: string): URL {
