@@ -103,6 +103,7 @@ const loadFinished = ref(false);
 let session: EditicsHostSession | undefined = undefined;
 const frameReady = ref(false);
 let readyTimeoutId: ReturnType<typeof setTimeout> | undefined;
+let timeoutModalReAskId: ReturnType<typeof setTimeout> | undefined;
 let autoSaveTimeoutId: any = undefined;
 
 const {
@@ -149,6 +150,14 @@ onMounted(async () => {
 onUnmounted(() => {
   if (readyTimeoutId) {
     clearTimeout(readyTimeoutId);
+  }
+  // The timeout modal re-asks every 15s while the user keeps waiting: abort
+  // the re-ask chain when the editor is closed, otherwise it outlives the
+  // component (its closure keeps checking this instance's `loadFinished`,
+  // which can never become true once the editor was left) and pops the
+  // dialog over whichever editor is reopened next.
+  if (timeoutModalReAskId) {
+    clearTimeout(timeoutModalReAskId);
   }
   if (autoSaveTimeoutId) {
     clearTimeout(autoSaveTimeoutId);
@@ -318,7 +327,7 @@ async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = 
     cssClass: 'editor-issue-modal',
     componentProps: {
       status,
-      loadFinished,
+      fileLoaded: loadFinished,
     },
     backdropDismiss: false,
   });
@@ -348,7 +357,7 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
       return 'close';
     } else {
       window.nativeAPI.log('info', `User chose to wait, ask them again in ${WAIT_TIMEOUT}ms`);
-      setTimeout(() => {
+      timeoutModalReAskId = setTimeout(() => {
         openTimeoutModal();
       }, WAIT_TIMEOUT);
       return 'wait';
