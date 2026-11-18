@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine
 import pytest
 
 from parsec._parsec import (
+    AccessToken,
     DateTime,
     DeviceCertificate,
     DeviceID,
@@ -18,7 +19,9 @@ from parsec._parsec import (
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    ShamirRecoveryBriefCertificate,
     ShamirRecoveryDeletionCertificate,
+    ShamirRecoveryShareCertificate,
     SigningKey,
     SigningKeyAlgorithm,
     UserID,
@@ -34,8 +37,23 @@ from parsec.events import (
 )
 from tests.common import Backend, CoolorgRpcClients, RpcTransportError, ShamirOrgRpcClients
 
+# We get topics from the get_certificate command to break if there is a new topic
+topics = [
+    a[:-6] + "_certificate"  # last 6 chars are "_after"
+    for a in authenticated_cmds.latest.certificate_get.Req.__dict__
+    if not a.startswith("__")
+]
+# Vlob is not a topic, but a kind of data a user can generate
+topics.append("vlob")
+# "dump" is returned by __dict__
+topics.remove("_certificate")
+# sequester certificates cannot be created by a user
+# it does not interact with the revocation process
+# see docs/hosting/sequester/index.rst for more.
+topics.remove("sequester_certificate")
 
-@pytest.fixture(params=("common_certificate", "realm_certificate", "shamir_certificate", "vlob"))
+
+@pytest.fixture(params=sorted(topics))
 def alice_generated_data(
     request: pytest.FixtureRequest,
     coolorg: CoolorgRpcClients,
@@ -51,6 +69,7 @@ def alice_generated_data(
     Note, while being part of the realm's data, blocks are not present here. This
     is simply because blocks don't contain timestamp information.
     """
+
     match request.param:
         case "common_certificate":
 
@@ -110,9 +129,36 @@ def alice_generated_data(
                 )
                 assert isinstance(outcome, RealmRoleCertificate)
 
-        case "shamir_certificate":
-            # TODO: implement this once Shamir support is done !
-            pytest.skip(reason="shamir not implemented")
+        case "shamir_recovery_certificate":
+
+            async def _alice_generated_data(now: DateTime) -> None:
+                shamir_share_certif = ShamirRecoveryShareCertificate(
+                    author=coolorg.alice.device_id,
+                    user_id=coolorg.alice.user_id,
+                    timestamp=now,
+                    recipient=coolorg.bob.user_id,
+                    ciphered_share=b"ciphered_share",
+                ).dump_and_sign(coolorg.alice.signing_key)
+
+                shamir_brief_certif = ShamirRecoveryBriefCertificate(
+                    author=coolorg.alice.device_id,
+                    user_id=coolorg.alice.user_id,
+                    timestamp=now,
+                    threshold=1,
+                    per_recipient_shares={coolorg.bob.user_id: 2},
+                ).dump_and_sign(coolorg.alice.signing_key)
+
+                outcome = await backend.shamir.setup(
+                    organization_id=coolorg.organization_id,
+                    now=now,
+                    author=coolorg.alice.device_id,
+                    author_verify_key=coolorg.alice.signing_key.verify_key,
+                    ciphered_data=b"ciphered_share",
+                    reveal_token=AccessToken.new(),
+                    shamir_recovery_brief_certificate=shamir_brief_certif,
+                    shamir_recovery_share_certificates=[shamir_share_certif],
+                )
+                assert isinstance(outcome, ShamirRecoveryBriefCertificate)
 
         case "vlob":
 
