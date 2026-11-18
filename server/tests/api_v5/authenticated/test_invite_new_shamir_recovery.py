@@ -16,6 +16,7 @@ from parsec.components.invite import (
     ShamirRecoveryRecipient,
     UserOnlineStatus,
 )
+from parsec.config import MockedEmailConfig
 from parsec.events import EventInvitation
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
 
@@ -76,6 +77,15 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
         await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
         == expected_invitations
     )
+
+    # check mail is sent to claimer
+    if send_email:
+        assert isinstance(backend.config.email_config, MockedEmailConfig)
+        assert len(backend.config.email_config.sent_emails) == 1
+        assert (
+            backend.config.email_config.sent_emails[0].recipient
+            == shamirorg.mallory.human_handle.email
+        )
 
 
 @pytest.mark.parametrize("send_email", (False, True))

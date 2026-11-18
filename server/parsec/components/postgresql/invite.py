@@ -1461,7 +1461,7 @@ class PGInviteComponent(BaseInviteComponent):
             now, organization_id, author, send_email, claimer_user_id, force_token
         )
         match outcome:
-            case (AccessToken() as token, author_human_handle):
+            case (AccessToken() as token, author_human_handle, claimer_email):
                 pass
             case err:
                 return err
@@ -1473,7 +1473,7 @@ class PGInviteComponent(BaseInviteComponent):
             if not (send_email and author_human_handle)
             else await self._send_shamir_recovery_invitation_email(
                 organization_id=organization_id,
-                email=author_human_handle.email,
+                email=claimer_email,
                 token=token,
                 greeter_human_handle=author_human_handle,
             )
@@ -1492,7 +1492,12 @@ class PGInviteComponent(BaseInviteComponent):
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, HumanHandle | None] | InviteNewForShamirRecoveryBadOutcome:
+    ) -> (
+        tuple[AccessToken, HumanHandle | None, EmailAddress] | InviteNewForShamirRecoveryBadOutcome
+    ):
+        """
+        returns (token, option(greeter human handle), claimer address)
+        """
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1562,7 +1567,7 @@ class PGInviteComponent(BaseInviteComponent):
             if not author_human_handle:
                 assert False  # TODO: Need a specific SendEmailBadOutcome or InviteNewForShamirRecoveryBadOutcome
 
-        return token, author_human_handle
+        return token, author_human_handle, claimer_human_handle.email
 
     async def _get_shamir_recovery_recipients(
         self, conn: AsyncpgConnection, internal_shamir_recovery_setup_id: int
