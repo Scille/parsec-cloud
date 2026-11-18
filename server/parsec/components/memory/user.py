@@ -305,6 +305,7 @@ class MemoryUserComponent(BaseUserComponent):
             # - The common topic
             # - For each realm the user is part of: the realm topic
             # - For each realm the user is part of: the last vlob
+            # - The shamir topic
 
             realms_user_is_part_of = [
                 realm
@@ -318,42 +319,46 @@ class MemoryUserComponent(BaseUserComponent):
             async with org.topics_lock(
                 read=realm_topics_user_is_part_of
             ) as realm_topics_last_timestamp:
-                last_timestamp = max(
-                    (
-                        common_topic_last_timestamp,
-                        *realm_topics_last_timestamp,
-                        *(
-                            ts
-                            for realm in realms_user_is_part_of
-                            if (ts := realm.last_vlob_timestamp) is not None
-                        ),
+                async with org.topics_lock(read=["shamir_recovery"]) as (
+                    shamir_topic_last_timestamp,
+                ):
+                    last_timestamp = max(
+                        (
+                            common_topic_last_timestamp,
+                            shamir_topic_last_timestamp,
+                            *realm_topics_last_timestamp,
+                            *(
+                                ts
+                                for realm in realms_user_is_part_of
+                                if (ts := realm.last_vlob_timestamp) is not None
+                            ),
+                        )
                     )
-                )
 
-                if last_timestamp >= certif.timestamp:
-                    return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
+                    if last_timestamp >= certif.timestamp:
+                        return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
 
-                # All checks are good, now we do the actual insertion
+                    # All checks are good, now we do the actual insertion
 
-                org.per_topic_last_timestamp["common"] = certif.timestamp
+                    org.per_topic_last_timestamp["common"] = certif.timestamp
 
-                target_user.revoked_user_certificate = revoked_user_certificate
-                target_user.cooked_revoked = certif
+                    target_user.revoked_user_certificate = revoked_user_certificate
+                    target_user.cooked_revoked = certif
 
-                await self._event_bus.send(
-                    EventCommonCertificate(
-                        organization_id=organization_id,
-                        timestamp=certif.timestamp,
+                    await self._event_bus.send(
+                        EventCommonCertificate(
+                            organization_id=organization_id,
+                            timestamp=certif.timestamp,
+                        )
                     )
-                )
-                await self._event_bus.send(
-                    EventUserRevokedOrFrozen(
-                        organization_id=organization_id,
-                        user_id=certif.user_id,
+                    await self._event_bus.send(
+                        EventUserRevokedOrFrozen(
+                            organization_id=organization_id,
+                            user_id=certif.user_id,
+                        )
                     )
-                )
 
-                return certif
+                    return certif
 
     @override
     async def update_user(

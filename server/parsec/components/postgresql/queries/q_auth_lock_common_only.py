@@ -119,6 +119,9 @@ async def auth_and_lock_common_write(
     user (since freeze is just a server-side access control flag, unlike
     user revocation which involve certificates which timestamp are required to
     be consistent with other certificates&data).
+
+    The lock is released when the encompassing transaction ends.
+
     """
     return await _do_query(
         conn,
@@ -149,6 +152,9 @@ async def auth_and_lock_common_read(
     user (since freeze is just a server-side access control flag, unlike
     user revocation which involve certificates which timestamp are required to
     be consistent with other certificates&data).
+
+    The lock is released when the encompassing transaction ends.
+
     """
     return await _do_query(
         conn,
