@@ -974,8 +974,9 @@ class EditicsComponent:
                             # ...otherwise the participant must know about the last change
                             and event.reconnect.lastOtherSaveTime != last_change.timestamp
                         ):
-                            # The client should reacts to this event by closing the co-authoring
-                            # session (i.e. sending a `close` client event).
+                            # Note we don't clear `participant.authed` here: instead
+                            # the client should react to this event by closing the
+                            # co-authoring session (i.e. sending a `close` client event).
                             return EditicsServerEventError(
                                 code=4010, description="Restore error. Document modified."
                             )
