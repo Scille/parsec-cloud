@@ -5,14 +5,11 @@ import type {
   EditicsHostToParentMessage,
   EditicsOpenOptions,
   EditicsRpcConvertToPdfReply,
+  EditicsRpcDocumentContentReply,
   EditicsRpcImageReply,
   EditicsRpcSaveReply,
 } from './parent_host_api';
 
-// Resolve assets relative to this standalone host page. In a web release the
-// application may be mounted below a path prefix (e.g. `/client/`), unlike
-// Electron and the Vite development server where it is served at the origin.
-//
 // `__EDITICS_ONLYOFFICE_BASE__` & `__EDITICS_X2T_BASE__` are build-time
 // constants injected by the `editics-build-time-paths` plugin (see
 // `scripts/vite_plugin_editics.ts`): they point to the versioned OnlyOffice
@@ -20,6 +17,9 @@ import type {
 // cache busting when upgrading the dependencies.
 declare const __EDITICS_ONLYOFFICE_BASE__: string;
 declare const __EDITICS_X2T_BASE__: string;
+// Note `window.location.href`: the assets are resolved relative to the editics
+// host page. This is needed for web release where the application is mounted
+// below a `/client/` path prefix.
 const ONLYOFFICE_API_URL = new URL(`${__EDITICS_ONLYOFFICE_BASE__}web-apps/apps/api/documents/api.js`, window.location.href).href;
 const X2T_SCRIPT_URL = new URL(`${__EDITICS_X2T_BASE__}x2t.js`, window.location.href).href;
 
@@ -38,8 +38,8 @@ function getParentOrigin(): string {
 
 export const PARENT_ORIGIN = getParentOrigin();
 
-export function postToParent(message: EditicsHostToParentMessage): void {
-  parentWindow.postMessage(message, PARENT_ORIGIN);
+export function postToParent(message: EditicsHostToParentMessage, transfer: Transferable[] = []): void {
+  parentWindow.postMessage(message, PARENT_ORIGIN, transfer);
 }
 
 // Sends an RPC to the parent (see the `oo-rpc-*` messages in
@@ -336,7 +336,7 @@ async function convertFromNativeFormat(data: Uint8Array, fileName: string, exten
   return runConversion(module, safeName, data, extension);
 }
 
-async function prepareDocumentContent(options: EditicsOpenOptions, documentContent: Uint8Array): Promise<Uint8Array> {
+export async function prepareDocumentContent(options: EditicsOpenOptions, documentContent: Uint8Array): Promise<Uint8Array> {
   if (documentContent.byteLength === 0) {
     throw new Error(`Cannot open an empty document: ${options.documentName}`);
   }
@@ -707,7 +707,7 @@ function trackSaveState(): void {
   setInterval(notifySaveState, 1000);
 }
 
-// --- open ---------------------------------------------------------------
+// --- editor start --------------------------------------------------------
 
 // The theme follows the Parsec app, so the editor's own controls to change it
 // (File > Advanced Settings and View > Interface Theme) must not be reachable.
@@ -736,11 +736,14 @@ function applyTheme(): void {
 }
 
 function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
+  const offline = options.collaborative === undefined;
   return {
-    offline: true,
-    // 0 disables the SDK's periodic autosave entirely (the value is only
-    // tested against zero, it is not an interval).
-    autosave: 0,
+    offline,
+    // SDK's periodic autosave (this value is only tested against zero, it is not an interval).
+    // - Offline: disabled as the saves are driven by the parent.
+    // - Collaborative mode: must stay enabled as it is what sends the local changes
+    //   to the server and broadcasts the cursor.
+    autosave: offline ? 0 : 1,
     width: '100%',
     height: '100%',
     documentType: options.documentType,
@@ -749,9 +752,7 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
       // A truthy placeholder URL: the vanilla `_checkConfigParams` rejects an
       // empty one. It is never fetched: the document bytes come from
       // `loadBinary()` below.
-      // Dummy placeholder URL (since an empty one is rejected). This is never
-      // fetched though, since the document bytes come from the `loadBinary()` call.
-      url: 'parsec://offline-document',
+      url: 'parsec://editics-document',
       permissions: {
         edit: options.mode === 'edit',
         // TODO: Download-as / print would need an x2t conversion by the host (see
@@ -765,7 +766,7 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
       lang: options.locale,
       user: {
         id: options.userId,
-        name: options.userName,
+        name: options.username,
       },
       customization: {
         compactHeader: false,
@@ -787,28 +788,61 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
         trackSaveState();
         postToParent({ command: 'oo-event-ready' });
       },
-      onSave: async function (bytes: Uint8Array) {
-        await onSaveBytes(bytes, options);
-      },
+      // The wrapper serializes the whole document and calls this hook on
+      // every `asc_Save` (i.e. every tick of the collaborative autosave loop
+      // while the user is typing!): only the offline mode uses it, where
+      // `asc_Save` is only ever called for a manual save (the loop is
+      // disabled, see `autosave` above). The collaborative mode persists
+      // through `onSaveRequest` instead (see the comment there).
+      ...(offline && {
+        onSave: async function (bytes: Uint8Array) {
+          await onSaveBytes(bytes, options);
+        },
+      }),
       onError: function (event: { data?: unknown }) {
         postToParent({
           command: 'oo-event-error',
           details: event && event.data !== undefined ? JSON.stringify(event.data) : String(event),
         });
       },
+      // The editor asks the host page to reopen the document from scratch.
+      // It is emitted in place of an error dialog when the co-authoring connection
+      // was severed with a recoverable close code (e.g. `restore` code 4010: our
+      // reconnection was refused because the document changed while we were away)
+      // and the editor has no unsaved local changes (in which case the editor stays
+      // in read-only mode without trying to reconnect to the server).
+      onRequestRefreshFile: function (event: { data?: unknown }) {
+        console.warn('Editor requested a document refresh, reloading the host page', event?.data ?? '');
+        window.location.reload();
+      },
     },
   };
+}
+
+// --- document content -----------------------------------------------------
+//
+// The parent is the only side with workspace access, so the document's
+// content is fetched from it on demand: some flows never need the bytes at
+// all (the collaborative mode reading the session's content), and the ones
+// that do (the offline mode opening a document, the collaborative mode
+// uploading the session's initial content) only need them once.
+
+export function requestParentDocumentContent(): Promise<Uint8Array> {
+  return rpcToParent<EditicsRpcDocumentContentReply>({ command: 'oo-rpc-get-document-content' }).then((reply) => {
+    if (reply.data !== undefined) {
+      return reply.data;
+    }
+    throw new Error(reply.error ?? 'no document content');
+  });
 }
 
 // `openEditor` is expected to be called only once since it loads OnlyOffice
 // scripts and set global variables (e.g. `window.APP`, `window.ooDocEditor`).
 export async function openEditor(
   options: EditicsOpenOptions,
-  documentContent: Uint8Array,
-  makeServer: (editor: OO.DocEditor) => OO.MockServer,
+  makeServer: (editor: OO.DocEditor) => Promise<OO.MockServer> | OO.MockServer,
 ): Promise<void> {
   currentTheme = options.theme;
-  const prepareDocumentPromise = prepareDocumentContent(options, documentContent);
 
   await loadScript(ONLYOFFICE_API_URL);
 
@@ -820,7 +854,7 @@ export async function openEditor(
 
   const config = buildConfig(options);
   const editor = new window.DocsAPI.DocEditor('placeholder');
-  const server = makeServer(editor);
+  const server = await makeServer(editor);
   window.APP = {
     // PDF print is not available, end the editor's action without doing anything
     printPdf: (_dataContainer, cb) => {
@@ -888,9 +922,13 @@ export async function openEditor(
       rights: 1,
       buildVersion: '7.3.3',
       buildNumber: 8,
+      light: false,
+      branding: false,
+      customization: false,
+      liveViewerSupport: true,
+      protectionSupport: true,
+      isAnonymousSupport: true,
+      advancedApi: false,
     },
   } satisfies OO.OOServerEventLicense);
-
-  const binDocumentContent = await prepareDocumentPromise;
-  editor.loadBinary(binDocumentContent);
 }

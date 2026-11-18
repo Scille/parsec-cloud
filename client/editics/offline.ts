@@ -12,7 +12,7 @@
 // the Parsec workspace (see the `oo-rpc-save` message in `parent_host_api.ts`).
 
 import type OO from 'onlyoffice-editor';
-import { openEditor } from './common';
+import { openEditor, postToParent, prepareDocumentContent, requestParentDocumentContent } from './common';
 import type { EditicsOpenOptions } from './parent_host_api';
 
 // --- OfflineMockServer -----------------------------------------------------
@@ -35,16 +35,20 @@ class OfflineMockServer implements OO.MockServer {
   // Absolute change index at which the in-progress save starts (the
   // "save point" reported back in the final `unSaveLock`).
   saveChangesIndex: number;
+  // Document loading is done concurrently with OnlyOffice editor init, this
+  // promise is then used once the `auth` handshake is done to load the .bin in
+  // OnlyOffice.
+  documentContentLoading: Promise<Uint8Array> | undefined;
 
-  constructor(editor: OO.DocEditor, options?: { user?: { id: string; username: string } }) {
+  constructor(editor: OO.DocEditor, userId: string, username: string, documentContentLoading: Promise<Uint8Array>) {
     this.editor = editor;
-    const u = options?.user ?? { id: 'uid-local', username: 'Local user' };
-    this.userId = u.id;
-    this.username = u.username;
+    this.userId = userId;
+    this.username = username;
     this.indexUser = 1;
     this.compositeUserId = this.userId + this.indexUser;
     this.syncChangesIndex = 0;
     this.saveChangesIndex = 0;
+    this.documentContentLoading = documentContentLoading;
   }
 
   onMessage(msg: OO.OOClientEvent): void {
@@ -77,6 +81,16 @@ class OfflineMockServer implements OO.MockServer {
             binaryChanges: false,
           },
         } satisfies OO.OOServerEventAuth);
+
+        // Note the `as` cast: the field is set to `undefined` only after it has been used.
+        (this.documentContentLoading as Promise<Uint8Array>).then(
+          (bin: Uint8Array) => this.editor.loadBinary(bin),
+          (err: Error) => {
+            console.error('Error while loading the document', err);
+            postToParent({ command: 'oo-event-error', details: `Error while loading the document: ${err}` });
+          },
+        );
+        this.documentContentLoading = undefined;
         break;
 
       case 'isSaveLock':
@@ -244,10 +258,15 @@ class OfflineMockServer implements OO.MockServer {
 
 // `openDocument` is expected to be called only once since it loads OnlyOffice
 // scripts and set global variables (e.g. `window.APP`, `window.ooDocEditor`).
-export async function openDocument(options: EditicsOpenOptions, documentContent: Uint8Array): Promise<void> {
-  await openEditor(options, documentContent, (editor) => {
-    return new OfflineMockServer(editor, {
-      user: { id: options.userId, username: options.userName },
-    });
+export async function openDocument(options: EditicsOpenOptions): Promise<void> {
+  // Fetch the document's content from the parent and convert it to OnlyOffice's
+  // native format right away, so both run in parallel with the (slow)
+  // OnlyOffice scripts download and the editor's boot.
+  const documentContentLoading = (async () => {
+    const documentContent = await requestParentDocumentContent();
+    return prepareDocumentContent(options, documentContent);
+  })();
+  await openEditor(options, async (editor) => {
+    return new OfflineMockServer(editor, options.userId, options.username, documentContentLoading);
   });
 }
