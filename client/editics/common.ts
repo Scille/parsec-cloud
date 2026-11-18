@@ -719,8 +719,8 @@ function getUiTheme(theme: EditicsOpenOptions['theme']): string {
 
 let currentTheme: EditicsOpenOptions['theme'] = 'light';
 
-// Applies a new theme, e.g. received from the parent through `oo-set-theme`
-// while the editor is open (see the message handling in `offline.ts`).
+// Applies a new theme, e.g. received from the parent through `oo-event-set-theme`
+// while the editor is open (see `startHostPage` in `start.ts`).
 export function setTheme(theme: EditicsOpenOptions['theme']): void {
   currentTheme = theme;
   applyTheme();

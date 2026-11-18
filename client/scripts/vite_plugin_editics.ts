@@ -195,7 +195,7 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
         buildTarget,
         rootDir: path.join(import.meta.dirname, '..'),
         htmlPath: 'editics/index.html',
-        scriptEntry: 'offline.ts',
+        scriptEntry: 'start.ts',
         metaTagName: 'editics-page',
         define,
       }),

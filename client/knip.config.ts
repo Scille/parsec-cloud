@@ -19,7 +19,7 @@ const config = {
         'src/parsec/types.ts',
         'src/theme/components/index.scss',
         // Editics host page is not part of the app's import graph since it is loaded in an iframe.
-        'editics/offline.ts',
+        'editics/start.ts',
       ],
     },
     // Refers to client/electron/package.json
