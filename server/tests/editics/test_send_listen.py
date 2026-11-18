@@ -29,6 +29,7 @@ from parsec.editics_protocol import (
     EditicsParticipantSessionID,
     EditicsServerEventAuth,
     EditicsServerEventAuthChanges,
+    EditicsServerEventConnectState,
     EditicsServerEventDisconnectReason,
     EditicsServerEventGetLock,
     EditicsServerEventSaveLock,
@@ -152,6 +153,48 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
         rep = await alice_editics.send(_auth_event(mode="edit"))
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 2
+
+
+async def test_join_broadcasts_never_reach_unauthed_participants(
+    backend: Backend,
+    coolorg: CoolorgRpcClients,
+    alice_editics: EditicsSessionClient,
+    bob_editics: EditicsSessionClient,
+) -> None:
+    await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
+
+    # Only `auth` event is allowed before initial content upload, but we also need
+    # to send an `unLockDocument` to complete the second auth.
+    await alice_editics.upload_initial_content(key_index=1, parts=[b"<Alice's initial content>"])
+
+    # Simulate concurrent startup of editors:
+    # 1. Alice do the `auth` first, Bob shouldn't receive a `connectState` event
+    #    about that since he isn't authed yet.
+    # 2. Bob do his `auth`, the first event he receive is hence a `waitAuth` (and
+    #    no the `connectState` from step 1!)
+    async with alice_editics.listen(), bob_editics.listen():
+        # Alice auth
+        rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep.participantIndexUser == 1
+
+        # Bob auth (park behind Alice's auth lock)
+        rep = await bob_editics.send(_auth_event(mode="edit"))
+        assert isinstance(rep, EditicsServerEventWaitAuth)
+        rep = await alice_editics.send(
+            EditicsClientEventUnLockDocument(
+                isSave=False, unlock=True, deleteIndex=None, releaseLocks=False
+            )
+        )
+        assert rep is None
+
+        # Finally assert how each editor gets the final participant list
+        rep = await bob_editics.recv()
+        assert isinstance(rep, EditicsServerEventAuth)
+        assert [entry.indexUser for entry in rep.participants] == [1, 2]
+        rep = await alice_editics.recv()
+        assert isinstance(rep, EditicsServerEventConnectState)
+        assert [entry.indexUser for entry in rep.participants] == [1, 2]
 
 
 async def test_reconnection_before_auth(alice_editics: EditicsSessionClient) -> None:
@@ -551,10 +594,11 @@ async def test_sse_deco_on_role_change(
 
             if expected == "deco":
                 # ...then a notification that he was kicked out...
-                event = await bob_editics.recv()
-                assert event == EditicsServerEventDisconnectReason(
-                    code=4004, description="access deny"
-                )
+                if auth is not None:  # No even are sent by the server before client `auth`
+                    event = await bob_editics.recv()
+                    assert event == EditicsServerEventDisconnectReason(
+                        code=4004, description="access deny"
+                    )
 
                 # ...and then the connection is closed
                 with pytest.raises(StopAsyncIteration):
