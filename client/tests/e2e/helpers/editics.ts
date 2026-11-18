@@ -19,7 +19,7 @@ export async function checkDocumentTitle(frame: FrameLocator, expectedTitle: str
 
 export async function mockEditicsRequest(context: BrowserContext, error?: '404' | 'timeout'): Promise<void> {
   await context.route(
-    (url) => url.hostname.startsWith('editics.') && url.pathname === '/editics/offline.html',
+    (url) => url.hostname.startsWith('editics.') && url.pathname === '/editics/index.html',
     async (route) => {
       console.log('MATCHING ROUTE');
       if (error === '404') {

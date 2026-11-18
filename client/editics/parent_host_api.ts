@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
 // Types of the postMessage protocol between the editics host page
-// (`editics/offline.ts`, loaded in an iframe) and its parent window
+// (`editics/index.html`, loaded in an iframe) and its parent window
 // (`src/services/editics.ts`).
 //
 // Two kinds of messages travel between the host and the parent:
