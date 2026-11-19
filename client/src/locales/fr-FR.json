@@ -571,6 +571,16 @@
             "title": "Vous êtes hors ligne",
             "message": "Vous pouvez continuer à travailler sur les fichiers disponibles sur cet appareil. Vos <b>modifications seront conservées et seront synchronisées</b> dès le retour de votre connexion.",
             "restored": "Connexion rétablie"
+        },
+        "shamir": {
+            "unusable": {
+                "title": "Votre accès n'est plus récupérable",
+                "action": "Reconfigurer ma récupération"
+            },
+            "revokedRecipients": {
+                "title": "Des contacts de récupération ont été révoqués",
+                "action": "Vérifier ma récupération"
+            }
         }
     },
     "WorkspaceDetails": {
@@ -2177,6 +2187,10 @@
             "description": "Désignez au moins {count} contacts de récupération. Si vous ne parvenez plus à accéder à Parsec, ils pourront ensemble vous aider à y accéder à nouveau.",
             "action": "Définir mes contacts de récupération",
             "actionSecondary": "Aider à récupérer l'accès",
+            "warning": {
+                "unusable": "Plusieurs contacts de récupération ont été révoqués : vous ne pouvez plus récupérer votre accès à Parsec. Veuillez choisir de nouveaux contacts de récupération.",
+                "revokedRecipients": "Certains de vos contacts de récupération ont été révoqués. Nous vous recommandons de désigner de nouveaux contacts de récupération."
+            },
             "modalSelf": {
                 "title": "Mes contacts de récupération",
                 "subtitle": "Gérez vos contacts de récupération pour récupérer votre accès",
@@ -2211,7 +2225,7 @@
                 "setupDone": "Vos contacts de récupération sont confirmés",
                 "revoked": "Révoqué",
                 "warningRevokedRecipients": "Attention : un ou plusieurs de vos contacts de récupération ont été révoqués. Ils ne pourront plus vous aider à récupérer l'accès à Parsec.",
-                "errorRecipientsAllRevoked": "Les contacts de récupération sélectionnés ont tous été révoqués. Veuillez supprimer la configuration actuelle et définir de nouveaux contacts de récupération.",
+                "errorRecipientsAllRevoked": "Trop de contacts de récupération ont été révoqués. Veuillez supprimer la configuration actuelle et définir de nouveaux contacts de récupération.",
                 "numberPeople": "{count} contacts de récupération",
                 "necessaryPeople": "{threshold} contacts de récupération sont nécessaires pour récupérer votre accès.",
                 "close": "Fermer",
