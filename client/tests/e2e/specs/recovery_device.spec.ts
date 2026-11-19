@@ -56,7 +56,7 @@ for (const authMode of ['password', 'sso']) {
     await expect(recoveryMethodChoices.locator('.recovery-method-item__title')).toHaveText([
       'Another connected device/browser',
       'Recovery file',
-      'Trusted users',
+      'Recovery contacts',
     ]);
 
     await recoveryMethodChoices.nth(1).click();
@@ -199,7 +199,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(recoveryMethodChoices.locator('.recovery-method-item__title')).toHaveText([
       'Another connected device/browser',
       'Recovery file',
-      'Trusted users',
+      'Recovery contacts',
     ]);
 
     await recoveryMethodChoices.nth(1).click();

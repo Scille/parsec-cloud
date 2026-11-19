@@ -66,23 +66,23 @@ msTest('Setup shamir recovery', async ({ context }) => {
   const shamirContainer = page.locator('.recovery-section').nth(2);
   const status = shamirContainer.locator('.recovery-method-state');
   await expect(shamirContainer.locator('.recovery-method-content-text__description')).toHaveText(
-    'Designate at least 3 trusted people. In case of lost access, they can help you regain access to your account.',
+    'Choose at least 3 recovery contacts. In case you lose access to Parsec, they can help you regain it.',
   );
   await expect(status).toHaveText('Inactive');
   const buttons = shamirContainer.locator('ion-button');
-  await expect(buttons).toHaveText(['Manage my people of trust', 'Help recover an access']);
+  await expect(buttons).toHaveText(['Manage my recovery contacts', 'Assist as a recovery contact']);
   const shamirModal = page.locator('.shamir-recovery-modal');
   await expect(shamirModal).toBeHidden();
   await buttons.nth(0).click();
   await expect(shamirModal).toBeVisible();
-  await expect(shamirModal.locator('.shamir-information-header__title')).toHaveText('Designate trusted people');
-  await expect(shamirModal.locator('.shamir-information-button')).toHaveText('Choose my trusted people');
+  await expect(shamirModal.locator('.shamir-information-header__title')).toHaveText('Set up recovery contacts');
+  await expect(shamirModal.locator('.shamir-information-button')).toHaveText('Choose my recovery contacts');
   await shamirModal.locator('.shamir-information-button').click();
   await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('0 / 3 minimum');
   const addedUsers = shamirModal.locator('.shamir-setup-list-item');
   await expect(addedUsers).toHaveCount(0);
   await expect(shamirModal.locator('#setup-shamir-button')).toBeTrulyDisabled();
-  await expect(shamirModal.locator('#setup-shamir-button')).toHaveText('Create my circle of trust');
+  await expect(shamirModal.locator('#setup-shamir-button')).toHaveText('Confirm my recovery contacts');
   await expect(shamirModal.locator('.shamir-setup-search-dropdown')).toBeHidden();
   const input = shamirModal.locator('.shamir-setup-search__input');
   await input.click();
@@ -177,11 +177,11 @@ msTest('Setup shamir recovery as outsider', async ({ context }) => {
   const shamirContainer = page.locator('.recovery-section').nth(2);
   const status = shamirContainer.locator('.recovery-method-state');
   await expect(shamirContainer.locator('.recovery-method-content-text__description')).toHaveText(
-    'Designate at least 3 trusted people. In case of lost access, they can help you regain access to your account.',
+    'Choose at least 3 recovery contacts. In case you lose access to Parsec, they can help you regain it.',
   );
   await expect(status).toHaveText('Inactive');
   const buttons = shamirContainer.locator('ion-button');
-  await expect(buttons).toHaveText(['Manage my people of trust', 'Help recover an access']);
+  await expect(buttons).toHaveText(['Manage my recovery contacts', 'Assist as a recovery contact']);
   const shamirModal = page.locator('.shamir-recovery-modal');
   await expect(shamirModal).toBeHidden();
   await buttons.nth(0).click();
@@ -224,7 +224,8 @@ msTest('Setup shamir recovery not enough users', async ({ context }) => {
   const error = shamirModal.locator('.ms-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText(
-    'Not enough people in your organization. At least 3 people with a profile different than External are required.',
+    // eslint-disable-next-line max-len
+    'Not enough users in your organization. At least 3 users are required to set up recovery contacts,  excluding users with External profile.',
   );
   await expect(shamirModal.locator('.shamir-information-button')).toBeTrulyDisabled();
   await page.release();
@@ -234,7 +235,7 @@ async function goThroughShamirInstructions(page: MsPage): Promise<void> {
   const instructionsModal = page.locator('.shamir-instructions-modal');
   await expect(instructionsModal).toBeVisible();
   const nextButton = instructionsModal.locator('.shamir-instructions-footer__next');
-  await expect(instructionsModal.locator('.instruction-step__title')).toHaveText('Get recovery links');
+  await expect(instructionsModal.locator('.instruction-step__title')).toHaveText('Get a recovery link');
   await expect(nextButton).toHaveText('Next');
   await nextButton.click();
   await expect(instructionsModal.locator('.instruction-step__title')).toHaveText('Exchange codes');
@@ -254,11 +255,11 @@ async function openGreeterModal(page: MsPage, user: 'Boby McBobFace' | 'Mikey Mc
   await page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(3).click();
   await expect(page).toHavePageTitle('My profile');
   await expect(page).toBeMyProfilePage();
-  await expect(page.locator('.recovery-section').nth(2).locator('ion-button').nth(1)).toHaveText('Help recover an access');
+  await expect(page.locator('.recovery-section').nth(2).locator('ion-button').nth(1)).toHaveText('Assist as a recovery contact');
   await page.locator('.recovery-section').nth(2).locator('ion-button').nth(1).click();
   const shamirModal = page.locator('.shamir-recovery-modal');
   await expect(shamirModal).toBeVisible();
-  await expect(shamirModal.locator('.shamir-others-list-item').nth(0)).toHaveText('Alicey McAliceFacealice@example.comRecover');
+  await expect(shamirModal.locator('.shamir-others-list-item').nth(0)).toHaveText('Alicey McAliceFacealice@example.comRecovery');
   await shamirModal.locator('.shamir-others-list-item').nth(0).locator('.shamir-others-list-item__recover').click();
   await expect(shamirModal.locator('.shamir-others-list-item').nth(0).locator('ion-button')).toHaveText(['Copy link', 'Start']);
   if (copyLink) {
@@ -325,7 +326,7 @@ msTest('Recover device using shamir', async ({ context }) => {
   await expect(exch1Modal.locator('.button-list').locator('.button-choice')).toHaveText(Array(4).fill(SAS_CODE_RE));
   await exch1Modal.locator('.button-list').locator('.button-choice', { hasText: claim1Code }).click();
   await expect(exch1Modal).toBeHidden();
-  await expect(greeter1Page).toShowToast('You helped Alicey McAliceFace recover their access.', 'Success');
+  await expect(greeter1Page).toShowToast('You helped Alicey McAliceFace recover access to Parsec.', 'Success');
   await greeter1Page.close();
 
   await expect(claimModal.locator('.claim-shamir-progress__labels').locator('ion-text').nth(1)).toHaveText('1 of 2');
@@ -382,7 +383,7 @@ msTest('Recover device using shamir', async ({ context }) => {
   await expect(exch2Modal.locator('.button-list').locator('.button-choice')).toHaveText(Array(4).fill(SAS_CODE_RE));
   await exch2Modal.locator('.button-list').locator('.button-choice', { hasText: claim2Code }).click();
   await expect(exch2Modal).toBeHidden();
-  await expect(greeter2Page).toShowToast('You helped Alicey McAliceFace recover their access.', 'Success');
+  await expect(greeter2Page).toShowToast('You helped Alicey McAliceFace recover access to Parsec.', 'Success');
   await greeter2Page.close();
 
   // Got all the parts, all that's left is choose the authentication
@@ -462,7 +463,7 @@ msTest('Claimer cancel shamir device recovery', async ({ context }) => {
 
   await claimModal.locator('.closeBtn').click();
   await answerQuestion(page, true, {
-    expectedQuestionText: 'Are you sure you want to interrupt your account recovery?',
+    expectedQuestionText: 'Are you sure you want to interrupt the recovery process?',
     expectedTitleText: 'Interrupt the recovery',
     expectedNegativeText: 'Keep going',
     expectedPositiveText: 'Interrupt',
@@ -532,7 +533,7 @@ msTest('Greeter cancel shamir device recovery', async ({ context }) => {
     expectedPositiveText: 'Interrupt',
   });
   await expect(exch1Modal).toBeHidden();
-  await expect(page).toShowToast('The trusted person cancelled the code exchange.', 'Error');
+  await expect(page).toShowToast('The recovery contact cancelled the code exchange.', 'Error');
 
   // Modal goes back to its initial state
   await expect(claimModal.locator('.claim-shamir-progress__labels').locator('ion-text').nth(1)).toHaveText('0 of 2');
