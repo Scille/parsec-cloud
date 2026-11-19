@@ -317,6 +317,11 @@ function onLinkClick(link: string): void {
   emits('joinOrganizationWithLinkClick', link);
 }
 
+async function onPasteLinkClick(): Promise<void> {
+  link.value = await Clipboard.readText();
+  await linkInputRef.value?.validate(link.value);
+}
+
 onMounted(async (): Promise<void> => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   loggedInDevices.value = await getLoggedInDevices();
