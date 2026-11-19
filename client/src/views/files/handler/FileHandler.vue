@@ -241,12 +241,14 @@ import {
   getWorkspaceInfo,
   isDesktop,
   isMobile,
+  isValidHandle,
   isWeb,
   Path,
   WorkspaceRole,
 } from '@/parsec';
 import {
   currentRouteIs,
+  getConnectionHandle,
   getCurrentRouteQuery,
   getDocumentPath,
   getFileHandlerMode,
@@ -451,6 +453,14 @@ function loadComponent(): void {
 }
 
 async function checkSaved(): Promise<boolean> {
+  // When logging out, it tries to display the pop-up and makes the app hangs,
+  // but it fails since the handle is already invalid.
+  // It does mean you're losing your changes, in this specific case.
+  const handle = getConnectionHandle();
+  if (handle === null || !(await isValidHandle(handle))) {
+    return true;
+  }
+
   // Only attempt to save if the editor is active and the document was loaded
   if (saveState.value === SaveState.None) {
     return true;

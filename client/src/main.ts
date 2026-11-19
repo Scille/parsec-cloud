@@ -593,10 +593,10 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
 }
 
 async function cleanBeforeQuitting(injectionProvider: InjectionProvider, stopClients = false): Promise<void> {
+  await injectionProvider.distributeEventToAll(Events.LogoutRequested, undefined, { sync: true });
   await injectionProvider.cleanAll();
   if (stopClients) {
     const started = await listStartedClients();
-
     for (const [handle, _device] of started) {
       await logout(handle);
     }
