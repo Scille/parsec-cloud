@@ -67,6 +67,19 @@ export async function listShamirInvitations(): Promise<Result<Array<ShamirInvita
   return { ok: true, value: invitations };
 }
 
+export async function getShamirRecoveryStatus(): Promise<Result<SelfShamirRecoveryInfoTag, ClientGetSelfShamirRecoveryError>> {
+  const handle = getConnectionHandle();
+
+  if (handle === null) {
+    return generateNoHandleError<ClientGetSelfShamirRecoveryError>();
+  }
+  const result = await libparsec.clientGetSelfShamirRecovery(handle);
+  if (!result.ok) {
+    return result;
+  }
+  return { ok: true, value: result.value.tag };
+}
+
 export async function getSelfShamirRecovery(): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>> {
   const handle = getConnectionHandle();
 

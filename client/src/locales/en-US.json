@@ -571,6 +571,16 @@
             "title": "You are offline",
             "message": "You can keep working on available files on this device. Your <b>changes will be saved and synchronized</b> as soon as your connection is restored.",
             "restored": "Connection restored"
+        },
+        "shamir": {
+            "unusable": {
+                "title": "Your access can no longer be recovered",
+                "action": "Set up recovery again"
+            },
+            "revokedRecipients": {
+                "title": "Some recovery contacts have been revoked",
+                "action": "Review my recovery"
+            }
         }
     },
     "WorkspaceDetails": {
@@ -2177,6 +2187,10 @@
             "description": "Choose at least {count} recovery contacts. In case you lose access to Parsec, they can help you regain it.",
             "action": "Manage my recovery contacts",
             "actionSecondary": "Assist as a recovery contact",
+            "warning": {
+                "unusable": "Several recovery contacts have been revoked: you can no longer recover your access to Parsec. Please choose new recovery contacts.",
+                "revokedRecipients": "Some of your recovery contacts have been revoked. We recommend setting up new recovery contacts."
+            },
             "modalSelf": {
                 "title": "My recovery contacts",
                 "subtitle": "Set up your recovery contacts",
@@ -2211,7 +2225,7 @@
                 "setupDone": "Your recovery contacts are confirmed",
                 "revoked": "Revoked",
                 "warningRevokedRecipients": "Warning: one or more of your recovery contacts is revoked. They will not be able to help you recover access to Parsec.",
-                "errorRecipientsAllRevoked": "The selected recovery contacts are all revoked. Please delete current configuration and set up new recovery contacts.",
+                "errorRecipientsAllRevoked": "Too many recovery contacts are revoked. Please delete current configuration and set up new recovery contacts.",
                 "numberPeople": "{count} recovery contacts",
                 "necessaryPeople": "{threshold} recovery contacts are necessary to recover access to Parsec.",
                 "close": "Close",
