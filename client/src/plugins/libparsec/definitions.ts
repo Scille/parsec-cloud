@@ -2083,6 +2083,8 @@ export enum ClientEventTag {
     ServerInvalidResponseContent = 'ClientEventServerInvalidResponseContent',
     ServerInvalidResponseStatus = 'ClientEventServerInvalidResponseStatus',
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
+    UserProfileUpdated = 'ClientEventUserProfileUpdated',
+    UserRevoked = 'ClientEventUserRevoked',
     WebClientNotAllowedByOrganization = 'ClientEventWebClientNotAllowedByOrganization',
     WorkspaceLocallyCreated = 'ClientEventWorkspaceLocallyCreated',
     WorkspaceOpsInboundSyncDone = 'ClientEventWorkspaceOpsInboundSyncDone',
@@ -2185,6 +2187,15 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
+export interface ClientEventUserProfileUpdated {
+    tag: ClientEventTag.UserProfileUpdated
+    userId: UserID
+    newProfile: UserProfile
+}
+export interface ClientEventUserRevoked {
+    tag: ClientEventTag.UserRevoked
+    userId: UserID
+}
 export interface ClientEventWebClientNotAllowedByOrganization {
     tag: ClientEventTag.WebClientNotAllowedByOrganization
 }
@@ -2257,6 +2268,8 @@ export type ClientEvent =
   | ClientEventServerInvalidResponseContent
   | ClientEventServerInvalidResponseStatus
   | ClientEventTooMuchDriftWithServerClock
+  | ClientEventUserProfileUpdated
+  | ClientEventUserRevoked
   | ClientEventWebClientNotAllowedByOrganization
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceOpsInboundSyncDone

@@ -11,7 +11,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
-use crate::ClientRevokeUserError;
+use crate::{ClientRevokeUserError, EventNewCertificates, EventUserRevoked};
 
 #[parsec_test(testbed = "coolorg")]
 async fn ok(env: &TestbedEnv) {
@@ -48,14 +48,15 @@ async fn ok(env: &TestbedEnv) {
         },
     );
 
-    // let mut spy = client.event_bus.spy.start_expecting();
+    let mut spy = client.event_bus.spy.start_expecting();
 
     let bob_user_id: UserID = "bob".parse().unwrap();
     client.revoke_user(bob_user_id).await.unwrap();
 
-    // TODO: check event !
-    // spy.assert_next(|event: &EventUserRevoked| {
-    // });
+    spy.assert_next(|_: &EventNewCertificates| {});
+    spy.assert_next(|event: &EventUserRevoked| {
+        p_assert_eq!(event.user_id, bob_user_id);
+    });
 
     let users = client.list_users(false, None, None).await.unwrap();
     let bob = users.iter().find(|user| user.id == bob_user_id).unwrap();
