@@ -1077,9 +1077,10 @@ class AuthenticatedListenSseStreamingResponse(StreamingResponse):
 
     @asynccontextmanager
     async def listen_events_context(self) -> AsyncGenerator[ApiEventListenOutcome]:
-        # This task is responsible for registering the client to the SSE stream and unregistering it
-        # when it finishes. It can either get cancelled internally (e.g. when the client gets frozen
-        # or revoked) or externally by the task group below (e.g. when the client gets disconnected).
+        # This task is responsible for registering the client to the SSE stream and
+        # unregistering it when it finishes. It gets cancelled externally by the
+        # task group below (e.g. when the client disconnects, on user revoke
+        # following the closing of the event channel sender, etc.).
         async def listen_events(task_status: anyio.abc.TaskStatus[ApiEventListenOutcome]) -> None:
             async with self.backend.events.sse_api_events_listen(
                 client_ctx=self.client_ctx, last_event_id=self.last_event_id
@@ -1089,10 +1090,9 @@ class AuthenticatedListenSseStreamingResponse(StreamingResponse):
 
         # Create a task group so that we can run the `sse_api_events_listen` context manager
         # in parallel with the main task managing the SSE stream. It's important to run it
-        # in a dedicated task so that its cancellation (typically when the client gets frozen
-        # or revoked) doesn't affect the main task. This is especially important since the
-        # the starlette `StreamingResponse` doesn't use a try-finally block to ensure that
-        # the `last_body=True` event is sent.
+        # in a dedicated task so that its cancellation doesn't affect the main task. This is
+        # especially important since the starlette `StreamingResponse` doesn't use a
+        # try-finally block to ensure that the `last_body=True` event is sent.
         async with anyio.create_task_group() as tg:
             yield await tg.start(listen_events)
             tg.cancel_scope.cancel()

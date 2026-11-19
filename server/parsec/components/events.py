@@ -241,7 +241,15 @@ class RegisteredClient:
     user_id: UserID
     realms: set[VlobID]
     profile: UserProfile
-    cancel_scope: anyio.CancelScope
+
+    def close(self) -> None:
+        # Closing the channel sender does two things:
+        # - It prevent any future event to be dispatched to the connection. This
+        #   is important to avoid race condition during the connection teardown (
+        #   typically causing flakiness in the tests).
+        # - It triggers the connection teardown (as it listen the channel) which
+        #   in turn will cause the unregistration of the client.
+        self.channel_sender.close()
 
 
 class SseAPiEventsListenBadOutcome(BadOutcomeEnum):
@@ -278,7 +286,7 @@ class BaseEventsComponent:
         """
         self._stopped = True
         for client in self._registered_clients.values():
-            client.cancel_scope.cancel()
+            client.close()
 
     def _on_event(self, event: Event) -> None:
         match event:
@@ -319,14 +327,18 @@ class BaseEventsComponent:
                         registered.channel_sender.send_nowait((event, apiv5_sse_payload))
                     except anyio.WouldBlock:
                         # Client is lagging too much behind, kill it
-                        registered.cancel_scope.cancel()
+                        registered.close()
+                    except anyio.ClosedResourceError:
+                        # The client's connection has already been closed (but
+                        # not unregistered yet, otherwise we wouldn't be there!)
+                        continue
 
             # Events for cross-server communication requiring disconnection of some listening clients
 
             case EventOrganizationExpired():
                 for registered in self._registered_clients.values():
                     if registered.organization_id == event.organization_id:
-                        registered.cancel_scope.cancel()
+                        registered.close()
 
             case EventUserRevokedOrFrozen():
                 for registered in self._registered_clients.values():
@@ -334,14 +346,14 @@ class BaseEventsComponent:
                         registered.organization_id == event.organization_id
                         and registered.user_id == event.user_id
                     ):
-                        registered.cancel_scope.cancel()
+                        registered.close()
 
             case EventOrganizationTosUpdated():
                 # All users in the organization must re-accept the TOS before being
                 # able to communicate with the server again.
                 for registered in self._registered_clients.values():
                     if registered.organization_id == event.organization_id:
-                        registered.cancel_scope.cancel()
+                        registered.close()
 
             # Other events for cross-server communication, just ignore them
 
@@ -352,7 +364,6 @@ class BaseEventsComponent:
         self,
         client_ctx: AuthenticatedClientContext,
         last_event_id: UUID | None,
-        cancel_scope: anyio.CancelScope,
     ) -> (
         tuple[EventOrganizationConfig, ClientBroadcastableEventStream, RegisteredClient]
         | SseAPiEventsListenBadOutcome
@@ -416,7 +427,6 @@ class BaseEventsComponent:
             user_id=client_ctx.user_id,
             realms=realms,
             profile=user_profile,
-            cancel_scope=cancel_scope,
         )
 
         # Note it is vital that there in no await between the check of `self._stopped`
@@ -467,26 +477,23 @@ class BaseEventsComponent:
         tuple[EventOrganizationConfig, ClientBroadcastableEventStream]
         | SseAPiEventsListenBadOutcome
     ]:
-        with anyio.CancelScope() as cancel_scope:
-            outcome = await self._register_client(
-                client_ctx=client_ctx, last_event_id=last_event_id, cancel_scope=cancel_scope
-            )
-            match outcome:
-                case (initial_organization_config_event, channel_receiver, registered_client):
-                    pass
-                case SseAPiEventsListenBadOutcome() as error:
-                    yield error
-                    return
+        outcome = await self._register_client(client_ctx=client_ctx, last_event_id=last_event_id)
+        match outcome:
+            case (initial_organization_config_event, channel_receiver, registered_client):
+                pass
+            case SseAPiEventsListenBadOutcome() as error:
+                yield error
+                return
 
-            try:
-                # Make sure to close the sender when leaving this scope
-                # This way, the receiver gets notified with an `anyio.EndOfStream`
-                with registered_client.channel_sender:
-                    yield (initial_organization_config_event, channel_receiver)
-            finally:
-                # It's vital to unregister the client here given the memory location of the
-                # client (and hence the id resulting of it) will most likely be re-used !
-                self._registered_clients.pop(id(client_ctx))
+        try:
+            # Make sure to close the sender when leaving this scope
+            # This way, the receiver gets notified with an `anyio.EndOfStream`
+            with registered_client.channel_sender:
+                yield (initial_organization_config_event, channel_receiver)
+        finally:
+            # It's vital to unregister the client here given the memory location of the
+            # client (and hence the id resulting of it) will most likely be re-used !
+            self._registered_clients.pop(id(client_ctx))
 
     # This API has obviously nothing to do with the Event component...
     # It has been put there since it is an orphan feature and giving it its own
