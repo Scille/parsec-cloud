@@ -94,11 +94,16 @@ msTest.describe(() => {
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText('image.png');
     const buttons = documents.locator('.file-handler').locator('.file-handler-topbar-buttons').locator('ion-button:visible');
-    await expect(buttons).toHaveCount(4);
-    await expect(buttons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+    await expect(buttons).toHaveCount(2);
+    await expect(buttons).toHaveText(['Options', 'Show menu']);
+    await buttons.nth(0).click();
+    const viewerActionMenu = documents.locator('#viewer-action-menu');
+    await expect(viewerActionMenu).toBeVisible();
+    await expect(viewerActionMenu.locator('ion-item')).toHaveCount(3);
+    await expect(viewerActionMenu.locator('ion-item')).toHaveText(['Details', 'Copy link', 'Download']);
     const modal = documents.locator('.file-details-modal');
     await expect(modal).toBeHidden();
-    await buttons.nth(0).click();
+    await viewerActionMenu.locator('ion-item').nth(0).click();
     await expect(modal).toBeVisible();
   });
 
@@ -217,7 +222,10 @@ msTest.describe(() => {
           await expect(actionMenuModal).toBeVisible();
           await modal.locator('#next-button').click();
         } else {
-          await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
+          await documents.locator('.file-handler-topbar-buttons__item').nth(0).click();
+          const viewerActionMenu = documents.locator('#viewer-action-menu');
+          await expect(viewerActionMenu).toBeVisible();
+          await viewerActionMenu.locator('ion-item').nth(2).click();
           await modal.locator('#next-button').click();
         }
       });

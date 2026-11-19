@@ -170,8 +170,13 @@ msTest.describe(() => {
     const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
     await expect(topbar.locator('.save-info')).toBeVisible();
     await expect(topbar.locator('.save-info')).toHaveText('Read only');
-    await expect(topbarButtons).toHaveCount(5);
-    await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF', 'Show menu']);
+    await expect(topbarButtons).toHaveCount(2);
+    await expect(topbarButtons).toHaveText(['Options', 'Show menu']);
+    const viewerActionMenu = documents.locator('#viewer-action-menu');
+    await topbarButtons.nth(0).click();
+    await expect(viewerActionMenu).toBeVisible();
+    await expect(viewerActionMenu.locator('ion-item')).toHaveCount(4);
+    await expect(viewerActionMenu.locator('ion-item')).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF']);
     const editicsFrame = await getEditorFrame(documents);
     await expect(editicsFrame.locator('#editor-container')).toBeVisible();
   });
