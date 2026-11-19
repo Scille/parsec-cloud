@@ -66,7 +66,7 @@ msTest('Setup shamir recovery', async ({ context }) => {
   const shamirContainer = page.locator('.recovery-section').nth(2);
   const status = shamirContainer.locator('.recovery-method-state');
   await expect(shamirContainer.locator('.recovery-method-content-text__description')).toHaveText(
-    'Designate at least 2 trusted people. In case of lost access, they can help you regain access to your account.',
+    'Designate at least 3 trusted people. In case of lost access, they can help you regain access to your account.',
   );
   await expect(status).toHaveText('Inactive');
   const buttons = shamirContainer.locator('ion-button');
@@ -78,7 +78,7 @@ msTest('Setup shamir recovery', async ({ context }) => {
   await expect(shamirModal.locator('.shamir-information-header__title')).toHaveText('Designate trusted people');
   await expect(shamirModal.locator('.shamir-information-button')).toHaveText('Choose my trusted people');
   await shamirModal.locator('.shamir-information-button').click();
-  await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('0 / 2 minimum');
+  await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('0 / 3 minimum');
   const addedUsers = shamirModal.locator('.shamir-setup-list-item');
   await expect(addedUsers).toHaveCount(0);
   await expect(shamirModal.locator('#setup-shamir-button')).toBeTrulyDisabled();
@@ -96,9 +96,9 @@ msTest('Setup shamir recovery', async ({ context }) => {
   const checkbox = shamirModal.locator('.ms-checkbox');
   await expect(checkbox).toBeHidden();
   await dropdownItems.nth(0).click();
-  await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('1 / 2 minimum');
+  await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('1 / 3 minimum');
   await dropdownItems.nth(1).click();
-  await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('2 selected');
+  await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('2 / 3 minimum');
   await dropdownItems.nth(2).click();
   await expect(shamirModal.locator('.shamir-setup-threshold-header__number')).toHaveText('3 selected');
   await expect(addedUsers).toHaveCount(3);
@@ -177,7 +177,7 @@ msTest('Setup shamir recovery as outsider', async ({ context }) => {
   const shamirContainer = page.locator('.recovery-section').nth(2);
   const status = shamirContainer.locator('.recovery-method-state');
   await expect(shamirContainer.locator('.recovery-method-content-text__description')).toHaveText(
-    'Designate at least 2 trusted people. In case of lost access, they can help you regain access to your account.',
+    'Designate at least 3 trusted people. In case of lost access, they can help you regain access to your account.',
   );
   await expect(status).toHaveText('Inactive');
   const buttons = shamirContainer.locator('ion-button');
@@ -224,7 +224,7 @@ msTest('Setup shamir recovery not enough users', async ({ context }) => {
   const error = shamirModal.locator('.ms-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText(
-    'Not enough people in your organization. At least 2 people with a profile different than External are required.',
+    'Not enough people in your organization. At least 3 people with a profile different than External are required.',
   );
   await expect(shamirModal.locator('.shamir-information-button')).toBeTrulyDisabled();
   await page.release();
