@@ -2,29 +2,32 @@
 
 # Glossary
 
-- [Glossary](#glossary)
-  - [General terms](#general-terms)
-    - [Organization](#organization)
-    - [Workspace](#workspace)
-    - [User](#user)
-    - [Device](#device)
-  - [User Profile](#user-profile)
-    - [Member](#standard)
-    - [Administrator](#administrator)
-    - [Outsider](#outsider)
-  - [Workspace Role](#workspace-role)
-    - [Reader](#reader)
-    - [Contributor](#contributor)
-    - [Manager](#manager)
-    - [Owner](#owner)
-  - [Operations](#operations)
-    - [Invitation](#invitation)
-    - [Onboarding](#onboarding)
-    - [Joining](#joining)
-  - [Internals](#internals)
-    - [Parsec Server](#parsec-server)
-  - [Other terms](#other-terms)
-    - [Passphrase](#passphrase)
+This glossary defines the terms that should be preferred in user interfaces.
+It does not apply to term used internally in the codebase.
+
+- [General terms](#general-terms)
+  - [Organization](#organization)
+  - [Workspace](#workspace)
+  - [User](#user)
+  - [Device](#device)
+- [User Profile](#user-profile)
+  - [Standard](#standard)
+  - [Administrator](#administrator)
+  - [Outsider](#outsider)
+- [Workspace Role](#workspace-role)
+  - [Reader](#reader)
+  - [Contributor](#contributor)
+  - [Manager](#manager)
+  - [Owner](#owner)
+- [Operations](#operations)
+  - [Invitation](#invitation)
+  - [Onboarding](#onboarding)
+  - [Joining](#joining)
+  - [Recovery](#recovery)
+- [Internals](#internals)
+  - [Parsec Server](#parsec-server)
+- [Other terms](#other-terms)
+  - [Passphrase](#passphrase)
 
 ## General terms
 
@@ -94,20 +97,30 @@ A Workspace can have multiple owners. The Workspace creator has the Owner role b
 
 The action of inviting a new user to join an existing Organization. Typically the user receive an email to start the Onboarding process.
 
-<!-- TODO: Confirm following terms to avoid -->
-- Terms to avoid: *Enroll*, *Enlist*, *Onboard*, *Greet*, *Join*
+- Terms to avoid: *Enroll*, *Enlist*, *Greet*, *Join*
 
-> Note that *invitation* is specifically used for users. For devices, the term *adding* should be used instead.
+> Note that *invitation* is used internally for adding different entities (user, device, shamir).
+> In user interface, *invitation* should only be used for users. For devices, a simpler term like *adding* is preferred.
 
 ### Onboarding
 
-The Onboarding process starts from an invitation. It consists in several steps between the inviter (*greeter*) and the invitee (*claimer*) for the latter to join an Organization.
+The Onboarding process starts from an invitation. It consists in several steps between the inviter (*greeter*) and the
+invitee (*claimer*) for the latter to join an Organization.
 
 Both the greeter and the claimer must exchange information in order to finalize the onboarding process.
 
 ### Joining
 
 A user joins an Organization when the Onboarding process is finalized successfully.
+
+### Recovery
+
+The process to recover access to Parsec in the event the user is no longer able to authenticate (e.g. lost password or device).
+
+The recovery can be performed through different methods, which must have been configured by the user while having access:
+
+- Recovery file: recover access by using a recovery file and a secret key that were generated and stored separately.
+- Recovery contacts: recover access by performing code exchange with at least N recovery contacts (based on Shamir Secret Sharing).
 
 ## Internals
 
