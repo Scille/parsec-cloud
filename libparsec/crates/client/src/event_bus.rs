@@ -403,6 +403,17 @@ impl_events!(
     /// integrate new certificates.
     InvalidCertificate(Box<crate::certif::InvalidCertificateError>),
 
+    /// A user has been revoked.
+    UserRevoked{
+        user_id: UserID,
+    },
+
+    /// The profile of a user was updated.
+    UserProfileUpdated{
+        user_id: UserID,
+        new_profile: UserProfile,
+    },
+
     // ***********************************************************************
     // Invitation related events
     // ***********************************************************************

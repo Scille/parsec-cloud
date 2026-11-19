@@ -10333,6 +10333,60 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 ballpark_client_late_offset,
             })
         }
+        "ClientEventUserProfileUpdated" => {
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            let new_profile = {
+                let js_val = Reflect::get(&obj, &"newProfile".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_user_profile_js_to_rs(raw_string.as_str())
+                }?
+            };
+            Ok(libparsec::ClientEvent::UserProfileUpdated {
+                user_id,
+                new_profile,
+            })
+        }
+        "ClientEventUserRevoked" => {
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
+                    })?
+            };
+            Ok(libparsec::ClientEvent::UserRevoked { user_id })
+        }
         "ClientEventWebClientNotAllowedByOrganization" => {
             Ok(libparsec::ClientEvent::WebClientNotAllowedByOrganization {})
         }
@@ -11053,6 +11107,50 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
             )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientEvent::UserProfileUpdated {
+            user_id,
+            new_profile,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventUserProfileUpdated".into(),
+            )?;
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+            let js_new_profile = JsValue::from_str(enum_user_profile_rs_to_js(new_profile));
+            Reflect::set(&js_obj, &"newProfile".into(), &js_new_profile)?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientEvent::UserRevoked { user_id, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventUserRevoked".into())?;
+            let js_user_id = JsValue::from_str(
+                {
+                    let custom_to_rs_string =
+                        |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(user_id) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                }
+                .as_ref(),
+            );
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WebClientNotAllowedByOrganization { .. } => {

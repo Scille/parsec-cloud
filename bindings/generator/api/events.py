@@ -13,6 +13,8 @@ from .common import (
     IndexInt,
     InvitationStatus,
     SizeInt,
+    UserID,
+    UserProfile,
     Variant,
     VlobID,
 )
@@ -136,6 +138,13 @@ class ClientEvent(Variant):
 
     class InvalidCertificate:
         detail: str
+
+    class UserRevoked:
+        user_id: UserID
+
+    class UserProfileUpdated:
+        user_id: UserID
+        new_profile: UserProfile
 
     # class InvalidKeysBundle:
     #     detail: str

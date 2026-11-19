@@ -1862,6 +1862,15 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
+export interface ClientEventUserProfileUpdated {
+    tag: "ClientEventUserProfileUpdated"
+    user_id: string
+    new_profile: UserProfile
+}
+export interface ClientEventUserRevoked {
+    tag: "ClientEventUserRevoked"
+    user_id: string
+}
 export interface ClientEventWebClientNotAllowedByOrganization {
     tag: "ClientEventWebClientNotAllowedByOrganization"
 }
@@ -1934,6 +1943,8 @@ export type ClientEvent =
   | ClientEventServerInvalidResponseContent
   | ClientEventServerInvalidResponseStatus
   | ClientEventTooMuchDriftWithServerClock
+  | ClientEventUserProfileUpdated
+  | ClientEventUserRevoked
   | ClientEventWebClientNotAllowedByOrganization
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceOpsInboundSyncDone
