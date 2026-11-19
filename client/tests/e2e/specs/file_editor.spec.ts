@@ -63,15 +63,24 @@ msTest.describe(() => {
       await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document.docx');
       await expect(topbar.locator('.back-button')).toBeVisible();
       const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
+      const viewerActionMenu = documents.locator('#viewer-action-menu');
       if (mode === 'edit') {
         await expect(topbar.locator('.save-info')).toBeHidden();
-        await expect(topbarButtons).toHaveCount(5);
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF', 'Show menu']);
+        await expect(topbarButtons).toHaveCount(2);
+        await expect(topbarButtons).toHaveText(['Options', 'Show menu']);
+        await topbarButtons.nth(0).click();
+        await expect(viewerActionMenu).toBeVisible();
+        await expect(viewerActionMenu.locator('ion-item')).toHaveCount(4);
+        await expect(viewerActionMenu.locator('ion-item')).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF']);
       } else {
         await expect(topbar.locator('.save-info')).toBeVisible();
         await expect(topbar.locator('.save-info')).toHaveText('Read only');
-        await expect(topbarButtons).toHaveCount(6);
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF', 'Show menu']);
+        await expect(topbarButtons).toHaveCount(2);
+        await expect(topbarButtons).toHaveText(['Options', 'Show menu']);
+        await topbarButtons.nth(0).click();
+        await expect(viewerActionMenu).toBeVisible();
+        await expect(viewerActionMenu.locator('ion-item')).toHaveCount(5);
+        await expect(viewerActionMenu.locator('ion-item')).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF']);
       }
       const editicsFrame = await getEditorFrame(documents);
       await expect(editicsFrame.locator('#editor-container')).toBeVisible();
@@ -97,33 +106,48 @@ msTest.describe(() => {
       await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document.docx');
       await expect(topbar.locator('.back-button')).toBeVisible();
       const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
-      await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF', 'Show menu']);
+      await expect(topbarButtons).toHaveText(['Options', 'Show menu']);
       await expect(topbar.locator('.save-info')).toBeVisible();
       await expect(topbar.locator('.save-info')).toHaveText('Read only');
+      const viewerActionMenu = documents.locator('#viewer-action-menu');
+      const viewerActionButton = viewerActionMenu.locator('ion-item');
 
       if (action === 'details') {
         const modal = documents.locator('.file-details-modal');
         await expect(modal).toBeHidden();
         await topbarButtons.nth(0).click();
+        await expect(viewerActionMenu).toBeVisible();
+        await expect(viewerActionButton).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF']);
+        await viewerActionButton.nth(0).click();
         await expect(modal).toBeVisible();
       } else if (action === 'copy_link') {
+        await topbarButtons.nth(0).click();
+        await expect(viewerActionMenu).toBeVisible();
+        await expect(viewerActionButton).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF']);
         await documents.context().grantPermissions(['clipboard-write']);
-        await topbarButtons.nth(1).click();
+        await viewerActionButton.nth(1).click();
         await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
         expect(await getClipboardText(documents)).toMatch(/^https?:\/\/.+\/redirect\/.+a=path&p=.+$/);
       } else if (action === 'edit') {
-        await topbarButtons.nth(2).click();
+        await topbarButtons.nth(0).click();
+        await expect(viewerActionMenu).toBeVisible();
+        await expect(viewerActionButton).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF']);
+        await viewerActionButton.nth(2).click();
         await expect(topbar.locator('.save-info')).toBeHidden();
-        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF', 'Show menu']);
+        await topbarButtons.nth(0).click();
+        await expect(viewerActionButton).toHaveText(['Details', 'Copy link', 'Download', 'Convert to PDF']);
       } else if (action === 'download') {
         const modal = documents.locator('.download-warning-modal');
         await expect(modal).toBeHidden();
-        await topbarButtons.nth(3).click();
+        await topbarButtons.nth(0).click();
+        await expect(viewerActionMenu).toBeVisible();
+        await expect(viewerActionButton).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Convert to PDF']);
+        await viewerActionButton.nth(3).click();
         await expect(modal).toBeVisible();
       } else if (action === 'show_menu') {
         const header = documents.locator('#connected-header');
         await expect(header).toBeHidden();
-        await topbarButtons.nth(5).click();
+        await topbarButtons.nth(1).click();
         await expect(header).toBeVisible();
       }
     });
@@ -210,7 +234,13 @@ msTest.describe(() => {
     await expect(documents.locator('.file-editor')).toBeVisible();
     const topbar = documents.locator('.file-handler-topbar');
     await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document_no_image.docx');
-    const convertButton = topbar.locator('#file-handler-convert-to-pdf');
+    const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
+    await expect(topbarButtons).toHaveCount(2);
+    await expect(topbarButtons).toHaveText(['Options', 'Show menu']);
+    await topbarButtons.nth(0).click();
+    const viewerActionMenu = documents.locator('#viewer-action-menu');
+    await expect(viewerActionMenu).toBeVisible();
+    const convertButton = viewerActionMenu.locator('#file-handler-convert-to-pdf');
     await expect(convertButton).toHaveText('Convert to PDF');
     // Only enabled once the document is loaded in the editor
     await expect(convertButton).toBeEnabled({ timeout: 10_000 });
@@ -221,6 +251,7 @@ msTest.describe(() => {
     await expect(documents).toShowToast('File was saved as document_no_image.pdf.', 'Success');
 
     // Convert again: the PDF already exists, keep both
+    await topbarButtons.nth(0).click();
     await expect(convertButton).toBeEnabled();
     await convertButton.click();
     await expect(spinner).toBeHidden({ timeout: 10_000 });
@@ -258,7 +289,13 @@ msTest.describe(() => {
 
     await expect(documents.locator('.file-editor')).toBeVisible();
     const topbar = documents.locator('.file-handler-topbar');
-    const convertButton = topbar.locator('#file-handler-convert-to-pdf');
+    const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
+    await expect(topbarButtons).toHaveCount(2);
+    await expect(topbarButtons).toHaveText(['Options', 'Show menu']);
+    await topbarButtons.nth(0).click();
+    const viewerActionMenu = documents.locator('#viewer-action-menu');
+    await expect(viewerActionMenu).toBeVisible();
+    const convertButton = viewerActionMenu.locator('#file-handler-convert-to-pdf');
     await expect(convertButton).toBeEnabled({ timeout: 10_000 });
 
     await convertButton.click();

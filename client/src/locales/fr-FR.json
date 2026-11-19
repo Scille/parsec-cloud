@@ -2918,6 +2918,7 @@
         "deleted": "(Supprimé)"
     },
     "fileViewers": {
+        "options": "Options",
         "openWithDefault": "Ouvrir avec l'app par défaut",
         "details": "Détails",
         "copyLink": "Copier le lien",
