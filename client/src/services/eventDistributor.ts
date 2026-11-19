@@ -11,6 +11,7 @@ import {
   GreetingAttemptID,
   InvitationStatus,
   UserID,
+  UserProfile,
   WorkspaceHandle,
   WorkspaceID,
   WorkspaceRole,
@@ -54,6 +55,8 @@ enum Events {
   ClockDesync = 'clock-desync',
   WebClientNotAllowed = 'web-client-not-allowed',
   UploadProgress = 'upload-progress',
+  UserRevoked = 'user-revoked',
+  UserProfileUpdated = 'user-profile-updated',
 }
 
 interface WorkspaceCreatedData {
@@ -146,6 +149,15 @@ interface UploadProgressData {
   bytesLeft: number;
 }
 
+interface UserRevokedData {
+  userId: UserID;
+}
+
+interface UserProfileUpdatedData {
+  userId: UserID;
+  newProfile: UserProfile;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -163,7 +175,9 @@ type EventData =
   | EntryDeletedData
   | WorkspaceMountpointInfo
   | OpenContextualMenuData
-  | UploadProgressData;
+  | UploadProgressData
+  | UserRevokedData
+  | UserProfileUpdatedData;
 
 interface Callback {
   id: string;

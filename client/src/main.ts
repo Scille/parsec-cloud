@@ -171,6 +171,12 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
           bytesLeft: Number(event.sizeToSync),
         });
         break;
+      case ClientEventTag.UserRevoked:
+        distributor.dispatchEvent(Events.UserRevoked, { userId: event.userId });
+        break;
+      case ClientEventTag.UserProfileUpdated:
+        distributor.dispatchEvent(Events.UserProfileUpdated, { userId: event.userId, newProfile: event.newProfile });
+        break;
       default:
         window.nativeAPI.log('info', `Unhandled event ${event.tag}`);
         break;

@@ -156,9 +156,19 @@
 
         <div class="recovery-method-actions">
           <ion-button
-            class="action-button color-secondary"
+            class="action-button"
+            :class="{
+              'color-secondary': !showShamirWarning,
+              'color-danger': shamirInfo?.tag === SelfShamirRecoveryInfoTag.SetupButUnusable,
+              'action-button--warning': shamirInfo?.tag === SelfShamirRecoveryInfoTag.SetupWithRevokedRecipients,
+            }"
             @click="openShamirRecoveryModal(ShamirTab.Self)"
           >
+            <ion-icon
+              v-if="showShamirWarning"
+              class="button-icon button-icon-left"
+              :icon="shamirInfo?.tag === SelfShamirRecoveryInfoTag.SetupButUnusable ? alertCircle : warning"
+            />
             {{ $msTranslate('OrganizationRecovery.shamir.action') }}
           </ion-button>
           <ion-button
@@ -170,6 +180,17 @@
             {{ $msTranslate('OrganizationRecovery.shamir.actionSecondary') }}
           </ion-button>
         </div>
+
+        <ms-report-text
+          v-if="showShamirWarning"
+          :theme="shamirInfo?.tag === SelfShamirRecoveryInfoTag.SetupButUnusable ? MsReportTheme.Error : MsReportTheme.Warning"
+        >
+          {{
+            shamirInfo?.tag === SelfShamirRecoveryInfoTag.SetupButUnusable
+              ? $msTranslate('OrganizationRecovery.shamir.warning.unusable')
+              : $msTranslate('OrganizationRecovery.shamir.warning.revokedRecipients')
+          }}
+        </ms-report-text>
 
         <div class="recovery-method-state">
           <ion-text
@@ -205,27 +226,40 @@ import {
   listOwnDevices,
   OwnDeviceInfo,
   SelfShamirRecoveryInfo,
+  SelfShamirRecoveryInfoTag,
   ShamirGreeter,
   UserProfile,
 } from '@/parsec';
 import { navigateTo, ProfilePages, Routes } from '@/router';
 import { Env } from '@/services/environment';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { openDeviceGreetModal } from '@/views/devices/utils';
 import ExportRecoveryDevice from '@/views/profile/ExportRecoveryDeviceModal.vue';
 import GreetShamirRecoveryModal from '@/views/shamir/GreetShamirRecoveryModal.vue';
 import ShamirRecoveryModal from '@/views/shamir/ShamirRecoveryModal.vue';
 import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
-import { checkmarkCircle } from 'ionicons/icons';
-import { Answer, askQuestion, MsImage, MsModalResult, MsSpinner, Theme, useTheme, useWindowSize } from 'megashark-lib';
-import { computed, inject, onMounted, Ref, ref } from 'vue';
+import { alertCircle, checkmarkCircle, warning } from 'ionicons/icons';
+import {
+  Answer,
+  askQuestion,
+  MsImage,
+  MsModalResult,
+  MsReportText,
+  MsReportTheme,
+  MsSpinner,
+  Theme,
+  useTheme,
+  useWindowSize,
+} from 'megashark-lib';
+import { computed, inject, onMounted, onUnmounted, Ref, ref } from 'vue';
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const { theme } = useTheme();
 const { isLargeDisplay } = useWindowSize();
 
+let eventDistributorCbId: string | null = null;
 const requiredShamirUsers = ref(3);
 const orgId = ref('');
 const hasRecoveryDevice = ref(false);
@@ -235,6 +269,12 @@ const devices: Ref<OwnDeviceInfo[]> = ref([]);
 const hasSecondaryDevice = computed(() => devices.value.length > 1);
 const shamirInfo = ref<SelfShamirRecoveryInfo | undefined>(undefined);
 const error = ref('');
+const showShamirWarning = computed(() => {
+  return (
+    shamirInfo.value?.tag === SelfShamirRecoveryInfoTag.SetupButUnusable ||
+    shamirInfo.value?.tag === SelfShamirRecoveryInfoTag.SetupWithRevokedRecipients
+  );
+});
 
 onMounted(async (): Promise<void> => {
   const [clientInfoResult, threshold] = await Promise.all([
@@ -247,6 +287,17 @@ onMounted(async (): Promise<void> => {
     orgId.value = clientInfoResult.value.organizationId;
     isExternal.value = clientInfoResult.value.currentProfile === UserProfile.Outsider;
     requiredShamirUsers.value = threshold + 1;
+  }
+  eventDistributorCbId = await eventDistributor.value.registerCallback([Events.UserRevoked], async (event: Events, _data?: EventData) => {
+    if (event === Events.UserRevoked) {
+      refreshShamirStatus();
+    }
+  });
+});
+
+onUnmounted(async () => {
+  if (eventDistributorCbId) {
+    eventDistributor.value.removeCallback(eventDistributorCbId);
   }
 });
 
@@ -468,6 +519,18 @@ async function onAddDeviceClick(): Promise<void> {
     .action-button {
       @include ms.responsive-breakpoint('md') {
         width: 100%;
+      }
+
+      &--warning {
+        --background: #{ms.color('surface-warning-default')};
+        --background-hover: #{ms.color('surface-warning-default-hover')};
+        --background-hover-opacity: none;
+        --background-activated: #{ms.color('surface-warning-default-pressed')};
+        --background-focused: --background;
+
+        &.ion-focused::part(native) {
+          box-shadow: ms.shadow('focus-warning');
+        }
       }
     }
 
