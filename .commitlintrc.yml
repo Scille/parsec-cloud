@@ -1,11 +1,22 @@
+$schema: https://raw.githubusercontent.com/conventional-changelog/commitlint/d2be18a5198d3792fd6d1268e1fdca87f45e55ba/%40commitlint/config-validator/src/commitlint.schema.json
 extends:
   - "@commitlint/config-conventional"
+# https://commitlint.js.org/reference/rules.html
 rules:
+  # Disable rule requiring that commit title must not end with `.`
+  header-full-stop: [0, never, .]
+  header-max-length:
+    - 2
+    - always
+    - 140 # default is 72
+  # List allowed scope on a commit
   scope-enum:
     - 2
     - always
     - scopes:
         - server
+        - server/memory
+        - server/postgresql
         - cli
         - client
         - client/web
@@ -13,7 +24,19 @@ rules:
         - libparsec
         - rfcs
       delimiters: [","]
+  # List allowed type on a commit
+  # We use the same default value, but explicitly to help user when searching for allowed types.
+  type-enum:
+    - 2
+    - always
+    - [build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test]
+  # The subject is what come after `type(scope): subject`
   subject-case:
+    - 1
+    - always
+    - sentence-case
+  # The body between the commit's title and footer
+  body-case:
     - 1
     - always
     - sentence-case

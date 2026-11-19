@@ -29,6 +29,13 @@ async function handleJoinLink(link: string): Promise<void> {
   await navigateTo(Routes.Home, { query: { claimLink: link } });
 }
 
+async function handleShamirRecovery(link: string): Promise<void> {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
+    await switchOrganization(null, true);
+  }
+  await navigateTo(Routes.Home, { query: { shamirRecoveryLink: link } });
+}
+
 async function handleBootstrapLink(link: string): Promise<void> {
   if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
     await switchOrganization(null, true);
@@ -154,6 +161,8 @@ export async function handleParsecLink(link: string, informationManager: Informa
     await handleAsyncEnrollmentLink(link);
   } else if (result.value.tag === ParsedParsecAddrTag.TOTPReset) {
     await handleTotpReset(link);
+  } else if (result.value.tag === ParsedParsecAddrTag.InvitationShamirRecovery) {
+    await handleShamirRecovery(link);
   } else {
     window.nativeAPI.log('warn', `Unhandled link type '${result.value.tag}'`);
   }

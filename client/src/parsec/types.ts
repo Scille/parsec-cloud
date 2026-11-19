@@ -114,6 +114,7 @@ export {
   WorkspaceStatEntryErrorTag,
   WorkspaceStatFolderChildrenErrorTag,
   WorkspaceStopErrorTag,
+  WorkspaceTimelineEntryTag,
 } from '@/plugins/libparsec';
 export type {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
@@ -186,6 +187,7 @@ export type {
   ClientListUsersError,
   ClientListWorkspacesError,
   ClientListWorkspacesInfoError,
+  ClientListWorkspaceTimelineError,
   ClientListWorkspaceUserRoleChangesError,
   ClientListWorkspaceUsersError,
   ClientNewDeviceInvitationError,
@@ -236,6 +238,7 @@ export type {
   GreetInProgressError,
   ImportRecoveryDeviceError,
   InviteListItem,
+  InviteListItemShamirRecovery,
   ListAvailableDeviceError,
   ListInvitationsError,
   MountpointToOsPathError,
@@ -266,6 +269,7 @@ export type {
   Result,
   SASCode,
   SecretKey,
+  InviteListItemShamirRecovery as ShamirInvitation,
   ShamirRecoveryClaimAddShareError,
   ShamirRecoveryClaimInitialInfo,
   ShamirRecoveryClaimInProgress1Info,
@@ -337,6 +341,7 @@ export type {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
+  WorkspaceTimelineEntry,
   WorkspaceUserRoleChange,
   X509CertificateReference,
 } from '@/plugins/libparsec';
