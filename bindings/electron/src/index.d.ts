@@ -1862,6 +1862,15 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
+export interface ClientEventUserProfileUpdated {
+    tag: "ClientEventUserProfileUpdated"
+    user_id: string
+    new_profile: UserProfile
+}
+export interface ClientEventUserRevoked {
+    tag: "ClientEventUserRevoked"
+    user_id: string
+}
 export interface ClientEventWebClientNotAllowedByOrganization {
     tag: "ClientEventWebClientNotAllowedByOrganization"
 }
@@ -1934,6 +1943,8 @@ export type ClientEvent =
   | ClientEventServerInvalidResponseContent
   | ClientEventServerInvalidResponseStatus
   | ClientEventTooMuchDriftWithServerClock
+  | ClientEventUserProfileUpdated
+  | ClientEventUserRevoked
   | ClientEventWebClientNotAllowedByOrganization
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceOpsInboundSyncDone
@@ -2208,6 +2219,20 @@ export interface ClientListUsersErrorStopped {
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
   | ClientListUsersErrorStopped
+
+
+// ClientListWorkspaceTimelineError
+export interface ClientListWorkspaceTimelineErrorInternal {
+    tag: "ClientListWorkspaceTimelineErrorInternal"
+    error: string
+}
+export interface ClientListWorkspaceTimelineErrorStopped {
+    tag: "ClientListWorkspaceTimelineErrorStopped"
+    error: string
+}
+export type ClientListWorkspaceTimelineError =
+  | ClientListWorkspaceTimelineErrorInternal
+  | ClientListWorkspaceTimelineErrorStopped
 
 
 // ClientListWorkspaceUserRoleChangesError
@@ -5788,6 +5813,53 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeDefault
 
 
+// WorkspaceTimelineEntry
+export interface WorkspaceTimelineEntryArchived {
+    tag: "WorkspaceTimelineEntryArchived"
+    timestamp: number
+    author: string
+}
+export interface WorkspaceTimelineEntryCreated {
+    tag: "WorkspaceTimelineEntryCreated"
+    timestamp: number
+    author: string
+    initial_name: string | null
+}
+export interface WorkspaceTimelineEntryDeletionPlanned {
+    tag: "WorkspaceTimelineEntryDeletionPlanned"
+    timestamp: number
+    author: string
+    deletion_date: number
+}
+export interface WorkspaceTimelineEntryRenamed {
+    tag: "WorkspaceTimelineEntryRenamed"
+    timestamp: number
+    author: string
+    previous_name: string | null
+    new_name: string | null
+}
+export interface WorkspaceTimelineEntryRestored {
+    tag: "WorkspaceTimelineEntryRestored"
+    timestamp: number
+    author: string
+}
+export interface WorkspaceTimelineEntryUserRoleChanged {
+    tag: "WorkspaceTimelineEntryUserRoleChanged"
+    timestamp: number
+    author: string
+    user_id: string
+    previous_role: RealmRole | null
+    new_role: RealmRole | null
+}
+export type WorkspaceTimelineEntry =
+  | WorkspaceTimelineEntryArchived
+  | WorkspaceTimelineEntryCreated
+  | WorkspaceTimelineEntryDeletionPlanned
+  | WorkspaceTimelineEntryRenamed
+  | WorkspaceTimelineEntryRestored
+  | WorkspaceTimelineEntryUserRoleChanged
+
+
 // WorkspaceWatchEntryOneShotError
 export interface WorkspaceWatchEntryOneShotErrorEntryNotFound {
     tag: "WorkspaceWatchEntryOneShotErrorEntryNotFound"
@@ -6118,6 +6190,10 @@ export function clientListUsers(
     client: number,
     skip_revoked: boolean
 ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+export function clientListWorkspaceTimeline(
+    client: number,
+    realm_id: string
+): Promise<Result<Array<WorkspaceTimelineEntry>, ClientListWorkspaceTimelineError>>
 export function clientListWorkspaceUserRoleChanges(
     client: number,
     realm_id: string,

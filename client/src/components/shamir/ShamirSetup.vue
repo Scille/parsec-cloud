@@ -66,7 +66,7 @@
 
       <ion-button
         @click="startSetup"
-        :disabled="allUsers.length < shamirThreshold"
+        :disabled="allUsers.length < requiredUsers"
         class="shamir-information-button"
       >
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.setupInfo.startSetup') }}
@@ -90,10 +90,10 @@
           <!-- eslint-disable vue/html-indent -->
           <ion-text class="shamir-setup-threshold-header__number">
             {{
-              selectedUsers.length < shamirThreshold
+              selectedUsers.length < requiredUsers
                 ? $msTranslate({
                     key: 'OrganizationRecovery.shamir.modalSelf.threshold.minUsers',
-                    data: { count: selectedUsers.length, threshold: shamirThreshold },
+                    data: { count: selectedUsers.length, threshold: requiredUsers },
                   })
                 : $msTranslate({ key: 'OrganizationRecovery.shamir.modalSelf.threshold.selected', data: { count: selectedUsers.length } })
             }}
@@ -184,7 +184,7 @@
       <ms-checkbox
         class="shamir-setup__checkbox"
         v-model="confirmSetupCheckbox"
-        v-if="selectedUsers.length >= shamirThreshold"
+        v-if="selectedUsers.length >= requiredUsers"
       >
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.trustedPeople.checkbox') }}
       </ms-checkbox>
@@ -199,7 +199,7 @@
       <ion-button
         @click="setupShamir"
         id="setup-shamir-button"
-        :disabled="selectedUsers.length < shamirThreshold || !confirmSetupCheckbox"
+        :disabled="selectedUsers.length < requiredUsers || !confirmSetupCheckbox"
       >
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.trustedPeople.confirmSetup') }}
       </ion-button>
@@ -241,7 +241,8 @@ const step = ref<ShamirSetupStep>(ShamirSetupStep.Initial);
 const allUsers = ref<Array<UserInfo>>([]);
 const selectedUsers = ref<Array<UserInfo>>([]);
 const error = ref<Translatable | undefined>(undefined);
-const shamirThreshold = ref(3);
+const shamirThreshold = ref(2);
+const requiredUsers = ref(3);
 const searchInputValue = ref('');
 const searchContainer = useTemplateRef<HTMLElement | null>('searchContainer');
 const isSearchOpen = ref(false);
@@ -251,10 +252,10 @@ const currentProfile = ref<UserProfile>(UserProfile.Outsider);
 const progress = computed(() => {
   if (selectedUsers.value.length === 0) {
     return 2;
-  } else if (selectedUsers.value.length >= shamirThreshold.value) {
+  } else if (selectedUsers.value.length >= requiredUsers.value) {
     return 100;
   } else {
-    return (selectedUsers.value.length / shamirThreshold.value) * 100;
+    return (selectedUsers.value.length / requiredUsers.value) * 100;
   }
 });
 
@@ -280,18 +281,19 @@ onMounted(async () => {
   const [usersResult, clientResult, threshold] = await Promise.all([listUsers(true), getClientInfo(), getRequiredShamirThreshold()]);
   if (usersResult.ok && clientResult.ok) {
     shamirThreshold.value = threshold;
+    requiredUsers.value = threshold + 1;
     currentProfile.value = clientResult.value.currentProfile;
     if (clientResult.value.currentProfile === UserProfile.Outsider) {
       allUsers.value = usersResult.value.filter((user) => user.currentProfile === UserProfile.Admin);
-      if (allUsers.value.length < shamirThreshold.value) {
-        error.value = { key: 'OrganizationRecovery.shamir.errors.notEnoughAdmins', data: { needed: shamirThreshold.value } };
+      if (allUsers.value.length < requiredUsers.value) {
+        error.value = { key: 'OrganizationRecovery.shamir.errors.notEnoughAdmins', data: { needed: requiredUsers.value } };
       }
     } else {
       allUsers.value = usersResult.value.filter(
         (user) => user.id !== clientResult.value.userId && user.currentProfile !== UserProfile.Outsider,
       );
-      if (allUsers.value.length < shamirThreshold.value) {
-        error.value = { key: 'OrganizationRecovery.shamir.errors.notEnoughPeople', data: { needed: shamirThreshold.value } };
+      if (allUsers.value.length < requiredUsers.value) {
+        error.value = { key: 'OrganizationRecovery.shamir.errors.notEnoughPeople', data: { needed: requiredUsers.value } };
       }
     }
     allUsers.value.sort((u1, u2) => u1.humanHandle.label.localeCompare(u2.humanHandle.label));
@@ -344,7 +346,7 @@ function onDocumentClick(event: MouseEvent): void {
 }
 
 async function setupShamir(): Promise<void> {
-  if (selectedUsers.value.length < shamirThreshold.value) {
+  if (selectedUsers.value.length < requiredUsers.value) {
     return;
   }
   const result = await setupShamirRecovery(selectedUsers.value, shamirThreshold.value, 1);

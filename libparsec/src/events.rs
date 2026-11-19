@@ -119,6 +119,13 @@ pub enum ClientEvent {
     InvalidCertificate {
         detail: String,
     },
+    UserRevoked {
+        user_id: UserID,
+    },
+    UserProfileUpdated {
+        user_id: UserID,
+        new_profile: UserProfile,
+    },
     // TODO
     // InvalidKeysBundle {
     //     detail: String,
@@ -182,6 +189,8 @@ pub(crate) struct OnEventCallbackPlugged {
     _too_much_drift_with_server_clock:
         EventBusConnectionLifetime<libparsec_client::EventTooMuchDriftWithServerClock>,
     _invalid_certificate: EventBusConnectionLifetime<libparsec_client::EventInvalidCertificate>,
+    _user_revoked: EventBusConnectionLifetime<libparsec_client::EventUserRevoked>,
+    _user_profile_updated: EventBusConnectionLifetime<libparsec_client::EventUserProfileUpdated>,
     // _invalid_keys_bundle: EventBusConnectionLifetime<libparsec_client::EventInvalidKeysBundle>,
     // _invalid_manifest: EventBusConnectionLifetime<libparsec_client::EventInvalidManifest>,
 }
@@ -519,6 +528,26 @@ impl OnEventCallbackPlugged {
             })
         };
 
+        let user_revoked = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |e: &libparsec_client::EventUserRevoked| {
+                (on_event_callback)(handle, ClientEvent::UserRevoked { user_id: e.user_id });
+            })
+        };
+
+        let user_profile_updated = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |e: &libparsec_client::EventUserProfileUpdated| {
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::UserProfileUpdated {
+                        user_id: e.user_id,
+                        new_profile: e.new_profile,
+                    },
+                );
+            })
+        };
+
         // let invalid_keys_bundle = {
         //     let on_event_callback = on_event_callback.clone();
         //     event_bus.connect(move |e: &libparsec_client::EventInvalidKeysBundle| {
@@ -565,6 +594,8 @@ impl OnEventCallbackPlugged {
             _server_invalid_response_status: server_invalid_response_status,
             _server_invalid_response_content: server_invalid_response_content,
             _invalid_certificate: invalid_certificate,
+            _user_revoked: user_revoked,
+            _user_profile_updated: user_profile_updated,
             // _invalid_keys_bundle: invalid_keys_bundle,
             // _invalid_manifest: invalid_manifest,
         }

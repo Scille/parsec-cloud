@@ -2156,7 +2156,7 @@
         "device": {
             "title": "Trusted devices or browsers",
             "description": "Add secondary devices or browsers (Chrome or Firefox) as backup accesses to this organization.",
-            "otherActiveDevices": "{count} other active devices/browsers",
+            "otherDevices": "1 other device/browser | {count} other devices/browsers",
             "action": "Add a device"
         },
         "shamir": {
@@ -2259,7 +2259,8 @@
                     "noCodeSelected": "No code was selected, the recovery has been cancelled.",
                     "wrongCodeSelected": "The selected code is incorrect, the recovery has been cancelled.",
                     "signifyTrustFailed": "Failed to validate the code. Please try again.",
-                    "finalizeFailed": "Failed to finalize the recovery. Please try again."
+                    "finalizeFailed": "Failed to finalize the recovery. Please try again.",
+                    "emailNotSent": "Email could not be sent. Please give the link to the user."
                 }
             }
         },
@@ -2917,6 +2918,7 @@
         "deleted": "(Deleted)"
     },
     "fileViewers": {
+        "options": "Options",
         "openWithDefault": "Open with default app",
         "details": "Details",
         "copyLink": "Copy link",

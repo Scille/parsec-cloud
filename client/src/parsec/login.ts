@@ -201,6 +201,10 @@ export async function getClientInfo(handle: ConnectionHandle | null = null): Pro
   return generateNoHandleError<ClientInfoError>();
 }
 
+export async function isValidHandle(handle: ConnectionHandle): Promise<boolean> {
+  return (await libparsec.clientInfo(handle)).ok;
+}
+
 export async function getClientProfile(): Promise<UserProfile> {
   const result = await getClientInfo();
 

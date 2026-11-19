@@ -152,10 +152,13 @@ class ParticipantSession:
 
     def send_event(self, event: EditicsServerEvent) -> None:
         """
-        Push `event` on the participant's SSE channel (no-op if it has no
-        live SSE connection).
+        Push `event` on the participant's SSE channel.
+
+        No-op if:
+        - it has no live SSE connection
+        - it is not currently authenticated
         """
-        if self.sse_channel_sender is None:
+        if self.authed is None or self.sse_channel_sender is None:
             return
         try:
             self.sse_channel_sender.send_nowait(event)
@@ -974,8 +977,9 @@ class EditicsComponent:
                             # ...otherwise the participant must know about the last change
                             and event.reconnect.lastOtherSaveTime != last_change.timestamp
                         ):
-                            # The client should reacts to this event by closing the co-authoring
-                            # session (i.e. sending a `close` client event).
+                            # Note we don't clear `participant.authed` here: instead
+                            # the client should react to this event by closing the
+                            # co-authoring session (i.e. sending a `close` client event).
                             return EditicsServerEventError(
                                 code=4010, description="Restore error. Document modified."
                             )
@@ -1212,9 +1216,13 @@ class EditicsComponent:
                         del session.changes[event.deleteIndex :]
                     elif event.deleteIndex > len(session.changes):
                         # Like the real OnlyOffice server's `checkEndAuthLock`:
-                        # a `deleteIndex` equal to the current change count is a
-                        # silent no-op (nothing to destroy), only an index ABOVE
-                        # it is a client bookkeeping error.
+                        # - A `deleteIndex` equal to the current change count is
+                        #   a silent no-op (nothing to destroy)
+                        # - An index above it is a client bookkeeping error (note
+                        #   this is not necessary due to a client bug, it can also
+                        #   occur with concurrent changes: an undo arrives first
+                        #   and makes the other change's deleteIndex appear
+                        #   "above count" for a healthy client).
                         logger.warning(
                             f"Client event `unLockDocument`'s `deleteIndex={event.deleteIndex}` "
                             f"is incompatible with server's session changes count `{len(session.changes)}`"

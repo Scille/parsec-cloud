@@ -13,7 +13,7 @@ from parsec._parsec import (
     SigningKey,
     authenticated_cmds,
 )
-from parsec.events import EventPinged
+from parsec.events import EventOrganizationTosUpdated, EventPinged
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -242,7 +242,44 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         # And then the connection is closed
         with pytest.raises(StopAsyncIteration):
             event = await bob_sse.next_event()
-            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed
+            raise ValueError(event)
+
+
+async def test_race_condition_between_connection_closure_and_event_dispatch(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    async with coolorg.bob.events_listen() as bob_sse:
+        # SSE always starts with a `ServerConfig`
+        event = await bob_sse.next_event()
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+                sse_keepalive_seconds=30,
+                realm_minimum_archiving_period_before_deletion=2592000,
+            )
+        )
+
+        # Here is the potential race condition:
+        # 1. A TOS update event causes all connections to be closed.
+        # 2. Connection teardown is not done right away (i.e. the connection's
+        #    coroutine listening on the event channel must scheduled), so an
+        #    event dispatched in the meantime should be send to the connection.
+
+        # Dispatch the "before" ping, the TOS update and the "after" ping
+        # synchronously, before letting the event loop take over.
+        dispatch = backend.event_bus._dispatch_incoming_event
+        dispatch(EventPinged(organization_id=coolorg.organization_id, ping="before-tos-update"))
+        dispatch(EventOrganizationTosUpdated(organization_id=coolorg.organization_id))
+        dispatch(EventPinged(organization_id=coolorg.organization_id, ping="after-tos-update"))
+
+        event = await bob_sse.next_event()
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="before-tos-update")
+        )
+        with pytest.raises(StopAsyncIteration):
+            event = await bob_sse.next_event()
+            raise ValueError(event)
 
 
 async def test_close_on_organization_tos_updated(
@@ -287,4 +324,4 @@ async def test_close_on_organization_tos_updated(
         # And then the connection is closed
         with pytest.raises(StopAsyncIteration):
             event = await bob_sse.next_event()
-            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed
+            raise ValueError(event)

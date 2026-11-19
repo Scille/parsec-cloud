@@ -8,7 +8,8 @@ use std::sync::Arc;
 
 use crate::{
     AuthenticatedCmds, Bytes, ConnectionError, HeaderMap, HeaderName, HeaderValue, ProxyConfig,
-    ResponseMock, SSEResponseOrMissedEvents, StatusCode, test_register_low_level_send_hook,
+    ResponseMock, SSEResponseOrMissedEvents, StatusCode, editics_generate_auth_token,
+    test_register_low_level_send_hook,
 };
 use libparsec_platform_async::stream::StreamExt;
 use libparsec_protocol::API_LATEST_VERSION;
@@ -1079,3 +1080,32 @@ register_sse_http_hook!(
         p_assert_matches!(err, ConnectionError::NoResponse(_));
     }
 );
+
+#[parsec_test(testbed = "minimal")]
+async fn editics_auth_token_format(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let realm_id = VlobID::from_hex("7f1769b7ad4e4d40934f572f0e648204").unwrap();
+    let document_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
+    alice
+        .time_provider
+        .mock_time_frozen("2026-11-17T00:00:00Z".parse().unwrap());
+    let token = editics_generate_auth_token(&alice, realm_id, document_id);
+    let (token_body, token_signature) = {
+        let (token_body, token_signature_b64) = token.rsplit_once('.').unwrap();
+        let token_signature: [u8; SigningKey::SIGNATURE_SIZE] = data_encoding::BASE64URL
+            .decode(token_signature_b64.as_bytes())
+            .unwrap()
+            .try_into()
+            .unwrap();
+        (token_body, token_signature)
+    };
+    assert_eq!(
+        token_body,
+        "PARSEC-SIGN-ED25519.de10a11cec0010000000000000000000.1794873600.editics/7f1769b7ad4e4d40934f572f0e648204/87c6b5fd3b454c94bab51d6af1c6930b"
+    );
+    alice
+        .signing_key
+        .verify_key()
+        .verify_with_signature(&token_signature, token_body.as_bytes())
+        .unwrap();
+}

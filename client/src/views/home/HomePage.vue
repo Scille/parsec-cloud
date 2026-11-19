@@ -393,12 +393,12 @@ async function handleQuery(): Promise<void> {
   } else if (query.asyncEnrollmentLink) {
     const link = query.asyncEnrollmentLink;
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
-    handleAsyncEnrollment(link, informationManager);
+    await handleAsyncEnrollment(link, informationManager);
     await refreshJoinRequestsList();
   } else if (query.totpResetLink) {
     const link = query.totpResetLink;
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
-    handleTotpReset(link, informationManager);
+    await handleTotpReset(link, informationManager);
   } else if (query.shamirRecoveryLink) {
     const link = query.shamirRecoveryLink;
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
@@ -693,12 +693,15 @@ async function wrapHandleShamirRecovery(link?: string): Promise<void> {
 async function openJoinByLinkModal(link: string): Promise<void> {
   let component = null;
 
-  if ((await claimUserLinkValidator(link)).validity === Validity.Valid) {
+  if ((await asyncEnrollmentLinkValidator(link)).validity === Validity.Valid) {
+    await handleAsyncEnrollment(link, informationManager);
+    await refreshJoinRequestsList();
+    return;
+  } else if ((await claimUserLinkValidator(link)).validity === Validity.Valid) {
     component = UserJoinOrganizationModal;
   } else if ((await claimDeviceLinkValidator(link)).validity === Validity.Valid) {
     component = DeviceJoinOrganizationModal;
   }
-
   if (!component) {
     window.nativeAPI.log('error', 'Trying to open join link modal with invalid link');
     return;

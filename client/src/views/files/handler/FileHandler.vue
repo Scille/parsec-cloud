@@ -105,84 +105,15 @@
             >
               <ion-button
                 class="file-handler-topbar-buttons__item color-secondary"
-                id="file-handler-details"
-                @click="showDetails"
+                fill="outline"
                 :disabled="pathOpener.currentlyOpening.value"
-                fill="clear"
+                @click="openActionMenu"
               >
                 <ion-icon
-                  :icon="informationCircle"
-                  class="item-icon button-icon-left"
+                  :icon="ellipsisHorizontal"
+                  class="button-icon-left"
                 />
-                {{ $msTranslate('fileViewers.details') }}
-              </ion-button>
-              <ion-button
-                class="file-handler-topbar-buttons__item color-secondary"
-                id="file-handler-copy-link"
-                @click="copyLink(contentInfo.path)"
-                :disabled="pathOpener.currentlyOpening.value"
-                fill="clear"
-              >
-                <ion-icon
-                  :icon="link"
-                  class="item-icon button-icon-left"
-                />
-                {{ $msTranslate('fileViewers.copyLink') }}
-              </ion-button>
-              <ion-button
-                class="file-handler-topbar-buttons__item color-secondary"
-                id="file-handler-open-editor"
-                @click="openEditor(contentInfo.path)"
-                :disabled="pathOpener.currentlyOpening.value"
-                fill="clear"
-                v-if="!contentInfo.timestamp && readOnly && isEditicsEnabledForDocumentType(contentInfo.contentType) && !isReader"
-              >
-                <ion-icon
-                  :icon="create"
-                  class="item-icon button-icon-left"
-                />
-                {{ $msTranslate('fileViewers.openInEditor') }}
-              </ion-button>
-              <ion-button
-                class="file-handler-topbar-buttons__item color-secondary"
-                @click="downloadFile"
-                v-if="isWeb()"
-                :disabled="pathOpener.currentlyOpening.value"
-                fill="clear"
-              >
-                <ms-image
-                  :image="DownloadIcon"
-                  class="item-icon button-icon-left"
-                />
-                {{ $msTranslate('fileViewers.download') }}
-              </ion-button>
-              <ion-button
-                class="file-handler-topbar-buttons__item color-secondary"
-                id="file-handler-convert-to-pdf"
-                @click="convertToPdf"
-                v-if="canConvertToPdf"
-                :disabled="pathOpener.currentlyOpening.value || convertingToPdf"
-                fill="clear"
-              >
-                <ion-icon
-                  :icon="documentText"
-                  class="item-icon button-icon-left"
-                />
-                {{ $msTranslate('fileViewers.convertToPdf') }}
-              </ion-button>
-              <ion-button
-                class="file-handler-topbar-buttons__item color-secondary"
-                id="file-handler-open-with-system"
-                @click="openWithSystem(contentInfo.path)"
-                v-show="isDesktop() && !contentInfo.timestamp"
-                :disabled="pathOpener.currentlyOpening.value"
-                fill="clear"
-              >
-                <ion-icon
-                  :icon="open"
-                  class="item-icon button-icon-left"
-                />
-                {{ $msTranslate('fileViewers.openWithDefault') }}
+                {{ $msTranslate('fileViewers.options') }}
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item toggle-menu color-secondary"
@@ -199,9 +130,10 @@
               </ion-button>
             </div>
             <ion-button
-              class="file-handler-topbar-buttons__item action-menu"
+              class="file-handler-topbar-buttons__item action-menu color-secondary"
+              fill="outline"
               slot="icon-only"
-              @click="openSmallDisplayActionMenu"
+              @click="openActionMenu"
               v-else
             >
               <ion-icon :icon="ellipsisHorizontal" />
@@ -241,12 +173,13 @@ import {
   getWorkspaceInfo,
   isDesktop,
   isMobile,
-  isWeb,
+  isValidHandle,
   Path,
   WorkspaceRole,
 } from '@/parsec';
 import {
   currentRouteIs,
+  getConnectionHandle,
   getCurrentRouteQuery,
   getDocumentPath,
   getFileHandlerMode,
@@ -269,28 +202,15 @@ import { FileEditor } from '@/views/files/handler/editor';
 import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
 import { FileViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import {
-  alertCircle,
-  checkmarkCircle,
-  chevronDown,
-  chevronUp,
-  create,
-  documentText,
-  ellipsisHorizontal,
-  eye,
-  informationCircle,
-  link,
-  open,
-  warning,
-} from 'ionicons/icons';
+import ViewerActionMenu from '@/views/files/handler/ViewerActionMenu.vue';
+import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
+import { alertCircle, checkmarkCircle, chevronDown, chevronUp, ellipsisHorizontal, eye, warning } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import {
   Answer,
   askQuestion,
   attachMouseOverTooltip,
   Base64,
-  DownloadIcon,
   I18n,
   MsImage,
   MsModalResult,
@@ -451,6 +371,14 @@ function loadComponent(): void {
 }
 
 async function checkSaved(): Promise<boolean> {
+  // When logging out, it tries to display the pop-up and makes the app hangs,
+  // but it fails since the handle is already invalid.
+  // It does mean you're losing your changes, in this specific case.
+  const handle = getConnectionHandle();
+  if (handle === null || !(await isValidHandle(handle))) {
+    return true;
+  }
+
   // Only attempt to save if the editor is active and the document was loaded
   if (saveState.value === SaveState.None) {
     return true;
@@ -777,28 +705,54 @@ async function onSaveStateChange(newState: SaveState): Promise<void> {
   saveState.value = newState;
 }
 
-async function openSmallDisplayActionMenu(): Promise<void> {
+async function openActionMenu(event: Event): Promise<void> {
   if (!contentInfo.value) {
     return;
   }
-  const modal = await modalController.create({
-    component: SmallDisplayViewerActionMenu,
-    cssClass: 'viewer-action-menu-modal',
-    showBackdrop: true,
-    breakpoints: [0, 0.5, 1],
-    expandToScroll: false,
-    initialBreakpoint: 0.5,
-    componentProps: {
-      canOpenWithSystem: !contentInfo.value.timestamp && isDesktop(),
-      canEdit:
-        !contentInfo.value.timestamp && readOnly.value && isEditicsEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value,
-      canConvertToPdf: canConvertToPdf.value,
-    },
-  });
-  await modal.present();
-  const { data } = await modal.onDidDismiss();
-  if (data !== undefined) {
-    switch (data.action) {
+  let action: FileHandlerAction | null = null;
+  const canEdit =
+    !contentInfo.value.timestamp && readOnly.value && isEditicsEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value;
+
+  if (isLargeDisplay.value) {
+    const popover = await popoverController.create({
+      component: ViewerActionMenu,
+      event: event,
+      showBackdrop: false,
+      backdropDismiss: true,
+      componentProps: {
+        canOpenWithSystem: !contentInfo.value.timestamp && isDesktop(),
+        canEdit: canEdit,
+        canConvertToPdf: canConvertToPdf.value,
+      },
+      alignment: 'end',
+    });
+    await popover.present();
+    const { data } = await popover.onDidDismiss();
+    if (data !== undefined) {
+      action = data.action;
+    }
+  } else {
+    const modal = await modalController.create({
+      component: SmallDisplayViewerActionMenu,
+      cssClass: 'viewer-action-menu-modal',
+      showBackdrop: true,
+      breakpoints: [0, 0.5, 1],
+      expandToScroll: false,
+      initialBreakpoint: 0.5,
+      componentProps: {
+        canOpenWithSystem: !contentInfo.value.timestamp && isDesktop(),
+        canEdit: canEdit,
+        canConvertToPdf: canConvertToPdf.value,
+      },
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data !== undefined) {
+      action = data.action;
+    }
+  }
+  if (action !== null) {
+    switch (action) {
       case FileHandlerAction.Details:
         await showDetails();
         break;
@@ -820,7 +774,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
         break;
       default:
-        window.nativeAPI.log('warn', `No match for selected viewer action '${data.action}'`);
+        window.nativeAPI.log('warn', `No match for selected viewer action '${action}'`);
         break;
     }
   }

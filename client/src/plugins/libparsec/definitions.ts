@@ -123,8 +123,6 @@ export type ParsecWorkspacePathAddrAndRedirectionURL = [
 ]
 export type AccessToken = string
 export type AccountAuthMethodID = string
-export type AccountVaultItemOpaqueKeyID = string
-export type AnyhowError = string
 export type ApiVersion = string
 export type AsyncEnrollmentID = string
 export type DeviceID = string
@@ -134,7 +132,6 @@ export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
 export type OrganizationID = string
-export type PKIEnrollmentID = string
 export type ParsecAddr = string
 export type ParsecAsyncEnrollmentAddr = string
 export type ParsecAsyncEnrollmentRedirectionURL = string
@@ -161,8 +158,6 @@ export type Bytes = Uint8Array
 export type BytesVec = Uint8Array
 export type KeyDerivation = Uint8Array
 export type SecretKey = Uint8Array
-export type SequesterVerifyKeyDer = Uint8Array
-export type Sha256BoxData = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
 export type U16 = number
@@ -2088,6 +2083,8 @@ export enum ClientEventTag {
     ServerInvalidResponseContent = 'ClientEventServerInvalidResponseContent',
     ServerInvalidResponseStatus = 'ClientEventServerInvalidResponseStatus',
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
+    UserProfileUpdated = 'ClientEventUserProfileUpdated',
+    UserRevoked = 'ClientEventUserRevoked',
     WebClientNotAllowedByOrganization = 'ClientEventWebClientNotAllowedByOrganization',
     WorkspaceLocallyCreated = 'ClientEventWorkspaceLocallyCreated',
     WorkspaceOpsInboundSyncDone = 'ClientEventWorkspaceOpsInboundSyncDone',
@@ -2190,6 +2187,15 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
+export interface ClientEventUserProfileUpdated {
+    tag: ClientEventTag.UserProfileUpdated
+    userId: UserID
+    newProfile: UserProfile
+}
+export interface ClientEventUserRevoked {
+    tag: ClientEventTag.UserRevoked
+    userId: UserID
+}
 export interface ClientEventWebClientNotAllowedByOrganization {
     tag: ClientEventTag.WebClientNotAllowedByOrganization
 }
@@ -2262,6 +2268,8 @@ export type ClientEvent =
   | ClientEventServerInvalidResponseContent
   | ClientEventServerInvalidResponseStatus
   | ClientEventTooMuchDriftWithServerClock
+  | ClientEventUserProfileUpdated
+  | ClientEventUserRevoked
   | ClientEventWebClientNotAllowedByOrganization
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceOpsInboundSyncDone
@@ -2606,6 +2614,24 @@ export interface ClientListUsersErrorStopped {
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
   | ClientListUsersErrorStopped
+
+// ClientListWorkspaceTimelineError
+export enum ClientListWorkspaceTimelineErrorTag {
+    Internal = 'ClientListWorkspaceTimelineErrorInternal',
+    Stopped = 'ClientListWorkspaceTimelineErrorStopped',
+}
+
+export interface ClientListWorkspaceTimelineErrorInternal {
+    tag: ClientListWorkspaceTimelineErrorTag.Internal
+    error: string
+}
+export interface ClientListWorkspaceTimelineErrorStopped {
+    tag: ClientListWorkspaceTimelineErrorTag.Stopped
+    error: string
+}
+export type ClientListWorkspaceTimelineError =
+  | ClientListWorkspaceTimelineErrorInternal
+  | ClientListWorkspaceTimelineErrorStopped
 
 // ClientListWorkspaceUserRoleChangesError
 export enum ClientListWorkspaceUserRoleChangesErrorTag {
@@ -7003,6 +7029,61 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom
   | WorkspaceStorageCacheSizeDefault
 
+// WorkspaceTimelineEntry
+export enum WorkspaceTimelineEntryTag {
+    Archived = 'WorkspaceTimelineEntryArchived',
+    Created = 'WorkspaceTimelineEntryCreated',
+    DeletionPlanned = 'WorkspaceTimelineEntryDeletionPlanned',
+    Renamed = 'WorkspaceTimelineEntryRenamed',
+    Restored = 'WorkspaceTimelineEntryRestored',
+    UserRoleChanged = 'WorkspaceTimelineEntryUserRoleChanged',
+}
+
+export interface WorkspaceTimelineEntryArchived {
+    tag: WorkspaceTimelineEntryTag.Archived
+    timestamp: DateTime
+    author: DeviceID
+}
+export interface WorkspaceTimelineEntryCreated {
+    tag: WorkspaceTimelineEntryTag.Created
+    timestamp: DateTime
+    author: DeviceID
+    initialName: EntryName | null
+}
+export interface WorkspaceTimelineEntryDeletionPlanned {
+    tag: WorkspaceTimelineEntryTag.DeletionPlanned
+    timestamp: DateTime
+    author: DeviceID
+    deletionDate: DateTime
+}
+export interface WorkspaceTimelineEntryRenamed {
+    tag: WorkspaceTimelineEntryTag.Renamed
+    timestamp: DateTime
+    author: DeviceID
+    previousName: EntryName | null
+    newName: EntryName | null
+}
+export interface WorkspaceTimelineEntryRestored {
+    tag: WorkspaceTimelineEntryTag.Restored
+    timestamp: DateTime
+    author: DeviceID
+}
+export interface WorkspaceTimelineEntryUserRoleChanged {
+    tag: WorkspaceTimelineEntryTag.UserRoleChanged
+    timestamp: DateTime
+    author: DeviceID
+    userId: UserID
+    previousRole: RealmRole | null
+    newRole: RealmRole | null
+}
+export type WorkspaceTimelineEntry =
+  | WorkspaceTimelineEntryArchived
+  | WorkspaceTimelineEntryCreated
+  | WorkspaceTimelineEntryDeletionPlanned
+  | WorkspaceTimelineEntryRenamed
+  | WorkspaceTimelineEntryRestored
+  | WorkspaceTimelineEntryUserRoleChanged
+
 // WorkspaceWatchEntryOneShotError
 export enum WorkspaceWatchEntryOneShotErrorTag {
     EntryNotFound = 'WorkspaceWatchEntryOneShotErrorEntryNotFound',
@@ -7345,6 +7426,10 @@ export interface LibParsecPlugin {
         client: Handle,
         skip_revoked: boolean
     ): Promise<Result<Array<UserInfo>, ClientListUsersError>>
+    clientListWorkspaceTimeline(
+        client: Handle,
+        realm_id: VlobID
+    ): Promise<Result<Array<WorkspaceTimelineEntry>, ClientListWorkspaceTimelineError>>
     clientListWorkspaceUserRoleChanges(
         client: Handle,
         realm_id: VlobID,

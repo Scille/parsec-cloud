@@ -64,11 +64,11 @@ export class InjectionProvider {
     return this.default;
   }
 
-  async distributeEventToAll(event: Events, data?: EventData): Promise<void> {
+  async distributeEventToAll(event: Events, data?: EventData, options?: { sync?: boolean }): Promise<void> {
     for (const injections of this.injections.values()) {
-      await injections.eventDistributor.dispatchEvent(event, data);
+      await injections.eventDistributor.dispatchEvent(event, data, options);
     }
-    this.default.eventDistributor.dispatchEvent(event, data);
+    await this.default.eventDistributor.dispatchEvent(event, data, options);
   }
 
   async notifyAll(info: Information, mode: number): Promise<void> {

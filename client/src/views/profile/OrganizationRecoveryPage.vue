@@ -101,9 +101,9 @@
             <span class="has-devices">
               {{
                 $msTranslate({
-                  key: 'OrganizationRecovery.device.otherActiveDevices',
+                  key: 'OrganizationRecovery.device.otherDevices',
                   data: { count: devices.length - 1 },
-                  count: devices.length,
+                  count: devices.length - 1,
                 })
               }}
             </span>
@@ -147,7 +147,7 @@
               {{
                 $msTranslate({
                   key: 'OrganizationRecovery.shamir.description',
-                  data: { count: shamirThreshold },
+                  data: { count: requiredShamirUsers },
                 })
               }}
             </ion-text>
@@ -226,7 +226,7 @@ const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const { theme } = useTheme();
 const { isLargeDisplay } = useWindowSize();
 
-const shamirThreshold = ref(3);
+const requiredShamirUsers = ref(3);
 const orgId = ref('');
 const hasRecoveryDevice = ref(false);
 const queryingDevices = ref(true);
@@ -246,7 +246,7 @@ onMounted(async (): Promise<void> => {
   if (clientInfoResult.ok) {
     orgId.value = clientInfoResult.value.organizationId;
     isExternal.value = clientInfoResult.value.currentProfile === UserProfile.Outsider;
-    shamirThreshold.value = threshold;
+    requiredShamirUsers.value = threshold + 1;
   }
 });
 

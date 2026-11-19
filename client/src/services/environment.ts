@@ -12,6 +12,10 @@ export function getMajorMinorVersion(version: string): string | undefined {
 export const APP_VERSION = __APP_VERSION__;
 export const APP_MAJOR_MINOR_VERSION = getMajorMinorVersion(APP_VERSION);
 
+if (import.meta.env.PARSEC_APP_DEV_TESTBED_TEMPLATE) {
+  (window as any).PARSEC_APP_DEV_TESTBED_TEMPLATE = import.meta.env.PARSEC_APP_DEV_TESTBED_TEMPLATE;
+}
+
 /*
  STRIPE
 */

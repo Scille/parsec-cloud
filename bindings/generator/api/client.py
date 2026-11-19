@@ -357,6 +357,54 @@ async def client_list_workspace_user_role_changes(
     raise NotImplementedError
 
 
+class WorkspaceTimelineEntry(Variant):
+    class Created:
+        timestamp: DateTime
+        author: DeviceID
+        initial_name: EntryName | None
+
+    class UserRoleChanged:
+        timestamp: DateTime
+        author: DeviceID
+        user_id: UserID
+        previous_role: RealmRole | None
+        new_role: RealmRole | None
+
+    class Renamed:
+        timestamp: DateTime
+        author: DeviceID
+        previous_name: EntryName | None
+        new_name: EntryName | None
+
+    class Archived:
+        timestamp: DateTime
+        author: DeviceID
+
+    class DeletionPlanned:
+        timestamp: DateTime
+        author: DeviceID
+        deletion_date: DateTime
+
+    class Restored:
+        timestamp: DateTime
+        author: DeviceID
+
+
+class ClientListWorkspaceTimelineError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_list_workspace_timeline(
+    client: Handle,
+    realm_id: VlobID,
+) -> Result[list[WorkspaceTimelineEntry], ClientListWorkspaceTimelineError]:
+    raise NotImplementedError
+
+
 class ClientListWorkspacesError(ErrorVariant):
     class Internal:
         pass

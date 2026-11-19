@@ -7,7 +7,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Client, ClientUserUpdateProfileError};
+use crate::{Client, ClientUserUpdateProfileError, EventNewCertificates, EventUserProfileUpdated};
 
 use super::utils::client_factory;
 
@@ -57,6 +57,27 @@ async fn ok(env: &TestbedEnv) {
 
     // 6. admin to standard
     update_profile_and_check(UserProfile::Standard, bob_user_id, &client).await;
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn ok_event(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let bob_user_id: UserID = "bob".parse().unwrap();
+
+    let mut spy = client.event_bus.spy.start_expecting();
+
+    client
+        .update_user_profile(bob_user_id, UserProfile::Admin)
+        .await
+        .unwrap();
+
+    spy.assert_next(|_: &EventNewCertificates| {});
+    spy.assert_next(|event: &EventUserProfileUpdated| {
+        p_assert_eq!(event.user_id, bob_user_id);
+        p_assert_eq!(event.new_profile, UserProfile::Admin);
+    });
 }
 
 #[parsec_test(testbed = "coolorg", with_server)]

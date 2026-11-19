@@ -11,7 +11,10 @@ use super::{
     CertificateOps, UpTo,
     store::{CertificatesStoreWriteGuard, GetCertificateError, LastShamirRecovery},
 };
-use crate::{EventNewCertificates, event_bus::EventInvalidCertificate};
+use crate::{
+    EventNewCertificates, EventUserProfileUpdated, EventUserRevoked,
+    event_bus::EventInvalidCertificate,
+};
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum InvalidCertificateError {
@@ -270,10 +273,31 @@ pub(super) async fn add_certificates_batch(
 
     // Then add the common certificates...
 
+    enum UserEvent {
+        Revoked(EventUserRevoked),
+        ProfileUpdated(EventUserProfileUpdated),
+    }
+    let mut user_events: Vec<UserEvent> = Vec::new();
+
     for signed in common_certificates {
         let cooked = validate_common_certificate(ops, store, signed.to_owned())
             .await
             .map_err(send_event_on_invalid_certificate)?;
+
+        if !storage_initially_empty {
+            match &cooked {
+                CommonTopicArcCertificate::RevokedUser(c) => {
+                    user_events.push(UserEvent::Revoked(EventUserRevoked { user_id: c.user_id }))
+                }
+                CommonTopicArcCertificate::UserUpdate(c) => {
+                    user_events.push(UserEvent::ProfileUpdated(EventUserProfileUpdated {
+                        user_id: c.user_id,
+                        new_profile: c.new_profile,
+                    }))
+                }
+                _ => (),
+            }
+        }
 
         store.add_next_common_certificate(cooked, signed).await?;
         new_certificates += 1;
@@ -428,6 +452,13 @@ pub(super) async fn add_certificates_batch(
             .collect(),
     };
     ops.event_bus.send(&event);
+
+    for event in user_events {
+        match event {
+            UserEvent::Revoked(e) => ops.event_bus.send(&e),
+            UserEvent::ProfileUpdated(e) => ops.event_bus.send(&e),
+        }
+    }
 
     Ok(MaybeRedactedSwitch::NoSwitch { new_certificates })
 }
