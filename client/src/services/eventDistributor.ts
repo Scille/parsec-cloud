@@ -183,24 +183,28 @@ class EventDistributor {
   async dispatchEvent(
     event: Events,
     data?: EventData,
-    options: { aggregateTime?: number; delay?: number } = { aggregateTime: undefined, delay: undefined },
+    options?: { aggregateTime?: number; delay?: number; sync?: boolean },
   ): Promise<void> {
     async function sendToAll(callbacks: Array<Callback>, event: Events, data?: EventData): Promise<void> {
       for (const cb of callbacks) {
         if (cb.events.includes(event)) {
-          cb.funct(event, data);
+          if (options?.sync) {
+            await cb.funct(event, data);
+          } else {
+            cb.funct(event, data);
+          }
         }
       }
     }
 
-    if (options.aggregateTime !== undefined && options.delay !== undefined) {
+    if (options?.aggregateTime !== undefined && options?.delay !== undefined) {
       console.warn('Cannot have both aggregateTime and delay set, ignoring this event.');
       return;
     }
     // In some cases, events can occur very close to each other, leading to some heavy operations.
     // We can aggregate those cases in order to distribute only one event if multiple occur in a short
     // time lapse.
-    if (options.aggregateTime !== undefined) {
+    if (options?.aggregateTime !== undefined) {
       if (data) {
         // Can't have data with an aggregateTime, we wouldn't know what data to use
         console.warn('Cannot have an aggregate time with data, ignoring this event.');
@@ -218,7 +222,7 @@ class EventDistributor {
       }, options.aggregateTime);
       // Add it to the list
       this.timeouts.set(event, interval);
-    } else if (options.delay !== undefined) {
+    } else if (options?.delay !== undefined) {
       window.setTimeout(
         async (d?: EventData) => {
           await sendToAll(this.callbacks, event, d);
