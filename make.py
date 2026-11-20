@@ -53,12 +53,25 @@ if sys.platform == "linux":
         maybe_force_vendored_dbus_cargo_flags = "--features vendored-dbus"
 
 PYTHON_RELEASE_CARGO_FLAGS = (
-    f"--profile=release --features use-libsodium {maybe_force_vendored_openssl_cargo_flags}"
+    "--profile=release "
+    """--config 'build.rustflags=["--cfg=crypto_backend=\\"libsodium\\""]' """
+    f"{maybe_force_vendored_openssl_cargo_flags}"
 )
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-bindings --features test-utils"
 
-ELECTRON_RELEASE_CARGO_FLAGS = f"--profile=release --features libparsec/use-libsodium {maybe_force_vendored_openssl_cargo_flags} {maybe_force_vendored_dbus_cargo_flags}"
+# FIXME: `build.rustflags` is brittle, if you defined a more precise rustflags, the setting will be ignored.
+# More precise rustflags are for examples:
+# - `target.x86_64-unknown-linux-gnu.rustflags` in cargo config file (or CLI options)
+# - `CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS` in env variable
+# If `profile-rustflags` (https://github.com/rust-lang/cargo/issues/10271) was stabilized,
+# We would define a custom profile for that instead.
+ELECTRON_RELEASE_CARGO_FLAGS = (
+    "--profile=release "
+    """--config 'build.rustflags=["--cfg=crypto_backend=\\"libsodium\\""]' """
+    f"{maybe_force_vendored_openssl_cargo_flags} "
+    f"{maybe_force_vendored_dbus_cargo_flags}"
+)
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
 

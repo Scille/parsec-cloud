@@ -80,8 +80,9 @@ unwrap_used = "deny"
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = [
-    'cfg(use_pure_rust_but_dirty_zstd)',
-    'cfg(skip_fuse_atime_option)',
+    'cfg(use_pure_rust_but_dirty_zstd, values(none()))',
+    'cfg(skip_fuse_atime_option, values(none()))',
+    'cfg(crypto_backend, values("libsodium"))',
 ] }
 
 # All dependencies should be specified here instead of just in the crate(s) requiring them:

@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{TmpPath, tmp_path};
+use libparsec::{SequesterSigningKeyDer, TmpPath, tmp_path};
+use libparsec_tests_fixtures::p_assert_eq;
 use predicates::boolean::PredicateBooleanExt;
 
 // Generated with `openssl genrsa 512`
@@ -85,6 +86,11 @@ async fn test_too_small_authority_key(tmp_path: TmpPath) {
         tokio::fs::write(&pubkey_path, SERVICE_PUBLIC_KEY)
     )
     .unwrap();
+
+    p_assert_eq!(
+        SequesterSigningKeyDer::load_pem(SMALL_AUTHORITY_PRIVATE_KEY).map(|k| k.size_in_bytes()),
+        Ok(64) // 512 / 8
+    );
 
     crate::assert_cmd_failure!(
         "sequester",
