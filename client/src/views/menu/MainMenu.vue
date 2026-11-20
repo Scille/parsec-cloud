@@ -362,7 +362,7 @@ import {
   switchOrganization,
   watchRoute,
 } from '@/router';
-import { isUserAction, UserAction, useWorkspaceContextMenu } from '@/services/contextMenu';
+import { isUserAction, UserAction, useUserActions, useWorkspaceContextMenu } from '@/services/contextMenu';
 import {
   EventData,
   EventDistributor,
@@ -418,6 +418,7 @@ import {
   mailUnread,
   people,
   personAdd,
+  pulse,
   rocket,
   trash,
   warning,
@@ -470,6 +471,7 @@ const securityWarningsCount = computed(() => {
 });
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
+const userActions = useUserActions();
 const isReadOnly = computed(() => {
   if (currentWorkspace.value) {
     return (
@@ -613,6 +615,9 @@ function setActions(): Array<Array<MenuAction>> {
       { action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd },
       { action: UserAction.CopyAsyncEnrollmentLink, label: 'InvitationsPage.asyncEnrollmentRequest.copyLink', icon: link },
     ]);
+    if (currentRouteIs(Routes.Users)) {
+      actions.push([{ action: UserAction.ShowTimeline, label: 'UsersPage.activity.button', icon: pulse }]);
+    }
   }
   return actions;
 }
@@ -683,6 +688,8 @@ onMounted(async () => {
                 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
               );
             }
+          } else if (userAction === UserAction.ShowTimeline) {
+            await userActions.showTimeline();
           }
         }
       } else if (event === Events.DeviceCreated) {

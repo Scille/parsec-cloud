@@ -10,9 +10,11 @@ import {
   UserProfile,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { useSidePopoverMenu } from '@/services/sidePopoverMenu';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
+import UserTimeline from '@/views/users/UserTimeline.vue';
 import { modalController } from '@ionic/vue';
 import { getTextFromUser, I18n, MsModalResult, MsReportTheme, useWindowSize } from 'megashark-lib';
 import { inject, Ref } from 'vue';
@@ -20,6 +22,7 @@ import { inject, Ref } from 'vue';
 export function useUserActions() {
   const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
   const { isLargeDisplay } = useWindowSize();
+  const sidePopoverMenu = useSidePopoverMenu();
 
   async function revokeUser(user: UserInfo): Promise<void> {
     // Ask for confirmation by inputting the user email
@@ -147,10 +150,20 @@ export function useUserActions() {
     await modal.dismiss();
   }
 
+  async function showTimeline(): Promise<void> {
+    await sidePopoverMenu.open({
+      component: UserTimeline,
+      props: {
+        informationManager: informationManager.value,
+      },
+    });
+  }
+
   return {
     revokeUser,
     openDetails,
     updateProfiles,
     copyWorkspaceRoles,
+    showTimeline,
   };
 }

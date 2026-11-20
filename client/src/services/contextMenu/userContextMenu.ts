@@ -111,7 +111,7 @@ export function useUserContextMenu() {
     await modal.present();
     const { data } = await modal.onWillDismiss();
     await modal.dismiss();
-    return data.action;
+    return data?.action;
   }
 
   return {
