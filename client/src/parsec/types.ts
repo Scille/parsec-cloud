@@ -633,6 +633,28 @@ interface WorkspaceTimelineEvent {
   recipient?: HumanHandle;
 }
 
+// UserTimelineEntryTag
+enum UserTimelineEntryTag {
+  Joined = 'UserTimelineEntryJoined',
+  Revoked = 'UserTimelineEntryRevoked',
+}
+
+interface UserTimelineEntryJoined {
+  tag: UserTimelineEntryTag.Joined;
+  timestamp: DateTime;
+  user: HumanHandle;
+  inviter?: HumanHandle;
+}
+
+interface UserTimelineEntryRevoked {
+  tag: UserTimelineEntryTag.Revoked;
+  timestamp: DateTime;
+  user: HumanHandle;
+  revoker?: HumanHandle;
+}
+
+type UserTimelineEntry = UserTimelineEntryJoined | UserTimelineEntryRevoked;
+
 export {
   AccessToken,
   AccountHandle,
@@ -682,6 +704,10 @@ export {
   UploadProgress,
   UserID,
   UserInfo,
+  UserTimelineEntry,
+  UserTimelineEntryJoined,
+  UserTimelineEntryRevoked,
+  UserTimelineEntryTag,
   UserTuple,
   WorkspaceHandle,
   WorkspaceHistoryEntryStat,

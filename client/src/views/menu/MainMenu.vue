@@ -347,6 +347,7 @@ import {
   listAsyncEnrollments,
   listWorkspaces,
   LoggedInDeviceInfo,
+  showUserTimeline,
   UserProfile,
   WorkspaceInfo,
   WorkspaceRole,
@@ -418,6 +419,7 @@ import {
   mailUnread,
   people,
   personAdd,
+  pulse,
   rocket,
   trash,
   warning,
@@ -609,6 +611,9 @@ function setActions(): Array<Array<MenuAction>> {
       currentRouteIs(Routes.Archived)) &&
     props.userInfo.currentProfile === UserProfile.Admin
   ) {
+    if (currentRouteIs(Routes.Users)) {
+      actions.push([{ action: UserAction.ShowTimeline, label: 'UsersPage.activity.button', icon: pulse }]);
+    }
     actions.push([
       { action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd },
       { action: UserAction.CopyAsyncEnrollmentLink, label: 'InvitationsPage.asyncEnrollmentRequest.copyLink', icon: link },
@@ -683,6 +688,8 @@ onMounted(async () => {
                 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
               );
             }
+          } else if (userAction === UserAction.ShowTimeline) {
+            await showUserTimeline(informationManager.value);
           }
         }
       } else if (event === Events.DeviceCreated) {

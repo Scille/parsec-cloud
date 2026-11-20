@@ -1879,6 +1879,19 @@
             "noSharedWorkspaces": "You have no workspaces in common with this user.",
             "failedToListWorkspaces": "Failed to list workspaces."
         },
+        "activity": {
+            "button": "Activity",
+            "title": "User activity",
+            "loadError": "Failed to load the user activity.",
+            "noActivity": "No activity",
+            "exportAll": "Export all data",
+            "events": {
+                "joined": "<strong>{user}</strong> joined the organization.",
+                "joinedBy": "<strong>{inviter}</strong> invited <strong>{user}</strong> in the organization.",
+                "revoked": "<strong>{user}</strong> was revoked from the organization.",
+                "revokedBy": "<strong>{revoker}</strong> revoked <strong>{user}</strong> from the organization."
+            }
+        },
         "revocation": {
             "revokeTitle": "Revoke this user?",
             "revokeText": "This will <b>permanently</b> revoke <b>{user}</b>, preventing them from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address in the field below.<br/><br/>Email address: <b><i>{email}</i></b>",
