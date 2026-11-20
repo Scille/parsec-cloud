@@ -22,6 +22,7 @@ rules:
         - client/web
         - client/desktop
         - libparsec
+        - libparsec/crypto
         - rfcs
       delimiters: [","]
   # List allowed type on a commit
@@ -35,6 +36,8 @@ rules:
     - 1
     - always
     - sentence-case
+  # Disable body max line length
+  body-max-line-length: [0, always, Infinity]
   # The body between the commit's title and footer
   body-case:
     - 1
