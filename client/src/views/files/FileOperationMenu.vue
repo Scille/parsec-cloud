@@ -425,8 +425,8 @@ function scrollToTop(): void {
   box-shadow: ms.shadow('elevation-2xl');
   background: ms.color('surface-base-default');
   border: ms.border('thin') solid ms.color('border-base-default');
-  bottom: 1.5rem;
-  right: 2rem;
+  bottom: ms.spacing('padding-4xl');
+  right: ms.spacing('padding-5xl');
   z-index: 20;
   overflow: hidden;
   transition:
@@ -459,7 +459,7 @@ function scrollToTop(): void {
 
     &__title {
       @include ms.font('heading-h5');
-      margin-left: 1rem;
+      margin-left: ms.spacing('padding-3xl');
       height: stretch;
       display: flex;
       width: 100%;
@@ -588,15 +588,16 @@ function scrollToTop(): void {
   height: ms.size('xl');
   border-radius: ms.radius('2xl');
   background: ms.color('popover-header-background');
+  border: ms.border('thin') solid ms.color('border-base-default');
   color: ms.color('icon-on-color-heading');
   cursor: pointer;
   box-shadow: ms.shadow('elevation-2xl');
-  bottom: 1.5rem;
-  right: 2rem;
+  bottom: ms.spacing('padding-4xl');
+  right: ms.spacing('padding-5xl');
   z-index: 20;
 
   @include ms.responsive-breakpoint('sm') {
-    right: 1.5rem;
+    right: ms.spacing('padding-4xl');
     bottom: 4.5rem;
   }
 
@@ -617,11 +618,15 @@ function scrollToTop(): void {
     bottom: ms.spacing('padding-sm');
     width: ms.size('xs');
     height: ms.size('xs');
-    border-radius: 50%;
+    border-radius: ms.radius('full');
     background: ms.color('surface-base-default');
     color: ms.color('popover-header-background');
     // 11px, no size token matches this value
     font-size: 0.6875rem;
+
+    body.ms-theme-dark & {
+      background: ms.color('icon-on-color-heading');
+    }
   }
 }
 

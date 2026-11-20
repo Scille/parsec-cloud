@@ -102,7 +102,7 @@ defineEmits<{
   padding: ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-lg');
   background: ms.color('surface-base-page');
   gap: ms.spacing('gap-md');
-  min-height: 3rem;
+  min-height: ms.size('2xl');
 
   &__icon {
     font-size: 1.25rem;
