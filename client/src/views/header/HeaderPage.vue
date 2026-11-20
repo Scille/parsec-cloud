@@ -160,6 +160,31 @@
             </div>
           </template>
 
+          <!-- Shamir status -->
+          <div
+            v-if="shamirAlert"
+            class="shamir-alert"
+            :class="{
+              'shamir-alert--danger': shamirStatus === SelfShamirRecoveryInfoTag.SetupButUnusable,
+              'shamir-alert--warning': shamirStatus === SelfShamirRecoveryInfoTag.SetupWithRevokedRecipients,
+            }"
+            role="button"
+            @click="goToShamir"
+          >
+            <div class="shamir-alert__icon">
+              <ion-icon :icon="shamirAlert.icon" />
+            </div>
+            <div class="shamir-alert__text">
+              <ion-text class="shamir-alert__title">
+                {{ $msTranslate(shamirAlert.title) }}
+              </ion-text>
+              <ion-text class="shamir-alert__action">
+                {{ $msTranslate(shamirAlert.action) }}
+                <ion-icon :icon="chevronForward" />
+              </ion-text>
+            </div>
+          </div>
+
           <!-- Offline button -->
           <template v-if="!isSmallDisplay">
             <ion-text
@@ -221,7 +246,17 @@ import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import SmallDisplaySecurityRecommendations from '@/components/header/SmallDisplaySecurityRecommendations.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceInfo, WorkspaceRole, getClientInfo, getWorkspaceInfo } from '@/parsec';
+import {
+  ClientInfo,
+  Path,
+  SelfShamirRecoveryInfoTag,
+  UserProfile,
+  WorkspaceInfo,
+  WorkspaceRole,
+  getClientInfo,
+  getShamirRecoveryStatus,
+  getWorkspaceInfo,
+} from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -268,7 +303,7 @@ import {
   IonToolbar,
   modalController,
 } from '@ionic/vue';
-import { archive, chevronDown, ellipsisHorizontal, home, trash } from 'ionicons/icons';
+import { alertCircle, archive, chevronDown, chevronForward, ellipsisHorizontal, home, trash, warning } from 'ionicons/icons';
 import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
@@ -289,6 +324,25 @@ const connectionRestored = ref(false);
 const workspaceIsArchivedOrTrashed = computed(
   () => currentWorkspace.value && (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed),
 );
+const shamirStatus = ref<SelfShamirRecoveryInfoTag>(SelfShamirRecoveryInfoTag.NeverSetup);
+const shamirAlert = computed(() => {
+  switch (shamirStatus.value) {
+    case SelfShamirRecoveryInfoTag.SetupButUnusable:
+      return {
+        icon: alertCircle,
+        title: 'HeaderPage.shamir.unusable.title',
+        action: 'HeaderPage.shamir.unusable.action',
+      };
+    case SelfShamirRecoveryInfoTag.SetupWithRevokedRecipients:
+      return {
+        icon: warning,
+        title: 'HeaderPage.shamir.revokedRecipients.title',
+        action: 'HeaderPage.shamir.revokedRecipients.action',
+      };
+    default:
+      return undefined;
+  }
+});
 
 const showHeader = computed(() => {
   // Override visibility for specific routes
@@ -374,6 +428,10 @@ const routeWatchCancel = watchRoute(async () => {
   await updateRoute();
 });
 
+async function goToShamir(): Promise<void> {
+  await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Recovery } });
+}
+
 async function onNodeSelected(node: RouterPathNode): Promise<void> {
   await navigateTo(node.route, { params: node.params, query: node.query });
 }
@@ -457,13 +515,15 @@ onMounted(async () => {
     async () => await routerGoBack(),
   );
 
-  const result = await getClientInfo();
-  if (result.ok) {
-    userInfo.value = result.value;
-    isOnline.value = result.value.isServerOnline;
+  refreshShamirStatus();
+  const clientInfoResult = await getClientInfo();
+  if (clientInfoResult.ok) {
+    userInfo.value = clientInfoResult.value;
+    isOnline.value = clientInfoResult.value.isServerOnline;
   } else {
-    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(result.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
+
   await updateRoute();
 
   eventDistributorCbId = await eventDistributor.value.registerCallback(
@@ -475,6 +535,7 @@ onMounted(async () => {
       Events.WorkspaceUpdated,
       Events.Online,
       Events.Offline,
+      Events.UserRevoked,
     ],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
@@ -501,6 +562,8 @@ onMounted(async () => {
         await updateRoute();
       } else if (event === Events.Offline) {
         isOnline.value = false;
+      } else if (event === Events.UserRevoked) {
+        refreshShamirStatus();
       }
     },
   );
@@ -517,6 +580,11 @@ onUnmounted(async () => {
   routeWatchCancel();
   topbarWidthWatchCancel();
 });
+
+async function refreshShamirStatus(): Promise<void> {
+  const result = await getShamirRecoveryStatus();
+  shamirStatus.value = result.ok ? result.value : SelfShamirRecoveryInfoTag.NeverSetup;
+}
 
 async function openContextualMenu(event: Event): Promise<void> {
   event.stopPropagation();
@@ -668,6 +736,113 @@ async function openOfflineModal(): Promise<void> {
   }
 }
 
+.shamir-alert {
+  display: flex;
+  align-items: center;
+  gap: ms.spacing('gap-lg');
+  flex-shrink: 0;
+  padding: ms.spacing('padding-md') ms.spacing('padding-xl');
+  border-radius: ms.radius('lg');
+  cursor: pointer;
+
+  @include ms.responsive-breakpoint('xl') {
+    padding: ms.spacing('padding-sm');
+    border-radius: ms.radius('full');
+
+    .shamir-alert__text {
+      display: none;
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: ms.size('md');
+    height: ms.size('md');
+    border-radius: ms.radius('full');
+
+    ion-icon {
+      color: ms.color('icon-on-color-label');
+      font-size: ms.size('xs');
+    }
+  }
+
+  &:hover .shamir-alert__action,
+  &:focus-visible .shamir-alert__action {
+    text-decoration: underline;
+  }
+
+  &--warning {
+    background: ms.color('surface-warning-default-subtle');
+    border: ms.border('thin') solid ms.color('border-warning-default-subtle');
+
+    &:hover,
+    &:focus-visible {
+      background: ms.color('surface-warning-default-subtle-hover');
+    }
+
+    &:focus-visible {
+      box-shadow: ms.shadow('focus-warning');
+    }
+
+    .shamir-alert__icon {
+      background: ms.color('surface-warning-default');
+    }
+
+    .shamir-alert__action {
+      color: ms.color('text-warning-default');
+    }
+  }
+
+  &--danger {
+    background: ms.color('surface-error-default-subtle');
+    border: ms.border('thin') solid ms.color('border-error-default-subtle');
+
+    &:hover,
+    &:focus-visible {
+      background: ms.color('surface-error-default-subtle-hover');
+    }
+
+    &:focus-visible {
+      box-shadow: ms.shadow('focus-error');
+    }
+
+    .shamir-alert__icon {
+      background: ms.color('surface-error-default');
+    }
+
+    .shamir-alert__action {
+      color: ms.color('text-error-default');
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: ms.spacing('gap-xs');
+  }
+
+  &__title {
+    @include ms.font('label-md-emphasis');
+    color: ms.color('text-neutral-default');
+    white-space: nowrap;
+  }
+
+  &__action {
+    @include ms.font('label-sm-medium');
+    display: flex;
+    align-items: center;
+    gap: ms.spacing('gap-xs');
+    white-space: nowrap;
+
+    ion-icon {
+      font-size: 0.75rem;
+    }
+  }
+}
+
 .topbar {
   --background: #{ms.color('surface-base-page')};
   display: flex;
@@ -799,19 +974,6 @@ async function openOfflineModal(): Promise<void> {
       --background: transparent;
       --background-activated: transparent;
       --background-focused: transparent;
-    }
-
-    &::after {
-      content: '';
-      display: block;
-      width: 1px;
-      height: 1.5rem;
-      margin-left: calc(ms.spacing('gap-4xl') - ms.spacing('gap-3xl'));
-      background: ms.color('border-base-default');
-
-      @include ms.responsive-breakpoint('sm') {
-        display: none;
-      }
     }
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector

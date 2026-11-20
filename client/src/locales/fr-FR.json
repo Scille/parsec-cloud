@@ -571,6 +571,16 @@
             "title": "Vous êtes hors ligne",
             "message": "Vous pouvez continuer à travailler sur les fichiers disponibles sur cet appareil. Vos <b>modifications seront conservées et seront synchronisées</b> dès le retour de votre connexion.",
             "restored": "Connexion rétablie"
+        },
+        "shamir": {
+            "unusable": {
+                "title": "Votre accès n'est plus récupérable",
+                "action": "Reconfigurer ma récupération"
+            },
+            "revokedRecipients": {
+                "title": "Des contacts de récupération ont été révoqués",
+                "action": "Vérifier ma récupération"
+            }
         }
     },
     "WorkspaceDetails": {
@@ -2158,6 +2168,10 @@
             "description": "Désignez au moins {count} personnes de confiance. En cas de perte d'accès, elles pourront ensemble rétablir l'accès à votre compte.",
             "action": "Définir mes personnes de confiance",
             "actionSecondary": "Aider à récupérer un accès",
+            "warning": {
+                "unusable": "Plusieurs contacts de récupération ont été révoqués : vous ne pouvez plus récupérer votre accès à Parsec. Veuillez choisir de nouveaux contacts de récupération.",
+                "revokedRecipients": "Certains de vos contacts de récupération ont été révoqués. Nous vous recommandons de désigner de nouveaux contacts de récupération."
+            },
             "modalSelf": {
                 "title": "Mon cercle de confiance",
                 "subtitle": "Gérez votre cercle de confiance pour la récupération d'accès",
