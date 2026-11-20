@@ -10,12 +10,14 @@ msTest('Opens the about dialog', async ({ home }) => {
   await expect(modal.locator('.ms-modal-header__title')).toContainText('About');
   const titles = modal.locator('.app-info-key');
   const values = modal.locator('.app-info-value');
-  await expect(titles).toHaveText(['Version', 'Developer', 'License', 'Project']);
-  await expect(values).toHaveText([/^ v[a-z0-9-.+]+$/, 'Parsec Cloud', 'AGPLv3', ' GitHub ']);
+  await expect(titles).toHaveText(['Version', 'Developer', 'License', 'Project', 'Accessibility']);
+  await expect(values).toHaveText([/^ v[a-z0-9-.+]+$/, 'Parsec Cloud', 'AGPLv3', ' GitHub ', 'Non-compliant']);
 
   await openExternalLink(home, values.nth(1), /^https:\/\/parsec\.cloud\/?.*$/);
   await openExternalLink(home, values.nth(2), /^https:\/\/raw\.githubusercontent\.com\/Scille\/parsec-cloud\/.+\/LICENSE-AGPL3.*$/);
   await openExternalLink(home, values.nth(3), /^https:\/\/github\.com\/Scille\/parsec-cloud$/);
+  // cspell:disable-next-line
+  await openExternalLink(home, values.nth(4), /^https:\/\/parsec\.cloud\/fr\/declaration-d-accessibilite\/$/);
   await openExternalLink(home, modal.locator('.changelog-btn'), /^https:\/\/docs\.parsec\.cloud\/.+$/);
 
   await modal.locator('.closeBtn').click();

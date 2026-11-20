@@ -6,6 +6,7 @@
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "license": "AGPLv3",
         "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE-AGPL3",
+        "accessibilityLink": "https://parsec.cloud/fr/declaration-d-accessibilite/",
         "history": "https://docs.parsec.cloud/en/{version}/history.html",
         "pricingLink": "https://parsec.cloud/pricing/",
         "whatsNew": "https://parsec.cloud/blog/releases/{version}/"
@@ -2017,7 +2018,9 @@
             "version": "Version",
             "developer": "Developer",
             "license": "License",
-            "project": "Project"
+            "project": "Project",
+            "accessibility": "Accessibility",
+            "accessibilityStatus": "Non-compliant"
         },
         "update": {
             "notUpToDate": "A new version is available.",

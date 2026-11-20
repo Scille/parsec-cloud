@@ -278,6 +278,10 @@ async function openDeveloperLink(): Promise<void> {
   await openUrl(I18n.translate('app.developerLink'));
 }
 
+async function openAccessibilityLink(): Promise<void> {
+  await openUrl(I18n.translate('app.accessibilityLink'));
+}
+
 async function openTOS(tosLink: string): Promise<void> {
   await openUrl(tosLink);
 }
@@ -323,6 +327,7 @@ export const Env = {
     openChangelogLink,
     openSourcesLink,
     openDeveloperLink,
+    openAccessibilityLink,
     openTOS,
     openUrl,
     openSequesterDocumentationLink,
