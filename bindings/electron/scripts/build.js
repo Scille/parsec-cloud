@@ -76,7 +76,10 @@ function fetch_cargo_flags() {
     stdio: ['ignore', 'pipe', 'inherit'],
   });
 
-  return ret.stdout.toString(encoding = "ascii").trim().split(" ");
+  // The flags are meant to be shell-quoted (e.g. `--config 'build.rustflags=[...]'`),
+  // but here we pass them to cargo as raw argv (no shell), so the surrounding
+  // single quotes must be stripped to avoid cargo seeing them as part of the TOML value.
+  return ret.stdout.toString(encoding = "ascii").trim().split(" ").map((flag) => flag.replace(/^'(.*)'$/, "$1"));
 }
 
 async function build_electron_bindings(cargo_flags) {
