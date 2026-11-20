@@ -477,11 +477,27 @@ export class FileOperationMenu {
   }
 
   async close(): Promise<void> {
-    await this.menu.locator('.menu-header-icons').click();
+    const headerIcon = this.menu.locator('.menu-header-icons');
+    if (await headerIcon.isVisible()) {
+      await headerIcon.click();
+    }
+    // Clicking the header only reduces the menu when the sync banner is shown.
+    // In that case, collapse fully to the floating icon.
+    const status = this.menu.locator('.upload-menu-status');
+    if (await status.isVisible()) {
+      await status.hover();
+      const closeIcon = status.locator('.close-icon');
+      if (await closeIcon.isVisible()) {
+        await closeIcon.click();
+      }
+    }
   }
 
   async hideUploadStatus(): Promise<void> {
-    await this.menu.locator('.upload-menu-status').locator('.close-icon').click();
+    const closeIcon = this.menu.locator('.upload-menu-status').locator('.close-icon');
+    if (await closeIcon.isVisible()) {
+      await closeIcon.click();
+    }
   }
 
   async expectVisible(): Promise<void> {
