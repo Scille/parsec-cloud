@@ -382,7 +382,7 @@ macro_rules! test_send_hook_realm_get_keys_bundle {
     }};
 
     ($env: expr, $author: expr, $realm_id: expr) => {
-        test_send_hook_realm_get_keys_bundle!(__internal, $env, $author, $realm_id, None);
+        test_send_hook_realm_get_keys_bundle!(__internal, $env, $author, $realm_id, None)
     };
     ($env: expr, $author: expr, $realm_id: expr, $key_index: expr) => {
         test_send_hook_realm_get_keys_bundle!(
@@ -391,7 +391,7 @@ macro_rules! test_send_hook_realm_get_keys_bundle {
             $author,
             $realm_id,
             Some($key_index)
-        );
+        )
     };
 }
 

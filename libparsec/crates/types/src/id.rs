@@ -463,7 +463,7 @@ pub use user_device_ids::{DeviceID, InvalidDeviceID, InvalidUserID, UserID};
 
 /*
  * DeviceLabel
-*/
+ */
 
 // Equivalent to pattern r"^.+$" (i.e. at least 1 character) on 255 bytes
 #[inline]
