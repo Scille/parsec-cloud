@@ -18,6 +18,7 @@ from parsec.components.postgresql.queries import (
     AuthAndLockCommonOnlyData,
     auth_and_lock_common_write,
 )
+from parsec.components.postgresql.shamir import ShamirLastTimestampBadOutcome, shamir_last_timestamp
 from parsec.components.postgresql.utils import Q
 from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 from parsec.components.user import (
@@ -205,8 +206,23 @@ async def user_revoke_user(
     # - The common topic
     # - For each realm the user is part of: the realm topic
     # - For each realm the user is part of: the last vlob
+    # - The shamir topic
 
     last_timestamp = db_common.last_common_certificate_timestamp
+
+    match await shamir_last_timestamp(conn, organization_id, author):
+        case DateTime() as shamir_certificate_last_timestamp:
+            last_timestamp = max(last_timestamp, shamir_certificate_last_timestamp)
+        case None:
+            pass
+        case ShamirLastTimestampBadOutcome.ORGANIZATION_NOT_FOUND:
+            return UserRevokeUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        case ShamirLastTimestampBadOutcome.ORGANIZATION_EXPIRED:
+            return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
+        case ShamirLastTimestampBadOutcome.AUTHOR_NOT_FOUND:
+            return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
+        case ShamirLastTimestampBadOutcome.AUTHOR_REVOKED:
+            return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
 
     match row["realms_topics_last_timestamp"]:
         case DateTime() as realms_topics_last_timestamp:
@@ -222,7 +238,6 @@ async def user_revoke_user(
             last_timestamp = max(vlobs_last_timestamp, last_timestamp)
         # Can be `None` if the user to revoke is part realms which are all empty
         case None:
-            pass
             pass
         case _:
             assert False, row

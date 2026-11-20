@@ -14,8 +14,12 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.shamir_delete import shamir_delete
+from parsec.components.postgresql.shamir_last_timestamp import (
+    ShamirLastTimestampBadOutcome,
+    shamir_last_timestamp,
+)
 from parsec.components.postgresql.shamir_setup import shamir_setup
-from parsec.components.postgresql.utils import transaction
+from parsec.components.postgresql.utils import no_transaction, transaction
 from parsec.components.shamir import (
     BaseShamirComponent,
     ShamirDeleteSetupAlreadyDeletedBadOutcome,
@@ -93,3 +97,9 @@ class PGShamirComponent(BaseShamirComponent):
             author_verify_key,
             shamir_recovery_deletion_certificate,
         )
+
+    @no_transaction
+    async def shamir_last_timestamp(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
+    ) -> DateTime | ShamirLastTimestampBadOutcome | None:
+        return await shamir_last_timestamp(conn, organization_id, author)
