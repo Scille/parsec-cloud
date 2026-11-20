@@ -156,7 +156,7 @@ import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText } from '@ionic/vue';
-import { informationCircle, link, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
+import { informationCircle, link, personAdd, personRemove, pulse, repeat, returnUpForward } from 'ionicons/icons';
 import {
   DisplayState,
   MsActionBar,
@@ -457,7 +457,10 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated, Events.OpenContextMenu], handleEvents);
+  eventCbId = await eventDistributor.value.registerCallback(
+    [Events.InvitationUpdated, Events.OpenContextMenu, Events.MenuAction],
+    handleEvents,
+  );
   await restoreComponentData();
 
   hotkeys = hotkeyManager.newHotkeys();
@@ -558,6 +561,16 @@ const actionBarOptionsUsersPage = computed(() => {
       icon: informationCircle,
       onClick: async (): Promise<void> => {
         await openSelectedUserDetails();
+      },
+    });
+  }
+
+  if (isAdmin.value) {
+    actionArray.push({
+      label: 'UsersPage.activity.button',
+      icon: pulse,
+      onClick: async (): Promise<void> => {
+        await actions.showTimeline();
       },
     });
   }

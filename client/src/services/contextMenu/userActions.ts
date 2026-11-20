@@ -6,6 +6,7 @@ import {
   ClientUserUpdateProfileErrorTag,
   revokeUser as parsecRevokeUser,
   updateProfile as parsecUpdateProfile,
+  showUserTimeline,
   UserInfo,
   UserProfile,
 } from '@/parsec';
@@ -147,10 +148,15 @@ export function useUserActions() {
     await modal.dismiss();
   }
 
+  async function showTimeline(): Promise<void> {
+    await showUserTimeline(informationManager.value);
+  }
+
   return {
     revokeUser,
     openDetails,
     updateProfiles,
     copyWorkspaceRoles,
+    showTimeline,
   };
 }

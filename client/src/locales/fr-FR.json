@@ -1879,6 +1879,19 @@
             "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec cet utilisateur.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."
         },
+        "activity": {
+            "button": "Activité",
+            "title": "Activité des utilisateurs",
+            "loadError": "Impossible de charger l'activité.",
+            "noActivity": "Aucune activité",
+            "exportAll": "Exporter toutes les données",
+            "events": {
+                "joined": "<strong>{user}</strong> a rejoint l'organisation.",
+                "joinedBy": "<strong>{inviter}</strong> a invité <strong>{user}</strong> dans l'organisation.",
+                "revoked": "<strong>{user}</strong> a été révoqué·e de l'organisation.",
+                "revokedBy": "<strong>{revoker}</strong> a révoqué <strong>{user}</strong> de l'organisation."
+            }
+        },
         "revocation": {
             "revokeTitle": "Révoquer cet utilisateur ?",
             "revokeText": "<b>{user}</b> sera <b>définitivement</b> révoqué(e) et ne pourra plus accéder à l'organisation. Si vous êtes certain(e) de vouloir procéder à cette révocation, veuillez renseigner son adresse email dans le champ ci-dessous.<br/><br/>Adresse email: <b><i>{email}</i></b>",
