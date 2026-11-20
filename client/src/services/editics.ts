@@ -10,7 +10,9 @@ import type {
   EditicsHostToParentMessage,
   EditicsOpenOptions,
   EditicsParentToHostMessage,
-  EditicsRequestParentSaveReply,
+  EditicsRpcConvertToPdfReply,
+  EditicsRpcImageReply,
+  EditicsRpcSaveReply,
 } from '@editics_parent_host_api';
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
@@ -143,6 +145,38 @@ function onlyOfficeLog(level: 'debug' | 'warn' | 'error' | 'info', message: stri
   window.nativeAPI.log(level, `[OnlyOffice] ${message}`);
 }
 
+// Sends an RPC to the editics host page (see the `oo-rpc-*` messages in
+// `client/editics/parent_host_api.ts`) and resolves with the payload it posts
+// back on the MessagePort transferred along with the message. The request never
+// resolves if the host page cannot answer: `timeoutMs` instead rejects with
+// 'timeout' (e.g. when it is reloaded mid-request).
+function rpcToHost<T>(host: Window, request: EditicsParentToHostMessage, hostOrigin: string, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const timer = setTimeout((): void => {
+      channel.port1.close();
+      reject(new Error('the host page did not reply in time'));
+    }, timeoutMs);
+    channel.port1.onmessage = (event: MessageEvent<T>): void => {
+      clearTimeout(timer);
+      channel.port1.close();
+      resolve(event.data);
+    };
+    host.postMessage(request, hostOrigin, [channel.port2]);
+  });
+}
+
+// The reply port of an `oo-rpc-*` message: it is always transferred along with
+// the message (see `client/editics/parent_host_api.ts`), a missing one is a bug
+// on the sender (the host page) side.
+function expectRpcPort(event: MessageEvent<EditicsHostToParentMessage>): MessagePort {
+  const port = event.ports[0];
+  if (!port) {
+    throw new Error(`Bug: the '${String(event.data?.command)}' RPC message arrived without its reply port`);
+  }
+  return port;
+}
+
 export function getEditicsDocumentType(contentType: FileContentType): EditicsDocumentTypes | undefined {
   switch (contentType) {
     case FileContentType.Document:
@@ -173,19 +207,15 @@ export async function openDocument(
   const controller = new AbortController();
 
   // Save requests are asynchronous: the host converts the data, we perform
-  // the workspace write, then reply on the port it provided. The pending reply
-  // for a manual save request is tracked here so
-  // `session.save()` below can await it.
-  let pendingSaveResult: ((success: boolean, error?: string) => void) | undefined = undefined;
+  // the workspace write, then reply on the port it provided (see the
+  // `oo-rpc-save` message).
   let saving = false;
 
-  // Pending PDF conversions, waiting for the host's `oo-convert-to-pdf-result`.
-  // A request is removed on completion or timeout, so a late reply is ignored.
-  const pendingPdfConversions = new Map<number, (reply: { data?: Uint8Array; error?: string }) => void>();
-  let pdfRequestCounter = 0;
-
   const finishSave = (port: MessagePort | undefined, success: boolean, error?: string): void => {
-    port?.postMessage({ success, error } satisfies EditicsRequestParentSaveReply);
+    if (port) {
+      port.postMessage({ success, error } satisfies EditicsRpcSaveReply);
+      port.close();
+    }
     if (saving) {
       saving = false;
       handlers.onSaveStateChange?.(success ? EditicsSaveState.Saved : EditicsSaveState.Error);
@@ -230,36 +260,47 @@ export async function openDocument(
           }
 
           switch (event.data?.command) {
-            case 'oo-host-ready': {
+            case 'oo-event-host-ready': {
               clearTimeout(hostReadyTimeoutId);
               resolve();
               break;
             }
 
-            case 'oo-app-ready': {
+            case 'oo-event-app-ready': {
               onlyOfficeLog('debug', 'OnlyOffice app is ready');
               break;
             }
 
-            case 'oo-ready': {
+            case 'oo-event-ready': {
               onlyOfficeLog('debug', 'Document is ready');
               handlers.onReady();
               break;
             }
 
-            case 'oo-error': {
+            case 'oo-event-error': {
               handlers.onError(new EditicsError(EditicsErrorCodes.EventError, event.data.details));
               break;
             }
 
-            case 'oo-save': {
+            case 'oo-event-save-state': {
+              // The editor's dirty state changed ('unsaved' when the document has
+              // modifications, 'saved' when it is clean again).
+              if (!saving) {
+                const state = event.data.state === 'unsaved' ? EditicsSaveState.Unsaved : EditicsSaveState.Saved;
+                handlers.onSaveStateChange?.(state);
+              }
+              break;
+            }
+
+            case 'oo-rpc-save': {
               // The host converted the editor's native serialization back to the
               // file's original office format and asks us to persist it. We answer
               // on the transferred port once the workspace write completes; only
               // this side has libparsec access.
-              const port = event.ports[0];
-              if (!port || !handlers.onSave) {
-                port?.postMessage({ success: false, error: 'no save handler' } satisfies EditicsRequestParentSaveReply);
+              const port = expectRpcPort(event);
+              if (!handlers.onSave) {
+                port.postMessage({ success: false, error: 'no save handler' } satisfies EditicsRpcSaveReply);
+                port.close();
                 return;
               }
               saving = true;
@@ -274,52 +315,10 @@ export async function openDocument(
               break;
             }
 
-            case 'oo-save-state': {
-              // The editor's dirty state changed ('unsaved' when the document has
-              // modifications, 'saved' when it is clean again).
-              if (!saving) {
-                const state = event.data.state === 'unsaved' ? EditicsSaveState.Unsaved : EditicsSaveState.Saved;
-                handlers.onSaveStateChange?.(state);
-              }
-              break;
-            }
-
-            case 'oo-save-result': {
-              // Completion of a `session.save()` request initiated by this side.
-              const resolve = pendingSaveResult;
-              pendingSaveResult = undefined;
-              if (resolve) {
-                resolve(event.data.success === true, event.data.error);
-              } else {
-                onlyOfficeLog('warn', `Unexpected save result (success: ${event.data.success})`);
-              }
-              break;
-            }
-
-            case 'oo-insert-image': {
+            case 'oo-rpc-insert-image': {
               // The editor's user wants to insert an image: present a workspace
               // file picker and send its content back to the host.
-              if (!frame.contentWindow) {
-                return;
-              }
-              handleRequestImage(frame.contentWindow, event.data.requestId);
-              break;
-            }
-
-            case 'oo-convert-to-pdf-result': {
-              // When we send a request to convert a document to PDF to the frame,
-              // we add an id and store that id with a function (resolver) that will
-              // be called with the result.
-              // Since we request a conversion and we get the result asynchronously,
-              // this is done to match a request with the result (otherwise two quasi simultaneous
-              // requests resolved at different speeds could end up mixing up their results).
-              const resolver = pendingPdfConversions.get(event.data.requestId);
-              if (resolver) {
-                pendingPdfConversions.delete(event.data.requestId);
-                resolver(event.data);
-              } else {
-                onlyOfficeLog('warn', `Ignoring PDF conversion result for unknown request ${event.data.requestId}`);
-              }
+              handleRequestImage(expectRpcPort(event));
               break;
             }
           }
@@ -349,61 +348,48 @@ export async function openDocument(
       if (!frame.contentWindow) {
         return Promise.resolve(false);
       }
-      return new Promise<boolean>((resolve) => {
-        let settled = false;
-        const timer = setTimeout(() => {
-          if (!settled) {
-            settled = true;
-            pendingSaveResult = undefined;
-            onlyOfficeLog('error', 'Save request timed out');
-            handlers.onSaveStateChange?.(EditicsSaveState.Error);
-            resolve(false);
-          }
-        }, SAVE_TIMEOUT_MS);
-        pendingSaveResult = (success: boolean, _error?: string): void => {
-          if (settled) {
-            return;
-          }
-          settled = true;
-          clearTimeout(timer);
-          resolve(success);
-        };
-        frame.contentWindow!.postMessage({ command: 'oo-save-request' } satisfies EditicsParentToHostMessage, hostOrigin);
-      });
+      return rpcToHost<EditicsRpcSaveReply>(frame.contentWindow, { command: 'oo-rpc-request-save' }, hostOrigin, SAVE_TIMEOUT_MS).then(
+        (reply): boolean => reply.success === true,
+        (): boolean => {
+          onlyOfficeLog('error', 'Save request timed out');
+          handlers.onSaveStateChange?.(EditicsSaveState.Error);
+          return false;
+        },
+      );
     },
     setTheme: (theme: EditicsOpenOptions['theme']): void => {
-      frame.contentWindow?.postMessage({ command: 'oo-set-theme', theme } satisfies EditicsParentToHostMessage, hostOrigin);
+      frame.contentWindow?.postMessage({ command: 'oo-event-set-theme', theme } satisfies EditicsParentToHostMessage, hostOrigin);
     },
     convertToPdf: (): Promise<Uint8Array> => {
       if (!frame.contentWindow) {
         return Promise.reject(new EditicsError(EditicsErrorCodes.FrameNotLoaded));
       }
-      return new Promise<Uint8Array>((resolve, reject) => {
-        const requestId = ++pdfRequestCounter;
-        const timer = setTimeout(() => {
-          pendingPdfConversions.delete(requestId);
-          onlyOfficeLog('error', `PDF conversion request ${requestId} timed out`);
-          reject(new EditicsError(EditicsErrorCodes.ConversionTimeout));
-        }, PDF_CONVERSION_TIMEOUT_MS);
-        pendingPdfConversions.set(requestId, (reply): void => {
-          clearTimeout(timer);
+      return rpcToHost<EditicsRpcConvertToPdfReply>(
+        frame.contentWindow,
+        { command: 'oo-rpc-convert-to-pdf' },
+        hostOrigin,
+        PDF_CONVERSION_TIMEOUT_MS,
+      ).then(
+        (reply): Uint8Array => {
           // `data` comes from the frame's realm, `instanceof Uint8Array` would be false
           if (reply.data !== undefined && ArrayBuffer.isView(reply.data)) {
-            resolve(reply.data);
-          } else {
-            const details = reply.error ?? 'no data';
-            onlyOfficeLog('error', `PDF conversion request ${requestId} failed: ${details}`);
-            reject(new EditicsError(EditicsErrorCodes.ConversionFailed, details));
+            return reply.data;
           }
-        });
-        frame.contentWindow!.postMessage({ command: 'oo-convert-to-pdf', requestId } satisfies EditicsParentToHostMessage, hostOrigin);
-      });
+          const details = reply.error ?? 'no data';
+          onlyOfficeLog('error', `PDF conversion failed: ${details}`);
+          throw new EditicsError(EditicsErrorCodes.ConversionFailed, details);
+        },
+        (): Uint8Array => {
+          onlyOfficeLog('error', 'PDF conversion request timed out');
+          throw new EditicsError(EditicsErrorCodes.ConversionTimeout);
+        },
+      );
     },
   };
 
   frame.contentWindow.postMessage(
     {
-      command: 'oo-open',
+      command: 'oo-event-open',
       options,
       documentContent,
     } satisfies EditicsParentToHostMessage,
@@ -413,13 +399,10 @@ export async function openDocument(
   return session;
 }
 
-async function handleRequestImage(host: Window, requestId: number): Promise<void> {
-  const hostOrigin = await getEditicsOrigin();
-
-  const postReply = (
-    reply: Omit<Extract<EditicsParentToHostMessage, { command: 'oo-insert-image-result' }>, 'command' | 'requestId'>,
-  ): void => {
-    host.postMessage({ command: 'oo-insert-image-result', requestId, ...reply } satisfies EditicsParentToHostMessage, hostOrigin);
+async function handleRequestImage(port: MessagePort): Promise<void> {
+  const postReply = (reply: EditicsRpcImageReply): void => {
+    port.postMessage(reply);
+    port.close();
   };
 
   const workspaceHandle = getWorkspaceHandle();

@@ -5,7 +5,9 @@ import type {
   EditicsHostToParentMessage,
   EditicsOpenOptions,
   EditicsParentToHostMessage,
-  EditicsRequestParentSaveReply,
+  EditicsRpcConvertToPdfReply,
+  EditicsRpcImageReply,
+  EditicsRpcSaveReply,
 } from './parent_host_api';
 
 // Resolve assets relative to this standalone host page. In a web release the
@@ -39,6 +41,22 @@ const PARENT_ORIGIN = getParentOrigin();
 
 function postToParent(message: EditicsHostToParentMessage): void {
   parentWindow.postMessage(message, PARENT_ORIGIN);
+}
+
+// Sends an RPC to the parent (see the `oo-rpc-*` messages in
+// `parent_host_api.ts`) and resolves with the payload it posts back on the
+// MessagePort transferred along with the message. The extra `transfer` list
+// can be used to hand over payload buffers instead of copying them (the port
+// is always transferred along with them).
+function rpcToParent<T>(request: EditicsHostToParentMessage, transfer: Transferable[] = []): Promise<T> {
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = (ev: MessageEvent<T>): void => {
+      channel.port1.close();
+      resolve(ev.data);
+    };
+    parentWindow.postMessage(request, PARENT_ORIGIN, [channel.port2, ...transfer]);
+  });
 }
 
 function loadScript(src: string): Promise<void> {
@@ -571,22 +589,29 @@ function getApi(): OO.OOApi | null {
 
 // --- save protocol -------------------------------------------------------
 
-// In-flight save tracking: used to signal the completion of a
-// parent-initiated save request (`oo-save-request`) once the last save
-// triggered by it settles.
+// In-flight save tracking: used to signal the completion of a parent-requested
+// save (`oo-rpc-request-save`) once the last save triggered by it settles.
 let saveInflight = 0;
-let manualSavePending = false;
+// Where the completion of the ongoing parent-requested save is posted, i.e.
+// the port transferred with the `oo-rpc-request-save` message (see
+// `onSaveRequest`); it is closed once the save settles.
+let manualSavePort: MessagePort | undefined = undefined;
 let lastSaveError: string | null = null;
 
+// Signals the completion of the ongoing parent-requested save (if any) on
+// its port.
+function finishManualSave(success: boolean, error?: string, nothingToSave?: boolean): void {
+  const port = manualSavePort;
+  manualSavePort = undefined;
+  if (port) {
+    port.postMessage({ success, error, nothingToSave } satisfies EditicsRpcSaveReply);
+    port.close();
+  }
+}
+
 // Ask the parent window (only he has access to libparsec) to persist the document
-function requestParentSave(bytes: Uint8Array): Promise<EditicsRequestParentSaveReply> {
-  return new Promise(function (resolve) {
-    const channel = new MessageChannel();
-    channel.port1.onmessage = function (ev: MessageEvent<EditicsRequestParentSaveReply>) {
-      resolve(ev.data ?? { success: false, error: 'empty save reply' });
-    };
-    parentWindow.postMessage({ command: 'oo-save', data: bytes }, PARENT_ORIGIN, [channel.port2]);
-  });
+function requestParentSave(bytes: Uint8Array): Promise<EditicsRpcSaveReply> {
+  return rpcToParent({ command: 'oo-rpc-save', data: bytes });
 }
 
 // Actual save operation (the OnlyOffice editor called us with an export of the document)
@@ -603,13 +628,8 @@ async function onSaveBytes(binDocumentContent: Uint8Array, options: EditicsOpenO
     lastSaveError = String(e);
   } finally {
     saveInflight -= 1;
-    if (manualSavePending && saveInflight === 0) {
-      manualSavePending = false;
-      postToParent({
-        command: 'oo-save-result',
-        success: !lastSaveError,
-        error: lastSaveError ?? undefined,
-      });
+    if (manualSavePort !== undefined && saveInflight === 0) {
+      finishManualSave(!lastSaveError, lastSaveError ?? undefined);
     }
   }
   if (lastSaveError) {
@@ -618,20 +638,24 @@ async function onSaveBytes(binDocumentContent: Uint8Array, options: EditicsOpenO
 }
 
 // The parent asks for a save (the Parsec editor's save-on-close path, see
-// FileEditor.vue's save()). Completion is signaled back with 'oo-save-result'.
-function onSaveRequest(): void {
+// FileEditor.vue's save()).
+function onSaveRequest(port: MessagePort): void {
+  const reply = (payload: EditicsRpcSaveReply): void => {
+    port.postMessage(payload);
+    port.close();
+  };
   if (!window.ooDocEditor || !window.ooDocumentReady) {
     // Nothing editable was ever opened (or it failed to).
-    postToParent({ command: 'oo-save-result', success: true, nothingToSave: true });
+    reply({ success: true, nothingToSave: true });
     return;
   }
   const api = getApi();
   const modified = api && typeof api.isDocumentModified === 'function' ? api.isDocumentModified() : true;
   if (!modified) {
-    postToParent({ command: 'oo-save-result', success: true, nothingToSave: true });
+    reply({ success: true, nothingToSave: true });
     return;
   }
-  manualSavePending = true;
+  manualSavePort = port;
   // Goes through the wrapped `api.asc_Save`: serializeBinary ->
   // onSave(bytes) -> parent write -> editor save handshake.
   window.ooDocEditor.save();
@@ -646,23 +670,12 @@ function onSaveRequest(): void {
 // `/foo/bar.png`) and to load its content. Once received, the content is
 // handed to the editor as a data URL so it doesn't need to fetch anything.
 
-type EditicsImageReply = Extract<EditicsParentToHostMessage, { command: 'oo-insert-image-result' }>;
-
-// Pending `AddImage` requests, waiting for the parent's `oo-insert-image-result`.
-const pendingImageRequests = new Map<number, (reply: EditicsImageReply) => void>();
-let imageRequestCounter = 0;
-
 function requestParentImage(): Promise<{ fileName?: string; data: Uint8Array }> {
-  return new Promise((resolve, reject) => {
-    const requestId = ++imageRequestCounter;
-    pendingImageRequests.set(requestId, (reply) => {
-      if (reply.data !== undefined) {
-        resolve({ fileName: reply.fileName, data: reply.data });
-      } else {
-        reject(new Error(reply.error ?? 'no image data'));
-      }
-    });
-    postToParent({ command: 'oo-insert-image', requestId });
+  return rpcToParent<EditicsRpcImageReply>({ command: 'oo-rpc-insert-image' }).then((reply) => {
+    if (reply.data !== undefined) {
+      return { fileName: reply.fileName, data: reply.data };
+    }
+    throw new Error(reply.error ?? 'no image data');
   });
 }
 
@@ -862,22 +875,27 @@ async function convertToPdf(): Promise<Uint8Array> {
   return runConversion(module, 'export.bin', rendererStream, 'pdf', { noBase64: true, useFontsDir: true });
 }
 
-async function onConvertToPdfRequest(requestId: number): Promise<void> {
+async function onConvertToPdfRequest(port: MessagePort): Promise<void> {
+  // Always reply, so the parent's request never hangs.
+  const reply = (payload: EditicsRpcConvertToPdfReply): void => {
+    port.postMessage(payload);
+    port.close();
+  };
   if (!window.ooDocEditor || !window.ooDocumentReady) {
-    postToParent({ command: 'oo-convert-to-pdf-result', requestId, error: 'document not ready' });
+    reply({ error: 'document not ready' });
     return;
   }
   if (pdfConversionInProgress) {
-    postToParent({ command: 'oo-convert-to-pdf-result', requestId, error: 'conversion already in progress' });
+    reply({ error: 'conversion already in progress' });
     return;
   }
   pdfConversionInProgress = true;
   try {
     const data = await convertToPdf();
-    postToParent({ command: 'oo-convert-to-pdf-result', requestId, data });
+    reply({ data });
   } catch (e: unknown) {
     console.error('PDF conversion failed', e);
-    postToParent({ command: 'oo-convert-to-pdf-result', requestId, error: String(e) });
+    reply({ error: String(e) });
   } finally {
     pdfConversionInProgress = false;
   }
@@ -894,7 +912,7 @@ function notifySaveState(): void {
     return;
   }
   lastModified = modified;
-  postToParent({ command: 'oo-save-state', state: modified ? 'unsaved' : 'saved' });
+  postToParent({ command: 'oo-event-save-state', state: modified ? 'unsaved' : 'saved' });
 }
 
 function trackSaveState(): void {
@@ -979,19 +997,19 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
     },
     events: {
       onAppReady: function () {
-        postToParent({ command: 'oo-app-ready' });
+        postToParent({ command: 'oo-event-app-ready' });
       },
       onDocumentReady: function () {
         window.ooDocumentReady = true;
         trackSaveState();
-        postToParent({ command: 'oo-ready' });
+        postToParent({ command: 'oo-event-ready' });
       },
       onSave: async function (bytes: Uint8Array) {
         await onSaveBytes(bytes, options);
       },
       onError: function (event: { data?: unknown }) {
         postToParent({
-          command: 'oo-error',
+          command: 'oo-event-error',
           details: event && event.data !== undefined ? JSON.stringify(event.data) : String(event),
         });
       },
@@ -1092,6 +1110,17 @@ async function openDocument(options: EditicsOpenOptions, documentContent: Uint8A
   editor.loadBinary(binDocumentContent);
 }
 
+// The reply port of an `oo-rpc-*` message: it is always transferred along with
+// the message (see `parent_host_api.ts`), a missing one is a bug on the sender
+// (the parent) side.
+function expectRpcPort(event: MessageEvent, command: string): MessagePort {
+  const port = event.ports[0];
+  if (!port) {
+    throw new Error(`Bug: the '${command}' RPC message arrived without its reply port`);
+  }
+  return port;
+}
+
 window.addEventListener('message', function (event: MessageEvent) {
   // Filter messages that are not from the parent window.
   if (event.source !== parentWindow || event.origin !== PARENT_ORIGIN) {
@@ -1102,7 +1131,7 @@ window.addEventListener('message', function (event: MessageEvent) {
     return;
   }
   switch (data.command) {
-    case 'oo-open':
+    case 'oo-event-open':
       openDocument(data.options, data.documentContent).catch(function (err: Error) {
         let details = JSON.stringify(err);
         if (details === '{}') {
@@ -1114,32 +1143,29 @@ window.addEventListener('message', function (event: MessageEvent) {
           });
         }
         console.error('Error while opening the document', details);
-        postToParent({ command: 'oo-error', details });
+        postToParent({ command: 'oo-event-error', details });
       });
       break;
 
-    case 'oo-save-request':
-      onSaveRequest();
-      break;
-
-    case 'oo-set-theme':
+    case 'oo-event-set-theme':
       currentTheme = data.theme;
       applyTheme();
       break;
 
-    case 'oo-insert-image-result': {
-      const resolver = pendingImageRequests.get(data.requestId);
-      if (resolver) {
-        pendingImageRequests.delete(data.requestId);
-        resolver(data);
-      }
+    case 'oo-rpc-request-save':
+      onSaveRequest(expectRpcPort(event, data.command));
       break;
-    }
 
-    case 'oo-convert-to-pdf':
-      onConvertToPdfRequest(data.requestId);
+    case 'oo-rpc-convert-to-pdf':
+      onConvertToPdfRequest(expectRpcPort(event, data.command));
+      break;
+
+    default:
+      // Guard to have the compilation fail whenever a new message is added
+      // to the protocol.
+      data satisfies never;
       break;
   }
 });
 
-postToParent({ command: 'oo-host-ready' });
+postToParent({ command: 'oo-event-host-ready' });
