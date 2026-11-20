@@ -334,7 +334,6 @@ class EditicsJSRuntime:
         realm_id: VlobID,
         document_id: VlobID,
         editor_type: int,  # 0=Word, 1=Spreadsheet, 2=Presentation
-        vlob_version: int = 1,
         participant_session_id: EditicsParticipantSessionID | None = None,
     ) -> AsyncGenerator[EditicsJSClient, None]:
         participant_session_id = participant_session_id or uuid4().hex
@@ -346,7 +345,6 @@ class EditicsJSRuntime:
                     workspaceId: '{realm_id.hex}',
                     vlobId: '{document_id.hex}',
                     deviceIdHex: '{who.device_id.hex}',
-                    vlobVersion: {vlob_version},
                     editorType: {editor_type},
                 }},
                 {{

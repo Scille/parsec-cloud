@@ -198,7 +198,6 @@ function bytesFromEncryptedContent(encrypted, what) {
  * @property {string} userId - Integrator user id (the same `user.id` the editor
  * config gets, so the composite user IDs match).
  * @property {string} userName - Integrator user display name.
- * @property {number} vlobVersion - loaded vlob version.
  * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
  */
 /* eslint-enable max-len */
