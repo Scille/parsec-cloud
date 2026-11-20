@@ -341,7 +341,6 @@ export type {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
-  WorkspaceTimelineEntry,
   WorkspaceUserRoleChange,
   X509CertificateReference,
 } from '@/plugins/libparsec';
@@ -382,6 +381,7 @@ import type {
   UserProfile,
   UserX509CertificateDetails,
   VlobID,
+  WorkspaceTimelineEntry,
   X509CertificateReference as X509CertificateReferenceType,
 } from '@/plugins/libparsec';
 
@@ -627,6 +627,12 @@ interface UploadProgress {
   totalFiles: number;
 }
 
+interface WorkspaceTimelineEvent {
+  entry: WorkspaceTimelineEntry;
+  author?: HumanHandle;
+  recipient?: HumanHandle;
+}
+
 export {
   AccessToken,
   AccountHandle,
@@ -685,4 +691,5 @@ export {
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
+  WorkspaceTimelineEvent,
 };

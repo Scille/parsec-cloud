@@ -304,12 +304,11 @@ msTest.describe(() => {
       const sidebarArchiveButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
       const sidebarTrashButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
       const wk = documents.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
-      const contextMenu = documents.locator('.workspace-context-menu');
 
       if (page === 'archived') {
         // Archive workspace
         await wk.click({ button: 'right' });
-        await contextMenu.getByRole('listitem').nth(4).click();
+        await checkWorkspaceContextMenu(documents, 'owner', 'Archive this workspace');
         await answerQuestion(documents, true);
         await expect(documents).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
         await expect(wk).not.toBeVisible();
@@ -317,7 +316,7 @@ msTest.describe(() => {
       } else if (page === 'trashed') {
         // Move workspace to bin
         await wk.click({ button: 'right' });
-        await contextMenu.getByRole('listitem').nth(6).click();
+        await checkWorkspaceContextMenu(documents, 'owner', 'Delete this workspace');
         await answerQuestion(documents, true);
         await fillInputModal(documents, 'wksp1');
         await expect(documents).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');

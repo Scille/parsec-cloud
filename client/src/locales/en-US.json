@@ -215,7 +215,6 @@
             "downloadParsec": "Download desktop app"
         },
         "organizationList": {
-            "title": "Access your organizations",
             "subtitle": "Your organizations",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
@@ -285,29 +284,24 @@
         },
         "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",
         "noDevices": {
-            "titleCreateOrga": "New to Parsec?",
-            "titleInvitation": "You have received an invitation link?",
-            "invitationLink": "Enter the invitation link",
-            "invitationJoin": "Join",
-            "subtitle": "Enjoy a cloud experience with the guarantee that your data belongs to you."
-        },
-        "webAccess": {
-            "title": "Would you like to access your organization from this browser?",
-            "subtitle": "If you have already joined an organization on Parsec, follow these steps to access it from this browser:",
-            "step": {
-                "showButton": "Show steps",
-                "hideButton": "Hide steps",
-                "one": "Launch <b>Parsec</b> (desktop app) and <b>log in</b> to your organization.",
-                "two": "From your account menu (top right), select <b>My devices</b>, then click on <b>Add New Device</b> and <b>copy the link</b>.",
-                "three": "<b>Paste the link</b> below and follow the instructions to set up your web browser."
+            "link": {
+                "title": "Do you have a Parsec link?",
+                "subtitle": "Paste it to join an organization or add this device.",
+                "placeholder": "Paste your link here",
+                "continue": "Continue",
+                "paste": "Paste from clipboard"
             },
-            "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
-            "joinButton": "Continue",
-            "info": "Parsec securely stores your access keys in your browser. Make sure that browser storage is enabled and that it is not deleted when you close your browser ({more}).",
-            "more": "Learn more"
+            "otherNeeds": "Want to create your organization?",
+            "create": {
+                "title": "Create an organization",
+                "description": "Set up your organization to secure your data and your collaborators' data."
+            },
+            "trial": {
+                "title": "Try for free",
+                "description": "Try all features for <b>15 days</b>, with no commitment and no credit card required."
+            }
         },
         "lostDevice": "Lost your access?",
-        "recoverDevice": "Recover my session",
         "shamir": {
             "invalidLink": "Not a valid recovery link.",
             "noAuthentication": "The recovery was stopped because no authentication method was chosen.",
@@ -593,6 +587,24 @@
             "viewDocuments": "View documents (open, preview)"
         }
     },
+    "WorkspaceActivity": {
+        "title": "Workspace activity",
+        "exportAll": "Export all data",
+        "loadError": "Failed to load the workspace activity.",
+        "noActivity": "No activity",
+        "unknownUser": "Unknown user",
+        "events": {
+            "archived": "<strong>{author}</strong> archived the workspace.",
+            "created": "<strong>{author}</strong> created the workspace <strong>{name}</strong>.",
+            "deletionPlanned": "The permanent deletion of the workspace is scheduled for <strong>{when}</strong>.",
+            "renamed": "<strong>{author}</strong> renamed the workspace <strong>{previousName}</strong> to <strong>{newName}</strong>.",
+            "renamedTo": "<strong>{author}</strong> renamed the workspace to <strong>{newName}</strong>.",
+            "restored": "<strong>{author}</strong> restored the workspace.",
+            "shared": "<strong>{author}</strong> added <strong>{with}</strong> as <strong>{role}</strong>.",
+            "unshared": "<strong>{author}</strong> removed <strong>{with}</strong> from the workspace.",
+            "roleChanged": "<strong>{author}</strong> changed the role of <strong>{with}</strong> to <strong>{role}</strong>."
+        }
+    },
     "WorkspaceSharing": {
         "title": "Share the workspace",
         "searchPlaceholder": "John Smith",
@@ -709,6 +721,7 @@
             "actionHistory": "History",
             "actionShare": "Sharing and roles",
             "actionDetails": "Details",
+            "actionActivity": "Activity",
             "actionHide": "Hide this workspace",
             "actionShow": "Show this workspace",
             "actionArchive": "Archive this workspace",
@@ -1458,11 +1471,11 @@
                 },
                 "recoveryFile": {
                     "title": "Recovery file",
-                    "subtitle": "You must have created a recovery file and a secret key."
+                    "subtitle": "You must have created a recovery file and a secret key to recover access to Parsec."
                 },
                 "shamir": {
-                    "title": "Trusted users",
-                    "subtitle": "You must have created a circle of trust with at least {threshold} people."
+                    "title": "Recovery contacts",
+                    "subtitle": "You must have set up at least {threshold} recovery contacts to help you recover access to Parsec."
                 }
             },
             "connectedDevice": {
@@ -1490,75 +1503,75 @@
             },
             "shamir": {
                 "instructions": {
-                    "title": "How does the circle of trust work",
+                    "title": "How to recover access with recovery contacts",
                     "previous": "Previous",
                     "next": "Next",
                     "understood": "Got it",
                     "steps": {
                         "getLinks": {
-                            "title": "Get recovery links",
-                            "description": "Contact a trusted person (by email, by phone or in person) to get your recovery link (accessible from their profile)."
+                            "title": "Get a recovery link",
+                            "description": "Get in touch with one of your recovery contacts (by email, by phone or in person) to get the recovery link."
                         },
                         "exchangeCodes": {
                             "title": "Exchange codes",
-                            "description": "Choose your trusted people, and exchange codes with them to validate your recovery."
+                            "description": "Perform code exchange with enough recovery contacts to validate recovery."
                         },
                         "recoverAccount": {
                             "title": "Recover your account",
-                            "description": "Once you have the required number of approvals, you can recover your account and choose how you want to authenticate."
+                            "description": "Once you have the required number of approvals, you can recover access to Parsec and choose how you want to authenticate."
                         }
                     }
                 },
                 "link": {
-                    "title": "Start your account recovery",
-                    "subtitle": "Enter a recovery link, then exchange codes with your trusted people.",
+                    "title": "Start your access recovery",
+                    "subtitle": "Enter the recovery link, then exchange codes with your recovery contacts.",
                     "inputLabel": "Recovery link",
                     "start": "Start recovery",
                     "reminderTitle": "Where can I find this link?",
-                    "reminderDescription": "Your trusted contacts have this link. They can find it in their <b>profile</b>, via the <b>Access recovery</b> tab, by clicking <b>Help recover an access</b>, then <b>Copy link</b>."
+                    "reminderDescription": "Your recovery contacts can find the recovery link from their <b>profile</b>, via the <b>Access recovery</b> tab, by clicking <b>Assist as a recovery contact</b>, then <b>Copy link</b>."
                 },
                 "claim": {
                     "progressLabel": "Required approvals",
                     "progressCount": "{current} of {total}",
-                    "searchPlaceholder": "Search trusted people by name or email",
-                    "noMatch": "No trusted person matches your search.",
+                    "searchPlaceholder": "Search recovery contacts by name or email",
+                    "noMatch": "No recovery contact matches your search.",
                     "choose": "Choose",
                     "waiting": "Waiting...",
                     "cancel": "Cancel",
                     "done": {
                         "title": "Validation complete",
-                        "subtitle": "Your trusted people have approved your recovery. You can now set a new authentication method to access your account.",
+                        "subtitle": "Your recovery contacts have approved your recovery. You can now set up a new authentication method to access Parsec.",
                         "continue": "Set my authentication method"
                     },
                     "interrupt": {
                         "title": "Interrupt the recovery",
-                        "message": "Are you sure you want to interrupt your account recovery?",
+                        "message": "Are you sure you want to interrupt the recovery process?",
                         "yes": "Interrupt",
                         "no": "Keep going"
                     },
                     "errors": {
-                        "pickRecipientFailed": "Unable to reach this trusted person.",
-                        "waitFailed": "An error occurred while waiting for the trusted person.",
-                        "greeterCancelled": "The trusted person cancelled the code exchange.",
+                        "pickRecipientFailed": "Unable to reach this recovery contact.",
+                        "waitFailed": "An error occurred while waiting for the recovery contact.",
+                        "greeterCancelled": "The recovery contact cancelled the code exchange.",
                         "noCodeSelected": "No code was selected, the code exchange has been cancelled.",
                         "wrongCodeSelected": "The selected code is incorrect, the code exchange has been cancelled.",
                         "exchangeFailed": "The code exchange failed.",
-                        "claimFailed": "Unable to retrieve this trusted person's approval.",
-                        "addShareFailed": "Unable to add this trusted person's approval."
+                        "claimFailed": "Unable to retrieve this recovery contact's approval.",
+                        "addShareFailed": "Unable to add this recovery contact's approval."
                     },
                     "exchange": {
                         "chooseCode": {
-                            "title": "Trusted person's code",
-                            "description": "Select the code {name} gave you."
+                            "title": "Code from the recovery contact",
+                            "description": "Select the code {name} gives you."
                         },
                         "provideCode": {
                             "title": "Code to share",
-                            "description": "Please share this code with {name} to start the process."
+                            "description": "Share this code with {name}."
                         },
-                        "waiting": "Waiting for the trusted person"
+                        "waiting": "Waiting for the recovery contact"
                     },
                     "reminderTitle": "How do I exchange codes with a person?",
-                    "reminderDescription": "Choose a person who has access to Parsec and ask them to start the recovery via the <b>Access recovery</b> tab, by clicking <b>Help recover an access</b>, then <b>Start</b>.",
+                    "reminderDescription": "Choose a person who has access to Parsec and ask them to start the recovery via the <b>Access recovery</b> tab, by clicking <b>Assist as a recovery contact</b>, then <b>Start</b>.",
                     "progressDone": "Recovery complete"
                 }
             },
@@ -2160,81 +2173,81 @@
             "action": "Add a device"
         },
         "shamir": {
-            "title": "People of trust",
-            "description": "Designate at least {count} trusted people. In case of lost access, they can help you regain access to your account.",
-            "action": "Manage my people of trust",
-            "actionSecondary": "Help recover an access",
+            "title": "Recovery contacts",
+            "description": "Choose at least {count} recovery contacts. In case you lose access to Parsec, they can help you regain it.",
+            "action": "Manage my recovery contacts",
+            "actionSecondary": "Assist as a recovery contact",
             "modalSelf": {
-                "title": "My circle of trust",
-                "subtitle": "Manage your circle of trust for access recovery",
+                "title": "My recovery contacts",
+                "subtitle": "Set up your recovery contacts",
                 "setupInfo": {
-                    "title": "Designate trusted people",
-                    "subtitle": "If you lose your password or device, {threshold} of these people can help you restore your access to your account.",
-                    "info1Title": "Choose at least {threshold} colleagues",
-                    "info1Subtitle": "From among the organization's users — people you can easily contact",
-                    "info2Title": "They are notified and informed of their role",
-                    "info2Subtitle": "They will know they can help you recover your access if needed",
-                    "startSetup": "Choose my trusted people"
+                    "title": "Set up recovery contacts",
+                    "subtitle": "If you lose your password or device, {threshold} recovery contacts can work together to restore your access to Parsec.",
+                    "info1Title": "Choose at least {threshold} recovery contacts",
+                    "info1Subtitle": "Choose among the members of your organization, people you can easily contact",
+                    "info2Title": "Contact them in case you need help to recover access",
+                    "info2Subtitle": "They will be able to send you the recovery link and exchange codes to recover access to Parsec.",
+                    "startSetup": "Choose my recovery contacts"
                 },
                 "threshold": {
-                    "title": "Trusted people",
+                    "title": "Recovery contacts",
                     "minUsers": "{count} / {threshold} minimum",
                     "selected": "{count} selected",
-                    "subtitle": "These people will be able to help you recover your access."
+                    "subtitle": "These contacts will be able to help you recover access to Parsec."
                 },
                 "trustedPeople": {
                     "input": "Search by name or email",
-                    "noPeopleAddedTitle": "Search people you trust to start your circle.",
-                    "noPeopleAddedSubtitle": "You can add people by searching their name or email.",
-                    "checkbox": "I confirm my choice of trusted people for access recovery",
-                    "confirmSetup": "Create my circle of trust"
+                    "noPeopleAddedTitle": "Choose people you trust.",
+                    "noPeopleAddedSubtitle": "Add contacts by searching for their name or email address.",
+                    "checkbox": "I confirm the selected recovery contacts will be able to help me recover access to Parsec.",
+                    "confirmSetup": "Confirm my recovery contacts"
                 },
                 "deleteModal": {
-                    "title": "Delete my circle of trust",
-                    "message": "Your current circle will be deleted. You can then create a new one with other people.",
-                    "yes": "Delete my circle",
+                    "title": "Remove my recovery contacts",
+                    "message": "Your current recovery contacts will be removed. You will be able to set up new recovery contacts.",
+                    "yes": "Remove recovery contacts",
                     "no": "Keep"
                 },
-                "setupDone": "Your circle of trust is configured",
+                "setupDone": "Your recovery contacts are confirmed",
                 "revoked": "Revoked",
-                "warningRevokedRecipients": "Warning: some of your people of trust are revoked.",
-                "errorRecipientsAllRevoked": "The circle of trust contains only revoked people. Please delete it and create a new one.",
-                "numberPeople": "{count} trusted people",
-                "necessaryPeople": "{threshold} people of trust are necessary to recover your access.",
+                "warningRevokedRecipients": "Warning: one or more of your recovery contacts is revoked. They will not be able to help you recover access to Parsec.",
+                "errorRecipientsAllRevoked": "The selected recovery contacts are all revoked. Please delete current configuration and set up new recovery contacts.",
+                "numberPeople": "{count} recovery contacts",
+                "necessaryPeople": "{threshold} recovery contacts are necessary to recover access to Parsec.",
                 "close": "Close",
-                "delete": "Delete my circle of trust",
+                "delete": "Remove my recovery contacts",
                 "toasts": {
-                    "setupSuccess": "Your circle of trust has been created.",
-                    "setupFailed": "Cannot set up the circle of trust. Please try again."
+                    "setupSuccess": "Your recovery contacts have been confirmed.",
+                    "setupFailed": "Cannot set up recovery contacts. Please try again."
                 },
                 "errors": {
-                    "setupFailed": "Cannot set up the circle of trust. Please try again."
+                    "setupFailed": "Cannot set up the recovery contacts. Please try again."
                 }
             },
             "modalOthers": {
-                "title": "Help recover access",
-                "subtitle": "Help someone recover their access by being part of their circle of trust.",
-                "info": "If one of them contacts you, copy their link and send it to them, they can then initiate the code exchange.",
-                "noPeopleTitle": "You are not part of any circle of trust",
-                "noPeopleSubtitle": "People who have added you to their circle of trust will appear here. You can then help them recover their access in case of loss.",
+                "title": "Assist as a recovery contact",
+                "subtitle": "Assist people who added you as a recovery contact to regain access to Parsec.",
+                "info": "Find the person from the list below to start the recovery process. The person will receive a link by email but you can also copy the link and send it manually.",
+                "noPeopleTitle": "No one has selected you as a recovery contact.",
+                "noPeopleSubtitle": "People who have added you as a recovery contact will appear here. You can then help them recover access to Parsec.",
                 "copyLink": "Copy link",
                 "toasts": {
                     "linkCopied": "Recovery link copied to clipboard.",
                     "linkNotCopied": "Failed to copy recovery link to clipboard."
                 },
-                "recover": "Recover",
+                "recover": "Recovery",
                 "start": "Start"
             },
             "errors": {
                 "generic": "An error occurred. Please try again later.",
                 "failedToGetLink": "Failed to get the recovery link.",
-                "notEnoughPeople": "Not enough people in your organization. At least {needed} people with a profile different than External are required.",
+                "notEnoughPeople": "Not enough users in your organization. At least {needed} users are required to set up recovery contacts, excluding users with External profile.",
                 "notEnoughAdmins": "Not enough administrators in your organization. At least {needed} administrators are required."
             },
             "greet": {
                 "waitClaimer": {
                     "title": "Waiting for {name}",
-                    "description": "Ask {name} to choose you in their list to start the code exchange."
+                    "description": "Ask {name} to select your user from the recovery contacts list to start the code exchange."
                 },
                 "provideCode": {
                     "title": "Code to share",
@@ -2245,7 +2258,7 @@
                     "description": "Please select the verification code shared by {name}."
                 },
                 "waiting": "(Waiting for {name})",
-                "success": "You helped {name} recover their access.",
+                "success": "You helped {name} recover access to Parsec.",
                 "interrupt": {
                     "title": "Interrupt the recovery",
                     "message": "Are you sure you want to interrupt the recovery of {name}?",

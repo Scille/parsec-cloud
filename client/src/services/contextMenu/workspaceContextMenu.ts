@@ -107,6 +107,9 @@ export function useWorkspaceContextMenu(fromSidebar = false) {
       case WorkspaceAction.ShowDetails:
         await actions.showDetails(workspace);
         break;
+      case WorkspaceAction.ShowTimeline:
+        await actions.showTimeline(workspace);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
         break;
@@ -211,6 +214,12 @@ export function useWorkspaceContextMenu(fromSidebar = false) {
         break;
       case WorkspaceAction.Trash:
         await actions.trashWorkspace(workspace);
+        break;
+      case WorkspaceAction.ShowDetails:
+        await actions.showDetails(workspace);
+        break;
+      case WorkspaceAction.ShowTimeline:
+        await actions.showTimeline(workspace);
         break;
       default:
         console.warn('No WorkspaceAction match found');
