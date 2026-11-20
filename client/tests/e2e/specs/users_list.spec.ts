@@ -867,8 +867,8 @@ msTest('Check in UsersPage if action bar updates after resized', async ({ usersP
 
   await resizePage(usersPage, 1600);
   await expect(actionBar).toBeVisible();
-  await expect(actionsBarButtons).toHaveCount(2);
-  await expect(actionsBarButtons).toHaveText(['Invite a user', 'Copy join request link (PKI/SSO)']);
+  await expect(actionsBarButtons).toHaveCount(3);
+  await expect(actionsBarButtons).toHaveText(['Invite a user', 'Copy join request link (PKI/SSO)', 'Activity']);
   await expect(actionBarMoreButton).toBeHidden();
 
   await resizePage(usersPage, 1240);

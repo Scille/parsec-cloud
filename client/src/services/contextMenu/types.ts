@@ -41,6 +41,7 @@ export enum UserAction {
   ToggleSelect = 'user-toggle-select',
   SelectAll = 'user-select-all',
   UnselectAll = 'user-unselect-all',
+  ShowTimeline = 'user-show-timeline',
 }
 
 export function isUserAction(value: any): value is UserAction {
