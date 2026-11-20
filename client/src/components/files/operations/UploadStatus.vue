@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <div class="upload-status">
+  <div
+    class="upload-status"
+    :class="{ 'upload-status--collapsed': collapsed }"
+  >
     <template v-if="status.totalFiles > 0">
       <div class="upload-status-syncing">
         <ms-spinner
@@ -29,6 +32,12 @@
         <ion-text class="upload-status-syncing__files">
           {{ $msTranslate({ key: 'FoldersPage.ImportFile.syncing.filesLeft', count: status.totalFiles }) }}
         </ion-text>
+        <ion-icon
+          v-if="collapsed"
+          :icon="close"
+          class="upload-status__icon close-icon"
+          @click.stop="$emit('close')"
+        />
       </div>
     </template>
     <template v-else>
@@ -40,7 +49,7 @@
       <ion-icon
         :icon="close"
         class="upload-status__icon close-icon"
-        @click="$emit('close')"
+        @click.stop="$emit('close')"
       />
     </template>
   </div>
@@ -57,10 +66,16 @@ import { onMounted, onUnmounted, ref } from 'vue';
 
 const ETA_REFRESH_INTERVAL_MS = 2500;
 
-const props = defineProps<{
-  status: UploadProgress;
-  rateCalculator: TransferRateCalculator;
-}>();
+const props = withDefaults(
+  defineProps<{
+    status: UploadProgress;
+    rateCalculator: TransferRateCalculator;
+    collapsed?: boolean;
+  }>(),
+  {
+    collapsed: false,
+  },
+);
 
 const eta = ref(Infinity);
 let refreshInterval: ReturnType<typeof setInterval> | undefined;
@@ -84,7 +99,7 @@ defineEmits<{
 .upload-status {
   display: flex;
   align-items: center;
-  padding: ms.spacing('padding-2xl') ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-2xl');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-lg');
   background: ms.color('surface-base-page');
   gap: ms.spacing('gap-md');
   min-height: 3rem;
@@ -146,6 +161,15 @@ defineEmits<{
 
     &__spinner {
       align-self: start;
+      color: ms.color('icon-brand-default');
+
+      :deep(.circular-progress circle) {
+        stroke: ms.color('icon-brand-default');
+      }
+
+      :deep(.circular-progress circle.bg) {
+        stroke: transparent;
+      }
     }
 
     &-text {
@@ -168,6 +192,22 @@ defineEmits<{
       @include ms.font('label-sm-medium');
       color: ms.color('text-base-body');
       margin-left: auto;
+    }
+  }
+
+  &--collapsed {
+    .upload-status-syncing .close-icon {
+      display: none;
+    }
+
+    .upload-status-syncing:hover {
+      .close-icon {
+        display: flex;
+      }
+
+      .upload-status-syncing__files {
+        display: none;
+      }
     }
   }
 }

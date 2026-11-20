@@ -2,16 +2,23 @@
 
 import { ref } from 'vue';
 
+export enum UploadMenuState {
+  Open = 'open',
+  Collapsed = 'collapsed',
+  Floating = 'floating',
+}
+
 const _isVisible = ref(false);
-const _isMinimized = ref(true);
+const _state = ref<UploadMenuState>(UploadMenuState.Floating);
 
 interface UploadMenuControl {
   show: () => void;
   hide: () => void;
-  expand: () => void;
+  open: () => void;
+  collapse: () => void;
   minimize: () => void;
   isVisible: () => boolean;
-  isMinimized: () => boolean;
+  getState: () => UploadMenuState;
 }
 
 export default function useUploadMenu(): UploadMenuControl {
@@ -23,28 +30,33 @@ export default function useUploadMenu(): UploadMenuControl {
     _isVisible.value = false;
   }
 
-  function expand(): void {
-    _isMinimized.value = false;
+  function open(): void {
+    _state.value = UploadMenuState.Open;
+  }
+
+  function collapse(): void {
+    _state.value = UploadMenuState.Collapsed;
   }
 
   function minimize(): void {
-    _isMinimized.value = true;
+    _state.value = UploadMenuState.Floating;
   }
 
   function isVisible(): boolean {
     return _isVisible.value;
   }
 
-  function isMinimized(): boolean {
-    return _isMinimized.value;
+  function getState(): UploadMenuState {
+    return _state.value;
   }
 
   return {
     show,
     hide,
-    expand,
+    open,
+    collapse,
     minimize,
     isVisible,
-    isMinimized,
+    getState,
   };
 }
