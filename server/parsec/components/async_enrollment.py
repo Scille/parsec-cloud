@@ -777,8 +777,6 @@ async def send_accepted_enrollment_email(
     claimer_email: EmailAddress,
     user_label: str,
 ) -> SendEmailBadOutcome | None:
-    if not config.server_addr:
-        return SendEmailBadOutcome.BAD_SMTP_CONFIG
     message = generate_accepted_enrollment_email(
         jinja_env=config.jinja_env,
         from_addr=config.email_config.sender,
