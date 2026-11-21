@@ -4,10 +4,10 @@ import { Locator } from '@playwright/test';
 import {
   DisplaySize,
   expect,
-  fillInputModal,
   fillIonInput,
   getClipboardText,
   inviteUsers,
+  joinWithLink,
   MsPage,
   setWriteClipboardPermission,
 } from '@tests/e2e/helpers';
@@ -52,15 +52,7 @@ export async function initGreetUserModals(
   await expect(hostPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
   const invitationLink = await getClipboardText(hostPage);
 
-  await guestPage.locator('#create-organization-button').click();
-  if (displaySize === DisplaySize.Small) {
-    await expect(guestPage.locator('.create-join-modal')).toBeVisible();
-    await guestPage.locator('.create-join-modal').getByRole('listitem').nth(1).click();
-  } else {
-    await expect(guestPage.locator('.homepage-popover')).toBeVisible();
-    await guestPage.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  }
-  await fillInputModal(guestPage, invitationLink);
+  await joinWithLink(guestPage, invitationLink);
   const joinModal = guestPage.locator('.join-organization-modal');
   await expect(joinModal).toBeVisible();
 

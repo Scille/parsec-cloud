@@ -7,10 +7,11 @@ import {
   MockBms,
   MsPage,
   expect,
-  fillInputModal,
   fillIonInput,
   getTestbedBootstrapAddr,
+  joinWithLink,
   msTest,
+  openCreateOrganization,
   openExternalLink,
   setupNewPage,
 } from '@tests/e2e/helpers';
@@ -18,14 +19,7 @@ import { randomInt } from 'crypto';
 import path from 'path';
 
 async function openCreateOrganizationModal(page: MsPage): Promise<Locator> {
-  await page.locator('#create-organization-button').click();
-  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
-
-  if (smallDisplay) {
-    await page.locator('.create-join-modal-list__item').nth(0).click();
-  } else {
-    await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
-  }
+  await openCreateOrganization(page);
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-choice-item').nth(0).click();
   await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
@@ -275,9 +269,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
 
   const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
 
-  await page.locator('#create-organization-button').click();
-  await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, getTestbedBootstrapAddr(uniqueOrgName));
+  await joinWithLink(page, getTestbedBootstrapAddr(uniqueOrgName));
   const modal = page.locator('.create-organization-modal');
 
   // Mock the BMS
@@ -819,13 +811,7 @@ for (const displaySize of ['small', 'large']) {
 
       const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
 
-      await page.locator('#create-organization-button').click();
-      if (displaySize === DisplaySize.Small) {
-        await page.locator('.create-join-modal-list__item').nth(1).click();
-      } else {
-        await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-      }
-      await fillInputModal(page, getTestbedBootstrapAddr(uniqueOrgName));
+      await joinWithLink(page, getTestbedBootstrapAddr(uniqueOrgName));
       const modal = page.locator('.create-organization-modal');
 
       // Mock the BMS

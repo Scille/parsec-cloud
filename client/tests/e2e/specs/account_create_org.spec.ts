@@ -8,6 +8,7 @@ import {
   MockBms,
   MsPage,
   msTest,
+  openCreateOrganization,
   setupNewPage,
 } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
@@ -18,8 +19,7 @@ msTest('Account create org custom server with server matching', async ({ context
   await setupNewPage(page, { withParsecAccount: true, parsecAccountAutoLogin: true, location: '/page' });
   await expect(page).toHaveURL(/.+\/home$/);
 
-  await page.locator('#create-organization-button').click();
-  await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+  await openCreateOrganization(page);
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
 
@@ -99,8 +99,7 @@ msTest('Account create org saas with server matching', async ({ context }) => {
   });
   await expect(page).toHaveURL(/.+\/home$/);
 
-  await page.locator('#create-organization-button').click();
-  await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+  await openCreateOrganization(page);
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-choice-item').nth(0).click();
   await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();

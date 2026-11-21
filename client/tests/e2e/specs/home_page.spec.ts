@@ -11,7 +11,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
 
     const topBar = home.locator('.topbar');
-    await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
 
     const container = home.locator('.slider-container');
     await expect(container.locator('.organization-brand__subtitle')).toHaveText('Welcome back to Parsec');
@@ -32,8 +31,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(otherActions.locator('#other-actions-create-button')).toHaveText('Create an organization');
 
     if (displaySize === 'large') {
-      await expect(topBar.locator('.topbar-right').locator('#create-organization-button')).toHaveText(['Create or join']);
-      await expect(topBar.locator('.topbar-right').locator('#recover-button-header')).toHaveText(['Lost your access?']);
+      await expect(topBar.locator('.topbar-right').locator('#recover-button-header')).toHaveText(['I lost my access']);
       await expect(home.locator('.homepage-sidebar')).toBeVisible();
       await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
         'About',
@@ -44,7 +42,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Customer area',
       ]);
     } else {
-      await expect(topBar.locator('.topbar-right').locator('#create-organization-button')).toHaveText(['Create or join']);
       await expect(home.locator('.homepage-sidebar')).toBeHidden();
       await expect(home.locator('.menu-secondary')).toBeHidden();
       await home.locator('.menu-button').isVisible();
@@ -91,11 +88,10 @@ msTest('Check join link', async ({ home }) => {
     },
   ];
 
-  await home.locator('#create-organization-button').click();
-  await home.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  const confirmButton = home.locator('.text-input-modal').locator('#next-button');
-  const errorForm = home.locator('.text-input-modal').locator('.form-error');
-  const input = home.locator('.text-input-modal').locator('ion-input');
+  const linkForm = home.locator('.other-actions-link-form');
+  const confirmButton = linkForm.locator('#other-actions-join-button');
+  const errorForm = linkForm.locator('.form-error');
+  const input = linkForm.locator('ion-input');
 
   await expect(confirmButton).toHaveDisabledAttribute();
 
@@ -167,7 +163,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await home.locator('.organization-list').locator('.organization-item').nth(0).click();
     await expect(home.locator('.login-header__title')).toHaveText('Log in to an organization');
     await expect(home.locator('.organization-list')).toBeHidden();
-    const backButton = home.locator('.topbar-left__back-button');
+    const backButton = home.locator('.actions__back-button');
 
     if (displaySize === DisplaySize.Small) {
       await home.setDisplaySize(DisplaySize.Small);
