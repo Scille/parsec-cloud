@@ -67,9 +67,9 @@ const CRYPTO_BATCH_SIZE = 64;
 // The payloads of a crypto batch travel as a single flat buffer: the i-th
 // payload is `flat[offsets[i]..offsets[i+1]]` (so `offsets` has one more entry
 // than the payload count). This is the shape used on the wire towards the
-// parent (see `oo-encrypt-batch`/`oo-decrypt-batch` in `parent_host_api.ts`)
-// and towards libparsec (see `workspace_editics_(encrypt|decrypt)_batch`), so
-// a batch crosses the whole stack without ever being split or re-flattened.
+// parent (see `oo-rpc-(encrypt|decrypt)-batch` messages) and towards libparsec
+// (see `workspace_editics_(encrypt|decrypt)_batch`), so a batch crosses the whole
+// stack without ever being split or re-flattened.
 
 /**
  * @param {Uint8Array[]} payloads
@@ -187,18 +187,14 @@ function bytesFromEncryptedContent(encrypted, what) {
  * is responsible for splitting the batches when the key index changes, see
  * `_decryptInBatches`).
  * @typedef {Object} EditicsLibparsecDeps
- * @property {(deviceIdHex: string) => Promise<EditicsLibparsecResult<string>>} getHumanLabelFromDeviceId
- * @property {(flat: Uint8Array, offsets: number[]) => Promise<{keyIndex: number, flat: Uint8Array, offsets: number[]}>} encryptBatch
- * @property {(keyIndex: number, flat: Uint8Array, offsets: number[]) => Promise<EditicsLibparsecResult<{flat: Uint8Array, offsets: number[]}>>} decryptBatch
+ * @property {(deviceId: string) => Promise<EditicsLibparsecResult<string>>} getHumanLabelFromDeviceId
+ * @property {(flatCleartexts: Uint8Array, offsets: number[]) => Promise<{keyIndex: number, flatCiphertexts: Uint8Array, offsets: number[]}>} encryptBatch
+ * @property {(keyIndex: number, flatCiphertexts: Uint8Array, offsets: number[]) => Promise<EditicsLibparsecResult<{flatCleartexts: Uint8Array, offsets: number[]}>>} decryptBatch
  *
  * @typedef {Object} EditicsTranslatorConfig
  * @property {string} workspaceId - WorkspaceID (VlobID) hex.
  * @property {string} vlobId - VlobID hex of the document.
- * @property {string} deviceIdHex - DeviceID hex of the client's device.
- * @property {string} userId - Integrator user id (the same `user.id` the editor
- * config gets, so the composite user IDs match).
- * @property {string} userName - Integrator user display name.
- * @property {number} editorType - 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio.
+ * @property {boolean} isWordEditor
  */
 /* eslint-enable max-len */
 
@@ -239,19 +235,19 @@ class EditicsTranslator {
   }
 
   /**
-   * @param {string} deviceIdHex
+   * @param {string} deviceId
    * @returns {Promise<EditicsResult<string>>}
    */
-  async getHumanLabelFromDeviceId(deviceIdHex) {
-    const found = this._humanLabelFromDeviceIdCache.get(deviceIdHex);
+  async getHumanLabelFromDeviceId(deviceId) {
+    const found = this._humanLabelFromDeviceIdCache.get(deviceId);
     if (found !== undefined) {
       return { ok: true, value: found };
     }
     // Cache miss
-    const result = await this.libparsec.getHumanLabelFromDeviceId(deviceIdHex);
+    const result = await this.libparsec.getHumanLabelFromDeviceId(deviceId);
     if (result.ok) {
       // Overwrite any concurrent insertion since the result should be always the same.
-      this._humanLabelFromDeviceIdCache.set(deviceIdHex, result.value);
+      this._humanLabelFromDeviceIdCache.set(deviceId, result.value);
     }
     return result;
   }
@@ -291,8 +287,8 @@ class EditicsTranslator {
    * @returns {Promise<[number, Uint8Array]>} (key index, ciphertext)
    */
   async _encrypt(cleartext) {
-    const { keyIndex, flat, offsets } = await this.libparsec.encryptBatch(cleartext, [0, cleartext.byteLength]);
-    return [keyIndex, flat.subarray(offsets[0], offsets[1])];
+    const { keyIndex, flatCiphertexts, offsets } = await this.libparsec.encryptBatch(cleartext, [0, cleartext.byteLength]);
+    return [keyIndex, flatCiphertexts.subarray(offsets[0], offsets[1])];
   }
 
   /**
@@ -310,7 +306,7 @@ class EditicsTranslator {
     if (!result.ok) {
       return result;
     }
-    return { ok: true, value: result.value.flat.subarray(result.value.offsets[0], result.value.offsets[1]) };
+    return { ok: true, value: result.value.flatCleartexts.subarray(result.value.offsets[0], result.value.offsets[1]) };
   }
 
   /**
@@ -333,9 +329,9 @@ class EditicsTranslator {
       if (!cleartexts.ok) {
         return cleartexts;
       }
-      const { flat, offsets } = flattenBuffers(cleartexts.value);
-      const { keyIndex, flat: cipherFlat, offsets: cipherOffsets } = await this.libparsec.encryptBatch(flat, offsets);
-      cookBatch(keyIndex, cipherFlat, cipherOffsets);
+      const { flat: flatCleartexts, offsets: cleartextOffsets } = flattenBuffers(cleartexts.value);
+      const { keyIndex, flatCiphertexts, offsets: ciphertextOffsets } = await this.libparsec.encryptBatch(flatCleartexts, cleartextOffsets);
+      cookBatch(keyIndex, flatCiphertexts, ciphertextOffsets);
       // Allows early GC reclaim of used items (as it is likely there are referenced once)
       /** @type {unknown[]} */ (items).fill(null, i, i + chunk.length);
     }
@@ -373,7 +369,7 @@ class EditicsTranslator {
       if (!result.ok) {
         return result;
       }
-      cookBatch(batchItems, unflattenBuffers(result.value.flat, result.value.offsets));
+      cookBatch(batchItems, unflattenBuffers(result.value.flatCleartexts, result.value.offsets));
       // Allows early GC reclaim of used items (as it is likely there are referenced once)
       /** @type {unknown[]} */ (items).fill(null, batchStart, batchEnd);
       return { ok: true, value: null };
@@ -595,9 +591,9 @@ class EditicsTranslator {
         // base64 part carries information.
         return bytesFromBase64(fragment.slice(fragment.indexOf(';') + 1), 'OnlyOffice change fragment');
       },
-      (keyIndex, flat, offsets) => {
+      (keyIndex, flatCiphertexts, offsets) => {
         for (let j = 0; j < offsets.length - 1; j++) {
-          encryptedChanges.push([keyIndex, flat.subarray(offsets[j], offsets[j + 1]).toBase64()]);
+          encryptedChanges.push([keyIndex, flatCiphertexts.subarray(offsets[j], offsets[j + 1]).toBase64()]);
         }
       },
     );
@@ -1087,7 +1083,8 @@ class EditicsTranslator {
         block: lock.block,
       };
     });
-    if (this.config.editorType === 0) {
+    // Word is the only editor that returns the locks as a record...
+    if (this.config.isWordEditor) {
       /** @type {Record<string, OOLockEntry>} */
       const table = {};
       for (const record of records) {

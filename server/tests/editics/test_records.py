@@ -124,7 +124,7 @@ class RecordEvent:
 
 def _parse_record(
     record_path: Path,
-) -> tuple[int, list[RecordEvent], dict[EditicsParticipantSessionID, str]]:
+) -> tuple[bool, list[RecordEvent], dict[EditicsParticipantSessionID, str]]:
     """
     Parse the record's events, returning the editor type (0=Word, 1=Spreadsheet,
     2=Presentation), the events, and a label per participant ID (for readable
@@ -340,13 +340,16 @@ def _parse_record(
             )
         )
 
-    editor_type = next(
-        event.payload["editorType"]
-        for event in events
-        if event.type == "auth" and event.direction == "client-to-server"
+    is_word_editor = (
+        next(
+            event.payload["editorType"]
+            for event in events
+            if event.type == "auth" and event.direction == "client-to-server"
+        )
+        == 0
     )
 
-    return editor_type, events, participant_session_id_labels
+    return is_word_editor, events, participant_session_id_labels
 
 
 def _compare_server_event(event_from_record: OOEvent, actual_event: OOEvent) -> bool:
@@ -374,7 +377,7 @@ async def _do_test_record(
     The transport-level rows (`ws-open`/`ws-close`) open/close the SSE connection
     of the corresponding participant's JS client.
     """
-    editor_type, events, participant_session_id_labels = _parse_record(record_path)
+    is_word_editor, events, participant_session_id_labels = _parse_record(record_path)
 
     # Originally, Bob is READER and Mallory is not part of the workspace. Correct
     # those roles if needed.
@@ -452,7 +455,7 @@ async def _do_test_record(
                             realm_id=coolorg.wksp1_id,
                             document_id=EDITICS_DOCUMENT_ID,
                             participant_session_id=participant_session_id,
-                            editor_type=editor_type,
+                            is_word_editor=is_word_editor,
                         )
                     )
 
@@ -661,7 +664,6 @@ async def test_untranslatable_events(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=EDITICS_DOCUMENT_ID,
-        editor_type=0,
     ) as js_client:
         instance = f"globalThis.__editics_instances['{js_client.participant_session_id}']"
 
@@ -743,7 +745,6 @@ async def test_auth_changes_backlog_is_cooked_in_order(
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=EDITICS_DOCUMENT_ID,
-        editor_type=0,
     ) as js_client:
         instance = f"globalThis.__editics_instances['{js_client.participant_session_id}']"
 
@@ -777,7 +778,7 @@ async def test_auth_changes_backlog_is_cooked_in_order(
                         time: i,
                         encryptedChange: [
                             encrypted.keyIndex,
-                            encrypted.flat
+                            encrypted.flatCiphertexts
                                 .subarray(encrypted.offsets[i], encrypted.offsets[i + 1])
                                 .toBase64(),
                         ],
