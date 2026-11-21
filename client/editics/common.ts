@@ -709,30 +709,18 @@ function trackSaveState(): void {
 
 // --- editor start --------------------------------------------------------
 
-// The theme follows the Parsec app, so the editor's own controls to change it
-// (File > Advanced Settings and View > Interface Theme) must not be reachable.
-const HIDE_THEME_CONTROLS_CSS = '#fm-btn-settings, #slot-btn-interface-theme { display: none !important; }';
+// CSS code to hide the "File > Advanced Settings" panel.
+const HIDE_ADVANCED_SETTINGS_CSS = '#fm-btn-settings, #slot-btn-interface-theme { display: none !important; }';
 
 function getUiTheme(theme: EditicsOpenOptions['theme']): string {
   return theme === 'dark' ? 'theme-dark' : 'theme-classic-light';
 }
 
-let currentTheme: EditicsOpenOptions['theme'] = 'light';
-
 // Applies a new theme, e.g. received from the parent through `oo-event-set-theme`
-// while the editor is open (see `startHostPage` in `start.ts`).
 export function setTheme(theme: EditicsOpenOptions['theme']): void {
-  currentTheme = theme;
-  applyTheme();
-}
-
-// There is no API to change the theme once the editor is open, so this does
-// what the editor's own interface theme button does. It is a no-op until the
-// editor is loaded, or if the theme is already the current one.
-function applyTheme(): void {
   const editorFrame = document.querySelector('iframe[name="frameEditor"]') as HTMLIFrameElement | null;
   const editorWindow = editorFrame?.contentWindow as any | undefined;
-  editorWindow?.Common?.UI?.Themes?.setTheme?.(getUiTheme(currentTheme));
+  editorWindow?.Common?.UI?.Themes?.setTheme?.(getUiTheme(theme));
 }
 
 function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
@@ -842,15 +830,17 @@ export async function openEditor(
   options: EditicsOpenOptions,
   makeServer: (editor: OO.DocEditor) => Promise<OO.MockServer> | OO.MockServer,
 ): Promise<void> {
-  currentTheme = options.theme;
 
   await loadScript(ONLYOFFICE_API_URL);
 
   // 1. Create & initialize the editor
 
-  // The editor gives priority to the theme it stored over the `uiTheme` config.
-  // The frame shares our origin, so overwrite it to always start with the right theme.
-  localStorage.setItem('ui-theme-id', getUiTheme(options.theme));
+  // Clear the editor theme setting from the local storage since it has priority
+  // over the configuration passed during init.
+  // This is a defensive measure since this local storage attribute is only set when
+  // the user manually sets a theme from the advanced settings, which are currently
+  // disabled.
+  localStorage.removeItem('ui-theme-id');
 
   const config = buildConfig(options);
   const editor = new window.DocsAPI.DocEditor('placeholder');
@@ -906,9 +896,12 @@ export async function openEditor(
   };
   await editor.init(config, server);
   window.ooDocEditor = editor;
-  editor.injectCSS(HIDE_THEME_CONTROLS_CSS);
-  // The theme may have changed while the editor was loading
-  applyTheme();
+  // Entirely hide the advanced settings, this is to avoid weird quirks with not
+  // well tested configuration combinations (e.g. customizing the theme from there
+  // conflicts with the theme selection from Parsec's own settings).
+  // We might change this for a finer grain approach later on if some settings in
+  // the advanced settings end up being really needed by end users.
+  editor.injectCSS(HIDE_ADVANCED_SETTINGS_CSS);
 
   // 2. Load the document and start the actual edition
 
