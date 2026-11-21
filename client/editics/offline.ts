@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-// Offline edition mode (see `editics/README.md`).
+// Support for offline edition mode.
 //
 // The whole edition is done locally: the document is loaded from the bytes
 // provided by the parent window, and the OnlyOffice editor is driven by the
@@ -9,7 +9,7 @@
 //
 // Document saving is delegated to the parent window: it is the only side
 // with access to libparsec, so it is the one writing the document back into
-// the Parsec workspace (see the `oo-rpc-save` message in `parent_host_api.ts`).
+// the Parsec workspace (see the `oo-rpc-save` message).
 
 import type OO from 'onlyoffice-editor';
 import { openEditor, postToParent, prepareDocumentContent, requestParentDocumentContent } from './common';
@@ -267,6 +267,6 @@ export async function openDocument(options: EditicsOpenOptions): Promise<void> {
     return prepareDocumentContent(options, documentContent);
   })();
   await openEditor(options, async (editor) => {
-    return new OfflineMockServer(editor, options.userId, options.username, documentContentLoading);
+    return new OfflineMockServer(editor, options.authorId, options.authorLabel, documentContentLoading);
   });
 }

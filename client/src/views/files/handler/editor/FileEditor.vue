@@ -66,13 +66,14 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, closeFile, openFile, WorkspaceHandle, writeFile } from '@/parsec';
+import { ClientInfo, closeFile, getClientInfo, openFile, WorkspaceHandle, writeFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   EditicsError,
   EditicsErrorCodes,
   EditicsHostSession,
   EditicsSaveState,
+  getEditicsCollaborativeOptions,
   getEditicsDocumentType,
   openDocument,
 } from '@/services/editics';
@@ -82,7 +83,7 @@ import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus } from '@/views
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
 import { FileHandlerMode, SaveState } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import type { EditicsDocumentTypes, EditicsOpenOptions } from '@editics_parent_host_api';
+import type { EditicsCollaborativeOptions, EditicsDocumentTypes, EditicsOpenOptions } from '@editics_parent_host_api';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner, Theme, useTheme } from 'megashark-lib';
@@ -223,10 +224,39 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
     emits('fileError');
     return;
   }
+  if (!userInfo) {
+    window.nativeAPI.log('error', 'Cannot retreive user info');
+    emits('fileError');
+    return;
+  }
   frameReady.value = false;
   if (session) {
     session.controller.abort();
     session = undefined;
+  }
+
+  // Collaborative mode is the default. When the client is offline, we inform
+  // the user and let him choose between going back or using offline mode.
+  let collaborative: EditicsCollaborativeOptions | undefined = undefined;
+  if (!contentInfo.timestamp) {
+    const clientInfo = await getClientInfo();
+    if (!clientInfo.ok || !clientInfo.value.isServerOnline) {
+      if (!(await askOpenInOfflineMode())) {
+        emits('fileError');
+        await routerGoBack();
+        return;
+      }
+    }
+    // TODO: the e2e tests keep the editor in offline mode by default (unless
+    // `TESTING_ENABLE_EDITICS_COLLABORATIVE` is set), which differs from the
+    // normal collaborative-by-default policy.
+    if ((window as any).TESTING === false || (window as any).TESTING_ENABLE_EDITICS_COLLABORATIVE === true) {
+      collaborative = await getEditicsCollaborativeOptions(workspaceHandle, contentInfo.path);
+      if (!collaborative) {
+        // Fall back on the offline mode.
+        window.nativeAPI.log('warn', 'Editics: falling back on the offline edition mode');
+      }
+    }
   }
 
   session = await openDocument(
@@ -234,11 +264,12 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
       documentType,
-      username: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
-      userId: userInfo ? userInfo.userId : crypto.randomUUID(),
+      authorLabel: userInfo.humanHandle.label,
+      authorId: userInfo.deviceId,
       mode: readOnly || contentInfo.timestamp ? 'view' : 'edit',
       locale: longLocaleCodeToShort(I18n.getLocale()),
       theme: getEditorTheme(),
+      collaborative,
     },
     // Content is loaded lazily by the host frame request; if it fails,
     // the error flows back as `oo-event-error` -> onError.
@@ -338,6 +369,20 @@ async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = 
   }
 
   return role as MsModalResult;
+}
+
+async function askOpenInOfflineMode(): Promise<boolean> {
+  const modal = await modalController.create({
+    component: EditorIssueModal,
+    cssClass: 'editor-issue-modal',
+    componentProps: {
+      status: EditorIssueStatus.CollaborativeUnavailable,
+    },
+    backdropDismiss: false,
+  });
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+  return role === MsModalResult.Confirm;
 }
 
 async function openTimeoutModal(): Promise<'wait' | 'close'> {

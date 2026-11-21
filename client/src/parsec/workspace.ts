@@ -17,6 +17,7 @@ import {
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   ConnectionHandle,
+  EntryID,
   FsPath,
   MountpointHandle,
   MountpointToOsPathError,
@@ -30,7 +31,10 @@ import {
   SystemPath,
   UserID,
   UserTuple,
+  WorkspaceDecryptEditicsError,
   WorkspaceDecryptPathAddrError,
+  WorkspaceEditicsGenerateAuthTokenError,
+  WorkspaceEncryptEditicsError,
   WorkspaceGeneratePathAddrError,
   WorkspaceHandle,
   WorkspaceID,
@@ -495,4 +499,30 @@ export async function getWorkspaceTimeline(
     }
   }
   return result;
+}
+
+export async function editicsGenerateAuthToken(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+): Promise<Result<string, WorkspaceEditicsGenerateAuthTokenError>> {
+  return await libparsec.workspaceEditicsGenerateAuthToken(workspaceHandle, documentId);
+}
+
+export async function editicsEncryptBatch(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  flatCleartexts: Uint8Array,
+  offsets: number[],
+): Promise<Result<[bigint, Uint8Array, number[]], WorkspaceEncryptEditicsError>> {
+  return await libparsec.workspaceEditicsEncryptBatch(workspaceHandle, documentId, flatCleartexts, offsets);
+}
+
+export async function editicsDecryptBatch(
+  workspaceHandle: WorkspaceHandle,
+  documentId: EntryID,
+  keyIndex: bigint,
+  flatCiphertexts: Uint8Array,
+  offsets: number[],
+): Promise<Result<[Uint8Array, number[]], WorkspaceDecryptEditicsError>> {
+  return await libparsec.workspaceEditicsDecryptBatch(workspaceHandle, documentId, keyIndex, flatCiphertexts, offsets);
 }
