@@ -239,7 +239,7 @@ msTest('Check workspace rename in header breadcrumb', async ({ workspaces }) => 
   const sidebarWorkspaceButton = sidebar.locator('#sidebar-workspaces').locator('.sidebar-item').nth(0);
 
   const bobTab = await workspaces.openNewTab();
-  await login(bobTab, 'Boby McBobFace');
+  await login(bobTab, 'Boby McBobFace', 'bob@example.com');
   const bobCard = bobTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await expect(bobCard.locator('.workspace-card-content__title')).toHaveText('wksp1');
   await bobCard.click();
@@ -279,12 +279,12 @@ msTest('Check if action bar updates when resizing the window', async ({ connecte
 for (const method of ['button', 'context']) {
   msTest(`Take workspace ownership with ${method}`, async ({ home }) => {
     msTest.setTimeout(45_000);
-    await login(home, 'Boby McBobFace');
+    await login(home, 'Boby McBobFace', 'bob@example.com');
     await expect(home).toBeWorkspacePage();
     await createWorkspace(home, 'BOB WORKSPACE');
     await shareWorkspace(home, 'BOB WORKSPACE', 'Alicey McAliceFace', 'Contributor');
     await logout(home);
-    await login(home, 'Alicey McAliceFace');
+    await login(home, 'Alicey McAliceFace', 'alice@example.com');
     await expect(home).toBeWorkspacePage();
     await expect(home.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(2);
     await expect(home.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(['BOB WORKSPACE', 'wksp1']);

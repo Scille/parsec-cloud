@@ -32,11 +32,11 @@ msTest('Switch back and forth', async ({ connected }) => {
   await expect(connected).toBeHomePage();
 
   // Check that Alice is marked as logged in
-  await expect(connected.locator('.organization-card').nth(0).locator('.connected-text')).toBeVisible();
-  await expect(connected.locator('.organization-card').nth(0).locator('.connected-text')).toHaveText('Logged in');
+  await expect(connected.locator('.organization-item').nth(0).locator('.connected-text')).toBeVisible();
+  await expect(connected.locator('.organization-item').nth(0).locator('.connected-text')).toHaveText('Logged in');
 
   // Log in with Bob
-  await connected.locator('.organization-card').nth(1).click();
+  await connected.locator('.organization-item').filter({ hasText: 'bob@example.com' }).click();
   await expect(connected.locator('#password-input')).toBeVisible();
   await expect(connected.locator('.login-button')).toHaveDisabledAttribute();
   await connected.locator('#password-input').locator('input').fill('P@ssw0rd.');
@@ -68,7 +68,7 @@ msTest('Switch back and forth', async ({ connected }) => {
   await expect(popover).toBeHidden();
   await expect(connected).toBeHomePage();
 
-  await connected.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await connected.locator('.organization-list').locator('.organization-item').filter({ hasText: 'alice@example.com' }).click();
   // Should be Alice on the documents page
   await expect(profileName).toHaveText('Alicey McAliceFace');
   await expect(connected).toBeWorkspacePage();
@@ -80,8 +80,8 @@ msTest('Switch back and forth', async ({ connected }) => {
   await switchButton.click();
 
   // Check that both Alice and Bob are marked as logged in
-  await expect(connected.locator('.organization-card').nth(0).locator('.connected-text')).toBeVisible();
-  await expect(connected.locator('.organization-card').nth(1).locator('.connected-text')).toBeVisible();
-  await expect(connected.locator('.organization-card').nth(0).locator('.connected-text')).toHaveText('Logged in');
-  await expect(connected.locator('.organization-card').nth(1).locator('.connected-text')).toHaveText('Logged in');
+  await expect(connected.locator('.organization-item').nth(0).locator('.connected-text')).toBeVisible();
+  await expect(connected.locator('.organization-item').nth(1).locator('.connected-text')).toBeVisible();
+  await expect(connected.locator('.organization-item').nth(0).locator('.connected-text')).toHaveText('Logged in');
+  await expect(connected.locator('.organization-item').nth(1).locator('.connected-text')).toHaveText('Logged in');
 });

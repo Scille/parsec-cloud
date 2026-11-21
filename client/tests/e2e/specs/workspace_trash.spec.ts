@@ -216,7 +216,7 @@ msTest('Trash a workspace in small display', async ({ workspaces }) => {
 
 msTest('Check workspace deletion sync on second client', async ({ workspaces }) => {
   const secondTab = await workspaces.openNewTab();
-  await login(secondTab, 'Boby McBobFace');
+  await login(secondTab, 'Boby McBobFace', 'bob@example.com');
 
   const aliceSidebarTrashButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
   const bobSidebarTrashButton = secondTab.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');

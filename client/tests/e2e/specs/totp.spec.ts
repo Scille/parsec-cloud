@@ -138,7 +138,7 @@ msTest('Setup totp modal', async ({ myProfilePage }) => {
 
   await logout(myProfilePage);
 
-  await myProfilePage.locator('.organization-card').first().click();
+  await myProfilePage.locator('.organization-item').first().click();
   await expect(myProfilePage.locator('#password-input')).toBeVisible();
 
   await expect(myProfilePage.locator('.login-button')).toHaveDisabledAttribute();
@@ -221,7 +221,7 @@ msTest('Reset totp', async ({ myProfilePage }) => {
   await nextButton.click();
   await expect(resetModal).toBeHidden();
 
-  await page.locator('.organization-card').first().click();
+  await page.locator('.organization-item').first().click();
   await expect(page.locator('#password-input')).toBeVisible();
 
   await expect(page.locator('.login-button')).toHaveDisabledAttribute();
@@ -273,7 +273,7 @@ msTest('Change auth with TOTP active', async ({ myProfilePage }) => {
   // Alias for clarity
   const home = myProfilePage;
 
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.organization-list').locator('.organization-item').nth(0).click();
   await home.locator('.login-card').locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
   await fillInputModal(home, await generateTotpCode(totpSecret));
   await expect(home).toBeWorkspacePage();
@@ -313,7 +313,7 @@ msTest('Remove and re-add TOTP', async ({ myProfilePage }) => {
   // Alias for clarity
   const home = myProfilePage;
 
-  await home.locator('.organization-card').first().click();
+  await home.locator('.organization-item').first().click();
   await expect(home.locator('#password-input')).toBeVisible();
 
   await expect(home.locator('.login-button')).toHaveDisabledAttribute();
@@ -361,7 +361,7 @@ msTest('Remove and re-add TOTP', async ({ myProfilePage }) => {
   await expect(totp.locator('ion-toggle')).toHaveAttribute('aria-checked', 'true');
   await logout(myProfilePage);
 
-  await home.locator('.organization-card').first().click();
+  await home.locator('.organization-item').first().click();
   await expect(home.locator('#password-input')).toBeVisible();
 
   await expect(home.locator('.login-button')).toHaveDisabledAttribute();

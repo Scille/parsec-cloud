@@ -17,8 +17,8 @@ msTest('Display account invitations', async ({ parsecAccountLoggedIn }) => {
 
   // Open a second tab, no account, invite using the email
   const noAccountPage = await parsecAccountLoggedIn.openNewTab({ withParsecAccount: false });
-  await expect(noAccountPage.locator('.organization-card')).toHaveCount(3);
-  await login(noAccountPage, 'Alicey McAliceFace');
+  await expect(noAccountPage.locator('.organization-item')).toHaveCount(3);
+  await login(noAccountPage, 'Alicey McAliceFace', 'alice@example.com');
   await noAccountPage.locator('.sidebar').locator('#sidebar-users').click();
   await expect(noAccountPage).toHavePageTitle('Users');
   await expect(noAccountPage).toBeUserPage();

@@ -172,7 +172,7 @@ msTest.describe(() => {
   }
 
   msTest('Drop file in empty read only workspace', async ({ home }, testInfo: TestInfo) => {
-    await login(home, 'Boby McBobFace');
+    await login(home, 'Boby McBobFace', 'bob@example.com');
     await expect(home).toBeWorkspacePage();
     await home.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     await expect(home).toBeDocumentPage();

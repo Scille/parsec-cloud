@@ -97,9 +97,9 @@ msTest('Go through custom org creation process, auth SSO', async ({ home }) => {
   await expect(home).toBeWorkspacePage();
 
   await logout(home);
-  const cards = home.locator('.organization-list').locator('.organization-card');
+  const cards = home.locator('.organization-list').locator('.organization-item');
   await expect(cards).toHaveCount(4);
-  await expect(cards.nth(0).locator('.organization-card-content').locator('.organization-name')).toHaveText(uniqueOrgName);
+  await expect(cards.nth(0).locator('.organization-item-text__name')).toHaveText(uniqueOrgName);
   await cards.nth(0).click();
   await expect(home.locator('.login-card-footer').locator('.sso-provider-card', { hasText: 'ProConnect' })).toBeVisible();
   await home.locator('.sso-provider-card', { hasText: 'ProConnect' }).click();
