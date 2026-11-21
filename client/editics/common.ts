@@ -58,6 +58,27 @@ export function rpcToParent<T>(request: EditicsHostToParentMessage, transfer: Tr
   });
 }
 
+// Safety net for the RPCs the host cannot wait on forever (e.g. the crypto
+// requests, which block the document opening or the editor event flow):
+// rejects with `message` when the parent did not answer within `timeoutMs`.
+export function withRpcTimeout<T>(request: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout((): void => {
+      reject(new Error(message));
+    }, timeoutMs);
+    request.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 function loadScript(src: string): Promise<void> {
   return new Promise(function (resolve, reject) {
     const script = document.createElement('script');
@@ -202,7 +223,6 @@ async function convertToNativeFormat(data: Uint8Array, fileName: string): Promis
   resetMediaFiles(module);
 
   const safeName = sanitizeFileName(fileName);
-
   const nativeContent = runConversion(module, safeName, data, NATIVE_EXTENSION);
 
   collectMediaFiles(module);
@@ -281,6 +301,13 @@ function collectMediaFiles(module: X2TModule): void {
       // render the corresponding image as unloaded.
     }
   }
+}
+
+// The media collected by the last conversion to the native format (see
+// `collectMediaFiles`), as archive entries: this is what the collaborative
+// mode uploads to (or injects from) the edition session alongside the .bin.
+export function getCollectedMediaFiles(): Array<[string, Uint8Array]> {
+  return Array.from(mediaFiles.entries());
 }
 
 // `MockServer.getImageURL`: resolves a media name referenced by the document
@@ -413,8 +440,29 @@ async function onSaveBytes(binDocumentContent: Uint8Array, options: EditicsOpenO
   }
 }
 
-// The parent asks for a save (the Parsec editor's save-on-close path, see
-// FileEditor.vue's save()).
+// The document currently opened by `openEditor` (there is at most one, see
+// `openEditor`): the save flow needs its conversion options.
+let currentOptions: EditicsOpenOptions | undefined = undefined;
+
+// Collaborative mode only: tracks whether the session has changes that are
+// not persisted in the workspace file yet (the editor's own "modified" state
+// is not a valid indicator there, as its changes are flushed to the session
+// continuously). Registered by the collaborative host page through
+// `setCollaborativeSessionTracking`.
+export interface CollaborativeSession {
+  hasUnpersistedChanges: () => boolean;
+  markChangesPersisted: () => void;
+  close: () => void;
+}
+let collaborativeSession: CollaborativeSession | undefined = undefined;
+
+export function setCollaborativeSessionTracking(session: CollaborativeSession): void {
+  collaborativeSession = session;
+}
+export function getCollaborativeSession(): CollaborativeSession | undefined {
+  return collaborativeSession;
+}
+
 export function onSaveRequest(port: MessagePort): void {
   const reply = (payload: EditicsRpcSaveReply): void => {
     port.postMessage(payload);
@@ -427,14 +475,48 @@ export function onSaveRequest(port: MessagePort): void {
   }
   const api = getApi();
   const modified = api && typeof api.isDocumentModified === 'function' ? api.isDocumentModified() : true;
-  if (!modified) {
-    reply({ success: true, nothingToSave: true });
-    return;
+  if (currentOptions?.collaborative !== undefined) {
+    // Collaborative mode: the editor's own "modified" state only tells whether
+    // it has changes not flushed to the session yet, while the workspace file
+    // must be persisted whenever the session accumulated changes.
+    if (!modified && !collaborativeSession?.hasUnpersistedChanges()) {
+      reply({ success: true, nothingToSave: true });
+      return;
+    }
+    // The wrapper's `asc_Save` hook is not installed in this mode (see
+    // `buildConfig`), so the persistence is done here: serialize the document,
+    // convert it back to the workspace file's format and ask the parent to
+    // write it, then run the editor's save handshake (which flushes the
+    // editor's changes to the session and releases its locks). The completion
+    // (including the serialization failure below) is signaled on the port by
+    // the save flow, don't close it here.
+    const wire = api && typeof api.asc_nativeGetFile === 'function' ? api.asc_nativeGetFile() : undefined;
+    if (wire === undefined) {
+      reply({ success: false, error: 'could not serialize the document' });
+      return;
+    }
+    manualSavePort = port;
+    onSaveBytes(new TextEncoder().encode(wire), currentOptions)
+      .then(() => {
+        collaborativeSession?.markChangesPersisted();
+        // The save handshake: `asc_Save` -> `isSaveLock` -> `saveChanges` ->
+        // `unSaveLock` (the document content itself is already persisted).
+        window.ooDocEditor?.save();
+      })
+      .catch(() => {
+        // The failure is already reported to the parent through
+        // `finishManualSave`.
+      });
+  } else {
+    // Offline mode: goes through the wrapped `api.asc_Save`: serializeBinary
+    // -> onSave(bytes) -> parent write -> editor save handshake.
+    if (!modified) {
+      reply({ success: true, nothingToSave: true });
+      return;
+    }
+    manualSavePort = port;
+    window.ooDocEditor.save();
   }
-  manualSavePort = port;
-  // Goes through the wrapped `api.asc_Save`: serializeBinary ->
-  // onSave(bytes) -> parent write -> editor save handshake.
-  window.ooDocEditor.save();
 }
 
 // --- image insertion -------------------------------------------------------
@@ -753,8 +835,8 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
       mode: options.mode,
       lang: options.locale,
       user: {
-        id: options.userId,
-        name: options.username,
+        id: options.authorId,
+        name: options.authorLabel,
       },
       customization: {
         compactHeader: false,
@@ -824,12 +906,32 @@ export function requestParentDocumentContent(): Promise<Uint8Array> {
   });
 }
 
+// Loads a converted document (i.e. its .bin, along with the media files
+// extracted during x2t conversion) into the editor: the media are injected
+// into the x2t virtual filesystem and the in-memory media map first
+// (overwriting any leftover of a conversion that was discarded, e.g. by the
+// collaborative mode when the session already had a content), then the .bin
+// is handed to the editor.
+//
+// Notes:
+// - This helper is only used in collaborative mode.
+// - The callers load a document at most once and always strictly after their awaited conversion.
+export async function loadDocument(editor: OO.DocEditor, bin: Uint8Array, medias: Array<[string, Uint8Array]>): Promise<void> {
+  const module = await loadX2T();
+  for (const [name, content] of medias) {
+    module.FS.writeFile(`${MEDIA_DIR}/${name}`, content.slice());
+    mediaFiles.set(name, content.slice());
+  }
+  editor.loadBinary(bin);
+}
+
 // `openEditor` is expected to be called only once since it loads OnlyOffice
 // scripts and set global variables (e.g. `window.APP`, `window.ooDocEditor`).
 export async function openEditor(
   options: EditicsOpenOptions,
   makeServer: (editor: OO.DocEditor) => Promise<OO.MockServer> | OO.MockServer,
 ): Promise<void> {
+  currentOptions = options;
 
   await loadScript(ONLYOFFICE_API_URL);
 

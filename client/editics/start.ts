@@ -1,6 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-import { onConvertToPdfRequest, onSaveRequest, PARENT_ORIGIN, parentWindow, postToParent, setTheme } from './common';
+import { openDocument as openCollaborativeDocument } from './collaborative';
+import {
+  getCollaborativeSession,
+  onConvertToPdfRequest,
+  onSaveRequest,
+  PARENT_ORIGIN,
+  parentWindow,
+  postToParent,
+  setTheme,
+} from './common';
 import { openDocument as openOfflineDocument } from './offline';
 import type { EditicsOpenOptions, EditicsParentToHostMessage } from './parent_host_api';
 
@@ -15,14 +24,6 @@ function expectRpcPort(event: MessageEvent, command: string): MessagePort {
   return port;
 }
 
-// --- host page entry ------------------------------------------------------
-
-// Wires the parent message dispatch and signals the parent that the host
-// page is ready to receive the `oo-event-open` message (this is what the parent
-// waits for before loading the document, see `src/services/editics.ts`).
-//
-// `handlers.onOpen` is mode-specific (it plugs the OnlyOffice "server" of the
-// mode into `openEditor`).
 function startHostPage(handlers: { onOpen: (options: EditicsOpenOptions) => Promise<void> }): void {
   window.addEventListener('message', function (event: MessageEvent) {
     // Filter messages that are not from the parent window.
@@ -35,6 +36,8 @@ function startHostPage(handlers: { onOpen: (options: EditicsOpenOptions) => Prom
     }
     switch (data.command) {
       case 'oo-event-open':
+        // Nothing to do on resolution: the session (if any) registered
+        // itself on construction, see `CollaborativeEditicsServer`.
         handlers.onOpen(data.options).catch(function (err: Error) {
           console.error('Error while opening the document', err);
           postToParent({ command: 'oo-event-error', details: String(err) });
@@ -62,14 +65,21 @@ function startHostPage(handlers: { onOpen: (options: EditicsOpenOptions) => Prom
     }
   });
 
+  // When the page goes away (e.g. the user leaves the file editor), notify the
+  // server so the other participants are told we left (`unLockDocument` +
+  // `close`). The SSE stream is closed by the browser
+  // itself, this is about releasing the locks and the participant slot.
+  window.addEventListener('pagehide', () => {
+    getCollaborativeSession()?.close();
+  });
+
   postToParent({ command: 'oo-event-host-ready' });
 }
 
 startHostPage({
   onOpen: async (options: EditicsOpenOptions): Promise<void> => {
     if (options.collaborative !== undefined) {
-      // The collaborative edition mode is not implemented yet.
-      throw new Error('Editics collaborative edition is not implemented yet');
+      await openCollaborativeDocument(options);
     } else {
       await openOfflineDocument(options);
     }
