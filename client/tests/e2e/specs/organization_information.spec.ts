@@ -348,18 +348,6 @@ msTest('Export organization data as JSON', async ({ organizationPage }) => {
   const workspaces = [...content.workspaces].sort((a: any, b: any) => a.id.localeCompare(b.id));
   expect(workspaces).toEqual([
     {
-      id: 'f0000000000000000000000000000001',
-      size: 0,
-      metadataSize: expect.any(Number),
-      users: { RealmRoleOwner: 1, RealmRoleManager: 0, RealmRoleContributor: 0, RealmRoleReader: 0 },
-    },
-    {
-      id: 'f0000000000000000000000000000002',
-      size: 0,
-      metadataSize: expect.any(Number),
-      users: { RealmRoleOwner: 1, RealmRoleManager: 0, RealmRoleContributor: 0, RealmRoleReader: 0 },
-    },
-    {
       id: 'f0000000000000000000000000000004',
       size: 0,
       metadataSize: expect.any(Number),
