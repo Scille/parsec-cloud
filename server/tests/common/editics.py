@@ -333,7 +333,7 @@ class EditicsJSRuntime:
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
-        editor_type: int,  # 0=Word, 1=Spreadsheet, 2=Presentation
+        is_word_editor: bool = True,
         participant_session_id: EditicsParticipantSessionID | None = None,
     ) -> AsyncGenerator[EditicsJSClient, None]:
         participant_session_id = participant_session_id or uuid4().hex
@@ -344,8 +344,7 @@ class EditicsJSRuntime:
                 {{
                     workspaceId: '{realm_id.hex}',
                     vlobId: '{document_id.hex}',
-                    deviceIdHex: '{who.device_id.hex}',
-                    editorType: {editor_type},
+                    isWordEditor: {"true" if is_word_editor else "false"},
                 }},
                 {{
                     getHumanLabelFromDeviceId: async (deviceId) => {{
@@ -365,31 +364,31 @@ class EditicsJSRuntime:
                     // buffer (the i-th payload is
                     // `flat[offsets[i]..offsets[i+1]]`), and all the ciphertexts
                     // of a batch are sealed with a single key index.
-                    encryptBatch: async (flat, offsets) => {{
+                    encryptBatch: async (flatCleartexts, offsets) => {{
                         const keyIndex = 3;  // Dummy but realistic-looking value
                         const ciphertexts = [];
                         for (let i = 0; i < offsets.length - 1; i++) {{
-                            const cleartext = flat.subarray(offsets[i], offsets[i + 1]);
+                            const cleartext = flatCleartexts.subarray(offsets[i], offsets[i + 1]);
                             ciphertexts.push(
                                 bytesFromStr(JSON.stringify({{"keyIndex": keyIndex, "cleartext": cleartext.toBase64()}})),
                             );
                         }}
-                        const cipherFlat = new Uint8Array(
+                        const flatCiphertexts = new Uint8Array(
                             ciphertexts.reduce((acc, ciphertext) => acc + ciphertext.byteLength, 0),
                         );
-                        const cipherOffsets = [0];
+                        const ciphertextOffsets = [0];
                         let pos = 0;
                         for (const ciphertext of ciphertexts) {{
-                            cipherFlat.set(ciphertext, pos);
+                            flatCiphertexts.set(ciphertext, pos);
                             pos += ciphertext.byteLength;
-                            cipherOffsets.push(pos);
+                            ciphertextOffsets.push(pos);
                         }}
-                        return {{keyIndex, flat: cipherFlat, offsets: cipherOffsets}};
+                        return {{keyIndex, flatCiphertexts, offsets: ciphertextOffsets}};
                     }},
-                    decryptBatch: async (keyIndex, flat, offsets) => {{
+                    decryptBatch: async (keyIndex, flatCiphertexts, offsets) => {{
                         const cleartexts = [];
                         for (let i = 0; i < offsets.length - 1; i++) {{
-                            const ciphertext = flat.subarray(offsets[i], offsets[i + 1]);
+                            const ciphertext = flatCiphertexts.subarray(offsets[i], offsets[i + 1]);
                             let content;
                             try {{
                                 content = JSON.parse(bytesToStr(ciphertext));
@@ -401,17 +400,17 @@ class EditicsJSRuntime:
                             }}
                             cleartexts.push(Uint8Array.fromBase64(content.cleartext));
                         }}
-                        const cleartextFlat = new Uint8Array(
+                        const flatCleartexts = new Uint8Array(
                             cleartexts.reduce((acc, cleartext) => acc + cleartext.byteLength, 0),
                         );
                         const cleartextOffsets = [0];
                         let pos = 0;
                         for (const cleartext of cleartexts) {{
-                            cleartextFlat.set(cleartext, pos);
+                            flatCleartexts.set(cleartext, pos);
                             pos += cleartext.byteLength;
                             cleartextOffsets.push(pos);
                         }}
-                        return {{ok: true, value: {{flat: cleartextFlat, offsets: cleartextOffsets}}}};
+                        return {{ok: true, value: {{flatCleartexts, offsets: cleartextOffsets}}}};
                     }},
                 }},
             );
