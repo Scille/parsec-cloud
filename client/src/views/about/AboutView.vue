@@ -88,6 +88,21 @@
           </span>
         </ion-text>
       </ion-item>
+
+      <!-- accessibility -->
+      <ion-item class="info-list__item">
+        <ion-label class="app-info-key">
+          {{ $msTranslate('AboutPage.appInfo.accessibility') }}
+        </ion-label>
+        <ion-text class="app-info-value">
+          <span
+            @click="Env.Links.openAccessibilityLink()"
+            class="link"
+          >
+            {{ $msTranslate('AboutPage.appInfo.accessibilityStatus') }}
+          </span>
+        </ion-text>
+      </ion-item>
     </ion-list>
   </div>
 </template>
