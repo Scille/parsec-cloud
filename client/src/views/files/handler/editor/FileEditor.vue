@@ -229,23 +229,20 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
     session = undefined;
   }
 
-  const documentContent = await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp);
-  if (!documentContent) {
-    emits('fileError');
-    return;
-  }
   session = await openDocument(
     {
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
       documentType,
-      userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
+      username: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
       mode: readOnly || contentInfo.timestamp ? 'view' : 'edit',
       locale: longLocaleCodeToShort(I18n.getLocale()),
       theme: getEditorTheme(),
     },
-    documentContent,
+    // Content is loaded lazily by the host frame request; if it fails,
+    // the error flows back as `oo-event-error` -> onError.
+    async (): Promise<Uint8Array | undefined> => await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp),
     {
       onReady: (): void => {
         window.nativeAPI.log('info', 'OnlyOffice editor is ready and document loaded successfully');

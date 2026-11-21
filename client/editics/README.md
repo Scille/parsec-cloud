@@ -4,6 +4,13 @@ Editics is the integration of [OnlyOffice](https://www.onlyoffice.com) into the
 Parsec GUI, to edit office documents (text documents, spreadsheets, slides)
 directly from a workspace.
 
+Editics works in two modes:
+
+- **Offline**: the edition is done purely locally.
+- **Collaborative**: the co-authoring protocol events are translated between the
+  OnlyOffice protocol and the editics protocol, and exchanged with the Parsec
+  server hosting the session.
+
 The feature is gated by the `PARSEC_APP_ENABLE_EDITICS` environ variable.
 
 ## Frame nesting
@@ -22,7 +29,7 @@ The whole system is a stack of three nested windows:
 |    the workspace)                                                       |
 │                                                                         │
 │  ┌───────────────────────────────────────────────────────────────────┐  │
-│  │  Host iframe (i.e. `editics/offline.html`)                        │  │
+│  │  Host iframe (i.e. `editics/index.html`)                          │  │
 │  │                                                                   │  │
 │  │  - Loads OnlyOffice x2t to handle conversions from/into           |  |
 |  |    OnlyOffice's .bin internal format                              |  |
@@ -65,13 +72,13 @@ The host page must stay standalone since it is loaded in a iframe.
 Hence it lives outside the app's import graph (no shared chunks with the app
 bundle, no `@/` imports).
 
-- **Dev**: the Vite dev server serves `editics/offline.html` and transpiles
-  `offline.ts` on the fly.
+- **Dev**: the Vite dev server serves `editics/index.html` and transpiles
+  `start.ts` on the fly.
 - **Release**: `scripts/vite_plugin_editics.ts` bundles the typescript entry
   with esbuild and inlines it in the host page, which is emitted with a
-  content hash (e.g. `dist/editics/offline-8bdb1067.html`) for cache busting.
+  content hash (e.g. `dist/editics/index-8bdb1067.html`) for cache busting.
   The actual name of the host page is advertised to the main app through a meta
-  tag injected in the main app's `index.html`.
+  tag injected in the main app's `index.html` (i.e. `editics-page`).
 
 On top of that, the OnlyOffice editor and x2t assets trees are exposed/copied
 (using `viteStaticCopy` plugin) verbatim, but into versioned folders inside the

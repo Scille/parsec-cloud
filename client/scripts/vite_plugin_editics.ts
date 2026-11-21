@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-// Serve/bundles the editics host page (i.e. `editics/*.html`). This must be done
+// Serve/bundle the editics host page (i.e. `editics/index.html`). This must be done
 // outside of the main app since since editics host page is loaded in an iframe
 // hence must stay standalone (no shared chunks with the app bundle, no `@/` imports).
 
@@ -15,10 +15,13 @@ interface EditicsHostPagesOptions {
   // Same target as the app build (see `build.target` in vite.config.ts).
   buildTarget: string | string[];
   rootDir: string;
-  // e.g. `editics/offline.html`
+  // e.g. `editics/index.html`
   htmlPath: string;
   // e.g. `offline.ts`
   scriptEntry: string;
+  // Name of the `index.html` meta tag advertising the (content-hashed) host
+  // page name to the app (see `getEditicsHostPage` in `src/services/editics.ts`).
+  metaTagName: string;
   // Build-time injected constants (see the `editics-build-time-paths` plugin).
   define: Record<string, string>;
 }
@@ -27,7 +30,7 @@ function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
   return {
     name: 'build-editics-host-pages',
     apply: 'build',
-    // `post` is required for the `editics-offline-page` meta tag injection into `index.html`
+    // `post` is required for the `editics-page` meta tag injection into `index.html`
     generateBundle: {
       order: 'post',
       async handler(_options, bundle) {
@@ -95,10 +98,10 @@ function buildEditicsHostPage(options: EditicsHostPagesOptions): Plugin {
           (file): file is Extract<typeof file, { type: 'asset' }> => file.type === 'asset' && file.fileName === 'index.html',
         );
         if (!indexHtml) {
-          throw new Error('Cannot find the emitted `index.html` to inject `editics-offline-page` tag');
+          throw new Error(`Cannot find the emitted \`index.html\` to inject \`${options.metaTagName}\` tag`);
         }
         const indexHtmlSource = indexHtml.source;
-        const metaTag = `<meta name="editics-offline-page" content="${htmlFileName}">`;
+        const metaTag = `<meta name="${options.metaTagName}" content="${htmlFileName}">`;
         if (!/<head>/i.test(indexHtmlSource)) {
           throw new Error('Cannot find `<head>` in `index.html` to inject the editics host page name');
         }
@@ -134,7 +137,7 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
 
   const onlyofficeVersion = readPackageVersion('onlyoffice-editor');
   const x2tVersion = readPackageVersion('onlyoffice-x2t');
-  // Paths relative to the host page (i.e. `editics/offline.html`, which lives
+  // Paths relative to the host page (i.e. `editics/index.html`, which lives
   // in the same folder as the OnlyOffice asset trees).
   const onlyofficeBase = `onlyoffice/${onlyofficeVersion}/`;
   const x2tBase = `onlyoffice-x2t/${x2tVersion}/`;
@@ -184,17 +187,16 @@ export default function generateEditicsPlugins(env: ConfigEnv, buildTarget: stri
   plugins.push(viteStaticCopy({ targets }));
 
   if (env.command === 'build') {
-    // Bundle the editics host pages (i.e. `editics/*.html`) when in release.
-    // In dev mode, Vite out-of-the-box serves the pages and transpiles the
-    // TypeScript entries on the fly.
-    // plugins.push(editicsHostPages({ buildTarget, rootDir: path.join(import.meta.dirname, '..') }));
-    const rootDir = path.join(import.meta.dirname, '..');
+    // Bundle the editics host page (i.e. `editics/index.html`) when in release.
+    // In dev mode, Vite out-of-the-box serves the page and transpiles the
+    // TypeScript entry on the fly.
     plugins.push(
       buildEditicsHostPage({
-        rootDir,
-        htmlPath: 'editics/offline.html',
-        scriptEntry: 'offline.ts',
         buildTarget,
+        rootDir: path.join(import.meta.dirname, '..'),
+        htmlPath: 'editics/index.html',
+        scriptEntry: 'start.ts',
+        metaTagName: 'editics-page',
         define,
       }),
     );
