@@ -2,18 +2,37 @@
 
 import { FileContentType } from '@/common/fileTypes';
 import ImageSelectionModal from '@/components/files/explorer/ImageSelectionModal.vue';
-import { isElectron, WorkspaceHandle } from '@/parsec';
+import {
+  DeviceID,
+  editicsDecryptBatch,
+  editicsEncryptBatch,
+  editicsGenerateAuthToken,
+  EntryID,
+  entryStat,
+  FsPath,
+  getClientInfo,
+  getUserInfoFromDeviceID,
+  getWorkspaceInfo,
+  isElectron,
+  parseParsecAddr,
+  WorkspaceHandle,
+} from '@/parsec';
 import { getWorkspaceHandle } from '@/router';
 import { Env } from '@/services/environment';
 import type {
+  EditicsCollaborativeOptions,
   EditicsDocumentTypes,
   EditicsHostToParentMessage,
   EditicsOpenOptions,
   EditicsParentToHostMessage,
   EditicsRpcConvertToPdfReply,
+  EditicsRpcDecryptBatchReply,
   EditicsRpcDocumentContentReply,
+  EditicsRpcEncryptBatchReply,
   EditicsRpcImageReply,
+  EditicsRpcParticipantNameReply,
   EditicsRpcSaveReply,
+  EditicsRpcTokenReply,
 } from '@editics_parent_host_api';
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
@@ -266,26 +285,13 @@ export async function openDocument(
               // The host page signals it is ready to open a document: send
               // `oo-event-open` every time it does (a reloaded host page restarts
               // from scratch and will fetch the document's content again, see
-              // `oo-rpc-get-document-content`).
+              // `oo-rpc-get-document-content`). Also reset the save bookkeeping:
+              // the reloaded host page starts with a clean save state (the reload
+              // only ever happens before any change exists, so there is no
+              // pending save to preserve).
+              saving = false;
               frame.contentWindow?.postMessage({ command: 'oo-event-open', options } satisfies EditicsParentToHostMessage, hostOrigin);
               resolve();
-              break;
-            }
-
-            case 'oo-rpc-get-document-content': {
-              const port = expectRpcPort(event);
-              getDocumentContent()
-                .then(
-                  (documentContent): EditicsRpcDocumentContentReply => ({
-                    data: documentContent,
-                    error: documentContent === undefined ? 'failed to read the workspace file' : undefined,
-                  }),
-                  (err: unknown): EditicsRpcDocumentContentReply => ({ error: String(err) }),
-                )
-                .then((reply): void => {
-                  port.postMessage(reply);
-                  port.close();
-                });
               break;
             }
 
@@ -338,10 +344,47 @@ export async function openDocument(
               break;
             }
 
+            case 'oo-rpc-get-document-content': {
+              const port = expectRpcPort(event);
+              getDocumentContent()
+                .then(
+                  (documentContent): EditicsRpcDocumentContentReply => ({
+                    data: documentContent,
+                    error: documentContent === undefined ? 'failed to read the workspace file' : undefined,
+                  }),
+                  (err: unknown): EditicsRpcDocumentContentReply => ({ error: String(err) }),
+                )
+                .then((reply): void => {
+                  port.postMessage(reply);
+                  port.close();
+                });
+              break;
+            }
+
             case 'oo-rpc-insert-image': {
               // The editor's user wants to insert an image: present a workspace
               // file picker and send its content back to the host.
-              handleRequestImage(expectRpcPort(event));
+              handleInsertImage(expectRpcPort(event));
+              break;
+            }
+
+            case 'oo-rpc-get-participant-name': {
+              handleGetParticipantNameRequest(expectRpcPort(event), event.data.deviceId);
+              break;
+            }
+
+            case 'oo-rpc-encrypt-batch': {
+              handleEncryptBatchRequest(expectRpcPort(event), event.data.flatCleartexts, event.data.offsets, options);
+              break;
+            }
+
+            case 'oo-rpc-generate-auth-token': {
+              handleGenerateAuthTokenRequest(expectRpcPort(event), options);
+              break;
+            }
+
+            case 'oo-rpc-decrypt-batch': {
+              handleDecryptBatchRequest(expectRpcPort(event), event.data.keyIndex, event.data.flatCiphertexts, event.data.offsets, options);
               break;
             }
           }
@@ -416,7 +459,7 @@ export async function openDocument(
   return session;
 }
 
-async function handleRequestImage(port: MessagePort): Promise<void> {
+async function handleInsertImage(port: MessagePort): Promise<void> {
   const postReply = (reply: EditicsRpcImageReply): void => {
     port.postMessage(reply);
     port.close();
@@ -444,6 +487,131 @@ async function handleRequestImage(port: MessagePort): Promise<void> {
   });
 }
 
+async function handleGetParticipantNameRequest(port: MessagePort, deviceId: DeviceID): Promise<void> {
+  let participantName: string | undefined = undefined;
+  const result = await getUserInfoFromDeviceID(deviceId);
+  if (result.ok) {
+    participantName = result.value.humanHandle.label;
+  } else {
+    onlyOfficeLog('warn', `Failed to resolve the participant name of the device ${deviceId}`);
+  }
+  const reply = { participantName } satisfies EditicsRpcParticipantNameReply;
+  port.postMessage(reply);
+  port.close();
+}
+
+// The session payload buffers are freshly allocated (by libparsec on this
+// side, by `TextEncoder.encode`/`Uint8Array.fromBase64` on the host side) and
+// not used anymore once the reply is posted, so they can be transferred back
+// instead of being copied by the structured clone. The ownership check keeps
+// us safe should a future caller pass a view on a shared buffer (transferring
+// it would detach the other views' data); empty buffers are left to the
+// structured clone, which copies nothing for them.
+function transferBuffer(data: Uint8Array): Transferable[] {
+  return data.byteOffset === 0 && data.byteLength > 0 && data.byteLength === data.buffer.byteLength && data.buffer instanceof ArrayBuffer
+    ? [data.buffer]
+    : [];
+}
+
+async function handleEncryptBatchRequest(
+  port: MessagePort,
+  flatCleartexts: Uint8Array,
+  offsets: number[],
+  options: EditicsOpenOptions,
+): Promise<void> {
+  const postReply = (payload: EditicsRpcEncryptBatchReply, transfer: Transferable[] = []): void => {
+    port.postMessage(payload, transfer);
+    port.close();
+  };
+
+  const collaborative = options.collaborative;
+  if (!collaborative) {
+    postReply({ error: 'no collaborative session' });
+    return;
+  }
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({ error: 'cannot get the workspace handle' });
+    return;
+  }
+
+  const result = await editicsEncryptBatch(workspaceHandle, collaborative.documentId, flatCleartexts, offsets);
+  if (!result.ok) {
+    onlyOfficeLog('warn', `Failed to encrypt the editics payloads: ${JSON.stringify(result.error)}`);
+    postReply({ error: `failed to encrypt the payloads (${result.error.tag})` });
+    return;
+  }
+  const [keyIndex, flatCiphertexts, ciphertextOffsets] = result.value;
+  // The host page carries the key index as a plain number (the wire schema
+  // uses JSON, which cannot serialize bigints).
+  postReply({ keyIndex: Number(keyIndex), flatCiphertexts, offsets: ciphertextOffsets }, transferBuffer(flatCiphertexts));
+}
+
+async function handleDecryptBatchRequest(
+  port: MessagePort,
+  keyIndex: number,
+  flatCiphertexts: Uint8Array,
+  offsets: number[],
+  options: EditicsOpenOptions,
+): Promise<void> {
+  const postReply = (payload: EditicsRpcDecryptBatchReply, transfer: Transferable[] = []): void => {
+    port.postMessage(payload, transfer);
+    port.close();
+  };
+
+  const collaborative = options.collaborative;
+  if (!collaborative) {
+    postReply({ error: 'no collaborative session' });
+    return;
+  }
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({ error: 'cannot get the workspace handle' });
+    return;
+  }
+
+  const result = await editicsDecryptBatch(
+    workspaceHandle,
+    collaborative.documentId as EntryID,
+    BigInt(keyIndex),
+    flatCiphertexts,
+    offsets,
+  );
+  if (!result.ok) {
+    onlyOfficeLog('warn', `Failed to decrypt the editics payloads: ${JSON.stringify(result.error)}`);
+    postReply({ error: `failed to decrypt the payloads (${result.error.tag})` });
+    return;
+  }
+  const [flatCleartexts, cleartextOffsets] = result.value;
+  postReply({ flatCleartexts: flatCleartexts, offsets: cleartextOffsets }, transferBuffer(flatCleartexts));
+}
+
+async function handleGenerateAuthTokenRequest(port: MessagePort, options: EditicsOpenOptions): Promise<void> {
+  const postReply = (payload: EditicsRpcTokenReply): void => {
+    port.postMessage(payload);
+    port.close();
+  };
+
+  const collaborative = options.collaborative;
+  if (!collaborative) {
+    postReply({ error: 'no collaborative session' });
+    return;
+  }
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    postReply({ error: 'cannot get the workspace handle' });
+    return;
+  }
+
+  const result = await editicsGenerateAuthToken(workspaceHandle, collaborative.documentId);
+  if (!result.ok) {
+    onlyOfficeLog('warn', `Failed to generate the editics token: ${JSON.stringify(result.error)}`);
+    postReply({ error: `failed to generate the token (${result.error.tag})` });
+    return;
+  }
+  postReply({ token: result.value });
+}
+
 // Opens the workspace image picker (see `ImageSelectionModal`) and resolves
 // with the name and content of the image, or `null` if the user cancelled.
 async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promise<{ name: string; content: Uint8Array } | null> {
@@ -461,4 +629,56 @@ async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promi
   const { data, role } = await modal.onWillDismiss();
   await modal.dismiss();
   return role === MsModalResult.Confirm ? (data as { name: string; content: Uint8Array }) : null;
+}
+
+// TODO: Editics server URL should be provided by the server through a (soon to be
+//       developed!) dedicated API. Once available, this code is no longer needed.
+async function getEditicsSessionServerUrl(organizationAddr: string): Promise<string | undefined> {
+  const parsedAddr = await parseParsecAddr(organizationAddr);
+  if (!parsedAddr.ok) {
+    onlyOfficeLog('warn', `Failed to parse the organization address '${organizationAddr}'`);
+    return undefined;
+  }
+  const { hostname, port, isDefaultPort, useSsl } = parsedAddr.value;
+  return `${useSsl ? 'https' : 'http'}://${hostname}${isDefaultPort ? '' : `:${port}`}`;
+}
+
+export async function getEditicsCollaborativeOptions(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+): Promise<EditicsCollaborativeOptions | undefined> {
+  const clientInfo = await getClientInfo();
+  if (!clientInfo.ok) {
+    onlyOfficeLog('warn', `Cannot get the client info: ${JSON.stringify(clientInfo.error)}`);
+    return undefined;
+  }
+
+  const serverUrl = await getEditicsSessionServerUrl(clientInfo.value.organizationAddr);
+  if (serverUrl === undefined) {
+    onlyOfficeLog('warn', 'Cannot resolve the editics server URL, falling back on the offline mode');
+    return undefined;
+  }
+
+  const [workspaceInfo, entry] = await Promise.all([getWorkspaceInfo(workspaceHandle), entryStat(workspaceHandle, path)]);
+  if (!workspaceInfo.ok) {
+    onlyOfficeLog('warn', `Cannot get the workspace info: ${JSON.stringify(workspaceInfo.error)}`);
+    return undefined;
+  }
+  if (!entry.ok || !entry.value.isFile()) {
+    onlyOfficeLog('warn', `Cannot stat the document being opened: ${JSON.stringify(entry.ok ? undefined : entry.error)}`);
+    return undefined;
+  }
+
+  // Collaborative edition is not possible in an archived workspace since it is read-only
+  if (workspaceInfo.value.isArchived) {
+    onlyOfficeLog('info', 'The workspace is archived, falling back on the offline mode');
+    return undefined;
+  }
+
+  return {
+    serverUrl,
+    organizationId: clientInfo.value.organizationId,
+    realmId: workspaceInfo.value.id,
+    documentId: entry.value.id,
+  };
 }

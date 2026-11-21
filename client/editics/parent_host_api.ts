@@ -1,26 +1,33 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
+import { DeviceID, VlobID } from '@/plugins/libparsec';
+
 // Types of the postMessage protocol between the editics host page
 // (`editics/index.html`, loaded in an iframe) and its parent window
 // (`src/services/editics.ts`).
 //
 // Two kinds of messages travel between the host and the parent:
 //
-// - `oo-event-*`: fire-and-forget notifications, no reply is expected;
+// - `oo-event-*`: fire-and-forget notifications, no reply is expected.
 //
 // - `oo-rpc-*`: a request which is answered through the MessagePort
-//   transferred along with the message (the requester keeps one end and
-//   resolves with the payload the responder posts on the other end): each
-//   request below has a matching `EditicsRpc*Reply` interface describing
+//   transferred along with the message.
+//   Each request below has a matching `EditicsRpc*Reply` interface describing
 //   that payload, with its fields set on success and `error` otherwise.
 
 export type EditicsDocumentTypes = 'word' | 'cell' | 'slide' | 'pdf';
 export type EditicsOpenModes = 'view' | 'edit';
 
-export interface EditicsCollaborativeSession {
+export interface EditicsCollaborativeOptions {
   // Base URL of the Parsec server hosting the session, without a trailing slash
   // (e.g. https://editics.app.parsec.cloud).
   serverUrl: string;
+  organizationId: string;
+  realmId: string;
+  // Document ID is basically the vlob ID (it is named differently since the
+  // server doesn't enforce the ID to be an actual vlob, which is useful to
+  // start an editics session on a document before its initial outbound sync).
+  documentId: VlobID;
 }
 
 export interface EditicsOpenOptions {
@@ -31,12 +38,12 @@ export interface EditicsOpenOptions {
   // `oo-rpc-get-document-content`).
   documentExtension: string;
   documentType: EditicsDocumentTypes;
-  username: string;
-  userId: string;
+  authorLabel: string;
+  authorId: DeviceID;
   mode: EditicsOpenModes;
   locale: string;
   theme: 'light' | 'dark';
-  collaborative?: EditicsCollaborativeSession;
+  collaborative?: EditicsCollaborativeOptions;
 }
 
 // Replied to `oo-rpc-save` by the parent, and to `oo-rpc-request-save` by the
@@ -50,47 +57,69 @@ export interface EditicsRpcSaveReply {
   nothingToSave?: boolean;
 }
 
-// Returned by the parent on the port of an `oo-rpc-insert-image` message: the
-// image's name and content on success, why the insert failed otherwise.
 export interface EditicsRpcImageReply {
   fileName?: string;
   data?: Uint8Array;
   error?: string;
 }
 
-// Returned by the parent on the port of an `oo-rpc-get-document-content`
-// message: the document's content on success, the failure otherwise.
 export interface EditicsRpcDocumentContentReply {
   data?: Uint8Array;
   error?: string;
 }
 
-// Returned by the host on the port of an `oo-rpc-convert-to-pdf` message: the
-// PDF file on success, why the conversion failed otherwise.
 export interface EditicsRpcConvertToPdfReply {
   data?: Uint8Array;
+  error?: string;
+}
+
+export interface EditicsRpcParticipantNameReply {
+  participantName?: string;
+}
+
+export interface EditicsRpcEncryptBatchReply {
+  keyIndex?: number;
+  flatCiphertexts?: Uint8Array;
+  offsets?: number[];
+  error?: string;
+}
+
+export interface EditicsRpcDecryptBatchReply {
+  flatCleartexts?: Uint8Array;
+  offsets?: number[];
+  error?: string;
+}
+
+export interface EditicsRpcTokenReply {
+  token?: string;
   error?: string;
 }
 
 export type EditicsHostToParentMessage =
   | { command: 'oo-event-host-ready' }
   | { command: 'oo-event-app-ready' }
-  | { command: 'oo-event-ready' }
+  | { command: 'oo-event-document-ready' }
   | { command: 'oo-event-error'; details: string }
   // The editor's dirty state changed, so the parent can keep its save
   // indicator up to date.
   | { command: 'oo-event-save-state'; state: 'unsaved' | 'saved' }
   // The host serialized the document to OnlyOffice's native format and asks
   // the parent (the only side with libparsec access) to persist it in the
-  // workspace. Replied with `EditicsRpcSaveReply`.
+  // workspace.
+  // Replied with `EditicsRpcSaveReply`.
   | { command: 'oo-rpc-save'; data: Uint8Array }
   // The user wants to insert an image into the document: the parent should
   // display a file picker, load the selected file and return its content.
   // Replied with `EditicsRpcImageReply`.
   | { command: 'oo-rpc-insert-image' }
-  // The host needs the document's content, which only the parent can read
-  // from the workspace. This is used in offline mode or in collaborative when
-  // the document initial content hasn't already been uploaded.
+  // Replied with `EditicsRpcParticipantNameReply`.
+  | { command: 'oo-rpc-get-participant-name'; deviceId: DeviceID }
+  // Replied with `EditicsRpcEncryptBatchReply`.
+  | { command: 'oo-rpc-encrypt-batch'; flatCleartexts: Uint8Array; offsets: number[] }
+  // Replied with `EditicsRpcDecryptBatchReply`.
+  | { command: 'oo-rpc-decrypt-batch'; keyIndex: number; flatCiphertexts: Uint8Array; offsets: number[] }
+  // Replied with `EditicsRpcTokenReply`.
+  | { command: 'oo-rpc-generate-auth-token' }
   // Replied with `EditicsRpcDocumentContentReply`.
   | { command: 'oo-rpc-get-document-content' };
 
@@ -98,9 +127,14 @@ export type EditicsParentToHostMessage =
   // The host page asked for its document (see `oo-event-host-ready`), the
   // parent opens it.
   | { command: 'oo-event-open'; options: EditicsOpenOptions }
-  | { command: 'oo-rpc-request-save' }
   // The app theme changed while the editor is open.
   | { command: 'oo-event-set-theme'; theme: EditicsOpenOptions['theme'] }
-  // Asks the host to export the document's current state (saved or not) to
-  // PDF. Replied with `EditicsRpcConvertToPdfReply`.
+  // The parent asks the host to run a full save of the document (serialize
+  // it, persist it through `oo-rpc-save`, then run the editor's save
+  // handshake): this is what the parent's save button does.
+  // Replied with `EditicsRpcSaveReply`.
+  | { command: 'oo-rpc-request-save' }
+  // The parent asks the host to export the document's current state (saved
+  // or not) to PDF.
+  // Replied with `EditicsRpcConvertToPdfReply`.
   | { command: 'oo-rpc-convert-to-pdf' };
