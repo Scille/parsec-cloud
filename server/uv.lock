@@ -700,7 +700,7 @@ wheels = [
 
 [[package]]
 name = "parsec-cloud"
-version = "3.11.1a0+dev"
+version = "3.11.1a0.dev20779+55cb2e4"
 source = { virtual = "." }
 dependencies = [
     { name = "anyio" },
