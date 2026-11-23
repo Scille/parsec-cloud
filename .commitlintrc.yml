@@ -14,15 +14,21 @@ rules:
     - 2
     - always
     - scopes:
+        - cli
+        - client
+        - client/desktop
+        - client/web
+        - cspell
+        - dependabot
+        - docs
+        - github-actions
+        - libparsec
+        - pre-commit
+        - rfcs
+        - rust
         - server
         - server/memory
         - server/postgresql
-        - cli
-        - client
-        - client/web
-        - client/desktop
-        - libparsec
-        - rfcs
       delimiters: [","]
   # List allowed type on a commit
   # We use the same default value, but explicitly to help user when searching for allowed types.
@@ -35,6 +41,8 @@ rules:
     - 1
     - always
     - sentence-case
+  # Disable body max line length
+  body-max-line-length: [0, always, Infinity]
   # The body between the commit's title and footer
   body-case:
     - 1
