@@ -40,6 +40,9 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.enableShamir) {
         (window as any).TESTING_ENABLE_SHAMIR = true;
       }
+      if (options.editicsMode) {
+        (window as any).TESTING_EDITICS_MODE = options.editicsMode;
+      }
       if (options.mockPki) {
         // When the testbed is used, `pkiInitForScws()` relies on a mock and never
         // actually tries to access the SCWS middleware.
@@ -191,6 +194,7 @@ interface ClientAreaInitialParams {
 
 export const msTest = debugTest.extend<{
   context: BrowserContext;
+  editicsMode: 'collaborative' | 'offline' | undefined;
   home: MsPage;
   secondTab: MsPage;
   connected: MsPage;
@@ -257,9 +261,9 @@ export const msTest = debugTest.extend<{
     await context.close();
   },
 
-  home: async ({ context }, use) => {
+  home: async ({ context, editicsMode }, use) => {
     const page = (await context.newPage()) as MsPage;
-    await setupNewPage(page);
+    await setupNewPage(page, { editicsMode: editicsMode });
     await use(page);
     await page.release();
   },
@@ -319,6 +323,13 @@ export const msTest = debugTest.extend<{
   documentsOptions: [
     async ({}, use: any): Promise<void> => {
       await use({ empty: false });
+    },
+    { option: true },
+  ],
+
+  editicsMode: [
+    async ({}, use: any): Promise<void> => {
+      await use(undefined);
     },
     { option: true },
   ],

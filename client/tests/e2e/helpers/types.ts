@@ -57,6 +57,7 @@ export interface SetupOptions {
   allowedProtectionMethods?: Array<ProtectionMethod>;
   additionalUsers?: Array<AdditionalUserData>;
   enableShamir?: boolean;
+  editicsMode?: 'collaborative' | 'offline';
   customNextStage?: (page: MsPage) => Promise<void>;
   allowLogs?: boolean;
 }

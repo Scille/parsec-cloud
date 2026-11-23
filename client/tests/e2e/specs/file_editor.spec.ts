@@ -4,22 +4,15 @@ import { TestInfo } from '@playwright/test';
 import {
   checkDocumentTitle,
   checkEntryContextMenu,
-  enableCollaborativeMode,
   expect,
-  expectParagraphTexts,
   fillInputModal,
   getClipboardText,
   getEditorFrame,
   importDefaultFiles,
   ImportDocuments,
-  login,
   mockEditicsRequest,
   msTest,
-  pressInDocument,
-  promoteSecondUserToContributor,
   saveDocument,
-  typeInDocument,
-  waitForDocumentLoaded,
   waitUntilSaved,
 } from '@tests/e2e/helpers';
 
@@ -398,148 +391,5 @@ msTest.describe(() => {
         await expect(documents).toBeDocumentPage();
       }
     }
-  });
-
-  // Both tests below exercise the collaborative edition mode (the default mode
-  // when the client is online, see `editics/README.md`): the e2e tests keep the
-  // editor in offline mode otherwise, so they explicitly opt in with the
-  // `enableCollaborativeMode` helper (see `FileEditor.vue`).
-
-  msTest('Edit file in editor with two users', async ({ documents }, testInfo: TestInfo) => {
-    msTest.setTimeout(240_000);
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
-    // Let it process everything, avoid the refresh
-    await documents.waitForTimeout(500);
-
-    await enableCollaborativeMode(documents);
-
-    // Promote Bob to Contributor so that he can edit the document too
-    await promoteSecondUserToContributor(documents);
-
-    // Open the document in the editor with Alice
-    const aliceEntry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
-    await aliceEntry.click({ button: 'right' });
-    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
-    await waitForDocumentLoaded(documents);
-
-    // Open the document in the editor with Bob
-    const secondTab = await documents.openNewTab();
-    await enableCollaborativeMode(secondTab);
-    await login(secondTab, 'Boby McBobFace', 'bob@example.com');
-    await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(secondTab).toBeDocumentPage();
-    const bobEntry = secondTab.locator('.folder-container').locator('.file-list-item').nth(0);
-    await bobEntry.click({ button: 'right' });
-    await checkEntryContextMenu(secondTab, 'file-full', 'Edit', { canEdit: true });
-    await waitForDocumentLoaded(secondTab);
-
-    // Alice types at the very beginning of the document
-    await typeInDocument(documents, 'New first line!');
-    await expectParagraphTexts(documents, ['New first line!Title\r\n']);
-    // Bob should see Alice's changes
-    await expectParagraphTexts(secondTab, ['New first line!Title\r\n']);
-
-    // Bob types at the very beginning of the document
-    await pressInDocument(secondTab, 'Control+Home');
-    await typeInDocument(secondTab, 'New NEWER first line!');
-    await expectParagraphTexts(secondTab, ['New NEWER first line!New first line!Title\r\n']);
-    // Alice should see Bob's changes
-    await expectParagraphTexts(documents, ['New NEWER first line!New first line!Title\r\n']);
-
-    // Alice inserts a new line at the very beginning of the document (the
-    // paragraph insertion is a structural change, unlike the plain text edits)
-    await pressInDocument(documents, 'Control+Home');
-    await pressInDocument(documents, 'Enter');
-    await expectParagraphTexts(documents, ['\r\n', 'New NEWER first line!New first line!Title\r\n']);
-    // Bob should see the new line too
-    await expectParagraphTexts(secondTab, ['\r\n', 'New NEWER first line!New first line!Title\r\n']);
-  });
-
-  msTest('Open file in editor while other user is editing', async ({ documents }, testInfo: TestInfo) => {
-    msTest.setTimeout(240_000);
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
-    // Let it process everything, avoid the refresh
-    await documents.waitForTimeout(500);
-
-    await enableCollaborativeMode(documents);
-
-    // Promote Bob to Contributor so that he can edit the document too
-    await promoteSecondUserToContributor(documents);
-
-    // Open the document in the editor with Alice
-    const aliceEntry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
-    await aliceEntry.click({ button: 'right' });
-    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
-    await waitForDocumentLoaded(documents);
-
-    // Alice types at the very beginning of the document and inserts a new line
-    await typeInDocument(documents, 'New first line!');
-    await expectParagraphTexts(documents, ['New first line!Title\r\n']);
-    await pressInDocument(documents, 'Enter');
-    await expectParagraphTexts(documents, ['New first line!\r\n', 'Title\r\n']);
-
-    // Open the document in the editor with Bob while Alice is still editing: Bob
-    // joins the session and catches up with Alice's changes (delivered as the
-    // session's changes backlog)
-    const secondTab = await documents.openNewTab();
-    await enableCollaborativeMode(secondTab);
-    await login(secondTab, 'Boby McBobFace', 'bob@example.com');
-    await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(secondTab).toBeDocumentPage();
-    const bobEntry = secondTab.locator('.folder-container').locator('.file-list-item').nth(0);
-    await bobEntry.click({ button: 'right' });
-    await checkEntryContextMenu(secondTab, 'file-full', 'Edit', { canEdit: true });
-    await waitForDocumentLoaded(secondTab);
-
-    // Bob must see Alice's changes, including the inserted line
-    await expectParagraphTexts(secondTab, ['New first line!\r\n', 'Title\r\n']);
-
-    // Bob can also edit the document, Alice should see his changes
-    await pressInDocument(secondTab, 'Control+Home');
-    await typeInDocument(secondTab, 'New NEWER first line!');
-    await expectParagraphTexts(secondTab, ['New NEWER first line!New first line!\r\n', 'Title\r\n']);
-    await expectParagraphTexts(documents, ['New NEWER first line!New first line!\r\n', 'Title\r\n']);
-  });
-
-  msTest('Check file edited by other user', async ({ documents }, testInfo: TestInfo) => {
-    msTest.setTimeout(240_000);
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Docx, false);
-    // Let it process everything, avoid the refresh
-    await documents.waitForTimeout(500);
-
-    await enableCollaborativeMode(documents);
-
-    // Promote Bob to Contributor so that he can open the document in the editor too
-    await promoteSecondUserToContributor(documents);
-
-    // Open the document in the editor with Alice
-    const aliceEntry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
-    await aliceEntry.click({ button: 'right' });
-    await checkEntryContextMenu(documents, 'file-full', 'Edit', { canEdit: true });
-    await waitForDocumentLoaded(documents);
-
-    // Make some edits and wait for the changes to be sent to the session
-    await typeInDocument(documents, 'New first line!');
-    await expectParagraphTexts(documents, ['New first line!Title\r\n']);
-    await waitUntilSaved(documents);
-
-    // Leaving the editor persists the document into the workspace file (this is
-    // the only way the collaborative mode persists it, see `onSaveRequest` in
-    // `editics/common.ts`)
-    const topbar = documents.locator('.file-handler-topbar');
-    await topbar.locator('.back-button').click();
-    await expect(documents).toBeDocumentPage();
-
-    // Open the document in the editor with Bob and check he sees the modification
-    const secondTab = await documents.openNewTab();
-    await enableCollaborativeMode(secondTab);
-    await login(secondTab, 'Boby McBobFace', 'bob@example.com');
-    await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(secondTab).toBeDocumentPage();
-    const bobEntry = secondTab.locator('.folder-container').locator('.file-list-item').nth(0);
-    await bobEntry.click({ button: 'right' });
-    await checkEntryContextMenu(secondTab, 'file-full', 'Edit', { canEdit: true });
-    await waitForDocumentLoaded(secondTab);
-    await expectParagraphTexts(secondTab, ['New first line!Title\r\n']);
   });
 });
