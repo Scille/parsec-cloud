@@ -125,7 +125,7 @@ export enum EditicsSaveState {
 }
 
 interface EditicsEventHandlers {
-  onReady: () => void;
+  onDocumentReady: () => void;
   onError: (error: any) => void;
   // Persists document content converted by the offline host back to the
   // workspace file's original format. Throwing/rejecting fails the save.
@@ -300,9 +300,9 @@ export async function openDocument(
               break;
             }
 
-            case 'oo-event-ready': {
+            case 'oo-event-document-ready': {
               onlyOfficeLog('debug', 'Document is ready');
-              handlers.onReady();
+              handlers.onDocumentReady();
               break;
             }
 

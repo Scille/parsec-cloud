@@ -286,7 +286,7 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
     // the error flows back as `oo-event-error` -> onError.
     async (): Promise<Uint8Array | undefined> => await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp),
     {
-      onReady: (): void => {
+      onDocumentReady: (): void => {
         window.nativeAPI.log('info', 'OnlyOffice editor is ready and document loaded successfully');
         if (readyTimeoutId) {
           clearTimeout(readyTimeoutId);
