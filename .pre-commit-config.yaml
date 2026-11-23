@@ -398,6 +398,12 @@ repos:
         files: ^json_schema/
 
       - id: check-dependabot
+      - id: check-github-actions
+      - id: check-github-issue-config
+      - id: check-github-issue-forms
+      - id: check-github-workflows
+      # TODO: Not all workflows has timeout set
+      # - id: check-github-workflows-require-timeout
 
       - id: check-readthedocs
 
