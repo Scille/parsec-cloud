@@ -306,6 +306,13 @@ FILES_WITH_VERSION_INFO: dict[Matcher, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"default: .* # __VERSION__", "default: {version} # __VERSION__")
         ]
     },
+    Matcher.simple(ROOT_DIR / ".github/dependabot.yml"): {
+        Tool.Python: [
+            ReplaceRegex(
+                '">=.*" # marker:python', hide_patch_version('">={version}" # marker:python')
+            )
+        ]
+    },
     Matcher.simple(ROOT_DIR / ".github/workflows/_releaser_nightly_build.yml"): {
         Tool.Python: [PYTHON_GA_VERSION]
     },
