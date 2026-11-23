@@ -856,7 +856,7 @@ function buildConfig(options: EditicsOpenOptions): OO.DocEditorConfig {
       onDocumentReady: function () {
         window.ooDocumentReady = true;
         trackSaveState();
-        postToParent({ command: 'oo-event-ready' });
+        postToParent({ command: 'oo-event-document-ready' });
       },
       // The wrapper serializes the whole document and calls this hook on
       // every `asc_Save` (i.e. every tick of the collaborative autosave loop

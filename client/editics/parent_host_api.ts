@@ -96,8 +96,11 @@ export interface EditicsRpcTokenReply {
 }
 
 export type EditicsHostToParentMessage =
+  // The host IFrame is ready to receive messages from the parent
   | { command: 'oo-event-host-ready' }
+  // The OnlyOffice editor is initialized and ready to load the document
   | { command: 'oo-event-app-ready' }
+  // The OnlyOffice editor has finished to load the document
   | { command: 'oo-event-document-ready' }
   | { command: 'oo-event-error'; details: string }
   // The editor's dirty state changed, so the parent can keep its save
