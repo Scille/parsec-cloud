@@ -118,7 +118,10 @@ impl AnonymousServerCmds {
 
         let server_version = resp
             .headers()
-            .get("Server")
+            // The "X-App-Server" header is used starting with v3.12 (see #13558)
+            .get("X-App-Server")
+            // The "Server" header was introduced in v3.10 and used until v3.11
+            .or_else(|| resp.headers().get("Server"))
             .and_then(|v| Some(v.to_str().ok()?.to_string()));
 
         match resp.status().as_u16() {
