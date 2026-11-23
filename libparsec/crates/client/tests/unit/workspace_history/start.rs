@@ -26,7 +26,7 @@ async fn ok(
         }
         DataAccessStrategy::RealmExport => {
             // Always the same name since it is written in the realm export database file
-            "Org1".parse().unwrap()
+            "TestbedOrg1".parse().unwrap()
         }
     };
     p_assert_eq!(ops.organization_id(), &expected_organization_id);
