@@ -44,7 +44,7 @@ async fn ok(
         DataAccessStrategy::RealmExport => {
             p_assert_eq!(
                 timestamp_higher_bound,
-                "2025-02-15T22:16:26.601990Z".parse().unwrap()
+                "2026-11-23T18:59:02.538024Z".parse().unwrap()
             );
         }
     }
