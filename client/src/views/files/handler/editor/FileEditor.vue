@@ -1,65 +1,67 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
-  <iframe
-    class="file-editor"
-    ref="editorFrame"
-    v-if="!error"
-    v-show="frameReady"
-  />
-  <div
-    v-if="!frameReady"
-    class="loading-container"
-  >
-    <div class="loading-content">
-      <!-- prettier-ignore -->
-      <ms-image
-        :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
-        class="logo-img"
-      />
-      <ms-spinner title="fileEditors.loading" />
-    </div>
-  </div>
-  <div
-    v-if="error"
-    class="file-editor-error"
-  >
-    <div class="error-content">
-      <div class="error-content-text">
-        <ion-text class="error-content-text__title">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
-        <ion-text class="error-content-text__message">{{ $msTranslate(error) }}</ion-text>
-      </div>
-      <div class="error-content-buttons">
-        <ion-button
-          class="error-content-buttons__item color-secondary"
-          @click="routerGoBack()"
-        >
-          {{ $msTranslate(EditorButtonAction.BackToFiles) }}
-        </ion-button>
-      </div>
-    </div>
-
+  <div class="file-editor-container">
+    <iframe
+      class="file-editor"
+      ref="editorFrame"
+      v-if="!error"
+      v-show="frameReady"
+    />
     <div
-      class="error-advices"
-      v-show="showErrorTips"
+      v-if="!error && !appReady"
+      class="loading-container"
     >
-      <ion-text class="error-advices__title">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
-      <ion-list class="error-advices-list ion-no-padding">
-        <ion-item class="error-advices-list__item ion-no-padding">
-          <ion-icon
-            class="item-icon"
-            :icon="checkmarkCircle"
-          />
-          {{ $msTranslate('fileEditors.advices.advice1') }}
-        </ion-item>
-        <ion-item class="error-advices-list__item ion-no-padding">
-          <ion-icon
-            class="item-icon"
-            :icon="checkmarkCircle"
-          />
-          {{ $msTranslate('fileEditors.advices.advice2') }}
-        </ion-item>
-      </ion-list>
+      <div class="loading-content">
+        <!-- prettier-ignore -->
+        <ms-image
+          :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
+          class="logo-img"
+        />
+        <ms-spinner title="fileEditors.loading" />
+      </div>
+    </div>
+    <div
+      v-if="error"
+      class="file-editor-error"
+    >
+      <div class="error-content">
+        <div class="error-content-text">
+          <ion-text class="error-content-text__title">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
+          <ion-text class="error-content-text__message">{{ $msTranslate(error) }}</ion-text>
+        </div>
+        <div class="error-content-buttons">
+          <ion-button
+            class="error-content-buttons__item color-secondary"
+            @click="routerGoBack()"
+          >
+            {{ $msTranslate(EditorButtonAction.BackToFiles) }}
+          </ion-button>
+        </div>
+      </div>
+
+      <div
+        class="error-advices"
+        v-show="showErrorTips"
+      >
+        <ion-text class="error-advices__title">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
+        <ion-list class="error-advices-list ion-no-padding">
+          <ion-item class="error-advices-list__item ion-no-padding">
+            <ion-icon
+              class="item-icon"
+              :icon="checkmarkCircle"
+            />
+            {{ $msTranslate('fileEditors.advices.advice1') }}
+          </ion-item>
+          <ion-item class="error-advices-list__item ion-no-padding">
+            <ion-icon
+              class="item-icon"
+              :icon="checkmarkCircle"
+            />
+            {{ $msTranslate('fileEditors.advices.advice2') }}
+          </ion-item>
+        </ion-list>
+      </div>
     </div>
   </div>
 </template>
@@ -104,6 +106,14 @@ const showErrorTips = ref(false);
 const loadFinished = ref(false);
 let session: EditicsHostSession | undefined = undefined;
 const frameReady = ref(false);
+// The host page is loaded (`frameReady`), but OnlyOffice's editor is still
+// booting: in order not to show an unfinished (untimely light-themed) editor,
+// the loading overlay stays on top of the frame until the editor application
+// signals it is ready (`oo-event-app-ready`, i.e. it is displaying its own
+// loading UI from that point on). The overlay is also dismissed on document
+// ready (in case the app-ready event never arrives, e.g. on a page reload) and
+// on error (to show the error screen).
+const appReady = ref(false);
 let readyTimeoutId: ReturnType<typeof setTimeout> | undefined;
 let timeoutModalReAskId: ReturnType<typeof setTimeout> | undefined;
 let autoSaveTimeoutId: any = undefined;
@@ -286,8 +296,12 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
     // the error flows back as `oo-event-error` -> onError.
     async (): Promise<Uint8Array | undefined> => await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp),
     {
+      onAppReady: (): void => {
+        appReady.value = true;
+      },
       onDocumentReady: (): void => {
         window.nativeAPI.log('info', 'OnlyOffice editor is ready and document loaded successfully');
+        appReady.value = true;
         if (readyTimeoutId) {
           clearTimeout(readyTimeoutId);
           readyTimeoutId = undefined;
@@ -312,6 +326,7 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
         emits('onSaveStateChange', mapSaveState(state));
       },
       onError: async (err: unknown): Promise<void> => {
+        appReady.value = true;
         error.value = 'fileViewers.errors.titles.genericError';
         showErrorTips.value = true;
 
@@ -446,7 +461,17 @@ async function convertToPdf(): Promise<Uint8Array> {
 </script>
 
 <style scoped lang="scss">
+.file-editor-container {
+  // Fills what is left of the file handler layout below the topbar.
+  flex: 1;
+  min-height: 0;
+  // The loading overlay is positioned over the whole editor area.
+  position: relative;
+}
+
 .file-editor {
+  display: block;
+  width: 100%;
   height: 100%;
   background: ms.color('surface-base-default');
   border: none;
@@ -532,12 +557,19 @@ async function convertToPdf(): Promise<Uint8Array> {
 }
 
 .loading-container {
+  // Covers the editor frame until OnlyOffice's own loading UI can take
+  // over: the overlay must not take part in the layout (the editor frame
+  // otherwise gets shrunk to make room for it) and must be opaque (an
+  // ancestor's background would otherwise show the half-loaded editor
+  // through it).
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: ms.color('surface-base-page');
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
   user-select: none;
 }
 
