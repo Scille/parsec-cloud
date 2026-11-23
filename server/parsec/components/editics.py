@@ -451,48 +451,51 @@ def _release_participant_locks(
     return released
 
 
-def _push_changes_backlog(session: EditicsDocumentSession, participant: ParticipantSession) -> None:
+def _push_handshake_auth(
+    session: EditicsDocumentSession, participant: ParticipantSession, with_changes_backlog: bool
+) -> None:
     """
-    Push on the participant's SSE channel the backlog of changes that
-    occurred since the session was created (delivered as a single `authChanges`
-    chunk), so a newcomer can catch up before its `auth` reply.
+    Push on the participant's SSE channel the `authChanges` and `auth` server events
+    completing its handshake.
+
+    Since a `auth` client event triggers two server events (i.e. optional
+    `authChanges`, then `auth`), we must push them through the same SSE channel
+    (instead of e.g. having one through the SSE and the other through the HTTP POST
+    response) to ensure they stay ordered.
     """
-    if not session.changes:
-        return
-    participant.send_event(
-        EditicsServerEventAuthChanges(
-            changes=[
-                AuthChangeRecord(
-                    index=index + 1,
-                    author=(change.author_device_id, change.author_index),
-                    time=change.timestamp,
-                    encryptedChange=change.encrypted_change,
-                )
-                for index, change in enumerate(session.changes)
-            ],
-        )
-    )
-
-
-def _handshake_auth(
-    session: EditicsDocumentSession, participant: ParticipantSession
-) -> EditicsServerEventAuth:
-    return EditicsServerEventAuth(
-        participants=_participant_entries(session),
-        participantSessionId=participant.participant_session_id,
-        participantIndexUser=participant.index,
-        participantSessionTimeConnect=participant.created_at,
-        openedAt=session.created_at,
-        locks=list(session.region_locks.values()),
-        messages=[
-            MessageRecord(
-                time=m.timestamp,
-                author=(m.author_device_id, m.author_index),
-                encryptedMessage=m.encrypted_message,
+    if with_changes_backlog and session.changes:
+        participant.send_event(
+            EditicsServerEventAuthChanges(
+                changes=[
+                    AuthChangeRecord(
+                        index=index + 1,
+                        author=(change.author_device_id, change.author_index),
+                        time=change.timestamp,
+                        encryptedChange=change.encrypted_change,
+                    )
+                    for index, change in enumerate(session.changes)
+                ],
             )
-            for m in session.chat_messages
-        ],
-        initialContentUploaded=session.encrypted_initial_content is not None,
+        )
+
+    participant.send_event(
+        EditicsServerEventAuth(
+            participants=_participant_entries(session),
+            participantSessionId=participant.participant_session_id,
+            participantIndexUser=participant.index,
+            participantSessionTimeConnect=participant.created_at,
+            openedAt=session.created_at,
+            locks=list(session.region_locks.values()),
+            messages=[
+                MessageRecord(
+                    time=m.timestamp,
+                    author=(m.author_device_id, m.author_index),
+                    encryptedMessage=m.encrypted_message,
+                )
+                for m in session.chat_messages
+            ],
+            initialContentUploaded=session.encrypted_initial_content is not None,
+        )
     )
 
 
@@ -505,8 +508,7 @@ def _release_auth_lock(session: EditicsDocumentSession) -> None:
     for other in session.participants.values():
         if (other_authed := other.authed) and other_authed.parked:
             other_authed.parked = False
-            _push_changes_backlog(session, other)
-            other.send_event(_handshake_auth(session, other))
+            _push_handshake_auth(session, other, with_changes_backlog=True)
 
 
 def _handle_participant_departure(
@@ -1017,8 +1019,9 @@ class EditicsComponent:
                     # blocks of a non-viewer restorer only, and the broadcast
                     # targets the non-viewer connections.
                     # Then broadcast the new participant list, and complete with
-                    # the `auth` reply: no changes backlog, the participant never
-                    # left the session logically so it already has the changes.
+                    # the `auth` reply: no changes backlog is pushed, the
+                    # participant never left the session logically so it already
+                    # has the changes.
                     if not participant_view:
                         lock_table_event = EditicsServerEventGetLock(
                             locks=_lock_table_snapshot(session)
@@ -1046,7 +1049,8 @@ class EditicsComponent:
                         if other.participant_session_id == participant.participant_session_id:
                             continue
                         other.send_event(broadcasted_event)
-                    return _handshake_auth(session, participant)
+                    _push_handshake_auth(session, participant, with_changes_backlog=False)
+                    return None
 
                 # The handshake is complete: from now on the participant appears
                 # in the participants lists (i.e. the `auth` replies and
@@ -1054,10 +1058,14 @@ class EditicsComponent:
                 # connection was registered in the session.
                 participant.authed = ParticipantSessionAuthed(view=participant_view)
 
+                # The RPC reply is either:
+                # - `None`: For `authChanges`&`auth`, since they are send through SSE to stay ordered.
+                # - `EditicsServerEventWaitAuth`: No ordering issue since it is a single event.
+                rpc_reply: EditicsServerEventWaitAuth | None = None
+
                 # Viewers are ignored from the auth lock logic (don't take or wait for lock)
                 if participant_view:
-                    reply = _handshake_auth(session, participant)
-                    _push_changes_backlog(session, participant)
+                    _push_handshake_auth(session, participant, with_changes_backlog=True)
 
                 else:
                     # Auth lock logic according to OnlyOffice 9.3.0 (`endAuth` in
@@ -1111,7 +1119,7 @@ class EditicsComponent:
                         assert (
                             lock_holder.authed is not None
                         )  # Lock gets dropped whenever the participant leaves
-                        reply = EditicsServerEventWaitAuth(
+                        rpc_reply = EditicsServerEventWaitAuth(
                             authLockedBy=EditicsParticipantEntry(
                                 deviceId=lock_holder.device_id,
                                 indexUser=lock_holder.index,
@@ -1139,8 +1147,7 @@ class EditicsComponent:
                             # auth lock holder.
                             session.auth_lock_holder = participant.participant_session_id
 
-                        reply = _handshake_auth(session, participant)
-                        _push_changes_backlog(session, participant)
+                        _push_handshake_auth(session, participant, with_changes_backlog=True)
 
                 broadcasted_event = EditicsServerEventConnectState(
                     participantsTimestamp=session.monotonic_now(),
@@ -1152,7 +1159,7 @@ class EditicsComponent:
                     # as a trigger: the lock holder releases the lock because of
                     # the co-editing mode transition (see the auth lock logic
                     # comment above), and only ever uses the flag for error logging.
-                    waitAuth=isinstance(reply, EditicsServerEventWaitAuth),
+                    waitAuth=isinstance(rpc_reply, EditicsServerEventWaitAuth),
                 )
                 for other_participant in session.participants.values():
                     if (
@@ -1162,7 +1169,7 @@ class EditicsComponent:
                         continue
                     other_participant.send_event(broadcasted_event)
 
-                return reply
+                return rpc_reply
 
             case EditicsClientEventGetMessages():
                 return EditicsServerEventMessage(
