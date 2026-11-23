@@ -285,9 +285,24 @@ async function openTOS(tosLink: string): Promise<void> {
 /* Editics variables */
 
 const ENABLE_EDITICS_VARIABLE = 'PARSEC_APP_ENABLE_EDITICS';
+const EDITICS_MODE_VARIABLE = 'PARSEC_APP_EDITICS_MODE';
 
 function isEditicsEnabled(): boolean {
   return import.meta.env[ENABLE_EDITICS_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_EDITICS === true;
+}
+
+// Default mode is `collaborative`
+export type EditicsMode = 'collaborative' | 'offline';
+
+function getEditicsMode(): EditicsMode {
+  const mode: string | undefined = (window as any).TESTING_EDITICS_MODE ?? import.meta.env[EDITICS_MODE_VARIABLE];
+  if (mode === 'offline') {
+    return 'offline';
+  }
+  if (mode !== undefined && mode !== 'collaborative') {
+    window.nativeAPI.log('warn', `Unknown editics mode '${mode}', expected 'collaborative' or 'offline', using 'collaborative'`);
+  }
+  return 'collaborative';
 }
 
 export function ensureHttpsProtocol(server: string): string {
@@ -310,6 +325,7 @@ export const Env = {
   getAccountServer,
   isAccountEnabled,
   isEditicsEnabled,
+  getEditicsMode,
   isAccountAutoLoginEnabled,
   isCustomBrandingEnabled,
   ensureHttpsProtocol,

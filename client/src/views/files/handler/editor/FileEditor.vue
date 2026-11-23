@@ -77,6 +77,7 @@ import {
   getEditicsDocumentType,
   openDocument,
 } from '@/services/editics';
+import { Env } from '@/services/environment';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus } from '@/views/files/handler/editor';
@@ -235,26 +236,36 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
     session = undefined;
   }
 
-  // Collaborative mode is the default. When the client is offline, we inform
-  // the user and let him choose between going back or using offline mode.
+  // Collaborative edition is the default, but it needs the editics server to be
+  // online: when it isn't, we let the user choose between going back or editing offline.
+  // The offline-only mode (i.e. not as a fallback) is used for:
+  // - Read only document: Archived workspace or file history.
+  // - `PARSEC_APP_EDITICS_MODE=offline` environ variable is set
+  // The offline-only mode can also be forced through the `PARSEC_APP_EDITICS_MODE`
+  // environment variable (in which case no dialog is shown).
   let collaborative: EditicsCollaborativeOptions | undefined = undefined;
-  if (!contentInfo.timestamp) {
-    const clientInfo = await getClientInfo();
-    if (!clientInfo.ok || !clientInfo.value.isServerOnline) {
-      if (!(await askOpenInOfflineMode())) {
-        emits('fileError');
-        await routerGoBack();
-        return;
-      }
+  if (Env.getEditicsMode() === 'collaborative') {
+    if (contentInfo.timestamp) {
+      window.nativeAPI.log('info', 'Editics: workspace history, opening the document in offline mode');
     }
-    // TODO: the e2e tests keep the editor in offline mode by default (unless
-    // `TESTING_ENABLE_EDITICS_COLLABORATIVE` is set), which differs from the
-    // normal collaborative-by-default policy.
-    if ((window as any).TESTING === false || (window as any).TESTING_ENABLE_EDITICS_COLLABORATIVE === true) {
-      collaborative = await getEditicsCollaborativeOptions(workspaceHandle, contentInfo.path);
-      if (!collaborative) {
-        // Fall back on the offline mode.
-        window.nativeAPI.log('warn', 'Editics: falling back on the offline edition mode');
+    const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+    if (workspaceInfoResult.ok && workspaceInfoResult.value.isArchived) {
+      window.nativeAPI.log('info', 'Editics: archived workspace, opening the document in offline mode');
+    } else {
+      const clientInfo = await getClientInfo();
+      if (!clientInfo.ok || !clientInfo.value.isServerOnline) {
+        if (!(await askOpenInOfflineMode())) {
+          emits('fileError');
+          await routerGoBack();
+          return;
+        }
+      } else {
+        collaborative = await getEditicsCollaborativeOptions(workspaceHandle, contentInfo.path);
+        if (!collaborative) {
+          // Fall back on the offline mode (editics server not available, ...).
+          // Note the archived workspace case is handled above.
+          window.nativeAPI.log('warn', 'Editics: falling back on the offline mode');
+        }
       }
     }
   }

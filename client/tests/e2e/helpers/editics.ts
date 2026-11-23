@@ -88,16 +88,6 @@ export async function pressInDocument(page: MsPage, key: string): Promise<void> 
   await page.keyboard.press(key);
 }
 
-// The e2e tests keep the editor in offline mode by default (so the suite
-// doesn't depend on the still work in progress collaborative stack): a test
-// can opt in with this helper (see `isCollaborativeEnabledInTests` in
-// `FileEditor.vue`).
-export async function enableCollaborativeMode(page: MsPage): Promise<void> {
-  await page.evaluate(() => {
-    (window as any).TESTING_ENABLE_EDITICS_COLLABORATIVE = true;
-  });
-}
-
 // Promotes the second user of the default organization (Boby McBobFace,
 // a Reader of wksp1 by default) to Contributor, so that he can edit the
 // workspace files too. The testbed organization is left with Alice as the
