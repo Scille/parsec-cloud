@@ -144,6 +144,8 @@ async def test_initial_content_can_be_uploaded_before_any_participant(
     async with alice_editics.listen():
         # The late-joining editor is told the initial content is already there
         rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.initialContentUploaded is True
         assert await alice_editics.fetch_initial_content() == (1, INITIAL_CONTENT_PARTS)
@@ -168,6 +170,8 @@ async def test_initial_content_lifecycle(
         #    anything else.
 
         rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.initialContentUploaded is False
 
@@ -211,6 +215,8 @@ async def test_initial_content_lifecycle(
 
         async with bob_editics.listen():
             rep = await bob_editics.send(_auth_event(mode="edit"))
+            assert rep is None
+            rep = await bob_editics.recv()
             assert isinstance(rep, EditicsServerEventAuth)
             assert rep.initialContentUploaded is True
 
@@ -223,7 +229,8 @@ async def test_save_changes_refused_before_initial_content(
 ) -> None:
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
 
         # The `saveChanges` event is refused...
         with pytest.raises(RpcTransportError) as exc:
@@ -269,13 +276,15 @@ async def test_initial_content_upload_is_broadcast_to_viewers(
     # Alice joins first and takes the auth lock (single-editor mode)
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
 
         # Viewers are never parked behind the auth lock, so Bob can join
         # (and her join is broadcasted to Alice)
         async with bob_editics.listen():
             rep = await bob_editics.send(_auth_event(mode="view"))
-            assert isinstance(rep, EditicsServerEventAuth)
+            assert rep is None
+            assert isinstance(await bob_editics.recv(), EditicsServerEventAuth)
             event = await alice_editics.recv()
             assert isinstance(event, EditicsServerEventConnectState)
 

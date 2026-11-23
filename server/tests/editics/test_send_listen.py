@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager, AsyncExitStack
 from typing import Literal
 from uuid import uuid4
@@ -27,10 +28,13 @@ from parsec.editics_protocol import (
     EditicsClientEventUnLockDocument,
     EditicsClientEventUnSaveLock,
     EditicsParticipantSessionID,
+    EditicsServerEvent,
+    EditicsServerEventAdapter,
     EditicsServerEventAuth,
     EditicsServerEventAuthChanges,
     EditicsServerEventConnectState,
     EditicsServerEventDisconnectReason,
+    EditicsServerEventError,
     EditicsServerEventGetLock,
     EditicsServerEventSaveLock,
     EditicsServerEventSavePartChanges,
@@ -121,6 +125,8 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
     async with alice_editics.listen():
         # The send route still authenticates through the `Authorization` header
         rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 1
 
@@ -131,6 +137,11 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
         rep = await alice_editics.send(
             _auth_event(mode="edit", reconnect=(participant_session_id_1, None))
         )
+        assert rep is None
+        # A restored non-viewer first gets the current lock table
+        rep = await alice_editics.recv()
+        assert isinstance(rep, EditicsServerEventGetLock)
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 1
 
@@ -142,6 +153,8 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
 
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 2
 
@@ -151,6 +164,8 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
 
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 2
 
@@ -175,6 +190,8 @@ async def test_join_broadcasts_never_reach_unauthed_participants(
     async with alice_editics.listen(), bob_editics.listen():
         # Alice auth
         rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 1
 
@@ -208,11 +225,14 @@ async def test_reconnection_before_auth(alice_editics: EditicsSessionClient) -> 
 
     alice_editics.base_params["psid"] = participant_session_id_1
 
-    rep = await alice_editics.send(
-        _auth_event(mode="view", reconnect=(participant_session_id_1, None))
-    )
-    assert isinstance(rep, EditicsServerEventAuth)
-    assert rep.participantIndexUser == 1
+    async with alice_editics.listen():
+        rep = await alice_editics.send(
+            _auth_event(mode="view", reconnect=(participant_session_id_1, None))
+        )
+        assert rep is None
+        rep = await alice_editics.recv()
+        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep.participantIndexUser == 1
 
     # Case 2: the participant ID exists on the server, but isn't authenticated yet
 
@@ -222,6 +242,8 @@ async def test_reconnection_before_auth(alice_editics: EditicsSessionClient) -> 
         rep = await alice_editics.send(
             _auth_event(mode="edit", reconnect=(participant_session_id_1, None))
         )
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 2
 
@@ -231,51 +253,67 @@ async def test_reconnection_participant_session_id_mismatch(
 ) -> None:
     dummy_participant_session_id = "b146ee2c144c485e924f6082c4ee66bf"
 
-    # Case 1: the server doesn't know at all this participant ID
+    async with alice_editics.listen():
+        rep = await alice_editics.send(
+            _auth_event(mode="view", reconnect=(dummy_participant_session_id, None))
+        )
+        assert rep is None
+        rep = await alice_editics.recv()
+        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep.participantIndexUser == 1
 
-    rep = await alice_editics.send(
-        _auth_event(mode="view", reconnect=(dummy_participant_session_id, None))
-    )
-    assert isinstance(rep, EditicsServerEventAuth)
-    assert rep.participantIndexUser == 1
 
-
-@pytest.mark.parametrize("more_recent_self_change", (False, True))
+@pytest.mark.parametrize(
+    "kind", ("view", "edit_last_change_from_self", "edit_last_change_from_others")
+)
 async def test_reconnection_with_changes(
     backend: Backend,
     coolorg: CoolorgRpcClients,
     bob_editics: EditicsSessionClient,
     alice_editics: EditicsSessionClient,
-    more_recent_self_change: bool,
+    kind: str,
 ) -> None:
     # 1) Alice connects and add some changes
 
-    rep = await alice_editics.send(_auth_event(mode="edit"))
-    assert isinstance(rep, EditicsServerEventAuth)
+    async with alice_editics.listen():
+        rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        rep = await alice_editics.recv()
+        assert isinstance(rep, EditicsServerEventAuth)
 
-    await alice_editics.upload_initial_content(key_index=1, parts=[b"<Alice's initial content>"])
-    rep = await alice_editics.send(_save_changes_event(changes=[(1, b"<Change 1 from Alice>")]))
-    assert isinstance(rep, EditicsServerEventUnSaveLock)
-    assert rep.time is not None
-    change_1_from_alice_timestamp = rep.time
-    rep = await alice_editics.send(_save_changes_event(changes=[(1, b"<Change 2 from Alice>")]))
-    assert isinstance(rep, EditicsServerEventUnSaveLock)
-    assert rep.time is not None
-    change_2_from_alice_timestamp = rep.time
+        await alice_editics.upload_initial_content(
+            key_index=1, parts=[b"<Alice's initial content>"]
+        )
+        rep = await alice_editics.send(_save_changes_event(changes=[(1, b"<Change 1 from Alice>")]))
+        assert isinstance(rep, EditicsServerEventUnSaveLock)
+        assert rep.time is not None
+        change_1_from_alice_timestamp = rep.time
+        rep = await alice_editics.send(_save_changes_event(changes=[(1, b"<Change 2 from Alice>")]))
+        assert isinstance(rep, EditicsServerEventUnSaveLock)
+        assert rep.time is not None
+        change_2_from_alice_timestamp = rep.time
 
     # 2) Now Bob connect, and will try to reconnect
 
-    if more_recent_self_change:
-        await wksp1_alice_gives_role(
-            coolorg,
-            backend,
-            coolorg.bob.user_id,
-            new_role=RealmRole.CONTRIBUTOR,
-            wait_events=True,
-        )
-        bob_mode = "edit"
-    else:
-        bob_mode = "view"
+    await wksp1_alice_gives_role(
+        coolorg,
+        backend,
+        coolorg.bob.user_id,
+        new_role=RealmRole.CONTRIBUTOR,
+        wait_events=True,
+    )
+    match kind:
+        case "view":
+            bob_mode = "view"
+            bob_do_change = False
+        case "edit_last_change_from_self":
+            bob_mode = "edit"
+            bob_do_change = True
+        case "edit_last_change_from_others":
+            bob_mode = "edit"
+            bob_do_change = False
+        case unknown:
+            assert False, unknown
 
     # Connect...
     async with bob_editics.listen():
@@ -285,14 +323,16 @@ async def test_reconnection_with_changes(
         if isinstance(rep, EditicsServerEventWaitAuth):
             rep = await alice_editics.send(EditicsClientEventClose())
             assert rep is None
-            rep = await bob_editics.recv()
-            assert isinstance(rep, EditicsServerEventAuthChanges)
-            rep = await bob_editics.recv()
+        # The changes backlog is pushed on the SSE connection before the `auth`
+        # reply completing the handshake
+        rep = await bob_editics.recv()
+        assert isinstance(rep, EditicsServerEventAuthChanges)
+        rep = await bob_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
 
         # The server consider the client is always aware of its own changes, hence
         # it just skip the check if the last change is its own
-        if more_recent_self_change:
+        if bob_do_change:
             rep = await bob_editics.send(_save_changes_event(changes=[(1, b"<Change 2 from Bob>")]))
             assert isinstance(rep, EditicsServerEventUnSaveLock)
             assert rep.time is not None
@@ -301,22 +341,40 @@ async def test_reconnection_with_changes(
 
     # ...and reconnection (with wrong changes info)...
 
-    for bad_lastOtherSaveTime in (None, change_1_from_alice_timestamp):
-        rep = await bob_editics.send(
-            _auth_event(
-                mode=bob_mode, reconnect=(bob_editics.participant_session_id, bad_lastOtherSaveTime)
+    async def reconnect(lastOtherSaveTime: EditicsTimestampMs | None) -> EditicsServerEvent:
+        async with bob_editics.listen():
+            rep = await bob_editics.send(
+                _auth_event(
+                    mode=bob_mode,
+                    reconnect=(bob_editics.participant_session_id, lastOtherSaveTime),
+                )
             )
-        )
+            if rep is not None:
+                return rep
+            rep = await bob_editics.recv()
+            # A restored non-viewer first gets the current lock table, just ignore it
+            if isinstance(rep, EditicsServerEventGetLock):
+                rep = await bob_editics.recv()
+            return rep
+
+    rep = await reconnect(None)
+    if bob_mode == "view" or bob_do_change:
         assert isinstance(rep, EditicsServerEventAuth)
+    else:
+        assert rep == EditicsServerEventError(
+            code=4010, description="Restore error. Document modified."
+        )
+    rep = await reconnect(change_1_from_alice_timestamp)
+    if bob_mode == "view" or bob_do_change:
+        assert isinstance(rep, EditicsServerEventAuth)
+    else:
+        assert rep == EditicsServerEventError(
+            code=4010, description="Restore error. Document modified."
+        )
 
     # ...finally reconnection with up-to-date changes info
 
-    rep = await bob_editics.send(
-        _auth_event(
-            mode=bob_mode,
-            reconnect=(bob_editics.participant_session_id, change_2_from_alice_timestamp),
-        )
-    )
+    rep = await reconnect(change_2_from_alice_timestamp)
     assert isinstance(rep, EditicsServerEventAuth)
 
 
@@ -334,6 +392,8 @@ async def test_reconnection_cannot_change_participant_mode(
             # `reconnect` param (i.e. server fully overwrites the previous participant
             # auth info, including the participant mode).
             rep = await alice_editics.send(_auth_event(mode=initial_mode))
+            assert rep is None
+            rep = await alice_editics.recv()
             assert isinstance(rep, EditicsServerEventAuth)
             assert rep.participantIndexUser == 1
 
@@ -356,6 +416,12 @@ async def test_reconnection_cannot_change_participant_mode(
                     mode=initial_mode, reconnect=(alice_editics.participant_session_id, None)
                 )
             )
+            assert rep is None
+            if initial_mode == "edit":
+                # A restored non-viewer first gets the current lock table
+                rep = await alice_editics.recv()
+                assert isinstance(rep, EditicsServerEventGetLock)
+            rep = await alice_editics.recv()
             assert isinstance(rep, EditicsServerEventAuth)
             assert rep.participantIndexUser == 1
 
@@ -396,6 +462,8 @@ async def test_participant_session_id_of_another_device_is_refused(
         await assert_bob_refused()
 
         rep = await alice_editics.send(auth_event)
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
 
         # `auth` done
@@ -419,6 +487,8 @@ async def test_read_only_realm_role_must_join_in_view_mode(
 ) -> None:
     async with bob_editics.listen():
         rep = await bob_editics.send(_auth_event(mode="view"))
+        assert rep is None
+        rep = await bob_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert rep.participantIndexUser == 1
         assert [p.view for p in rep.participants] == [True]
@@ -436,14 +506,20 @@ async def test_write_realm_role_can_join_in_view_mode(
 ) -> None:
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="view"))
+        assert rep is None
+        rep = await alice_editics.recv()
         assert isinstance(rep, EditicsServerEventAuth)
         assert [p.view for p in rep.participants] == [True]
 
         # Bob joins as a write-capable editor
-        await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR)
+        await wksp1_alice_gives_role(
+            coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR, wait_events=True
+        )
         async with bob_editics.listen():
             # Alice the viewer holds no auth lock: Bob joins without waiting
             rep = await bob_editics.send(_auth_event(mode="edit"))
+            assert rep is None
+            rep = await bob_editics.recv()
             assert isinstance(rep, EditicsServerEventAuth)
             assert [p.view for p in rep.participants] == [True, False]
 
@@ -454,7 +530,8 @@ async def test_viewer_cannot_send_editor_only_events(
 ) -> None:
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
         await alice_editics.upload_initial_content(key_index=1, parts=[b"<bin>"])
 
     for event in (
@@ -468,7 +545,8 @@ async def test_viewer_cannot_send_editor_only_events(
     ):
         async with bob_editics.listen():
             rep = await bob_editics.send(_auth_event(mode="view"))
-            assert isinstance(rep, EditicsServerEventAuth)
+            assert rep is None
+            assert isinstance(await bob_editics.recv(), EditicsServerEventAuth)
 
             rep = await bob_editics.send(event)
             assert isinstance(rep, EditicsServerEventDisconnectReason)
@@ -503,7 +581,8 @@ async def test_full_event_channel_closes_the_sse_connection(
     # Alice joins first, and hence becomes the single editor holding the auth lock
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
 
         async with bob_editics.listen():
             # Bob joins while the auth lock is held: he is parked, i.e. his
@@ -543,7 +622,8 @@ async def test_close_by_last_participant_destroys_session(
     assert backend.editics._document_sessions == {}
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
         assert len(backend.editics._document_sessions) == 1
 
         # `close` is a voluntary leave: nothing is expected in reply
@@ -580,7 +660,9 @@ async def test_sse_deco_on_role_change(
         bob_editics.base_params["psid"] = participant_session_id
         async with bob_editics.listen():
             if auth:
-                await bob_editics.send(EditicsClientEventAuth(reconnect=None, mode=auth))
+                rep = await bob_editics.send(EditicsClientEventAuth(reconnect=None, mode=auth))
+                assert rep is None
+                assert isinstance(await bob_editics.recv(), EditicsServerEventAuth)
 
             expected_before_event = send_event_warning(participant_session_id, "before")
             with backend.event_bus.spy() as spy:
@@ -670,7 +752,8 @@ async def test_delete_index_defensive_handling(
         ]
 
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
 
         await alice_editics.upload_initial_content(
             key_index=1, parts=[b"<Alice's initial content>"]
@@ -734,35 +817,37 @@ async def test_send_too_large(
     alice_editics: EditicsSessionClient,
 ) -> None:
 
-    rep = await alice_editics.send(_auth_event(mode="edit"))
-    assert isinstance(rep, EditicsServerEventAuth)
+    async with alice_editics.listen():
+        rep = await alice_editics.send(_auth_event(mode="edit"))
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
 
-    event = (
-        '{"type":"saveChanges",'
-        '"encryptedChanges":[[1,"abcdef=="]],'
-        '"startSaveChanges":true,'
-        '"endSaveChanges":true,'
-        '"deleteIndex":null,'
-        '"excelAdditionalInfoIndexCols":null,'
-        '"excelAdditionalInfoIndexRows":null,'
-        '"encryptedCursorAdditionalInfo":null,'
-        '"releaseLocks":false}'
-    )
-    backend.config.editics_max_part_size = len(event) - 1
+        event = (
+            '{"type":"saveChanges",'
+            '"encryptedChanges":[[1,"abcdef=="]],'
+            '"startSaveChanges":true,'
+            '"endSaveChanges":true,'
+            '"deleteIndex":null,'
+            '"excelAdditionalInfoIndexCols":null,'
+            '"excelAdditionalInfoIndexRows":null,'
+            '"encryptedCursorAdditionalInfo":null,'
+            '"releaseLocks":false}'
+        )
+        backend.config.editics_max_part_size = len(event) - 1
 
-    # Regular request with `Content-Length` header
-    with pytest.raises(RpcTransportError) as exc:
-        await alice_editics.send_event_raw(event)
-    assert exc.value.rep.status_code == 413
+        # Regular request with `Content-Length` header
+        with pytest.raises(RpcTransportError) as exc:
+            await alice_editics.send_event_raw(event)
+        assert exc.value.rep.status_code == 413
 
-    # Request without `Content-Length` header
-    async def async_iterator():
-        yield event[:50].encode()
-        yield event[50:].encode()
+        # Request without `Content-Length` header
+        async def async_iterator():
+            yield event[:50].encode()
+            yield event[50:].encode()
 
-    with pytest.raises(RpcTransportError) as exc:
-        await alice_editics.send_event_raw(async_iterator())
-    assert exc.value.rep.status_code == 413
+        with pytest.raises(RpcTransportError) as exc:
+            await alice_editics.send_event_raw(async_iterator())
+        assert exc.value.rep.status_code == 413
 
 
 async def test_zombie_sse_teardown_does_not_evict_the_participant(
@@ -788,6 +873,19 @@ async def test_zombie_sse_teardown_does_not_evict_the_participant(
             headers={**client.base_headers, "Accept": "text/event-stream"},
         )
 
+    async def _recv_raw_sse(
+        sse_events: AsyncIterator[httpx_sse.ServerSentEvent],
+    ) -> EditicsServerEvent:
+        # Receive the next server event from a raw SSE connection (skipping
+        # the keepalives), as `EditicsSessionClient.recv` does for its own
+        # connection. The connection's event iterator is single-use, hence it
+        # is created once per connection and passed along.
+        async for sse in sse_events:
+            if sse.event == "keepalive" or not sse.data:
+                continue
+            return EditicsServerEventAdapter.validate_json(sse.data)
+        raise AssertionError("The SSE connection was closed before the expected event")
+
     await wksp1_alice_gives_role(
         coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR, wait_events=True
     )
@@ -798,10 +896,15 @@ async def test_zombie_sse_teardown_does_not_evict_the_participant(
         # zombie's teardown (nested context managers would unwind in the wrong order).
         async with AsyncExitStack() as live_stack:
             async with AsyncExitStack() as zombie_stack:
-                await zombie_stack.enter_async_context(_raw_sse(alice_editics))
+                alice_zombie_sse = await zombie_stack.enter_async_context(_raw_sse(alice_editics))
+                alice_zombie_sse_events = alice_zombie_sse.aiter_sse()
 
                 rep = await alice_editics.send(_auth_event(mode="edit"))
-                assert isinstance(rep, EditicsServerEventAuth)
+                assert rep is None
+                # The `auth` reply travels on the SSE connection (here: the zombie)
+                assert isinstance(
+                    await _recv_raw_sse(alice_zombie_sse_events), EditicsServerEventAuth
+                )
                 session = backend.editics._document_sessions[session_key]
                 # Alice is the first editor: she takes the auth lock (single-editor mode)
                 assert session.auth_lock_holder == alice_editics.participant_session_id
@@ -815,8 +918,9 @@ async def test_zombie_sse_teardown_does_not_evict_the_participant(
                 )
                 assert rep is None
                 rep = await bob_editics.send(_auth_event(mode="edit"))
-                assert isinstance(rep, EditicsServerEventAuth)
-                assert sorted(entry.indexUser for entry in rep.participants) == [1, 2]
+                assert rep is None
+                assert isinstance(await bob_editics.recv(), EditicsServerEventAuth)
+                assert sorted(entry.indexUser for entry in _participant_entries(session)) == [1, 2]
 
                 # Alice holds a region lock
                 rep = await alice_editics.send(EditicsClientEventGetLock(block=["blockA"]))
@@ -824,7 +928,8 @@ async def test_zombie_sse_teardown_does_not_evict_the_participant(
                 assert set(session.region_locks) == {"blockA"}
 
                 # A second SSE connection replaces the first one (the zombie)
-                await live_stack.enter_async_context(_raw_sse(alice_editics))
+                alice_live_sse = await live_stack.enter_async_context(_raw_sse(alice_editics))
+                alice_live_sse_events = alice_live_sse.aiter_sse()
 
                 # Restore the very same participant session (a fresh `auth` would be
                 # parked behind the auth lock Alice herself holds, since the zombie
@@ -835,7 +940,15 @@ async def test_zombie_sse_teardown_does_not_evict_the_participant(
                         reconnect=(alice_editics.participant_session_id, None),
                     )
                 )
-                assert isinstance(rep, EditicsServerEventAuth)
+                assert rep is None
+                # A restored non-viewer first gets the current lock table, then the
+                # `auth` reply completing its handshake (both on the live SSE connection)
+                assert isinstance(
+                    await _recv_raw_sse(alice_live_sse_events), EditicsServerEventGetLock
+                )
+                assert isinstance(
+                    await _recv_raw_sse(alice_live_sse_events), EditicsServerEventAuth
+                )
 
             # The zombie connection is torn down here, while the live one is open:
             # nothing must have been released.
@@ -990,7 +1103,8 @@ async def test_save_changes_without_is_save_lock_takes_the_lock(
 
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
         await alice_editics.upload_initial_content(key_index=1, parts=[b"<bin>"])
 
         session = backend.editics._document_sessions[session_key]
@@ -1033,7 +1147,8 @@ async def test_save_changes_while_save_lock_held_by_another_participant_kicks(
 
     async with alice_editics.listen():
         rep = await alice_editics.send(_auth_event(mode="edit"))
-        assert isinstance(rep, EditicsServerEventAuth)
+        assert rep is None
+        assert isinstance(await alice_editics.recv(), EditicsServerEventAuth)
         await alice_editics.upload_initial_content(key_index=1, parts=[b"<bin>"])
 
         # Release the auth lock so Bob can join as an editor right away
@@ -1046,7 +1161,8 @@ async def test_save_changes_while_save_lock_held_by_another_participant_kicks(
 
         async with bob_editics.listen():
             rep = await bob_editics.send(_auth_event(mode="edit"))
-            assert isinstance(rep, EditicsServerEventAuth)
+            assert rep is None
+            assert isinstance(await bob_editics.recv(), EditicsServerEventAuth)
 
             # Alice takes the save lock and starts a multi-chunk save: the lock
             # stays held until `endSaveChanges: true`.

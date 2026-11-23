@@ -150,7 +150,7 @@ async def test_compatible_api_version(alice_editics: EditicsSessionClient) -> No
         },
         content=_auth_event(mode="view").model_dump_json(),
     )
-    assert rep.status_code == 200
+    assert rep.status_code == 204
     assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
 
     # Listen
