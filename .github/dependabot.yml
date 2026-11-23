@@ -12,6 +12,8 @@ updates:
       - /.github/actions/use-pre-commit
     pull-request-branch-name:
       separator: "-"
+    commit-message:
+      prefix: chore(github-actions)
     labels:
       - I-Dependency
       - I-Github-Actions
@@ -35,6 +37,8 @@ updates:
 
   - package-ecosystem: pre-commit
     directory: /
+    commit-message:
+      prefix: chore(pre-commit)
     labels:
       - I-Dependency
       - I-CICD
@@ -58,6 +62,8 @@ updates:
     directory: /
     pull-request-branch-name:
       separator: "-"
+    commit-message:
+      prefix: chore(rust)
     labels:
       - I-Dependency
       - I-Rust
@@ -153,6 +159,8 @@ updates:
     versioning-strategy: increase-if-necessary
     pull-request-branch-name:
       separator: "-"
+    commit-message:
+      prefix: chore(docs)
     labels:
       - I-Dependency
       - I-Python
@@ -173,6 +181,8 @@ updates:
   - package-ecosystem: uv
     directory: /server
     versioning-strategy: increase-if-necessary
+    commit-message:
+      prefix: chore(server)
     pull-request-branch-name:
       separator: "-"
     labels:
@@ -232,6 +242,8 @@ updates:
     directory: /client
     pull-request-branch-name:
       separator: "-"
+    commit-message:
+      prefix: chore(client)
     labels:
       - I-Dependency
       - I-Javascript
@@ -282,6 +294,8 @@ updates:
 
   - package-ecosystem: npm
     directory: /client/electron
+    commit-message:
+      prefix: chore(client/electron)
     pull-request-branch-name:
       separator: "-"
     labels:
@@ -311,6 +325,8 @@ updates:
     directories:
       - /bindings/electron
       - /bindings/web
+    commit-message:
+      prefix: chore(client)
     pull-request-branch-name:
       separator: "-"
     labels:
@@ -331,6 +347,8 @@ updates:
     directory: /.cspell
     pull-request-branch-name:
       separator: "-"
+    commit-message:
+      prefix: chore(cspell)
     labels:
       - I-Dependency
       - I-CICD
@@ -354,14 +372,16 @@ updates:
       interval: monthly
     pull-request-branch-name:
       separator: "-"
+    commit-message:
+      prefix: chore(server)
+    labels:
+      - I-Dependency
+      - I-Docker
     cooldown:
       default-days: 10
     directories:
       - server/packaging/server
       - server/packaging/testbed-server
-    labels:
-      - I-Dependency
-      - I-Docker
     groups:
       docker:
         patterns:
@@ -372,12 +392,14 @@ updates:
       interval: monthly
     pull-request-branch-name:
       separator: "-"
-    cooldown:
-      default-days: 10
-    directory: docs/hosting/deployment
+    commit-message:
+      prefix: chore(docs)
     labels:
       - I-Dependency
       - I-Docker
+    cooldown:
+      default-days: 10
+    directory: docs/hosting/deployment
     groups:
       docker:
         patterns:
