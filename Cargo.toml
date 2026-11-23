@@ -236,11 +236,7 @@ zstd = { version = "0.14.0", default-features = false }
 
 [workspace.dependencies.spinners]
 default-features = false
-version = "4.2.0"
-# Using a commit from main branch as the maintainer does not seems to create releases anymore.
-# Using that commit allow Cargo to not depend on syn@1
-rev = "79660ac0c864f721cabba8e5cae952042a9f45f1"
-git = "https://github.com/FGRibreau/spinners.git"
+version = "5.0.0"
 
 [workspace.dependencies.criterion]
 default-features = false
