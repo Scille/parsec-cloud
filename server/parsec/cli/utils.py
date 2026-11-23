@@ -124,7 +124,13 @@ async_confirm = async_wrapper(click.confirm)
 async_prompt = async_wrapper(click.prompt)
 
 
-class ParsecDateTimeClickType(click.ParamType):
+class ParsecDateTimeClickTypeInfoDict(TypedDict):
+    formats: dict[str, str]
+    name: str
+    param_type: str
+
+
+class ParsecDateTimeClickType(click.ParamType[DateTime]):
     """
     Add support for RFC3339 date time to `click.DateTime`.
 
@@ -157,10 +163,13 @@ class ParsecDateTimeClickType(click.ParamType):
     def __repr__(self) -> str:
         return "ParsecDateTimeClickType"
 
-    def to_info_dict(self) -> dict[str, Any]:
-        info_dict = super().to_info_dict()
-        info_dict["formats"] = self.formats
-        return info_dict
+    def to_info_dict(self) -> ParsecDateTimeClickTypeInfoDict:
+        base_info_dict = super().to_info_dict()
+        return {
+            "formats": self.formats,
+            "name": base_info_dict["name"],
+            "param_type": base_info_dict["param_type"],
+        }
 
     def get_metavar(self, param: click.Parameter, ctx: click.Context) -> str | None:
         return "[2000-01-01|2000-01-01T00:00:00Z]"
