@@ -668,6 +668,14 @@ class EditicsComponent:
                 for (organization_id, realm_id, _), session in self._document_sessions.items():
                     if organization_id != event.organization_id or realm_id != event.realm_id:
                         continue
+
+                    # Special case for archived event since it impacts everyone
+                    # in the realm
+                    if event.kind == "ARCHIVED":
+                        for participant in session.participants.values():
+                            participant.access_denied_close_sse()
+                        continue
+
                     for participant in session.participants.values():
                         if participant.user_id != event.user_id:
                             continue

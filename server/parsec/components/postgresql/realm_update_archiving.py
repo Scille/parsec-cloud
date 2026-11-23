@@ -167,15 +167,18 @@ async def realm_update_archiving(
         configuration_str = "AVAILABLE"
         deletion_date = None
         status = "AVAILABLE"
+        signal_kind = "OTHER"
     elif certif.configuration == RealmArchivingConfiguration.ARCHIVED:
         configuration_str = "ARCHIVED"
         deletion_date = None
         status = "ARCHIVED_OR_DELETION_PLANNED"
+        signal_kind = "ARCHIVED"
     else:
         configuration_str = "DELETION_PLANNED"
         deletion_date = certif.configuration.deletion_date
         assert deletion_date is not None
         status = "ARCHIVED_OR_DELETION_PLANNED"
+        signal_kind = "ARCHIVED"
 
     update_realm_topic_ok = await conn.fetchval(
         *_q_insert_realm_archiving(
@@ -201,7 +204,7 @@ async def realm_update_archiving(
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=db_common.user_id,
-            kind="OTHER",
+            kind=signal_kind,
         ),
     )
 

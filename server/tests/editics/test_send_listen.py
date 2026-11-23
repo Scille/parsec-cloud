@@ -964,7 +964,7 @@ async def test_zombie_sse_teardown_does_not_evict_the_participant(
 
 
 @pytest.mark.parametrize(
-    "kind", ("organization_expired", "user_revoked_or_frozen", "realm_unshared")
+    "kind", ("organization_expired", "user_revoked_or_frozen", "realm_unshared", "realm_archived")
 )
 async def test_kicks_participant_out(
     backend: Backend,
@@ -978,6 +978,7 @@ async def test_kicks_participant_out(
         organization_id: OrganizationID,
         realm_id: VlobID,
         participants: list[tuple[AuthenticatedRpcClient, Literal["view", "edit"]]],
+        document_id: VlobID | None = None,
     ) -> tuple[OrganizationID, VlobID, VlobID]:
         session = EditicsDocumentSession()
         for who, mode in participants:
@@ -990,7 +991,8 @@ async def test_kicks_participant_out(
                 authed=ParticipantSessionAuthed(view=(mode == "view")),
             )
             session.participants[participant.participant_session_id] = participant
-        session_id = (organization_id, realm_id, VlobID.new())
+        document_id = document_id or VlobID.new()
+        session_id = (organization_id, realm_id, document_id)
         backend.editics._document_sessions[session_id] = session
         return session_id
 
@@ -1023,6 +1025,7 @@ async def test_kicks_participant_out(
         backend,
         organization_id=coolorg.organization_id,
         realm_id=VlobID.new(),
+        document_id=s1_id[2],  # Same document ID in different realms, unlikely but legal
         participants=[(coolorg.alice, "view"), (coolorg.bob, "edit")],
     )
     # Unrelated organization, shouldn't be impacted no matter what
@@ -1030,6 +1033,7 @@ async def test_kicks_participant_out(
         backend,
         organization_id=OrganizationID("other"),
         realm_id=coolorg.wksp1_id,
+        document_id=s1_id[2],  # Same document ID in different realms, unlikely but legal
         participants=[(coolorg.alice, "view"), (coolorg.bob, "edit")],
     )
 
@@ -1039,6 +1043,7 @@ async def test_kicks_participant_out(
                 EventOrganizationExpired(organization_id=coolorg.organization_id)
             )
             expected_alice_authed = False
+            expected_other_realm_alice_authed = False
             expected_other_realm_bob_authed = False
         case "user_revoked_or_frozen":
             backend.editics._on_event(
@@ -1047,6 +1052,7 @@ async def test_kicks_participant_out(
                 )
             )
             expected_alice_authed = True
+            expected_other_realm_alice_authed = True
             expected_other_realm_bob_authed = False
         case "realm_unshared":
             backend.editics._on_event(
@@ -1059,6 +1065,20 @@ async def test_kicks_participant_out(
                 )
             )
             expected_alice_authed = True
+            expected_other_realm_alice_authed = True
+            expected_other_realm_bob_authed = True
+        case "realm_archived":
+            backend.editics._on_event(
+                EventRealmCertificate(
+                    organization_id=coolorg.organization_id,
+                    timestamp=coolorg.alice.now_factory(),
+                    realm_id=coolorg.wksp1_id,
+                    user_id=coolorg.alice.user_id,
+                    kind="ARCHIVED",
+                )
+            )
+            expected_alice_authed = False
+            expected_other_realm_alice_authed = True
             expected_other_realm_bob_authed = True
         case unknown:
             assert False, unknown
@@ -1080,7 +1100,7 @@ async def test_kicks_participant_out(
         (coolorg.bob.user_id, False),
     ]
     assert _participants_in_session(other_realm_s5_id) == [
-        (coolorg.alice.user_id, expected_alice_authed),
+        (coolorg.alice.user_id, expected_other_realm_alice_authed),
         (coolorg.bob.user_id, expected_other_realm_bob_authed),
     ]
     assert _participants_in_session(other_org_s6_id) == [
