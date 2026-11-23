@@ -127,6 +127,11 @@ export enum EditicsSaveState {
 interface EditicsEventHandlers {
   onDocumentReady: () => void;
   onError: (error: any) => void;
+  // Optional notification that the editor application finished booting and
+  // is about to open the document (i.e. OnlyOffice's own loading UI is
+  // displayed from now on): used to hide the app's loading overlay at the
+  // right time, without waiting for the document to be fully loaded.
+  onAppReady?: () => void;
   // Persists document content converted by the offline host back to the
   // workspace file's original format. Throwing/rejecting fails the save.
   onSave: (data: Uint8Array) => Promise<void>;
@@ -297,6 +302,7 @@ export async function openDocument(
 
             case 'oo-event-app-ready': {
               onlyOfficeLog('debug', 'OnlyOffice app is ready');
+              handlers.onAppReady?.();
               break;
             }
 
