@@ -431,6 +431,9 @@ def check_export_content(
     ORDER BY sequential_id
     """).fetchall()
 
+    for _, _, _, _, blob, size, _, _ in vlobs:
+        assert size == len(blob)
+
     # Ensure `sequential_id` and `timestamp` are consistent, this is not mandatory in
     # production (since two concurrent vlobs can have the same timestamp), however
     # it is the case in our testbed data. So it's an interesting check anyway ;-)
@@ -455,7 +458,10 @@ def check_export_content(
             row[2],  # version
             row[3],  # key_index
             stabilize(row[4]),  # blob
-            row[5],  # size
+            # Compressed data size is also unstable (e.g. zstd >=0.14.4 records
+            # the decompressed size in the frame header, hence adding a couple of
+            # bytes to the compressed data).
+            stabilize(row[5]),  # size
             DeviceID.from_bytes(row[6]),  # author
             DateTime.from_timestamp_micros(row[7]),  # timestamp
         )
