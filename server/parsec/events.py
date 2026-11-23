@@ -433,7 +433,12 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
     timestamp: DateTime
     realm_id: VlobID
     user_id: UserID
-    kind: tuple[Literal["SHARE"], RealmRole] | Literal["UNSHARE"] | Literal["OTHER"]
+    kind: (
+        tuple[Literal["SHARE"], RealmRole]
+        | Literal["UNSHARE"]
+        | Literal["ARCHIVED"]
+        | Literal["OTHER"]
+    )
 
     @property
     def role_removed(self) -> bool:

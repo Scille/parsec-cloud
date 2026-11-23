@@ -10,6 +10,7 @@ from parsec._parsec import (
     DeviceID,
     OrganizationID,
     RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
@@ -755,7 +756,9 @@ class MemoryRealmComponent(BaseRealmComponent):
                         timestamp=certif.timestamp,
                         realm_id=certif.realm_id,
                         user_id=author_user_id,
-                        kind="OTHER",
+                        kind="OTHER"
+                        if certif.configuration == RealmArchivingConfiguration.AVAILABLE
+                        else "ARCHIVED",
                     )
                 )
 
