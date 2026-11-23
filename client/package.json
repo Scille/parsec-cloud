@@ -42,8 +42,8 @@
         "@ionic/storage": "^4.0.0",
         "@ionic/vue": "^9.0.5",
         "@ionic/vue-router": "^9.0.5",
-        "@sentry/vue": "^11.11.0",
-        "axios": "^1.21.0",
+        "@sentry/vue": "^11.12.0",
+        "axios": "^1.21.1",
         "dompurify": "^3.4.17",
         "fast-fuzzy": "^1.12.0",
         "file-type": "^22.3.0",
@@ -59,7 +59,7 @@
         "tslib": "^2.9.1",
         "uuid": "^14.0.3",
         "vue": "^3.5.45",
-        "vue-router": "^5.4.0"
+        "vue-router": "^5.5.0"
     },
     "//": "⚠️ Updating ViteJS requires to also update `build.target` config in `client/vite.config.ts`",
     "devDependencies": {
