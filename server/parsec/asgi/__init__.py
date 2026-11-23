@@ -227,8 +227,9 @@ def app_factory(
         allow_methods=["OPTIONS", "GET", "POST", "PATCH"],
         # last-event-id is used for SEE synchronization when an interruption occurs.
         allow_headers=["api-version", "authorization", "user-agent", "last-event-id"],
-        # Needed to be able to retrieve and show server version in the web version
-        expose_headers=["server"],
+        # Needed to be able to retrieve and show server version in the web app
+        # The X-App-Server header is used starting with v3.12 (in v3.10 and v3.11 we used the Server header, see #13558)
+        expose_headers=["X-App-Server"],
     )
     logger.debug(f"Allowed origins: {cors_allow_origins}")
     app.state.backend = backend
@@ -423,10 +424,11 @@ async def serve_parsec_asgi_app(
         app=app,
         host=host,
         port=port,
-        # Note this only tells uvicorn to not include its own "server: uvicorn" header,
-        # but it does not affect the Parsec server_header added just below.
+        # Note this only tells uvicorn to NOT include its own "Server: uvicorn" header,
+        # but it does not affect the headers added just below.
         server_header=False,
-        headers=[("Server", server_header)],
+        # Using X-App-Server because Server header is usually stripped by reverse proxies, load balancers or CDN in prod
+        headers=[("X-App-Server", server_header)],
         log_level="info",
         # Remove default log config to inherit instead the one we set in `parsec.logging`
         log_config=None,
