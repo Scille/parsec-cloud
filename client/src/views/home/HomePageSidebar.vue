@@ -24,6 +24,18 @@
         :image="LogoRowWhite"
       />
     </div>
+    <div
+      v-if="Env.isAccessibilityStatementEnabled()"
+      class="sidebar-footer"
+    >
+      <button
+        type="button"
+        @click="Env.Links.openAccessibilityLink()"
+        class="sidebar-footer__link"
+      >
+        {{ $msTranslate('app.accessibility.toggle') }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -202,6 +214,34 @@ onMounted(() => {
     position: relative;
     z-index: 2;
     cursor: pointer;
+  }
+}
+
+.sidebar-footer {
+  position: relative;
+  z-index: 3;
+  padding-inline: ms.spacing('padding-4xl');
+  padding-bottom: ms.spacing('padding-4xl');
+  text-align: center;
+
+  &__link {
+    @include ms.font('label-md-medium');
+    background: transparent;
+    color: ms.color('text-on-color-label');
+    border: none;
+    border-radius: ms.radius('lg');
+    padding: ms.spacing('padding-sm') ms.spacing('padding-lg');
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: ms.color('surface-neutral-on-color');
+      color: ms.color('text-on-color-heading');
+    }
+
+    &:focus-visible {
+      box-shadow: ms.shadow('focus-brand');
+    }
   }
 }
 </style>

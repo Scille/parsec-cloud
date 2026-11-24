@@ -199,6 +199,15 @@ function isShamirEnabled(): boolean {
 }
 
 /*
+ * Accessibility statement, only displayed if the custom branding provides a text for `app.accessibility.toggle`
+ */
+function isAccessibilityStatementEnabled(): boolean {
+  const key = 'app.accessibility.toggle';
+  const message = I18n.translate(key).trim();
+  return message !== '' && message !== key;
+}
+
+/*
  Links
 */
 
@@ -278,6 +287,10 @@ async function openDeveloperLink(): Promise<void> {
   await openUrl(I18n.translate('app.developerLink'));
 }
 
+async function openAccessibilityLink(): Promise<void> {
+  await openUrl(I18n.translate('app.accessibility.link'));
+}
+
 async function openTOS(tosLink: string): Promise<void> {
   await openUrl(tosLink);
 }
@@ -330,6 +343,7 @@ export const Env = {
   isCustomBrandingEnabled,
   ensureHttpsProtocol,
   isShamirEnabled,
+  isAccessibilityStatementEnabled,
   Links: {
     openDocumentationLink,
     openDocumentationUserGuideLink,
@@ -339,6 +353,7 @@ export const Env = {
     openChangelogLink,
     openSourcesLink,
     openDeveloperLink,
+    openAccessibilityLink,
     openTOS,
     openUrl,
     openSequesterDocumentationLink,
