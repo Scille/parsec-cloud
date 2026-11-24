@@ -168,6 +168,10 @@ gettext:
 		$(BUILDDIR)/locale/hosting/deployment/webapp/idopte-pki-web.pot \
 		$(BUILDDIR)/locale/hosting/deployment/editics/index.pot \
 		$(BUILDDIR)/locale/cli/manpages/*.pot \
+		$(BUILDDIR)/locale/cli/device.pot \
+		$(BUILDDIR)/locale/cli/invite.pot \
+		$(BUILDDIR)/locale/cli/user.pot \
+		$(BUILDDIR)/locale/cli/workspace.pot
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 

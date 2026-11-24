@@ -369,6 +369,7 @@ sdkjs
 sdkmanager
 sealedbox
 secho
+secr
 secretbox
 secretkey
 secretkeybytes

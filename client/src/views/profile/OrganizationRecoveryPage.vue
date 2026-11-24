@@ -169,7 +169,11 @@
               class="button-icon button-icon-left"
               :icon="shamirInfo?.tag === SelfShamirRecoveryInfoTag.SetupButUnusable ? alertCircle : warning"
             />
-            {{ $msTranslate('OrganizationRecovery.shamir.action') }}
+            {{
+              shamirInfo?.isUsable()
+                ? $msTranslate('OrganizationRecovery.shamir.actionView')
+                : $msTranslate('OrganizationRecovery.shamir.action')
+            }}
           </ion-button>
           <ion-button
             v-show="!isExternal"

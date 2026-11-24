@@ -103,7 +103,7 @@
         fill="clear"
         @click="deleteShamir"
         class="shamir-done-footer__button color-danger"
-        :class="shamirInfo.tag === SelfShamirRecoveryInfoTag.SetupButUnusable ? 'required-action' : ''"
+        :class="{ 'required-action': shamirInfo.tag === SelfShamirRecoveryInfoTag.SetupButUnusable }"
       >
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.delete') }}
       </ion-button>
@@ -232,6 +232,29 @@ async function deleteShamir(): Promise<void> {
     gap: ms.spacing('gap-lg');
     margin-top: 1.5rem;
     justify-content: space-between;
+
+    &__button.color-danger {
+      --color: #{ms.color('text-error-default')};
+      --color-hover: #{ms.color('text-error-default-hover')};
+      --background: transparent;
+      --background-hover: #{ms.color('surface-error-default-subtle-hover')};
+      --background-hover-opacity: none;
+      --background-activated: #{ms.color('surface-error-default-subtle-pressed')};
+      --background-focused: --background;
+
+      &.ion-focused::part(native) {
+        box-shadow: ms.shadow('focus-error');
+      }
+
+      &.required-action {
+        --color: #{ms.color('text-error-on-color')};
+        --color-hover: #{ms.color('text-error-on-color-hover')};
+        --background: #{ms.color('surface-error-default')};
+        --background-hover: #{ms.color('surface-error-default-hover')};
+        --background-activated: #{ms.color('surface-error-default-pressed')};
+        width: 100%;
+      }
+    }
   }
 }
 

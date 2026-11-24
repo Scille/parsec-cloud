@@ -10,9 +10,9 @@ Shared recovery
 
 ..  warning::
 
-  This section describes an advanced function that is currently only available
-  via Parsec CLI. For a user friendly way to recover access to your organization
-  see :ref:`Recovery files<doc_userguide_recovery_files>`.
+  This section describes how to use shared recovery via Parsec CLI. For the
+  user-friendly way to set up and use shared recovery from the Parsec application,
+  see :ref:`Recovery contacts<doc_userguide_recovery_contacts>`.
 
 The shared recovery allows a user to recover access to their organization by
 distributing the information required to recover their account (the "secret")
@@ -21,9 +21,10 @@ among a group of users of the organization. The information is divided into part
 achieved, i.e. a sufficient number of shares (the "threshold") are combined,
 therefore enabling the recovery of the user account.
 
-This is based on *Shamir's secret sharing algorithm*. The idea is that even if an
-attacker steals some shares, it is impossible for the attacker to reconstruct
-the secret unless they have stolen the quorum number of shares.
+This is based on `Shamir's secret sharing algorithm <https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing>`_.
+The idea is that even if an attacker steals some shares, it is impossible for
+the attacker to reconstruct the secret unless they have stolen the quorum number
+of shares.
 
 Overview
 ========

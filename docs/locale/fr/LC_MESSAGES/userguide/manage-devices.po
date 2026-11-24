@@ -65,10 +65,12 @@ msgstr ""
 #: ../../userguide/manage-devices.rst:25
 msgid ""
 "We strongly encourage you to create a :ref:`recovery file "
-"<doc_userguide_recovery_files>`."
+"<doc_userguide_recovery_files>` or to set up :ref:`recovery contacts "
+"<doc_userguide_recovery_contacts>`."
 msgstr ""
 "Nous vous recommandons de créer un :ref:`fichier de récupération "
-"<doc_userguide_recovery_files>`."
+"<doc_userguide_recovery_files>` ou de désigner des :ref:`contacts de "
+"récupération <doc_userguide_recovery_contacts>`."
 
 #: ../../userguide/manage-devices.rst:30
 msgid "Add a new device"
@@ -288,3 +290,12 @@ msgid ""
 msgstr ""
 "Une fois importé, un nouvel appareil sera créé automatiquement et vous "
 "pourrez vous connecter à votre organisation en cliquant sur ``Suivant``."
+
+#: ../../userguide/manage-devices.rst:164
+msgid ""
+"If you set up recovery contacts, you can also :ref:`recover your access with "
+"their help <doc_userguide_recovery_contacts_recover>`."
+msgstr ""
+"Si vous avez désigné des contacts de récupération, vous pouvez également :"
+"ref:`récupérer votre accès avec leur aide "
+"<doc_userguide_recovery_contacts_recover>`."

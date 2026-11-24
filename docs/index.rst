@@ -31,6 +31,7 @@ You can also use the search function in the top left corner.
     userguide/parsec-workspaces
     userguide/manage-files
     userguide/manage-devices
+    userguide/recovery-contacts
     userguide/mfa
     userguide/security
     userguide/troubleshooting/index
