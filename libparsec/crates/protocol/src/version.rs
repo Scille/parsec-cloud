@@ -63,6 +63,7 @@ use libparsec_types::prelude::*;
 // - v5.7 (Parsec 3.12+)
 //   * Add `name/help_link/icon` fields to `server_config.openbao.auths` response
 //   * Add `realm_list_info` to authenticated commands.
+//   * Add `OrganizationConfig.editics_server_urls` field in `events_listen` response
 
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,

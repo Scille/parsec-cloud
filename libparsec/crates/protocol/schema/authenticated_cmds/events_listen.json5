@@ -56,6 +56,21 @@
                                 "name": "realm_minimum_archiving_period_before_deletion",
                                 "type": "Integer",
                                 "introduced_in": "5.5"
+                            },
+                            {
+                                // Empty if editics is disabled, otherwise contains
+                                // the URLs of all the editics server instances.
+                                // The client is expected to run a sharding algorithm
+                                // with this to determine to which editics server it
+                                // should connect to join a given document session.
+                                //
+                                // Note the client has no latitude on which server
+                                // to connect to: the sharding algorithm is also
+                                // checked server-side and each document can only be
+                                // edited by a single editics server instance.
+                                "name": "editics_server_urls",
+                                "type": "List<String>",
+                                "introduced_in": "5.7"
                             }
                         ]
                     },
