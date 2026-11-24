@@ -2193,6 +2193,7 @@
             "title": "Contacts de récupération",
             "description": "Désignez au moins {count} contacts de récupération. Si vous ne parvenez plus à accéder à Parsec, ils pourront ensemble vous aider à y accéder à nouveau.",
             "action": "Définir mes contacts de récupération",
+            "actionView": "Consulter mes contacts de récupération",
             "actionSecondary": "Aider à récupérer l'accès",
             "warning": {
                 "unusable": "Plusieurs contacts de récupération ont été révoqués : vous ne pouvez plus récupérer votre accès à Parsec. Veuillez choisir de nouveaux contacts de récupération.",

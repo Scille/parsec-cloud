@@ -2192,7 +2192,8 @@
         "shamir": {
             "title": "Recovery contacts",
             "description": "Choose at least {count} recovery contacts. In case you lose access to Parsec, they can help you regain it.",
-            "action": "Manage my recovery contacts",
+            "action": "Set up my recovery contacts",
+            "actionView": "View my recovery contacts",
             "actionSecondary": "Assist as a recovery contact",
             "warning": {
                 "unusable": "Several recovery contacts have been revoked: you can no longer recover your access to Parsec. Please choose new recovery contacts.",

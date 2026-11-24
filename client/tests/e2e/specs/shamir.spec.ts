@@ -70,7 +70,7 @@ msTest('Setup shamir recovery', async ({ context }) => {
   );
   await expect(status).toHaveText('Inactive');
   const buttons = shamirContainer.locator('ion-button');
-  await expect(buttons).toHaveText(['Manage my recovery contacts', 'Assist as a recovery contact']);
+  await expect(buttons).toHaveText(['Set up my recovery contacts', 'Assist as a recovery contact']);
   const shamirModal = page.locator('.shamir-recovery-modal');
   await expect(shamirModal).toBeHidden();
   await buttons.nth(0).click();
@@ -120,6 +120,7 @@ msTest('Setup shamir recovery', async ({ context }) => {
   await shamirModal.locator('.shamir-done-footer__button').nth(1).click();
   await expect(shamirModal).toBeHidden();
   await expect(status).toHaveText('Active');
+  await expect(buttons).toHaveText(['View my recovery contacts', 'Assist as a recovery contact']);
   await page.release();
 });
 
@@ -181,7 +182,7 @@ msTest('Setup shamir recovery as outsider', async ({ context }) => {
   );
   await expect(status).toHaveText('Inactive');
   const buttons = shamirContainer.locator('ion-button');
-  await expect(buttons).toHaveText(['Manage my recovery contacts', 'Assist as a recovery contact']);
+  await expect(buttons).toHaveText(['Set up my recovery contacts', 'Assist as a recovery contact']);
   const shamirModal = page.locator('.shamir-recovery-modal');
   await expect(shamirModal).toBeHidden();
   await buttons.nth(0).click();
@@ -198,6 +199,7 @@ msTest('Setup shamir recovery as outsider', async ({ context }) => {
 
   await expect(shamirModal).toBeHidden();
   await expect(status).toHaveText('Active');
+  await expect(buttons).toHaveText(['View my recovery contacts', 'Assist as a recovery contact']);
   await page.release();
 });
 

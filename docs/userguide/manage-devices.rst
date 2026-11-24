@@ -22,7 +22,8 @@ access to your computer or cannot log in for any reason.
    event you lose access to your computer. You will need to be re-invited to
    :ref:`join the organization <doc_userguide_join_organization>`.
 
-   We strongly encourage you to create a :ref:`recovery file <doc_userguide_recovery_files>`.
+   We strongly encourage you to create a :ref:`recovery file <doc_userguide_recovery_files>`
+   or to set up :ref:`recovery contacts <doc_userguide_recovery_contacts>`.
 
 .. _userguide-add-new-device:
 
@@ -157,3 +158,7 @@ You will be able to import the Recovery File and type in the Secret Key.
 
 
 Once imported, Parsec will create a new device and you will be able to log into your organization by clicking ``Next``.
+
+.. seealso::
+
+  If you set up recovery contacts, you can also :ref:`recover your access with their help <doc_userguide_recovery_contacts_recover>`.

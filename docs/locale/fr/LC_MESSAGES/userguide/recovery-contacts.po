@@ -1,0 +1,574 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.11.1-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-24 10:42+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../userguide/recovery-contacts.rst:6
+msgid "Recovery contacts"
+msgstr "Contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:8
+msgid ""
+"**Recovery contacts** are members of your organization you choose to help "
+"you get back your access to Parsec if you ever lose it, for example if you "
+"forget your password or lose your computer."
+msgstr ""
+"Les **contacts de récupération** sont des membres de votre organisation que "
+"vous choisissez pour vous aider à retrouver votre accès à Parsec si vous le "
+"perdez, par exemple si vous oubliez votre mot de passe ou perdez votre "
+"ordinateur."
+
+#: ../../userguide/recovery-contacts.rst:12
+msgid ""
+"Unlike a :ref:`recovery file <doc_userguide_recovery_files>`, there is "
+"nothing to store, neither for you nor for your recovery contacts: Parsec "
+"takes care of everything automatically. Your recovery contacts only need to "
+"be available to help you when the time comes."
+msgstr ""
+"Contrairement à un :ref:`fichier de récupération "
+"<doc_userguide_recovery_files>`, il n'y a rien à conserver, ni pour vous ni "
+"pour vos contacts de récupération : Parsec s'occupe de tout automatiquement. "
+"Vos contacts de récupération doivent simplement être disponibles pour vous "
+"aider le moment venu."
+
+#: ../../userguide/recovery-contacts.rst:17
+msgid "How it works"
+msgstr "Comment ça marche"
+
+#: ../../userguide/recovery-contacts.rst:19
+msgid ""
+"When you set up your recovery contacts, Parsec splits the information needed "
+"to recover your access into several parts and gives one part to each of your "
+"recovery contacts."
+msgstr ""
+"Lorsque vous désignez vos contacts de récupération, Parsec découpe les "
+"informations nécessaires à la récupération de votre accès en plusieurs "
+"morceaux et confie un morceau à chacun de vos contacts de récupération."
+
+#: ../../userguide/recovery-contacts.rst:23
+msgid "You choose **at least 3** recovery contacts."
+msgstr "Vous choisissez **au moins 3** contacts de récupération."
+
+#: ../../userguide/recovery-contacts.rst:24
+msgid "Any **2** of them are enough to help you recover your access."
+msgstr ""
+"**2** d'entre eux, quels qu'ils soient, suffisent pour vous aider à "
+"récupérer votre accès."
+
+#: ../../userguide/recovery-contacts.rst:25
+msgid "A single recovery contact can **never** recover your access alone."
+msgstr ""
+"Un contact de récupération seul ne peut **jamais** récupérer votre accès."
+
+#: ../../userguide/recovery-contacts.rst:27
+msgid ""
+"This way, you can still recover your access even if one of your recovery "
+"contacts is unavailable (on holiday, has left the organization, etc.)."
+msgstr ""
+"Ainsi, vous pouvez récupérer votre accès même si l'un de vos contacts de "
+"récupération n'est pas disponible (en congés, a quitté l'organisation, etc.)."
+
+#: ../../userguide/recovery-contacts.rst:30
+msgid ""
+"To recover your access, you will get in touch with your recovery contacts "
+"(by email, by phone or in person) and perform a short **code exchange** with "
+"each of them. Each successful code exchange counts as an **approval**. Once "
+"you have 2 approvals, you can access Parsec again."
+msgstr ""
+"Pour récupérer votre accès, vous prendrez contact avec vos contacts de "
+"récupération (par email, par téléphone ou en personne) et effectuerez un "
+"court **échange de codes** avec chacun d'eux. Chaque échange de codes réussi "
+"compte comme une **validation**. Une fois que vous avez 2 validations, vous "
+"pouvez à nouveau accéder à Parsec."
+
+#: ../../userguide/recovery-contacts.rst:37
+msgid ""
+"Recovery contacts are specific to an organization. If you are a member of "
+"several organizations, you need to set up recovery contacts in each of them."
+msgstr ""
+"Les contacts de récupération sont propres à une organisation. Si vous êtes "
+"membre de plusieurs organisations, vous devez désigner des contacts de "
+"récupération dans chacune d'elles."
+
+#: ../../userguide/recovery-contacts.rst:42
+msgid ""
+"Choose people you trust and that you can easily reach. Your recovery "
+"contacts will be able to help you recover your access, so make sure they "
+"would not do it without your consent."
+msgstr ""
+"Choisissez des personnes de confiance que vous pouvez facilement joindre. "
+"Vos contacts de récupération pourront vous aider à récupérer votre accès : "
+"assurez-vous qu'ils ne le feraient pas sans votre accord."
+
+#: ../../userguide/recovery-contacts.rst:48
+msgid ""
+"This feature is based on an algorithm called `Shamir's secret sharing "
+"<https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing>`_. You do not need "
+"to know anything about it to use recovery contacts."
+msgstr ""
+"Cette fonctionnalité repose sur un algorithme appelé `partage de clé secrète "
+"de Shamir <https://fr.wikipedia.org/wiki/"
+"Partage_de_cl%C3%A9_secr%C3%A8te_de_Shamir>`_. Vous n'avez pas besoin de le "
+"connaître pour utiliser les contacts de récupération."
+
+#: ../../userguide/recovery-contacts.rst:54
+msgid "Set up your recovery contacts"
+msgstr "Désigner vos contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:56
+#: ../../userguide/recovery-contacts.rst:105
+#: ../../userguide/recovery-contacts.rst:144
+msgid ""
+"Click on your name on the main menu (top-right) and select ``Access "
+"recovery``."
+msgstr ""
+"Cliquez sur votre nom dans le menu principal (en haut à droite) et "
+"sélectionnez ``Récupération d'accès``."
+
+#: ../../userguide/recovery-contacts.rst:57
+msgid ""
+"In the ``Recovery contacts`` section, click ``Set up my recovery contacts``."
+msgstr ""
+"Dans la section ``Contacts de récupération``, cliquez sur ``Définir mes "
+"contacts de récupération``."
+
+#: ../../userguide/recovery-contacts.rst:59
+msgid "Access recovery page"
+msgstr "Page de récupération d'accès"
+
+#: ../../userguide/recovery-contacts.rst:63
+msgid "Read the explanation and click ``Choose my recovery contacts``."
+msgstr ""
+"Lisez les explications et cliquez sur ``Choisir mes contacts de "
+"récupération``."
+
+#: ../../userguide/recovery-contacts.rst:65
+msgid "Recovery contacts explanation"
+msgstr "Explications sur les contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:70
+msgid ""
+"Search for the members you want to add, by name or email, and select at "
+"least 3 of them."
+msgstr ""
+"Recherchez les membres que vous souhaitez ajouter, par nom ou par email, et "
+"sélectionnez-en au moins 3."
+
+#: ../../userguide/recovery-contacts.rst:72
+msgid "Check the confirmation box and click ``Confirm my recovery contacts``."
+msgstr ""
+"Cochez la case de confirmation et cliquez sur ``Confirmer mes contacts de "
+"récupération``."
+
+#: ../../userguide/recovery-contacts.rst:74
+msgid "Choosing recovery contacts"
+msgstr "Choix des contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:79
+msgid ""
+"Your recovery contacts are now set up. You can see them at any time by "
+"clicking ``View my recovery contacts``."
+msgstr ""
+"Vos contacts de récupération sont désormais définis. Vous pouvez les "
+"consulter à tout moment en cliquant sur ``Consulter mes contacts de "
+"récupération``."
+
+#: ../../userguide/recovery-contacts.rst:82
+msgid "Recovery contacts confirmed"
+msgstr "Contacts de récupération confirmés"
+
+#: ../../userguide/recovery-contacts.rst:89
+msgid ""
+"Let your recovery contacts know that you chose them, so they will not be "
+"surprised if you ask for their help one day."
+msgstr ""
+"Prévenez vos contacts de récupération que vous les avez choisis, afin qu'ils "
+"ne soient pas surpris si vous leur demandez de l'aide un jour."
+
+#: ../../userguide/recovery-contacts.rst:94
+msgid ""
+"Users with the *External* profile cannot be chosen as recovery contacts."
+msgstr ""
+"Les utilisateurs ayant le profil *Externe* ne peuvent pas être choisis comme "
+"contacts de récupération."
+
+#: ../../userguide/recovery-contacts.rst:95
+msgid ""
+"If you have the *External* profile, you can only choose *Administrators* as "
+"your recovery contacts."
+msgstr ""
+"Si vous avez le profil *Externe*, vous ne pouvez choisir que des "
+"*Administrateurs* comme contacts de récupération."
+
+#: ../../userguide/recovery-contacts.rst:97
+msgid ""
+"Your organization needs to have enough members to choose from. If it does "
+"not, Parsec will tell you how many members are required."
+msgstr ""
+"Votre organisation doit compter suffisamment de membres parmi lesquels "
+"choisir. Dans le cas contraire, Parsec vous indique le nombre de membres "
+"nécessaires."
+
+#: ../../userguide/recovery-contacts.rst:103
+msgid "Remove or change your recovery contacts"
+msgstr "Supprimer ou modifier vos contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:106
+msgid ""
+"Click ``View my recovery contacts``, then ``Remove my recovery contacts``."
+msgstr ""
+"Cliquez sur ``Consulter mes contacts de récupération``, puis sur ``Supprimer "
+"mes contacts de récupération``."
+
+#: ../../userguide/recovery-contacts.rst:107
+msgid "Confirm by clicking ``Remove recovery contacts``."
+msgstr "Confirmez en cliquant sur ``Supprimer mes contacts de récupération``."
+
+#: ../../userguide/recovery-contacts.rst:109
+msgid "Removing recovery contacts"
+msgstr "Suppression des contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:114
+msgid "Your recovery contacts can no longer help you recover your access."
+msgstr ""
+"Vos contacts de récupération ne peuvent plus vous aider à récupérer votre "
+"accès."
+
+#: ../../userguide/recovery-contacts.rst:116
+msgid ""
+"To change your recovery contacts, remove them and then :ref:`set up new ones "
+"<doc_userguide_recovery_contacts_setup>`."
+msgstr ""
+"Pour modifier vos contacts de récupération, supprimez-les puis :ref:"
+"`désignez-en de nouveaux <doc_userguide_recovery_contacts_setup>`."
+
+#: ../../userguide/recovery-contacts.rst:120
+msgid "When a recovery contact is revoked"
+msgstr "Lorsqu'un contact de récupération est révoqué"
+
+#: ../../userguide/recovery-contacts.rst:122
+msgid ""
+"If one of your recovery contacts is revoked from the organization, they can "
+"no longer help you. Parsec shows a warning at the top of the application and "
+"on the ``Access recovery`` page:"
+msgstr ""
+"Si l'un de vos contacts de récupération est révoqué de l'organisation, il ne "
+"peut plus vous aider. Parsec affiche alors un avertissement en haut de "
+"l'application et sur la page ``Récupération d'accès`` :"
+
+#: ../../userguide/recovery-contacts.rst:126
+msgid ""
+"``Some recovery contacts have been revoked``: you can still recover your "
+"access with your remaining contacts, but we recommend choosing new ones."
+msgstr ""
+"``Des contacts de récupération ont été révoqués`` : vous pouvez toujours "
+"récupérer votre accès avec vos contacts restants, mais nous vous "
+"recommandons d'en choisir de nouveaux."
+
+#: ../../userguide/recovery-contacts.rst:128
+msgid ""
+"``Your access can no longer be recovered``: too many recovery contacts have "
+"been revoked, fewer than 2 remain. You must remove your current recovery "
+"contacts and set up new ones."
+msgstr ""
+"``Votre accès n'est plus récupérable`` : trop de contacts de récupération "
+"ont été révoqués, il en reste moins de 2. Vous devez supprimer vos contacts "
+"de récupération actuels et en désigner de nouveaux."
+
+#: ../../userguide/recovery-contacts.rst:132
+msgid "Warning about revoked recovery contacts"
+msgstr "Avertissement concernant des contacts de récupération révoqués"
+
+#: ../../userguide/recovery-contacts.rst:139
+msgid "See who chose you as a recovery contact"
+msgstr "Voir qui vous a désigné comme contact de récupération"
+
+#: ../../userguide/recovery-contacts.rst:141
+msgid ""
+"Other members of your organization may have chosen you as one of their "
+"recovery contacts. To see who they are:"
+msgstr ""
+"D'autres membres de votre organisation vous ont peut-être choisi comme l'un "
+"de leurs contacts de récupération. Pour savoir de qui il s'agit :"
+
+#: ../../userguide/recovery-contacts.rst:145
+msgid ""
+"In the ``Recovery contacts`` section, click ``Assist as a recovery contact``."
+msgstr ""
+"Dans la section ``Contacts de récupération``, cliquez sur ``Aider à "
+"récupérer l'accès``."
+
+#: ../../userguide/recovery-contacts.rst:147
+msgid "List of people who chose you as a recovery contact"
+msgstr "Liste des personnes qui vous ont désigné comme contact de récupération"
+
+#: ../../userguide/recovery-contacts.rst:152
+msgid ""
+"The list shows all the people you can help. If nobody chose you yet, the "
+"list is empty."
+msgstr ""
+"La liste affiche toutes les personnes que vous pouvez aider. Si personne ne "
+"vous a encore choisi, la liste est vide."
+
+#: ../../userguide/recovery-contacts.rst:157
+msgid ""
+"Users with the *External* profile cannot be recovery contacts, so this "
+"button is not available to them."
+msgstr ""
+"Les utilisateurs ayant le profil *Externe* ne peuvent pas être contacts de "
+"récupération, ce bouton n'est donc pas disponible pour eux."
+
+#: ../../userguide/recovery-contacts.rst:163
+msgid "Help someone recover their access"
+msgstr "Aider quelqu'un à récupérer son accès"
+
+#: ../../userguide/recovery-contacts.rst:165
+msgid ""
+"When someone who chose you as a recovery contact loses their access, they "
+"will ask for your help. You both need to be available at the same time to "
+"perform the code exchange, for example during a call or in person."
+msgstr ""
+"Lorsqu'une personne qui vous a choisi comme contact de récupération perd son "
+"accès, elle vous demandera de l'aide. Vous devez être disponibles en même "
+"temps pour effectuer l'échange de codes, par exemple lors d'un appel ou en "
+"personne."
+
+#: ../../userguide/recovery-contacts.rst:169
+msgid ""
+"Click on your name on the main menu (top-right) and select ``Access "
+"recovery``, then click ``Assist as a recovery contact``."
+msgstr ""
+"Cliquez sur votre nom dans le menu principal (en haut à droite) et "
+"sélectionnez ``Récupération d'accès``, puis cliquez sur ``Aider à récupérer "
+"l'accès``."
+
+#: ../../userguide/recovery-contacts.rst:171
+msgid "Find the person in the list."
+msgstr "Trouvez la personne dans la liste."
+
+#: ../../userguide/recovery-contacts.rst:173
+msgid ""
+"Click ``Start`` to begin the recovery. The person will receive a **recovery "
+"link** by email."
+msgstr ""
+"Cliquez sur ``Commencer`` pour lancer la récupération. La personne recevra "
+"un **lien de récupération** par email."
+
+#: ../../userguide/recovery-contacts.rst:175
+msgid ""
+"If the email does not reach them, click ``Copy link`` and send them the "
+"recovery link by any other means."
+msgstr ""
+"Si l'email ne lui parvient pas, cliquez sur ``Copier le lien`` et envoyez-"
+"lui le lien de récupération par tout autre moyen."
+
+#: ../../userguide/recovery-contacts.rst:180
+msgid ""
+"Before helping, make sure that the person asking for help really is who they "
+"claim to be, for example by calling them or meeting them in person."
+msgstr ""
+"Avant d'aider, assurez-vous que la personne qui demande de l'aide est bien "
+"celle qu'elle prétend être, par exemple en l'appelant ou en la rencontrant "
+"en personne."
+
+#: ../../userguide/recovery-contacts.rst:183
+msgid ""
+"Wait for the person to open the recovery link and select you in their list "
+"of recovery contacts."
+msgstr ""
+"Attendez que la personne ouvre le lien de récupération et vous sélectionne "
+"dans sa liste de contacts de récupération."
+
+#: ../../userguide/recovery-contacts.rst:186
+msgid "Waiting for the person recovering their access"
+msgstr "En attente de la personne qui récupère son accès"
+
+#: ../../userguide/recovery-contacts.rst:191
+msgid ""
+"Give them the code displayed on your screen, then select the code they give "
+"you."
+msgstr ""
+"Transmettez-lui le code affiché à l'écran, puis sélectionnez le code qu'elle "
+"vous donne."
+
+#: ../../userguide/recovery-contacts.rst:194
+msgid "Code exchange with the person recovering their access"
+msgstr "Échange de codes avec la personne qui récupère son accès"
+
+#: ../../userguide/recovery-contacts.rst:201
+msgid ""
+"If the code the person gives you is not in the list, stop the process: "
+"someone may be trying to take over this person's access."
+msgstr ""
+"Si le code que la personne vous donne ne figure pas dans la liste, arrêtez "
+"la procédure : quelqu'un essaie peut-être de prendre le contrôle de l'accès "
+"de cette personne."
+
+#: ../../userguide/recovery-contacts.rst:204
+msgid ""
+"Your approval is sent. The person may still need the approval of another "
+"recovery contact before recovering their access."
+msgstr ""
+"Votre validation est envoyée. La personne peut encore avoir besoin de la "
+"validation d'un autre contact de récupération avant de récupérer son accès."
+
+#: ../../userguide/recovery-contacts.rst:207
+msgid "Recovery approved"
+msgstr "Récupération validée"
+
+#: ../../userguide/recovery-contacts.rst:215
+msgid "Recover your access with your recovery contacts"
+msgstr "Récupérer votre accès avec vos contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:217
+msgid ""
+"If you lost your access to Parsec and you set up recovery contacts, you can "
+"ask them to help you."
+msgstr ""
+"Si vous avez perdu votre accès à Parsec et que vous avez désigné des "
+"contacts de récupération, vous pouvez leur demander de vous aider."
+
+#: ../../userguide/recovery-contacts.rst:220
+msgid ""
+"Get in touch with one of your recovery contacts (by email, by phone or in "
+"person) and ask them to :ref:`start your recovery "
+"<doc_userguide_recovery_contacts_assist>`. They will send you a **recovery "
+"link**."
+msgstr ""
+"Prenez contact avec l'un de vos contacts de récupération (par email, par "
+"téléphone ou en personne) et demandez-lui de :ref:`commencer votre "
+"récupération <doc_userguide_recovery_contacts_assist>`. Il vous enverra un "
+"**lien de récupération**."
+
+#: ../../userguide/recovery-contacts.rst:224
+msgid ""
+"Open Parsec and click ``I lost my access`` (top-right of the welcome page), "
+"or ``Forgot your password?`` when trying to log in."
+msgstr ""
+"Ouvrez Parsec et cliquez sur ``J'ai perdu mon accès`` (en haut à droite de "
+"la page d'accueil), ou sur ``Mot de passe oublié ?`` lors de la connexion."
+
+#: ../../userguide/recovery-contacts.rst:226
+msgid ""
+"Select ``Recovery contacts`` and click ``Continue with this recovery "
+"method``."
+msgstr ""
+"Sélectionnez ``Contacts de récupération`` et cliquez sur ``Continuer avec "
+"cette méthode``."
+
+#: ../../userguide/recovery-contacts.rst:228
+msgid "Choose recovery contacts as recovery method"
+msgstr "Choisir les contacts de récupération comme méthode de récupération"
+
+#: ../../userguide/recovery-contacts.rst:233
+msgid ""
+"Parsec explains the steps of the recovery. Click ``Next`` to go through "
+"them, then ``Got it``."
+msgstr ""
+"Parsec vous explique les étapes de la récupération. Cliquez sur ``Suivant`` "
+"pour les parcourir, puis sur ``J'ai compris``."
+
+#: ../../userguide/recovery-contacts.rst:236
+msgid "Recovery instructions"
+msgstr "Instructions de récupération"
+
+#: ../../userguide/recovery-contacts.rst:241
+msgid "Paste the recovery link you received and click ``Start recovery``."
+msgstr ""
+"Collez le lien de récupération que vous avez reçu et cliquez sur ``Commencer "
+"la récupération``."
+
+#: ../../userguide/recovery-contacts.rst:243
+msgid "Enter the recovery link"
+msgstr "Saisir le lien de récupération"
+
+#: ../../userguide/recovery-contacts.rst:250
+msgid ""
+"You can also simply click on the recovery link you received: Parsec will "
+"open and the recovery will start directly."
+msgstr ""
+"Vous pouvez aussi simplement cliquer sur le lien de récupération que vous "
+"avez reçu : Parsec s'ouvrira et la récupération démarrera directement."
+
+#: ../../userguide/recovery-contacts.rst:253
+msgid ""
+"The list of your recovery contacts is displayed, along with the number of "
+"approvals you still need. Ask one of them to click ``Start`` on their side "
+"(see :ref:`Help someone recover their access "
+"<doc_userguide_recovery_contacts_assist>`), then click ``Choose`` next to "
+"their name."
+msgstr ""
+"La liste de vos contacts de récupération s'affiche, ainsi que le nombre de "
+"validations qu'il vous reste à obtenir. Demandez à l'un d'eux de cliquer sur "
+"``Commencer`` de son côté (voir :ref:`Aider quelqu'un à récupérer son accès "
+"<doc_userguide_recovery_contacts_assist>`), puis cliquez sur ``Choisir`` à "
+"côté de son nom."
+
+#: ../../userguide/recovery-contacts.rst:258
+msgid "Choose a recovery contact"
+msgstr "Choisir un contact de récupération"
+
+#: ../../userguide/recovery-contacts.rst:263
+msgid ""
+"Select the code your recovery contact gives you, then give them the code "
+"displayed on your screen."
+msgstr ""
+"Sélectionnez le code que votre contact de récupération vous donne, puis "
+"transmettez-lui le code affiché à l'écran."
+
+#: ../../userguide/recovery-contacts.rst:266
+msgid "Code exchange with a recovery contact"
+msgstr "Échange de codes avec un contact de récupération"
+
+#: ../../userguide/recovery-contacts.rst:273
+msgid ""
+"If the code your recovery contact gives you is not in the list, stop the "
+"process: someone may be trying to interfere with your recovery."
+msgstr ""
+"Si le code que votre contact de récupération vous donne ne figure pas dans "
+"la liste, arrêtez la procédure : quelqu'un essaie peut-être d'interférer "
+"avec votre récupération."
+
+#: ../../userguide/recovery-contacts.rst:276
+msgid ""
+"Repeat steps 6 and 7 with another recovery contact until you have the "
+"required number of approvals."
+msgstr ""
+"Répétez les étapes 6 et 7 avec un autre contact de récupération jusqu'à "
+"obtenir le nombre de validations requis."
+
+#: ../../userguide/recovery-contacts.rst:278
+msgid ""
+"Once the validation is complete, click ``Set my authentication method`` and "
+"choose how you want to log in from now on."
+msgstr ""
+"Une fois la validation terminée, cliquez sur ``Définir mon moyen "
+"d'authentification`` et choisissez comment vous souhaitez vous connecter "
+"désormais."
+
+#: ../../userguide/recovery-contacts.rst:281
+msgid "Recovery approved by recovery contacts"
+msgstr "Récupération validée par vos contacts de récupération"
+
+#: ../../userguide/recovery-contacts.rst:286
+msgid ""
+"Your access has been recovered! You can now log in to your organization."
+msgstr ""
+"Votre accès a été récupéré ! Vous pouvez maintenant vous connecter à votre "
+"organisation."
