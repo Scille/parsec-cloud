@@ -207,7 +207,6 @@ msTest.describe(() => {
     const uploadMenu = new FileOperationMenu(documents);
     await uploadMenu.expectVisible();
     await uploadMenu.expectOperationsCount(1);
-    await uploadMenu.hideUploadStatus();
     await uploadMenu.close();
 
     // cspell:disable-next-line
@@ -297,7 +296,6 @@ msTest.describe(() => {
     const uploadMenu = new FileOperationMenu(documents);
     await uploadMenu.expectVisible();
     await uploadMenu.expectOperationsCount(1);
-    await uploadMenu.hideUploadStatus();
     await uploadMenu.close();
 
     const entry = documents.locator('.folder-container').locator('.file-list-item').first();

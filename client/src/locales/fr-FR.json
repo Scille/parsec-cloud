@@ -1054,8 +1054,10 @@
                 "clear": "Effacer la liste"
             },
             "synced": "Fichiers synchronisés et sécurisés",
+            "operationsInProgress": "{count} opération en cours | {count} opérations en cours",
             "syncing": {
                 "title": "Synchronisation de vos fichiers",
+                "titleWithCount": "Synchronisation de {count} fichier | Synchronisation de {count} fichiers",
                 "filesLeft": "{count} fichier | {count} fichiers",
                 "timeLeft": "Temps restant : ~{time}",
                 "calculating": "Calcul..."

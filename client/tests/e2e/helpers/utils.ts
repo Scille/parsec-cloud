@@ -490,10 +490,6 @@ export class FileOperationMenu {
     await this.menu.locator('.menu-header-icons').click();
   }
 
-  async hideUploadStatus(): Promise<void> {
-    await this.menu.locator('.upload-menu-status').locator('.close-icon').click();
-  }
-
   async expectVisible(): Promise<void> {
     await expect(this.menu).toBeVisible();
   }
@@ -504,6 +500,12 @@ export class FileOperationMenu {
 
   async expectOperationsCount(count: number): Promise<void> {
     await expect(this.menu.locator('.upload-menu-list').locator('.file-operation-item')).toHaveCount(count);
+  }
+
+  async expectOperationsDone(): Promise<void> {
+    const items = this.menu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(items.first()).toBeVisible();
+    await expect(this.menu.locator('.file-operation-item:not(.done):not(.cancelled):not(.failed)')).toHaveCount(0);
   }
 
   getLocator(): Locator {
@@ -566,7 +568,7 @@ export async function importDefaultFiles(
   if (imported > 0) {
     const uploadMenu = new FileOperationMenu(documentsPage);
     await uploadMenu.expectVisible();
-    await uploadMenu.hideUploadStatus();
+    await uploadMenu.expectOperationsDone();
     await uploadMenu.close();
   }
   await expect(documentsPage.locator('.folder-container').locator('.no-files-content')).toBeHidden();

@@ -1,100 +1,121 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS -->
 
 <template>
+  <!-- Collapsed: task button with sync status -->
   <div
-    class="upload-menu"
-    :class="{
-      minimize: menu.isMinimized(),
-      'minimized-with-status': menu.isMinimized() && showUploadStatus,
-    }"
+    v-if="menu.isMinimized()"
+    ref="collapsedButton"
+    class="upload-menu-collapsed"
+    @click="toggleMenu()"
   >
+    <ion-icon
+      v-if="activeOperationsCount > 0"
+      :icon="sync"
+      class="upload-menu-collapsed__icon upload-menu-collapsed__icon--rotating"
+    />
     <div
-      class="upload-menu-header"
-      @click="toggleMenu()"
+      v-else
+      class="upload-menu-collapsed__cloud"
     >
-      <ion-text
-        v-if="!menu.isMinimized() || (menu.isMinimized() && showUploadStatus)"
-        class="upload-menu-header__title"
-      >
-        {{ $msTranslate('FoldersPage.ImportFile.title') }}
-      </ion-text>
       <ion-icon
-        class="menu-header-icons"
-        :icon="menu.isMinimized() && !showUploadStatus ? sync : chevronDown"
+        :icon="isSyncing ? cloud : cloudDone"
+        class="upload-menu-collapsed__icon"
+      />
+      <ion-icon
+        v-if="isSyncing"
+        :icon="arrowUp"
+        class="upload-menu-collapsed__arrow"
       />
     </div>
-
-    <upload-status
-      v-if="showUploadStatus"
-      class="upload-menu-status"
-      :status="uploadProgressStatus"
-      :rate-calculator="rateCalculator as TransferRateCalculator"
-      @close="showUploadStatus = false"
-    />
-
-    <ion-list
-      v-if="!menu.isMinimized()"
-      class="upload-menu-tabs"
-    >
-      <ion-item
-        class="upload-menu-tabs__item"
-        @click="onFilterSelected(OperationFilter.InProgress)"
-        :class="filter === OperationFilter.InProgress ? 'active' : ''"
-      >
-        <div class="item-container">
-          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.inProgress') }}</ion-text>
-        </div>
-      </ion-item>
-      <ion-item
-        class="upload-menu-tabs__item"
-        @click="onFilterSelected(OperationFilter.Done)"
-        :class="filter === OperationFilter.Done ? 'active' : ''"
-      >
-        <div class="item-container">
-          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.done') }}</ion-text>
-        </div>
-      </ion-item>
-      <ion-item
-        class="upload-menu-tabs__item"
-        @click="onFilterSelected(OperationFilter.Error)"
-        :class="filter === OperationFilter.Error ? 'active' : ''"
-      >
-        <div class="item-container">
-          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
-        </div>
-      </ion-item>
-      <ion-button
-        @click="onClearClicked"
-        fill="clear"
-        size="small"
-        class="upload-menu-tabs__clear"
-      >
-        {{ $msTranslate('FoldersPage.ImportFile.tabs.clear') }}
-      </ion-button>
-    </ion-list>
-
-    <ion-list class="upload-menu-list">
-      <component
-        v-for="item in currentItems"
-        :is="getOperationComponent(item)"
-        :key="item.operationData.id + item.refreshKey"
-        :operation-data="item.operationData"
-        :status="item.status"
-        :event-data="item.eventData"
-        @cancel="onOperationCancelClick"
-        @click="onOperationClick"
-      />
-      <div
-        class="upload-menu-list__empty"
-        v-if="currentItems.length === 0"
-      >
-        <ms-image :image="theme === Theme.Dark ? NoImportInProgressDark : NoImportInProgress" />
-        <ion-text class="upload-menu-list__empty-text">
-          {{ $msTranslate(items.length === 0 ? 'FoldersPage.ImportFile.noTasks' : 'FoldersPage.ImportFile.noCurrentTasks') }}
-        </ion-text>
-      </div>
-    </ion-list>
   </div>
+
+  <!-- Open -->
+  <transition name="upload-menu">
+    <div
+      v-if="!menu.isMinimized()"
+      class="upload-menu"
+    >
+      <div
+        class="upload-menu-header"
+        @click="toggleMenu()"
+      >
+        <ion-text class="upload-menu-header__title">
+          {{ $msTranslate('FoldersPage.ImportFile.title') }}
+        </ion-text>
+        <ion-icon
+          class="menu-header-icons"
+          :icon="chevronDown"
+        />
+      </div>
+
+      <upload-status
+        v-if="showUploadStatus"
+        class="upload-menu-status"
+        :status="uploadProgressStatus"
+        :rate-calculator="rateCalculator as TransferRateCalculator"
+      />
+
+      <ion-list class="upload-menu-tabs">
+        <ion-item
+          class="upload-menu-tabs__item"
+          @click="onFilterSelected(OperationFilter.InProgress)"
+          :class="filter === OperationFilter.InProgress ? 'active' : ''"
+        >
+          <div class="item-container">
+            <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.inProgress') }}</ion-text>
+          </div>
+        </ion-item>
+        <ion-item
+          class="upload-menu-tabs__item"
+          @click="onFilterSelected(OperationFilter.Done)"
+          :class="filter === OperationFilter.Done ? 'active' : ''"
+        >
+          <div class="item-container">
+            <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.done') }}</ion-text>
+          </div>
+        </ion-item>
+        <ion-item
+          class="upload-menu-tabs__item"
+          @click="onFilterSelected(OperationFilter.Error)"
+          :class="filter === OperationFilter.Error ? 'active' : ''"
+        >
+          <div class="item-container">
+            <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
+          </div>
+        </ion-item>
+        <ion-button
+          @click="onClearClicked"
+          fill="clear"
+          size="small"
+          class="upload-menu-tabs__clear"
+        >
+          {{ $msTranslate('FoldersPage.ImportFile.tabs.clear') }}
+        </ion-button>
+      </ion-list>
+
+      <ion-list class="upload-menu-list">
+        <component
+          v-for="item in currentItems"
+          :is="getOperationComponent(item)"
+          :key="item.operationData.id + item.refreshKey"
+          :operation-data="item.operationData"
+          :status="item.status"
+          :event-data="item.eventData"
+          @cancel="onOperationCancelClick"
+          @click="onOperationClick"
+        />
+        <div
+          class="upload-menu-list__empty"
+          v-if="currentItems.length === 0"
+        >
+          <ms-image :image="theme === Theme.Dark ? NoImportInProgressDark : NoImportInProgress" />
+          <ion-text class="upload-menu-list__empty-text">
+            {{ $msTranslate(items.length === 0 ? 'FoldersPage.ImportFile.noTasks' : 'FoldersPage.ImportFile.noCurrentTasks') }}
+          </ion-text>
+        </div>
+      </ion-list>
+    </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
@@ -116,10 +137,19 @@ import { FileEventRegistrationCanceller, FileOperationEventData, FileOperationEv
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
-import { chevronDown, sync } from 'ionicons/icons';
-import { MsImage, NoImportInProgress, NoImportInProgressDark, Theme, useTheme } from 'megashark-lib';
+import { arrowUp, chevronDown, cloud, cloudDone, sync } from 'ionicons/icons';
+import {
+  attachMouseOverTooltip,
+  MsImage,
+  NoImportInProgress,
+  NoImportInProgressDark,
+  Theme,
+  TooltipAlignment,
+  TooltipSide,
+  useTheme,
+} from 'megashark-lib';
 import type { Component } from 'vue';
-import { computed, inject, onMounted, onUnmounted, ref, Ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, reactive, ref, Ref, watch } from 'vue';
 
 interface OperationItem {
   operationData: FileOperationData;
@@ -143,15 +173,16 @@ const items = ref<Array<OperationItem>>([]);
 
 const filter = ref<OperationFilter | undefined>(undefined);
 
+function isInProgress(item: OperationItem): boolean {
+  return [FileOperationEvents.Added, FileOperationEvents.Progress, FileOperationEvents.Started].includes(item.status);
+}
+
 const currentItems = computed(() => {
   if (!filter.value) {
     return items.value;
   }
   return items.value.filter((item) => {
-    if (
-      filter.value === OperationFilter.InProgress &&
-      [FileOperationEvents.Added, FileOperationEvents.Progress, FileOperationEvents.Started].includes(item.status)
-    ) {
+    if (filter.value === OperationFilter.InProgress && isInProgress(item)) {
       return true;
     } else if (filter.value === OperationFilter.Done && item.status === FileOperationEvents.Finished) {
       return true;
@@ -166,7 +197,6 @@ const currentItems = computed(() => {
 });
 
 let canceller!: FileEventRegistrationCanceller;
-const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
 const uploadProgressStatus = ref<UploadProgress>({ totalBytes: 0, totalFiles: 0 });
 const workspacesBacklog = new Map<WorkspaceID, UploadProgress>();
@@ -174,6 +204,27 @@ const rateCalculator = ref<TransferRateCalculator>(new TransferRateCalculator())
 const showUploadStatus = ref(false);
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventRegisterKey: string | undefined = undefined;
+
+const activeOperationsCount = computed(() => items.value.filter(isInProgress).length);
+const isSyncing = computed(() => uploadProgressStatus.value.totalFiles > 0);
+
+const collapsedTooltip = reactive({
+  key: computed(() => {
+    if (activeOperationsCount.value > 0) {
+      return 'FoldersPage.ImportFile.operationsInProgress';
+    }
+    return isSyncing.value ? 'FoldersPage.ImportFile.syncing.titleWithCount' : 'FoldersPage.ImportFile.synced';
+  }),
+  count: computed(() => activeOperationsCount.value || uploadProgressStatus.value.totalFiles || undefined),
+});
+
+const collapsedButton = ref<HTMLElement>();
+
+watch(collapsedButton, async (button) => {
+  if (button) {
+    await attachMouseOverTooltip(button, collapsedTooltip, 500, TooltipAlignment.Center, TooltipSide.Left, { x: -0.5 });
+  }
+});
 
 function toggleMenu(): void {
   if (menu.isMinimized()) {
@@ -242,12 +293,9 @@ async function onFileOperationEvent(
   operationData?: FileOperationData,
   eventData?: FileOperationEventData,
 ): Promise<void> {
-  isFileOperationManagerActive.value = true;
   if (!operationData) {
     if (event !== FileOperationEvents.AllFinished) {
       window.nativeAPI.log('warn', `Got event ${event} without operation data`);
-    } else {
-      isFileOperationManagerActive.value = false;
     }
     return;
   }
@@ -293,9 +341,7 @@ async function onFileOperationEvent(
 }
 
 async function onClearClicked(): Promise<void> {
-  items.value = items.value.filter((item) =>
-    [FileOperationEvents.Progress, FileOperationEvents.Started, FileOperationEvents.Added].includes(item.status),
-  );
+  items.value = items.value.filter(isInProgress);
   filter.value = undefined;
 }
 
@@ -377,9 +423,6 @@ function scrollToTop(): void {
   right: 2rem;
   z-index: 20;
   overflow: hidden;
-  transition:
-    width 250ms ease-in-out,
-    max-height 250ms ease-in-out;
 
   @include ms.responsive-breakpoint('sm') {
     right: 0;
@@ -411,6 +454,9 @@ function scrollToTop(): void {
       height: stretch;
       display: flex;
       width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
       align-items: center;
     }
   }
@@ -519,6 +565,103 @@ function scrollToTop(): void {
   }
 }
 
+.upload-menu-enter-active,
+.upload-menu-leave-active {
+  transition:
+    width 250ms ease-in-out,
+    max-height 250ms ease-in-out,
+    right 250ms ease-in-out,
+    bottom 250ms ease-in-out,
+    border-radius 250ms ease-in-out;
+  pointer-events: none;
+}
+
+.upload-menu-enter-from,
+.upload-menu-leave-to {
+  width: ms.size('xl');
+  max-height: ms.size('xl');
+
+  @include ms.responsive-breakpoint('sm') {
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+}
+
+.upload-menu-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  width: ms.size('xl');
+  height: ms.size('xl');
+  border-radius: ms.radius('2xl');
+  background: ms.color('popover-header-background');
+  border: ms.border('thin') solid ms.color('border-base-default');
+  color: ms.color('icon-on-color-heading');
+  cursor: pointer;
+  box-shadow: ms.shadow('elevation-2xl');
+  opacity: ms.opacity('9');
+  transition: opacity 150ms ease;
+  bottom: 1.5rem;
+  right: 2rem;
+  z-index: 20;
+
+  &:hover {
+    opacity: ms.opacity('10');
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+
+  &__icon {
+    font-size: ms.size('sm');
+
+    &--rotating {
+      animation: upload-menu-rotate 1.5s linear infinite;
+    }
+  }
+
+  &__cloud {
+    position: relative;
+    display: flex;
+  }
+
+  &__arrow {
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 60%;
+    color: ms.color('popover-header-background');
+    animation: upload-menu-arrow 1s ease-out infinite;
+  }
+}
+
+@keyframes upload-menu-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes upload-menu-arrow {
+  0% {
+    transform: translateY(30%);
+    opacity: ms.opacity('10');
+  }
+  50% {
+    opacity: ms.opacity('10');
+  }
+  100% {
+    transform: translateY(-30%);
+    opacity: 0;
+  }
+}
+
 .menu-header-icons {
   display: flex;
   gap: ms.spacing('gap-lg');
@@ -531,43 +674,6 @@ function scrollToTop(): void {
 
   &:hover {
     background-color: ms.color('surface-neutral-on-color');
-  }
-}
-
-.minimize {
-  width: 2.75rem;
-  max-height: 2.75rem;
-  cursor: default;
-
-  @include ms.responsive-breakpoint('sm') {
-    right: 1.5rem;
-    bottom: 1.5rem;
-    border-radius: ms.radius('2xl');
-  }
-
-  .upload-menu-list {
-    padding: ms.spacing('padding-none');
-    margin: 0;
-    overflow: hidden;
-    height: 0;
-  }
-
-  .menu-header-icons {
-    transform: rotate(180deg);
-    margin-left: auto;
-  }
-}
-
-.minimized-with-status {
-  width: 28rem;
-  max-height: 6.5rem;
-
-  .upload-menu-header {
-    padding: ms.spacing('padding-sm');
-  }
-
-  .menu-header-icons {
-    padding: ms.spacing('padding-lg');
   }
 }
 </style>
