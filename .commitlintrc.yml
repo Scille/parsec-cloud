@@ -24,6 +24,7 @@ rules:
         - github-actions
         - libparsec
         - libparsec/crypto
+        - libparsec/mountpoint
         - pre-commit
         - rfcs
         - rust
