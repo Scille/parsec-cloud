@@ -32,16 +32,13 @@
       </div>
     </template>
     <template v-else>
-      <ion-icon
-        :icon="checkmarkCircle"
-        class="upload-status__icon checkmark-icon"
-      />
-      <ion-text class="upload-status__text">{{ $msTranslate('FoldersPage.ImportFile.synced') }}</ion-text>
-      <ion-icon
-        :icon="close"
-        class="upload-status__icon close-icon"
-        @click="$emit('close')"
-      />
+      <div class="upload-status-success">
+        <ion-icon
+          :icon="cloudDone"
+          class="upload-status__icon checkmark-icon"
+        />
+        <ion-text class="upload-status__text">{{ $msTranslate('FoldersPage.ImportFile.synced') }}</ion-text>
+      </div>
     </template>
   </div>
 </template>
@@ -51,7 +48,7 @@ import { TransferRateCalculator } from '@/common/transferRate';
 import { UploadProgress } from '@/parsec';
 import { formatETA } from '@/services/translation';
 import { IonIcon, IonText } from '@ionic/vue';
-import { checkmarkCircle, close } from 'ionicons/icons';
+import { cloudDone } from 'ionicons/icons';
 import { MsSpinner } from 'megashark-lib';
 import { onMounted, onUnmounted, ref } from 'vue';
 
@@ -66,6 +63,7 @@ const eta = ref(Infinity);
 let refreshInterval: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
+  eta.value = props.rateCalculator.getEta();
   refreshInterval = setInterval(() => {
     eta.value = props.rateCalculator.getEta();
   }, ETA_REFRESH_INTERVAL_MS);
@@ -74,23 +72,19 @@ onMounted(() => {
 onUnmounted(() => {
   clearInterval(refreshInterval);
 });
-
-defineEmits<{
-  (e: 'close'): void;
-}>();
 </script>
 
 <style scoped lang="scss">
 .upload-status {
   display: flex;
   align-items: center;
-  padding: ms.spacing('padding-2xl') ms.spacing('padding-lg') ms.spacing('padding-2xl') ms.spacing('padding-2xl');
+  padding: ms.spacing('padding-lg') ms.spacing('padding-md') ms.spacing('padding-lg') ms.spacing('padding-lg');
   background: ms.color('surface-base-page');
   gap: ms.spacing('gap-md');
   min-height: 3rem;
 
   &__icon {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
 
     &.checkmark-icon {
       color: ms.color('icon-brand-default');
@@ -98,18 +92,6 @@ defineEmits<{
 
     &.step-icon {
       color: ms.color('icon-brand-default');
-    }
-
-    &.close-icon {
-      color: ms.color('icon-neutral-default');
-      margin-left: auto;
-      padding: ms.spacing('padding-sm');
-
-      &:hover {
-        cursor: pointer;
-        background: ms.color('surface-neutral-default-subtle-hover');
-        border-radius: ms.radius('2xl');
-      }
     }
   }
 
@@ -169,6 +151,14 @@ defineEmits<{
       color: ms.color('text-base-body');
       margin-left: auto;
     }
+  }
+
+  &-success {
+    display: flex;
+    align-items: center;
+    margin-inline: 0.25rem;
+    gap: ms.spacing('gap-lg');
+    flex-grow: 1;
   }
 }
 </style>
