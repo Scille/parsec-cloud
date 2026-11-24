@@ -201,6 +201,36 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
   await expect(item.locator('.user-status')).toHaveText('Revoked');
 });
 
+msTest('Revoked user is updated in other tabs', async ({ usersPage }) => {
+  const bobTab = await usersPage.openNewTab();
+  await login(bobTab, 'Boby McBobFace', 'bob@example.com');
+  await bobTab.locator('.sidebar').locator('#sidebar-users').click();
+  await expect(bobTab).toBeUserPage();
+
+  const aliceMallory = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
+  const bobMallory = bobTab.locator('#users-page-user-list').getByRole('listitem').filter({ hasText: 'Malloryy McMalloryFace' });
+  await expect(aliceMallory.locator('.user-status')).toHaveText('Active');
+  await expect(bobMallory.locator('.user-status')).toHaveText('Active');
+
+  // Alice revokes Mallory
+  await aliceMallory.click({ button: 'right' });
+  await checkUserContextMenu(usersPage, 'Administrator', 'External', 'Revoke this user');
+  const inputModal = usersPage.locator('.text-input-modal');
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await fillIonInput(inputModal.locator('ion-input'), 'mallory@example.com');
+  await expect(inputModal.locator('#next-button')).toBeEnabled();
+  await inputModal.locator('#next-button').click();
+  await expect(usersPage).toShowToast('Malloryy McMalloryFace has been revoked. They can no longer access this organization.', 'Success');
+
+  // Both tabs show Mallory as revoked
+  await expect(aliceMallory.locator('.user-status')).toHaveText('Revoked');
+  await expect(aliceMallory).toHaveTheClass('revoked');
+  await expect(bobMallory.locator('.user-status')).toHaveText('Revoked');
+  await expect(bobMallory).toHaveTheClass('revoked');
+
+  await bobTab.release();
+});
+
 msTest('Selection in grid mode', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
   const item = usersPage.locator('.users-grid-container').locator('.user-card-item').nth(1);

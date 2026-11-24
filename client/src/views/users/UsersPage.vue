@@ -310,7 +310,6 @@ async function revokeSelectedUsers(): Promise<void> {
   await actions.revokeUser(selectedUsers[0]);
 
   await onSelectionCancel();
-  await refreshUserList();
 }
 
 async function openSelectedUserDetails(): Promise<void> {
@@ -346,7 +345,6 @@ async function openUserContextMenu(event: Event, user: UserModel, onFinished?: (
     onFinished();
   }
   await onSelectionCancel();
-  await refreshUserList();
 }
 
 async function openGlobalUserContextMenu(): Promise<void> {
@@ -395,7 +393,6 @@ async function updateSelectedUserProfiles(): Promise<void> {
 async function updateUserProfiles(selectedUsers: Array<UserInfo>): Promise<void> {
   await actions.updateProfiles(selectedUsers);
   await onSelectionCancel();
-  await refreshUserList();
 }
 
 async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
@@ -449,16 +446,18 @@ const routeWatchCancel = watchRoute(async () => {
 async function handleEvents(event: Events, data?: EventData): Promise<void> {
   if (event === Events.InvitationUpdated && data) {
     if ((data as InvitationUpdatedData).status === InvitationStatus.Finished) {
-      await refreshUserList();
+      refreshUserList();
     }
   } else if (event === Events.OpenContextMenu) {
     await openGlobalUserContextMenu();
+  } else if (event === Events.UserProfileUpdated || event === Events.UserRevoked) {
+    refreshUserList();
   }
 }
 
 onMounted(async (): Promise<void> => {
   eventCbId = await eventDistributor.value.registerCallback(
-    [Events.InvitationUpdated, Events.OpenContextMenu, Events.MenuAction],
+    [Events.InvitationUpdated, Events.OpenContextMenu, Events.MenuAction, Events.UserProfileUpdated, Events.UserRevoked],
     handleEvents,
   );
   await restoreComponentData();
