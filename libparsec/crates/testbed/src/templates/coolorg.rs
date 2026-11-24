@@ -12,8 +12,7 @@ use crate::TestbedTemplate;
 /// - devices `alice@dev2` and `bob@dev2` whose storages are empty
 /// - 1 workspace `wksp1` shared between alice (owner) and bob (reader)
 /// - `wksp1` is bootstrapped (i.e. has it initial key rotation and name certificates).
-/// - Alice & Bob have their user realm created and user manifest v1 synced with `wksp1` in it
-/// - Mallory has no user realm created
+/// - No user has its user realm created (as the client never synchronizes the user manifest)
 /// - 1 pending invitation from Alice for a new user with email `zack@example.invalid`
 /// - 1 pending invitation for a new device for Alice
 pub(crate) fn generate() -> Arc<TestbedTemplate> {
@@ -54,24 +53,16 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
 
     builder.create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id);
 
-    // 4) Create users realms & and v1 manifest for Alice and Bob
-
-    builder
-        .new_user_realm("alice")
-        .then_create_initial_user_manifest_vlob();
-
-    builder
-        .new_user_realm("bob")
-        .then_create_initial_user_manifest_vlob();
-
-    // 5) Initialize client storages for alice@dev1 and bob@dev1
+    // 4) Initialize client storages for alice@dev1 and bob@dev1
+    //
+    // Note the user realm is never created: the client never synchronizes its
+    // user manifest (it only uses it locally), so the user realm doesn't exist
+    // server-side in practice.
 
     builder.certificates_storage_fetch_certificates("alice@dev1");
-    builder.user_storage_fetch_user_vlob("alice@dev1");
     builder
         .user_storage_local_update("alice@dev1")
         .update_local_workspaces_with_fetched_certificates();
-    builder.user_storage_fetch_realm_checkpoint("alice@dev1");
     builder.workspace_data_storage_fetch_workspace_vlob(
         "alice@dev1",
         wksp1_id,
@@ -83,7 +74,6 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     builder
         .user_storage_local_update("bob@dev1")
         .update_local_workspaces_with_fetched_certificates();
-    builder.user_storage_fetch_realm_checkpoint("bob@dev1");
     builder.workspace_data_storage_fetch_workspace_vlob(
         "bob@dev1",
         wksp1_id,

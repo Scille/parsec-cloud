@@ -14,7 +14,6 @@ from parsec._parsec import (
     SecretKeyAlgorithm,
     VlobID,
     authenticated_cmds,
-    testbed,
 )
 from parsec.components.sequester import (
     RejectedBySequesterService,
@@ -56,13 +55,23 @@ async def test_authenticated_vlob_update_ok(
 
     match kind:
         case "key_index_0":
-            assert isinstance(coolorg.alice.event, testbed.TestbedEventBootstrapOrganization)
-            realm_id = coolorg.alice.event.first_user_user_realm_id
+            realm_id = VlobID.new()
             key_index = 0
-            last_realm_certificate_timestamp = get_last_realm_certificate_timestamp(
-                testbed_template=coolorg.testbed_template,
-                realm_id=realm_id,
+            last_realm_certificate_timestamp = DateTime.now()
+            outcome = await backend.realm.create(
+                now=last_realm_certificate_timestamp,
+                organization_id=coolorg.organization_id,
+                author=coolorg.alice.device_id,
+                author_verify_key=coolorg.alice.signing_key.verify_key,
+                realm_role_certificate=RealmRoleCertificate(
+                    author=coolorg.alice.device_id,
+                    timestamp=last_realm_certificate_timestamp,
+                    realm_id=realm_id,
+                    role=RealmRole.OWNER,
+                    user_id=coolorg.alice.user_id,
+                ).dump_and_sign(coolorg.alice.signing_key),
             )
+            assert isinstance(outcome, RealmRoleCertificate)
             author = coolorg.alice
 
         case "as_owner":

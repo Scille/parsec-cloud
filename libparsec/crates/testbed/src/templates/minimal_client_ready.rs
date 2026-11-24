@@ -96,20 +96,16 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
                 .insert("bar.txt".parse().unwrap(), bar_txt_id);
         });
 
-    // 8) Create Alice user realm & manifest
-
-    builder
-        .new_user_realm("alice")
-        .then_create_initial_user_manifest_vlob();
-
-    // 9) Fetch all data in Alice's client storages
+    // 8) Fetch all data in Alice's client storages
+    //
+    // Note the user realm is never created: the client never synchronizes its
+    // user manifest (it only uses it locally), so the user realm doesn't exist
+    // server-side in practice.
 
     builder.certificates_storage_fetch_certificates("alice@dev1");
-    builder.user_storage_fetch_user_vlob("alice@dev1");
     builder
         .user_storage_local_update("alice@dev1")
         .update_local_workspaces_with_fetched_certificates();
-    builder.user_storage_fetch_realm_checkpoint("alice@dev1");
 
     builder.workspace_data_storage_fetch_workspace_vlob(
         "alice@dev1",
