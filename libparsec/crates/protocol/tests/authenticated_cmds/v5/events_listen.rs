@@ -55,6 +55,40 @@ pub fn rep_ok() {
             ),
         ),
         (
+            // Generated from Parsec 3.11.1-a.0+dev
+            // Content:
+            //   status: 'ok'
+            //   event: 'ORGANIZATION_CONFIG'
+            //   active_users_limit: 8
+            //   editics_server_urls: [ 'https://editics1.parsec.invalid', 'https://editics2.parsec.invalid', ]
+            //   realm_minimum_archiving_period_before_deletion: 2592000
+            //   sse_keepalive_seconds: 30
+            //   user_profile_outsider_allowed: True
+            &hex!(
+                "87a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d697408b3656469746963735f73657276"
+                "65725f75726c7392bf68747470733a2f2f65646974696373312e7061727365632e696e"
+                "76616c6964bf68747470733a2f2f65646974696373322e7061727365632e696e76616c"
+                "6964d92e7265616c6d5f6d696e696d756d5f617263686976696e675f706572696f645f"
+                "6265666f72655f64656c6574696f6ece00278d00b57373655f6b656570616c6976655f"
+                "7365636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c6c6f"
+                "776564c3"
+            )[..],
+            authenticated_cmds::events_listen::Rep::Ok(
+                authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
+                    active_users_limit: ActiveUsersLimit::LimitedTo(8),
+                    user_profile_outsider_allowed: true,
+                    sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    realm_minimum_archiving_period_before_deletion: Maybe::Present(2592000),
+                    editics_server_urls: Maybe::Present(vec![
+                        "https://editics1.parsec.invalid".to_string(),
+                        "https://editics2.parsec.invalid".to_string(),
+                    ]),
+                },
+            ),
+        ),
+        (
+            // Legacy 5.3>=API<5.5 format (without `editics_server_urls` field)
             // Generated from Parsec 3.8.2-a.0+dev
             // Content:
             //   status: 'ok'
@@ -76,6 +110,7 @@ pub fn rep_ok() {
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     realm_minimum_archiving_period_before_deletion: Maybe::Present(2592000),
+                    editics_server_urls: Maybe::Absent,
                 },
             ),
         ),
@@ -100,6 +135,7 @@ pub fn rep_ok() {
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     realm_minimum_archiving_period_before_deletion: Maybe::Absent,
+                    editics_server_urls: Maybe::Absent,
                 },
             ),
         ),
@@ -124,6 +160,7 @@ pub fn rep_ok() {
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     realm_minimum_archiving_period_before_deletion: Maybe::Absent,
+                    editics_server_urls: Maybe::Absent,
                 },
             ),
         ),
@@ -152,6 +189,7 @@ pub fn rep_ok() {
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     realm_minimum_archiving_period_before_deletion: Maybe::Absent,
+                    editics_server_urls: Maybe::Absent,
                 },
             ),
         ),
@@ -180,6 +218,7 @@ pub fn rep_ok() {
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     realm_minimum_archiving_period_before_deletion: Maybe::Absent,
+                    editics_server_urls: Maybe::Absent,
                 },
             ),
         ),
