@@ -62,21 +62,18 @@ You should then:
 
 import binascii
 import datetime
-import io
 import os
 import re
 import struct
 import sys
 import textwrap
 
+from compression import zstd
+
 try:
     import msgpack  # type: ignore
 except ImportError:
     raise SystemExit("msgpack not installed. Run `pip install msgpack`")
-try:
-    import zstandard  # type: ignore
-except ImportError:
-    raise SystemExit("zstandard not installed. Run `pip install zstandard`")
 try:
     import nacl.exceptions  # type: ignore
     import nacl.public  # type: ignore
@@ -135,12 +132,8 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
             return None
 
         try:
-            io_input = io.BytesIO(raw[1:])
-            io_output = io.BytesIO()
-            decompressor = zstandard.ZstdDecompressor()
-            decompressor.copy_stream(io_input, io_output)
-            decompressed = io_output.getvalue()
-        except zstandard.ZstdError:
+            decompressed = zstd.decompress(raw[1:])
+        except zstd.ZstdError:
             return None
 
         return attempt_msgpack_deserialization(decompressed)
