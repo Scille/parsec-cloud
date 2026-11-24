@@ -8,7 +8,11 @@
         "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE-AGPL3",
         "history": "https://docs.parsec.cloud/en/{version}/history.html",
         "pricingLink": "https://parsec.cloud/pricing/",
-        "whatsNew": "https://parsec.cloud/blog/releases/{version}/"
+        "whatsNew": "https://parsec.cloud/blog/releases/{version}/",
+        "accessibility": {
+            "toggle": "",
+            "link": "https://parsec.cloud/fr/declaration-d-accessibilite/"
+        }
     },
     "quit": {
         "title": "Exit Parsec",
@@ -2055,7 +2059,9 @@
             "version": "Version",
             "developer": "Developer",
             "license": "License",
-            "project": "Project"
+            "project": "Project",
+            "accessibility": "Accessibility",
+            "accessibilityStatus": "View statement"
         },
         "update": {
             "notUpToDate": "A new version is available.",

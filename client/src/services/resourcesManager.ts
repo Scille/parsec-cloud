@@ -110,7 +110,7 @@ class WebResourcesProvider implements IResourcesProvider {
 
   async load(res: Resources): Promise<NonNullable<unknown>> {
     const resName = resolveResource(res, this.cacheBustingSuffix);
-    const resp = await this.axiosInstance.get(resName, { responseType: 'arraybuffer' });
+    const resp = await this.axiosInstance.get(resName, { responseType: 'arraybuffer', timeout: 2000 });
     if (resp.status !== 200) {
       throw new Error(`HTTP status ${resp.status} ${resp.statusText}`);
     }
@@ -182,7 +182,7 @@ class _ResourcesManager {
           }
         })
         .catch((reason) => {
-          window.nativeAPI.log('debug', `Failed to retrieve custom resource ${res}: ${reason.toString()}`);
+          console.debug(`Failed to retrieve custom resource ${res}: ${reason.toString()}`);
         });
       promises.push(promise);
     }
