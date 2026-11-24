@@ -1,4 +1,5 @@
 name: CI Rust
+# cspell: words LIBCMTD NODEFAULTLIB rlibs
 
 on:
   workflow_call:
@@ -248,8 +249,33 @@ jobs:
             os: windows-2025
     env:
       # By default `libparsec_crypto` uses RustCrypto (more convenient for dev),
-      # however in production sodiumoxide is used for native platforms
-      RUSTFLAGS: --cfg=crypto_backend="libsodium"
+      # however in production sodiumoxide is used for native platforms.
+      #
+      # IMPORTANT: Cargo's rustflags sources are mutually exclusive and checked in
+      # order (CARGO_ENCODED_RUSTFLAGS > RUSTFLAGS > CARGO_TARGET_*_RUSTFLAGS >
+      # build.rustflags), so there must be NO job-level RUSTFLAGS here, otherwise it
+      # *silently discards* the target-specific flags below. The crypto_backend cfg
+      # is therefore repeated in each target-specific variable (same pattern as the
+      # Linux job's CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS).
+      #
+      # On Windows, since Rust 1.97 the `linker_messages` lint is warn-by-default
+      # and `setup-rust-toolchain` denies warnings (`build-warnings: deny` default),
+      # which turns MSVC linker output into hard errors:
+      # - LNK4099: the vendored libsodium/openssl static libs reference PDBs that
+      #   are not shipped (the `ci-rust` profile sets `debug = false`, so they are
+      #   never generated). These are emitted by the linker *while processing the
+      #   rlibs' object files*, before any /DEBUG switch takes effect, so
+      #   /DEBUG:NONE cannot silence them.
+      # - LNK4098: vendored C libs are built against the static debug CRT
+      #   (LIBCMTD) while rustc links the dynamic CRT.
+      # Both are benign on MSVC (link proceeds "as if no debug info" / picks one
+      # CRT), and both only appear now because Rust >= 1.97 surfaces linker output
+      # as warnings. The vendored C deps can't be rebuilt differently without
+      # leaking flags into openssl-src's perl/make build (D8016 /MD vs /MT), so
+      # we allow the `linker_messages` lint on Windows only, keeping
+      # `build-warnings: deny` for all real rustc/clippy warnings.
+      CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: --cfg=crypto_backend="libsodium" -A linker_messages
+      CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTFLAGS: --cfg=crypto_backend="libsodium"
     name: "${{ matrix.name }}: 🦀 Rust tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
