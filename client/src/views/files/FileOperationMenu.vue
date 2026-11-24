@@ -3,33 +3,36 @@
 <template>
   <div
     class="upload-menu"
-    :class="{
-      minimize: menu.isMinimized(),
-      'minimized-with-status': menu.isMinimized() && showUploadStatus,
-    }"
+    :class="{ minimize: menu.isMinimized() }"
   >
     <div
       class="upload-menu-header"
       @click="toggleMenu()"
     >
       <ion-text
-        v-if="!menu.isMinimized() || (menu.isMinimized() && showUploadStatus)"
+        v-if="!menu.isMinimized()"
         class="upload-menu-header__title"
       >
         {{ $msTranslate('FoldersPage.ImportFile.title') }}
       </ion-text>
       <ion-icon
+        v-show="menu.isMinimized()"
+        ref="minimizedIcon"
         class="menu-header-icons"
-        :icon="menu.isMinimized() && !showUploadStatus ? sync : chevronDown"
+        :icon="runningOperationsCount > 0 ? hourglassOutline : sync"
+      />
+      <ion-icon
+        v-show="!menu.isMinimized()"
+        class="menu-header-icons"
+        :icon="chevronDown"
       />
     </div>
 
     <upload-status
-      v-if="showUploadStatus"
+      v-if="showUploadStatus && !menu.isMinimized()"
       class="upload-menu-status"
       :status="uploadProgressStatus"
       :rate-calculator="rateCalculator as TransferRateCalculator"
-      @close="showUploadStatus = false"
     />
 
     <ion-list
@@ -116,10 +119,19 @@ import { FileEventRegistrationCanceller, FileOperationEventData, FileOperationEv
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
-import { chevronDown, sync } from 'ionicons/icons';
-import { MsImage, NoImportInProgress, NoImportInProgressDark, Theme, useTheme } from 'megashark-lib';
+import { chevronDown, hourglassOutline, sync } from 'ionicons/icons';
+import {
+  attachMouseOverTooltip,
+  MsImage,
+  NoImportInProgress,
+  NoImportInProgressDark,
+  Theme,
+  TooltipAlignment,
+  TooltipSide,
+  useTheme,
+} from 'megashark-lib';
 import type { Component } from 'vue';
-import { computed, inject, onMounted, onUnmounted, ref, Ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, reactive, ref, Ref, useTemplateRef } from 'vue';
 
 interface OperationItem {
   operationData: FileOperationData;
@@ -143,15 +155,18 @@ const items = ref<Array<OperationItem>>([]);
 
 const filter = ref<OperationFilter | undefined>(undefined);
 
+function isInProgress(item: OperationItem): boolean {
+  return [FileOperationEvents.Added, FileOperationEvents.Progress, FileOperationEvents.Started].includes(item.status);
+}
+
+const runningOperationsCount = computed(() => items.value.filter(isInProgress).length);
+
 const currentItems = computed(() => {
   if (!filter.value) {
     return items.value;
   }
   return items.value.filter((item) => {
-    if (
-      filter.value === OperationFilter.InProgress &&
-      [FileOperationEvents.Added, FileOperationEvents.Progress, FileOperationEvents.Started].includes(item.status)
-    ) {
+    if (filter.value === OperationFilter.InProgress && isInProgress(item)) {
       return true;
     } else if (filter.value === OperationFilter.Done && item.status === FileOperationEvents.Finished) {
       return true;
@@ -174,6 +189,17 @@ const rateCalculator = ref<TransferRateCalculator>(new TransferRateCalculator())
 const showUploadStatus = ref(false);
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventRegisterKey: string | undefined = undefined;
+const minimizedIcon = useTemplateRef<InstanceType<typeof IonIcon>>('minimizedIcon');
+
+const minimizedTooltip = reactive({
+  key: computed(() => {
+    if (runningOperationsCount.value > 0) {
+      return 'FoldersPage.ImportFile.operationsInProgress';
+    }
+    return uploadProgressStatus.value.totalFiles > 0 ? 'FoldersPage.ImportFile.syncing.tooltip' : 'FoldersPage.ImportFile.synced';
+  }),
+  count: computed(() => runningOperationsCount.value || uploadProgressStatus.value.totalFiles || undefined),
+});
 
 function toggleMenu(): void {
   if (menu.isMinimized()) {
@@ -206,6 +232,9 @@ function getOperationComponent(item: OperationItem): Component {
 onMounted(async () => {
   canceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
   eventRegisterKey = await eventDistributor.value.registerCallback([Events.UploadProgress], onEvent);
+  if (minimizedIcon.value) {
+    attachMouseOverTooltip(minimizedIcon.value.$el, minimizedTooltip, undefined, TooltipAlignment.End, TooltipSide.Top);
+  }
 });
 
 onUnmounted(async () => {
@@ -293,9 +322,7 @@ async function onFileOperationEvent(
 }
 
 async function onClearClicked(): Promise<void> {
-  items.value = items.value.filter((item) =>
-    [FileOperationEvents.Progress, FileOperationEvents.Started, FileOperationEvents.Added].includes(item.status),
-  );
+  items.value = items.value.filter(isInProgress);
   filter.value = undefined;
 }
 
@@ -553,21 +580,7 @@ function scrollToTop(): void {
   }
 
   .menu-header-icons {
-    transform: rotate(180deg);
     margin-left: auto;
-  }
-}
-
-.minimized-with-status {
-  width: 28rem;
-  max-height: 6.5rem;
-
-  .upload-menu-header {
-    padding: ms.spacing('padding-sm');
-  }
-
-  .menu-header-icons {
-    padding: ms.spacing('padding-lg');
   }
 }
 </style>

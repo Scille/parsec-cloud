@@ -37,11 +37,6 @@
         class="upload-status__icon checkmark-icon"
       />
       <ion-text class="upload-status__text">{{ $msTranslate('FoldersPage.ImportFile.synced') }}</ion-text>
-      <ion-icon
-        :icon="close"
-        class="upload-status__icon close-icon"
-        @click="$emit('close')"
-      />
     </template>
   </div>
 </template>
@@ -51,7 +46,7 @@ import { TransferRateCalculator } from '@/common/transferRate';
 import { UploadProgress } from '@/parsec';
 import { formatETA } from '@/services/translation';
 import { IonIcon, IonText } from '@ionic/vue';
-import { checkmarkCircle, close } from 'ionicons/icons';
+import { checkmarkCircle } from 'ionicons/icons';
 import { MsSpinner } from 'megashark-lib';
 import { onMounted, onUnmounted, ref } from 'vue';
 
@@ -66,6 +61,8 @@ const eta = ref(Infinity);
 let refreshInterval: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
+  // The component is mounted again each time the menu is expanded, the rate calculator already has its samples
+  eta.value = props.rateCalculator.getEta();
   refreshInterval = setInterval(() => {
     eta.value = props.rateCalculator.getEta();
   }, ETA_REFRESH_INTERVAL_MS);
@@ -74,10 +71,6 @@ onMounted(() => {
 onUnmounted(() => {
   clearInterval(refreshInterval);
 });
-
-defineEmits<{
-  (e: 'close'): void;
-}>();
 </script>
 
 <style scoped lang="scss">
@@ -98,18 +91,6 @@ defineEmits<{
 
     &.step-icon {
       color: ms.color('icon-brand-default');
-    }
-
-    &.close-icon {
-      color: ms.color('icon-neutral-default');
-      margin-left: auto;
-      padding: ms.spacing('padding-sm');
-
-      &:hover {
-        cursor: pointer;
-        background: ms.color('surface-neutral-default-subtle-hover');
-        border-radius: ms.radius('2xl');
-      }
     }
   }
 

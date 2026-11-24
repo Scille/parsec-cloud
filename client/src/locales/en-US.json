@@ -1054,11 +1054,13 @@
                 "clear": "Clear list"
             },
             "synced": "All files synchronized and secured",
+            "operationsInProgress": "{count} operation in progress | {count} operations in progress",
             "syncing": {
                 "title": "Synchronizing your files",
                 "filesLeft": "{count} file | {count} files",
                 "timeLeft": "Time left: ~{time}",
-                "calculating": "Calculating..."
+                "calculating": "Calculating...",
+                "tooltip": "Synchronizing {count} file | Synchronizing {count} files"
             },
             "noTasks": "No tasks",
             "noCurrentTasks": "No tasks in this category",
