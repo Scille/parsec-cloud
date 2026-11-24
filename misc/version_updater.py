@@ -449,6 +449,10 @@ FILES_WITH_VERSION_INFO: dict[Matcher, dict[Tool, RawRegexes]] = {
                 r"parsec-cloud==.+'",
                 "parsec-cloud=={version}'",
             ),
+            ReplaceRegex(
+                r"--branch v.+ ",
+                "--branch v{version} ",
+            ),
         ],
     },
     Matcher.simple(ROOT_DIR / "docs/hosting/deployment/webapp/index.rst"): {

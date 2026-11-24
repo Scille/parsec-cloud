@@ -41,7 +41,7 @@ But if you just want to deploy a Parsec server locally you can do it with the fo
 
 .. code-block:: bash
 
-   git clone --depth 1 https://github.com/Scille/parsec-cloud.git
+   git clone --depth 1 --branch v3.11.1-a.0+dev https://github.com/Scille/parsec-cloud.git
    cd parsec-cloud/docs/hosting/deployment
    bash setup-tls.sh
    bash gen-secrets.sh
