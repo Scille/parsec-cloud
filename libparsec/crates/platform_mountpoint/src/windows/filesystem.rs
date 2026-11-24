@@ -48,22 +48,6 @@ static SECURITY_DESCRIPTOR: Lazy<SecurityDescriptor> = Lazy::new(|| {
         .expect("unreachable, valid SecurityDescriptor")
 });
 
-// TODO: support entry info
-
-/// Used for the virtual file to retrieve entry info
-/// This is used as a way for external applications to get information
-/// on a file in a Parsec mountpoint by opening and reading the
-/// virtual file f"{file_path}.{ENTRY_INFO_EXTENSION}".
-const ENTRY_INFO_EXTENSION: &str = "__parsec_entry_info__";
-
-fn is_entry_info_path(path: &FsPath) -> bool {
-    path.parts()
-        .last()
-        .and_then(|name| name.suffix())
-        .map(|suffix| suffix == ENTRY_INFO_EXTENSION)
-        .unwrap_or_default()
-}
-
 /// In Windows logic opening a file/folder provides an exclusive handle
 /// on it so that no concurrent modification can occur.
 ///
@@ -81,7 +65,10 @@ pub(crate) enum OpenedObj {
     },
     File {
         // Keeping file name here is useful for debug logs
+        // (note: derived `Debug` doesn't count as a read for dead_code analysis)
+        #[expect(dead_code)]
         parsec_file_name: FsPath,
+        #[expect(dead_code)]
         id: VlobID,
         fd: FileDescriptor,
     },
@@ -176,6 +163,7 @@ fn parsec_entry_stat_to_winfsp_file_info(stat: &EntryStat, is_read_only: bool) -
 }
 
 #[cfg(test)]
+#[expect(dead_code)]
 #[allow(clippy::type_complexity)]
 pub(crate) static LOOKUP_HOOK: Mutex<
     Option<Box<dyn FnMut(&FsPath) -> Option<Result<EntryStat, WorkspaceStatEntryError>> + Send>>,
@@ -477,30 +465,6 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 || granted_access.is(FileAccessRights::FILE_APPEND_DATA);
             let read_mode = granted_access.is(FileAccessRights::FILE_READ_DATA);
             let parsec_file_name = os_path_to_parsec_path(file_name)?;
-
-            // TODO
-            // if !write_mode && is_entry_info_path(&parsec_file_name) {
-            //     let outcome = self.ops.stat_entry(&parsec_file_name).await;
-            //     return match outcome {
-            //         Ok(stat) => Ok(Arc::new(Mutex::new(OpenedObj::EntryInfo {
-            //             parsec_file_name,
-            //             info: parsec_entry_stat_to_winfsp_file_info(&stat, , self.is_read_only),
-            //         }))),
-            //         Err(err) => Err(match err {
-            //             WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-            //             WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
-            //             WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
-            //             WorkspaceStatEntryError::NoRealmAccess
-            //             | WorkspaceStatEntryError::InvalidKeysBundle(_)
-            //             | WorkspaceStatEntryError::InvalidCertificate(_)
-            //             | WorkspaceStatEntryError::InvalidManifest(_)
-            //             | WorkspaceStatEntryError::Internal(_) => {
-            //                  log::warn!("WinFSP `open` operation cannot complete: {:?}", err);
-            //                  STATUS_ACCESS_DENIED
-            //              }
-            //         }),
-            //     };
-            // }
 
             let options = OpenOptions {
                 read: read_mode,

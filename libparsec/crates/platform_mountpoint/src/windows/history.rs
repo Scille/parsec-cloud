@@ -66,7 +66,10 @@ pub(crate) enum OpenedObj {
     },
     File {
         // Keeping file name here is useful for debug logs
+        // (note: derived `Debug` doesn't count as a read for dead_code analysis)
+        #[expect(dead_code)]
         parsec_file_name: FsPath,
+        #[expect(dead_code)]
         id: VlobID,
         fd: FileDescriptor,
     },
