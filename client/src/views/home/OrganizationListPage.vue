@@ -233,7 +233,7 @@
                   <template #join>
                     <a
                       class="other-actions-link__doc"
-                      @click="Env.Links.openDocumentationUserGuideLink('join_organization', 'join-an-organization')"
+                      @click="Env.Links.openDocumentationUserGuideLink('join-organization', 'join-an-organization')"
                     >
                       {{ $msTranslate('HomePage.organizationList.linkDescriptionJoin') }}
                     </a>
@@ -241,7 +241,7 @@
                   <template #device>
                     <a
                       class="other-actions-link__doc"
-                      @click="Env.Links.openDocumentationUserGuideLink('manage_devices', 'add-a-new-device')"
+                      @click="Env.Links.openDocumentationUserGuideLink('manage-devices', 'add-a-new-device')"
                     >
                       {{ $msTranslate('HomePage.organizationList.linkDescriptionDevice') }}
                     </a>

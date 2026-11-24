@@ -139,7 +139,7 @@ msTest('Unshare workspace while on workspace page', async ({ workspaceSharingMod
   await openExternalLink(
     page,
     workspaceSharingModal.locator('#only-user-warning').locator('.see-more-button'),
-    new RegExp('^https://docs\\.parsec\\.cloud/(en|fr)/[a-z0-9-+.]+/userguide/parsec_workspaces\\.html(#share-a-workspace)?$'),
+    new RegExp('^https://docs\\.parsec\\.cloud/(en|fr)/[a-z0-9-+.]+/userguide/parsec-workspaces\\.html(#share-a-workspace)?$'),
   );
 
   // Check that Bob doesn't have any workspaces anymore
@@ -179,7 +179,7 @@ msTest('Unshare workspace while navigating inside it', async ({ workspaceSharing
   await openExternalLink(
     page,
     workspaceSharingModal.locator('#only-user-warning').locator('.see-more-button'),
-    new RegExp('^https://docs\\.parsec\\.cloud/(en|fr)/[a-z0-9-+.]+/userguide/parsec_workspaces\\.html(#share-a-workspace)?$'),
+    new RegExp('^https://docs\\.parsec\\.cloud/(en|fr)/[a-z0-9-+.]+/userguide/parsec-workspaces\\.html(#share-a-workspace)?$'),
   );
 
   await expect(secondTab).toShowInformationModal('The workspace wksp1 is no longer shared with you.', 'Error');

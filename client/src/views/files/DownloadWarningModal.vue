@@ -68,7 +68,7 @@ const { theme } = useTheme();
 onMounted(async () => {});
 
 async function openDocumentation(): Promise<void> {
-  await Env.Links.openDocumentationUserGuideLink('join_organization');
+  await Env.Links.openDocumentationUserGuideLink('join-organization');
 }
 
 async function onConfirmClicked(): Promise<boolean> {

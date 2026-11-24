@@ -692,7 +692,7 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
 }
 
 async function openDocumentation(): Promise<void> {
-  await Env.Links.openDocumentationUserGuideLink('parsec_workspaces', 'share-a-workspace');
+  await Env.Links.openDocumentationUserGuideLink('parsec-workspaces', 'share-a-workspace');
 }
 </script>
 
