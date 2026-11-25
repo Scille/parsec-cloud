@@ -1,0 +1,1 @@
+Removed the notification area. This feature ended up not being used, and is removed in favor of alternate means of activity tracking, such as specific notifications systems (ex. the invitations button) or activity monitors (ex. the new Users and Workspace **Timelines**).

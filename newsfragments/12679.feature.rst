@@ -1,0 +1,1 @@
+Authentication: enhanced handling of multiple SSO options, making it easier to add more in the future.

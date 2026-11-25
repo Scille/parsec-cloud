@@ -1,0 +1,1 @@
+Fixed a bug where the whole document editor screen would become selected when clicking on the save icon.
