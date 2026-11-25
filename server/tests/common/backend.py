@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
 import pytest
 
@@ -27,13 +28,41 @@ def backend_mocked_data() -> dict[OrganizationID, MemoryOrganization]:
     return {}
 
 
+def patch_backend_config[T: Callable[..., Any]](
+    build_hook: Callable[[BackendConfig], BackendConfig],
+) -> Callable[[T], T]:
+    """
+    Decorator to patch the backend config *before* it gets used to build the backend instance.
+
+    This is useful to ensure the new config doesn't get ignored due to a cache
+    initialized at backend instantiation.
+
+    usage:
+
+        def patch_backend_config(backend_config: BackendConfig) -> BackendConfig:
+            backend_config.sse_keepalive = 42
+            return backend_config
+
+        @patch_backend_config(patch_backend_config)
+        async def test_foo(backend: Backend) -> None:
+            assert backend.config.sse_keepalive == 42
+    """
+
+    def wrapper(fn: T) -> T:
+        fn.backend_config_build_hook = build_hook  # type: ignore
+        return fn
+
+    return wrapper
+
+
 @pytest.fixture
 def backend_config(
+    request: pytest.FixtureRequest,
     db_config: BaseDatabaseConfig,
     blockstore_config: BaseBlockStoreConfig,
     backend_mocked_data: dict[OrganizationID, MemoryOrganization],
 ) -> BackendConfig:
-    return BackendConfig(
+    config = BackendConfig(
         jinja_env=get_environment(None),
         debug=True,
         db_config=db_config,
@@ -50,6 +79,11 @@ def backend_config(
         email_rate_limit_cooldown_delay=60,
         email_rate_limit_max_per_hour=3,
     )
+    try:
+        build_hook = request.function.backend_config_build_hook
+        return build_hook(config)
+    except AttributeError:
+        return config
 
 
 @pytest.fixture
