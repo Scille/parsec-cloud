@@ -411,6 +411,7 @@ export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
     realmMinimumArchivingPeriodBeforeDeletion: U64
+    editicsServerUrls: Array<string>
 }
 
 export interface ShamirRecoveryClaimInProgress1Info {
@@ -565,6 +566,13 @@ export interface UserX509CertificateDetails {
     emails: Array<EmailAddress>
     canSign: boolean
     canEncrypt: boolean
+}
+
+export interface WorkspaceEditicsPreparedDocumentSession {
+    organizationId: OrganizationID
+    realmId: VlobID
+    documentId: VlobID
+    editicsServerUrl: string | null
 }
 
 export interface WorkspaceHistoryFileStat {
@@ -5518,6 +5526,66 @@ export type WorkspaceEditicsGenerateAuthTokenError =
   | WorkspaceEditicsGenerateAuthTokenErrorInternal
   | WorkspaceEditicsGenerateAuthTokenErrorStopped
 
+// WorkspaceEditicsPreparedDocumentSessionError
+export enum WorkspaceEditicsPreparedDocumentSessionErrorTag {
+    EntryNotFound = 'WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound',
+    Internal = 'WorkspaceEditicsPreparedDocumentSessionErrorInternal',
+    InvalidCertificate = 'WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest',
+    NoRealmAccess = 'WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess',
+    Offline = 'WorkspaceEditicsPreparedDocumentSessionErrorOffline',
+    RealmDeleted = 'WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted',
+    Stopped = 'WorkspaceEditicsPreparedDocumentSessionErrorStopped',
+}
+
+export interface WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.EntryNotFound
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInternal {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.Internal
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorOffline {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.Offline
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.RealmDeleted
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorStopped {
+    tag: WorkspaceEditicsPreparedDocumentSessionErrorTag.Stopped
+    error: string
+}
+export type WorkspaceEditicsPreparedDocumentSessionError =
+  | WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound
+  | WorkspaceEditicsPreparedDocumentSessionErrorInternal
+  | WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate
+  | WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle
+  | WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest
+  | WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess
+  | WorkspaceEditicsPreparedDocumentSessionErrorOffline
+  | WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted
+  | WorkspaceEditicsPreparedDocumentSessionErrorStopped
+
 // WorkspaceEncryptEditicsError
 export enum WorkspaceEncryptEditicsErrorTag {
     Internal = 'WorkspaceEncryptEditicsErrorInternal',
@@ -7832,6 +7900,10 @@ export interface LibParsecPlugin {
         workspace: Handle,
         document: VlobID
     ): Promise<Result<string, WorkspaceEditicsGenerateAuthTokenError>>
+    workspaceEditicsPrepareDocumentSession(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<WorkspaceEditicsPreparedDocumentSession, WorkspaceEditicsPreparedDocumentSessionError>>
     workspaceFdClose(
         workspace: Handle,
         fd: FileDescriptor
