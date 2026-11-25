@@ -113,7 +113,6 @@ class Tool(enum.Enum):
     Node = "node"
     Parsec = "parsec"
     PostgreSQL = "postgres"
-    PreCommit = "pre-commit"
     Python = "python"
     Rust = "rust"
     Testbed = "testbed"
@@ -301,11 +300,6 @@ RUST_CRATE_BUSL_LICENSED = (
 )
 
 FILES_WITH_VERSION_INFO: dict[Matcher, dict[Tool, RawRegexes]] = {
-    Matcher.simple(ROOT_DIR / ".github/actions/use-pre-commit/action.yml"): {
-        Tool.PreCommit: [
-            ReplaceRegex(r"default: .* # __VERSION__", "default: {version} # __VERSION__")
-        ]
-    },
     Matcher.simple(ROOT_DIR / ".github/dependabot.yml"): {
         Tool.Python: [
             ReplaceRegex(

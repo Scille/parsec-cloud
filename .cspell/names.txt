@@ -50,6 +50,7 @@ Nihilanth
 oremanj
 pandoc
 Poedit
+prek
 proconnect
 rechiffrement
 rechiffrer

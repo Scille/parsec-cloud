@@ -175,8 +175,7 @@ jobs:
         run: |
           uv --project server run --locked ruff version
           for step in ruff-format ruff-check pyright ${{ !inputs.style-only && 'sqlfluff sqlfluff-in-python' || '' }}; do
-            python \
-              ${{ steps.pre-commit.outputs.install-path }} \
+            prek \
               run \
               $step \
               --show-diff-on-failure \

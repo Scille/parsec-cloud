@@ -10,26 +10,19 @@ inputs:
     description: where is located the pre-commit config file
     required: false
     default: .pre-commit-config.yaml
-  version:
-    description: pre-commit version to use
-    required: false
-    default: 4.2.0 # __VERSION__
   install-only:
     description: Only install pre-commit without running it.
     required: false
     default: "false"
-  install-dir:
-    description: Path where to install pre-commit.
+  save-cache:
+    description: Should we save data in cache
     required: false
-    default: ~/.cache/pre-commit
+    default: ${{ github.event_name != 'merge_group' }}
 
 outputs:
   cache-hit:
     description: A boolean value to indicate an exact match was found for the key.
     value: ${{ steps.cache-pre-commit.outputs.cache-hit }}
-  install-path:
-    description: A path where pre-commit.pyz is installed
-    value: ${{ inputs.install-dir }}/pre-commit.pyz
   suggested-args:
     description: Suggested args to run pre-commit on the minimum of files.
     value: ${{ steps.suggested-run.outputs.args }}
@@ -37,52 +30,49 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Cache pre-commit install
-      id: cache-pre-commit
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+    - name: Install prek
+      uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
       with:
-        key: pre-commit-${{ inputs.version }}-${{ hashFiles(inputs.config-file) }}
-        path: |
-          ${{ inputs.install-dir }}
+        tool: prek
 
-    # Install pre-commit as a standalone .pyz archive that can be run by Python
-    - name: Install pre-commit
-      id: install-precommit
-      if: steps.cache-pre-commit.outputs.cache-hit != 'true'
-      shell: bash -eux {0}
+    - name: Get prek cache info
+      id: cache
+      shell: bash -eux -o pipefail {0}
       run: |
-        mkdir -p ${{ inputs.install-dir }}
-        MAX_TRIES=5
-        tries=0
-        until wget \
-          https://github.com/pre-commit/pre-commit/releases/download/v${{ inputs.version }}/pre-commit-${{ inputs.version }}.pyz \
-          -O ${{ inputs.install-dir }}/pre-commit.pyz; do
-          tries=$((tries + 1))
-          if [ $tries -gt $MAX_TRIES ]; then
-            echo "Too many retries"
-            exit 1
-          fi
-          echo "Download failed, retrying in 5sec"
-          sleep 5
-        done
+        (echo -n path=; prek cache dir ) | tee -a $GITHUB_OUTPUT
+        echo "key=prek-0-${{ hashFiles(inputs.config-file) }}" | tee -a $GITHUB_OUTPUT
 
-    - name: Debug installed python package
-      run: |
-        python --version
-        python ${{ inputs.install-dir }}/pre-commit.pyz --version
+    - name: Restore prek cache
+      id: cache-prek
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        key: ${{ steps.cache.outputs.key }}
+        path: ${{ steps.cache.outputs.path }}
+
+    - name: Prepare env
       shell: bash
+      run: |
+        prek prepare-hooks
+        prek cache gc
+
+    - name: Save prek cache
+      if: inputs.save-cache
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        key: ${{ steps.cache.outputs.key }}
+        path: ${{ steps.cache.outputs.path }}
 
     - name: Minimal pre-commit work
       id: suggested-run
       shell: bash
       run: |
-        echo 'Suggested pre-commit args:'
+        echo 'Suggested prek args:'
         (
           case "${{ github.event_name }}" in
             pull_request)
               # Ensure base ref is in the git tree
               git fetch origin ${{ github.base_ref }} >&2
-              echo "args=--origin=HEAD --source=origin/${{ github.base_ref }}"
+              echo "args=--to-ref=HEAD --from-ref=origin/${{ github.base_ref }}"
             ;;
             *)
               echo "args=--all-files"
@@ -90,12 +80,11 @@ runs:
           esac
         ) | tee -a $GITHUB_OUTPUT
 
-    - name: Run pre-commit
+    - name: Run prek
       if: inputs.install-only != 'true'
       shell: bash -ex {0}
       run: |
-        python \
-          ${{ inputs.install-dir }}/pre-commit.pyz \
+        prek \
           run \
           --verbose \
           --show-diff-on-failure \
@@ -103,6 +92,6 @@ runs:
           $EXTRA_ARGS
       env:
         EXTRA_ARGS: >-
-          ${{ inputs.config-file != '' && format('--config {0}', inputs.config-file) || '' }}
+          ${{ inputs.config-file != '' && format('--config={0}', inputs.config-file) || '' }}
           ${{ steps.suggested-run.outputs.args }}
           ${{ inputs.extra-args }}
