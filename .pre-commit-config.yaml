@@ -408,3 +408,10 @@ repos:
       - id: check-readthedocs
 
       - id: check-snapcraft
+
+      - id: check-jsonschema
+        name: Validate git-cliff configuration
+        alias: check-git-cliff
+        files: .cliff.toml
+        types_or: [toml]
+        args: [--schemafile=https://www.schemastore.org/git-cliff.json]
