@@ -3320,10 +3320,23 @@ fn struct_server_organization_config_js_to_rs<'a>(
             v
         }
     };
+    let editics_server_urls = {
+        let js_val: Handle<JsArray> = obj.get(cx, "editicsServerUrls")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                v.push(js_item.value(cx));
+            }
+            v
+        }
+    };
     Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
         realm_minimum_archiving_period_before_deletion,
+        editics_server_urls,
     })
 }
 
@@ -3348,6 +3361,16 @@ fn struct_server_organization_config_rs_to_js<'a>(
         "realmMinimumArchivingPeriodBeforeDeletion",
         js_realm_minimum_archiving_period_before_deletion,
     )?;
+    let js_editics_server_urls = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.editics_server_urls.len());
+        for (i, elem) in rs_obj.editics_server_urls.into_iter().enumerate() {
+            let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "editicsServerUrls", js_editics_server_urls)?;
     Ok(js_obj)
 }
 
@@ -5304,6 +5327,104 @@ fn struct_user_x509_certificate_details_rs_to_js<'a>(
     js_obj.set(cx, "canSign", js_can_sign)?;
     let js_can_encrypt = JsBoolean::new(cx, rs_obj.can_encrypt);
     js_obj.set(cx, "canEncrypt", js_can_encrypt)?;
+    Ok(js_obj)
+}
+
+// WorkspaceEditicsPreparedDocumentSession
+
+#[allow(dead_code)]
+fn struct_workspace_editics_prepared_document_session_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceEditicsPreparedDocumentSession> {
+    let organization_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let realm_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let document_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "documentId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let editics_server_url = {
+        let js_val: Handle<JsValue> = obj.get(cx, "editicsServerUrl")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
+    Ok(libparsec::WorkspaceEditicsPreparedDocumentSession {
+        organization_id,
+        realm_id,
+        document_id,
+        editics_server_url,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_editics_prepared_document_session_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceEditicsPreparedDocumentSession,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
+    js_obj.set(cx, "organizationId", js_organization_id)?;
+    let js_realm_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.realm_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "realmId", js_realm_id)?;
+    let js_document_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.document_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "documentId", js_document_id)?;
+    let js_editics_server_url = match rs_obj.editics_server_url {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "editicsServerUrl", js_editics_server_url)?;
     Ok(js_obj)
 }
 
@@ -18310,6 +18431,87 @@ fn variant_workspace_editics_generate_auth_token_error_rs_to_js<'a>(
         libparsec::WorkspaceEditicsGenerateAuthTokenError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceEditicsGenerateAuthTokenErrorStopped")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceEditicsPreparedDocumentSessionError
+
+#[allow(dead_code)]
+fn variant_workspace_editics_prepared_document_session_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceEditicsPreparedDocumentSessionError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::EntryNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEditicsPreparedDocumentSessionErrorInternal")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::InvalidManifest { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::NoRealmAccess { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEditicsPreparedDocumentSessionErrorOffline")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceEditicsPreparedDocumentSessionErrorStopped")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -31400,6 +31602,73 @@ fn workspace_editics_generate_auth_token(mut cx: FunctionContext) -> JsResult<Js
     Ok(promise)
 }
 
+// workspace_editics_prepare_document_session
+fn workspace_editics_prepare_document_session(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in JavaScript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_editics_prepare_document_session(workspace, path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_workspace_editics_prepared_document_session_rs_to_js(
+                            &mut cx, ok,
+                        )?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_editics_prepared_document_session_error_rs_to_js(
+                                &mut cx, err,
+                            )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_fd_close
 fn workspace_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -35072,6 +35341,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "workspaceEditicsGenerateAuthToken",
         workspace_editics_generate_auth_token,
+    )?;
+    cx.export_function(
+        "workspaceEditicsPrepareDocumentSession",
+        workspace_editics_prepare_document_session,
     )?;
     cx.export_function("workspaceFdClose", workspace_fd_close)?;
     cx.export_function("workspaceFdFlush", workspace_fd_flush)?;

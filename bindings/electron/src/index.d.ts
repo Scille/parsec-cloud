@@ -366,6 +366,7 @@ export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
     realmMinimumArchivingPeriodBeforeDeletion: number
+    editicsServerUrls: Array<string>
 }
 
 
@@ -545,6 +546,14 @@ export interface UserX509CertificateDetails {
     emails: Array<string>
     canSign: boolean
     canEncrypt: boolean
+}
+
+
+export interface WorkspaceEditicsPreparedDocumentSession {
+    organizationId: string
+    realmId: string
+    documentId: string
+    editicsServerUrl: string | null
 }
 
 
@@ -4583,6 +4592,55 @@ export type WorkspaceEditicsGenerateAuthTokenError =
   | WorkspaceEditicsGenerateAuthTokenErrorStopped
 
 
+// WorkspaceEditicsPreparedDocumentSessionError
+export interface WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInternal {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorInternal"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorOffline {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorOffline"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted"
+    error: string
+}
+export interface WorkspaceEditicsPreparedDocumentSessionErrorStopped {
+    tag: "WorkspaceEditicsPreparedDocumentSessionErrorStopped"
+    error: string
+}
+export type WorkspaceEditicsPreparedDocumentSessionError =
+  | WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound
+  | WorkspaceEditicsPreparedDocumentSessionErrorInternal
+  | WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate
+  | WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle
+  | WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest
+  | WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess
+  | WorkspaceEditicsPreparedDocumentSessionErrorOffline
+  | WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted
+  | WorkspaceEditicsPreparedDocumentSessionErrorStopped
+
+
 // WorkspaceEncryptEditicsError
 export interface WorkspaceEncryptEditicsErrorInternal {
     tag: "WorkspaceEncryptEditicsErrorInternal"
@@ -6596,6 +6654,10 @@ export function workspaceEditicsGenerateAuthToken(
     workspace: number,
     document: string
 ): Promise<Result<string, WorkspaceEditicsGenerateAuthTokenError>>
+export function workspaceEditicsPrepareDocumentSession(
+    workspace: number,
+    path: string
+): Promise<Result<WorkspaceEditicsPreparedDocumentSession, WorkspaceEditicsPreparedDocumentSessionError>>
 export function workspaceFdClose(
     workspace: number,
     fd: number

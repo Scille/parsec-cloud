@@ -3768,10 +3768,29 @@ fn struct_server_organization_config_js_to_rs(
             v
         }
     };
+    let editics_server_urls = {
+        let js_val = Reflect::get(&obj, &"editicsServerUrls".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = x
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
     Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
         realm_minimum_archiving_period_before_deletion,
+        editics_server_urls,
     })
 }
 
@@ -3794,6 +3813,23 @@ fn struct_server_organization_config_rs_to_js(
         &js_obj,
         &"realmMinimumArchivingPeriodBeforeDeletion".into(),
         &js_realm_minimum_archiving_period_before_deletion,
+    )?;
+    let js_editics_server_urls = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.editics_server_urls.len() as u32);
+        for (i, elem) in rs_obj.editics_server_urls.into_iter().enumerate() {
+            let js_elem = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(elem.as_ref())
+            };
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(
+        &js_obj,
+        &"editicsServerUrls".into(),
+        &js_editics_server_urls,
     )?;
     Ok(js_obj)
 }
@@ -5973,6 +6009,130 @@ fn struct_user_x509_certificate_details_rs_to_js(
     Reflect::set(&js_obj, &"canSign".into(), &js_can_sign)?;
     let js_can_encrypt = rs_obj.can_encrypt.into();
     Reflect::set(&js_obj, &"canEncrypt".into(), &js_can_encrypt)?;
+    Ok(js_obj)
+}
+
+// WorkspaceEditicsPreparedDocumentSession
+
+#[allow(dead_code)]
+fn struct_workspace_editics_prepared_document_session_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceEditicsPreparedDocumentSession, JsValue> {
+    let organization_id = {
+        let js_val = Reflect::get(&obj, &"organizationId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
+            })?
+    };
+    let realm_id = {
+        let js_val = Reflect::get(&obj, &"realmId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
+            })?
+    };
+    let document_id = {
+        let js_val = Reflect::get(&obj, &"documentId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
+            })?
+    };
+    let editics_server_url = {
+        let js_val = Reflect::get(&obj, &"editicsServerUrl".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?,
+            )
+        }
+    };
+    Ok(libparsec::WorkspaceEditicsPreparedDocumentSession {
+        organization_id,
+        realm_id,
+        document_id,
+        editics_server_url,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_editics_prepared_document_session_rs_to_js(
+    rs_obj: libparsec::WorkspaceEditicsPreparedDocumentSession,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
+    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    let js_realm_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.realm_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
+        }
+        .as_ref(),
+    );
+    Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+    let js_document_id = JsValue::from_str(
+        {
+            let custom_to_rs_string =
+                |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(rs_obj.document_id) {
+                Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
+        }
+        .as_ref(),
+    );
+    Reflect::set(&js_obj, &"documentId".into(), &js_document_id)?;
+    let js_editics_server_url = match rs_obj.editics_server_url {
+        Some(val) =>
+        {
+            #[allow(clippy::useless_asref)]
+            JsValue::from_str(val.as_ref())
+        }
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"editicsServerUrl".into(), &js_editics_server_url)?;
     Ok(js_obj)
 }
 
@@ -21959,6 +22119,92 @@ fn variant_workspace_editics_generate_auth_token_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceEditicsPreparedDocumentSessionError
+
+#[allow(dead_code)]
+fn variant_workspace_editics_prepared_document_session_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceEditicsPreparedDocumentSessionError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorEntryNotFound".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorInvalidCertificate".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorInvalidManifest".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorNoRealmAccess".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorOffline".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorRealmDeleted".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceEditicsPreparedDocumentSessionError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceEditicsPreparedDocumentSessionErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceEncryptEditicsError
 
 #[allow(dead_code)]
@@ -31802,6 +32048,41 @@ pub fn workspaceEditicsGenerateAuthToken(workspace: u32, document: String) -> Pr
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_editics_generate_auth_token_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_editics_prepare_document_session
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceEditicsPrepareDocumentSession(workspace: u32, path: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+        let ret = libparsec::workspace_editics_prepare_document_session(workspace, path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_workspace_editics_prepared_document_session_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err =
+                    variant_workspace_editics_prepared_document_session_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
