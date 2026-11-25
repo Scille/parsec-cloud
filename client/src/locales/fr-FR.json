@@ -1903,9 +1903,9 @@
             }
         },
         "revocation": {
-            "revokeTitle": "Révoquer cet utilisateur ?",
-            "revokeText": "<b>{user}</b> sera <b>définitivement</b> révoqué(e) et ne pourra plus accéder à l'organisation. Si vous êtes certain(e) de vouloir procéder à cette révocation, veuillez renseigner son adresse email dans le champ ci-dessous.<br/><br/>Adresse email: <b><i>{email}</i></b>",
-            "label": "Saisissez l'adresse email pour confirmer",
+            "revokeTitle": "Révoquer cet utilisateur",
+            "revokeText": "<b>{user}</b> perdra <b>définitivement</b> l'accès à cette organisation. Cette action est irréversible.",
+            "label": "Saisissez '{email}' pour confirmer",
             "revokeYes": "Révoquer",
             "revokeFailed": "Impossible de révoquer cet utilisateur.",
             "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation."

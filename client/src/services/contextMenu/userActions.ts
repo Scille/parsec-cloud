@@ -16,7 +16,7 @@ import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserTimeline from '@/views/users/UserTimeline.vue';
 import { modalController } from '@ionic/vue';
-import { getTextFromUser, I18n, MsModalResult, MsReportTheme, useWindowSize } from 'megashark-lib';
+import { getTextFromUser, MsModalResult, MsReportTheme, useWindowSize } from 'megashark-lib';
 import { inject, Ref } from 'vue';
 
 export function useUserActions() {
@@ -30,13 +30,15 @@ export function useUserActions() {
       {
         title: 'UsersPage.revocation.revokeTitle',
         additionalMessage: {
-          message: { key: 'UsersPage.revocation.revokeText', data: { user: user.humanHandle.label, email: user.humanHandle.email } },
+          message: { key: 'UsersPage.revocation.revokeText', data: { user: user.humanHandle.label } },
           theme: MsReportTheme.Warning,
         },
         trim: true,
         validator: matchingStringValidator(user.humanHandle.email),
-        inputLabel: 'UsersPage.revocation.label',
-        placeholder: I18n.valueAsTranslatable(user.humanHandle.email),
+        inputLabel: {
+          key: 'UsersPage.revocation.label',
+          data: { email: user.humanHandle.email },
+        },
         okButtonText: 'UsersPage.revocation.revokeYes',
         yesIsDangerous: true,
       },

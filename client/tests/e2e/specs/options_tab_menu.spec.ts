@@ -336,5 +336,5 @@ msTest('Test user options tab menu', async ({ usersPage }) => {
   await user1.locator('.ms-checkbox').check();
   await tabItem.nth(3).click();
   await expect(usersPage.locator('.text-input-modal')).toBeVisible();
-  await expect(usersPage.locator('.text-input-modal').locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(usersPage.locator('.text-input-modal').locator('.ms-modal-header__title')).toHaveText('Revoke this user');
 });

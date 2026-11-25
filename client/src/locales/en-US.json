@@ -862,7 +862,7 @@
             "title": "Delete this workspace",
             "subtitleBin": "You are about to schedule for deletion the workspace <b>{workspace}</b>. It will remain accessible in read-only until its deletion on <b>{deletionDate}</b>.",
             "subtitleDelete": "You are about to delete the workspace <b>{workspace}</b>. Its data and history will be <u>permanently deleted</u> and you won't be able to restore it.",
-            "label": "Input '{workspace}' to proceed",
+            "label": "Type '{workspace}' to confirm",
             "yesBin": "Move to bin",
             "yesDelete": "Permanently delete",
             "info": "Workspaces scheduled for deletion will remain accessible in read-only for {duration}, after which they will be permanently deleted. Workspace owners can restore them before this date.",
@@ -1903,9 +1903,9 @@
             }
         },
         "revocation": {
-            "revokeTitle": "Revoke this user?",
-            "revokeText": "This will <b>permanently</b> revoke <b>{user}</b>, preventing them from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address in the field below.<br/><br/>Email address: <b><i>{email}</i></b>",
-            "label": "Input the email address to proceed",
+            "revokeTitle": "Revoke this user",
+            "revokeText": "<b>{user}</b> will <b>permanently</b> lose access to this organization. This action cannot be undone.",
+            "label": "Type '{email}' to confirm",
             "revokeYes": "Revoke",
             "revokeFailed": "Failed to revoke this user.",
             "revokeSuccess": "{user} has been revoked. They can no longer access this organization."
