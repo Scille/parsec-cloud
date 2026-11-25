@@ -54,7 +54,6 @@ async def test_anonymous_server_server_config_ok(
                     ),
                 ],
             )
-            anonymous_server.headers["User-Agent"] = "Parsec-Client/3.7 Linux"
 
             expected_rep = anonymous_server_cmds.latest.server_config.RepOk(
                 account=anonymous_server_cmds.latest.server_config.AccountConfig.ENABLED_WITH_VAULT,
