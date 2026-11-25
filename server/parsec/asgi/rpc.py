@@ -242,7 +242,6 @@ def settle_compatible_versions(
 # - 461: User is revoked
 # - 462: User is frozen
 # - 463: User must accept the TOS
-# - 464: Web client not allowed by organization configuration
 # - 498: Authentication token expired
 
 
@@ -259,7 +258,6 @@ class CustomHttpStatus(Enum):
     UserRevoked = 461
     UserFrozen = 462
     UserMustAcceptTos = 463
-    WebClientNotAllowedByOrganizationConfig = 464
     TokenExpired = 498
 
 
