@@ -19,7 +19,7 @@
         </ion-text>
       </div>
       <div class="invitation-mobile-content">
-        <ion-text class="invitation-mobile-content__createdOn body-sm">
+        <ion-text class="invitation-mobile-content__createdOn">
           <ion-icon :icon="person" />
           {{ inviterLabel }}
         </ion-text>

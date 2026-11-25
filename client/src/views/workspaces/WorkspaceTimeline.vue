@@ -23,7 +23,7 @@
       </div>
       <ion-button
         v-show="workspace.selfRole === WorkspaceRole.Owner"
-        class="workspace-activity-header__export button-small color-secondary"
+        class="workspace-activity-header__export color-secondary"
         fill="outline"
         @click="downloadWorkspaceExport"
       >

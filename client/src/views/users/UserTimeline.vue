@@ -19,7 +19,7 @@
         </ion-button>
       </div>
       <ion-button
-        class="user-activity-header__export button-small color-secondary"
+        class="user-activity-header__export color-secondary"
         fill="outline"
         @click="exportUsers"
       >
