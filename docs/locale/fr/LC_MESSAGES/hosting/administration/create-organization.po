@@ -245,12 +245,16 @@ msgid "Start Parsec client application (web or desktop)"
 msgstr "Lancez l'application client Parsec (Web ou bureau)"
 
 #: ../../hosting/administration/create-organization.rst:139
-msgid "Select :menuselection:`Create or join --> Join``"
-msgstr "Sélectionnez :menuselection:`Créer ou rejoindre --> Rejoindre``"
+msgid ""
+"Paste the **bootstrap link** from previous step under ``Do you have a Parsec "
+"link?``"
+msgstr ""
+"Collez le **lien de bootstrap** de l'étape précédente sous ``Vous avez un "
+"lien Parsec ?``"
 
 #: ../../hosting/administration/create-organization.rst:140
-msgid "Paste the **bootstrap link** from previous step"
-msgstr "Collez le **lien de bootstrap** de l'étape précédente"
+msgid "Click ``Continue``"
+msgstr "Cliquez sur ``Continuer``"
 
 #: ../../hosting/administration/create-organization.rst:141
 msgid "Follow the instructions to create the first user of the Organization."

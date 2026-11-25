@@ -47,8 +47,8 @@ You can add a new device from your profile page.
   If you do not trust the link, do not proceed.
 
 4. Once the verification done, on the new device, you can simply click on the link to start Parsec.
-   Otherwise, you can copy the link, start Parsec and select ``Join`` in the welcome page
-   (the application should have pre-filled the link with the clipboard content, but you can manually paste it).
+   Otherwise, you can copy the link, start Parsec, paste the link on the welcome screen under
+   ``Do you have a Parsec link?`` and click ``Continue``.
    Then you follow the instructions to perform the code exchange between your devices.
 
 .. caution::

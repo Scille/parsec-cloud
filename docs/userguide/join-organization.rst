@@ -30,8 +30,8 @@ Start the invitation process
 2. After making sure that the link is safe, simply click on the link.
    Parsec will start and guide you through the invitation process.
 
-   - You can also start Parsec and paste the link on the welcome screen
-     (Click ``Create or join`` then ``Join``).
+   - You can also start Parsec, paste the link on the welcome screen under
+     ``Do you have a Parsec link?`` and click ``Continue``.
 
 .. _doc_userguide_join_organization_token_exchange:
 
@@ -114,8 +114,8 @@ Request to join the organization
 2. After making sure that the link is safe, simply click on the link.
    Parsec will start and guide you through the invitation process.
 
-   - You can also start Parsec and paste the link on the welcome screen
-     (Click ``Create or join`` then ``Join``).
+   - You can also start Parsec, paste the link on the welcome screen under
+     ``Do you have a Parsec link?`` and click ``Continue``.
 
 3. Depending on your system, you may have to select the identity provider you would like to use (PKI or SSO).
 

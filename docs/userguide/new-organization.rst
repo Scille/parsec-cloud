@@ -5,12 +5,19 @@
 Create an organization
 ======================
 
-When you start Parsec for the first time, the welcome screen will propose to
-**create** or **join** an organization.
+When you start Parsec for the first time, the welcome screen allows you to
+**paste a Parsec link** (to join an organization or add a device), to
+**try Parsec for free** or to **create an organization**.
 
 .. image:: screens/welcome_to_parsec.png
     :align: center
     :alt: Welcome to Parsec
+
+.. note::
+
+  The steps below differ slightly between the desktop app and the web app. On
+  the web app you do not choose the type of server: it depends on the address
+  you use to access Parsec.
 
 
 Create an organization on Parsec
@@ -31,8 +38,9 @@ servers and associated to your customer account.
 If you already have a customer account on Parsec, follow the steps below to
 create your organization:
 
-1. Start by clicking ``Create an organization`` on the welcome screen.
-2. Select ``Create my organization on Parsec``.
+1. Start by clicking ``Create an organization`` on the welcome screen
+   (on the web app, first go to https://app.parsec.cloud).
+2. On the desktop app, select ``Create my organization on Parsec``.
 3. Log in with your customer account.
 4. Enter the organization name (**this name cannot be changed later**,
    see :ref:`About Organization Names <doc_userguide_new_organization_naming>`).
@@ -57,9 +65,9 @@ required.
   Your organization and associated data will be deleted at the end of the trial
   period.
 
-1. Start by clicking ``Create an organization`` on the welcome screen.
-2. Select ``Try Parsec for 15 days``.
-3. Enter your name and email address.
+1. Start by clicking ``Try for free`` on the welcome screen
+   (on the web app, you will be redirected to the trial website).
+2. Enter your name and email address.
 
 You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
 
@@ -70,8 +78,9 @@ Create an organization on my own Parsec server
 
 Follow the steps below to create an organization on your own Parsec server:
 
-1. Start by clicking ``Create an organization`` on the welcome screen.
-2. Select ``Use a different Parsec server``.
+1. Start by clicking ``Create an organization`` on the welcome screen
+   (on the web app, first go to the address of your own Parsec server).
+2. On the desktop app, select ``Use a different Parsec server``.
 3. Specify the organization name and the address of your own Parsec server.
 
 You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
