@@ -1,0 +1,1 @@
+Added a mandatory confirmation when revoking a user to prevent accidental revocations.

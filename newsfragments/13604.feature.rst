@@ -1,0 +1,1 @@
+Added an option to export *Users* or *Workspace* activity in ``.json`` format.

@@ -1,0 +1,1 @@
+Added a ``Copy path`` button when browsing a workspace to easily share the current path.

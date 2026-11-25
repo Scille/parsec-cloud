@@ -1,0 +1,1 @@
+Added **Real-time collaborative document editing**. Multiple users can now edit the same document simultaneously and view live updates from collaborators in the built-in document editor.

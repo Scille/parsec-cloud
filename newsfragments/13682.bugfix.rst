@@ -1,0 +1,1 @@
+Improved handling of OpenOffice file formats (``.odt``, ``.odp``, ``.ods``)

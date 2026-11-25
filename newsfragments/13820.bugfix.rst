@@ -1,0 +1,1 @@
+Fixed a bug that caused a message stating that the file was taking too long to open, even after it had already opened.

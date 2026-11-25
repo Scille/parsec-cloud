@@ -1,0 +1,1 @@
+Added a workspace *Timeline* feature displaying workspace activity (added/removed users, role changes, workspace renames, etc).
