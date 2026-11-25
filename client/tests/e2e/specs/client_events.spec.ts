@@ -12,12 +12,11 @@ msTest('Revoked event', async ({ usersPage }) => {
   await expect(menu).toBeVisible();
   await menu.getByRole('listitem').nth(1).click();
   const inputModal = usersPage.locator('.text-input-modal');
-  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user');
   await expect(inputModal.locator('.report-text__text')).toHaveText(
-    'This will permanently revoke Boby McBobFace, preventing them \
-    from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
-    in the field below.Email address: bob@example.com',
+    'Boby McBobFace will permanently lose access to this organization. This action cannot be undone.',
   );
+  await expect(inputModal.locator('.input-label')).toHaveText("Type 'bob@example.com' to confirm");
   await fillIonInput(inputModal.locator('ion-input'), 'bob@example.com');
   await expect(inputModal.locator('#next-button')).toBeEnabled();
   await inputModal.locator('#next-button').click();
@@ -28,12 +27,11 @@ msTest('Revoked event', async ({ usersPage }) => {
   const item2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
   await item2.click({ button: 'right' });
   await menu.getByRole('listitem').nth(1).click();
-  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user');
   await expect(inputModal.locator('.report-text__text')).toHaveText(
-    'This will permanently revoke Malloryy McMalloryFace, preventing them \
-    from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
-    in the field below.Email address: mallory@example.com',
+    'Malloryy McMalloryFace will permanently lose access to this organization. This action cannot be undone.',
   );
+  await expect(inputModal.locator('.input-label')).toHaveText("Type 'mallory@example.com' to confirm");
   await fillIonInput(inputModal.locator('ion-input'), 'mallory@example.com');
   await expect(inputModal.locator('#next-button')).toBeEnabled();
   await inputModal.locator('#next-button').click();

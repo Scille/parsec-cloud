@@ -153,12 +153,11 @@ for (const success of [true, false]) {
     await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'Revoke this user');
 
     const inputModal = usersPage.locator('.text-input-modal');
-    await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+    await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user');
     await expect(inputModal.locator('.report-text__text')).toHaveText(
-      'This will permanently revoke Boby McBobFace, preventing them \
-      from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
-      in the field below.Email address: bob@example.com',
+      'Boby McBobFace will permanently lose access to this organization. This action cannot be undone.',
     );
+    await expect(inputModal.locator('.input-label')).toHaveText("Type 'bob@example.com' to confirm");
     await fillIonInput(inputModal.locator('ion-input'), 'bob@example.fr');
     await expect(inputModal.locator('#next-button')).toHaveAttribute('disabled');
     await fillIonInput(inputModal.locator('ion-input'), 'bob@example.com');
@@ -186,12 +185,11 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
   await item.locator('.ms-checkbox').check();
   await usersPage.locator('#activate-users-ms-action-bar').getByText('Revoke this user').click();
   const inputModal = usersPage.locator('.text-input-modal');
-  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user');
   await expect(inputModal.locator('.report-text__text')).toHaveText(
-    'This will permanently revoke Boby McBobFace, preventing them \
-    from accessing this organization. If you are certain you want to proceed with the revocation, please input their email address \
-    in the field below.Email address: bob@example.com',
+    'Boby McBobFace will permanently lose access to this organization. This action cannot be undone.',
   );
+  await expect(inputModal.locator('.input-label')).toHaveText("Type 'bob@example.com' to confirm");
   await fillIonInput(inputModal.locator('ion-input'), 'bob@example.fr');
   await expect(inputModal.locator('#next-button')).toHaveAttribute('disabled');
   await fillIonInput(inputModal.locator('ion-input'), 'bob@example.com');
@@ -216,7 +214,7 @@ msTest('Revoked user is updated in other tabs', async ({ usersPage }) => {
   await aliceMallory.click({ button: 'right' });
   await checkUserContextMenu(usersPage, 'Administrator', 'External', 'Revoke this user');
   const inputModal = usersPage.locator('.text-input-modal');
-  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user?');
+  await expect(inputModal.locator('.ms-modal-header__title')).toHaveText('Revoke this user');
   await fillIonInput(inputModal.locator('ion-input'), 'mallory@example.com');
   await expect(inputModal.locator('#next-button')).toBeEnabled();
   await inputModal.locator('#next-button').click();

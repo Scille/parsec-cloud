@@ -178,7 +178,6 @@ export function useWorkspaceActions() {
           key: 'WorkspacesPage.trashWorkspace.label',
           data: { workspace: workspace.name },
         },
-        placeholder: I18n.valueAsTranslatable(workspace.name),
         okButtonText:
           minimumArchivingPeriodInSeconds > 0 ? 'WorkspacesPage.trashWorkspace.yesBin' : 'WorkspacesPage.trashWorkspace.yesDelete',
         yesIsDangerous: true,
